@@ -70,7 +70,7 @@
         "idle"
       ],
       "statePolicy": "Same solid silhouette irrespective of canopy presentation. The current seam does not distinguish launched from closed; no new classifier is invented.",
-      "implementationPolicy": "A frozen spreadTickSvgs array decorates the existing four authoritative spread tick nodes in TL,TR,BL,BR order. Matched production captures on 8bfe6a00 showed a narrow horizontal outer extent +/-34 at --sp:0 versus inspected reference approximately +/-70. The corrected child path is M-46 -10V-20L-36 -30H-26, mirrored for other quadrants, in a centered104x80 viewport. Parent centers remain x +/-24 plus native horizontal --sp, y +/-24; child outer extents46/30 produce approximately70/54 at zero spread. Only child artwork moves, keeping authoritative parent transforms, node order, spread, color and visibility unchanged. This correction requires its own actual capture before visual acceptance.",
+      "implementationPolicy": "A frozen spreadTickSvgs array decorates the existing four authoritative spread tick nodes in TL,TR,BL,BR order. Matched production captures on 8bfe6a00 showed a narrow horizontal outer extent +/-34 at --sp:0 versus inspected reference approximately +/-70. The corrected child path is M-46 -10V-20L-36 -30H-26, mirrored for other quadrants, in a centered104x80 viewport. Parent centers remain x +/-24 plus native horizontal --sp, y +/-24; child outer extents46/30 produce approximately70/54 at zero spread. Only child artwork moves, keeping authoritative parent transforms, node order, spread, color and visibility unchanged. Affected run40223412905 preserved all four Brella states before later workload timeout; independent actual-image review confirmed approximate +/-70 horizontal and +/-54 vertical extents at --sp:0. This supports the correction, not all-model or pixel-perfect parity.",
       "limits": [
         "Destroyed/recovery states and exact per-model dimensions remain unverified; no dashed canopy state is fabricated. Final actual-HUD comparison is still needed; this child-artwork baseline correction alone does not establish retail parity."
       ]
@@ -225,5 +225,36 @@
       "Mobile range telemetry obscures some upper reticle artwork; no clean mobile fidelity claim.",
       "Stringer and Brush remain native fallback; no invented projected guides."
     ]
+  },
+  "affectedCaptureEvidence": {
+    "runId": 40223412905,
+    "head": "b21424aeb1ccf8a04a831292c9c1ef2f242c80fc",
+    "artifactId": 12611266685,
+    "artifactSha256": "d81ff83a609243f91dc29fe64402e3dcccc4bb3e382864c7513a9d5480fd2482",
+    "overallResult": "FAILED: both capture steps exceeded12-minute budgets. Do not count incomplete receipt rows or treat workflow as successful.",
+    "completedPairedStates": {
+      "brella": [
+        "idle",
+        "firing",
+        "canopy-open",
+        "release"
+      ],
+      "nautilus": [
+        "idle",
+        "first-ready",
+        "second-charging",
+        "full",
+        "stream-second",
+        "stream-first"
+      ]
+    },
+    "review": "Corrected Brella width and reached Nautilus corner orientation/native charge rings visually reviewed. Spacing/radii retail calibration remains unproven.",
+    "missing": [
+      "Nautilus depleted PNG",
+      "Ballpoint states",
+      "interruption/switch checks",
+      "new Splatling mobile capture"
+    ],
+    "failureOrder": "Baseline action timeout19:07:39 UTC precedes later depleted surface19:08:11 and secondary20-second screenshot timeout. Owned-process cleanup is required to avoid overlap. Candidate receipt remained running at timeout."
   }
 }

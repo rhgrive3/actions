@@ -16,11 +16,17 @@ jobs:
   reticle-browser-review:
     if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/improve/inkwave-weapon-reticles-20261025'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        suite: [affected-brella, affected-nautilus, affected-ballpoint]
     timeout-minutes: 40
     env:
       SOURCE_SHA: ${{ github.sha }}
       BASELINE_SHA: 7f863ea2d65671abd1453fdae1b61de00f1d10e2
-      EVIDENCE: .qa-evidence/reticle-visual-review
+      EVIDENCE: .qa-evidence/reticle-visual-review/${{ matrix.suite }}
+      CAPTURE_SUITE: ${{ matrix.suite }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,16 +90,41 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SOURCE_SHA="$BASELINE_SHA" node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-baseline-site" "$EVIDENCE/baseline" --before --suite=affected-brella-splatling --viewport=desktop 2>&1 | tee "$EVIDENCE/baseline-capture.log"
-      - name: Capture actual candidate game and assert installed DOM/state
+          printf 'owned GNU-timeout child group; child TERM at700s; KILL after15s; outer step720s; suite=%s\n' "$CAPTURE_SUITE" > "$EVIDENCE/supervision.txt"
+          SOURCE_SHA="$BASELINE_SHA" timeout --signal=TERM --kill-after=15s 700s node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-baseline-site" "$EVIDENCE/baseline" --before --suite="$CAPTURE_SUITE" --viewport=desktop --render-hz=30 2>&1 | tee "$EVIDENCE/baseline-capture.log"
+      - name: Require owned baseline browser exit before candidate
+        id: baseline-cleanup
         if: always() && steps.production-build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const c=JSON.parse(fs.readFileSync(process.env.EVIDENCE+'/baseline/cleanup.json'));
+          assert.equal(c.status,'closed');assert.equal(c.exited,true);
+          assert(c.browserPid>0&&c.ownerNodePid>0&&c.startedAt&&c.finishedAt);
+          console.log('Owned baseline browser exit verified',JSON.stringify(c));
+          NODE
+      - name: Capture actual candidate game and assert installed DOM/state
+        if: always() && steps.production-build.outcome == 'success' && steps.baseline-cleanup.outcome == 'success'
         id: candidate-capture
         timeout-minutes: 12
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-candidate-site" "$EVIDENCE/candidate" --suite=affected-brella-splatling --viewport=desktop 2>&1 | tee "$EVIDENCE/candidate-capture.log"
+          timeout --signal=TERM --kill-after=15s 700s node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-candidate-site" "$EVIDENCE/candidate" --suite="$CAPTURE_SUITE" --viewport=desktop --render-hz=30 2>&1 | tee "$EVIDENCE/candidate-capture.log"
+      - name: Verify owned candidate browser exit
+        if: always() && steps.candidate-capture.outcome != 'skipped' && steps.production-build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const c=JSON.parse(fs.readFileSync(process.env.EVIDENCE+'/candidate/cleanup.json'));
+          assert.equal(c.status,'closed');assert.equal(c.exited,true);assert(c.finishedAt);
+          console.log('Owned candidate browser exit verified',JSON.stringify(c));
+          NODE
       - name: State narrow result, not full CI or retail equivalence
         if: always() && steps.baseline-capture.outcome == 'success' && steps.candidate-capture.outcome == 'success'
         shell: bash
@@ -107,24 +138,25 @@ jobs:
           const after=JSON.parse(fs.readFileSync(root+'/candidate/receipt.json'));
           assert.equal(before.status,'baseline-recorded');assert.equal(after.status,'passed');
           assert.equal(before.sourceSha,process.env.BASELINE_SHA);assert.equal(after.sourceSha,process.env.SOURCE_SHA);
-          assert.equal(after.coverage.suite,'affected-brella-splatling');
-          assert.equal(after.coverage.expectedScreenshotStates,19);
+          const expected={ 'affected-brella':4,'affected-nautilus':8,'affected-ballpoint':7 }[process.env.CAPTURE_SUITE];
+          assert(expected);assert.equal(after.coverage.suite,process.env.CAPTURE_SUITE);
+          assert.equal(after.coverage.expectedScreenshotStates,expected);
           assert.deepEqual(before.coverage.actualWeapons,after.coverage.actualWeapons);
           assert.equal(before.scenarios.length,after.scenarios.length);
           const pairs=after.scenarios.filter(s=>s.files).map(s=>{
             const other=before.scenarios.find(b=>b.viewportName===s.viewportName&&b.weaponId===s.weaponId&&b.phase===s.phase);
             assert(other?.files);return {viewport:s.viewportName,weaponId:s.weaponId,phase:s.phase,before:other.files,after:s.files};
           });
-          assert.equal(pairs.length,19);
+          assert.equal(pairs.length,expected);
           fs.writeFileSync(root+'/comparison-index.json',JSON.stringify({baselineSha:before.sourceSha,candidateSha:after.sourceSha,baselineContentHash:before.contentHash,candidateContentHash:after.contentHash,coverage:after.coverage,pairs,retailParity:'unverified',fullAcceptance:false},null,2));
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'Affected desktop-only production reticle gate passed: corrected Brella (4 states), Nautilus and Ballpoint (7 native two-stage/stream/depleted states each), native charger idle (1 state); 19 paired states/head at 1280×720 DPR1. Full-hold Nautilus and active-stream Ballpoint interruption/rebuild assertions are metadata-only. Prior first-four/mobile evidence is not rerun or broadened; new Splatling mobile coverage is unverified. Software GPU only; Nintendo pixel/behavior parity and full CI remain unverified.\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`Affected desktop suite ${process.env.CAPTURE_SUITE}: ${expected} paired states/head at1280×720 DPR1. Three independent per-weapon jobs share this exact head; their union is19 states+6metadata rows only if all three pass. Native physics remains60Hz; rendering30Hz with source-boundary60Hz sampling, actual dt/native tick deltas recorded. Prior/mobile coverage is not broadened. Software GPU only; Nintendo parity and full CI remain unverified.\n`);
           NODE
       - name: Preserve screenshots, hidden diagnostics, logs even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reticle-visual-review-${{ github.sha }}
-          path: .qa-evidence/reticle-visual-review/
+          name: reticle-visual-review-${{ github.sha }}-${{ matrix.suite }}
+          path: .qa-evidence/reticle-visual-review/${{ matrix.suite }}/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

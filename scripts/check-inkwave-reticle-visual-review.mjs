@@ -29,15 +29,20 @@ export const SPLATLING_PHASES=Object.freeze(['idle','first-ready','second-chargi
 export function captureMatrix(flags=[]) {
   const suite=flags.find(f=>f.startsWith('--suite='))?.slice(8)||'first-four';
   const viewport=flags.find(f=>f.startsWith('--viewport='))?.slice(11)||'all';
-  assert(['first-four','affected-brella-splatling'].includes(suite),'unknown capture suite');
+  assert(['first-four','affected-brella-splatling','affected-brella','affected-nautilus','affected-ballpoint'].includes(suite),'unknown capture suite');
   assert(['all','desktop','mobile'].includes(viewport),'unknown capture viewport');
   // New affected coverage is explicitly desktop-only and bounded. The prior
   // first-four/mobile acceptance matrix remains the default, unchanged.
-  if(suite==='affected-brella-splatling')assert.equal(viewport,'desktop','affected suite requires explicit --viewport=desktop; new Splatling mobile is unverified');
+  if(suite!=='first-four')assert.equal(viewport,'desktop','affected suite requires explicit --viewport=desktop; new Splatling mobile is unverified');
+  const brella=CASES.find(c=>c.name==='brella'),charger={...CASES.find(c=>c.name==='native-charger-fallback'),idleOnly:true};
+  const suites={'first-four':CASES,'affected-brella-splatling':[brella,...SPLATLING_CASES,charger],
+    'affected-brella':[brella],'affected-nautilus':[SPLATLING_CASES[0],charger],'affected-ballpoint':[SPLATLING_CASES[1]]};
+  const renderHz=Number(flags.find(f=>f.startsWith('--render-hz='))?.slice(12)||60);
+  assert([30,60].includes(renderHz),'only source-supported 30/60Hz render cadence allowed');
+  if(suite==='first-four')assert.equal(renderHz,60,'prior default matrix retains its original60Hz protocol');
   return {suite,viewports:VIEWPORTS.filter(v=>viewport==='all'||v.name===viewport),
-    cases:suite==='first-four'?CASES:[CASES.find(c=>c.name==='brella'),...SPLATLING_CASES,
-      {...CASES.find(c=>c.name==='native-charger-fallback'),idleOnly:true}],
-    screenshotStateCount:suite==='affected-brella-splatling'?19:null};
+    cases:suites[suite],renderHz,dt:1/renderHz,
+    screenshotStateCount:({'affected-brella-splatling':19,'affected-brella':4,'affected-nautilus':8,'affected-ballpoint':7})[suite]??null};
 }
 export const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 export function pngDimensions(bytes) {
@@ -49,6 +54,27 @@ export function browserLaunchOptions(executablePath) {
   // full Chromium, not its default headless shell, for offline WebGL captures.
   return {headless:true,...(executablePath?{executablePath}:{channel:'chromium'}),
     args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
+}
+async function settlesWithin(action,timeoutMs) {
+  let timer;
+  try{return await Promise.race([Promise.resolve().then(action).then(()=>true),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),timeoutMs);})]);}
+  finally{clearTimeout(timer);}
+}
+export async function closeOwnedBrowser(browserServer,{reason='normal',timeoutMs=5000,onUpdate=()=>{}}={}) {
+  const child=browserServer.process();
+  assert(child?.pid>0,'owned browser process identity required');
+  const record={ownerNodePid:process.pid,browserPid:child.pid,reason,startedAt:new Date().toISOString(),forced:false,status:'closing'};
+  onUpdate({...record});
+  try {
+    let closed=false;
+    try{closed=await settlesWithin(()=>browserServer.close(),timeoutMs);}catch(error){record.gracefulError=String(error);}
+    if(!closed){record.forced=true;onUpdate({...record});assert(await settlesWithin(()=>browserServer.kill(),timeoutMs),'owned browser kill deadline');}
+    record.exitCode=child.exitCode;record.signalCode=child.signalCode;
+    record.exited=child.exitCode!=null||child.signalCode!=null;
+    assert(record.exited,'owned browser process did not exit; next capture must not start');
+    record.status='closed';return record;
+  } catch(error){record.status='failed';record.error=String(error);throw error;}
+  finally{record.finishedAt=new Date().toISOString();onUpdate({...record});}
 }
 export function reticleCrop(rect, viewport) {
   const width = Math.min(240,viewport.width),height = Math.min(200,viewport.height);
@@ -89,7 +115,7 @@ export function splatlingPhaseReady(row,phase) {
   if(phase==='second-charging')return hold&&near(row.first,1)&&row.second>=.35&&row.second<=.65;
   if(phase==='full')return hold&&row.charge>=1&&near(row.first,1)&&near(row.second,1);
   if(phase==='stream-second')return stream&&row.charge===0&&row.second>=.25&&row.second<=.75;
-  if(phase==='stream-first')return stream&&row.charge===0&&row.first>0&&near(row.second,0);
+  if(phase==='stream-first')return stream&&row.charge===0&&row.first>1e-7&&near(row.second,0)&&Number.isFinite(row.offsets?.[0])&&row.offsets[0]<100;
   return false;
 }
 export function assertSplatlingCapture(row,scenario,phase,{before=false}={}) {
@@ -107,11 +133,25 @@ export function assertSplatlingCapture(row,scenario,phase,{before=false}={}) {
 }
 export function readSplatlingPhase() {
   const a=window.__G.local,h=window.__inkwave.hud,r=a.weaponRunner;
-  return {charge:r.charge,charging:r.charging===true,streaming:r.streaming===true,first:h._L.splatFirst,second:h._L.splatSecond};
+  return {charge:r.charge,charging:r.charging===true,streaming:r.streaming===true,first:h._L.splatFirst,second:h._L.splatSecond,
+    offsets:[h._chargeEl,h._chargeSecond].map(el=>el?Number.parseFloat(el.style.strokeDashoffset):null),
+    streamTime:r.catalogState?.streamTime,streamElapsed:r.catalogState?.streamElapsed,
+    firstStreamFrames:a.weapon.catalogRecord?.parameters.WeaponParam?.MaxShootingFrame_First};
 }
-export async function untilSplatling(page,phase,maxFrames=480) {
+export function splatlingSampleDt(state,phase,baseDt=1/60) {
+  if(phase==='stream-first'&&baseDt===1/30&&state.streaming) {
+    assert(Number.isFinite(state.streamTime)&&Number.isFinite(state.streamElapsed)&&Number.isFinite(state.firstStreamFrames)&&state.firstStreamFrames>0,'source-owned stream boundary required');
+    const remaining=(state.streamTime-Math.max(0,state.streamElapsed))*60;
+    // Switch BEFORE a two-tick render could cross the one-frame Ballpoint
+    // first-only window. Read the actual source table, never infer a timer.
+    if(remaining<=state.firstStreamFrames+2+1e-7)return 1/60;
+  }
+  return baseDt;
+}
+export async function untilSplatling(page,phase,maxFrames=480,baseDt=1/60) {
   for(let frames=1;frames<=maxFrames;frames++) {
-    await pace(page);
+    const state=await page.evaluate(readSplatlingPhase);
+    await pace(page,1,splatlingSampleDt(state,phase,baseDt));
     if(splatlingPhaseReady(await page.evaluate(readSplatlingPhase),phase))return frames;
   }
   throw Error('Actual Splatling phase deadline: '+phase);
@@ -119,28 +159,41 @@ export async function untilSplatling(page,phase,maxFrames=480) {
 
 // Freeze the scheduler only; advance the actual game once per native RAF. Never
 // request a bulk debug step or run a synchronous 240-frame GPU/render burst.
-export async function pace(page, frames=1) {
+export async function pace(page, frames=1,dt=1/60) {
   assert(Number.isInteger(frames) && frames>0 && frames<=240);
-  await page.evaluate(async frames=>{
+  assert(dt===1/60||dt===1/30,'supported native render interval');
+  await page.evaluate(async ({frames,dt})=>{
     const g=window.__inkwave;
     if(!g.frozen)throw Error('Paced capture requires the native scheduler frozen');
     for(let i=0;i<frames;i++) {
       await new Promise(resolve=>requestAnimationFrame(resolve));
-      g._frame(1/60);
+      const before=g.s3Clock?.ticks,accumulatorBefore=g.s3Clock?.accumulator;
+      g._frame(dt);
+      const after=g.s3Clock?.ticks,nativeTickDelta=after-before;
+      if(nativeTickDelta!==Math.round(dt*60))throw Error('Actual fixed clock tick delta differs from requested cadence');
+      (window.__reticleCadence ||= []).push({sequence:window.__reticleCadence.length+1,dt,renderHz:1/dt,nativeTickDelta,
+        nativeTicksBefore:before,nativeTicksAfter:after,accumulatorBefore,accumulatorAfter:g.s3Clock?.accumulator,
+        weaponId:window.__G.local.weaponId,wallTimestamp:Date.now()});
     }
-  },frames);
+  },{frames,dt});
 }
-async function until(page,predicate,label,maxFrames=240) {
+export async function paceTicks(page,ticks,dt=1/60) {
+  assert(Number.isSafeInteger(ticks)&&ticks>0&&ticks<=480);
+  assert(dt===1/30||dt===1/60);
+  const perRender=Math.round(dt*60),whole=Math.floor(ticks/perRender),rest=ticks%perRender;
+  if(whole)await pace(page,whole,dt);if(rest)await pace(page,1,1/60);
+}
+async function until(page,predicate,label,maxFrames=240,dt=1/60) {
   for(let n=0;n<maxFrames;n++) {
-    await pace(page);
+    await pace(page,1,dt);
     if(await page.evaluate(predicate))return n+1;
   }
   throw Error('Actual game state deadline: '+label);
 }
-export async function settleCamera(page,maxFrames=180) {
+export async function settleCamera(page,maxFrames=180,dt=1/60) {
   let previous=null,stable=0;
   for(let frames=1;frames<=maxFrames;frames++) {
-    await pace(page);
+    await pace(page,1,dt);
     const current=await page.evaluate(()=>{
       const G=window.__G,g=window.__inkwave;
       return {pose:[...G.camera.position.toArray(),...G.camera.quaternion.toArray(),G.camera.fov],
@@ -210,6 +263,7 @@ async function readSnapshot(page) {
       invuln:a.invuln,ink:a.ink,fullT:h._L.fullT??0,
       shield:{classes:[...h.shield.classList],opacity:getComputedStyle(h.shield).opacity,visibility:getComputedStyle(h.shield).visibility},
       tank:{classes:[...h.tank.classList],opacity:getComputedStyle(h.tank).opacity,visibility:getComputedStyle(h.tank).visibility,level:h._tank?.level??null},
+      cadence:{renderFrames:window.__reticleCadence?.length||0,last:window.__reticleCadence?.at(-1)||null},
       profiles:[...r.querySelectorAll('[data-iw-reticle-presentation-profile]')].map(n=>n.dataset.iwReticlePresentationProfile),
       profileArtwork:[...r.querySelectorAll('[data-iw-reticle-presentation-profile]')].map(n=>({display:getComputedStyle(n).display,bounds:n.getBoundingClientRect().toJSON()})),
       decoratedSpreadTicks:r.querySelectorAll('.iw-ret__tick > .iw-reticle-presentation-spread-tick').length,
@@ -250,10 +304,11 @@ export async function main(argv=process.argv.slice(2)) {
   const receipt={schema:1,before,sourceSha,contentHash:build.contentHash,inputHash:build.inputHash,
     probeSha256:sha256(script),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
     coverage:{suite:matrix.suite,actualWeapons:matrix.cases.map(c=>c.id),expectedScreenshotStates:matrix.screenshotStateCount,
-      splatlingMobile:matrix.suite==='affected-brella-splatling'?'not covered in this affected desktop gate':'not part of the unchanged first-four matrix',
-      switches:matrix.suite==='affected-brella-splatling'?'Nautilus full hold + Ballpoint active stream interrupted through native charger fallback; metadata-only':'original Wiper/native charger switch-back'},
+      splatlingMobile:matrix.suite!=='first-four'?'not covered in this affected desktop gate':'not part of the unchanged first-four matrix',
+      switches:matrix.cases.filter(c=>c.switchAt).map(c=>({weaponId:c.id,phase:c.switchAt,fallback:'charger',metadataOnly:true}))},
     scope:'Actual production range/HUD DOM and browser screenshots; software GPU only. Reference-guided approximation, NOT Nintendo pixel/behavior parity or full CI.',
-    captureProtocol:{browser:process.env.CHROMIUM_PATH?'custom-executable':'chromium-full-headless',scale:'device',screenshotDeadlineMs:20000,nativeRenderOnly:true,animations:'unchanged'},
+    captureProtocol:{browser:process.env.CHROMIUM_PATH?'custom-executable':'chromium-full-headless',scale:'device',screenshotDeadlineMs:20000,nativeRenderOnly:true,animations:'unchanged',
+      baseRenderHz:matrix.renderHz,baseDt:matrix.dt,physicsHz:60,adaptive:'60Hz near source-owned first-only stream boundary; actual tick deltas recorded',ownedBrowserServerHost:'127.0.0.1'},
     comparison:'Pair same viewport/weapon/phase crop against immutable main; retail reference review is separate, not certified by this gate.'};
   const write=()=>fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
   fs.copyFileSync(path.join(site,'inkwave-build.json'),path.join(out,'inkwave-build.json'));
@@ -268,11 +323,26 @@ export async function main(argv=process.argv.slice(2)) {
     fs.createReadStream(file).pipe(res);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  let browser,page;
+  let browser,page,browserServer,cleanupPromise,interruption;
+  const cleanup=reason=>browserServer?(cleanupPromise ||= closeOwnedBrowser(browserServer,{reason,onUpdate:record=>{
+    receipt.cleanup=record;fs.writeFileSync(path.join(out,'cleanup.json'),JSON.stringify(record,null,2)+'\n');write();
+  }})):Promise.resolve(null);
+  const onSignal=signal=>{
+    interruption=signal;receipt.status='interrupted';receipt.interruption={signal,ownerNodePid:process.pid,wallTimestamp:Date.now()};write();
+    void cleanup('signal:'+signal).catch(error=>{receipt.cleanupFailure=String(error);write();});
+  };
+  const onTerm=()=>onSignal('SIGTERM'),onInt=()=>onSignal('SIGINT');
+  process.once('SIGTERM',onTerm);process.once('SIGINT',onInt);
+  const requireActive=()=>{if(interruption)throw Error('Capture interrupted by '+interruption);};
   try {
     const {chromium}=await import('playwright');
     const {enterRangeFromMenu}=await import('./lib/inkwave-range-menu-entry.mjs');
-    browser=await chromium.launch(browserLaunchOptions(process.env.CHROMIUM_PATH));
+    // Official BrowserServer owns this invocation's process/child group only.
+    // Binding the control endpoint to loopback does not expose it externally.
+    browserServer=await chromium.launchServer({...browserLaunchOptions(process.env.CHROMIUM_PATH),host:'127.0.0.1'});
+    requireActive();
+    receipt.browserProcess={pid:browserServer.process().pid,ownerNodePid:process.pid,startedAt:new Date().toISOString()};write();
+    browser=await chromium.connect(browserServer.wsEndpoint());requireActive();
     receipt.browserVersion=browser.version();write();
     for(const view of matrix.viewports) {
       const context=await browser.newContext({viewport:{width:view.width,height:view.height},deviceScaleFactor:view.deviceScaleFactor,hasTouch:view.touch,isMobile:view.touch});
@@ -297,8 +367,9 @@ export async function main(argv=process.argv.slice(2)) {
           const g=window.__inkwave;g.debug.fire(false);window.__G.match.range.setWeapon(id);
           await window.__G.local.character.sourceMotion.ready;
         },scenario.id);
-        const cameraSettlement=await settleCamera(page);
+        const cameraSettlement=await settleCamera(page,180,matrix.dt);
         const capture=async phase=>{
+          requireActive();
           console.log(before?'baseline':'candidate',view.name,scenario.id,phase,'capture');
           const row=await readSnapshot(page);
           console.log(JSON.stringify({head:sourceSha,before,viewport:view.name,actualWeaponId:row.weaponId,phase,profile:row.profiles,viewportCss:row.viewport,dpr:row.dpr,settings:row.settings}));
@@ -307,10 +378,14 @@ export async function main(argv=process.argv.slice(2)) {
           row.viewportName=view.name;row.phase=phase;row.entry=entry;row.cameraSettlement=cameraSettlement;row.sourceSha=sourceSha;row.contentHash=build.contentHash;
           row.files={frame:basename+'-frame.png',crop:basename+'-reticle.png'};row.crop=crop;row.screenshotScale='device';
           receipt.scenarios.push(row);write();
+          const cadence=await page.evaluate(()=>window.__reticleCadence||[]);
+          fs.writeFileSync(path.join(out,'cadence-'+view.name+'.json'),JSON.stringify(cadence,null,2)+'\n');
           row.surfaceBefore=await page.evaluate(inspectCaptureSurface,{redraw:true});write();
           assert.equal(row.surfaceBefore.state.weaponId,row.weaponId);
           await page.screenshot({path:path.join(out,row.files.frame),scale:'device',timeout:20000});
+          requireActive();
           await page.screenshot({path:path.join(out,row.files.crop),clip:crop,scale:'device',timeout:20000});
+          requireActive();
           row.surfaceAfter=await page.evaluate(inspectCaptureSurface,{redraw:false});
           assertSurfaceInvariant(row.surfaceBefore,row.surfaceAfter);
           const afterCapture=await readSnapshot(page);assertSnapshot(afterCapture,scenario,phase,before);
@@ -327,23 +402,23 @@ export async function main(argv=process.argv.slice(2)) {
         if(scenario.idleOnly)continue;
         if(scenario.splatling) {
           await page.evaluate(()=>window.__inkwave.debug.fire(true));
-          for(const phase of ['first-ready','second-charging','full']){await untilSplatling(page,phase);await capture(phase);}
+          for(const phase of ['first-ready','second-charging','full']){await untilSplatling(page,phase,480,matrix.dt);await capture(phase);}
           await page.evaluate(()=>window.__inkwave.debug.fire(false));
-          for(const phase of ['stream-second','stream-first','depleted']){await untilSplatling(page,phase);await capture(phase);}
+          for(const phase of ['stream-second','stream-first','depleted']){await untilSplatling(page,phase,480,matrix.dt);await capture(phase);}
           // A bounded representative interruption: full hold on Nautilus, an
           // active nonzero stream on Ballpoint. No additional PNGs or inferred
           // charge state; use the real input, runner and selection API.
-          await page.evaluate(()=>window.__inkwave.debug.fire(true));await untilSplatling(page,'full');
-          if(scenario.switchAt==='stream-second'){await page.evaluate(()=>window.__inkwave.debug.fire(false));await untilSplatling(page,'stream-second');}
+          await page.evaluate(()=>window.__inkwave.debug.fire(true));await untilSplatling(page,'full',480,matrix.dt);
+          if(scenario.switchAt==='stream-second'){await page.evaluate(()=>window.__inkwave.debug.fire(false));await untilSplatling(page,'stream-second',480,matrix.dt);}
           const interrupted=await readSnapshot(page);assertSnapshot(interrupted,scenario,scenario.switchAt,before);
           receipt.scenarios.push({...interrupted,viewportName:view.name,phase:'switch-interrupted-'+scenario.switchAt,sourceSha,contentHash:build.contentHash});write();
-          await page.evaluate(()=>{window.__inkwave.debug.fire(false);window.__G.match.range.setWeapon('charger');});await pace(page,2);
+          await page.evaluate(()=>{window.__inkwave.debug.fire(false);window.__G.match.range.setWeapon('charger');});await paceTicks(page,2,matrix.dt);
           const fallback=await readSnapshot(page),native=CASES.find(c=>c.name==='native-charger-fallback');
           assertSnapshot(fallback,native,'switch-back',before);
           assert.equal(fallback.cornerCount,0,'no old Splatling corners in native fallback');
           assert.equal(await page.evaluate(()=>window.__inkwave.hud.ret.querySelectorAll('.iw-ret__charge-second').length),0,'no old second ring in native fallback');
           receipt.scenarios.push({...fallback,viewportName:view.name,phase:'switch-native-from-'+scenario.name,sourceSha,contentHash:build.contentHash});write();
-          await page.evaluate(id=>window.__G.match.range.setWeapon(id),scenario.id);await pace(page,2);
+          await page.evaluate(id=>window.__G.match.range.setWeapon(id),scenario.id);await paceTicks(page,2,matrix.dt);
           const restored=await readSnapshot(page);assertSnapshot(restored,scenario,'switch-back',before);
           receipt.scenarios.push({...restored,viewportName:view.name,phase:'switch-back',sourceSha,contentHash:build.contentHash});write();
           continue;
@@ -355,14 +430,14 @@ export async function main(argv=process.argv.slice(2)) {
           await until(page,()=>{const r=window.__G.local.weaponRunner;return r.charging&&r.charge>=1;},scenario.id+' full charge');
           await capture('full');
         } else {
-          await pace(page,8);await capture('firing');
+          await paceTicks(page,8,matrix.dt);await capture('firing');
           if(scenario.name==='brella') {
-            await until(page,()=>window.__G.local.weaponRunner.catalogState?.canopy?.open===true,'real Brella canopy opens');
+            await until(page,()=>window.__G.local.weaponRunner.catalogState?.canopy?.open===true,'real Brella canopy opens',240,matrix.dt);
             await capture('canopy-open');
           }
         }
         await page.evaluate(()=>window.__inkwave.debug.fire(false));
-        await until(page,()=>{const r=window.__G.local.weaponRunner;return !r.charging&&(r.charge||0)===0;},scenario.id+' release');
+        await until(page,()=>{const r=window.__G.local.weaponRunner;return !r.charging&&(r.charge||0)===0;},scenario.id+' release',240,matrix.dt);
         await capture('release');
       }
       // Return from unsupported native charger to Wiper, then native charger:
@@ -377,12 +452,17 @@ export async function main(argv=process.argv.slice(2)) {
       await context.close();page=null;
     }
     if(matrix.screenshotStateCount!=null)assert.equal(receipt.scenarios.filter(s=>s.files).length,matrix.screenshotStateCount,'exact bounded affected screenshot coverage');
-    receipt.status=before?'baseline-recorded':'passed';
+    requireActive();receipt.status=before?'baseline-recorded':'passed';
   } catch(error) {
-    receipt.status='failed';receipt.failure=String(error.stack||error);
-    if(page){await page.screenshot({path:path.join(out,'failure.png'),timeout:10000}).catch(()=>{});receipt.diagnostic=await page.evaluate(()=>({title:document.title,text:document.body.innerText.slice(0,2000),menu:window.__inkwave?.menus?.current})).catch(String);}
+    receipt.status=interruption?'interrupted':'failed';receipt.failure=String(error.stack||error);
+    // Interruption artifacts must never masquerade as a late accepted state.
+    if(page&&!interruption){await page.screenshot({path:path.join(out,'failure.png'),timeout:10000}).catch(()=>{});receipt.diagnostic=await page.evaluate(()=>({title:document.title,text:document.body.innerText.slice(0,2000),menu:window.__inkwave?.menus?.current})).catch(String);}
     throw error;
-  } finally {write();await browser?.close();await new Promise(resolve=>server.close(resolve));}
+  } finally {
+    try{await cleanup(interruption?'signal:'+interruption:'capture-ended');}
+    catch(error){receipt.status=interruption?'interrupted':'failed';receipt.cleanupFailure=String(error);throw error;}
+    finally{process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);write();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+  }
   return receipt;
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url)await main();
