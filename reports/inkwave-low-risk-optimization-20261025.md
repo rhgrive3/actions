@@ -32,7 +32,7 @@ coordinates and do not retain the scratch. Existing geometry, margins,
 animation, record order, RNG and the malformed-cloth fallback stay intact.
 See [prop measurements](prop-envelope-scratch-20261025/README.md).
 
-## Combined local verification
+## Optimization-only local verification, before incorporating #1879
 
 - Focused PNG, materialization and real prop-bound tests: 20 pass, 0 fail/skip.
 - Exact emitted packaging and direct-source ownership: 24 pass, 0 fail/skip.
@@ -69,3 +69,35 @@ Source and fixture equivalence were independently reviewed. No device FPS,
 retail-audio equivalence, or native asset qualification is inferred from these
 local measurements. Existing deferred changes in the #1878 adoption record
 remain deferred; source branches are preserved when their superseded PRs close.
+
+## Later #1879 incorporation and review correction
+
+During this work, #1879 arrived with the additional catalogue Mist/Blaster/Brush
+fixes at `7ee2625d2f3bcf5bd6270572167b94047de2f7a4`. Its original commits
+are retained as ancestors of this follow-up rather than replacing its branch.
+The PR now targets main. #1878 was merged at
+`f6d9fb06f86a5affb963d1ee5ae199e907f30961` only after its exact head completed
+37 successful workflows, one conditional skip and zero pending/failed runs.
+The old #1867–#1877 PRs are resolved with their source branches preserved.
+
+Independent review of #1879 found a real collision-phase gap: pushing Inkbrush
+into a wall clips horizontal velocity to zero before resource sampling, which
+incorrectly re-enabled enemy-floor damage despite continued roll input.
+The correction admits zero velocity only with a current wall contact, finite
+horizontal normal and input directed into that wall. Neutral, away/tangent,
+airborne, empty-tank, sub/swing and other-Brush cases retain their exclusions.
+Mist still slows the actor, and weapon damage remains effective.
+
+The new regression restores the real Actor integration and Level/Physics wall
+at 30/60/120 Hz. Restoring only the old helper makes that regression fail.
+The corrected #1879 test group passes 28 source and 28 freshly emitted cases;
+the contributor's related six-file group passes 77 cases. Independent review
+also reran the four Inkbrush tests successfully. These overlapping groups are
+not a global count, and the earlier 72-condition browser receipt remains tied
+to its original inputs rather than relabeled as a new-head result.
+
+The reconciled production build has 1,477 canonical inputs, 2,174 artifacts,
+contentHash `4a44e52dae4bfaf0af02f05df711f9a3127ebfec8a9d38dd596ea61f4ee8d911`
+and inputHash `70f6ad9b542befb461a936d3d4241c22ebe4888c6d64b1d7a20dca56aeb799e2`.
+Its emitted packaging/ownership and startup-budget checks must pass before
+publication; hosted acceptance is recorded on the eventual PR's exact head.
