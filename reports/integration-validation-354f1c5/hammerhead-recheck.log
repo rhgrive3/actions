@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '読み込み中にエラーが発生しました: Failed to fetch'
+- ''
+
+    at file:///workspace/actions/scripts/check-inkwave-hammerhead-minimap.mjs:32:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '読み込み中にエラーが発生しました: Failed to fetch',
+  expected: '',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

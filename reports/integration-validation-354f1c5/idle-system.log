@@ -1,0 +1,8 @@
+INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"boot","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+page.waitForFunction: Timeout 180000ms exceeded.
+    at runIdleProbe.diagnose.diagnose (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:379:14)
+    at async runIdleProbe (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:207:12)
+    at async main (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:362:16) {
+  log: [],
+  name: 'TimeoutError'
+}

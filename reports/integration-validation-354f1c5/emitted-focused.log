@@ -1,0 +1,346 @@
+TAP version 13
+# Subtest: three native viewport events coalesce to one layout but all cancel gestures and resync gyro
+ok 1 - three native viewport events coalesce to one layout but all cancel gestures and resync gyro
+  ---
+  duration_ms: 72.55305
+  type: 'test'
+  ...
+# Subtest: unchanged resize preserves live gestures and schedules no layout
+ok 2 - unchanged resize preserves live gestures and schedules no layout
+  ---
+  duration_ms: 2.340877
+  type: 'test'
+  ...
+# Subtest: changed innerWidth cancels immediately and duplicate resize preserves the new gesture
+ok 3 - changed innerWidth cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 15.919856
+  type: 'test'
+  ...
+# Subtest: changed innerHeight cancels immediately and duplicate resize preserves the new gesture
+ok 4 - changed innerHeight cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 1.47007
+  type: 'test'
+  ...
+# Subtest: changed width cancels immediately and duplicate resize preserves the new gesture
+ok 5 - changed width cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 12.386216
+  type: 'test'
+  ...
+# Subtest: changed height cancels immediately and duplicate resize preserves the new gesture
+ok 6 - changed height cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 1.274651
+  type: 'test'
+  ...
+# Subtest: changed scale cancels immediately and duplicate resize preserves the new gesture
+ok 7 - changed scale cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 9.626324
+  type: 'test'
+  ...
+# Subtest: missing visual viewport falls back to layout dimensions
+ok 8 - missing visual viewport falls back to layout dimensions
+  ---
+  duration_ms: 28.029278
+  type: 'test'
+  ...
+# Subtest: destroy cancels a pending viewport animation and disallows stale callbacks
+ok 9 - destroy cancels a pending viewport animation and disallows stale callbacks
+  ---
+  duration_ms: 1.701358
+  type: 'test'
+  ...
+# Subtest: existing three event listeners still use one relayout handler
+ok 10 - existing three event listeners still use one relayout handler
+  ---
+  duration_ms: 0.698322
+  type: 'test'
+  ...
+# native prebuilt: payload absent or unverified for scorch, hagglefish, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# node:fs:440
+#     return binding.readFileUtf8(path, stringToFlags(options.flag));
+#                    ^
+# Error: ENOENT: no such file or directory, open '/workspace/actions/_site-final/patches/native-stages/runtime/rule-availability.mjs'
+#     at Object.readFileSync (node:fs:440:20)
+#     at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:68:20)
+#     at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+#     at [kLink] (node:internal/vm/module:330:28)
+#     at SourceTextModule.link (node:internal/vm/module:194:22)
+#     at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+#     at nativeFixture (file:///workspace/actions/patches/native-stages/tests/fixture.mjs:13:9)
+#     at file:///workspace/actions/patches/native-stages/tests/native-minimap-flip-cache.test.mjs:6:15
+#     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26) {
+#   errno: -2,
+#   code: 'ENOENT',
+#   syscall: 'open',
+#   path: '/workspace/actions/_site-final/patches/native-stages/runtime/rule-availability.mjs'
+# }
+# Node.js v22.23.4
+# Subtest: patches/native-stages/tests/native-minimap-flip-cache.test.mjs
+not ok 2 - patches/native-stages/tests/native-minimap-flip-cache.test.mjs
+  ---
+  duration_ms: 3304.692079
+  type: 'test'
+  location: '/workspace/actions/patches/native-stages/tests/native-minimap-flip-cache.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# {"cancelAt":"before","reads":0,"decode":0,"textures":0,"dimensions":[],"closes":[],"disposes":[],"error":"AbortError"}
+# (node:6323) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: cached textures before
+ok 12 - cached textures before
+  ---
+  duration_ms: 162.215087
+  type: 'test'
+  ...
+# {"cancelAt":"cache","reads":2,"decode":0,"textures":0,"dimensions":[],"closes":[],"disposes":[],"error":"AbortError"}
+# Subtest: cached textures cache
+ok 13 - cached textures cache
+  ---
+  duration_ms: 112.336878
+  type: 'test'
+  ...
+# {"cancelAt":"decode","reads":2,"decode":2,"textures":0,"dimensions":[],"closes":[1,1],"disposes":[],"error":"AbortError"}
+# Subtest: cached textures decode
+ok 14 - cached textures decode
+  ---
+  duration_ms: 65.382737
+  type: 'test'
+  ...
+# {"cancelAt":"never","reads":8,"decode":8,"textures":8,"dimensions":[[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8]],"closes":[1,1,1,1,1,1,1,1],"disposes":[1,1,1,1,1,1,1,1],"error":null}
+# Subtest: cached textures never
+ok 15 - cached textures never
+  ---
+  duration_ms: 69.589045
+  type: 'test'
+  ...
+# {"cancelAt":"resize","resize":true,"reads":2,"decode":4,"textures":0,"dimensions":[],"closes":[1,1,1,1],"disposes":[],"error":"AbortError"}
+# Subtest: resized cached textures resize
+ok 16 - resized cached textures resize
+  ---
+  duration_ms: 59.092725
+  type: 'test'
+  ...
+# {"cancelAt":"never","resize":true,"reads":8,"decode":16,"textures":8,"dimensions":[[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024]],"closes":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"disposes":[1,1,1,1,1,1,1,1],"error":null}
+# Subtest: resized cached textures never
+ok 17 - resized cached textures never
+  ---
+  duration_ms: 97.269775
+  type: 'test'
+  ...
+# Subtest: optional signal retains success
+ok 18 - optional signal retains success
+  ---
+  duration_ms: 76.524633
+  type: 'test'
+  ...
+# Subtest: inactive stage objects do not decode unused textures, preserving every active map
+ok 19 - inactive stage objects do not decode unused textures, preserving every active map
+  ---
+  duration_ms: 28.239863
+  type: 'test'
+  ...
+# Subtest: worker decode failure retains original error and once-only cleanup
+ok 20 - worker decode failure retains original error and once-only cleanup
+  ---
+  duration_ms: 31.540609
+  type: 'test'
+  ...
+# Subtest: worker setup failure retains original error and once-only cleanup
+ok 21 - worker setup failure retains original error and once-only cleanup
+  ---
+  duration_ms: 188.344611
+  type: 'test'
+  ...
+# Subtest: worker cache failure retains original error and once-only cleanup
+ok 22 - worker cache failure retains original error and once-only cleanup
+  ---
+  duration_ms: 15.240474
+  type: 'test'
+  ...
+# {"cancelAt":"transferred","reads":2,"decode":1,"textures":1,"dimensions":[[8,8]],"closes":[1],"disposes":[1],"error":"AbortError"}
+# Subtest: abort after first ownership transfer disposes retained texture once
+ok 23 - abort after first ownership transfer disposes retained texture once
+  ---
+  duration_ms: 53.032921
+  type: 'test'
+  ...
+# Subtest: browser-direct pixel metadata and ownership, resize=false
+ok 24 - browser-direct pixel metadata and ownership, resize=false
+  ---
+  duration_ms: 88.650766
+  type: 'test'
+  ...
+# Subtest: browser-direct pixel metadata and ownership, resize=true
+ok 25 - browser-direct pixel metadata and ownership, resize=true
+  ---
+  duration_ms: 43.787838
+  type: 'test'
+  ...
+# Subtest: resize rejection preserves sibling cleanup and original error
+ok 26 - resize rejection preserves sibling cleanup and original error
+  ---
+  duration_ms: 18.297002
+  type: 'test'
+  ...
+# (node:6349) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: warm stale stops detached work and cleans once
+ok 27 - warm stale stops detached work and cleans once
+  ---
+  duration_ms: 99.192231
+  type: 'test'
+  ...
+# Subtest: warm abort stops detached work and cleans once
+ok 28 - warm abort stops detached work and cleans once
+  ---
+  duration_ms: 11.824439
+  type: 'test'
+  ...
+# Subtest: frame stale stops detached work and cleans once
+ok 29 - frame stale stops detached work and cleans once
+  ---
+  duration_ms: 29.835039
+  type: 'test'
+  ...
+# Subtest: frame abort stops detached work and cleans once
+ok 30 - frame abort stops detached work and cleans once
+  ---
+  duration_ms: 47.808621
+  type: 'test'
+  ...
+# Subtest: successful publish and explicit release retain existing ownership
+ok 31 - successful publish and explicit release retain existing ownership
+  ---
+  duration_ms: 27.777162
+  type: 'test'
+  ...
+# Subtest: new build aborts warm old build without releasing new world
+ok 32 - new build aborts warm old build without releasing new world
+  ---
+  duration_ms: 21.531592
+  type: 'test'
+  ...
+# Subtest: compile rejection preserves primary error and detached cleanup
+ok 33 - compile rejection preserves primary error and detached cleanup
+  ---
+  duration_ms: 41.953759
+  type: 'test'
+  ...
+# Subtest: stage shader warm-up precedes publication and an abort during it cleans the candidate
+ok 34 - stage shader warm-up precedes publication and an abort during it cleans the candidate
+  ---
+  duration_ms: 13.780895
+  type: 'test'
+  ...
+# Subtest: native stage compile rejection releases detached geometry without publication
+ok 35 - native stage compile rejection releases detached geometry without publication
+  ---
+  duration_ms: 28.931755
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# (node:6358) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: every Spinner and Dualies base/alternate emits visible muzzle ink on admitted fire
+ok 36 - every Spinner and Dualies base/alternate emits visible muzzle ink on admitted fire
+  ---
+  duration_ms: 5377.891144
+  type: 'test'
+  ...
+# Subtest: actual composed FX hooks retain spin-up, full-charge and streaming ink for all Spinner variants
+ok 37 - actual composed FX hooks retain spin-up, full-charge and streaming ink for all Spinner variants
+  ---
+  duration_ms: 2059.909781
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# (node:6374) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: only ordinary Shooter families and their catalogue kits receive muzzle beads
+ok 38 - only ordinary Shooter families and their catalogue kits receive muzzle beads
+  ---
+  duration_ms: 3.381406
+  type: 'test'
+  ...
+# Subtest: shared 3D muzzle-only beads include legacy and 11.3.0 Spinner/Dualies but exclude paint, other families and specials
+ok 39 - shared 3D muzzle-only beads include legacy and 11.3.0 Spinner/Dualies but exclude paint, other families and specials
+  ---
+  duration_ms: 0.739816
+  type: 'test'
+  ...
+# Subtest: live Dualies 3D beads preserve independent right/left launch sockets and change no gameplay state
+ok 40 - live Dualies 3D beads preserve independent right/left launch sockets and change no gameplay state
+  ---
+  duration_ms: 2961.512504
+  type: 'test'
+  ...
+# Subtest: live legacy Splatling firing receives three additional cosmetic droplets without replacing its independent body
+ok 41 - live legacy Splatling firing receives three additional cosmetic droplets without replacing its independent body
+  ---
+  duration_ms: 1921.21407
+  type: 'test'
+  ...
+# Subtest: live 11.3.0 catalogue Splatling and Dualies inherit the same pure muzzle beads
+ok 42 - live 11.3.0 catalogue Splatling and Dualies inherit the same pure muzzle beads
+  ---
+  duration_ms: 2115.637316
+  type: 'test'
+  ...
+# Subtest: real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes
+ok 43 - real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes
+  ---
+  duration_ms: 2282.687101
+  type: 'test'
+  ...
+# Subtest: cessation expires, switching retires, clear/reuse resets a pooled birth
+ok 44 - cessation expires, switching retires, clear/reuse resets a pooled birth
+  ---
+  duration_ms: 2710.418552
+  type: 'test'
+  ...
+# Subtest: stress stays within fixed 32 bursts/96 drops and writes no new GPU resources
+ok 45 - stress stays within fixed 32 bursts/96 drops and writes no new GPU resources
+  ---
+  duration_ms: 3277.442593
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions/_site-final contentHash=4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102
+# (node:6388) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects
+ok 46 - Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects
+  ---
+  duration_ms: 1.503135
+  type: 'test'
+  ...
+# Subtest: native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body
+ok 47 - native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body
+  ---
+  duration_ms: 3724.580839
+  type: 'test'
+  ...
+1..47
+# tests 47
+# suites 0
+# pass 46
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 21708.266604

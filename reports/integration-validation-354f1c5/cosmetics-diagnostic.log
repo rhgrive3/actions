@@ -1,0 +1,13 @@
+console warning THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.
+requestfailed http://127.0.0.1:37341/_versions/36bcf4183a9843e80a09fa7972501f44a91a7b414259a3878b6b937de13c83b3/patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Explosion_00.mp3 { errorText: 'net::ERR_ABORTED' }
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 240000ms exceeded.
+    at /workspace/actions/scripts/check-inkwave-firing-cosmetics-browser.mjs:55:20 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

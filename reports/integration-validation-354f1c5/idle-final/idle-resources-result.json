@@ -1,0 +1,11 @@
+{
+  "phase": "identity",
+  "errors": [],
+  "loaded": [],
+  "loadedDropped": 0,
+  "sourceSha": "ebe716900acca44e26dd61839ea4bfe7a7805161",
+  "contentHash": "4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102",
+  "status": "failed",
+  "error": "browserType.launchPersistentContext: Executable doesn't exist at /home/agent/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝\n    at async runIdleProbe.diagnose.diagnose (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:373:11)\n    at async runIdleProbe (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:207:12)\n    at async main (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:362:16)",
+  "primaryError": "browserType.launchPersistentContext: Executable doesn't exist at /home/agent/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝\n    at async runIdleProbe.diagnose.diagnose (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:373:11)\n    at async runIdleProbe (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:207:12)\n    at async main (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:362:16)"
+}

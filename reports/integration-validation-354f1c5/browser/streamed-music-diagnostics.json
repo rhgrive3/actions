@@ -1,0 +1,51 @@
+{
+  "sourceSha": null,
+  "contentHash": "b235a57aba9ce93065056f876436fa915297d458cb0c9f2b32701f7e67a2d569",
+  "schema": 1,
+  "assetURL": "http://127.0.0.1:45019/_versions/2087bbc340265f979bc5cfa8eb644e4f5c42f5d82a246698f87e8584f53e9c54/assets/audio/Jet_Arrow.mp3",
+  "ownerGlobal": "s3ProbeG",
+  "media": [],
+  "network": [],
+  "snapshots": [
+    {
+      "reason": "before-context-close",
+      "observedAt": "2026-10-25T06:18:51.349Z",
+      "state": {
+        "ownerGlobal": "s3ProbeG",
+        "ownerPresent": true,
+        "musicPresent": true,
+        "track": null,
+        "desiredTrack": null,
+        "current": null,
+        "preloaded": null,
+        "players": [],
+        "retryCount": 0,
+        "errorReported": false,
+        "audioContextState": null,
+        "audioContextTime": null,
+        "matchState": "playing"
+      }
+    }
+  ],
+  "diagnostics": [],
+  "dropped": {
+    "media": 0,
+    "network": 0,
+    "snapshots": 0,
+    "association": 0
+  },
+  "interpretation": "Observation only: canceled requests remain errors in the capture gate",
+  "limits": {
+    "media": 256,
+    "network": 128,
+    "snapshots": 8,
+    "playerIds": 8,
+    "pendingPerPlayer": 8,
+    "eventCharacters": 2048,
+    "retainedCharacters": 524288,
+    "pendingCharacters": 131072
+  },
+  "enabled": true,
+  "closeStartedAt": "2026-10-25T06:18:51.349Z",
+  "closeFinishedAt": "2026-10-25T06:18:55.381Z"
+}

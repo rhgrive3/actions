@@ -1,0 +1,96 @@
+TAP version 13
+# Subtest: three native viewport events coalesce to one layout but all cancel gestures and resync gyro
+ok 1 - three native viewport events coalesce to one layout but all cancel gestures and resync gyro
+  ---
+  duration_ms: 20.553255
+  type: 'test'
+  ...
+# Subtest: unchanged resize preserves live gestures and schedules no layout
+ok 2 - unchanged resize preserves live gestures and schedules no layout
+  ---
+  duration_ms: 1.29855
+  type: 'test'
+  ...
+# Subtest: changed innerWidth cancels immediately and duplicate resize preserves the new gesture
+ok 3 - changed innerWidth cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 1.754239
+  type: 'test'
+  ...
+# Subtest: changed innerHeight cancels immediately and duplicate resize preserves the new gesture
+ok 4 - changed innerHeight cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 1.385924
+  type: 'test'
+  ...
+# Subtest: changed width cancels immediately and duplicate resize preserves the new gesture
+ok 5 - changed width cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 4.573883
+  type: 'test'
+  ...
+# Subtest: changed height cancels immediately and duplicate resize preserves the new gesture
+ok 6 - changed height cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 5.730838
+  type: 'test'
+  ...
+# Subtest: changed scale cancels immediately and duplicate resize preserves the new gesture
+ok 7 - changed scale cancels immediately and duplicate resize preserves the new gesture
+  ---
+  duration_ms: 7.156593
+  type: 'test'
+  ...
+# Subtest: missing visual viewport falls back to layout dimensions
+ok 8 - missing visual viewport falls back to layout dimensions
+  ---
+  duration_ms: 2.931854
+  type: 'test'
+  ...
+# Subtest: destroy cancels a pending viewport animation and disallows stale callbacks
+ok 9 - destroy cancels a pending viewport animation and disallows stale callbacks
+  ---
+  duration_ms: 9.512947
+  type: 'test'
+  ...
+# Subtest: existing three event listeners still use one relayout handler
+ok 10 - existing three event listeners still use one relayout handler
+  ---
+  duration_ms: 1.853173
+  type: 'test'
+  ...
+# (node:3648) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: cancelled jitter does not delay a new connection
+ok 11 - cancelled jitter does not delay a new connection
+  ---
+  duration_ms: 172.755127
+  type: 'test'
+  ...
+# Subtest: cancelled jitter does not delay a reused connection
+ok 12 - cancelled jitter does not delay a reused connection
+  ---
+  duration_ms: 17.997363
+  type: 'test'
+  ...
+# Subtest: concurrent connections have independent jitter while each preserves packet order
+ok 13 - concurrent connections have independent jitter while each preserves packet order
+  ---
+  duration_ms: 45.744484
+  type: 'test'
+  ...
+# Subtest: reconnecting the same Transport discards the previous room RTT sample
+ok 14 - reconnecting the same Transport discards the previous room RTT sample
+  ---
+  duration_ms: 15.542172
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2641.524924

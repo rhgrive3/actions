@@ -1,0 +1,13 @@
+{
+  "status": "failed",
+  "scope": "Actual Chromium fetch and emitted prebuilt loader cancellation/integrity; no Game lifecycle or GPU rendering acceptance.",
+  "contentHash": "f75205126dc2f9830e2d3db5fa837bb9ed404af93d5a781e44f678cb09207311",
+  "inputHash": "1b3c82c25b5538e309c813ace3434d8532975331ab0c675d3c5a561929c325dc",
+  "stage": "undertow",
+  "selection": "Smallest admitted complete stage by total array bytes",
+  "arrayBytes": 20099609,
+  "requests": [],
+  "receipts": {},
+  "browser": "154.0.8037.57",
+  "error": "page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:38447/_versions/203dd453e72c35440b7881b34cd475ffb33b64b40b809803c64526b75b086659/patches/native-stages/runtime/prebuilt-load.mjs\n    at /workspace/inkwave-validation-354f1c5/native-browser-load-cancel/probe.mjs:9:13"
+}

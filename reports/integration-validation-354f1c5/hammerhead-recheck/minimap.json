@@ -1,0 +1,7 @@
+{
+  "status": "failed",
+  "id": "hammerhead",
+  "rules": [],
+  "errors": [],
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ '読み込み中にエラーが発生しました: Failed to fetch'\n- ''\n\n    at file:///workspace/actions/scripts/check-inkwave-hammerhead-minimap.mjs:32:10"
+}

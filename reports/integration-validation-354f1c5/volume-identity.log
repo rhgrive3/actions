@@ -1,0 +1,27 @@
+✔ both shipped default packs retain every source VTF byte and all 34 decoded RGBA frames (6323.312196ms)
+✖ ordinary FX construction loads both bundled names without configuration, then releases readiness (25.480754ms)
+✔ gzip reader rejects corrupt streams, unsupported codecs and an expanded-size overflow (50.811009ms)
+✔ default binary cache reuses verified bytes offline, repairs corruption and evicts the prior slot version (527.68635ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8661.130165
+
+✖ failing tests:
+
+test at patches/local-quality/tests/ink-volume-defaults.test.mjs:26:1
+✖ ordinary FX construction loads both bundled names without configuration, then releases readiness (25.480754ms)
+  TypeError: vm.SourceTextModule is not a constructor
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:85:16)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-defaults.test.mjs:27:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

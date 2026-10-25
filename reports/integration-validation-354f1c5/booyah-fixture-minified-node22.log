@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: Booyah charge orb preserves 3 radians per second at 30Hz
+ok 1 - Booyah charge orb preserves 3 radians per second at 30Hz
+  ---
+  duration_ms: 440.877466
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 60Hz
+ok 2 - Booyah charge orb preserves 3 radians per second at 60Hz
+  ---
+  duration_ms: 49.049353
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 120Hz
+ok 3 - Booyah charge orb preserves 3 radians per second at 120Hz
+  ---
+  duration_ms: 58.455891
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 144Hz
+ok 4 - Booyah charge orb preserves 3 radians per second at 144Hz
+  ---
+  duration_ms: 17.042642
+  type: 'test'
+  ...
+# Subtest: irregular cadence and repeated zero-time callbacks do not advance the orb
+ok 5 - irregular cadence and repeated zero-time callbacks do not advance the orb
+  ---
+  duration_ms: 23.440517
+  type: 'test'
+  ...
+# Subtest: negative control detects the previous render-count-dependent rotation
+ok 6 - negative control detects the previous render-count-dependent rotation
+  ---
+  duration_ms: 66.696393
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2973.75261

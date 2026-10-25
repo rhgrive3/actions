@@ -1,0 +1,22 @@
+{
+  "status": "failed",
+  "errors": [],
+  "quality": {
+    "cpuGridUnchanged": true,
+    "trianglePositionsUnchanged": true,
+    "authoritiesRetained": true,
+    "finalAtlas": 2048,
+    "textureCount": 81
+  },
+  "failureRollback": {
+    "rejected": false,
+    "levelRetained": false,
+    "paintRetained": false,
+    "displayRetained": false
+  },
+  "corruptionProbe": {
+    "requests": 0,
+    "error": null
+  },
+  "error": "AssertionError [ERR_ASSERTION]: corruption route was never exercised\n    at file:///workspace/actions/scripts/check-inkwave-native-lifecycle.mjs:37:145"
+}

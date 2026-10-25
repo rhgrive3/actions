@@ -1,0 +1,16 @@
+INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+browserType.launchPersistentContext: Executable doesn't exist at /home/agent/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+    at async runIdleProbe.diagnose.diagnose (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:373:11)
+    at async runIdleProbe (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:207:12)
+    at async main (/workspace/actions/scripts/check-inkwave-idle-resources.mjs:362:16) {
+  log: [],
+  name: 'Error'
+}

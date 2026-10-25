@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "scope": "Real Chromium and local WebSocket fixture, emitted Transport only; not full game or deployed relay acceptance",
+  "browser": "154.0.8037.57",
+  "contentHash": "4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102",
+  "transportSHA256": "ec0cfb444fb4d7795143ce0b71838a33ad5300f5b3ac113b3d413a1d4118ab36",
+  "connections": 4,
+  "rtt": {
+    "old": 130.59999999997672,
+    "reset": 0,
+    "next": 4.799999999930151,
+    "closed": true
+  },
+  "jitter": {
+    "scheduled": [
+      910,
+      10
+    ],
+    "cancellation": "AbortError",
+    "closed": true
+  },
+  "errors": []
+}

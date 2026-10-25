@@ -1,0 +1,150 @@
+{
+  "schema": 1,
+  "source": "/workspace/actions/inkwave-public",
+  "files": {
+    "src/fx/fx.js": {
+      "status": "unchanged",
+      "expected": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
+      "candidate": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
+      "connection": "compatible"
+    },
+    "index.html": {
+      "status": "unchanged",
+      "expected": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
+      "candidate": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
+      "connection": "compatible"
+    },
+    "src/main.js": {
+      "status": "unchanged",
+      "expected": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417",
+      "candidate": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417",
+      "connection": "compatible"
+    },
+    "src/game/actor.js": {
+      "status": "unchanged",
+      "expected": "eddf4f40001e3fb863daef36a5943581069562660acdc11f8e3f76bc701a29ff",
+      "candidate": "eddf4f40001e3fb863daef36a5943581069562660acdc11f8e3f76bc701a29ff",
+      "connection": "compatible"
+    },
+    "src/game/weapons.js": {
+      "status": "unchanged",
+      "expected": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881",
+      "candidate": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881",
+      "connection": "compatible"
+    },
+    "src/game/player.js": {
+      "status": "unchanged",
+      "expected": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa",
+      "candidate": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa",
+      "connection": "compatible"
+    },
+    "src/game/match.js": {
+      "status": "unchanged",
+      "expected": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0",
+      "candidate": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0",
+      "connection": "compatible"
+    },
+    "src/world/paint.js": {
+      "status": "unchanged",
+      "expected": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
+      "candidate": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
+      "connection": "compatible"
+    },
+    "src/config.js": {
+      "status": "unchanged",
+      "expected": "ae57e67f0dd6e44e988dbfeef20c8583a61f1a3fdb69d3f1aa5032afd16f8868",
+      "candidate": "ae57e67f0dd6e44e988dbfeef20c8583a61f1a3fdb69d3f1aa5032afd16f8868",
+      "connection": "compatible"
+    },
+    "src/ui/menus.js": {
+      "status": "unchanged",
+      "expected": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
+      "candidate": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
+      "connection": "compatible"
+    },
+    "src/core/shadowcache.js": {
+      "status": "unchanged",
+      "expected": "0b06a8e8525cb3a0a8736884d622abd92f449e3d2f03a2214f9f163d2e49a53f",
+      "candidate": "0b06a8e8525cb3a0a8736884d622abd92f449e3d2f03a2214f9f163d2e49a53f",
+      "connection": "compatible"
+    },
+    "src/core/input.js": {
+      "status": "unchanged",
+      "expected": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
+      "candidate": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
+      "connection": "compatible"
+    },
+    "src/ui/hud.js": {
+      "status": "unchanged",
+      "expected": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
+      "candidate": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
+      "connection": "compatible"
+    },
+    "src/i18n.js": {
+      "status": "unchanged",
+      "expected": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
+      "candidate": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
+      "connection": "compatible"
+    },
+    "src/game/physics.js": {
+      "status": "unchanged",
+      "expected": "129c60ab0f5ed1874b7bbc4bc6d0beb510b08dde0efddc844a9f5289b5d4087d",
+      "candidate": "129c60ab0f5ed1874b7bbc4bc6d0beb510b08dde0efddc844a9f5289b5d4087d",
+      "connection": "compatible"
+    },
+    "src/core/ctx.js": {
+      "status": "unchanged",
+      "expected": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
+      "candidate": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
+      "connection": "compatible"
+    },
+    "src/game/character.js": {
+      "status": "unchanged",
+      "expected": "ff6a8a7bd7ac1c441464598ebff1af94fead2514893f96ea39b41f86634a6221",
+      "candidate": "ff6a8a7bd7ac1c441464598ebff1af94fead2514893f96ea39b41f86634a6221",
+      "connection": "compatible"
+    },
+    "src/game/character-weapons.js": {
+      "status": "unchanged",
+      "expected": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
+      "candidate": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
+      "connection": "compatible"
+    },
+    "src/net/netmatch.js": {
+      "status": "unchanged",
+      "expected": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8",
+      "candidate": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8",
+      "connection": "compatible"
+    },
+    "src/core/mobile.js": {
+      "status": "unchanged",
+      "expected": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a",
+      "candidate": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a",
+      "connection": "compatible"
+    },
+    "src/game/cameraRig.js": {
+      "status": "unchanged",
+      "expected": "46a8beabfaab8bdaf00ea1e11df4ee907d71279b419f5533500ce45aa98c24d1",
+      "candidate": "46a8beabfaab8bdaf00ea1e11df4ee907d71279b419f5533500ce45aa98c24d1",
+      "connection": "compatible"
+    },
+    "src/game/motion/retarget.js": {
+      "status": "unchanged",
+      "expected": "f2a465cce04e66cb9fc3aad3dfe2cf78d7245a6f054ba76d3727d3944e2222bd",
+      "candidate": "f2a465cce04e66cb9fc3aad3dfe2cf78d7245a6f054ba76d3727d3944e2222bd",
+      "connection": "compatible"
+    },
+    "src/game/motion/source-controller.js": {
+      "status": "unchanged",
+      "expected": "bd5e5dd15228d9554a3559111086d3e066cdae73b1d113d3db6adbe6cfb768e3",
+      "candidate": "bd5e5dd15228d9554a3559111086d3e066cdae73b1d113d3db6adbe6cfb768e3",
+      "connection": "compatible"
+    },
+    "src/game/character-geo.js": {
+      "status": "unchanged",
+      "expected": "1e8b8874385b3a429ceb10e043c0234f60615a7de0c08cfcab4a58d460994179",
+      "candidate": "1e8b8874385b3a429ceb10e043c0234f60615a7de0c08cfcab4a58d460994179",
+      "connection": "compatible"
+    }
+  }
+}

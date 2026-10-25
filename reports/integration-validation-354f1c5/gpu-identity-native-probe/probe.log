@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "scope": "Checker function contract on an actual Chromium WebGL2 canvas. No game boot, Three workload, idle-resource acceptance, or hardware GPU performance claim.",
+  "head": "7b732dddf630f323e3a89b0c735ce6ab4a003f7e",
+  "checkerSha256": "38ecd78556719ebb87e2cdf6982138a43430299d72381f60e2aacf6f9746b93a",
+  "captureFunctionSha256": "b13cc90b491fe54b172a9bd2655a1823304389c25101c08f9de51fda31bf7bb9",
+  "verifyFunctionSha256": "9760c58e76f94d6c4ba58656452917726c0b01e32ab147a3b20591f3d53b1206",
+  "browser": "154.0.8037.57",
+  "setup": {
+    "actualWebGL2": true,
+    "width": 32,
+    "height": 32,
+    "initiallyLost": false
+  },
+  "capture": {
+    "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "verify": {
+    "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "successCleanup": {
+    "probeDeleted": true,
+    "removed": 1
+  },
+  "secondCapture": {
+    "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "loss": {
+    "event": {
+      "isTrusted": true,
+      "type": "webglcontextlost"
+    },
+    "lost": true,
+    "probeObservedLoss": true
+  },
+  "rejection": "Error: page.evaluate: Error: Idle GPU context lost or replaced during workload\n    at verifyIdleGpuContext (eval at evaluate (:311:30), <anonymous>:5:87)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+  "lossCleanup": {
+    "probeDeleted": true,
+    "removed": 1
+  }
+}

@@ -1,0 +1,4 @@
+Read-only diagnosis before checker edit:
+The existing predicate requires G.match.range and state=playing. Match constructor stores opts (inkwave-public/src/game/match.js:14). Practice adapter adds opts.range (patches/practice-range/adapter.mjs:40), and installPracticeRange wraps Match.setup to create this.range = new RangeSession (patches/practice-range/install.mjs:24-30). Thus opts.range alone is not an equivalent predicate. Existing range HUD/update handlers also use match.range.
+Earlier cosmetics/startup-failure.json recorded match=playing and range HUD text, but did not record session ownership. It was captured AFTER screenshot, so it cannot establish the predicate was true at the timeout boundary. No product defect or stale predicate has been established.
+Change: failure diagnostics only, captured before screenshot; predicate, timeout, workload unchanged. Current running browser process was not stopped or modified.

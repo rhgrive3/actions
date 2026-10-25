@@ -1,0 +1,108 @@
+{
+  "status": "passed",
+  "sourceSha": "d11183447c217d3ae5a6e14d914c985de3131b9d",
+  "inputHash": "1b3c82c25b5538e309c813ace3434d8532975331ab0c675d3c5a561929c325dc",
+  "sourceFiles": 1470,
+  "verifierSha256": "4d6045e2d16c45743fc0a31afbdaa416f25684d7dd29ca6aea7ffa5dc5bd202e",
+  "manifestInputs": 1468,
+  "artifacts": 2164,
+  "contentHash": "f75205126dc2f9830e2d3db5fa837bb9ed404af93d5a781e44f678cb09207311",
+  "prebuilt": {
+    "baseURL": "../../native-prebuilt/",
+    "converterSha256": "2c8ac61161f48c483c55e7c1b9cbd071f8b13e1cf6c6b7de615a64e9cad242af",
+    "stages": {
+      "scorch": {
+        "stageSha256": "1aaf93de6dd84bb9e2c47b8b5d16159691945e37d82b2f135b73afa6e655da06",
+        "bytes": 174831
+      },
+      "hagglefish": {
+        "stageSha256": "fd2f46bcc43b199b3d85e6028bbdff9253c1f3c25466eed261bb8d371e33aa76",
+        "bytes": 223781
+      },
+      "inkblot": {
+        "stageSha256": "8b58f0a1fab5be57ebd4caa6ac997d69dc471a2153bd204f0f1f19a6da9d7ece",
+        "bytes": 182353
+      },
+      "mako": {
+        "stageSha256": "bab5ab5a8d6f470be1586f6ae200b01f30fddfe29601cfb90d3d2e4c8da5c8d0",
+        "bytes": 205554
+      },
+      "brinewater": {
+        "stageSha256": "5dbdd0a7facbc319da36b74ed0d41356d2dba051ebf564336a504e99c80ac3cf",
+        "bytes": 451581
+      },
+      "airport": {
+        "stageSha256": "506dcfea4abe6b05f53207863f1153324d6df4d8dcdf6bcb3d3b7ed1ec8df598",
+        "bytes": 250637
+      },
+      "barnacle": {
+        "stageSha256": "bea1490c1c4a1ff259d9b2c72fd14e76c80c460380516d75a912e100b1dcf5aa",
+        "bytes": 265377
+      },
+      "bluefin": {
+        "stageSha256": "f00f4ee8da56d8263821618077cc5cb38ebccbdb6fc85d95c617056fd34fea1e",
+        "bytes": 439003
+      },
+      "crableg": {
+        "stageSha256": "25db0a65666a3dfbcca74565538db551ebb77f673ef80cef3871f0fbbec17feb",
+        "bytes": 375626
+      },
+      "eeltail": {
+        "stageSha256": "7edebd56de7894c218b27d434d6129f0b188d68a205a46c4193f29e217544c22",
+        "bytes": 337673
+      },
+      "flounder": {
+        "stageSha256": "41f1c015b0698d4a85592751f1875bdd8b2b078a445fd04b3efadacef0a6edb5",
+        "bytes": 536152
+      },
+      "hammerhead": {
+        "stageSha256": "0bc43a30e55bd8283d20d67a22817ad46469cc81621b13b11f7ee8d12ce63a9c",
+        "bytes": 163895
+      },
+      "humpback": {
+        "stageSha256": "9103594620930e0ac333b40de5a045803f465f8a404a430d0262a0191c7186e2",
+        "bytes": 123590
+      },
+      "manta": {
+        "stageSha256": "cb41bed6fdf16784263ca80501499f1b345e85027a8f74d0dfc87ada299459c6",
+        "bytes": 206767
+      },
+      "mincemeat": {
+        "stageSha256": "fd970fdb34ac3df0f740893064806e00d0a86a962a426b8c983d223792c6f2f2",
+        "bytes": 295977
+      },
+      "museum": {
+        "stageSha256": "5860872a921f1fbf3d3da29e02dfdf2be6fa234746ffc2087dc38446f3732c55",
+        "bytes": 223794
+      },
+      "robo": {
+        "stageSha256": "202a07b593c3d2fbc2ddb24e77d1bd8f9acf5595fab15813b49a08f1be225e31",
+        "bytes": 349257
+      },
+      "shipshape": {
+        "stageSha256": "03b2c5262e1e34aefcd4ec64d96fe528b4bf7bdb2c808a6db4b36418589dc1c1",
+        "bytes": 195759
+      },
+      "sturgeon": {
+        "stageSha256": "d14ea6447cdafdcf7ec63b251154adc07975fb805509c4afefffe6503bc71260",
+        "bytes": 128757
+      },
+      "umami": {
+        "stageSha256": "3c6b79b8a70d5ac441ea6b2532643999d9cfd5a29823947e37d630da817e0cbc",
+        "bytes": 290649
+      },
+      "undertow": {
+        "stageSha256": "e7ff63d62cb20ab14b80f2d7456534dd645555cbf3102a7570ad2b632d9f88c8",
+        "bytes": 220462
+      },
+      "urchin": {
+        "stageSha256": "732684dc6678262676ea0eaba3e4465af76d89b2734d0b1838ca9e74bffd449b",
+        "bytes": 302270
+      },
+      "wahoo": {
+        "stageSha256": "a76880bfe1f32c891c0a262c8bee31b5c40a37782c64c5520c689204aae517bc",
+        "bytes": 143611
+      }
+    }
+  }
+}

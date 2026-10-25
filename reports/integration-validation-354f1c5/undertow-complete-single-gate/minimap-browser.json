@@ -1,0 +1,5 @@
+{
+  "status": "failed",
+  "errors": [],
+  "error": "page.waitForFunction: Timeout 180000ms exceeded.\n    at /workspace/actions/scripts/check-inkwave-undertow-minimap.mjs:23:13"
+}

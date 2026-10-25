@@ -1,0 +1,17 @@
+lifecycle boot
+quality passed
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: corruption route was never exercised
+    at file:///workspace/actions/scripts/check-inkwave-native-lifecycle.mjs:37:145 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.4

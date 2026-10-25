@@ -1,0 +1,14 @@
+✔ lifecycle rejects invalid selection before browser work: "" (2102.509475ms)
+✔ lifecycle rejects invalid selection before browser work: "scorch," (2037.168224ms)
+✔ lifecycle rejects invalid selection before browser work: "scorch,scorch" (3236.261362ms)
+✔ lifecycle rejects invalid selection before browser work: "missing-native" (1922.450988ms)
+✔ lifecycle rejects invalid mobile selection before browser work: "" (3530.486965ms)
+✔ lifecycle rejects invalid mobile selection before browser work: "missing-native" (3035.187625ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16344.664459

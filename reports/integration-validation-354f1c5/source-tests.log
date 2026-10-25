@@ -1,0 +1,83 @@
+✔ three native viewport events coalesce to one layout but all cancel gestures and resync gyro (9.405749ms)
+✔ unchanged resize preserves live gestures and schedules no layout (1.360712ms)
+✔ changed innerWidth cancels immediately and duplicate resize preserves the new gesture (1.907579ms)
+✔ changed innerHeight cancels immediately and duplicate resize preserves the new gesture (1.419022ms)
+✔ changed width cancels immediately and duplicate resize preserves the new gesture (1.471512ms)
+✔ changed height cancels immediately and duplicate resize preserves the new gesture (1.438042ms)
+✔ changed scale cancels immediately and duplicate resize preserves the new gesture (1.767098ms)
+✔ missing visual viewport falls back to layout dimensions (1.576221ms)
+✔ destroy cancels a pending viewport animation and disallows stale callbacks (5.513378ms)
+✔ existing three event listeners still use one relayout handler (0.203769ms)
+native prebuilt: payload absent or unverified for scorch, hagglefish, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+(node:1008) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team flips match fresh support bytes with signed zeros, holes and slopes: nav=false 4x4 (7.248295ms)
+✔ team flips match fresh support bytes with signed zeros, holes and slopes: nav=false 5x3 (1.920259ms)
+✔ team flips match fresh support bytes with signed zeros, holes and slopes: nav=false 1x1 (1.015172ms)
+✔ team flips match fresh support bytes with signed zeros, holes and slopes: nav=true 4x4 (2.585151ms)
+✔ team flips match fresh support bytes with signed zeros, holes and slopes: nav=true 5x3 (3.497538ms)
+✔ team flips match fresh support bytes with signed zeros, holes and slopes: nav=true 1x1 (1.252283ms)
+✔ changed nav values/reachability, scale, mask owner and explicit source revision rebuild exactly (3.234173ms)
+✔ custom projection caller keeps complete support rebuilds (0.851861ms)
+✔ source faces share one immutable neutral color while dynamic/object colors keep independent owners (1.015177ms)
+{"cancelAt":"before","reads":0,"decode":0,"textures":0,"dimensions":[],"closes":[],"disposes":[],"error":"AbortError"}
+(node:1009) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cached textures before (57.625744ms)
+{"cancelAt":"cache","reads":2,"decode":0,"textures":0,"dimensions":[],"closes":[],"disposes":[],"error":"AbortError"}
+✔ cached textures cache (31.159902ms)
+{"cancelAt":"decode","reads":2,"decode":2,"textures":0,"dimensions":[],"closes":[1,1],"disposes":[],"error":"AbortError"}
+✔ cached textures decode (10.232727ms)
+{"cancelAt":"never","reads":8,"decode":8,"textures":8,"dimensions":[[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8]],"closes":[1,1,1,1,1,1,1,1],"disposes":[1,1,1,1,1,1,1,1],"error":null}
+✔ cached textures never (23.302244ms)
+{"cancelAt":"resize","resize":true,"reads":2,"decode":4,"textures":0,"dimensions":[],"closes":[1,1,1,1],"disposes":[],"error":"AbortError"}
+✔ resized cached textures resize (20.04819ms)
+{"cancelAt":"never","resize":true,"reads":8,"decode":16,"textures":8,"dimensions":[[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024]],"closes":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"disposes":[1,1,1,1,1,1,1,1],"error":null}
+✔ resized cached textures never (19.739375ms)
+✔ optional signal retains success (19.575399ms)
+✔ inactive stage objects do not decode unused textures, preserving every active map (25.915508ms)
+✔ worker decode failure retains original error and once-only cleanup (16.651218ms)
+✔ worker setup failure retains original error and once-only cleanup (18.300937ms)
+✔ worker cache failure retains original error and once-only cleanup (14.340824ms)
+{"cancelAt":"transferred","reads":2,"decode":1,"textures":1,"dimensions":[[8,8]],"closes":[1],"disposes":[1],"error":"AbortError"}
+✔ abort after first ownership transfer disposes retained texture once (19.432977ms)
+✔ browser-direct pixel metadata and ownership, resize=false (48.177836ms)
+✔ browser-direct pixel metadata and ownership, resize=true (23.884608ms)
+✔ resize rejection preserves sibling cleanup and original error (13.364818ms)
+(node:1029) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ warm stale stops detached work and cleans once (36.497227ms)
+✔ warm abort stops detached work and cleans once (13.198539ms)
+✔ frame stale stops detached work and cleans once (9.820644ms)
+✔ frame abort stops detached work and cleans once (16.011956ms)
+✔ successful publish and explicit release retain existing ownership (11.377108ms)
+✔ new build aborts warm old build without releasing new world (12.467654ms)
+✔ compile rejection preserves primary error and detached cleanup (12.855624ms)
+✔ stage shader warm-up precedes publication and an abort during it cleans the candidate (13.504326ms)
+✔ native stage compile rejection releases detached geometry without publication (10.989783ms)
+(node:1040) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every Spinner and Dualies base/alternate emits visible muzzle ink on admitted fire (3960.395485ms)
+✔ actual composed FX hooks retain spin-up, full-charge and streaming ink for all Spinner variants (2302.693292ms)
+(node:1047) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ only ordinary Shooter families and their catalogue kits receive muzzle beads (1.901386ms)
+✔ shared 3D muzzle-only beads include legacy and 11.3.0 Spinner/Dualies but exclude paint, other families and specials (1.065188ms)
+✔ live Dualies 3D beads preserve independent right/left launch sockets and change no gameplay state (2612.135435ms)
+✔ live legacy Splatling firing receives three additional cosmetic droplets without replacing its independent body (2606.487484ms)
+✔ live 11.3.0 catalogue Splatling and Dualies inherit the same pure muzzle beads (2088.633479ms)
+✔ real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes (1522.689492ms)
+✔ cessation expires, switching retires, clear/reuse resets a pooled birth (2402.316972ms)
+✔ stress stays within fixed 32 bursts/96 drops and writes no new GPU resources (1641.168671ms)
+(node:1068) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects (0.975746ms)
+✔ native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body (2304.708843ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 55
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14751.145633

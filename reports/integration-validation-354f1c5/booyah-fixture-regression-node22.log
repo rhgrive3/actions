@@ -1,0 +1,222 @@
+TAP version 13
+# Subtest: short ribbon writes all padded slots without recomputing visible normals or leaving stale alpha
+ok 1 - short ribbon writes all padded slots without recomputing visible normals or leaving stale alpha
+  ---
+  duration_ms: 8.479633
+  type: 'test'
+  ...
+# Subtest: pool saturation marks evicted ribbons ended; retained stale handles cannot allocate
+ok 2 - pool saturation marks evicted ribbons ended; retained stale handles cannot allocate
+  ---
+  duration_ms: 1.158814
+  type: 'test'
+  ...
+# Subtest: empty RibbonPool retains one warm upload and reinitializes after clearing
+ok 3 - empty RibbonPool retains one warm upload and reinitializes after clearing
+  ---
+  duration_ms: 1.289433
+  type: 'test'
+  ...
+# Subtest: idle ShapePool preserves warmed instancing without 4 redundant uploads per frame
+ok 4 - idle ShapePool preserves warmed instancing without 4 redundant uploads per frame
+  ---
+  duration_ms: 10.296973
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike retires its ribbon at kit dt=0.008333333333333333 without idle uploads
+ok 5 - Triple Inkstrike retires its ribbon at kit dt=0.008333333333333333 without idle uploads
+  ---
+  duration_ms: 126.082305
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike retires its ribbon at kit dt=0.1 without idle uploads
+ok 6 - Triple Inkstrike retires its ribbon at kit dt=0.1 without idle uploads
+  ---
+  duration_ms: 485.17799
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike retires its ribbon at kit dt=0.5 without idle uploads
+ok 7 - Triple Inkstrike retires its ribbon at kit dt=0.5 without idle uploads
+  ---
+  duration_ms: 294.260572
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike ends its ribbon when its carrier retires by capacity
+ok 8 - Triple Inkstrike ends its ribbon when its carrier retires by capacity
+  ---
+  duration_ms: 309.135575
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike ends its ribbon when its carrier retires by dead
+ok 9 - Triple Inkstrike ends its ribbon when its carrier retires by dead
+  ---
+  duration_ms: 311.612512
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike ends its ribbon when its carrier retires by follow-false
+ok 10 - Triple Inkstrike ends its ribbon when its carrier retires by follow-false
+  ---
+  duration_ms: 104.307411
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike ends its ribbon when its carrier retires by shell-clear
+ok 11 - Triple Inkstrike ends its ribbon when its carrier retires by shell-clear
+  ---
+  duration_ms: 31.524943
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike ends its ribbon when its carrier retires by kit-clear
+ok 12 - Triple Inkstrike ends its ribbon when its carrier retires by kit-clear
+  ---
+  duration_ms: 15.318065
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike ends its ribbon when its carrier retires by dispose
+ok 13 - Triple Inkstrike ends its ribbon when its carrier retires by dispose
+  ---
+  duration_ms: 8.468915
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike cancellation preserves transient carriers and still retires them at expiry
+ok 14 - Triple Inkstrike cancellation preserves transient carriers and still retires them at expiry
+  ---
+  duration_ms: 49.083029
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike pre-expiry geometry, points and RNG are unchanged at dt=0.008333333333333333
+ok 15 - Triple Inkstrike pre-expiry geometry, points and RNG are unchanged at dt=0.008333333333333333
+  ---
+  duration_ms: 340.403956
+  type: 'test'
+  ...
+# Subtest: Triple Inkstrike pre-expiry geometry, points and RNG are unchanged at dt=0.1
+ok 16 - Triple Inkstrike pre-expiry geometry, points and RNG are unchanged at dt=0.1
+  ---
+  duration_ms: 66.81772
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 30Hz
+ok 17 - Booyah charge orb preserves 3 radians per second at 30Hz
+  ---
+  duration_ms: 7.971336
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 60Hz
+ok 18 - Booyah charge orb preserves 3 radians per second at 60Hz
+  ---
+  duration_ms: 14.11414
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 120Hz
+ok 19 - Booyah charge orb preserves 3 radians per second at 120Hz
+  ---
+  duration_ms: 0.589881
+  type: 'test'
+  ...
+# Subtest: Booyah charge orb preserves 3 radians per second at 144Hz
+ok 20 - Booyah charge orb preserves 3 radians per second at 144Hz
+  ---
+  duration_ms: 0.717882
+  type: 'test'
+  ...
+# Subtest: irregular cadence and repeated zero-time callbacks do not advance the orb
+ok 21 - irregular cadence and repeated zero-time callbacks do not advance the orb
+  ---
+  duration_ms: 0.452278
+  type: 'test'
+  ...
+# Subtest: negative control detects the previous render-count-dependent rotation
+ok 22 - negative control detects the previous render-count-dependent rotation
+  ---
+  duration_ms: 37.128759
+  type: 'test'
+  ...
+# Subtest: Ink Vac vortex rotation and inhale/release opacity agree at 30/60/120 Hz
+ok 23 - Ink Vac vortex rotation and inhale/release opacity agree at 30/60/120 Hz
+  ---
+  duration_ms: 14.30428
+  type: 'test'
+  ...
+# Subtest: marker retained rotation agrees at 30/60/120 Hz
+ok 24 - marker retained rotation agrees at 30/60/120 Hz
+  ---
+  duration_ms: 1.495377
+  type: 'test'
+  ...
+# Subtest: strike retained rotation agrees at 30/60/120 Hz
+ok 25 - strike retained rotation agrees at 30/60/120 Hz
+  ---
+  duration_ms: 7.059268
+  type: 'test'
+  ...
+# Subtest: re-evaluating a retained frame at the same elapsed time does not advance animation
+ok 26 - re-evaluating a retained frame at the same elapsed time does not advance animation
+  ---
+  duration_ms: 1.105027
+  type: 'test'
+  ...
+# (node:8298) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 30Hz
+ok 27 - composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 30Hz
+  ---
+  duration_ms: 88.11354
+  type: 'test'
+  ...
+# Subtest: composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 60Hz
+ok 28 - composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 60Hz
+  ---
+  duration_ms: 45.563907
+  type: 'test'
+  ...
+# Subtest: composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 120Hz
+ok 29 - composed SwimWake exact uniform parity through idle/live/teleport/fade/reset/rebind 120Hz
+  ---
+  duration_ms: 86.020372
+  type: 'test'
+  ...
+# Subtest: actual composed body batches affine row bounds but preserves dirty gen, cells, dead masks and score
+ok 30 - actual composed body batches affine row bounds but preserves dirty gen, cells, dead masks and score
+  ---
+  duration_ms: 1518.634356
+  type: 'test'
+  ...
+# Subtest: coverage ignores known wall writes and preserves weighted scan order, while unknown writes and identity changes invalidate
+ok 31 - coverage ignores known wall writes and preserves weighted scan order, while unknown writes and identity changes invalidate
+  ---
+  duration_ms: 4.106537
+  type: 'test'
+  ...
+# Subtest: actual composed body wall writes retain the coverage cache; turf body writes replace it
+ok 32 - actual composed body wall writes retain the coverage cache; turf body writes replace it
+  ---
+  duration_ms: 992.314158
+  type: 'test'
+  ...
+# Subtest: growth team guard follows retained, evicted, completed, reused and unexpected leases without changing eligible order
+ok 33 - growth team guard follows retained, evicted, completed, reused and unexpected leases without changing eligible order
+  ---
+  duration_ms: 1775.65382
+  type: 'test'
+  ...
+# Subtest: ShapePool escaped record and typed array cannot be recycled into another live lease
+ok 34 - ShapePool escaped record and typed array cannot be recycled into another live lease
+  ---
+  duration_ms: 140.973025
+  type: 'test'
+  ...
+# Subtest: production splat opposing-growth guard preserves forced-completion order against unconditional scan
+ok 35 - production splat opposing-growth guard preserves forced-completion order against unconditional scan
+  ---
+  duration_ms: 1667.219446
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10050.214694

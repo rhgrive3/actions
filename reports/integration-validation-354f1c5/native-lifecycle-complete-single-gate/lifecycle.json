@@ -1,0 +1,23 @@
+{
+  "status": "failed",
+  "errors": [],
+  "quality": {
+    "cpuGridUnchanged": true,
+    "trianglePositionsUnchanged": true,
+    "authoritiesRetained": true,
+    "finalAtlas": 2048,
+    "textureCount": 81
+  },
+  "failureRollback": {
+    "rejected": false,
+    "levelRetained": true,
+    "paintRetained": true,
+    "displayRetained": true
+  },
+  "corruptionProbe": {
+    "route": "http://127.0.0.1:46155/native-prebuilt/hagglefish/vertices.0.bin",
+    "requests": 1,
+    "error": "Failed to fetch"
+  },
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(Object.values(result.failureRollback).every(Boolean))\n\n    at file:///workspace/actions/scripts/check-inkwave-native-lifecycle.mjs:49:232"
+}

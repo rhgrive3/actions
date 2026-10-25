@@ -1,0 +1,3 @@
+2964d5d58f40e600718e5606820691021b17d445d0d1ed052e3ed5eeddf6cde8  /workspace/inkwave-validation-354f1c5/boot-gate-before/check-inkwave-hammerhead-minimap.mjs
+435cb38b8dbe26072c4e3e634d12d26ee257be15f3570c885fe3192a6e021ca7  /workspace/inkwave-validation-354f1c5/boot-gate-before/check-inkwave-native-lifecycle.mjs
+a550609a7c7ee45d6312e6abf45e1858e39c9acdf8db871c1bd907463be8e6b6  /workspace/inkwave-validation-354f1c5/boot-gate-before/check-inkwave-undertow-minimap.mjs

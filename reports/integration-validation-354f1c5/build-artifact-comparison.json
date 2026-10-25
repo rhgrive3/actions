@@ -1,0 +1,12 @@
+{
+  "old": "4873d95918510609f9be570002b3cf96d807091c3c32f89049b4a0eabeeb9102",
+  "next": "f75205126dc2f9830e2d3db5fa837bb9ed404af93d5a781e44f678cb09207311",
+  "changedStableArtifacts": [
+    "index.html",
+    "patches/local-quality/ink-volume/assets/roller/manifest.json",
+    "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+    "patches/native-stages/runtime/build-config.mjs",
+    "sw.js"
+  ],
+  "stableCompared": 1082
+}

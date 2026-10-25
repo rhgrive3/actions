@@ -1,0 +1,27 @@
+(node:2061) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"mode":"source","index":1,"name":"#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint","sourceSha256":"11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765","siteIdentity":null,"command":["/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node","--max-old-space-size=384","--experimental-vm-modules","--test","--test-reporter=tap","--test-concurrency=1","--test-name-pattern=^#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint$","patches/splatoon3/tests/turf-finish.test.mjs"],"exit":0,"signal":null,"error":null,"counts":{"tests":1,"pass":1,"fail":0,"skipped":0},"seconds":4.559851791000001,"log":"source-01.tap","passed":true}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Source closure changed
++ actual - expected
+
++ '1c3ec7958c91090ec0ee3039b36a870777c00031b1773a134ae0625968cd444b'
+- 'd74d285babed6724eb62ac36810fc9c75e6d86b632994944b2ac1d402ffec7f3'
+
+    at verifySource (file:///workspace/actions/scripts/run-inkwave-turf-finish-isolated.mjs:123:48)
+    at main (file:///workspace/actions/scripts/run-inkwave-turf-finish-isolated.mjs:167:2)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///workspace/actions/scripts/run-inkwave-turf-finish-isolated.mjs:173:95 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '1c3ec7958c91090ec0ee3039b36a870777c00031b1773a134ae0625968cd444b',
+  expected: 'd74d285babed6724eb62ac36810fc9c75e6d86b632994944b2ac1d402ffec7f3',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0
+Isolated Turf failed (exit 1); evidence: /workspace/actions/.ci-scratch/inkwave-patches/turf-finish
