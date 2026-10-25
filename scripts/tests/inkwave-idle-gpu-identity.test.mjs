@@ -34,8 +34,8 @@ test('an already lost context fails before recording identity',()=>{
 });
 test('main captures actual desktop identity before workload and verifies its lifetime before retirement',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8').split('async function main(){')[1];
- const capture=source.indexOf('page.evaluate(captureIdleGpuIdentity)'),audio=source.indexOf("phase='audio'"),work=source.indexOf('await runResultsWorkDiagnostic('),verify=source.indexOf('page.evaluate(verifyIdleGpuContext)'),retire=source.indexOf('await retireDesktopForCold(');
+ const capture=source.indexOf('page.evaluate(captureIdleGpuIdentity)'),audio=source.indexOf("phase='audio'"),work=source.indexOf('await runResultsWorkDiagnostic('),verify=source.indexOf('await runIdleGpuContextDiagnostic(page,gpuTrace,verifyIdleGpuContext)'),retire=source.indexOf('await retireDesktopForCold(');
  assert(capture>=0&&capture<audio&&audio<work&&work<verify&&verify<retire);
  assert(!source.includes('getParameter('));
- assert.match(source.slice(work,verify),/publish\(\{status:'running',phase,result,resultsWorkProgress:resultsProgress.snapshot\(\)/);
+ assert.match(source.slice(work,verify),/publish\(\{status:'running',phase,result,resultsWorkProgress:(?:resultsProgress\.snapshot\(\)|completedProgress)/);
 });
