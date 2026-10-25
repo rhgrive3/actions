@@ -1,0 +1,50 @@
+{
+  "candidateSHA": "43001b8227d89da773bcae619e0a53318b3541c2",
+  "evidenceUsed": "Existing 136 browser state rows and exact candidate source only; no new browser run or runtime change",
+  "initialPulse": {
+    "caseFrame": 548,
+    "Gtime": 147.45000000000948,
+    "nativeClockAtPulse": 8846,
+    "nativeClockAtPostTickSnapshot": 8847
+  },
+  "delayedPulses": [
+    {
+      "caseFrame": 551,
+      "Gtime": 147.50000000000952,
+      "nativeClockAtPulse": 8850,
+      "nativeClockAtPostTickSnapshot": 8850
+    },
+    {
+      "caseFrame": 555,
+      "Gtime": 147.56666666667624,
+      "nativeClockAtPulse": 8854,
+      "nativeClockAtPostTickSnapshot": 8854
+    }
+  ],
+  "rawPulseClockDeltas": [
+    0,
+    4,
+    8
+  ],
+  "postTickSnapshotClockDeltas": [
+    0,
+    3,
+    7
+  ],
+  "GtimeDeltas": [
+    0,
+    0.05,
+    0.11666666666666667
+  ],
+  "callOrder": [
+    "clock.mjs FixedClock.advance calls tick callback before ticks++",
+    "runSimulation advances G.time at tick entry",
+    "simulateMatchInterval: controller -> Match.update -> Projectiles.update",
+    "kit-trizooka.mjs: lobe0 _push announces birth synchronously during Match.update",
+    "weapons-adapter.mjs: delay subtracts dt even in allocation tick; zero active elapsed skips _step",
+    "kit-rescue-adapter.mjs injects flushTrizookaBirths after native list pass",
+    "flush sets pending=false at zero-time endpoint; this path bypasses _step birth observer",
+    "after runSimulation and ticks++, FX.update -> Director.updateRounds -> ROUND_FX.trizooka.start calls trizookaShot when p.age=0"
+  ],
+  "conclusion": "The raw counters are sampled at different update phases. Lobe0 before tick counter increment, endpoint globs during post-tick FX. This accounts for one-tick difference between raw pulse counter delta and same-phase snapshots/G.time. No native clock value is changed. The records alone do not establish reference-game input/recording phase alignment."
+}

@@ -1,0 +1,42 @@
+{
+  "candidateSHA": "43001b8227d89da773bcae619e0a53318b3541c2",
+  "scope": "4 native game camera images; no reference media; see states.json for candidate observations",
+  "images": [
+    {
+      "file": "images/vac2-birth-native.png",
+      "sha256": "5165bba961787af70f63ae9c8f36404deec7492c60197ebada100a10aea10668",
+      "stateFile": "states.json",
+      "acceptance": true,
+      "observedByThisWorker": true,
+      "camera": "native game camera",
+      "note": "Observed rendered PNG; native simulation paused after fixed updates"
+    },
+    {
+      "file": "images/triz-level-birth-clock0-native.png",
+      "sha256": "8b0f731b6978c5799db49bbc382f1111e62ed656390c6aa36e08c870992e944a",
+      "stateFile": "states.json",
+      "acceptance": true,
+      "observedByThisWorker": true,
+      "camera": "native game camera",
+      "note": "Observed rendered PNG; native simulation paused after fixed updates"
+    },
+    {
+      "file": "images/stamp-air-contact-native.png",
+      "sha256": "82b26c3a5a032342c38df226187f20e6d5ed021f2dda6034de32cb553ba20b9d",
+      "stateFile": "states.json",
+      "acceptance": true,
+      "observedByThisWorker": true,
+      "camera": "native game camera",
+      "note": "Observed rendered PNG; native simulation paused after fixed updates"
+    },
+    {
+      "file": "images/chump-plus3F-native.png",
+      "sha256": "79ba80556076e87fddf419fd5f42179df7e115cb0cd67d07905fc3fe23d953e8",
+      "stateFile": "states.json",
+      "acceptance": true,
+      "observedByThisWorker": true,
+      "camera": "native game camera",
+      "note": "Observed rendered PNG; native simulation paused after fixed updates"
+    }
+  ]
+}
