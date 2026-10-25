@@ -63,3 +63,32 @@ PR #1878 の `dd90aa241aabd5f0b972cc3471386ba3d4da86dc` から派生した
 原典フィールドが未使用というだけでは、不明な意味を推測して物理を変えていない。
 
 Switch・実GPU・Safari/iPad・二端末ネット対戦は未実施。生成物の検証と実機一致は区別する。
+
+
+## 独立レビュー後の壁押し付け補完
+
+元 #1879 の最終head `7ee2625d2f3bcf5bd6270572167b94047de2f7a4` に対する追加差分。
+上記の検証数値・元ログ・原典の固定11.3.0は維持する。
+
+実Physicsの `Actor._resolve` は壁へ向かう水平速度を0にする。その後に呼ばれる
+`resourceSurface` が、ZRと前進入力を保持しているパブロまで停止とみなして
+敵床ダメージ／回復抑止へ戻す問題を独立レビューで再現した。これは上記の
+パブロ検証資料にある「壁へフデ先を押し付けて進む」条件と整合しない。
+`brush-roll-ink.mjs` で、実際の壁接触と有限な壁法線があり、移動入力が
+その壁へ向かう（内積が負）場合だけ、水平速度0でも移動試行を継続中と判定する。
+Physics、武器ダメージ、ミストの係数やその他の分岐は変更しない。
+
+`inkbrush-enemy-ink-roll.test.mjs` の追加回帰は、fixtureの通常のintegration停止を
+実 `Actor.prototype._integrate` に戻し、既にZRを保持した状態から実Level／Physicsの
+床と壁へ進む。30/60/120Hzで壁が速度を0にした後も床ダメージ0とHP回復を確認し、
+入力ゼロ・壁から離れる入力・接線入力では免除しない。空中・空タンク・サブ・振り・
+別フデの除外、ミストの半減と実際の武器ダメージも検査する。
+元7eeのhelperだけをloaderで戻す負例は、30Hz壁接触時に `onEnemy=true` となり失敗した。
+
+追加後の新規4ファイルはsource 28/28、fresh minified生成物28/28成功。
+関連enemy-ink／sub-ready／movement-resources／Mistの6ファイルも77/77成功（上記との件数は合算しない）。
+本番ビルド、startup budget、quick互換、source migration監査も成功。
+追加後のbuild contentHashは
+`7ee9f176b0166eef0d84ef1f9347b49a6e798e2ff1e474496e48abf2e0c629f5`、
+宣言入力1,477・生成物2,174。Node v24.19.0のlocal検証であり、元7eeの72条件ブラウザを
+追加後のfresh browser受入へ読み替えない。新しい最終headの完全CIは別途必要。
