@@ -165,6 +165,23 @@ jobs:
           path: .ci-artifacts
           destination: browser-<< parameters.suite >>
 
+
+  offload-complete:
+    # A single trusted CircleCI job status can only succeed after all eight
+    # patch shards, the exact site build and seven original browser suites.
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Attest immutable full-suite CircleCI DAG completion
+          command: |
+            set -euo pipefail
+            test "$(git rev-parse HEAD)" = "$CIRCLE_SHA1"
+            printf 'INKWAVE_OFFLOAD_COMPLETE source=%s patches=8 browser_suites=7\n' "$CIRCLE_SHA1"
+
 workflows:
   ink-wave-ci-offload:
     when: << pipeline.parameters.run-inkwave >>
@@ -199,3 +216,14 @@ workflows:
           name: browser-startup
           suite: startup
           requires: [build-native-site]
+      - offload-complete:
+          requires:
+            - patch-regressions
+            - build-native-site
+            - browser-active
+            - browser-catalog
+            - browser-ui
+            - browser-responsive
+            - browser-network
+            - browser-range
+            - browser-startup
