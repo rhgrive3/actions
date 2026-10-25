@@ -1,0 +1,566 @@
+[
+  {
+    "job": 121068760847,
+    "sha256": "79d4b225c32661d8bc008eddf7e09767dfcfabfcde362a4a3ef2eeb6ae07185e",
+    "bytes": 364392,
+    "events": [
+      {
+        "channel": "critical",
+        "seq": 15224,
+        "producer": "sample",
+        "edge": "exit",
+        "state": "results",
+        "actualState": "results",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 355715.3999999999,
+        "stateElapsedMs": 188608.59999999986,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1472.0999999996275,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 186817.0999999994,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 12819.599999998929,
+            "otherWallMs": 173997.50000000047,
+            "maxWallMs": 20322.399999999907,
+            "maxFrame": 108,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12290,
+            "outerCalls": 12290,
+            "wallMs": 12819.599999998929,
+            "maxWallMs": 1700.3000000000466,
+            "maxMethod": "drawArrays",
+            "maxFrame": 17,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 4626.499999998836,
+                "maxWallMs": 1700.3000000000466
+              },
+              "drawElements": {
+                "calls": 6840,
+                "outerCalls": 6840,
+                "wallMs": 5440.799999999348,
+                "maxWallMs": 1640.1999999999534
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 1633.0000000002328,
+                "maxWallMs": 1615.1000000000931
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1119.3000000005122,
+                "maxWallMs": 935
+              }
+            }
+          }
+        }
+      },
+      {
+        "channel": "critical",
+        "seq": 15225,
+        "producer": "cleanup",
+        "edge": "enter",
+        "state": "restoring",
+        "actualState": "results",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 355721.30000000005,
+        "stateElapsedMs": 188614.5,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1473.5999999996275,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 186817.0999999994,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 12819.599999998929,
+            "otherWallMs": 173997.50000000047,
+            "maxWallMs": 20322.399999999907,
+            "maxFrame": 108,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12290,
+            "outerCalls": 12290,
+            "wallMs": 12819.599999998929,
+            "maxWallMs": 1700.3000000000466,
+            "maxMethod": "drawArrays",
+            "maxFrame": 17,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 4626.499999998836,
+                "maxWallMs": 1700.3000000000466
+              },
+              "drawElements": {
+                "calls": 6840,
+                "outerCalls": 6840,
+                "wallMs": 5440.799999999348,
+                "maxWallMs": 1640.1999999999534
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 1633.0000000002328,
+                "maxWallMs": 1615.1000000000931
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1119.3000000005122,
+                "maxWallMs": 935
+              }
+            }
+          }
+        }
+      },
+      {
+        "channel": "critical",
+        "seq": 15226,
+        "producer": "cleanup",
+        "edge": "exit",
+        "state": "restoring",
+        "actualState": "playing",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 355742.69999999995,
+        "stateElapsedMs": 188635.8999999999,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1474.299999999581,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 186817.0999999994,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 12819.599999998929,
+            "otherWallMs": 173997.50000000047,
+            "maxWallMs": 20322.399999999907,
+            "maxFrame": 108,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12290,
+            "outerCalls": 12290,
+            "wallMs": 12819.599999998929,
+            "maxWallMs": 1700.3000000000466,
+            "maxMethod": "drawArrays",
+            "maxFrame": 17,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 4626.499999998836,
+                "maxWallMs": 1700.3000000000466
+              },
+              "drawElements": {
+                "calls": 6840,
+                "outerCalls": 6840,
+                "wallMs": 5440.799999999348,
+                "maxWallMs": 1640.1999999999534
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 1633.0000000002328,
+                "maxWallMs": 1615.1000000000931
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1119.3000000005122,
+                "maxWallMs": 935
+              }
+            }
+          }
+        }
+      }
+    ],
+    "errors": [
+      "2026-10-25T05:16:52.5455566Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.",
+      "2026-10-25T05:16:52.6808271Z INKWAVE_IDLE_FAILURE_PROGRESS {\"phase\":\"gpu-identity\",\"state\":\"unknown\",\"frame\":null,\"completed\":null,\"totalCompleted\":null,\"sampledRegion\":\"unknown\",\"regionEdge\":\"unknown\",\"observations\":{\"critical\":{\"retained\":0,\"capacity\":null,\"received\":null,\"limit\":null,\"truncated\":false},\"detail\":{\"retained\":0,\"capacity\":null,\"received\":null,\"limit\":null,\"truncated\":false},\"coarseEdgesPerFrame\":128,\"criticalOmitted\":null,\"detailOmitted\":null,\"gl\":\"counters-only\"},\"scope\":\"sampled diagnostic; not GPU/FPS evidence\"}",
+      "2026-10-25T05:16:52.7189046Z page.evaluate: Target page, context or browser has been closed"
+    ]
+  },
+  {
+    "job": 121084286575,
+    "sha256": "13f7bc8ad0ab99fea5adc8624ca75673ba5ed1307c417edc868c3331b9a204c7",
+    "bytes": 360651,
+    "events": [
+      {
+        "channel": "critical",
+        "seq": 15224,
+        "producer": "sample",
+        "edge": "exit",
+        "state": "results",
+        "actualState": "results",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 261621,
+        "stateElapsedMs": 138164.69999999995,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12410
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1072.2000000027474,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 135785.59999999614,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 9722.300000001444,
+            "otherWallMs": 126063.29999999469,
+            "maxWallMs": 25725.5,
+            "maxFrame": 118,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12410,
+            "outerCalls": 12410,
+            "wallMs": 9722.300000001444,
+            "maxWallMs": 5950.90000000014,
+            "maxMethod": "drawElements",
+            "maxFrame": 38,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 247.6000000005588,
+                "maxWallMs": 154.5
+              },
+              "drawElements": {
+                "calls": 6960,
+                "outerCalls": 6960,
+                "wallMs": 8412.70000000042,
+                "maxWallMs": 5950.90000000014
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 1.3999999999068677,
+                "maxWallMs": 0.6999999999534339
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1060.6000000005588,
+                "maxWallMs": 816.8000000000466
+              }
+            }
+          }
+        }
+      },
+      {
+        "channel": "critical",
+        "seq": 15225,
+        "producer": "cleanup",
+        "edge": "enter",
+        "state": "restoring",
+        "actualState": "results",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 261621,
+        "stateElapsedMs": 138164.69999999995,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12410
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1072.2000000027474,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 135785.59999999614,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 9722.300000001444,
+            "otherWallMs": 126063.29999999469,
+            "maxWallMs": 25725.5,
+            "maxFrame": 118,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12410,
+            "outerCalls": 12410,
+            "wallMs": 9722.300000001444,
+            "maxWallMs": 5950.90000000014,
+            "maxMethod": "drawElements",
+            "maxFrame": 38,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 247.6000000005588,
+                "maxWallMs": 154.5
+              },
+              "drawElements": {
+                "calls": 6960,
+                "outerCalls": 6960,
+                "wallMs": 8412.70000000042,
+                "maxWallMs": 5950.90000000014
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 1.3999999999068677,
+                "maxWallMs": 0.6999999999534339
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1060.6000000005588,
+                "maxWallMs": 816.8000000000466
+              }
+            }
+          }
+        }
+      },
+      {
+        "channel": "critical",
+        "seq": 15226,
+        "producer": "cleanup",
+        "edge": "exit",
+        "state": "restoring",
+        "actualState": "playing",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 261624.1000000001,
+        "stateElapsedMs": 138167.80000000005,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12410
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1072.3000000028405,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 135785.59999999614,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 9722.300000001444,
+            "otherWallMs": 126063.29999999469,
+            "maxWallMs": 25725.5,
+            "maxFrame": 118,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12410,
+            "outerCalls": 12410,
+            "wallMs": 9722.300000001444,
+            "maxWallMs": 5950.90000000014,
+            "maxMethod": "drawElements",
+            "maxFrame": 38,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 247.6000000005588,
+                "maxWallMs": 154.5
+              },
+              "drawElements": {
+                "calls": 6960,
+                "outerCalls": 6960,
+                "wallMs": 8412.70000000042,
+                "maxWallMs": 5950.90000000014
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 1.3999999999068677,
+                "maxWallMs": 0.6999999999534339
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1060.6000000005588,
+                "maxWallMs": 816.8000000000466
+              }
+            }
+          }
+        }
+      }
+    ],
+    "errors": [
+      "2026-10-25T05:53:47.8464414Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.",
+      "2026-10-25T05:53:48.7500646Z INKWAVE_IDLE_FAILURE_PROGRESS {\"phase\":\"gpu-identity\",\"state\":\"unknown\",\"frame\":null,\"completed\":null,\"totalCompleted\":null,\"sampledRegion\":\"unknown\",\"regionEdge\":\"unknown\",\"observations\":{\"critical\":{\"retained\":0,\"capacity\":null,\"received\":null,\"limit\":null,\"truncated\":false},\"detail\":{\"retained\":0,\"capacity\":null,\"received\":null,\"limit\":null,\"truncated\":false},\"coarseEdgesPerFrame\":128,\"criticalOmitted\":null,\"detailOmitted\":null,\"gl\":\"counters-only\"},\"scope\":\"sampled diagnostic; not GPU/FPS evidence\"}",
+      "2026-10-25T05:53:48.7627929Z page.evaluate: Target page, context or browser has been closed"
+    ]
+  }
+]

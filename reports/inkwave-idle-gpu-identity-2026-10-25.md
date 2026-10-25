@@ -23,6 +23,18 @@ prefix timestamp is not their execution timestamp.
 Synchronous identity queries after a large rendering workload are a plausible
 avoidable synchronization point. Logs alone do not prove a driver deadlock,
 memory exhaustion, console backpressure, or the cause of runner shutdown.
+The browser's own cleanup timestamps are 05:16:26.692746 and 05:53:02.747404;
+runner shutdown is at 05:16:52.5455566 and 05:53:47.8464414. Thus the remaining
+intervals are about 25.85 and 45.10 seconds, not an expired 120-second GPU-query
+deadline. This candidate removes an unnecessary synchronization hazard, but is
+not proof that the original run would never have completed without shutdown.
+Machine-readable excerpts and full-log SHA256s accompany this report.
+
+General rationale (not incident proof):
+[MDN WebGL best practices](https://github.com/mdn/content/blob/main/files/en-us/web/api/webgl_api/webgl_best_practices/index.md)
+describes possible flush/round-trip synchronization in getParameter;
+[Emscripten Optimizing WebGL](https://emscripten.org/docs/optimizing/Optimizing-WebGL)
+recommends obtaining and caching static GL state during startup/loading.
 
 ## Minimal candidate
 
@@ -50,6 +62,11 @@ comparison ledger is unaffected. No model editing/comparison or Discord work.
   loss-and-restoration, context replacement, missing/consumed probe and ordering.
   Existing tests compare all 240 calls/order/dt/state and counters against an
   independently hashed baseline and exercise assertion/deadline negative controls.
+- Real WebGL helper smoke on system Chromium 154 passed all four cases: healthy,
+  lost, lost-and-restored, replaced. This uses a minimal canvas and actual
+  WEBGL_lose_context; it is separate from game workload acceptance.
+- Candidate commit `6890cd67a8fc6287ab986bfca4595371013fbbd7` passed exact-source
+  validation of all 1444 build inputs against the same production artifact.
 - Normal production build at exact b57 succeeded, contentHash
   `88f5ee899779516d21d02b8a033bc722a684bdeb515d44b95f2077259afde209`, matching CI.
 - CI-pinned Playwright 1.62.1 is present but its Chromium 151 binary is absent.
