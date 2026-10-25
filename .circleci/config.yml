@@ -1,196 +1,33 @@
-# INKWAVE: independent, full-fidelity patch regression executor.
-# This supplements existing GitHub Actions; it does not waive any required checks.
+# INKWAVE fast dispatch: only launch large CircleCI jobs when an exact
+# source/build/test input changed. The continuation retains all original
+# 8 patch and 7 browser acceptance lanes without weakened assertions.
 version: 2.1
+setup: true
 
-jobs:
-  patch-regressions:
-    docker:
-      - image: cimg/node:22.23.3
-    resource_class: large
-    working_directory: ~/project
-    parallelism: 8
-    environment:
-      INKWAVE_TEST_SHARD_COUNT: "8"
-      INKWAVE_TEST_CONCURRENCY: "2"
-    steps:
-      - checkout
-      - run:
-          name: Verify checkout identity
-          command: |
-            set -euo pipefail
-            test "$(git rev-parse HEAD)" = "$CIRCLE_SHA1"
-            node --version
-      - run:
-          name: Install pinned test dependencies
-          command: |
-            set -euo pipefail
-            npm install --no-save --no-package-lock --silent esbuild@0.28.2
-      - run:
-          name: Execute complete patch regression shard
-          no_output_timeout: 30m
-          command: |
-            set -euo pipefail
-            export SOURCE_SHA="$CIRCLE_SHA1"
-            export INKWAVE_TEST_SHARD_INDEX="$CIRCLE_NODE_INDEX"
-            export INKWAVE_TEST_LOG_DIR="$PWD/.ci-scratch/inkwave-patches"
-            export INKWAVE_TEST_SCRATCH="$PWD/.ci-scratch/inkwave-worker"
-            mkdir -p "$INKWAVE_TEST_LOG_DIR" "$INKWAVE_TEST_SCRATCH"
-            node --experimental-vm-modules scripts/check-inkwave-patches.mjs
-      - run:
-          name: Compress regression evidence
-          when: always
-          command: |
-            mkdir -p .ci-artifacts
-            if [ -d .ci-scratch/inkwave-patches ]; then
-              tar -czf ".ci-artifacts/patch-shard-${CIRCLE_NODE_INDEX}.tar.gz" -C .ci-scratch inkwave-patches
-            fi
-      - store_artifacts:
-          path: .ci-artifacts
-          destination: patch-regressions
-
-  build-native-site:
-    docker:
-      - image: cimg/node:22.23.3
-    resource_class: large
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: Verify immutable source and CircleCI test step parity
-          command: |
-            set -euo pipefail
-            test "$(git rev-parse HEAD)" = "$CIRCLE_SHA1"
-            node --test scripts/tests/inkwave-circleci-browser-lane.test.mjs
-      - restore_cache:
-          keys:
-            - inkwave-node22-esbuild-v1-{{ checksum "package.json" }}
-      - run:
-          name: Build the exact production site once
-          command: |
-            set -euo pipefail
-            mkdir -p .built-site
-            npm install --no-save --no-package-lock --silent esbuild@0.28.2
-            node scripts/build-inkwave.mjs inkwave-public .built-site/_site
-            node scripts/check-inkwave-startup-budget.mjs .built-site/_site
-            git rev-parse HEAD > .built-site/_site-source-sha.txt
-            test "$(cat .built-site/_site-source-sha.txt)" = "$CIRCLE_SHA1"
-      - save_cache:
-          key: inkwave-node22-esbuild-v1-{{ checksum "package.json" }}
-          paths:
-            - ~/.npm/_cacache
-      - run:
-          name: Cache pinned Chromium and WebKit executables once for all seven lanes
-          no_output_timeout: 20m
-          command: |
-            set -euo pipefail
-            npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
-            export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browser-cache"
-            npx playwright install chromium webkit
-      - save_cache:
-          key: inkwave-pw-1.62.1-linux-v1-{{ checksum "package.json" }}
-          paths:
-            - .browser-cache
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .built-site
-            - node_modules
-
-  browser-lane:
-    parameters:
-      suite:
-        type: enum
-        enum: [active, catalog, ui, responsive, network, range, startup]
-    docker:
-      - image: cimg/node:22.23.3
-    resource_class: large
-    working_directory: ~/project
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Verify immutable production build identity
-          command: |
-            set -euo pipefail
-            test "$(git rev-parse HEAD)" = "$CIRCLE_SHA1"
-            test "$(cat .built-site/_site-source-sha.txt)" = "$CIRCLE_SHA1"
-            node scripts/check-inkwave-startup-budget.mjs .built-site/_site
-      - restore_cache:
-          keys:
-            - inkwave-node22-esbuild-v1-{{ checksum "package.json" }}
-      - restore_cache:
-          keys:
-            - inkwave-pw-1.62.1-linux-v1-{{ checksum "package.json" }}
-      - run:
-          name: Install pinned browsers and native Linux dependencies
-          no_output_timeout: 20m
-          command: |
-            set -euo pipefail
-            # The exact pinned npm dependencies are shared by build-native-site.
-            node -e "const p=require('playwright/package.json'); if(p.version!=='1.62.1') process.exit(1)"
-            sudo python3 scripts/prepare-inkwave-ci-apt.py
-            export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browser-cache"
-            npx playwright install --with-deps chromium webkit
-      - run:
-          name: Execute the exact GitHub-native browser acceptance commands
-          no_output_timeout: 30m
-          command: |
-            set -euo pipefail
-            export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browser-cache"
-            export CI_STORAGE="$PWD/.ci-scratch/circleci-browser/<< parameters.suite >>"
-            mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
-            sudo mkdir -p /mnt/workspace/.dev-state/agent-work/cache/iwrui
-            sudo chown -R "$(id -u):$(id -g)" /mnt/workspace/.dev-state
-            node scripts/ci/run-circleci-browser-lane.mjs "<< parameters.suite >>"
-      - run:
-          name: Save SHA-bound acceptance receipt and failure artifacts
-          when: always
-          command: |
-            mkdir -p .ci-artifacts
-            root=".ci-scratch/circleci-browser/<< parameters.suite >>"
-            if [ -f "$root/circleci-lane-receipt.json" ]; then
-              cp "$root/circleci-lane-receipt.json" ".ci-artifacts/browser-<< parameters.suite >>-receipt.json"
-            fi
-            if [ -f "$root/evidence/ci-result.json" ]; then
-              cp "$root/evidence/ci-result.json" ".ci-artifacts/browser-<< parameters.suite >>-native-result.json"
-            elif [ -d "$root/evidence" ]; then
-              tar -czf ".ci-artifacts/browser-<< parameters.suite >>-failure-evidence.tar.gz" -C "$root" evidence
-            fi
-      - store_artifacts:
-          path: .ci-artifacts
-          destination: browser-<< parameters.suite >>
+orbs:
+  path-filtering: circleci/path-filtering@1
 
 workflows:
-  ink-wave-ci-offload:
+  detect-inkwave-changes:
     jobs:
-      - patch-regressions
-      - build-native-site
-      - browser-lane:
-          name: browser-active
-          suite: active
-          requires: [build-native-site]
-      - browser-lane:
-          name: browser-catalog
-          suite: catalog
-          requires: [build-native-site]
-      - browser-lane:
-          name: browser-ui
-          suite: ui
-          requires: [build-native-site]
-      - browser-lane:
-          name: browser-responsive
-          suite: responsive
-          requires: [build-native-site]
-      - browser-lane:
-          name: browser-network
-          suite: network
-          requires: [build-native-site]
-      - browser-lane:
-          name: browser-range
-          suite: range
-          requires: [build-native-site]
-      - browser-lane:
-          name: browser-startup
-          suite: startup
-          requires: [build-native-site]
+      - path-filtering/filter:
+          name: detect-native-changes
+          base-revision: main
+          same-base-run: false
+          config-path: .circleci/continue.yml
+          mapping: |
+            inkwave-public/.* run-inkwave true
+            patches/.* run-inkwave true
+            tests/.* run-inkwave true
+            server/.* run-inkwave true
+            account/.* run-inkwave true
+            scripts/.*inkwave.* run-inkwave true
+            scripts/verify-completion-sources.mjs run-inkwave true
+            scripts/check-weapons-reference.mjs run-inkwave true
+            scripts/run-logged-test-process.mjs run-inkwave true
+            scripts/lib/minimap-.* run-inkwave true
+            scripts/tests/test_fetch_inkwave_pinned_references.py run-inkwave true
+            package.json run-inkwave true
+            package-lock.json run-inkwave true
+            .github/workflows/validate-inkwave-update.yml run-inkwave true
+            .circleci/.* run-inkwave true
