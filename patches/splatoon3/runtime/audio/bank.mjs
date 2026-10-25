@@ -86,8 +86,13 @@ export class WeaponSoundBank {
       const serial=o.variant??(loop?0:bank.roundRobin.get(name)??0);bank.roundRobin.set(name,(serial+1)%3);
       const authorized=bank.authorized.pick(id,event,serial);
       if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
-      const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();
+      const originalBuffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();
       const recordedChargerOnset=!!authorized&&chargerOnset;
+      // The Worker-transformed recording stays at playbackRate=1. Missing
+      // preparation never alters or delays the original authorized onset.
+      const buffer=recordedChargerOnset
+        ? bank.chargerStretchCache?.lookup(id,originalBuffer,o.actor?.weapon?.chargeTime)||originalBuffer
+        : originalBuffer;
       const recordedSpinnerMotor=!!authorized&&AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event);
       s.buffer=buffer;s.loop=loop;
       if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
@@ -135,7 +140,7 @@ export class WeaponSoundBank {
   }
 
   stats(){return{realOnly:this.realOnly,audibleShotFallback:this.audibleShotFallback,bytes:this.bytes,budget:this.maxBytes,entries:this.cache.size,hits:this.hits,misses:this.misses,evicted:this.evicted,pending:this.pending.size,generatedOffThread:this.generatedOffThread,worker:!!this.worker,workerFallback:this.workerFailed,workerError:this.workerError,authorized:this.authorized.stats()};}
-  dispose(){this.disposed=true;this.worker?.terminate();this.worker=null;this.inFlight=null;if(this.timer)clearTimeout(this.timer);this.timer=null;this.jobs.length=0;this.pending.clear();this.cache.clear();this.defs.clear();this.roundRobin.clear();this.bytes=0;this.authorized.clear();}
+  dispose(){this.disposed=true;this.chargerStretchCache?.dispose();this.worker?.terminate();this.worker=null;this.inFlight=null;if(this.timer)clearTimeout(this.timer);this.timer=null;this.jobs.length=0;this.pending.clear();this.cache.clear();this.defs.clear();this.roundRobin.clear();this.bytes=0;this.authorized.clear();}
 }
 // A weak actor key prevents one player's firing/landing from suppressing another's.
 const actors=new WeakMap();let nextActor=1;
