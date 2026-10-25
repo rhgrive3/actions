@@ -12,6 +12,23 @@ import { createIdleGpuTrace, runIdleGpuContextDiagnostic, closeIdleFailureResour
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const ARTIFACT_MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
+// As in motion-detail, avoid a second loopback HTTP hop through route.fetch:
+// concurrent CI can reset that socket even when Chromium finishes booting.
+// Serve only manifest-listed GETs, checking the actual immutable bytes again.
+// Unknown URLs keep the real HTTP response; errors still fail the probe.
+export async function serveIdleArtifact(route,site,manifest,loaded,beforeFulfill=()=>{}){
+ const request=route.request(),url=request.url(),key=decodeURIComponent(new URL(url).pathname).slice(1)||'index.html';
+ if(request.method()!=='GET'||!Object.hasOwn(manifest.artifacts,key)){await route.continue();return null;}
+ const file=path.resolve(site,key);
+ if(!file.startsWith(site+path.sep)||!fs.realpathSync(file).startsWith(site+path.sep))throw Error('Invalid build artifact path: '+key);
+ const body=fs.readFileSync(file);
+ if(sha(body)!==manifest.artifacts[key])throw Error('Loaded byte mismatch '+key);
+ loaded.add(key);
+ await beforeFulfill({key,url});
+ await route.fulfill({status:200,headers:{'content-type':ARTIFACT_MIME[path.extname(file)]||'application/octet-stream'},body});
+ return key;
+}
 export const IDLE_OPERATION_TIMEOUT_MS=120000;
 // Both 120-frame states execute real WebGL calls under per-producer console
 // instrumentation. On heavily shared CI runners the original 240s deadline
@@ -443,14 +460,14 @@ async function main(){
    if(execFileSync('git',['rev-parse','HEAD:'+p],{cwd:ROOT,encoding:'utf8'}).trim()!==execFileSync('git',['hash-object',p],{cwd:ROOT,encoding:'utf8'}).trim())throw Error('Idle verifier differs from commit');
   }
   const {manifest}=identity;
-  const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
+  const mime=ARTIFACT_MIME;
   server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://localhost'),p=path.resolve(site,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!p.startsWith(site+path.sep)||!fs.statSync(p).isFile())throw Error('missing');res.writeHead(200,{'content-type':mime[path.extname(p)]||'application/octet-stream'});fs.createReadStream(p).pipe(res);}catch{res.writeHead(404);res.end();}});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const address='http://127.0.0.1:'+server.address().port+'/';
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
   browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:800,height:600},args:BROWSER_ARGS});
   page=boundIdleEvaluations(await browser.newPage(),()=>phase);page.setDefaultTimeout(IDLE_OPERATION_TIMEOUT_MS);page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,1500));});
-  await page.route(address+'**',async route=>{try{const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Loaded byte mismatch '+key);loaded.add(key);await route.fulfill({response,body});}catch(e){errors.push(e.message);await route.abort();}});
+  await page.route(address+'**',async route=>{try{await serveIdleArtifact(route,site,manifest,loaded);}catch(e){errors.push(e.message);await route.abort();}});
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,music:0,sfx:1})));
   phase='boot';await page.goto(address+'?devstage&skipTitle',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed,null,{timeout:180000});
@@ -571,18 +588,16 @@ async function main(){
     const pendingKey=++pendingSerial,pendingPath=new URL(route.request().url()).pathname;
     if(coldPending.size<256)coldPending.set(pendingKey,{path:pendingPath,started:Date.now(),type:route.request().resourceType()});else pendingDropped++;
     try {
-     const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
-     if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Cold loaded byte mismatch '+key);
-     coldLoaded.add(key);
-     if(!hooked&&key.endsWith('/src/main.js')){
-      hooked=true;
-      // Observe the real G.env publication before the unmodified main module
-      // executes. No constructor, target factory, budget, or served bytes change.
-      try{await coldPage.evaluate(observeColdEnvironment,new URL('./core/ctx.js',response.url()).href);}
-      catch(error){coldEvaluationError??=error;throw error;}
-     }
-     await route.fulfill({response,body});
-     if(key.endsWith('/src/main.js'))mainReleased=true;
+     const key=await serveIdleArtifact(route,site,manifest,coldLoaded,async({key,url})=>{
+      if(!hooked&&key.endsWith('/src/main.js')){
+       hooked=true;
+       // Observe the real G.env publication before the unmodified main module
+       // executes. No constructor, target factory, budget, or served bytes change.
+       try{await coldPage.evaluate(observeColdEnvironment,new URL('./core/ctx.js',url).href);}
+       catch(error){coldEvaluationError??=error;throw error;}
+      }
+     });
+     if(key?.endsWith('/src/main.js'))mainReleased=true;
     }catch(error){errors.push('cold boot route: '+error.message);await route.abort();}
     finally{coldPending.delete(pendingKey);}
    });

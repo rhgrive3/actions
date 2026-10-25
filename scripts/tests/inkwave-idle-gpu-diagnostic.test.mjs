@@ -69,7 +69,11 @@ test('normal failure cleanup preserves primary unchanged and late owner completi
 });
 test('existing acceptance, timeout and 240-frame loop remain unchanged in repository',()=>{
  assert.match(source,/export const IDLE_OPERATION_TIMEOUT_MS=120000;/);assert.match(source,/export const RESULTS_WORK_TIMEOUT_MS=480000;/);
- assert.match(source,/frames:120,playing:sample\('playing'\),results:sample\('results'\)/);assert.match(source,/for\(let i=0;i<120;i\+\+\)/);
+ // The async-fence owner delegates both 120-frame states through the generator.
+ assert.match(source,/const sample=function\*\(next\)/);
+ assert.match(source,/const playing=yield\* sample\('playing'\),results=yield\* sample\('results'\);/);
+ assert.match(source,/return \{frames:120,playing,results,/);assert.match(source,/for\(let i=0;i<120;i\+\+\)/);
+ assert.match(source,/g\._frame\(1\/60\)/);
  assert.match(source,/if\(r.errors\?\.length\|\|!r.gpu\?\.webgl\?\.startsWith\('WebGL 2.0'\)\|\|!r.gpu.renderer\)throw Error\('Browser\/GPU errors'\)/);
 });
 

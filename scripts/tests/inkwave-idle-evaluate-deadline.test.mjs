@@ -4,10 +4,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import vm from 'node:vm';
 import {
   IDLE_OPERATION_TIMEOUT_MS, boundIdleEvaluations, runIdleProbe,
-  idleFailureReporter, closeIdleResources, primaryIdleFailure, closeProbeOwner,
+  idleFailureReporter, closeIdleResources, primaryIdleFailure, closeProbeOwner, serveIdleArtifact,
 } from '../check-inkwave-idle-resources.mjs';
 
 function clock() {
@@ -126,19 +127,22 @@ test('falsy thrown values remain failures and cyclic error causes cannot hang re
   const cyclic=new AggregateError([],'cyclic');cyclic.cause=cyclic;assert.equal(primaryIdleFailure(cyclic),cyclic);
 });
 
-test('actual cold route retains the original evaluation timeout instead of a later navigation error',async()=>{
+test('actual cold route retains the original evaluation timeout instead of a later navigation error',async t=>{
   const source=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8');
   const start=source.indexOf("await coldPage.route(address+'**',"),end=source.indexOf('\n   await coldPage.goto',start);
   assert(start>=0&&end>start);
   const callback=source.slice(start+"await coldPage.route(address+'**',".length,end).trim().replace(/\);$/,'');
   const timers=clock(),page=boundIdleEvaluations({evaluate:()=>new Promise(()=>{})},()=> 'cold-boot-mobile',timers);
-  const context={URL,Date,manifest:{artifacts:{}},coldPage:page,observeColdEnvironment(){},coldLoaded:new Set(),coldPending:new Map(),pendingSerial:0,pendingDropped:0,errors:[],hooked:false,mainReleased:false,coldEvaluationError:null};
+  const site=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'idle-cold-deadline-'))),key='_versions/r/src/main.js',body=Buffer.from('export const main=1;');
+  t.after(()=>fs.rmSync(site,{recursive:true,force:true}));fs.mkdirSync(path.dirname(path.join(site,key)),{recursive:true});fs.writeFileSync(path.join(site,key),body);
+  const manifest={artifacts:{[key]:crypto.createHash('sha256').update(body).digest('hex')}};
+  const context={URL,Date,site,manifest,serveIdleArtifact,coldPage:page,observeColdEnvironment(){},coldLoaded:new Set(),coldPending:new Map(),pendingSerial:0,pendingDropped:0,errors:[],hooked:false,mainReleased:false,coldEvaluationError:null};
   const route=vm.runInNewContext('('+callback+')',context);let aborted=0;
   const url='http://localhost/_versions/r/src/main.js';
-  const pending=route({request:()=>({url:()=>url,resourceType:()=> 'script'}),fetch:async()=>({url:()=>url,body:async()=>''}),fulfill:async()=>assert.fail('timed-out route cannot release main'),abort:async()=>{aborted++;}});
+  const pending=route({request:()=>({url:()=>url,method:()=> 'GET',resourceType:()=> 'script'}),fetch:()=>assert.fail('immutable main must not use an HTTP hop'),continue:()=>assert.fail('listed main must not bypass its observer'),fulfill:async()=>assert.fail('timed-out route cannot release main'),abort:async()=>{aborted++;}});
   await flush();timers.tick(120000);await pending;
   const original=context.coldEvaluationError;assert.equal(original.code,'INKWAVE_IDLE_EVALUATION_TIMEOUT');
-  assert.equal(aborted,1);assert.equal(context.coldPending.size,0);assert.equal(timers.pending.size,0);
+  assert.equal(aborted,1);assert.equal(context.mainReleased,false);assert.equal(context.coldPending.size,0);assert.equal(timers.pending.size,0);
   context.error=Error('later navigation timeout');
   const selection=source.match(/coldError=coldEvaluationError\?\?error;/)?.[0];assert(selection);
   vm.runInNewContext(selection,context);assert.equal(context.coldError,original);
