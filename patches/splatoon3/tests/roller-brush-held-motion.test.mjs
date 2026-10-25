@@ -150,13 +150,47 @@ test('catalogue vertical swings use admitted mode and original interval when the
 
 test('remote held-down rolling poses do not enable the ground-contact loop in air', async () => {
   const f = await production(), calls = [];
-  const actor = { remote: true, alive: true, grounded: false, _nearCamera: () => true,
-    net: { loops: {} }, weapon: { kind: 'roller', rollSpeed: 5 }, weaponRunner: { rolling: true },
-    vel: new f.THREE.Vector3(), pos: new f.THREE.Vector3() };
-  const net = { byNid: new Map([[1, actor]]), _voiceLoop(_a, _near, key, on) { calls.push([key, !!on]); return null; } };
-  f.NetMatch.prototype._voices.call(net, 1 / 60);
-  assert.deepEqual(calls.find(([key]) => key === 'roll'), ['roll', false]);
-  calls.length = 0; actor.grounded = true;
-  f.NetMatch.prototype._voices.call(net, 1 / 60);
-  assert.deepEqual(calls.find(([key]) => key === 'roll'), ['roll', true]);
+  const makeActor = isLocal => {
+    const actor = new f.Actor({ team: 0, name: 'remote held regression', isLocal, weapon: 'roller',
+      CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+    actor.nid = 17; actor.owner = 'owner'; actor.ink = 100;
+    actor.character.actor = actor; actor.character.onEvent = null; actor._nearCamera = () => true;
+    f.G.scene.add(actor.character.root);
+    return actor;
+  };
+  const owner = makeActor(true), actor = makeActor(false), packets = [];
+  f.G.actors = [owner, actor];
+  const members = new Set(['owner', 'viewer']), cfg = { id: 'held-contact', map: 'reef', difficulty: 'normal' };
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const sender = new f.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true, _members: members,
+    tr: { broadcast: msg => packets.push(clone(msg)), sendTo() {} } }, cfg);
+  sender.bind({ actors: [owner], state: 'playing', time: 180, opts: {} });
+  const receiver = new f.NetMatch({ myId: 'viewer', hostId: 'owner', isHost: false, _members: members,
+    tr: { broadcast() {}, sendTo() {} } }, cfg);
+  receiver.bind({ actors: [actor], state: 'playing', time: 180, opts: {} });
+  receiver._voiceLoop = (_a, _near, key, on) => { calls.push([key, !!on]); return null; };
+  const checkRoll = expected => {
+    calls.length = 0; receiver._voices(1 / 60);
+    assert.deepEqual(calls.find(([key]) => key === 'roll'), ['roll', expected]);
+  };
+  try {
+    actor.grounded = true; actor.weaponRunner.rolling = true;
+    checkRoll(false); // Grounded held state cannot substitute for an accepted snapshot.
+    owner.alive = true; owner.grounded = true; owner.weaponRunner.rolling = true;
+    sender._sendTick();
+    assert.ok(packets.length, 'real owner snapshot emitted');
+    const packet = packets.at(-1);
+    receiver.onMessage('owner', clone(packet));
+    receiver._peer('owner').tr = packet.ts;
+    receiver._sample(actor, packet.ts, 0);
+    assert.equal(actor.net.ready, true, 'received snapshot admitted and sampled');
+    actor.grounded = false;
+    checkRoll(false);
+    actor.grounded = true;
+    checkRoll(true);
+  } finally {
+    sender.dispose(); receiver.dispose();
+    f.G.actors = [];
+    for (const a of [owner, actor]) { f.G.scene.remove(a.character.root); a.character.dispose(); }
+  }
 });
