@@ -1,0 +1,126 @@
+name: INKWAVE isolated reticle visual review
+
+on:
+  push:
+    branches: ['improve/inkwave-weapon-reticles-20261025']
+    paths: ['diagnostics/inkwave-reticle-visuals.trigger.json']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inkwave-reticle-visual-review-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reticle-browser-review:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/improve/inkwave-weapon-reticles-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      BASELINE_SHA: 7f863ea2d65671abd1453fdae1b61de00f1d10e2
+      EVIDENCE: .qa-evidence/reticle-visual-review
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Pin and validate this isolated trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git show -s --format=fuller HEAD > "$EVIDENCE/candidate-commit.txt"
+          cp diagnostics/inkwave-reticle-visuals.trigger.json "$EVIDENCE/trigger.json"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const trigger=JSON.parse(fs.readFileSync('diagnostics/inkwave-reticle-visuals.trigger.json'));
+          assert.equal(trigger.schema,1);
+          assert.equal(trigger.baselineSha,process.env.BASELINE_SHA);
+          assert.equal(trigger.state,'run');
+          assert.equal(trigger.scope,'reticle-visual-review');
+          assert.equal(trigger.fullAcceptance,false);
+          NODE
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated browser toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 2>&1 | tee "$EVIDENCE/install.log"
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps chromium 2>&1 | tee "$EVIDENCE/browser-install.log"
+      - name: Verify runner and focused reticle contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
+      - name: Check out immutable main comparison
+        uses: actions/checkout@v4
+        with:
+          ref: 7f863ea2d65671abd1453fdae1b61de00f1d10e2
+          fetch-depth: 1
+          path: .reticle-baseline
+          persist-credentials: false
+      - name: Build exact production baseline and candidate
+        id: production-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .reticle-baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          git -C .reticle-baseline show -s --format=fuller HEAD > "$EVIDENCE/baseline-commit.txt"
+          ln -s "$GITHUB_WORKSPACE/node_modules" .reticle-baseline/node_modules
+          (cd .reticle-baseline && node scripts/build-inkwave.mjs inkwave-public "$RUNNER_TEMP/reticle-baseline-site") 2>&1 | tee "$EVIDENCE/baseline-build.log"
+          node scripts/build-inkwave.mjs inkwave-public "$RUNNER_TEMP/reticle-candidate-site" 2>&1 | tee "$EVIDENCE/candidate-build.log"
+      - name: Capture actual baseline game and production HUD
+        id: baseline-capture
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA="$BASELINE_SHA" node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-baseline-site" "$EVIDENCE/baseline" --before 2>&1 | tee "$EVIDENCE/baseline-capture.log"
+      - name: Capture actual candidate game and assert installed DOM/state
+        if: always() && steps.production-build.outcome == 'success'
+        id: candidate-capture
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-candidate-site" "$EVIDENCE/candidate" 2>&1 | tee "$EVIDENCE/candidate-capture.log"
+      - name: State narrow result, not full CI or retail equivalence
+        if: always() && steps.baseline-capture.outcome == 'success' && steps.candidate-capture.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const root=process.env.EVIDENCE;
+          const before=JSON.parse(fs.readFileSync(root+'/baseline/receipt.json'));
+          const after=JSON.parse(fs.readFileSync(root+'/candidate/receipt.json'));
+          assert.equal(before.status,'baseline-recorded');assert.equal(after.status,'passed');
+          assert.equal(before.sourceSha,process.env.BASELINE_SHA);assert.equal(after.sourceSha,process.env.SOURCE_SHA);
+          assert.equal(before.scenarios.length,after.scenarios.length);
+          const pairs=after.scenarios.filter(s=>s.files).map(s=>{
+            const other=before.scenarios.find(b=>b.viewportName===s.viewportName&&b.weaponId===s.weaponId&&b.phase===s.phase);
+            assert(other?.files);return {viewport:s.viewportName,weaponId:s.weaponId,phase:s.phase,before:other.files,after:s.files};
+          });
+          fs.writeFileSync(root+'/comparison-index.json',JSON.stringify({baselineSha:before.sourceSha,candidateSha:after.sourceSha,baselineContentHash:before.contentHash,candidateContentHash:after.contentHash,pairs,retailParity:'unverified',fullAcceptance:false},null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'Actual production reticle browser captures and focused DOM/state assertions passed. Inspect paired reticle crops and full frames in the artifact. Desktop 1280×720 DPR1 is the 720p reference view; mobile 844×390 DPR3 is additional coverage, not reference equality. Software GPU only; Nintendo pixel/behavior parity and full CI remain unverified.\n');
+          NODE
+      - name: Preserve screenshots, hidden diagnostics, logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reticle-visual-review-${{ github.sha }}
+          path: .qa-evidence/reticle-visual-review/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7

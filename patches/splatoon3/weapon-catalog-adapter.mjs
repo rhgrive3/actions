@@ -127,7 +127,7 @@ export function adaptWeaponCatalog(rel, code) {
       "const kindOf = (w) => (WEAPONS[w] && WEAPONS[w].kind) || w || 'shooter';",
       "const kindOf = (w) => (WEAPONS[w] && (WEAPONS[w].modelKind || WEAPONS[w].kind)) || w || 'shooter';",
       'HUD icon and model family');
-    return replaceOnce(code,
+    code = replaceOnce(code,
       '      const kind = (W && W.kind) || w;',
       `      const family = W?.behaviorKind || (W?.kind === 'catalog' ? W?.modelKind : W?.kind);
       const kind = family === 'stringer' || family === 'splatana' ? 'charger'
@@ -135,6 +135,10 @@ export function adaptWeaponCatalog(rel, code) {
         : family === 'brella' ? 'shooter'
         : family || w;`,
       'HUD weapon reticle behavior family');
+    // Install after the final composed HUD class is evaluated. Gameplay family
+    // mapping and all existing source-composition anchors remain untouched.
+    return "import { installWeaponReticlePresentation } from '../../patches/local-quality/weapon-reticle-installer.mjs';\n" + code +
+      "\ninstallWeaponReticlePresentation(HUD, WEAPONS);\n";
   }
 
   if (rel === 'src/main.js') {
