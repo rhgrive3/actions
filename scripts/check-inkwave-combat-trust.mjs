@@ -62,7 +62,7 @@ try{
       },netMatchGo(){G.match.state='playing';},netMatchAborted(){}};
     G.net=new NetSession();globalThis.step=()=>{clock+=1000/60;G.time+=1/60;G.net.update(1/60);};
     // Same placement on both clients (this fake match never runs applyRemote).
-    globalThis.place=(victimX=0)=>{const [a,v]=G.actors;a.pos.set(0,0,0);v.pos.set(victimX,0,10);a.aimDir.set(0,0,1);a.aimPoint.set(victimX,1,10);G.projectiles.clear();};
+    globalThis.place=(victimX=0)=>{const [a,v]=G.actors;a.pos.set(0,0,0);v.pos.set(victimX,0,10);a.aimDir.set(victimX,0,10).normalize();a.aimPoint.set(victimX,1,10);G.projectiles.clear();};
    });
   }
   const [host,guest]=pages,code=await host.evaluate(()=>G.net.create('Owner'));

@@ -9,7 +9,8 @@ import { adaptQueueNetworkUi } from '../queue-network-ui-adapter.mjs';
 const compositionURL = new URL('../../../scripts/inkwave-source-composition.mjs', import.meta.url);
 const composition = fs.readFileSync(compositionURL, 'utf8')
   .replace("import { adaptQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs';",
-    'export const observedQueueInputs = new Map(); const adaptQueueNetworkUi = (rel, code) => { observedQueueInputs.set(rel, code); return code; };')
+    "import { adaptQueueNetworkUi as realQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs'; " +
+    'export const observedQueueInputs = new Map(); const adaptQueueNetworkUi = (rel, code) => { observedQueueInputs.set(rel, code); return realQueueNetworkUi(rel, code); };')
   .replace(/from '([^']+)'/g, (_match, specifier) => "from '" + new URL(specifier, compositionURL).href + "'");
 const observed = await import('data:text/javascript;base64,' + Buffer.from(composition).toString('base64'));
 function input(rel) {
