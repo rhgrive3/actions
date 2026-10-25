@@ -29,12 +29,20 @@ intervals are about 25.85 and 45.10 seconds, not an expired 120-second GPU-query
 deadline. This candidate removes an unnecessary synchronization hazard, but is
 not proof that the original run would never have completed without shutdown.
 Machine-readable excerpts and full-log SHA256s accompany this report.
+The stack identifies a pending `page.evaluate`, not a browser-side instruction
+pointer: there are no entry/exit markers distinguishing evaluate dispatch,
+getExtension, VERSION, and renderer-string retrieval. A delayed renderer task
+or command queue cannot be distinguished from a blocked getParameter here.
 
 General rationale (not incident proof):
 [MDN WebGL best practices](https://github.com/mdn/content/blob/main/files/en-us/web/api/webgl_api/webgl_best_practices/index.md)
 describes possible flush/round-trip synchronization in getParameter;
 [Emscripten Optimizing WebGL](https://emscripten.org/docs/optimizing/Optimizing-WebGL)
 recommends obtaining and caching static GL state during startup/loading.
+The inspected [Chromium implementation](https://github.com/chromium/chromium/blob/main/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc)
+implements isContextLost as a local context-loss-mode comparison, whereas the
+identity queries reach GetString. This is supporting source-level rationale,
+not a profile of the pinned CI binary or a universal driver guarantee.
 
 ## Minimal candidate
 
@@ -75,8 +83,46 @@ comparison ledger is unaffected. No model editing/comparison or Discord work.
   the supported PLAYWRIGHT_MODULE hook (only executablePath differs). It is
   not equivalent to CI-pinned browser acceptance. Browser runs are recorded
   separately below once complete.
-- No remote branch, PR-head/main update, workflow dispatch or rerun performed.
-  Parent owns publication/integration. Official final-head CI remains required.
+- At the parent's explicit follow-up request, pushed dedicated candidate branch
+  `fix/inkwave-idle-gpu-probe-20261025` and read it back through GitHub connector
+  at `7ae14508f746828ef7def6ebb95600ccd8cff1fc` (code commit 6890cd67 plus evidence).
+  **Candidate full browser verification is in progress**, on that committed
+  verifier in a fresh profile. No PR-head/main update, PR creation, workflow
+  dispatch or rerun performed. Parent owns integration. Official CI is required.
 
 Full local evidence: `/workspace/inkwave-idle-evidence/` (original logs, build log,
 test output, browser install failure, browser receipts and adapter).
+
+## Full browser baseline
+
+The unmodified b57 verifier passed the full exact-source probe on system
+Chromium 154.0.8037.57. All cloud, far-stage, pause, audio, 240-frame results,
+GPU identity, desktop retirement and fresh cold-mobile checks completed.
+Thus the CI failure is **not reproduced locally**. There is no measured proof
+that this candidate fixes the runner shutdown or improves wall time.
+
+Baseline playing/results: 120 frames each; world renders 120/120; actor updates
+960/0; projectile, paint and FX work 120/0 each; GPU submissions 15579/12290.
+CPU submission times: 76437.9 / 81495.5 ms. Results-state console emission wall
+time: 1147.6 ms; renderer wall: 79767.9 ms; observed draw calls: 4964.8 ms.
+These numbers are not GPU execution time or device FPS. All 15226 critical
+diagnostics were accepted, zero rejected/invalid, no truncation (the intentionally
+bounded retained ring contains the final 256 events). Container memory.events
+showed zero OOM/OOM-kill; sampled memory.peak was 2840821760 bytes. This does not
+rule out memory pressure on the independent GitHub runner.
+
+Reproduce using Playwright 1.62.1 and the supported `PLAYWRIGHT_MODULE` adapter
+in the evidence package (which only supplies `/usr/bin/chromium` as executable):
+
+```sh
+PLAYWRIGHT_MODULE=/workspace/inkwave-idle-evidence/system-playwright.mjs \
+node scripts/check-inkwave-idle-resources.mjs \
+  --site /workspace/inkwave-idle-site \
+  --evidence-dir /workspace/inkwave-idle-evidence/b57-system \
+  --profile-dir /workspace/inkwave-idle-evidence/profile-b57-system --exact-source
+```
+
+An attempted shell timing invocation for the candidate initially failed because
+`/usr/bin/time` is absent (no verifier execution). It was replaced with Bash's
+`time`; this changes no browser or verifier options. The candidate then runs
+sequentially after baseline, using a fresh profile and the same artifact.
