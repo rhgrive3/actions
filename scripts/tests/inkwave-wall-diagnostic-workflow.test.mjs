@@ -234,11 +234,21 @@ function canonicalCircleAdditions(body,name) {
  return body;
 }
 
+// The core gate reads this exact CircleCI config before dependency setup.
+// Invert only its reviewed, singular checkout addition; never replace a job pin.
+const reviewedCoreSparseInputs = '            /.github/\n            /.circleci/config.yml\n            /inkwave-public/\n';
+function canonicalCoreSparseInputs(body) {
+  assert.equal(body.split(reviewedCoreSparseInputs).length, 2, 'exact reviewed core config checkout and placement required');
+  assert.equal(body.split('            /.circleci/config.yml\n').length, 2, 'core config checkout must occur once');
+  return body.replace(reviewedCoreSparseInputs, '            /.github/\n            /inkwave-public/\n');
+}
+
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     let body = canonicalCircleAdditions(job(text,name),name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
       .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
     if (name === 'validate_core') {
+      body = canonicalCoreSparseInputs(body);
       body = canonicalCoreBrowserInstall(body);
       body = canonicalQueueCoreBody(body);
       body = canonicalCoreEvidence(body);
@@ -313,4 +323,19 @@ test('reviewed core browser provisioning rejects missing, altered, relocated and
  for(const [before,after] of edits){const changed=workflow.replace(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verifyAcceptedJobs(changed));}
  const relocated=workflow.replace(reviewedCoreBrowserInstall,'').replace('      - name: Verify local quality regressions\n',reviewedCoreBrowserInstall+'      - name: Verify local quality regressions\n');
  assert.notEqual(relocated,workflow);assert.throws(()=>verifyAcceptedJobs(relocated));
+});
+
+
+test('reviewed core config checkout rejects omission, duplication, relocation and broader inputs',()=>{
+  for(const replacement of [
+    '            /.github/\n            /inkwave-public/\n',
+    '            /.github/\n            /.circleci/config.yml\n            /.circleci/config.yml\n            /inkwave-public/\n',
+    '            /.github/\n            /inkwave-public/\n            /.circleci/config.yml\n',
+    '            /.github/\n            /.circleci/\n            /inkwave-public/\n',
+    '            /.github/\n            /.circleci/config.yml\n            /.circleci/unreviewed.yml\n            /inkwave-public/\n',
+    '            /.github/\n            # /.circleci/config.yml\n            /inkwave-public/\n',
+  ]){
+    const changed=workflow.replace(reviewedCoreSparseInputs,replacement);
+    assert.notEqual(changed,workflow);assert.throws(()=>verifyAcceptedJobs(changed));
+  }
 });

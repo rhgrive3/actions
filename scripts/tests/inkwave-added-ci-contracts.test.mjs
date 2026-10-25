@@ -27,13 +27,31 @@ test('required checks keep their identities and cancellation cannot skip the req
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
 });
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
-function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>m[1]);}
+// Only Validate core executes the CircleCI parity gate that reads this config.
+const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
+function assertCurrentCheckouts(name,source,count){
+ const blocks=checkouts(source);assert.equal(blocks.length,count);
+ if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+}
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
- for(const[name,count]of[['validate-inkwave-update.yml',10],['inkwave-main-weapons.yml',4]]){
-  const blocks=checkouts(read(name));assert.equal(blocks.length,count);
-  for(const block of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,profile);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
- }
+ for(const[name,count]of[['validate-inkwave-update.yml',10],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
  const weapon=read('inkwave-main-weapons.yml');assert.match(weapon,/ref: 83f27e5d59db944458a85122a95d1154e3543393[\s\S]*path: work\/roller-grip-baseline/);assert.match(weapon,/git fetch --no-tags --depth=1 origin "\$DIFF_BASE"/);
+});
+test('exact job-bound sparse profiles reject missing, unexpected and misplaced CircleCI inputs',()=>{
+ const name='validate-inkwave-update.yml',source=read(name),circle='            /.circleci/config.yml\n';
+ assertCurrentCheckouts(name,source,10);
+ for(const altered of [
+  source.replace(circle,''),
+  source.replace(circle,circle+'            /unexpected-input/\n'),
+  source.replace(circle,circle+circle),
+  source.replace(circle+'            /inkwave-public/\n','            /inkwave-public/\n'+circle),
+  source.replace('  validate_core:\n','  renamed_core:\n'),
+  source.replace('            /.github/\n','            /.github/\n'+circle),
+ ]){assert.notEqual(altered,source);assert.throws(()=>assertCurrentCheckouts(name,altered,10));}
+ const weapon=read('inkwave-main-weapons.yml');
+ assert.throws(()=>assertCurrentCheckouts('inkwave-main-weapons.yml',weapon.replace('            /.github/\n','            /.github/\n'+circle),4));
 });
 function matches(pattern,file){let out='^';for(let i=0;i<pattern.length;i++){const c=pattern[i];if(c==='*'){if(pattern[i+1]==='*'){out+='.*';i++;}else out+='[^/]*';}else if(c==='?')out+='[^/]';else out+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}return new RegExp(out+'$').test(file);}
 function paths(source,event){const section=event==='push'?source.slice(source.indexOf('  push:'),source.indexOf('  pull_request:')):source.slice(source.indexOf('  pull_request:'),source.indexOf('  workflow_dispatch:'));return [...section.matchAll(/^      - '([^']+)'$/gm)].map(m=>m[1]);}

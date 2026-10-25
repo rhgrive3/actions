@@ -17,8 +17,14 @@ function step(text,name){
  const start=text.indexOf(marker),next=text.indexOf('\n      - ',start+marker.length);
  return text.slice(start,next<0?text.length:next+1);
 }
+const CAPTURE_LABEL_EDIT=["    name: Compare all 48 original native captures\n","    name: Compare all 52 original native captures\n"];
 function verifyWorkflow(text){
- let original=text;
+ // The approved protocol-2 scenario adds four captures; normalize only its
+ // exact display label while retaining the original historical byte seal.
+ const [oldLabel,newLabel]=CAPTURE_LABEL_EDIT;
+ assert.equal(text.split(newLabel).length,2,'one exact reviewed 52-capture display label');
+ assert.equal(text.split(oldLabel).length,1,'legacy 48-capture display label is not current protocol');
+ let original=text.replace(newLabel,oldLabel);
  for(const [before,after]of [...EDITS].reverse()){
   assert.equal(original.split(after).length,2,'exact singular reviewed route edit');
   original=original.replace(after,before);
@@ -31,6 +37,15 @@ function verifyWorkflow(text){
  assert(at(sourceName)<at(buildName));return true;
 }
 test('PR1869 wiring retains every original workflow byte and native capture/comparison command',()=>verifyWorkflow(workflow));
+
+test('only the exact reviewed 52-capture display label is normalized; original seal and commands stay closed',()=>{
+ assert.equal(verifyWorkflow(workflow),true);
+ const [oldLabel,newLabel]=CAPTURE_LABEL_EDIT;
+ for(const value of ['48','51','53','052'])assert.throws(()=>verifyWorkflow(workflow.replace(newLabel,newLabel.replace('52',value))));
+ assert.throws(()=>verifyWorkflow(workflow.replace(newLabel,newLabel+newLabel)),'duplicate label');
+ assert.throws(()=>verifyWorkflow(workflow.replace(' --require-complete','')),'command drift');
+ assert.throws(()=>verifyWorkflow(workflow.replace('--mode candidate','--mode baseline')),'capture mode drift');
+});
 test('source, replay, build, identity, receipt and native capture mutations fail closed',()=>{
  const edits=[
   ['fix/inkwave-ci-composed-regressions-20261024','fix/unreviewed'],
