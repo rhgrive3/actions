@@ -53,6 +53,10 @@ on:
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
+      - 'patches/splatoon3/tests/shooter-muzzle-droplets.test.mjs'
+      - 'patches/splatoon3/tests/splatling-cosmetics.test.mjs'
+      - 'patches/splatoon3/tests/firing-cosmetics-budget.test.mjs'
+      - 'patches/splatoon3/tests/firing-cosmetics-wire.test.mjs'
       - 'scripts/tests/inkwave-added-ci-contracts.test.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   pull_request:
@@ -107,6 +111,10 @@ on:
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
+      - 'patches/splatoon3/tests/shooter-muzzle-droplets.test.mjs'
+      - 'patches/splatoon3/tests/splatling-cosmetics.test.mjs'
+      - 'patches/splatoon3/tests/firing-cosmetics-budget.test.mjs'
+      - 'patches/splatoon3/tests/firing-cosmetics-wire.test.mjs'
       - 'scripts/tests/inkwave-added-ci-contracts.test.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
