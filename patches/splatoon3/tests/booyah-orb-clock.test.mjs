@@ -16,7 +16,7 @@ function orb(raw = source) {
   assert.ok(actor.startsWith('  booyahBomb: {') && shell.startsWith('  shell(add,'));
   const clamp01 = n => Math.max(0, Math.min(1, n));
   const api = Function('clamp01', 'easeOut', 'vfxRandom', 'SHELL', 'DISC', 'nonWailVfxTicks', transformBody(`return {${shell},${actor}};`))(clamp01, n => 1 - (1 - clamp01(n)) ** 3, () => 0.5, {ORB: 0}, {RUNE: 0}, nonWailVfxTicks);
-  const pool = {add(life, values, follow) { return {life, v: new Float32Array(values), t: 0, follow}; }};
+  const pool = {addRaw(life, ...values) { const follow=values.pop(); assert.equal(values.length,16); assert.equal(typeof follow,'function'); return {life, v: new Float32Array(values), t: 0, follow}; }};
   const director = {kit:{shells:pool}, time:0, v:[{set(x,y,z){Object.assign(this,{x,y,z});return this;}}], up:{}, hdr:c=>c, shell:api.shell, disc:()=>({})};
   const actorState = {pos:{x:2,y:3,z:4},_s3AllSpecialState:{charge:0.5}};
   const track={color:[1,0,0],d:{},start:0};

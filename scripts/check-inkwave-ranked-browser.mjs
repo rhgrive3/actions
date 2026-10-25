@@ -8,6 +8,7 @@ import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+import {installRankedLiveAudioReader} from './lib/ranked-live-audio.mjs';
 const site=path.resolve(process.argv[2]||'_site-ranked'),out=path.resolve(process.argv[3]||'reports/ranked-browser');fs.mkdirSync(out,{recursive:true});
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const publicUrl=process.env.RANKED_PUBLIC_URL;
@@ -105,10 +106,11 @@ async function checkRankedRemoteContactGear(host, guest, save) {
      const row=packet.a?.find(row=>row[0]===a.nid);if(row){state.wire.push({ts:packet.ts,f:row[10],life:packet.l?.[a.nid],gear:packet.gg?.[a.nid]??null});if(state.wire.length>64)state.wire.shift();}}}
     return result;
    };
-   // Observe actual AudioEngine.loop handles, not loopWeapon's pending loader
-   // wrapper. All calls still reach the unmodified real WebAudio implementation.
+   // Retain public request handles for exact cleanup. The installed reader
+   // resolves their owned live voices in AudioEngine.loops; loader/request
+   // wrappers alone never qualify. Calls still reach real WebAudio unchanged.
    G.audio.loop=function(name,options,...args){const h=state.loop.call(this,name,options,...args);
-    if(h&&options?.actor?.remote){const record={nid:options.actor.nid,name,handle:h,volume:options.volume??1,stops:0};state.audio.push(record);
+    if(h&&options?.actor?.remote){const record={nid:options.actor.nid,name,options,handle:h,volume:options.volume??1,stops:0};state.audio.push(record);
      const set=h.set,stop=h.stop;h.set=function(p,...rest){if(p?.volume!=null)record.volume=p.volume;return set.call(this,p,...rest);};
      h.stop=function(...rest){record.stops++;return stop.apply(this,rest);};}
     return h;
@@ -117,7 +119,7 @@ async function checkRankedRemoteContactGear(host, guest, save) {
     return {nid,owner:actor.owner,remote:actor.remote,alive:actor.alive,weapon:actor.weaponId,grounded:actor.grounded,held:!!actor.weaponRunner.rolling,
      suspended:actor.weaponRunner.s3RollerSuspendedHold===true,ready:!!actor.net?.ready,f:cur?.f??null,sampledOwner:cur?.rollerContactOwner??null,
      life:actor.netLife,sampledLife:cur?.life??null,near:actor._nearCamera(),rollLoop:!!actor.net?.loops?.roll?.playing,
-     realRollLoops:state.audio.filter(r=>r.nid===nid).map(r=>({name:r.name,volume:r.volume,playing:r.handle.playing,registered:G.audio.loops.has(r.handle),stops:r.stops})),
+     realRollLoops:state.readAudio(nid),
      audioState:G.audio.ctx?.state??'none',audioTime:G.audio.ctx?.currentTime??null,
      equipment:objectShredderEquipped(actor),gearOverride:typeof actor.s3?.objectHitGear==='boolean'?actor.s3.objectHitGear:null,proof:proof?{...proof}:null,acceptedSequence:actor.net?._adoptionSeq??null,
      sampledGear:cur?.adoption?.gear?.loadout?.[2]?.main??null,turret:!!actor.character.s3RemoteTurretPose};
@@ -126,6 +128,7 @@ async function checkRankedRemoteContactGear(host, guest, save) {
    return {nid:a.nid,owner:a.owner,weapon:a.weaponId,position:state.position,yaw:state.yaw};
   },previousFrozen[index])));
   assert.equal(identities[0].weapon,'roller');assert.equal(identities[1].weapon,'dualies');
+  await Promise.all(pages.map(p=>p.evaluate(installRankedLiveAudioReader)));
   // A real browser gesture unlocks the real context. No silent/mock handles or
   // autoplay policy relaxation qualify as the positive audio control.
   for(const p of pages){await p.mouse.click(12,12);await p.waitForFunction(()=>RG.audio.ctx?.state==='running',null,timeout);}

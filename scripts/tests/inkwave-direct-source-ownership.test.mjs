@@ -130,7 +130,11 @@ test('PropKit atlas, lifetime and rematch behavior are authored in the real modu
   assert.match(worldProps, /import \{ G as propAtlasGame \} from '\.\.\/core\/ctx\.js'/);
   assert.match(worldProps, /_replayBuckets\(\)/);
   assert.match(worldProps, /this\._buckets\.clear\(\);\s*this\._released = true/);
-  assert.match(worldProps, /build\(\) \{\s*syncPropAtlas\(this\)/);
+  // Both entrypoints must consume the same authored generator, whose first action
+  // synchronizes the atlas. Do not mistake sliced builds for a removed sync.
+  assert.match(worldProps, /build\(\) \{ const steps = this\._buildSteps\(\); let next; do \{ next = steps\.next\(\); \} while \(!next\.done\); return next\.value; \}/);
+  assert.match(worldProps, /async buildAsync\(options\) \{ return runBuildSlices\(this\._buildSteps\(\), options\); \}/);
+  assert.match(worldProps, /\*_buildSteps\(\) \{\s*syncPropAtlas\(this\)/);
   assert.match(worldProps, /update\(dt, time\) \{\s*syncPropAtlas\(this\)/);
   assert.match(worldProps, /this\._propAtlasRedraw = null/);
   assert.doesNotMatch(worldProps, /PropKit\.prototype\./);

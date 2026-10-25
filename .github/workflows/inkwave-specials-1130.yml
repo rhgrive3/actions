@@ -114,6 +114,7 @@ jobs:
           node --experimental-vm-modules --test --test-concurrency=2 \
             patches/splatoon3/tests/area-special-vfx-clock.test.mjs \
             patches/splatoon3/tests/booyah-orb-clock.test.mjs \
+            scripts/tests/inkwave-special-frame-extraction.test.mjs \
             patches/splatoon3/tests/projectile-special-vfx-clock.test.mjs \
             patches/splatoon3/tests/special-crab-ribbon-lifetime.test.mjs \
             patches/splatoon3/tests/support-special-vfx-cadence.test.mjs \

@@ -142,7 +142,19 @@ function nativeProjectiles(context, G) {
     else context[s.local.name] = () => {
     };
   }
-  vm.runInContext(`globalThis.TestProjectiles=class {${methods.map((n) => weapons.slice(n.start, n.end)).join("\n")}};`, context);
+  // Methods may call module-local helpers after production composition. Keep
+  // their exact emitted bodies and transitive local function dependencies;
+  // imported physics/metadata sinks above remain explicitly outside this test.
+  const functions = new Map(tree.body.filter(n => n.type === 'FunctionDeclaration').map(n => [n.id.name,n]));
+  const dependencies = new Map();
+  const visit = node => {
+    for (const call of nodes(node, n => n.type === 'CallExpression' && n.callee.type === 'Identifier')) {
+      const name=call.callee.name, fn=functions.get(name);
+      if (fn && !dependencies.has(name)) { dependencies.set(name,fn); visit(fn); }
+    }
+  };
+  methods.forEach(visit);
+  vm.runInContext(`${[...dependencies.values()].map(n => weapons.slice(n.start,n.end)).join('\n')}\nglobalThis.TestProjectiles=class {${methods.map((n) => weapons.slice(n.start, n.end)).join("\n")}};`, context);
   return context.TestProjectiles;
 }
 async function vacFixture(mutation) {
