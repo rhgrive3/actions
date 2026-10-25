@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { REQUIRED_LANES, statusLaneName, summarizeCircleCI } from '../ci/check-circleci-offload.mjs';
+import { REQUIRED_LANES, statusLaneName, summarizeCircleCI, evaluateOffloadEvidence } from '../ci/check-circleci-offload.mjs';
 
 const sha = 'a'.repeat(40);
 
@@ -43,4 +43,54 @@ test('latest failure replaces older success for a lane on the same SHA', () => {
 test('a merely queued CircleCI check never marks the offload complete', () => {
   const checks = [{app:{slug:'circleci'},name:'browser-network',head_sha:sha,status:'in_progress',conclusion:null}];
   assert.equal(summarizeCircleCI(checks,[],sha)['browser-network'], 'pending');
+});
+
+test('Nine independent green job statuses alone do not prove the eight-way patch fan-in', () => {
+  const statuses = REQUIRED_LANES.map(name => ({context:'ci/circleci: '+name, sha, state:'success'}));
+  assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'pending');
+});
+
+test('Final CircleCI DAG receipt proves all required upstream patch and browser jobs passed', () => {
+  const statuses = [{context:'ci/circleci: offload-complete',sha,state:'success',
+    updated_at:'2026-10-25T05:40:00Z'}];
+  assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'success');
+  assert.match(evaluateOffloadEvidence([],statuses,sha).via,/final DAG/);
+});
+
+test('Only exact source SHA can admit the final DAG receipt', () => {
+  const statuses = [{context:'ci/circleci: offload-complete',sha:'b'.repeat(40),state:'success'}];
+  assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'pending');
+  assert.equal(evaluateOffloadEvidence([],[{context:'ci/other: offload-complete',sha,state:'success'}],sha).state,'pending');
+});
+
+test('CircleCI workflow-level GitHub Checks can replace job-level statuses', () => {
+  const checks = [{app:{slug:'circleci-checks'},head_sha:sha,
+    name:'ink-wave-ci-offload-a1234567',status:'completed',conclusion:'success',
+    completed_at:'2026-10-25T05:45:00Z'}];
+  assert.equal(evaluateOffloadEvidence(checks,[],sha).state,'success');
+});
+
+test('Green setup workflow and spoofed GitHub Actions checks do not admit offload', () => {
+  const checks = [
+    {app:{slug:'circleci-checks'},head_sha:sha,name:'detect-inkwave-changes',
+      status:'completed',conclusion:'success'},
+    {app:{slug:'github-actions'},head_sha:sha,name:'ink-wave-ci-offload',
+      status:'completed',conclusion:'success'}
+  ];
+  assert.equal(evaluateOffloadEvidence(checks,[],sha).state,'pending');
+});
+
+test('Failed and pending full-workflow results are never green', () => {
+  const check = {app:{slug:'circleci-checks'},head_sha:sha,name:'ink-wave-ci-offload',
+    status:'completed',conclusion:'failure',completed_at:'2026-10-25T05:42:00Z'};
+  assert.equal(evaluateOffloadEvidence([check],[],sha).state,'failure');
+  assert.equal(evaluateOffloadEvidence([{...check,status:'in_progress',conclusion:null}],[],sha).state,'pending');
+});
+
+test('Successful rerun fan-in supersedes older failed patch status on same SHA', () => {
+  const statuses = [
+    {context:'ci/circleci: patch-regressions',sha,state:'failure',updated_at:'2026-10-25T04:00:00Z'},
+    {context:'ci/circleci: offload-complete',sha,state:'success',updated_at:'2026-10-25T05:00:00Z'}
+  ];
+  assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'success');
 });

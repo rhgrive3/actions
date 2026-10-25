@@ -48,7 +48,9 @@ content hash and the original native CI receipt are checked for every suite.
    The switch is intentionally OFF by default.
 5. Verify one new test PR. In normal PR mode, GitHub now skips 8 patches
    and 7 browser lanes and instead runs a fail-closed CircleCI check gate.
-   That gate requires all nine CircleCI job statuses on the EXACT PR SHA;
+   That gate requires CircleCI's exact-SHA offload-complete job (which
+   depends on all eight patch shards, the shared build, and seven browsers)
+   or the trusted full-workflow GitHub Check on the EXACT PR SHA;
    incomplete, stale, failed, or unrelated results cannot pass.
    GitHub still runs the immutable core and its final Validate gate.
 
@@ -63,7 +65,10 @@ ordinary PR CircleCI transfer.
 
 - Current CircleCI pipeline execution has NOT been independently observed.
 - The browser Linux and WebGL environment needs at least one actual green run.
-- Do not activate until the CircleCI status names are verified by the gate.
+- Do not activate until the CircleCI final DAG receipt / workflow Check appears
+  for the tested commit. The initial dynamic-filter setup passing is not proof.
+- The path-filtering orb uses version 2 to avoid outdated Python package
+  installation issues on current build images.
 - The GitHub gate uses at most one verifier job, waiting up to 75 minutes;
   it replaces 15 heavy duplicated GitHub compute lanes while enabled.
 - CircleCI Free advertises 30 concurrent jobs, but large workers burn more
