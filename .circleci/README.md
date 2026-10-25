@@ -85,3 +85,7 @@ Resources:
 https://circleci.com/docs/guides/optimize/parallelism-faster-jobs/
 https://circleci.com/docs/reference/configuration-reference/
 https://circleci.com/docs/guides/plans-pricing/credits/
+
+The source-status gate also invalidates an earlier successful full-workflow
+receipt if a later CircleCI run or canceled shard appears on the same SHA;
+it cannot use stale green results to certify an unfinished rerun.

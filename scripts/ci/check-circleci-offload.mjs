@@ -101,6 +101,22 @@ export function evaluateOffloadEvidence(checkRuns, statuses, sha) {
   proofs.sort((a,b)=>a.recorded-b.recorded);
   const proof=proofs.at(-1);
   const latestLaneFailure=Object.entries(lanes).filter(([,x])=>level(x)==='failure').map(([lane])=>lane);
+  // An earlier all-green fan-in cannot certify a later rerun on the SAME SHA.
+  // This also catches a new path-filter setup/pending job whose CircleCI final
+  // DAG completion has not arrived. Treat any newer failure as failure, other
+  // newer activity as pending. Do not silently reuse an older success.
+  const laterActivity = [
+    ...statuses.filter(x => x.sha === sha && /^ci\/circleci:/i.test(x.context || ''))
+      .map(x => ({ recorded:timestamp(x.updated_at || x.created_at), state:level(x.state), source:x.context })),
+    ...checkRuns.filter(x => x.head_sha === sha && trustedApp(x.app?.slug))
+      .map(x => ({ recorded:timestamp(x.completed_at || x.started_at || x.created_at),
+        state:level(x.status === 'completed' ? x.conclusion : 'pending'), source:x.name }))
+  ].filter(x => proof && x.recorded > proof.recorded);
+  if (proof?.state === 'success' && laterActivity.length) {
+    if (laterActivity.some(x => x.state === 'failure'))
+      return {state:'failure',via:'newer CircleCI result after previous full-suite pass',lanes};
+    return {state:'pending',via:'new CircleCI run superseded previous full-suite pass',lanes};
+  }
   // Earlier failed shard receipts can legitimately remain on the SHA after a
   // successful rerun, so a NEW authoritative green fan-in proves recovery.
   if (proof?.state === 'success') return {state:'success',via:proof.via,lanes};

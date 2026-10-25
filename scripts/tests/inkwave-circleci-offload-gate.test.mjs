@@ -94,3 +94,30 @@ test('Successful rerun fan-in supersedes older failed patch status on same SHA',
   ];
   assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'success');
 });
+
+
+test('an older full-suite success cannot certify a later canceled same-SHA run', () => {
+  const statuses=[
+    {context:'ci/circleci: offload-complete',sha,state:'success',updated_at:'2026-10-25T04:00:00Z'},
+    {context:'ci/circleci: patch-regressions',sha,state:'error',updated_at:'2026-10-25T05:00:00Z'}
+  ];
+  assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'failure');
+});
+
+test('a newer same-SHA setup rerun invalidates the previous full-suite receipt', () => {
+  const statuses=[
+    {context:'ci/circleci: offload-complete',sha,state:'success',updated_at:'2026-10-25T04:00:00Z'},
+    {context:'ci/circleci: detect-native-changes',sha,state:'pending',updated_at:'2026-10-25T05:00:00Z'}
+  ];
+  assert.equal(evaluateOffloadEvidence([],statuses,sha).state,'pending');
+});
+
+test('a newer trusted workflow check cannot inherit an older successful workflow status', () => {
+  const checks=[
+    {app:{slug:'circleci-checks'},head_sha:sha,name:'ink-wave-ci-offload old',
+      status:'completed',conclusion:'success',completed_at:'2026-10-25T04:00:00Z'},
+    {app:{slug:'circleci-checks'},head_sha:sha,name:'detect-inkwave-changes',
+      status:'in_progress',conclusion:null,started_at:'2026-10-25T05:00:00Z'}
+  ];
+  assert.equal(evaluateOffloadEvidence(checks,[],sha).state,'pending');
+});
