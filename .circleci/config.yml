@@ -94,6 +94,7 @@ jobs:
           root: .
           paths:
             - .built-site
+            - node_modules
 
   browser-lane:
     parameters:
@@ -126,7 +127,8 @@ jobs:
           no_output_timeout: 20m
           command: |
             set -euo pipefail
-            npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+            # The exact pinned npm dependencies are shared by build-native-site.
+            node -e "const p=require('playwright/package.json'); if(p.version!=='1.62.1') process.exit(1)"
             sudo python3 scripts/prepare-inkwave-ci-apt.py
             export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browser-cache"
             npx playwright install --with-deps chromium webkit
