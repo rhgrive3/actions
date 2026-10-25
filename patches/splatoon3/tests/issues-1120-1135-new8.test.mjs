@@ -123,7 +123,11 @@ test('#1134 Charger actor candidates are clipped strictly before the nearest def
   const code = readPatch('patches/splatoon3/runtime/weapons-charger-flight.mjs');
   assert.ok(code.includes('if(chargerActorBeforeStop(t,length,distance)){'), 'strict defense clipping still gates each actor');
   assert.ok(code.includes('row.actor=actor;row.d=t*length;actors.push(row);'), 'pooled hit-candidate rows preserve ordered actor and distance');
-  assert.ok(code.indexOf('const defense=system.kitDefenseCandidate') < code.indexOf('const actors=job.hitCandidates'),
+  // Optimized flights lease pooled candidate rows. The defense must resolve
+  // before that lease admits any actor; the old allocation site is now gone.
+  const defenseAt = code.indexOf('const defense=system.kitDefenseCandidate');
+  const candidateAt = code.indexOf('const lease=leases[depth]');
+  assert.ok(defenseAt >= 0 && candidateAt > defenseAt,
     'defense stop distance is resolved before actor candidates are admitted');
 });
 
