@@ -24,7 +24,7 @@ test('whole-tree admission permits only named QA controls, never production, rep
   const changed=base.map(x=>({...x}));const found=changed.find(x=>x.path===name);if(found)found.sha='b'.repeat(40);else changed.push(row(name));assert.throws(()=>assertReviewedTree(base,changed));
  }
  for(const name of CONTROL_PATHS)assert.throws(()=>assertReviewedTree(base,base.filter(x=>x.path!==name)),/every closed QA control must exist/);
- assert.equal(CONTROL_PATHS.length,24);
+ assert.equal(CONTROL_PATHS.length,25);
  assert.throws(()=>assertReviewedTree(base,base.map(x=>x.path===allowed?{...x,mode:'100755'}:x)));
  assert.throws(()=>assertReviewedTree(base,[...base,{...base[0]}]));
  assert.equal(new Set(CONTROL_PATHS).size,CONTROL_PATHS.length);assert.equal(PAINT_PATHS.length,13);assert.equal(new Set(PAINT_PATHS).size,13);
@@ -138,7 +138,7 @@ test('explicit controls inside excluded test directories remain mandatory physic
 
 test('every closed QA control is a mandatory physical input, not a sparse metadata exemption',()=>withRepo(({root,g,put})=>{
  for (const rel of CONTROL_PATHS) put(rel, '// committed QA control fixture\n');
- g('add','.');g('commit','-qm','all twenty-four controls');const commit=g('rev-parse','HEAD');
+ g('add','.');g('commit','-qm','all twenty-five controls');const commit=g('rev-parse','HEAD');
  const clean=readCheckout(root,commit);
  for (const rel of CONTROL_PATHS) {
   const file=path.join(root,rel),bytes=fs.readFileSync(file);
@@ -252,7 +252,7 @@ for (const testCase of cases) await t.test(testCase.name, async () => {
 test('historical and workflow fixture admission names exactly three QA inputs and retains production exclusions',()=>{
  const added=['scripts/fixtures/inkwave-historical-05eb-1862-leaves.json','scripts/tests/inkwave-31pr-paint-source-pair.test.mjs','scripts/tests/continuous-browser-video.test.mjs'];
  const historical=CONTROL_PATHS.filter(name=>!added.includes(name));
- assert.equal(historical.length,21);
+ assert.equal(historical.length,22);
  for(const name of added)assert.equal(CONTROL_PATHS.filter(value=>value===name).length,1);
  const reviewed=[row('patches/network-replication/adapter.mjs'),row('patches/splatoon3/adapter.mjs'),...historical.map(name=>row(name)),row(added[1]),row(added[2])];
  const actual=[...reviewed.map(value=>added.includes(value.path)?{...value,sha:'b'.repeat(40)}:{...value}),row(added[0],'c'.repeat(40))];
@@ -269,10 +269,11 @@ test('historical and workflow fixture admission names exactly three QA inputs an
  }
 });
 
+const FK_CONTROL_PATH='patches/local-quality/tests/motion-fk-hotpath.test.mjs';
 const PREVIOUS_CONTROL_PATHS=[".github/workflows/inkwave-projectile-visuals.yml", "patches/network-replication/tests/issue-1033-handoff-hit.test.mjs", "patches/splatoon3/tests/ranked-rainmaker-peer-compat.qa.mjs", "scripts/benchmark-aplus-verification.mjs", "scripts/check-inkwave-idle-resources.mjs", "scripts/check-inkwave-projectile-visuals.mjs", "scripts/check-inkwave-range.mjs", "scripts/lib/inkwave-pr1869-current-pair.mjs", "scripts/fixtures/inkwave-historical-05eb-1862-leaves.json", "scripts/tests/continuous-browser-video.test.mjs", "scripts/tests/inkwave-23pr-paint-source-pair.test.mjs", "scripts/tests/inkwave-31pr-paint-source-pair.test.mjs", "scripts/tests/inkwave-ci-source-admission.test.mjs", "scripts/tests/inkwave-pr1869-current-pair.test.mjs", "scripts/tests/inkwave-pr1869-workflow-route.test.mjs", "scripts/tests/inkwave-reef-splash-workflow-registration.test.mjs", "scripts/tests/inkwave-results-work-progress.test.mjs", "scripts/tests/inkwave-streamed-music-diagnostics.test.mjs", "scripts/verify-inkwave-pr1869-current-pair.mjs"];
 const NAV_RESPONSIVE_CONTROL_PATHS=["scripts/check-inkwave-local-references.mjs", "scripts/tests/inkwave-local-references.test.mjs", "scripts/check-inkwave-responsive-core.mjs", "scripts/lib/inkwave-responsive-diagnostics.mjs", "scripts/tests/inkwave-responsive-diagnostics.test.mjs"];
 test('navigation repair and responsive diagnostics add only five exact controls to the prior nineteen',()=>{
- assert.deepEqual([...CONTROL_PATHS].sort(),[...PREVIOUS_CONTROL_PATHS,...NAV_RESPONSIVE_CONTROL_PATHS].sort());
+ assert.deepEqual(CONTROL_PATHS.filter(value=>value!==FK_CONTROL_PATH).sort(),[...PREVIOUS_CONTROL_PATHS,...NAV_RESPONSIVE_CONTROL_PATHS].sort());
  const reviewed=[...CONTROL_PATHS.map(name=>row(name)),row('inkwave-public/src/game/nav.js'),row('inkwave-public/src/ui/menus.js')];
  const actual=reviewed.map(value=>NAV_RESPONSIVE_CONTROL_PATHS.includes(value.path)?{...value,sha:'b'.repeat(40)}:{...value});
  assertReviewedTree(reviewed,actual);
@@ -286,15 +287,15 @@ test('navigation repair and responsive diagnostics add only five exact controls 
   for(const mutate of [x=>({...x,mode:'100755'}),x=>({...x,type:'commit'})])assert.throws(()=>assertReviewedTree(reviewed,actual.map(value=>value.path===rel?mutate(value):value)));
  }
 });
-test('five new controls bind actual candidate file bytes as mandatory physical checkout inputs',()=>withRepo(({root,g,put})=>{
+test('navigation, responsive and exact FK controls bind actual candidate bytes as mandatory physical inputs',()=>withRepo(({root,g,put})=>{
  const expected=new Map();
  for(const rel of CONTROL_PATHS){
   const bytes=fs.readFileSync(new URL('../../'+rel,import.meta.url));
   assert(bytes.length>0,rel+' must contain candidate bytes');put(rel,bytes);
   expected.set(rel,crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+bytes.length+'\0'),bytes])).digest('hex'));
  }
- g('add','.');g('commit','-qm','actual twenty-four control bytes');const commit=g('rev-parse','HEAD'),clean=readCheckout(root,commit);
- for(const rel of NAV_RESPONSIVE_CONTROL_PATHS){
+ g('add','.');g('commit','-qm','actual twenty-five control bytes');const commit=g('rev-parse','HEAD'),clean=readCheckout(root,commit);
+ for(const rel of [...NAV_RESPONSIVE_CONTROL_PATHS,FK_CONTROL_PATH]){
   assert.equal(clean.rows.find(value=>value.path===rel).sha,expected.get(rel));
   assert(clean.inputs.some(value=>value.path===rel));
   const file=path.join(root,rel),bytes=fs.readFileSync(file);
@@ -303,3 +304,19 @@ test('five new controls bind actual candidate file bytes as mandatory physical c
  }
  assert.deepEqual(readCheckout(root,commit),clean);
 }));
+
+// Admit only the existing owner FK regression test, never runtime or model changes.
+test('FK metric correction admits one exact QA path beyond the previous twenty-four controls',()=>{
+ assert.deepEqual([...CONTROL_PATHS].sort(),[...PREVIOUS_CONTROL_PATHS,...NAV_RESPONSIVE_CONTROL_PATHS,FK_CONTROL_PATH].sort());
+ assert.equal(CONTROL_PATHS.filter(value=>value===FK_CONTROL_PATH).length,1);
+ const reviewed=CONTROL_PATHS.map(name=>row(name));
+ const actual=reviewed.map(value=>value.path===FK_CONTROL_PATH?{...value,sha:'b'.repeat(40)}:value);
+ assertReviewedTree(reviewed,actual);
+ for(const rel of ['patches/local-quality/tests/unreviewed-fk.test.mjs','patches/local-quality/motion-fk-hotpath-adapter.mjs','inkwave-public/src/game/motion/source-bank.js','inkwave-public/src/game/motion/source-controller.js','inkwave-public/src/game/character-model.js','.github/workflows/inkwave-update.yml',...PAINT_PATHS]){
+  const changed=actual.map(value=>({...value})),found=changed.find(value=>value.path===rel);
+  if(found)found.sha='c'.repeat(40);else changed.push(row(rel,'c'.repeat(40)));
+  assert.throws(()=>assertReviewedTree(reviewed,changed),/unreviewed tree delta/,rel);
+ }
+ assert.throws(()=>assertReviewedTree(reviewed,actual.filter(value=>value.path!==FK_CONTROL_PATH)),/every closed QA control must exist/);
+ for(const mutate of [x=>({...x,mode:'100755'}),x=>({...x,type:'commit'})])assert.throws(()=>assertReviewedTree(reviewed,actual.map(value=>value.path===FK_CONTROL_PATH?mutate(value):value)));
+});
