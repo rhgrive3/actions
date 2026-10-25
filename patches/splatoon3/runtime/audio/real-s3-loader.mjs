@@ -78,8 +78,6 @@ export class RealS3SampleLoader {
     }
     const key=id+':'+(event||'*');
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
-    // Check active backoff before allocating a new worker-queue promise.
-    if(this.status==='ready'&&Date.now()<(this.retryAfter.get(key)||0))return Promise.resolve({loaded:0,throttled:true});
     if(this.inFlight.has(key)){
       if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key);if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
       return this.inFlight.get(key);
