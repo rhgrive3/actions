@@ -5,7 +5,12 @@ verified and deliberately enabled. This proposal preserves every native check.
 
 ## Allocation
 
-CircleCI's native config runs exactly 8 patch-test shards (parallelism 8),
+CircleCI starts with a small path-filtering setup workflow. Only relevant source,
+patch, test or CI-config changes continue into .circleci/continue.yml.
+Documentation-only changes do not allocate 15 heavy workers. A regression test
+proves the CircleCI selectors cover every GitHub Validate PR input path.
+
+The continuation runs exactly 8 patch-test shards (parallelism 8),
 one immutable production game build, and 7 named browser suites:
 browser-active, browser-catalog, browser-ui, browser-responsive,
 browser-network, browser-range, browser-startup.
@@ -29,8 +34,11 @@ content hash and the original native CI receipt are checked for every suite.
 2. CircleCI > Projects > rhgrive3/actions > Project Settings > Project Setup:
    ensure GitHub checkout/config source is rhgrive3/actions and the
    config path is .circleci/config.yml. Enable an appropriate push/PR trigger.
+   Under Project Settings > Advanced, enable Dynamic Configuration if this
+   CircleCI project was created before the feature became enabled by default.
    GitHub authorization alone does not confirm project/pipeline setup.
-3. In CircleCI > Pipelines, confirm the named ink-wave-ci-offload workflow
+3. In CircleCI > Pipelines, confirm the detect-inkwave-changes setup
+   workflow continues into the named ink-wave-ci-offload workflow
    actually runs 8 patch executors, build-native-site and all seven browser
    jobs for the same intended PR HEAD SHA. Require full green evidence.
 4. ONLY AFTER step 3, open rhgrive3/actions GitHub Settings > Secrets and
