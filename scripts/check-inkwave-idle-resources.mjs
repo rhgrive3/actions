@@ -70,10 +70,12 @@ export function createResultsProgress(token,{capacity=256,detailCapacity=32,maxM
   c.last=p.seq;c.received++;c.truncated||=p.edge==='limit';c.ring[c.cursor]=p;c.cursor=(c.cursor+1)%c.capacity;c.size=Math.min(c.size+1,c.capacity);return true;
  },seal(){sealed=true;},snapshot(){return {diagnosticOnly:true,timingScope:'observer CPU/console overhead; not FPS or GPU execution',...snapshot(channels.critical),invalidMessages:rejected,sealed,maxChars,criticalMode:'reserved frame/sample/cleanup; first128 coarse-callee edges per frame, then limit marker',detailMode:'bounded actor-edge sample; GL counters aggregated, no per-draw events',detail:snapshot(channels.detail)};}};
 }
-// One synchronous browser task: no added yield, RAF await, GPU fence or clock reset.
-export function measureResultsWork({token,maxDetailEvents=128}){
- if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128)throw TypeError('Invalid results progress token/budget');
+// One synchronous browser task with bounded native GPU completion checkpoints.
+// No extra simulated frames, RAF yields, quality changes or relaxed acceptance gates.
+export function measureResultsWork({token,maxDetailEvents=128,gpuBackpressureEvery=0}){
+ if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128||!Number.isInteger(gpuBackpressureEvery)||gpuBackpressureEvery<0||gpuBackpressureEvery>120)throw TypeError('Invalid results progress token/budget');
  const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
+ if(gpuBackpressureEvery&&(typeof gl.finish!=='function'||typeof gl.isContextLost!=='function'))throw Error('Native WebGL GPU completion check unavailable');
  const beforeState=match.state,beforePaused=match.paused,started=performance.now();let counts,state='setup',frame=0,completed=0,totalCompleted=0,stateStarted=started,failed=false,failure,watchedClock,criticalInFrame=0,criticalSuppressed=0,detailSuppressed=0;
  const sequences={critical:0,detail:0};let timing=null,rendererDepth=0,drawDepth=0,rendererOrdinal=0;
  // Diagnostic wall time only. Other renderer work includes JS, other native
@@ -131,9 +133,36 @@ export function measureResultsWork({token,maxDetailEvents=128}){
   for(const [obj,key,label]of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label,key==='render'?'R.render':label);
   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions','gl.'+key,'aggregate');
   for(const [obj,key,label]of [[match,'update','match.update'],[match,'updateController','controller'],[g.input,'pollPad','input.pollPad'],[g.input,'endFrame','input.endFrame'],[g,'_padMenus','padMenus'],[G.net,'update','network'],[G.paint,'advanceSimulation','paint.clock'],[G.env,'update','environment'],[g.decor,'update','decor'],[g.props,'update','props'],[g.rig,'update','camera'],[g.diorama,'update','diorama'],[g.screenfx,'update','screenfx'],[g.fxHooks,'update','fxHooks'],[G.projectiles,'syncSights','projectile.sights'],[G.projectiles,'syncVisuals','projectile.visuals'],[G.projectiles,'updateArc','projectile.arc'],[g.showcase,'update','showcase.update'],[g.showcase,'render','showcase.render'],[g,'_updateLocalLoops','audio.loops'],[g,'_updateAmbience','audio.ambience'],[G.audio,'setListener','audio.listener'],[g,'_updateHud','hud'],[g.menus,'update','menus'],[g.R.composer,'render','composer'],[G.renderer,'render','renderer']])observe(obj,key,label);
-  const sample=next=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};state=next;frame=completed=0;timing=createTiming();match.state=next;match.paused=false;const start=stateStarted=performance.now();emit('sample','enter');
-   for(let i=0;i<120;i++){frame=i+1;criticalInFrame=0;rendererOrdinal=0;if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}emit('frame','enter');let returned=false;try{g._frame(1/60);returned=true;completed++;totalCompleted++;}finally{emit('frame',returned?'exit':'throw');}}
-   emit('sample','exit');return {...counts,cpuSubmissionMs:performance.now()-start};
+  const sample=next=>{
+   counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};
+   state=next;frame=completed=0;timing=createTiming();match.state=next;match.paused=false;
+   const start=stateStarted=performance.now();let gpuSyncWallMs=0,gpuSyncCalls=0,maxGpuSyncWallMs=0;
+   emit('sample','enter');
+   for(let i=0;i<120;i++){
+    frame=i+1;criticalInFrame=0;rendererOrdinal=0;
+    if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}
+    emit('frame','enter');let returned=false;
+    try{g._frame(1/60);returned=true;completed++;totalCompleted++;}
+    finally{emit('frame',returned?'exit':'throw');}
+    if(gpuBackpressureEvery&&((i+1)%gpuBackpressureEvery===0||i===119)){
+     // Native WebGL completion, not an additional draw or queue-only flush.
+     // Bound outstanding SwiftShader commands while preserving all 240 Game._frame
+     // calls, the simulated dt, the original GL draw counts and state order.
+     emit('gpu-sync','enter');const syncStarted=performance.now();let syncReturned=false;
+     try{
+      gl.finish();
+      if(gl.isContextLost())throw Error('Idle GPU context lost during native submission');
+      syncReturned=true;
+     }finally{
+      const ms=Math.max(0,performance.now()-syncStarted);
+      gpuSyncWallMs+=ms;gpuSyncCalls++;maxGpuSyncWallMs=Math.max(maxGpuSyncWallMs,ms);
+      emit('gpu-sync',syncReturned?'exit':'throw');
+     }
+    }
+   }
+   emit('sample','exit');
+   return {...counts,cpuSubmissionMs:Math.max(0,performance.now()-start-gpuSyncWallMs),
+    ...(gpuBackpressureEvery?{gpuBackpressureEvery,gpuSyncCalls,gpuSyncWallMs,maxGpuSyncWallMs}:{})};
   };
   return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};
  }catch(error){failed=true;failure=error;throw error;}
@@ -145,7 +174,7 @@ export function measureResultsWork({token,maxDetailEvents=128}){
 }
 export async function runResultsWorkDiagnostic(page,progress){
  const listener=message=>progress.accept(message.text());let attached=false,failed=false,failure;
- try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token});}
+ try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token,gpuBackpressureEvery:8});}
  catch(error){failed=true;failure=error;throw error;}
  finally{progress.seal();if(attached)try{page.off('console',listener);}catch(error){if(failed)throw new AggregateError([failure,error],'Results diagnostic listener cleanup failed',{cause:failure});throw error;}}
 }
@@ -224,7 +253,7 @@ export function formatIdleFailureProgress(error,data){
  let latest,region;
  for(let i=events.length-1;i>=Math.max(0,events.length-512);i--){const e=events[i];if(!e||typeof e!=='object'||e.producer==='cleanup')continue;latest??=e;if(e.state===latest.state&&e.frame===latest.frame&&!['frame','sample','cleanup','observer'].includes(e.producer)){region=e;break;}}
  region??=latest;
- const labels=['frame','sample','cleanup','observer','clock.advance','actorUpdates','projectileUpdates','paintFlushes','fxUpdates','R.render','match.update','controller','input.pollPad','input.endFrame','padMenus','network','paint.clock','environment','decor','props','camera','diorama','screenfx','fxHooks','projectile.sights','projectile.visuals','projectile.arc','showcase.update','showcase.render','audio.loops','audio.ambience','audio.listener','hud','menus','composer','renderer'];
+ const labels=['frame','sample','cleanup','observer','clock.advance','actorUpdates','projectileUpdates','paintFlushes','fxUpdates','R.render','match.update','controller','input.pollPad','input.endFrame','padMenus','network','paint.clock','environment','decor','props','camera','gpu-sync','diorama','screenfx','fxHooks','projectile.sights','projectile.visuals','projectile.arc','showcase.update','showcase.render','audio.loops','audio.ambience','audio.listener','hud','menus','composer','renderer'];
  const integer=(v,max)=>Number.isSafeInteger(v)&&v>=0&&v<=max?v:null;
  const elapsed=v=>Number.isFinite(v)&&v>=0&&v<=Number.MAX_SAFE_INTEGER?v:undefined;
  const observation=(c,capacity,messages)=>({retained:Array.isArray(c?.events)?integer(c.events.length,capacity):0,capacity:integer(c?.capacity,capacity),received:integer(c?.received,messages),limit:integer(c?.maxMessages,messages),truncated:c?.truncated===true});
@@ -260,6 +289,7 @@ export function validateIdleResult(r) {
   if(!r.audio?.running||r.audio.initialPlayers!==0||r.audio.initialScheduler||r.audio.mutedTicks!==0||r.audio.mutedNodes!==0||r.audio.mutedPlayers!==0||r.audio.mutedScheduler||!r.audio.sfxPlayed||r.audio.resumedTrack!=='battle'||r.audio.toggleMaxPlayers!==1)throw Error('Muted music/SFX gate');
   const work=r.resultsWork;
   if(!work||work.frames!==120||work.playing.actorUpdates<=0||work.playing.projectileUpdates!==120||work.playing.paintFlushes!==120||work.playing.fxUpdates!==120||work.results.actorUpdates!==0||work.results.projectileUpdates!==0||work.results.paintFlushes!==0||work.results.fxUpdates!==0||work.playing.worldRenders!==120||work.results.worldRenders!==120||[work.playing,work.results].some(v=>!Number.isFinite(v.cpuSubmissionMs)||v.cpuSubmissionMs<0||!Number.isSafeInteger(v.gpuDrawSubmissions)||v.gpuDrawSubmissions<=0))throw Error('RESULT native work comparison gate');
+  if([work.playing,work.results].some(v=>v.gpuBackpressureEvery!==8||v.gpuSyncCalls!==15||!Number.isFinite(v.gpuSyncWallMs)||v.gpuSyncWallMs<0||!Number.isFinite(v.maxGpuSyncWallMs)||v.maxGpuSyncWallMs<0))throw Error('RESULT GPU completion checkpoints missing');
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
 }
@@ -461,6 +491,8 @@ async function main(){
    resultsMs:result.resultsWork.results.cpuSubmissionMs,
    playingDraws:result.resultsWork.playing.gpuDrawSubmissions,
    resultsDraws:result.resultsWork.results.gpuDrawSubmissions,
+   playingSyncCalls:result.resultsWork.playing.gpuSyncCalls,resultsSyncCalls:result.resultsWork.results.gpuSyncCalls,
+   playingSyncWallMs:result.resultsWork.playing.gpuSyncWallMs,resultsSyncWallMs:result.resultsWork.results.gpuSyncWallMs,
    consoleReceived:completedProgress.received,detailReceived:completedProgress.detail?.received,
    consoleTruncated:completedProgress.truncated,detailTruncated:completedProgress.detail?.truncated
   }));
