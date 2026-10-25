@@ -21,7 +21,19 @@ function fixture(options={}){
  };
  const object=(label,keys)=>Object.fromEntries(keys.map(key=>[key,op(label+'.'+key)]));
  G.actors=Array.from({length:options.actorCount??2},(_,i)=>object('actor'+i,['update']));G.projectiles=object('projectile',['update','syncSights','syncVisuals','updateArc']);G.paint=object('paint',['flush','advanceSimulation']);G.fx=object('fx',['update']);G.env=object('environment',['update']);G.audio=object('audio',['setListener']);
- const gl=object('gl',['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced']);
+ const gl=object('gl',['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced']);let syncCalls=0,flushCalls=0,deletedSyncs=0,polledSyncs=0;
+ Object.assign(gl,{SYNC_GPU_COMMANDS_COMPLETE:1,ALREADY_SIGNALED:2,CONDITION_SATISFIED:3,TIMEOUT_EXPIRED:4,WAIT_FAILED:5});
+ gl.fenceSync=()=>{syncCalls++;if(options.missingSyncAt===syncCalls)return null;return {id:syncCalls};};
+ gl.flush=()=>{flushCalls++;};
+ gl.clientWaitSync=sync=>{
+  polledSyncs++;sync.polls=(sync.polls||0)+1;
+  if(options.syncErrorAt===sync.id)throw options.syncError;
+  if(options.waitFailedAt===sync.id)return gl.WAIT_FAILED;
+  if(sync.polls<=(options.pendingPollsPerFence??0))return gl.TIMEOUT_EXPIRED;
+  return gl.CONDITION_SATISFIED;
+ };
+ gl.deleteSync=()=>{deletedSyncs++;};
+ gl.isContextLost=()=>options.lostAtSync===syncCalls;
  if(options.nestedDraw)gl.drawArrays=op('gl.drawArrays',()=>gl.drawElements(4,3,5123,0));
  G.renderer={getContext:()=>gl,render:op('renderer.render',()=>{if(options.nestedRenderer&&!renderNesting){renderNesting++;try{G.renderer.render();}finally{renderNesting--;}}for(let i=0;i<(options.drawsPerFrame??1);i++)gl.drawArrays(4,0,3);})};g.R={composer:{render:op('composer.render',()=>G.renderer.render())},render:op('world.render',()=>g.R.composer.render())};
  g.input=object('input',['pollPad','endFrame']);g.decor=object('decor',['update']);g.rig=object('camera',['update']);g.showcase={...object('showcase',['update','render']),fullFrame:false};g.menus=object('menus',['update']);g._padMenus=op('padMenus');g._updateHud=op('hud');g._updateLocalLoops=op('audio.loops');g._updateAmbience=op('audio.ambience');
@@ -30,10 +42,10 @@ function fixture(options={}){
  g._frame=dt=>{frame++;frames.push([match.state,dt,match.paused]);for(let i=0;i<(options.pollsPerFrame??1);i++)g.input.pollPad();g._padMenus(dt);g.s3Clock.advance(dt,()=>{G.time+=dt;G.paint.advanceSimulation(dt);if(match.state==='playing'){for(const a of G.actors)a.update(dt);G.projectiles.update(dt);}});g._s3Ticked=1;
   if(match.state==='playing'){G.fx.update(dt);G.paint.flush(dt);}G.env.update(dt);g.decor.update(dt);g.rig.update(dt);G.projectiles.syncSights();G.projectiles.syncVisuals();G.projectiles.updateArc();g.showcase.update(dt);g._updateLocalLoops(dt);g._updateAmbience(dt);G.audio.setListener();g.R.render();g.showcase.render();if(match.state==='playing')g._updateHud(dt);g.menus.update(dt);g.input.endFrame();};
  for(const obj of [...G.actors,G.projectiles,G.paint,G.fx,G.env,G.audio,G.renderer,g.R,g.R.composer,g.input,g.decor,g.rig,g.showcase,g.menus,g,g.s3Clock,gl])for(const key of Reflect.ownKeys(obj))if(typeof obj[key]==='function')originals.push([obj,key,obj[key]]);
- const context={__G:G,document:{hidden:false},performance:{now:()=>{if(clockErrorOnce){clockErrorOnce=false;throw Error('diagnostic clock');}time+=options.clockStep??1;return time;}},console:{info:text=>{time+=options.emitDelayMs??0;messages.push(text);options.sink?.(text);if(options.consoleError)throw options.consoleError;}}};
- return {G,g,match,work,frames,messages,run(source=measureResultsWork.toString(),args={token:'test'}){return vm.runInNewContext('('+source+')',context)(args);},restored(){for(const [obj,key,fn]of originals)assert.equal(obj[key],fn,key);assert.equal(match.state,'intro');assert.equal(match.paused,true);assert.equal(Object.hasOwn(g.s3Clock,'advance'),false);}};
+ const context={__G:G,document:{hidden:false},setTimeout:fn=>{time+=options.syncDelayMs??17;Promise.resolve().then(fn);return 1;},performance:{now:()=>{if(clockErrorOnce){clockErrorOnce=false;throw Error('diagnostic clock');}time+=options.clockStep??1;return time;}},console:{info:text=>{time+=options.emitDelayMs??0;messages.push(text);options.sink?.(text);if(options.consoleError)throw options.consoleError;}}};
+ return {G,g,match,work,frames,messages,syncCalls:()=>syncCalls,flushCalls:()=>flushCalls,deletedSyncs:()=>deletedSyncs,polledSyncs:()=>polledSyncs,run(source=measureResultsWork.toString(),args={token:'test'}){return vm.runInNewContext('('+source+')',context)(args);},restored(){for(const [obj,key,fn]of originals)assert.equal(obj[key],fn,key);assert.equal(match.state,'intro');assert.equal(match.paused,true);assert.equal(Object.hasOwn(g.s3Clock,'advance'),false);}};
 }
-test('one synchronous evaluate preserves all240 native calls/order/dt/state and original work counts',async()=>{
+test('one browser evaluate preserves all240 native calls/order/dt/state and original work counts',async()=>{
  const original=fixture(),expected=original.run(baselineSource),progress=createResultsProgress('test'),f=fixture({sink:progress.accept});let calls=0,listener;
  const page={on(_event,fn){listener=fn;},off(_event,fn){assert.equal(fn,listener);listener=null;},evaluate(fn,args){calls++;assert.equal(fn,measureResultsWork);return Promise.resolve(f.run(fn.toString(),args));}};
  const actual=await runResultsWorkDiagnostic(page,progress);assert.equal(calls,1);assert.equal(f.frames.length,240);assert.deepEqual(f.work,original.work);assert.deepEqual(f.frames,original.frames);
@@ -54,6 +66,34 @@ test('observation emission failure cannot replace a native falsy throw',()=>{
 test('partial observer installation failure restores existing hooks and original state',()=>{
  const f=fixture(),menus=f.g.menus;f.g.menus=new Proxy(menus,{set(){throw 0;}});let failed=false,caught;
  try{f.run();}catch(error){failed=true;caught=error;}assert(failed);assert.equal(caught,0);assert.equal(f.frames.length,0);f.restored();
+});
+test('async native GPU fences preserve exactly240 frames, dt, states, draws and cleanup',async()=>{
+ const baseline=fixture({drawsPerFrame:8}),expected=baseline.run(baselineSource),p=createResultsProgress('test'),f=fixture({drawsPerFrame:8,syncDelayMs:17,sink:p.accept});
+ const result=await f.run(undefined,{token:'test',gpuBackpressureEvery:8});
+ assert.equal(f.frames.length,240);assert.deepEqual(f.work,baseline.work);assert.deepEqual(f.frames,baseline.frames);
+ assert.equal(f.syncCalls(),30);assert.equal(f.flushCalls(),30);assert.equal(f.deletedSyncs(),30);assert.equal(f.polledSyncs(),30);
+ for(const state of ['playing','results']){
+  assert.equal(result[state].gpuBackpressureEvery,8);assert.equal(result[state].gpuSyncCalls,15);
+  assert(result[state].gpuSyncWallMs>=15*17);assert(result[state].maxGpuSyncWallMs>=17);
+  assert(Number.isFinite(result[state].cpuSubmissionMs));assert(result[state].cpuSubmissionMs>=0);
+  for(const key of ['actorUpdates','projectileUpdates','paintFlushes','fxUpdates','worldRenders','gpuDrawSubmissions'])assert.equal(result[state][key],expected[state][key]);
+ }
+ assert.equal(p.snapshot().events.at(-1).producer,'cleanup');assert(p.snapshot().events.some(e=>e.producer==='gpu-sync'&&e.edge==='exit'));f.restored();
+});
+test('un-signaled WebGL fences never advance frames until asynchronous polling completes',async()=>{
+ const f=fixture({pendingPollsPerFence:2});
+ const result=await f.run(undefined,{token:'test',gpuBackpressureEvery:8});
+ assert.equal(f.syncCalls(),30);assert.equal(f.polledSyncs(),90);assert.equal(f.deletedSyncs(),30);
+ assert.equal(f.frames.length,240);assert.equal(result.playing.gpuSyncCalls,15);assert.equal(result.results.gpuSyncCalls,15);f.restored();
+});
+test('GPU fence failures and context loss fail closed and restore every hook',async()=>{
+ for(const [options,pattern] of [[{lostAtSync:3},/context lost/],[{syncErrorAt:3,syncError:Error('GPU driver failure')},/GPU driver failure/],[{waitFailedAt:3},/completion wait failed/],[{missingSyncAt:3},/Unable to create/]]){
+  const f=fixture(options);
+  await assert.rejects(f.run(undefined,{token:'test',gpuBackpressureEvery:8}),pattern);
+  assert.equal(f.syncCalls(),3);assert.equal(f.frames.length,24);f.restored();
+ }
+ const f=fixture();
+ assert.throws(()=>f.run(undefined,{token:'test',gpuBackpressureEvery:121}),/Invalid results progress token\/budget/);assert.equal(f.frames.length,0);f.restored();
 });
 test('detail cap is independent of reserved progress and never reduces native workload',()=>{
  const p=createResultsProgress('test'),f=fixture({sink:p.accept});f.run(undefined,{token:'test',maxDetailEvents:4});const s=p.snapshot();assert.equal(f.frames.length,240);assert.equal(s.detail.received,5);assert(s.detail.truncated);assert.equal(s.detail.events.at(-1).edge,'limit');assert.equal(s.events.at(-1).totalCompleted,240);assert.equal(s.events.at(-1).producer,'cleanup');assert.equal(s.truncated,false);f.restored();
@@ -92,7 +132,7 @@ test('the unchanged comparison can finish after120 and before480 seconds under o
  const timers={setTimeout(fn,ms){const id=++serial;delays.push(ms);pending.set(id,{fn,at:time+ms});return id;},clearTimeout(id){pending.delete(id);}};
  const tick=ms=>{time+=ms;for(const [id,x]of pending)if(x.at<=time){pending.delete(id);x.fn();}};
  const progress=createResultsProgress('test'),f=fixture({sink:text=>listener({text:()=>text})});
- const page={on(_e,fn){listener=fn;},off(){listener=null;},evaluate(fn,args){evaluations++;assert.equal(fn,measureResultsWork);assert.deepEqual(args,{token:'test'});return new Promise(resolve=>{finish=()=>resolve(f.run(fn.toString(),args));});}};boundIdleEvaluations(page,()=> 'results-work',timers);
+ const page={on(_e,fn){listener=fn;},off(){listener=null;},evaluate(fn,args){evaluations++;assert.equal(fn,measureResultsWork);assert.deepEqual(args,{token:'test',gpuBackpressureEvery:8});return new Promise(resolve=>{finish=()=>resolve(f.run(fn.toString(),args));});}};boundIdleEvaluations(page,()=> 'results-work',timers);
  const task=runIdleProbe(()=>runResultsWorkDiagnostic(page,progress),{diagnose:()=>assert.fail('successful comparison must not diagnose'),cleanup:()=>{cleanups++;assert(progress.snapshot().sealed);}}).then(value=>{settled=true;return value;});await flush();
  assert.equal(IDLE_OPERATION_TIMEOUT_MS,120000);assert.equal(RESULTS_WORK_TIMEOUT_MS,480000);assert.deepEqual(delays,[480000]);tick(120000);await flush();assert.equal(settled,false);assert.equal(cleanups,0);tick(60000);finish();const value=await task;
  assert.equal(value.frames,120);assert.equal(value.playing.worldRenders,120);assert.equal(value.results.worldRenders,120);assert.equal(f.frames.length,240);assert.deepEqual(f.frames.map(x=>x[0]),[...Array(120).fill('playing'),...Array(120).fill('results')]);assert(f.frames.every(x=>x[1]===1/60));f.restored();assert.equal(evaluations,1);assert.equal(serial,1);assert.equal(cleanups,1);assert.equal(pending.size,0);assert.equal(listener,null);
