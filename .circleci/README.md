@@ -1,29 +1,74 @@
-# INKWAVE CircleCI parallel regression runner
+# INKWAVE dual-CI: CircleCI offload rollout
 
-CircleCI runs the **existing complete patch regression suite**, not a shortened or substituted smoke test. The `.circleci/config.yml` pipeline invokes `scripts/check-inkwave-patches.mjs` exactly as the GitHub Actions 8-shard matrix does.
+The original GitHub CI stays authoritative until the CircleCI integration is
+verified and deliberately enabled. This proposal preserves every native check.
 
-## What is enabled
+## Allocation
 
-- 8 independent, index-based shards, using `CIRCLE_NODE_INDEX` as `INKWAVE_TEST_SHARD_INDEX` and `CIRCLE_NODE_TOTAL=8` as the configured count.
-- 2 concurrent test processes per shard, as in GitHub Actions.
-- Node.js 22.23.3 and the existing pinned esbuild 0.28.2 install.
-- An immutable checkout assertion comparing HEAD with `CIRCLE_SHA1`.
-- Compressed, per-shard test logs and manifests retained as CircleCI artifacts, including on failure.
-- No GitHub Actions validation gates are disabled or bypassed.
+CircleCI's native config runs exactly 8 patch-test shards (parallelism 8),
+one immutable production game build, and 7 named browser suites:
+browser-active, browser-catalog, browser-ui, browser-responsive,
+browser-network, browser-range, browser-startup.
 
-## Complete the CircleCI project setup
+These 15 expensive lanes come from the 8 patch and 7 browser jobs of the
+existing 22-job GitHub Validate workflow. The GitHub site build, source and
+network core validation, final verification, diagnostic workflows, and other
+independent PR checks are retained. This lane count does NOT guarantee exactly
+50% of the overall repository runner-minutes, which must be measured.
 
-CircleCI GitHub linking and CircleCI **project/pipeline trigger** setup are distinct.
+The browser driver at scripts/ci/run-circleci-browser-lane.mjs reads the
+ORIGINAL .github/workflows/validate-inkwave-update.yml and executes its
+native suite commands unmodified. New/unknown conditions fail closed.
+One produced site is shared across CircleCI browser lanes; source SHA, build
+content hash and the original native CI receipt are checked for every suite.
 
-1. In CircleCI, open the `rhgrive3/actions` project under **Projects**. If it is not present yet, select **Create Project** and choose this repository.
-2. In **Project Settings → Project Setup**, use `rhgrive3/actions` as both the **config source** and **checkout source**. Set the config path to `.circleci/config.yml`.
-3. For a **GitHub App** pipeline, add a GitHub trigger for push/PR events as desired. For an existing **GitHub OAuth** project, CircleCI normally sets up the default GitHub trigger automatically.
-4. Check **Pipelines** for the branch `ci/circleci-parallel-patches-20261025`. Only call the migration successful after all eight shards actually complete.
+## Activation (after CircleCI login)
 
-Current GitHub PR branches do not automatically acquire a CircleCI config merely because this separate PR exists. Merge the config to main after review, then determine how to trigger CircleCI on the existing PR heads without gratuitously resetting their GitHub Actions checks. Existing GitHub-required checks remain authoritative until equivalent CircleCI evidence and branch-protection requirements are configured.
+1. Once normal GitHub checks pass, merge PR #1874 so the CircleCI config
+   exists on main. Other open PR branches need not be rewritten.
+2. CircleCI > Projects > rhgrive3/actions > Project Settings > Project Setup:
+   ensure GitHub checkout/config source is rhgrive3/actions and the
+   config path is .circleci/config.yml. Enable an appropriate push/PR trigger.
+   GitHub authorization alone does not confirm project/pipeline setup.
+3. In CircleCI > Pipelines, confirm the named ink-wave-ci-offload workflow
+   actually runs 8 patch executors, build-native-site and all seven browser
+   jobs for the same intended PR HEAD SHA. Require full green evidence.
+4. ONLY AFTER step 3, open rhgrive3/actions GitHub Settings > Secrets and
+   variables > Actions > Variables, and create this repository variable:
+     Name: INKWAVE_CIRCLECI_OFFLOAD
+     Value: enabled
+   The switch is intentionally OFF by default.
+5. Verify one new test PR. In normal PR mode, GitHub now skips 8 patches
+   and 7 browser lanes and instead runs a fail-closed CircleCI check gate.
+   That gate requires all nine CircleCI job statuses on the EXACT PR SHA;
+   incomplete, stale, failed, or unrelated results cannot pass.
+   GitHub still runs the immutable core and its final Validate gate.
 
-## Resource use and next phase
+Rollback: remove the variable or set a value other than enabled. New PR
+runs then restore the complete original GitHub matrix automatically.
 
-`large` (Docker Gen1) provides 4 vCPU/8 GB per shard, for up to 8 simultaneous CircleCI executors. CircleCI's published rate is 20 credits/min per large executor; the eight fully active shards therefore consume approximately 160 credits per minute of wall-clock time, plus any other billable resources. Availability depends on the connected CircleCI organization's plan and credit balance. Public open-source Free-plan eligibility is determined by CircleCI, not by this config.
+Specialized runtime-performance comparison branches deliberately keep their
+original GitHub tests, since their baseline mode is not part of the
+ordinary PR CircleCI transfer.
 
-Playwright/WebGL/browser checks and the separate `validate_core` job are **not yet migrated**. They have more environment and artifact dependencies. Keep the GitHub workflow enabled during this initial rollout; expand to browser shards only after verifying their build identity, actual rendering, and failure conditions on CircleCI. Never treat an unrelated SHA's green result as proof that a newer PR head passed.
+## Operational cautions
+
+- Current CircleCI pipeline execution has NOT been independently observed.
+- The browser Linux and WebGL environment needs at least one actual green run.
+- Do not activate until the CircleCI status names are verified by the gate.
+- The GitHub gate uses at most one verifier job, waiting up to 75 minutes;
+  it replaces 15 heavy duplicated GitHub compute lanes while enabled.
+- CircleCI Free advertises 30 concurrent jobs, but large workers burn more
+  credits than the small-Docker minutes shown in marketing. Eligible public
+  OSS may receive 400,000 credits/month, subject to CircleCI qualification.
+- Existing GitHub action runs are not cancelled or reset by the config change.
+- Other independent INKWAVE workflows remain. Removing them needs evidence
+  that their unique tests are covered, not merely similar filenames.
+
+Native-source parity and failure-control unit tests are executed in the
+GitHub validate_core job and the CircleCI immutable build job.
+
+Resources:
+https://circleci.com/docs/guides/optimize/parallelism-faster-jobs/
+https://circleci.com/docs/reference/configuration-reference/
+https://circleci.com/docs/guides/plans-pricing/credits/
