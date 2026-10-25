@@ -1265,6 +1265,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "if (h.stamp === this.stamp && p.type === 'slosh' && p.head) return;",
       "if (h.stamp === this.stamp && (p.type === 'slosh' || bucketSheetProjectile(p)) && bucketSheetHead(p)) return;", 'shared Bucket head retirement');
     code = "import { bucketSheetProjectile, bucketSheetHead } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\n" + code;
+    // Catalogue weapon.kind is 'catalog'; VFX selects the actual family.
+    // This preserves the legacy Splatling and covers its five added peers.
+    code = replaceOnce(code, "        const wk = a.weapon?.kind ?? 'charger';",
+      "        const wk = a.weapon?.behaviorKind ?? a.weapon?.kind ?? 'charger';",
+      'catalogue muzzle-charge VFX family');
     code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
