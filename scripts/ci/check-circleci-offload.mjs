@@ -64,6 +64,51 @@ export function summarizeCircleCI(checkRuns, statuses, sha) {
   return Object.fromEntries(REQUIRED_LANES.map(lane => [lane, chosen[lane]?.state || 'missing']));
 }
 
+
+/**
+ * CircleCI's regular commit statuses are JOB-level. GitHub Checks from the
+ * CircleCI Checks app are WORKFLOW-level, and may be the only published signal.
+ * The authoritative fan-in job is a small native CircleCI job that cannot
+ * succeed until all eight patch shards, the shared build and all seven
+ * browser jobs have succeeded. A trusted workflow check is equivalent.
+ *
+ * Neither a lone green patch shard nor a green path-filtering setup is proof.
+ */
+export const OFFLOAD_COMPLETE_JOB = 'offload-complete';
+export const OFFLOAD_WORKFLOW = 'ink-wave-ci-offload';
+
+const trustedApp = value => /^(?:circleci|circleci-checks)$/i.test(String(value || ''));
+const level = x => x === 'success' ? 'success' : (['failure','cancelled','timed_out','action_required','neutral','skipped'].includes(x) ? 'failure' : 'pending');
+const timestamp = x => Date.parse(x || '') || 0;
+
+export function evaluateOffloadEvidence(checkRuns, statuses, sha) {
+  const lanes = summarizeCircleCI(checkRuns, statuses, sha);
+  const proofs = [];
+  for (const status of statuses) {
+    if (status.sha !== sha) continue; // Source identity is mandatory.
+    if (!/^ci\/circleci:\s*(?:ink-wave-ci-offload\/)?offload-complete$/.test(status.context || '')) continue;
+    proofs.push({ state:level(status.state), via:'CircleCI final DAG job', recorded:timestamp(status.updated_at || status.created_at) });
+  }
+  for (const check of checkRuns) {
+    if (check.head_sha !== sha || !trustedApp(check.app?.slug)) continue;
+    // GitHub Checks reports workflow success rather than individual jobs.
+    // New CircleCI GitHub App project integrations append a pipeline ID.
+    const name = String(check.name || '').replace(/^CircleCI\s*\/\s*/i,'');
+    if (!/^ink-wave-ci-offload(?:$|[ /(-])/.test(name)) continue;
+    proofs.push({ state:level(check.status === 'completed' ? check.conclusion : 'pending'),
+      via:'CircleCI complete workflow check', recorded:timestamp(check.completed_at || check.started_at || check.created_at) });
+  }
+  proofs.sort((a,b)=>a.recorded-b.recorded);
+  const proof=proofs.at(-1);
+  const latestLaneFailure=Object.entries(lanes).filter(([,x])=>level(x)==='failure').map(([lane])=>lane);
+  // Earlier failed shard receipts can legitimately remain on the SHA after a
+  // successful rerun, so a NEW authoritative green fan-in proves recovery.
+  if (proof?.state === 'success') return {state:'success',via:proof.via,lanes};
+  if (proof?.state === 'failure') return {state:'failure',via:proof.via,lanes};
+  if (latestLaneFailure.length) return {state:'failure',via:'failed lanes: '+latestLaneFailure.join(','),lanes};
+  return {state:'pending',via:proof?.via || 'awaiting CircleCI final DAG receipt',lanes};
+}
+
 async function githubList(base, token) {
   const result = [];
   for (let page = 1; page <= 10; page++) {
@@ -98,18 +143,17 @@ async function main() {
       githubList(base + '/check-runs', token),
       githubList(base + '/statuses', token)
     ]);
-    const summary = summarizeCircleCI(checks, statuses, sha);
-    const state = JSON.stringify(summary);
+    const receipt = evaluateOffloadEvidence(checks, statuses, sha);
+    const state = JSON.stringify(receipt);
     if (state !== previous) {
       console.log('INKWAVE CircleCI exact-source audit', sha, state);
       previous = state;
     }
-    if (Object.values(summary).every(s => s === 'success')) {
-      console.log('CircleCI offloaded acceptance complete for exact SHA');
+    if (receipt.state === 'success') {
+      console.log('CircleCI offloaded acceptance complete for exact SHA:', receipt.via);
       return;
     }
-    if (Object.values(summary).some(s => !['missing', 'pending', 'success'].includes(s)))
-      throw Error('CircleCI failed/cancelled on exact source SHA: ' + state);
+    if (receipt.state === 'failure') throw Error('CircleCI failed on exact source SHA: ' + state);
     await sleep(40_000);
   }
   throw Error('CircleCI exact-source evidence was not complete inside the 75-minute gate');
