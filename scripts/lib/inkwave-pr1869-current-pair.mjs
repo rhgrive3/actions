@@ -10,6 +10,8 @@ export const REVIEWED_TREE='66fb79e6857848e2443e14773d7ebcd91e8cd8bb';
 export const BRANCH='fix/inkwave-ci-composed-regressions-20261024';
 export const INPUT_KEYS_SHA256='b998b269a0171118c898da7b60baddf7509900125d8754e2158e8252748f57e3';
 export const CONTROL_PATHS=Object.freeze([
+ 'scripts/check-inkwave-touch-layout.mjs',
+ 'patches/splatoon3/tests/touch-viewport-gate.test.mjs',
  'patches/local-quality/tests/motion-fk-hotpath.test.mjs',
  '.github/workflows/inkwave-projectile-visuals.yml',
  'patches/network-replication/tests/issue-1033-handoff-hit.test.mjs',
