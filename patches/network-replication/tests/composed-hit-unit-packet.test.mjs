@@ -3,6 +3,7 @@ import {validDamageGroup} from '../../splatoon3/runtime/final-damage.mjs';
 import {respawnPunisherEquipped,withHitPunisher} from '../../splatoon3/runtime/clothing-gear.mjs';
 import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
+import { clearRemoteRollerSuspension } from '../roller-contact.mjs';
 import { endRemoteSuperJumpEpoch } from '../superjump-epoch.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import test from 'node:test';
@@ -46,9 +47,9 @@ function hitWorld() {
     calls.push({ a, v, damage, weapon, group, punisher:respawnPunisherEquipped(a), objectGear:objectShredderEquipped(a) }); emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
   const C = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
-    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock', 'endRemoteSuperJumpEpoch',
+    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteRollerSuspension', 'clearRemoteDodgeClock', 'endRemoteSuperJumpEpoch',
     source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + hitAuthoritySource + 'return class {' + ['sendHit', '_retirePendingSequence', '_retirePendingHit', '_retirePendingHitsForVictim', '_hitHandoffPacket', '_hit', '_validHitAuthorityMetadata', '_hitAck', '_remoteRespawn'].map(method).join('\n') + '}')
-    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock, endRemoteSuperJumpEpoch);
+    (G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge, {slosher:{kind:'slosher'}}, validDamageGroup, clearRemoteRollerPresentation, clearRemoteRollerSuspension, clearRemoteDodgeClock, endRemoteSuperJumpEpoch);
   const n = new C();
   Object.assign(n, { myId: 'A', cfg: { id: 'match-A' }, byNid: new Map(), hitPending: new Map(), s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } },
     peers: new Map(), _peer(id) { if (!this.peers.has(id)) this.peers.set(id, {}); return this.peers.get(id); } });
@@ -107,12 +108,13 @@ test('composed respawn preserves all current retirements and clears only this vi
   a.remoteDropRollVisual = { remotePresentation: true, id: 9 };
   a.net.remoteDodgeWatermark = { owner: 'B', life: 1, tp: 0, token: 1, epoch: 1 };
   a.character = { s3RollerFlick: { networkRemote: true, owner: 'B', life: 1, epoch: 1, vertical: true } };
-  a.weaponRunner = { s3RollerAttack: { networkRemote: true }, s3FlickVertical: true };
+  a.weaponRunner = { s3RollerSuspendedHold: true, s3RollerAttack: { networkRemote: true }, s3FlickVertical: true };
   a.net._rollerPresentationState = { owner: 'B', life: 1, epoch: 1, tick: 60, active: true };
   a.s3.c1088SurgePresentation = { tag: C1088_SURGE_TAG, life: 1, epoch: 1, phase: 'burst', charge: .8, time: .25, sampleAge: 0 };
   f.n._pendingHits = new Map([[1, { v: 2 }], [2, { v: 9 }]]);
   assert.equal(a.s3.c1088SurgePresentation.tag, C1088_SURGE_TAG, 'a live remote Surge presentation exists before respawn');
   f.n._remoteRespawn(a);
+  assert.equal(a.weaponRunner.s3RollerSuspendedHold, false, 'respawn invokes the actual remote Roller suspension cleanup');
   assert.equal(a.remoteDodgeClock, undefined, 'respawn retires the actual remote dodge pose clock');
   assert.equal(a.remoteDropRollVisual, null, 'respawn retires the actual remote Drop Roller presentation');
   assert.deepEqual(a.net.remoteDodgeWatermark, { owner: 'B', life: 1, tp: 0, token: 1, epoch: 1 },

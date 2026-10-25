@@ -39,6 +39,13 @@ const admission=()=>({actions:'true',event:'workflow_dispatch',selected:'true',g
 test('pilot admits only explicit manual selection and exact independent heads',()=>assert.equal(admitPilot(admission()),true));
 test('pilot rejects every alternate input/event/source/dirty-worktree boundary',()=>{for(const [key,value]of [['actions','false'],['event','pull_request'],['selected','false'],['selected','True'],['gameSha','main'],['gameSha','b'.repeat(40)],['qaSha','main'],['actualQa','b'.repeat(40)],['actualGame','b'.repeat(40)],['gameTree','b'.repeat(40)],['qaDirty',' M script'],['gameDirty',' M runtime']])assert.throws(()=>admitPilot({...admission(),[key]:value}),key);});
 test('128MiB disk and2GiB RAM admission is fail closed',()=>{admitResources({diskBytes:128*1024**2,memoryBytes:2*1024**3});for(const x of [{diskBytes:128*1024**2-1,memoryBytes:2*1024**3},{diskBytes:128*1024**2,memoryBytes:2*1024**3-1},{diskBytes:NaN,memoryBytes:Infinity}])assert.throws(()=>admitResources(x));});
+// The only post-seal workflow delta is these two added PR trigger paths.
+// Audio-readiness paths and its receipt command are already in both historical
+// blobs below, so they remain byte-protected rather than normalized away.
+const reviewedSplatlingTriggers=[
+ "      - 'scripts/lib/inkwave-splatling-render-evidence.mjs'\n",
+ "      - 'patches/splatoon3/runtime/splatling-cosmetics.mjs'\n",
+];
 function assertUnchangedDefaultVolumeJob(y){
  let old=y.slice(0,y.indexOf('  video-lifecycle-pilot:\n'));old=old.replace(/  workflow_dispatch:\n[\s\S]*?permissions:\n/,'  workflow_dispatch:\npermissions:\n').replace("    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.video_lifecycle_pilot }}\n",'');const buildTrigger="      - 'scripts/build-inkwave.mjs'\n";
  const compositionTrigger="      - 'scripts/inkwave-source-composition.mjs'\n";
@@ -48,9 +55,14 @@ function assertUnchangedDefaultVolumeJob(y){
  const triggerPrefix='on:\n  pull_request:\n    paths:\n'+buildTrigger+compositionTrigger;
  assert.ok(old.includes(triggerPrefix),'Reviewed triggers must remain first in pull_request.paths');
  old=old.replace(triggerPrefix,'on:\n  pull_request:\n    paths:\n');
+ for(const trigger of reviewedSplatlingTriggers)assert.equal(old.split(trigger).length-1,1,'Exactly one reviewed Splatling trigger is required');
+ const workflowTrigger="      - '.github/workflows/inkwave-ink-volumes.yml'\n";
+ const splatlingSuffix=workflowTrigger+reviewedSplatlingTriggers.join('')+'  workflow_dispatch:\n';
+ assert.ok(old.includes(splatlingSuffix),'Reviewed Splatling triggers must remain last in pull_request.paths');
+ old=old.replace(splatlingSuffix,workflowTrigger+'  workflow_dispatch:\n');
  const reviewedAptPath="      - 'scripts/prepare-inkwave-ci-apt.py'\n";const reviewedAptStep="      - run: |\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps chromium webkit\n";assert.equal(old.split(reviewedAptPath).length-1,1,'Only one pinned CI apt path may be added');assert.equal(old.split(reviewedAptStep).length-1,1,'Only one approved CI apt preparation may precede native browsers');const integratedBlob=createHash('sha1').update('blob '+Buffer.byteLength(old)+'\0').update(old).digest('hex');assert.equal(integratedBlob,'29c322adaaad48c9a19431f5049c3800378ba0c9','The integrated default volume job may not drift beyond the two reviewed additions');old=old.replace(reviewedAptPath,'').replace(reviewedAptStep,'      - run: npx playwright install --with-deps chromium webkit\n');const originalBlob=createHash('sha1').update('blob '+Buffer.byteLength(old)+'\0').update(old).digest('hex');assert.equal(originalBlob,'582cc30c606d0d4963d8f172f157b6d8a2dbbf9e','All original volume assertions and native gates must be byte-exact');
 }
-test('existing workflow body remains byte-exact after only reviewed pilot, source triggers and apt additions',async()=>{const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');assertUnchangedDefaultVolumeJob(y);});
+test('existing workflow body remains byte-exact after only reviewed pilot, source/Splatling triggers and apt additions',async()=>{const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');assertUnchangedDefaultVolumeJob(y);});
 test('actual workflow conditions preserve PR/default manual and select pilot-only explicitly',async()=>{const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');const expression=name=>y.match(new RegExp('  '+name+':\\n    if: \\$\\{\\{ (.*?) \\}\\}'))[1];const run=(name,event,selected)=>Function('github','inputs','return '+expression(name))({event_name:event},{video_lifecycle_pilot:selected});for(const [event,selected,normal,pilot]of [['pull_request',false,true,false],['pull_request',true,true,false],['workflow_dispatch',false,true,false],['workflow_dispatch',undefined,true,false],['workflow_dispatch',true,false,true]]){assert.equal(!!run('volume',event,selected),normal);assert.equal(!!run('video-lifecycle-pilot',event,selected),pilot);}});
 test('pilot workflow enforces both failure-path upload cap and immutable build identity',async()=>{const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');assert.match(y,/id: evidence-size\n        if: always\(\)/);assert.match(y,/total <= 64\*1024\*\*2/);assert.match(y,/always\(\) && steps.evidence-size.outputs.safe == 'true'/);assert.match(y,/working-directory: game\n        env:\n          GITHUB_SHA: 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64/);assert.match(y,/ref: \$\{\{ github.sha \}\}\n          path: qa/);});
 
@@ -66,6 +78,32 @@ for(const [name,mutate]of [
  ['changed timeout',s=>s.replace('    timeout-minutes: 30','    timeout-minutes: 60')],
  ['weakened rendering assertion',s=>s.replace('--shape-only','--accept-all')],
  ['changed default checkout',s=>s.replace('ref: ${{ github.event.pull_request.head.sha || github.sha }}','ref: main')],
+])test('default volume guard rejects '+name,async()=>{
+ const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
+ const changed=mutate(y);assert.notEqual(changed,y,'negative control must change the real workflow');
+ assert.throws(()=>assertUnchangedDefaultVolumeJob(changed));
+});
+
+for(const [index,trigger]of reviewedSplatlingTriggers.entries()){
+ for(const [name,mutate]of [
+  ['missing',s=>s.replace(trigger,'')],
+  ['duplicate',s=>s.replace(trigger,trigger+trigger)],
+  ['broadened',s=>s.replace(trigger,trigger.replace('.mjs','*.mjs'))],
+  ['moved',s=>s.replace(trigger,'').replace(buildTrigger,buildTrigger+trigger)],
+ ])test('default volume guard rejects '+name+' Splatling trigger '+index,async()=>{
+  const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
+  const changed=mutate(y);assert.notEqual(changed,y,'negative control must change the real workflow');
+  assert.throws(()=>assertUnchangedDefaultVolumeJob(changed));
+ });
+}
+for(const [name,mutate]of [
+ ['unknown Splatling trigger',s=>s.replace(reviewedSplatlingTriggers[1],reviewedSplatlingTriggers[1]+"      - 'scripts/lib/unknown-splatling-evidence.mjs'\n")],
+ ['reversed Splatling triggers',s=>s.replace(reviewedSplatlingTriggers.join(''),[...reviewedSplatlingTriggers].reverse().join(''))],
+ ['missing audio readiness trigger',s=>s.replace("      - 'scripts/lib/inkwave-audio-readiness-diagnostics.mjs'\n",'')],
+ ['duplicate audio readiness trigger',s=>s.replace("      - 'scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs'\n","      - 'scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs'\n".repeat(2))],
+ ['missing audio diagnostic command',s=>s.replace('        run: node --test scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs\n','')],
+ ['audio diagnostic command drift',s=>s.replace('run: node --test scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs','run: node --test --test-name-pattern=skip scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs')],
+ ['native geometry command drift',s=>s.replace('run: node --experimental-vm-modules --test patches/local-quality/tests/ink-volume*.test.mjs','run: true')],
 ])test('default volume guard rejects '+name,async()=>{
  const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
  const changed=mutate(y);assert.notEqual(changed,y,'negative control must change the real workflow');

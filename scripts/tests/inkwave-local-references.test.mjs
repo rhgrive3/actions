@@ -27,7 +27,7 @@ function copyClosure(root,published,target=published,seen=new Set()){
   copyClosure(root,resolve(published,ref),resolve(target,ref),seen);
  }
 }
-function copied(root){const r=SOURCE_SITE_REFERENCES[0];put(root,r.source,fs.readFileSync(path.join(repo,r.source)));copyClosure(root,'src/config.js','inkwave-public/src/config.js');copyClosure(root,r.target);assert.equal(checkLocalReferences(root).mapped.length,1);}
+function copied(root){const r=SOURCE_SITE_REFERENCES[0];put(root,r.source,fs.readFileSync(path.join(repo,r.source)));copyClosure(root,'src/config.js','inkwave-public/src/config.js');copyClosure(root,'src/core/buildSlices.js','inkwave-public/src/core/buildSlices.js');copyClosure(root,r.target);assert.equal(checkLocalReferences(root).mapped.length,1);}
 function rejectsOnly(root,reason){assert.throws(()=>checkLocalReferences(root),error=>{for(const line of error.message.split('\n'))assert.match(line,reason);return true;});}
 test('all thirteen exact production source/site mappings retain pinned bytes and classifications',()=>{
  assert.equal(SOURCE_SITE_REFERENCES.length,13);
@@ -182,5 +182,31 @@ test('reviewed native recovery engine exact epoch rejects old and tampered targe
  files[row.inputKey]=previous;save();assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/input manifest mismatch/);
  files[row.inputKey]=reviewed;save();
  for(const p of paths){put(site,p,'tampered');assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/artifact mismatch/);put(site,p,payload);}
+ assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
+}));
+
+// Legacy navigation preparation is now sliced; its native engine edge is unchanged.
+// Admit only that reviewed owner epoch, never the prior synchronous source proof.
+test('sliced navigation owner rejects its previous pin and unreviewed source bytes', () => fixture(root => {
+ const row=SOURCE_SITE_REFERENCES.find(r=>r.source==='inkwave-public/src/game/nav.js');
+ const reviewed='4b38ce452c58b1ec60660cb90660603a4a156e2ce58a9d76f013135fa3ebe151';
+ const previous='c2a2920e677fd69c6c11848881ffafda90bdd9ff2ba8662579713e5944fceb6a';
+ assert.equal(row.sourceSha256,reviewed);
+ const current=fs.readFileSync(path.join(repo,row.source));assert.equal(sha(current),reviewed);
+ assert.match(current.toString(),/import \{ runBuildSlices \} from '\.\.\/core\/buildSlices\.js'/);
+ put(root,row.source,current);put(root,row.target,fs.readFileSync(path.join(repo,row.target)));
+ copyClosure(root,'src/core/buildSlices.js','inkwave-public/src/core/buildSlices.js');
+ assert.equal(fs.lstatSync(path.join(root,'inkwave-public/src/core/buildSlices.js')).isFile(),true);
+ assert.equal(verifyMappedReference(root,row.source,row.ref).target,row.target);
+ put(root,row.source,Buffer.concat([current,Buffer.from('\n// unreviewed navigation mutation\n')]));
+ assert.throws(()=>verifyMappedReference(root,row.source,row.ref),/Pinned reference source mismatch/);
+ put(root,row.source,current);
+ const site=path.join(root,'site'),rev='f'.repeat(64),payload=Buffer.from('export {};');
+ const paths=[row.target,'_versions/'+rev+'/'+row.target];for(const p of paths)put(site,p,payload);
+ const files={[row.sourceInputKey]:reviewed,[row.inputKey]:row.targetSha256};
+ const save=()=>put(site,'inkwave-build.json',JSON.stringify({build:{revision:rev},files,artifacts:Object.fromEntries(paths.map(p=>[p,sha(payload)]))}));
+ save();assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
+ files[row.sourceInputKey]=previous;save();assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/input manifest mismatch/);
+ files[row.sourceInputKey]=reviewed;save();
  assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
 }));

@@ -13,6 +13,7 @@ import { respawnPunisherEquipped, withHitPunisher } from '../../splatoon3/runtim
 import { validDamageGroup } from '../../splatoon3/runtime/final-damage.mjs';
 import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
+import { clearRemoteRollerSuspension, packRollerSuspensionFlag } from '../roller-contact.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { KIT_FORWARD } from '../../splatoon3/runtime/kit-network.mjs';
 import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock } from '../../splatoon3/runtime/catalog-dualies-motion.mjs';
@@ -39,11 +40,11 @@ const productionPackActor = new Function(
   'PLAYER', 'F', 'SPAWN_ARMOR_FLAG', 'RESPAWN_PUNISHER_FLAG', 'chargerSightVisible', 'slamProtected',
   'spawnProtectionRemaining', 'respawnPunisherEquipped', 'swimTrailVisible', 'swimSplashVisible', 'r2', 'r3',
   'packAdoptionState', 'packC1088SurgePresentation', 'objectShredderEquipped', 'OBJECT_SHREDDER_FLAG', 'splashdownProtected',
-  'dualiesNetworkAction', 'dualiesNetworkDirection', 'dualiesNetworkLock',
+  'dualiesNetworkAction', 'dualiesNetworkDirection', 'dualiesNetworkLock', 'packRollerSuspensionFlag',
   `${hitAuthoritySource}\n${sourceFunction('packActor')}\nreturn packActor;`,
 )({ hp: 100 }, {}, 0, 0, () => false, () => false, () => 0, () => false, () => true, () => true,
   (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG, splashdownProtected,
-  dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock);
+  dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock, packRollerSuspensionFlag);
 const productionUnpackActor = new Function('PLAYER',
   `${hitAuthoritySource}\n${sourceFunction('unpackActor')}\nreturn unpackActor;`,
 )({ hp: 100 });
@@ -114,7 +115,7 @@ function makeWorld(id, { omitBossHandoffCleanup = false } = {}) {
   const NetMatchHarness = new Function(
     'G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'mapNoBots', 'now',
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
-    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
+    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteRollerSuspension', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD', 'acceptPaintTick', 'forgetPaintPeer', 'transferPaintOwner',
     'beginOwnerClock', 'closeOwnerClock', 'handleOwnerClockMessage', 'retireOwnerClock',
     `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
@@ -132,7 +133,7 @@ ${methods}
     G, { hp: 100, spawnInvuln: 3 }, on, emit, (x) => Math.round(x * 100) / 100,
     180, new Set(['shooter']), mapNoBots, () => 1,
     () => {}, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge,
-    WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
+    WEAPONS, validDamageGroup, clearRemoteRollerPresentation, clearRemoteRollerSuspension, C1088_SURGE_TAG,
     retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD, acceptPaintTick, forgetPaintPeer, transferPaintOwner,
     beginOwnerClock, closeOwnerClock, handleOwnerClockMessage, retireOwnerClock,
   );
