@@ -24,6 +24,22 @@ test('all inherited alternate input and mode selectors are removed; only declare
 function make(){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'turf-guard-v2-'));const runtime=path.join(dir,'runtime.mjs');fs.writeFileSync(runtime,'export const n=1;');const manifest=path.join(dir,'inkwave-build.json');fs.writeFileSync(manifest,JSON.stringify({artifacts:{'runtime.mjs':sha256(fs.readFileSync(runtime))},inputHash:'test',contentHash:'test',build:{revision:'test'}}));return {dir,runtime,manifest};}
 test('altered actual runtime is rejected even when its manifest is untouched',()=>{const x=make();const b=bindSite(x.dir);const manifest=fs.readFileSync(x.manifest);fs.writeFileSync(x.runtime,'export const n=2;');assert.deepEqual(fs.readFileSync(x.manifest),manifest);assert.throws(()=>verifySite(b),/artifact bytes changed/);assert.throws(()=>bindSite(x.dir),/artifact bytes changed/);});
 test('manifest identity drift and added undeclared payloads are rejected',()=>{const x=make(),b=bindSite(x.dir);fs.appendFileSync(x.manifest,' ');assert.throws(()=>verifySite(b),/Build identity changed/);const y=make(),c=bindSite(y.dir);fs.writeFileSync(path.join(y.dir,'extra.mjs'),'export{}');assert.throws(()=>verifySite(c),/inventory changed/);});
+function makePrebuilt(){
+ const x=make(),root=path.join(x.dir,'native-prebuilt');fs.mkdirSync(path.join(root,'scorch'),{recursive:true});fs.mkdirSync(path.join(root,'packs'));
+ const chunk=path.join(root,'scorch/triangles.0.bin'),pack=path.join(root,'packs/p.bin');fs.writeFileSync(chunk,'chunk');fs.writeFileSync(pack,'pack');
+ const record=Buffer.from(JSON.stringify({arrays:{triangles:{chunks:[{file:'triangles.0.bin',sha256:sha256(fs.readFileSync(chunk))}]}},manifest:{prebuiltTexturePacks:[{file:'packs/p.bin',sha256:sha256(fs.readFileSync(pack))}]}}));
+ const stage=path.join(root,'scorch/stage.json');fs.writeFileSync(stage,record);
+ const m=JSON.parse(fs.readFileSync(x.manifest));m.build.nativeStages={prebuilt:{stages:{scorch:{stageSha256:sha256(record)}}}};fs.writeFileSync(x.manifest,JSON.stringify(m));
+ return {...x,root,chunk,pack,stage};
+}
+test('declared native prebuilt payload is admitted outside artifacts; undeclared or altered payload is rejected',()=>{
+ const x=makePrebuilt(),b=bindSite(x.dir);verifySite(b);assert.deepEqual(Object.keys(b.prebuilt).sort(),['native-prebuilt/packs/p.bin','native-prebuilt/scorch/stage.json','native-prebuilt/scorch/triangles.0.bin']);
+ fs.writeFileSync(path.join(x.root,'packs/extra.bin'),'x');assert.throws(()=>verifySite(b),/inventory changed/);
+ const y=makePrebuilt();fs.writeFileSync(y.chunk,'chunK');assert.throws(()=>bindSite(y.dir),/artifact bytes changed/);
+ const z=makePrebuilt(),c=bindSite(z.dir);fs.writeFileSync(z.pack,'pacK!');assert.throws(()=>verifySite(c),/artifact bytes changed/);
+ const w=makePrebuilt(),d=bindSite(w.dir);fs.appendFileSync(w.stage,' ');assert.throws(()=>verifySite(d),/prebuilt stage changed/);
+ const v=make();fs.mkdirSync(path.join(v.dir,'native-prebuilt'));fs.writeFileSync(path.join(v.dir,'native-prebuilt/x.bin'),'x');assert.throws(()=>bindSite(v.dir),/inventory changed/);
+});
 test('source closure detects runtime, helper and inventory drift',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'turf-source-v2-'));for(const p of ['patches','scripts','inkwave-public'])fs.mkdirSync(path.join(dir,p));const file=path.join(dir,'scripts/helper.mjs');fs.writeFileSync(file,'export{}');const b=bindSource(dir);verifySource(b);fs.writeFileSync(file,'export const changed=true;');assert.throws(()=>verifySource(b),/Source closure changed/);});
 
 function active(pid){try{const stat=fs.readFileSync('/proc/'+pid+'/stat','utf8');return stat.slice(stat.lastIndexOf(')')+2).split(' ')[0]!=='Z';}catch(e){if(e.code==='ENOENT')return false;throw e;}}

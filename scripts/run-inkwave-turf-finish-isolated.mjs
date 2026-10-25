@@ -78,17 +78,42 @@ function leaves(root, prefix='') {
  }
  return out.sort();
 }
+// Native prebuilt payloads sit outside manifest.artifacts (and the revision).
+// They are declared by manifest.build.nativeStages.prebuilt: each stage.json
+// digest is pinned there, and stage.json pins every chunk and texture pack.
+function prebuiltPayload(root,manifest){
+ const stages=manifest.build?.nativeStages?.prebuilt?.stages;if(!stages)return {};
+ const out={};
+ for(const [id,row]of Object.entries(stages)){
+  assert(/^[a-z0-9-]+$/.test(id),'Invalid prebuilt stage: '+id);
+  const name='native-prebuilt/'+id+'/stage.json',bytes=fs.readFileSync(safePath(root,name));
+  assert.equal(sha256(bytes),row.stageSha256,'Emitted prebuilt stage changed: '+name);out[name]=row.stageSha256;
+  const record=JSON.parse(bytes);
+  for(const a of Object.values(record.arrays))for(const c of a.chunks)out['native-prebuilt/'+id+'/'+c.file]=c.sha256;
+  for(const p of record.manifest?.prebuiltTexturePacks||[])out['native-prebuilt/'+p.file]=p.sha256;
+ }
+ return out;
+}
 export function bindSite(site) {
  const manifestBytes=fs.readFileSync(path.join(site,'inkwave-build.json'));const manifest=JSON.parse(manifestBytes);
  assert(manifest.artifacts && typeof manifest.artifacts==='object' && !Array.isArray(manifest.artifacts));
  const names=Object.keys(manifest.artifacts).sort();assert(names.length>0);assert(!names.includes('inkwave-build.json'));
- const binding={root:site,manifestSha256:sha256(manifestBytes),inputHash:manifest.inputHash,contentHash:manifest.contentHash,revision:manifest.build?.revision,artifacts:{...manifest.artifacts},names};
+ const prebuilt=prebuiltPayload(site,manifest);assert(!names.some(n=>Object.hasOwn(prebuilt,n)));
+ // Hash the large prebuilt payload once; later checks re-hash every stage.json
+ // and require the same file identity (inode, size, mtime) for its payload.
+ const prebuiltStat={};
+ for(const [name,expected]of Object.entries(prebuilt)){const file=safePath(site,name);assert(/^[a-f0-9]{64}$/.test(expected),'Malformed artifact digest: '+name);assert.equal(sha256(fs.readFileSync(file)),expected,'Emitted artifact bytes changed: '+name);const s=fs.statSync(file);prebuiltStat[name]=[s.ino,s.size,s.mtimeMs];}
+ const binding={root:site,manifestSha256:sha256(manifestBytes),inputHash:manifest.inputHash,contentHash:manifest.contentHash,revision:manifest.build?.revision,artifacts:{...manifest.artifacts},names,prebuilt,prebuiltStat};
  verifySite(binding);return binding;
 }
 export function verifySite(binding) {
- assert.equal(sha256(fs.readFileSync(path.join(binding.root,'inkwave-build.json'))),binding.manifestSha256,'Build identity changed');
- assert.deepEqual(leaves(binding.root),[...binding.names,'inkwave-build.json'].sort(),'Emitted inventory changed or has undeclared files');
+ const manifestBytes=fs.readFileSync(path.join(binding.root,'inkwave-build.json'));
+ assert.equal(sha256(manifestBytes),binding.manifestSha256,'Build identity changed');
+ const prebuilt=binding.prebuilt||{};
+ assert.deepEqual(prebuiltPayload(binding.root,JSON.parse(manifestBytes)),prebuilt,'Emitted prebuilt declaration changed');
+ assert.deepEqual(leaves(binding.root),[...binding.names,...Object.keys(prebuilt),'inkwave-build.json'].sort(),'Emitted inventory changed or has undeclared files');
  for(const name of binding.names){const expected=binding.artifacts[name];assert(/^[a-f0-9]{64}$/.test(expected),'Malformed artifact digest: '+name);assert.equal(sha256(fs.readFileSync(safePath(binding.root,name))),expected,'Emitted artifact bytes changed: '+name);}
+ for(const name of Object.keys(prebuilt)){if(name.endsWith('/stage.json'))continue;const s=fs.statSync(safePath(binding.root,name));assert.deepEqual([s.ino,s.size,s.mtimeMs],binding.prebuiltStat[name],'Emitted artifact bytes changed: '+name);}
 }
 export function bindSource(root) {
  const files={};for(const prefix of ['inkwave-public','patches','scripts'])for(const name of leaves(root,prefix))files[name]=sha256(fs.readFileSync(safePath(root,name)));
