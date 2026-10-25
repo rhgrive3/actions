@@ -48,7 +48,7 @@ jobs:
           path: .ci-artifacts
           destination: patch-regressions
 
-build-native-site:
+  build-native-site:
     docker:
       - image: cimg/node:22.23.3
     resource_class: large
