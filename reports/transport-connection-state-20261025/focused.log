@@ -1,0 +1,68 @@
+(node:840) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ network transforms require unique source anchors and leave other paths unchanged (5.763462ms)
+✔ pending Transport.close rejects promptly and removes every owned callback/timer (5.894019ms)
+✔ SIM receive timers are cancelled; queued callbacks cannot revive a closed transport (5.052485ms)
+✔ cancelled join and its obsolete socket/session callbacks cannot mutate a newer lobby (6.525408ms)
+✔ stale join failure cannot fail newer connecting room or retry (5.251573ms)
+✔ stale join failure cannot fail newer lobby room or retry (5.464794ms)
+✔ stale create failure cannot fail newer connecting room or retry (4.802319ms)
+✔ stale create failure cannot fail newer lobby room or retry (4.640025ms)
+✔ welcome settled before leave cannot commit IDs into the replacement room (4.684221ms)
+✔ synchronous connecting-state cancellation cannot acquire an orphan socket (3.709445ms)
+✔ ordinary relay handshake failure preserves player-facing errors and cleans up (4.131419ms)
+✔ ordinary timeout handshake failure preserves player-facing errors and cleans up (3.550887ms)
+✔ ordinary close handshake failure preserves player-facing errors and cleans up (3.895695ms)
+✔ ordinary error handshake failure preserves player-facing errors and cleans up (3.631268ms)
+✔ ordinary constructor handshake failure preserves player-facing errors and cleans up (3.614693ms)
+✔ ordinary success keeps normal relay payloads and close notifies once (5.021543ms)
+✔ ordinary close with bye returns offline (5.245384ms)
+✔ room-code-taken create retries remain bounded and a retry can succeed (5.12256ms)
+✔ reusing Transport isolates old callbacks and heartbeat from its new socket (4.412753ms)
+✔ leaving or ending a match clears its ready timer; queued old go cannot launch a newer match (6.012107ms)
+✔ obsolete startNetMatch resolve cannot signal or fail a newer room (14.590189ms)
+✔ obsolete startNetMatch reject cannot signal or fail a newer room (7.919603ms)
+✔ obsolete lobby launch cannot construct a match in a newer room (8.853968ms)
+✔ synchronous lobby-state cancellation rejects join without stale lobby messages (7.172841ms)
+✔ synchronous lobby-state cancellation rejects create without stale lobby messages (5.434378ms)
+✔ ordinary host match start launches when every human is ready (6.877918ms)
+✔ ordinary host ready timeout still starts its current match (8.022529ms)
+✔ synchronous starting-state cancellation stops match-start acquisition (5.173676ms)
+✔ #1159 _fail clears the old GO deadline before another room (5.720628ms)
+✔ #1159 _closed clears the old GO deadline before another room (6.7527ms)
+✔ #1159 a new round on the same transport retires the old deadline and owns a full interval (4.893094ms)
+(node:841) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1167 join cancellation cannot tear down subsequent join, including queued deadline (8.817985ms)
+✔ #1167 join cancellation cannot tear down subsequent create, including queued deadline (5.933008ms)
+✔ #1167 create cancellation cannot tear down subsequent join, including queued deadline (4.443289ms)
+✔ #1167 create cancellation cannot tear down subsequent create, including queued deadline (4.348396ms)
+✔ #1167 two cancelled connections leave only the third successful socket and heartbeat (4.309127ms)
+✔ #1154 early GO waits for lobby, matches cfg and launches once (4.590108ms)
+✔ #1154 early GO waits for world, matches cfg and launches once (5.432135ms)
+✔ #1154 early GO waits for warmup, matches cfg and launches once (5.98048ms)
+✔ #1154 disconnect with a queued GO cannot revive a disposed match or a new lobby (4.51091ms)
+✔ #1157 native disposed NetMatch cannot rebind or resubscribe; duplicate live bind is inert (332.167586ms)
+(node:842) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ malformed relay controls are inert and a later valid welcome still connects (476.612674ms)
+✔ invalid welcomes cannot settle the handshake, change identity, or start heartbeats (435.470225ms)
+✔ JSON heartbeat replies acknowledge only a current finite probe (419.655575ms)
+✔ background recovery keeps a JSON-pong connection and still closes an unanswered one (828.789025ms)
+✔ malformed host lobby snapshots leave every field and event unchanged (431.321134ms)
+✔ invalid peer profile updates cannot partly mutate or rebroadcast the host roster (443.111113ms)
+✔ eight-player host snapshots retain Turf, Boss, ranked modes, gear and legacy optional fields (458.994587ms)
+(node:861) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cancelled jitter does not delay a new connection (20.544149ms)
+✔ cancelled jitter does not delay a reused connection (3.843937ms)
+✔ concurrent connections have independent jitter while each preserves packet order (4.530971ms)
+✔ reconnecting the same Transport discards the previous room RTT sample (4.057689ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3836.998379

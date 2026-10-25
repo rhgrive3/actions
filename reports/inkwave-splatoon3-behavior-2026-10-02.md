@@ -6362,6 +6362,16 @@ main726eとの統合では、main側の新しいrelay時計・音声・capture a
 [active resetの追加候補](respawn-active-reset-20261023/README.md)では、表示復帰中に他のinvalidateを挟まずActor.resetを直接呼ぶと旧weight.925926が残り、新lifeでも.84375へ進むbd5回帰をsource／通常生成物／実Gameで確認した。handoff自身の表示recordだけをnative raw姿勢へ戻して破棄し、既存resetを引数・戻り値そのまま1回呼ぶ。入力／physics／native reset本体／曲線／grip／IK／geometryは変えない。直後record=null・新life weight0、canonical／銃口／実弾／塗りと対照一致、source18/18・生成物18/18。同条件Gameのreset前5地点とnative/cameraは一致。参照QAは22fのchecker/test2葉だけを別のproduction無変更候補a042に保持し、PR1853の9-edgeを含む8/8、source／生成物13参照を通す。旧702/main7eを祖先に保持し、既存不採用案・bd5は更新せず、PR/mainは独立確認待ち。
 
 
+## 2026-10-25: 接続ごとの遅延診断状態
+
+[Transport 接続状態の記録](transport-connection-state-20261025/README.md)では、
+開発用ネットワーク遅延の配送時刻が破棄した接続から次の接続へ残る問題と、
+Transport 再利用時の旧 RTT 標本の持ち越しを修正した。
+全本番合成コード・通常生成物・実 Chromium のローカル WebSocket で検証した。
+参照版は Splatoon 3 Ver.11.3.0 のままだが、本家内部の RTT 平滑化仕様や
+ブラウザ用シミュレーター相当仕様は未確認。ゲームルール・移動・射撃・復活条件は
+変更せず、本家の同条件実機・通信挙動と一致したとは扱わない。
+
 ## 2026-10-24: 全13 PRの統合
 
 所有者の明示的な依頼により、各PRの修正と最適化をmainへ統合する。原作比較の参照版は従来どおりSplatoon 3 Ver.11.3.0。今回の統合だけで本家実機・同条件の動的映像との一致を認定しない。既存の未確認・未採用項目は引き続き残す。

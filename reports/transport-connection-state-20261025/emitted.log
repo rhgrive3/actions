@@ -1,0 +1,14 @@
+(node:1011) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cancelled jitter does not delay a new connection (5.007056ms)
+✔ cancelled jitter does not delay a reused connection (2.812452ms)
+✔ concurrent connections have independent jitter while each preserves packet order (3.441235ms)
+✔ reconnecting the same Transport discards the previous room RTT sample (2.775667ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 303.165108

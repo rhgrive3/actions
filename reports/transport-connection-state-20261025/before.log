@@ -1,0 +1,84 @@
+(node:813) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ cancelled jitter does not delay a new connection (20.924149ms)
+✖ cancelled jitter does not delay a reused connection (3.076414ms)
+✖ concurrent connections have independent jitter while each preserves packet order (2.889343ms)
+✖ reconnecting the same Transport discards the previous room RTT sample (3.343384ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 369.357118
+
+✖ failing tests:
+
+test at patches/reliability/tests/transport-connection-state.test.mjs:55:36
+✖ cancelled jitter does not delay a new connection (20.924149ms)
+  AssertionError [ERR_ASSERTION]: new TCP connection owns its delivery ordering
+
+  910 !== 10
+
+      at TestContext.<anonymous> (file:///workspace/actions-reconnect/patches/reliability/tests/transport-connection-state.test.mjs:67:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 910,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/transport-connection-state.test.mjs:55:36
+✖ cancelled jitter does not delay a reused connection (3.076414ms)
+  AssertionError [ERR_ASSERTION]: new TCP connection owns its delivery ordering
+
+  910 !== 10
+
+      at TestContext.<anonymous> (file:///workspace/actions-reconnect/patches/reliability/tests/transport-connection-state.test.mjs:67:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 910,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/transport-connection-state.test.mjs:73:1
+✖ concurrent connections have independent jitter while each preserves packet order (2.889343ms)
+  AssertionError [ERR_ASSERTION]: one link cannot head-of-line block another
+
+  910 !== 10
+
+      at TestContext.<anonymous> (file:///workspace/actions-reconnect/patches/reliability/tests/transport-connection-state.test.mjs:80:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 910,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/transport-connection-state.test.mjs:93:1
+✖ reconnecting the same Transport discards the previous room RTT sample (3.343384ms)
+  AssertionError [ERR_ASSERTION]: old room sample must not be advertised in the new room
+
+  800 !== 0
+
+      at TestContext.<anonymous> (file:///workspace/actions-reconnect/patches/reliability/tests/transport-connection-state.test.mjs:98:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 800,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
