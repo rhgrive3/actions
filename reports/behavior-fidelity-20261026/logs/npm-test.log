@@ -1,0 +1,205 @@
+
+> inkwave-workspace@1.0.0 test
+> npm run check:patches && npm run audit:migration && npm run test:direct-source && npm run test:quality && npm run test:relay && npm run test:account && npm run test:backup && npm run test:queue-recovery && npm run test:memory
+
+
+> inkwave-workspace@1.0.0 check:patches
+> node scripts/check-inkwave-patches.mjs --quick
+
+INKWAVE quick checks OK: upstream compatible; reference 11.3.0
+
+> inkwave-workspace@1.0.0 audit:migration
+> node scripts/inkwave-source-migration-audit.mjs
+
+{
+  "sourceFilesExamined": 122,
+  "sourceFilesRewritten": 74,
+  "sourceFilesDirect": 48,
+  "totalOriginalBytes": 4641333,
+  "totalComposedBytes": 5251604,
+  "directOwnerPathsVerified": [
+    "patches/splatoon3/runtime/weapons-collision.mjs",
+    "src/game/character-lod.js",
+    "src/game/character-outfit.js",
+    "src/game/inkCollision.js",
+    "src/game/lobbySet-tex.js",
+    "src/game/motion/body-balance.js",
+    "src/game/motion/source-bank.js",
+    "src/game/nav.js",
+    "src/world/murals.js",
+    "src/world/props-core.js",
+    "src/world/props-marina-placements.js",
+    "src/world/props-marina-vessels.js",
+    "src/world/props.js",
+    "src/world/stages/cargo/layout.js",
+    "src/world/stages/cargo/placements.js",
+    "src/world/stages/data.js",
+    "src/world/stages/index.js",
+    "src/world/stages/surfaces.js"
+  ],
+  "changedPaths": [
+    {
+      "path": "src/net/netmatch.js",
+      "sourceBytes": 42534,
+      "composedBytes": 177448,
+      "deltaBytes": 134914
+    },
+    {
+      "path": "src/ui/hud.js",
+      "sourceBytes": 85019,
+      "composedBytes": 127803,
+      "deltaBytes": 42784
+    },
+    {
+      "path": "src/game/weapons.js",
+      "sourceBytes": 87952,
+      "composedBytes": 128847,
+      "deltaBytes": 40895
+    },
+    {
+      "path": "src/main.js",
+      "sourceBytes": 74741,
+      "composedBytes": 109143,
+      "deltaBytes": 34402
+    },
+    {
+      "path": "src/ui/menus.js",
+      "sourceBytes": 252955,
+      "composedBytes": 287264,
+      "deltaBytes": 34309
+    },
+    {
+      "path": "src/core/mobile.js",
+      "sourceBytes": 29906,
+      "composedBytes": 53649,
+      "deltaBytes": 23743
+    },
+    {
+      "path": "src/game/player.js",
+      "sourceBytes": 11945,
+      "composedBytes": 32971,
+      "deltaBytes": 21026
+    },
+    {
+      "path": "src/world/paint.js",
+      "sourceBytes": 36556,
+      "composedBytes": 54344,
+      "deltaBytes": 17788
+    },
+    {
+      "path": "src/core/input.js",
+      "sourceBytes": 7310,
+      "composedBytes": 25012,
+      "deltaBytes": 17702
+    },
+    {
+      "path": "src/game/character.js",
+      "sourceBytes": 231400,
+      "composedBytes": 246055,
+      "deltaBytes": 14655
+    },
+    {
+      "path": "src/game/actor.js",
+      "sourceBytes": 50015,
+      "composedBytes": 63620,
+      "deltaBytes": 13605
+    },
+    {
+      "path": "styles/hud.css",
+      "sourceBytes": 102072,
+      "composedBytes": 115185,
+      "deltaBytes": 13113
+    },
+    {
+      "path": "src/core/renderer.js",
+      "sourceBytes": 17731,
+      "composedBytes": 30100,
+      "deltaBytes": 12369
+    },
+    {
+      "path": "styles/ui.css",
+      "sourceBytes": 290094,
+      "composedBytes": 302277,
+      "deltaBytes": 12183
+    },
+    {
+      "path": "src/net/session.js",
+      "sourceBytes": 17518,
+      "composedBytes": 29446,
+      "deltaBytes": 11928
+    },
+    {
+      "path": "src/game/motion/source-controller.js",
+      "sourceBytes": 36429,
+      "composedBytes": 45943,
+      "deltaBytes": 9514
+    },
+    {
+      "path": "src/game/character-face.js",
+      "sourceBytes": 58743,
+      "composedBytes": 68193,
+      "deltaBytes": 9450
+    },
+    {
+      "path": "src/ui/diorama.js",
+      "sourceBytes": 11854,
+      "composedBytes": 21220,
+      "deltaBytes": 9366
+    },
+    {
+      "path": "src/game/bots.js",
+      "sourceBytes": 45154,
+      "composedBytes": 54066,
+      "deltaBytes": 8912
+    },
+    {
+      "path": "src/game/showcase.js",
+      "sourceBytes": 158118,
+      "composedBytes": 166852,
+      "deltaBytes": 8734
+    }
+  ],
+  "changedPathsTruncated": true,
+  "failures": []
+}
+
+> inkwave-workspace@1.0.0 test:direct-source
+> node --test scripts/tests/inkwave-direct-source-ownership.test.mjs scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-lossless-lightmap.test.mjs
+
+✔ public-source fetch is a read-only candidate workflow, never a direct-source overwrite (1.191001ms)
+✔ native catalogue sweep helper ships as a non-eager immutable runtime dependency (0.546426ms)
+✔ migrated A-star heuristic owner is the readable game source (0.316035ms)
+✔ mural atlas and world branding use directly editable source without rebuild-time rewriting (1595.997545ms)
+✔ ZEVANT stage and lobby lettering is directly owned by authored game modules (4.963201ms)
+✔ level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches (1.966949ms)
+✔ PropKit atlas, lifetime and rematch behavior are authored in the real module, without prototype rewriting (45.21563ms)
+✔ registered Scorch and native layouts live directly in the stage map module (0.523946ms)
+✔ native ink and catalogue sweep entry points and AABB early-outs live in real collision source (1.611393ms)
+✔ standalone native sweep keeps Node collision regression free of the full stage engine and three dependency (6.20647ms)
+✔ practice-stage registry and surface slots are authored without string adapters (0.700629ms)
+✔ source motion bank sampling and FK are directly owned by the authored module (1.217384ms)
+✔ Direct-Source migrated LOD, outfit AO, body-balance and transport compat modules require zero hotpath/compat rewrite and pass auditDirectSource (2631.899949ms)
+✔ native stage Node18 fallback preserves source terrain validation before stage publication (102.33994ms)
+✔ production grayscale lightmaps keep independently Pillow-verified exact pixels while saving space (8261.211036ms)
+✔ lossless PNG optimization is fail-closed for unexpected bytes or bit-depth (1.290354ms)
+✔ lossless PNG optimization preserves pixels from all five input row filters (46.700649ms)
+✔ exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes (0.315551ms)
+✔ Pages publishes the exact workflow revision, never a moving main branch (1.854536ms)
+✔ every published gameplay patch group can trigger Pages (0.497404ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13703.353452
+
+> inkwave-workspace@1.0.0 test:quality
+> node --experimental-vm-modules --experimental-global-webcrypto --test patches/local-quality/tests/nav-heuristic.test.mjs patches/local-quality/tests/pose-rotation.test.mjs patches/local-quality/tests/motion-fk-hotpath.test.mjs patches/local-quality/tests/squid-rapid-idle-regression.test.mjs patches/local-quality/tests/prop-atlas.test.mjs patches/local-quality/tests/prop-retention.test.mjs && node patches/local-quality/tests/performance-v2-ao.test.mjs && node patches/local-quality/tests/performance-v2-geometry.test.mjs && node patches/local-quality/tests/performance-v2-topology.test.mjs
+
+(node:3269) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ motion optimization is guarded, composed and excluded from browser payloads (82.129605ms)
+✔ FK instrumentation preserves the range; the old argument-dropping wrapper is rejected (2.693453ms)
+{"fixture":"held Roller release with awaited source banks; no rendered-motion claim","hz":120,"frames":156,"supportFrames":50,"maxGap":2.2591401799415137e-15,"release":{"frame":150,"advance":0,"gap":9.511095073011754e-16},"rangedCalls":[0,559]}

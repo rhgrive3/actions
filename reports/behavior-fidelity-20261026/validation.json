@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "parentPr": 1878,
+  "parentCommit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "branch": "fix/inkwave-original-behavior-20261026",
+  "referenceVersion": "Splatoon 3 11.3.0",
+  "build": {
+    "contentHash": "f1c8893ce039a9eaf545c60961889ff0e8490e7c78ee511c2371931fccdad599",
+    "inputCount": 1477,
+    "artifactCount": 2174,
+    "mismatches": []
+  },
+  "npmTest": "running",
+  "browser": {
+    "cases": 72,
+    "errors": [],
+    "contentHash": "f1c8893ce039a9eaf545c60961889ff0e8490e7c78ee511c2371931fccdad599",
+    "realCharacter": true,
+    "realPhysics": true,
+    "cpuPaint": true,
+    "hardwareParity": false
+  },
+  "baseline": {
+    "expectedFailures": 23,
+    "expectedPasses": 4,
+    "mutant": "exact original main-weapon-catalog/resources bytes loaded into otherwise candidate fixture"
+  },
+  "limitations": [
+    "Whole-weapon rolling browser failed existing standard Roller grip limits; see logs/rolling-browser.log.",
+    "No Switch, device-GPU, iPad/Safari or two-device parity acceptance.",
+    "Native prebuilt LFS payload absent; production uses existing browser-conversion fallback."
+  ],
+  "summaries": {
+    "baseline-final.tap": {
+      "tests": 27,
+      "pass": 4,
+      "fail": 23,
+      "skipped": 0,
+      "artifact": "logs/baseline-final.tap.gz",
+      "sha256": "ca6c37b58057249c8befa90472c69eca88480630749a33c6448088e8489a606a",
+      "bytes": 24926
+    },
+    "final-source.tap": {
+      "tests": 57,
+      "pass": 57,
+      "fail": 0,
+      "skipped": 0,
+      "artifact": "logs/final-source.tap",
+      "sha256": "68a050c7f225d00eb7e107ebfce13e336ea9d207cd9e9749cadd2ada993217c5",
+      "bytes": 6924
+    },
+    "final-paint.tap": {
+      "artifact": "logs/final-paint.tap",
+      "sha256": "23da529caf12d3694f51875124722741cd1f76a2522bb2f96283bb1b6558c9fa",
+      "bytes": 4069
+    },
+    "mist-after.tap": {
+      "tests": 31,
+      "pass": 31,
+      "fail": 0,
+      "skipped": 0,
+      "artifact": "logs/mist-after.tap",
+      "sha256": "1a5217dedff07d89f0e082dbc5c865e10ae8f2285229fa27d42606daf5d09304",
+      "bytes": 3961
+    },
+    "enemy-ink.tap": {
+      "tests": 44,
+      "pass": 44,
+      "fail": 0,
+      "skipped": 0,
+      "artifact": "logs/enemy-ink.tap",
+      "sha256": "ffae63b5a2a3764dfd6743e568e5803d884bf559e53288b9de1780111ce516ed",
+      "bytes": 5624
+    },
+    "emitted.tap": {
+      "tests": 27,
+      "pass": 27,
+      "fail": 0,
+      "skipped": 0,
+      "artifact": "logs/emitted.tap",
+      "sha256": "a037716c27b7f24157dab9c6157d710ed2c87a155b6c936978279e7b03289017",
+      "bytes": 4290
+    },
+    "build.log": {
+      "artifact": "logs/build.log",
+      "sha256": "68a3ded0416d4b5228f5c32c188178ea997462796fd62b7de3f12d523b3451a4",
+      "bytes": 1298
+    },
+    "budget.log": {
+      "artifact": "logs/budget.log",
+      "sha256": "a918a7f14344a2089a408c25fbccf306dd4aeb26905346b024d452cc7274674c",
+      "bytes": 520
+    },
+    "npm-test.log": {
+      "tests": 20,
+      "pass": 20,
+      "fail": 0,
+      "skipped": 0,
+      "artifact": "logs/npm-test.log",
+      "sha256": "f7c07d5de3bb85621578b79917b5746928d976a7df3caa2ff310cc86c0913852",
+      "bytes": 7748
+    },
+    "rolling-browser.log": {
+      "artifact": "logs/rolling-browser.log",
+      "sha256": "e739cfe3e1d81b55bbaa5e60435844680915d1939d05f83b2b77320e16685afa",
+      "bytes": 621
+    }
+  }
+}
