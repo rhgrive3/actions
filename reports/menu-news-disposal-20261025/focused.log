@@ -1,0 +1,25 @@
+✔ actual menu key handler retains event consumption, repeat, modal and navigation order (541.080744ms)
+✔ existing production slider already keeps one pointer owner through unrelated up/cancel and capture loss (1.738879ms)
+✔ lens scalar coordinates preserve all particle arguments, mutation and random order (1059.445779ms)
+✔ menu hover writes only changed values and measures geometry again after layout invalidation (2.417218ms)
+✔ first engine-driven update preserves the pending news timer and active animation (255.269822ms)
+✔ full-composition disposal releases news before update (141.534802ms)
+✔ full-composition disposal releases news after update (112.969151ms)
+✔ direct quality composition also disposes news without depending on RAF formatting (26.40016ms)
+✔ negative control: a second finger moves and releases the native slider (2.396637ms)
+✔ slider admits one primary-button pointer and ignores unrelated moves and releases (1.543256ms)
+✔ slider retires on pointercancel and never consumes later moves (0.687011ms)
+✔ slider retires on lostpointercapture and never consumes later moves (0.628172ms)
+✔ slider retires on blur and never consumes later moves (0.627742ms)
+✔ slider retires on destroy and never consumes later moves (0.655654ms)
+✔ settings transform is identity-tracked, scoped, and rejects input drift (31.855408ms)
+✔ pressing a slider track selects its row before applying the new value (1.414633ms)
+✔ a hidden zero-width slider cannot apply invalid pointer-derived values (0.669335ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2275.285948

@@ -1,0 +1,57 @@
+✔ negative control: upstream show() leaves the closed results screen live until the wipe midpoint (1.573069ms)
+✔ MAIN MENU on results: the closing results screen takes no further taps or pad input (19.365281ms)
+✔ a tap that began on the previous screen never activates the item that appears under it (10.564458ms)
+✔ items still invisible in their entrance animation cannot be activated; visible ones can (14.022306ms)
+✔ ordinary screen changes keep working: immediate swaps stay live, nav works once mounted (13.269707ms)
+[menus] unknown screen unknown
+[menus] unknown screen unknown
+✔ #950 raw negative: stale title timer overwrites a newer settings screen (3.052589ms)
+✔ #950 raw negative: disposed title timer reopens the menu API (0.723825ms)
+✔ #950 title keeps the 350ms admission guard and exactly one 200ms confirmation (1.828132ms)
+✔ #950 newer settings navigation cancels title timer, including an already queued callback (0.808963ms)
+✔ #950 newer main navigation cancels title timer, including an already queued callback (0.724437ms)
+✔ #950 newer null navigation cancels title timer, including an already queued callback (0.74007ms)
+✔ #950 title reentry and forced same-screen replacement retire old callbacks without retiring a new one (1.37987ms)
+✔ #950 redundant/invalid show does not discard a valid title confirmation (1.39335ms)
+✔ #950 disposal cancels a zero-valued timer id, blocks queued confirmation and direct navigation (0.884707ms)
+✔ #950 pending native wipe callback cannot re-enter after disposal (0.851938ms)
+✔ #950 raw negative: old mode pick enters setup after leaving and reentering mode (1.597827ms)
+✔ #950 normal mode selection stays once-only with 260ms delay (1.295313ms)
+✔ #950 normal mode selection stays once-only with 0ms reduced-motion delay (0.80002ms)
+✔ #950 leave retires mode timer and its stale selection callback (0.907892ms)
+✔ #950 reenter retires mode timer and its stale selection callback (1.012939ms)
+✔ #950 force retires mode timer and its stale selection callback (0.887311ms)
+✔ #950 dispose retires mode timer and its stale selection callback (0.791086ms)
+✔ #950 repeated title/main/mode cycles keep only one navigation owner and zero pending after disposal (2.691558ms)
+✔ #950 build-only identity includes the transform and rejects missing or duplicated native anchors (27.765152ms)
+✔ #950 PR1182 residual: an invalid navigation request must not swallow valid title confirmation (1.058248ms)
+✔ #950 PR1182 residual: cancelled queued title callback cannot reopen repeated-confirm admission (0.776014ms)
+✔ #950 PR1182 residual: old Mode selection cannot advance a later visit to Setup (0.958077ms)
+✔ #950 PR1182 residual: native pending wipe cannot resurrect a disposed screen (0.621252ms)
+✔ #950 title confirmation transitions once after its original 200ms (3.168473ms)
+✔ #950 subsequent navigation and re-entered title cannot be stolen by the previous timer (0.807862ms)
+✔ #950 dispose clears pending title timeout and prevents screen resurrection (9.24585ms)
+✔ circular ribbons retain exact chronological points and all uploaded vertices through wrap, expiry and eviction (24.666393ms)
+✔ cached Explosher coefficients preserve every Float32 sparkle value including reused projectile seeds and saturation (3.485649ms)
+✔ scalar Kraken guards preserve planar, 3D and invalid contact results (1.197797ms)
+✔ TRY IT cancels only the detached news animation and retains remove-before-Boss ordering (31.750961ms)
+✔ inventory indexing preserves first duplicate actor, string IDs, disappearance and marker positions (21.411941ms)
+✔ unsupported special kinds allocate no Group or team color work (11.141825ms)
+✔ idle local movement audio skips only absent handles and still fades existing loops after death (47.715399ms)
+✔ ranked objective projection scratch retains every Canvas command for all four ranked rules (5.054393ms)
+✔ news-owned templates retain exact source clip strings through expansion, contraction and rounding boundaries (372.519616ms)
+✔ offscreen ally marker arithmetic preserves exact edge, rear and nonfinite coordinates (34.481407ms)
+✔ crosshair cache invalidates numerator and denominator independently without changing signed zero or nonfinite results (24.539343ms)
+✔ diorama compares authored and CSSOM forms, restores external edits and handles replacement nodes (11.916937ms)
+✔ dust ring retains all emitted arguments and RNG order over quality and burst sizes (570.966958ms)
+✔ only documented model branches consume speed and independent Wail pose clocks still advance (25.089067ms)
+✔ five Wail finish batches preserve six source transforms, per-speaker visibility, shadows, culling and divergence fallback (47.096637ms)
+✔ Storm factory skips all discarded meshes/materials while preserving native RNG, record, events and fallback (66.361183ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 47
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1857.328821

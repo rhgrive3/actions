@@ -1,0 +1,10 @@
+
+> inkwave-workspace@1.0.0 check:patches
+> node scripts/check-inkwave-patches.mjs --quick
+
+INKWAVE patch compatibility review required: src/core/mobile.js. See patches/splatoon3/README.md. No unpatched fallback is published.
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice
