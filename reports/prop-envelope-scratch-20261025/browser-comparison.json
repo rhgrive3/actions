@@ -1,0 +1,612 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "meshes": [
+    "props:spin:fan",
+    "props:spin:turbine",
+    "props:blink",
+    "props:flags",
+    "props:banners"
+  ],
+  "frames": [
+    {
+      "time": 0,
+      "view": 0,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 1,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 2,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 3,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 4,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 5,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 6,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 7,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 8,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 0,
+      "view": 9,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 0,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 1,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 2,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 3,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 4,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 5,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 6,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 7,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 8,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 0.2,
+      "view": 9,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 0,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 1,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 2,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 3,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 4,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 5,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 6,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 7,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 8,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 1,
+      "view": 9,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 0,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 1,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 2,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 3,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 4,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 5,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 6,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 7,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 5,
+          "triangles": 1636
+        },
+        {
+          "calls": 5,
+          "triangles": 1636
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 8,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    },
+    {
+      "time": 10,
+      "view": 9,
+      "differences": 0,
+      "draws": [
+        {
+          "calls": 1,
+          "triangles": 240
+        },
+        {
+          "calls": 1,
+          "triangles": 240
+        }
+      ]
+    }
+  ]
+}

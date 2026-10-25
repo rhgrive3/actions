@@ -40,7 +40,9 @@ export function setPropInstanceEnvelope(mesh) {
       if (!Number.isFinite(sway)) return; // preserve uncullable fallback for unsupported shader data
       local.min.z -= sway; local.max.z += sway;
     }
-    for (const r of recs) box.union(local.clone().applyMatrix4(r.m));
+    // union copies extrema; one local scratch box serves every placement.
+    const transformed = new THREE.Box3();
+    for (const r of recs) box.union(transformed.copy(local).applyMatrix4(r.m));
   }
   finishEnvelope(mesh, box);
 }

@@ -1,0 +1,115 @@
+{
+  "base": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "node": "v24.19.0",
+  "stage": "halyard",
+  "parity": [
+    {
+      "name": "props:spin:turbine",
+      "axis": "y",
+      "records": 2,
+      "culled": true,
+      "sphere": {
+        "center": [
+          0,
+          3.62,
+          0
+        ],
+        "radius": 47.89661234877327
+      }
+    },
+    {
+      "name": "props:spin:fan",
+      "axis": "z",
+      "records": 2,
+      "culled": true,
+      "sphere": {
+        "center": [
+          1.1102230246251565e-16,
+          3.5519999999999996,
+          0
+        ],
+        "radius": 20.34151870857307
+      }
+    },
+    {
+      "name": "props:spin:hv_radar17",
+      "axis": "y",
+      "records": 2,
+      "culled": true,
+      "sphere": {
+        "center": [
+          0,
+          10.149999999999999,
+          0
+        ],
+        "radius": 3.5965210817597772
+      }
+    },
+    {
+      "name": "props:spin:hv_radar11",
+      "axis": "y",
+      "records": 2,
+      "culled": true,
+      "sphere": {
+        "center": [
+          0,
+          9.35,
+          0
+        ],
+        "radius": 28.044029745294402
+      }
+    },
+    {
+      "name": "props:blink",
+      "axis": null,
+      "records": 49,
+      "culled": true,
+      "sphere": {
+        "center": [
+          3.552713678800501e-15,
+          5.402500000000001,
+          0
+        ],
+        "radius": 61.08446431292408
+      }
+    },
+    {
+      "name": "props:flags",
+      "axis": null,
+      "records": 44,
+      "culled": false,
+      "sphere": null
+    }
+  ],
+  "cloneCounts": {
+    "before": 51,
+    "after": 2
+  },
+  "repetitions": 5000,
+  "times": {
+    "before": [
+      77.80980799999998,
+      77.854108,
+      72.34520999999995,
+      61.63814000000002,
+      52.45397600000001,
+      89.47456999999986,
+      58.58264099999997,
+      1592.4737559999999,
+      811.7844100000002
+    ],
+    "after": [
+      67.10138800000004,
+      61.01574800000003,
+      57.56211200000007,
+      56.54398900000001,
+      66.04733699999997,
+      76.92043899999999,
+      98.6210759999999,
+      560.9683089999999,
+      223.42590199999995
+    ]
+  },
+  "medianBefore": 77.80980799999998,
+  "medianAfter": 67.10138800000004
+}
