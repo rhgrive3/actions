@@ -16,7 +16,7 @@ test('fixed gear identity requires shoes main and accepted owner/life; numbers a
  const a={s3:{loadout:[{main:'objectShredder'},{main:'objectShredder'},{main:'runSpeed',subs:['objectShredder']}],modifiers:{objectShredder:true,objectShredderAP:57}}};
  assert.equal(objectGearRate(a,'sprinkler'),1);a.s3.loadout[2].main='objectShredder';assert.equal(objectGearRate(a,'sprinkler'),10);assert.equal(objectGearRate(a,'unknown'),1);
  a.remote=true;a.owner='peer';a.netLife=3;assert.equal(objectShredderEquipped(a),false);
- receiveObjectGearSnapshot(a,'peer',OBJECT_SHREDDER_FLAG);assert.equal(objectShredderEquipped(a),true);
+ receiveObjectGearSnapshot(a,'peer',1);assert.equal(objectShredderEquipped(a),true);
  a.netLife=4;assert.equal(objectShredderEquipped(a),false);a.netLife=3;a.owner='other';assert.equal(objectShredderEquipped(a),false);
  assert.equal(withObjectHitGear(a,10,()=>objectGearRate(a,'sprinkler')),1);
  assert.equal(withObjectHitGear(a,true,()=>objectGearRate(a,'sprinkler')),10);
@@ -38,6 +38,46 @@ for(const [id,rate] of [['splashWall',1.5],['beakon',10],['torpedo',1.3],['inkMi
  const ghost=f.G.projectiles.kitBarrierCandidate({...p,ghost:true},p.prev,p.pos);if(id==='inkMine'){assert.equal(ghost,null,'Ink Mine is not a destroyable device');assert.equal(o.hp,1000);return;}assert.ok(ghost);ghost.onHit();assert.equal(o.hp,1000);
  const hit=f.G.projectiles.kitBarrierCandidate(p,p.prev,p.pos);assert.ok(hit);hit.onHit();assert.equal(o.hp,1000-10*rate);hit.onHit();assert.equal(o.hp,1000-10*rate);
 });
+
+test('all six Dualies mains keep turret bit27 independent of equipped Object Shredder across accepted snapshots',async()=>{
+ const {MAIN_WEAPON_CATALOG}=await import('../runtime/main-weapon-catalog-data.mjs');
+ const {DUALIES_TURRET_FLAG}=await import('../runtime/dualies-network.mjs');
+ assert.equal(DUALIES_TURRET_FLAG,OBJECT_SHREDDER_FLAG,'regression must exercise the original numeric collision');
+ const ids=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='dualies').map(r=>r.id);
+ assert.equal(ids.length,6);
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
+   extraExports:"export {objectShredderEquipped} from './patches/splatoon3/runtime/object-gear.mjs';"});
+ for(const id of ids){
+   const owner=f.make(id),proxy=f.make(id);owner.nid=proxy.nid=1;
+   owner.owner=proxy.owner='owner';owner.remote=false;proxy.remote=true;
+   owner.s3.loadout[2].main='objectShredder';
+   let packet;
+   const sender=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,tr:{broadcast:d=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'gear-dualies'});
+   const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false},{id:'gear-dualies'});
+   sender.bind({actors:[owner],state:'playing',time:180});
+   receiver.bind({actors:[proxy],state:'playing',time:180});
+   try{
+     owner.weaponRunner.s3Turret=false;
+     if(owner.weaponRunner.catalogState)owner.weaponRunner.catalogState.turret=0;
+     sender._sendTick();
+     assert.equal(packet.og?.[1],1,id+' equipped shoes in independent sidecar');
+     assert.equal(packet.a[0][10]&DUALIES_TURRET_FLAG,0,id+' idle turret stays off');
+     receiver._tick('owner',{...packet,ts:2});
+     assert.equal(f.objectShredderEquipped(proxy),true,id+' receiver retains equipped shoes');
+     owner.s3.loadout[2].main='runSpeed';
+     owner.weaponRunner.s3Turret=true;
+     sender._sendTick();
+     assert.ok(packet.a[0][10]&DUALIES_TURRET_FLAG,id+' active planted turret is transmitted');
+     assert.equal(packet.og?.[1],0,id+' planted state does not fabricate shoes');
+     receiver._tick('owner',{...packet,ts:3});
+     assert.equal(f.objectShredderEquipped(proxy),false,id+' receiver rejects false gear grant');
+     const old={...packet,ts:4};delete old.og;
+     receiver._tick('owner',old);
+     assert.equal(f.objectShredderEquipped(proxy),false,id+' missing sidecar fails closed');
+   }finally{sender.dispose();receiver.dispose();f.G.projectiles.clear();f.G.actors.length=0;}
+ }
+});
+
 for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2]])test(`${id} object candidate applies fixed rate once and rejects ghosts`,async()=>{
  const f=await setup(),a=f.make(),b=f.make();equip(a,id);b.team=1;b.s3.loadout[2].main='objectShredder';f.G.actors=[a,b];readySpecialEvidence(a, {placeAtFixtureOrigin:true});useSpecialEvidence(f,a);
  const o=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind===kind);assert.ok(o);o.hp=1000;
@@ -74,14 +114,14 @@ test('real NetMatch preserves shoes identity through JSON hit, rejects foreign s
  }finally{sender.dispose();receiver.dispose();f.G.projectiles.clear();rf.G.projectiles.clear();}
 });
 
-test('real owner snapshot bit27 is independent from RP and special ready and rejects stale/foreign rows',async()=>{
+test('real owner gear sidecar stays independent of Dualies bit27 and rejects stale/foreign rows',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {objectShredderEquipped} from './patches/splatoon3/runtime/object-gear.mjs';"}),a=f.make();a.nid=1;a.owner='owner';a.s3.loadout[2].main='objectShredder';
- let packet;const sender=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,tr:{broadcast:d=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'object-gear'});sender.bind({actors:[a],state:'playing',time:180});sender._sendTick();assert.ok(packet.a[0][10]&OBJECT_SHREDDER_FLAG);
+ let packet;const sender=new f.NetMatch({myId:'owner',hostId:'owner',isHost:true,tr:{broadcast:d=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'object-gear'});sender.bind({actors:[a],state:'playing',time:180});sender._sendTick();assert.equal(packet.og?.[1],1);assert.equal(packet.a[0][10]&OBJECT_SHREDDER_FLAG,0,'shoes gear never claims the turret flag');
  const remote=f.make();remote.owner='owner';remote.nid=1;const receiver=new f.NetMatch({myId:'viewer',hostId:'owner',isHost:false},{id:'object-gear'});receiver.bind({actors:[remote],state:'playing',time:180});
  receiver._tick('foreign',{...packet,ts:1});assert.equal(f.objectShredderEquipped(remote),false);
  receiver._tick('owner',{...packet,ts:2});assert.equal(f.objectShredderEquipped(remote),true);
- const clear=JSON.parse(JSON.stringify(packet));clear.ts=1;clear.a[0][10]&=~OBJECT_SHREDDER_FLAG;receiver._tick('owner',clear);assert.equal(f.objectShredderEquipped(remote),true);
- f.G.time+=1/60;a.s3.loadout[2].main='runSpeed';sender._sendTick();packet.ts=3;receiver._tick('owner',packet);assert.equal(f.objectShredderEquipped(remote),false);
+ const clear=JSON.parse(JSON.stringify(packet));clear.ts=1;clear.og[1]=0;receiver._tick('owner',clear);assert.equal(f.objectShredderEquipped(remote),true);
+ f.G.time+=1/60;a.s3.loadout[2].main='runSpeed';sender._sendTick();assert.equal(packet.og?.[1],0);packet.ts=3;receiver._tick('owner',packet);assert.equal(f.objectShredderEquipped(remote),false);
 });
 
 for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2]])test(`${id}: real catalogue JSON proposals bind sender and target life and apply multiplier only once`,async()=>{

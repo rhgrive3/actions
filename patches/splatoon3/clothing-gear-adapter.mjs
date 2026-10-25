@@ -10,10 +10,12 @@ export function adaptClothingGear(rel, code, replace) {
   // Existing life/owner admission and ACK listeners remain outside this local scope.
   const hit = 'G.projectiles?.applyHit(atk, v, d.d, d.w, d.g);';
   patch(hit, 'withHitPunisher(atk, d.rp, () => { ' + hit + ' });', 'hit-scoped equipment and finally');
-  patch('if (respawnPunisherEquipped(a)) f |= RESPAWN_PUNISHER_FLAG;', 'if (respawnPunisherEquipped(a)) f |= RESPAWN_PUNISHER_FLAG;\n  if (objectShredderEquipped(a)) f |= OBJECT_SHREDDER_FLAG;', 'snapshot bit27');
-  patch('receiveClothingSnapshot(a, from, snap.f);', 'receiveClothingSnapshot(a, from, snap.f); receiveObjectGearSnapshot(a, from, snap.f);', 'accepted object gear identity');
+  // Bit27 belongs to the Dualies turret pose. Object Shredder is transported
+  // as a separate owner-authored 0/1 sidecar; tuple layout remains unchanged.
+  patch("    this.stats.out++;\n    this.s.tr?.broadcast(msg);", "    const gearRows = Object.create(null);\n    for (const packed of a) {\n      const id = packed?.[0], actor = this.byNid.get(id);\n      if (Number.isSafeInteger(id) && actor && !actor.remote) gearRows[id] = objectShredderEquipped(actor) ? 1 : 0;\n    }\n    msg.og = gearRows;\n    this.stats.out++;\n    this.s.tr?.broadcast(msg);", 'unambiguous owner equipment sidecar');
+  patch('receiveClothingSnapshot(a, from, snap.f);', 'receiveClothingSnapshot(a, from, snap.f); receiveObjectGearSnapshot(a, from, d.og?.[s[0]]);', 'accepted Object Shredder sidecar');
   patch('rp: respawnPunisherEquipped(attacker)', 'rp: respawnPunisherEquipped(attacker), os: objectShredderEquipped(attacker)', 'object hit equipment');
   patch('withHitPunisher(atk, d.rp, () => { ' + hit + ' });', 'withHitPunisher(atk, d.rp, () => withObjectHitGear(atk, d.os, () => { ' + hit + ' }));', 'accepted object hit scope');
-  code = "import { objectShredderEquipped, receiveObjectGearSnapshot, withObjectHitGear, OBJECT_SHREDDER_FLAG } from '../../patches/splatoon3/runtime/object-gear.mjs';\n" + code;
+  code = "import { objectShredderEquipped, receiveObjectGearSnapshot, withObjectHitGear } from '../../patches/splatoon3/runtime/object-gear.mjs';\n" + code;
   return "import { respawnPunisherEquipped, receiveClothingSnapshot, withHitPunisher, RESPAWN_PUNISHER_FLAG } from '../../patches/splatoon3/runtime/clothing-gear.mjs';\n" + code;
 }

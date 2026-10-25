@@ -2,7 +2,9 @@
 // Leanny/splat3 7280ff9cde8bb1c5dcef46c700c326471584d2e6, 1130
 // misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json,
 // RowKey ObjectEffect_Up. Missing/default columns are deliberately unmodified.
-export const OBJECT_SHREDDER_FLAG = 134217728; // bit27; special-ready owns bit26
+// Historical bit27 collides with the Dualies planted-pose flag. Never transmit
+// object gear in actor flags. Keep this constant for historical trace checks.
+export const OBJECT_SHREDDER_FLAG = 134217728;
 export const OBJECT_SHREDDER_RATES = Object.freeze({
   booyahBomb: 1.1, crabTank: 1.3, waveBreaker: 1.25, superChump: 2,
   splashWall: 1.5, sprinkler: 10, beakon: 10, torpedo: 1.3,
@@ -15,9 +17,12 @@ export function objectShredderEquipped(actor) {
   const proof = actor.s3?.objectGearSnapshot;
   return !!proof && proof.owner === actor.owner && proof.life === life(actor) && proof.equipped === true;
 }
-export function receiveObjectGearSnapshot(actor, owner, flags) {
+export function receiveObjectGearSnapshot(actor, owner, value) {
   actor.s3 ||= {};
-  actor.s3.objectGearSnapshot = { owner, life: life(actor), equipped: !!(flags & OBJECT_SHREDDER_FLAG) };
+  // Explicit 0/1 from the accepted owner's sidecar. Missing, malformed or
+  // old-peer data fails closed, even if actor flags carry a Dualies turret.
+  if (value !== 0 && value !== 1) { actor.s3.objectGearSnapshot = null; return; }
+  actor.s3.objectGearSnapshot = { owner, life: life(actor), equipped: value === 1 };
 }
 // Called only inside existing accepted-owner/life admission. A packet contains
 // one equipment identity, not an arbitrary damage multiplier. Old peers omit it.

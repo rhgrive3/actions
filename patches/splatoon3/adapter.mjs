@@ -1282,10 +1282,14 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // Bit28 is reserved for owner-held drum suspension: presentation only.
+    code = replaceOnce(code, "function packActor(a) {", "const ROLLER_SUSPENDED_WIRE_FLAG = 1 << 28;\nfunction packActor(a) {", "roller suspended bit");
+    code = replaceOnce(code, "  if (wr.rolling) f |= F.rolling;", "  if (wr.rolling) f |= F.rolling;\n  if (wr.rolling && wr.s3RollerSuspendedHold && (a.weapon?.kind === 'roller' || a.weapon?.behaviorKind === 'roller' || a.weapon?.behaviorKind === 'brush')) f |= ROLLER_SUSPENDED_WIRE_FLAG;", "owner roll suspension flag");
+    code = replaceOnce(code, "wr.rolling = !!(f & F.rolling); wr.streaming = !!(f & F.streaming);", "wr.rolling = !!(f & F.rolling); wr.s3RollerSuspendedHold = wr.rolling && !!(f & ROLLER_SUSPENDED_WIRE_FLAG) && (a.weapon?.kind === 'roller' || a.weapon?.behaviorKind === 'roller' || a.weapon?.behaviorKind === 'brush'); wr.streaming = !!(f & F.streaming);", "remote presentation support bit");
     // Rolling also represents a held-down weapon across a jump. The existing
     // grounded flag keeps remote contact audio silent until touchdown.
     code = replaceOnce(code, "h = this._voiceLoop(a, near, 'roll', wr.rolling, 'roll');",
-      "h = this._voiceLoop(a, near, 'roll', wr.rolling && a.grounded, 'roll');", 'airborne roller contact voice');
+      "h = this._voiceLoop(a, near, 'roll', wr.rolling && a.grounded && !(a.net?.cur?.f & ROLLER_SUSPENDED_WIRE_FLAG), 'roll');", 'airborne roller contact voice');
     // The existing firing bit carries the held intake level for Ink Vac.
     // Weapon firingT is deliberately masked while Vac owns the trigger.
     code = replaceOnce(code, '  if (wr.firingT > 0) f |= F.firing;',
