@@ -118,7 +118,7 @@ const approvedMotionTests = [
   'scripts/tests/inkwave-ui-visual-probe-errors.test.mjs'
 ];
 const approvedMotionArguments = ' ' + approvedMotionTests.join(' ');
-const approvedCoreHash = 'd91e7883718efdacc8b6af8431557419a747beeddc229252a23a2e012f5e0d5f';
+const approvedCoreHash = 'cc163629550d6b7d11d2ac779e043e627d2482dbeb92ce0dec4e61f58c6f6e5a';
 function canonicalCoreMotionTests(body) {
   const marker = '      - name: Verify motion verifier regressions\n';
   assert.equal(body.split(marker).length, 2, 'exact motion regression step required');
