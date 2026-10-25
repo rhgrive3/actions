@@ -70,12 +70,12 @@ export function createResultsProgress(token,{capacity=256,detailCapacity=32,maxM
   c.last=p.seq;c.received++;c.truncated||=p.edge==='limit';c.ring[c.cursor]=p;c.cursor=(c.cursor+1)%c.capacity;c.size=Math.min(c.size+1,c.capacity);return true;
  },seal(){sealed=true;},snapshot(){return {diagnosticOnly:true,timingScope:'observer CPU/console overhead; not FPS or GPU execution',...snapshot(channels.critical),invalidMessages:rejected,sealed,maxChars,criticalMode:'reserved frame/sample/cleanup; first128 coarse-callee edges per frame, then limit marker',detailMode:'bounded actor-edge sample; GL counters aggregated, no per-draw events',detail:snapshot(channels.detail)};}};
 }
-// One synchronous browser task with bounded native GPU completion checkpoints.
-// No extra simulated frames, RAF yields, quality changes or relaxed acceptance gates.
+// One browser evaluate with bounded GPU command submission and real event-loop
+// turns. Never skip a native frame or weaken a GPU/context acceptance condition.
 export function measureResultsWork({token,maxDetailEvents=128,gpuBackpressureEvery=0}){
  if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128||!Number.isInteger(gpuBackpressureEvery)||gpuBackpressureEvery<0||gpuBackpressureEvery>120)throw TypeError('Invalid results progress token/budget');
  const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
- if(gpuBackpressureEvery&&(typeof gl.finish!=='function'||typeof gl.isContextLost!=='function'))throw Error('Native WebGL GPU completion check unavailable');
+ if(gpuBackpressureEvery&&['fenceSync','flush','clientWaitSync','deleteSync','isContextLost'].some(key=>typeof gl[key]!=='function'))throw Error('Native WebGL fence completion check unavailable');
  const beforeState=match.state,beforePaused=match.paused,started=performance.now();let counts,state='setup',frame=0,completed=0,totalCompleted=0,stateStarted=started,failed=false,failure,watchedClock,criticalInFrame=0,criticalSuppressed=0,detailSuppressed=0;
  const sequences={critical:0,detail:0};let timing=null,rendererDepth=0,drawDepth=0,rendererOrdinal=0;
  // Diagnostic wall time only. Other renderer work includes JS, other native
@@ -128,12 +128,15 @@ export function measureResultsWork({token,maxDetailEvents=128,gpuBackpressureEve
   }
  };restore.push(()=>{obj[key]=old;});};
  const observe=(obj,key,label)=>{const old=obj?.[key];if(typeof old!=='function')return;const descriptor=Object.getOwnPropertyDescriptor(obj,key);obj[key]=function(...args){return invoke(old,this,args,label);};restore.push(()=>{if(descriptor)Object.defineProperty(obj,key,descriptor);else delete obj[key];});};
+ // Generator preserves synchronous fixtures. Production advances it across real
+ // asynchronous GPU completion fences while keeping all native hooks installed.
+ function* execute(){
  try{
   for(let i=0;i<G.actors.length;i++)hook(G.actors[i],'update','actorUpdates','actor['+i+'].update','detail');
   for(const [obj,key,label]of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label,key==='render'?'R.render':label);
   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions','gl.'+key,'aggregate');
   for(const [obj,key,label]of [[match,'update','match.update'],[match,'updateController','controller'],[g.input,'pollPad','input.pollPad'],[g.input,'endFrame','input.endFrame'],[g,'_padMenus','padMenus'],[G.net,'update','network'],[G.paint,'advanceSimulation','paint.clock'],[G.env,'update','environment'],[g.decor,'update','decor'],[g.props,'update','props'],[g.rig,'update','camera'],[g.diorama,'update','diorama'],[g.screenfx,'update','screenfx'],[g.fxHooks,'update','fxHooks'],[G.projectiles,'syncSights','projectile.sights'],[G.projectiles,'syncVisuals','projectile.visuals'],[G.projectiles,'updateArc','projectile.arc'],[g.showcase,'update','showcase.update'],[g.showcase,'render','showcase.render'],[g,'_updateLocalLoops','audio.loops'],[g,'_updateAmbience','audio.ambience'],[G.audio,'setListener','audio.listener'],[g,'_updateHud','hud'],[g.menus,'update','menus'],[g.R.composer,'render','composer'],[G.renderer,'render','renderer']])observe(obj,key,label);
-  const sample=next=>{
+  const sample=function*(next){
    counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};
    state=next;frame=completed=0;timing=createTiming();match.state=next;match.paused=false;
    const start=stateStarted=performance.now();let gpuSyncWallMs=0,gpuSyncCalls=0,maxGpuSyncWallMs=0;
@@ -145,13 +148,12 @@ export function measureResultsWork({token,maxDetailEvents=128,gpuBackpressureEve
     try{g._frame(1/60);returned=true;completed++;totalCompleted++;}
     finally{emit('frame',returned?'exit':'throw');}
     if(gpuBackpressureEvery&&((i+1)%gpuBackpressureEvery===0||i===119)){
-     // Native WebGL completion, not an additional draw or queue-only flush.
-     // Bound outstanding SwiftShader commands while preserving all 240 Game._frame
-     // calls, the simulated dt, the original GL draw counts and state order.
+     // Fence, flush, yield and await GPU completion before the next batch.
+     // No additional Game._frame, no changed simulated dt or draw submissions.
      emit('gpu-sync','enter');const syncStarted=performance.now();let syncReturned=false;
      try{
-      gl.finish();
-      if(gl.isContextLost())throw Error('Idle GPU context lost during native submission');
+      yield {state:next,frame:i+1,totalCompleted};
+      if(match.state!==next||match.paused!==false||__G!==G||G.game!==g||G.renderer.getContext()!==gl||gl.isContextLost())throw Error('Idle native frame owner/context changed during GPU completion');
       syncReturned=true;
      }finally{
       const ms=Math.max(0,performance.now()-syncStarted);
@@ -164,16 +166,54 @@ export function measureResultsWork({token,maxDetailEvents=128,gpuBackpressureEve
    return {...counts,cpuSubmissionMs:Math.max(0,performance.now()-start-gpuSyncWallMs),
     ...(gpuBackpressureEvery?{gpuBackpressureEvery,gpuSyncCalls,gpuSyncWallMs,maxGpuSyncWallMs}:{})};
   };
-  return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};
+  const playing=yield* sample('playing'),results=yield* sample('results');
+  return {frames:120,playing,results,measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};
  }catch(error){failed=true;failure=error;throw error;}
  finally{
   state='restoring';emit('cleanup','enter');const errors=[];for(const close of restore.reverse())try{close();}catch(error){errors.push(error);}
   try{match.state=beforeState;match.paused=beforePaused;}catch(error){errors.push(error);}emit('cleanup','exit');
   if(errors.length)throw new AggregateError(failed?[failure,...errors]:errors,'Results diagnostic cleanup failed',failed?{cause:failure}:undefined);
  }
+ }
+ const iterator=execute();
+ if(!gpuBackpressureEvery)return iterator.next().value;
+ // WebGL without RAF has no implicit frame boundary; use an explicit GL
+ // completion fence and nonblocking polls, always yielding a browser task.
+ const waitForGpuCompletion=async()=>{
+  const sync=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
+  if(!sync)throw Error('Unable to create native WebGL GPU completion fence');
+  try{
+   gl.flush();
+   await new Promise(resolve=>setTimeout(resolve,0));
+   for(;;){
+    if(gl.isContextLost())throw Error('Idle GPU context lost during fence completion');
+    const status=gl.clientWaitSync(sync,0,0);
+    if(status===gl.ALREADY_SIGNALED||status===gl.CONDITION_SATISFIED)return;
+    if(status!==gl.TIMEOUT_EXPIRED)throw Error('Native WebGL GPU completion wait failed');
+    await new Promise(resolve=>setTimeout(resolve,8));
+   }
+  }finally{gl.deleteSync(sync);}
+ };
+ return (async()=>{
+  let step=iterator.next();
+  while(!step.done){
+   try{await waitForGpuCompletion();}
+   catch(error){return iterator.throw(error);}
+   step=iterator.next();
+  }
+  return step.value;
+ })();
 }
 export async function runResultsWorkDiagnostic(page,progress){
- const listener=message=>progress.accept(message.text());let attached=false,failed=false,failure;
+ const listener=message=>{
+  const text=message.text();
+  if(!progress.accept(text))return;
+  // Only 30 bounded checkpoints. Keep useful progress when runner shutdown
+  // prevents final JSON/artifact upload; do not forward all console events.
+  if(text.includes('"producer":"gpu-sync"')&&text.includes('"edge":"exit"')){
+   try{const e=JSON.parse(text.slice(text.indexOf('{')));console.error('INKWAVE_GPU_FENCE '+JSON.stringify({state:e.state,frame:e.frame,totalCompleted:e.totalCompleted,elapsedMs:e.elapsedMs}));}catch{}
+  }
+ };let attached=false,failed=false,failure;
  try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token,gpuBackpressureEvery:8});}
  catch(error){failed=true;failure=error;throw error;}
  finally{progress.seal();if(attached)try{page.off('console',listener);}catch(error){if(failed)throw new AggregateError([failure,error],'Results diagnostic listener cleanup failed',{cause:failure});throw error;}}
