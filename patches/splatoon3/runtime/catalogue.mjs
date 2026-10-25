@@ -334,6 +334,7 @@ export function installCatalogueSplashdown(api){
   Projectiles.prototype.update=function(dt,...args){const r=update.call(this,dt,...args);if(valid(dt)&&dt>0)fistsStep(api,dt);return r;};
   Projectiles.prototype.clear=function(...args){for(const f of this._catalogueFists||[])remove(f,G);this._catalogueFists=[];return clear.apply(this,args);};
   Projectiles.prototype.kitDefenseCandidate=function(p){let best=candidate?.call(this,p);if(!p?.owner||p.ghost||!p.prev||!p.pos)return best;
+    if(!this._catalogueFists?.length)return best;
     const delta=p.pos.clone().sub(p.prev),length=delta.length();if(!length)return best;delta.divideScalar(length);
     for(const f of this._catalogueFists||[]){if(f.dead||f.owner.team===p.team||f.age-.25>=55/60)continue;
       const to=f.pos.clone().sub(p.prev),at=Math.max(0,Math.min(length,to.dot(delta))),point=p.prev.clone().addScaledVector(delta,at);
