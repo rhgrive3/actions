@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import * as zlib from 'node:zlib';
-const { deflateSync } = zlib;
+const { deflateSync, inflateSync } = zlib;
 import { optimizeLightmapPng, decodeGrayLightmap, crc32 as fallbackCrc32 } from '../lib/inkwave-lossless-lightmap.mjs';
 const crc32 = zlib.crc32 || fallbackCrc32;
 
@@ -55,7 +55,8 @@ test('lossless PNG optimization preserves pixels from all five input row filters
   const predictor = (filter, left, up, upperLeft) => filter === 1 ? left : filter === 2 ? up
     : filter === 3 ? Math.floor((left + up) / 2) : filter === 4 ? paeth(left, up, upperLeft) : 0;
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    pixels[y * width + x] = (Math.floor(x / 19) * 23 + y * 7 + (x % 19) * 3) & 255;
+    pixels[y * width + x] = y < 4 ? [0, 255, 127, 128][y]
+      : (Math.floor(x / 19) * 23 + y * 7 + (x % 19) * 3) & 255;
   }
   const inputFilters = [];
   for (let y = 0; y < height; y++) {
@@ -97,6 +98,24 @@ test('lossless PNG optimization preserves pixels from all five input row filters
   assert.deepEqual(after.chunks.filter(chunk => chunk.kind !== 'IDAT').map(chunk => chunk.bytes),
     before.chunks.filter(chunk => chunk.kind !== 'IDAT').map(chunk => chunk.bytes), 'all non-IDAT chunk bytes remain identical');
   assert(compacted.length <= original.length, 'lossless re-encoding never grows the fixture');
+  // An exhaustive PNG-spec oracle scores all complete candidates. Flat rows
+  // exercise ties (including zero); later rows force scratch buffers to be
+  // overwritten after losing partial candidates and changing the winner.
+  const expected = Buffer.alloc((width + 1) * height);
+  for (let y = 0; y < height; y++) {
+    const row = pixels.subarray(y * width, (y + 1) * width);
+    const candidates = Array.from({ length: 5 }, (_, filter) => Uint8Array.from(row, (pixel, x) =>
+      (pixel - predictor(filter, x ? row[x - 1] : 0,
+        y ? pixels[(y - 1) * width + x] : 0,
+        y && x ? pixels[(y - 1) * width + x - 1] : 0)) & 255));
+    const scores = candidates.map(values => values.reduce((sum, value) => sum + Math.min(value, 256 - value), 0));
+    const winner = scores.indexOf(Math.min(...scores));
+    expected[y * (width + 1)] = winner;
+    expected.set(candidates[winner], y * (width + 1) + 1);
+  }
+  const encoded = Buffer.concat(after.chunks.filter(chunk => chunk.kind === 'IDAT')
+    .map(chunk => chunk.bytes.subarray(8, -4)));
+  assert.deepEqual(inflateSync(encoded), expected, 'earliest minimum filter and every filtered byte match the exhaustive oracle');
 });
 
 test('exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes', () => {

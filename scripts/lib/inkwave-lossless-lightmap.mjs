@@ -82,11 +82,13 @@ export function decodeGrayLightmap(source) {
 export function optimizeLightmapPng(source) {
   const { ihdr, pixels, width, height, chunks } = decodeGrayLightmap(source);
   const filtered = Buffer.alloc((width + 1) * height);
+  // Each candidate overwrites its whole row before it can win. Swap two
+  // scratch rows instead of allocating five new buffers per image row.
+  let bytes = Buffer.allocUnsafe(width), best = Buffer.allocUnsafe(width);
   for (let y = 0; y < height; y++) {
     const row = y * width, out = y * (width + 1);
-    let smallest = Infinity, bestFilter = 0, best = null;
+    let smallest = Infinity, bestFilter = 0;
     for (let method = 0; method <= 4; method++) {
-      const bytes = Buffer.allocUnsafe(width);
       let score = 0;
       for (let x = 0; x < width; x++) {
         const left = x ? pixels[row + x - 1] : 0;
@@ -97,8 +99,14 @@ export function optimizeLightmapPng(source) {
         const value = (pixels[row + x] - pred) & 255;
         bytes[x] = value;
         score += value < 128 ? value : 256 - value;
+        // Scores only increase, and ties retain the earlier filter. A losing
+        // partial row can never replace best, so its remaining bytes are unused.
+        if (score >= smallest) break;
       }
-      if (score < smallest) { smallest = score; bestFilter = method; best = bytes; }
+      if (score < smallest) {
+        smallest = score; bestFilter = method;
+        const previous = best; best = bytes; bytes = previous;
+      }
     }
     filtered[out] = bestFilter;
     best.copy(filtered, out + 1);
