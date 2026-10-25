@@ -1,0 +1,47 @@
+(node:2980) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all 58 added main owners retain Poison Mist speed scaling exactly once across idle, fire and charge states (44.761571ms)
+✔ the seven legacy owners retain their existing single Mist multiplier (3.592213ms)
+✔ catalogue grounded and airborne movement uses the same cloud membership at 30/60/120Hz and recovers immediately on exit (20.776403ms)
+(node:2987) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source Inkbrush moving roll keeps dry-ground speed while crossing enemy ink (12.430868ms)
+✔ real Actor resource phase ignores floor damage and allows normal healing during moving Inkbrush roll (8.837087ms)
+✔ stationary, released, empty, airborne, sub-ready, pending swing and other brushes receive no exemption (3.716942ms)
+(node:2994) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 96 equal overlapping Mist volumes need one LOS per current query; gear and position stay live (1447.488772ms)
+✔ stronger later Mist is tested, blocked stronger volumes do not suppress a weaker visible one (1085.877643ms)
+✔ ordinary human movement queries once, airborne squid does not query an unused scale (1147.04077ms)
+✔ 96 non-Mist objects cause no LOS and remain unaffected (1168.020943ms)
+✔ uncached query equals the previous full scan across seeded mixed volumes and same-time mutations (1187.707177ms)
+(node:3001) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Mist low/mid/high coefficients equal hash-verified 11.3.0 MoveDownRt (2.477028ms)
+✔ actual cloud scales reduction once in human/squid forms at 0AP (1616.018213ms)
+✔ actual cloud scales reduction once in human/squid forms at 10AP (1289.595285ms)
+✔ actual cloud scales reduction once in human/squid forms at 57AP (1211.11551ms)
+✔ current cloud membership restores speed immediately on exit; overlap does not multiply slow (1181.086789ms)
+✔ equipment changes alter current reduction; death, friendly and remote Actors remain unaffected (1253.014221ms)
+✔ human air and form transitions preserve unresolved squid air momentum at 30fps (1226.976638ms)
+✔ human air and form transitions preserve unresolved squid air momentum at 60fps (1221.650965ms)
+✔ human air and form transitions preserve unresolved squid air momentum at 120fps (1354.839428ms)
+✔ expired or absent cloud cannot be restored by a stale local lease (1501.694535ms)
+✔ JSON replayed cloud applies only local victim 0AP and rejects unsupported status leases (2900.27489ms)
+✔ JSON replayed cloud applies only local victim 57AP and rejects unsupported status leases (5398.229565ms)
+✔ hard landing and enemy ink each combine once with the current Mist scale (4897.322032ms)
+✔ actual NetMatch catalogue JSON birth/deploy/status keeps victim 0AP local (7043.964823ms)
+✔ actual NetMatch catalogue JSON birth/deploy/status keeps victim 57AP local (5561.060971ms)
+✔ actual splat and respawn remove old membership, then current-cloud re-entry applies fresh equipment (3387.65896ms)
+✔ native Mist jump reduction keeps native admission and landing (3332.965871ms)
+✔ remote status does not add progress or ink drain beyond local fixed ticks at 30Hz (4807.11534ms)
+✔ remote status does not add progress or ink drain beyond local fixed ticks at 60Hz (5107.22395ms)
+✔ remote status does not add progress or ink drain beyond local fixed ticks at 120Hz (3888.933977ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69275.922561

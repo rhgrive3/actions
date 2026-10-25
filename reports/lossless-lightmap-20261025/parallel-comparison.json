@@ -1,0 +1,67 @@
+{
+  "node": "v24.19.0",
+  "baseline": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "byteIdenticalFixtures": 125,
+  "production": [
+    {
+      "path": "inkwave-public/assets/lightmaps/cargo.png",
+      "inputBytes": 220594,
+      "outputBytes": 168115,
+      "sha256": "65e8f7b182b6ff9309648c5446c0020baf886841741bbf701f8a7272d695509f",
+      "height": 2048
+    },
+    {
+      "path": "inkwave-public/assets/lightmaps/halyard.png",
+      "inputBytes": 63401,
+      "outputBytes": 54085,
+      "sha256": "a0f6a82fff3232c09c6d08c07c40dec432642423ad069cf515e5a1444df07ace",
+      "height": 1024
+    },
+    {
+      "path": "inkwave-public/assets/lightmaps/kelpline.png",
+      "inputBytes": 153108,
+      "outputBytes": 121155,
+      "sha256": "0600a7727be738685c764c2b30a90fb79d19adddc85f78c5f81b13f5432c1058",
+      "height": 1024
+    },
+    {
+      "path": "inkwave-public/assets/lightmaps/tidewater.png",
+      "inputBytes": 149335,
+      "outputBytes": 119063,
+      "sha256": "9e4725a3547333e441c8ede95cca4a086fd0d82134fec1bdfa6460ff21acd9ba",
+      "height": 2048
+    },
+    {
+      "path": "patches/practice-range/assets/lightmaps/range.png",
+      "inputBytes": 161986,
+      "outputBytes": 112128,
+      "sha256": "812f214bb5a84d109711b49957f4f51dbac82a17424c9db788157253af4de635",
+      "height": 2048
+    }
+  ],
+  "samples": {
+    "before": [
+      1436.3695099999986,
+      1441.8859240000002,
+      1956.622510000001,
+      1578.6329819999992,
+      1709.1322800000016
+    ],
+    "after": [
+      1481.9622680000011,
+      1378.4205149999998,
+      1621.6334580000002,
+      1586.9552250000015,
+      1900.7716390000023
+    ]
+  },
+  "medianMs": {
+    "before": 1578.6329819999992,
+    "after": 1586.9552250000015
+  },
+  "scratchBuffers": {
+    "before": 40960,
+    "after": 10
+  },
+  "reductionPercent": -0.5271803576192058
+}

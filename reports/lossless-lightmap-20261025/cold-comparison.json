@@ -1,0 +1,44 @@
+[
+  {
+    "variant": "pruned",
+    "trial": 0,
+    "wallSeconds": 2.930492413000138,
+    "cpuSeconds": 3.1828469999999998,
+    "exit": 0
+  },
+  {
+    "variant": "decode",
+    "trial": 0,
+    "wallSeconds": 2.675367065999808,
+    "cpuSeconds": 2.9692179999999997,
+    "exit": 0
+  },
+  {
+    "variant": "decode",
+    "trial": 1,
+    "wallSeconds": 2.480940895999993,
+    "cpuSeconds": 2.6801480000000013,
+    "exit": 0
+  },
+  {
+    "variant": "pruned",
+    "trial": 1,
+    "wallSeconds": 2.8802779359998567,
+    "cpuSeconds": 3.073842999999999,
+    "exit": 0
+  },
+  {
+    "variant": "pruned",
+    "trial": 2,
+    "wallSeconds": 2.8952471719999266,
+    "cpuSeconds": 3.116252000000001,
+    "exit": 0
+  },
+  {
+    "variant": "decode",
+    "trial": 2,
+    "wallSeconds": 2.4930935009999757,
+    "cpuSeconds": 2.655729,
+    "exit": 0
+  }
+]

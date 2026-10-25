@@ -67,13 +67,22 @@ export function decodeGrayLightmap(source) {
   for (let y = 0; y < height; y++) {
     const method = packed[y * (width + 1)], row = y * width;
     if (method > 4) throw Error('lightmap: unsupported row filter');
+    const input = y * (width + 1) + 1;
+    // PNG None already stores the exact bytes; Up needs only the previous
+    // row, with no left/Paeth predictor work. Keep first-row Up on the generic
+    // path, where its absent previous row is defined as zero.
+    if (method === 0) { packed.copy(pixels, row, input, input + width); continue; }
+    if (method === 2 && y) {
+      for (let x = 0; x < width; x++) pixels[row + x] = (packed[input + x] + pixels[row - width + x]) & 255;
+      continue;
+    }
     for (let x = 0; x < width; x++) {
       const left = x ? pixels[row + x - 1] : 0;
       const above = y ? pixels[row - width + x] : 0;
       const aboveLeft = y && x ? pixels[row - width + x - 1] : 0;
       const pred = method === 0 ? 0 : method === 1 ? left : method === 2 ? above :
         method === 3 ? ((left + above) >> 1) : paeth(left, above, aboveLeft);
-      pixels[row + x] = (packed[y * (width + 1) + 1 + x] + pred) & 255;
+      pixels[row + x] = (packed[input + x] + pred) & 255;
     }
   }
   return { ihdr, pixels, width, height, chunks };
@@ -82,11 +91,13 @@ export function decodeGrayLightmap(source) {
 export function optimizeLightmapPng(source) {
   const { ihdr, pixels, width, height, chunks } = decodeGrayLightmap(source);
   const filtered = Buffer.alloc((width + 1) * height);
+  // Each candidate overwrites its whole row before it can win. Swap two
+  // scratch rows instead of allocating five new buffers per image row.
+  let bytes = Buffer.allocUnsafe(width), best = Buffer.allocUnsafe(width);
   for (let y = 0; y < height; y++) {
     const row = y * width, out = y * (width + 1);
-    let smallest = Infinity, bestFilter = 0, best = null;
+    let smallest = Infinity, bestFilter = 0;
     for (let method = 0; method <= 4; method++) {
-      const bytes = Buffer.allocUnsafe(width);
       let score = 0;
       for (let x = 0; x < width; x++) {
         const left = x ? pixels[row + x - 1] : 0;
@@ -97,8 +108,14 @@ export function optimizeLightmapPng(source) {
         const value = (pixels[row + x] - pred) & 255;
         bytes[x] = value;
         score += value < 128 ? value : 256 - value;
+        // Scores only increase, and ties retain the earlier filter. A losing
+        // partial row can never replace best, so its remaining bytes are unused.
+        if (score >= smallest) break;
       }
-      if (score < smallest) { smallest = score; bestFilter = method; best = bytes; }
+      if (score < smallest) {
+        smallest = score; bestFilter = method;
+        const previous = best; best = bytes; bytes = previous;
+      }
     }
     filtered[out] = bestFilter;
     best.copy(filtered, out + 1);

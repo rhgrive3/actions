@@ -1,0 +1,64 @@
+(node:1388) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #210 actor-local equipment grants the documented whole-frame damage grace (3789.086881ms)
+✔ #210 short exits preserve consumed grace; 45F away restores the full window (1450.972158ms)
+✔ #210 leaving by takeoff also needs 45F, and reset clears both contact clocks (1849.450916ms)
+✔ #210 grace and #244 rate do not leak between differently equipped actors (2610.792174ms)
+✔ #244 damage is quantized to 0.1 HP per reference frame, including the AP25/26 boundary (1693.649564ms)
+✔ #244 rate quantization is independent of resource-call interval partitioning (750.110844ms)
+✔ #114 weapon damage uses the same total-damage cap, without healing or passive splats (882.931837ms)
+✔ #114 weapon hit during contact, re-entry, and recovery cannot renew a separate ink budget (810.750664ms)
+✔ #114 equipped total cap suppresses regeneration even during grace or invulnerability (1259.058944ms)
+✔ #247 classifies actual shooter/dualies/blaster attack state instead of held ZR (4807.868376ms)
+✔ #247 charge/stream/slosh use un-geared action speed times the resistance coefficient (1271.261188ms)
+✔ #247 splatling release does not select a different enemy speed during its stream (747.287087ms)
+✔ #247 restores shared tuning even when movement throws, preserving other actors and dry movement (780.827807ms)
+✔ all four enemy-ink fixes use identical 60Hz actor outcomes at 30/60/120Hz render cadence (1846.005607ms)
+(node:1439) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source Inkbrush moving roll keeps dry-ground speed while crossing enemy ink (14.990851ms)
+✔ real Actor resource phase ignores floor damage and allows normal healing during moving Inkbrush roll (22.681871ms)
+✔ stationary, released, empty, airborne, sub-ready, pending swing and other brushes receive no exemption (2.541621ms)
+(node:1446) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Issue 160 baseline: original native Actor retains squid collision on enemy ground (536.672437ms)
+✔ Issue 160: held Swim exits on enemy ink before native body and grate collision (539.738095ms)
+✔ Issue 160: actual floor crossing exits before the next collision and restores on own ink at 30/60/120 Hz (2012.126123ms)
+✔ neutral ground and own-ink wall climbing keep their existing Swim eligibility (1419.545951ms)
+✔ enemy jump, airborne Swim, fire priority, weapon busy, and Super Jump ownership stay native (640.665723ms)
+✔ enemy-ground form eligibility also applies to remote actors and leaves death/respawn lifecycle intact (644.690526ms)
+(node:1460) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ issue-415 adapter transform resets eligible enemy-ink recovery without touching other fields (1.841259ms)
+✔ issue-415 enemy-ink contact resets recovery timer; negative main control preserves 0.4s credit (1804.530809ms)
+(node:1474) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #731 the two enemy-ink curves stay sourced to the pinned 11.3.0 parameters (1079.637927ms)
+✔ #731 a held sub selects the attack/ready curve while walking and firing keep theirs (8054.101444ms)
+✔ #731 the settled speed in enemy ink matches the selected curve at 0 and 57 AP (4233.156609ms)
+✔ #731 releasing the sub leaves the attack/ready curve exactly once with no leak (777.21988ms)
+✔ #731 enemy-floor squid exits invalid swim and the admitted sub then owns the ready curve (1542.505374ms)
+✔ #731 readiness is read from weapon state, not the raw button (0.85887ms)
+✔ #731 30/60/120 Hz render schedules make the same fixed-tick state selection (6273.426933ms)
+✔ #731 a reset clears the sub ready state before the weapon re-arms (1655.693159ms)
+✔ #731 a remote opponent gets the same curve and visual-only state cannot own it (2661.099083ms)
+✔ #731 the scoped enemy-ink cap never leaks into shared state or another actor (2464.441042ms)
+✔ #731 missing ready connection reproduces ordinary cap and settled speed despite admitted sub (985.251933ms)
+(node:1492) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1054 activation and active Trizooka use the ordinary enemy-ink clock exactly once (5864.929712ms)
+✔ #1054 Trizooka retains equipped grace/rate/cap and fresh surface resets (1350.736ms)
+✔ #1054 invulnerability blocks contact damage, not the contact clock (1283.560212ms)
+✔ #1054 off-ink healing runs once and special expiration does not duplicate resources (1253.493231ms)
+✔ #1054 render cadence cannot change enemy-ink damage or the special timer (3864.586333ms)
+✔ #1164 active Trizooka cannot fire after entering unsupported lethal water (1186.740974ms)
+✔ #1164 lethal-water activation is rejected before consuming Special or spawning shots (1275.322533ms)
+✔ #1164 supported under-deck route does not cause a false water splat (2075.31134ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87057.525228
