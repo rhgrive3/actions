@@ -148,6 +148,29 @@ export async function runResultsWorkDiagnostic(page,progress){
  catch(error){failed=true;failure=error;throw error;}
  finally{progress.seal();if(attached)try{page.off('console',listener);}catch(error){if(failed)throw new AggregateError([failure,error],'Results diagnostic listener cleanup failed',{cause:failure});throw error;}}
 }
+// Identity queries can synchronize the driver. Capture them on the actual
+// desktop context before the measured workload queues its 240 rendered frames.
+// Retain context ownership/loss evidence so an early identity cannot conceal
+// a lost, restored or replaced context after the workload.
+export function captureIdleGpuIdentity(){
+ const gl=__G.renderer.getContext();
+ if(gl.isContextLost())throw Error('Idle GPU context already lost');
+ const ext=gl.getExtension('WEBGL_debug_renderer_info');
+ const gpu={webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
+ const probe={gl,gpu,lost:false};
+ probe.onLoss=()=>{probe.lost=true;};
+ gl.canvas.addEventListener('webglcontextlost',probe.onLoss);
+ window.__idleGpuIdentity=probe;
+ return gpu;
+}
+export function verifyIdleGpuContext(){
+ const probe=window.__idleGpuIdentity;
+ if(!probe)throw Error('Idle GPU identity was not captured');
+ try{
+  if(__G.renderer.getContext()!==probe.gl||probe.lost||probe.gl.isContextLost())throw Error('Idle GPU context lost or replaced during workload');
+  return probe.gpu;
+ }finally{probe.gl.canvas.removeEventListener('webglcontextlost',probe.onLoss);delete window.__idleGpuIdentity;}
+}
 const boundedPages=new WeakSet();
 // Playwright evaluate uses kNoTimeout, independently of setDefaultTimeout.
 // This is a host-side failure deadline, not cancellation or GPU completion proof.
@@ -189,7 +212,7 @@ export async function runIdleProbe(task,{diagnose,cleanup}){
 // Fixed vocabulary and numeric bounds: never echo arbitrary error/event text.
 export function formatIdleFailureProgress(error,data){
  const primary=primaryIdleFailure(error),phase=primary?.phase??data?.phase;
- const phases=['identity','boot','audio','clouds','clouds:day','clouds:sunset','clouds:golden','clouds:aggregate','far-stage-transitions','pause','results-work','gpu-identity','cold-boot-mobile'];
+ const phases=['identity','boot','audio','clouds','clouds:day','clouds:sunset','clouds:golden','clouds:aggregate','far-stage-transitions','pause','results-work','gpu-identity','gpu-context','cold-boot-mobile'];
  const p=phase==='results-work'?data?.resultsWorkProgress:null,events=Array.isArray(p?.events)?p.events:[];
  let latest,region;
  for(let i=events.length-1;i>=Math.max(0,events.length-512);i--){const e=events[i];if(!e||typeof e!=='object'||e.producer==='cleanup')continue;latest??=e;if(e.state===latest.state&&e.frame===latest.frame&&!['frame','sample','cleanup','observer'].includes(e.producer)){region=e;break;}}
@@ -355,6 +378,7 @@ async function main(){
   phase='boot';await page.goto(address+'?devstage&skipTitle',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed,null,{timeout:180000});
   await page.evaluate(()=>{__inkwave.debug.freeze();__inkwave.menus.wipe.cancel();});
+  phase='gpu-identity';const gpu=await page.evaluate(captureIdleGpuIdentity);
   await page.keyboard.press('Shift');
   phase='audio';result=await page.evaluate(async()=>{
    const G=window.__G,g=G.game,m=G.music,a=G.audio;
@@ -370,6 +394,7 @@ async function main(){
     return {audio:{initialPlayers,initialScheduler,mutedTicks,mutedNodes,mutedPlayers,mutedScheduler,sfxPlayed,resumedTrack,toggleMaxPlayers,running:a.ctx.state==='running'}};
    }finally{m._tick=tick;a.ctx.createOscillator=osc;}
   });
+  result.gpu=gpu;
   phase='clouds';result.clouds=[];const cloudTrace=result.cloudSequence={},cloudToken=crypto.randomUUID();
   const cloudCheckpoint=()=>publish({status:'running',phase,result,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
   await runCloudThemeSequence(
@@ -418,7 +443,8 @@ async function main(){
   // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
   // is invented. The existing browser/GL and exact-source identities remain gates.
   phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress);
-  phase='gpu-identity';result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
+  publish({status:'running',phase,result,resultsWorkProgress:resultsProgress.snapshot(),sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
+  phase='gpu-context';result.gpu=await page.evaluate(verifyIdleGpuContext);
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
   // The preceding desktop measurements are complete. Retire its live renderer
