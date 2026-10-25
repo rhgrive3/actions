@@ -685,9 +685,12 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       m.pole.set(side?.8:-.8,-.5,-.22);ch._solveLimb(limb,m.p,m.pole,m.handQ,1,side?0:1);
     }
     ch.kid.updateWorldMatrix(true,true);m.error=0;
+    // The complete subtree was just updated, and there are no callbacks in
+    // this read-only error measurement. localToWorld would walk and rebuild
+    // the same ancestor matrices for each of these four points again.
     for(let side=0;side<2;side++){
       const socket=side?g.userData.gripL:g.userData.gripR,bone=side?ch.bones.handL:ch.bones.handR;
-      m.a.copy(socket);g.localToWorld(m.a);m.b.copy(g.userData[side?'holeL':'holeR']);bone.localToWorld(m.b);m.error=Math.max(m.error,m.a.distanceTo(m.b));
+      m.a.copy(socket).applyMatrix4(g.matrixWorld);m.b.copy(g.userData[side?'holeL':'holeR']).applyMatrix4(bone.matrixWorld);m.error=Math.max(m.error,m.a.distanceTo(m.b));
     }
   }
   cp._buildPose=function(dt,input){const r=build.call(this,dt,input),id=mapped(this);if(id==='trizooka'||id==='inkVac'){

@@ -1,0 +1,64 @@
+{
+  "kind": "10000 Super Chump numerical preview plans, fresh contact sinks; 9 alternating repeats",
+  "comparison": "paired complete actual minified modules in equivalent VM realms",
+  "mathInstrumentation": false,
+  "artifacts": [
+    {
+      "role": "before",
+      "file": "/workspace/actions/_site-after/patches/splatoon3/runtime/all-specials.mjs",
+      "contentHash": "ebdd80f2a7fd19ddd2bb10c5be2c21e45d7f97f47d0f65951249b648a52f4d77",
+      "artifactSHA256": "181d7dfa2d7680fa14fbb0f9b4a12cd3ec07e91c181eec28966b63751bab2a47"
+    },
+    {
+      "role": "after",
+      "file": "/workspace/actions/_site-specials/patches/splatoon3/runtime/all-specials.mjs",
+      "contentHash": "093b3c1e0bdfb80b7a06aeb599893413e21cb84530a4ab734d012c16685eb063",
+      "artifactSHA256": "ad27e32ecec9218d20b02d48265b89611541e316950a5ee6bf725f00783bd87e"
+    }
+  ],
+  "runs": {
+    "before": [
+      144.054937,
+      150.75599699999998,
+      137.15848500000016,
+      148.47902599999998,
+      121.5478599999999,
+      124.3443699999998,
+      122.93210499999986,
+      133.62848900000017,
+      145.7230709999999
+    ],
+    "after": [
+      70.33665700000006,
+      80.21158700000001,
+      71.96882299999993,
+      71.58621100000005,
+      97.01626799999985,
+      75.76785000000018,
+      102.24456199999986,
+      224.83709700000009,
+      68.53073899999981
+    ]
+  },
+  "checksums": {
+    "before": 546012.6409223394,
+    "after": 546012.6409223394
+  },
+  "statistics": {
+    "before": {
+      "medianMs": 137.15848500000016,
+      "minMs": 121.5478599999999,
+      "maxMs": 150.75599699999998
+    },
+    "after": {
+      "medianMs": 75.76785000000018,
+      "minMs": 68.53073899999981,
+      "maxMs": 224.83709700000009
+    }
+  },
+  "medianReductionPercent": 44.75890427048673,
+  "scope": "Local serial timing slot allocated by the root agent; complete production minified modules in equivalent VM realms with host Vector/query fixtures. Not a browser/full-game/device-FPS measurement.",
+  "excludedDiagnostic": "Earlier candidate-only emitted timing compared a host-realm frozen oracle with a VM candidate; it is invalid as a performance comparison and is excluded.",
+  "driverSHA256": "4b9e80cf7f0fe72972fb2925f3e318ec8fa5211d8f17099905da41f6999a7a3f",
+  "logSHA256": "e94ebf821f033fc520f8ebddb1c269051c634e54c42d03793b280a2e153986dc"
+}

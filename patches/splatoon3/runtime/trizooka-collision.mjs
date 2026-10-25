@@ -14,7 +14,7 @@
 //
 // Every helper returns without touching anything unless the projectile belongs
 // to this kit, so an un-composed build stays byte-identical to native.
-import { selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
+import { selectTrizookaFlight, selectTrizookaCollision, perpendicularBasis, VOLLEY_CONFIG, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
 import { damageGroupId } from './final-damage.mjs';
 
 export const TRIZOOKA_WID = 'trizooka';
@@ -154,16 +154,51 @@ export function kitTrizookaFlight(system, p, dt) {
 // An offset DIFFERENCE around the native centreline, applied after the native
 // integration moved p.pos. Adding an absolute circle each frame would teleport
 // the projectile and destroy the swept segment.
+function orbitBasis(x, y, z) {
+  const len = Math.hypot(x, y, z) || 1;
+  return perpendicularBasis({ x: x / len, y: y / len, z: z / len });
+}
 export function kitTrizookaOrbitDelta(system, p, dt) {
   if (!isKitProjectile(p)) return false;
   const step = dt > 0 ? dt : 0;
   if (!(step > 0)) return false;
-  const now = trizookaOrbitOffset(p, step);
-  const prev = { age: Math.max(0, (p.age ?? 0) - step), s3VolleyIndex: p.s3VolleyIndex, vel: p.vel, s3Yaw: p.s3Yaw };
-  const before = trizookaOrbitOffset(prev, step);
-  p.pos.x += now.x - before.x;
-  p.pos.y += now.y - before.y;
-  p.pos.z += now.z - before.z;
+  const age = p.age ?? 0;
+  const w = TRIZOOKA_ORBIT.transitionFrames > 0 ? TRIZOOKA_ORBIT.transitionFrames : 1;
+  const k = Math.min(1, age / w);
+  const radius = TRIZOOKA_ORBIT.startRadius + (TRIZOOKA_ORBIT.endRadius - TRIZOOKA_ORBIT.startRadius) * k;
+  const index = p.s3VolleyIndex ?? 0;
+  const phase = TRIZOOKA_ORBIT.turnRate * (age + index * VOLLEY_CONFIG.lobeInterval) + index * TRIZOOKA_ORBIT.lobePhase;
+  let x, y, z;
+  if (p?.vel && p.vel.lengthSq() > 1e-9) { x = p.vel.x; y = p.vel.y; z = p.vel.z; }
+  else { x = Math.sin(p?.s3Yaw ?? 0); y = 0; z = Math.cos(p?.s3Yaw ?? 0); }
+  const basis = orbitBasis(x, y, z), { u, v } = basis;
+  const c = Math.cos(phase) * radius, s = Math.sin(phase) * radius;
+  const nowX = u.x * c + v.x * s, nowY = u.y * c + v.y * s, nowZ = u.z * c + v.z * s;
+
+  // Capture the same previous-step inputs after the current evaluation. Native
+  // velocity normally stays unchanged between these two pure orbit queries.
+  // Resample it nevertheless: custom lengthSq/accessors may change the axis.
+  const previousAge = Math.max(0, (p.age ?? 0) - step), previousIndex = p.s3VolleyIndex,
+    previousVelocity = p.vel, previousYaw = p.s3Yaw;
+  const oldW = TRIZOOKA_ORBIT.transitionFrames > 0 ? TRIZOOKA_ORBIT.transitionFrames : 1;
+  const oldK = Math.min(1, previousAge / oldW);
+  const oldRadius = TRIZOOKA_ORBIT.startRadius + (TRIZOOKA_ORBIT.endRadius - TRIZOOKA_ORBIT.startRadius) * oldK;
+  const oldIndex = previousIndex ?? 0;
+  const oldPhase = TRIZOOKA_ORBIT.turnRate * (previousAge + oldIndex * VOLLEY_CONFIG.lobeInterval) + oldIndex * TRIZOOKA_ORBIT.lobePhase;
+  let oldX, oldY, oldZ;
+  if (previousVelocity && previousVelocity.lengthSq() > 1e-9) { oldX = previousVelocity.x; oldY = previousVelocity.y; oldZ = previousVelocity.z; }
+  else { oldX = Math.sin(previousYaw ?? 0); oldY = 0; oldZ = Math.cos(previousYaw ?? 0); }
+  const oldBasis = typeof x === 'number' && typeof y === 'number' && typeof z === 'number'
+    && Object.is(x, oldX) && Object.is(y, oldY) && Object.is(z, oldZ) ? basis : orbitBasis(oldX, oldY, oldZ);
+  const oldC = Math.cos(oldPhase) * oldRadius, oldS = Math.sin(oldPhase) * oldRadius;
+  // Keep the original two dot products and then subtract; factoring the delta
+  // through u/v changes rounding and can move a native collision boundary.
+  const beforeX = oldBasis.u.x * oldC + oldBasis.v.x * oldS;
+  const beforeY = oldBasis.u.y * oldC + oldBasis.v.y * oldS;
+  const beforeZ = oldBasis.u.z * oldC + oldBasis.v.z * oldS;
+  p.pos.x += nowX - beforeX;
+  p.pos.y += nowY - beforeY;
+  p.pos.z += nowZ - beforeZ;
   p.s3OrbitApplied = true;
   return true;
 }

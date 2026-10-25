@@ -1,0 +1,94 @@
+class RibbonPool {
+  constructor(THREE, trails, points, additive, uTime, light = {}) {
+    this.T = trails; this.M = points; this.additive = additive; this.list = []; this._emptyUploaded = false;
+    const V = trails * points * 2;
+    const g = new THREE.BufferGeometry();
+    this.pos = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    this.col = new THREE.BufferAttribute(new Float32Array(V * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.rib = new THREE.BufferAttribute(new Float32Array(V * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.side = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    this.face = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute('position', this.pos); g.setAttribute('aCol', this.col); g.setAttribute('aRib', this.rib);
+    g.setAttribute('aSide', this.side); g.setAttribute('aFace', this.face);
+    const idx = [];
+    for (let t = 0; t < trails; t++) for (let k = 0; k < points - 1; k++) {
+      const a = (t * points + k) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+    g.setIndex(idx); g.setDrawRange(0, 6);
+    const m = new THREE.ShaderMaterial({ uniforms: { uTime, uAdd: { value: additive ? 1 : 0 }, ...light }, vertexShader: RIBBON_VERT, fragmentShader: RIBBON_FRAG,
+      transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: additive ? THREE.CustomBlending : THREE.NormalBlending });
+    if (additive) { m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor; m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor; }
+    this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = additive ? 7 : 6;
+    this.mesh.name = additive ? 'special-vfx:ribbons+' : 'special-vfx:ribbons';
+    this._t = new THREE.Vector3(); this._s = new THREE.Vector3(); this._c = new THREE.Vector3();
+  }
+  // opts: { width, widthTail, color [r,g,b], alpha, style, life (point lifetime s), spacing (m), flat (ground-aligned) }
+  start(opts) {
+    if (this.list.length >= this.T) { const old = this.list.findIndex(r => r.ended), victim=this.list[old >= 0 ? old : 0]; victim.ended=true;victim.pts.length=0;victim.samples.length=0;victim.count=0;this.list.splice(old >= 0 ? old : 0, 1); }
+    const r = { pts: [], samples: new Array(this.M), head: 0, count: 0, ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
+    this.list.push(r); return r;
+  }
+  push(r, x, y, z, now) {
+    if (!r || r.ended) return;
+    const M=this.M,last=r.count?r.samples[(r.head+r.count-1)%M]:null;
+    if (last && Math.hypot(x - last[0], y - last[1], z - last[2]) < r.o.spacing) { last[0] = x; last[1] = y; last[2] = z; last[3] = now; return; }
+    let at;
+    if(r.count===M){at=r.head;r.head=(r.head+1)%M;}
+    else{at=(r.head+r.count)%M;r.count++;}
+    const point=r.samples[at]||(r.samples[at]=[0,0,0,0]);point[0]=x;point[1]=y;point[2]=z;point[3]=now;
+    // pts remains the public lifetime sentinel. Its chronological view is
+    // synchronized in the existing render scan, never shifted per sample.
+    r.pts.length=r.count;
+  }
+  end(r) { if (r) r.ended = true; }
+  update(now, camPos) {
+    if(this.list.length===0&&this._emptyUploaded)return;
+    let v = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array, SD = this.side.array, FC = this.face.array;
+    const t = this._t, s = this._s, c = this._c;
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      const r = this.list[i];
+      while (r.count && now - r.samples[r.head][3] > r.o.life) { r.head=(r.head+1)%this.M; r.count--; }
+      r.pts.length=r.count;
+      for(let k=0;k<r.count;k++)r.pts[k]=r.samples[(r.head+k)%this.M];
+      if (r.ended && r.count < 2) { this.list.splice(i, 1); r.samples.length=0; }
+    }
+    let slot = 0;
+    for (const r of this.list) {
+      const p = r.pts, n = p.length; if (n < 2) continue;
+      const base = slot * this.M * 2; slot++;
+      for (let k = 0; k < this.M; k++) {
+        if(k>=n){
+          const src=base+(n-1)*2;
+          for(let side=0;side<2;side++){
+            const vi=base+k*2+side,from=src+side;
+            for(let c=0;c<3;c++){P[vi*3+c]=P[from*3+c];SD[vi*3+c]=SD[from*3+c];FC[vi*3+c]=FC[from*3+c];}
+            for(let c=0;c<4;c++){C[vi*4+c]=C[from*4+c];R[vi*4+c]=R[from*4+c];}C[vi*4+3]=0;
+          }continue;
+        }
+        const j = Math.min(n - 1, k), q = p[n - 1 - j];                 // head first
+        const qa = p[Math.max(0, n - 2 - j)], qb = p[Math.min(n - 1, n - j)];
+        t.set(qb[0] - qa[0], qb[1] - qa[1], qb[2] - qa[2]); if (t.lengthSq() < 1e-10) t.set(0, 1, 0); t.normalize();
+        if (r.o.flat) c.set(0, 1, 0); else c.set(camPos.x - q[0], camPos.y - q[1], camPos.z - q[2]).normalize();   // flat: lies on the ground
+        s.crossVectors(t, c); if (s.lengthSq() < 1e-8) s.set(1, 0, 0); s.normalize();
+        const age = Math.min(1, (now - q[3]) / r.o.life), along = n > 1 ? j / (n - 1) : 0;
+        const w = (r.o.width + (r.o.widthTail - r.o.width) * Math.max(age, along)) * 0.5;
+        const alpha = k < n ? r.o.alpha * (1 - age) * (1 - along * 0.3) : 0;
+        for (let side = 0; side < 2; side++) {
+          const vi = base + k * 2 + side, sg = side ? 1 : -1;
+          P[vi * 3] = q[0] + s.x * w * sg; P[vi * 3 + 1] = q[1] + s.y * w * sg; P[vi * 3 + 2] = q[2] + s.z * w * sg;
+          C[vi * 4] = r.o.color[0]; C[vi * 4 + 1] = r.o.color[1]; C[vi * 4 + 2] = r.o.color[2]; C[vi * 4 + 3] = alpha;
+          R[vi * 4] = along; R[vi * 4 + 1] = sg; R[vi * 4 + 2] = r.o.style; R[vi * 4 + 3] = r.o.seed;
+          SD[vi * 3] = s.x; SD[vi * 3 + 1] = s.y; SD[vi * 3 + 2] = s.z; FC[vi * 3] = c.x; FC[vi * 3 + 1] = c.y; FC[vi * 3 + 2] = c.z;
+        }
+      }
+      v = slot;
+    }
+    // keep one degenerate segment drawn (warm program); zero alpha
+    if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
+    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;this._drawCount=slot;
+    for (const a of [this.pos, this.col, this.rib, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
+  }
+  clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; r.samples.length=0; r.count=0; } this.list.length = 0; this._emptyUploaded = false; }
+}
+
+// ---------------------------------------------------------------------------------------------------------------

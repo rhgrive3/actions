@@ -1,0 +1,204 @@
+{
+  "status": "passed",
+  "seed": 20261025,
+  "browser": "151.0.7922.34",
+  "driverSHA256": "13d7bf281ed38d7efbea6962eb8d23d8e09843d6df6af70ef95af565f2be3b6e",
+  "equalFields": [
+    "rows",
+    "nativeExtra",
+    "cloudDrawCalls",
+    "nativeCloudRetirements",
+    "baseline",
+    "after",
+    "vfxResources",
+    "fixture"
+  ],
+  "beforeContentHash": "ebdd80f2a7fd19ddd2bb10c5be2c21e45d7f97f47d0f65951249b648a52f4d77",
+  "afterContentHash": "2b60fbddf735c629a230bf0e2579412856944e5f3dc0b75839f3bb5fa65ff688",
+  "images": [
+    {
+      "file": "bubbler.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "04d0b29f0b41a0c16d54a56c5a6a3429159223dafbc2da558285279d536c63ea"
+    },
+    {
+      "file": "inkVac-exhale.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "d77c940b9fd644218038228f7d3e0f310cb110240a717defcba2ba9a891f67ae"
+    },
+    {
+      "file": "inkVac-return.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "d804d6c8b6450cdfbce6f45cbfd2e4658658acb948b8a3ecdecc9ced8cf35561"
+    },
+    {
+      "file": "inkVac.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "04bd7e52481902eaad6e4d24ff74faf524d7607c4d8501cec535a9d7f6cf8788"
+    },
+    {
+      "file": "screen-native-flight.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "1f9d6e03c6d08ce3d316a32ab69b1923ba092ecb1971beb35567a05e3317e242"
+    },
+    {
+      "file": "screen-native-land.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "bcbdfb74e419a2f42c0ce0afad7278414d241f00633c11e62484e2753deb2085"
+    },
+    {
+      "file": "slam.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "5890611c90af95d15c1c4b3649ac9057f105c16b60c2df0a47350cdc9e2117ee"
+    },
+    {
+      "file": "storm.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "64a6ef03ced6651af2272c29ee47333ffb574528d9a153226167d7676c0698f0"
+    },
+    {
+      "file": "superChump-native-f110.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "bbc7fc3c81f34757b9412256458bd555f7ec6cd283f4b3163fbcb39be6af2800"
+    },
+    {
+      "file": "superChump-native-f220.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "bece9d75ed140be7fc21515c47e04a2fe699117fafd122ab245f8a98996ec4e5"
+    },
+    {
+      "file": "superChump-native-f330.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "5c341f1259cdc95cdbb3379431b091cc537262e2dd9bc1542dcf92ba8eeed71e"
+    },
+    {
+      "file": "superChump-native-f60.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "789e3906cfad8a86e91961e0492e742c2bfbfa821a6ae5f4c7189c23fd051820"
+    },
+    {
+      "file": "tacticooler.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "d523d05085a6a88479696357013ddc9e0f432a874e7c7c1693e1e68c9e2dae7b"
+    },
+    {
+      "file": "tripleInkstrike-native-f170.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "83f1422d812f6d2b2d7d00af8b9ef3798a6e059e8c414aa0bf87d078f8eb1038"
+    },
+    {
+      "file": "tripleInkstrike-native-f220.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "4e20ffcc171fb9569c6aa3481958a4ef896b98d32aaedf3f4c9466938c3aa4fe"
+    },
+    {
+      "file": "tripleInkstrike-native-f70.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "653cf1d3d9dc24ab7d43943017a81e9e3a6acf3265057a7987433d1e038542ed"
+    },
+    {
+      "file": "trizooka-return.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "082ad92c770817e46cf969abaf7dcf025907894e9137241e593ebd35d4409c6c"
+    },
+    {
+      "file": "trizooka-swim.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "04c92699db153054d4bfc93647ab32084757a512aad92c3f7a8660047c5672dc"
+    },
+    {
+      "file": "trizooka.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "c8075c8d2996aaec9397eceb6be77d362ace92472d097d3fa944019bd544900c"
+    },
+    {
+      "file": "wail-native-main.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "101df4d3e8a50f6607c3e35600767edd2f8354abbb1f0428742fb6283c7a66c3"
+    },
+    {
+      "file": "wail-native-swim.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "1a3828f7a56a10068bfea6925eab61b1b4da3ad91872076a231a938ecd62729f"
+    },
+    {
+      "file": "zipcaster-native-coat.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "2b9d4ddff08d9d35407b89455e99371a0b250cecbd6408042c25ae2ca1c0a9e0"
+    },
+    {
+      "file": "zipcaster-native-return.png",
+      "size": [
+        960,
+        720
+      ],
+      "rgbaSHA256": "9f62ddbee26afbd0195a93ade5080bf671883646f52eba7c56ff6b3edbd1a56e"
+    }
+  ]
+}

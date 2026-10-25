@@ -1,0 +1,98 @@
+{
+  "baseCommit": "6dacd47095352cfd600f9c83012c71a2f298a460",
+  "sourceSHA256": {
+    "before": {
+      "motion": "ef77d2aa83611893fd3e7cc29dd2d3dc872e27a92c033f378ac3a08bbf9f0e1f",
+      "presentation": "fd28ed09f5a478da260245f73c36bccf64bece7dec8eb88d5e59fd19e956a573"
+    },
+    "after": {
+      "motion": "f66d28de0ddfc915f6e7abfe3d9a6837fe0de1acb17920c78a5205dcc0295b5c",
+      "presentation": "46627f494c4c701edd27eefff5f25a92a491c4c530b97943d1c92b2a093ad185"
+    }
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C"
+  },
+  "repeats": 9,
+  "iterations": 10000,
+  "scope": "Production extracted fit/pose functions, real THREE transforms, native callback sinks; CPU owner only, no device FPS claim",
+  "workloads": {
+    "fit": {
+      "timing": {
+        "before": [
+          41.877433999999994,
+          13.183285000000012,
+          12.468506999999988,
+          13.013398999999993,
+          13.456801999999982,
+          13.451956999999993,
+          13.733053999999981,
+          12.693939999999998,
+          12.370522999999991
+        ],
+        "after": [
+          15.623014000000012,
+          12.77267900000001,
+          9.109251999999998,
+          8.572321999999986,
+          12.705502999999965,
+          14.77597000000003,
+          8.670634000000007,
+          8.508317999999974,
+          8.883001000000036
+        ]
+      },
+      "counters": {
+        "before": {
+          "rotations": 8,
+          "matrixRefreshes": 12
+        },
+        "after": {
+          "rotations": 8,
+          "matrixRefreshes": 4
+        }
+      }
+    },
+    "speakers": {
+      "timing": {
+        "before": [
+          25.67172199999999,
+          9.513549000000012,
+          10.623160999999982,
+          10.791574999999966,
+          8.443842999999958,
+          8.164683999999966,
+          8.705827999999997,
+          9.630442000000016,
+          9.316970999999967
+        ],
+        "after": [
+          24.811712,
+          7.433704999999975,
+          8.28346300000004,
+          7.436831999999981,
+          7.553539999999998,
+          6.9146069999999895,
+          7.368751000000088,
+          7.782191000000012,
+          9.18217100000004
+        ]
+      },
+      "counters": {
+        "before": {
+          "sin": 12,
+          "cos": 0,
+          "pow": 12,
+          "axisAngle": 6
+        },
+        "after": {
+          "sin": 8,
+          "cos": 1,
+          "pow": 2,
+          "axisAngle": 0
+        }
+      }
+    }
+  }
+}

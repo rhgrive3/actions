@@ -1,0 +1,198 @@
+{
+  "baseCommit": "6dacd47095352cfd600f9c83012c71a2f298a460",
+  "scope": "Local current-model revalidation; no hosted Actions invoked",
+  "checks": {
+    "source": {
+      "logSHA256": "f4bf9592b7b185c014e1c904fc54381fc4cc5a9a80729cf1216cf1c1e611a007",
+      "counts": {
+        "tests": 21,
+        "pass": 21,
+        "fail": 0,
+        "skipped": 0
+      },
+      "tail": [
+        "✔ complete-module AST loader executes the source functions before an emitted build is selected (35.967462ms)",
+        "ℹ tests 21",
+        "ℹ suites 0",
+        "ℹ pass 21",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 93547.843774"
+      ]
+    },
+    "source-more": {
+      "logSHA256": "bf692d65b7911b45c1bd1fcbfbd28901c224a5b0e762da2ff186e636073307ab",
+      "counts": {
+        "tests": 22,
+        "pass": 22,
+        "fail": 0,
+        "skipped": 0
+      },
+      "tail": [
+        "✔ custom non-numeric axis components preserve every original numeric coercion (1.30384ms)",
+        "ℹ tests 22",
+        "ℹ suites 0",
+        "ℹ pass 22",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 15715.645803"
+      ]
+    },
+    "world-emitted": {
+      "logSHA256": "91ec383b38ac9e24a5620e271c86ed5656ba6b0a9175defe6803cc1f738f24f0",
+      "counts": {
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "skipped": 0
+      },
+      "tail": [
+        "✔ remote Inkstrike exits before sampling a circle, querying terrain or painting (58.127091ms)",
+        "ℹ tests 4",
+        "ℹ suites 0",
+        "ℹ pass 4",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1549.80831"
+      ]
+    },
+    "director-emitted": {
+      "logSHA256": "3e28a39b43c6c64afd64d57f9fdc9133e5d1ff5f3897feaf017de683c0950fc6",
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0
+      },
+      "tail": [
+        "✔ uninstrumented fixtures preserve state while using native Math/Vector3 and no RNG spy (428.040717ms)",
+        "ℹ tests 9",
+        "ℹ suites 0",
+        "ℹ pass 9",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 9511.658454"
+      ]
+    },
+    "kits-emitted": {
+      "logSHA256": "fbdc1a1c3cf46ddbec438d2655dfe3cb13edb97b1ef5d6119c1d6a89d9ca7c8d",
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "tail": [
+        "✔ custom non-numeric axis components preserve every original numeric coercion (0.547764ms)",
+        "ℹ tests 7",
+        "ℹ suites 0",
+        "ℹ pass 7",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 763.243672"
+      ]
+    },
+    "existing-emitted": {
+      "logSHA256": "7766aa41fb46a2cdabc4338f3771c592c7598986c7248114598157a10625516f",
+      "counts": {
+        "tests": 22,
+        "pass": 22,
+        "fail": 0,
+        "skipped": 0
+      },
+      "tail": [
+        "✔ negative control: emitted collapsing-height mutation is detected (33.679935ms)",
+        "ℹ tests 22",
+        "ℹ suites 0",
+        "ℹ pass 22",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 3659.005024"
+      ]
+    },
+    "quick": {
+      "logSHA256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "counts": {},
+      "tail": [
+        "INKWAVE quick checks OK: upstream compatible; reference 11.3.0"
+      ]
+    },
+    "build": {
+      "logSHA256": "14a4161ce162dad9e67452695dd7830d3858de9020f1c49e784178b495fc2cf7",
+      "counts": {},
+      "tail": [
+        "three.js: 152 of 444 exports kept · 2071 KB → 599 KB (gzip diagnostics disabled)",
+        "reviewed audio helper: omitted (reviewed current orphan; no literal reference)",
+        "startup runtime: 11489 -> 6062 bytes",
+        "patch: splatoon3+quality+range · build 2b60fbddf735",
+        "JS transforms (excludes replaced Three inputs): 4761 KB → 2840 KB  (gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)",
+        "CSS: 478 KB → 402 KB",
+        "repeated module strings: saved 30357 bytes total, 30104 in the offline precache",
+        "modulepreload: 145 modules (369 deferred, all precached)",
+        "lossless lightmaps: 173878 bytes saved with identical decoded pixels"
+      ]
+    },
+    "budget": {
+      "logSHA256": "8f5b6cdce0c294d41ba6b767f378af1703b3c2b45927fcde8048a92dd40b478d",
+      "counts": {},
+      "tail": [
+        "  \"practiceRangePreloadBytes\": 78161,",
+        "  \"initialJSBytes\": 2052531,",
+        "  \"criticalHTMLBytes\": 24090,",
+        "  \"precacheCount\": 538,",
+        "  \"precacheBytes\": 7571924,",
+        "  \"workerBytes\": 87434,",
+        "  \"declaredBytes\": 15818814,",
+        "  \"measurementKind\": \"deterministic file and dependency gates; not native browser timings\"",
+        "}"
+      ]
+    },
+    "comparator": {
+      "logSHA256": "3cf22841afecb5deb17fe62f26e1b8fb6771cb8ea85c26efb9db7e683dfe7d1d",
+      "counts": {},
+      "tail": [
+        "test_equal_decoded_pixels_pass (test_compare_inkwave_special_presentation.SpecialComparisonTest.test_equal_decoded_pixels_pass) ... ok",
+        "test_missing_capture_is_rejected (test_compare_inkwave_special_presentation.SpecialComparisonTest.test_missing_capture_is_rejected) ... ok",
+        "test_resource_and_identity_mismatches_are_rejected (test_compare_inkwave_special_presentation.SpecialComparisonTest.test_resource_and_identity_mismatches_are_rejected) ... ok",
+        "test_rgb_change_with_unchanged_alpha_is_rejected (test_compare_inkwave_special_presentation.SpecialComparisonTest.test_rgb_change_with_unchanged_alpha_is_rejected) ... ok",
+        "",
+        "----------------------------------------------------------------------",
+        "Ran 4 tests in 0.016s",
+        "",
+        "OK"
+      ]
+    }
+  },
+  "sourceCases": 43,
+  "emittedAndOwnershipCases": 42,
+  "comparatorNegativeControls": 4,
+  "knownBaselineFailure": "Two preexisting Crab ribbon fixtures reproduce failure with baseline and candidate; PR1870 owns repair; tests not weakened.",
+  "browserComparison": {
+    "status": "passed",
+    "images": 23,
+    "nativeScenarios": 11,
+    "exactFields": [
+      "rows",
+      "nativeExtra",
+      "cloudDrawCalls",
+      "nativeCloudRetirements",
+      "baseline",
+      "after",
+      "vfxResources",
+      "fixture"
+    ],
+    "rgbaChangedChannels": 0
+  }
+}

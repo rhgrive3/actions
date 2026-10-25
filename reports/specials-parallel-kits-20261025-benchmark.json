@@ -1,0 +1,64 @@
+{
+  "kind": "trizooka-native-orbit-serial-cpu",
+  "callsPerRun": 200000,
+  "repeats": 9,
+  "samples": {
+    "before": [
+      161.87805400000002,
+      146.34556900000007,
+      156.57671600000003,
+      141.051469,
+      154.67987399999993,
+      149.9974830000001,
+      149.30477400000018,
+      150.16721300000017,
+      137.48790400000007
+    ],
+    "after": [
+      92.862572,
+      107.46335199999976,
+      95.37387100000024,
+      100.70513699999992,
+      92.0130610000001,
+      101.36580000000004,
+      91.91652599999998,
+      99.76475300000038,
+      95.75014100000044
+    ]
+  },
+  "median": {
+    "before": 149.9974830000001,
+    "after": 95.75014100000044
+  },
+  "sink": 33601211.22435804,
+  "provenance": {
+    "module": "file:///workspace/actions-kits/.ci-scratch/redo-kit/site/patches/splatoon3/runtime/kit-trizooka.mjs",
+    "moduleSHA256": "7b081089997dcf20177a120b053e057b010ff7ed50aab00033cc7d6401af91e2",
+    "candidateBuild": {
+      "contentHash": "9fe1de616bf05dcd3f40686dbffb1a8258f1e4b5f62efdd575774c31aee80da9",
+      "inputHash": "98ad6570210c921bc7cb7194267eb12949130eb956e9150264e261b0c978f6c1"
+    },
+    "beforeBuild": {
+      "contentHash": "ebdd80f2a7fd19ddd2bb10c5be2c21e45d7f97f47d0f65951249b648a52f4d77",
+      "inputHash": "a60be7ee189f288f18bd56f07ef6e6fe8804a66820e3cd353e3a35ec350640ac"
+    },
+    "nativeModule": "file:///workspace/actions-kits/.ci-scratch/redo-kit/site/patches/splatoon3/runtime/trizooka-collision.mjs",
+    "nativeSHA256": "4426d6d05390ef166a12e53d9a1e4d52d64f7c44abd0d92998a77020c1f08336",
+    "beforeMode": "paired-actual-modules",
+    "beforeModule": "file:///workspace/actions/_site-after/patches/splatoon3/runtime/kit-trizooka.mjs",
+    "beforeNative": "file:///workspace/actions/_site-after/patches/splatoon3/runtime/trizooka-collision.mjs",
+    "beforeNativeSHA256": "c22ecc5cf0bc29ec08b54461d3b6869fb942f9d45ef08955724afa22a7f616e6",
+    "frozenBase": "6dacd47095352cfd600f9c83012c71a2f298a460",
+    "frozenSHA256": "5f7735f18eb6529582d2f53786ed88984ae33df2117473a7ae3d83cf04ec440f",
+    "nativeFrozenSHA256": "7032ddf4fb6aa48747a90d781bde58714c9c43f043db70e6591a429167bf1fd0"
+  },
+  "scope": "Complete production native orbit-delta CPU timing with real Vector3 inputs; no GPU or device-FPS claim.",
+  "medianReductionPercent": 36.165501523781984,
+  "environment": {
+    "node": "v24.19.0",
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "cpuQuota": 4,
+    "timingSlot": "parent-authorized serial window after root source/browser jobs completed"
+  },
+  "logSHA256": "65e3266724af5c9a4d60c99a7b36e8d73cdf07f101247190cc2e7af2f2d81305"
+}

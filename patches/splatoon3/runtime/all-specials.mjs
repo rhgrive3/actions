@@ -1244,14 +1244,26 @@ function inkstrikeDamage(rt,o){
     if(inside(object.pos))specialObjectDamage(rt,o.owner,object,37.5,'tripleInkstrike',o.pos);
   rt.system?.s3DamageSubObjects?.(o.owner,o.pos,Math.hypot(o.currentRadius,20),(_d,object)=>inside(object?.pos)?37.5:0,'tripleInkstrike',{pierceLOS:true});
 }
+// These circles contain only deterministic numerical directions. Contact
+// points, normals and terrain queries are still sampled at every use.
+function specialCirclePoints(count,rotation=0,xScale=1,zScale=1){
+  const points=[];
+  for(let i=0;i<count;i++){
+    const angle=i/count*Math.PI*2+rotation;
+    points.push(Math.cos(angle)*xScale,Math.sin(angle)*zScale);
+  }
+  return Object.freeze(points);
+}
+let inkstrikePaintCircle=null;
 function inkstrikePaint(rt,o,elapsed){
   if(o.owner.remote)return;
   // Raw BlastParam: PaintSpanFrame2, radius.5->7 over50F. The Wiki measures
   // floor reach +1.5/-1.2 trial lines. Preserve the existing20-point footprint
   // calibration, but never substitute damage radius7.7 or an unbounded floor.
   const radius=.5+6.5*clamp(elapsed/(50/FPS),0,1),stamp=Math.min(.78,radius),ring=radius-stamp,n=ring>0?20:1;
+  const circle=n===20?(inkstrikePaintCircle ||= specialCirclePoints(20)):null;
   for(let i=0;i<n;i++){
-    const angle=i/n*Math.PI*2,from=(o._inkstrikeProbe ||= new rt.api.THREE.Vector3()).set(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
+    const from=(o._inkstrikeProbe ||= new rt.api.THREE.Vector3()).set(o.pos.x+(circle?circle[i*2]:1)*ring,o.pos.y+7.5,o.pos.z+(circle?circle[i*2+1]:0)*ring);
     const hit=rt.api.G.physics?.raycast?.(from,rt.down,13.5,rt.hit,true);let point=null;
     if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=(o._inkstrikePoint ||= new rt.api.THREE.Vector3()).copy(hit.point).addScaledVector(hit.normal,.08);
     else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
@@ -1305,9 +1317,11 @@ function chumpLandingPlan(rt,actor,state,out=null){
   groundAt(rt,target,target);
   const count=12,positions=out?out.positions:[],rotation=seedUnit(state.seed,17)*Math.PI*2;
   const direction=(out?out.direction.copy(target):target.clone()).sub(actor.pos).setY(0).normalize(),side=out?out.side.set(direction.z,0,-direction.x):new rt.api.THREE.Vector3(direction.z,0,-direction.x);
+  let ellipse=state.chumpEllipse;
+  if(!ellipse||!Object.is(ellipse.rotation,rotation))ellipse=state.chumpEllipse=Object.freeze({rotation,points:specialCirclePoints(count,rotation,17.5,10)});
   for(let i=0;i<count;i++){
-    const angle=(i/count)*Math.PI*2+rotation,pos=out?positions[i].copy(target):target.clone();
-    pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
+    const pos=out?positions[i].copy(target):target.clone();
+    pos.addScaledVector(side,ellipse.points[i*2]).addScaledVector(direction,ellipse.points[i*2+1]);
     groundAt(rt,pos,pos);
     // Public gameplay: decoys do not select a landing point outside the map.
     // Keep this deterministic preview/launch fallback inside the valid target;

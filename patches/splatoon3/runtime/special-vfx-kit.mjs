@@ -431,15 +431,7 @@ class RibbonPool {
     for (const r of this.list) {
       const p = r.pts, n = p.length; if (n < 2) continue;
       const base = slot * this.M * 2; slot++;
-      for (let k = 0; k < this.M; k++) {
-        if(k>=n){
-          const src=base+(n-1)*2;
-          for(let side=0;side<2;side++){
-            const vi=base+k*2+side,from=src+side;
-            for(let c=0;c<3;c++){P[vi*3+c]=P[from*3+c];SD[vi*3+c]=SD[from*3+c];FC[vi*3+c]=FC[from*3+c];}
-            for(let c=0;c<4;c++){C[vi*4+c]=C[from*4+c];R[vi*4+c]=R[from*4+c];}C[vi*4+3]=0;
-          }continue;
-        }
+      for (let k = 0, active = Math.min(n, this.M); k < active; k++) {
         const j = Math.min(n - 1, k), q = p[n - 1 - j];                 // head first
         const qa = p[Math.max(0, n - 2 - j)], qb = p[Math.min(n - 1, n - j)];
         t.set(qb[0] - qa[0], qb[1] - qa[1], qb[2] - qa[2]); if (t.lengthSq() < 1e-10) t.set(0, 1, 0); t.normalize();
@@ -455,6 +447,20 @@ class RibbonPool {
           R[vi * 4] = along; R[vi * 4 + 1] = sg; R[vi * 4 + 2] = r.o.style; R[vi * 4 + 3] = r.o.seed;
           SD[vi * 3] = s.x; SD[vi * 3 + 1] = s.y; SD[vi * 3 + 2] = s.z; FC[vi * 3] = c.x; FC[vi * 3 + 1] = c.y; FC[vi * 3 + 2] = c.z;
         }
+      }
+      // Padded vertices repeat the last live pair with zero alpha. Seed that
+      // pair once, then double the already padded block with native copies.
+      // This preserves every Float32 slot without per-point JS field loops.
+      const at = base + n * 2, tail = (this.M - n) * 2;
+      for (let copied = 0; copied < tail;) {
+        const count = Math.min(copied || 2, tail - copied), from = copied ? at : at - 2, to = at + copied;
+        P.copyWithin(to * 3, from * 3, (from + count) * 3);
+        SD.copyWithin(to * 3, from * 3, (from + count) * 3);
+        FC.copyWithin(to * 3, from * 3, (from + count) * 3);
+        C.copyWithin(to * 4, from * 4, (from + count) * 4);
+        R.copyWithin(to * 4, from * 4, (from + count) * 4);
+        if (!copied) C[to * 4 + 3] = C[(to + 1) * 4 + 3] = 0;
+        copied += count;
       }
       v = slot;
     }

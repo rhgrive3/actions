@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const opt=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const site=fs.realpathSync(opt('--site','_site')),out=path.resolve(opt('--evidence-dir','.ci-scratch/special-presentation'));
+const seedArg=opt('--seed',null),seed=seedArg===null?null:Number(seedArg);
+assert.ok(seed===null||Number.isInteger(seed)&&seed>=0&&seed<=0xffffffff,'seed must be an unsigned 32-bit integer');
 fs.mkdirSync(out,{recursive:true});
 const hash=b=>createHash('sha256').update(b).digest('hex'),manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
@@ -24,6 +26,7 @@ try{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const {chromium}=await import('playwright');browser=await chromium.launch({headless:true,executablePath:opt('--browser-executable',undefined),args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:960,height:720}});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ if(seed!==null)await page.addInitScript(initial=>{let word=initial>>>0;Math.random=()=>((word=(Math.imul(word,1664525)+1013904223)>>>0)/4294967296);},seed);
  await page.goto(`http://127.0.0.1:${server.address().port}/specials`);
  result=await page.evaluate(async prefix=>{
   const THREE=await import('three'),{G}=await import(prefix+'src/core/ctx.js'),{install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
@@ -136,20 +139,23 @@ try{
   // Current catalogue controls, real native Actor/Physics, optional FX absent.
   // These cases catch visible failures that pure model construction misses.
   const nativeExtra=[];
-  for(const id of ['killerWail','zipcaster','splattercolorScreen']){
+  for(const id of ['killerWail','zipcaster','splattercolorScreen','tripleInkstrike','superChump']){
     clear();G.actors=[];
     G.level=new Level({bounds:{minX:-150,maxX:150,minZ:-150,maxZ:150},spawnPads:[[-140,0,0],[140,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-150,-.5,-150],max:[150,0,150]}]});G.physics=new api.Physics(G.level);
     const a=new api.Actor({team:0,name:'current native special',isLocal:true,weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
     G.actors=[a];scene.add(ch.root);a.pos.set(0,0,0);a._probeGround();a.invuln=0;
     if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
     if(ch.sourceMotion?.status!=='ready')throw Error('Source motion unavailable: '+id);
-    const step=(n=1)=>{for(let i=0;i<n;i++){G.time+=1/60;a.update(1/60);G.projectiles.update(1/60);}};
+    const step=(n=1)=>{for(let i=0;i<n;i++){G.time+=1/60;a.update(1/60);G.projectiles.update(1/60);G.fx?.update(1/60,camera);}};
     step(40);a.weapon={...a.weapon,special:id,specialCost:200};a.special=200;a.intent.special=true;step();a.intent.special=false;
     if(a.specialActive?.id!==id)throw Error('Native special input rejected: '+id);
     camera.position.set(2.2,1.9,3.2);camera.lookAt(0,.8,0);
     if(id==='killerWail'){
+      const wailFx=G.fx=new api.FX(scene,{quality:.35});wailFx.setCollider(()=>null);
       camera.position.set(3.6,2.8,6);camera.lookAt(0,1.4,0);
       step(42);a.intent.fire=true;step(12);
+      const liveLasers=wailFx.s3SpecialVfx.lasers.size;
+      if(!liveLasers||wailFx.s3SpecialVfx.errors)throw Error('Native Wail effect rows missing');
       if(!ch.weapon.pivot.visible||!G.projectiles.list.some(p=>p.owner===a))throw Error('Wail main emission/visibility');
       let before=render();ch.weapon.pivot.visible=false;const weaponPixels=changed(before,render());ch.weapon.pivot.visible=true;
       if(weaponPixels<20)throw Error('Wail permitted main is not visible');
@@ -167,7 +173,9 @@ try{
       if(ch.s3SpecialDevices())throw Error('Wail held models survived native death');
       if(tails.length!==4)throw Error('Wail fired-pair tail display '+tails.length);
       step(300);if(scene.children.some(g=>g.name==='killer-wail-surviving-speaker'))throw Error('Wail tail display leaked');
-      nativeExtra.push({id,weaponPixels,speakerPixels,nativeSwim:true,tailSpeakers:tails.length,tailRetired:true});
+      if(wailFx.s3SpecialVfx.lasers.size||wailFx.s3SpecialVfx.errors)throw Error('Native Wail effect expiry/error');
+      nativeExtra.push({id,weaponPixels,speakerPixels,nativeSwim:true,tailSpeakers:tails.length,tailRetired:true,liveLasers,effectLasersRetired:true});
+      wailFx.dispose();G.fx=null;
     }else if(id==='zipcaster'){
       step();const coat=ch.kid.getObjectByName('zipcaster-ink-coat');if(!coat)throw Error('Zipcaster ink coat absent');
       const resources=new Set();coat.traverse(o=>{if(o.geometry)resources.add(o.geometry);});let borrowedDisposals=0;
@@ -177,6 +185,38 @@ try{
       for(const g of resources)g.removeEventListener('dispose',dispose);
       step(30);render();images.push({name:'zipcaster-native-return',data:renderer.domElement.toDataURL('image/png')});
       nativeExtra.push({id,borrowedGeometries:resources.size,borrowedDisposals,coatRetired:true});
+    }else if(id==='tripleInkstrike'||id==='superChump'){
+      // Actual native input, Actor/Physics, world objects and effect director.
+      // The controlled floor/paint sink isolates coordinate and event parity.
+      const events=[],paint=[],oldSplat=G.paint.splat;
+      const off=api.on('all:special',e=>{if(e.actor===a&&e.id===id)events.push({action:e.action,kind:e.kind,index:e.index,object:e.object,pos:e.pos,target:e.target,seed:e.seed});});
+      G.paint.splat=(p,r,team,options={})=>{paint.push([p.x,p.y,p.z,r,team,options.seed,options.claimMode]);return 0;};
+      const fx=G.fx=new api.FX(scene,{quality:.35});fx.setCollider(()=>null);
+      let peakObjects=0,previewPoints=0;
+      try{
+        a.aimPitch=-.15;a.aimDir.set(0,Math.sin(a.aimPitch),Math.cos(a.aimPitch));a.aimPoint.set(0,0,26);
+        for(let frame=0;frame<720;frame++){
+          a.intent.sub=id==='tripleInkstrike'&&[1,41,81].includes(frame);
+          a.intent.fire=id==='superChump'&&frame===80;
+          step();
+          const objects=G.projectiles._s3AllSpecialObjects||[];peakObjects=Math.max(peakObjects,objects.filter(o=>o.id===id).length);
+          if(id==='superChump'&&frame<80){
+            const {superChumpLandingPreview}=await import(prefix+'patches/splatoon3/runtime/all-specials.mjs');
+            const preview=superChumpLandingPreview(api,a);if(preview?.positions.length!==12)throw Error('Native Chump preview missing');previewPoints+=preview.positions.length;
+          }
+          if((id==='superChump'?[60,110,220,330]:[70,170,220]).includes(frame)){
+            const target=objects.find(o=>o.id===id)?.target||new THREE.Vector3(0,0,26);
+            camera.position.copy(target).add(new THREE.Vector3(24,18,28));camera.lookAt(target.clone().add(new THREE.Vector3(0,1,0)));
+            render();images.push({name:id+'-native-f'+frame,data:renderer.domElement.toDataURL('image/png')});
+          }
+        }
+        const births=events.filter(e=>e.action===(id==='superChump'?'balloon':'marker'));
+        if(births.length!==(id==='superChump'?12:3)||!paint.length||fx.s3SpecialVfx.errors)throw Error('Native world lifecycle/paint/VFX missing: '+id);
+        if((G.projectiles._s3AllSpecialObjects||[]).some(o=>o.id===id)||a.specialActive?.id===id)throw Error('Native world special did not retire: '+id);
+        const digest=bytes=>crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(bytes))).then(b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join(''));
+        nativeExtra.push({id,hz:60,driver:'real Actor.update/Physics/Projectiles/FX; controlled floor and paint sink',sourceMotion:ch.sourceMotion.status,
+          peakObjects,previewPoints,stamps:paint.length,paintSHA256:await digest(paint),events,retired:true,directorErrors:fx.s3SpecialVfx.errors});
+      }finally{off();G.paint.splat=oldSplat;fx.dispose();G.fx=null;}
     }else{
       a.pos.y=6;a.grounded=false;a.aimPitch=-.25;a.intent.sub=true;step();a.intent.sub=false;
       for(let i=0;!G.projectiles._s3AllSpecialObjects.some(o=>o.kind==='screen')&&i<20;i++)step();
@@ -275,7 +315,7 @@ try{
   return {rows,nativeExtra,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,vfxResources,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Trizooka, Vac and nativeExtra use actual Actor.update/Physics; legacy diagnostic rows use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
- assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};
+ assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,seed,browser:browser.version(),driverSHA256:hash(fs.readFileSync(new URL(import.meta.url))),...result,errors};
  fs.writeFileSync(path.join(out,'special-presentation-result.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
 }catch(e){fs.writeFileSync(path.join(out,'special-presentation-result.json'),JSON.stringify({status:'failed',error:e.message,errors},null,2));throw e;}
 finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

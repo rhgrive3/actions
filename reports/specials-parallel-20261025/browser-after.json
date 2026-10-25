@@ -1,0 +1,1815 @@
+{
+  "status": "passed",
+  "contentHash": "2b60fbddf735c629a230bf0e2579412856944e5f3dc0b75839f3bb5fa65ff688",
+  "revision": "e3aa54120f1d8bf8fc1e1d444f951ed60dbf3286894768c4992aba5ea0623c1a",
+  "seed": 20261025,
+  "browser": "151.0.7922.34",
+  "driverSHA256": "13d7bf281ed38d7efbea6962eb8d23d8e09843d6df6af70ef95af565f2be3b6e",
+  "rows": [
+    {
+      "id": "trizooka",
+      "driver": "real Actor.update with native Physics",
+      "sourceMotion": "ready",
+      "phase": "charge",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 17886,
+      "actorPixels": 38307,
+      "maxHandError": 8.891536662303994e-16,
+      "calls": 11,
+      "triangles": 122483,
+      "nativeLifecycle": {
+        "swimDistance": 2.361,
+        "swimFrames": 30,
+        "shotsWhileSwimming": 0,
+        "surfacedOnFire": true,
+        "returnedToCarry": true
+      }
+    },
+    {
+      "id": "inkVac",
+      "driver": "real Actor.update with native Physics",
+      "sourceMotion": "ready",
+      "phase": "inhale",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 5843,
+      "actorPixels": 30950,
+      "maxHandError": 5.865828344120991e-16,
+      "calls": 12,
+      "triangles": 120455,
+      "nativeLifecycle": {
+        "exhalePixels": 5306,
+        "transitionFrames": 20,
+        "countershots": 1,
+        "returnedToCarry": true
+      }
+    },
+    {
+      "id": "storm",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": "hold",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 2827,
+      "actorPixels": 25538,
+      "maxHandError": 0,
+      "calls": 9,
+      "triangles": 36838
+    },
+    {
+      "id": "slam",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": "hang",
+      "position": [
+        0,
+        2.033333333333334,
+        0
+      ],
+      "changedPixels": 60498,
+      "actorPixels": 10831,
+      "maxHandError": 0,
+      "calls": 11,
+      "triangles": 41782
+    },
+    {
+      "id": "bubbler",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 120476,
+      "actorPixels": 583,
+      "maxHandError": 0,
+      "calls": 16,
+      "triangles": 44139
+    },
+    {
+      "id": "tacticooler",
+      "driver": "manual phase/finish diagnostic",
+      "sourceMotion": "ready",
+      "phase": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "changedPixels": 21116,
+      "actorPixels": 12384,
+      "maxHandError": 0,
+      "calls": 18,
+      "triangles": 14614
+    }
+  ],
+  "nativeExtra": [
+    {
+      "id": "killerWail",
+      "weaponPixels": 992,
+      "speakerPixels": 3481,
+      "nativeSwim": true,
+      "tailSpeakers": 4,
+      "tailRetired": true,
+      "liveLasers": 2,
+      "effectLasersRetired": true
+    },
+    {
+      "id": "zipcaster",
+      "borrowedGeometries": 6,
+      "borrowedDisposals": 0,
+      "coatRetired": true
+    },
+    {
+      "id": "splattercolorScreen",
+      "jarPixels": 7741,
+      "landedAt": 0.41666666666666663,
+      "operationAge": 0.5000000000000012,
+      "unfold": 0.8750000000000009
+    },
+    {
+      "id": "tripleInkstrike",
+      "hz": 60,
+      "driver": "real Actor.update/Physics/Projectiles/FX; controlled floor and paint sink",
+      "sourceMotion": "ready",
+      "peakObjects": 3,
+      "previewPoints": 0,
+      "stamps": 1446,
+      "paintSHA256": "3a6836378f77c4dad4835f882340cab6f9d12c32397741544382e7829991b5ce",
+      "events": [
+        {
+          "action": "deploy",
+          "kind": "marker",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            1.1,
+            0
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "marker",
+          "index": 0,
+          "pos": [
+            0,
+            1.1,
+            0
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "land",
+          "kind": "marker",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "deploy",
+          "kind": "marker",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            1.1,
+            0
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "marker",
+          "index": 1,
+          "pos": [
+            0,
+            1.1,
+            0
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "land",
+          "kind": "marker",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "deploy",
+          "kind": "marker",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            1.1,
+            0
+          ],
+          "seed": 3081855080
+        },
+        {
+          "action": "marker",
+          "index": 2,
+          "pos": [
+            0,
+            1.1,
+            0
+          ],
+          "seed": 3081855080
+        },
+        {
+          "action": "end",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "seed": 2801944743
+        },
+        {
+          "action": "land",
+          "kind": "marker",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 3081855080
+        },
+        {
+          "action": "active",
+          "kind": "strike",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "pulse",
+          "kind": "strike",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "active",
+          "kind": "strike",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "pulse",
+          "kind": "strike",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "expire",
+          "kind": "strike",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 156006726
+        },
+        {
+          "action": "pulse",
+          "kind": "strike",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "active",
+          "kind": "strike",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 3081855080
+        },
+        {
+          "action": "pulse",
+          "kind": "strike",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "expire",
+          "kind": "strike",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 91815917
+        },
+        {
+          "action": "pulse",
+          "kind": "strike",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 3081855080
+        },
+        {
+          "action": "pulse",
+          "kind": "strike",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 3081855080
+        },
+        {
+          "action": "expire",
+          "kind": "strike",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            0.08,
+            19.76
+          ],
+          "target": [
+            0,
+            0.08,
+            19.76
+          ],
+          "seed": 3081855080
+        }
+      ],
+      "retired": true,
+      "directorErrors": 0
+    },
+    {
+      "id": "superChump",
+      "hz": 60,
+      "driver": "real Actor.update/Physics/Projectiles/FX; controlled floor and paint sink",
+      "sourceMotion": "ready",
+      "peakObjects": 12,
+      "previewPoints": 960,
+      "stamps": 72,
+      "paintSHA256": "61265939c13550dacb14d76ef01316073526d086bdebbfa56193649f8d4ce708",
+      "events": [
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            15.54,
+            0.08,
+            30.6
+          ],
+          "seed": 2803583176
+        },
+        {
+          "action": "balloon",
+          "index": 0,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            15.54,
+            0.08,
+            30.6
+          ],
+          "seed": 2803583176
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            9.44,
+            0.08,
+            34.42
+          ],
+          "seed": 3008976263
+        },
+        {
+          "action": "balloon",
+          "index": 1,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            9.44,
+            0.08,
+            34.42
+          ],
+          "seed": 3008976263
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            0.81,
+            0.08,
+            35.99
+          ],
+          "seed": 1245386042
+        },
+        {
+          "action": "balloon",
+          "index": 2,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            0.81,
+            0.08,
+            35.99
+          ],
+          "seed": 1245386042
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 3,
+          "object": 4,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -8.04,
+            0.08,
+            34.88
+          ],
+          "seed": 2660115281
+        },
+        {
+          "action": "balloon",
+          "index": 3,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -8.04,
+            0.08,
+            34.88
+          ],
+          "seed": 2660115281
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 4,
+          "object": 5,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -14.74,
+            0.08,
+            31.39
+          ],
+          "seed": 1587676284
+        },
+        {
+          "action": "balloon",
+          "index": 4,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -14.74,
+            0.08,
+            31.39
+          ],
+          "seed": 1587676284
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 5,
+          "object": 6,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -17.48,
+            0.08,
+            26.46
+          ],
+          "seed": 143562155
+        },
+        {
+          "action": "balloon",
+          "index": 5,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -17.48,
+            0.08,
+            26.46
+          ],
+          "seed": 143562155
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 6,
+          "object": 7,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -15.54,
+            0.08,
+            21.4
+          ],
+          "seed": 419540750
+        },
+        {
+          "action": "balloon",
+          "index": 6,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -15.54,
+            0.08,
+            21.4
+          ],
+          "seed": 419540750
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 7,
+          "object": 8,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -9.44,
+            0.08,
+            17.58
+          ],
+          "seed": 1168272149
+        },
+        {
+          "action": "balloon",
+          "index": 7,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -9.44,
+            0.08,
+            17.58
+          ],
+          "seed": 1168272149
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 8,
+          "object": 9,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -0.81,
+            0.08,
+            16.01
+          ],
+          "seed": 4049977712
+        },
+        {
+          "action": "balloon",
+          "index": 8,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            -0.81,
+            0.08,
+            16.01
+          ],
+          "seed": 4049977712
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 9,
+          "object": 10,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            8.04,
+            0.08,
+            17.12
+          ],
+          "seed": 3986449935
+        },
+        {
+          "action": "balloon",
+          "index": 9,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            8.04,
+            0.08,
+            17.12
+          ],
+          "seed": 3986449935
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 10,
+          "object": 11,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            14.74,
+            0.08,
+            20.61
+          ],
+          "seed": 2508266530
+        },
+        {
+          "action": "balloon",
+          "index": 10,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            14.74,
+            0.08,
+            20.61
+          ],
+          "seed": 2508266530
+        },
+        {
+          "action": "deploy",
+          "kind": "decoy",
+          "index": 11,
+          "object": 12,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            17.48,
+            0.08,
+            25.54
+          ],
+          "seed": 75820313
+        },
+        {
+          "action": "balloon",
+          "index": 11,
+          "pos": [
+            0,
+            1.2,
+            0
+          ],
+          "target": [
+            17.48,
+            0.08,
+            25.54
+          ],
+          "seed": 75820313
+        },
+        {
+          "action": "end",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "seed": 2501374884
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 11,
+          "object": 12,
+          "pos": [
+            17.48,
+            0.08,
+            25.54
+          ],
+          "target": [
+            17.48,
+            0.08,
+            25.54
+          ],
+          "seed": 75820313
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 10,
+          "object": 11,
+          "pos": [
+            14.74,
+            0.08,
+            20.61
+          ],
+          "target": [
+            14.74,
+            0.08,
+            20.61
+          ],
+          "seed": 2508266530
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 9,
+          "object": 10,
+          "pos": [
+            8.04,
+            0.08,
+            17.12
+          ],
+          "target": [
+            8.04,
+            0.08,
+            17.12
+          ],
+          "seed": 3986449935
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 8,
+          "object": 9,
+          "pos": [
+            -0.81,
+            0.08,
+            16.01
+          ],
+          "target": [
+            -0.81,
+            0.08,
+            16.01
+          ],
+          "seed": 4049977712
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 7,
+          "object": 8,
+          "pos": [
+            -9.44,
+            0.08,
+            17.58
+          ],
+          "target": [
+            -9.44,
+            0.08,
+            17.58
+          ],
+          "seed": 1168272149
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 6,
+          "object": 7,
+          "pos": [
+            -15.54,
+            0.08,
+            21.4
+          ],
+          "target": [
+            -15.54,
+            0.08,
+            21.4
+          ],
+          "seed": 419540750
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 5,
+          "object": 6,
+          "pos": [
+            -17.48,
+            0.08,
+            26.46
+          ],
+          "target": [
+            -17.48,
+            0.08,
+            26.46
+          ],
+          "seed": 143562155
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 4,
+          "object": 5,
+          "pos": [
+            -14.74,
+            0.08,
+            31.39
+          ],
+          "target": [
+            -14.74,
+            0.08,
+            31.39
+          ],
+          "seed": 1587676284
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 3,
+          "object": 4,
+          "pos": [
+            -8.04,
+            0.08,
+            34.88
+          ],
+          "target": [
+            -8.04,
+            0.08,
+            34.88
+          ],
+          "seed": 2660115281
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0.81,
+            0.08,
+            35.99
+          ],
+          "target": [
+            0.81,
+            0.08,
+            35.99
+          ],
+          "seed": 1245386042
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            9.44,
+            0.08,
+            34.42
+          ],
+          "target": [
+            9.44,
+            0.08,
+            34.42
+          ],
+          "seed": 3008976263
+        },
+        {
+          "action": "active",
+          "kind": "decoy",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            15.54,
+            0.08,
+            30.6
+          ],
+          "target": [
+            15.54,
+            0.08,
+            30.6
+          ],
+          "seed": 2803583176
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 11,
+          "object": 12,
+          "pos": [
+            17.48,
+            0.08,
+            25.54
+          ],
+          "target": [
+            17.48,
+            0.08,
+            25.54
+          ],
+          "seed": 75820313
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 10,
+          "object": 11,
+          "pos": [
+            14.74,
+            0.08,
+            20.61
+          ],
+          "target": [
+            14.74,
+            0.08,
+            20.61
+          ],
+          "seed": 2508266530
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 9,
+          "object": 10,
+          "pos": [
+            8.04,
+            0.08,
+            17.12
+          ],
+          "target": [
+            8.04,
+            0.08,
+            17.12
+          ],
+          "seed": 3986449935
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 8,
+          "object": 9,
+          "pos": [
+            -0.81,
+            0.08,
+            16.01
+          ],
+          "target": [
+            -0.81,
+            0.08,
+            16.01
+          ],
+          "seed": 4049977712
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 7,
+          "object": 8,
+          "pos": [
+            -9.44,
+            0.08,
+            17.58
+          ],
+          "target": [
+            -9.44,
+            0.08,
+            17.58
+          ],
+          "seed": 1168272149
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 6,
+          "object": 7,
+          "pos": [
+            -15.54,
+            0.08,
+            21.4
+          ],
+          "target": [
+            -15.54,
+            0.08,
+            21.4
+          ],
+          "seed": 419540750
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 5,
+          "object": 6,
+          "pos": [
+            -17.48,
+            0.08,
+            26.46
+          ],
+          "target": [
+            -17.48,
+            0.08,
+            26.46
+          ],
+          "seed": 143562155
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 4,
+          "object": 5,
+          "pos": [
+            -14.74,
+            0.08,
+            31.39
+          ],
+          "target": [
+            -14.74,
+            0.08,
+            31.39
+          ],
+          "seed": 1587676284
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 3,
+          "object": 4,
+          "pos": [
+            -8.04,
+            0.08,
+            34.88
+          ],
+          "target": [
+            -8.04,
+            0.08,
+            34.88
+          ],
+          "seed": 2660115281
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 2,
+          "object": 3,
+          "pos": [
+            0.81,
+            0.08,
+            35.99
+          ],
+          "target": [
+            0.81,
+            0.08,
+            35.99
+          ],
+          "seed": 1245386042
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 1,
+          "object": 2,
+          "pos": [
+            9.44,
+            0.08,
+            34.42
+          ],
+          "target": [
+            9.44,
+            0.08,
+            34.42
+          ],
+          "seed": 3008976263
+        },
+        {
+          "action": "expire",
+          "kind": "decoy",
+          "index": 0,
+          "object": 1,
+          "pos": [
+            15.54,
+            0.08,
+            30.6
+          ],
+          "target": [
+            15.54,
+            0.08,
+            30.6
+          ],
+          "seed": 2803583176
+        }
+      ],
+      "retired": true,
+      "directorErrors": 0
+    }
+  ],
+  "cloudDrawCalls": 1,
+  "nativeCloudRetirements": 36,
+  "baseline": {
+    "geometries": 108,
+    "textures": 5,
+    "programs": 26,
+    "buffers": 434
+  },
+  "after": {
+    "geometries": 108,
+    "textures": 5,
+    "programs": 26,
+    "buffers": 434
+  },
+  "vfxResources": {
+    "pool": [
+      {
+        "quality": 0.35,
+        "key": "sparks",
+        "cap": 315,
+        "attributeCapacity": 316,
+        "draws": 4,
+        "pixels": 2592,
+        "baseline": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        }
+      },
+      {
+        "quality": 0.35,
+        "key": "puffs",
+        "cap": 182,
+        "attributeCapacity": 183,
+        "draws": 4,
+        "pixels": 2307,
+        "baseline": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        }
+      },
+      {
+        "quality": 1,
+        "key": "sparks",
+        "cap": 900,
+        "attributeCapacity": 901,
+        "draws": 4,
+        "pixels": 2592,
+        "baseline": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        }
+      },
+      {
+        "quality": 1,
+        "key": "puffs",
+        "cap": 520,
+        "attributeCapacity": 521,
+        "draws": 4,
+        "pixels": 2326,
+        "baseline": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        }
+      }
+    ],
+    "fists": [
+      {
+        "quality": 0.35,
+        "mode": "clear",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "clear",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "dispose",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "dispose",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "normal",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 0.35,
+        "mode": "normal",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "clear",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "clear",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "dispose",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "dispose",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "normal",
+        "cycle": 0,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      },
+      {
+        "quality": 1,
+        "mode": "normal",
+        "cycle": 1,
+        "directorErrors": 0,
+        "draws": 2,
+        "owned": 2,
+        "shared": 2,
+        "before": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        },
+        "allocated": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 41,
+          "buffers": 554
+        },
+        "rendered": {
+          "geometries": 127,
+          "textures": 5,
+          "programs": 42,
+          "buffers": 554
+        },
+        "after": {
+          "geometries": 108,
+          "textures": 5,
+          "programs": 26,
+          "buffers": 434
+        }
+      }
+    ],
+    "scope": "emitted native FX/director + production factory; injected fist records; no retail or gameplay qualification",
+    "baseline": {
+      "geometries": 108,
+      "textures": 5,
+      "programs": 26,
+      "buffers": 434
+    },
+    "after": {
+      "geometries": 108,
+      "textures": 5,
+      "programs": 26,
+      "buffers": 434
+    }
+  },
+  "renderer": "WebKit WebGL",
+  "fixture": "source-loaded native rig; Trizooka, Vac and nativeExtra use actual Actor.update/Physics; legacy diagnostic rows use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim",
+  "errors": []
+}
