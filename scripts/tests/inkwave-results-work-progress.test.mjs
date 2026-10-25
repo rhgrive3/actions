@@ -75,7 +75,7 @@ test('WebGL completion fails closed on loss or native failure and restores all h
   assert.equal(f.syncCalls(),3);assert.equal(f.frames.length,24);f.restored();
  }
  const f=fixture();
- assert.throws(()=>f.run(undefined,{token:'test',gpuBackpressureEvery:121}),TypeError);assert.equal(f.frames.length,0);f.restored();
+ assert.throws(()=>f.run(undefined,{token:'test',gpuBackpressureEvery:121}),/Invalid results progress token\/budget/);assert.equal(f.frames.length,0);f.restored();
 });
 test('detail cap is independent of reserved progress and never reduces native workload',()=>{
  const p=createResultsProgress('test'),f=fixture({sink:p.accept});f.run(undefined,{token:'test',maxDetailEvents:4});const s=p.snapshot();assert.equal(f.frames.length,240);assert.equal(s.detail.received,5);assert(s.detail.truncated);assert.equal(s.detail.events.at(-1).edge,'limit');assert.equal(s.events.at(-1).totalCompleted,240);assert.equal(s.events.at(-1).producer,'cleanup');assert.equal(s.truncated,false);f.restored();
