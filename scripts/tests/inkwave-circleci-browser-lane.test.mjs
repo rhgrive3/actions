@@ -49,3 +49,26 @@ test('Native command edits update the browser acceptance source hash', () => {
   assert.notEqual(before.sourceHash, after.sourceHash);
   assert(after.commands.some(s => s.command.includes('range-altered')));
 });
+
+test('CircleCI path selection is a superset of GitHub native PR trigger paths', () => {
+  const lines = workflow.split(/\r?\n/);
+  const start = lines.indexOf('  pull_request:');
+  const end = lines.indexOf('  workflow_dispatch:');
+  assert(start >= 0 && end > start, 'Expected stable native PR trigger definition');
+  const paths = lines.slice(start, end)
+    .filter(x => /^\s{6}- /.test(x))
+    .map(x => x.trim().slice(2).replace(/^['"]|['"]$/g, ''));
+  assert(paths.length >= 30, 'Native GitHub path coverage unexpectedly shrunk');
+  const setup = fs.readFileSync('.circleci/config.yml', 'utf8');
+  const mappings = setup.split(/\r?\n/)
+    .filter(x => /^\s{12}\S+ run-inkwave true$/.test(x))
+    .map(x => new RegExp('^' + x.trim().split(' ')[0] + '$'));
+  assert(mappings.length >= 10, 'Missing native CircleCI file-change selectors');
+  const witness = p => p.replace(/\*\*/g, 'example/feature').replace(/\*/g, 'example').replace(/\?/g, 'x');
+  for (const source of paths) {
+    assert(mappings.some(x => x.test(witness(source))), 'CircleCI ignores a mandatory GitHub trigger: ' + source);
+  }
+  for (const irrelevant of ['README.md', 'docs/unrelated-note.md', '.github/workflows/hex-lane-quality.yml'])
+    assert(!mappings.some(x => x.test(irrelevant)), 'Unrelated change launches heavy INKWAVE CI: ' + irrelevant);
+  assert(setup.includes('same-base-run: false'), 'Do not repeat heavy CI on same-main revision');
+});
