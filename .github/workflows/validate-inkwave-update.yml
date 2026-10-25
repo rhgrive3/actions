@@ -200,6 +200,8 @@ jobs:
         with:
           path: ~/.npm/_cacache
           key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+      - name: Prove CircleCI offload command parity and fail-closed SHA gate
+        run: node --test scripts/tests/inkwave-circleci-browser-lane.test.mjs scripts/tests/inkwave-circleci-offload-gate.test.mjs
       - name: Verify scoped network diagnostic workflow contracts
         run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
       - name: Install pinned source regression and build tool
