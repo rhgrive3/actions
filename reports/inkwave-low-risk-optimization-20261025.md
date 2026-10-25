@@ -142,3 +142,35 @@ availability, not a production test result. The acquisition retains failure
 status and its diagnostic artifacts; committed game source remains intact.
 Production builds use the committed source and pass without that acquisition.
 No acquisition guard or status is weakened to conceal the external failure.
+
+## Main-push idle verifier transport correction
+
+PR #1880's exact head completed all 13 applicable workflows successfully before
+merging as `8fe088bd7`. Pages deployment and its deployed-ranked verification
+also passed. The subsequent main-push active browser job
+[121283295430](https://github.com/rhgrive3/actions/actions/runs/40231206631/job/121283295430)
+correctly failed on a cold-boot `route.fetch: read ECONNRESET` for the local
+versioned `src/fx/fxHooks.js`, plus the corresponding browser console error.
+The PR and main receipts use identical contentHash `83772a6f…`, Chromium
+151.0.7922.34 and ANGLE SwiftShader. Both completed all 240 native frames,
+15 GPU completion checkpoints per state and every cold-allocation condition.
+The reset's lower-level socket cause is unconfirmed; this was a real boot
+request failure, not evidence of a GPU failure or teardown cancellation.
+
+The idle verifier now follows the existing motion-detail verifier's transport:
+manifest-listed GETs read the real immutable artifact, check its SHA256 again,
+and fulfill those same bytes with the original MIME type. This removes the
+synthetic second HTTP hop. Unlisted URLs and other methods retain the actual
+HTTP response. Missing, altered or escaping artifacts still fail; browser and
+route errors remain fatal. Cold-main observation completes before releasing
+unchanged main-module bytes, and pending-request bounds and original-error
+selection remain intact. No game inputs, GPU thresholds, frame counts or
+operation deadlines change. A separate stale test assertion was aligned with
+the existing async generator, retaining explicit playing/results, 120-frame,
+fixed-dt, timeout and browser-error checks.
+
+New transport regressions cover real binary/module/index bytes, query and
+encoded paths, missing/modified artifacts, path/symlink escape, real-server
+fallback, observer ordering and observer failure. Hosted acceptance of this
+correction must belong to its eventual exact PR head; the historical main
+failure remains recorded rather than relabeled as passing.

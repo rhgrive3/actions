@@ -6,6 +6,7 @@ import './inkwave-idle-evaluate-deadline.test.mjs';
 import './inkwave-cloud-theme-deadlines.test.mjs';
 import './inkwave-results-work-progress.test.mjs';
 import './inkwave-idle-gpu-identity.test.mjs';
+import './inkwave-idle-artifact-transport.test.mjs';
 const sample=()=>({
   coldBoot:{quality:'high',touch:true,gamePublishedAtAllocation:false,marina:true,cloud:[1024,320],farSize:256,sameTargetsAfterBoot:true},
   clouds:['day','sunset','golden'].map(theme=>({theme,highBytes:10485760,lowBytes:2621440,meanByteError:1,largeErrorFraction:.001,highRepeatChanged:0,nonzero:1000})),
@@ -16,6 +17,11 @@ const sample=()=>({
   errors:[],gpu:{webgl:'WebGL 2.0 fixture',renderer:'schema-only'}
 });
 test('acceptance schema can represent all required observations, not a GPU claim',()=>assert.equal(validateIdleResult(sample()).farTransitions,4));
+test('transport and browser errors remain fatal even when all resource observations pass',()=>{
+ for(const error of ['cold boot route: read ECONNRESET','cold boot console: Failed to load resource: net::ERR_FAILED','Loaded byte mismatch _versions/test/src/fx/fxHooks.js']){
+  const r=sample();r.errors.push(error);assert.throws(()=>validateIdleResult(r),/Browser\/GPU errors/);
+ }
+});
 for(const [name,mutate] of [
  ['missing RESULT evidence',r=>delete r.resultsWork],['RESULT simulation continues',r=>r.resultsWork.results.actorUpdates=1],['RESULT paint keeps flushing',r=>r.resultsWork.results.paintFlushes=120],['RESULT presentation freezes',r=>r.resultsWork.results.worldRenders=0],['missing GPU submission counts',r=>r.resultsWork.results.gpuDrawSubmissions=0],['missing GPU completion barriers',r=>r.resultsWork.results.gpuSyncCalls=0],['invalid GPU sync cost',r=>r.resultsWork.playing.gpuSyncWallMs=NaN],['invalid CPU comparison',r=>r.resultsWork.playing.cpuSubmissionMs=NaN],
  ['late mobile budget',r=>r.coldBoot.gamePublishedAtAllocation=true],['oversized cold cloud',r=>r.coldBoot.cloud=[2048,640]],['oversized cold cube',r=>r.coldBoot.farSize=512],['late replacement hides cold budget',r=>r.coldBoot.sameTargetsAfterBoot=false],
