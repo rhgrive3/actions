@@ -1,1 +1,1 @@
-{"schema":1,"baseSourceSha":"48a32036da8ff6bf24cba39a737f6ecedce00399","state":"run","scope":"two-failure-diagnostic-only","fullAcceptance":false}
+{"schema":1,"baseSourceSha":"48a32036da8ff6bf24cba39a737f6ecedce00399","state":"gpu-forensics","scope":"idle-gpu-context-only","fullAcceptance":false,"diagnostics":["cdp-ping","runner-heartbeat","pre-gpu-checkpoint"]}

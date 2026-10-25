@@ -449,9 +449,36 @@ async function main(){
   // CPU submission time includes JS/driver submission, not asynchronous GPU time.
   // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
   // is invented. The existing browser/GL and exact-source identities remain gates.
+  // Prepare a CDP renderer session before the real 240-frame GPU workload.
+  // Diagnostic observations never change the original pass/fail conditions.
+  const idleRendererCdp=await browser.newCDPSession(page);
+  console.error('INKWAVE_CDP_SESSION_READY '+JSON.stringify({phase:'before-results-work'}));
   phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress);
-  publish({status:'running',phase,result,resultsWorkProgress:resultsProgress.snapshot(),sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
-  phase='gpu-context';gpuTrace=createIdleGpuTrace(crypto.randomUUID(),{emit:line=>{
+  const completedProgress=resultsProgress.snapshot();
+  // Runner logs survive cases where artifact upload never starts.
+  console.error('INKWAVE_PRE_GPU '+JSON.stringify({
+   framesPerState:result.resultsWork.frames,playingMs:result.resultsWork.playing.cpuSubmissionMs,
+   resultsMs:result.resultsWork.results.cpuSubmissionMs,
+   playingDraws:result.resultsWork.playing.gpuDrawSubmissions,
+   resultsDraws:result.resultsWork.results.gpuDrawSubmissions,
+   consoleReceived:completedProgress.received,detailReceived:completedProgress.detail?.received,
+   consoleTruncated:completedProgress.truncated,detailTruncated:completedProgress.detail?.truncated
+  }));
+  publish({status:'running',phase,result,resultsWorkProgress:completedProgress,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
+  phase='gpu-context';
+  // 3 seconds is an observation window, not an acceptance deadline.
+  // A pending ping never skips the original verifyIdleGpuContext call.
+  const cdpPingStarted=Date.now();let cdpPingTimer;
+  console.error('INKWAVE_CDP_PING_REQUESTED '+JSON.stringify({phase}));
+  let cdpPingResult;
+  try{cdpPingResult=await Promise.race([
+   idleRendererCdp.send('Runtime.evaluate',{expression:'1+1',returnByValue:true,awaitPromise:false})
+    .then(r=>({status:r?.result?.value===2?'responsive':'unexpected-result'}),
+          e=>({status:'error',message:String(e?.message??e).slice(0,240)})),
+   new Promise(resolve=>{cdpPingTimer=setTimeout(()=>resolve({status:'pending'}),3000);})
+  ]);}finally{clearTimeout(cdpPingTimer);}
+  console.error('INKWAVE_CDP_PING '+JSON.stringify({...cdpPingResult,elapsedMs:Date.now()-cdpPingStarted}));
+  gpuTrace=createIdleGpuTrace(crypto.randomUUID(),{emit:line=>{
    // Immediate bounded stderr/file checkpoints; not proof of CDP dispatch.
    // A killed runner can still prevent artifact upload.
    try{console.error(line);}catch{}
