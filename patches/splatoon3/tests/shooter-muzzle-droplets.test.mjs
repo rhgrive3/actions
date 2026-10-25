@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
-import {isOrdinaryShooter,SHOOTER_MUZZLE_COSMETICS as C} from '../runtime/shooter-muzzle-droplets.mjs';
+import {isOrdinaryShooter,muzzleDropletFamily,SHOOTER_MUZZLE_COSMETICS as C} from '../runtime/shooter-muzzle-droplets.mjs';
 async function setup(){
  const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true});
  f.G.camera={position:new f.THREE.Vector3(0,2,-4)};
@@ -14,6 +14,71 @@ test('only ordinary Shooter families and their catalogue kits receive muzzle bea
  for(const family of ['splatling','dualies','brella','slosher'])assert(!isOrdinaryShooter({type:'shot',catalog:{r:{family}}}));
  assert(!isOrdinaryShooter({type:'shot',wid:'shooter',s3SpecialWeapon:true}));
 });
+test('shared 3D muzzle-only beads include legacy and 11.3.0 Spinner/Dualies but exclude paint, other families and specials',()=>{
+ for(const family of ['shooter','splatling','dualies']){
+  assert.equal(muzzleDropletFamily({type:'shot',catalog:{r:{family}}}),family);
+  assert.equal(muzzleDropletFamily({type:'shot',s3Weapon:{kind:family}}),family);
+  assert.equal(muzzleDropletFamily({type:'shot',wid:family}),family);
+ }
+ for(const family of ['charger','blaster','slosher','stringer','brella','roller','brush','splatana'])
+  assert.equal(muzzleDropletFamily({type:'shot',catalog:{r:{family}}}),null);
+ assert.equal(muzzleDropletFamily({type:'shot',wid:'splatling',s3SpecialWeapon:true}),null);
+ assert.equal(muzzleDropletFamily({type:'drop',wid:'dualies'}),null);
+ assert.equal(muzzleDropletFamily({type:'shot',catalog:{r:{family:'brella'}},wid:'dualies'}),null);
+});
+
+test('live Dualies 3D beads preserve independent right/left launch sockets and change no gameplay state',async()=>{
+ const f=await setup(),sys=f.G.projectiles,a=f.make('dualies');
+ a.isLocal=true;a.pos.set(0,0,0);a.aimPoint.set(0,1.05,70);a.aimDir.set(0,0,1);
+ a.character.getMuzzle=out=>out.set(.3,1.05,.3);
+ a.character.getMuzzleHand=(out,hand)=>out.set(hand?-.3:.3,1.05,.3);
+ f.G.fx={muzzle(){},_spawnDrop(){}};
+ sys.fireDualies(a,a.weapon,0,0);sys.fireDualies(a,a.weapon,0,1);
+ const rounds=sys.list.slice(),before=rounds.map(gameplay),muzzle=rounds.map(p=>p.start.clone());
+ assert.equal(rounds.length,2);assert.ok(muzzle[0].distanceTo(muzzle[1])>.4);
+ let paint=0,rng=0;f.G.paint.splat=()=>{paint++;return 0;};
+ f.setRandom(()=>{rng++;return .5;});
+ for(const p of rounds)p.age=1/60;f.G.time=1/60;sys._draw();
+ const b=sys.shooterMuzzleDroplets;
+ assert.equal(b.count,2);assert.equal(b.drawn,2*C.drops);assert.equal(b.emitted,2*C.drops);
+ assert.equal(b.pool[0].family,'dualies');assert.equal(b.pool[1].family,'dualies');
+ assert.ok(b.pool[0].pos.distanceTo(muzzle[0])<1e-8);
+ assert.ok(b.pool[1].pos.distanceTo(muzzle[1])<1e-8);
+ assert.equal(rng,0);assert.equal(paint,0);
+ assert.deepEqual(rounds.map(gameplay),before);
+ // An animation change after the bullets leave cannot move the free beads.
+ a.character.getMuzzle=out=>out.set(0,1.05,20);
+ sys._draw();assert.ok(b.pool[0].pos.distanceTo(muzzle[0])<1e-8);
+ assert.ok(b.pool[1].pos.distanceTo(muzzle[1])<1e-8);
+ f.G.time+=C.life+1/60;sys._draw();assert.equal(b.drawn,0);
+});
+
+test('live legacy Splatling firing receives three additional cosmetic droplets without replacing its independent body',async()=>{
+ const f=await setup(),sys=f.G.projectiles,a=f.make('splatling');a.isLocal=true;
+ f.G.fx={muzzle(){},_spawnDrop(){}};sys.fireSplatling(a,a.weapon,0);
+ assert.equal(sys.list.length,1);const p=sys.list[0],original=gameplay(p);
+ p.age=1/60;f.G.time=1/60;sys._draw();
+ assert.equal(sys.shooterMuzzleDroplets.drawn,C.drops);
+ assert.equal(sys.shooterMuzzleDroplets.pool[0].family,'splatling');
+ assert.ok(sys.blobs.count>=1+C.drops,'independent Splatling body and 3D muzzle beads');
+ assert.equal(gameplay(p),JSON.stringify(JSON.parse(original).map((v,i)=>i===5?1/60:v)));
+});
+
+test('live 11.3.0 catalogue Splatling and Dualies inherit the same pure muzzle beads',async()=>{
+ const f=await setup(),sys=f.G.projectiles;
+ for(const [id,frames] of [['s3-spinner-quick',75],['s3-maneuver-short',4]]){
+  sys.clear();f.G.actors.length=0;
+  const a=f.make(id);a.isLocal=true;a.form='kid';a.ink=100;
+  a.intent.fire=true;f.tick(a,frames);a.intent.fire=false;f.tick(a,2);
+  const round=sys.list.find(p=>p.owner===a&&p.catalog?.r?.id===id);
+  assert.ok(round,id+' must fire a source-family projectile');
+  round.age=1/60;f.G.time+=1/60;
+  sys._draw();
+  assert.ok(sys.shooterMuzzleDroplets.drawn>=C.drops,id+' 3D muzzle beads');
+  assert.equal(sys.shooterMuzzleDroplets.pool[0].family,id.includes('spinner')?'splatling':'dualies');
+ }
+});
+
 test('real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes',async()=>{
  const f=await setup(),a=f.make('shooter'),sys=f.G.projectiles;a.isLocal=true;
  f.G.fx={muzzle(){},_spawnDrop(){}};sys.fireShooter(a,a.weapon,0);const p=sys.list[0];
