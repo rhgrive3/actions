@@ -414,6 +414,7 @@ visit('patches/native-stages/runtime/native-world.mjs');
 visit('patches/native-stages/runtime/source-worker.mjs');
 visit('patches/splatoon3/runtime/audio/reverb-worker.mjs');
 visit('patches/splatoon3/runtime/audio/grain-worker.mjs');
+visit('patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
@@ -430,6 +431,9 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/audio/grain-texture.mjs',
   'patches/splatoon3/runtime/audio/grain-prewarm.mjs',
   'patches/splatoon3/runtime/audio/grain-worker.mjs',
+  // Selected Charger conversions are asynchronous: precache, but do not preload on game boot.
+  'patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs',
+  'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs',
   // Reverb preparation remains an ordinary module/Worker fetch, with immutable offline coverage.
   'patches/splatoon3/runtime/audio/reverb-impulse.mjs',
   'patches/splatoon3/runtime/audio/reverb-prewarm.mjs',
