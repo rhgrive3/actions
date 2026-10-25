@@ -152,6 +152,16 @@ function canonicalQueueCoreBody(body) {
     assert.equal(body.split(from).length,2,"queue core hunk 8 must occur exactly once");body=body.replace(from,to); }
   return body;
 }
+// This queue-only source-ownership step is required on current CI, but it did
+// not exist in the reviewed historical job. The full additive body is checked
+// against approvedCoreHash before reversing exactly this tested step for the
+// older immutable digest. Both old and new workload gates remain mandatory.
+const reviewedDriveQueueStep = '      - name: Verify Drive queue ownership and composed native parity\n'
+ + '        run: node --experimental-vm-modules --test --test-concurrency=1 scripts/tests/inkwave-build-input-coverage.test.mjs patches/network-replication/tests/drive-*.test.mjs patches/local-quality/tests/drive-*.test.mjs patches/local-quality/tests/queue-world-slicing.test.mjs\n';
+function canonicalReviewedDriveQueueStep(body) {
+ assert.equal(body.split(reviewedDriveQueueStep).length,2,'exact Drive queue native/ownership regression step required once');
+ return body.replace(reviewedDriveQueueStep,'');
+}
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     let body = job(text,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
@@ -161,6 +171,7 @@ function verifyAcceptedJobs(text) {
       body = canonicalCoreEvidence(body);
       const additiveBody = body;
       body = canonicalCoreMotionTests(body);
+      body = canonicalReviewedDriveQueueStep(body);
       assert.equal(createHash('sha256').update(additiveBody).digest('hex'), approvedCoreHash, 'reviewed additive core body');
     }
     assert.equal(createHash('sha256').update(body).digest('hex'),expected,name);
@@ -175,6 +186,8 @@ test('the previously pinned broken artifact command is rejected despite its orig
 test('artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits',()=> {
   for(const [before,after] of [
     ['patches/splatoon3/tests/active-special-gauge.test.mjs',''],
+    ['scripts/tests/inkwave-build-input-coverage.test.mjs','scripts/tests/not-a-real-test.mjs'],
+    ['patches/local-quality/tests/queue-world-slicing.test.mjs',''],
     ['patches/network-replication/tests/tower-mine-paint-admission.test.mjs','patches/network-replication/tests/not-a-real-test.mjs'],
     ['      - name: Retain exact emitted launch packet evidence\n        if: always()', '      - name: Retain exact emitted launch packet evidence\n        if: false'],
     ['path: _site-launch-packets.json','path: another-report.json'],
