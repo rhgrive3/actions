@@ -16,7 +16,16 @@ function verify(text){
  assert.match(text,/      network_opening_diagnostic:\n        description: [^\n]+\n        type: boolean\n        default: false\n/);
  assert.equal(condition(text,'network-opening-diagnostic'),"github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
  assert.equal(condition(text,'render-diagnostic'),'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
- for(const name of ['validate_core','patch_tests','browser','seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),'inputs.diagnostic_only != true',name);
+ for(const name of ['validate_core','seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),'inputs.diagnostic_only != true',name);
+ // Full GitHub coverage remains the default. Only exact-SHA-verified ordinary PRs may offload.
+ for(const name of ['patch_tests','browser']) {
+  const rule=condition(text,name);
+  assert(rule.startsWith('${{ inputs.diagnostic_only != true && !('),name+' must default to full native CI');
+  assert(rule.includes("vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled'"),name+' must require explicit opt-in');
+  assert(rule.includes("github.event_name == 'pull_request'"),name+' must preserve push CI');
+  assert(rule.includes('inkwave/runtime-performance-ui'),name+' must preserve special baseline CI');
+ }
+ assert(condition(text,'circleci_offload_gate').includes("vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled'"));
  assert.equal(condition(text,'validate'),'${{ always() && inputs.diagnostic_only != true }}');
  assert.match(text,/^  group: validate-inkwave-\$\{\{ github.event.pull_request.number \|\| inputs.source_sha \|\| github.ref \}\}\$\{\{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' \|\| inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' \|\| '' \}\}$/m);
  assert.match(text,/^  cancel-in-progress: \$\{\{ !\(inputs.diagnostic_only == true && \(inputs.network_opening_diagnostic == true \|\| inputs.wall_render_diagnostic == true\)\) \}\}$/m);
