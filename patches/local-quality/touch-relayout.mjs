@@ -9,7 +9,7 @@ export function physicalOrientation(env) {
 
 // WebKit can dispatch a redundant resize (for example right after pointerdown)
 // with unchanged layout and visual viewports; it must not drop a live gesture.
-export function viewportKey(env) {
+function viewportKey(env) {
   const visual = env.visualViewport;
   return [env.innerWidth, env.innerHeight, visual?.width ?? env.innerWidth, visual?.height ?? env.innerHeight, visual?.scale ?? 1].join(':');
 }
