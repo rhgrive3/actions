@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "errors": [],
+  "proof": {
+    "id": "undertow",
+    "actors": 8,
+    "bots": 7,
+    "levelOwnsCurrentNav": true,
+    "selected": {
+      "pixel": 112,
+      "x": -7.5,
+      "z": 61.333333333333336,
+      "floor": 7.550000190734863,
+      "cover": 10.550000190734863,
+      "sourceFloorTriangle": 37128,
+      "sourceCoverTriangle": 37447,
+      "paintCell": 1042516
+    },
+    "mapOwner": 1,
+    "mapAlpha": 255,
+    "version1130Verified": false
+  }
+}

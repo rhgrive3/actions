@@ -1,0 +1,122 @@
+{
+  "id": "dualies",
+  "legacy": true,
+  "family": "dualies",
+  "names": {
+    "en": "Splat Dualies",
+    "ja": "スプラマニューバー"
+  },
+  "sourceRow": "Maneuver_Normal_00",
+  "sourceSha256": "55e37c4d8db92b63d48f281015a30a9aaccd1ff838edf88ae4103124c365eb07",
+  "rowPointer": "/100",
+  "matchmakingRange": 12.5,
+  "ui": [
+    {
+      "Type": "Range",
+      "Value": 50
+    },
+    {
+      "Type": "Power",
+      "Value": 29
+    },
+    {
+      "Type": "Mobility",
+      "Value": 60
+    }
+  ],
+  "parameters": {
+    "CollisionLapOverParam": {
+      "ChangeFrameForField": 0,
+      "ChangeFrameForPlayer": 0,
+      "EndRadiusForField": 0.2,
+      "EndRadiusForPlayer": 0.335,
+      "FriendThroughFrameForPlayer": 0,
+      "InitRadiusForField": 0.2,
+      "InitRadiusForPlayer": 0.335
+    },
+    "CollisionParam": {
+      "ChangeFrameForField": 0,
+      "ChangeFrameForPlayer": 0,
+      "EndRadiusForField": 0.2,
+      "EndRadiusForPlayer": 0.31,
+      "FriendThroughFrameForPlayer": 0,
+      "InitRadiusForField": 0.2,
+      "InitRadiusForPlayer": 0.31
+    },
+    "DamageParam": {
+      "ReduceEndFrame": 15,
+      "ReduceStartFrame": 7,
+      "ValueMax": 300,
+      "ValueMin": 150
+    },
+    "MainEffectiveRangeUpParam": {},
+    "MainWeaponSetting": {},
+    "MoveParam": {
+      "FreeGravity": 0.016,
+      "GoStraightStateEndMaxSpeed": 2.3425,
+      "GoStraightToBrakeStateFrame": 3,
+      "SpawnSpeed": 2.37
+    },
+    "PaintParam": {
+      "DepthScaleMax": 2.24,
+      "DepthScaleMaxBreakFree": 2.24,
+      "DepthScaleMin": 1.31,
+      "DepthScaleMinBreakFree": 1.12,
+      "DistanceMiddle": 1.1,
+      "WidthHalfFar": 1.66,
+      "WidthHalfMiddle": 1.71,
+      "WidthHalfNear": 1.71
+    },
+    "SideStepParam": {
+      "InkConsume": 0.07,
+      "MoveFrame": 12,
+      "SplashSlideParam": {
+        "PaintWidthHalf": 1.8
+      },
+      "UnrelaxFrameMove": 32,
+      "UnrelaxFrameMove_Last": 32,
+      "UnrelaxFrameNoSideStep": 32,
+      "UnrelaxFrameNoSideStep_Last": 32,
+      "UnrelaxFrameNoSquid": 32,
+      "UnrelaxFrameNoSquid_Last": 32,
+      "UnrelaxFrameOneMuzzle": 32,
+      "UnrelaxFrameOneMuzzle_Last": 32
+    },
+    "SplashPaintParam": {
+      "DepthMaxDropHeight": 3,
+      "DepthMinDropHeight": 10,
+      "DepthScaleMin": 1,
+      "WidthHalf": 1.55825,
+      "WidthHalfNearest": 2.18155
+    },
+    "SplashSpawnParam": {
+      "ForceSpawnNearestAddNumArray": [],
+      "SpawnBetweenLength": 14,
+      "SpawnNearestLength": 1,
+      "SpawnNum": 1,
+      "SplitNum": 7
+    },
+    "WeaponParam": {
+      "InkConsume": 0.0072,
+      "Jump_DegBiasDecreaseStartFrame": 25,
+      "Jump_DegBiasEndFrame": 70,
+      "Jump_DegBiasMax": 0.4,
+      "Jump_DegSwerve": 7.5,
+      "LapOver_DegSwerve": 0,
+      "LapOver_RepeatFrame": 4,
+      "MoveSpeed": 0.08,
+      "RepeatFrame": 5,
+      "ShotGuideFrame": 7,
+      "Stand_DegBiasDecrease": 0.005,
+      "Stand_DegBiasKf": 0.01,
+      "Stand_DegBiasMin": 0.01,
+      "Stand_DegSwerve": 2
+    },
+    "spl__SpawnBulletAdditionMovePlayerParam": {
+      "ZRate": 2
+    }
+  },
+  "sourceActor": "WeaponManeuverNormal",
+  "sourcePath": "data/parameter/1130/weapon/WeaponManeuverNormal.game__GameParameterTable.json",
+  "modelKind": "dualies"
+}

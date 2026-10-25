@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: actual native volley birth path emits three distinct pulses at 0/4/8F; heavy spray stays once
+ok 1 - actual native volley birth path emits three distinct pulses at 0/4/8F; heavy spray stays once
+  ---
+  duration_ms: 2742.007204
+  type: 'test'
+  ...
+# Subtest: native clocks, packets, positions and damage ownership are identical with effects disabled
+ok 2 - native clocks, packets, positions and damage ownership are identical with effects disabled
+  ---
+  duration_ms: 6268.292431
+  type: 'test'
+  ...
+# Subtest: birth pulses agree at 30/60/120Hz including tick-endpoint flushes; high Hz does not duplicate
+ok 3 - birth pulses agree at 30/60/120Hz including tick-endpoint flushes; high Hz does not duplicate
+  ---
+  duration_ms: 2295.706379
+  type: 'test'
+  ...
+# Subtest: no state-counter flash, no pending trails, and cancelled delayed births never pulse
+ok 4 - no state-counter flash, no pending trails, and cancelled delayed births never pulse
+  ---
+  duration_ms: 851.289396
+  type: 'test'
+  ...
+# Subtest: native birth cancellation on life/ownership change and disabled effects emits nothing later
+ok 5 - native birth cancellation on life/ownership change and disabled effects emits nothing later
+  ---
+  duration_ms: 2495.528984
+  type: 'test'
+  ...
+# Subtest: accepted remote ghosts bypass _push, nested observer paths deduplicate, rejected births do not flash
+not ok 6 - accepted remote ghosts bypass _push, nested observer paths deduplicate, rejected births do not flash
+  ---
+  duration_ms: 789.589048
+  type: 'test'
+  location: '/workspace/actions/patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs:126:1'
+  failureType: 'testCodeFailure'
+  error: '_assignWeaponQueueRound0 is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    NativeProjectiles.ghostProjectile (evalmachine.<anonymous>:2:73626)
+    c.ghostProjectile (evalmachine.<anonymous>:2:71643)
+    e.ghostProjectile (evalmachine.<anonymous>:2:67164)
+    TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs:128:59)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: birth and same-step terminal still emit once; no late resurrection after clearing presentation
+ok 7 - birth and same-step terminal still emit once; no late resurrection after clearing presentation
+  ---
+  duration_ms: 1665.614488
+  type: 'test'
+  ...
+# Subtest: native _new reuse resets dedup; newborn unrelated/dead/ended shots and other systems do not flash
+ok 8 - native _new reuse resets dedup; newborn unrelated/dead/ended shots and other systems do not flash
+  ---
+  duration_ms: 750.311419
+  type: 'test'
+  ...
+# Subtest: existing Ink Vac hook and Trizooka hook each emit once, without cross-special flashes
+ok 9 - existing Ink Vac hook and Trizooka hook each emit once, without cross-special flashes
+  ---
+  duration_ms: 825.362124
+  type: 'test'
+  ...
+# Subtest: actual sprite pool keeps brief cores visible at 30/60/120 Hz and leaves dark gaps at 60 Hz
+ok 10 - actual sprite pool keeps brief cores visible at 30/60/120 Hz and leaves dark gaps at 60 Hz
+  ---
+  duration_ms: 915.898663
+  type: 'test'
+  ...
+# Subtest: each local and ghost birth resamples translated/recoiled/rotated/scaled current nozzle without altering native snapshots
+not ok 11 - each local and ghost birth resamples translated/recoiled/rotated/scaled current nozzle without altering native snapshots
+  ---
+  duration_ms: 1237.070023
+  type: 'test'
+  location: '/workspace/actions/patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs:178:1'
+  failureType: 'testCodeFailure'
+  error: '_assignWeaponQueueRound0 is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    NativeProjectiles.ghostProjectile (evalmachine.<anonymous>:2:73626)
+    c.ghostProjectile (evalmachine.<anonymous>:2:71643)
+    e.ghostProjectile (evalmachine.<anonymous>:2:67164)
+    TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs:182:116)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: hidden/retired/missing/wrong-owner/nonfinite nozzles use finite native snapshot fallback
+ok 12 - hidden/retired/missing/wrong-owner/nonfinite nozzles use finite native snapshot fallback
+  ---
+  duration_ms: 8343.3974
+  type: 'test'
+  ...
+# Subtest: read-only accessor rejects dead/jumping ownership and refreshes world matrices without native muzzle calls
+ok 13 - read-only accessor rejects dead/jumping ownership and refreshes world matrices without native muzzle calls
+  ---
+  duration_ms: 498.728352
+  type: 'test'
+  ...
+# Subtest: local foreign live-character alias uses native snapshot fallback
+ok 14 - local foreign live-character alias uses native snapshot fallback
+  ---
+  duration_ms: 433.030439
+  type: 'test'
+  ...
+# Subtest: ghost foreign live-character alias uses native snapshot fallback
+not ok 15 - ghost foreign live-character alias uses native snapshot fallback
+  ---
+  duration_ms: 452.493544
+  type: 'test'
+  location: '/workspace/actions/patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs:209:34'
+  failureType: 'testCodeFailure'
+  error: '_assignWeaponQueueRound0 is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    NativeProjectiles.ghostProjectile (evalmachine.<anonymous>:2:73626)
+    c.ghostProjectile (evalmachine.<anonymous>:2:71643)
+    e.ghostProjectile (evalmachine.<anonymous>:2:67164)
+    TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs:217:70)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 12
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37004.233288

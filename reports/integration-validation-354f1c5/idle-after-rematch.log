@@ -1,0 +1,12 @@
+INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+Error [IdleEvaluationTimeoutError]: Idle evaluate exceeded 120000 ms (clouds:day)
+    at themeError (file:///workspace/actions/scripts/check-inkwave-idle-resources.mjs:36:39)
+    at Timeout.<anonymous> (file:///workspace/actions/scripts/check-inkwave-idle-resources.mjs:41:71)
+    at listOnTimeout (node:internal/timers:635:17)
+    at process.processTimers (node:internal/timers:571:7) {
+  code: 'INKWAVE_IDLE_EVALUATION_TIMEOUT',
+  phase: 'clouds:day',
+  timeoutMs: 120000,
+  elapsedMs: 120055.00221400004,
+  scope: 'cloud-theme'
+}

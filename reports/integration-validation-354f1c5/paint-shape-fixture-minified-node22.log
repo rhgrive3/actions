@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: actual composed paint draw restores renderer state and blocks retry after a partial pass
+ok 1 - actual composed paint draw restores renderer state and blocks retry after a partial pass
+  ---
+  duration_ms: 38.929297
+  type: 'test'
+  ...
+# Subtest: actual composed clear restores target and clear colour when clearing fails
+ok 2 - actual composed clear restores target and clear colour when clearing fails
+  ---
+  duration_ms: 1.053667
+  type: 'test'
+  ...
+# Subtest: ancillary-only accepted ownership writes notify exact minimap cells; repeat and rejected orders do not
+ok 3 - ancillary-only accepted ownership writes notify exact minimap cells; repeat and rejected orders do not
+  ---
+  duration_ms: 11.376536
+  type: 'test'
+  ...
+# Subtest: released growth leases relinquish native/ordinary ancillary cache graphs
+ok 4 - released growth leases relinquish native/ordinary ancillary cache graphs
+  ---
+  duration_ms: 19.759387
+  type: 'test'
+  ...
+# Subtest: warm materials hide only after an ordinary draw, wake for work, and rewarm after context restoration
+ok 5 - warm materials hide only after an ordinary draw, wake for work, and rewarm after context restoration
+  ---
+  duration_ms: 136.41694
+  type: 'test'
+  ...
+# Subtest: shape finalizers run exactly once on expiration, follow removal, death, eviction and clear
+ok 6 - shape finalizers run exactly once on expiration, follow removal, death, eviction and clear
+  ---
+  duration_ms: 224.537403
+  type: 'test'
+  ...
+# Subtest: cosmetic trials and periodic phases agree over equal elapsed time at 30, 60 and 120 Hz
+ok 7 - cosmetic trials and periodic phases agree over equal elapsed time at 30, 60 and 120 Hz
+  ---
+  duration_ms: 27.204428
+  type: 'test'
+  ...
+# Subtest: one-shot resolution avoids LOS on cold and failed samples but retains native, base and routed recording occlusion
+ok 8 - one-shot resolution avoids LOS on cold and failed samples but retains native, base and routed recording occlusion
+  ---
+  duration_ms: 1265.963298
+  type: 'test'
+  ...
+# Subtest: generic sound lookup never instantiates weapon banks and main sound lookup still resolves
+ok 9 - generic sound lookup never instantiates weapon banks and main sound lookup still resolves
+  ---
+  duration_ms: 0.746196
+  type: 'test'
+  ...
+# Subtest: storm bob matches the old 60 Hz sampled sine sum and equal-time 30/120 Hz endpoints
+ok 10 - storm bob matches the old 60 Hz sampled sine sum and equal-time 30/120 Hz endpoints
+  ---
+  duration_ms: 892.521678
+  type: 'test'
+  ...
+# Subtest: default shape spins agree across render rates including random initial angles
+ok 11 - default shape spins agree across render rates including random initial angles
+  ---
+  duration_ms: 920.365508
+  type: 'test'
+  ...
+# Subtest: pause guards preserve formatted DOM state while eliminating unchanged replacements
+ok 12 - pause guards preserve formatted DOM state while eliminating unchanged replacements
+  ---
+  duration_ms: 1891.968136
+  type: 'test'
+  ...
+# Subtest: Tenta targets share one ground probe per unchanged target within an update and refresh every next update
+ok 13 - Tenta targets share one ground probe per unchanged target within an update and refresh every next update
+  ---
+  duration_ms: 151.030279
+  type: 'test'
+  ...
+# Subtest: Super Chump preview reuses only presentation vectors while ground changes remain visible and launch outputs are independent
+ok 14 - Super Chump preview reuses only presentation vectors while ground changes remain visible and launch outputs are independent
+  ---
+  duration_ms: 413.083356
+  type: 'test'
+  ...
+# Subtest: boss follow socket scratch persists across movement and falls back with no stale position
+ok 15 - boss follow socket scratch persists across movement and falls back with no stale position
+  ---
+  duration_ms: 13.559702
+  type: 'test'
+  ...
+# Subtest: native trail calls stay at sixty source trials per second and phase switches discard partial carry
+ok 16 - native trail calls stay at sixty source trials per second and phase switches discard partial carry
+  ---
+  duration_ms: 262.481674
+  type: 'test'
+  ...
+# Subtest: spawn flash retains every seeded particle argument after common-angle reuse
+ok 17 - spawn flash retains every seeded particle argument after common-angle reuse
+  ---
+  duration_ms: 356.469447
+  type: 'test'
+  ...
+# Subtest: network boss payload limits admit all producer counts and reject oversized visual allocation requests
+ok 18 - network boss payload limits admit all producer counts and reject oversized visual allocation requests
+  ---
+  duration_ms: 45.709543
+  type: 'test'
+  ...
+# Subtest: Booyah cheer ends its ribbon when the carrier retires before its final follow callback
+ok 19 - Booyah cheer ends its ribbon when the carrier retires before its final follow callback
+  ---
+  duration_ms: 114.78847
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10566.300839

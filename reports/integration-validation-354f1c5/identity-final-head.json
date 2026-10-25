@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "sourceSha": "94b035efca9e86fbb6431c568086426790536c00",
+  "inputHash": "1b3c82c25b5538e309c813ace3434d8532975331ab0c675d3c5a561929c325dc",
+  "sourceFiles": 1470,
+  "verifierSha256": "4d6045e2d16c45743fc0a31afbdaa416f25684d7dd29ca6aea7ffa5dc5bd202e",
+  "manifestInputs": 1468,
+  "artifacts": 2164,
+  "contentHash": "f75205126dc2f9830e2d3db5fa837bb9ed404af93d5a781e44f678cb09207311",
+  "prebuiltStages": 23
+}

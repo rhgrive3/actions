@@ -1,0 +1,439 @@
+{
+  "nodeVersion": "v22.23.4",
+  "siteIdentity": null,
+  "sourceClosure": {
+    "sha256": "53976e012162214316ea535a768ee56f83a30dea9b6369000763a11746bafb68",
+    "files": 4186
+  },
+  "complete": true,
+  "sourceFile": "patches/splatoon3/tests/turf-finish.test.mjs",
+  "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+  "discoveredCases": [
+    "#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint",
+    "#410 actual bomb explosion and actual cloud rain still run but cannot flip the frozen result",
+    "#410 duplicate finish keeps one snapshot; actual new playing cycle captures fresh coverage",
+    "#410 host packet contains frozen coverage and native follower accepts host rather than local paint",
+    "#410 neutralization clears current/previous sub together so no release edge is manufactured",
+    "#410 Boss result path bypasses Turf coverage and preserves native result delivery",
+    "#410 fixed-step deadline and Alpha tie are stable across 30/60/120/144Hz render partitions",
+    "catalog Match entry executes native finish/judge and rejects an uncaptured negative control",
+    "#923 finish/judge skip costly Actor stepping and soft-push without retiring live projectiles",
+    "#923 boss finish keeps native Actor and boss physics; normal playing remains unaffected",
+    "#980 final legal projectile interval flips the frozen winner at every render cadence",
+    "#980 a fractional last tick includes only pre-deadline paint and neutralizes at the boundary",
+    "#980 180 seconds includes every authoritative interval, including number 10800",
+    "#935 actual held Charger/Splatling/SUB are cancelled before finish neutralization at 30/60/120Hz"
+  ],
+  "expectedRuns": 14,
+  "unchangedTestBodies": true,
+  "heapLimitMiB": 384,
+  "maxConcurrentChildren": 1,
+  "rows": [
+    {
+      "mode": "source",
+      "index": 1,
+      "name": "#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 1.4062587870000003,
+      "log": "source-01.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 2,
+      "name": "#410 actual bomb explosion and actual cloud rain still run but cannot flip the frozen result",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 actual bomb explosion and actual cloud rain still run but cannot flip the frozen result$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 2.5711039549999994,
+      "log": "source-02.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 3,
+      "name": "#410 duplicate finish keeps one snapshot; actual new playing cycle captures fresh coverage",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 duplicate finish keeps one snapshot; actual new playing cycle captures fresh coverage$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 3.0376362850000005,
+      "log": "source-03.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 4,
+      "name": "#410 host packet contains frozen coverage and native follower accepts host rather than local paint",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 host packet contains frozen coverage and native follower accepts host rather than local paint$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 3.0728994469999997,
+      "log": "source-04.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 5,
+      "name": "#410 neutralization clears current/previous sub together so no release edge is manufactured",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 neutralization clears current/previous sub together so no release edge is manufactured$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 2.8725431639999988,
+      "log": "source-05.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 6,
+      "name": "#410 Boss result path bypasses Turf coverage and preserves native result delivery",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 Boss result path bypasses Turf coverage and preserves native result delivery$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 2.9559350660000017,
+      "log": "source-06.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 7,
+      "name": "#410 fixed-step deadline and Alpha tie are stable across 30/60/120/144Hz render partitions",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#410 fixed-step deadline and Alpha tie are stable across 30/60/120/144Hz render partitions$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 4.286636853,
+      "log": "source-07.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 8,
+      "name": "catalog Match entry executes native finish/judge and rejects an uncaptured negative control",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^catalog Match entry executes native finish/judge and rejects an uncaptured negative control$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 2.4763943060000018,
+      "log": "source-08.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 9,
+      "name": "#923 finish/judge skip costly Actor stepping and soft-push without retiring live projectiles",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#923 finish/judge skip costly Actor stepping and soft-push without retiring live projectiles$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 3.0601083109999965,
+      "log": "source-09.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 10,
+      "name": "#923 boss finish keeps native Actor and boss physics; normal playing remains unaffected",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#923 boss finish keeps native Actor and boss physics; normal playing remains unaffected$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 1.3615540450000043,
+      "log": "source-10.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 11,
+      "name": "#980 final legal projectile interval flips the frozen winner at every render cadence",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#980 final legal projectile interval flips the frozen winner at every render cadence$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 4.247927779000005,
+      "log": "source-11.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 12,
+      "name": "#980 a fractional last tick includes only pre-deadline paint and neutralizes at the boundary",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#980 a fractional last tick includes only pre-deadline paint and neutralizes at the boundary$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 2.6909209310000004,
+      "log": "source-12.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 13,
+      "name": "#980 180 seconds includes every authoritative interval, including number 10800",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#980 180 seconds includes every authoritative interval, including number 10800$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 1.793840599999996,
+      "log": "source-13.tap",
+      "passed": true
+    },
+    {
+      "mode": "source",
+      "index": 14,
+      "name": "#935 actual held Charger/Splatling/SUB are cancelled before finish neutralization at 30/60/120Hz",
+      "sourceSha256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "siteIdentity": null,
+      "command": [
+        "/workspace/inkwave-validation-354f1c5/npm-cache/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=384",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "--test-name-pattern=^#935 actual held Charger/Splatling/SUB are cancelled before finish neutralization at 30/60/120Hz$",
+        "patches/splatoon3/tests/turf-finish.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "seconds": 12.756587823000002,
+      "log": "source-14.tap",
+      "passed": true
+    }
+  ]
+}

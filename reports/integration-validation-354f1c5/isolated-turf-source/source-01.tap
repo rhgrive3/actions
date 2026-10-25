@@ -1,0 +1,18 @@
+TAP version 13
+# (node:3714) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint
+ok 1 - \#410 deadline captures before synchronous state listeners and delayed judge ignores subsequent paint
+  ---
+  duration_ms: 601.639634
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1281.162974

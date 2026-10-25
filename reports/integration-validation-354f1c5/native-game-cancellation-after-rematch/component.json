@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "errors": [],
+  "scope": "Independent actual Game cancellation component: canonical concurrent world loads and all three world switches. Not full native-lifecycle or mobile acceptance.",
+  "contentHash": "f75205126dc2f9830e2d3db5fa837bb9ed404af93d5a781e44f678cb09207311",
+  "inputHash": "1b3c82c25b5538e309c813ace3434d8532975331ab0c675d3c5a561929c325dc",
+  "browser": "154.0.8037.57",
+  "cancellation": {
+    "id": "inkblot",
+    "nativeGroups": 1
+  },
+  "switches": [
+    {
+      "id": "tidewater",
+      "native": false,
+      "nativeGroups": 0,
+      "memory": {
+        "geometries": 243,
+        "textures": 29
+      }
+    },
+    {
+      "id": "scorch",
+      "native": true,
+      "nativeGroups": 1,
+      "memory": {
+        "geometries": 321,
+        "textures": 104
+      }
+    },
+    {
+      "id": "tidewater",
+      "native": false,
+      "nativeGroups": 0,
+      "memory": {
+        "geometries": 243,
+        "textures": 29
+      }
+    }
+  ],
+  "fingerprint": {
+    "same": true,
+    "changed": false,
+    "missing": false
+  }
+}

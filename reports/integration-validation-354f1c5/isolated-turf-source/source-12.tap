@@ -1,0 +1,18 @@
+TAP version 13
+# (node:3945) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#980 a fractional last tick includes only pre-deadline paint and neutralizes at the boundary
+ok 1 - \#980 a fractional last tick includes only pre-deadline paint and neutralizes at the boundary
+  ---
+  duration_ms: 1144.001985
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2581.227072

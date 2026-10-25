@@ -1,0 +1,4 @@
+Original full-source failures5690 and5857 were preserved in full patch log.
+paint-queue-regressions.test.mjs: composed _drawQuads now calls actual BufferAttribute.updateRanges.push. Test fabricated an attribute lacking updateRanges, so execution threw before the deliberately injected renderer failure. Replaced attribute/geometry stubs with real THREE objects; all same-error/renderer restore/mipmap/quads/retry-blocking assertions unchanged.
+queue-visual-batch305.test.mjs: Director shell/disc/band now use actual ShapePool.addRaw; prior add-only stub omitted it. Replaced with real SpecialVfxKit retained pool and disposed resources after every rate case. No producer or acceptance change.
+Both files support optional QUEUE_FIXTURE_ESBUILD for minified+compacted extracted function bodies, preserving invocation this/arguments. Node22 source19/19 PASS and minified19/19 PASS, skip0. This is focused fixture verification, not a full-suite or GPU acceptance replacement.

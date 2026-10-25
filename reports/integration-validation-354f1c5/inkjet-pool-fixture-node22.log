@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: Inkjet fair actual pool bounds 30Hz actors=1 cap=182
+ok 1 - Inkjet fair actual pool bounds 30Hz actors=1 cap=182
+  ---
+  duration_ms: 119.967319
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 30Hz actors=2 cap=182
+ok 2 - Inkjet fair actual pool bounds 30Hz actors=2 cap=182
+  ---
+  duration_ms: 104.248384
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 30Hz actors=4 cap=182
+ok 3 - Inkjet fair actual pool bounds 30Hz actors=4 cap=182
+  ---
+  duration_ms: 81.339649
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 60Hz actors=1 cap=182
+ok 4 - Inkjet fair actual pool bounds 60Hz actors=1 cap=182
+  ---
+  duration_ms: 143.103306
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 60Hz actors=2 cap=182
+ok 5 - Inkjet fair actual pool bounds 60Hz actors=2 cap=182
+  ---
+  duration_ms: 113.709026
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 60Hz actors=4 cap=182
+ok 6 - Inkjet fair actual pool bounds 60Hz actors=4 cap=182
+  ---
+  duration_ms: 112.540998
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 120Hz actors=1 cap=182
+ok 7 - Inkjet fair actual pool bounds 120Hz actors=1 cap=182
+  ---
+  duration_ms: 182.269314
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 120Hz actors=2 cap=182
+ok 8 - Inkjet fair actual pool bounds 120Hz actors=2 cap=182
+  ---
+  duration_ms: 144.383886
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 120Hz actors=4 cap=182
+ok 9 - Inkjet fair actual pool bounds 120Hz actors=4 cap=182
+  ---
+  duration_ms: 194.914279
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 30Hz actors=1 cap=520
+ok 10 - Inkjet fair actual pool bounds 30Hz actors=1 cap=520
+  ---
+  duration_ms: 3.866944
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 30Hz actors=2 cap=520
+ok 11 - Inkjet fair actual pool bounds 30Hz actors=2 cap=520
+  ---
+  duration_ms: 14.175365
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 30Hz actors=4 cap=520
+ok 12 - Inkjet fair actual pool bounds 30Hz actors=4 cap=520
+  ---
+  duration_ms: 53.642287
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 60Hz actors=1 cap=520
+ok 13 - Inkjet fair actual pool bounds 60Hz actors=1 cap=520
+  ---
+  duration_ms: 29.822546
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 60Hz actors=2 cap=520
+ok 14 - Inkjet fair actual pool bounds 60Hz actors=2 cap=520
+  ---
+  duration_ms: 58.78983
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 60Hz actors=4 cap=520
+ok 15 - Inkjet fair actual pool bounds 60Hz actors=4 cap=520
+  ---
+  duration_ms: 56.453692
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 120Hz actors=1 cap=520
+ok 16 - Inkjet fair actual pool bounds 120Hz actors=1 cap=520
+  ---
+  duration_ms: 145.709791
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 120Hz actors=2 cap=520
+ok 17 - Inkjet fair actual pool bounds 120Hz actors=2 cap=520
+  ---
+  duration_ms: 202.832558
+  type: 'test'
+  ...
+# Subtest: Inkjet fair actual pool bounds 120Hz actors=4 cap=520
+ok 18 - Inkjet fair actual pool bounds 120Hz actors=4 cap=520
+  ---
+  duration_ms: 123.039554
+  type: 'test'
+  ...
+# Subtest: Inkjet admission reuses records, shares only free capacity, and excludes ineligible actors
+ok 19 - Inkjet admission reuses records, shares only free capacity, and excludes ineligible actors
+  ---
+  duration_ms: 1.092645
+  type: 'test'
+  ...
+# Subtest: Inkjet quotas exclude retired/recycled rounds and deduplicate live owners without array scans
+ok 20 - Inkjet quotas exclude retired/recycled rounds and deduplicate live owners without array scans
+  ---
+  duration_ms: 0.617614
+  type: 'test'
+  ...
+# Subtest: Inkjet quota distribution reuses collected records without a second WeakMap lookup
+ok 21 - Inkjet quota distribution reuses collected records without a second WeakMap lookup
+  ---
+  duration_ms: 9.206392
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2610.99068

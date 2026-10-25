@@ -1,0 +1,40 @@
+{
+  "status": "failed",
+  "scope": "Original full run spans fixture corrections; not a fresh final-head acceptance run",
+  "counts": {
+    "tests": "9066",
+    "pass": "9013",
+    "fail": "30",
+    "cancelled": "0",
+    "skipped": "23",
+    "todo": "0",
+    "duration_ms": "9406922.631737"
+  },
+  "skips": [
+    "ok 127 - emitted menu fixture: unfocused # SKIP",
+    "ok 128 - emitted menu fixture: focus-without-neutral # SKIP",
+    "ok 129 - emitted menu fixture: fixed # SKIP",
+    "ok 314 - 30Hz emitted page focus gates gamepad authority # SKIP",
+    "ok 315 - 60Hz emitted page focus gates gamepad authority # SKIP",
+    "ok 316 - 120Hz emitted page focus gates gamepad authority # SKIP",
+    "ok 317 - actual emitted input policy boundaries # SKIP",
+    "ok 389 - \\#523 + \\#533 + \\#907 emitted corner map stays OFF while explicit unflipped Turf Map supports alive gyro and A confirmation # SKIP",
+    "ok 390 - \\#523 + \\#533 + \\#907 emitted corner map stays OFF while explicit flipped Turf Map supports alive gyro and A confirmation # SKIP",
+    "ok 391 - \\#523 + \\#533 + \\#907 emitted corner map stays OFF while explicit unflipped Turf Map supports dead gyro and A confirmation # SKIP",
+    "ok 392 - \\#523 + \\#533 + \\#907 emitted corner map stays OFF while explicit flipped Turf Map supports dead gyro and A confirmation # SKIP",
+    "ok 1324 - pinned alternate rows match raw Leanny 11.3.0 source when provided # SKIP Set INKWAVE_MAIN_WEAPON_REFERENCE for independent raw source cross-check",
+    "ok 1358 - \\#561: installed built site presents the assist exactly like the composition # SKIP",
+    "ok 2883 - \\#523 emitted config preserves opt-in policy # SKIP",
+    "ok 2885 - \\#523 emitted Game/Match use emitted defaults for the live HUD transport # SKIP",
+    "ok 4398 - \\#724 the pinned official reference image is unmodified # SKIP reference image not fetched in this environment",
+    "ok 4399 - \\#724 the reference record carries the measured geometry, not the retracted absence claim # SKIP reference manifest not fetched in this environment",
+    "ok 5253 - curated values and names match the pinned raw reference when supplied # SKIP set INKWAVE_MAIN_WEAPON_REFERENCE to the downloaded pinned source directory",
+    "ok 5577 - raw damage-table content hash and extracted rows match the immutable source # SKIP",
+    "ok 6117 - optional pinned PR1223 real restore and composed Actor validate the compatibility seam # SKIP",
+    "ok 8247 - \\#158: emitted full Match module judges deterministic Alpha and preserves close non-ties # SKIP",
+    "ok 8635 - ten untouched models remain byte-identical to the same-runner before build # SKIP",
+    "ok 8882 - weight speed curves match pinned original misc parameters when source fixture is present # SKIP"
+  ],
+  "manualSkipsAdded": false,
+  "productionInputsUnchangedAfterTransportIntegration": true
+}

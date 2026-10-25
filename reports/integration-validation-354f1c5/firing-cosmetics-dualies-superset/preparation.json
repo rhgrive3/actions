@@ -1,0 +1,40 @@
+{
+  "status": "prepared-not-executed",
+  "head": "9532928b8c91168ea3d77538478377b5d1340db2",
+  "basePath": "scripts/check-inkwave-firing-cosmetics-browser.mjs",
+  "baseCheckerSHA256": "9b628b269d9e8986b6615f6f5e146c1a84538ea6174cc6142a103f69710c96e6",
+  "probePath": ".ci-scratch/firing-cosmetics-dualies-superset.mjs",
+  "probeSHA256": "17fd1df808a6ac329fd1f1314d003395f5cc3aa09a7391f74acb70117c940edf",
+  "sourceCatalog": "patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+  "sourceCatalogSHA256": "d2f6274e1a65b666ee7172773a3c447900dc6c90917c2228964f9e27237d766c",
+  "identity": {
+    "id": "dualies",
+    "family": "dualies"
+  },
+  "confirmingTest": "patches/splatoon3/tests/shooter-muzzle-droplets.test.mjs: live Dualies 3D beads preserve independent right/left launch sockets and change no gameplay state",
+  "baseCases": 13,
+  "supersetCases": 14,
+  "addedCase": [
+    "dualies",
+    4,
+    [
+      0,
+      2,
+      4,
+      7,
+      12
+    ]
+  ],
+  "views": [
+    "wide",
+    "side",
+    "oblique",
+    "front",
+    "top"
+  ],
+  "baseExpectedImages": 305,
+  "supersetExpectedImages": 330,
+  "unchanged": "All original bytes remain apart from the one added CASES entry: 240000ms boot gate, seed, original ticks, views, assertions and render calls retained.",
+  "evidenceAvailable": "Existing per-tick manifest records round IDs/positions/ages/seeds, FX drop count/sample and per-view images. It does not separately record shooterMuzzleDroplets pool ownership or left/right muzzle coordinates; no dedicated shared-pool acceptance claim.",
+  "runConstraints": "Run with no third positional case filter and no TICKS/VIEWS overrides. Normal original checker acceptance remains separate."
+}
