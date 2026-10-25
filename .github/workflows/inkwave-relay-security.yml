@@ -12,6 +12,10 @@ on:
       - "patches/splatoon3/tests/source-fixture.mjs"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/network-replication/adapter.mjs'
   push:
     branches: [main]
     paths:
@@ -24,6 +28,10 @@ on:
       - "patches/splatoon3/tests/source-fixture.mjs"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/network-replication/adapter.mjs'
 concurrency:
   # Cancel obsolete PR-head checks; keep every main push and manually dispatched run.
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
@@ -54,6 +62,6 @@ jobs:
       - name: Check server syntax
         run: node --check server/src/index.js
       - name: Relay security and existing hit NACK regressions
-        run: node --test server/tests/*.test.mjs
+        run: node --experimental-vm-modules --test server/tests/*.test.mjs
       - name: Production-composed client compatibility and legacy rejection
         run: node --experimental-vm-modules --test patches/reliability/tests/relay-compatibility.test.mjs

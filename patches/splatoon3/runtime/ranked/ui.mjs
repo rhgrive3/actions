@@ -100,8 +100,11 @@ export function objectiveText(engine, G, api = {}) {
     const inventory = state.inventories || {};
     const localId = local ? String(local.nid ?? `${local.team}:${local.slot}`) : '';
     const own = inventory[localId];
-    const carried = !own && team >= 0 ? Object.values(inventory).filter(item => item?.team === team)
-      .reduce((sum, item) => sum + finite(item?.small) + finite(item?.power ? 8 : 0), 0) : 0;
+    let carried = 0;
+    if (!own && team >= 0) for (const id in inventory) if (Object.hasOwn(inventory, id)) {
+      const item = inventory[id];
+      if (item?.team === team) carried = carried + finite(item?.small) + finite(item?.power ? 8 : 0);
+    }
     const basket = team >= 0 ? state.baskets?.[team] : null;
     const count = own ? (own.power ? t('POWER CLAM') : t('{n}/8 CLAMS', { n: Math.ceil(finite(own.small)) }))
       : team >= 0 ? t('{n} CLAMS ON TEAM', { n: Math.ceil(carried) }) : t('COLLECT CLAMS');
@@ -224,8 +227,8 @@ function projectObjective(minimap, point) {
   return minimap.toCanvas(x,z,xy);
 }
 
-function marker(ctx, minimap, point, color, label, radius = 5) {
-  const xy = projectObjective(minimap,point);
+function marker(ctx, minimap, point, color, label, radius = 5, projected = null) {
+  const xy = projected ?? projectObjective(minimap,point);
   if (!xy) return;
   const x=xy.x,y=xy.y;
   ctx.beginPath(); ctx.arc(x, y, radius + 2, 0, Math.PI * 2); ctx.fillStyle = '#15121c'; ctx.fill();
@@ -248,7 +251,7 @@ function drawObjectives(minimap, engine, G) {
       const w = Math.max(6, size[0] * minimap.s), h = Math.max(6, size[1] * minimap.s);
       ctx.fillStyle = color; ctx.globalAlpha = owner === 0 || owner === 1 ? .18 : .08; ctx.fillRect(px - w / 2, py - h / 2, w, h);
       ctx.globalAlpha = .95; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(px - w / 2, py - h / 2, w, h);
-      marker(ctx, minimap, center, color, String(i + 1), 4);
+      marker(ctx, minimap, center, color, String(i + 1), 4, p);
     });
   } else if (engine.mode === 'tower') {
     const path = stage.tower?.path || [];
@@ -286,18 +289,19 @@ function drawObjectives(minimap, engine, G) {
     // never the stage's spawn anchors, which only seed a match at setup.
     (state.clams || []).forEach(clam => marker(ctx, minimap, clam.pos, clam.kind === 'power' ? '#ffe28a' : '#fff', clam.kind === 'power' ? 'P' : null, clam.kind === 'power' ? 5 : 2.5));
     (stage.clams?.goals || []).forEach((p, team) => marker(ctx, minimap, p, colors[team], 'B', 6));
-    const inventories = Object.entries(state.inventories || {}), actors = G.match?.actors || [];
-    let powerCount=0,actorIndex=null;
-    for(const [,inventory] of inventories)if(inventory?.power)powerCount++;
-    if(powerCount>=4 && actors.length>=4){
+    const inventories = state.inventories || {};
+    let powerIds = null;
+    for (const id of Object.keys(inventories)) if (inventories[id]?.power) (powerIds ??= []).push(id);
+    const actors = G.match?.actors || [];
+    let actorIndex=null;
+    if((powerIds?.length || 0)>=4 && actors.length>=4){
       actorIndex=new Map();
       for(const actor of actors){
         const id=String(actor.nid ?? `${actor.team}:${actor.slot}`);
         if(!actorIndex.has(id))actorIndex.set(id,actor);
       }
     }
-    for (const [id, inventory] of inventories) {
-      if (!inventory?.power) continue;
+    for (const id of powerIds || []) {
       const actor = actorIndex ? actorIndex.get(id) : actors.find(a => String(a.nid ?? `${a.team}:${a.slot}`) === id);
       if (actor?.pos) marker(ctx, minimap, actor.pos, colors[actor.team], 'P', 6);
     }

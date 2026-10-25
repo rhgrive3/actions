@@ -19,6 +19,23 @@ const closureHashes = new Map([
     "095dd539c7a7d95cfc90067086e23f32dfe4d26dd2af4d7db5173a64a8fee631"
   ]
 ]);
+// Classic worker scripts that KTX2Loader fetches as text into a Blob Worker.
+// They run outside the module graph and cannot load this helper; their
+// Emscripten code generation is reviewed for this exact vendored file only.
+const sealedWorkerScripts = new Map([
+  ['vendor/three/jsm/libs/basis/basis_transcoder.js', '8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1'],
+]);
+// KTX2Loader builds its transcoder Worker from strings in its own source (a
+// Blob of its worker function plus the sealed transcoder). It ships
+// byte-identical (see build-inkwave.mjs); only these exact bytes may hold the
+// single reviewed site, a one-argument `new Worker(this.workerSourceURL)`.
+// Any other content is scanned as usual.
+const sealedLoaders = new Map([
+  ['vendor/three/jsm/loaders/KTX2Loader.js', '3a3233ce3409443076d3414b78832e1405fcfac5ecb34d367365fd0781127d6c'],
+]);
+const isReviewedLoaderWorker = node => node.type === 'NewExpression' && node.callee?.type === 'Identifier' && node.callee.name === 'Worker'
+  && node.arguments.length === 1 && node.arguments[0].type === 'MemberExpression' && !node.arguments[0].computed
+  && node.arguments[0].object?.type === 'ThisExpression' && node.arguments[0].property?.name === 'workerSourceURL';
 const clean = value => JSON.parse(JSON.stringify(value, (key, item) => ['start', 'end', 'loc', 'raw'].includes(key) ? undefined : item));
 // These complete QA URL expressions were included in the current graph review.
 const reviewedURLs = new Map([
@@ -71,7 +88,12 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
   const sites = new Map(); let reference = null, parseFailure = null;
   for (const [file, source] of modules) {
     if (file === REVIEWED_AUDIO_ORPHAN) continue;
-    let ast; try { ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
+    const digest = createHash('sha256').update(source).digest('hex');
+    if (sealedWorkerScripts.get(file) === digest) continue;
+    const sealedLoader = sealedLoaders.get(file) === digest;
+    let reviewedLoaderSites = 0;
+    let ast;
+    try { ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
     catch { parseFailure = file; break; }
     const walk = node => {
       if (!node || typeof node !== 'object') return;
@@ -84,7 +106,8 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
       if ((node.type === 'Identifier' && ['eval', 'Function'].includes(node.name)) || (node.type === 'Literal' && ['eval', 'Function'].includes(node.value))) reference = file + ' (unreviewed code generation)';
       const kind = node.type === 'ImportExpression' ? 'import'
         : node.type === 'NewExpression' && ['Worker', 'SharedWorker'].includes(node.callee?.name) ? 'worker' : null;
-      if (kind) {
+      if (kind && sealedLoader && isReviewedLoaderWorker(node)) reviewedLoaderSites++;
+      else if (kind) {
         const target = kind === 'import' ? node.source : node.arguments[0];
         const expression = target?.type === 'MemberExpression' && !target.computed && target.property?.name === 'href' ? target.object : target;
         const base = expression?.arguments?.[1];
@@ -98,6 +121,7 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
       }
       for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(walk); else if (value && typeof value === 'object') walk(value);
     }; walk(ast);
+    if (sealedLoader && reviewedLoaderSites !== 1) return keep('sealed loader site count changed: ' + file);
   }
   if (parseFailure) return keep('unparsed module: ' + parseFailure);
   if (reference) return keep('module reference: ' + reference);

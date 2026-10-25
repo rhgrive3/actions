@@ -9,6 +9,12 @@ export function physicalOrientation(env) {
 
 export function createTouchRelayout(mobile, env = globalThis) {
   const signal = mobile._abort.signal;
+  const viewportKey = () => {
+    const visual = env.visualViewport;
+    return [env.innerWidth, env.innerHeight, visual?.width ?? env.innerWidth,
+      visual?.height ?? env.innerHeight, visual?.scale ?? 1].join(':');
+  };
+  let lastViewportKey = viewportKey();
   let orientation = physicalOrientation(env), frame = null, unknownRotationPending = false;
   const cancel = () => {
     if (frame !== null) env.cancelAnimationFrame(frame);
@@ -20,6 +26,10 @@ export function createTouchRelayout(mobile, env = globalThis) {
     const current = physicalOrientation(env);
     const rotated = current !== orientation || (current === null &&
       (event?.type === 'orientationchange' || event?.type === 'change') && !unknownRotationPending);
+    const currentViewportKey = viewportKey();
+    // Never let equal viewport dimensions conceal a physical rotation.
+    if (event?.type === 'resize' && !rotated && currentViewportKey === lastViewportKey) return;
+    lastViewportKey = currentViewportKey;
     orientation = current;
     if (rotated) {
       if (current === null) unknownRotationPending = true;

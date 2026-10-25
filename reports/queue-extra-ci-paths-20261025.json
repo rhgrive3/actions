@@ -1,0 +1,196 @@
+[
+  {
+    "slug": "ink-volumes-splatling-visual-evidence-input-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-ink-volumes.yml",
+    "paths": [
+      "scripts/lib/inkwave-splatling-render-evidence.mjs",
+      "patches/splatoon3/runtime/splatling-cosmetics.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "explosher-flight-glitter-preflight-untracked-direct-ci-inputs",
+    "workflow": ".github/workflows/inkwave-explosher-flight-glitter.yml",
+    "paths": [
+      "scripts/lib/inkwave-explosher-common-build.mjs",
+      "scripts/lib/inkwave-explosher-inverse-contract.mjs",
+      "scripts/lib/inkwave-explosher-volume-barrier.mjs",
+      "scripts/lib/inkwave-explosher-video-gate.mjs",
+      "scripts/lib/inkwave-explosher-stage-admission.mjs",
+      "scripts/lib/inkwave-projectile-capture-ui.mjs",
+      "scripts/lib/inkwave-range-menu-entry.mjs",
+      "scripts/render-inkwave-projectile-shapes.mjs",
+      "scripts/check-inkwave-projectile-visuals.mjs",
+      "scripts/compile-inkwave-explosher-inverse-pair.mjs",
+      "scripts/compile-inkwave-explosher-controlled-main.mjs",
+      "scripts/fixtures/explosher-inverse-baseline.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "health-recovery-rain-ci-direct-profile-runtime-fixture-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-health-recovery-rain.yml",
+    "paths": [
+      "patches/splatoon3/profile.json",
+      "patches/splatoon3/runtime/turf-combat.mjs",
+      "patches/splatoon3/runtime/weapons.mjs",
+      "patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+      "patches/splatoon3/runtime/final-damage.mjs",
+      "patches/splatoon3/tests/storm-effects-fixture.mjs",
+      "patches/splatoon3/tests/fixture-cache.mjs",
+      "patches/splatoon3/adapter.mjs",
+      "patches/reliability/special-water-adapter.mjs",
+      "patches/touch-layout/adapter.mjs",
+      "patches/reliability/adapter.mjs",
+      "patches/local-quality/adapter.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "defense-selection-ci-missing-direct-runtime-and-fixture-pr-triggers",
+    "workflow": ".github/workflows/inkwave-defense-selection.yml",
+    "paths": [
+      "patches/splatoon3/runtime/kit-subs.mjs",
+      "patches/splatoon3/runtime/trizooka-collision.mjs",
+      "patches/splatoon3/runtime/weapons.mjs",
+      "patches/splatoon3/tests/kit-composed-fixture.mjs",
+      "patches/splatoon3/adapter.mjs",
+      "patches/splatoon3/runtime/kit-trizooka.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "lobby-slot-native-cssom-qa-three-production-input-pr-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-lobby-slot-browser.yml",
+    "paths": [
+      "inkwave-public/src/ui/menus.js",
+      "scripts/inkwave-source-composition.mjs",
+      "patches/splatoon3/ui-localization-adapter.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "crab-gyro-ci-fifteen-direct-input-pr-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-crab-gyro.yml",
+    "paths": [
+      "scripts/build-inkwave.mjs",
+      "scripts/inkwave-source-composition.mjs",
+      "patches/reliability/tests/pause-fixture.mjs",
+      "patches/splatoon3/tests/source-fixture.mjs",
+      "patches/splatoon3/adapter.mjs",
+      "patches/touch-layout/adapter.mjs",
+      "patches/reliability/adapter.mjs",
+      "patches/reliability/pause-adapter.mjs",
+      "patches/splatoon3/runtime/clock.mjs",
+      "patches/splatoon3/runtime/install.mjs",
+      "inkwave-public/src/core/input.js",
+      "inkwave-public/src/game/player.js",
+      "inkwave-public/src/main.js",
+      "inkwave-public/src/game/match.js",
+      "inkwave-public/src/ui/menus.js"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "main-weapons-ci-eight-composed-adapter-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-main-weapons.yml",
+    "paths": [
+      "patches/splatoon3/adapter.mjs",
+      "patches/splatoon3/weapons-adapter.mjs",
+      "patches/splatoon3/weapon-edgecases-adapter.mjs",
+      "patches/splatoon3/roller-depletion-adapter.mjs",
+      "patches/splatoon3/weapon-paint-inertia-adapter.mjs",
+      "patches/splatoon3/charger-sight-cache-adapter.mjs",
+      "patches/splatoon3/kit-rescue-adapter.mjs",
+      "patches/splatoon3/agent3-weapon-physics-adapter.mjs"
+    ],
+    "status": "implemented",
+    "rollerPaths": [
+      "patches/splatoon3/adapter.mjs",
+      "patches/splatoon3/weapons-adapter.mjs",
+      "patches/splatoon3/weapon-edgecases-adapter.mjs",
+      "patches/splatoon3/roller-depletion-adapter.mjs",
+      "patches/splatoon3/weapon-paint-inertia-adapter.mjs",
+      "patches/splatoon3/agent3-weapon-physics-adapter.mjs"
+    ]
+  },
+  {
+    "slug": "relay-security-composed-client-source-trigger-gap",
+    "workflow": ".github/workflows/inkwave-relay-security.yml",
+    "paths": [
+      "scripts/inkwave-source-composition.mjs",
+      "patches/splatoon3/adapter.mjs",
+      "patches/reliability/adapter.mjs",
+      "patches/network-replication/adapter.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "terminal-recovery-qa-nine-direct-runtime-build-input-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-terminal-recovery-qa.yml",
+    "paths": [
+      "patches/native-stages/runtime/native-load.mjs",
+      "patches/native-stages/runtime/native-level.mjs",
+      "patches/native-stages/runtime/native-physics.mjs",
+      "patches/native-stages/runtime/native-render.mjs",
+      "patches/native-stages/runtime/native-ink-chunks.mjs",
+      "patches/native-stages/runtime/native-texture-budget.mjs",
+      "patches/native-stages/runtime/native-gpu-budget.mjs",
+      "scripts/build-inkwave.mjs",
+      "scripts/inkwave-source-composition.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "object-presentation-qa-nine-production-input-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-object-presentation-qa.yml",
+    "paths": [
+      "patches/splatoon3/runtime/install.mjs",
+      "patches/splatoon3/profile.json",
+      "inkwave-public/src/config.js",
+      "inkwave-public/src/core/renderer.js",
+      "inkwave-public/src/world/environment.js",
+      "inkwave-public/src/game/actor.js",
+      "inkwave-public/src/game/character.js",
+      "scripts/inkwave-source-composition.mjs",
+      "scripts/build-inkwave.mjs"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "squid-visual-qa-direct-imports-and-environment-trigger-gaps",
+    "workflow": ".github/workflows/inkwave-squid-visual-qa.yml",
+    "paths": [
+      "inkwave-public/src/game/character-weapons.js",
+      "inkwave-public/src/game/character-lod.js",
+      "inkwave-public/src/game/character-style.js",
+      "inkwave-public/src/game/character-outfit.js",
+      "inkwave-public/src/game/character-face.js",
+      "inkwave-public/src/game/character-hair.js",
+      "inkwave-public/src/world/environment.js"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "pause-gpu-source-inputs-not-triggering-visual-qa",
+    "workflow": ".github/workflows/inkwave-pause-gpu.yml",
+    "paths": [
+      "inkwave-public/src/main.js",
+      "inkwave-public/src/core/renderer.js"
+    ],
+    "status": "implemented"
+  },
+  {
+    "slug": "headgear-visual-qa-missing-production-source-pr-triggers",
+    "workflow": ".github/workflows/inkwave-headgear-visual-qa.yml",
+    "paths": [
+      "inkwave-public/src/game/character.js",
+      "inkwave-public/src/core/ctx.js",
+      "inkwave-public/src/world/environment.js",
+      "scripts/build-inkwave.mjs",
+      "scripts/inkwave-source-composition.mjs",
+      "patches/splatoon3/runtime/install.mjs"
+    ],
+    "status": "implemented"
+  }
+]

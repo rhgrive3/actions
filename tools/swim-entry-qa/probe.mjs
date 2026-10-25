@@ -5,22 +5,43 @@ const KEYS=['actors','level','physics','paint','match','rig','projectiles','time
 export const FRAME_NAMES=['first-entry-28','first-follow-29','reentry-72','reentry-follow-73'];
 const angle=x=>Math.atan2(Math.sin(x),Math.cos(x));
 const arr=v=>v?.toArray?Array.from(v.toArray()):v?.elements?Array.from(v.elements):v&&ArrayBuffer.isView(v)?Array.from(v):null;
+const EMPTY_RANDOM_HASH='4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945';
+const RANDOM_CHECKS={installed:1,sourceReady:1,beforeTick:133,afterTick:133,beforeCapture:4,afterCapture:4,complete:1};
+// Movement with explicit style consumes no gameplay RNG. Production UUIDs use
+// crypto, so a zero-length stream is valid only with an installed observer and
+// independently counted setup, tick and capture boundaries.
+export function verifyRandomObservation(result){
+ const fail=message=>{throw Error('random observation: '+message);},o=result.randomObservation;
+ if(!Number.isSafeInteger(result.randomCalls)||result.randomCalls<0)fail('invalid draw count');
+ if(!/^[a-f0-9]{64}$/.test(result.randomValuesHash||''))fail('missing stream digest');
+ if(!o||o.version!==1||o.algorithm!=='lcg-u32-1664525-1013904223'||o.initialSeed!==913||result.seed!==913)fail('missing seeded observer');
+ if(!Number.isInteger(o.finalState)||o.finalState<0||o.finalState>0xffffffff)fail('invalid final state');
+ if(Object.keys(o.checks||{}).length!==Object.keys(RANDOM_CHECKS).length)fail('missing observation boundaries');
+ for(const [name,count]of Object.entries(RANDOM_CHECKS))if(o.checks[name]!==count)fail('incomplete '+name);
+ if(result.simulationTicks!==73||result.tickSeconds!==1/60)fail('incomplete simulation');
+ if(result.randomCalls===0&&(o.finalState!==913||result.randomValuesHash!==EMPTY_RANDOM_HASH))fail('empty stream mismatch');
+ if(result.randomCalls>0&&result.randomValuesHash===EMPTY_RANDOM_HASH)fail('nonempty stream mismatch');
+ return true;
+}
 export async function collectSwimEntryFrames(api,onFrame){
  const {G,THREE,Actor,Character,Level,Physics,Projectiles,PlayerController,swimMotionSnapshot}=api;
  const saved=Object.fromEntries(KEYS.map(k=>[k,G[k]])),random=Math.random,children=new Set(G.scene.children),rows=[],trace=[];let a,seed=913,randomCalls=0;
- const randomValues=[];
+ const randomValues=[],checks=Object.fromEntries(Object.keys(RANDOM_CHECKS).map(k=>[k,0]));
+ const observedRandom=()=>{randomCalls++;seed=Math.imul(seed,1664525)+1013904223>>>0;randomValues.push(seed);return seed/2**32;};
+ const checkRandom=where=>{if(Math.random!==observedRandom)throw Error('RNG instrumentation replaced at '+where);checks[where]++;};
  try{
-  Math.random=()=>{randomCalls++;seed=Math.imul(seed,1664525)+1013904223>>>0;randomValues.push(seed);return seed/2**32;};
+  Math.random=observedRandom;checkRandom('installed');
   G.mode='match';G.settings={quality:'high',shadows:false,aimAssist:0};G.teamColors=[new THREE.Color(0xe6e900),new THREE.Color(0x6340db)];G.time=0;
   G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
   G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true,canRespawn:()=>false};G.projectiles=new Projectiles(G.scene);G.actors=[];
   a=new Actor({team:0,isLocal:true,name:'swim-owner-entry',weapon:'shooter',CharacterClass:Character,style:{hair:0,hat:0,skin:2,outfit:0,eyes:0}});const c=a.character;
   a.nid=901;c.actor=a;c.setLod('hero');G.scene.add(c.root);G.actors=[a];a.pos.set(0,0,0);a.grounded=a.ground.hit=true;a.ground.block=0;a.groundN.set(0,1,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);
   await c._sourceMotionLoader;await c.sourceMotion?.ready;if(c.sourceMotion?.status!=='ready')throw Error('swim source bank not ready');
+  checkRandom('sourceReady');
   let dive=false;const mobile={active:true,root:{},moveX:0,moveY:0,lookDX:0,lookDY:0,pressed:new Set(),wasPressed:()=>false,gyro:{enabled:false,discard(){}},down:k=>k==='squid'&&dive};
   const raw={keys:new Set(),pressed:new Set(),padPressed:new Set(),mouse:{dx:0,dy:0,left:false,right:false},mobile,lastDevice:'touch',down:()=>false,wasPressed:()=>false,padButton:()=>false,padValue:()=>0};
   const rig={yaw:0,pitch:0,mode:'follow',target:a,gameCam:G.camera||new THREE.PerspectiveCamera(25,1,.01,5000)};G.rig=rig;const controller=new PlayerController(a,rig,raw);
-  const tick=()=>{controller.update(1/60);G.time+=1/60;a.update(1/60);c.root.updateMatrixWorld(true);c.skeleton.update();};
+  const tick=()=>{checkRandom('beforeTick');controller.update(1/60);G.time+=1/60;a.update(1/60);c.root.updateMatrixWorld(true);c.skeleton.update();checkRandom('afterTick');};
   for(let i=0;i<60;i++)tick();dive=true;mobile.moveX=-.02;let priorHeading=null;
   for(let frame=1;frame<=73;frame++){
    if(frame===71)c.s3SwimMotionEnabled=false;if(frame===72)c.s3SwimMotionEnabled=true;tick();
@@ -31,12 +52,13 @@ export async function collectSwimEntryFrames(api,onFrame){
    if(![...skinned.mantle,...skinned.width,skinned.pitch,skinned.roll].every(Number.isFinite))throw Error('non-finite drawn mantle');
    if([28,29,72,73].includes(frame)){
     const row={name:FRAME_NAMES[rows.length],simulationFrame:frame,active:snap.active,age:snap.age,swimYaw:snap.yaw,sourceStatus:s.status,sourceActive:s.active,input:{kind:'normalized-mobile-stick',moveX:mobile.moveX,moveY:mobile.moveY,squid:dive},position:canonical.position,velocity:canonical.velocity,form:c.form,formT:c.formT,mantle:arr(mantle),heading:Math.atan2(mantle.x,mantle.z),pivotQuaternion:arr(c.squid.pivot.quaternion),skinned,previousSkinnedHeading:priorHeading,headingStep:priorHeading===null?null:angle(skinned.heading-priorHeading)};
-    rows.push(row);await onFrame?.({actor:a,row});
+    rows.push(row);checkRandom('beforeCapture');await onFrame?.({actor:a,row});checkRandom('afterCapture');
    }
    priorHeading=skinned.heading;
   }
+  checkRandom('complete');
   const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)))),b=>b.toString(16).padStart(2,'0')).join('');
-  return {scope:'actual mobile-stick/PlayerController/Actor/Physics; one eligibility cancellation; CPU source matrices and skinned landmarks',seed:913,tickSeconds:1/60,sourceBankAwaited:true,rows,simulationTicks:73,canonicalTraceHash:await digest(trace),randomCalls,randomValuesHash:await digest(randomValues)};
+  return {scope:'actual mobile-stick/PlayerController/Actor/Physics; one eligibility cancellation; CPU source matrices and skinned landmarks',seed:913,tickSeconds:1/60,sourceBankAwaited:true,rows,simulationTicks:73,canonicalTraceHash:await digest(trace),randomCalls,randomValuesHash:await digest(randomValues),randomObservation:{version:1,algorithm:'lcg-u32-1664525-1013904223',initialSeed:913,finalState:seed,checks}};
  }finally{
   if(a){G.scene.remove(a.character.root);a.character.dispose();}G.projectiles?.clear?.();for(const o of [...G.scene.children])if(!children.has(o)){G.scene.remove(o);o.traverse(n=>{n.geometry?.dispose?.();for(const m of Array.isArray(n.material)?n.material:[n.material])m?.dispose?.();});}for(const k of KEYS)G[k]=saved[k];Math.random=random;
  }

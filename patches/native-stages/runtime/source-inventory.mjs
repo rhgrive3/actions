@@ -2,13 +2,19 @@
 // No model, image, sound or other source asset payload is bundled here.
 const encoder=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes),value=>value.toString(16).padStart(2,'0')).join('');
-const fromHex=value=>Uint8Array.from(value.match(/../g),byte=>parseInt(byte,16));
 const modes=new Map([['040000','tree'],['100644','blob'],['100755','blob'],['120000','blob'],['160000','commit']]);
 const compareBytes=(a,b)=>{for(let i=0;i<Math.min(a.length,b.length);i++)if(a[i]!==b[i])return a[i]-b[i];return a.length-b.length;};
 async function gitTreeHash(entries){
- const rows=entries.map(entry=>({entry,sort:encoder.encode(entry.name+(entry.type==='tree'?'/':''))}));rows.sort((a,b)=>compareBytes(a.sort,b.sort));
- const chunks=rows.map(({entry})=>{const prefix=encoder.encode(entry.mode.replace(/^0+/,'')+' '+entry.name+'\0'),bytes=new Uint8Array(prefix.length+20);bytes.set(prefix);bytes.set(fromHex(entry.sha),prefix.length);return bytes;});
- const size=chunks.reduce((sum,row)=>sum+row.length,0),header=encoder.encode('tree '+size+'\0'),bytes=new Uint8Array(header.length+size);bytes.set(header);let offset=header.length;for(const row of chunks){bytes.set(row,offset);offset+=row.length;}
+ const rows=entries.map(entry=>({entry,sort:encoder.encode(entry.name+(entry.type==='tree'?'/':'')),mode:entry.mode.replace(/^0+/,'')}));
+ rows.sort((a,b)=>compareBytes(a.sort,b.sort));
+ let size=0;for(const row of rows)size+=row.mode.length+1+row.sort.length-(row.entry.type==='tree'?1:0)+1+20;
+ if(!Number.isSafeInteger(size))throw Error('Invalid source tree size');
+ const header=encoder.encode('tree '+size+'\0'),bytes=new Uint8Array(header.length+size);bytes.set(header);let offset=header.length;
+ for(const {entry,sort,mode} of rows){
+  for(let i=0;i<mode.length;i++)bytes[offset++]=mode.charCodeAt(i);bytes[offset++]=32;
+  const nameLength=sort.length-(entry.type==='tree'?1:0);for(let i=0;i<nameLength;i++)bytes[offset++]=sort[i];bytes[offset++]=0;
+  for(let i=0;i<40;i+=2)bytes[offset++]=parseInt(entry.sha.slice(i,i+2),16);
+ }
  return hex(await crypto.subtle.digest('SHA-1',bytes));
 }
 /** Reconstruct every Git tree object; an echoed JSON sha field is not proof. */

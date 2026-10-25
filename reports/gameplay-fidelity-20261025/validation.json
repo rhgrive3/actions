@@ -1,0 +1,122 @@
+{
+  "baselineMain": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "integratedRuntimeCommit": "7b9f87efe50d7c3bd47f5f33e32813dba9a03376",
+  "builtCommit": "c17a1df3679968ececa0efce8d1932aa0c4ebf27",
+  "build": {
+    "status": "passed",
+    "optimization": "esbuild-minify",
+    "contentHash": "aa570845f2ad140a47e3cd056401a937e081500ce1e3fb6cd285e8d1e37baa90",
+    "command": "node scripts/build-inkwave.mjs inkwave-public /tmp/inkwave-gameplay-20261025-site",
+    "initialAttempt": "The initial _site.building attempt failed with ENOENT copying a transient vendor file. The same unmodified build script succeeded with an isolated temporary output."
+  },
+  "relatedRegression": {
+    "status": "passed",
+    "testFiles": 40,
+    "failed": 0,
+    "skipped": 0,
+    "manifest": "integrated-tests.json",
+    "elapsedSeconds": 112.1,
+    "sourceHead": "7b9f87efe50d7c3bd47f5f33e32813dba9a03376"
+  },
+  "additionalTriSlosherRegression": {
+    "status": "passed",
+    "testFile": "patches/splatoon3/tests/catalog-20261025-paint-regressions.test.mjs",
+    "hz": [
+      30,
+      60,
+      120
+    ],
+    "target12WU": 62,
+    "target12_1WU": 0,
+    "runtimeChangeAfter40FileRun": false
+  },
+  "npmTest": {
+    "status": "passed",
+    "exitCode": 0,
+    "reportedNodeTests": [
+      20,
+      18,
+      27,
+      24,
+      28
+    ],
+    "reportedPythonTests": 13,
+    "includes": "compatibility, source migration audit, direct-source ownership, quality/performance, relay, accounts, backup and queue recovery"
+  },
+  "browserPaint": {
+    "status": "passed",
+    "cases": 48,
+    "weapons": 16,
+    "hz": [
+      30,
+      60,
+      120
+    ],
+    "actualCharacter": true,
+    "actualPhysics": true,
+    "cpuOwnershipGrid": true,
+    "hardwareGpuParity": false,
+    "report": "browser-paint.json"
+  },
+  "browserReticle": {
+    "status": "passed",
+    "report": "browser-reticle.json",
+    "acceptedNormalAppEntry": true,
+    "scenarios": [
+      {
+        "name": "desktop",
+        "viewport": [
+          1280,
+          720
+        ],
+        "confirmedHits": 3,
+        "confirmedSplat": true,
+        "missedShotHitEvents": 0
+      },
+      {
+        "name": "phone",
+        "viewport": [
+          844,
+          390
+        ],
+        "confirmedHits": 3,
+        "confirmedSplat": true,
+        "missedShotHitEvents": 0
+      }
+    ],
+    "pageErrors": [],
+    "gpu": "Chromium SwiftShader; no hardware GPU/Switch parity claim"
+  },
+  "reticleComponent": {
+    "status": "passed",
+    "viewports": 4,
+    "families": 7,
+    "views": 28,
+    "report": "../reticle-viewport-20261025/results.json"
+  },
+  "paintPointInvestigation": {
+    "status": "measured, unresolved calibration",
+    "samples": 315,
+    "shotsPerCondition": 45,
+    "seeds": 3,
+    "retainedShotsPerActor": 15,
+    "allSingleShotAndOwnedAreaCreditAssertionsPassed": true,
+    "report": "paint-points.json",
+    "globalMultiplierChanged": false
+  },
+  "independentReview": {
+    "scope": "charger stripe, audio routing and shared catalogue integration",
+    "criticalOrMajorFindings": 0,
+    "readOnly": true
+  },
+  "notClaimed": [
+    "complete equivalence of all 17 reports",
+    "original area-to-point coefficient",
+    "R-PEN unique recording",
+    "full roller joint-trajectory parity",
+    "all Kraken differences",
+    "exact Stringer ink masks",
+    "Switch/hardware-GPU/mobile-device verification",
+    "two-client online gameplay verification"
+  ]
+}

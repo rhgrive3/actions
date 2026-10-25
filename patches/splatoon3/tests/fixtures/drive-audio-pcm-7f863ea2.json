@@ -1,0 +1,1692 @@
+{
+  "grain": [
+    {
+      "kind": "bubbles",
+      "sr": 8000,
+      "hash": "ec4d1ae26536d051e5a99921b6451c3ce6ec6ba55aed5d0a4e3fe0c3c58b0712",
+      "frames": 24000
+    },
+    {
+      "kind": "bubbles_bright",
+      "sr": 8000,
+      "hash": "44954f36ff866699dbbfc52f697682c4ec9b3019efb13b7d5b4d95a78b7401c6",
+      "frames": 20000
+    },
+    {
+      "kind": "squelch",
+      "sr": 8000,
+      "hash": "87f20680a3e0f00e05519a89bb8af6dc422bbc32fe8b2e4e03bd93e2a851bb84",
+      "frames": 20000
+    },
+    {
+      "kind": "rain",
+      "sr": 8000,
+      "hash": "f4a539627a37e9bb9159a66ad17b8400b3ae18b9cd7088820ae7f22adca4379a",
+      "frames": 24000
+    },
+    {
+      "kind": "sizzle",
+      "sr": 8000,
+      "hash": "ad241c01db67d02610e0cece85f50c38199c3f94bb863b0de56d75c4e6add2af",
+      "frames": 16000
+    },
+    {
+      "kind": "bubbles",
+      "sr": 44100,
+      "hash": "cc49fb73ae8ae16ed71408a7400722d3bc6229ae0622acc4172a7e4dfb88807a",
+      "frames": 132300
+    },
+    {
+      "kind": "bubbles_bright",
+      "sr": 44100,
+      "hash": "15f70e2854d6dba6e6ee892bc3fe46acfee0e665a9ee0427159d220789e2257d",
+      "frames": 110250
+    },
+    {
+      "kind": "squelch",
+      "sr": 44100,
+      "hash": "3128d28ea06f824b0904d8d942b49f1e916e0ab67175d8275b53679ad98182b1",
+      "frames": 110250
+    },
+    {
+      "kind": "rain",
+      "sr": 44100,
+      "hash": "1aefacb037d439bacef912a90e6b509628161a18b1e329c8dfd09a29d0291488",
+      "frames": 132300
+    },
+    {
+      "kind": "sizzle",
+      "sr": 44100,
+      "hash": "ddf1db609725049e45659fd6277ddf05d2be36cdcaac1b945a0cd54607e2c4e8",
+      "frames": 88200
+    },
+    {
+      "kind": "bubbles",
+      "sr": 48000,
+      "hash": "ccddf2c72b013b28754dbcaf5aaa47e7591643862e582d2050cc81e9871883ac",
+      "frames": 144000
+    },
+    {
+      "kind": "bubbles_bright",
+      "sr": 48000,
+      "hash": "73e926d97862863c7b6b36bc98c61fa848b7eb333de5d48683b35c1a1b22294e",
+      "frames": 120000
+    },
+    {
+      "kind": "squelch",
+      "sr": 48000,
+      "hash": "825c14a72d45e15b8b6050f178e448f18e31221d16a5829f0b47549519bc954b",
+      "frames": 120000
+    },
+    {
+      "kind": "rain",
+      "sr": 48000,
+      "hash": "f9ba8c3963c7926617a31276a5f53ba9b79551fcc68b8e755c6c0723984b8f3b",
+      "frames": 144000
+    },
+    {
+      "kind": "sizzle",
+      "sr": 48000,
+      "hash": "f33ed4f0592e8763b42372fcf4addd936e6174e2f99464d618c2bdd3a9992a5c",
+      "frames": 96000
+    },
+    {
+      "kind": "bubbles",
+      "sr": 96000,
+      "hash": "3b6d80afc3c872c6adefbed435cc73cdee5f8c1c58e69ee24ac1f46a54222a8d",
+      "frames": 288000
+    },
+    {
+      "kind": "bubbles_bright",
+      "sr": 96000,
+      "hash": "1491a7457e8ccdd94ddd5cd93b4247b44ed1964dc98cc427a26510556317c005",
+      "frames": 240000
+    },
+    {
+      "kind": "squelch",
+      "sr": 96000,
+      "hash": "436d5e791a5178937e52beb85f4ca5262e62e85b847f1f8cdc8692d3528345a4",
+      "frames": 240000
+    },
+    {
+      "kind": "rain",
+      "sr": 96000,
+      "hash": "0d1a4a4dfbb08fb7092e155b14b7cbbb967dd6cc3b79b5367470296adf80eaed",
+      "frames": 288000
+    },
+    {
+      "kind": "sizzle",
+      "sr": 96000,
+      "hash": "45e7b15be14bbc4d7bdb9244a34c19ba9f2e3da33b7fcaf18de9bad44719a0aa",
+      "frames": 192000
+    }
+  ],
+  "guided": [
+    {
+      "id": "s3-shooter-blaze",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "a8512b394ee00bfb356c7c54bcfe60c26c366f7921c6f3995e26a2bc5f5a56cb"
+    },
+    {
+      "id": "s3-shooter-blaze",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "73e6b5c8192d767b7e74dfa8e61aa7b7ebd3e1f6f38ab87038d38c6cd8c74951"
+    },
+    {
+      "id": "s3-shooter-blaze",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "815df20cb232c4320e38ef89029165a2e2c095e096e296cba9c92540677f4ee7"
+    },
+    {
+      "id": "shooter",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "4175c57aec607b5b0a6beddd01877430f93f4d200ef2852c3b3a04c13c223f03"
+    },
+    {
+      "id": "shooter",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "164766eb9a39e3ed1511c39de77239eefa7ef31f7fbff673224b765a8e83eca9"
+    },
+    {
+      "id": "shooter",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "bb3cf75ae05e7b830b90a1d5b4c204228a200701f439ecf627ab06e8aa20e60f"
+    },
+    {
+      "id": "s3-shooter-gravity",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "e01a20a33e2832923220afee7fb374e1f40d346bf9fb3f7c751b727fbe1bbf3d"
+    },
+    {
+      "id": "s3-shooter-gravity",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "103f56a2460c90a43e40ba1c601e348a005bb82e5ef7a2b76c31187c072f2fb1"
+    },
+    {
+      "id": "s3-shooter-gravity",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "2273716ec84218efcb23ce99f070124dad91dbcc30177e1e017aef1de8a6dd28"
+    },
+    {
+      "id": "s3-shooter-quickmiddle",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "cfba6cd590ee820dfdf0e27a25a821c097050176879a09340e1642c4109b8d9e"
+    },
+    {
+      "id": "s3-shooter-quickmiddle",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "be51db509d5d4b0bca0b7248582566bedd972b0aaababdd39486862d5259b18c"
+    },
+    {
+      "id": "s3-shooter-quickmiddle",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "699bb35ebaba7e8369e147c1736f7fc35d8d985cd4d3b5aafaf217d4e51e1dc9"
+    },
+    {
+      "id": "s3-shooter-expert",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "a952013a1c6d8dd859e0d4f415254e1c62de4881160a66184d7fe2a4c37e4b2a"
+    },
+    {
+      "id": "s3-shooter-expert",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "648d4321657b64202aaa65423de9d1ac710d79a8440e45aff2e014dfb10d5517"
+    },
+    {
+      "id": "s3-shooter-expert",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "66f78149c277b7655cd315cf1f596de9094cbed3f7380487de338c52359e782d"
+    },
+    {
+      "id": "s3-shooter-long",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "e9481209182398f2b4514bcba8784b0dc3a17a97bfff1d5839396129b082bb99"
+    },
+    {
+      "id": "s3-shooter-long",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "dbfd8f6809aa905756f65571bf039ba2a05005d04998f21f61ea647bc646974e"
+    },
+    {
+      "id": "s3-shooter-long",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "b5199a1250de36277cc8e704a3d6deb6bbb588bc2fc37d44c037e1757a8776dd"
+    },
+    {
+      "id": "s3-roller-compact",
+      "event": "windup",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "d3a005fe67d7ec140c75ac4b2eedd4d1b0e19c540c0308861be9a1273bc5d96d"
+    },
+    {
+      "id": "s3-roller-compact",
+      "event": "windup",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "d8be3ce50120bbdc319121081b2e13525d4098b40b575e50460395cec4d8d6cb"
+    },
+    {
+      "id": "s3-roller-compact",
+      "event": "windup",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "24069f86fc6c679f9e12272f945f64f2c57b8086e94837b3e86435ba92d1a10a"
+    },
+    {
+      "id": "s3-roller-compact",
+      "event": "roll",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "0446c92dadac18a9b8bd46074ae1bd319ddb26f711b983855e8046beb4758bdf"
+    },
+    {
+      "id": "s3-roller-compact",
+      "event": "roll",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "23378ee231e3f49657ef02081c757c7aeb2be31de0799e2f35f33c50b4bb2281"
+    },
+    {
+      "id": "s3-roller-compact",
+      "event": "roll",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "4850c8fe0b03d75fda3215d54c828d21e7d0752d07d3ba9dd20ff0962e610a97"
+    },
+    {
+      "id": "roller",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "286010c343c882253657c2f935a261930d9ef507279cab7466be38c6f11797df"
+    },
+    {
+      "id": "roller",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "886bbb4a29043235df2e845f43c2c3f811355b3303ee24d72b0f423758f322c6"
+    },
+    {
+      "id": "roller",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "1321456fd53f4a3555d0187cf9e7350ebbb7d571e593c88558bf297023cf591d"
+    },
+    {
+      "id": "roller",
+      "event": "windup",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "884b2626913846ff4f74028af981881722c12080e44a5ff3d3aee23af445a8a1"
+    },
+    {
+      "id": "roller",
+      "event": "windup",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "37567218c8938a6aed3209a9d660bd1d8b234fefaee2a77b741a3f676a2a491d"
+    },
+    {
+      "id": "roller",
+      "event": "windup",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "badf2ef56a6ef57e53014e4d828e0d499fdf69f4f0ccab0223fd26688c818d4a"
+    },
+    {
+      "id": "roller",
+      "event": "roll",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "258683c77235c30b42ca800fd04461c20151257a8a781cfcee4605db51cd9009"
+    },
+    {
+      "id": "roller",
+      "event": "roll",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "adf256e2734c7f235950199b8f4d0a0fc99924d630683396d52ce12c4c7dded6"
+    },
+    {
+      "id": "roller",
+      "event": "roll",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "355d5c8f3587e1eb088ceb4b4605ff95c86920ddaea68bae9c298e90590a3196"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "7d1d6f09bfe85d23b93f2f6e4e5238141b9a92529625b66d4a26c981735d64fb"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "58790fbd483fa14b67ba4041641a14d0dfa525e3fafa5720bc30dfb72f2a950c"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "ec0657b500bad3baf26516be76a3471b18d6c4501530467560a14b9d4b997c10"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "event": "roll",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "28367e670f2fc9dd5735cd8e606e9cfb2714abea4222a1b8b8f63855cca89e70"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "event": "roll",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "911258686b8ab97ca7396b4c8b1b06d051bdad9de35ecfc2ee9c76e5b6909650"
+    },
+    {
+      "id": "s3-roller-heavy",
+      "event": "roll",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "c7a39d5523946bd31000a11ffcc7fe9bda1def9c625db7c8e6e666215d71c62b"
+    },
+    {
+      "id": "s3-brush-mini",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "acde5945e5e2f3cb0529fde80865edf05769a1e1acf8612e0ce3fce67089a407"
+    },
+    {
+      "id": "s3-brush-mini",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "cffa9c2b3fca5bf6882208ff229d623a204780bb5a3d349dee0c792c16a8409d"
+    },
+    {
+      "id": "s3-brush-mini",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "7c42c0eab551add5c708879cb5f948b6e220c813ed6fd31e9e4a817940d86241"
+    },
+    {
+      "id": "s3-brush-mini",
+      "event": "roll",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "59af51a68c73c4fb6c40c7237c5c3f5d4a08c9c00da75668baf9081810c64eb1"
+    },
+    {
+      "id": "s3-brush-mini",
+      "event": "roll",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "98516ba9c8809333a55a79c5b57056ecb04085b75a84881b873b50b145255682"
+    },
+    {
+      "id": "s3-brush-mini",
+      "event": "roll",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "eac5f58de9dc57a21fbd2cfccb0b5e4f3af1e84e1ab290218a2a17fd34b4f997"
+    },
+    {
+      "id": "s3-brush-normal",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "95f15eeb5a838de5d0ab3a1339adbbc7341a63a547b7f4373dc601e49ce8a921"
+    },
+    {
+      "id": "s3-brush-normal",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "42a78f10f3c5af1b36fb6118527eb5204eb7ffa79894c6eb8e9b3e2e5626ca5f"
+    },
+    {
+      "id": "s3-brush-normal",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "d38f4c869230abc22203b7c0294a560744b43aac9f6ea86b62f8746cb0accd1b"
+    },
+    {
+      "id": "s3-brush-normal",
+      "event": "roll",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "893dda27bd72a81862bd4f5bf380dd7773f85ef7ffca3ec0eecf18d0aea90485"
+    },
+    {
+      "id": "s3-brush-normal",
+      "event": "roll",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "a3393201d35b2260bbdd593ac5798605805f18f00af69cfcdda3666180f4a241"
+    },
+    {
+      "id": "s3-brush-normal",
+      "event": "roll",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "7d552110f4cf0276f9d915351437755502277975cf101911567b42aba8b0e9fa"
+    },
+    {
+      "id": "charger",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "d6108e0ef9f683a7d5d6214bd45e9f5eb03ad637a4808fbde7bbd4a65c85711b"
+    },
+    {
+      "id": "charger",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "f49242dc411435e11a05d3c9aeb08cf7164f7893884aa12f7c064764f5fb1cb2"
+    },
+    {
+      "id": "charger",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "8497b1b56408b8012053e2d03216ef50fadc7ce5ab9aaccffc7bbf6510a7ee36"
+    },
+    {
+      "id": "charger",
+      "event": "fire_full",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "5cca6f4b41ed7c5c07a03b50bf1bc27ac46d434102c87e4e838d8b43d7744006"
+    },
+    {
+      "id": "charger",
+      "event": "fire_full",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "1215a96a1e404d6ebebe7416a5e300dcf8af102cbe552480620b2d3fc662d7b0"
+    },
+    {
+      "id": "charger",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "b73601e590cc9e18573d217e4f13bd46b12ba80b04bdc18e02c3878d3c57d5e1"
+    },
+    {
+      "id": "charger",
+      "event": "ready",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "900bbea8fc2034ae3bef51810d96f481a329af98b51a9a7bf2ffdc48b8df066d"
+    },
+    {
+      "id": "charger",
+      "event": "ready",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "0593ef1f92f8c352cf904439147e46b0ff5165a647bd02cf4b90a935244cc6d6"
+    },
+    {
+      "id": "charger",
+      "event": "ready",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "e98276a7ade03fe4f25675ba313178a666ef0a5939262f2a4486163023a1f9ea"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "bfba578da7f54858970e7fd3160d61de87f5b741883350ef515ff10c8fdc5946"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "ac374c847cff0c30e00ecb0fafc715383080f262b72f6b2eb351e04bd0ca0877"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "138c8d84b0740b0c7ede2345b5ffe6bdf1ee19adee8f8f73a58eaf579ade1e82"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "fire_full",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "e8f9c3728cf3b470819ccc3fffe4d40c72609d315147861b8dfd907cfd5ab541"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "fire_full",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "2472373327e604c2baeec6a9b7affa1ef9c9728a2e89a25843a41da097b24532"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "a8cbb3128218ae717df69b9c05901468155e80e913b056395c53941288f03bb4"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "ready",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "e3f3a07b3b7c67bbf96bdfc20dea3b145fe3176aac8b9223ea4a35a1fff7c799"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "ready",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "d5b065b9ed68c3a66f0ae3020713bab849ac34373779e1bc7e18a13ec964003f"
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "event": "ready",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "58bc920017a7bf139d2f4e6639e01109097d70a16492727d12f0ada798169313"
+    },
+    {
+      "id": "slosher",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "420f350dbb3586888faeb9d87fe8a6c1b2093e462267a7e1ceb8c6b12b93fc89"
+    },
+    {
+      "id": "slosher",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "4fe9f4019ba31136c2b1acf23eb6e6bdbf2332e931d4c41abf983476af431f32"
+    },
+    {
+      "id": "slosher",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "eb3f5ddf4ed15b38525e9e22b9be84e12768d1ca29ce7bbcea12ac2b069e989e"
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "4ec7deadb804b756da17198a624652c788d3a69b2a24016850efde302d886352"
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "3661e2b4953ef74d9402f8d148544ec7fa441f305c55f04eab76e5f3473085b7"
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "831794d5d8f8b1d6797cc4da3ac6683066bb9708e4010ae85a47171752155457"
+    },
+    {
+      "id": "s3-slosher-launcher",
+      "event": "fire",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "441fe9e34671be4cbf5ba29233a901169d53bb49caeb4f98195ddf2a79302d25"
+    },
+    {
+      "id": "s3-slosher-launcher",
+      "event": "fire",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "5dfb48a7c88e774939c7634e5544a149899cd24e279c11f4d716531b4dbbfb22"
+    },
+    {
+      "id": "s3-slosher-launcher",
+      "event": "fire",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "5ff4e5be5a673732c754330c2fa8a8e739743fc2a1730781e2f3e5c4ad88b0f4"
+    },
+    {
+      "id": "s3-spinner-quick",
+      "event": "ready",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "e3b99ce4644eff97b26a7e2474bb6fd2852d251794d31b139767744a82d01586"
+    },
+    {
+      "id": "s3-spinner-quick",
+      "event": "ready",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "ee0779b38d4b8577804d19b94ca627429429ec4608a226dc0dba3b4a38a18d6e"
+    },
+    {
+      "id": "s3-spinner-quick",
+      "event": "ready",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "b2c6ceae2ba9db4e21a64934fc4e9c595ad93d3fdf6e59f919f045f82ed1f52d"
+    },
+    {
+      "id": "splatling",
+      "event": "ready",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "344369fbe6bcbef1046babf40c8089a61fd800ff31acf7cda2000881397611ba"
+    },
+    {
+      "id": "splatling",
+      "event": "ready",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "c93653c9fd3b31055d6cd129eb134f118fedd53c61086feae5eb9c4f862ea1b9"
+    },
+    {
+      "id": "splatling",
+      "event": "ready",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "8eb91d55ab742d19a7a90f453bc1743c5040ec76ea546b6c4fc222adbbc2ba7c"
+    },
+    {
+      "id": "s3-spinner-hyper",
+      "event": "ready",
+      "variant": 0,
+      "sr": 8000,
+      "hash": "642117df69528c71387e6b80bc2ea2399d262e8ae7e726e90aa357466a906950"
+    },
+    {
+      "id": "s3-spinner-hyper",
+      "event": "ready",
+      "variant": 1,
+      "sr": 8000,
+      "hash": "354568e0c23271e112eb29af420d73b87482e67a0044103285d4a058478164f8"
+    },
+    {
+      "id": "s3-spinner-hyper",
+      "event": "ready",
+      "variant": 2,
+      "sr": 8000,
+      "hash": "8809b7a0ba6390ab5cf1298db259f53456c1e084eb1223c99540bc63eb69623a"
+    }
+  ],
+  "render": [
+    {
+      "id": "s3-shooter-flash",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "5cff499b5d9fdea7dfce74bd0d35db4d3cc425aa09b8a5cf25d7df0f5a55234d"
+    },
+    {
+      "id": "s3-shooter-flash",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "8378bc315f4fafb53145342f0c398a64e5f8a7fe06a15d601236e5ff44c13fa0"
+    },
+    {
+      "id": "s3-shooter-flash",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "c043dee75cf385d9e5c9ce388d83db200228fbc18e93398c6a2ecf50b6f948f9"
+    },
+    {
+      "id": "s3-shooter-flash",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "fd35cc041fde87e432bfa66e625814577d15417ddc219030f566be6718340de9"
+    },
+    {
+      "id": "s3-shooter-flash",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "e5c0b47dc736d13912ad41c44edc51fb275aaeb9c28c755e2aba2e8af61eca7a"
+    },
+    {
+      "id": "s3-shooter-flash",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "90777e93469ab0474bb03073842c7a7415da94d4c384b7cdded722a872eb2405"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "de9b721d8cefd62837cf3b584e9165068ce080e59f80bc64e3b5ac70d80a3836"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "c9af81358ad1d7152680d7bbcafb31d4e8e21f69cad7136bcaee15aea5295ea3"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "explosion",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "2d19df727a20f8457f7cf665e2ffc27d6036abcf78824f147e5f98a8ddf742b3"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "433099b316bc08454fb7e911130c446c21bf4cf3b0cefe9045e2796d64a970f4"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "mode_change",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "8bb071e5ca82c7da2ac6a3482839cdca9d0447ef07655682d7202ae3174ad998"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "d162e400aaf8c613f9ed33d6d3f2608e006103759c0042bcea4b5088c7e29744"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f767b71301671ab5f25c21c5c01392b51ba2eb526db6522fe8480ed583da9601"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "explosion",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "292ffd870028aca5edd0393f306da448e05027e64c51a4a132b95740af6d4eec"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "a09ba7689f4ce34e883630f5502d2abc68ec9f39ec9da7230a0582b84abb6e90"
+    },
+    {
+      "id": "s3-blaster-precision",
+      "event": "mode_change",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "22cdc65de5bcec7f8ecff9e5f2767654b78134598bb0549e5387c4855b1c3d71"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "b31f0d127fd1aa06709e822c938e979623e9ee58e5a81d93a5522c0aaf1bd645"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "fire_vertical",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "ed973320751b7880331aec349d9089b0cab87039a9074b57939124225ce50843"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "windup",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "1d7a1dd68343761094312a27a3b66406886844b6fed2e00741d4b1c0b973799b"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "roll",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "04af2ed1c362f9ead698616c99377b1f38b404a0235b2e17322158c5f5270491"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "b13f85b108b8350ce84184e7051233e8cb5ea1296f0d58c7ec79fc4f652d6e78"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f994008ed7758f0ac1d093a48facefb8d8dd72d8e90e43abc477690828cece6a"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "fire_vertical",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "1a08d5a319417ab67119c5071ff630dda146b87956508d7cf4185d014e3732d9"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "windup",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "fe8ecc14ded26c86ea52870445964a137cd5b10245c167bb8ae3cc653e02f9d9"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "roll",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "2292d9602774bfdfd5dd075a853a5441788c34ddaec818b8ea6e0996baef03cd"
+    },
+    {
+      "id": "s3-roller-wide",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "e98431d988a37eca82cc88305258f73372df9cabe30fb67a7715208d137278b1"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "1dd7ab6dbfabf56f439d066fa3c83c8768227f3c674ca7009c3c0a5449d6ba57"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "windup",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "74830e6477c388f957423e5f1a1e976402e25e8cfe66edb35dee1bc929149113"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "roll",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "349eb52ee3936d17c0ddeb64c5915c74803906c7116ee468f712e047305826d4"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "03173a72897aee8d781a2ed120e16bc68b758be66eb329d1d4a0580f5ff6aa77"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "d332460f34c9ef17fb45e2f2d5a581c1ab4ae2d6d27846c58f488c230e44db02"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "windup",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "0fa5e9f060e9e5fb4e10674d26243e826df8971d1d6f02fe11c0847f3a481471"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "roll",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "c37b8de3cf5ed4bdce9924d81c6bb75ccefd4dfa21bcdb51b9be6ee4602309cb"
+    },
+    {
+      "id": "s3-brush-heavy",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "0b4f1a76b6c8c0ffb28caf988ca3af8f6e78a64ff41784fb2fd5179d38cbf081"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "6035fd661ebf76d8bd4c9b5c7442eac507b2ae637eb22db649d49ca86e068293"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "f63e2185a9d91f497ce94645c5b489715f77777817b62fdbae3a496d092b42b7"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "charge",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "20978d4754ce57cc3eb5977c180058726057a3dd02b7854a8a88438ba8aa3533"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "ready",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "ba18382e68eda9146c351d7f34e983dfb2ecc63c55aa1c0cd743e99bf413a95d"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "release",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "c04f6f745a0600e57c1ad751960db0cd3eaecbca34e03944c503632e78a8f775"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "da216350af53979806a12fba2f8b8a3f5a6bbecfd8f242a31ff612aba4412deb"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "scope",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "c44acc659f341ff0da106d606bb83bff41614bc65d540e80d501b05377cbbaa4"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "a083726b1c9d569c6f9bbb2005f6d9a7792ccc6c9be21cf0241488ff4040c011"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "12d95920fcce8d44f9abbbf4b50e70d496d04d65ca0a8ea97cfba2e524d3e54b"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "charge",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "7310669b4be223a88892ba53512de9e3874dd3b2586e8c2ce5032c7f3c0bd978"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "ready",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "91e024e92d0624f53a9d2289f079d52889bbe19eddc7c980e0dd959f1c1d6356"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "release",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "12404929b4fa54bfafb74901b6b6c7c0bd324bec64b5dbd709678025378a0eb9"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f21e52d4a356d103e1fd0035685223915e3939ba8265f4b15f62032c8324f641"
+    },
+    {
+      "id": "s3-charger-pencil",
+      "event": "scope",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "688ca7ef8824dbd808816260d743586eeb6a0e8913d1c10e9be9da4a6eb95b79"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "ee39b8af19531fa1766ffbfa29f87c5a940ee3b74723fe836ab2f877a7a2f2cc"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "windup",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "af30f15e9ce849c080f0fe67070f637a831e46b529b550225be80f9ae176611b"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "58559f1106483b41816a6f0eb2c1df7f001fe0be8f24a1c519c9a89721c1c99d"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "explosion",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "a9aae78a581579eba2b376e81f340d0aa3c8496068555d25fc56b4fb7fa8fec9"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "8738f82ac3f90b4114350069888caf25142f721e06527f48f2f87ab5669c391e"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "windup",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "186d469cb0c73f45c4238273f8a4ead93b01a3e16a12649ddcb136ed2a67bfb6"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "664953df787cfb1b77a5ed37fffd1d65514a989b64a3902e26dad3370bb65505"
+    },
+    {
+      "id": "s3-slosher-double",
+      "event": "explosion",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "42b5114fa13d439f226f841ca56284265c08a523e35b66d87a71a4b100f8ab5b"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "f9cd71e3fe62b55c09ed19af94f94c122ce5b4d460214c38631ad2a669fb2575"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "e7898a32a9f10c88dfb79874df4bf65970ef581e9c6f91aff530737440b3c111"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "7e102931850cf8f2dbc94b5a0d9fdf5b12f2bfe15f637b80abe2f7e2987c0464"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "charge",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "ac2801b564267837024e9f60c7ebbfa4c59aee08ad904055111d1b39cc897b39"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "ready",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "e7b1e83e8bcc8bae9634dcd10c0b957b19ff0465aa7c3c60921a8d66cf2334f3"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "release",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "c8ccc939b14aca45373fe26a66bb9c3160734b0c4f44a13eaa092e2a552cc3fc"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "windup",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "0ec25ff465fdf3923459649a18eb251e2968bdcbeb1a752ee45c8ccff456e4d8"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "spin",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "b9465ac863a51409c1126e60168c561b9f8b77e3303500e1d14f2f538abc399e"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "a228b7a7c56f0464427d4308b38728e73a78f17b16bd612b500e096cd43a7267"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "875e09c49a81afaae8428e9be22a224644a5a6e3a255e99dccb3fd9b4090a154"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f3d9bd29b5874e5f830354f047c7d826d14d89bffd205f607756cb5a4b1a1984"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "bb752b3042dfacc430792784168a7f592d22cdd466552b2af5951ad4c4d95c5a"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "charge",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "1c843c5ce69fcc1755d72a5e347cfb4ac4a876575076b8c8afc415c7126ad03d"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "ready",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "19f13f32f7672763c930ebdc199c2f64022632dbc02d306fa6da3bce17cf2574"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "release",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "3a4a3560ed3bab9c76a54c59fdc8109b29cf47175500a3b578f40fe448028cc4"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "windup",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f445a0f3a7032a96590818d9b49e5cda79df9f7de2062873cd1e9b2b96fd5a32"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "spin",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "ce182575ad11d10d2776a382a97f9ceba4bdb3b0b7957f7ed0e2b52218aa82fa"
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "420a83ed10c8c4812db40dfe0d1cd09c4cf2331fc44a3f6ae8ccffc4bed37c0b"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "7afe28bed2d57fd6e4f5df06e9aacdf402241f9bc7b9a08674581a42a323846d"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "fire_left",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "8c2f038a2f1dc62f8ddd8bef841fe7362f5f9b799f91f12ef0aa73b37244bf1c"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "8f990ca1322f1ebbe23e072d14de468da67f572a46411d705e1bbbe72fc406ed"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "dodge",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "3a3e1811973ebedf138aba441fd2e141b70bcf32276a23f0aee3d110ffbd97a0"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "7d586a8b8403f526f380b6722ca3ab980ba7394066ff03476d7bcb8070375404"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "277f565d9ccf14b5c4d93af6c393a2b432bf52d509ffbecfab1205f9c30888e1"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "fire_left",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "ed351186a230fe189e78bb4b13b939ed1831f40f5b9adceaced30668cd5e8439"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "fire_alt",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "104ceba7e9abb19b7d07814fcc0f02d8c420e87e5e4863438cd39fdfcf21d9de"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "dodge",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "7a27bd1daab43d7a81cac3028dbe61602cbf87388e45b88ebbbad10242533ae7"
+    },
+    {
+      "id": "s3-maneuver-long",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f58fae084abf27ede76e972478ba377304d24dd61706633c26c0153f93179be2"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "d3fe999b7d43d559180ec58334ff15d21ea7ebbcd54af5404c57d8602502f16a"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "open",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "33694c8796afea96a8c7a48b066579a42377819df491bceacca7ea69850e1135"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "close",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "7bd16fb6dcf8ff421b0613e1fb3bcc6521367f65ca6bf65530d5d0e9636625a3"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "purge",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "e7ab8221ff43be3c9bd21452c90130501a6bca2e7a4908fbf1a1658b52dd3d0e"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "shield_hit",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "3ea44fe85df3ba429093a47b55da2725132f1f33268ec60a5a22218b344b31cf"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "break",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "0fdb2940c057ff2f18b1b679c436b2bca4bc8e9c72bd3c58437fb1aeeb89a594"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "f9e59521a4474a99c134fbb0736e028990f09ca7cdf2778ff6ce03aff457ea1d"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "5357707f937aacf3b10e45108fe69a22a5bdd7766d71f0499f1b24164c219fc5"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "open",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "8025c239339e434808ee47a5551f1e2fe9dcdabe29111b352f17d96b9956fa06"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "close",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "fd03d738bd684f2a4c4cbcb1da8aa12d953cf508ac395ea40a891ff6570cfa69"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "purge",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "00e1f411cc4f85e971c4ab9fc4887c6d36c2b02c38454a9c71f45419c7726a45"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "shield_hit",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "bdf515e07d389fa703c3151547786867d59b5b94c612d27715a7fc6b4bcaa0f1"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "break",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "67ff1f3156b24b4954554c4b2d4494d562f3c4b96aa3a96ff980b3c95bddf25e"
+    },
+    {
+      "id": "s3-shelter-focus",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "a601bf5afc0fafa8ce3d96e3cbdf5bdd04cb72670fe0749a54556612f66e3958"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "9e18716568f3f49d04af55d597d4e46b26bac93f17d149e1e6d8c4cfbef05fa9"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "42c16a98b4c417b2afbd894023e38a2a21640f8039957070dab846aa3a019d16"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "charge",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "4cb3dece6ede47e4853f0edcc870676cb111c141319b5d436763d6f6eec49d88"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "ready",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "4e8e56b0afd505fde8f641301a072126471a1d0699faaae51d803d34ab355483"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "release",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "df701d087a42b30b249700d7d4cf54b01f21f604ef3d7ee946ecef10e685d5cb"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "ed5cca38504428c3f0c4902d1a74d4188f08ae5df28c6c024708808acb4ce2ae"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "explosion",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "2a1268c6dfb4e937c9430400c794cbe13058ec6d55c6884c8fae4bdfa5fdab65"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "bed50c26d18400dd7602e58e45db00c435b5289904dcfb04f8be3797291361f0"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "1e2d5fc4f32f63c6ce6dbf154e0abc39b7f000d6f822ede7f34f569d1ffa79e9"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "charge",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "dcf80d376e7052d9f5abd5bd2d520cad303020a31e577e5c2ebb9b45c1f43089"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "ready",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "2cbf8a2426900a441ed4615f758a4e5d149a311b8aef98b40e21115170a3ed7f"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "release",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "1a718ad148b9c191becf9219a4b7da71d7a7ab76c84c053e8d119f8fba7244f0"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "5a833c7fc4633bc139345710fea091b9dc16caec93032f9fe8c502b3d7e16f58"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "event": "explosion",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "634646b6f3eeae1f08c4a3c6d793f38764fbf497413febaed1c4cf5d909f5be5"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "fire",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "684309abf1521c8298953924c88108abd6719095739e77abc03f73fbf3fcb74e"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "68e6427a6d58905eeb1ea1a6eebdf2c6ad96dd5934bf35a2ec7e16d584da1682"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "charge",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "986d9e641c1a69c3871b5079020dc619648c2e456f06965dac8f14f377202f05"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "ready",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "bdecf09202cf3be1fb3fbd2afeac31c90c1e23e16943ac6e1c39dd243eef5e4f"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "release",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "5f9f45b6685081a7c190cfe7017adfebdc9cdfceeee7e15cf3eccec0e5778d65"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "windup",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "50165621012504789bde650ecc2f3fc52fff0575b25171433f92b55649812d91"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "impact",
+      "variant": 2,
+      "sr": 44100,
+      "hash": "b9a3509fce02450468635f8ae7d522035f3d5beb751bce7a7539422d4b34cf10"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "fire",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "f72070cc558a295db59e0208850d89084d2b77975826c0559048e2482bb20668"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "fire_full",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "b8271b0609f86e922ff472d48f29fecc8be2cedeb16d34a2999256e2939aa372"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "charge",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "804e3382c7a2cb642bf0ac157cc3db64b2b636b73750ef95ba5d0909866c02b7"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "ready",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "24704cc3258c0a2b0b9467cb2fb7625ec87f88c96d73ee3bd945cfa5eacc2ff9"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "release",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "0243388f11867972a81c5472a96852902fabef89d8980e91264f8c12514fcd4d"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "windup",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "908c2a6721d8a1c9b3ca1d3293f7adeb2b3d3b0d5413f89f110653cdd2f690aa"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "event": "impact",
+      "variant": 2,
+      "sr": 48000,
+      "hash": "635ea964cb68f7887141d2e24fe4ab07f4649f716384a303162d8a34edfb18b7"
+    }
+  ],
+  "cuePlans": 1760,
+  "baseline": "7f863ea2; Float32 PCM from unmodified source modules",
+  "fallbackRecipe": {
+    "id": "drive-fallback-control",
+    "family": "control",
+    "events": [
+      "fire",
+      "ready",
+      "roll"
+    ],
+    "seed": 31,
+    "coefficients": [
+      220,
+      0.08,
+      3200,
+      0.4,
+      700,
+      5,
+      1100,
+      7,
+      0.3,
+      1.4,
+      0.2,
+      1.6
+    ]
+  },
+  "fallback": [
+    {
+      "event": "fire",
+      "sr": 8000,
+      "hash": "ec1a0bbe8a324cdcdc1ba7f232cd834fdbe8d758be739b21dafdc3f8c2683a33"
+    },
+    {
+      "event": "ready",
+      "sr": 8000,
+      "hash": "8123d1cd419904c438f220e87ed4c98fba279f5e82bf5804381a900271ca2cf0"
+    },
+    {
+      "event": "roll",
+      "sr": 8000,
+      "hash": "8417d65446d8cdffedfe6cfc2a5a1f52d6ccf5fe14e2d3ed9f7bf4d73ae5556f"
+    },
+    {
+      "event": "fire",
+      "sr": 44100,
+      "hash": "c869e4d90cd36a639d0621ed5db2804f0e5cbd9000681612929ef3295ddc8298"
+    },
+    {
+      "event": "ready",
+      "sr": 44100,
+      "hash": "b23d73f7631eb1a4c0dd9cad4795ff6128dae87f95984aed28047a5869aea575"
+    },
+    {
+      "event": "roll",
+      "sr": 44100,
+      "hash": "8197eb1bf689f58bb760fa3840a7329e96eca4c1d50bd36cbac76f018ae7cde0"
+    },
+    {
+      "event": "fire",
+      "sr": 48000,
+      "hash": "d4e0a2d433f83e6903dfac9c5b16b8a15ee82c2ab39a5d9875ab93b3ebcab807"
+    },
+    {
+      "event": "ready",
+      "sr": 48000,
+      "hash": "215a725147b493f1e304cf3055a7de9df6f483fcab2273a97c5d47f00b694b48"
+    },
+    {
+      "event": "roll",
+      "sr": 48000,
+      "hash": "e8f86de6dde7dae9d1942ecfe87eebd8707e63609f0b82c5172db88d7dcb8c18"
+    }
+  ]
+}

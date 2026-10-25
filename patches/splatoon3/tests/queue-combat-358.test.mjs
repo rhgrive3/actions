@@ -3,6 +3,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {catalogFlickSourceDamage} from '../runtime/catalog-flick-damage.mjs';
 import {catalogBubbleLimitGroundNormalSpeed} from '../runtime/projectile-presentation.mjs';
 import {fixture} from './source-fixture.mjs';
+import {parse} from '../../loading-cache/vendor/acorn.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-combat-358-before.json',import.meta.url)));
 const read=name=>fs.readFileSync(new URL('../runtime/'+name,import.meta.url),'utf8');
 const pure=(code,name,globals={})=>vm.runInNewContext(code.replace(/export /g,'')+';'+name,{Math,...globals});
@@ -66,10 +67,18 @@ test('real composed Charger helpers return their outputs and births retain indep
 });
 
 test('actual Charger scan reuses range-clipped duration and preserves each moving target endpoint',()=>{
- const source=read('weapons-charger-flight.mjs'),start=source.indexOf('  function step(system,job,dt){'),end=source.indexOf('    const amount=job.damage;',start),after=source.slice(start,end);
- const run=(code,ghost,speed)=>{const ends=[],G={actors:Array.from({length:8},(_,i)=>({alive:true,team:1,pos:new THREE.Vector3(i,.2,i*.1)})),physics:{}},job={speed,range:.5,travel:0,pos:new THREE.Vector3(),prev:new THREE.Vector3(),dir:new THREE.Vector3(0,0,1),owner:{team:0},team:0,seen:new Set(),base:new THREE.Vector3(),moved:new THREE.Vector3(),ghost};let mins=0;const math=Object.create(Math);math.min=(...a)=>{mins++;return Math.min(...a);};
-  const fn=pure(code+'return actors;}','step',{Math:math,G,EPS:1e-9,SIM_DT:1/60,PLAYER:{},collision:{InitRadiusForField:.1,EndRadiusForField:.1,InitRadiusForPlayer:.1,EndRadiusForPlayer:.1},sweptWorldHit:()=>({hit:false}),coherentMotionStart:()=>({x0:0,y0:0,z0:0}),hurtboxRadius:()=>.3,hurtboxHeight:()=>1.7,capsuleEntry(_a,end){ends.push(end.toArray());return null;},chargerActorBeforeStop:()=>false});fn({},job,1/60);return{ends,mins};};
- for(const ghost of [false,true])for(const speed of [0,60,120]){const a=run(before.chargerScan,ghost,speed),b=run(after,ghost,speed);assert.deepEqual(b.ends,a.ends);assert.equal(b.mins,ghost?1:2);assert.equal(a.mins,ghost?1:9);}
+ const source=read('weapons-charger-flight.mjs'),steps=[];
+ const visit=node=>{
+  if(!node||typeof node!=='object')return;
+  if(node.type==='FunctionDeclaration'&&node.id?.name==='step')steps.push(node);
+  for(const value of Object.values(node))if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object')visit(value);
+ };
+ visit(parse(source,{ecmaVersion:'latest',sourceType:'module'}));assert.equal(steps.length,1,'one complete Charger step declaration');
+ // Keep the real lease try/finally intact; an interior statement is not a function boundary.
+ const after=source.slice(steps[0].start,steps[0].end);
+ const run=(code,ghost,speed)=>{const ends=[],G={actors:Array.from({length:8},(_,i)=>({alive:true,team:1,pos:new THREE.Vector3(i,.2,i*.1)})),physics:{}},job={speed,range:.5,travel:0,pos:new THREE.Vector3(),prev:new THREE.Vector3(),dir:new THREE.Vector3(0,0,1),owner:{team:0,addTurf(){}},team:0,seen:new Set(),base:new THREE.Vector3(),moved:new THREE.Vector3(),ghost,paint:{width:1,terminalRate:1}};let mins=0;const math=Object.create(Math);math.min=(...a)=>{mins++;return Math.min(...a);};
+  const fn=pure(code,'step',{Math:math,G,EPS:1e-9,SIM_DT:1/60,PLAYER:{},collision:{InitRadiusForField:.1,EndRadiusForField:.1,InitRadiusForPlayer:.1,EndRadiusForPlayer:.1},sweptWorldHit:()=>({hit:false}),coherentMotionStart:()=>({x0:0,y0:0,z0:0}),hurtboxRadius:()=>.3,hurtboxHeight:()=>1.7,capsuleEntry(_a,end){ends.push(end.toArray());return null;},chargerActorBeforeStop:()=>false,paintTravel(){},splatTravelPoint:()=>0,chargerPaintWorldRadius:width=>width,emit(){}});fn({},job,1/60);return{ends,mins};};
+ for(const ghost of [false,true])for(const speed of [0,60,120]){const a=run(before.chargerScan+'return actors;}',ghost,speed),b=run(after,ghost,speed);assert.deepEqual(b.ends,a.ends);assert.equal(b.mins,ghost?1:2);assert.equal(a.mins,ghost?1:9);}
 });
 
 import {ClamsRule} from '../runtime/ranked/clams.mjs';

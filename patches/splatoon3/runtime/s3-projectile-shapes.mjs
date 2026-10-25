@@ -402,16 +402,6 @@ export function bodyParams(p, kind, sp, out = {}) {
 export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capacity, matrix, rotation, scale, dir, axis) {
   const list = system?.list;
   if (!list) return count;
-  const write = (at, radius, color, tail, wob, phase, look) => {
-    if (count >= capacity) return;
-    scale.setScalar(radius); matrix.compose(at, rotation, scale);
-    B.setMatrixAt(count, matrix); B.setColorAt(count, color);
-    const o = count * 4;
-    shp[o] = tail; shp[o + 1] = wob; shp[o + 2] = phase; shp[o + 3] = 0;
-    inkLook[o] = look[0]; inkLook[o + 1] = look[1]; inkLook[o + 2] = look[2]; inkLook[o + 3] = look[3];
-    petals[count * 2] = 0; petals[count * 2 + 1] = 0;
-    count++;
-  };
   for (const p of list) {
     const kind = p.s3Shape;
     if (count >= capacity) break;
@@ -422,7 +412,13 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
     const seed = p.seed || 0, ph = seed * 40 + p.age * 18;
     const grow = clamp(p.age * 20, 0.2, 1);
     const R = S3_SHAPE.explosher.radius * grow;
-    write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
+    scale.setScalar(R); matrix.compose(p.pos, rotation, scale);
+    B.setMatrixAt(count, matrix); B.setColorAt(count, p.owner.color);
+    const o=count*4;
+    shp[o]=1.15+Math.min(0.3,sp*0.006);shp[o+1]=0.12;shp[o+2]=ph;shp[o+3]=0;
+    inkLook[o]=0.32;inkLook[o+1]=3;inkLook[o+2]=1;inkLook[o+3]=(seed*43.98)%6.2832;
+    petals[count*2]=0;petals[count*2+1]=0;
+    count++;
   }
   return count;
 }

@@ -18,7 +18,7 @@ test('every special model builds from shared geometry with team-ink parts, withi
   for (const id of SPECIAL_MODEL_IDS) {
     const m = buildSubModel(T, id, ink);
     assert.ok(m?.root, `${id} builds`);
-    const list = meshes(m.root), tris = list.reduce((n, x) => n + x.geometry.index.count / 3, 0);
+    const list = meshes(m.root), tris = list.reduce((n, x) => n + (x.geometry.index?.count ?? x.geometry.attributes.position.count) / 3, 0);
     assert.ok(tris > 100 && tris < 12000, `${id}: ${tris} triangles`);
     assert.ok(list.every(x => isSharedGeometry(x.geometry)), `${id}: shared geometry`);
     if (id !== 'spInkjetCannon') assert.ok(m.inkMeshes.length || [...m.materials.values()].some(x => x.userData.s3InkDerived), `${id}: has team-ink parts`);

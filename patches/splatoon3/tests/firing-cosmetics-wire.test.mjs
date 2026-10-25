@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {fixture} from './source-fixture.mjs';
 // Actual final composed native serializer, before/after observational drawing.
 // This is a packet-component regression, not relay or two-peer acceptance.
-for(const id of ['shooter','splatling','s3-shooter-heavy','s3-spinner-quick'])test(id+' native wire bytes do not depend on cosmetic drawing',async()=>{
+for(const id of ['shooter','splatling','dualies','s3-shooter-heavy','s3-spinner-quick','s3-maneuver-short'])test(id+' native wire bytes do not depend on cosmetic drawing',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmMathRandom:()=>.37,
   extraExports:"export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};

@@ -1,3 +1,4 @@
+import {verifyRandomObservation} from './probe.mjs';
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {fileURLToPath} from 'node:url';
 import {verifyIdentityPair,CURRENT_SHA256,REFERENCE_SHA256} from './reference.mjs';
 import {validatePredictedPair,BANK_PRECISION} from './bank-contract.mjs';
@@ -8,9 +9,10 @@ export function compareHeadingReceipts(before,after,head){
  assert.match(head,/^[0-9a-f]{40}$/);assert.equal(before.sourceSha,head);assert.equal(after.sourceSha,head);assert.equal(before.expect,'baseline');assert.equal(after.expect,'candidate');
  for(const r of [before,after]){assert.equal(r.status,'rendered-awaiting-visual-review');assert.equal(r.browserRun,true);assert.equal(r.sourceBankAwaited,true);assert.equal(r.expectedFrames,12);assert.equal(r.images.length,12);assert.equal(r.screenshots.length,12);assert.equal(r.rows.length,4);assert.equal(r.errors.length,0);assert.equal(r.blocked.length,0);assert.equal(new Set(r.images.map(x=>x.name)).size,12);}
  for(const r of [before,after])assert.equal(r.threeExportContract?.status,'passed','exact production Three QA export gate');assert.deepEqual(before.threeExportContract,after.threeExportContract,'same production export contract');
+ assert.deepEqual(before.randomObservation,after.randomObservation,'same complete fixed observation');
  verifyIdentityPair(before.sourceIdentity,after.sourceIdentity,head);
  assert.equal(before.authoredHashes[changed],REFERENCE_SHA256);assert.equal(after.authoredHashes[changed],CURRENT_SHA256);
- for(const r of [before,after]){assert.equal(r.simulationTicks,360);assert(r.randomCalls>0);for(const k of ['canonicalTraceHash','sourceHeadingTraceHash','randomValuesHash'])assert.match(r[k],/^[0-9a-f]{64}$/);assert.deepEqual(r.bankContract,{status:'existing-bank-response-verified',advances:152,precision:BANK_PRECISION});assert.equal(r.buildInputHashes?.['local-quality/squid-motion-binding-adapter.mjs'],r.authoredHashes[changed]);}
+ for(const r of [before,after]){assert.equal(r.simulationTicks,360);verifyRandomObservation(r);for(const k of ['canonicalTraceHash','sourceHeadingTraceHash','randomValuesHash'])assert.match(r[k],/^[0-9a-f]{64}$/);assert.deepEqual(r.bankContract,{status:'existing-bank-response-verified',advances:152,precision:BANK_PRECISION});assert.equal(r.buildInputHashes?.['local-quality/squid-motion-binding-adapter.mjs'],r.authoredHashes[changed]);}
  for(const k of ['canonicalTraceHash','randomCalls','randomValuesHash'])assert.equal(before[k],after[k],k);assert.notEqual(before.sourceHeadingTraceHash,after.sourceHeadingTraceHash,'named source-heading response must differ');
  const oldInputs={...before.buildInputHashes},newInputs={...after.buildInputHashes};delete oldInputs['local-quality/squid-motion-binding-adapter.mjs'];delete newInputs['local-quality/squid-motion-binding-adapter.mjs'];assert.deepEqual(oldInputs,newInputs,'all other build inputs exact');
  assert.equal(before.browserVersion,after.browserVersion);assert.deepEqual(before.harnessHashes,after.harnessHashes);assert.deepEqual(before.lighting,after.lighting);assert.equal(before.seed,after.seed);assert.equal(before.tickSeconds,after.tickSeconds);

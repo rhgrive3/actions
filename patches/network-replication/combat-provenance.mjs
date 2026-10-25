@@ -132,11 +132,19 @@ function record(nm,from,packet,t,acceptedSub=null) {
   }
   const store=s.proofs.get(from)||[];let acceptedProof=null;
   const packetStart=store.length;
+  // A burst shares one exact index; ordinary small envelopes retain the
+  // allocation-free walk. Only accepted proofs extend either index.
+  let proofKeys=null,recentByActor=null;
   for(let i=0;i<Math.min(packet.e.length,256);i++) {
     const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub);
     if(!candidate)continue;
+    if(!proofKeys&&packet.e.length>=32){
+      proofKeys=new Set();recentByActor=new Map();
+      for(const proof of store){proofKeys.add(proof.key);if(t-proof.at<1)recentByActor.set(proof.actor,(recentByActor.get(proof.actor)||0)+1);}
+    }
     let duplicate=false,recent=0;
-    for(const proof of store) {
+    if(proofKeys){duplicate=proofKeys.has(candidate.key);recent=recentByActor.get(candidate.actor)||0;}
+    else for(const proof of store) {
       if(proof.key===candidate.key){duplicate=true;break;}
       if(proof.actor===candidate.actor && t-proof.at<1)recent++;
     }
@@ -151,6 +159,7 @@ function record(nm,from,packet,t,acceptedSub=null) {
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
     if(recent>=rate)continue;
     store.push(candidate);if(acceptedSub)acceptedProof=candidate;
+    if(proofKeys){proofKeys.add(candidate.key);if(t-candidate.at<1)recentByActor.set(candidate.actor,recent+1);}
   }
   if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;
 }
@@ -255,9 +264,10 @@ function bossVisible(nm,p) {
   return false;
 }
 function rayNear(p,target,margin=5) {
-  const d=difference(target,p.origin),along=dot(d,p.unit);
+  const dx=target[0]-p.origin[0],dy=target[1]-p.origin[1],dz=target[2]-p.origin[2];
+  const along=dx*p.unit[0]+dy*p.unit[1]+dz*p.unit[2];
   if(along< -2 || along>p.reach+8)return false;
-  const sideways=Math.sqrt(Math.max(0,dot(d,d)-along*along));
+  const sideways=Math.sqrt(Math.max(0,(dx*dx+dy*dy+dz*dz)-along*along));
   return sideways<=margin;
 }
 function actualTarget(nm,type,d) {

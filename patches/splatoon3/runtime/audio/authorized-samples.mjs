@@ -24,7 +24,7 @@ function decodedBytes(rows){
   return total;
 }
 function canReusePCM(row,clip){
-  return row.file===clip.file && !!row.sha256 && row.sha256===clip.sha256
+  return !!row.sha256 && !!clip.sha256 && row.sha256.toLowerCase()===clip.sha256.toLowerCase()
     && LOOP_EVENTS.has(row.event)===LOOP_EVENTS.has(clip.event)
     && (row.loopStart??null)===(clip.loopStart??null)
     && (row.loopEnd??null)===(clip.loopEnd??null)
@@ -32,7 +32,7 @@ function canReusePCM(row,clip){
 }
 function pcmKey(clip) {
   return clip.sha256 && clip.seamlessLoop !== false
-    ? JSON.stringify([clip.file, clip.sha256, LOOP_EVENTS.has(clip.event), clip.loopStart ?? null, clip.loopEnd ?? null]) : null;
+    ? JSON.stringify([clip.sha256.toLowerCase(), LOOP_EVENTS.has(clip.event), clip.loopStart ?? null, clip.loopEnd ?? null]) : null;
 }
 function windupKey(clip) {
   return clip.sha256 && clip.seamlessLoop !== false ? JSON.stringify([clip.file, clip.sha256]) : null;
@@ -123,7 +123,7 @@ export class AuthorizedSamplePack {
     this.ctx=ctx;this.maxBytes=maxBytes;this.fetcher=fetcher||globalThis.fetch?.bind(globalThis);
     this.loaded=new Map();this._mruKey=null;this.byEvent=new Map();this.bytes=0;this.errors=[];
     this.manifest=null;this.source='none';this.pending=0;this.generation=0;this.repaired=0;
-    this._loadScopes=new Set();
+    this._loadScopes=new Set();this._lruStage=null;
   }
   key(id,event,variant){return `${id}:${event}:${variant}`;}
   _cancelLoads(){const retired=[...this._loadScopes];this._loadScopes=new Set();for(const scope of retired)scope.cancel();}
@@ -133,6 +133,7 @@ export class AuthorizedSamplePack {
     if(!arr?.length)return null;const item=arr[index%arr.length];
     // Playback touches move entries to the end of the decoded-cache LRU.
     const key=this.key(item.id,item.event,item.variant);if(this.loaded.has(key)&&this._mruKey!==key){this.loaded.delete(key);this.loaded.set(key,item);this._mruKey=key;}
+    this._lruStage?.touch(key,item);
     return item;
   }
   _reindex(){
@@ -152,6 +153,9 @@ export class AuthorizedSamplePack {
     const generation=++this.generation;
     this._cancelLoads();
     const current=()=>this.generation===generation && this.ctx.state!=='closed';
+    // abort listeners may synchronously start a newer import. A retired caller
+    // must not overwrite that owner's staging LRU or create further load work.
+    if(!current())return {loaded:0,rejected:0,errors:[],cancelled:true,bytes:this.bytes};
     const cancelled=Symbol('cancelled audio sample load');
     const next=replace?new Map():new Map(this.loaded);
     let total=replace?0:decodedBytes(next),done=0,repairs=0,cursor=0;
@@ -179,9 +183,33 @@ export class AuthorizedSamplePack {
     if(usePCMIndex)for(const row of next.values())indexRow(row,true);
     const acquire=row=>{if(!refs.has(row.buffer))total+=row.bytes;refs.set(row.buffer,(refs.get(row.buffer)||0)+1);};
     const release=row=>{const n=refs.get(row.buffer);if(n===1){refs.delete(row.buffer);total-=row.bytes;}else refs.set(row.buffer,n-1);};
+    // Playback keeps using the published bank while this transaction awaits
+    // network/decode. Mirror those real touches into staging, including a row
+    // staged eviction had removed but the still-live bank just played again.
+    const trim=protect=>{
+      while(total>this.maxBytes&&next.size>1){
+        const victim=next.keys().next().value;
+        if(victim===protect)break;
+        const removed=next.get(victim);next.delete(victim);release(removed);indexRow(removed,false);changedEvents.add(`${removed.id}:${removed.event}`);
+      }
+    };
+    const stage=replace?null:{generation,touch:(key,item)=>{
+      if(!current())return;
+      const row=next.get(key);
+      if(row){next.delete(key);next.set(key,row);indexRow(row,false);indexRow(row,true);}
+      else{next.set(key,item);acquire(item);indexRow(item,true);changedEvents.add(`${item.id}:${item.event}`);}
+      trim(key);
+    }};
+    this._lruStage=stage;
     const remainingByFile=new Map();
     for(const clip of valid)remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
-    const hashedFiles=new Set(valid.filter(clip=>clip.sha256).map(clip=>clip.file));
+    const hashedFiles=new Set(),directHashes=new Map();
+    for(const clip of valid){
+      const hash=clip.sha256?.toLowerCase()||null;
+      if(hash)hashedFiles.add(clip.file);
+      if(!directHashes.has(clip.file))directHashes.set(clip.file,hash);
+      else if(directHashes.get(clip.file)!==hash)directHashes.set(clip.file,null);
+    }
     // The same file can back multiple variants: download/decode it once per import.
     const getDecoded=(clip)=>{
       if(decoded.has(clip.file))return decoded.get(clip.file);
@@ -202,11 +230,17 @@ export class AuthorizedSamplePack {
         // Decode only after the consuming manifest entry passes its checksum.
         // A pure unhashed file has no later byte borrower, so WebKit may take
         // ownership of its fetched ArrayBuffer directly.
-        const file={bytes,digest:null,pcm:null,scope};
+        const file={bytes,digest:null,verifiedDigest:null,pcm:null,scope};
         file.decode=()=>file.pcm||(file.pcm=scope.run(async()=>{
           if(!current())throw cancelled;
           scope.check();
-          const pcm=await this.ctx.decodeAudioData(hashedFiles.has(clip.file)?bytes.slice(0):bytes);
+          // Only uniform, signed declarations may transfer their original bytes.
+          // Verify before native decode detaches them; later rows reuse the digest.
+          const directHash=directHashes.get(clip.file);
+          if(directHash){
+            if(file.verifiedDigest!==directHash)throw new Error('Checksum must precede direct decode');
+          }
+          const pcm=await this.ctx.decodeAudioData(hashedFiles.has(clip.file)&&!directHash?bytes.slice(0):bytes);
           scope.check();
           if(!current())throw cancelled;
           if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
@@ -247,7 +281,7 @@ export class AuthorizedSamplePack {
               // Memoize only this transaction's actual fetched bytes; every
               // manifest row still compares its own declared checksum.
               if(!decodedFile.digest)decodedFile.digest=decodedFile.scope.run(()=>globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
-                .then(dig=>Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
+                .then(dig=>decodedFile.verifiedDigest=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
               const sha=await decodedFile.digest;
               if(!current())return;
               if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
@@ -269,11 +303,7 @@ export class AuthorizedSamplePack {
           next.set(key,row);acquire(row);indexRow(row,true);changedEvents.add(`${row.id}:${row.event}`);
           // New row fits the budget alone; evict from the original LRU head
           // until the staged bank fits, accounting for shared PCM identities.
-          while(total>this.maxBytes&&next.size>1){
-            const victim=next.keys().next().value;
-            if(victim===key)break;
-            const removed=next.get(victim);next.delete(victim);release(removed);indexRow(removed,false);changedEvents.add(`${removed.id}:${removed.event}`);
-          }
+          trim(key);
           done++;
         }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
         finally{
@@ -287,6 +317,7 @@ export class AuthorizedSamplePack {
       }
     });
     await Promise.all(jobs);
+    if(this._lruStage===stage)this._lruStage=null;
     // Last-request-wins. The old playback bank remains valid throughout network/decode.
     if(!current())return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes};
     let byEvent;
@@ -308,7 +339,7 @@ export class AuthorizedSamplePack {
     this.source='user-supplied';
     return {loaded:done,rejected:errors.length,errors,cancelled:false,bytes:this.bytes,repairedLoops:repairs};
   }
-  clear(){this.generation++;this.loaded.clear();this._mruKey=null;this.byEvent.clear();this.bytes=0;this.manifest=null;this.source='none';this.errors=[];this.repaired=0;this._cancelLoads();}
+  clear(){this.generation++;this._lruStage=null;this.loaded.clear();this._mruKey=null;this.byEvent.clear();this.bytes=0;this.manifest=null;this.source='none';this.errors=[];this.repaired=0;this._cancelLoads();}
   stats(){return{source:this.source,clips:this.loaded.size,bytes:this.bytes,limitBytes:this.maxBytes,errors:this.errors.length,
     repairedLoops:this.repaired,pending:this.pending,rights:this.manifest?.usageRights||null,targetVersion:this.manifest?.targetVersion||null};}
 }

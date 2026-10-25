@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "provenance": {
+    "source": "reviewed pre-aggregate composition",
+    "publicRef": "e3a8c3b",
+    "capturedFrom": "/tmp/pr1878-ranked-audio-repair/source"
+  },
+  "sources": {
+    "src/ui/hud.js": {
+      "rawSha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
+      "composedSha256": "0b8e6fb79967ff2e51049ae5c909db446e59e2a5c2f9862102e621b97b5d0a70"
+    },
+    "src/fx/fxHooks.js": {
+      "rawSha256": "ecd815b1a4607055b388996c2f1a32c0a6818476779c80282881b6ead22e17e4",
+      "composedSha256": "9b63987d8b774d9c0f0016073a284b8636ef5f0bfdb13395b32d001b2783bc43"
+    }
+  },
+  "hud": {
+    "_fxLoop": "_fxLoop(t) {\n    if (this._worldPaused) { this._rafId = 0; return; }\n    const raw = Math.min(0.25, Math.max(0, (t - this._lastFx) / 1000));\n    this._lastFx = t;\n    if (this._judgeOwner && !this._judgeOwner.current()) this._judgeOwner.cancel();\n    if (this.paused) { this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0; return; }\n    const dt = raw * this.timeScale;\n    this._fxTime += dt;\n    for (const [name, fn] of this._fxMap) { let keep = true; try { keep = fn(dt) !== false; } catch (e) { console.error('[hud]', e); keep = false; } if (!keep && this._fxMap.get(name) === fn) this._fxMap.delete(name); }\n    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;\n  }",
+    "_addFx": "_addFx(name, fn) {\n    this._fxMap = this._fxMap || new Map();\n    this._fxMap.set(name, fn);\n    if (!this._rafId && !this._worldPaused) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }\n  }"
+  },
+  "gates": {
+    "climbT": "s.climbT += dt;\n        if (s.climbT > 0.07) { s.climbT = 0;",
+    "bubbleT": "s.bubbleT += dt;\n        if (s.bubbleT > 0.35) { s.bubbleT = 0;",
+    "sizzleT": "s.sizzleT += dt;\n        if (s.sizzleT > 0.11) { s.sizzleT = 0;"
+  }
+}

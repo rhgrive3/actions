@@ -13,19 +13,24 @@ const record = name => {
 };
 const visualFor=(r,unit,unitOrder,index=0)=>catalogVisualSpec(r,{b:unit,unit:unitOrder,c:unit.CollisionParam||r.parameters.CollisionParam},index);
 
-test('Tri-Slosher reuses Bucket draw radius and tail for every sheet',()=>{
+test('Tri-Slosher and Dread Wringer share Bucket sheet art with their own source dimensions',()=>{
   const r=record('WeaponSlosherDiffusion'),units=r.parameters.UnitGroupParam.Unit;
   assert.equal(units.length,4);
   const center=visualFor(r,units[0],0,0),side=visualFor(r,units[2],2,0);
-  assert.equal(center.style,'sheet');assert.equal(center.draw.InitRadius,.5625);
-  assert.equal(catalogVisualRadius(center,0),1);
+  assert.equal(center.style,'sheet');assert.equal(center.draw.InitRadius,1.4);
+  assert.equal(catalogVisualRadius(center,0),1.4);
   assert.equal(catalogVisualRadius(side,0),1);
-  assert.equal(catalogVisualRadius(visualFor(r,units[0],0,1),0),.97,'later fragments reuse Bucket taper');
+  assert.equal(catalogVisualRadius(visualFor(r,units[0],0,1),0),0,'source zero-sized companions do not borrow a Bucket envelope');
   assert.equal(fidelityInkLook({type:'shot',catalogVisual:center}),INK_LOOK.slosh,'not a Shooter rod');
   const p={catalogVisual:center,age:5/60,vel:{length:()=>70}};
   updateCatalogVisual(p);
-  assert.ok(p.tail0>1 && p.vis===1);
+  assert.ok(p.tail0>1 && p.vis===1.4);
   assert.ok(fidelityInkTail({...p,type:'shot'},1,p.vis*INK_LOOK.slosh[4],INK_LOOK.slosh)>1);
+  const double=record('WeaponSlosherDouble'),pair=double.parameters.UnitGroupParam.Unit;
+  assert.equal(catalogVisualRadius(visualFor(double,pair[0],0),0),1.4);
+  assert.equal(catalogVisualRadius(visualFor(double,pair[1],1),0),1.2);
+  assert.ok(Math.abs(catalogVisualRadius(visualFor(double,pair[0],0,7),0)-.28)<1e-12,
+    'eighth fragment retains its seventh source offset instead of clamping to a Bucket index');
 });
 
 test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',async()=>{

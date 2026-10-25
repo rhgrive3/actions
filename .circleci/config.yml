@@ -1,0 +1,33 @@
+# INKWAVE fast dispatch: only launch large CircleCI jobs when an exact
+# source/build/test input changed. The continuation retains all original
+# 8 patch and 7 browser acceptance lanes without weakened assertions.
+version: 2.1
+setup: true
+
+orbs:
+  path-filtering: circleci/path-filtering@2
+
+workflows:
+  detect-inkwave-changes:
+    jobs:
+      - path-filtering/filter:
+          name: detect-native-changes
+          base-revision: main
+          same-base-run: false
+          config-path: .circleci/continue.yml
+          mapping: |
+            inkwave-public/.* run-inkwave true
+            patches/.* run-inkwave true
+            tests/.* run-inkwave true
+            server/.* run-inkwave true
+            account/.* run-inkwave true
+            scripts/.*inkwave.* run-inkwave true
+            scripts/verify-completion-sources.mjs run-inkwave true
+            scripts/check-weapons-reference.mjs run-inkwave true
+            scripts/run-logged-test-process.mjs run-inkwave true
+            scripts/lib/minimap-.* run-inkwave true
+            scripts/tests/test_fetch_inkwave_pinned_references.py run-inkwave true
+            package.json run-inkwave true
+            package-lock.json run-inkwave true
+            .github/workflows/validate-inkwave-update.yml run-inkwave true
+            .circleci/.* run-inkwave true

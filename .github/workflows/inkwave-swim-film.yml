@@ -2,6 +2,11 @@ name: INKWAVE swim film regression
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/fixture-cache.mjs'
+      - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/tests/inkwave-workflow-inputs.test.mjs'
       - 'inkwave-public/src/fx/fx.js'
       - 'patches/local-quality/swim-surface.mjs'
       - 'patches/local-quality/swim-splash-adapter.mjs'
@@ -26,5 +31,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify direct QA input trigger coverage
+        run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Film presentation, frame-rate parity and off-screen shape parity
         run: node --experimental-vm-modules --test patches/local-quality/tests/swim-presentation.test.mjs patches/local-quality/tests/swim-surface-fps.test.mjs patches/local-quality/tests/swim-film-offscreen.test.mjs

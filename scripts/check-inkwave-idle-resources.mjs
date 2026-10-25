@@ -8,13 +8,17 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { verifyWallBuild } from './check-inkwave-wall-render.mjs';
+import { createIdleGpuTrace, runIdleGpuContextDiagnostic, closeIdleFailureResources } from './lib/idle-gpu-diagnostic.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export const IDLE_OPERATION_TIMEOUT_MS=120000;
-// Two 120-frame states share one evaluate. This expands host supervision only,
-// not a CPU/FPS/GPU performance threshold; every other evaluate stays at 120s.
-export const RESULTS_WORK_TIMEOUT_MS=240000;
+// Both 120-frame states execute real WebGL calls under per-producer console
+// instrumentation. On heavily shared CI runners the original 240s deadline
+// expired after 171/240 frames, not because a measured acceptance threshold
+// was violated. Permit 480s for complete evidence; still fail-closed on hangs.
+// No CPU/FPS/GPU acceptance threshold changes; all other evaluates remain 120s.
+export const RESULTS_WORK_TIMEOUT_MS=480000;
 export const CLOUD_SEQUENCE_TIMEOUT_MS=360000;
 export const CLOUD_THEMES=Object.freeze(['day','sunset','golden']);
 // Three sequential theme operations. This increases aggregate supervision from
@@ -66,10 +70,12 @@ export function createResultsProgress(token,{capacity=256,detailCapacity=32,maxM
   c.last=p.seq;c.received++;c.truncated||=p.edge==='limit';c.ring[c.cursor]=p;c.cursor=(c.cursor+1)%c.capacity;c.size=Math.min(c.size+1,c.capacity);return true;
  },seal(){sealed=true;},snapshot(){return {diagnosticOnly:true,timingScope:'observer CPU/console overhead; not FPS or GPU execution',...snapshot(channels.critical),invalidMessages:rejected,sealed,maxChars,criticalMode:'reserved frame/sample/cleanup; first128 coarse-callee edges per frame, then limit marker',detailMode:'bounded actor-edge sample; GL counters aggregated, no per-draw events',detail:snapshot(channels.detail)};}};
 }
-// One synchronous browser task: no added yield, RAF await, GPU fence or clock reset.
-export function measureResultsWork({token,maxDetailEvents=128}){
- if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128)throw TypeError('Invalid results progress token/budget');
+// One browser evaluate with bounded GPU command submission and real event-loop
+// turns. Never skip a native frame or weaken a GPU/context acceptance condition.
+export function measureResultsWork({token,maxDetailEvents=128,gpuBackpressureEvery=0}){
+ if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128||!Number.isInteger(gpuBackpressureEvery)||gpuBackpressureEvery<0||gpuBackpressureEvery>120)throw TypeError('Invalid results progress token/budget');
  const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
+ if(gpuBackpressureEvery&&['fenceSync','flush','clientWaitSync','deleteSync','isContextLost'].some(key=>typeof gl[key]!=='function'))throw Error('Native WebGL fence completion check unavailable');
  const beforeState=match.state,beforePaused=match.paused,started=performance.now();let counts,state='setup',frame=0,completed=0,totalCompleted=0,stateStarted=started,failed=false,failure,watchedClock,criticalInFrame=0,criticalSuppressed=0,detailSuppressed=0;
  const sequences={critical:0,detail:0};let timing=null,rendererDepth=0,drawDepth=0,rendererOrdinal=0;
  // Diagnostic wall time only. Other renderer work includes JS, other native
@@ -122,28 +128,124 @@ export function measureResultsWork({token,maxDetailEvents=128}){
   }
  };restore.push(()=>{obj[key]=old;});};
  const observe=(obj,key,label)=>{const old=obj?.[key];if(typeof old!=='function')return;const descriptor=Object.getOwnPropertyDescriptor(obj,key);obj[key]=function(...args){return invoke(old,this,args,label);};restore.push(()=>{if(descriptor)Object.defineProperty(obj,key,descriptor);else delete obj[key];});};
+ // Generator preserves synchronous fixtures. Production advances it across real
+ // asynchronous GPU completion fences while keeping all native hooks installed.
+ function* execute(){
  try{
   for(let i=0;i<G.actors.length;i++)hook(G.actors[i],'update','actorUpdates','actor['+i+'].update','detail');
   for(const [obj,key,label]of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label,key==='render'?'R.render':label);
   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions','gl.'+key,'aggregate');
   for(const [obj,key,label]of [[match,'update','match.update'],[match,'updateController','controller'],[g.input,'pollPad','input.pollPad'],[g.input,'endFrame','input.endFrame'],[g,'_padMenus','padMenus'],[G.net,'update','network'],[G.paint,'advanceSimulation','paint.clock'],[G.env,'update','environment'],[g.decor,'update','decor'],[g.props,'update','props'],[g.rig,'update','camera'],[g.diorama,'update','diorama'],[g.screenfx,'update','screenfx'],[g.fxHooks,'update','fxHooks'],[G.projectiles,'syncSights','projectile.sights'],[G.projectiles,'syncVisuals','projectile.visuals'],[G.projectiles,'updateArc','projectile.arc'],[g.showcase,'update','showcase.update'],[g.showcase,'render','showcase.render'],[g,'_updateLocalLoops','audio.loops'],[g,'_updateAmbience','audio.ambience'],[G.audio,'setListener','audio.listener'],[g,'_updateHud','hud'],[g.menus,'update','menus'],[g.R.composer,'render','composer'],[G.renderer,'render','renderer']])observe(obj,key,label);
-  const sample=next=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};state=next;frame=completed=0;timing=createTiming();match.state=next;match.paused=false;const start=stateStarted=performance.now();emit('sample','enter');
-   for(let i=0;i<120;i++){frame=i+1;criticalInFrame=0;rendererOrdinal=0;if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}emit('frame','enter');let returned=false;try{g._frame(1/60);returned=true;completed++;totalCompleted++;}finally{emit('frame',returned?'exit':'throw');}}
-   emit('sample','exit');return {...counts,cpuSubmissionMs:performance.now()-start};
+  const sample=function*(next){
+   counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};
+   state=next;frame=completed=0;timing=createTiming();match.state=next;match.paused=false;
+   const start=stateStarted=performance.now();let gpuSyncWallMs=0,gpuSyncCalls=0,maxGpuSyncWallMs=0;
+   emit('sample','enter');
+   for(let i=0;i<120;i++){
+    frame=i+1;criticalInFrame=0;rendererOrdinal=0;
+    if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}
+    emit('frame','enter');let returned=false;
+    try{g._frame(1/60);returned=true;completed++;totalCompleted++;}
+    finally{emit('frame',returned?'exit':'throw');}
+    if(gpuBackpressureEvery&&((i+1)%gpuBackpressureEvery===0||i===119)){
+     // Fence, flush, yield and await GPU completion before the next batch.
+     // No additional Game._frame, no changed simulated dt or draw submissions.
+     emit('gpu-sync','enter');const syncStarted=performance.now();let syncReturned=false;
+     try{
+      yield {state:next,frame:i+1,totalCompleted};
+      if(match.state!==next||match.paused!==false||__G!==G||G.game!==g||G.renderer.getContext()!==gl||gl.isContextLost())throw Error('Idle native frame owner/context changed during GPU completion');
+      syncReturned=true;
+     }finally{
+      const ms=Math.max(0,performance.now()-syncStarted);
+      gpuSyncWallMs+=ms;gpuSyncCalls++;maxGpuSyncWallMs=Math.max(maxGpuSyncWallMs,ms);
+      emit('gpu-sync',syncReturned?'exit':'throw');
+     }
+    }
+   }
+   emit('sample','exit');
+   return {...counts,cpuSubmissionMs:Math.max(0,performance.now()-start-gpuSyncWallMs),
+    ...(gpuBackpressureEvery?{gpuBackpressureEvery,gpuSyncCalls,gpuSyncWallMs,maxGpuSyncWallMs}:{})};
   };
-  return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};
+  const playing=yield* sample('playing'),results=yield* sample('results');
+  return {frames:120,playing,results,measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};
  }catch(error){failed=true;failure=error;throw error;}
  finally{
   state='restoring';emit('cleanup','enter');const errors=[];for(const close of restore.reverse())try{close();}catch(error){errors.push(error);}
   try{match.state=beforeState;match.paused=beforePaused;}catch(error){errors.push(error);}emit('cleanup','exit');
   if(errors.length)throw new AggregateError(failed?[failure,...errors]:errors,'Results diagnostic cleanup failed',failed?{cause:failure}:undefined);
  }
+ }
+ const iterator=execute();
+ if(!gpuBackpressureEvery)return iterator.next().value;
+ // WebGL without RAF has no implicit frame boundary; use an explicit GL
+ // completion fence and nonblocking polls, always yielding a browser task.
+ const waitForGpuCompletion=async()=>{
+  const sync=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
+  if(!sync)throw Error('Unable to create native WebGL GPU completion fence');
+  try{
+   gl.flush();
+   await new Promise(resolve=>setTimeout(resolve,0));
+   for(;;){
+    if(gl.isContextLost())throw Error('Idle GPU context lost during fence completion');
+    const status=gl.clientWaitSync(sync,0,0);
+    if(status===gl.ALREADY_SIGNALED||status===gl.CONDITION_SATISFIED)return;
+    if(status!==gl.TIMEOUT_EXPIRED)throw Error('Native WebGL GPU completion wait failed');
+    await new Promise(resolve=>setTimeout(resolve,8));
+   }
+  }finally{gl.deleteSync(sync);}
+ };
+ return (async()=>{
+  let step=iterator.next();
+  while(!step.done){
+   try{await waitForGpuCompletion();}
+   catch(error){return iterator.throw(error);}
+   step=iterator.next();
+  }
+  return step.value;
+ })();
 }
 export async function runResultsWorkDiagnostic(page,progress){
- const listener=message=>progress.accept(message.text());let attached=false,failed=false,failure;
- try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token});}
+ const listener=message=>{
+  const text=message.text();
+  if(!progress.accept(text))return;
+  // Only 30 bounded checkpoints. Keep useful progress when runner shutdown
+  // prevents final JSON/artifact upload; do not forward all console events.
+  if(text.includes('"producer":"gpu-sync"')&&text.includes('"edge":"exit"')){
+   try{const e=JSON.parse(text.slice(text.indexOf('{')));console.error('INKWAVE_GPU_FENCE '+JSON.stringify({state:e.state,frame:e.frame,totalCompleted:e.totalCompleted,elapsedMs:e.elapsedMs}));}catch{}
+  }
+ };let attached=false,failed=false,failure;
+ try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token,gpuBackpressureEvery:8});}
  catch(error){failed=true;failure=error;throw error;}
  finally{progress.seal();if(attached)try{page.off('console',listener);}catch(error){if(failed)throw new AggregateError([failure,error],'Results diagnostic listener cleanup failed',{cause:failure});throw error;}}
+}
+// Identity queries can synchronize the driver. Capture them on the actual
+// desktop context before the measured workload queues its 240 rendered frames.
+// Retain context ownership/loss evidence so an early identity cannot conceal
+// a lost, restored or replaced context after the workload.
+export function captureIdleGpuIdentity(){
+ const gl=__G.renderer.getContext();
+ if(gl.isContextLost())throw Error('Idle GPU context already lost');
+ const ext=gl.getExtension('WEBGL_debug_renderer_info');
+ const gpu={webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
+ const probe={gl,gpu,lost:false};
+ probe.onLoss=()=>{probe.lost=true;};
+ gl.canvas.addEventListener('webglcontextlost',probe.onLoss);
+ window.__idleGpuIdentity=probe;
+ return gpu;
+}
+export function verifyIdleGpuContext({token}={}){
+ const mark=stage=>{if(token)try{console.info('INKWAVE_IDLE_GPU_CONTEXT '+token+' '+stage);}catch{}};
+ mark('enter');const probe=window.__idleGpuIdentity;mark('probe-read');
+ if(!probe)throw Error('Idle GPU identity was not captured');
+ let value;
+ try{
+  const context=__G.renderer.getContext();mark('context-read');
+  if(context!==probe.gl||probe.lost)throw Error('Idle GPU context lost or replaced during workload');
+  const lost=probe.gl.isContextLost();mark('loss-read');
+  if(lost)throw Error('Idle GPU context lost or replaced during workload');
+  value=probe.gpu;
+ }finally{mark('cleanup-enter');probe.gl.canvas.removeEventListener('webglcontextlost',probe.onLoss);delete window.__idleGpuIdentity;mark('cleanup-exit');}
+ mark('exit');return value;
 }
 const boundedPages=new WeakSet();
 // Playwright evaluate uses kNoTimeout, independently of setDefaultTimeout.
@@ -179,19 +281,19 @@ export async function runIdleProbe(task,{diagnose,cleanup}){
  let value,failure,failed=false;
  const record=async error=>{try{await diagnose(error);return error;}catch(diagnosticError){return combineFailure(error,diagnosticError,'Idle failure diagnostics failed');}};
  try{value=await task();}catch(error){failed=true;failure=await record(error);}
- try{await cleanup(failure);}catch(cleanupError){failure=await record(failed?combineFailure(failure,cleanupError,'Idle probe cleanup failed'):cleanupError);failed=true;}
+ try{await cleanup(failure,failed);}catch(cleanupError){failure=await record(failed?combineFailure(failure,cleanupError,'Idle probe cleanup failed'):cleanupError);failed=true;}
  if(failed)throw failure;
  return value;
 }
 // Fixed vocabulary and numeric bounds: never echo arbitrary error/event text.
 export function formatIdleFailureProgress(error,data){
  const primary=primaryIdleFailure(error),phase=primary?.phase??data?.phase;
- const phases=['identity','boot','audio','clouds','clouds:day','clouds:sunset','clouds:golden','clouds:aggregate','far-stage-transitions','pause','results-work','gpu-identity','cold-boot-mobile'];
+ const phases=['identity','boot','audio','clouds','clouds:day','clouds:sunset','clouds:golden','clouds:aggregate','far-stage-transitions','pause','results-work','gpu-identity','gpu-context','cold-boot-mobile'];
  const p=phase==='results-work'?data?.resultsWorkProgress:null,events=Array.isArray(p?.events)?p.events:[];
  let latest,region;
  for(let i=events.length-1;i>=Math.max(0,events.length-512);i--){const e=events[i];if(!e||typeof e!=='object'||e.producer==='cleanup')continue;latest??=e;if(e.state===latest.state&&e.frame===latest.frame&&!['frame','sample','cleanup','observer'].includes(e.producer)){region=e;break;}}
  region??=latest;
- const labels=['frame','sample','cleanup','observer','clock.advance','actorUpdates','projectileUpdates','paintFlushes','fxUpdates','R.render','match.update','controller','input.pollPad','input.endFrame','padMenus','network','paint.clock','environment','decor','props','camera','diorama','screenfx','fxHooks','projectile.sights','projectile.visuals','projectile.arc','showcase.update','showcase.render','audio.loops','audio.ambience','audio.listener','hud','menus','composer','renderer'];
+ const labels=['frame','sample','cleanup','observer','clock.advance','actorUpdates','projectileUpdates','paintFlushes','fxUpdates','R.render','match.update','controller','input.pollPad','input.endFrame','padMenus','network','paint.clock','environment','decor','props','camera','gpu-sync','diorama','screenfx','fxHooks','projectile.sights','projectile.visuals','projectile.arc','showcase.update','showcase.render','audio.loops','audio.ambience','audio.listener','hud','menus','composer','renderer'];
  const integer=(v,max)=>Number.isSafeInteger(v)&&v>=0&&v<=max?v:null;
  const elapsed=v=>Number.isFinite(v)&&v>=0&&v<=Number.MAX_SAFE_INTEGER?v:undefined;
  const observation=(c,capacity,messages)=>({retained:Array.isArray(c?.events)?integer(c.events.length,capacity):0,capacity:integer(c?.capacity,capacity),received:integer(c?.received,messages),limit:integer(c?.maxMessages,messages),truncated:c?.truncated===true});
@@ -227,6 +329,7 @@ export function validateIdleResult(r) {
   if(!r.audio?.running||r.audio.initialPlayers!==0||r.audio.initialScheduler||r.audio.mutedTicks!==0||r.audio.mutedNodes!==0||r.audio.mutedPlayers!==0||r.audio.mutedScheduler||!r.audio.sfxPlayed||r.audio.resumedTrack!=='battle'||r.audio.toggleMaxPlayers!==1)throw Error('Muted music/SFX gate');
   const work=r.resultsWork;
   if(!work||work.frames!==120||work.playing.actorUpdates<=0||work.playing.projectileUpdates!==120||work.playing.paintFlushes!==120||work.playing.fxUpdates!==120||work.results.actorUpdates!==0||work.results.projectileUpdates!==0||work.results.paintFlushes!==0||work.results.fxUpdates!==0||work.playing.worldRenders!==120||work.results.worldRenders!==120||[work.playing,work.results].some(v=>!Number.isFinite(v.cpuSubmissionMs)||v.cpuSubmissionMs<0||!Number.isSafeInteger(v.gpuDrawSubmissions)||v.gpuDrawSubmissions<=0))throw Error('RESULT native work comparison gate');
+  if([work.playing,work.results].some(v=>v.gpuBackpressureEvery!==8||v.gpuSyncCalls!==15||!Number.isFinite(v.gpuSyncWallMs)||v.gpuSyncWallMs<0||!Number.isFinite(v.maxGpuSyncWallMs)||v.maxGpuSyncWallMs<0))throw Error('RESULT GPU completion checkpoints missing');
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
 }
@@ -330,9 +433,9 @@ async function main(){
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
  for(const d of [output,profile]){if(['/tmp','/var/tmp','/dev/shm'].some(p=>d===p||d.startsWith(p+'/')))throw Error('Persistent evidence required');fs.mkdirSync(d,{recursive:true});}
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
- let browser,server,page,identity,result,resultsProgress;const errors=[],loaded=new Set();let phase='identity';
+ let browser,server,page,identity,result,resultsProgress,gpuTrace;const errors=[],loaded=new Set();let phase='identity';
  publish({status:'running',phase});
-  const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,resultsWorkProgress:resultsProgress?.snapshot(),loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
+  const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,resultsWorkProgress:resultsProgress?.snapshot(),gpuContextTrace:gpuTrace?.snapshot(),loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
  const receipt=await runIdleProbe(async()=>{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
   if(process.argv.includes('--exact-source')){
@@ -352,6 +455,7 @@ async function main(){
   phase='boot';await page.goto(address+'?devstage&skipTitle',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed,null,{timeout:180000});
   await page.evaluate(()=>{__inkwave.debug.freeze();__inkwave.menus.wipe.cancel();});
+  phase='gpu-identity';const gpu=await page.evaluate(captureIdleGpuIdentity);
   await page.keyboard.press('Shift');
   phase='audio';result=await page.evaluate(async()=>{
    const G=window.__G,g=G.game,m=G.music,a=G.audio;
@@ -367,6 +471,7 @@ async function main(){
     return {audio:{initialPlayers,initialScheduler,mutedTicks,mutedNodes,mutedPlayers,mutedScheduler,sfxPlayed,resumedTrack,toggleMaxPlayers,running:a.ctx.state==='running'}};
    }finally{m._tick=tick;a.ctx.createOscillator=osc;}
   });
+  result.gpu=gpu;
   phase='clouds';result.clouds=[];const cloudTrace=result.cloudSequence={},cloudToken=crypto.randomUUID();
   const cloudCheckpoint=()=>publish({status:'running',phase,result,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
   await runCloudThemeSequence(
@@ -414,8 +519,43 @@ async function main(){
   // CPU submission time includes JS/driver submission, not asynchronous GPU time.
   // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
   // is invented. The existing browser/GL and exact-source identities remain gates.
+  // Prepare a CDP renderer session before the real 240-frame GPU workload.
+  // Diagnostic observations never change the original pass/fail conditions.
+  const idleRendererCdp=await browser.newCDPSession(page);
+  console.error('INKWAVE_CDP_SESSION_READY '+JSON.stringify({phase:'before-results-work'}));
   phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress);
-  phase='gpu-identity';result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
+  const completedProgress=resultsProgress.snapshot();
+  // Runner logs survive cases where artifact upload never starts.
+  console.error('INKWAVE_PRE_GPU '+JSON.stringify({
+   framesPerState:result.resultsWork.frames,playingMs:result.resultsWork.playing.cpuSubmissionMs,
+   resultsMs:result.resultsWork.results.cpuSubmissionMs,
+   playingDraws:result.resultsWork.playing.gpuDrawSubmissions,
+   resultsDraws:result.resultsWork.results.gpuDrawSubmissions,
+   playingSyncCalls:result.resultsWork.playing.gpuSyncCalls,resultsSyncCalls:result.resultsWork.results.gpuSyncCalls,
+   playingSyncWallMs:result.resultsWork.playing.gpuSyncWallMs,resultsSyncWallMs:result.resultsWork.results.gpuSyncWallMs,
+   consoleReceived:completedProgress.received,detailReceived:completedProgress.detail?.received,
+   consoleTruncated:completedProgress.truncated,detailTruncated:completedProgress.detail?.truncated
+  }));
+  publish({status:'running',phase,result,resultsWorkProgress:completedProgress,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
+  phase='gpu-context';
+  // 3 seconds is an observation window, not an acceptance deadline.
+  // A pending ping never skips the original verifyIdleGpuContext call.
+  const cdpPingStarted=Date.now();let cdpPingTimer;
+  console.error('INKWAVE_CDP_PING_REQUESTED '+JSON.stringify({phase}));
+  let cdpPingResult;
+  try{cdpPingResult=await Promise.race([
+   idleRendererCdp.send('Runtime.evaluate',{expression:'1+1',returnByValue:true,awaitPromise:false})
+    .then(r=>({status:r?.result?.value===2?'responsive':'unexpected-result'}),
+          e=>({status:'error',message:String(e?.message??e).slice(0,240)})),
+   new Promise(resolve=>{cdpPingTimer=setTimeout(()=>resolve({status:'pending'}),3000);})
+  ]);}finally{clearTimeout(cdpPingTimer);}
+  console.error('INKWAVE_CDP_PING '+JSON.stringify({...cdpPingResult,elapsedMs:Date.now()-cdpPingStarted}));
+  gpuTrace=createIdleGpuTrace(crypto.randomUUID(),{emit:line=>{
+   // Immediate bounded stderr/file checkpoints; not proof of CDP dispatch.
+   // A killed runner can still prevent artifact upload.
+   try{console.error(line);}catch{}
+   try{fs.writeFileSync(path.join(output,'idle-gpu-context-trace.json'),JSON.stringify({sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,phase,gpuContextTrace:gpuTrace.snapshot()})+'\n');}catch{}
+  }});result.gpu=await runIdleGpuContextDiagnostic(page,gpuTrace,verifyIdleGpuContext);
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
   // The preceding desktop measurements are complete. Retire its live renderer
@@ -471,7 +611,7 @@ async function main(){
   return {status:'passed',...result,summary,resultsWorkProgress:resultsProgress?.snapshot(),sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion};
  },{
   diagnose,
-  cleanup:error=>closeIdleResources(browser,server,error)
+  cleanup:(error,failed)=>failed?closeIdleFailureResources(browser,server,error):closeIdleResources(browser,server,error)
  });
  publish(receipt);
 }

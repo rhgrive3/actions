@@ -1,0 +1,37 @@
+
+> inkwave-workspace@1.0.0 test:direct-source
+> node --test scripts/tests/inkwave-direct-source-ownership.test.mjs scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-lossless-lightmap.test.mjs
+
+✔ public-source fetch is a read-only candidate workflow, never a direct-source overwrite (1.041623ms)
+✔ native catalogue sweep helper ships as a non-eager immutable runtime dependency (0.462444ms)
+✔ migrated A-star heuristic owner is the readable game source (0.181612ms)
+✔ mural atlas and world branding use directly editable source without rebuild-time rewriting (247.707819ms)
+✔ ZEVANT stage and lobby lettering is directly owned by authored game modules (1.511287ms)
+✔ level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches (0.934953ms)
+✔ PropKit atlas, lifetime and rematch behavior are authored in the real module, without prototype rewriting (3.093832ms)
+✔ registered Scorch and native layouts live directly in the stage map module (0.334011ms)
+✔ native ink and catalogue sweep entry points and AABB early-outs live in real collision source (1.044637ms)
+✔ standalone native sweep keeps Node collision regression free of the full stage engine and three dependency (1.454833ms)
+✔ practice-stage registry and surface slots are authored without string adapters (0.478718ms)
+✔ source motion bank sampling and FK are directly owned by the authored module (0.734993ms)
+✔ Direct-Source migrated LOD, outfit AO, body-balance and transport compat modules require zero hotpath/compat rewrite and pass auditDirectSource (709.279727ms)
+✔ native stage Node18 fallback preserves source terrain validation before stage publication (0.265659ms)
+✔ production grayscale lightmaps keep independently Pillow-verified exact pixels while saving space (2059.748473ms)
+✔ lossless PNG optimization is fail-closed for unexpected bytes or bit-depth (0.68677ms)
+✔ lossless PNG optimization preserves pixels from all five input row filters (7.026161ms)
+✔ exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes (0.165459ms)
+✔ Pages publishes the exact workflow revision, never a moving main branch (0.800621ms)
+✔ every published gameplay patch group can trigger Pages (0.214081ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2159.300856
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice

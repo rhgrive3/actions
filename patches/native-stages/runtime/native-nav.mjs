@@ -75,9 +75,9 @@ export function* buildNativeNavSteps(graph){
   }
   yield 'sample';
  }
- const jumpAttachments=L.manifest.sourceNavigation?.wallJumpAttach?Array.from({length:graph.nodes.length},()=>[]):null;
- const drops=L.manifest.sourceNavigation?.highDrops?Array.from({length:graph.nodes.length},()=>[]):null;
- const surges=L.manifest.sourceNavigation?.wallSurge?Array.from({length:graph.nodes.length},()=>[]):null;
+ const jumpAttachments=L.manifest.sourceNavigation?.wallJumpAttach?new Array(graph.nodes.length):null;
+ const drops=L.manifest.sourceNavigation?.highDrops?new Array(graph.nodes.length):null;
+ const surges=L.manifest.sourceNavigation?.wallSurge?new Array(graph.nodes.length):null;
  for(const n of graph.nodes){
   for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
    if(!dx&&!dz)continue;const ix=n.ix+dx,iz=n.iz+dz;
@@ -91,10 +91,10 @@ export function* buildNativeNavSteps(graph){
     // Native high ledges can drop safely to verified support above fall death.
     else if(!(dx&&dz)&&dy<-.5&&m.y>PLAYER.fallDeathY){type='drop';cost=st+.8;}
     else {
-     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);else{if(jumpAttachments&&dy>1.25)jumpAttachments[n.id].push(id);if(surges&&dy>1.25)surges[n.id].push(id);}}
+     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);else{if(jumpAttachments&&dy>1.25)(jumpAttachments[n.id]??=[]).push(id);if(surges&&dy>1.25)(surges[n.id]??=[]).push(id);}}
      continue;
     }
-    if(type==='drop'&&drops&&dy< -1.25){drops[n.id].push(id);continue;}
+    if(type==='drop'&&drops&&dy< -1.25){(drops[n.id]??=[]).push(id);continue;}
     const lift=type==='walk'?.65:1.5;
     if(!graph.physics.los(a.set(n.x,n.y+lift,n.z),b.set(m.x,m.y+lift,m.z))){
      continue;
@@ -109,7 +109,7 @@ export function* buildNativeNavSteps(graph){
  // may qualify that actual support pair; ordinary edges remain unchanged.
  if(surges||drops)for(const n of graph.nodes){for(const [dx,dz]of CARDINAL_TWO){
   const ix=n.ix+dx,iz=n.iz+dz;if(ix<0||iz<0||ix>=graph.nx||iz>=graph.nz)continue;
-  for(const id of graph.cells[iz*graph.nx+ix]){const dy=graph.nodes[id].y-n.y;if(surges&&dy>1.25)surges[n.id].push(id);if(drops&&dy< -1.25)drops[n.id].push(id);}
+  for(const id of graph.cells[iz*graph.nx+ix]){const dy=graph.nodes[id].y-n.y;if(surges&&dy>1.25)(surges[n.id]??=[]).push(id);if(drops&&dy< -1.25)(drops[n.id]??=[]).push(id);}
  }yield 'departures';}
  yield* pruneNativeNavSteps(graph);
  if(drops||surges||jumpAttachments||L.manifest.sourceNavigation?.wallApproach){
@@ -123,9 +123,9 @@ export function* buildNativeNavSteps(graph){
     for(const [dx,dz]of CARDINAL_TWO){const ix=n.ix+dx,iz=n.iz+dz;if(ix<0||iz<0||ix>=graph.nx||iz>=graph.nz)continue;for(const id of graph.cells[iz*graph.nx+ix]){yield 'transitions';const edge=nativeApproachJumpTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}}
     if(n.nativePaintable)for(const direction of CARDINAL_DIRECTIONS){yield 'transitions';const edge=nativeWallApproachTransition(graph,n,direction);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
    }
-   for(const id of jumpAttachments?.[n.id]||[]){yield 'transitions';const edge=nativeJumpAttachTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
-   for(const id of surges?.[n.id]||[]){yield 'transitions';const edge=nativeSurgeTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
-   for(const id of drops?.[n.id]||[]){yield 'transitions';const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of jumpAttachments?.[n.id]||EMPTY_CELL){yield 'transitions';const edge=nativeJumpAttachTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of surges?.[n.id]||EMPTY_CELL){yield 'transitions';const edge=nativeSurgeTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of drops?.[n.id]||EMPTY_CELL){yield 'transitions';const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
    for(const edge of n.nb)if(!seen[edge.to]){seen[edge.to]=1;queue.push(edge.to);}
    yield 'transitions';
   }

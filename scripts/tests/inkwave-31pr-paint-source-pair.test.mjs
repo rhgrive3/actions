@@ -18,6 +18,19 @@ const firingPacked=fs.readFileSync(new URL('../fixtures/inkwave-firing-compositi
 assert.equal(createHash('sha256').update(firingPacked).digest('hex'),FIRING_31_PRS_COMPOSITION_FIXTURE_SHA256);
 const firingComposition=gunzipSync(firingPacked).toString('utf8');
 assert.equal(gitBlobSha1(firingComposition),F.blobs['scripts/inkwave-source-composition.mjs']);
+// These four bodies belong to public, immutable 05eb/1862 epochs. They are
+// historical test inputs only, never a replacement for current-head admission.
+const historicalPacked=fs.readFileSync(new URL('../fixtures/inkwave-historical-05eb-1862-leaves.json',import.meta.url));
+assert.equal(createHash('sha256').update(historicalPacked).digest('hex'),'f2b1dd93a225480656cf6968c33f4c1bab9b835ea249d48ea4b516adc64e5a59');
+const historicalLeaves=JSON.parse(historicalPacked);
+const historicalLeafBlobs={
+ 'scripts/inkwave-source-composition.mjs':'e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5',
+ 'scripts/lib/inkwave-build-only-modules.mjs':'64012e646a889ef090b8b0e21cd82d30e0670130',
+ 'patches/splatoon3/runtime/roller.mjs':'df2851585c5281efafb135f21e8dafa1621eb206',
+ 'patches/splatoon3/runtime/weapon-handoff-motion.mjs':'267763bb5ad147ea56f8cd326672492fb8c19ba8',
+};
+assert.deepEqual(Object.keys(historicalLeaves),Object.keys(historicalLeafBlobs));
+for(const [p,sha]of Object.entries(historicalLeafBlobs))assert.equal(gitBlobSha1(historicalLeaves[p]),sha,p+' frozen historical body');
 const maps=()=>[new Map(Object.entries(fixture.baseline)),new Map(Object.entries(fixture.candidate))];
 const expected={mode:'current-pair-with-gameplay-differences',sourceBase:P.baseCommit,sourceHead:P.candidateCommit};
 const historicalEpoch={sourceHead:P.candidateCommit,blobs:Object.fromEntries(Object.entries(P.blobs).map(([path,row])=>[path,row.candidate]))};
@@ -35,7 +48,7 @@ test('all thirteen exact source leaves admit without replay or a physics equalit
   assert.equal(gitBlobSha1(before.get(path)),P.blobs[path].base);
   assert.equal(gitBlobSha1(after.get(path)),P.blobs[path].candidate);
  }
- assertLiveSource(new Map(paths.map(path=>[path,fs.readFileSync(new URL('../../'+path,import.meta.url),'utf8')])));
+ assertLiveSource(new Map(Object.entries(fixture.candidate)),P.candidateCommit);
  const result=planMainInkBaseline(before,after,expected);
  assert.equal(JSON.stringify([...result.sources]),snap);assert.deepEqual(result.changes,[]);
  assert.equal(result.evidence.paths.filter(p=>p.originalGitBlob!==p.candidateGitBlob).length,9);
@@ -44,12 +57,12 @@ test('all thirteen exact source leaves admit without replay or a physics equalit
 });
 
 const respawnExpected={mode:'current-pair-with-gameplay-differences',sourceBase:R.baseCommit,sourceHead:R.candidateCommit};
-const respawn05ebMaps=()=>[new Map(Object.entries(fixture.candidate)),new Map(paths.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]))];
-test('05eb binds every current leaf to its own exact tuple and preserves both sides without replay',()=>{
+const respawn05ebMaps=()=>[new Map(Object.entries(fixture.candidate)),new Map(paths.map(p=>[p,historicalLeaves[p]??fixture.candidate[p]]))];
+test('05eb binds every frozen historical leaf to its own exact tuple and preserves both sides without replay',()=>{
  const [before,after]=respawn05ebMaps(),snap=JSON.stringify([[...before],[...after]]);
  assert.equal(R.baseCommit,'7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51');assert.equal(R.candidateCommit,'05eb9b8243bfba7e166600990df33ac19bbaa0c2');
  assert.deepEqual(Object.keys(R.blobs),paths);
- for(const p of paths){assert.equal(gitBlobSha1(before.get(p)),R.blobs[p].base);assert.equal(gitBlobSha1(after.get(p)),R.blobs[p].candidate,'current source must match exact05eb: '+p);}
+ for(const p of paths){assert.equal(gitBlobSha1(before.get(p)),R.blobs[p].base);assert.equal(gitBlobSha1(after.get(p)),R.blobs[p].candidate,'historical source must match exact05eb: '+p);}
  const result=planMainInkBaseline(before,after,respawnExpected);
  assert.deepEqual([...result.sources],[...before]);assert.deepEqual(result.changes,[]);
  assert.equal(JSON.stringify([[...before],[...after]]),snap);
@@ -169,13 +182,13 @@ test('only the sixteen pinned pose source leaves are identical after the first b
 // Keep the historical fixtures above pinned. Admit the reviewed respawn delta
 // as its own complete tuple, preserving both inputs without historical replay.
 const respawnMaps=()=>[new Map(Object.entries(fixture.post30Pose)),
- new Map(CHARACTER_POSE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]))];
+ new Map(CHARACTER_POSE_PATHS.map(p=>[p,historicalLeaves[p]??fixture.post30Pose[p]]))];
 test('1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay',()=>{
  const [before,after]=respawnMaps(),snap=[...before],subject=[...after];
  assert.deepEqual(Object.keys(RESPAWN.paths),CHARACTER_POSE_PATHS);
  for(const p of CHARACTER_POSE_PATHS){
   assert.equal(gitBlobSha1(before.get(p)),RESPAWN.paths[p].baseline,p+' baseline');
-  assert.equal(gitBlobSha1(after.get(p)),RESPAWN.paths[p].candidate,p+' current source');
+  assert.equal(gitBlobSha1(after.get(p)),RESPAWN.paths[p].candidate,p+' frozen historical source');
  }
  const result=planCharacterPoseBaseline(before,after);
  assert.equal(result.pairEvidence.mode,'current-pose-pair-with-gameplay-differences');
@@ -240,4 +253,19 @@ test('post30 controls CLI accepts only the frozen single-difference tuple and co
   assert.deepEqual(out.counts,{positiveCli:2,cliRejected:56,helperRejected:29});
   assert.equal(out.originalInputsUnchanged,true);assert.equal(out.scratchRemoved,true);
  }finally{fs.rmSync(root,{recursive:true,force:true});}
+});
+
+// A current checkout must not inherit an obsolete epoch label merely because
+// the historical controls above pass. Current-head production admission runs
+// separately and retains its own full-tree/source/build/receipt checks.
+test('current checkout cannot impersonate the frozen 05eb or 1862 epochs',()=>{
+ const currentPaint=new Map(paths.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const currentPose=new Map(CHARACTER_POSE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const paintBefore=new Map(Object.entries(fixture.candidate)),poseBefore=new Map(Object.entries(fixture.post30Pose));
+ const snap=JSON.stringify([[...currentPaint],[...currentPose]]);
+ assert.throws(()=>assertLiveSource(currentPaint,P.candidateCommit));
+ assert.throws(()=>assertLiveSource(currentPaint,F.sourceHead));
+ assert.throws(()=>planMainInkBaseline(paintBefore,currentPaint,respawnExpected));
+ assert.throws(()=>planCharacterPoseBaseline(poseBefore,currentPose));
+ assert.equal(JSON.stringify([[...currentPaint],[...currentPose]]),snap);
 });

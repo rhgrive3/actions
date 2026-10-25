@@ -1,3 +1,4 @@
+import { finiteTripleAt } from './coordinates.mjs';
 // Host-only ranked objective pose admission. Cosmetic interpolation is unchanged.
 // This is a plausibility gate, not a fully authoritative server movement simulator:
 // it bounds what an owner-reported pose may do relative to the last admitted pose,
@@ -106,7 +107,8 @@ function flightOf(row) {
   if (!Array.isArray(a) || a[0] !== ADOPTION_TAG) return null;
   const j = a[5];
   if (!Array.isArray(j) || j.length !== 16 || j[0] !== 1) return null;
-  const from = vec(j.slice(3,6)), to = vec(j.slice(6,9));
+  const from = finiteTripleAt(j, 3, finite) ? [j[3],j[4],j[5]] : null;
+  const to = finiteTripleAt(j, 6, finite) ? [j[6],j[7],j[8]] : null;
   return from && to ? { from, to } : null;
 }
 function nearLanding(p, ctx, state, actor) {
@@ -148,7 +150,7 @@ function nearRespawn(p, actor, ctx) {
 //   landings(actor) fixed Super Jump points, allies(actor) teammate points }.
 export function admitRankedPose(state, row, actor, ts, world, ctx = null) {
   if (!state || !Array.isArray(row) || row.length < 21 || !finite(ts) ||
-      !row.slice(1,4).every(finite) || !Number.isSafeInteger(row[10]) ||
+      !finiteTripleAt(row, 1, finite) || !Number.isSafeInteger(row[10]) ||
       !Number.isSafeInteger(row[16]) || row[16] < 0) return false;
   const next = [row[1],row[2],row[3]], flags = row[10], prev = state.last;
   const now = finite(ctx?.now) ? ctx.now : null;

@@ -173,21 +173,42 @@ test('Tacticooler flat sweeps match original motion, Tower updates and reentrant
 });
 
 test('catalog splash direction is created only for an admitted release, preserving exhaustion, threshold, head-stop and payload order',()=>{
- const source=runtime('main-weapon-catalog.mjs'),current=cut(source,'      if(!p.ghost&&d.splashCount>0','      if(!p.ghost&&s.rollerFlight');
+ const source=runtime('main-weapon-catalog.mjs');
+ // The release kernel consumes these real per-step bindings from its caller.
+ // Keep the production horizontal-distance calculation, not len aliases/stubs.
+ const distance=cut(source,'      const splashBefore=','      this.projectileVisuals?.recordPhysicsPoint');
+ assert.match(distance,/const splashBefore=/);assert.match(distance,/const splashLength=/);
+ const current=distance+cut(source,'      if(!p.ghost&&d.splashCount>0','      if(!p.ghost&&s.rollerFlight');
  const run=(kernel,config)=>{
   const rows=[],g={EPS:1e-9,DT:1/60,HZ:60,clamp:(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v)),G:{},catalogSplashRadius,mainInkFootprint:()=>({width:.3}),
    spawnSplashDrop(_g,o){rows.push(['drop',o.from.toArray(),o.direction.toArray(),o.radius,o.salt,o.catchUpSeconds]);return {};},
    floorPaint(_a,from,radius,depth,direction){rows.push(['floor',from.toArray(),radius,depth,direction.toArray()]);}};
   const fn=compile('function advance(p,s,d,travelBefore,len,stop){'+kernel+'}',['advance'],g).advance;
-  let clones=0;const vel=new THREE.Vector3(0,0,60);vel.clone=function(){clones++;return new THREE.Vector3().copy(this);};
-  const p={ghost:config.ghost,vel,prev:new THREE.Vector3(0,5,0),pos:new THREE.Vector3(0,5,1),life:1,age:1/60,owner:{},team:0,seed:7};
-  const s={dropCount:config.used,nextSplash:config.next,travel:1,carry:0,r:{}},d={splashCount:config.count,splashSpacing:.2,splashDropSpec:config.falling?{}:null,depth:1};
-  fn(p,s,d,0,1,config.stop);return {rows,state:[s.dropCount,s.nextSplash],clones};
+  let clones=0;const vel=new THREE.Vector3(...(config.velocity||[0,0,60]));vel.clone=function(){clones++;return new THREE.Vector3().copy(this);};
+  const p={ghost:config.ghost,vel,prev:new THREE.Vector3(0,5,0),pos:new THREE.Vector3(...(config.position||[0,5,1])),life:1,age:1/60,owner:{},team:0,seed:7};
+  const s={dropCount:config.used,nextSplash:config.next,travel:1,splashTravel:config.splashTravel||0,carry:0,r:{}},d={splashHorizontal:!!config.horizontal,splashCount:config.count,splashSpacing:.2,splashDropSpec:config.falling?{}:null,depth:1};
+  fn(p,s,d,0,config.length??1,config.stop);return {rows,state:[s.dropCount,s.nextSplash],splashTravel:s.splashTravel,clones};
  };
  for(const config of [{used:0,next:2,count:3,stop:Infinity},{used:3,next:0,count:3,stop:Infinity},{used:0,next:1,count:3,stop:1},
   {used:0,next:.2,count:6,stop:Infinity},{used:0,next:.2,count:6,stop:.8},{used:-2,next:0,count:0,stop:Infinity}])for(const falling of [false,true])for(const ghost of [false,true]){
   const a=run(oracle.kernels.splash,{...config,falling,ghost}),b=run(current,{...config,falling,ghost});
   assert.deepEqual(a.rows,b.rows);assert.deepEqual(a.state,b.state);assert.equal(b.clones,b.rows.length?1:0);
+ }
+ // Horizontal travel must ignore the vertical component and retain the prior
+ // splash clock. An upward-only step advances no threshold and allocates no direction.
+ for(const falling of [false,true]){
+  const config={used:0,next:5.2,count:6,stop:Infinity,falling,horizontal:true,splashTravel:5,
+   position:[0,9,1],velocity:[0,240,60],length:Math.sqrt(17)};
+  const rising=run(current,config);assert.equal(rising.rows.length,5);assert.equal(rising.splashTravel,6);assert.equal(rising.clones,1);
+  for(let i=0;i<5;i++){
+   const xyz=rising.rows[i][1],t=(i+1)*.2;
+   assert(Math.abs(xyz[1]-(5+4*t))<1e-12);assert(Math.abs(xyz[2]-t)<1e-12);
+   if(falling)assert.equal(rising.rows[i][4],i); // Ordered salts survive distance extraction.
+  }
+  const vertical=run(current,{...config,next:5,position:[0,9,0],velocity:[0,240,0],length:4});
+  assert.deepEqual(vertical.rows,[]);assert.deepEqual(vertical.state,[0,5]);assert.equal(vertical.splashTravel,5);assert.equal(vertical.clones,0);
+  const stopped=run(current,{...config,stop:.8});assert.equal(stopped.rows.length,3);assert.equal(stopped.clones,1);
+  const exhausted=run(current,{...config,used:6});assert.deepEqual(exhausted.rows,[]);assert.equal(exhausted.clones,0);
  }
 });
 

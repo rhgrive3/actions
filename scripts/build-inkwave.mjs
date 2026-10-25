@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {dedupeVersionedVolumeAssets} from './lib/inkwave-volume-packaging.mjs';
 import {compactInstalledAudioManifest} from './lib/inkwave-audio-manifest.mjs';
-import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
+import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets, copyPrebuiltNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 import { emitLightmapIndex } from './lib/inkwave-lightmap-index.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
@@ -93,7 +93,6 @@ const compactEsm = (code, file) => {
 const dependencySpecs = new Map(), composedOwners = new Map();
 function composeSource(rel, source) {
   let code=adaptBuildSource(rel,source);
-  if (rel === 'src/world/lightmap-assets.js') code = emitLightmapIndex(code, SRC);
   const specs=[];
   if (/\.m?js$/.test(rel)) {
     for(const m of code.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
@@ -127,23 +126,35 @@ const BUILD = OUT + '.building';
 fs.rmSync(BUILD, { recursive: true, force: true });
 let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
 let losslessLightmapSavings = 0;
+let pendingLightmapIndex = null;
 for (const file of walk(SRC)) {
   const rel = path.relative(SRC, file);
   if (SKIP.has(rel) || rel.startsWith('assets/native-stages' + path.sep) || rel.startsWith('_native-reference-assets' + path.sep)) continue;
   const dst = path.join(BUILD, rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   const ext = path.extname(file);
+  // The Basis transcoder is a classic script that KTX2Loader inlines into a
+  // Worker blob; it must stay byte-identical, never an ES module. KTX2Loader
+  // itself also ships byte-identical, so the audio-orphan scan can seal the
+  // exact strings its Worker blob is built from (lazy: prebuilt stages only).
+  if (rel.startsWith(path.join('vendor', 'three', 'jsm', 'libs', 'basis') + path.sep) || rel === path.join('vendor', 'three', 'jsm', 'loaders', 'KTX2Loader.js')) { fs.copyFileSync(file, dst); continue; }
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
+    // Its asset inventory is not complete until the late overlays finish.
+    if (rel.split(path.sep).join('/') === 'src/world/lightmap-assets.js') {
+      pendingLightmapIndex = { code, dst, rel };
+      continue;
+    }
     // These exact production inputs are reread/composed by the mandatory
     // Three bundle below, which replaces module and removes core. Copying
-    // composed source here keeps the intermediate paths/diagnostics intact
-    // without minifying two outputs that can never be published. Diagnostics
+    // neither full split file here: the bundle below reads/composes the source
+    // directly. This also prevents a stale raw core from entering graph scans
+    // or a synchronized staging tree after its later removal. Diagnostics
     // and no-shake builds still take the original standalone transform path.
     const replacedThree = !unminified && process.env.INKWAVE_NO_THREE_SHAKE !== '1' &&
       /^(?:vendor\/three\/build\/three\.(?:core|module)\.js)$/.test(rel.split(path.sep).join('/')) &&
       fs.existsSync(path.join(SRC, 'vendor/three/build/three.module.js'));
-    if (replacedThree) { fs.writeFileSync(dst, code); continue; }
+    if (replacedThree) continue;
     const esm = ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/')));
     await stageTransform(code, {
       loader: ext === '.css' ? 'css' : 'js', format: esm ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
@@ -292,6 +303,21 @@ for (const file of walk(RANGE_ROOT)) {
 
 await finishTransforms();
 
+// Final lightmap inventory: all asset overlays are complete before emission.
+if (pendingLightmapIndex) {
+  const { code: source, dst, rel } = pendingLightmapIndex;
+  const code = emitLightmapIndex(source, BUILD);
+  await stageTransform(code, {
+    loader: 'js', format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
+  }, res => {
+    const output = !unminified ? compactEsm(res.code, rel.split(path.sep).join('/')) : res.code;
+    fs.writeFileSync(dst, output);
+    rawJs += Buffer.byteLength(code); minJs += Buffer.byteLength(output);
+    gzRaw += gz(Buffer.from(code)); gzMin += gz(Buffer.from(output));
+  });
+  await finishTransforms();
+}
+
 // Re-encode every final lightmap once after upstream, Scorch, and Range assets
 // have been overlaid. Keep all five assets offline and verify exact pixels.
 if (!unminified) for (const file of walk(path.join(BUILD, 'assets/lightmaps')).filter(file => file.endsWith('.png'))) {
@@ -333,9 +359,9 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
     } }],
   });
   const out = res.outputFiles[0].contents;
-  const before = fs.statSync(path.join(BUILD, 'vendor/three/build/three.module.js')).size + fs.statSync(path.join(BUILD, 'vendor/three/build/three.core.js')).size;
+  const before = fs.statSync(path.join(THREE_DIR, 'three.module.js')).size + fs.statSync(path.join(THREE_DIR, 'three.core.js')).size;
   fs.writeFileSync(path.join(BUILD, 'vendor/three/build/three.module.js'), compactEsm(Buffer.from(out).toString('utf8'), 'vendor/three/build/three.module.js'));
-  fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'));
+  fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'), { force: true });
   console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} ${reportGzip ? `(gzip ${kb(gz(Buffer.from(out)))})` : '(gzip diagnostics disabled)'}`);
 }
 
@@ -676,10 +702,14 @@ for (const [file, hash] of Object.entries(nativeSourceIdentity)) identity.files[
 identity.build.nativeStages = nativePrepared?.config || null;
 identity.build.volumePackaging=volumePackaging;
 identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-stages.mjs', import.meta.url)));
+// Decides which prebuilt payloads are admitted and copied.
+identity.files['build-script/lib/inkwave-native-prebuilt.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-prebuilt.mjs', import.meta.url)));
 if (accountBundle) identity.build.account = accountBundle;
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
 copyLocalNativeAssets(BUILD, nativePrepared);
+const prebuiltCopy = copyPrebuiltNativeAssets(BUILD, nativePrepared);
+if (prebuiltCopy) console.log(`native prebuilt: ${prebuiltCopy.stages} stages, ${prebuiltCopy.files} files, ${(prebuiltCopy.bytes/1048576).toFixed(1)} MiB outside the revision`);
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);

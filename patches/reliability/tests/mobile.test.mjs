@@ -108,7 +108,11 @@ async function fixture({ raw = false, layout = false } = {}) {
     up: (id, type = 'pointerup', x, y) => input.root.dispatch(type, event(id, x, y)),
     button(id, pointer = 1) { const b = input._box(id); route('pointerdown', pointer, b.x, b.y); return b; },
     resetState() { input.resetPointers(); },
-    resize() { window.dispatch('resize'); for (const fn of frames.splice(0)) fn(); },
+    resize(width = dimensions.innerWidth + 1, height = dimensions.innerHeight) {
+      dimensions.innerWidth = context.innerWidth = width;
+      dimensions.innerHeight = context.innerHeight = height;
+      window.dispatch('resize'); for (const fn of frames.splice(0)) fn();
+    },
   };
 }
 function clearState(input, { map = false } = {}) {
@@ -265,6 +269,25 @@ for (const action of ['resetPointers', 'reset', 'blur', 'hidden', 'device', 'res
     f.move(1, 200, 100); assert.equal(f.input.lookDX, 0); assert.equal(f.input.pressed.size, 0);
   });
 }
+
+test('unchanged resize preserves live full-MobileInput gestures and pending actions', async () => {
+  const f = await fixture({ layout: true }); seed(f);
+  const before = {
+    pointers: [...f.input._ptr.entries()], pressed: [...f.input.pressed],
+    edges: [...f.input._pendingEdges], lookDX: f.input.lookDX, lookDY: f.input.lookDY,
+    jumpTarget: f.input.jumpTarget, fire: f.input.down('fire'), jump: f.input.down('jump'),
+    resyncs: f.input.gyro.resyncs, gyroYaw: f.input.gyro.dYaw, gyroPitch: f.input.gyro.dPitch,
+  };
+  f.window.dispatch('resize');
+  assert.deepEqual({
+    pointers: [...f.input._ptr.entries()], pressed: [...f.input.pressed],
+    edges: [...f.input._pendingEdges], lookDX: f.input.lookDX, lookDY: f.input.lookDY,
+    jumpTarget: f.input.jumpTarget, fire: f.input.down('fire'), jump: f.input.down('jump'),
+    resyncs: f.input.gyro.resyncs, gyroYaw: f.input.gyro.dYaw, gyroPitch: f.input.gyro.dPitch,
+  }, before);
+  assert.equal(f.frames.length, 0);
+  f.resize(); clearState(f.input);
+});
 
 test('resetPointers/resize/device-hide preserve the map toggle while discarding stale targets', async () => {
   const f = await fixture({ layout: true }); f.input.setMap(true);

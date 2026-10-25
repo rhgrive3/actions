@@ -162,7 +162,7 @@ class Director {
   shell(add, life, style, pos, s0, s1, col, a, o = {}) {
     const pool = add ? this.kit.shells : this.kit.inkShells, seed = vfxRandom();
     const ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0, s = s0 + (s1 - s0) * ease(t);
       r.v[4] = s; r.v[5] = s * (o.sy ?? 1); r.v[6] = s; r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t;
       r.v[11] = a * (o.fade === false ? 1 : o.fadeIn ? Math.min(1, t / o.fadeIn) * (1 - smooth((t - 0.6) / 0.4)) : 1 - smooth((t - (o.hold ?? 0.35)) / (1 - (o.hold ?? 0.35))));
@@ -173,7 +173,7 @@ class Director {
   }
   disc(add, life, style, pos, nrm, r0, r1, col, a, o = {}) {
     const pool = add ? this.kit.discs : this.kit.inkDiscs, seed = vfxRandom(), ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
       r.v[3] = r0 + (r1 - r0) * ease(t); r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
@@ -182,7 +182,7 @@ class Director {
   }
   band(add, life, style, pos, r0, r1, h0, h1, col, a, o = {}) {
     const pool = add ? this.kit.bands : this.kit.inkBands, seed = vfxRandom(), ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
       r.v[4] = r0 + (r1 - r0) * ease(t); r.v[5] = h0 + (h1 - h0) * ease(t); r.v[3] = (r._spinOrigin ??= r.v[3]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
@@ -191,7 +191,7 @@ class Director {
   }
   beam(add, life, style, a, b, r0, r1, col, alpha, o = {}) {
     const pool = add ? this.kit.beams : this.kit.inkBeams;
-    return pool.add(life, [a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6], o.follow || null);
+    return pool.addRaw(life, a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6, o.follow || null);
   }
   setBeam(r, a, b, r0, r1, alpha) {
     const v = r.v; v[0] = a.x; v[1] = a.y; v[2] = a.z; v[4] = b.x; v[5] = b.y; v[6] = b.z;
@@ -685,12 +685,12 @@ const OBJECT_FX = {
       r.acc = (r.acc || 0) + dt;
       while (r.acc > 0.03) {
         r.acc -= 0.03;
-        const th = rnd(TAU), rr = R * rnd(1, 0.6);
-        this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.2, 0.1), p.z + Math.sin(th) * rr);
+        const th = rnd(TAU), rr = R * rnd(1, 0.6), cs = Math.cos(th), sn = Math.sin(th);
+        this.v[0].set(p.x + cs * rr, p.y + rnd(1.2, 0.1), p.z + sn * rr);
         // spray thrown off tangentially at the base
-        this.drop(this.v[0], -Math.sin(th) * 9, rnd(5, 1), Math.cos(th) * 9, 0.5, 0.1, c, { grav: 12, drag: 0.6 });
-        this.puff(PUFF.CHUNK, this.v[0], -Math.sin(th) * 6, rnd(8, 3), Math.cos(th) * 6, 0.6, 0.16, 0.05, c, 1, { grav: 16, drag: 0.6 });
-        this.puff(PUFF.MIST, this.v[0], -Math.sin(th) * 3, rnd(3, 1), Math.cos(th) * 3, 0.7, 0.7, 1.6, this.hdr(c, 0.95), 0.4, { drag: 2, buoy: 1 });
+        this.drop(this.v[0], -sn * 9, rnd(5, 1), cs * 9, 0.5, 0.1, c, { grav: 12, drag: 0.6 });
+        this.puff(PUFF.CHUNK, this.v[0], -sn * 6, rnd(8, 3), cs * 6, 0.6, 0.16, 0.05, c, 1, { grav: 16, drag: 0.6 });
+        this.puff(PUFF.MIST, this.v[0], -sn * 3, rnd(3, 1), cs * 3, 0.7, 0.7, 1.6, this.hdr(c, 0.95), 0.4, { drag: 2, buoy: 1 });
       }
     },
     end(r, o) { const p = o.pos; this.smoke(this.v[0].copy(p).setY(p.y + 2), 6, this.hdr(r.color, 0.95), { kind: PUFF.MIST, size: 1.4, speed: 2, rise: 3, life: 1.1, alpha: 0.45 }); },
@@ -963,6 +963,15 @@ const DIRECTORS = {
         if (!ids.has(a)) ids.set(a, this.wailActorSerial = (this.wailActorSerial || 0) + 1);
         const key = `${ids.get(a)}:${e.activation}:${e.index ?? 0}`;
         let L = this.lasers.get(key);
+        if (L) {
+          // Repeated accepted rows update owned endpoints. Read both inputs
+          // before either write so direct callers may alias the old endpoints.
+          const px = pos.x, py = pos.y, pz = pos.z, tx = target.x, ty = target.y, tz = target.z;
+          const from = L.from.set(px, py, pz), end = L.to.set(tx, ty, tz), len = end.distanceTo(from);
+          if (len > C.maxLength) end.sub(from).multiplyScalar(C.maxLength / len).add(from);
+          L.seen = this.time;
+          return;
+        }
         const end = target.clone(), len = end.distanceTo(pos);
         if (len > C.maxLength) end.sub(pos).multiplyScalar(C.maxLength / len).add(pos);
         // Keep accepted beam origins fixed. Character frames may run after
@@ -1337,8 +1346,9 @@ const DIRECTORS = {
       if (consumeVfxPeriod(t, 'acc', .1)) {
         const rib = this.ribbon(true, { width: 0.1, widthTail: 0.02, color: this.hdr(t.color, 1.3, 0.8), alpha: 0.6, style: RIBBON.GLOW, life: 0.25, spacing: 0.08 });
         const y0 = rnd(1.6, 0.3), ph = rnd(TAU), r0 = rnd(1.2, 0.8), dirSign = sgn();
-        this.shell(true, 0.5, SHELL.FLASH, a.pos, 0, 0, [0, 0, 0], 0, { follow: (rec) => { const k = rec.t / rec.life, th = ph + dirSign * k * 5;
+        const carrier = this.shell(true, 0.5, SHELL.FLASH, a.pos, 0, 0, [0, 0, 0], 0, { follow: (rec) => { const k = rec.t / rec.life, th = ph + dirSign * k * 5;
           this.v[7].set(a.pos.x + Math.cos(th) * r0, a.pos.y + y0 + k * 0.8, a.pos.z + Math.sin(th) * r0); this.pushRibbon(rib, this.v[7], true); if (k > 0.98) this.kit.glowRibbons.end(rib); } });
+        carrier.onEnd = () => this.kit.glowRibbons.end(rib);
       }
     },
     event(a, e, pos, target) { if (e.action === 'marker' && pos) this.flash(pos, this.rgb(a), 0.6, 0.15); },

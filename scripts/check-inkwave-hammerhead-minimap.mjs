@@ -25,9 +25,10 @@ try {
   page.on('pageerror', e => result.errors.push(e.message));
   await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true, musicVolume: 0, audioVolume: 0 })));
   await page.goto('http://127.0.0.1:' + server.address().port + '/?map=hammerhead', { waitUntil: 'domcontentloaded' });
-  await page.evaluate(async () => globalThis.NG = (await import(new URL('src/core/ctx.js', document.baseURI))).G);
-  await page.waitForFunction(() => NG.game?.menus && NG.mode !== 'boot' || document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
+  // Wait once within the original boot budget, then bind the current game owner.
+  await page.waitForFunction(() => globalThis.__G?.game?.menus && globalThis.__G.mode !== 'boot' || document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
   assert.equal(await page.locator('#boot-error').textContent(), '');
+  await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js', document.baseURI)); if (G !== globalThis.__G) throw Error('Native probe context owner mismatch'); globalThis.NG = G; });
   for (const mode of ['turf', 'zones', 'tower', 'rainmaker', 'clams']) {
     await page.evaluate(async mode => {
       const g = NG.game; g.debug.freeze(); g._skipRender = true; g.menus.wipe.cancel();

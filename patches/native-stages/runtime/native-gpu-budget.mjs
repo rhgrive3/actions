@@ -37,7 +37,7 @@ export function nativeRenderCaps({ mobile = false, tier = 0 } = {}) {
   if (!mobile) caps.pixelRatio = 1.25;
   if (tier >= 1) Object.assign(caps, { msaa: 0, bloom: false, pixelRatio: 1, shadowSize: 2048, paintAtlas: 2048 });
   if (tier >= 2) Object.assign(caps, { pixelRatio: 0.75, shadowSize: 1024 });
-  return caps;
+  return Object.freeze(caps);
 }
 
 // Touch devices start one texture step lower: High loads ~520 source maps
@@ -60,7 +60,41 @@ export function nativeTierTextureCaps(caps, tier = 0, mobile = false) {
   return { ...caps, maxDimension: Math.min(caps.maxDimension, t >= 3 ? 128 : 256) };
 }
 
-const capKey = caps => Object.keys(caps).sort().map(k => k + '=' + caps[k]).join(',');
+// UASTC transcodes to one of these without an uncompressed RGBA32 fallback
+// (KTX2Loader: ASTC, BC7, BC1/BC3 and ETC2 all cover opaque and alpha maps).
+const UASTC_TARGETS = ['WEBGL_compressed_texture_astc', 'EXT_texture_compression_bptc', 'WEBGL_compressed_texture_s3tc', 'WEBGL_compressed_texture_etc'];
+export function nativeCompressedTextureSupport(renderer) {
+  const extensions = renderer?.extensions;
+  return typeof extensions?.has === 'function' && UASTC_TARGETS.some(name => extensions.has(name));
+}
+
+/**
+ * Texture quality and caps for one native load. Touch devices start one step
+ * lower unless the stage ships KTX2 and this GPU receives it compressed; the
+ * uncompressed touch budget then stays attached as `caps.fallback` for any
+ * image that has to be decoded from its source PNG instead.
+ */
+export function nativeTextureProfile({ settingsQuality, tier = 0, touch = false, compressed = false, stageCaps }) {
+  const relief = touch && compressed;
+  const quality = nativeTextureQuality(settingsQuality, tier, touch && !relief);
+  const caps = nativeTierTextureCaps(stageCaps(quality), tier, touch && !relief);
+  if (!relief) return { quality, caps, textureTouch: touch };
+  const fallbackQuality = nativeTextureQuality(settingsQuality, tier, true);
+  const fallback = { quality: fallbackQuality, ...nativeTierTextureCaps(stageCaps(fallbackQuality), tier, true) };
+  return { quality, caps: { ...caps, fallback }, textureTouch: false };
+}
+
+// Renderer.q is read on frame paths. Native caps are immutable, so build their
+// canonical key once instead of allocating/sorting an array on every read.
+// Ad-hoc mutable caps retain their existing value-based behaviour.
+const frozenCapKeys = new WeakMap();
+const capKey = caps => {
+  let key = frozenCapKeys.get(caps);
+  if (key !== undefined) return key;
+  key = Object.keys(caps).sort().map(k => k + '=' + caps[k]).join(',');
+  if (Object.isFrozen(caps)) frozenCapKeys.set(caps, key);
+  return key;
+};
 const capped = new WeakMap();
 
 /** Same object for the same input: Renderer compares quality by identity. */

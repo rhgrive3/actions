@@ -14,7 +14,7 @@ export function classifyAnyAim(v,spec,speed,ownerHorizontalLimit){
  const ymin=v.y-.005,ymax=v.y+.005,lo=-1.05,hi=1.15,u=spec.spawnSpeedY;
  if(ymax<e.yMin||ymin>e.yMax)return 'outside-bounded-native-set';
  const y=p=>speed*Math.sin(p)+u*Math.cos(p),h=p=>speed*Math.cos(p)-u*Math.sin(p);
- const inverse=target=>{let a=lo,b=hi;for(let i=0;i<64;i++){const m=(a+b)/2;if(y(m)<target)a=m;else b=m;}return [a,b];};
+ const inverse=target=>{let a=lo,b=hi;for(let i=0;i<64;i++){const m=(a+b)/2;if(m===a||m===b)break;if(y(m)<target)a=m;else b=m;}return [a,b];};
  // Upward inherited velocity spans [0,inheritYMax]; floor clamp retains all
  // lower raw vertical speeds when its output cell includes the floor.
  const rawMin=ymin<=spec.spawnSpeedYWorldMin?-Infinity:ymin-spec.inheritYMax,rawMax=ymax;

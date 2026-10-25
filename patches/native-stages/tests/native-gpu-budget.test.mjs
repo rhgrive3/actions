@@ -47,6 +47,19 @@ test('capped quality keeps identity for equal inputs', () => {
   assert.ok(Object.isFrozen(capQuality(HIGH, caps)));
 });
 
+test('immutable native caps reuse keys while mutable ad-hoc caps remain value based', () => {
+  const native = nativeRenderCaps();
+  assert.ok(Object.isFrozen(native));
+  const frozen = Object.freeze({ msaa: 2, ao: false });
+  assert.equal(capQuality(HIGH, frozen), capQuality(HIGH, { ao: false, msaa: 2 }));
+  const mutable = { msaa: 2 };
+  const initial = capQuality(HIGH, mutable);
+  mutable.msaa = 0;
+  assert.equal(capQuality(HIGH, mutable).msaa, 0);
+  mutable.msaa = 2;
+  assert.equal(capQuality(HIGH, mutable), initial);
+});
+
 test('texture quality is lowered only by the stepped tiers', () => {
   assert.equal(nativeTextureQuality('ultra', 0), 'high');
   assert.equal(nativeTextureQuality('high', 1), 'balanced');

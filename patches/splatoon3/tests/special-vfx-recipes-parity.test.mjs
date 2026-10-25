@@ -10,7 +10,7 @@ function fixture(code,q){
   rows.push(Array.from(new Float32Array([x,y,z,vx,vy,vz,0,Math.max(.001,life),s0,s1,drag??1.5,grav??0,r,g,b,a,kind,rot??random()*Math.PI*2,spin??0,seed??random(),stretch??0,fadeIn??.06,buoy??0])));
  };
  const pool={spawnRaw:raw,spawn(...args){const o=args[14];return raw(...args.slice(0,14),o?.drag,o?.grav,o?.rot,o?.spin,o?.seed,o?.stretch,o?.fadeIn,o?.buoy);}};
- const C=new Function('rnd','vfxRandom','clamp','TAU','PUFF','SPARK','return class Recipes{'+code+'}')(rnd,random,(x,a,b)=>x<a?a:x>b?b:x,Math.PI*2,{CHUNK:2,PETAL:4,SMOKE:0},{STREAK:0,STAR:1});
+ const C=new Function('rnd','vfxRandom','clamp','TAU','PUFF','SPARK','return class Director{'+code+'}')(rnd,random,(x,a,b)=>x<a?a:x>b?b:x,Math.PI*2,{CHUNK:2,PETAL:4,SMOKE:0},{STREAK:0,STAR:1});
  const self=new C();self.kit={puffs:pool,sparks:pool,q};self.v=Array.from({length:8},()=>new THREE.Vector3());
  return {self,rows,calls:()=>calls};
 }

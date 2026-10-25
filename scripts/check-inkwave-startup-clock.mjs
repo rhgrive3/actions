@@ -33,9 +33,9 @@ const server = http.createServer((req, res) => {
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const relay = new WebSocketServer({ host: '127.0.0.1', port: 0 });
 await new Promise(resolve => relay.once('listening', resolve));
-const connect = createLocalRelay(), queued = [];
+const connect = createLocalRelay(), queued = []; let holdTicks = false;
 relay.on('connection', (ws, req) => connect(ws, req, { send(text, deliver) {
-  if (text.startsWith('m|') && text.includes('"k":"t"')) queued.push({ text, deliver });
+  if (holdTicks && text.startsWith('m|') && text.includes('"k":"t"')) queued.push({ text, deliver });
   else deliver(text);
 } }));
 const address = `http://127.0.0.1:${server.address().port}/probe?relay=${encodeURIComponent('ws://127.0.0.1:' + relay.address().port)}`;
@@ -115,8 +115,17 @@ try {
           if (data.k === 't') receipts.push({ ts: data.ts, relay: this.relayReceipt(from), received: performance.now() / 1000 });
           return receive.call(this, from, data);
         };
-        if (counterfactual) tr.relayReceipt = () => null;
       }, counterfactual);
+      // Negotiate the real nonce/relay origin before testing the delayed queue;
+      // otherwise a modern peer correctly rejects unnegotiated first packets.
+      await owner.evaluate(() => G.netm._sendTick());
+      await viewer.waitForFunction(id => G.netm?.peers?.get(id)?.lastTs !== undefined, owners[0]);
+      const warmup = await viewer.evaluate(id => { const peer=G.netm.peers.get(id);
+        return { ts:peer.lastTs, x:G.actors.find(a=>a.owner===id).net.buf.at(-1)?.x, accepted:G.netm.stats.in }; },owners[0]);
+      await viewer.evaluate(() => { receipts.length=0; });
+      if (counterfactual) await viewer.evaluate(() => { G.net.tr.relayReceipt=()=>null; });
+      assert.equal(queued.length,0,'warm-up tick must not be held before nonce origin admission');
+      holdTicks = true;
       const send = x => owner.evaluate(x => { G.local.pos.x = x; G.netm._sendTick(); }, x);
       await send(2); await until(() => queued.length === 1);
       // Longer than the unmodified 5 s guard: startup holds the first tick,
@@ -124,6 +133,7 @@ try {
       await new Promise(resolve => setTimeout(resolve, 6200));
       await send(7); await until(() => queued.length === 2);
       for (const { text, deliver } of queued.splice(0)) deliver(text);
+      holdTicks = false;
       await viewer.waitForFunction(() => receipts.length === 2);
       const result = await viewer.evaluate(ownerId => {
         const peer = G.netm.peers.get(ownerId), actor = G.actors.find(a => a.owner === ownerId);
@@ -131,8 +141,15 @@ try {
       }, owners[0]);
       assert(result.receipts[1].ts - result.receipts[0].ts > 5, 'owner advances beyond the original grace');
       assert(result.receipts[1].received - result.receipts[0].received < 1, 'receiver drains the startup backlog');
-      assert.equal(result.lastTs, result.receipts[rejected ? 0 : 1].ts);
-      assert.equal(result.x, rejected ? 2 : 7);
+      if (!legacy && counterfactual) {
+        // Current relay-stamped contract fails closed when a receipt disappears.
+        assert.equal(result.lastTs,warmup.ts,'missing receipt cannot advance nonce-authenticated time');
+        assert.equal(result.x,warmup.x,'missing receipt cannot replace authenticated pose');
+        assert.equal(result.accepted,warmup.accepted,'missing receipt cannot enter actor timeline');
+      } else {
+        assert.equal(result.lastTs, result.receipts[rejected ? 0 : 1].ts);
+        assert.equal(result.x, rejected ? 2 : 7);
+      }
       if (!counterfactual) assert(result.receipts[1].relay - result.receipts[0].relay > 5000);
       assert.deepEqual(errors, []);
       results.push({ engine, browser: browser.version(), clients: 2, legacy, counterfactual, ...result });

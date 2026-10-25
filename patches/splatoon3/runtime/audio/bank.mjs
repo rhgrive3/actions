@@ -139,5 +139,5 @@ export class WeaponSoundBank {
 }
 // A weak actor key prevents one player's firing/landing from suppressing another's.
 const actors=new WeakMap();let nextActor=1;
-export function audioEmitterKey(o={}){if(o.emitterId!=null)return String(o.emitterId);const a=o.actor;if(a&&typeof a==='object'){if(!actors.has(a))actors.set(a,nextActor++);return 'actor'+actors.get(a);}if(o.pos&&[o.pos.x,o.pos.y,o.pos.z].every(Number.isFinite))return `cell:${Math.floor(o.pos.x/2)}:${Math.floor(o.pos.y/2)}:${Math.floor(o.pos.z/2)}`;return 'local';}
+export function audioEmitterKey(o={}){if(o.emitterId!=null)return String(o.emitterId);const a=o.actor;if(a&&typeof a==='object'){let id=actors.get(a);if(id===undefined){id=nextActor++;actors.set(a,id);}return 'actor'+id;}if(o.pos&&Number.isFinite(o.pos.x)&&Number.isFinite(o.pos.y)&&Number.isFinite(o.pos.z))return `cell:${Math.floor(o.pos.x/2)}:${Math.floor(o.pos.y/2)}:${Math.floor(o.pos.z/2)}`;return 'local';}
 export function selectVictim(voices,incomingPriority){let result=null;for(const v of voices){if(v.v.dead||v.stolen)continue;if(!result||(v.priority??35)<(result.priority??35)||((v.priority??35)===(result.priority??35)&&v.t<result.t))result=v;}return result&&(result.priority??35)<=incomingPriority?result:null;}

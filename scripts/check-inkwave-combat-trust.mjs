@@ -62,7 +62,7 @@ try{
       },netMatchGo(){G.match.state='playing';},netMatchAborted(){}};
     G.net=new NetSession();globalThis.step=()=>{clock+=1000/60;G.time+=1/60;G.net.update(1/60);};
     // Same placement on both clients (this fake match never runs applyRemote).
-    globalThis.place=(victimX=0)=>{const [a,v]=G.actors;a.pos.set(0,0,0);v.pos.set(victimX,0,10);a.aimDir.set(0,0,1);a.aimPoint.set(victimX,1,10);G.projectiles.clear();};
+    globalThis.place=(victimX=0,victimZ=10)=>{const [a,v]=G.actors;a.pos.set(0,0,0);v.pos.set(victimX,0,victimZ);a.aimDir.set(victimX,0,victimZ).normalize();a.aimPoint.set(victimX,1,victimZ);G.projectiles.clear();};
    });
   }
   const [host,guest]=pages,code=await host.evaluate(()=>G.net.create('Owner'));
@@ -72,10 +72,32 @@ try{
   const cfg={...await host.evaluate(async()=>{const {PROTO,COMPAT}=await import('/src/net/transport.js');return {proto:PROTO,compat:COMPAT};}),id:engine+'-combat-trust',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
   await Promise.all(pages.map(p=>p.evaluate(cfg=>G.net._begin(cfg),cfg)));
   await host.evaluate(()=>G.net._go());await Promise.all(pages.map(p=>p.waitForFunction(()=>G.match?.state==='playing')));
-  const frames=async n=>{for(let i=0;i<n;i++){await Promise.all(pages.map(p=>p.evaluate(()=>step())));await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
+  // BEGIN COMBAT FRAME PACING (exercised verbatim by the CPU regression)
+  function createCombatFramePacer(now=()=>performance.now(),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))){
+    const started=now();let frame=0;
+    return async()=>{const delay=started+(++frame)*1000/60-now();if(delay>0)await wait(delay);};
+  }
+  // END COMBAT FRAME PACING
+  // Browser performance.now() is controlled above, but the real production
+  // relay authenticates ticks with Date.now(). Never fast-forward only the
+  // owner clock: the fixed relay origin must continue admitting fresh ticks.
+  const pace=createCombatFramePacer();
+  const frames=async n=>{for(let i=0;i<n;i++){await pace();await Promise.all(pages.map(p=>p.evaluate(()=>step())));await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
   // Settle longer than the receiver's 1.2 s lag-compensation window, so an
   // earlier placement is no longer a legal past pose of the victim.
-  const reset=async(victimX=0)=>{await Promise.all(pages.map(p=>p.evaluate(x=>{place(x);G.actors[1].hp=100;wall=false;},victimX)));await frames(80);};
+  const reset=async(victimX=0,victimZ=10)=>{
+    // A wall-rejected claim can remain deferred for 0.95 s. Keep the OLD
+    // environment intact until it expires; opening the wall first would turn
+    // scenario C's old claim into damage during scenario D's setup.
+    const hp=await guest.evaluate(()=>G.local.hp);
+    await frames(80);
+    assert.equal(await guest.evaluate(()=>G.local.hp),hp,'old scenario cannot gain a late admitted hit while draining');
+    const pending=await Promise.all(pages.map(p=>p.evaluate(()=>[...(G.netm._combatProvenance?.pending.values()||[])].reduce((n,items)=>n+items.length,0))));
+    assert.deepEqual(pending,[0,0],'old claims must expire before changing collision or restoring HP');
+    await Promise.all(pages.map(p=>p.evaluate(([x,z])=>{place(x,z);G.actors[1].hp=100;wall=false;},[victimX,victimZ])));
+    await frames(80);
+    assert.equal(await guest.evaluate(()=>G.local.hp),100,'new scenario starts without inherited damage');
+  };
   await frames(12);
 
   // A. Genuine round in the open: the victim loses exactly what the owner sent.
@@ -103,8 +125,12 @@ try{
 
   // D. Positive control for C: the same forged-size claim with the wall away
   // from the line of fire (victim stepped out) is a legal hit and applies.
-  await reset(9);
+  // At z=7 and x=5 the actual trajectory crosses the z=6 wall at x=30/7>4,
+  // while staying inside the real shooter's reach. The old (9,10) probe was
+  // outside the same weapon's effective reach, so no legal hit could follow.
+  await reset(5,7);
   await guest.evaluate(()=>{wall=true;});
+  assert.equal(await guest.evaluate(()=>G.physics.los(G.actors[0].pos,G.actors[1].pos)),true,'positive control is not behind the controlled wall');
   await host.evaluate(()=>{G.projectiles.fireShooter(G.local,G.local.weapon,0);G.projectiles.clear();G.netm.sendHit(G.local,G.actors[1],36,G.local.weapon.id);});
   await frames(20);
   assert.equal(await guest.evaluate(()=>G.local.hp),64,'visible victim takes the legal 36');

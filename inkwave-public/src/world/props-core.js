@@ -1,3 +1,4 @@
+import { runBuildSlices } from '../core/buildSlices.js';
 import { setPropInstanceEnvelope } from './render-bounds.js';
 import { G as propAtlasGame } from '../core/ctx.js';
 // INKWAVE prop kit: procedural set dressing for the harbor / skatepark / container-yard arenas.
@@ -135,10 +136,21 @@ function roundBox(w, h, d, r) {
 }
 
 // Lathe around +Y. profile = [[r, y], ...] ordered bottom→out→up→in; `null` entries split strips (hard crease).
+// Only ordinary bounded integer tessellations are retained (at most 32 tables).
+const radialTables = new Map();
+function radialTable(count,inclusive){
+ const cached = Number.isInteger(count) && count >= 3 && count <= 96;
+ const key=count*2+(inclusive?1:0);
+ if(cached && radialTables.has(key))return radialTables.get(key);
+ const cos=[],sin=[];
+ for(let k=0;inclusive?k<=count:k<count;k++){const a=(k/count)*TAU;cos.push(Math.cos(a));sin.push(Math.sin(a));}
+ const table={cos,sin};
+ if(cached){if(radialTables.size>=32)radialTables.delete(radialTables.keys().next().value);radialTables.set(key,table);}
+ return table;
+}
 function latheGeo(profile, seg, closed = false) {
   const g = new GB();
-  const cos = [], sin = [];
-  for (let k = 0; k <= seg; k++) { const ph = (k / seg) * TAU; cos.push(Math.cos(ph)); sin.push(Math.sin(ph)); }
+  const {cos,sin} = radialTable(seg,true);
   const strips = [[]];
   for (const p of profile) { if (p === null) strips.push([]); else strips[strips.length - 1].push(p); }
   for (const S of strips) {
@@ -171,8 +183,7 @@ function latheGeo(profile, seg, closed = false) {
 // Tube along a polyline (parallel-transport frames). radius may be a function of t in [0,1].
 function tubeGeo(pts, radius, radial = 8, closed = false, up = null) {
   const n = pts.length, g = new GB();
-  const cos = [], sin = [];
-  for (let k = 0; k < radial; k++) { const a = (k / radial) * TAU; cos.push(Math.cos(a)); sin.push(Math.sin(a)); }
+  const {cos,sin} = radialTable(radial,false);
   const P = pts.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
   const T = [];
   for (let i = 0; i < n; i++) {
@@ -1101,16 +1112,18 @@ function bannerGeo(w, h) {
 }
 
 // ------------------------------------------------------------------------------------------------ merge
-const _v = new THREE.Vector3(), _nm = new THREE.Matrix3();
-function mergeParts(parts) {
+const _v = new THREE.Vector3();
+function mergeParts(parts) { const steps = mergePartSteps(parts); let next; do { next = steps.next(); } while (!next.done); return next.value; }
+function* mergePartSteps(parts) {
+  const normalMatrix = new THREE.Matrix3();
   let nv = 0, ni = 0;
-  for (const p of parts) { const c = p.g.attributes.position.count; nv += c; ni += p.g.index ? p.g.index.count : c; }
+  for (const p of parts) { const c = p.g.attributes.position.count; nv += c; ni += p.g.index ? p.g.index.count : c; yield; }
   const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), colr = new Float32Array(nv * 3), uv = new Float32Array(nv * 2);
   const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
   let vo = 0, io = 0;
   for (const p of parts) {
     const g = p.g, P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv, C = g.attributes.color;
-    _nm.getNormalMatrix(p.m);
+    normalMatrix.getNormalMatrix(p.m);
     const flip = p.m.determinant() < 0;
     const cr = p.c.r, cg = p.c.g, cb = p.c.b;
     for (let i = 0; i < P.count; i++) {
@@ -1119,7 +1132,7 @@ function mergeParts(parts) {
       pos[o] = _v.x; pos[o + 1] = _v.y; pos[o + 2] = _v.z;
       let ao = 1;
       if (p.ao != null) { const hh = Math.max(0, _v.y - p.ao); const t = Math.min(1, hh / 0.55); ao = 0.72 + 0.28 * t * t * (3 - 2 * t); }
-      _v.fromBufferAttribute(N, i).applyMatrix3(_nm).normalize();
+      _v.fromBufferAttribute(N, i).applyMatrix3(normalMatrix).normalize();
       nor[o] = _v.x; nor[o + 1] = _v.y; nor[o + 2] = _v.z;
       const k = C ? C.getX(i) : 1, k2 = C ? C.getY(i) : 1, k3 = C ? C.getZ(i) : 1;
       colr[o] = cr * k * ao; colr[o + 1] = cg * k2 * ao; colr[o + 2] = cb * k3 * ao;
@@ -1127,6 +1140,7 @@ function mergeParts(parts) {
       if (p.uv) { const r = p.uv; uv[u] = r[0] + (U ? U.getX(i) : 0) * (r[2] - r[0]); uv[u + 1] = r[1] + (U ? U.getY(i) : 0) * (r[3] - r[1]); }
       else if (p.uvs) { uv[u] = (U ? U.getX(i) : 0) * p.uvs[0]; uv[u + 1] = (U ? U.getY(i) : 0) * p.uvs[1]; }
       else { uv[u] = WHITE_UV[0]; uv[u + 1] = WHITE_UV[1]; }
+      if ((i & 1023) === 1023) yield;
     }
     if (g.index) {
       const I = g.index.array;
@@ -1138,6 +1152,7 @@ function mergeParts(parts) {
       for (let j = 0; j < P.count; j += 3) { idx[io++] = vo + j; idx[io++] = vo + j + (flip ? 2 : 1); idx[io++] = vo + j + (flip ? 1 : 2); }
     }
     vo += P.count;
+    yield;
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -1145,8 +1160,14 @@ function mergeParts(parts) {
   g.setAttribute('color', new THREE.BufferAttribute(colr, 3));
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(new THREE.BufferAttribute(idx, 1));
-  g.computeBoundingSphere(); g.computeBoundingBox();
-  return g;
+  let complete = false;
+  try {
+    const box = g.boundingBox = new THREE.Box3();
+    for (let i = 0; i < nv; i++) { box.expandByPoint(_v.fromArray(pos, i * 3)); if ((i & 1023) === 1023) yield; }
+    const sphere = g.boundingSphere = new THREE.Sphere(); box.getCenter(sphere.center); let radiusSq = 0;
+    for (let i = 0; i < nv; i++) { radiusSq = Math.max(radiusSq, sphere.center.distanceToSquared(_v.fromArray(pos, i * 3))); if ((i & 1023) === 1023) yield; }
+    sphere.radius = Math.sqrt(radiusSq); complete = true; return g;
+  } finally { if (!complete) g.dispose(); }
 }
 const triCountOf = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
 
@@ -3251,12 +3272,14 @@ export class PropKit {
 
   // Regenerate released build buckets from the recorded placements (same-instance rebuild).
   // Does not touch count/lastTris/colliders — those are established by the first add().
-  _replayBuckets() {
+  _replayBuckets() { for (const _ of this._replayBucketSteps()) {} }
+  *_replayBucketSteps() {
     // Recreate each animated record exactly once alongside its static geometry.
     this._spin = []; this._blink = []; this._flags = []; this._banners = [];
     for (const p of this._placements) {
       const def = D[p.type];
       if (def) this._place(def, p.type, p.o);
+      yield;
     }
   }
 
@@ -3292,23 +3315,34 @@ export class PropKit {
     return out;
   }
 
-  build() {
+  build() { const steps = this._buildSteps(); let next; do { next = steps.next(); } while (!next.done); return next.value; }
+
+  async buildAsync(options) { return runBuildSlices(this._buildSteps(), options); }
+
+  async addAll(placements, options) {
+    const kit = this;
+    function* addSteps() { const colliders = []; for (const item of placements) { const result = kit.add(item.type, item); if (result?.colliders) colliders.push(...result.colliders); yield; } return colliders; }
+    return runBuildSlices(addSteps(), options);
+  }
+
+  *_buildSteps() {
     syncPropAtlas(this);
     // A prior build released the consumed buckets; regenerate them from the recorded placements so
     // a same-instance rebuild re-merges identical geometry instead of wiping the live meshes.
-    if (this._released) { this._buckets.clear(); this._replayBuckets(); }
+    if (this._released) { this._buckets.clear(); yield* this._replayBucketSteps(); }
     this._disposeMeshes();
     if (this._headless) return this;
     for (const [bucket, parts] of this._buckets) {
       if (!parts.length) continue;
       const [key, flag] = bucket.split('~');   // 'gloss~ns' = gloss material, no shadow casting
-      const mesh = new THREE.Mesh(mergeParts(parts), this.mat[key]);
+      const mesh = new THREE.Mesh(yield* mergePartSteps(parts), this.mat[key]);
       mesh.name = 'props:' + bucket;
       mesh.castShadow = this.castShadow && CASTS[key] && flag !== 'ns';
       mesh.receiveShadow = key !== 'glow' && key !== 'blob';
       if (key === 'blob') mesh.renderOrder = 1;
       mesh.matrixAutoUpdate = false;
       this.group.add(mesh); this._meshes.push(mesh);
+      yield;
     }
     // spinners
     const kinds = {};
@@ -3321,6 +3355,7 @@ export class PropKit {
       mesh.userData = { recs, axis: kind === 'fan' ? 'z' : 'y' };
       setPropInstanceEnvelope(mesh);
       this.group.add(mesh); this._inst.push(mesh);
+      yield;
     }
     if (this._blink.length) {
       const mesh = new THREE.InstancedMesh(G.sph(1, 8, 6, false), this.mat.blink, this._blink.length);
@@ -3328,6 +3363,7 @@ export class PropKit {
       mesh.frustumCulled = false; mesh.name = 'props:blink'; mesh.userData = { recs: this._blink, blink: true };
       setPropInstanceEnvelope(mesh);
       this.group.add(mesh); this._inst.push(mesh);
+      yield;
     }
     for (const [recs, geo, name] of [[this._flags, () => flagGeo(), 'flags'], [this._banners, () => bannerGeo(0.8, 1.9), 'banners']]) {
       if (!recs.length) continue;
@@ -3338,6 +3374,7 @@ export class PropKit {
       mesh.userData = { recs, cloth: true };
       setPropInstanceEnvelope(mesh);
       this.group.add(mesh); this._inst.push(mesh);
+      yield;
     }
     this._applyColors();
     // Release the consumed static build graph now that every part is merged into the final buffers.

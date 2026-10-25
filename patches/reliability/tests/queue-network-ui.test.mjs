@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { usesSplatChargerRise } from '../../splatoon3/runtime/audio/charger-charge-rise.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { utf8ByteLength } from '../../network-replication/utf8-length.mjs';
 import { installClock, runSimulation } from '../../splatoon3/runtime/clock.mjs';
@@ -17,7 +18,7 @@ test('exact UTF8 byte quota matches TextEncoder for BMP, astral, isolated surrog
   for(const value of cases)assert.equal(utf8ByteLength(value),encoder.encode(value).byteLength);
 });
 test('remote idle audio avoids distance probes but always stops a previously playing handle',()=>{
-  const G={audio:{}},voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G});
+  const G={audio:{}},voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesSplatChargerRise});
   let probes=0,calls=0,stops=0;const actor={remote:true,alive:true,weapon:{kind:'shooter'},weaponRunner:{},net:{loops:{}},_nearCamera(){probes++;return false;}};
   const n={byNid:new Map([[1,actor]]),_voiceLoop(a,near,key,on){calls++;if(a.net.loops[key]&&!on){a.net.loops[key].stop();a.net.loops[key]=null;}return null;}};
   voices.call(n,.016);assert.equal(probes,0);assert.equal(calls,0);
@@ -27,7 +28,7 @@ test('remote idle audio avoids distance probes but always stops a previously pla
 test('remote Charger release retires its recorded phrase and rearms the next onset without idle probes',()=>{
   let probes=0,starts=0,stops=0,calls=0;
   const G={audio:{playChargerChargeRise(){starts++;return {stop(){stops++;}};}}};
-  const voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G});
+  const voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesSplatChargerRise});
   const a={remote:true,alive:true,weapon:{id:'charger',kind:'charger'},weaponRunner:{charging:true},net:{loops:{}},_nearCamera(){probes++;return true;}};
   const n={byNid:new Map([[1,a]]),_voiceLoop(_a,_near,key){assert.ok(key==='spin'||key==='roll','Charger cannot create a repeating click');calls++;return null;}};
   voices.call(n,.016);assert.equal(starts,1);assert.equal(probes,1);assert.equal(a.net._chargerOnsetActive,true);
@@ -116,13 +117,17 @@ test('lobby slot occupancy is sampled once for eight anchors and direct callers 
 test('stick guards compare authored and serialized styles and repair external edits or replacement nodes',()=>{
  const draw=method('src/core/mobile.js','_drawStick','openEditor');
  const canonical=v=>v.replace(/-?\d+(?:\.\d+)?/g,n=>String(+n)).replace(/,0\)/,',0px)').replace(/,/g,', ');
- const node=()=>{const values={},writes={transform:0,opacity:0};return {writes,classList:{toggle(){}},style:{get transform(){return values.transform||'';},set transform(v){writes.transform++;values.transform=canonical(v);},get opacity(){return values.opacity||'';},set opacity(v){writes.opacity++;values.opacity=String(+Number(v).toFixed(6));}}};};
+ const node=()=>{const values={},writes={transform:0,opacity:0},classes=new Set();return {writes,classList:{contains:name=>classes.has(name),toggle(name,force){const on=force===undefined?!classes.has(name):!!force;if(on)classes.add(name);else classes.delete(name);return on;}},style:{get transform(){return values.transform||'';},set transform(v){writes.transform++;values.transform=canonical(v);},get opacity(){return values.opacity||'';},set opacity(v){writes.opacity++;values.opacity=String(+Number(v).toFixed(6));}}};};
  const owner={stickEl:node(),knob:node(),dirEl:node(),_stick:{ox:20,oy:20},_stickHome:{x:20,y:20,d:40}};
  const run=()=>draw.call(owner,true,12,0,.123456789);
  for(let i=0;i<120;i++)run();
+ assert.equal(owner.stickEl.classList.contains('is-on'),true);assert.equal(owner.stickEl.classList.contains('is-run'),false);
+ owner.stickEl.classList.toggle('is-on',false);owner.stickEl.classList.toggle('is-run',true);run();
+ assert.equal(owner.stickEl.classList.contains('is-on'),true,'repair an externally removed active class');assert.equal(owner.stickEl.classList.contains('is-run'),false,'repair an externally added run class');
  assert.deepEqual(owner.knob.writes,{transform:1,opacity:0});assert.deepEqual(owner.dirEl.writes,{transform:1,opacity:1});
  owner.knob.style.transform='scale(2)';owner.dirEl.style.transform='scale(2)';owner.dirEl.style.opacity='0';run();
  assert.equal(owner.knob.writes.transform,3);assert.deepEqual(owner.dirEl.writes,{transform:3,opacity:3});run();assert.equal(owner.dirEl.writes.opacity,3);
  draw.call(owner,false);draw.call(owner,false);assert.equal(owner.dirEl.style.opacity,'0');run();assert.notEqual(owner.dirEl.style.opacity,'0');
+ draw.call(owner,true,12,0,1);assert.equal(owner.stickEl.classList.contains('is-run'),true);draw.call(owner,false);assert.equal(owner.stickEl.classList.contains('is-on'),false);assert.equal(owner.stickEl.classList.contains('is-run'),false);
  owner.knob=node();owner.dirEl=node();run();assert.equal(owner.knob.writes.transform,1);assert.deepEqual(owner.dirEl.writes,{transform:1,opacity:1});
 });

@@ -42,8 +42,8 @@ const CHANGES = [
   ],
   [
     "src/ui/menus.js",
-    "    cancelAnimationFrame(this._raf);\n",
-    "    cancelAnimationFrame(this._raf);\n    this._news?.dispose();\n"
+    "    this.wipe.cancel();\n    this.el.remove();\n",
+    "    this._news?.dispose();\n    this.wipe.cancel();\n    this.el.remove();\n"
   ],
   [
     "src/ui/menus.js",
@@ -188,12 +188,6 @@ const CHANGES = [
 export function adaptVisualAudioQueue(rel, code) {
   for (let [file, before, after] of CHANGES) {
     if (rel !== file) continue;
-    // Direct quality tests and the full reliability composition have distinct,
-    // exact RAF cleanup anchors. Preserve both cleanup owners in either route.
-    if (file === 'src/ui/menus.js' && before === "    cancelAnimationFrame(this._raf);\n" && !code.includes(before)) {
-      before = "    cancelAnimationFrame(this._raf); cancelAnimationFrame(this._fitQ); this._fitQ = 0;\n";
-      after = before + "    this._news?.dispose();\n";
-    }
     const expected = 1;
     const count = code.split(before).length - 1;
     if (count !== expected) throw new Error('visual/audio queue anchor: ' + file + ': expected ' + expected + ', got ' + count + ': ' + before.slice(0, 80));

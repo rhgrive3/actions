@@ -16,7 +16,7 @@ test('native standing/jumping Splatling gets its own compact bead and no Shooter
  assert(sys.list.length);const p=sys.list[0];p.delay=0;p.age=.05;p.pos.copy(p.start).addScaledVector(p.vel,.05);
  let calls=0;f.G.fx={inkVolumes:{isInkVolumes:true,assets:new Map([['shooter',{}]]),begin(){},end(){},submitComposite(){calls++;return true;}}};
  const snapshot=()=>JSON.stringify([p.age,p.seed,p.size,p.damage,p.vel.toArray(),p.pos.toArray(),p.life,p.grav,p.drag,a.ink]);
- const before=snapshot();sys._draw();sys.syncVisuals(1);assert.equal(calls,0);assert.equal(p._iwVisualHistory??null,null);assert.equal(sys.s3ShapeCounts.body,0);assert.equal(sys.shooterMuzzleDroplets.drawn,0);
+ const before=snapshot();sys._draw();sys.syncVisuals(1);assert.equal(calls,0);assert.equal(p._iwVisualHistory??null,null);assert.equal(sys.s3ShapeCounts.body,0);assert.equal(sys.shooterMuzzleDroplets.drawn,3,'shared three-dimensional muzzle-only beads accompany the Splatling body');
  assert(sys.blobs.count>=1);const m=new f.THREE.Matrix4();sys.blobs.getMatrixAt(0,m);const scale=new f.THREE.Vector3().setFromMatrixScale(m);assert(Math.abs(scale.x-C.radius)<1e-7);assert(sys.blobShape.array[0]<=1+C.tailLength/C.radius+1e-5);assert(sys.blobInkLook.array[1]>0,'rounded drop branch, independent of Shooter rod');
  const shape=Array.from(sys.blobShape.array.slice(0,4));a.grounded=false;f.G.camera={position:new f.THREE.Vector3(0,30,0)};sys._draw();assert.deepEqual(Array.from(sys.blobShape.array.slice(0,4)),shape);assert.equal(snapshot(),before);
  const resources=[sys.blobs.geometry,sys.blobs.material];for(let i=0;i<10;i++)sys._draw();assert.deepEqual([sys.blobs.geometry,sys.blobs.material],resources);

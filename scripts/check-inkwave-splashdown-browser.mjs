@@ -17,18 +17,50 @@ const inkjet = process.argv.includes('--inkjet') ? { hz:Number(opt('--hz','60'))
 if(inkjet){assert.ok([30,60,120].includes(inkjet.hz));assert.ok([1,2,4].includes(inkjet.actorCount));assert.ok(['near','mixed'].includes(inkjet.layout));}
 const out = path.resolve(opt('--evidence-dir', '.ci-scratch/splashdown-browser'));
 fs.mkdirSync(out, { recursive: true });
-const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
+const batch = process.argv.includes('--batch');
+assert.ok(!batch || !terminal && !inkjet && !['--hz','--actors','--layout'].some(flag => process.argv.includes(flag)), '--batch owns its complete 22-case matrix');
+const checks = batch ? [{id:'splashdown',out,terminal:null,inkjet:null}] : [{id:terminal?'terminal':inkjet?'inkjet':'splashdown',out,terminal,inkjet}];
+if (batch) {
+  for (const hz of [30,60,120]) for (const actorCount of [1,2,4]) for (const layout of ['near','mixed']) {
+    const id=`${hz}hz-${actorCount}p-${layout}`;
+    checks.push({id:'inkjet/'+id,out:path.join(out,'inkjet',id),terminal:null,inkjet:{hz,actorCount,layout}});
+  }
+  for (const hz of [30,60,120]) checks.push({id:`inkjet-terminal/${hz}hz`,out:path.join(out,'inkjet-terminal',`${hz}hz`),terminal:{hz},inkjet:null});
+}
+const hasTerminals = checks.some(check => check.terminal);
+// The expensive content/provenance pass runs once. Every case boundary checks
+// the complete verified file identities; response bytes are hashed again before
+// serving. A modified file cannot hide behind a reused preflight receipt.
+const verifiedFiles = new Map();
+const fingerprint = file => { const s=fs.statSync(file,{bigint:true});assert.ok(s.isFile(),file+' regular file');return [s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs].join(':'); };
+function verifiedRead(file) {
+  file=path.resolve(file);const before=fingerprint(file),prior=verifiedFiles.get(file);
+  if(prior!==undefined)assert.equal(before,prior,'verified input changed: '+file);
+  const bytes=fs.readFileSync(file);assert.equal(fingerprint(file),before,'input changed while reading: '+file);
+  verifiedFiles.set(file,before);return bytes;
+}
+function assertVerifiedFilesUnchanged() {
+  for(const [file,identity] of verifiedFiles)assert.equal(fingerprint(file),identity,'verified input changed during browser batch: '+file);
+}
+const manifestBytes=verifiedRead(path.join(site,'inkwave-build.json'));
+const manifest = JSON.parse(manifestBytes);
 const hash = data => createHash('sha256').update(data).digest('hex');
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash);
-for (const [file, digest] of Object.entries(manifest.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
+assert.ok(/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(manifest.build?.revision || ''),'safe revision namespace');
+let artifactVerificationBytes=0;
+for (const [file, digest] of Object.entries(manifest.artifacts)) {
+  assert.ok(!path.isAbsolute(file) && !file.split(/[\\/]/).includes('..') && /^[a-f0-9]{64}$/.test(digest),'valid artifact '+file);
+  const bytes=verifiedRead(path.join(site,file));artifactVerificationBytes+=bytes.length;
+  assert.equal(hash(bytes), digest, file);
+}
 let qaIdentity=null,probeSource=null;
-if(terminal){
+if(hasTerminals){
 // Verify against the final composed tree or verified HEAD selected by the parent.
 assert.equal(hash(JSON.stringify(manifest.files)),manifest.inputHash,'build input identity');
 const sourceRoot=fs.realpathSync(opt('--source-root',fileURLToPath(new URL('../',import.meta.url))));
 const sourceProofPath=opt('--source-proof',null),expectedProofHash=opt('--expected-proof-sha256',null);
 assert.ok(sourceProofPath && /^[a-f0-9]{64}$/.test(expectedProofHash || ''),'explicit final source proof and expected proof SHA256 required');
-const sourceProofBytes=fs.readFileSync(sourceProofPath);assert.equal(hash(sourceProofBytes),expectedProofHash,'selected final source proof');
+const sourceProofBytes=verifiedRead(sourceProofPath);assert.equal(hash(sourceProofBytes),expectedProofHash,'selected final source proof');
 const sourceProof=JSON.parse(sourceProofBytes);
 assert.ok(['verified-HEAD','verified-official-HEAD','prepared-composition-not-HEAD'].includes(sourceProof.mode),'known proof provenance');
 assert.ok(sourceProof.fullBrowserInputVerificationRequired && /^[a-f0-9]{40}$/.test(sourceProof.candidateTree),'complete source-proof contract');
@@ -37,22 +69,22 @@ const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','t
 const verifiedInputs=[];
 for(const [key,digest] of Object.entries(manifest.files)){
   const prefix=Object.keys(namespaces).find(p=>key.startsWith(p));assert.ok(prefix && !key.split('/').includes('..'),'known source namespace '+key);
-  const file=namespaces[prefix]+key.slice(prefix.length),source=fs.readFileSync(path.join(sourceRoot,file));assert.equal(gitBlob(source),sourceProof.files[file],'exact final composed Git source '+file);assert.equal(digest,hash(source),'build input matches exact source '+file);verifiedInputs.push({key,file,sha256:digest,gitBlob:gitBlob(source)});
+  const file=namespaces[prefix]+key.slice(prefix.length),source=verifiedRead(path.join(sourceRoot,file));assert.equal(gitBlob(source),sourceProof.files[file],'exact final composed Git source '+file);assert.equal(digest,hash(source),'build input matches exact source '+file);verifiedInputs.push({key,file,sha256:digest,gitBlob:gitBlob(source)});
 }
 for(const key of ['patch/runtime/special-vfx.mjs','patch/runtime/all-specials.mjs','patch/runtime/install.mjs','upstream/src/game/weapons.js','upstream/src/game/actor.js','upstream/src/game/physics.js','upstream/src/world/paint.js','upstream/src/world/level.js','upstream/src/net/netmatch.js'])assert.ok(manifest.files[key],'required source input '+key);
-const builder=fs.readFileSync(path.join(sourceRoot,'scripts/build-inkwave.mjs'));assert.equal(gitBlob(builder),sourceProof.files['scripts/build-inkwave.mjs'],'exact final builder Git blob');assert.equal(manifest.build.script,hash(builder),'exact final builder');
-const probeFile=fileURLToPath(new URL('./lib/inkjet-terminal-probe.mjs',import.meta.url));probeSource=fs.readFileSync(probeFile);
-const harnessBodies={'scripts/check-inkwave-splashdown-browser.mjs':fs.readFileSync(fileURLToPath(import.meta.url)),'scripts/lib/inkjet-terminal-probe.mjs':probeSource,'scripts/generate-inkwave-source-proof.py':fs.readFileSync(path.join(sourceRoot,'scripts/generate-inkwave-source-proof.py'))};
+const builder=verifiedRead(path.join(sourceRoot,'scripts/build-inkwave.mjs'));assert.equal(gitBlob(builder),sourceProof.files['scripts/build-inkwave.mjs'],'exact final builder Git blob');assert.equal(manifest.build.script,hash(builder),'exact final builder');
+const probeFile=fileURLToPath(new URL('./lib/inkjet-terminal-probe.mjs',import.meta.url));probeSource=verifiedRead(probeFile);
+const harnessBodies={'scripts/check-inkwave-splashdown-browser.mjs':verifiedRead(fileURLToPath(import.meta.url)),'scripts/lib/inkjet-terminal-probe.mjs':probeSource,'scripts/generate-inkwave-source-proof.py':verifiedRead(path.join(sourceRoot,'scripts/generate-inkwave-source-proof.py'))};
 for(const [file,bytes] of Object.entries(harnessBodies))assert.equal(gitBlob(bytes),sourceProof.files[file],'exact final QA harness '+file);
-qaIdentity={driverSHA256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),probeSHA256:hash(probeSource),inputProofSHA256:hash(sourceProofBytes),sourceRoot,proofMode:sourceProof.mode,baseCommit:sourceProof.baseCommit,candidateHead:sourceProof.candidateHead,candidateTree:sourceProof.candidateTree,candidateRuntimeGitBlob:sourceProof.files['patches/splatoon3/runtime/special-vfx.mjs'],verifiedInputs};
-fs.writeFileSync(path.join(out,'source-preflight.json'),JSON.stringify({status:'passed',...qaIdentity,inputHash:manifest.inputHash,contentHash:manifest.contentHash},null,2)+'\n');
+qaIdentity={driverSHA256:hash(harnessBodies['scripts/check-inkwave-splashdown-browser.mjs']),probeSHA256:hash(probeSource),inputProofSHA256:hash(sourceProofBytes),sourceRoot,proofMode:sourceProof.mode,baseCommit:sourceProof.baseCommit,candidateHead:sourceProof.candidateHead,candidateTree:sourceProof.candidateTree,candidateRuntimeGitBlob:sourceProof.files['patches/splatoon3/runtime/special-vfx.mjs'],verifiedInputs};
+for(const check of checks)if(check.terminal){fs.mkdirSync(check.out,{recursive:true});fs.writeFileSync(path.join(check.out,'source-preflight.json'),JSON.stringify({status:'passed',...qaIdentity,inputHash:manifest.inputHash,contentHash:manifest.contentHash},null,2)+'\n');}
 if(process.argv.includes('--preflight-only')){console.log('Exact candidate source preflight passed; no browser was run.');process.exit(0);}
 }
 const { chromium } = await import(opt('--playwright-module','playwright'));
 
 const prefix = `/_versions/${manifest.build.revision}/`;
 const server = http.createServer((req, res) => {
-  if(terminal && req.url === '/qa/inkjet-terminal-probe.mjs'){res.setHeader('content-type','text/javascript');res.end(probeSource);return;}
+  if(hasTerminals && req.url === '/qa/inkjet-terminal-probe.mjs'){res.setHeader('content-type','text/javascript');res.end(probeSource);return;}
   if (req.url === '/check') {
     res.setHeader('content-type', 'text/html');
     res.end(`<html><head><link rel="icon" href="data:,"><script type="importmap">{"imports":{"three":"${prefix}vendor/three/build/three.module.js","three/addons/":"${prefix}vendor/three/jsm/"}}</script></head><body style="margin:0"></body></html>`);
@@ -61,15 +93,31 @@ const server = http.createServer((req, res) => {
   const file = path.resolve(site, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
   if (!file.startsWith(site + '/') || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end(); return; }
   res.setHeader('content-type', /\.m?js$/.test(file) ? 'text/javascript' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream');
-  fs.createReadStream(file).pipe(res);
+  try {
+    const rel=path.relative(site,file).split(path.sep).join('/');
+    const digest=rel==='inkwave-build.json'?hash(manifestBytes):manifest.artifacts[rel];
+    assert.ok(digest,'unverified response '+rel);
+    const bytes=verifiedRead(file);assert.equal(hash(bytes),digest,'served artifact '+rel);
+    res.end(bytes);
+  } catch(error) { activeErrors?.push(error.message);res.writeHead(500);res.end('Verified artifact unavailable'); }
 });
-const errors = [];
-let browser;
-const watchdog = setTimeout(() => { errors.push('180-second browser watchdog'); void browser?.close(); }, 180_000);
+let browser, activeErrors=null, browserLaunches=0, batchError=null;
+const receipts=checks.map(check=>({id:check.id,evidence:check.out,status:'not-run'}));
+const saveBatch=()=>{if(batch)fs.writeFileSync(path.join(out,'batch-result.json'),JSON.stringify({status:!batchError && receipts.every(row=>row.status==='passed')?'passed':'failed',buildRevision:manifest.build.revision,inputHash:manifest.inputHash,contentHash:manifest.contentHash,artifactVerificationPasses:1,artifactVerificationFiles:Object.keys(manifest.artifacts).length,artifactVerificationBytes,sourceProofVerificationPasses:hasTerminals?1:0,browserLaunches,error:batchError,checks:receipts},null,2)+'\n');};
 try {
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
+  await new Promise((resolve,reject) => {server.once('error',reject);server.listen(0, '127.0.0.1', resolve);});
+  browserLaunches++;
+  const executablePath=opt('--browser-executable',null);
+  browser = await chromium.launch({ headless: true, ...(executablePath?{executablePath}:{}), args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  for(let index=0;index<checks.length;index++) {
+  const {out,terminal,inkjet}=checks[index],receipt=receipts[index],errors=[];
+  activeErrors=errors;receipt.status='running';fs.mkdirSync(out,{recursive:true});
+  let context;
+  const watchdog=setTimeout(()=>{errors.push('180-second browser watchdog');void browser?.close();},180_000);
+  try {
+  assertVerifiedFilesUnchanged();
+  context=await browser.newContext({viewport:{width:960,height:720}});
+  const page=await context.newPage();
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   if(inkjet || terminal)await page.addInitScript(()=>{let seed=0x12345678;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
@@ -279,14 +327,25 @@ try {
   if(inkjet) for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
   delete result.images;
   result.servedHashes=servedHashes;
-  result.qaIdentity=qaIdentity;result.inputHash=manifest.inputHash;result.browserVersion=browser.version();
+  result.qaIdentity=terminal?qaIdentity:null;result.inputHash=manifest.inputHash;result.browserVersion=browser.version();
   result.errors = errors; result.buildRevision = manifest.build.revision; result.contentHash = manifest.contentHash;
   fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify({ evidence: out, cases: result.cases.length, failures: result.failures, errors }));
   assert.deepEqual(errors, [], 'browser errors');
   assert.deepEqual(result.failures, [], 'catalogue splashdown lifecycle regressions');
+  assertVerifiedFilesUnchanged();receipt.status='passed';
+  } catch(error) {
+    receipt.status='failed';receipt.error=error.stack || String(error);
+    fs.writeFileSync(path.join(out,'case-error.json'),JSON.stringify({id:receipt.id,error:receipt.error,errors},null,2)+'\n');throw error;
+  } finally {
+    clearTimeout(watchdog);
+    try { await context?.close(); } catch(error) { receipt.status='failed';receipt.cleanupError=error.stack || String(error);throw error; }
+    finally { activeErrors=null;saveBatch(); }
+  }
+  }
+} catch(error) {
+  batchError=error.stack || String(error);throw error;
 } finally {
-  clearTimeout(watchdog);
-  await browser?.close();
-  await new Promise(resolve => server.close(resolve));
+  try { await browser?.close(); } catch(error) { batchError=error.stack || String(error);throw error; }
+  finally { await new Promise(resolve => server.close(resolve));saveBatch(); }
 }

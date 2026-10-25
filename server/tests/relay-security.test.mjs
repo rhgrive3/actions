@@ -145,6 +145,43 @@ test('backpressured recipients are not fed an unbounded queue', () => {
   assert.equal(h.closed?.code, 1013);
 });
 
+test('failed LEAVE recipients are removed and survivors finish on the final host, including synchronous close reentry', () => {
+  for (const failBy of ['backpressure', 'throw']) {
+    const { room, sockets: [host, next, failedGuest, survivor] } = roomWith('H', 'N', 'F', 'S');
+    const ids = [host.id, next.id, failedGuest.id, survivor.id];
+    const start = survivor.sent.length;
+    for (const ws of [next, failedGuest]) {
+      if (failBy === 'backpressure') ws.bufferedAmount = 1024 * 1024;
+      else ws.send = () => { throw new Error('socket became unavailable'); };
+    }
+    host.close(1000, 'host left');
+    assert.equal(room.hostId, ids[3]);
+    assert.deepEqual([...room.members.keys()], [ids[3]]);
+    assert.equal(next.closed?.code, 1013); assert.equal(failedGuest.closed?.code, 1013);
+    const leaves = survivor.sent.slice(start).map(JSON.parse);
+    assert.deepEqual(leaves.map(x => x.id), ids.slice(0, 3), 'one ordered cleanup per departing member');
+    assert.equal(leaves.at(-1).host, ids[3], 'a stale outer broadcast must not overwrite the final host');
+    next.emit('message', '{"t":"lock","v":true}');
+    assert.equal(room.locked, false, 'failed elected host has no authority');
+    survivor.emit('message', '{"t":"lock","v":true}');
+    assert.equal(room.locked, true);
+    assert.equal(room._cleanupQueue.length, 0); assert.equal(room._cleaningMembers, false);
+    host.emit('close'); next.emit('close');
+    assert.equal(survivor.sent.length, start + leaves.length, 'duplicate close does not rebroadcast membership');
+  }
+});
+
+test('membership failure cleanup remains complete when close itself throws', () => {
+  const { room, sockets: [host, failed, survivor] } = roomWith('H', 'F', 'S');
+  const [hostId, failedId, survivorId] = [host.id, failed.id, survivor.id];
+  failed.send = () => { throw new Error('send'); };
+  failed.close = () => { throw new Error('close'); };
+  host.close(1000, 'bye');
+  assert.equal(room.hostId, survivorId);
+  assert.deepEqual([...room.members.keys()], [survivorId]);
+  assert.deepEqual(survivor.sent.filter(x => x.startsWith('{"t":"leave"')).map(JSON.parse).map(x => x.id), [hostId, failedId]);
+});
+
 test('incompatible peers rejected before WebSocketPair allocation', async () => {
   const room = new RoomDurableObject({}, {});
   const host = new Socket();

@@ -104,3 +104,65 @@ test('critical HTTP failures retain immutable expected hash, safe edge headers a
  assert.deepEqual(details.expectedArtifact,{file,sha256:sha});assert.deepEqual(details.responseHeaders,{'content-type':'text/html','x-cache':'MISS','x-github-request-id':'edge1'});assert.equal(details.requestTiming.responseEnd,31);
  const p=page(),receipt={};const boot=observeRankedBoot(p,url,receipt,()=>new Promise(()=>{}),{artifacts:{[file]:sha}});p.emit('response',r);await assert.rejects(boot,/503/);assert.deepEqual(receipt.failures[0].expectedArtifact,{file,sha256:sha});assert.equal(receipt.status,'failed');
 });
+
+
+// Execute the checker's exact recovery/catch fragments without launching a
+// browser. These tests establish sequencing and fail-closed diagnostics only;
+// real two-context WebAudio recovery still requires the ranked browser gate.
+const rankedCheckerSource=fs.readFileSync(new URL('../check-inkwave-ranked-browser.mjs',import.meta.url),'utf8');
+const recoveryStart=rankedCheckerSource.indexOf('  // Recovery must re-admit native contact');
+const recoveryEnd=rankedCheckerSource.indexOf("  phase('recovered-real-audio'",recoveryStart);
+assert(recoveryStart>=0&&recoveryEnd>recoveryStart);
+const executeRecovery=new Function('host','guest','place','setInput','lane','timeout','identities','snapshot',`return (async()=>{${rankedCheckerSource.slice(recoveryStart,recoveryEnd)};return recovered;})();`);
+function recoveryHarness({rejectAdmission=false}={}){
+ const calls=[],waits=[],pending={};
+ const host={waitForFunction:async(fn,arg,options)=>{assert.equal(options.timeout,30000);calls.push('owner-admitted');}};
+ const guest={waitForFunction:(predicate,nid,options)=>{
+  assert.equal(nid,7);assert.equal(options.timeout,30000);waits.push(predicate);
+  if(waits.length===1){calls.push('remote-readiness');return new Promise((resolve,reject)=>{pending.resolve=resolve;pending.reject=reject;if(rejectAdmission)reject(Error('recovery admission timeout'));});}
+  calls.push('positive-audio');return Promise.resolve({remote:'positive-real-audio'});
+ }};
+ const run=()=>executeRecovery(host,guest,async()=>{calls.push('place');},async(_page,fire,keys=[])=>{assert.equal(fire,true);calls.push(keys.length?'pulse':'held-at-rest');}, {supported:[1,2,3],yaw:0},{timeout:30000},[{nid:7}],async p=>p);
+ return {calls,waits,pending,run};
+}
+function withRankedRead(state,fn){const previous=globalThis.__rankedReplication;globalThis.__rankedReplication={read:nid=>{assert.equal(nid,7);return state;}};try{return fn();}finally{globalThis.__rankedReplication=previous;}}
+const recoveredAtRest={held:true,grounded:true,suspended:false,f:17,near:true,rollLoop:true,audioState:'running',realRollLoops:[{playing:true,registered:true,volume:0}]};
+test('ranked recovery waits for native and real remote loop admission before its bounded movement pulse',async()=>{
+ const h=recoveryHarness(),run=h.run();await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(h.calls,['place','held-at-rest','owner-admitted','remote-readiness']);
+ assert(!h.calls.includes('pulse'),'relay delay cannot consume movement before readiness');
+ assert.equal(withRankedRead(recoveredAtRest,()=>h.waits[0](7)),true,'a registered playing loop may be ready at zero volume');
+ h.pending.resolve();assert.deepEqual(await run,{remote:'positive-real-audio'});
+ assert.deepEqual(h.calls,['place','held-at-rest','owner-admitted','remote-readiness','pulse','positive-audio']);
+ assert.equal(withRankedRead(recoveredAtRest,()=>h.waits[1](7)),false,'zero-volume readiness cannot pass the positive audio gate');
+ const positive={...recoveredAtRest,realRollLoops:[{playing:true,registered:true,volume:.2}]};
+ assert.equal(withRankedRead(positive,()=>h.waits[1](7)),positive);
+ assert.match(rankedCheckerSource,/if\(keys.includes\('KeyS'\)\)state.motionTimer=setTimeout\(\(\)=>RG.input.keys.delete\('KeyS'\),250\)/,'movement remains bounded to 250 ms');
+});
+test('ranked recovery rejects suspended, stale-bit, ungrounded, distant and non-live loops before a pulse',async()=>{
+ const h=recoveryHarness(),run=h.run();await new Promise(resolve=>setImmediate(resolve));
+ const invalid=[{held:false},{grounded:false},{suspended:true},{f:17|(1<<28)},{near:false},{rollLoop:false},{audioState:'suspended'},
+  {realRollLoops:[]},{realRollLoops:[{playing:true,registered:false,volume:1}]},{realRollLoops:[{playing:false,registered:true,volume:1}]}];
+ for(const delta of invalid)assert.equal(!!withRankedRead({...recoveredAtRest,...delta},()=>h.waits[0](7)),false,JSON.stringify(delta));
+ h.pending.reject(Error('recovery admission timeout'));await assert.rejects(run,/recovery admission timeout/);
+ assert(!h.calls.includes('pulse'));assert(!h.calls.includes('positive-audio'));
+});
+const failureStart=rankedCheckerSource.indexOf(" }catch(error){\n  receipt.status='failed';receipt.error=error?.stack||String(error);");
+const failureEnd=rankedCheckerSource.indexOf('\n finally{\n  const cleanupErrors=[];receipt.restoration=[];',failureStart);
+assert(failureStart>=0&&failureEnd>failureStart);
+const failureBody=rankedCheckerSource.slice(failureStart+15,failureEnd).trim().replace(/}$/, '');
+const executeRankedFailure=new Function('receipt','error','pages','identities','save',`return (async()=>{${failureBody}})();`);
+test('ranked recovery failure captures observed actor, remote loop and wire state before restoration without passing',async()=>{
+ const previousRG=globalThis.RG,previousState=globalThis.__rankedReplication,error=Error('positive recovery audio timeout'),saved=[];
+ const remote={...recoveredAtRest,suspended:true,realRollLoops:[{playing:false,registered:false,volume:0}]},wire={f:17|(1<<28)};
+ globalThis.RG={match:{local:{nid:7,alive:true,grounded:true,weaponRunner:{rolling:true,s3RollerSuspendedHold:false},pos:{toArray:()=>[1,2,3]},vel:{toArray:()=>[0,0,0]},ink:90}}};
+ globalThis.__rankedReplication={read:nid=>{assert.equal(nid,7);return remote;},wire:[wire]};
+ const receipt={status:'running',phases:[{name:'suspended-owner-to-remote'}]};
+ try{
+  await assert.rejects(executeRankedFailure(receipt,error,[{evaluate:async(fn,nid)=>fn(nid)},{evaluate:async()=>{throw Error('page closed');}}],[{nid:7}],r=>saved.push(structuredClone(r))),e=>e===error);
+  assert.equal(receipt.status,'failed');assert.equal(receipt.failureAfter,'suspended-owner-to-remote');assert.match(receipt.error,/positive recovery audio timeout/);
+  assert.deepEqual(receipt.failureState[0],{context:0,local:{nid:7,alive:true,grounded:true,held:true,suspended:false,position:[1,2,3],velocity:[0,0,0],ink:90},remote,wire});
+  assert.deepEqual(receipt.failureState[1],{context:1,diagnosticError:'page closed'});
+  assert.equal(saved.length,1);assert.equal(saved[0].status,'failed');assert(!receipt.phases.some(p=>p.name==='recovered-real-audio'));
+ }finally{globalThis.RG=previousRG;globalThis.__rankedReplication=previousState;}
+});

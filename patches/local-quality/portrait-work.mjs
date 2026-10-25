@@ -282,6 +282,10 @@ function clearPortraitPointers(showcase) {
   showcase._portraitActiveCharacter = null;
 }
 
+function releasePendingPortraitTargets(showcase) {
+  if (showcase._portraitReleasePending) showcase._releasePortraitTargets?.(false);
+}
+
 function requeuePortraitJob(showcase, job) {
   if (showcase._portraitJob !== job) return;
   if (!job.cbs.length) {
@@ -299,6 +303,19 @@ function requeuePortraitJob(showcase, job) {
 }
 
 export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
+  // The native target owner knows queued work and GPU readbacks. Staging moves
+  // one job out of that queue before rendering, so include its live callbacks
+  // in the same ownership check rather than creating another release policy.
+  const releasePortraitTargets = Showcase.prototype._releasePortraitTargets;
+  if (releasePortraitTargets) {
+    Showcase.prototype._releasePortraitTargets = function releaseStagedPortraitTargets(final = false) {
+      if (!final && this._portraitJob?.cbs?.length) {
+        this._portraitReleasePending = true;
+        return false;
+      }
+      return releasePortraitTargets.call(this, final);
+    };
+  }
   const nativePortraitStep = Showcase.prototype._portraitStep;
   Showcase.prototype._portraitStep = function stagedPortraitStep() {
     if (!this._portraitCharacter) return nativePortraitStep.call(this);
@@ -309,7 +326,7 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
       this._portraitJob = this._pq.shift() || null;
     }
     const job = this._portraitJob;
-    if (!job) return;
+    if (!job) { releasePendingPortraitTargets(this); return; }
     if (job._portraitCacheEpoch == null) job._portraitCacheEpoch = this._portraitCacheEpoch || 0;
     const cacheEpoch = job._portraitCacheEpoch;
     const started = performance.now();
@@ -322,6 +339,7 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
         if (job.cbs.length === 0) {
           this._portraitJob = null;
           clearPortraitPointers(this);
+          releasePendingPortraitTargets(this);
           return;
         }
         if (portraitModeProtected(this, overlayModes)) {
@@ -342,6 +360,7 @@ export function installPortraitWork(Showcase, G, copyCanvas, overlayModes) {
       const retained = canvas && cachePortrait(this, job.key, canvas, !!G.game?.mobile?.touch, cacheEpoch);
       if (canvas && !retained) releasePortrait(canvas);
       if (this._portraitJob === job) this._portraitJob = null;
+      releasePendingPortraitTargets(this);
     };
     const render = () => {
       if (portraitModeProtected(this, overlayModes)) {

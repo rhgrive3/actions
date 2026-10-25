@@ -99,7 +99,7 @@ test('parallel browser families retain every final integration acceptance surfac
     assert.ok(workflow.includes(suite), suite);
   assert.ok(workflow.includes('browsers: chromium webkit'));
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
-  assert.ok(!workflow.includes('needs: validate'));
+  assert.doesNotMatch(workflow,/^    needs: validate$/m);
   assertCancellationPolicy(workflow);
   for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'network-browser', 'paint-mask', 'range', 'startup-browser', 'rematch-lifecycle'])
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
@@ -290,11 +290,11 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assertShardEvidencePolicy(workflow);
-  assert.ok(gate.includes('needs: [validate_core, patch_tests]'));
+  assert.ok(gate.includes('needs: [validate_core, patch_tests, circleci_offload_gate]'));
   assert.ok(gate.includes('always()'));
   assert.ok(gate.includes('test "$CORE_RESULT" = success'));
   assert.ok(gate.includes('test "$PATCH_RESULT" = success'));
-  assert.ok(!workflow.includes('needs: validate'));
+  assert.doesNotMatch(workflow,/^    needs: validate$/m);
 });
 
 test('emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage', () => {

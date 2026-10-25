@@ -545,6 +545,20 @@ export function adaptSource(rel, code) {
       'Heavy Splatling axis-aligned outer corner brackets (#1100)');
   }
   if (rel === 'src/ui/hud.js') {
+    // Reticle art was calibrated at 720 CSS pixels high. Keep that geometry
+    // on small viewports without scaling the projected impact coordinates.
+    code = replaceOnce(code,
+      "    const w = f.weapon || 'shooter';",
+      `    const w = f.weapon || 'shooter';
+    const reticleScale = Math.min(1, Math.max(.5, Math.min(innerHeight / 720, innerWidth / 1280)));
+    if (reticleScale !== L.reticleScale) {
+      L.reticleScale = reticleScale;
+      this.xh.style.setProperty('--iw-reticle-scale', String(reticleScale));
+      L.spread = null; L.dualGuide = false;
+    }`, 'reticle artwork follows viewport height');
+    code = replaceOnce(code, "this.ret.style.setProperty('--sp', sp.toFixed(1));",
+      "this.ret.style.setProperty('--sp', (sp / reticleScale).toFixed(1));",
+      'preserve screen-space spread under artwork scaling');
     code = replaceOnce(code,
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg>`;',
       '        <circle r="23" class="iw-ret__ring" pathLength="100" style="stroke-dasharray:19 6;stroke-dashoffset:9.5"/><circle r="9" class="iw-ret__ring thin"/></svg><span class="iw-ret__bias" hidden aria-hidden="true"></span>`;',
@@ -571,7 +585,7 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay helper');
     code = replaceOnce(code,
       "    if (L.kind === 'charger') {\n      const c = clamp(+f.charge || 0);\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = (this._chargeC * (1 - c)).toFixed(2);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = c > 0.001;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n    } else if",
-      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n      let reachOn = view.visible && !!ch.chargerCurrent && !!ch.chargerFull;\n      if (reachOn) {\n        const cam = G.rig?.gameCam || G.camera;\n        const current = cam ? this._project(cam, ch.chargerCurrent.x, ch.chargerCurrent.y, ch.chargerCurrent.z) : null;\n        const fullReach = cam ? this._project(cam, ch.chargerFull.x, ch.chargerFull.y, ch.chargerFull.z) : null;\n        reachOn = !!current && !!fullReach && current.z >= -1 && current.z <= 1 && fullReach.z >= -1 && fullReach.z <= 1;\n        if (reachOn) {\n          this.ret.style.setProperty('--crx', (current.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cry', (-current.y * innerHeight * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfx', (fullReach.x * innerWidth * 0.5).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfy', (-fullReach.y * innerHeight * 0.5).toFixed(1) + 'px');\n        }\n      }\n      this.ret.classList.toggle('has-reach', reachOn);\n    } else if",
+      "    if (L.kind === 'charger') {\n      const view = chargerReticleView(this._local()?.weaponRunner, WEAPONS[w] || {});\n      const c = view.gauge;\n      if (L.charge == null || Math.abs(c - L.charge) > 0.004) {\n        L.charge = c;\n        this._chargeEl.style.strokeDashoffset = this._chargeC * (1 - c);\n        this.ret.style.setProperty('--ch', c.toFixed(3));\n      }\n      const full = view.visible && c >= 0.999;\n      if (full !== L.full) { L.full = full; this.ret.classList.toggle('is-full', full); if (full) this._restart(this.ret, 'is-flash'); }\n      const charging = view.visible;\n      if (charging !== L.charging) { L.charging = charging; this.ret.classList.toggle('is-charging', charging); }\n      const delayed = view.delayed;\n      if (delayed !== L.chargeDelay) { L.chargeDelay = delayed; this.ret.classList.toggle('is-charge-delay', delayed); }\n      let reachOn = view.visible && !!ch.chargerCurrent && !!ch.chargerFull;\n      if (reachOn) {\n        const cam = G.rig?.gameCam || G.camera;\n        const current = cam ? this._project(cam, ch.chargerCurrent.x, ch.chargerCurrent.y, ch.chargerCurrent.z) : null;\n        const fullReach = cam ? this._project(cam, ch.chargerFull.x, ch.chargerFull.y, ch.chargerFull.z) : null;\n        reachOn = !!current && !!fullReach && current.z >= -1 && current.z <= 1 && fullReach.z >= -1 && fullReach.z <= 1;\n        if (reachOn) {\n          this.ret.style.setProperty('--crx', (current.x * innerWidth * 0.5 / reticleScale).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cry', (-current.y * innerHeight * 0.5 / reticleScale).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfx', (fullReach.x * innerWidth * 0.5 / reticleScale).toFixed(1) + 'px');\n          this.ret.style.setProperty('--cfy', (-fullReach.y * innerHeight * 0.5 / reticleScale).toFixed(1) + 'px');\n        }\n      }\n      this.ret.classList.toggle('has-reach', reachOn);\n    } else if",
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
@@ -692,7 +706,7 @@ export function adaptSource(rel, code) {
             const baseX = i === 0 ? 10.5 : -10.5;
             const lockX = turret ? (i === 0 ? 4 : -4) : 0;
             this._twin[i]?.setAttribute('transform',
-              \`translate(\${(x - baseX + lockX).toFixed(2)} \${y.toFixed(2)})\`);
+              \`translate(\${(x / reticleScale - baseX + lockX).toFixed(2)} \${(y / reticleScale).toFixed(2)})\`);
           }
         }
         L.dualGuide = true; L.dualGuideTurret = turret;
@@ -1251,6 +1265,11 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "if (h.stamp === this.stamp && p.type === 'slosh' && p.head) return;",
       "if (h.stamp === this.stamp && (p.type === 'slosh' || bucketSheetProjectile(p)) && bucketSheetHead(p)) return;", 'shared Bucket head retirement');
     code = "import { bucketSheetProjectile, bucketSheetHead } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\n" + code;
+    // Catalogue weapon.kind is 'catalog'; VFX selects the actual family.
+    // This preserves the legacy Splatling and covers its five added peers.
+    code = replaceOnce(code, "        const wk = a.weapon?.kind ?? 'charger';",
+      "        const wk = a.weapon?.behaviorKind ?? a.weapon?.kind ?? 'charger';",
+      'catalogue muzzle-charge VFX family');
     code = adaptChargerSightCache(rel, code, replaceOnce);
     code = replaceOnce(code, "      if (form === 'swim' && hs > 4.5) {",
       "      if (form === 'swim' && hs > 4.5 && swimSplashVisible(a)) {", 'sneaking turn splash');
@@ -1268,6 +1287,10 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // Rolling also represents a held-down weapon across a jump. The existing
+    // grounded flag keeps remote contact audio silent until touchdown.
+    code = replaceOnce(code, "h = this._voiceLoop(a, near, 'roll', wr.rolling, 'roll');",
+      "h = this._voiceLoop(a, near, 'roll', wr.rolling && a.grounded, 'roll');", 'airborne roller contact voice');
     // The existing firing bit carries the held intake level for Ink Vac.
     // Weapon firingT is deliberately masked while Vac owns the trigger.
     code = replaceOnce(code, '  if (wr.firingT > 0) f |= F.firing;',

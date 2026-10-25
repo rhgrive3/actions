@@ -2,6 +2,9 @@ import { consumeVfxPeriod } from '../runtime/nonwail-vfx-clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
+import { compactModuleStrings } from '../../../scripts/lib/inkwave-source-compaction.mjs';
 import { inkjetVfxAdmission, inkjetVfxRoom } from '../runtime/inkjet-vfx-budget.mjs';
 import { inkjetVfxTicks } from '../runtime/inkjet-vfx-clock.mjs';
 // Source recipe + actual Float32 SpritePool simulation. No WebGL timing claim.
@@ -9,22 +12,24 @@ const source=fs.readFileSync(new URL('../runtime/special-vfx.mjs',import.meta.ur
 const kit=fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs',import.meta.url),'utf8');
 const sections=[...source.matchAll(/  inkjet: \{\n([\s\S]*?)\n  \},/g)].map(m=>m[1]);
 assert.equal(sections.length,2);
-const spriteClass=kit.slice(kit.indexOf('class SpritePool {'),kit.indexOf('// ---------------------------------------------------------------------------------------------------------------\n// Ribbon trails'));
+// Include the actual shader constants and constructor so cached attributes and
+// future pool initialization remain owned by production code, not a test copy.
+const spriteClass=kit.slice(kit.indexOf('const OUT ='),kit.indexOf('// ---------------------------------------------------------------------------------------------------------------\n// Ribbon trails')).replace(/^export /gm,'');
+const compileBody=body=>process.env.SPECIAL_VFX_ESBUILD ? compactModuleStrings(createRequire(import.meta.url)(process.env.SPECIAL_VFX_ESBUILD).transformSync('function fixtureBody(){'+body+'}',{loader:'js',minify:true,charset:'utf8',keepNames:true}).code).code+';return fixtureBody();' : body;
 
 class V { set(x,y,z){Object.assign(this,{x,y,z});return this;} copy(p){return this.set(p.x,p.y,p.z);}setY(y){this.y=y;return this;}lerp(p,k){this.x+=(p.x-this.x)*k;this.y+=(p.y-this.y)*k;this.z+=(p.z-this.z)*k;return this;} }
 function runLoad(hz, actorCount, cap, seconds=2) {
  const random=()=>.2,rnd=(a=1,b=0)=>b+random()*(a-b);
- const Pool=new Function('vfxRandom','TAU',spriteClass+';return SpritePool;')(random,Math.PI*2);
+ const Pool=new Function('vfxRandom','TAU',compileBody(spriteClass+';return SpritePool;'))(random,Math.PI*2);
  let evictions=0;
- const pool=(capacity)=>{const p=Object.create(Pool.prototype);Object.assign(p,{cap:capacity,n:0,S:23,p:new Float32Array(capacity*23),mesh:{geometry:{}},additive:false});
-  for(const key of ['aPos','aDir','aCol','aPar'])p[key]={array:new Float32Array((capacity+1)*4),clearUpdateRanges(){},addUpdateRange(){}};
+ const pool=(capacity)=>{const p=new Pool(THREE,capacity,false,{value:0});
   p._evict=()=>{evictions++;throw Error('Inkjet caused eviction');};return p;};
  const d={kit:{sparks:pool(900),puffs:pool(cap)},v:Array.from({length:8},()=>new V().set(0,0,0)),time:0,up:new V().set(0,1,0),forward:(a,v)=>v.set(0,0,1),setBeam(){},pushRibbon(){},hdr:c=>c,disc(){}};
  let current=0;const admissions=Array(actorCount).fill(0);
  d.spark=(kind,p,vx,vy,vz,life,s0,s1,col,a,o)=>d.kit.sparks.spawn(p.x,p.y,p.z,vx,vy,vz,life,s0,s1,...col,a,kind,o);
  d.puff=(kind,p,vx,vy,vz,life,s0,s1,col,a,o)=>{admissions[current]++;return d.kit.puffs.spawn(p.x,p.y,p.z,vx,vy,vz,life,s0,s1,...col,a,kind,o);};
  d.drop=(p,vx,vy,vz,life,size,col,o={})=>d.puff(0,p,vx,vy,vz,life,size,size*.45,col,1,o);
- const recipes=sections.map(code=>new Function('consumeVfxPeriod','inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom','return ({'+code+'}).frame;')(consumeVfxPeriod,inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
+ const recipes=sections.map(code=>new Function('consumeVfxPeriod','inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom',compileBody('return ({'+code+'}).frame;'))(consumeVfxPeriod,inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
  const actors=Array.from({length:actorCount},()=>({a:{pos:new V().set(0,2,0),form:'kid',intent:{}},t:{d:{jets:[{},{}],cones:[{},{}]},color:[1,0,0]},r:{d:{ink:{}},color:[1,0,0]},p:{pos:new V().set(0,2,4)}}));
  for(const x of actors){x.a.alive=true;x.a.specialActive={id:'inkjet'};x.p.owner=x.a;}
  d.G={actors:actors.map(x=>x.a),projectiles:{list:actors.map(x=>Object.assign(x.p,{wid:'inkjet'}))}};d.rounds=new Map(actors.map(x=>[x.p,{wid:'inkjet',p:x.p}]));
@@ -33,6 +38,7 @@ function runLoad(hz, actorCount, cap, seconds=2) {
  for(let k=0;k<hz*seconds;k++){frame(1/hz);d.kit.sparks.update(1/hz);d.kit.puffs.update(1/hz);peakPuffs=Math.max(peakPuffs,d.kit.puffs.n);peakSparks=Math.max(peakSparks,d.kit.sparks.n);}
  const existing=d.kit.puffs.n, existingSparks=d.kit.sparks.n;d.kit.puffs.cap=0;d.kit.sparks.cap=0;const before=admissions.reduce((a,b)=>a+b,0);frame(1/60);
  if(d.kit.puffs.n!==existing||d.kit.sparks.n!==existingSparks||admissions.reduce((a,b)=>a+b,0)!==before)throw Error('quality reduction changed live particles or admitted new ones');
+ for(const p of [d.kit.sparks,d.kit.puffs]){p.mesh.geometry.dispose();p.mesh.material.dispose();}
  return {hz,actorCount,cap,peakPuffs,peakSparks,evictions,admissions,qualityDropPreserved:existing};
 }
 

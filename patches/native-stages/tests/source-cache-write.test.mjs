@@ -54,6 +54,15 @@ test('metadata key mismatch aborts without mutating either store',async()=>{
 });
 test('failed metadata put rolls back stage eviction and write; retry stays consistent',async()=>{const db=database();await write('candidate',db,'a',data(1),10);await write('candidate',db,'b',data(2),20);const before=structuredClone(db.stores);db.failPut=(store,row)=>store==='stage-times'&&row.key==='c';await write('candidate',db,'c',data(3),30);assert.deepEqual(db.stores,before);assert.equal(db.aborts,1);db.failPut=null;await write('candidate',db,'c',data(3),30);assert.deepEqual(stages(db).map(r=>r.key),['b','c']);consistent(db);});
 test('derived read still checks every buffer seal and rejects altered data',async()=>{const db=database();const value=data(1);await write('candidate',db,'a',value,10);assert.deepEqual(await use('candidate',db,m=>m.readDerived('a')),value);db.stores.get('stages').get('a').data.mask[0]^=1;assert.equal(await use('candidate',db,m=>m.readDerived('a')),null);});
+test('packed face cache roundtrips shared views and seals both triangle bytes and face ranges',async()=>{
+ const value=data(1);value.faceTriangles=new Uint32Array([3,8,12,19]);value.manifest.faces=[{triangles:value.faceTriangles.subarray(0,2)},{triangles:value.faceTriangles.subarray(2)}];
+ for(const corrupt of [null,row=>row.faceTriangles[0]++,row=>{row.manifest.faces[0].triangles=row.faceTriangles.subarray(1,3);}]){
+  const db=database();await write('candidate',db,'packed',value,10);const stored=db.stores.get('stages').get('packed').data;
+  assert.equal(stored.manifest.faces[0].triangles.buffer,stored.faceTriangles.buffer);
+  if(corrupt)corrupt(stored);const read=await use('candidate',db,m=>m.readDerived('packed'));
+  if(corrupt)assert.equal(read,null);else{assert.deepEqual(read,value);assert.equal(read.manifest.faces[1].triangles.buffer,read.faceTriangles.buffer);}
+ }
+});
 test('steady write requests return zero stage payload bytes without changing cache contents',async()=>{
  const a=database(),b=database(),value=data(1,1048576/10|0);for(const kind of ['baseline','candidate']){const db=kind==='baseline'?a:b;await write(kind,db,'a',value,10);await write(kind,db,'b',value,20);db.reads=[];await write(kind,db,'c',value,30);}
  assert.deepEqual(stages(b),stages(a));const sum=db=>db.reads.reduce((n,r)=>n+r.payloadBytes,0);assert.equal(sum(a),bytes(value)*2);assert.equal(sum(b),0);assert.ok(!b.reads.some(r=>r.store==='stages'&&r.op==='getAll'));consistent(b);

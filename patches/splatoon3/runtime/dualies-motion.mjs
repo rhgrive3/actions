@@ -69,7 +69,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
     states.delete(ch);
     ch.tumble = ch.tumbleDrop = ch.lockW = 0;
   }
-  function prepare(ch, input) {
+  function prepare(ch, input, snapshot=true) {
     const s = state(ch), runner = ch._runner(input), actor = ch._owner();
     if (actor?.remote) {
       const presentation = remoteDodgePresentation(actor), clock = presentation?.clock || null;
@@ -84,7 +84,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
         s.runner = runner;
         s.nativeFallback = false;
         s.remoteClock = active ? clock : null;
-        return { s, runner, d: null, active };
+        return snapshot?{ s, runner, d: null, active }:undefined;
       }
       s.blockedRoll = null;
       const allowedPlant = allowed(ch, input, runner)
@@ -95,7 +95,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
       s.runner = runner;
       s.nativeFallback = false;
       s.remoteClock = null;
-      return { s, runner, d: null, active: allowedPlant };
+      return snapshot?{ s, runner, d: null, active: allowedPlant }:undefined;
     }
     s.remoteClock = null;
     const d = runner?.dodge;
@@ -115,7 +115,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
     s.managed = !!runner && mapped;
     s.runner = runner;
     s.nativeFallback = !mapped;
-    return { s, runner, d, active };
+    return snapshot?{ s, runner, d, active }:undefined;
   }
   function admission(ch, runner) {
     const s = states.get(ch);
@@ -128,7 +128,7 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
   }
   proto._updateStates = function (dt, input) {
     const before = this.lockW;
-    if (enabled(this)) prepare(this, input);
+    if (enabled(this)) prepare(this, input, false);
     const result = updateStates.call(this, dt, input);
     if (!enabled(this)) { states.delete(this); return result; }
     const { s, runner, d, active } = prepare(this, input);

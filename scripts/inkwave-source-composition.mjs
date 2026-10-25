@@ -1,4 +1,12 @@
+import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
+import { adaptWeaponQueue20261024 } from '../patches/splatoon3/weapon-queue-20261024-adapter.mjs';
+import { adaptDriveVisualAudio } from '../patches/local-quality/drive-visual-audio-adapter.mjs';
+import { adaptQueueWorld20261024 } from '../patches/local-quality/queue-world-20261024-adapter.mjs';
 import { adaptWorldQueueBuild } from '../patches/local-quality/world-queue-build-adapter.mjs';
+import { adaptQueueExtraWorld } from '../patches/local-quality/queue-extra-world-adapter.mjs';
+import { adaptQueueUi20261025 } from '../patches/local-quality/queue-ui-20261025-adapter.mjs';
+import { adaptQueueExtraWeaponsFx } from '../patches/local-quality/queue-extra-weapons-fx-adapter.mjs';
+import { adaptQueueExtraDecor } from '../patches/local-quality/queue-extra-decor-adapter.mjs';
 import { adaptSettingsHudQueue } from '../patches/local-quality/settings-hud-queue-adapter.mjs';
 import { adaptFiringCosmetics } from '../patches/splatoon3/firing-cosmetics-adapter.mjs';
 import { adaptAddedUiMotion } from '../patches/local-quality/added-ui-motion-adapter.mjs';
@@ -80,7 +88,15 @@ export function adaptBuildSource(rel, code) {
   code = adaptInputLensQueue(rel, code);
   code = adaptSpawnExclusion(rel, code);
   const composed = adaptAddedUiMotion(rel, adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce));
-  return adaptFiringCosmetics(rel, composed);
+  code = adaptFiringCosmetics(rel, composed);
+  code = adaptDriveCoreQueue(rel, code, replaceOnce);
+  code = adaptWeaponQueue20261024(rel, code, replaceOnce);
+  code = adaptDriveVisualAudio(rel, code, replaceOnce);
+  code = adaptQueueWorld20261024(rel, code, replaceOnce);
+  code = adaptQueueExtraWorld(rel, code);
+  code = adaptQueueExtraWeaponsFx(rel, code);
+  code = adaptQueueUi20261025(rel, code);
+  return adaptQueueExtraDecor(rel, code);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream
