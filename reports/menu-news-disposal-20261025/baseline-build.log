@@ -1,0 +1,12 @@
+file:///workspace/actions-settings-base/patches/splatoon3/adapter.mjs:65
+  if (conflicts.length) throw new Error(`INKWAVE patch compatibility review required: ${conflicts.join(', ')}. See patches/splatoon3/README.md. No unpatched fallback is published.`);
+                              ^
+
+Error: INKWAVE patch compatibility review required: src/core/mobile.js. See patches/splatoon3/README.md. No unpatched fallback is published.
+    at checkCompatibility (file:///workspace/actions-settings-base/patches/splatoon3/adapter.mjs:65:31)
+    at file:///workspace/actions-settings-base/scripts/build-inkwave.mjs:67:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.19.0
