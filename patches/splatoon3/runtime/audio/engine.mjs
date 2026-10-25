@@ -1,6 +1,7 @@
 import { audioLoadDeadline } from './load-deadline.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
+import { PitchPreservingChargeCache } from './pitch-preserving-charge.mjs';
 import { chargerRiseBuffer, playChargerRise, disposeChargerRise, usesSplatChargerRise } from './charger-charge-rise.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
@@ -34,11 +35,12 @@ export function installWeaponAudioEngine(Engine){
   };
   p.weaponBank=function(){if(!this.ctx)return null;if(!this._weaponBank||this._weaponBank.ctx!==this.ctx){
     this._weaponBank?.dispose();this._weaponBank=new WeaponSoundBank(this.ctx,{realOnly:true,audibleShotFallback:true});
+    this._weaponBank.chargerStretchCache=new PitchPreservingChargeCache(this.ctx);
     this._realS3Loader=new RealS3SampleLoader(this._weaponBank);
   }return this._weaponBank;};
   p.resolveWeaponSound=function(name){if(typeof name!=='string'||!name.startsWith(MAIN_AUDIO_PREFIX))return null;return this.weaponBank()?.resolve(name)||null;};
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
-  p.prepareWeapon=function(id,{urgent=true}={}){
+  p.prepareWeapon=function(id,{urgent=true,chargeTime=null}={}){
     const requested=mainAudioSourceId(id),borrowed=isBorrowedRecordedMain(requested);
     id=borrowedRecordedMainId(requested);
     if(!AUDIO_RECIPES[id]||!urgent)return;
@@ -60,6 +62,14 @@ export function installWeaponAudioEngine(Engine){
       // serializing four separate event-specific fetch/decode transactions.
       const isCharger=AUDIO_RECIPES[id].family==='charger';
       const main=loader?.ensure(id,isCharger?'charge':'fire');
+      // Only authorized non-Splat Charger onsets receive a timed conversion.
+      // The async Worker runs after recording decode; never delay gameplay.
+      if(isCharger&&!usesSplatChargerRise(id)&&Number.isFinite(chargeTime))
+        main?.then(()=>{
+          if(this._weaponBank!==bank||this.ctx!==bank.ctx)return;
+          const source=bank.authorized.pick(id,'charge',0)?.buffer;
+          if(source)bank.chargerStretchCache?.prepare(id,source,chargeTime);
+        }).catch(()=>{});
       if(isCharger)loader?.ensure(id);
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
@@ -162,6 +172,13 @@ export function installWeaponAudioEngine(Engine){
     if(!name)return null;
     const loader=this._realS3Loader;
     const recorded=bank.authorized.byEvent.has(`${id}:${event}`);
+    // A late sample stays audible unmodified on the first hold. Request only
+    // an off-thread conversion for subsequent holds; no gameplay-time DSP.
+    if(recorded&&event==='charge'&&AUDIO_RECIPES[id]?.family==='charger'&&
+       !usesSplatChargerRise(id)&&options.actor?.isLocal){
+      const source=bank.authorized.pick(id,'charge',0)?.buffer;
+      if(source)bank.chargerStretchCache?.prepare(id,source,options.actor.weapon?.chargeTime);
+    }
     // An already-decoded native event always wins. Only route a confirmed
     // manifest-absent event to an explicitly registered source recording.
     // This keeps the original gameplay clock and never fabricates PCM.
