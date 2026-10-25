@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { verifyWallBuild } from './check-inkwave-wall-render.mjs';
+import { createIdleGpuTrace, runIdleGpuContextDiagnostic, closeIdleFailureResources } from './lib/idle-gpu-diagnostic.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -163,13 +164,19 @@ export function captureIdleGpuIdentity(){
  window.__idleGpuIdentity=probe;
  return gpu;
 }
-export function verifyIdleGpuContext(){
- const probe=window.__idleGpuIdentity;
+export function verifyIdleGpuContext({token}={}){
+ const mark=stage=>{if(token)try{console.info('INKWAVE_IDLE_GPU_CONTEXT '+token+' '+stage);}catch{}};
+ mark('enter');const probe=window.__idleGpuIdentity;mark('probe-read');
  if(!probe)throw Error('Idle GPU identity was not captured');
+ let value;
  try{
-  if(__G.renderer.getContext()!==probe.gl||probe.lost||probe.gl.isContextLost())throw Error('Idle GPU context lost or replaced during workload');
-  return probe.gpu;
- }finally{probe.gl.canvas.removeEventListener('webglcontextlost',probe.onLoss);delete window.__idleGpuIdentity;}
+  const context=__G.renderer.getContext();mark('context-read');
+  if(context!==probe.gl||probe.lost)throw Error('Idle GPU context lost or replaced during workload');
+  const lost=probe.gl.isContextLost();mark('loss-read');
+  if(lost)throw Error('Idle GPU context lost or replaced during workload');
+  value=probe.gpu;
+ }finally{mark('cleanup-enter');probe.gl.canvas.removeEventListener('webglcontextlost',probe.onLoss);delete window.__idleGpuIdentity;mark('cleanup-exit');}
+ mark('exit');return value;
 }
 const boundedPages=new WeakSet();
 // Playwright evaluate uses kNoTimeout, independently of setDefaultTimeout.
@@ -205,7 +212,7 @@ export async function runIdleProbe(task,{diagnose,cleanup}){
  let value,failure,failed=false;
  const record=async error=>{try{await diagnose(error);return error;}catch(diagnosticError){return combineFailure(error,diagnosticError,'Idle failure diagnostics failed');}};
  try{value=await task();}catch(error){failed=true;failure=await record(error);}
- try{await cleanup(failure);}catch(cleanupError){failure=await record(failed?combineFailure(failure,cleanupError,'Idle probe cleanup failed'):cleanupError);failed=true;}
+ try{await cleanup(failure,failed);}catch(cleanupError){failure=await record(failed?combineFailure(failure,cleanupError,'Idle probe cleanup failed'):cleanupError);failed=true;}
  if(failed)throw failure;
  return value;
 }
@@ -356,9 +363,9 @@ async function main(){
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
  for(const d of [output,profile]){if(['/tmp','/var/tmp','/dev/shm'].some(p=>d===p||d.startsWith(p+'/')))throw Error('Persistent evidence required');fs.mkdirSync(d,{recursive:true});}
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
- let browser,server,page,identity,result,resultsProgress;const errors=[],loaded=new Set();let phase='identity';
+ let browser,server,page,identity,result,resultsProgress,gpuTrace;const errors=[],loaded=new Set();let phase='identity';
  publish({status:'running',phase});
-  const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,resultsWorkProgress:resultsProgress?.snapshot(),loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
+  const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,resultsWorkProgress:resultsProgress?.snapshot(),gpuContextTrace:gpuTrace?.snapshot(),loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
  const receipt=await runIdleProbe(async()=>{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
   if(process.argv.includes('--exact-source')){
@@ -444,7 +451,12 @@ async function main(){
   // is invented. The existing browser/GL and exact-source identities remain gates.
   phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress);
   publish({status:'running',phase,result,resultsWorkProgress:resultsProgress.snapshot(),sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
-  phase='gpu-context';result.gpu=await page.evaluate(verifyIdleGpuContext);
+  phase='gpu-context';gpuTrace=createIdleGpuTrace(crypto.randomUUID(),{emit:line=>{
+   // Immediate bounded stderr/file checkpoints; not proof of CDP dispatch.
+   // A killed runner can still prevent artifact upload.
+   try{console.error(line);}catch{}
+   try{fs.writeFileSync(path.join(output,'idle-gpu-context-trace.json'),JSON.stringify({sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,phase,gpuContextTrace:gpuTrace.snapshot()})+'\n');}catch{}
+  }});result.gpu=await runIdleGpuContextDiagnostic(page,gpuTrace,verifyIdleGpuContext);
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
   // The preceding desktop measurements are complete. Retire its live renderer
@@ -500,7 +512,7 @@ async function main(){
   return {status:'passed',...result,summary,resultsWorkProgress:resultsProgress?.snapshot(),sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion};
  },{
   diagnose,
-  cleanup:error=>closeIdleResources(browser,server,error)
+  cleanup:(error,failed)=>failed?closeIdleFailureResources(browser,server,error):closeIdleResources(browser,server,error)
  });
  publish(receipt);
 }

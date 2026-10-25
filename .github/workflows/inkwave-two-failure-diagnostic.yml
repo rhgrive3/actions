@@ -1,0 +1,152 @@
+name: INKWAVE two-failure diagnostics (not acceptance)
+# Diagnostic branch only. This never replaces Validate or any PR acceptance check.
+on:
+  push:
+    branches: ['diagnostics/inkwave-two-failures-20261025-1537']
+    paths: ['diagnostics/inkwave-two-failures.trigger.json']
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-two-failure-diagnostic-${{ github.run_id }}
+  cancel-in-progress: false
+env:
+  SOURCE_SHA: ${{ github.sha }}
+  WORKFLOW_SHA: ${{ github.workflow_sha }}
+  BASE_SOURCE_SHA: 48a32036da8ff6bf24cba39a737f6ecedce00399
+jobs:
+  held-fit-numeric-diagnostic:
+    name: Diagnostic only - selected held-fit numeric regression
+    if: github.event_name == 'push' && github.ref == 'refs/heads/diagnostics/inkwave-two-failures-20261025-1537'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package.json
+            /inkwave-public/vendor/three/
+            /scripts/tests/inkwave-held-fit-numeric.test.mjs
+            /patches/splatoon3/runtime/special-motion.mjs
+            /patches/local-quality/tests/fixtures/special-fit-7c94a8b-before-358.mjs.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify immutable diagnostic identity and unchanged fit source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$WORKFLOW_SHA" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD:patches/splatoon3/runtime/special-motion.mjs)" = ebe2ffb3cf9b3e34d80109e82ecefc4c39f03b94
+          mkdir -p .diagnostic-evidence
+      - name: Run only the standalone held-fit numeric regression
+        id: fit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap --test-name-pattern='^special held fit exits only after both constraints perform no projection$' scripts/tests/inkwave-held-fit-numeric.test.mjs | tee .diagnostic-evidence/held-fit.tap
+          node --input-type=module -e 'import assert from "node:assert/strict"; import fs from "node:fs"; const tap=fs.readFileSync(".diagnostic-evidence/held-fit.tap","utf8"); for(const [key,value] of [["tests",1],["pass",1],["fail",0],["skipped",0]]) assert.deepEqual(tap.split("\n").filter(line=>line.startsWith("# "+key+" ")),["# "+key+" "+value]);'
+      - name: Record diagnostic scope without claiming full acceptance
+        if: always()
+        env:
+          CHECK_OUTCOME: ${{ steps.fit.outcome }}
+        run: |
+          mkdir -p .diagnostic-evidence
+          node --input-type=module -e 'import fs from "node:fs"; fs.writeFileSync(".diagnostic-evidence/diagnostic-scope.json",JSON.stringify({scope:"selected-held-fit-numeric-only",fullAcceptance:false,originalValidateCoreRepaired:false,sourceSha:process.env.SOURCE_SHA,workflowSha:process.env.WORKFLOW_SHA,baseSourceSha:process.env.BASE_SOURCE_SHA,outcome:process.env.CHECK_OUTCOME,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT},null,2)+"\n");'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diagnostic-held-fit-numeric-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          path: .diagnostic-evidence/
+          retention-days: 14
+
+  idle-gpu-context-diagnostic:
+    name: Diagnostic only - idle GPU-context browser check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/diagnostics/inkwave-two-failures-20261025-1537'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI_STORAGE: /mnt/workspace/inkwave-two-failure-idle-${{ github.run_id }}-${{ github.run_attempt }}
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify immutable diagnostic source and prepare bounded storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$WORKFLOW_SHA" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          mkdir -p .ci-scratch .built-site
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
+          mkdir -p "$CI_STORAGE/evidence/idle-resources" "$CI_STORAGE/cache/idle-resources"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+          node --input-type=module -e 'import fs from "node:fs"; fs.writeFileSync(process.env.CI_STORAGE+"/evidence/idle-resources/diagnostic-source-identity.json",JSON.stringify({scope:"existing-idle-resource-checker-with-gpu-context-diagnostics",fullAcceptance:false,sourceSha:process.env.SOURCE_SHA,workflowSha:process.env.WORKFLOW_SHA,baseSourceSha:process.env.BASE_SOURCE_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT},null,2)+"\n");'
+      - name: Install only pinned build and Chromium dependencies
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx --no-install playwright install --with-deps chromium
+      - name: Build exact diagnostic source without production overrides
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          git rev-parse HEAD > .built-site/_site-source-sha.txt
+          test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
+      - name: Run only the existing idle resource checker with failure diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source 2>&1 | tee "$CI_STORAGE/evidence/idle-resources/idle-checker.log"
+      # Immediately preserve small host checkpoints even when the checker fails.
+      # A forcibly killed runner may still prevent this upload; never infer a pass.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        timeout-minutes: 2
+        with:
+          name: diagnostic-idle-gpu-context-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: |
+            ${{ env.CI_STORAGE }}/evidence/idle-resources/*.json
+            ${{ env.CI_STORAGE }}/evidence/idle-resources/*.jsonl
+            ${{ env.CI_STORAGE }}/evidence/idle-resources/*.ndjson
+            ${{ env.CI_STORAGE }}/evidence/idle-resources/idle-checker.log
+          retention-days: 14
