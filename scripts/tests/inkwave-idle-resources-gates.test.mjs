@@ -5,6 +5,7 @@ import { validateIdleResult } from '../check-inkwave-idle-resources.mjs';
 import './inkwave-idle-evaluate-deadline.test.mjs';
 import './inkwave-cloud-theme-deadlines.test.mjs';
 import './inkwave-results-work-progress.test.mjs';
+import './inkwave-idle-gpu-identity.test.mjs';
 const sample=()=>({
   coldBoot:{quality:'high',touch:true,gamePublishedAtAllocation:false,marina:true,cloud:[1024,320],farSize:256,sameTargetsAfterBoot:true},
   clouds:['day','sunset','golden'].map(theme=>({theme,highBytes:10485760,lowBytes:2621440,meanByteError:1,largeErrorFraction:.001,highRepeatChanged:0,nonzero:1000})),
