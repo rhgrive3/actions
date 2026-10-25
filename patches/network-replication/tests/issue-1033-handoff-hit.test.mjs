@@ -864,17 +864,23 @@ test('bind, disposal, and the production session close path retire hit state bef
   const lost = room();
   lost.S.net.bind({ actors: [], boss: null });
   lost.S.net.sendHit(lost.S.attacker, lost.S.victim, 36, 'shooter');
-  const SessionHarness = new Function('G', 'MAPS', 'MATCH', 'TEAM', 'mapNoBots',
-    `return class SessionHarness { ${methodFrom(sessionSource, '_closed')} ${methodFrom(sessionSource, 'leave')} ${methodFrom(sessionSource, '_blankLobby')} }`)
-    (lost.S.G, [{ id: 'tidewater' }], { defaultDuration: 180 }, 4, mapNoBots);
+  const cancelledStartTimers = [], startTimer = setTimeout(() => {}, 60000);
+  startTimer.unref?.();
+  try {
+  const SessionHarness = new Function('G', 'MAPS', 'MATCH', 'TEAM', 'mapNoBots', 'clearTimeout',
+    `return class SessionHarness { ${methodFrom(sessionSource, '_closed')} ${methodFrom(sessionSource, '_cancelStartRequest')} ${methodFrom(sessionSource, 'leave')} ${methodFrom(sessionSource, '_blankLobby')} }`)
+    (lost.S.G, [{ id: 'tidewater' }], { defaultDuration: 180 }, 4, mapNoBots, timer => { cancelledStartTimers.push(timer); clearTimeout(timer); });
   const aborted = [];
   const session = Object.assign(new SessionHarness(), {
     state: 'match', match: lost.S.net, tr: { close() {} }, code: 'ROOM', error: null,
-    _roomAttempt: 0, _members: new Map(), _goT: null,
+    _roomAttempt: 0, _members: new Map(), _goT: null, _startAckT: startTimer, _pendingStart: { id: 'pending-start' },
     _setState(state) { this.state = state; }, _emit(name, detail) { aborted.push({ name, detail }); },
   });
   lost.S.G.game = { netMatchAborted(reason) { aborted.push({ name: 'aborted', reason }); } };
   session._closed('lost');
+  assert.equal(cancelledStartTimers.filter(timer => timer === startTimer).length, 1, 'session close cancels the actual pending start timer once');
+  assert.equal(session._startAckT, null);
+  assert.equal(session._pendingStart, null);
   assert.equal(session.match, null);
   assert.equal(lost.S.net.hitPending.size, 0, 'connection close disposes the old delivery queue');
   assert.equal(lost.S.net._pendingHits.size, 0, 'connection close disposes the old combat queue');
@@ -886,4 +892,5 @@ test('bind, disposal, and the production session close path retire hit state bef
   assert.equal(reconnected.net.sendHit(reconnected.attacker, reconnected.victim, 36, 'shooter'), true);
   assert.equal(reconnected.sent[0].data.h, 1, 'a new match starts with a fresh hit identity space');
   assert.equal(reconnected.net.hitPending.size, 1);
+  } finally { clearTimeout(startTimer); }
 });
