@@ -1,0 +1,134 @@
+{
+  "baseCommit": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "environment": "local managed workspace; no hosted Actions invocation",
+  "checks": {
+    "source": {
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-concurrency=2",
+        "patches/splatoon3/tests/special-vfx.test.mjs",
+        "patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs",
+        "patches/splatoon3/tests/triple-splashdown-presentation.test.mjs",
+        "patches/splatoon3/tests/special-vfx-recipes-parity.test.mjs",
+        "patches/splatoon3/tests/special-sprite-eviction-parity.test.mjs",
+        "patches/splatoon3/tests/special-vfx-pool-capacity.test.mjs",
+        "patches/splatoon3/tests/special-sprite-drag-cache.test.mjs",
+        "patches/local-quality/tests/special-vfx-zero-drag-parity.test.mjs"
+      ],
+      "logSHA256": "c5a5051a5714a93d685f05dab3ff6ef0701046ceba1e5b218f227af140345bba",
+      "tail": [
+        "✔ real tripleSplashdown age/drop lifecycle owns the unarmed pose and restores normal control at 30/60/120Hz (21628.197119ms)",
+        "✔ independent fists stay visible after owner death through 86F and retire their owned materials once at 87F (16442.297196ms)",
+        "ℹ tests 43",
+        "ℹ suites 0",
+        "ℹ pass 43",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 140246.049986"
+      ]
+    },
+    "emitted": {
+      "command": [
+        "env",
+        "INKWAVE_BUILT_SITE=_site-after",
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "scripts/tests/inkwave-special-frame-emitted.test.mjs",
+        "scripts/tests/inkwave-direct-source-ownership.test.mjs"
+      ],
+      "logSHA256": "d91a87d0d7cf689e8bc5baf5935dae6c343c4aedccf415b8a2b5f16234f647bb",
+      "tail": [
+        "✔ emitted Screen installer closure closes upright, hides, reuses and preserves authority (68.852379ms)",
+        "✔ negative control: emitted collapsing-height mutation is detected (40.729809ms)",
+        "ℹ tests 22",
+        "ℹ suites 0",
+        "ℹ pass 22",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 6427.648639"
+      ]
+    },
+    "quick": {
+      "command": [
+        "node",
+        "scripts/check-inkwave-patches.mjs",
+        "--quick"
+      ],
+      "logSHA256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "tail": [
+        "INKWAVE quick checks OK: upstream compatible; reference 11.3.0"
+      ]
+    },
+    "build": {
+      "command": [
+        "node",
+        "scripts/build-inkwave.mjs",
+        "inkwave-public",
+        "_site-after"
+      ],
+      "logSHA256": "d3adde733f8c1ab1513a4c6be5e7eeb31f08b97e58c26104a61c117b9ba6a219",
+      "tail": [
+        "lightmap tidewater.png: 149335 -> 119063 bytes (same pixels)",
+        "three.js: 152 of 444 exports kept · 2071 KB → 599 KB (gzip diagnostics disabled)",
+        "reviewed audio helper: omitted (reviewed current orphan; no literal reference)",
+        "startup runtime: 11489 -> 6062 bytes",
+        "patch: splatoon3+quality+range · build ebdd80f2a7fd",
+        "JS transforms (excludes replaced Three inputs): 4761 KB → 2840 KB  (gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)",
+        "CSS: 478 KB → 402 KB",
+        "repeated module strings: saved 30357 bytes total, 30104 in the offline precache",
+        "modulepreload: 145 modules (369 deferred, all precached)",
+        "lossless lightmaps: 173878 bytes saved with identical decoded pixels"
+      ]
+    },
+    "budget": {
+      "command": [
+        "node",
+        "scripts/check-inkwave-startup-budget.mjs",
+        "_site-after"
+      ],
+      "logSHA256": "e6ad0c3a2e5f962e6220bf26f61e9b122a8c598ed180fbf897e3a0d05bdec8a1",
+      "tail": [
+        "  \"practiceRangeModulePreloads\": 14,",
+        "  \"practiceRangePreloadBytes\": 78161,",
+        "  \"initialJSBytes\": 2052171,",
+        "  \"criticalHTMLBytes\": 24090,",
+        "  \"precacheCount\": 538,",
+        "  \"precacheBytes\": 7570308,",
+        "  \"workerBytes\": 87434,",
+        "  \"declaredBytes\": 15817198,",
+        "  \"measurementKind\": \"deterministic file and dependency gates; not native browser timings\"",
+        "}"
+      ]
+    }
+  },
+  "captures": {
+    "after-f01.png": "de08dd05011878138a39aa111a67455ae87047e65fd50db0cc886695f89acbd9",
+    "after-f06.png": "d370b0cc85913142caef08c854a7c4c650de46b9812ea7bb70e8978b6eb9826b",
+    "after-f17.png": "2339a1db5c0878f461a5de1103c7bcce974ec91af4f33c6dd59fa55f66ab1dfb",
+    "after-f18.png": "8ac0bd3f2aeac936173c261ba7ae7efc55eacebd44bb07b389b5c1fe03599320",
+    "after-f24.png": "a24eddc4e7802d2251122c7a1b1f6a121fc1321299d04ca7701110cfd7db96f9",
+    "after-f30.png": "0e179e3398ffc1c634591b97bc32c468182c21685ad3b51c04f9b48ce7749acd",
+    "after-f36.png": "a8b67b4fc27443e5794b1819b1e4d5036aba606579075fae3fa5aee095e2370d",
+    "after-f45.png": "111a32a32f9902580c4acc4ac97687177b19b8af237c85af6f8547d4d2cd919c",
+    "after-f52.png": "e873284490fb7aca421833615c4f0b9ef48ccbd1af4b53ea996056c3345d259e",
+    "after-f60.png": "83500f51cfb020d2443253226f8c9e3e0ec68b74744c3efbad96b6f145e3bc88",
+    "before-f01.png": "de08dd05011878138a39aa111a67455ae87047e65fd50db0cc886695f89acbd9",
+    "before-f06.png": "d370b0cc85913142caef08c854a7c4c650de46b9812ea7bb70e8978b6eb9826b",
+    "before-f17.png": "2339a1db5c0878f461a5de1103c7bcce974ec91af4f33c6dd59fa55f66ab1dfb",
+    "before-f18.png": "8ac0bd3f2aeac936173c261ba7ae7efc55eacebd44bb07b389b5c1fe03599320",
+    "before-f24.png": "a24eddc4e7802d2251122c7a1b1f6a121fc1321299d04ca7701110cfd7db96f9",
+    "before-f30.png": "0e179e3398ffc1c634591b97bc32c468182c21685ad3b51c04f9b48ce7749acd",
+    "before-f36.png": "a8b67b4fc27443e5794b1819b1e4d5036aba606579075fae3fa5aee095e2370d",
+    "before-f45.png": "111a32a32f9902580c4acc4ac97687177b19b8af237c85af6f8547d4d2cd919c",
+    "before-f52.png": "e873284490fb7aca421833615c4f0b9ef48ccbd1af4b53ea996056c3345d259e",
+    "before-f60.png": "83500f51cfb020d2443253226f8c9e3e0ec68b74744c3efbad96b6f145e3bc88"
+  },
+  "capturesNote": "Twenty PNGs remain in the local .browser-evidence/splashdown-vfx-final directory; paired.json records pixel comparisons. PNGs are not part of this commit."
+}

@@ -1,0 +1,452 @@
+{
+  "terminalReceipt": null,
+  "scope": "production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison",
+  "cases": [
+    {
+      "fxMode": "none",
+      "hz": 30,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.5,
+      "endedAt": 1.2,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 43,
+      "fistPixels": [
+        1910,
+        3399
+      ],
+      "normalPass": null,
+      "captures": []
+    },
+    {
+      "fxMode": "none",
+      "hz": 60,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.497772612341123,
+      "endedAt": 1.1666666666666667,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 86,
+      "fistPixels": [
+        1911,
+        3375
+      ],
+      "normalPass": {
+        "energyPixels": 0,
+        "solidPixels": 1699
+      },
+      "captures": [
+        {
+          "frame": 1,
+          "phase": "rise",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 30,
+          "phase": "rise",
+          "pos": [
+            0,
+            4.474304742009401,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 60,
+          "phase": "rise",
+          "pos": [
+            0,
+            6.497772612341123,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 70,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 80,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 87,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 0,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 120,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 0,
+          "armed": true,
+          "presentation": null
+        }
+      ]
+    },
+    {
+      "fxMode": "none",
+      "hz": 120,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.5,
+      "endedAt": 1.175,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 173,
+      "fistPixels": [
+        1934,
+        3371
+      ],
+      "normalPass": null,
+      "captures": []
+    },
+    {
+      "fxMode": "disabled",
+      "hz": 30,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.5,
+      "endedAt": 1.2,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 43,
+      "fistPixels": [
+        1929,
+        3407
+      ],
+      "normalPass": null,
+      "captures": []
+    },
+    {
+      "fxMode": "disabled",
+      "hz": 60,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.497772612341123,
+      "endedAt": 1.1666666666666667,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 86,
+      "fistPixels": [
+        1905,
+        3399
+      ],
+      "normalPass": null,
+      "captures": [
+        {
+          "frame": 1,
+          "phase": "rise",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 30,
+          "phase": "rise",
+          "pos": [
+            0,
+            4.474304742009401,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 60,
+          "phase": "rise",
+          "pos": [
+            0,
+            6.497772612341123,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 70,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 80,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 87,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 0,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 120,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 0,
+          "armed": true,
+          "presentation": null
+        }
+      ]
+    },
+    {
+      "fxMode": "disabled",
+      "hz": 120,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.5,
+      "endedAt": 1.175,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 173,
+      "fistPixels": [
+        1911,
+        3373
+      ],
+      "normalPass": null,
+      "captures": []
+    },
+    {
+      "fxMode": "enabled",
+      "hz": 30,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.5,
+      "endedAt": 1.2,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 43,
+      "fistPixels": [
+        1815,
+        3125
+      ],
+      "normalPass": null,
+      "captures": []
+    },
+    {
+      "fxMode": "enabled",
+      "hz": 60,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.497772612341123,
+      "endedAt": 1.1666666666666667,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 86,
+      "fistPixels": [
+        1800,
+        3130
+      ],
+      "normalPass": null,
+      "captures": [
+        {
+          "frame": 1,
+          "phase": "rise",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 30,
+          "phase": "rise",
+          "pos": [
+            0,
+            4.474304742009401,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 60,
+          "phase": "rise",
+          "pos": [
+            0,
+            6.497772612341123,
+            0
+          ],
+          "fists": 2,
+          "armed": false,
+          "presentation": "tripleSplashdown"
+        },
+        {
+          "frame": 70,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 80,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 2,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 87,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 0,
+          "armed": true,
+          "presentation": null
+        },
+        {
+          "frame": 120,
+          "phase": null,
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "fists": 0,
+          "armed": true,
+          "presentation": null
+        }
+      ]
+    },
+    {
+      "fxMode": "enabled",
+      "hz": 120,
+      "sourceMotion": "ready",
+      "phases": [
+        "rise",
+        "drop"
+      ],
+      "maxY": 6.5,
+      "endedAt": 1.175,
+      "primitiveFrames": 0,
+      "armedFrames": 0,
+      "fistFrames": 173,
+      "fistPixels": [
+        1844,
+        3252
+      ],
+      "normalPass": null,
+      "captures": []
+    }
+  ],
+  "failures": [],
+  "servedHashes": {},
+  "qaIdentity": null,
+  "inputHash": "a60be7ee189f288f18bd56f07ef6e6fe8804a66820e3cd353e3a35ec350640ac",
+  "browserVersion": "151.0.7922.34",
+  "errors": [],
+  "buildRevision": "66ba16e3704b4234253ea481d34a7fe64fcce51dd61113c3b6162d20ff78ac87",
+  "contentHash": "ebdd80f2a7fd19ddd2bb10c5be2c21e45d7f97f47d0f65951249b648a52f4d77"
+}

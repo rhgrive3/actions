@@ -159,11 +159,16 @@ void main(){
   vec2 p = mat2(ca, -sa, sa, ca) * vUv;
   float r = length(p), a = 0.0; vec3 col = vCol.rgb;
   if (kind == 0 || kind == 3) {        // smoke / dust: billowy edge, darker belly, fades and thins with age
+    // Four noise octaves sum to < 1, so the edge cannot reach this bound.
+    // No derivatives are used in this branch: reject empty billboard corners
+    // before evaluating the sixteen noise hashes per FBM sample.
+    if (r > 1.0 - vPar.z * 0.25) discard;
     float n = sxFbm(p * 1.7 + vPar.w * 31.0 + vec2(0.0, uTime * 0.15));
     float edge = 0.62 + 0.38 * n - vPar.z * 0.25;
     a = 1.0 - smoothstep(edge - 0.32, edge, r);
     col *= 0.78 + 0.32 * (p.y * 0.5 + 0.5) + 0.12 * n;
   } else if (kind == 1) {              // ink mist: soft, slightly lumpy
+    if (r >= 1.0) discard; // noise is nonnegative and can only shrink the edge
     float n = sxNoise(p * 3.0 + vPar.w * 13.0);
     a = (1.0 - smoothstep(0.25, 1.0, r + n * 0.18)) * 0.8;
   } else if (kind == 4) {              // ink petal (S3 footage 83.0s/96.8s): a pointed leaf of glossy ink, team colour at the
@@ -185,6 +190,7 @@ void main(){
     return;
   } else {                             // ink chunk: a glossy liquid drop, round when slow and a teardrop (head leading)
     // when stretched along its velocity; shaded exactly like the game's droplets (sxInk)
+    if (vCol.a < 0.03) discard; // per-instance fade, before noise/coverage/lighting
     float st = vStretch, L = 1.0 + st;
     vec2 P = vec2(vUv.x, vUv.y * L);                                   // quad units: x radius 1, y half-length L
     float an = atan(P.y - st, P.x);
@@ -203,7 +209,6 @@ void main(){
     vec2 bx = vec2(vAx.y, -vAx.x);   // the same side axis the vertex shader used
     vec3 n = normalize(vec3(bx * q.x + vAx * q.y, z + 0.05));
     col = sxInk(vCol.rgb, n, vec3(0.0, 0.0, 1.0), 1.0);
-    if (vCol.a < 0.03) discard;
     gl_FragColor = vec4(col, a);
     ${OUT}
     return;
@@ -287,11 +292,17 @@ class SpritePool {
     this._heapValid=false;this._heapBlocked=false;
     const p = this.p, S = this.S;
     if(this.n===0&&this._emptyUploaded)return;
+    // A burst's adjacent particles share drag. Reuse only this update's last
+    // exact factor; keep non-finite time and NaN rates on the original path.
+    const finiteTime = Number.isFinite(dt);
+    let lastDrag = NaN, lastDragFactor = 0;
     for (let j = this.n - 1; j >= 0; j--) {
       const i = j * S; p[i + 6] += dt;
       if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
       // Exact zero drag needs no exponential for finite dt; preserve NaN for non-finite time deltas.
-      const drag = p[i + 10] === 0 && Number.isFinite(dt) ? 1 : Math.exp(-p[i + 10] * dt);
+      const rate = p[i + 10];
+      const drag = finiteTime && rate === lastDrag ? lastDragFactor
+        : (lastDrag = rate, lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt));
       p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;
       p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;
     }

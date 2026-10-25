@@ -1,0 +1,1412 @@
+{
+  "frames": [
+    {
+      "frame": 1,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 6,
+          "triangles": 8704,
+          "sparks": 1,
+          "puffs": 75,
+          "ribbons": 0,
+          "shapes": 4,
+          "draws": 6
+        },
+        "after": {
+          "calls": 6,
+          "triangles": 8704,
+          "sparks": 1,
+          "puffs": 75,
+          "ribbons": 0,
+          "shapes": 4,
+          "draws": 6
+        }
+      },
+      "timing": {
+        "before": [
+          22.936172,
+          17.595467,
+          20.794808,
+          18.225749,
+          16.26792,
+          24.920401,
+          18.651226,
+          21.827121,
+          17.449555
+        ],
+        "after": [
+          20.995894,
+          22.143538,
+          19.483723,
+          19.794774,
+          17.838634,
+          18.617482,
+          19.298795,
+          17.427235,
+          19.294646
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          27.300000000046566,
+          22.400000000023283,
+          26.5,
+          22.20000000006985,
+          20.5,
+          31.5,
+          23,
+          28,
+          21.800000000046566
+        ],
+        "after": [
+          29.29999999993015,
+          27.5,
+          24.300000000046566,
+          24.5,
+          23,
+          23.70000000006985,
+          23.79999999993015,
+          21.900000000023283,
+          26
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 19.852046555555557,
+          "median": 18.651226,
+          "p95": 24.920401,
+          "max": 24.920401
+        },
+        "after": {
+          "n": 9,
+          "mean": 19.432746777777776,
+          "median": 19.298795,
+          "p95": 22.143538,
+          "max": 22.143538
+        }
+      }
+    },
+    {
+      "frame": 6,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 6,
+          "triangles": 8704,
+          "sparks": 1,
+          "puffs": 75,
+          "ribbons": 0,
+          "shapes": 4,
+          "draws": 6
+        },
+        "after": {
+          "calls": 6,
+          "triangles": 8704,
+          "sparks": 1,
+          "puffs": 75,
+          "ribbons": 0,
+          "shapes": 4,
+          "draws": 6
+        }
+      },
+      "timing": {
+        "before": [
+          28.185647,
+          30.7422,
+          41.466737,
+          31.826699,
+          27.733157,
+          29.87321,
+          35.324718,
+          26.158755,
+          27.180372
+        ],
+        "after": [
+          27.241074,
+          35.642582,
+          26.524548,
+          26.282957,
+          29.63141,
+          28.309929,
+          29.987132,
+          34.653865,
+          35.936986
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          28.800000000046566,
+          35.40000000002328,
+          46.70000000006985,
+          35.70000000006985,
+          31.599999999976717,
+          37,
+          41,
+          30.099999999976717,
+          31.300000000046566
+        ],
+        "after": [
+          31.400000000023283,
+          39.800000000046566,
+          31.29999999993015,
+          30.5,
+          34.20000000006985,
+          34.5,
+          35.70000000006985,
+          39,
+          43.29999999993015
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 30.94349944444444,
+          "median": 29.87321,
+          "p95": 41.466737,
+          "max": 41.466737
+        },
+        "after": {
+          "n": 9,
+          "mean": 30.467831444444446,
+          "median": 29.63141,
+          "p95": 35.936986,
+          "max": 35.936986
+        }
+      }
+    },
+    {
+      "frame": 17,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 4,
+          "triangles": 5964,
+          "sparks": 0,
+          "puffs": 75,
+          "ribbons": 0,
+          "shapes": 3,
+          "draws": 4
+        },
+        "after": {
+          "calls": 4,
+          "triangles": 5964,
+          "sparks": 0,
+          "puffs": 75,
+          "ribbons": 0,
+          "shapes": 3,
+          "draws": 4
+        }
+      },
+      "timing": {
+        "before": [
+          140.665197,
+          63.903637,
+          65.994419,
+          64.916457,
+          48.978618,
+          54.665362,
+          61.28203,
+          66.572803,
+          56.723474
+        ],
+        "after": [
+          70.638701,
+          49.791672,
+          49.996131,
+          54.65361,
+          58.638412,
+          66.087428,
+          61.365653,
+          49.820589,
+          51.154423
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          148.70000000006985,
+          68.39999999990687,
+          72.09999999997672,
+          70.29999999993015,
+          54,
+          59.20000000006985,
+          65.29999999993015,
+          71.29999999993015,
+          61.90000000002328
+        ],
+        "after": [
+          87.30000000004657,
+          56.90000000002328,
+          55.59999999997672,
+          59.59999999997672,
+          62.79999999993015,
+          71.09999999997672,
+          66,
+          54.199999999953434,
+          56
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 69.30022188888888,
+          "median": 63.903637,
+          "p95": 140.665197,
+          "max": 140.665197
+        },
+        "after": {
+          "n": 9,
+          "mean": 56.90517988888889,
+          "median": 54.65361,
+          "p95": 70.638701,
+          "max": 70.638701
+        }
+      }
+    },
+    {
+      "frame": 18,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 6,
+          "triangles": 16146,
+          "sparks": 2,
+          "puffs": 205,
+          "ribbons": 0,
+          "shapes": 11,
+          "draws": 6
+        },
+        "after": {
+          "calls": 6,
+          "triangles": 16146,
+          "sparks": 2,
+          "puffs": 205,
+          "ribbons": 0,
+          "shapes": 11,
+          "draws": 6
+        }
+      },
+      "timing": {
+        "before": [
+          107.6456,
+          110.288292,
+          104.968797,
+          118.937004,
+          126.00898,
+          104.599916,
+          132.982873,
+          103.172879,
+          111.132671
+        ],
+        "after": [
+          113.433469,
+          115.101087,
+          126.827022,
+          114.207529,
+          107.367813,
+          112.743863,
+          105.706405,
+          116.224636,
+          113.2846
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          108.69999999995343,
+          115.90000000002328,
+          111.5,
+          124.30000000004657,
+          130.89999999990687,
+          109.5,
+          137.5,
+          107.59999999997672,
+          115.70000000006985
+        ],
+        "after": [
+          134.5,
+          119.40000000002328,
+          129.09999999997672,
+          119.80000000004657,
+          113,
+          117.70000000006985,
+          109.90000000002328,
+          121.09999999997672,
+          118.30000000004657
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 113.30411244444444,
+          "median": 110.288292,
+          "p95": 132.982873,
+          "max": 132.982873
+        },
+        "after": {
+          "n": 9,
+          "mean": 113.87738044444444,
+          "median": 113.433469,
+          "p95": 126.827022,
+          "max": 126.827022
+        }
+      }
+    },
+    {
+      "frame": 24,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 6,
+          "triangles": 16146,
+          "sparks": 2,
+          "puffs": 205,
+          "ribbons": 0,
+          "shapes": 11,
+          "draws": 6
+        },
+        "after": {
+          "calls": 6,
+          "triangles": 16146,
+          "sparks": 2,
+          "puffs": 205,
+          "ribbons": 0,
+          "shapes": 11,
+          "draws": 6
+        }
+      },
+      "timing": {
+        "before": [
+          150.431177,
+          169.806875,
+          170.340013,
+          180.421998,
+          167.89423,
+          159.543941,
+          159.102896,
+          175.634894,
+          169.572316
+        ],
+        "after": [
+          148.479888,
+          179.76043,
+          145.652439,
+          194.130302,
+          170.341897,
+          175.884524,
+          179.000467,
+          175.744569,
+          149.285741
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          151.5,
+          175.5,
+          175.69999999995343,
+          184.70000000006985,
+          176.69999999995343,
+          164.19999999995343,
+          180.19999999995343,
+          180.19999999995343,
+          174.10000000009313
+        ],
+        "after": [
+          171.79999999993015,
+          184.5,
+          151.5,
+          199.79999999993015,
+          175,
+          181.09999999997672,
+          184,
+          180.29999999993015,
+          154.09999999997672
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 166.97203777777779,
+          "median": 169.572316,
+          "p95": 180.421998,
+          "max": 180.421998
+        },
+        "after": {
+          "n": 9,
+          "mean": 168.69780633333335,
+          "median": 175.744569,
+          "p95": 194.130302,
+          "max": 194.130302
+        }
+      }
+    },
+    {
+      "frame": 30,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 4,
+          "triangles": 12030,
+          "sparks": 0,
+          "puffs": 202,
+          "ribbons": 0,
+          "shapes": 9,
+          "draws": 4
+        },
+        "after": {
+          "calls": 4,
+          "triangles": 12030,
+          "sparks": 0,
+          "puffs": 202,
+          "ribbons": 0,
+          "shapes": 9,
+          "draws": 4
+        }
+      },
+      "timing": {
+        "before": [
+          200.519517,
+          237.430175,
+          221.680171,
+          216.934311,
+          215.290964,
+          218.628278,
+          209.78888,
+          224.248607,
+          217.321182
+        ],
+        "after": [
+          211.784816,
+          222.434684,
+          207.034864,
+          238.852359,
+          209.39331,
+          233.923355,
+          237.026082,
+          212.558656,
+          213.911899
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          224.5,
+          242.5,
+          226.30000000004657,
+          222.59999999997672,
+          219.29999999993015,
+          223.10000000009313,
+          214.60000000009313,
+          228.70000000006985,
+          238.80000000004657
+        ],
+        "after": [
+          215.70000000006985,
+          228.20000000006985,
+          211.09999999997672,
+          245.09999999997672,
+          214.40000000002328,
+          244.5,
+          241.80000000004657,
+          217.70000000006985,
+          218.70000000006985
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 217.98245388888887,
+          "median": 217.321182,
+          "p95": 237.430175,
+          "max": 237.430175
+        },
+        "after": {
+          "n": 9,
+          "mean": 220.7688916666667,
+          "median": 213.911899,
+          "p95": 238.852359,
+          "max": 238.852359
+        }
+      }
+    },
+    {
+      "frame": 36,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 4,
+          "triangles": 12000,
+          "sparks": 0,
+          "puffs": 187,
+          "ribbons": 0,
+          "shapes": 9,
+          "draws": 4
+        },
+        "after": {
+          "calls": 4,
+          "triangles": 12000,
+          "sparks": 0,
+          "puffs": 187,
+          "ribbons": 0,
+          "shapes": 9,
+          "draws": 4
+        }
+      },
+      "timing": {
+        "before": [
+          261.453651,
+          278.931857,
+          278.543592,
+          277.846881,
+          246.748116,
+          267.599361,
+          256.140599,
+          284.123226,
+          279.262118
+        ],
+        "after": [
+          273.714761,
+          249.609527,
+          274.654945,
+          278.473919,
+          267.984674,
+          281.806832,
+          261.613837,
+          270.401389,
+          271.565029
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          262.69999999995343,
+          283.4000000000233,
+          283.20000000006985,
+          282.19999999995343,
+          251.09999999997672,
+          274.70000000006985,
+          260.70000000006985,
+          289.20000000006985,
+          284
+        ],
+        "after": [
+          278.20000000006985,
+          255.59999999997672,
+          279.70000000006985,
+          282.69999999995343,
+          272.20000000006985,
+          286.4000000000233,
+          283.0999999999767,
+          275.29999999993015,
+          276.39999999990687
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 270.0721556666667,
+          "median": 277.846881,
+          "p95": 284.123226,
+          "max": 284.123226
+        },
+        "after": {
+          "n": 9,
+          "mean": 269.98054588888886,
+          "median": 271.565029,
+          "p95": 281.806832,
+          "max": 281.806832
+        }
+      }
+    },
+    {
+      "frame": 45,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 4,
+          "triangles": 9016,
+          "sparks": 0,
+          "puffs": 147,
+          "ribbons": 0,
+          "shapes": 7,
+          "draws": 4
+        },
+        "after": {
+          "calls": 4,
+          "triangles": 9016,
+          "sparks": 0,
+          "puffs": 147,
+          "ribbons": 0,
+          "shapes": 7,
+          "draws": 4
+        }
+      },
+      "timing": {
+        "before": [
+          217.802479,
+          245.007056,
+          224.231794,
+          248.633388,
+          233.123793,
+          252.028637,
+          230.306147,
+          237.745921,
+          223.825991
+        ],
+        "after": [
+          251.960673,
+          235.083962,
+          258.46999,
+          225.532712,
+          249.763925,
+          225.847936,
+          261.811973,
+          232.516446,
+          268.157427
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          218.90000000002328,
+          251.20000000006985,
+          228.69999999995343,
+          253.30000000004657,
+          238.30000000004657,
+          257,
+          235.5,
+          255.59999999997672,
+          228.09999999997672
+        ],
+        "after": [
+          256.79999999993015,
+          240.69999999995343,
+          263.0999999999767,
+          229.5,
+          254.5,
+          230.89999999990687,
+          266.5999999999767,
+          236.70000000006985,
+          272.80000000004657
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 234.7450228888889,
+          "median": 233.123793,
+          "p95": 252.028637,
+          "max": 252.028637
+        },
+        "after": {
+          "n": 9,
+          "mean": 245.46056044444447,
+          "median": 249.763925,
+          "p95": 268.157427,
+          "max": 268.157427
+        }
+      }
+    },
+    {
+      "frame": 52,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 4,
+          "triangles": 8938,
+          "sparks": 0,
+          "puffs": 108,
+          "ribbons": 0,
+          "shapes": 7,
+          "draws": 4
+        },
+        "after": {
+          "calls": 4,
+          "triangles": 8938,
+          "sparks": 0,
+          "puffs": 108,
+          "ribbons": 0,
+          "shapes": 7,
+          "draws": 4
+        }
+      },
+      "timing": {
+        "before": [
+          257.624612,
+          272.663446,
+          272.603315,
+          267.361206,
+          268.09232,
+          271.473963,
+          548.866972,
+          267.937308,
+          264.462766
+        ],
+        "after": [
+          244.875519,
+          268.044679,
+          241.50467,
+          287.978329,
+          251.796832,
+          274.555157,
+          315.760757,
+          274.7181,
+          255.115446
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          261.30000000004657,
+          277,
+          277.19999999995343,
+          273.60000000009313,
+          272.70000000006985,
+          290.5999999999767,
+          559.8999999999069,
+          274.29999999993015,
+          269.0999999999767
+        ],
+        "after": [
+          249.19999999995343,
+          273.4000000000233,
+          246,
+          292.5,
+          257.19999999995343,
+          297.39999999990687,
+          321,
+          280.5999999999767,
+          259.69999999995343
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 299.00954533333334,
+          "median": 268.09232,
+          "p95": 548.866972,
+          "max": 548.866972
+        },
+        "after": {
+          "n": 9,
+          "mean": 268.2610543333333,
+          "median": 268.044679,
+          "p95": 315.760757,
+          "max": 315.760757
+        }
+      }
+    },
+    {
+      "frame": 60,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      },
+      "counts": {
+        "before": {
+          "calls": 3,
+          "triangles": 4230,
+          "sparks": 0,
+          "puffs": 59,
+          "ribbons": 0,
+          "shapes": 4,
+          "draws": 3
+        },
+        "after": {
+          "calls": 3,
+          "triangles": 4230,
+          "sparks": 0,
+          "puffs": 59,
+          "ribbons": 0,
+          "shapes": 4,
+          "draws": 3
+        }
+      },
+      "timing": {
+        "before": [
+          118.614671,
+          149.491531,
+          168.641856,
+          161.12857,
+          129.192114,
+          155.343258,
+          160.756204,
+          136.089006,
+          153.328461
+        ],
+        "after": [
+          158.332399,
+          131.040397,
+          175.333676,
+          132.342599,
+          147.890352,
+          137.746508,
+          129.750783,
+          158.968954,
+          128.213379
+        ]
+      },
+      "cpuTiming": {
+        "before": [
+          119.60000000009313,
+          154.40000000002328,
+          178.60000000009313,
+          166.09999999997672,
+          136.19999999995343,
+          160.30000000004657,
+          165.59999999997672,
+          141,
+          158.80000000004657
+        ],
+        "after": [
+          162.90000000002328,
+          135.70000000006985,
+          180.09999999997672,
+          138.29999999993015,
+          154.20000000006985,
+          143.09999999997672,
+          134.5,
+          164.70000000006985,
+          133
+        ]
+      },
+      "stats": {
+        "before": {
+          "n": 9,
+          "mean": 148.06507455555555,
+          "median": 153.328461,
+          "p95": 168.641856,
+          "max": 168.641856
+        },
+        "after": {
+          "n": 9,
+          "mean": 144.4021163333333,
+          "median": 137.746508,
+          "p95": 175.333676,
+          "max": 175.333676
+        }
+      }
+    }
+  ],
+  "boundaryCases": [
+    {
+      "kind": 0,
+      "phase": 0.01,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 0,
+      "phase": 0.5,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 0,
+      "phase": 0.95,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 1,
+      "phase": 0.01,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 1,
+      "phase": 0.5,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 1,
+      "phase": 0.95,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 2,
+      "phase": 0.01,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 2,
+      "phase": 0.5,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 2,
+      "phase": 0.95,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 3,
+      "phase": 0.01,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 3,
+      "phase": 0.5,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    },
+    {
+      "kind": 3,
+      "phase": 0.95,
+      "pixelDelta": {
+        "channels": 0,
+        "maxDelta": 0
+      }
+    }
+  ],
+  "cpuTiming": {
+    "before": [
+      56.20000000006985,
+      54.5,
+      50.40000000002328,
+      56.40000000002328,
+      50.40000000002328,
+      60.59999999997672,
+      51.70000000006985,
+      56.39999999990687,
+      50
+    ],
+    "after": [
+      48,
+      43.09999999997672,
+      52.29999999993015,
+      41.90000000002328,
+      47.5,
+      50.59999999997672,
+      47.79999999993015,
+      42.20000000006985,
+      45.90000000002328
+    ]
+  },
+  "negativeControl": {
+    "channels": 174326,
+    "maxDelta": 236
+  },
+  "environment": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "viewport": [
+      960,
+      720
+    ],
+    "antialias": false,
+    "quality": 1,
+    "gpuTimerQuery": true,
+    "browser": "151.0.7922.34",
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "node": "v24.19.0",
+    "repeats": 9
+  },
+  "totals": {
+    "before": {
+      "n": 9,
+      "mean": 1570.2461704444443,
+      "median": 1543.5105199999998,
+      "p95": 1813.202545,
+      "max": 1813.202545
+    },
+    "after": {
+      "n": 9,
+      "mean": 1538.2541135555557,
+      "median": 1525.482008,
+      "p95": 1601.321884,
+      "max": 1601.321884
+    }
+  },
+  "cpuStats": {
+    "before": {
+      "n": 9,
+      "mean": 54.066666666677015,
+      "median": 54.5,
+      "p95": 60.59999999997672,
+      "max": 60.59999999997672
+    },
+    "after": {
+      "n": 9,
+      "mean": 46.58888888888113,
+      "median": 47.5,
+      "p95": 52.29999999993015,
+      "max": 52.29999999993015
+    }
+  },
+  "cpuScope": "Synthetic 520-particle equal-drag pool, 200 warm-up + 1000 updates per repetition; same finite dt=1e-6, complete state equality, not full-game frame time.",
+  "scope": "Production impact recipes/pools/GLSL, controlled 60 Hz presentation, same renderer. timing/totals use non-disjoint GPU TIME_ELAPSED queries on SwiftShader; cpuTiming includes submission and one-pixel readback. Neither establishes device FPS or gameplay/paint performance.",
+  "builds": {
+    "before": {
+      "revision": "eaf00d23251a6ebbc05203647a490eda5c81f7c404de989737d9bf142fac439f",
+      "inputHash": "8a010660f1ea9fde8601e8ca5a9f17a83341cd7a8c8d8b04fa1caa7f3dd684f4",
+      "contentHash": "9a9c81663997ac2abd88c4ff454b35beef1aca74b4423414df7cae055aed1a93",
+      "kitSHA256": "49a5499fe425e1a1c737d108383433c08f54a702232628e5384987d94b689e93"
+    },
+    "after": {
+      "revision": "66ba16e3704b4234253ea481d34a7fe64fcce51dd61113c3b6162d20ff78ac87",
+      "inputHash": "a60be7ee189f288f18bd56f07ef6e6fe8804a66820e3cd353e3a35ec350640ac",
+      "contentHash": "ebdd80f2a7fd19ddd2bb10c5be2c21e45d7f97f47d0f65951249b648a52f4d77",
+      "kitSHA256": "afef2883a57e8a3dc91a39305506617d157701a663e25a506ed211efad04dadd"
+    }
+  },
+  "changedInputs": [
+    "patch/runtime/special-vfx-kit.mjs"
+  ],
+  "verifiedRequests": [
+    "after/patches/local-quality/geometry-build-storage.mjs",
+    "after/patches/local-quality/idle-resources.mjs",
+    "after/patches/local-quality/ink-ripple-presentation.mjs",
+    "after/patches/local-quality/layout-sample.mjs",
+    "after/patches/native-stages/runtime/build-config.mjs",
+    "after/patches/native-stages/runtime/engine.mjs",
+    "after/patches/native-stages/runtime/native-paint.mjs",
+    "after/patches/native-stages/runtime/native-projectile-sweep.mjs",
+    "after/patches/native-stages/runtime/registry.mjs",
+    "after/patches/network-replication/sprinkler-contact-commit.mjs",
+    "after/patches/practice-range/stage/layout.mjs",
+    "after/patches/practice-range/stage/surfaces.mjs",
+    "after/patches/practice-range/stage/zones.mjs",
+    "after/patches/splatoon3/issue-460-gauge.mjs",
+    "after/patches/splatoon3/runtime/action-admission.mjs",
+    "after/patches/splatoon3/runtime/active-special-gauge.mjs",
+    "after/patches/splatoon3/runtime/actor-motion.mjs",
+    "after/patches/splatoon3/runtime/agent3-weapon-physics.mjs",
+    "after/patches/splatoon3/runtime/all-specials.mjs",
+    "after/patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+    "after/patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+    "after/patches/splatoon3/runtime/battle-framing.mjs",
+    "after/patches/splatoon3/runtime/blast-occlusion.mjs",
+    "after/patches/splatoon3/runtime/blaster-flight-paint.mjs",
+    "after/patches/splatoon3/runtime/brella-aperture.mjs",
+    "after/patches/splatoon3/runtime/brella-canopy-visual.mjs",
+    "after/patches/splatoon3/runtime/brella-physics.mjs",
+    "after/patches/splatoon3/runtime/camera-aim-controls.mjs",
+    "after/patches/splatoon3/runtime/clock.mjs",
+    "after/patches/splatoon3/runtime/clothing-gear.mjs",
+    "after/patches/splatoon3/runtime/conditional-gear-network.mjs",
+    "after/patches/splatoon3/runtime/conditional-gear.mjs",
+    "after/patches/splatoon3/runtime/contact-recovery.mjs",
+    "after/patches/splatoon3/runtime/crab-tank-aim.mjs",
+    "after/patches/splatoon3/runtime/crab-tank-projectile.mjs",
+    "after/patches/splatoon3/runtime/crab-tank-splash-visual.mjs",
+    "after/patches/splatoon3/runtime/dry-ink.mjs",
+    "after/patches/splatoon3/runtime/dualies-accuracy.mjs",
+    "after/patches/splatoon3/runtime/dualies-guide-cache.mjs",
+    "after/patches/splatoon3/runtime/dualies-slide-paint.mjs",
+    "after/patches/splatoon3/runtime/final-damage.mjs",
+    "after/patches/splatoon3/runtime/flow-effects.mjs",
+    "after/patches/splatoon3/runtime/gear.mjs",
+    "after/patches/splatoon3/runtime/haunt.mjs",
+    "after/patches/splatoon3/runtime/inkjet-vfx-budget.mjs",
+    "after/patches/splatoon3/runtime/inkjet-vfx-clock.mjs",
+    "after/patches/splatoon3/runtime/intro-presentation.mjs",
+    "after/patches/splatoon3/runtime/issue-465-blaster-startup.mjs",
+    "after/patches/splatoon3/runtime/kit-autobomb.mjs",
+    "after/patches/splatoon3/runtime/kit-big-bubbler.mjs",
+    "after/patches/splatoon3/runtime/kit-composition.mjs",
+    "after/patches/splatoon3/runtime/kit-ink-vac.mjs",
+    "after/patches/splatoon3/runtime/kit-sprinkler.mjs",
+    "after/patches/splatoon3/runtime/kit-subs.mjs",
+    "after/patches/splatoon3/runtime/kit-trizooka.mjs",
+    "after/patches/splatoon3/runtime/main-ink-footprints.mjs",
+    "after/patches/splatoon3/runtime/main-knockback.mjs",
+    "after/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+    "after/patches/splatoon3/runtime/movement.mjs",
+    "after/patches/splatoon3/runtime/nonwail-vfx-clock.mjs",
+    "after/patches/splatoon3/runtime/object-gear.mjs",
+    "after/patches/splatoon3/runtime/paint-ownership.mjs",
+    "after/patches/splatoon3/runtime/player-hurtbox.mjs",
+    "after/patches/splatoon3/runtime/private-tracking-render.mjs",
+    "after/patches/splatoon3/runtime/private-tracking.mjs",
+    "after/patches/splatoon3/runtime/projectile-collision.mjs",
+    "after/patches/splatoon3/runtime/ranked-gear.mjs",
+    "after/patches/splatoon3/runtime/recovery-gate.mjs",
+    "after/patches/splatoon3/runtime/render.mjs",
+    "after/patches/splatoon3/runtime/replica-retirement.mjs",
+    "after/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+    "after/patches/splatoon3/runtime/roller-contact-paint.mjs",
+    "after/patches/splatoon3/runtime/roller-freefall.mjs",
+    "after/patches/splatoon3/runtime/roller-heavy-swing.mjs",
+    "after/patches/splatoon3/runtime/roller-impact-paint.mjs",
+    "after/patches/splatoon3/runtime/roller-max-paint.mjs",
+    "after/patches/splatoon3/runtime/roller-model.mjs",
+    "after/patches/splatoon3/runtime/roller-paint-calibration.mjs",
+    "after/patches/splatoon3/runtime/roller-vertical-paint.mjs",
+    "after/patches/splatoon3/runtime/roller-vertical-shaft-return.mjs",
+    "after/patches/splatoon3/runtime/roller.mjs",
+    "after/patches/splatoon3/runtime/scoring.mjs",
+    "after/patches/splatoon3/runtime/shooter-accuracy.mjs",
+    "after/patches/splatoon3/runtime/shooter-impact-paint.mjs",
+    "after/patches/splatoon3/runtime/shooter-movement.mjs",
+    "after/patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+    "after/patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+    "after/patches/splatoon3/runtime/source-distance.mjs",
+    "after/patches/splatoon3/runtime/source-shot-footprint.mjs",
+    "after/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+    "after/patches/splatoon3/runtime/special-device-flight.mjs",
+    "after/patches/splatoon3/runtime/special-models.mjs",
+    "after/patches/splatoon3/runtime/special-motion.mjs",
+    "after/patches/splatoon3/runtime/special-presentation-owner.mjs",
+    "after/patches/splatoon3/runtime/special-presentation.mjs",
+    "after/patches/splatoon3/runtime/special-vfx-kit.mjs",
+    "after/patches/splatoon3/runtime/special-vfx.mjs",
+    "after/patches/splatoon3/runtime/splatling-jump-spread.mjs",
+    "after/patches/splatoon3/runtime/splatling-radius-charge.mjs",
+    "after/patches/splatoon3/runtime/splatling-startup-compat.mjs",
+    "after/patches/splatoon3/runtime/splatling.mjs",
+    "after/patches/splatoon3/runtime/storm-effects.mjs",
+    "after/patches/splatoon3/runtime/storm-power.mjs",
+    "after/patches/splatoon3/runtime/sub-mark-resistance.mjs",
+    "after/patches/splatoon3/runtime/sub-models.mjs",
+    "after/patches/splatoon3/runtime/sub-ready.mjs",
+    "after/patches/splatoon3/runtime/sub-resistance.mjs",
+    "after/patches/splatoon3/runtime/sub-special-fidelity.mjs",
+    "after/patches/splatoon3/runtime/sub-surface-attachment.mjs",
+    "after/patches/splatoon3/runtime/support-cooler.mjs",
+    "after/patches/splatoon3/runtime/swim-stealth.mjs",
+    "after/patches/splatoon3/runtime/tacticooler-gauge.mjs",
+    "after/patches/splatoon3/runtime/tenacity.mjs",
+    "after/patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+    "after/patches/splatoon3/runtime/toxic-mist.mjs",
+    "after/patches/splatoon3/runtime/triple-slam-fists.mjs",
+    "after/patches/splatoon3/runtime/trizooka-collision.mjs",
+    "after/patches/splatoon3/runtime/turf-combat.mjs",
+    "after/patches/splatoon3/runtime/turf-finish.mjs",
+    "after/patches/splatoon3/runtime/wail-speaker-batch.mjs",
+    "after/patches/splatoon3/runtime/wail-speakers.mjs",
+    "after/patches/splatoon3/runtime/weapon-accuracy.mjs",
+    "after/patches/splatoon3/runtime/weapon-edgecases.mjs",
+    "after/patches/splatoon3/runtime/weapon-gates.mjs",
+    "after/patches/splatoon3/runtime/weapon-weight-data.mjs",
+    "after/patches/splatoon3/runtime/weapon-weight.mjs",
+    "after/patches/splatoon3/runtime/weapons-charger-flight.mjs",
+    "after/patches/splatoon3/runtime/weapons-collision.mjs",
+    "after/patches/splatoon3/runtime/weapons-fidelity.mjs",
+    "after/patches/splatoon3/runtime/weapons.mjs",
+    "after/patches/splatoon3/runtime/zipcaster-armor.mjs",
+    "after/patches/splatoon3/stage/scorch-layout.mjs",
+    "after/src/config.js",
+    "after/src/core/ctx.js",
+    "after/src/fx/swimWake.js",
+    "after/src/game/cameraRig.js",
+    "after/src/game/chargerTuning.js",
+    "after/src/game/inkFlight.js",
+    "after/src/game/minimap.js",
+    "after/src/game/nav.js",
+    "after/src/game/physics.js",
+    "after/src/world/inkShading.js",
+    "after/src/world/level.js",
+    "after/src/world/levelMaterial.js",
+    "after/src/world/mapkit.js",
+    "after/src/world/maps.js",
+    "after/src/world/paint.js",
+    "after/src/world/stages/cargo/layout.js",
+    "after/src/world/stages/cargo/surfaces.js",
+    "after/src/world/stages/surfaces.js",
+    "after/src/world/texlib.js",
+    "before/patches/local-quality/geometry-build-storage.mjs",
+    "before/patches/local-quality/idle-resources.mjs",
+    "before/patches/local-quality/ink-ripple-presentation.mjs",
+    "before/patches/local-quality/layout-sample.mjs",
+    "before/patches/native-stages/runtime/build-config.mjs",
+    "before/patches/native-stages/runtime/engine.mjs",
+    "before/patches/native-stages/runtime/native-paint.mjs",
+    "before/patches/native-stages/runtime/native-projectile-sweep.mjs",
+    "before/patches/native-stages/runtime/registry.mjs",
+    "before/patches/network-replication/sprinkler-contact-commit.mjs",
+    "before/patches/practice-range/stage/layout.mjs",
+    "before/patches/practice-range/stage/surfaces.mjs",
+    "before/patches/practice-range/stage/zones.mjs",
+    "before/patches/splatoon3/issue-460-gauge.mjs",
+    "before/patches/splatoon3/runtime/action-admission.mjs",
+    "before/patches/splatoon3/runtime/active-special-gauge.mjs",
+    "before/patches/splatoon3/runtime/actor-motion.mjs",
+    "before/patches/splatoon3/runtime/agent3-weapon-physics.mjs",
+    "before/patches/splatoon3/runtime/all-specials.mjs",
+    "before/patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+    "before/patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+    "before/patches/splatoon3/runtime/battle-framing.mjs",
+    "before/patches/splatoon3/runtime/blast-occlusion.mjs",
+    "before/patches/splatoon3/runtime/blaster-flight-paint.mjs",
+    "before/patches/splatoon3/runtime/brella-aperture.mjs",
+    "before/patches/splatoon3/runtime/brella-canopy-visual.mjs",
+    "before/patches/splatoon3/runtime/brella-physics.mjs",
+    "before/patches/splatoon3/runtime/camera-aim-controls.mjs",
+    "before/patches/splatoon3/runtime/clock.mjs",
+    "before/patches/splatoon3/runtime/clothing-gear.mjs",
+    "before/patches/splatoon3/runtime/conditional-gear-network.mjs",
+    "before/patches/splatoon3/runtime/conditional-gear.mjs",
+    "before/patches/splatoon3/runtime/contact-recovery.mjs",
+    "before/patches/splatoon3/runtime/crab-tank-aim.mjs",
+    "before/patches/splatoon3/runtime/crab-tank-projectile.mjs",
+    "before/patches/splatoon3/runtime/crab-tank-splash-visual.mjs",
+    "before/patches/splatoon3/runtime/dry-ink.mjs",
+    "before/patches/splatoon3/runtime/dualies-accuracy.mjs",
+    "before/patches/splatoon3/runtime/dualies-guide-cache.mjs",
+    "before/patches/splatoon3/runtime/dualies-slide-paint.mjs",
+    "before/patches/splatoon3/runtime/final-damage.mjs",
+    "before/patches/splatoon3/runtime/flow-effects.mjs",
+    "before/patches/splatoon3/runtime/gear.mjs",
+    "before/patches/splatoon3/runtime/haunt.mjs",
+    "before/patches/splatoon3/runtime/inkjet-vfx-budget.mjs",
+    "before/patches/splatoon3/runtime/inkjet-vfx-clock.mjs",
+    "before/patches/splatoon3/runtime/intro-presentation.mjs",
+    "before/patches/splatoon3/runtime/issue-465-blaster-startup.mjs",
+    "before/patches/splatoon3/runtime/kit-autobomb.mjs",
+    "before/patches/splatoon3/runtime/kit-big-bubbler.mjs",
+    "before/patches/splatoon3/runtime/kit-composition.mjs",
+    "before/patches/splatoon3/runtime/kit-ink-vac.mjs",
+    "before/patches/splatoon3/runtime/kit-sprinkler.mjs",
+    "before/patches/splatoon3/runtime/kit-subs.mjs",
+    "before/patches/splatoon3/runtime/kit-trizooka.mjs",
+    "before/patches/splatoon3/runtime/main-ink-footprints.mjs",
+    "before/patches/splatoon3/runtime/main-knockback.mjs",
+    "before/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+    "before/patches/splatoon3/runtime/movement.mjs",
+    "before/patches/splatoon3/runtime/nonwail-vfx-clock.mjs",
+    "before/patches/splatoon3/runtime/object-gear.mjs",
+    "before/patches/splatoon3/runtime/paint-ownership.mjs",
+    "before/patches/splatoon3/runtime/player-hurtbox.mjs",
+    "before/patches/splatoon3/runtime/private-tracking-render.mjs",
+    "before/patches/splatoon3/runtime/private-tracking.mjs",
+    "before/patches/splatoon3/runtime/projectile-collision.mjs",
+    "before/patches/splatoon3/runtime/ranked-gear.mjs",
+    "before/patches/splatoon3/runtime/recovery-gate.mjs",
+    "before/patches/splatoon3/runtime/render.mjs",
+    "before/patches/splatoon3/runtime/replica-retirement.mjs",
+    "before/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+    "before/patches/splatoon3/runtime/roller-contact-paint.mjs",
+    "before/patches/splatoon3/runtime/roller-freefall.mjs",
+    "before/patches/splatoon3/runtime/roller-heavy-swing.mjs",
+    "before/patches/splatoon3/runtime/roller-impact-paint.mjs",
+    "before/patches/splatoon3/runtime/roller-max-paint.mjs",
+    "before/patches/splatoon3/runtime/roller-model.mjs",
+    "before/patches/splatoon3/runtime/roller-paint-calibration.mjs",
+    "before/patches/splatoon3/runtime/roller-vertical-paint.mjs",
+    "before/patches/splatoon3/runtime/roller-vertical-shaft-return.mjs",
+    "before/patches/splatoon3/runtime/roller.mjs",
+    "before/patches/splatoon3/runtime/scoring.mjs",
+    "before/patches/splatoon3/runtime/shooter-accuracy.mjs",
+    "before/patches/splatoon3/runtime/shooter-impact-paint.mjs",
+    "before/patches/splatoon3/runtime/shooter-movement.mjs",
+    "before/patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+    "before/patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+    "before/patches/splatoon3/runtime/source-distance.mjs",
+    "before/patches/splatoon3/runtime/source-shot-footprint.mjs",
+    "before/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+    "before/patches/splatoon3/runtime/special-device-flight.mjs",
+    "before/patches/splatoon3/runtime/special-models.mjs",
+    "before/patches/splatoon3/runtime/special-motion.mjs",
+    "before/patches/splatoon3/runtime/special-presentation-owner.mjs",
+    "before/patches/splatoon3/runtime/special-presentation.mjs",
+    "before/patches/splatoon3/runtime/special-vfx-kit.mjs",
+    "before/patches/splatoon3/runtime/special-vfx.mjs",
+    "before/patches/splatoon3/runtime/splatling-jump-spread.mjs",
+    "before/patches/splatoon3/runtime/splatling-radius-charge.mjs",
+    "before/patches/splatoon3/runtime/splatling-startup-compat.mjs",
+    "before/patches/splatoon3/runtime/splatling.mjs",
+    "before/patches/splatoon3/runtime/storm-effects.mjs",
+    "before/patches/splatoon3/runtime/storm-power.mjs",
+    "before/patches/splatoon3/runtime/sub-mark-resistance.mjs",
+    "before/patches/splatoon3/runtime/sub-models.mjs",
+    "before/patches/splatoon3/runtime/sub-ready.mjs",
+    "before/patches/splatoon3/runtime/sub-resistance.mjs",
+    "before/patches/splatoon3/runtime/sub-special-fidelity.mjs",
+    "before/patches/splatoon3/runtime/sub-surface-attachment.mjs",
+    "before/patches/splatoon3/runtime/support-cooler.mjs",
+    "before/patches/splatoon3/runtime/swim-stealth.mjs",
+    "before/patches/splatoon3/runtime/tacticooler-gauge.mjs",
+    "before/patches/splatoon3/runtime/tenacity.mjs",
+    "before/patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+    "before/patches/splatoon3/runtime/toxic-mist.mjs",
+    "before/patches/splatoon3/runtime/triple-slam-fists.mjs",
+    "before/patches/splatoon3/runtime/trizooka-collision.mjs",
+    "before/patches/splatoon3/runtime/turf-combat.mjs",
+    "before/patches/splatoon3/runtime/turf-finish.mjs",
+    "before/patches/splatoon3/runtime/wail-speaker-batch.mjs",
+    "before/patches/splatoon3/runtime/wail-speakers.mjs",
+    "before/patches/splatoon3/runtime/weapon-accuracy.mjs",
+    "before/patches/splatoon3/runtime/weapon-edgecases.mjs",
+    "before/patches/splatoon3/runtime/weapon-gates.mjs",
+    "before/patches/splatoon3/runtime/weapon-weight-data.mjs",
+    "before/patches/splatoon3/runtime/weapon-weight.mjs",
+    "before/patches/splatoon3/runtime/weapons-charger-flight.mjs",
+    "before/patches/splatoon3/runtime/weapons-collision.mjs",
+    "before/patches/splatoon3/runtime/weapons-fidelity.mjs",
+    "before/patches/splatoon3/runtime/weapons.mjs",
+    "before/patches/splatoon3/runtime/zipcaster-armor.mjs",
+    "before/patches/splatoon3/stage/scorch-layout.mjs",
+    "before/src/config.js",
+    "before/src/core/ctx.js",
+    "before/src/fx/swimWake.js",
+    "before/src/game/cameraRig.js",
+    "before/src/game/chargerTuning.js",
+    "before/src/game/inkFlight.js",
+    "before/src/game/minimap.js",
+    "before/src/game/nav.js",
+    "before/src/game/physics.js",
+    "before/src/world/inkShading.js",
+    "before/src/world/level.js",
+    "before/src/world/levelMaterial.js",
+    "before/src/world/mapkit.js",
+    "before/src/world/maps.js",
+    "before/src/world/paint.js",
+    "before/src/world/stages/cargo/layout.js",
+    "before/src/world/stages/cargo/surfaces.js",
+    "before/src/world/stages/surfaces.js",
+    "before/src/world/texlib.js",
+    "before/vendor/three/build/three.module.js"
+  ],
+  "errors": [],
+  "driverSHA256": "b7fdef57d55d15f9b3ef516a688c4d420003d2c31ae07cf160f55c63ddf24ecb"
+}
