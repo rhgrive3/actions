@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {SnapshotPool} from '../runtime/snapshot-pool.mjs';
-import {buildPointBlocks,pointBlockMinimum} from '../runtime/point-block-minimum.mjs';
+import {buildPointBlocks,pointBlockMinimum} from './fixtures/point-block-minimum.mjs';
 import {catalogDepletedDescriptor} from '../runtime/catalog-depletion.mjs';
 import {validSpecialWorldPayload,admitsRemoteWorldBirth,REMOTE_WORLD_OBJECTS_PER_ACTOR} from '../runtime/special-world-payload.mjs';
 import {cataloguePayload} from '../runtime/catalogue-payload.mjs';

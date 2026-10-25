@@ -466,7 +466,7 @@ jobs:
           compression-level: 0
 
   compare:
-    name: Compare all 48 original native captures
+    name: Compare all 52 original native captures
     needs: capture
     runs-on: ubuntu-latest
     timeout-minutes: 10

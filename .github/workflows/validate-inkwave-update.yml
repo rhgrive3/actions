@@ -179,6 +179,7 @@ jobs:
             /*
             !/*/
             /.github/
+            /.circleci/config.yml
             /inkwave-public/
             /patches/
             /scripts/

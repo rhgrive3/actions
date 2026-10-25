@@ -79,7 +79,10 @@ async function checkRankedRemoteContactGear(host, guest, save) {
  const timeout={timeout:30000};
  const snapshot=async pending=>{const handle=await pending;try{return await handle.jsonValue();}finally{await handle.dispose();}};
  const phase=(name,value)=>{receipt.phases.push({name,...value});save(receipt);};
- const setInput=(page,fire,keys=[])=>page.evaluate(({fire,keys})=>{const state=__rankedReplication;clearTimeout(state.motionTimer);RG.input.mouse.left=fire;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])RG.input.keys.delete(key);for(const key of keys)RG.input.keys.add(key);if(keys.includes('KeyS'))state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyS'),250);},{fire,keys});
+ // Native keyboard events own both held keys and physical press edges. A
+ // keys-only Space hold cannot admit a jump/dodge through Player -> Actor.
+ // Dispatch only transitions so repeated helper calls never replay an edge.
+ const setInput=(page,fire,keys=[])=>page.evaluate(({fire,keys})=>{const state=__rankedReplication;clearTimeout(state.motionTimer);RG.input.mouse.left=fire;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])if(RG.input.down(key)&&!keys.includes(key))window.dispatchEvent(new KeyboardEvent('keyup',{code:key}));for(const key of keys)if(!RG.input.down(key))window.dispatchEvent(new KeyboardEvent('keydown',{code:key}));if(keys.includes('KeyS'))state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyS'),250);},{fire,keys});
  const place=(page,position,yaw)=>page.evaluate(async({position,yaw})=>{
   const {PLAYER}=await import(new URL('src/config.js',document.baseURI)),a=RG.match.local;
   a.pos.fromArray(position);a.vel.set(0,0,0);a.yaw=a.aimYaw=yaw;RG.rig.yaw=yaw;RG.rig.pitch=0;

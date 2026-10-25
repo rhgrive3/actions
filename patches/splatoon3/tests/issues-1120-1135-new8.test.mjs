@@ -10,6 +10,9 @@ import { adaptSource } from '../adapter.mjs';
 import { deathGearPenalty } from '../runtime/clothing-gear.mjs';
 import { rollerContactCandidate } from '../runtime/roller.mjs';
 import { chargerActorBeforeStop } from '../runtime/weapons-charger-flight.mjs';
+import { capsuleEntry } from '../runtime/weapons-collision.mjs';
+import { hurtboxRadius, hurtboxHeight } from '../runtime/player-hurtbox.mjs';
+import { fixture as flightFixture } from '../../../scripts/weapons-fixture.mjs';
 import { resolveSubAtCharge, SUCTION, CURLING } from '../runtime/kit-subs.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -116,19 +119,37 @@ test('#1125 network composition carries Blaster startup as presentation-only sid
   assert.ok(code.includes("wr.s3BlasterWindup = a.weapon.kind === \\'blaster\\' ? Math.max(0, Number(S.blasterWindup) || 0) : 0;"));
 });
 
-test('#1134 Charger actor candidates are clipped strictly before the nearest defense contact', () => {
+test('#1134 Charger actor candidates are clipped strictly before the nearest defense contact', async () => {
   assert.equal(chargerActorBeforeStop(0.4, 10, 5), true);
   assert.equal(chargerActorBeforeStop(0.5, 10, 5), false, 'equal-distance defense wins the tie');
   assert.equal(chargerActorBeforeStop(0.6, 10, 5), false);
-  const code = readPatch('patches/splatoon3/runtime/weapons-charger-flight.mjs');
-  assert.ok(code.includes('if(chargerActorBeforeStop(t,length,distance)){'), 'strict defense clipping still gates each actor');
-  assert.ok(code.includes('row.actor=actor;row.d=t*length;actors.push(row);'), 'pooled hit-candidate rows preserve ordered actor and distance');
-  // Optimized flights lease pooled candidate rows. The defense must resolve
-  // before that lease admits any actor; the old allocation site is now gone.
-  const defenseAt = code.indexOf('const defense=system.kitDefenseCandidate');
-  const candidateAt = code.indexOf('const lease=leases[depth]');
-  assert.ok(defenseAt >= 0 && candidateAt > defenseAt,
-    'defense stop distance is resolved before actor candidates are admitted');
+  // Exercise the installed finite flight rather than pinning allocation/lease
+  // spelling. Native collision computes the exact equal-distance capsule entry.
+  for (const reverse of [false, true]) {
+    const f = await flightFixture({ fidelity: true }), owner = f.make('charger');
+    const targets = ['near', 'middle', 'equal', 'behind'].map((name, i) =>
+      f.make('shooter', { team: 1, name, z: 0.8 + i * 0.4 }));
+    f.G.actors = [owner, ...(reverse ? [...targets].reverse() : targets)];
+    owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 1.05, 40);
+    const system = f.projectiles, events = [];
+    system.applyHit = (_owner, victim, damage) => { assert.ok(damage > 0); events.push(victim.name); };
+    system.fireCharger(owner, owner.weapon, 1);
+    const job = system._fidelityChargerFlights[0], dt = 1 / 60;
+    assert.ok(job?.full, 'real installed full-charge piercing flight');
+    const length = Math.min(job.speed * dt, job.range), end = job.pos.clone().addScaledVector(job.dir, length);
+    const collision = f.profile.weaponsFidelityCompletion.weapons.charger.CollisionParam;
+    const entry = capsuleEntry(job.pos, end, targets[2].pos, hurtboxRadius(targets[2], f.PLAYER), hurtboxHeight(targets[2], f.PLAYER), collision.InitRadiusForPlayer, collision.EndRadiusForPlayer);
+    assert.ok(entry > 0 && entry < 1, 'tie occurs within the actual first flight segment');
+    const stop = entry * length;
+    system.kitDefenseCandidate = () => ({ distance: stop, onHit() { events.push('defense'); } });
+    system.update(dt);
+    assert.deepEqual(events, ['near', 'middle', 'defense'], 'only strictly earlier actors hit, in contact order regardless of enumeration; equal/behind remain protected');
+    assert.ok(Math.abs(job.travel - stop) < 1e-10, 'flight terminates at the defense, not a later actor');
+    assert.equal(system._fidelityChargerFlights.length, 0, 'defense retires the flight');
+    system.update(dt);
+    assert.deepEqual(events, ['near', 'middle', 'defense'], 'retired contact cannot replay damage or defense callbacks');
+    system.clear();
+  }
 });
 
 test('#1120 installed Ink Vac honors real release edge after suction hold', async () => {

@@ -1,9 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { parseBrowserLane, SUITES } from '../ci/run-circleci-browser-lane.mjs';
 
 const workflow = fs.readFileSync('.github/workflows/validate-inkwave-update.yml', 'utf8');
+
+test('core sparse checkout materializes every CircleCI parity gate input', () => {
+  const core = workflow.split('  validate_core:\n')[1]?.split('\n  patch_tests:')[0];
+  const patterns = core?.match(/          sparse-checkout: \|\n((?:            [^\n]+\n)+)/)?.[1].trim().split('\n').map(line => line.trim());
+  assert.ok(patterns?.length, 'core must retain its explicit sparse input selection');
+  const required = ['.github/workflows/validate-inkwave-update.yml', '.circleci/config.yml',
+    'scripts/tests/inkwave-circleci-browser-lane.test.mjs', 'scripts/tests/inkwave-circleci-offload-gate.test.mjs',
+    'scripts/ci/run-circleci-browser-lane.mjs', 'scripts/ci/check-circleci-offload.mjs'];
+  const excluded = ['.circleci/unused.yml', 'account/tests/example.test.mjs'];
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-core-sparse-'));
+  const git = args => execFileSync('git', args, {cwd:root, stdio:['pipe','pipe','pipe']});
+  try {
+    git(['init', '-q']);
+    for (const file of [...required, ...excluded]) {
+      fs.mkdirSync(path.dirname(path.join(root,file)), {recursive:true});
+      fs.writeFileSync(path.join(root,file), file);
+    }
+    git(['add', '.']);
+    git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture']);
+    const select = selection => execFileSync('git', ['sparse-checkout','set','--no-cone','--stdin'],
+      {cwd:root, input:selection.join('\n')+'\n', stdio:['pipe','pipe','pipe']});
+    // Exact prior allowlist: the imported gate code remains, but its config is absent.
+    select(patterns.filter(line => line !== '/.circleci/config.yml'));
+    assert.equal(fs.existsSync(path.join(root,'.circleci/config.yml')), false);
+    assert.ok(fs.existsSync(path.join(root,'scripts/ci/run-circleci-browser-lane.mjs')));
+    select(patterns);
+    for (const file of required) assert.ok(fs.existsSync(path.join(root,file)), 'required gate input: '+file);
+    for (const file of excluded) assert.equal(fs.existsSync(path.join(root,file)), false, 'unrelated input: '+file);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});
 
 test('CircleCI consumes all seven native browser suites without omitting native acceptance steps', () => {
   const result = new Map(SUITES.map(suite => [suite, parseBrowserLane(workflow, suite)]));

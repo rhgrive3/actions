@@ -8,7 +8,7 @@ test('independent pre-world minimap oracle reconstructs the already-reviewed sou
 test('abortable native minimap source epoch remains exact and rejects mixed or edited source sets',()=>{
  const sourcePaths=['inkwave-public/src/game/minimap.js','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/native-stages/runtime/native-minimap.mjs'];
  const pins=Object.fromEntries(sourcePaths.map(file=>[file,digest(fs.readFileSync(new URL('../../'+file,import.meta.url)))]));
- assert.equal(assertReviewedMinimapSources(pins),'library-queue-world-minimap-abortable-native-20261025');
+ assert.equal(assertReviewedMinimapSources(pins),'library-queue-world-minimap-abortable-axis-prefilter-1870');
  const old=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-storage-beec332');
  assert.ok(old,'previous reviewed native renderer remains admissible');
  const native='patches/native-stages/runtime/native-minimap.mjs';
@@ -22,10 +22,51 @@ test('abortable native minimap source epoch remains exact and rejects mixed or e
 });
 test('abortable scheduling retains the reviewed native raster and support generator bytes',()=>{
  const source=fs.readFileSync(new URL('../../patches/native-stages/runtime/native-minimap.mjs',import.meta.url),'utf8');
+ // Reverse exactly PR #1870's one authorized prefilter hunk, not arbitrary
+ // normalization: every other support/raster/scheduler byte must be reviewed.
+ const reviewed=reviewedNativeSource(source);
  const marker='export function buildNativeMinimap';
- assert.equal(source.split(marker).length,2);
- assert.equal(digest(source.split(marker)[0]),'9f5cc5efe70aefb1a648f8f8cb9a4a4bdd294b1ffaeed5111be571312b92e9b6');
+ assert.equal(reviewed.split(marker).length,2);
+ assert.equal(digest(reviewed.split(marker)[0]),'9f5cc5efe70aefb1a648f8f8cb9a4a4bdd294b1ffaeed5111be571312b92e9b6');
 });
+
+const nativePath='../../patches/native-stages/runtime/native-minimap.mjs';
+const oldCandidate='   const n=nav.nodes[id];if(Math.hypot(n.x-x,n.z-z)<=nav.step*1.1)candidates.push(n);';
+const filteredCandidate='   const n=nav.nodes[id],dx=n.x-x,dz=n.z-z,reach=nav.step*1.1;\n   if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;\n   if(Math.hypot(dx,dz)<=reach)candidates.push(n);';
+function reviewedNativeSource(source){
+ assert.equal(source.split(filteredCandidate).length,2,'one exact reviewed axis prefilter');
+ const reviewed=source.replace(filteredCandidate,oldCandidate);
+ assert.equal(digest(reviewed),'5ba0e08316cc9a5e07b4f0f1e57129b9e4d355bf7684110aa95783f9007ad3ac','all other abortable-native bytes remain exact');
+ return reviewed;
+}
+test('merged axis-prefilter epoch rejects edited prefilter and mixed renderer sources',()=>{
+ const source=fs.readFileSync(new URL(nativePath,import.meta.url),'utf8');
+ reviewedNativeSource(source);
+ assert.equal(digest(source),'668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb');
+ const current=REVIEWED_MINIMAP_SOURCE_EPOCHS.at(-1),native='patches/native-stages/runtime/native-minimap.mjs';
+ const changed=source.replace('Math.abs(dx)>reach','Math.abs(dx)>=reach');assert.notEqual(changed,source);
+ assert.throws(()=>assertReviewedMinimapSources({...current.pins,[native]:digest(changed)}),/source pin mismatch/);
+ assert.throws(()=>assertReviewedMinimapSources({...current.pins,['patches/splatoon3/runtime/minimap-dirty.mjs']:REVIEWED_MINIMAP_SOURCE_EPOCHS[0].pins['patches/splatoon3/runtime/minimap-dirty.mjs']}),/source pin mismatch/);
+ const prior=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(epoch=>epoch.name==='library-queue-world-minimap-abortable-native-20261025');
+ assert.equal(assertReviewedMinimapSources({...current.pins,[native]:prior.pins[native]}),prior.name);
+});
+test('exact old and axis-prefilter support geometry agree on circular boundaries, signed zeros, tiny scales and slopes',async()=>{
+ const source=fs.readFileSync(new URL(nativePath,import.meta.url),'utf8'),reviewed=reviewedNativeSource(source),{THREE}=await geometryFixture();
+ const load=text=>new Function('THREE',text.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn nativeMinimapSupport;')(THREE);
+ const probes=[load(reviewed),load(source)];let cases=0;
+ for(const step of [1e-12,.25,1,1000])for(const [x,z]of [[0,-0],[-.25,.5],[100,-100]])for(const slope of [0,.5,-.5]){
+  const reach=step*1.1,offsets=[-2*reach,-reach*(1+Number.EPSILON),-reach,-reach/Math.SQRT2,-0,0,reach/Math.SQRT2,reach,reach*(1+Number.EPSILON),2*reach];
+  for(const dx of offsets)for(const dz of offsets){
+   const floor={point:{y:0},normal:{x:slope,y:1,z:0},triangle:1},roof={point:{y:4},normal:{x:0,y:1,z:0},triangle:2};
+   const level={triangleWorld:{nodes:[0,-1,0,0,4],ray:origin=>origin.y>4?roof:origin.y>0?floor:null}};
+   const nav={x0:x,z0:z,step,nx:1,nz:1,cells:[[0]],nodes:[{x:x+dx,y:-slope*dx,z:z+dz}]},layers={nav,reachable:[1]};
+   const actual=probes.map(probe=>probe(level,x,z,layers));
+   assert.deepEqual(actual.map(hit=>hit?.triangle),[actual[0]?.triangle,actual[0]?.triangle]);cases++;
+  }
+ }
+ assert.equal(cases,3600);
+});
+
 test('Chromium Canvas2D retains legacy base and native nearest-cell ink pixels for reviewed world storage',async t=>{
  const {chromium}=await import('playwright'),executablePath=process.env.CHROMIUM_EXECUTABLE||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined);
  if(!executablePath&&!fs.existsSync(chromium.executablePath()))return t.skip('Chromium is not installed');

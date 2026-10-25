@@ -72,7 +72,17 @@ try{
   const cfg={...await host.evaluate(async()=>{const {PROTO,COMPAT}=await import('/src/net/transport.js');return {proto:PROTO,compat:COMPAT};}),id:engine+'-combat-trust',map:'',mode:'turf',roster:owners.map((owner,nid)=>({owner,nid,team:nid,slot:0,weapon:'shooter',bot:false}))};
   await Promise.all(pages.map(p=>p.evaluate(cfg=>G.net._begin(cfg),cfg)));
   await host.evaluate(()=>G.net._go());await Promise.all(pages.map(p=>p.waitForFunction(()=>G.match?.state==='playing')));
-  const frames=async n=>{for(let i=0;i<n;i++){await Promise.all(pages.map(p=>p.evaluate(()=>step())));await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
+  // BEGIN COMBAT FRAME PACING (exercised verbatim by the CPU regression)
+  function createCombatFramePacer(now=()=>performance.now(),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))){
+    const started=now();let frame=0;
+    return async()=>{const delay=started+(++frame)*1000/60-now();if(delay>0)await wait(delay);};
+  }
+  // END COMBAT FRAME PACING
+  // Browser performance.now() is controlled above, but the real production
+  // relay authenticates ticks with Date.now(). Never fast-forward only the
+  // owner clock: the fixed relay origin must continue admitting fresh ticks.
+  const pace=createCombatFramePacer();
+  const frames=async n=>{for(let i=0;i<n;i++){await pace();await Promise.all(pages.map(p=>p.evaluate(()=>step())));await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
   // Settle longer than the receiver's 1.2 s lag-compensation window, so an
   // earlier placement is no longer a legal past pose of the victim.
   const reset=async(victimX=0,victimZ=10)=>{

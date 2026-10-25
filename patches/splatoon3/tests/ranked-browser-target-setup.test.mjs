@@ -153,3 +153,69 @@ test('stationary proof resets a catalogue Dualies roll and its distinct post-rol
     assert.ok(Math.hypot(fixed.pos[0],fixed.pos[2]-2)<1e-10);assert.deepEqual(fixed.wall,{before:800,after:380,shots:1});
   }
 });
+
+// The ranked checker must deliver keyboard events through native Input. Merely
+// editing held keys omits the physical edge now owned by Player -> Actor.
+async function keyboardProof() {
+  const f=await fixture({fullRuntime:true,productionComposition:true}),modules=new Map();
+  const root=new URL('../../../',import.meta.url),upstream=new URL('inkwave-public/',root);
+  class KeyboardEvent extends Event { constructor(type,options={}) { super(type);this.code=options.code;this.repeat=options.repeat??false; } }
+  const window=new EventTarget(),document=Object.assign(new EventTarget(),{
+    documentElement:{classList:{add(){},remove(){},toggle(){}}},hidden:false,pointerLockElement:null,hasFocus:()=>true,
+  });
+  Object.assign(f.context,{window,document,KeyboardEvent,AbortController,
+    navigator:{userAgent:'ranked keyboard regression',maxTouchPoints:0,getGamepads:()=>[]},
+    screen:{width:1280,height:800,orientation:{angle:0}},localStorage:{getItem:()=>null},RG:f.G,
+    __rankedReplication:{motionTimer:null}});
+  const synthetic=(identifier,values)=>new vm.SyntheticModule(Object.keys(values),function(){for(const [key,value]of Object.entries(values))this.setExport(key,value);},{context:f.context,identifier});
+  function load(url) {
+    if(url.href.startsWith(new URL('patches/',upstream).href))url=new URL(url.href.slice(upstream.href.length),root);
+    if(modules.has(url.href))return modules.get(url.href);
+    const rel=url.href.startsWith(upstream.href)?url.href.slice(upstream.href.length):url.href.slice(root.href.length);
+    const mod=rel==='src/core/ctx.js'?synthetic(url.href,{G:f.G})
+      :rel==='src/config.js'?synthetic(url.href,f)
+      :new vm.SourceTextModule(adaptBuildSource(rel,fs.readFileSync(url,'utf8')),{context:f.context,identifier:url.href});
+    modules.set(url.href,mod);return mod;
+  }
+  const inputModule=load(new URL('src/core/input.js',upstream));
+  await inputModule.link((spec,from)=>spec==='three'?synthetic('three',{...f.THREE}):load(new URL(spec,from.identifier)));
+  await inputModule.evaluate();
+  const input=new inputModule.namespace.Input({}),a=f.make('dualies'),rig={yaw:0,pitch:0};
+  f.G.input=input;f.G.rig=rig;f.G.settings={aimAssist:0};a.canSuperJump=()=>false;
+  const controller=new f.PlayerController(a,rig,input);controller.computeAim=()=>{};
+  const helperStart=browser.indexOf(' const setInput='),helperEnd=browser.indexOf('\n const place=',helperStart);
+  assert(helperStart>=0&&helperEnd>helperStart);
+  const setInput=vm.runInContext('('+browser.slice(helperStart,helperEnd).trim().slice('const setInput='.length).replace(/;$/,'')+')',f.context);
+  const page={evaluate:(fn,arg)=>fn(arg)};
+  const tick=()=>{controller.update(1/60);f.tick(a);input.endFrame();};
+  return {f,input,a,window,KeyboardEvent,tick,setInput:(fire,keys=[])=>setInput(page,fire,keys)};
+}
+
+test('ranked keyboard producer delivers one native dodge edge; holds do not duplicate and release/repress does',async()=>{
+  const old=await keyboardProof();
+  old.input.mouse.left=true;old.input.keys.add('KeyD');old.input.keys.add('Space');old.tick();
+  assert.equal(old.a.intent.jump,true);assert.equal(old.a.weaponRunner.dodge,null,'old held-key-only helper never supplies the physical jump edge');
+  assert.equal(old.a.ink,100);
+  const h=await keyboardProof();
+  await h.setInput(true,['KeyD','Space']);assert.equal(h.input.wasPressed('Space'),true);h.tick();
+  assert.ok(h.a.weaponRunner.dodge,'native Player -> Actor admits the genuine dodge');
+  const token=h.a.weaponRunner.dodge.token;assert.equal(token,1);assert.equal(h.a.ink,93);
+  assert.equal(h.input.wasPressed('Space'),false,'native Input.endFrame consumes the physical edge');
+  await h.setInput(true,['KeyD','Space']);assert.equal(h.input.wasPressed('Space'),false);
+  h.window.dispatchEvent(new h.KeyboardEvent('keydown',{code:'Space',repeat:true}));
+  assert.equal(h.input.wasPressed('Space'),false,'native auto-repeat cannot create another edge');
+  for(let i=0;i<60;i++)h.tick();
+  assert.equal(h.a.weaponRunner.dodge,null);assert.equal(h.a.weaponRunner._rollToken,token,'held jump cannot create another native roll');
+  await h.setInput(false);assert.equal(h.input.down('Space'),false);h.tick();
+  await h.setInput(true,['KeyD','Space']);assert.equal(h.input.wasPressed('Space'),true);h.tick();
+  assert.equal(h.a.weaponRunner.dodge.token,token+1,'release/repress admits exactly one new native roll');
+});
+
+test('ranked keyboard producer preserves a pending edge on keyup and delegates menu consumption',async()=>{
+  const h=await keyboardProof();
+  await h.setInput(false,['Space']);await h.setInput(false);
+  assert.equal(h.input.down('Space'),false);assert.equal(h.input.wasPressed('Space'),true,'native keyup retains a tap pending its simulation tick');
+  h.input.endFrame();assert.equal(h.input.wasPressed('Space'),false);
+  h.input.onKey=()=>true;await h.setInput(false,['Space']);
+  assert.equal(h.input.down('Space'),false);assert.equal(h.input.wasPressed('Space'),false,'the helper does not bypass native menu ownership');
+});

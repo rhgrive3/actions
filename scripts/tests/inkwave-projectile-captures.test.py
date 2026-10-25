@@ -41,10 +41,25 @@ def completed_receipt():
                      camera={'pose': {'pos': [0, 0, 0]}}, captureConditions={},
                      runtime=dict(roster=native_roster(), projectiles=[dict(seed=.5, age=0, pos=[0, 1, 0], vel=[0, 0, 1], unit=0)],
                                   render=dict(glError=0, glErrors=[], staleGlErrors=[]))) for i in range(48)]
-    return dict(status='passed', errors=[], provenance={'canonicalRoster': native_roster()}, screenshots=captures,
-                visualScenarios=[{'name': str(i), 'seed': i, 'setup': {'roster': native_roster()}, 'births': [], 'impacts': [],
-                                  'rng': {'afterNativeFire': dict(seed=i, draws=3, state=42)}}
-                                 for i in range(6)], performance=rows)
+    scenarios = [{'name': str(i), 'seed': i, 'setup': {'roster': native_roster()}, 'births': [], 'impacts': [],
+                  'rng': {'afterNativeFire': dict(seed=i, draws=3, state=42)}} for i in range(6)]
+    contact = dict(route='MainWeaponCatalog.P._step:washtub', retired=True, nativeStageContact=True, face=7, seed=.5, normal=[0,1,0],
+                   washtubContact=dict(valid=True,sourceActor='WeaponSlosherWashtub',seed=.5,weapon='s3-slosher-washtub',catalogUnit=0,life=1.2,damage=55,point=[0,0,4],retiredPosition=[0,0,4],normal=[0,1,0],face=7,block=0,
+                                       paintReceipt={'face':7,'center':[0,0,4]},matchingNativeRaycast={'face':7,'point':[0,0,4],'normal':[0,1,0]}))
+    scenarios.append(dict(name='floor-washtub', seed=13, setup={'weapon':'s3-slosher-washtub','roster':native_roster()},
+        births=[dict(sourceActor='WeaponSlosherWashtub',route='MainWeaponCatalog.P._step',weapon='s3-slosher-washtub',
+                     controllerInput='Actor.update intent.fire=true',catalogUnit=0,life=1.2,damage=55,seed=.5,pos=[0,1,0],velocity=[0,8,84])],
+        controllerProbe=dict(source='normal Actor.update intent.fire path after native Actor.spawnAt reset',weapon='s3-slosher-washtub',
+                             sourceActor='WeaponSlosherWashtub',unit=0,lifecycleAtBirth=None,heldFrames=18),
+        impactFrame=36,captureFrame=44,impactState={},impactEvidence=contact,impacts=[],rng={'afterNativeFire':dict(seed=13,draws=3,state=42)}))
+    for phase, perspective in [('F0','shoulder'),('F5','side'),('F15','side'),('floor-contact-F36-capture-F44','shoulder')]:
+        live = 0 if phase.startswith('floor-contact') else 1
+        resource=dict(protocol=1,liveRounds=live,sparkles=live*28,positionCount=160,sizeCount=160,arrayLengths=[480,160],
+                      totalBufferBytes=2560,textureOwners=0,repeatedDraws=2,stableOwners=True,stableArrays=True,rngUnchanged=True,shapeCountsUnchanged=True)
+        captures.append(dict(scenario='floor-washtub',phase=phase,frame=None,perspective=perspective,perspectiveMode='unit-fixture',seed=13,
+                             camera={},captureConditions={},runtime=dict(roster=native_roster(),washtubResources=resource,projectiles=[] if not live else [dict(seed=.5,weapon='s3-slosher-washtub',sourceActor='WeaponSlosherWashtub',catalogUnit=0,life=1.2,damage=55,unit=None,shape='explosher',pos=[0,1,1],vel=[0,8,84],age=.1,delay=0)],render=dict(glError=0,glErrors=[],staleGlErrors=[]))))
+    return dict(status='passed', visualProtocol=2, errors=[], provenance={'canonicalRoster': native_roster()}, screenshots=captures,
+                visualScenarios=scenarios, performance=rows)
 
 
 def pair(before, after):
@@ -83,6 +98,52 @@ class AdmissionTests(unittest.TestCase):
                 doc = copy.deepcopy(completed_receipt())
                 mutate(doc)
                 self.assertEqual(comparator.verify_complete(doc)['status'], 'fail')
+
+    def test_washtub_required_catalog_birth_contact_and_fixed_resources(self):
+        control = completed_receipt()
+        self.assertEqual(comparator.verify_washtub(control)['status'], 'pass')
+        changes = [lambda d: d.pop('visualProtocol'), lambda d: d.update(visualProtocol=1),
+                   lambda d: d['visualScenarios'].pop(), lambda d: d['screenshots'].pop(),
+                   lambda d: d['visualScenarios'][-1]['setup'].update(weapon='slosher'),
+                   lambda d: d['visualScenarios'][-1]['births'][0].update(route='legacy-projectile-step'),
+                   lambda d: d['visualScenarios'][-1]['births'][0].update(life=0),
+                   lambda d: d['visualScenarios'][-1]['controllerProbe'].update(heldFrames=61),
+                   lambda d: d['visualScenarios'][-1]['impactEvidence']['washtubContact'].update(retiredPosition=[0,1,4]),
+                   lambda d: d['visualScenarios'][-1]['impactEvidence']['washtubContact']['matchingNativeRaycast'].update(face=8)]
+        for key, value in [('sparkles',29),('positionCount',161),('arrayLengths',[483,160]),('totalBufferBytes',2564),
+                           ('textureOwners',1),('repeatedDraws',0),('stableOwners',False),('stableArrays',False),('rngUnchanged',False),('shapeCountsUnchanged',False)]:
+            changes.append(lambda d, k=key, v=value: d['screenshots'][-4]['runtime']['washtubResources'].update({k:v}))
+        def remove_all_faces(d):
+            contact=d['visualScenarios'][-1]['impactEvidence'];proof=contact['washtubContact']
+            for obj in [contact,proof,proof['paintReceipt'],proof['matchingNativeRaycast']]: obj.pop('face')
+        def remove_all_points(d):
+            proof=d['visualScenarios'][-1]['impactEvidence']['washtubContact']
+            proof.pop('point');proof.pop('retiredPosition')
+        changes += [remove_all_faces,remove_all_points,
+                    lambda d: d['screenshots'][-4]['runtime'].update(projectiles=[]),
+                    lambda d: d['screenshots'][-3]['runtime']['projectiles'][0].update(seed=.6),
+                    lambda d: d['screenshots'][-2]['runtime']['projectiles'][0].update(life=1.3),
+                    lambda d: d['visualScenarios'][-1]['impactEvidence']['washtubContact'].update(seed=.6),
+                    lambda d: d['visualScenarios'][-1]['impactEvidence']['washtubContact'].update(face=-1),
+                    lambda d: d['visualScenarios'][-1]['impactEvidence']['washtubContact'].update(point=[float('nan'),0,4]),
+                    lambda d: d['visualScenarios'][-1]['births'][0].pop('seed'),
+                    lambda d: d['visualScenarios'][-1]['impactEvidence'].pop('normal')]
+        changes.append(lambda d: d['screenshots'][-4]['runtime'].pop('washtubResources'))
+        for mutate in changes:
+            subject = copy.deepcopy(control); mutate(subject)
+            self.assertEqual(comparator.verify_washtub(subject)['status'], 'fail')
+            self.assertEqual(comparator.verify_complete(subject)['status'], 'fail')
+
+    def test_washtub_life_position_and_face_drift_remain_physical_failures(self):
+        control = completed_receipt()
+        for mutate in [lambda d: d['visualScenarios'][-1]['births'][0].update(life=1.3),
+                       lambda d: d['visualScenarios'][-1]['impactEvidence']['washtubContact'].update(point=[0,0,5]),
+                       lambda d: d['visualScenarios'][-1]['controllerProbe'].update(sourceActor='WeaponSlosher')]:
+            subject = copy.deepcopy(control); mutate(subject)
+            self.assertEqual(pair(control,subject)['physicalVerification']['status'],'fail')
+        legacy = copy.deepcopy(control); legacy.pop('visualProtocol')
+        self.assertEqual(pair(legacy,legacy)['physicalVerification']['status'],'fail')
+        self.assertEqual(pair(control,legacy)['physicalVerification']['status'],'fail')
 
     def test_image_bytes_and_capture_directory_are_required(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -96,6 +96,7 @@ const persistentContext = await chromium.launchPersistentContext(profile, {
 const browser = persistentContext.browser();
 const report = {
   schema: 1,
+  visualProtocol: 2,
   mode,
   site,
   build: { revision: manifest.build?.revision, contentHash: manifest.contentHash, inputHash: manifest.inputHash },
@@ -529,7 +530,7 @@ async function setCamera(page, perspective) {
 
 async function renderAndCapture(page, scenario, phase, perspective, seed) {
   const camera = await setCamera(page, perspective);
-  const runtime = await page.evaluate(() => {
+  const runtime = await page.evaluate(scenario => {
     const G = window.__G;
     G.paint.flush(1 / 60);
     const hasVisualSync = typeof G.projectiles.syncVisuals === 'function';
@@ -577,10 +578,36 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     if (staleGlErrors.length || glErrors.length) {
       throw new Error(`WebGL reported errors around native render (pre=${staleGlErrors.join(',') || 'none'}; post=${glErrors.join(',') || 'none'})`);
     }
+    let washtubResources = null;
+    if (scenario === 'floor-washtub') {
+      const P = G.projectiles, R = P._s3Shapes;
+      if (!R?.sparks?.isPoints || !R.sparkPos || !R.sparkSize) throw Error('Missing native Explosher sparkle owner');
+      const refs = [R, R.sparks, R.sparks.geometry, R.sparks.material, R.sparkPos, R.sparkSize, R.sparkPos.array, R.sparkSize.array];
+      const previous = window.__iwWashtubResourceRefs;
+      if (previous && refs.some((r, i) => r !== previous[i])) throw Error('Explosher resource owner/buffer replaced between captures');
+      window.__iwWashtubResourceRefs = refs;
+      const count = P.list.filter(p => p.delay <= 0 && p.catalog?.r?.sourceActor === 'WeaponSlosherWashtub').length;
+      const rngBefore = window.__iwScenarioRandomRecorder?.snapshot?.();
+      const countsBefore = JSON.stringify(P.s3ShapeCounts);
+      P._draw(); P._draw();
+      if (refs.some((r, i) => r !== [P._s3Shapes, R.sparks, R.sparks.geometry, R.sparks.material, R.sparkPos, R.sparkSize, R.sparkPos.array, R.sparkSize.array][i])) throw Error('Repeated native draw replaces Explosher buffers');
+      const rngAfter = window.__iwScenarioRandomRecorder?.snapshot?.();
+      if (!rngBefore || !rngAfter || ['seed','draws','state'].some(k => rngBefore[k] !== rngAfter[k])) throw Error('Repeated Explosher draw changes scenario RNG');
+      if (JSON.stringify(P.s3ShapeCounts) !== countsBefore) throw Error('Repeated Explosher draw changes native shape counts');
+      const sparkles = P.s3ShapeCounts?.sparkles;
+      const arrayLengths = [R.sparkPos.array.length, R.sparkSize.array.length];
+      const positionCount = R.sparks.geometry.getAttribute('position')?.count, sizeCount = R.sparks.geometry.getAttribute('aSize')?.count;
+      if (count > 1 || sparkles !== count * 28 || positionCount !== 160 || sizeCount !== 160 || arrayLengths[0] !== 480 || arrayLengths[1] !== 160) throw Error('Explosher fixed sparkle budget violated');
+      if (R.sparks.geometry.getAttribute('position') !== R.sparkPos || R.sparks.geometry.getAttribute('aSize') !== R.sparkSize || R.sparks.material.map != null) throw Error('Explosher attribute/texture ownership changed');
+      washtubResources = { protocol: 1, scope: 'one native catalog Explosher round; fixed existing sparkle resources, not whole-scene GPU cost',
+        liveRounds: count, sparkles, positionCount, sizeCount, arrayLengths, totalBufferBytes: R.sparkPos.array.byteLength + R.sparkSize.array.byteLength,
+        stableOwners: true, stableArrays: true, repeatedDraws: 2, rngUnchanged: true, shapeCountsUnchanged: true, textureOwners: 0 };
+    }
     const read = G.projectiles.list.map(p => ({
       type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(),
       mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),
       seed: p.seed, unit: p.fidelitySloshUnitIndex ?? p.fidelityRollerUnitIndex ?? null,
+      ...(p.wid === 's3-slosher-washtub' ? { weapon:p.wid, life:p.life, damage:p.damage, sourceActor:p.catalog?.r?.sourceActor, catalogUnit:p.catalog?.descriptor?.unit, shape:p.s3Shape } : {}),
     }));
     const visibleHeadProjectiles = G.projectiles.list.filter(p => p.delay <= 0 && !p._s3SloshBirthPending);
     const projectileScreen = visibleHeadProjectiles.map(p => {
@@ -599,6 +626,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     }
     return {
       projectiles: read,
+      washtubResources,
       roster: window.__iwProjectileRosterSnapshot(),
       projectileScreen,
       visibleCenters: projectileScreen.length,
@@ -624,7 +652,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
       },
       drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],
     };
-  });
+  }, scenario);
   if ((perspective === 'front' || perspective === 'side') && runtime.liveHeadCount > 0 &&
       (runtime.visibleCenters <= 0 || !runtime.projectileCrop)) {
     throw new Error(`${scenario}/${phase}/${perspective}: projectile-follow camera has ${runtime.liveHeadCount} live heads but no visible projectile center/crop`);
@@ -742,6 +770,7 @@ const visualSetup = async ({ name, seed, impact = null }) => {
         nativePaintReceiptFace: extra.paintReceipts?.find(receipt => receipt.face === hit.face && receipt.stageFace?.valid)?.face ?? null,
         wallDropTransition: extra.wallDropTransition ?? null,
         impactPaintContact: extra.impactPaintContact ?? null,
+        washtubContact: extra.washtubContact ?? null,
       });
     };
     const projectiles = G.projectiles;
@@ -865,6 +894,19 @@ const visualSetup = async ({ name, seed, impact = null }) => {
       // chosen native face into paint.splat synchronously before this step
       // returns. Treat that face-bearing receipt plus retirement as the
       // production contact state; validate the face against live stage geometry.
+      let washtubContact = null;
+      if (retired && p.catalog?.r?.sourceActor === 'WeaponSlosherWashtub' && p.catalog.lobes?.length === 1) {
+        const chosen = p.catalog.lobes[0].hit;
+        const point = chosen?.point?.toArray?.(), normal = chosen?.normal?.toArray?.();
+        const stageFace = chosen?.hit ? stageFaceFor(chosen.face, point) : null;
+        const paint = stepContext.paintReceipts.find(r => r.face === chosen?.face && r.stageFace?.valid && r.matchingNativeRaycast && r.matchingNativeRaycast.face === chosen.face);
+        if (chosen?.hit && stageFace?.valid && normal?.[1] > .68 && point && p.pos.distanceTo(chosen.point) < 1e-7 && paint) {
+          washtubContact = { source: 'sole catalog lobe native swept hit equals retired explosion centre and native floor paint face',
+            valid: true, sourceActor: p.catalog.r.sourceActor, seed:p.seed, weapon:p.wid, catalogUnit:p.catalog.descriptor.unit, life:p.life, damage:p.damage, point, normal, face: chosen.face, block: stageFace.block,
+            retiredPosition: p.pos.toArray(), matchingNativeRaycast: paint.matchingNativeRaycast, paintReceipt: paint };
+          record('MainWeaponCatalog.P._step:washtub', p, { ...chosen, block: stageFace.block }, { retired: true, stageFace, paintReceipts: stepContext.paintReceipts, washtubContact });
+        }
+      }
       const paintContact = p.catalog && retired ? stepContext.paintReceipts.find(receipt =>
         receipt.stageFace?.valid && receipt.sourceHint === 'non-raycast-paint') : null;
       const contactPoint = paintContact?.center ? new V(...paintContact.center) : null;
@@ -945,7 +987,7 @@ const visualSetup = async ({ name, seed, impact = null }) => {
   if (g.screenfx?.clear) g.screenfx.clear();
   window.__iwResetProjectileRoster();
   const weapon = impact === 'wall' ? 'shooter' :
-    name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
+    name === 'floor-washtub' ? 's3-slosher-washtub' : name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';
 async function resetCaptureCharacter(actor) {
   const old = actor.character, parent = old.root.parent;
   const fresh = new old.constructor({ color: actor.color, weapon: actor.weaponId,
@@ -1176,6 +1218,7 @@ async function runContactScenarios(page) {
   for (const scenario of [
     { name: 'wall-shooter', seed: 0x7a11, method: 'controller-shooter', impact: 'wall', maxFrames: 120 },
     { name: 'floor-slosher9', seed: 0x7a12, method: 'slosher9', impact: 'floor', maxFrames: 150 },
+    { name: 'floor-washtub', seed: 0x7a13, method: 'controller-washtub', impact: 'floor', maxFrames: 150 },
   ]) {
     const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });
     const { setup, lifecycleReset } = setupResult;
@@ -1186,7 +1229,24 @@ async function runContactScenarios(page) {
       const betweenSetupAndFire = window.__iwScenarioRandomRecorder?.snapshot?.() ?? null;
       const fireRng = window.__iwResetScenarioRandom(seed);
       const beforeNativeFire = fireRng.snapshot();
-      if (method === 'controller-shooter') {
+      if (method === 'controller-washtub') {
+        if (a.weaponId !== 's3-slosher-washtub' || a.weapon?.catalogRecord?.sourceActor !== 'WeaponSlosherWashtub') throw Error('Wrong native Explosher catalog selection');
+        const actorBefore = a.pos.toArray(), prior = G.projectiles.list.length, dt = 1 / 60;
+        if (prior || a.s3?.squidSpawn) throw Error('Explosher controller setup is not neutral');
+        a.intent.fire = true;
+        for (let i = 0; i < 60 && !G.projectiles.list.some(p => p.owner === a && p.delay <= 0 && !p.catalog?.birthPending); i++) {
+          controllerFramesHeld = i + 1;
+          G.time += dt; window.__inkwave.time += dt; a.update(dt);
+          G.projectiles.update(dt); G.fx.update(dt, G.camera); window.__inkwave.fxHooks?.update?.(dt); G.paint.flush(dt);
+        }
+        a.intent.fire = false;
+        const rounds = G.projectiles.list.filter(p => p.owner === a);
+        if (rounds.length !== 1 || rounds[0].wid !== 's3-slosher-washtub' || rounds[0].catalog?.r?.sourceActor !== 'WeaponSlosherWashtub' || rounds[0].catalog?.birthPending || rounds[0].delay > 0) throw Error('Native controller did not release exactly one admitted catalog Explosher round');
+        controllerProbe = { source: 'normal Actor.update intent.fire path after native Actor.spawnAt reset', heldFrames: controllerFramesHeld,
+          actorBefore, actorAtBirth: a.pos.toArray(), weapon: a.weaponId, sourceActor: rounds[0].catalog.r.sourceActor,
+          unit: rounds[0].catalog.descriptor.unit, lifecycleAtBirth: a.s3?.squidSpawn ? { phase: a.s3.squidSpawn.phase ?? null } : null };
+        if (controllerProbe.lifecycleAtBirth || controllerProbe.unit !== 0) throw Error('Explosher birth lifecycle/unit mismatch');
+      } else if (method === 'controller-shooter') {
         const prior = G.projectiles.list.length, dt = 1 / 60;
         const V = G.camera.position.constructor;
         const spawnStateBefore = a.s3?.squidSpawn ? { ...a.s3.squidSpawn } : null;
@@ -1237,8 +1297,8 @@ async function runContactScenarios(page) {
       const births = G.projectiles.list.map(p => ({ seed: p.seed, type: p.type, pos: p.pos.toArray(), velocity: p.vel.toArray(),
         route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime.stepHead' : 'legacy-projectile-step',
         sourceActor: p.catalog?.r?.sourceActor ?? p.s3Weapon?.sourceActor ?? p.inkKey ?? null,
-        controllerInput: method === 'controller-shooter' ? 'Actor.update intent.fire=true' : null,
-        controllerFramesHeld }));
+        controllerInput: method.startsWith('controller-') ? 'Actor.update intent.fire=true' : null,
+        controllerFramesHeld, ...(method === 'controller-washtub' ? { weapon:p.wid, life:p.life, damage:p.damage, catalogUnit:p.catalog?.descriptor?.unit } : {}) }));
       return { births, controllerProbe, rng: { afterVisualSetup: window.__iwCurrentVisualSetupRng ?? null,
         betweenSetupAndFire, beforeNativeFire, afterNativeFire: fireRng.snapshot() } };
     }, { method: scenario.method, seed: scenario.seed, expectedWall: setup.wall });
@@ -1267,6 +1327,10 @@ async function runContactScenarios(page) {
           catalogSteps: window.__iwProjectileCatalogSteps.slice(catalogStepStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
       });
+      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {
+        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view');
+        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);
+      }
       captureFrame = frame;
       flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts,
         headImpacts: row.headImpacts, surfaceHits: row.surfaceHits });
@@ -1277,6 +1341,7 @@ async function runContactScenarios(page) {
           hit.stageFace?.wall === true && hit.normal && Math.abs(hit.normal[1]) < 0.45 &&
           hit.block === setup.wall?.block && hit.face === setup.wall?.face &&
           hit.normal.reduce((sum, value, i) => sum + value * setup.wall.normal[i], 0) > 0.9)
+        : scenario.name === 'floor-washtub' ? row.surfaceHits.find(hit => hit.route === 'MainWeaponCatalog.P._step:washtub' && hit.retired === true && hit.nativeStageContact === true && hit.washtubContact?.valid === true)
         : row.surfaceHits.find(hit => hit.route === 'Projectiles._impact' && hit.retired === true && hit.nativeStageContact === true &&
           hit.stageFace && hit.normal && hit.normal[1] > 0.68 && hit.impactPaintContact?.valid === true &&
           hit.impactPaintContact.cpuFace === hit.face);
@@ -1294,6 +1359,7 @@ async function runContactScenarios(page) {
       elapsedSinceImpactFrames: captureFrame - impactFrame, impactState, impactEvidence, capture,
       evidence: scenario.impact === 'wall'
         ? 'The actor controller fired the legacy shooter; InkFlightRuntime.world returned the chosen valid live-stage Hit, and the same step entered the retained fidelityWallDrop phase at hit.point + hit.normal × 0.025.'
+        : scenario.name === 'floor-washtub' ? 'Actual catalog Explosher Actor input released one round; its sole native swept lobe hit equals its retired explosion centre on the live floor face, matching native floor-raycast blast paint.'
         : 'Projectiles._impact received a validated native floor Hit; its scoped impact paint matched the source .14-normal offset and CPU PaintSystem recorded the same live face.' });
   }
 }

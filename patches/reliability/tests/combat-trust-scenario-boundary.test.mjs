@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import {fixture} from '../../network-replication/tests/robustness-fixture.mjs';
 const clone=v=>JSON.parse(JSON.stringify(v));
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-async function sessions(fixtures, id) {
-  const clients = new Map(), wire = [];
+async function sessions(fixtures, id, relayClockRate=1) {
+  const clients = new Map(), wire = []; let relayClock=1000;
   for (const [index, name] of ['A', 'B'].entries()) {
     const f = fixtures[index];
     f.clock.set(name === 'A' ? 92.3055 : 138.3587);
@@ -17,7 +17,7 @@ async function sessions(fixtures, id) {
     s.lobby.players = [{ id: 'A', ready: false }, { id: 'B', ready: false }];
     f.G.net = s;
     const send = (to, data) => { wire.push({ from: name, to, data: clone(data) }); return true; };
-    s.tr = { sendTo: send, broadcast(data) { send(name === 'A' ? 'B' : 'A', data); return true; }, lock() { return true; }, close() {} };
+    s.tr = { _relayClock:true, relayReceipt:()=>Math.round(relayClock*1000), sendTo: send, broadcast(data) { send(name === 'A' ? 'B' : 'A', data); return true; }, lock() { return true; }, close() {} };
     clients.set(name, { name, f, s, net: null, actors: [], triggers: 0 });
   }
   const cfg = { id, proto: fixtures[0].PROTO, compat: fixtures[0].COMPAT,
@@ -73,7 +73,7 @@ async function sessions(fixtures, id) {
     assert.ok(index >= 0); return wire.splice(index, 1)[0];
   }
   return { clients, wire, begin, flush, takeTick,
-    advance(dt) { for (const c of clients.values()) { c.f.clock.advance(dt); c.f.G.time += dt; } },
+    advance(dt) { relayClock+=dt*relayClockRate; for (const c of clients.values()) { c.f.clock.advance(dt); c.f.G.time += dt; } },
     pause(dt) { for (const c of clients.values()) c.f.clock.advance(dt); },
     restart(id) {
       for (const c of clients.values()) { clearTimeout(c.s._goT); c.s._goT = null; c.s.endMatch(); }
@@ -83,20 +83,23 @@ async function sessions(fixtures, id) {
   };
 }
 
-async function runScenario(resetSource){
-const fixtures=[await fixture({productionComposition:true,includeSession:true}),await fixture({productionComposition:true,includeSession:true})];const p=await sessions(fixtures,'combat-test');await p.begin('A');await p.begin('B');p.flush();const a=p.clients.get('A'),b=p.clients.get('B'),events=[];let scenario='init';
+async function runScenario(resetSource,relayClockRate=1){
+const fixtures=[await fixture({productionComposition:true,includeSession:true}),await fixture({productionComposition:true,includeSession:true})];const p=await sessions(fixtures,'combat-test',relayClockRate);await p.begin('A');await p.begin('B');p.flush();const a=p.clients.get('A'),b=p.clients.get('B'),events=[];let scenario='init';
 for(const c of [a,b]){const{G,THREE}=c.f;G.actors=c.actors;G.local=c.local;G.projectiles=c.f.projectiles;G.match=c.net.match;c.net.match.state='playing';c.wall=false;G.physics.los=(u,v)=>{if(!c.wall||(u.z-6)*(v.z-6)>=0)return true;const k=(6-u.z)/(v.z-u.z),x=u.x+(v.x-u.x)*k,y=u.y+(v.y-u.y)*k;return !(Math.abs(x)<4&&y<4);};for(const actor of c.actors){actor.invuln=0;actor.netLife=1;actor._spawnBarrier=()=>{};actor.character.actor=actor;actor.character._runner=()=>actor.weaponRunner;actor.character._owner=()=>actor;actor.character.getMuzzle=out=>out.copy(actor.pos).add(new THREE.Vector3(0,1.05,.3));}const hit=G.projectiles.applyHit;G.projectiles.applyHit=function(...args){const before=args[1].hp,r=hit.apply(this,args);events.push({scenario,client:c.name,kind:'applyHit',ts:c.f.clock.now(),damage:args[2],before,after:args[1].hp,result:r});return r;};for(const method of ['sendTo','broadcast']){const send=c.s.tr[method];c.s.tr[method]=function(...args){const d=args.at(-1);if(d.k==='hit'||d.k==='hit_ack')events.push({scenario,client:c.name,kind:'send',ts:c.f.clock.now(),d:clone(d)});return send.apply(this,args);};}}
 function frames(n){for(let i=0;i<n;i++){p.advance(1/60);for(const c of [a,b])c.net.update(1/60);p.flush();}}
 function place(c,x,z){const [at,v]=c.actors;at.pos.set(0,0,0);v.pos.set(x,0,z);at.aimDir.set(x,0,z).normalize();at.aimPoint.set(x,1,z);c.f.projectiles.clear();}
 const pages=[a,b].map(c=>({evaluate:async(fn,args)=>{const previous={G:globalThis.G,place:globalThis.place,wall:Object.getOwnPropertyDescriptor(globalThis,'wall')};globalThis.G=c.f.G;globalThis.place=(x,z)=>place(c,x,z);Object.defineProperty(globalThis,'wall',{configurable:true,get:()=>c.wall,set:v=>{c.wall=v;}});try{return fn(args);}finally{globalThis.G=previous.G;globalThis.place=previous.place;if(previous.wall)Object.defineProperty(globalThis,'wall',previous.wall);else delete globalThis.wall;}}}));
-const reset=new Function('pages','guest','frames','assert','return ('+resetSource+');')(pages,pages[1],frames,assert);
+const resetAction=new Function('pages','guest','frames','assert','return ('+resetSource+');')(pages,pages[1],frames,assert);
+const clocks=()=>[a,b].map(c=>({client:c.name,now:c.f.clock.now(),lastTs:c.net.peers.get(c.remote.owner)?.lastTs,
+  pending:[...(c.net._combatProvenance?.pending.values()||[])].flat().map(item=>({h:item.d.h,age:c.f.clock.now()-item.at}))}));
+const reset=async(...args)=>{try{return await resetAction(...args);}catch(error){error.receipt={scenario,clocks:clocks()};p.dispose();throw error;}};
 function claim(d){a.f.projectiles.fireShooter(a.local,a.local.weapon,0);a.f.projectiles.clear();a.net.sendHit(a.local,a.remote,d,a.local.weapon.id);frames(20);events.push({scenario,kind:'afterClaim',hp:b.local.hp,pending:[...(b.net._combatProvenance?.pending.values()||[])].flat().map(x=>x.d)});}
 scenario='A';await reset();const sent=[],send=a.net.sendHit;a.net.sendHit=function(...args){sent.push(args[2]);return send.apply(this,args);};a.f.projectiles.fireShooter(a.local,a.local.weapon,0);for(let i=0;i<60&&!sent.length;i++)a.f.projectiles.update(1/60);frames(20);assert.equal(sent.length,1);assert(Math.abs(b.local.hp-(100-sent[0]))<.11);
 scenario='B';await reset();claim(220);assert.equal(b.local.hp,100);
 scenario='C';await reset();b.wall=true;claim(36);assert.equal(b.local.hp,100);
 scenario='D';await reset(5,7);b.wall=true;claim(36);
 
-const result={hp:b.local.hp,events};p.dispose();return result;
+const result={hp:b.local.hp,events,clocks:clocks()};p.dispose();return result;
 }
 
 const checker=fs.readFileSync(new URL('../../../scripts/check-inkwave-combat-trust.mjs',import.meta.url),'utf8');
@@ -114,4 +117,29 @@ test('combat trust checker drains rejected claims in the old scene; exact hits r
  const fixedAcks=fixed.events.filter(e=>e.scenario==='D'&&e.d?.k==='hit_ack');
  assert.deepEqual(fixedAcks.map(e=>[e.d.h,e.d.hp]),[[4,64]],'expired occluded h3 never becomes legal after opening the wall');
  assert.equal(fixed.events.filter(e=>e.scenario==='D'&&e.kind==='applyHit'&&e.result==='accepted').length,1);
+});
+
+
+test('accelerating only browser clocks reproduces the expired pending claim; aligned relay clocks retain strict isolation',async()=>{
+ await assert.rejects(runScenario(resetSource,.2),error=>{
+  assert.equal(error.receipt.scenario,'D');assert.deepEqual(error.actual,[0,1]);
+  const victim=error.receipt.clocks[1];assert.deepEqual(victim.pending.map(item=>item.h),[3]);
+  assert.ok(victim.pending[0].age>.95,'claim is already expired but cleanup received no accepted tick');
+  assert.ok(error.receipt.clocks[0].now-victim.lastTs>1,'authenticated owner tick admission stopped');
+  return true;
+ });
+ const aligned=await runScenario(resetSource,1);
+ assert.equal(aligned.hp,64);assert.deepEqual(aligned.clocks.map(c=>c.pending.length),[0,0]);
+ assert.ok(aligned.clocks[0].now-aligned.clocks[1].lastTs<.1,'fresh owner ticks remain admitted');
+ assert.deepEqual(aligned.events.filter(e=>e.scenario==='D'&&e.d?.k==='hit_ack').map(e=>[e.d.h,e.d.hp]),[[4,64]]);
+});
+
+test('exact browser frame pacer never advances simulation ahead of relay wall time',async()=>{
+ assert.match(checker,/const frames=async n=>\{for\(let i=0;i<n;i\+\+\)\{await pace\(\);await Promise\.all/,'every browser frame waits before advancing its controlled clock');
+ const source=checker.match(/\/\/ BEGIN COMBAT FRAME PACING[^\n]*\n([\s\S]*?)\/\/ END COMBAT FRAME PACING/)?.[1];
+ assert.ok(source,'browser frame pacing remains identifiable');
+ const factory=new Function('return ('+source.trim()+');')();
+ let wall=1000;const waits=[];const pace=factory(()=>wall,async ms=>{assert.ok(ms>0);waits.push(ms);wall+=ms;});
+ for(let i=1;i<=720;i++){await pace();assert.ok(wall-1000+1e-8>=i*1000/60);if(i===200)wall+=250;}
+ assert.ok(waits.length>0);assert.ok(waits.every(ms=>ms<=1000/60+1e-8),'overdue frames never add arbitrary sleeps');
 });

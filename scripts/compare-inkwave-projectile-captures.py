@@ -621,6 +621,7 @@ def scenario_pairs(before: dict[str, Any], after: dict[str, Any]) -> dict[str, A
     contact_requirements = {
         "wall-shooter": ("setup.wall", "controllerProbe", "impactFrame", "captureFrame", "impactState", "impactEvidence"),
         "floor-slosher9": ("setup", "impactFrame", "captureFrame", "impactState", "impactEvidence"),
+        "floor-washtub": ("setup", "controllerProbe", "impactFrame", "captureFrame", "impactState", "impactEvidence.washtubContact"),
     }
 
     def has_path(value: dict[str, Any], path: str) -> bool:
@@ -703,6 +704,7 @@ def scenario_pairs(before: dict[str, Any], after: dict[str, Any]) -> dict[str, A
         "scopedContactProofRequirements": {
             "wall-shooter": list(contact_requirements["wall-shooter"]),
             "floor-slosher9": list(contact_requirements["floor-slosher9"]),
+            "floor-washtub": list(contact_requirements["floor-washtub"]),
         },
         "note": "Controller and collision proof is compared exactly for the named wall/floor scenarios. Cosmetic impactState.fx pool counters remain raw diagnostics only; every other impactState field and startup lifecycle state except priorSquidSpawn is gated.",
         "scenarios": entries,
@@ -919,12 +921,90 @@ def bounded_physical_mismatches(result: dict[str, Any], limit: int = 8) -> list[
     return out
 
 
+def verify_washtub(document: dict[str, Any]) -> dict[str, Any]:
+    """Protocol 2 requires actual round identity, native contact and source-owned fixed resources."""
+    errors = []
+    number = lambda v: type(v) in (int, float) and math.isfinite(v)
+    vector = lambda v: isinstance(v, list) and len(v) == 3 and all(number(x) for x in v)
+    index = lambda v: type(v) is int and v >= 0
+    if document.get("visualProtocol") != 2:
+        return {"status": "fail", "errors": ["visualProtocol 2 required; legacy 48-frame receipts are not migrated acceptance"]}
+    scenarios = [r for r in document.get("visualScenarios", []) if r.get("name") == "floor-washtub"]
+    captures = [r for r in document.get("screenshots", []) if r.get("scenario") == "floor-washtub"]
+    if len(scenarios) != 1 or len(captures) != 4:
+        errors.append("exactly one floor-washtub scenario and four native views required")
+    else:
+        row = scenarios[0]
+        if row.get("setup", {}).get("weapon") != "s3-slosher-washtub":
+            errors.append("wrong catalog washtub selection")
+        probe = row.get("controllerProbe", {})
+        if (probe.get("source") != "normal Actor.update intent.fire path after native Actor.spawnAt reset"
+                or probe.get("weapon") != "s3-slosher-washtub" or probe.get("sourceActor") != "WeaponSlosherWashtub"
+                or type(probe.get("unit")) is not int or probe["unit"] != 0 or probe.get("lifecycleAtBirth") is not None
+                or type(probe.get("heldFrames")) is not int or not 1 <= probe["heldFrames"] <= 60):
+            errors.append("missing actual catalog controller release proof")
+        births = row.get("births", [])
+        birth = births[0] if len(births) == 1 else {}
+        if (len(births) != 1 or birth.get("sourceActor") != "WeaponSlosherWashtub"
+                or birth.get("route") != "MainWeaponCatalog.P._step" or birth.get("weapon") != "s3-slosher-washtub"
+                or birth.get("controllerInput") != "Actor.update intent.fire=true" or type(birth.get("catalogUnit")) is not int or birth["catalogUnit"] != 0
+                or not number(birth.get("seed")) or not number(birth.get("life")) or birth["life"] <= 0
+                or not number(birth.get("damage")) or birth["damage"] <= 0 or not vector(birth.get("pos")) or not vector(birth.get("velocity"))):
+            errors.append("wrong/missing native washtub projectile birth/lifetime")
+        identity = ("seed", "weapon", "sourceActor", "catalogUnit", "life", "damage")
+        contact = row.get("impactEvidence", {})
+        proof = contact.get("washtubContact", {})
+        paint = proof.get("paintReceipt", {})
+        raycast = proof.get("matchingNativeRaycast", {})
+        normal = contact.get("normal")
+        if (contact.get("route") != "MainWeaponCatalog.P._step:washtub" or contact.get("retired") is not True
+                or contact.get("nativeStageContact") is not True or proof.get("valid") is not True
+                or not all(k in proof and k in birth and strict_equal(proof[k], birth[k]) for k in identity)
+                or not number(contact.get("seed")) or contact.get("seed") != birth.get("seed")
+                or not index(contact.get("face")) or not index(proof.get("face")) or not index(proof.get("block"))
+                or not index(paint.get("face")) or not index(raycast.get("face"))
+                or not vector(proof.get("point")) or not vector(proof.get("retiredPosition")) or not vector(proof.get("normal"))
+                or not vector(paint.get("center")) or not vector(raycast.get("point")) or not vector(raycast.get("normal"))
+                or proof.get("point") != proof.get("retiredPosition") or proof.get("normal") != normal
+                or proof.get("face") != contact.get("face") or paint.get("face") != contact.get("face")
+                or raycast.get("face") != contact.get("face") or not vector(normal) or normal[1] <= .68):
+            errors.append("missing native washtub swept-floor/explosion/paint face link")
+        early = [(r.get("phase"), r.get("perspective")) for r in captures if r.get("phase") in ("F0", "F5", "F15")]
+        if sorted(early) != sorted([("F0", "shoulder"), ("F5", "side"), ("F15", "side")]):
+            errors.append("washtub early/midflight views incomplete")
+        contacts = [r for r in captures if str(r.get("phase", "")).startswith("floor-contact-F") and r.get("perspective") == "shoulder"]
+        if len(contacts) != 1:
+            errors.append("washtub floor contact view incomplete")
+        for capture in captures:
+            runtime = capture.get("runtime", {})
+            resource = runtime.get("washtubResources", {})
+            expected_live = 0 if str(capture.get("phase", "")).startswith("floor-contact-F") else 1
+            rounds = runtime.get("projectiles")
+            if not isinstance(rounds, list) or len(rounds) != expected_live:
+                errors.append("washtub actual runtime round count differs: " + str(capture.get("phase")))
+            elif expected_live:
+                round = rounds[0]
+                if (not all(k in round and k in birth and strict_equal(round[k], birth[k]) for k in identity)
+                        or round.get("shape") != "explosher" or not vector(round.get("pos")) or not vector(round.get("vel"))
+                        or not number(round.get("age")) or round["age"] < 0 or not number(round.get("delay")) or round["delay"] > 0):
+                    errors.append("washtub actual runtime round identity/state differs: " + str(capture.get("phase")))
+            expected = dict(protocol=1, liveRounds=expected_live, sparkles=28*expected_live, positionCount=160, sizeCount=160,
+                            totalBufferBytes=2560, textureOwners=0, repeatedDraws=2)
+            if (any(type(resource.get(k)) is not int or resource[k] != v for k, v in expected.items())
+                    or resource.get("arrayLengths") != [480,160]
+                    or any(resource.get(k) is not True for k in ("stableOwners", "stableArrays", "rngUnchanged", "shapeCountsUnchanged"))):
+                errors.append("missing/corrupt fixed washtub sparkle budget: " + str(capture.get("phase")))
+    return {"status": "pass" if not errors else "fail", "errors": errors,
+            "scope": "fixed existing Explosher sparkle buffers and owners; not whole-scene GPU timing or speed"}
+
+
 def verify_complete(document: dict[str, Any]) -> dict[str, Any]:
     errors = []
     if document.get("status") != "passed" or document.get("errors"):
         errors.append("capture invocation did not pass")
-    if len(document.get("screenshots", [])) != 48 or len(document.get("visualScenarios", [])) != 6:
-        errors.append("expected 48 captures and six native scenarios")
+    if len(document.get("screenshots", [])) != 52 or len(document.get("visualScenarios", [])) != 7:
+        errors.append("expected 52 captures and seven native scenarios")
+    errors.extend(verify_washtub(document)["errors"])
     errors.extend(roster_evidence_errors(document.get("provenance", {}).get("canonicalRoster"), "provenance.canonicalRoster"))
     for index, receipt in enumerate(document.get("screenshots", [])):
         errors.extend(roster_evidence_errors(receipt.get("runtime", {}).get("roster"), f"screenshots[{index}].runtime.roster"))
@@ -985,14 +1065,16 @@ def compare(before_path: Path, after_path: Path, output_path: Path, admit_camera
     overall_ci_status = "passed" if overall_ci_passed else (
         "failed" if any(status in ("failed", "error") for status in statuses) else "incomplete"
     )
+    protocol_matched = before.get("visualProtocol") == after.get("visualProtocol") == 2
     physical_checks = {
+        "visualProtocol": "pass" if protocol_matched else "fail",
         "pairedCaptures": "pass" if all_pairs_match else "fail",
         "nativeScenarioState": scenarios["status"],
         "postNativeFireRng": post_native_rng["status"],
         "canonicalPhysicalSetup": canonical_physical["status"],
     }
     physical_status = "pass" if (
-        physical_checks["pairedCaptures"] == "pass"
+        protocol_matched and physical_checks["pairedCaptures"] == "pass"
         and physical_checks["nativeScenarioState"] == "pass"
         and physical_checks["postNativeFireRng"] in ("matched", "not-provided")
         and physical_checks["canonicalPhysicalSetup"] in ("matched", "not-provided")
@@ -1000,6 +1082,7 @@ def compare(before_path: Path, after_path: Path, output_path: Path, admit_camera
 
     result = {
         "schema": 1,
+        "washtubResourceVerification": {"before": verify_washtub(before), "after": verify_washtub(after)},
         "analysis": "exact paired screenshot receipt comparison; visual output hashes are recorded but not required to match",
         "inputs": {
             "before": {"path": str(before_path), "sha256": before_file_hash,
@@ -1127,7 +1210,8 @@ def main() -> int:
         "firstPhysicalMismatches": bounded_physical_mismatches(result),
     }, indent=2))
     complete = all(row["status"] == "pass" for row in result.get("completeVerification", {}).values())
-    return 0 if result["physicalVerification"]["status"] == "pass" and complete else 1
+    resources = all(row["status"] == "pass" for row in result["washtubResourceVerification"].values())
+    return 0 if result["physicalVerification"]["status"] == "pass" and complete and resources else 1
 
 
 if __name__ == "__main__":
