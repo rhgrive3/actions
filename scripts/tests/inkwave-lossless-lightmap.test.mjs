@@ -60,7 +60,7 @@ test('lossless PNG optimization preserves pixels from all five input row filters
   }
   const inputFilters = [];
   for (let y = 0; y < height; y++) {
-    const filter = y % 5, row = y * width, scanline = y * (width + 1);
+    const filter = (y + 2) % 5, row = y * width, scanline = y * (width + 1);
     inputFilters.push(filter);
     scanlines[scanline] = filter;
     for (let x = 0; x < width; x++) {
@@ -90,7 +90,8 @@ test('lossless PNG optimization preserves pixels from all five input row filters
     pngChunk('IDAT', deflateSync(scanlines)), secondMetadata, pngChunk('IEND', Buffer.alloc(0))]);
   const compacted = optimizeLightmapPng(original);
   const before = decodeGrayLightmap(original), after = decodeGrayLightmap(compacted);
-  assert.deepEqual([...new Set(inputFilters)], [0, 1, 2, 3, 4], 'fixture includes None, Sub, Up, Average and Paeth rows');
+  assert.equal(inputFilters[0], 2, 'first-row Up uses a zero preceding row');
+  assert.deepEqual([...new Set(inputFilters)].sort(), [0, 1, 2, 3, 4], 'fixture includes None, Sub, Up, Average and Paeth rows');
   assert.equal(after.width, before.width);
   assert.equal(after.height, before.height);
   assert(after.ihdr.equals(before.ihdr), 'all image header metadata stays byte-identical');
