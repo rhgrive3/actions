@@ -1,8 +1,17 @@
-// Extra readable Shooter muzzle beads. Existing firing FX stay intact.
+// Small independent 3D muzzle beads for Shooter, Splatling and Dualies.
+// Existing muzzle flashes and the Splatling's compact projectile body stay intact.
 // Fixed reusable CPU records + existing glossy blob mesh; no physics, paint,
 // callbacks on landing, shared RNG, new geometry/material, or network payload.
 export const SHOOTER_MUZZLE_COSMETICS=Object.freeze({bursts:32,drops:3,life:.14,radius:.043});
-export function isOrdinaryShooter(p){return !!p&&!p.s3SpecialWeapon&&p.type==='shot'&&(p.catalog?.r?.family==='shooter'||p.s3Weapon?.kind==='shooter'||p.wid==='shooter');}
+// Do not infer projectile identity from the currently held weapon: sub/special
+// shots, delayed volleys and reused records must never borrow main-weapon FX.
+export function muzzleDropletFamily(p){
+ if(!p||p.s3SpecialWeapon||p.type!=='shot')return null;
+ const family=p.catalog?.r?.family??p.s3Weapon?.kind??p.wid;
+ return family==='shooter'||family==='splatling'||family==='dualies'?family:null;
+}
+// Retained to preserve the Shooter-only contract used by existing tests/callers.
+export function isOrdinaryShooter(p){return muzzleDropletFamily(p)==='shooter';}
 export class ShooterMuzzleDroplets{
  constructor(THREE){
   this.next=0;this.count=0;this.drawn=0;this.emitted=0;
@@ -11,24 +20,37 @@ export class ShooterMuzzleDroplets{
  }
  clear(){for(const b of this.pool)b.owner=null;this.next=this.count=this.drawn=this.emitted=0;}
  observe(p,time,system,camera){
-  if(!isOrdinaryShooter(p)||p.delay>0||p._iwShooterMuzzleSeen||!p.owner?.color||!(p.age>=0&&p.age<4/60)||!p.start)return;
+  const family=muzzleDropletFamily(p);
+  if(!family||p.delay>0||p._iwShooterMuzzleSeen||!p.owner?.color||!(p.age>=0&&p.age<4/60)||!p.start)return;
   p._iwShooterMuzzleSeen=true;
   if(camera&&camera.distanceToSquared(p.start)>900)return;
   const b=this.pool[this.next];this.next=(this.next+1)%this.pool.length;
-  b.owner=p.owner;b.wid=p.owner.weapon?.id;b.t=time-p.age;b.seed=p.seed||0;b.pos.copy(p.start);
-  // Resolve the currently drawn socket once; free droplets then keep their
-  // launch origin/direction when the actor moves, aims or jumps.
-  if(p.owner.character?.getMuzzle){p.owner.character.getMuzzle(this.origin);if(Number.isFinite(this.origin.x+this.origin.y+this.origin.z)&&this.origin.distanceToSquared(p.start)<4)b.pos.copy(this.origin);}
+  b.owner=p.owner;b.wid=p.owner.weapon?.id;b.family=family;
+  b.t=time-p.age;b.seed=p.seed||0;b.pos.copy(p.start);
+  // Dualies must retain the fired hand's actual physical nozzle. Calling the
+  // single getMuzzle() socket here would pull BOTH hands onto the right pistol.
+  // Catalogue raw sockets may have a same-tick presentation-only pose delta;
+  // applying that delta to this cosmetic never changes the projectile itself.
+  if(family==='dualies'){
+   const pose=p.catalog&&p._s3PoseBirthOffset;
+   if(pose&&pose.seed===p.seed&&Number.isFinite(pose.x+pose.y+pose.z)){
+    b.pos.x+=pose.x;b.pos.y+=pose.y;b.pos.z+=pose.z;
+   }
+  }else if(p.owner.character?.getMuzzle){
+   p.owner.character.getMuzzle(this.origin);
+   if(Number.isFinite(this.origin.x+this.origin.y+this.origin.z)&&
+      this.origin.distanceToSquared(p.start)<4)b.pos.copy(this.origin);
+  }
   b.dir.copy(p.vel);if(b.dir.lengthSq()<1e-8)b.dir.set(0,0,1);else b.dir.normalize();
   if(Math.abs(b.dir.y)<.95)b.right.set(-b.dir.z,0,b.dir.x).normalize();else b.right.set(1,0,0);
   b.up.crossVectors(b.dir,b.right);this.emitted+=SHOOTER_MUZZLE_COSMETICS.drops;
  }
- append(time,mesh,shape,look,petals,n,cap,m,q,s,pos,dir,axis){
+ append(time,mesh,shape,look,petals,n,cap,m,q,s,pos,dir,axis,camera=null){
   this.count=this.drawn=0;
   for(const b of this.pool){
    if(!b.owner)continue;
    const age=time-b.t;
-   if(age>=SHOOTER_MUZZLE_COSMETICS.life||age<0||b.owner.alive===false||b.owner.weapon?.id!==b.wid){b.owner=null;continue;}
+   if(age>=SHOOTER_MUZZLE_COSMETICS.life||age<0||b.owner.alive===false||b.owner.weapon?.id!==b.wid||camera&&camera.distanceToSquared(b.pos)>900){b.owner=null;continue;}
    this.count++;
    for(let i=0;i<SHOOTER_MUZZLE_COSMETICS.drops&&n<cap;i++){
     const phase=b.seed*6.2832+i*2.39996,lateral=.38+i*.09,speed=5.5+i*.9;

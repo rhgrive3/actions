@@ -1,5 +1,8 @@
 // Family-specific connections applied after the established visual adapter.
 // Gameplay methods, generic particles and Slosher/roller paths are untouched.
+// The pooled shooterMuzzleDroplets member now draws three independent 3D
+// cosmetic beads at each admitted Shooter/Splatling/Dualies birth; the legacy
+// property name is kept for pool ownership and test compatibility.
 function once(code,before,after,label){const at=code.indexOf(before);if(at<0||code.indexOf(before,at+before.length)>=0)throw Error('firing cosmetics anchor: '+label);return code.slice(0,at)+after+code.slice(at+before.length);}
 export function adaptFiringCosmetics(rel,code){
  if(rel!=='src/game/weapons.js')return code;
@@ -17,7 +20,7 @@ export function adaptFiringCosmetics(rel,code){
       if (n >= MAX_BLOBS) break;
       if (isSplatlingCosmeticProjectile(p)) n = appendSplatlingCosmetic(p, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _dir, ZAX, G.camera?.position);
     }
-    n = this.shooterMuzzleDroplets.append(G.time, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _v, _dir, ZAX);
+    n = this.shooterMuzzleDroplets.append(G.time, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _v, _dir, ZAX, G.camera?.position);
     B.count = n;`,'shared mesh upload after existing effects');
  code=once(code,'disposeVisuals() { this.projectileVisuals.dispose(); }','disposeVisuals() { this.shooterMuzzleDroplets.clear(); this.projectileVisuals.dispose(); }','visual disposal');
  return code;

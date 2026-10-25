@@ -10,7 +10,7 @@ import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
 import { NativeInkMesh } from './native-ink-chunks.mjs';
 import { nativeStageTextureCaps } from './native-texture-budget.mjs';
-import { nativeGpuTier,nativeRenderCaps,nativeTextureQuality,nativeTierTextureCaps,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
+import { nativeGpuTier,nativeRenderCaps,nativeTextureProfile,nativeCompressedTextureSupport,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
 import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
 
 // Snapshot keeps the previous playable world alive until every fallible
@@ -46,10 +46,23 @@ function disposeOldWorld(game,snap){
  old(()=>snap.paint?.dispose?.(),'paint');
 }
 
+function yieldNativeWorld(signal){
+ return new Promise((resolve,reject)=>{
+  let handle,settled=false;
+  const frame=typeof globalThis.requestAnimationFrame==='function';
+  const cancel=()=>{if(handle===undefined)return;if(frame)globalThis.cancelAnimationFrame?.(handle);else clearTimeout(handle);};
+  const finish=error=>{if(settled)return;settled=true;signal?.removeEventListener('abort',abort);if(error){cancel();reject(error);}else resolve();};
+  const abort=()=>finish(new DOMException('Aborted','AbortError'));
+  if(signal?.aborted){abort();return;}
+  signal?.addEventListener('abort',abort,{once:true});
+  handle=frame?globalThis.requestAnimationFrame(()=>finish()):setTimeout(()=>finish(),0);
+ });
+}
+
 /** Prepare detached, publish atomically through the existing worldCurrent guard. */
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
- let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures;
+ let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures,pendingNavigation;
  let snapshot=null,published=false,committed=false;
  const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
@@ -60,13 +73,22 @@ export async function buildNativeWorld(game,map,current){
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   // A previous context loss on a native stage lowers this load's budget.
-  const gpuTier=nativeGpuTier(),quality=nativeTextureQuality(game.settings.quality,gpuTier,!!game.mobile?.touch);
-  const textureCaps=nativeTierTextureCaps(nativeStageTextureCaps(data.manifest,quality,{
-    mobile:!!game.mobile?.touch,
-    deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
-    maxTextureSize:G.renderer.capabilities.maxTextureSize
-  }),gpuTier,!!game.mobile?.touch);
+  // Touch devices start one texture step lower unless the stage ships KTX2
+  // and this GPU receives it compressed (about a quarter of the memory).
+  const gpuTier=nativeGpuTier();
+  const {quality,caps:textureCaps}=nativeTextureProfile({settingsQuality:game.settings.quality,tier:gpuTier,touch:!!game.mobile?.touch,
+    compressed:!!data.manifest.prebuiltTextures&&nativeCompressedTextureSupport(G.renderer),
+    stageCaps:q=>nativeStageTextureCaps(data.manifest,q,{
+      mobile:!!game.mobile?.touch,
+      deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
+      maxTextureSize:G.renderer.capabilities.maxTextureSize
+    })});
   const textureLimit=textureCaps.maxDimension;
+  let navStart=performance.now();
+  // Desktop navigation yields in short slices while texture fetch/decode waits.
+  // Constrained devices retain serial construction to avoid competing peaks.
+  if(globalThis.navigator&&!game.mobile?.touch&&!(globalThis.navigator.deviceMemory>0&&globalThis.navigator.deviceMemory<=4))
+   pendingNavigation=NavGraph.createNative(level,physics,{signal,current}).then(nav=>({nav}),error=>{const failed=!signal.aborted&&current()&&error.name!=='AbortError';controller.abort(error);return {error,failed};});
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
@@ -94,15 +116,19 @@ export async function buildNativeWorld(game,map,current){
   await stageWarmed;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const stageShaderWarmMilliseconds=performance.now()-stageWarmStart;
-  status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
+  status.update('navigation');await yieldNativeWorld(signal);
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
-  const navStart=performance.now(),nav=await NavGraph.createNative(level,physics,{signal,current});
+  if(!pendingNavigation)navStart=performance.now();
+  const navigation=pendingNavigation?await pendingNavigation:{nav:await NavGraph.createNative(level,physics,{signal,current})};
+  if(navigation.error)throw navigation.error;const nav=navigation.nav;
   // Minimap preparation must use this detached world's navigation, not G.nav
   // which still belongs to the current world until publication below.
   level.nativeNav=nav;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   // The minimap's global CURRENT is not touched until final commit.
   const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
+  if(G.settings?.minimap!==false)await minimap.prepareNative?.({signal,current});
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const wake=new SwimWake();
   const gpuBudget=nativeRenderCaps({mobile:!!game.mobile?.touch,tier:gpuTier});
   const nextWorld={display,level,gpuTier,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{gpuTier,gpuBudget,loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,stageShaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
@@ -135,6 +161,8 @@ export async function buildNativeWorld(game,map,current){
   data.vertices=null;data.indices=null;
   disposeOldWorld(game,snapshot);
  }catch(error){
+  controller.abort(error);
+  if(pendingNavigation){const navigation=await pendingNavigation;if(navigation.failed)error=navigation.error;}
   const recoveryErrors=[];
   const recover=(fn)=>{try{fn();}catch(e){recoveryErrors.push(e);}};
   try{

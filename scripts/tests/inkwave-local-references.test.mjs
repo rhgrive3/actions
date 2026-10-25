@@ -143,3 +143,44 @@ test('historical navigation and facade digests do not substitute for current emi
   assert.throws(()=>verifyMappedReference(repo,row.source,row.ref,root),/input manifest mismatch/);
  });
 });
+
+test('aggregate native registry admits only its reviewed prebuilt descriptor target, not the primary body', () => fixture(root => {
+ const row=SOURCE_SITE_REFERENCES.find(r=>r.target==='patches/native-stages/runtime/registry.mjs');
+ assert.equal(row.targetSha256,'5eaa9132beca15ac3e5ba9ea9769258bce73bc295ee5331e757465836e1495f1');
+ const current=fs.readFileSync(path.join(repo,row.target),'utf8');
+ const addition="nativeStageBuild.prebuilt?.stages?.[s.id]?'変換済みの原典モデルを読み込みます。物理・ルール配置は検証中。':";
+ assert.equal(current.split(addition).length,2);
+ const primary=current.replace(addition,'');
+ assert.equal(sha(primary),'bec89cade19764800de9bf5abd781c488c3e204e42f9033f58515646b051039b');
+ put(root,row.source,fs.readFileSync(path.join(repo,row.source)));put(root,row.target,primary);
+ assert.throws(()=>verifyMappedReference(root,row.source,row.ref),/Pinned reference source mismatch/);
+ put(root,row.target,current);assert.equal(verifyMappedReference(root,row.source,row.ref).target,row.target);
+ const site=path.join(root,'site'),rev='d'.repeat(64),payload=Buffer.from('export {};');
+ const paths=[row.target,'_versions/'+rev+'/'+row.target];for(const p of paths)put(site,p,payload);
+ const files={[row.sourceInputKey]:row.sourceSha256,[row.inputKey]:sha(primary)};
+ const save=()=>put(site,'inkwave-build.json',JSON.stringify({build:{revision:rev},files,artifacts:Object.fromEntries(paths.map(p=>[p,sha(payload)]))}));
+ save();assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/input manifest mismatch/);
+ files[row.inputKey]=row.targetSha256;save();assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
+}));
+
+test('reviewed native recovery engine exact epoch rejects old and tampered target proofs', () => fixture(root => {
+ const row=SOURCE_SITE_REFERENCES.find(r=>r.target==='patches/native-stages/runtime/engine.mjs');
+ const reviewed='7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26';
+ const previous='0e4312862c7e22923d056af96d68a999c6877f9c3551b7434778f7f656e410de';
+ assert.equal(row.targetSha256,reviewed);
+ const current=fs.readFileSync(path.join(repo,row.target));assert.equal(sha(current),reviewed);
+ put(root,row.source,fs.readFileSync(path.join(repo,row.source)));put(root,row.target,current);
+ assert.equal(verifyMappedReference(root,row.source,row.ref).target,row.target);
+ put(root,row.target,Buffer.concat([current,Buffer.from('\n// unreviewed engine mutation\n')]));
+ assert.throws(()=>verifyMappedReference(root,row.source,row.ref),/Pinned reference source mismatch/);
+ put(root,row.target,current);
+ const site=path.join(root,'site'),rev='e'.repeat(64),payload=Buffer.from('export {};');
+ const paths=[row.target,'_versions/'+rev+'/'+row.target];for(const p of paths)put(site,p,payload);
+ const files={[row.sourceInputKey]:row.sourceSha256,[row.inputKey]:reviewed};
+ const save=()=>put(site,'inkwave-build.json',JSON.stringify({build:{revision:rev},files,artifacts:Object.fromEntries(paths.map(p=>[p,sha(payload)]))}));
+ save();assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
+ files[row.inputKey]=previous;save();assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/input manifest mismatch/);
+ files[row.inputKey]=reviewed;save();
+ for(const p of paths){put(site,p,'tampered');assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/artifact mismatch/);put(site,p,payload);}
+ assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
+}));

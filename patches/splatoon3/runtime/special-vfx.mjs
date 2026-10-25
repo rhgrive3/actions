@@ -162,7 +162,7 @@ class Director {
   shell(add, life, style, pos, s0, s1, col, a, o = {}) {
     const pool = add ? this.kit.shells : this.kit.inkShells, seed = vfxRandom();
     const ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0, s = s0 + (s1 - s0) * ease(t);
       r.v[4] = s; r.v[5] = s * (o.sy ?? 1); r.v[6] = s; r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t;
       r.v[11] = a * (o.fade === false ? 1 : o.fadeIn ? Math.min(1, t / o.fadeIn) * (1 - smooth((t - 0.6) / 0.4)) : 1 - smooth((t - (o.hold ?? 0.35)) / (1 - (o.hold ?? 0.35))));
@@ -173,7 +173,7 @@ class Director {
   }
   disc(add, life, style, pos, nrm, r0, r1, col, a, o = {}) {
     const pool = add ? this.kit.discs : this.kit.inkDiscs, seed = vfxRandom(), ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
       r.v[3] = r0 + (r1 - r0) * ease(t); r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
@@ -182,7 +182,7 @@ class Director {
   }
   band(add, life, style, pos, r0, r1, h0, h1, col, a, o = {}) {
     const pool = add ? this.kit.bands : this.kit.inkBands, seed = vfxRandom(), ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
       r.v[4] = r0 + (r1 - r0) * ease(t); r.v[5] = h0 + (h1 - h0) * ease(t); r.v[3] = (r._spinOrigin ??= r.v[3]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
@@ -191,7 +191,7 @@ class Director {
   }
   beam(add, life, style, a, b, r0, r1, col, alpha, o = {}) {
     const pool = add ? this.kit.beams : this.kit.inkBeams;
-    return pool.add(life, [a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6], o.follow || null);
+    return pool.addRaw(life, a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6, o.follow || null);
   }
   setBeam(r, a, b, r0, r1, alpha) {
     const v = r.v; v[0] = a.x; v[1] = a.y; v[2] = a.z; v[4] = b.x; v[5] = b.y; v[6] = b.z;

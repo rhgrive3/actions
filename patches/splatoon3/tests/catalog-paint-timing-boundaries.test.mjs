@@ -113,8 +113,9 @@ for(const id of ['s3-shelter-focus','s3-shelter-compact'])test(id+' held canopy 
   else{
    assert.ok(foot.length>0,'explicit source foot mask is connected');
    assert.equal(foot[0].frame-opened,p.FootSplashWaitFrame);
-   if(p.FootSplashSpanFrame===0)assert.equal(foot.length,1,'zero span is bounded to one attempt per opening');
-   else for(let i=1;i<foot.length;i++)assert.equal(foot[i].frame-foot[i-1].frame,p.FootSplashSpanFrame);
+   const interval=Math.max(1,p.FootSplashSpanFrame);
+   if(p.FootSplashSpanFrame===0)assert.ok(foot.length>1,'zero wait keeps painting as the held canopy moves');
+   for(let i=1;i<foot.length;i++)assert.equal(foot[i].frame-foot[i-1].frame,interval);
   }
  }
 });

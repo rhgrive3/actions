@@ -71,7 +71,7 @@ function rotateSupport(map,cache){
 }
 
 /** Uses the original live map's ink/live layers; leaves physics and paint intact. */
-export function buildNativeMinimap(map,canonicalProjection=false){
+function* nativeMinimapSteps(map,canonicalProjection=false){
  const L=map.level,W=map.w,H=map.h,N=W*H,w=L.triangleWorld,P=map.paint;
  for(const [key,context] of [['canvas','ctx'],['base','bctx'],['inkC','ictx'],['flashC','fctx']]){
   const canvas=map[key];if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}else if(map._built){const ctx=map[context];if(typeof ctx.reset==='function')ctx.reset();else canvas.width=W;}
@@ -80,16 +80,18 @@ export function buildNativeMinimap(map,canonicalProjection=false){
  if(map.flashImg?.width!==W||map.flashImg?.height!==H)map.flashImg=map.fctx.createImageData(W,H);else map.flashImg.data.fill(0);
  const layers=reachableLayers(L),cache=map._nativeSupportCache;
  if(canonicalProjection&&map._built&&cache&&cache.flip!==map.flip&&cache.hits.length===N&&supportMatches(map,layers,cache)){
-  rotateSupport(map,cache);map._drawBase();map.owner=new Uint8Array(N);map._built=true;return;
+  rotateSupport(map,cache);map._drawBase();if(map.owner?.length!==N)map.owner=new Uint8Array(N);else map.owner.fill(0);map._built=true;return;
  }
- const hits=canonicalProjection?new Uint8Array(N):null;
+ const hits=canonicalProjection?(cache?.hits?.length===N?cache.hits:new Uint8Array(N)):null;if(hits)hits.fill(0);
  map._nativeSupportCache=null;
- map.hgt=new Float32Array(N).fill(-99);map.topBlock=new Int32Array(N).fill(-1);map.nrm=new Float32Array(N*2);
- map.pixCell=new Int32Array(N).fill(-1);
+ if(map.hgt?.length!==N)map.hgt=new Float32Array(N);map.hgt.fill(-99);
+ if(map.topBlock?.length!==N)map.topBlock=new Int32Array(N);map.topBlock.fill(-1);
+ if(map.nrm?.length!==N*2)map.nrm=new Float32Array(N*2);else map.nrm.fill(0);
+ if(map.pixCell?.length!==N)map.pixCell=new Int32Array(N);map.pixCell.fill(-1);
  // Native projection selects one exact paint cell; no bilinear neighbors exist.
  map.pixFx=map.pixFy=map.pixSx=map.pixSy=null;
  const scratch={candidates:[],first:{point:new THREE.Vector3(),normal:new THREE.Vector3()},next:{point:new THREE.Vector3(),normal:new THREE.Vector3()},options:{minNormalY:.45}};
- for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+ for(let y=0;y<H;y++){for(let x=0;x<W;x++){
   const i=y*W+x,wx=map._worldX(x+.5),wz=map._worldZ(y+.5),h=nativeMinimapSupport(L,wx,wz,layers,scratch);if(!h)continue;
   if(hits)hits[i]=1;
   map.hgt[i]=h.point.y;map.topBlock[i]=L.blockForTriangle(h.triangle);const sign=map.flip?1:-1;map.nrm[i*2]=h.normal.x*sign;map.nrm[i*2+1]=h.normal.z*sign;
@@ -97,6 +99,29 @@ export function buildNativeMinimap(map,canonicalProjection=false){
   const r=w._p.copy(h.point).sub(f.origin),u=r.dot(f.u),v=r.dot(f.v),iu=Math.max(0,Math.min(f.nu-1,Math.floor(u/f.cu))),iv=Math.max(0,Math.min(f.nv-1,Math.floor(v/f.cv))),k=f.grid+iv*f.nu+iu;
   if(!P.dead[k])map.pixCell[i]=k;
  }
- map._drawBase();map.owner=new Uint8Array(N);map._built=true;
+ yield;
+ }
+ map._drawBase();if(map.owner?.length!==N)map.owner=new Uint8Array(N);else map.owner.fill(0);map._built=true;
  if(hits)rememberSupport(map,layers,hits);
+}
+
+export function buildNativeMinimap(map,canonicalProjection=false){for(const _ of nativeMinimapSteps(map,canonicalProjection)){}return map;}
+function yieldNativeMinimap(signal){
+ return new Promise((resolve,reject)=>{
+  let handle,settled=false;
+  const frame=typeof globalThis.requestAnimationFrame==='function';
+  const cancel=()=>{if(handle===undefined)return;if(frame)globalThis.cancelAnimationFrame?.(handle);else clearTimeout(handle);};
+  const finish=error=>{if(settled)return;settled=true;signal?.removeEventListener('abort',abort);if(error){cancel();reject(error);}else resolve();};
+  const abort=()=>finish(new DOMException('Aborted','AbortError'));
+  if(signal?.aborted){abort();return;}
+  signal?.addEventListener('abort',abort,{once:true});
+  handle=frame?globalThis.requestAnimationFrame(()=>finish()):setTimeout(()=>finish(),0);
+ });
+}
+export async function buildNativeMinimapAsync(map,canonicalProjection=false,{signal,current=()=>true,budgetMilliseconds=4}={}){
+ const check=()=>{if(signal?.aborted||!current())throw new DOMException('Aborted','AbortError');};
+ const now=()=>globalThis.performance?.now?.()??Date.now();let start=now();
+ check();for(const _ of nativeMinimapSteps(map,canonicalProjection)){
+  check();if(now()-start>=budgetMilliseconds){await yieldNativeMinimap(signal);check();start=now();}
+ }check();return map;
 }

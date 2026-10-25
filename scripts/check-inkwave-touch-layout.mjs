@@ -240,6 +240,9 @@ try {
         const beforeRotation = page.viewportSize();
         await pointer(page, 'pointerdown', 81, beforeRotation.width * .45, beforeRotation.height * .4);
         assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1);
+        // Spurious same-size WebKit resize must not cancel this live edit.
+        await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+        assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1, 'same-size resize preserves edit pointer');
         await settleTouchViewport(page, { width: beforeRotation.height, height: beforeRotation.width });
         await page.waitForFunction(() => mobile._edit === null && mobile._H === Math.max(300, Math.min(460, Math.min(innerWidth, innerHeight))));
         const bounds = await page.evaluate(() => Object.keys(mobile.els).map(id => ({ id, ...mobile._box(id), w: innerWidth, h: innerHeight })));

@@ -14,7 +14,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "inputKey": "native-stages/runtime/engine.mjs",
     "sourceInputKey": "upstream/src/game/nav.js",
     "sourceSha256": "c2a2920e677fd69c6c11848881ffafda90bdd9ff2ba8662579713e5944fceb6a",
-    "targetSha256": "0e4312862c7e22923d056af96d68a999c6877f9c3551b7434778f7f656e410de"
+    "targetSha256": "7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26"
   },
   {
     "source": "inkwave-public/src/world/maps.js",
@@ -32,7 +32,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "inputKey": "native-stages/runtime/registry.mjs",
     "sourceInputKey": "upstream/src/world/maps.js",
     "sourceSha256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
-    "targetSha256": "bec89cade19764800de9bf5abd781c488c3e204e42f9033f58515646b051039b"
+    "targetSha256": "5eaa9132beca15ac3e5ba9ea9769258bce73bc295ee5331e757465836e1495f1"
   },
   {
     "source": "inkwave-public/src/world/maps.js",

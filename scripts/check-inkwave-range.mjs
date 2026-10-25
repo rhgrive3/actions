@@ -17,6 +17,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';
+import { runProfilerLifecycleBrowserChecks } from './lib/inkwave-profiler-lifecycle-browser.mjs';
 import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
@@ -433,6 +434,7 @@ for (const run of RUNS) {
           !perf.tracerRuntimeInstalled || perf.gpuStatus === 'error') {
         throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));
       }
+      out.checks.profilerLifecycle = await runProfilerLifecycleBrowserChecks(page, manifest.artifacts);
     }
     if (out.errors.length) throw new Error('page errors: ' + out.errors.join(' | '));
     if (out.missing.length) throw new Error('missing assets: ' + out.missing.join(' | '));

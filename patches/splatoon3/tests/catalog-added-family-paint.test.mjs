@@ -90,10 +90,12 @@ test('Brella collector survives a blocked centre pellet without crossing the wal
  for(let i=0;i<3;i++)volley.nodes.push({volley,distance:0,ended:false,samples:new Map()});
  const put=(i,end,ended)=>collectBrellaSplashes(volley.nodes[i],{prev:V(0)},V(end),ended,(at,r,spec,k)=>released.push({z:at.z,r,spec,k}));
  put(0,1,true);put(1,20,true);assert.equal(released.length,0,'await remaining member');put(2,20,true);
- assert.equal(released.length,6);assert.ok(released.every((r,i)=>Math.abs(r.z-3.3*(i+1))<1e-9));
- assert.ok(released.every(r=>r.r>source.SplashParam.SplashPaintWidthOneActive&&r.r<source.SplashParam.SplashPaintWidthFullActive));
+ assert.equal(released.length,6);assert.ok(released.every((r,i)=>Math.abs(r.z-3.3*i)<1e-9));
+ assert.equal(released[0].r,source.SplashParam.SplashPaintWidthFullActive,'all members contribute to the birth/feet drop');
+ assert.ok(released.slice(1).every(r=>r.r>source.SplashParam.SplashPaintWidthOneActive&&r.r<source.SplashParam.SplashPaintWidthFullActive));
  const blocked={plan,nodes:[],next:0};for(let i=0;i<3;i++)blocked.nodes.push({volley:blocked,distance:0,ended:false,samples:new Map()});
- const forbidden=[];for(const n of blocked.nodes)collectBrellaSplashes(n,{prev:V(0)},V(1),true,(...v)=>forbidden.push(v));assert.equal(forbidden.length,0);
+ const allowed=[];for(const n of blocked.nodes)collectBrellaSplashes(n,{prev:V(0)},V(1),true,(...v)=>allowed.push(v));
+ assert.equal(allowed.length,1,'only the birth/feet drop precedes this wall');assert.equal(allowed[0][0].z,0);
 });
 
 for(const id of ['s3-stringer-short','s3-saber-lite','s3-shelter-focus'])test(id+' preserves final floor paint at 30/60/120Hz and has no ghost authority',async()=>{

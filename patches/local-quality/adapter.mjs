@@ -160,6 +160,12 @@ const IDENTITY_FILES = [
   'collision-hotpath-adapter.mjs',
   'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
+  // Terminal composition dependencies are build inputs even when this layer's
+  // adaptQualitySource does not directly invoke them. Preserve existing order.
+  'added-ui-motion-adapter.mjs', 'drive-core-queue-adapter.mjs',
+  'drive-visual-audio-adapter.mjs', 'fx-empty-pools-adapter.mjs',
+  'ink-ripple-presentation-adapter.mjs', 'perf-readout-adapter.mjs',
+  'queue-world-20261024-adapter.mjs', 'showcase-idle-pools-adapter.mjs',
 ];
 
 export function replaceOnce(code, before, after, label) {

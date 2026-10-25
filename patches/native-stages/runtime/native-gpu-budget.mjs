@@ -60,6 +60,30 @@ export function nativeTierTextureCaps(caps, tier = 0, mobile = false) {
   return { ...caps, maxDimension: Math.min(caps.maxDimension, t >= 3 ? 128 : 256) };
 }
 
+// UASTC transcodes to one of these without an uncompressed RGBA32 fallback
+// (KTX2Loader: ASTC, BC7, BC1/BC3 and ETC2 all cover opaque and alpha maps).
+const UASTC_TARGETS = ['WEBGL_compressed_texture_astc', 'EXT_texture_compression_bptc', 'WEBGL_compressed_texture_s3tc', 'WEBGL_compressed_texture_etc'];
+export function nativeCompressedTextureSupport(renderer) {
+  const extensions = renderer?.extensions;
+  return typeof extensions?.has === 'function' && UASTC_TARGETS.some(name => extensions.has(name));
+}
+
+/**
+ * Texture quality and caps for one native load. Touch devices start one step
+ * lower unless the stage ships KTX2 and this GPU receives it compressed; the
+ * uncompressed touch budget then stays attached as `caps.fallback` for any
+ * image that has to be decoded from its source PNG instead.
+ */
+export function nativeTextureProfile({ settingsQuality, tier = 0, touch = false, compressed = false, stageCaps }) {
+  const relief = touch && compressed;
+  const quality = nativeTextureQuality(settingsQuality, tier, touch && !relief);
+  const caps = nativeTierTextureCaps(stageCaps(quality), tier, touch && !relief);
+  if (!relief) return { quality, caps, textureTouch: touch };
+  const fallbackQuality = nativeTextureQuality(settingsQuality, tier, true);
+  const fallback = { quality: fallbackQuality, ...nativeTierTextureCaps(stageCaps(fallbackQuality), tier, true) };
+  return { quality, caps: { ...caps, fallback }, textureTouch: false };
+}
+
 const capKey = caps => Object.keys(caps).sort().map(k => k + '=' + caps[k]).join(',');
 const capped = new WeakMap();
 

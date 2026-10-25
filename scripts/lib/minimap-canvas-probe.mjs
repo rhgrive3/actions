@@ -33,6 +33,16 @@ export const REVIEWED_MINIMAP_SOURCE_EPOCHS = Object.freeze([
   'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
   'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b',
   'patches/native-stages/runtime/native-minimap.mjs':'524fd0495d155ca83b7601a5d5264bbadc1abf5b9c0e1ded7342efb7281e925e'
+ })}),
+ // The sliced native raster retains the reviewed world-storage source set.
+ // Its exact native builder bytes retain the reviewed raster generator; only
+ // the asynchronous yield is abortable. Canvas acceptance is still mandatory. Keep the older
+ // synchronous epoch separately admissible; mixed source sets still fail.
+ Object.freeze({name:'library-queue-world-minimap-abortable-native-20261025',pins:Object.freeze({...COMMON_MINIMAP_PINS,
+  'inkwave-public/src/game/minimap.js':'18a7b3711083fc5e2a0f8d3782f2ff95fcd62df4b2e6cf8f867e18c72854c493',
+  'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
+  'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b',
+  'patches/native-stages/runtime/native-minimap.mjs':'5ba0e08316cc9a5e07b4f0f1e57129b9e4d355bf7684110aa95783f9007ad3ac'
  })})
 ]);
 export function assertReviewedMinimapSources(sourceHashes) {

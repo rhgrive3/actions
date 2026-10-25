@@ -7,7 +7,16 @@ import {execFileSync} from 'node:child_process';
 import crypto from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {selectedInput,INPUT_KEYS_SHA256,BASE,BRANCH,CONTROL_PATHS,PAINT_PATHS,hash,selectRoute,assertReviewedTree,readCheckout,verifyBuildInventory,assertSourceReceipt,assertReceiptOutside,writeReceipt} from '../lib/inkwave-pr1869-current-pair.mjs';
-import {prepareNativeStageBuild} from '../lib/inkwave-native-stages.mjs';
+// Positive-control data belongs to the reviewed PR1869 epoch, not the live
+// native-stage production tree of a later PR. Production admission remains
+// pinned in the unchanged verifier; native identity/prebuilt mutations reject.
+// Extracted from authenticated reviewed build manifest SHA256
+// 2dc4597355fe445efa02b6e877adde73cc27bfdb6dbcfcc3cf6eb09793d947a6.
+function reviewedNativeStageConfig(){
+ const value=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-pr1869-native-config-890e0ef8.json',import.meta.url),'utf8'));
+ assert.equal(hash(JSON.stringify(value)),'ac6368df84129ddbc51d128ba003b29462839c6c17aa6a51199328eef84ec6fb','immutable reviewed PR1869 positive-control native configuration');
+ return value;
+}
 const event=()=>({number:1869,repository:{full_name:'rhgrive3/actions'},pull_request:{number:1869,base:{ref:'main',sha:BASE,repo:{full_name:'rhgrive3/actions'}},head:{ref:BRANCH,sha:'1'.repeat(40),repo:{full_name:'rhgrive3/actions'}}}});
 test('route admits only the explicit same-repository PR1869 identity',()=>{
  const good=event();assert.deepEqual(selectRoute(good,'pull_request','rhgrive3/actions'),{repository:'rhgrive3/actions',pr:1869,branch:BRANCH,base:BASE,head:'1'.repeat(40)});
@@ -85,13 +94,13 @@ test('build inventory binds actual Git inputs and every output, with immutable n
  const site=path.join(dir,'site');fs.mkdirSync(site);
  const files={'upstream/src/main.js':hash(fs.readFileSync(path.join(root,'inkwave-public/src/main.js'))),'build-script/lib/fixture.mjs':hash(fs.readFileSync(path.join(root,'scripts/lib/fixture.mjs')))};
  const artifacts={'index.html':hash('fixture output\n')};fs.writeFileSync(path.join(site,'index.html'),'fixture output\n');
- const manifest={schema:1,files,artifacts,inputHash:hash(JSON.stringify(files)),contentHash:hash(JSON.stringify(artifacts)),build:{script:hash(fs.readFileSync(path.join(root,'scripts/build-inkwave.mjs'))),optimization:'esbuild-minify',esbuild:'0.28.2',revision:'c'.repeat(64),nativeStages:prepareNativeStageBuild(undefined).config}};
+ const manifest={schema:1,files,artifacts,inputHash:hash(JSON.stringify(files)),contentHash:hash(JSON.stringify(artifacts)),build:{script:hash(fs.readFileSync(path.join(root,'scripts/build-inkwave.mjs'))),optimization:'esbuild-minify',esbuild:'0.28.2',revision:'c'.repeat(64),nativeStages:reviewedNativeStageConfig()}};
  const manifestFile=path.join(site,'inkwave-build.json'),write=value=>fs.writeFileSync(manifestFile,JSON.stringify(value,null,2)+'\n');write(manifest);
  const inputKeysSha256=hash(JSON.stringify(Object.keys(files).sort()));
  const run=()=>verifyBuildInventory({root,commit,site,inputKeysSha256});
  const good=run();assert.equal(good.inputLeaves,2);assert.equal(good.artifactLeaves,1);assert.deepEqual(good.writtenPaths,[]);
  assert.throws(()=>verifyBuildInventory({root,commit,site}),'production default must not accept a synthetic keyset');
- for(const mutate of [m=>m.files['upstream/src/main.js']='0'.repeat(64),m=>m.files['unknown/main.js']='0'.repeat(64),m=>delete m.files['build-script/lib/fixture.mjs'],m=>m.inputHash='0'.repeat(64),m=>m.contentHash='0'.repeat(64),m=>m.artifacts['index.html']='0'.repeat(64),m=>m.artifacts['../escape']='0'.repeat(64),m=>m.build.script='0'.repeat(64),m=>m.build.optimization='none-offline',m=>m.build.esbuild='0.0.0',m=>m.build.revision='branch',m=>m.build.account={enabled:true},m=>m.build.nativeStages.mode='local-prepared',m=>delete m.build.nativeStages]){
+ for(const mutate of [m=>m.files['upstream/src/main.js']='0'.repeat(64),m=>m.files['unknown/main.js']='0'.repeat(64),m=>delete m.files['build-script/lib/fixture.mjs'],m=>m.inputHash='0'.repeat(64),m=>m.contentHash='0'.repeat(64),m=>m.artifacts['index.html']='0'.repeat(64),m=>m.artifacts['../escape']='0'.repeat(64),m=>m.build.script='0'.repeat(64),m=>m.build.optimization='none-offline',m=>m.build.esbuild='0.0.0',m=>m.build.revision='branch',m=>m.build.account={enabled:true},m=>m.build.nativeStages.mode='local-prepared',m=>m.build.nativeStages.runtimeSha256='0'.repeat(64),m=>m.build.nativeStages.prebuilt={baseURL:'../../native-prebuilt/',stages:{}},m=>delete m.build.nativeStages]){
   const bad=structuredClone(manifest);mutate(bad);write(bad);assert.throws(run);write(manifest);
  }
  fs.writeFileSync(path.join(site,'extra.js'),'extra');assert.throws(run);fs.unlinkSync(path.join(site,'extra.js'));
@@ -152,7 +161,23 @@ test('every closed QA control is a mandatory physical input, not a sparse metada
 // relaxed predicate. The short original preflight slice is authenticated below;
 // the candidate and all later browser predicates remain exact reviewed bytes.
 test('Range actual checker preserves all 24 manifest/index and stage cases',async t=>{
- const candidate=fs.readFileSync(new URL('../check-inkwave-range.mjs',import.meta.url),'utf8');
+ const integrated=fs.readFileSync(new URL('../check-inkwave-range.mjs',import.meta.url),'utf8');
+ const profilerImport="import { runProfilerLifecycleBrowserChecks } from './lib/inkwave-profiler-lifecycle-browser.mjs';\n";
+ const profilerCall="      out.checks.profilerLifecycle = await runProfilerLifecycleBrowserChecks(page, manifest.artifacts);\n";
+ const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
+ function reviewedRangeBody(source){
+  assert.equal(digest(source),'7528713841a736a3a7d92fc7f85933411e2d1f515def151989f1791e21b71772','exact integrated Range bytes');
+  for(const line of [profilerImport,profilerCall])assert.equal(source.split(line).length,2,'exactly one reviewed hook line');
+  assert(source.includes("import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';\n"+profilerImport+"import { pathToFileURL } from 'node:url';\n"),'exact import position');
+  assert(source.includes("        throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));\n      }\n"+profilerCall+"    }\n    if (out.errors.length)"),'hook follows unchanged performance acceptance inside profiler branch');
+  const body=source.replace(profilerImport,'').replace(profilerCall,'');
+  assert.equal(digest(body),'ff79498bc6a7fb53626a035712ee34550254b49b7f1fbfc003e6f10915c68fb2','exact original Range body after only two reviewed additions');
+  return body;
+ }
+ const helper=fs.readFileSync(new URL('../lib/inkwave-profiler-lifecycle-browser.mjs',import.meta.url));
+ assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+helper.length+'\0'),helper])).digest('hex'),'42b36a251f7350fc553b19b28c10a1cfd28b853e');
+ const candidate=reviewedRangeBody(integrated);
+ for(const mutation of [integrated.replace(profilerImport,''),integrated.replace(profilerCall,''),integrated.replace(profilerCall,profilerCall+profilerCall),integrated.replace('manifest.artifacts);','{});'),integrated+'\n// unreviewed change\n'])assert.throws(()=>reviewedRangeBody(mutation));
  const baselinePreflight="const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');\nconst manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));\nif (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build identity mismatch');\nif (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) throw new Error('Build does not include the practice range layer');\n// No baked AO pair exists for the range in this source tree. Verify the actual\n// artifact contract rather than requiring an asset that was never shipped.\nconst rangeLightmapFiles=['assets/lightmaps/range.json','assets/lightmaps/range.png'];\nconst rangeLightmapCount=rangeLightmapFiles.filter(f=>Object.hasOwn(manifest.artifacts,f)).length;\nif (rangeLightmapCount===1) throw new Error('Incomplete baked range AO pair');\n// The emitted runtime index is authoritative: packaged but unregistered\n// lightmap assets are not loaded by Game._loadLightmap, including Range.\nconst emittedLightmaps=(await import(pathToFileURL(path.join(site,'src/world/lightmap-assets.js')).href)).LIGHTMAP_LAYOUTS;\nif (!Array.isArray(emittedLightmaps) || emittedLightmaps.some(id=>typeof id!=='string')) throw new Error('Invalid emitted lightmap index');\nconst rangeLightmapAvailable=emittedLightmaps.includes('range');\nif (rangeLightmapAvailable && rangeLightmapCount!==2) throw new Error('Emitted Range lightmap index is missing its complete asset pair');\n\n";
  const sha256=value=>crypto.createHash('sha256').update(value).digest('hex');
  function uniqueOffset(source,anchor){const n=source.indexOf(anchor);assert(n>=0,anchor);assert.equal(source.indexOf(anchor,n+anchor.length),-1,anchor);return n;}

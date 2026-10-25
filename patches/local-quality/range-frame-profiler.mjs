@@ -11,7 +11,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
   const cpu = new Float32Array(maxSamples);
   let dc = 0, cc = 0, nc = 0, at=0, prev=0, lastText=0, skipped=0;
   let mode = 'other', cap=60, displayHz=0, dynScale=1, perf=null;
-  let tracer = null, traceError = null;
+  let tracer = null, traceError = null, disposed = false;
   const insert = (arr, count, value) => {
     arr[count % arr.length] = value;
     return count + 1;
@@ -70,7 +70,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     reset() { dc=cc=nc=0; prev=0; skipped=0; lastText=0; tracer?.reset(); },
     snapshot,
     report() { return tracer?.report() || JSON.stringify(snapshot(),null,2); },
-    dispose() { tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
+    dispose() { disposed = true; tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
   };
   let label=null, copyButton=null;
   const doc=env?.document;
@@ -87,6 +87,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
   // attribution layer is a further lazy import, never a normal game import.
   probe.ready = game
     ? import('./range-hitch-tracer.mjs').then(({installHitchTracer}) => {
+        if (disposed) return null;
         tracer = installHitchTracer(game,{env,now});
         return tracer;
       }).catch(error => {

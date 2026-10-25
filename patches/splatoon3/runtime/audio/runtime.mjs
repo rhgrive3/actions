@@ -3,6 +3,7 @@ import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
 import { sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE } from './extra-source-routes.mjs';
+import { usesSplatChargerRise } from './charger-charge-rise.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
 // family SFX never layer over real weapon audio or substitute missing MP3s.
@@ -117,7 +118,7 @@ export function installWeaponAudioRuntime(api){
   const oldUpdate=R.update;
   R.update=function(dt,input,...rest){
     const a=this.a,s=stateFor(this),id=mainAudioSourceId(a?.weapon?.id);
-    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});if(a?.isLocal&&WEAPON_AUDIO[id]?.family==='charger')G.audio?.prewarmChargerChargeRise?.(a.weapon?.chargeTime);}
+    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});if(a?.isLocal&&usesSplatChargerRise(id))G.audio?.prewarmChargerChargeRise?.(id);}
     // A selected kit may become available only after the user's first gesture
     // starts AudioContext. Preload the actual selected sub/special *events*
     // rather than decoding all 381 samples or warming every remote actor.
@@ -150,13 +151,12 @@ export function installWeaponAudioRuntime(api){
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
-        // The selected Splatune source excerpt ALREADY contains its own
-        // mechanical onset followed by the ascending Charger tone. Play that
-        // original at 1x with the exact measured source offset and length.
-        // Never layer the old recorded HoldNoise click on top.
-        s.chargeRise=G.audio?.playChargerChargeRise?.({
-          volume:a.isLocal?.55:.28,
-        })||null;
+        // Only the Splat Charger and its scope share this selected phrase.
+        // Squiffer/E-liter/Bamboo/Goo use their own existing MP3 onset;
+        // their ready cue follows their actual charge, not this 1.215s clip.
+        s.chargeRise=usesSplatChargerRise(id)?G.audio?.playChargerChargeRise?.({
+          volume:a.isLocal?.55:.28,weaponId:id,
+        })||null:null;
         if(s.chargeRise)active.add(this);
         else play(a,'charge',a.pos,a.isLocal?.55:.35); // if asset has not loaded
       }
@@ -179,21 +179,23 @@ export function installWeaponAudioRuntime(api){
     const charging=!!this.charging,q=clamp(Number(this.charge)||0,0,1);
     if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
-    keepLoop(this,'roll',!!this.rolling,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
+    keepLoop(this,'roll',!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
     if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
     if(s.wasCharge&&!charging&&!s.firedThisUpdate)play(a,'release',a.pos,.27);
     if(r.scope&&charging&&!s.wasCharge)play(a,'scope',a.pos,.26);
-    if(c.pending&&!s.pending&&r.events.includes('windup'))play(a,'windup',a.pos,.55);
+    // Brush_Move is a sustained floor-contact loop, not a swing windup.
+    // Playing its complete 15.99s recording here left audio after one swing.
+    if(c.pending&&!s.pending&&r.events.includes('windup')&&r.family!=='brush')play(a,'windup',a.pos,.55);
     s.pending=c.pending;s.wasReady=charging&&q>=1;s.wasCharge=charging;
     const canopy=c.canopy;
     if(canopy?.open&&!s.canopy?.open)play(a,'open',canopy.pos,.7);
     if(s.canopy?.open&&(!canopy?.open)&&!canopy?.launched)play(a,'close',a.pos,.6);
     if(canopy?.launched&&!s.canopy?.launched)play(a,'purge',canopy.pos,.75);
-    s.canopy=canopy?{open:canopy.open,launched:canopy.launched}:null;
+    if(canopy){const prior=s.canopy||(s.canopy={});prior.open=canopy.open;prior.launched=canopy.launched;}else s.canopy=null;
     return result;
   };
   const oldSet=Actor.prototype.setWeapon;
-  Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&WEAPON_AUDIO[mainAudioSourceId(this.weapon?.id)]?.family==='charger')G.audio?.prewarmChargerChargeRise?.(this.weapon?.chargeTime);return r;};
+  Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&usesSplatChargerRise(this.weapon?.id))G.audio?.prewarmChargerChargeRise?.(this.weapon?.id);return r;};
   const kit=installKitAudio(api,{listen,options});
   const installed={version:1,weapons:Object.keys(WEAPON_AUDIO).length,dispose(){for(const u of unsubs)u();for(const r of active)stop(r);kit?.dispose();}};
   Object.defineProperty(R,INSTALL,{value:installed});return installed;

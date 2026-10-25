@@ -30,9 +30,18 @@ class Vec {
   addScaledVector(v, s) { this.x += v.x * s; this.y += v.y * s; this.z += v.z * s; return this; }
 }
 function fixture() {
-  const records = [], pool = { add(life, values, follow) {
-    const r = { life, v: new Float32Array(values), follow, t: 0 }; records.push(r); return r;
-  }};
+  const records = [], pool = {
+    add(life, values, follow = null) {
+      const r = { life, v: new Float32Array(values), follow, t: 0, dead: false }; records.push(r); return r;
+    },
+    // Match ShapePool's scalar birth without replacing any director callback.
+    addRaw(life, ...values) {
+      assert.ok(values.length === 16 || values.length === 17, '16 shape slots and an optional follow callback');
+      const follow = values.length === 17 ? values.pop() : null;
+      assert.ok(follow == null || typeof follow === 'function', 'retained follow callback');
+      return this.add(life, values, follow);
+    },
+  };
   const director = Object.assign(Object.create(Director.prototype), {
     v: Array.from({ length: 8 }, () => new Vec()), up: new Vec(0, 1, 0),
     tracks: new Map(), time: 0, kit: { discs: pool, inkDiscs: pool, bands: pool, inkBands: pool },

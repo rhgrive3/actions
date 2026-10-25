@@ -13,11 +13,19 @@ export function objectShredderEquipped(actor) {
   if (typeof actor.s3?.objectHitGear === 'boolean') return actor.s3.objectHitGear;
   if (!actor.remote) return actor.s3?.loadout?.[2]?.main === 'objectShredder';
   const proof = actor.s3?.objectGearSnapshot;
-  return !!proof && proof.owner === actor.owner && proof.life === life(actor) && proof.equipped === true;
+  return !!proof && proof.owner === actor.owner && proof.life === life(actor)
+    && (proof.sequence === undefined || proof.sequence === actor.net?._adoptionSeq) && proof.equipped === true;
 }
-export function receiveObjectGearSnapshot(actor, owner, flags) {
+export function receiveObjectGearSnapshot(actor, owner, flags, adoption) {
   actor.s3 ||= {};
-  actor.s3.objectGearSnapshot = { owner, life: life(actor), equipped: !!(flags & OBJECT_SHREDDER_FLAG) };
+  // The caller has admitted owner/life/sequence and validated adoption.gear.
+  // Bit27 also carries Dualies turret state. Prefer the independent gear identity.
+  // Missing/invalid gear replaces the prior receipt with the unchanged legacy
+  // flag fallback; it is not evidence of unequipped gear and cannot reuse loadout.
+  const gear = adoption?.gear;
+  actor.s3.objectGearSnapshot = { owner, life: life(actor), sequence: adoption?.sequence,
+    source: gear ? 'accepted-gear' : 'legacy-flag',
+    equipped: gear ? gear.loadout[2].main === 'objectShredder' : !!(flags & OBJECT_SHREDDER_FLAG) };
 }
 // Called only inside existing accepted-owner/life admission. A packet contains
 // one equipment identity, not an arbitrary damage multiplier. Old peers omit it.

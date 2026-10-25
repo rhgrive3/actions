@@ -6,6 +6,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import { blasterFlightPaintSpec, configureBlasterFlightPaint } from '../runtime/blaster-flight-paint.mjs';
 import { catalogSplashFirst, catalogSplashNearestSlot } from '../runtime/catalog-splash-paint.mjs';
 import { catalogVisualSpec, catalogVisualRadius, SOURCE_DRAW_1130 } from '../runtime/projectile-presentation.mjs';
+import { PROJECTILE_VISUAL_SOURCE } from '../runtime/projectile-visual-source-data.mjs';
 import { coolerSegmentContact, installCoolerCollision } from '../runtime/support-cooler-collision.mjs';
 import { rainmakerWallBlast } from '../runtime/ranked/rainmaker-defense.mjs';
 import { RankedWorld } from '../runtime/ranked/world.mjs';
@@ -82,13 +83,64 @@ test('frozen draw caching preserves exact rounding, age animation, mutable rows 
     spec.draw={...draw};spec.index=0;spec.baseRadius=.18;
     for(let i=0;i<5;i++){spec.draw.EndRadius+=.11;assert.ok(Object.is(catalogVisualRadius(spec,1),originalRadius(spec,1)));}
   }
+  // Change one cache key at a time. Missing source radii make the base-radius
+  // fallback observable instead of letting another changed key hide a stale hit.
+  const spec={draw:Object.freeze({AfterOffsetInitRadius:.1,AfterOffsetEndRadius:.2,ChangeFrame:5}),index:0,baseRadius:.18};
+  const check=()=>{for(const age of [0,1/60,1])assert.ok(Object.is(catalogVisualRadius(spec,age),originalRadius(spec,age)));};
+  check();spec.index=3;check();spec.baseRadius=.36;check();
+  spec.draw=Object.freeze({...spec.draw,AfterOffsetEndRadius:.5});check();
+});
+
+test('catalogue Bucket sharing preserves derivative source units and unclamped glob envelopes',()=>{
+  for(const actor of ['WeaponSlosherDiffusion','WeaponSlosherDouble'])
+    for(const [unit,{drawSize}] of PROJECTILE_VISUAL_SOURCE[actor].slosh.entries())
+      for(const index of [-1,0,5,9]){
+        const spec=catalogVisualSpec({family:'slosher',sourceActor:actor},{b:{},unit},index);
+        assert.equal(spec.draw,drawSize,actor+' unit '+unit+' retains its own draw row');
+        assert.equal(spec.index,Math.max(0,index),'long derivative streams must not repeat the last Bucket glob');
+        assert.equal(spec.style,'sheet');
+        for(const age of [0,1/60,1])assert.ok(Object.is(catalogVisualRadius(spec,age),
+          originalRadius({draw:drawSize,index:Math.max(0,index),baseRadius:.18},age)));
+      }
+  const expired=catalogVisualSpec({family:'slosher',sourceActor:'WeaponSlosherDouble'},{b:{},unit:1},9);
+  assert.equal(catalogVisualRadius(expired,1),0,'an exhausted derivative envelope must not become an extra visible fragment');
 });
 
 test('catalogue Bucket sharing still handles dynamic source accessors conservatively',()=>{
-  let reads=0;
-  const record={family:'slosher',get sourceActor(){reads++;return 'WeaponSlosherDouble';}};
-  const spec=catalogVisualSpec(record,{b:{},unit:1},5);
-  assert.ok(reads>0);assert.equal(spec.style,'sheet');assert.equal(spec.index,4);
+  for(const inherited of [false,true]){
+    const values=['WeaponSlosherDouble','WeaponSlosherBathtub','WeaponSlosherDiffusion','WeaponSlosherStrong'],reads=[];
+    const holder={get sourceActor(){const value=values[reads.length];assert.ok(value,'no extra source read');reads.push(value);return value;}};
+    const record=Object.freeze(inherited?Object.assign(Object.create(holder),{family:'slosher'}):
+      Object.defineProperty({family:'slosher'},'sourceActor',Object.getOwnPropertyDescriptor(holder,'sourceActor')));
+    const descriptor={b:{},unit:1};
+    const first=catalogVisualSpec(record,descriptor,5);
+    assert.deepEqual(reads,values.slice(0,2),'draw selection reads first, then style selection, even for an inherited getter');
+    assert.equal(first.draw,PROJECTILE_VISUAL_SOURCE.WeaponSlosherDouble.slosh[1].drawSize);
+    assert.equal(first.index,5);assert.equal(first.style,'bubble','style must observe the second getter value');
+    descriptor.unit=0;
+    const second=catalogVisualSpec(record,descriptor,9);
+    assert.deepEqual(reads,values,'a frozen accessor record must not cache the earlier source value or draw');
+    assert.equal(second.draw,PROJECTILE_VISUAL_SOURCE.WeaponSlosherDiffusion.slosh[0].drawSize);
+    assert.equal(second.index,9);assert.equal(second.style,'sheet');
+  }
+});
+
+test('catalogue source changes and ordinary records retain live draw selection and fallback behavior',()=>{
+  const record={family:'slosher',sourceActor:'WeaponSlosherDouble'},descriptor={b:{},unit:1};
+  assert.equal(catalogVisualSpec(record,descriptor,5).draw,PROJECTILE_VISUAL_SOURCE.WeaponSlosherDouble.slosh[1].drawSize);
+  record.sourceActor='WeaponSlosherDiffusion';descriptor.unit=0;
+  assert.equal(catalogVisualSpec(record,descriptor,5).draw,PROJECTILE_VISUAL_SOURCE.WeaponSlosherDiffusion.slosh[0].drawSize);
+  record.sourceActor='WeaponSlosherStrong';descriptor.unit=1;
+  assert.equal(catalogVisualSpec(record,descriptor,5).draw,SOURCE_DRAW_1130.WeaponSlosherStrong[1]);
+  const ownDraw={InitRadius:.3,EndRadius:.4},unitDraw={InitRadius:.6,EndRadius:.7};
+  for(const sourceActor of ['WeaponSlosherStrong','WeaponSlosherBathtub']){
+    const ordinary={family:'slosher',sourceActor};
+    for(const [b,draw] of [[{DrawSizeParam:ownDraw},ownDraw],[{UnitParam:{DrawSizeParam:unitDraw}},unitDraw],[{},SOURCE_DRAW_1130[sourceActor][1]]]){
+      const spec=catalogVisualSpec(ordinary,{b,unit:1},5);
+      assert.equal(spec.draw,draw);assert.equal(spec.index,5);
+      assert.equal(spec.style,sourceActor==='WeaponSlosherBathtub'?'bubble':'sheet');
+    }
+  }
   assert.equal(catalogVisualSpec({family:'shooter',sourceActor:'WeaponShooterNormal'},{c:{}}).style,'rod');
 });
 

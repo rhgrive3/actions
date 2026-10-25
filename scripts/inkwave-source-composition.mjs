@@ -1,3 +1,7 @@
+import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
+import { adaptWeaponQueue20261024 } from '../patches/splatoon3/weapon-queue-20261024-adapter.mjs';
+import { adaptDriveVisualAudio } from '../patches/local-quality/drive-visual-audio-adapter.mjs';
+import { adaptQueueWorld20261024 } from '../patches/local-quality/queue-world-20261024-adapter.mjs';
 import { adaptWorldQueueBuild } from '../patches/local-quality/world-queue-build-adapter.mjs';
 import { adaptSettingsHudQueue } from '../patches/local-quality/settings-hud-queue-adapter.mjs';
 import { adaptFiringCosmetics } from '../patches/splatoon3/firing-cosmetics-adapter.mjs';
@@ -80,7 +84,12 @@ export function adaptBuildSource(rel, code) {
   code = adaptInputLensQueue(rel, code);
   code = adaptSpawnExclusion(rel, code);
   const composed = adaptAddedUiMotion(rel, adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce));
-  return adaptFiringCosmetics(rel, composed);
+  code = adaptFiringCosmetics(rel, composed);
+  code = adaptDriveCoreQueue(rel, code, replaceOnce);
+  code = adaptWeaponQueue20261024(rel, code, replaceOnce);
+  code = adaptDriveVisualAudio(rel, code, replaceOnce);
+  code = adaptQueueWorld20261024(rel, code, replaceOnce);
+  return code;
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

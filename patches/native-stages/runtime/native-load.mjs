@@ -44,9 +44,62 @@ export async function loadNativeData(id,signal,options={}){
  if(manifest.schema!==1||manifest.id!==id||data.triangles.length/9!==manifest.geometry.collisionTriangles||data.triangleFace.length!==manifest.geometry.collisionTriangles||data.mask.length!==manifest.gridCells)throw Error('Unsupported native asset schema: '+id);
  return data;
 }
+// Loaded only for stages that ship KTX2 textures. A loader is bound to one
+// renderer; a replaced loader is disposed only after its pending parses
+// settle, because disposing the worker pool drops their callbacks.
+let ktx2=null;
+function ktx2Loader(renderer){
+ if(ktx2?.renderer!==renderer){
+  if(ktx2){ktx2.retired=true;releaseKtx2(ktx2);}
+  ktx2={renderer,pending:0,retired:false,loader:import('../../../vendor/three/jsm/loaders/KTX2Loader.js').then(({KTX2Loader})=>
+   new KTX2Loader().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer))};
+ }
+ return ktx2;
+}
+function releaseKtx2(entry){if(entry.retired&&!entry.pending)entry.loader.then(l=>l.dispose(),()=>{});}
+// Textures ship as whole KTX2 slices of per-stage packs. One load fetches a
+// pack once (verified) and drops it after its last listed texture is taken.
+function prebuiltPacks(stage,rows){
+ const uses=new Map(),pending=new Map();
+ for(const [file,job] of rows){const pack=stage.manifest.prebuiltTextures?.[file]?.[job.role]?.pack;if(pack)uses.set(pack,(uses.get(pack)||0)+1);}
+ const specs=new Map((stage.manifest.prebuiltTexturePacks||[]).map(p=>[p.file,p]));
+ return {async slice(variant,signal){
+  let bytes=pending.get(variant.pack);
+  if(!bytes){const spec=specs.get(variant.pack);if(!spec)throw Error('Unlisted prebuilt pack: '+variant.pack);bytes=import('./prebuilt-load.mjs').then(({fetchVerified})=>fetchVerified(spec.file,spec,signal));pending.set(variant.pack,bytes);bytes.catch(()=>pending.delete(variant.pack));}
+  const pack=await bytes;
+  const left=(uses.get(variant.pack)||1)-1;uses.set(variant.pack,left);if(left<=0)pending.delete(variant.pack);
+  if(variant.offset+variant.bytes>pack.byteLength)throw Error('Prebuilt texture outside its pack');
+  return pack.slice(variant.offset,variant.offset+variant.bytes);
+ },release(){pending.clear();}};
+}
+async function prebuiltCompressedTexture(variant,packs,renderer,signal){
+ const bytes=await packs.slice(variant,signal);
+ const entry=ktx2Loader(renderer);entry.pending++;
+ try{
+  const loader=await entry.loader;
+  // The transcode cannot be cancelled. An abort settles this call at once;
+  // a texture that still arrives afterwards is disposed, never published.
+  return await new Promise((resolve,reject)=>{
+   let settled=false;
+   const settle=(fn,value)=>{if(settled)return false;settled=true;signal?.removeEventListener?.('abort',onAbort);fn(value);return true;};
+   const onAbort=()=>settle(reject,new DOMException('Aborted','AbortError'));
+   if(signal?.aborted)return onAbort();
+   signal?.addEventListener?.('abort',onAbort,{once:true});
+   loader.parse(bytes,texture=>{if(signal?.aborted)onAbort();if(!settle(resolve,texture))texture?.dispose?.();},error=>settle(reject,error));
+  });
+ }finally{entry.pending--;releaseKtx2(entry);}
+}
+/** Same bound as the PNG path's resize: start the chain at the first level within the cap. */
+export function capMipLevels(texture,limit){
+ const mips=texture.mipmaps;if(!Number.isFinite(limit)||!mips?.length)return;
+ let drop=0;while(drop<mips.length-1&&Math.max(mips[drop].width,mips[drop].height)>limit)drop++;
+ if(!drop)return;
+ texture.mipmaps=mips.slice(drop);texture.image={width:texture.mipmaps[0].width,height:texture.mipmaps[0].height};
+}
 export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit,previousTextures=null){
  const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
  const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
+ const fallback=textureLimit && typeof textureLimit==='object' ? textureLimit.fallback||null : null;
  const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
  textures._nativeBorrowed=new Set();
  // A source export can contain hundreds of textures for inactive/unrendered objects.
@@ -89,13 +142,42 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  }
  let failure=null;
  const checkAbort=()=>{if(failure)throw failure;if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
- let next=0;
+ let next=0;const packs=prebuiltPacks(data,rows);
  const worker=async()=>{try{while(next<rows.length){
   checkAbort();
-  const [file,job]=rows[next++],{role}=job;
+  const [file,rowJob]=rows[next++],{role}=rowJob;let job=rowJob;
   const borrowed=previousTextures?.get(file);
   if(canBorrowTexture(borrowed,data,file,job,renderer)){textures._nativeBorrowed.add(borrowed);for(const alias of job.aliases)textures.set(alias,borrowed);continue;}
-  let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
+  let {encoding}=job;
+  const variant=data.manifest.prebuiltTextures?.[file]?.[role];
+  if(variant){
+   // Prebuilt KTX2 (UASTC): pixel inference already applied to the manifest
+   // at build time; the GPU receives a compressed format.
+   let texture;
+   try{
+    texture=await prebuiltCompressedTexture(variant,packs,renderer,signal);checkAbort();
+    // Without a compressed target KTX2Loader still returns a CompressedTexture,
+    // holding RGBA32 data in RGBAFormat; the relaxed touch budget only holds
+    // for a GPU-compressed format.
+    if(fallback&&(!texture.isCompressedTexture||texture.format===THREE.RGBAFormat))throw Error('KTX2 transcoded uncompressed');
+    capMipLevels(texture,job.roleLimit);
+    texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);texture=null;
+    continue;
+   }catch(error){
+    // Abort and earlier failures still stop the pipeline; otherwise use the pinned PNG.
+    if(error?.name==='AbortError'||signal?.aborted||failure)throw error;
+    console.warn('[native] prebuilt texture unavailable, decoding source PNG: '+variant.pack+'@'+variant.offset+' '+error.message);
+   }finally{texture?.dispose();}
+  }
+  // Every PNG decode, including images a partial prebuilt table does not
+  // cover, keeps the uncompressed budget this load was relieved from.
+  if(fallback){
+   const allowed=fallback.quality==='high'||['albedo','opacity'].includes(role);
+   if(!allowed)continue;
+   const roleLimit=Math.min(job.roleLimit,fallback.maxDimension||Infinity,fallback.perRole?.[role]||Infinity,fallback.quality==='low'?512:fallback.quality==='high'?4096:1024);
+   if(roleLimit!==job.roleLimit)job={...job,roleLimit};
+  }
+  const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;
   try{
   bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,job.roleLimit/Math.max(bitmap.width,bitmap.height));
@@ -147,7 +229,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
  }}catch(error){if(!failure)failure=error;throw error;}};
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
-  const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');
+  const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));packs.release();const failed=results.find(r=>r.status==='rejected');
  if(failed||signal?.aborted){for(const t of new Set(textures.values()))if(!textures._nativeBorrowed.has(t)){t.image?.close?.();t.dispose();}throw failure||failed?.reason||new DOMException('Aborted','AbortError');}
  return textures;
 }

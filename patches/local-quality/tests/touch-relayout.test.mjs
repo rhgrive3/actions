@@ -44,6 +44,7 @@ for (const mode of ['fixed', 'float']) test(`${mode} stick and holds survive a r
 
 test('resize storms and duplicate rotation notifications queue one frame and reset once', () => {
   const f = fixture();
+  f.env.innerHeight = 900;
   for (let i = 0; i < 120; i++) f.layout({ type: 'resize' });
   assert.equal(f.frames.size, 1); assert.equal(f.counts.reset, 0);
   f.env.orientation = 90;
@@ -55,7 +56,7 @@ test('resize storms and duplicate rotation notifications queue one frame and res
 });
 
 test('destroy abort actually cancels queued layout and rejects further events', () => {
-  const f = fixture(); f.layout({ type: 'resize' });
+  const f = fixture(); f.env.innerHeight = 900; f.layout({ type: 'resize' });
   const id = [...f.frames.keys()][0]; f.mobile._abort.abort();
   assert.deepEqual(f.cancelled, [id]); assert.equal(f.frames.size, 0);
   f.layout({ type: 'resize' }); f.drain();
@@ -94,7 +95,7 @@ test('canonical production composition has one router and layout owner, with bou
   assert.equal((fixed.match(/this\.canvas\.addEventListener\('pointerdown'/g) || []).length, 1);
   assert.equal(Object.keys(qualityIdentity()).includes('touch-relayout.mjs'), true);
   assert.throws(() => adaptTouchRelayout(rel, fixed), /touch relayout conflict/);
-  assert.throws(() => adaptTouchRelayout(rel, before.replace('const relayout = () =>', 'const relayout = unexpected =>')), /touch relayout conflict/);
+  assert.throws(() => adaptTouchRelayout(rel, before.replace('const relayout = (event) =>', 'const relayout = unexpected =>')), /touch relayout conflict/);
   assert.equal(adaptTouchRelayout('src/core/gyro.js', 'unchanged'), 'unchanged');
 });
 
@@ -102,6 +103,7 @@ test('editor relayout cancels its stale drag without resyncing gyro or losing th
   const f = fixture(), draft = { fire: { x: .8 } };
   f.mobile.editing = true; f.mobile.layout = draft; f.mobile._edit = { pts: new Map([[9, {}]]) };
   f.mobile.resetPointers = function() { f.counts.reset++; this._edit = null; };
+  f.env.innerHeight = 900;
   f.layout({ type: 'resize' }); f.drain();
   assert.equal(f.mobile._edit, null); assert.equal(f.mobile.layout, draft);
   assert.equal(f.mobile.editing, true); assert.equal(f.counts.reset, 1);
