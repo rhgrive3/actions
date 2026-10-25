@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {BASELINE_SHA,CASES,VIEWPORTS,reticleCrop,assertSnapshot,pace,sha256} from '../check-inkwave-reticle-visual-review.mjs';
+import {BASELINE_SHA,CASES,VIEWPORTS,reticleCrop,assertSnapshot,pace,sha256,browserLaunchOptions,settleCamera,inspectCaptureSurface,assertSurfaceInvariant,pngDimensions} from '../check-inkwave-reticle-visual-review.mjs';
 
 const source=fs.readFileSync(new URL('../check-inkwave-reticle-visual-review.mjs',import.meta.url),'utf8');
 const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-reticle-visual-review.yml',import.meta.url),'utf8');
@@ -59,6 +59,52 @@ test('paced advancement yields every native RAF, never debug.step or synchronous
   await assert.rejects(pace({},241));
   assert.doesNotMatch(source,/debug\.step\(/);
   assert.match(source,/g\._frame\(1\/60\)/);
+});
+test('use known full Chromium WebGL mitigation without overriding custom executable or quality',()=>{
+  assert.equal(browserLaunchOptions().channel,'chromium');
+  assert.equal(browserLaunchOptions().headless,true);
+  assert.equal(browserLaunchOptions('/custom/chromium').executablePath,'/custom/chromium');
+  assert(!('channel' in browserLaunchOptions('/custom/chromium')));
+  assert.match(source,/a\.spawnAt\(a\.pos\.clone\(\)\.set\(-14\.6,\.04,0\),0\)/);
+  assert.match(source,/g\.rig\.follow\(a,true\)/);
+  assert.doesNotMatch(source,/animations:\s*'disabled'|\.finish\(\)[\s\S]*debug\.step/);
+  assert.equal((source.match(/scale:'device',timeout:20000/g)||[]).length,2,'original screenshot deadlines unchanged');
+});
+test('native camera settles only after blend ends and four stable paced frames, with bounded failure',async()=>{
+  let reads=0,steps=0;
+  const page={evaluate:async(fn,arg)=>{
+    if(typeof arg==='number'){steps++;return;}
+    reads++;return {pose:[reads<3?3-reads:0,0,0,0,0,0,1,55],blendActive:reads<2,weaponId:'roller',charging:false};
+  }};
+  const result=await settleCamera(page,10);
+  assert.equal(result.stableFrames,4);assert.equal(result.weaponId,'roller');assert.equal(steps,reads);
+  await assert.rejects(settleCamera({evaluate:async(fn,arg)=>typeof arg==='number'?undefined:{pose:[0],blendActive:true,charging:false}},4),/did not settle/);
+});
+test('render-only surface redraw drains GPU without changing clock/pose/charge and fails closed on mutation',()=>{
+  const oldWindow=globalThis.window,oldStyle=globalThis.getComputedStyle;
+  const vec=()=>({toArray:()=>[0,0,0]}),box={width:1280,height:720,toJSON:()=>({width:1280,height:720})};
+  let renders=0,finishes=0;
+  const G={time:1,match:{time:2,stateT:3},local:{weaponId:'roller',pos:vec(),weaponRunner:{charge:.5,chargeT:.5,charging:true}},camera:{position:vec(),quaternion:vec(),fov:55,aspect:16/9},
+    renderer:{domElement:{isConnected:true,width:960,height:540,getBoundingClientRect:()=>box},getPixelRatio:()=>.75,getContext:()=>({finish:()=>finishes++,isContextLost:()=>false})}};
+  const g={frozen:true,R:{render:()=>renders++}};
+  globalThis.window={__G:G,__inkwave:g};
+  // Browser globals read by the evaluator are supplied as test-only DOM doubles.
+  const saved={innerWidth:globalThis.innerWidth,innerHeight:globalThis.innerHeight,devicePixelRatio:globalThis.devicePixelRatio,document:globalThis.document};
+  Object.assign(globalThis,{innerWidth:1280,innerHeight:720,devicePixelRatio:1,document:{fonts:{status:'loaded'},visibilityState:'visible'},getComputedStyle:()=>({display:'block',visibility:'visible',opacity:'1'})});
+  try {
+    const before=inspectCaptureSurface({redraw:true}),after=inspectCaptureSurface();
+    assert.equal(renders,1);assert.equal(finishes,1);assertSurfaceInvariant(before,after);
+    assert.throws(()=>assertSurfaceInvariant(before,{...after,state:{...after.state,charge:.6}}));
+    assert.throws(()=>assertSurfaceInvariant(before,{...after,state:{...after.state,clock:[9]}}));
+    g.R.render=()=>G.time++;
+    assert.throws(()=>inspectCaptureSurface({redraw:true}),/advanced native clock, pose or charge/);
+  } finally {globalThis.window=oldWindow;globalThis.getComputedStyle=oldStyle;Object.assign(globalThis,saved);}
+});
+test('physical PNG dimensions are explicit, rejecting non-PNG bytes rather than assuming CSS scale',()=>{
+  const bytes=Buffer.alloc(24);Buffer.from([137,80,78,71,13,10,26,10]).copy(bytes);bytes.writeUInt32BE(720,16);bytes.writeUInt32BE(600,20);
+  assert.deepEqual(pngDimensions(bytes),{width:720,height:600});
+  assert.throws(()=>pngDimensions(Buffer.from('not png')));
+  for(const pattern of [/xhClasses/,/effectiveOpacity/,/muzzleBlock/,/surfaceBefore/,/surfaceAfter/,/sourceSha=sourceSha/,/imagePixels/])assert.match(source,pattern);
 });
 test('identities, 1:1 frame/crop PNGs and failure diagnostics are persisted',()=>{
   for(const pattern of [/build\.artifacts\[relative\]/,/probeSha256/,/imageSha256/,/baseWeaponId/,/fov:/,/css:/,/failure\.png/,/browser\.log/,/receipt\.status='failed'/])assert.match(source,pattern);

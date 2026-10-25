@@ -22,6 +22,16 @@ export const CASES = Object.freeze([
   {name:'octobrush-fallback',id:'s3-brush-normal',profile:null,kind:'roller',idleOnly:true},
 ]);
 export const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+export function pngDimensions(bytes) {
+  assert(bytes.length>=24&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),'complete PNG header required');
+  return {width:bytes.readUInt32BE(16),height:bytes.readUInt32BE(20)};
+}
+export function browserLaunchOptions(executablePath) {
+  // Same source-supported mitigation as check-inkwave-ranked-browser.mjs:
+  // full Chromium, not its default headless shell, for offline WebGL captures.
+  return {headless:true,...(executablePath?{executablePath}:{channel:'chromium'}),
+    args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
+}
 export function reticleCrop(rect, viewport) {
   const width = Math.min(240,viewport.width),height = Math.min(200,viewport.height);
   return {x:Math.max(0,Math.min(viewport.width-width,Math.round(rect.x+rect.width/2-width/2))),
@@ -72,17 +82,66 @@ async function until(page,predicate,label,maxFrames=240) {
   }
   throw Error('Actual game state deadline: '+label);
 }
+export async function settleCamera(page,maxFrames=180) {
+  let previous=null,stable=0;
+  for(let frames=1;frames<=maxFrames;frames++) {
+    await pace(page);
+    const current=await page.evaluate(()=>{
+      const G=window.__G,g=window.__inkwave;
+      return {pose:[...G.camera.position.toArray(),...G.camera.quaternion.toArray(),G.camera.fov],
+        blendActive:!!g.rig.blend?.active,weaponId:G.local.weaponId,charging:G.local.weaponRunner.charging===true};
+    });
+    assert(!current.charging,'idle camera settlement must not charge or fire a weapon');
+    const delta=previous?Math.max(...current.pose.map((v,i)=>Math.abs(v-previous.pose[i]))):Infinity;
+    stable=!current.blendActive&&delta<=1e-5?stable+1:0;
+    if(stable>=4)return {frames,stableFrames:stable,maxPoseDelta:delta,pose:current.pose,weaponId:current.weaponId};
+    previous=current;
+  }
+  throw Error('Native idle camera/FOV did not settle within '+maxFrames+' paced frames');
+}
+// Browser-evaluated: the native render-only redraw and GPU drain are already
+// used by frozen-HUD/ranked checkers. No Game frame, simulation clock, input,
+// animation or quality setting is changed here.
+export function inspectCaptureSurface({redraw=false}={}) {
+  const G=window.__G,g=window.__inkwave,m=G.match,a=G.local,r=G.renderer;
+  if(!g.frozen||!m||!r.domElement.isConnected)throw Error('Capture requires frozen native game surface');
+  const state=()=>({clock:[G.time,m.time,m.stateT,g.s3Clock?.ticks],weaponId:a.weaponId,
+    actorPosition:a.pos.toArray(),cameraPosition:G.camera.position.toArray(),cameraQuaternion:G.camera.quaternion.toArray(),fov:G.camera.fov,aspect:G.camera.aspect,
+    charge:a.weaponRunner.charge||0,chargeT:a.weaponRunner.chargeT||0,charging:a.weaponRunner.charging===true,
+    bowTilt:a.weaponRunner.catalogState?.bowTilt||0});
+  const before=state(),started=performance.now();
+  if(redraw){g.R.render();r.getContext().finish();}
+  const after=state();
+  if(JSON.stringify(after)!==JSON.stringify(before))throw Error('Render-only capture advanced native clock, pose or charge');
+  const canvas=r.domElement,box=canvas.getBoundingClientRect(),style=getComputedStyle(canvas);
+  if(r.getContext().isContextLost()||style.display==='none'||style.visibility!=='visible'||Number(style.opacity)<=0)
+    throw Error('Native capture canvas is lost or hidden');
+  if(Math.abs(box.width-innerWidth)>.01||Math.abs(box.height-innerHeight)>.01)throw Error('Native capture canvas bounds differ from viewport');
+  return {state:after,wallTimestamp:Date.now(),redraw,gpuFinishMs:redraw?performance.now()-started:null,
+    viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
+    canvas:{width:canvas.width,height:canvas.height,pixelRatio:r.getPixelRatio(),box:box.toJSON()},
+    fonts:document.fonts.status,visibility:document.visibilityState};
+}
+export function assertSurfaceInvariant(before,after) {
+  assert.deepEqual(after.state,before.state,'screenshot must not advance actual clock/weapon/pose/charge');
+  assert.deepEqual(after.viewport,before.viewport,'screenshot viewport must remain unchanged');
+  assert.deepEqual(after.canvas,before.canvas,'native canvas must remain unchanged');
+}
 async function readSnapshot(page) {
   return page.evaluate(()=>{
     const g=window.__inkwave,a=window.__G.local,h=g.hud,r=h.ret,runner=a.weaponRunner;
     const charge=h._chargeEl,rect=r.getBoundingClientRect();
     const hidden=el=>{for(let p=el;p&&p!==r.parentNode;p=p.parentElement)if(getComputedStyle(p).display==='none')return true;return false;};
-    const style=getComputedStyle(r),guide=g._hudTransport?.crosshair?.guide;
+    const style=getComputedStyle(r),crosshair=g._hudTransport?.crosshair,guide=crosshair?.guide;
+    let effectiveOpacity=1;const ancestors=[];
+    for(let element=r;element;element=element.parentElement){const s=getComputedStyle(element);effectiveOpacity*=Number(s.opacity);ancestors.push({tag:element.tagName,classes:element.className?.baseVal??element.className,opacity:s.opacity,visibility:s.visibility,display:s.display});}
     return {weaponId:a.weaponId,baseWeaponId:a.weapon.catalogRecord?.id||a.weapon.id||a.weaponId,
       family:a.weapon.behaviorKind||a.weapon.catalogRecord?.family||a.weapon.kind,hudWeapon:h._L.weapon,kind:h._L.kind,
       installed:!!h[Symbol.for('inkwave.weaponReticlePresentation.installed')],
       retConnected:r.isConnected,visible:style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)>0,
       visibility:style.visibility,hudVisible:!h.el.classList.contains('is-hidden'),
+      xhClasses:[...h.xh.classList],effectiveOpacity,ancestors,color:style.color,
+      inRange:crosshair?.inRange??null,onTarget:crosshair?.onTarget??null,muzzleBlock:crosshair?.muzzleBlock??null,
       classes:[...r.classList],rect:rect.toJSON(),charge:runner.charge||0,charging:runner.charging===true,
       profiles:[...r.querySelectorAll('[data-iw-reticle-presentation-profile]')].map(n=>n.dataset.iwReticlePresentationProfile),
       profileArtwork:[...r.querySelectorAll('[data-iw-reticle-presentation-profile]')].map(n=>({display:getComputedStyle(n).display,bounds:n.getBoundingClientRect().toJSON()})),
@@ -124,6 +183,7 @@ export async function main(argv=process.argv.slice(2)) {
   const receipt={schema:1,before,sourceSha,contentHash:build.contentHash,inputHash:build.inputHash,
     probeSha256:sha256(script),build:build.build,viewports:VIEWPORTS,scenarios:[],errors:[],status:'running',
     scope:'Actual production range/HUD DOM and browser screenshots; software GPU only. Reference-guided approximation, NOT Nintendo pixel/behavior parity or full CI.',
+    captureProtocol:{browser:process.env.CHROMIUM_PATH?'custom-executable':'chromium-full-headless',scale:'device',screenshotDeadlineMs:20000,nativeRenderOnly:true,animations:'unchanged'},
     comparison:'Pair same viewport/weapon/phase crop against immutable main; retail reference review is separate, not certified by this gate.'};
   const write=()=>fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
   fs.copyFileSync(path.join(site,'inkwave-build.json'),path.join(out,'inkwave-build.json'));
@@ -142,7 +202,8 @@ export async function main(argv=process.argv.slice(2)) {
   try {
     const {chromium}=await import('playwright');
     const {enterRangeFromMenu}=await import('./lib/inkwave-range-menu-entry.mjs');
-    browser=await chromium.launch({...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+    browser=await chromium.launch(browserLaunchOptions(process.env.CHROMIUM_PATH));
+    receipt.browserVersion=browser.version();write();
     for(const view of VIEWPORTS) {
       const context=await browser.newContext({viewport:{width:view.width,height:view.height},deviceScaleFactor:view.deviceScaleFactor,hasTouch:view.touch,isMobile:view.touch});
       page=await context.newPage();
@@ -157,7 +218,8 @@ export async function main(argv=process.argv.slice(2)) {
       await page.evaluate(()=>{
         const g=window.__inkwave,G=window.__G,a=G.local;
         g.debug.freeze();g.debug.freezeBots();G.match.range.movingTargets=false;g.debug.fire(false);
-        a.pos.set(-14.6,.04,0);a.vel.set(0,0,0);a.yaw=a.aimYaw=0;g.rig.yaw=0;g.rig.pitch=-.12;
+        // Native spawn resets fixed-clock interpolation; direct pos writes did not.
+        a.spawnAt(a.pos.clone().set(-14.6,.04,0),0);g.rig.yaw=0;g.rig.pitch=-.12;g.rig.follow(a,true);
       });
       for(const scenario of CASES) {
         console.log(view.name,scenario.id,'start');
@@ -165,17 +227,29 @@ export async function main(argv=process.argv.slice(2)) {
           const g=window.__inkwave;g.debug.fire(false);window.__G.match.range.setWeapon(id);
           await window.__G.local.character.sourceMotion.ready;
         },scenario.id);
-        await pace(page,4);
+        const cameraSettlement=await settleCamera(page);
         const capture=async phase=>{
           console.log(before?'baseline':'candidate',view.name,scenario.id,phase,'capture');
           const row=await readSnapshot(page);
           console.log(JSON.stringify({head:sourceSha,before,viewport:view.name,actualWeaponId:row.weaponId,phase,profile:row.profiles,viewportCss:row.viewport,dpr:row.dpr,settings:row.settings}));
           const basename=`${view.name}-${scenario.name}-${phase}`;
           const crop=reticleCrop(row.rect,view);
-          row.viewportName=view.name;row.phase=phase;row.entry=entry;row.files={frame:basename+'-frame.png',crop:basename+'-reticle.png'};row.crop=crop;
+          row.viewportName=view.name;row.phase=phase;row.entry=entry;row.cameraSettlement=cameraSettlement;row.sourceSha=sourceSha;row.contentHash=build.contentHash;
+          row.files={frame:basename+'-frame.png',crop:basename+'-reticle.png'};row.crop=crop;row.screenshotScale='device';
           receipt.scenarios.push(row);write();
-          await page.screenshot({path:path.join(out,row.files.frame),timeout:20000});
-          await page.screenshot({path:path.join(out,row.files.crop),clip:crop,timeout:20000});
+          row.surfaceBefore=await page.evaluate(inspectCaptureSurface,{redraw:true});write();
+          assert.equal(row.surfaceBefore.state.weaponId,row.weaponId);
+          await page.screenshot({path:path.join(out,row.files.frame),scale:'device',timeout:20000});
+          await page.screenshot({path:path.join(out,row.files.crop),clip:crop,scale:'device',timeout:20000});
+          row.surfaceAfter=await page.evaluate(inspectCaptureSurface,{redraw:false});
+          assertSurfaceInvariant(row.surfaceBefore,row.surfaceAfter);
+          const afterCapture=await readSnapshot(page);assertSnapshot(afterCapture,scenario,phase,before);
+          row.afterCapture={weaponId:afterCapture.weaponId,charge:afterCapture.charge,charging:afterCapture.charging,profiles:afterCapture.profiles,
+            xhClasses:afterCapture.xhClasses,effectiveOpacity:afterCapture.effectiveOpacity,color:afterCapture.color,inRange:afterCapture.inRange,
+            muzzleBlock:afterCapture.muzzleBlock,projectedShotGuide:afterCapture.projectedShotGuide};
+          row.imagePixels=Object.fromEntries(Object.entries(row.files).map(([key,file])=>[key,pngDimensions(fs.readFileSync(path.join(out,file)))]));
+          assert.deepEqual(row.imagePixels.frame,{width:view.width*view.deviceScaleFactor,height:view.height*view.deviceScaleFactor});
+          assert.deepEqual(row.imagePixels.crop,{width:crop.width*view.deviceScaleFactor,height:crop.height*view.deviceScaleFactor});
           row.imageSha256={frame:sha256(fs.readFileSync(path.join(out,row.files.frame))),crop:sha256(fs.readFileSync(path.join(out,row.files.crop)))};
           assertSnapshot(row,scenario,phase,before);write();
         };
