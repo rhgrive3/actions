@@ -390,7 +390,7 @@ class RibbonPool {
   // opts: { width, widthTail, color [r,g,b], alpha, style, life (point lifetime s), spacing (m), flat (ground-aligned) }
   start(opts) {
     if (this.list.length >= this.T) { const old = this.list.findIndex(r => r.ended), victim=this.list[old >= 0 ? old : 0]; victim.ended=true;victim.pts.length=0;victim.samples.length=0;victim.count=0;this.list.splice(old >= 0 ? old : 0, 1); }
-    const r = { pts: [], samples: new Array(this.M), head: 0, count: 0, ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
+    const r = { pts: [], samples: new Array(this.M), head: 0, count: 0, viewDirty: true, ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
     this.list.push(r); return r;
   }
   push(r, x, y, z, now) {
@@ -403,7 +403,7 @@ class RibbonPool {
     const point=r.samples[at]||(r.samples[at]=[0,0,0,0]);point[0]=x;point[1]=y;point[2]=z;point[3]=now;
     // pts remains the public lifetime sentinel. Its chronological view is
     // synchronized in the existing render scan, never shifted per sample.
-    r.pts.length=r.count;
+    r.pts.length=r.count;r.viewDirty=true;
   }
   end(r) { if (r) r.ended = true; }
   update(now, camPos) {
@@ -412,9 +412,12 @@ class RibbonPool {
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const r = this.list[i];
-      while (r.count && now - r.samples[r.head][3] > r.o.life) { r.head=(r.head+1)%this.M; r.count--; }
-      r.pts.length=r.count;
-      for(let k=0;k<r.count;k++)r.pts[k]=r.samples[(r.head+k)%this.M];
+      while (r.count && now - r.samples[r.head][3] > r.o.life) { r.head=(r.head+1)%this.M; r.count--;r.viewDirty=true; }
+      if(r.viewDirty){
+        r.pts.length=r.count;
+        for(let k=0;k<r.count;k++)r.pts[k]=r.samples[(r.head+k)%this.M];
+        r.viewDirty=false;
+      }
       if (r.ended && r.count < 2) { this.list.splice(i, 1); r.samples.length=0; }
     }
     let slot = 0;

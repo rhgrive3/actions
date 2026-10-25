@@ -228,7 +228,9 @@ function receipt(nm,from,e,s,waitForTowerProof=false){
 export function kitPaintRadiusAllowed(nm,from,e,cap){
  if(paintMeta(e))return !!receipt(nm,from,e,state(nm));
  // Unknown metadata cannot gain the wider core permit.
- return Math.fround(e[5])<=Math.fround(Math.max(cap,catalogPaintRadiusLimit(nm,from)));
+ const rounded=Math.fround(e[5]);
+ if(Number.isFinite(cap)&&rounded<=Math.fround(cap))return true;
+ return rounded<=Math.fround(Math.max(cap,catalogPaintRadiusLimit(nm,from)));
 }
 export function consumeKitPaint(nm,from,e){
  if(!paintMeta(e))return true;

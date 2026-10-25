@@ -18,6 +18,21 @@ on:
       - 'scripts/check-inkwave-crab-browser.mjs'
       - 'scripts/check-inkwave-gyro-touch-browser.mjs'
       - '.github/workflows/inkwave-crab-gyro.yml'
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/reliability/tests/pause-fixture.mjs'
+      - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/touch-layout/adapter.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/reliability/pause-adapter.mjs'
+      - 'patches/splatoon3/runtime/clock.mjs'
+      - 'patches/splatoon3/runtime/install.mjs'
+      - 'inkwave-public/src/core/input.js'
+      - 'inkwave-public/src/game/player.js'
+      - 'inkwave-public/src/main.js'
+      - 'inkwave-public/src/game/match.js'
+      - 'inkwave-public/src/ui/menus.js'
   workflow_dispatch:
 permissions:
   contents: read

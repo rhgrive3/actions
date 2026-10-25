@@ -20,7 +20,9 @@ export function nativeMinimapSupport(level,x,z,layers=reachableLayers(level),scr
  for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
   const cx=ix+dx,cz=iz+dz;if(cx<0||cz<0||cx>=nav.nx||cz>=nav.nz)continue;
   for(const id of nav.cells[cz*nav.nx+cx])if(reachable[id]){
-   const n=nav.nodes[id];if(Math.hypot(n.x-x,n.z-z)<=nav.step*1.1)candidates.push(n);
+   const n=nav.nodes[id],dx=n.x-x,dz=n.z-z,reach=nav.step*1.1;
+   if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;
+   if(Math.hypot(dx,dz)<=reach)candidates.push(n);
   }
  }
  if(!candidates.length)return first;

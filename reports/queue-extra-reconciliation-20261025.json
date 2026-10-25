@@ -1,0 +1,3096 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "baseHead": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "targetPr": 1870,
+  "activeQueueRowsAtStart": 513,
+  "counts": {
+    "already-in-pr": 292,
+    "needs-evidence": 83,
+    "implemented": 107,
+    "not-adopted": 28,
+    "in-other-pr": 2,
+    "excluded-user": 1
+  },
+  "scope": "Every active optimization queue title was resolved against existing PR work and current source. Implemented means included in this additional PR commit, not merged or verified on a retail/iPad device. Conditional proposals remain open.",
+  "entries": [
+    {
+      "slug": "all-subs-fixed-step-object-snapshot-array-reuse",
+      "status": "already-in-pr",
+      "reason": "Depth-leased object snapshots preserve reverse fixed-step traversal and callback mutation isolation; finally clears references after normal completion and exceptions.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "angle-shooter-tail-cache-static-bounds-and-capsule-scratch",
+      "status": "needs-evidence",
+      "reason": "Current updateAngleLine creates base=new api.THREE.Vector3() and result={t:0,dist:Infinity} per tick, and recomputes line-segment AABB once within each tick. No persistent bounds with append invalidation or depth-safe object-owned capsule scratch exists.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "animate-weapon-defer-unused-shot-pulse-by-kind",
+      "status": "already-in-pr",
+      "reason": "Evaluate the common shot pulse only for the Shooter and Splatling branches which consume it.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "audio-reference-collector-sparse-checkout-omit-unread-game-tree",
+      "status": "already-in-pr",
+      "reason": "Non-cone sparse checkout materializes only the standard-library collector and its workflow. Actual local Git sparse-checkout controls verify these two files and no game/modeler inputs. Collector URL/provenance/output/retention behavior is unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "audio-source-audit-workflow-only-trigger-and-no-manual-entry",
+      "status": "already-in-pr",
+      "reason": "Focused audio runtime/adapter/source/tools/script/report changes now trigger the audit; workflow_dispatch uses the immutable event SHA. PR supersession is isolated from independent manual runs. Existing tracked-input ZIP content policy and five-day retention remain.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "autobomb-pose-reuse-ground-speed-hypot",
+      "status": "implemented",
+      "reason": "One identical speed result supplies rotation threshold and grounded model pose.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "avoid-charger-rise-mp3-decode-input-clone",
+      "status": "implemented",
+      "reason": "Transfer exact response ArrayBuffer to native decoder; no post-decode raw-byte borrower.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "avoid-rejected-one-shot-poisoning-emitter-min-gap",
+      "status": "needs-evidence",
+      "reason": "Composed audio still records emitter timestamp before voice admission. Moving commit changes audible admission/failed-build behavior and LRU/backoff; needs dedicated sound/admission acceptance.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "avoid-resolved-recorded-loop-option-snapshot-per-frame",
+      "status": "implemented",
+      "reason": "Retain snapshots until actual loop resolves; forward later updates directly.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "avoid-unchanged-audio-bus-gain-automation-on-volume-slider",
+      "status": "already-in-pr",
+      "reason": "visual-audio-queue-adapter caches actual AudioParam identity and target; existing regression includes replacement nodes/mute.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "avoid-verified-mp3-compressed-buffer-clone-after-hash-check",
+      "status": "implemented",
+      "reason": "Uniform per-file signed declarations transfer bytes only after digest succeeds; mixed/unequal declarations retain copy.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "batch-cold-start-recorded-combat-cue-imports",
+      "status": "needs-evidence",
+      "reason": "START gate and serialized AuthorizedSamplePack generations require shared per-event inFlight admission and partial-error proof; cannot parallelize independent load calls.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "big-bubbler-active-tick-snapshot-array-reuse",
+      "status": "already-in-pr",
+      "reason": "Local and remote Bubbler tick snapshots use separate depth-leased arrays, preserving forward snapshot semantics and clearing references in finally.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "bind-default-fetch-for-recorded-charger-rise-safari",
+      "status": "already-in-pr",
+      "reason": "The default Charger-rise fetch is bound to globalThis, preserving WebKit Window.fetch receiver requirements while leaving injected fetchers unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "blaster-knockback-reuse-validated-distance-on-local-impulse",
+      "status": "needs-evidence",
+      "reason": "Pending: exported applyBlasterKnockback accepts arbitrary arrays; validBlasterKnockback reads values for every/isFinite and hypot, then victim eligibility getters run before a second offset norm. Removing that later read can change accessor arrays or offset mutation during eligibility access. No proven private stable-offset path or retained public fallback was established; validation and remote rejection were not weakened.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "body-balance-skip-zero-reach-bone-parent-walks",
+      "status": "needs-evidence",
+      "reason": "Pending. Zero vector additions can normalize -0 or propagate nonfinite parent quaternions. Finite-rig guard and effect/overhead need separate testing; reach state and chains retained.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "booyah-blast-fx-render-rate-particle-trials-and-rune-rotation",
+      "status": "needs-evidence",
+      "reason": "Render-rate correction changes particles and rune phase; retain for dedicated visual acceptance.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "booyah-blast-ring-repeated-static-ground-probes",
+      "status": "not-adopted",
+      "reason": "Not adopted: the same collider callable and blast origin can return a shifted surface or no surface on the next tick. No authoritative collision revision/static-world contract exists. Keep all intentional rings and fresh snap queries.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "booyah-damage-radius-elide-unobserved-hit-list",
+      "status": "implemented",
+      "reason": "Both internal callers ignore the list; retain actor hits, LOS, once and object callbacks; damageBandRadius still returns its observed list.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "booyah-growth-reuse-contact-plane-tile-layout",
+      "status": "already-in-pr",
+      "reason": "Reuse per-blast tile layout only after each original fresh contact probe and exact point/radius/normal/plan-scalar validation; final growth-frame callbacks can change terrain and force rebuilding.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "booyah-round-identity-retire-orphan-core",
+      "status": "already-in-pr",
+      "reason": "Retire owned shape handles as well as ribbons when a pooled round identity changes, preventing an orphaned Booyah core from surviving its owner.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "boss-hud-damage-number-projection-output-scratch",
+      "status": "already-in-pr",
+      "reason": "Boss damage-number projection reuses a HUD-owned output object instead of allocating one per number per frame. The result is consumed synchronously and never retained by the number.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "boss-hud-damage-numbers-elide-unchanged-opacity-writes",
+      "status": "already-in-pr",
+      "reason": "Existing input/lens guards both hidden and visible damage-number opacity.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "boss-hud-squad-teams-reuse-ephemeral-views",
+      "status": "implemented",
+      "reason": "Existing PR scratch reuse retained; clear retained Actor rows at every BossHud.setMode and HUD disposal boundary.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "boss-socket-audio-follow-reuse-vector3-scratch",
+      "status": "already-in-pr",
+      "reason": "Existing PR per-loop follow positions own constructor-aware socket vectors; no new vector on steady follow.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "bots-goal-crowding-axis-prune-before-hypot",
+      "status": "needs-evidence",
+      "reason": "Conditional queue reports near-heavy distribution regressions; live goal-distance distribution and same-device benefit missing.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "bots-perceive-lazy-swimmer-speed-hypot",
+      "status": "needs-evidence",
+      "reason": "Deferred adapter change; requires fresh source-composed bot traces including occlusion, spawn and inherited input edge cases.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "brella-canopy-axis-far-prune-before-distance",
+      "status": "needs-evidence",
+      "reason": "Prototype/override/near-density overhead and actual canopy contact acceptance need scoped before/after measurement.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "brella-canopy-trail-hoist-per-step-stamp-callback",
+      "status": "already-in-pr",
+      "reason": "Hoist the canopy stamp function and pass the canopy explicitly, retaining existing movement, sampling and paint call order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "brella-pellet-share-azimuth-sincos-per-pellet",
+      "status": "already-in-pr",
+      "reason": "Evaluate each pellet azimuth sine/cosine once and reuse those exact values for the existing vector expressions; no RNG reorder.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "brella-splash-cache-blocking-pellet-ready-index",
+      "status": "already-in-pr",
+      "reason": "A still-blocked cached member proves the volley is not ready; once it clears, changes identity, or ends, a full readiness scan runs again. Sparse membership and live mutations remain visible.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "brella-splash-plan-elide-four-value-validation-array",
+      "status": "already-in-pr",
+      "reason": "Read four validation values eagerly and apply the same finite tests using scalars instead of a new array.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "build-orphan-audit-stream-emitted-js-instead-of-retaining-all",
+      "status": "already-in-pr",
+      "reason": "Store lazy file readers in the module inventory and parse each visited module on demand; inline source stays owned and read/parse failures retain the helper.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "burst-bomb-aim-preview-per-render-vector-and-hit-allocation",
+      "status": "needs-evidence",
+      "reason": "Preview scratch needs a depth-safe contract across ray/actor hooks and retained arc cache references.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "cache-source-guided-inverse-fft-twiddles",
+      "status": "already-in-pr",
+      "reason": "The fixed 1024-bin FFT retains exact Float64 sine/cosine twiddles per direction rather than recalculating them per transform.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "camera-rig-share-follow-yaw-sincos",
+      "status": "already-in-pr",
+      "reason": "The baseline camera adapter already shares yaw sine/cosine when CameraRig.forward is the native implementation and preserves the custom-forward override branch.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "cancel-orphaned-primed-battle-mp3-on-aborted-start",
+      "status": "needs-evidence",
+      "reason": "START attempt generation ownership must precede cleanup; unconditional stop/drop would break legitimate Safari pre-GO prime.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "catalog-bubble-radius-hoist-integer-pow-factors",
+      "status": "implemented",
+      "reason": "Immutable exact Math.pow(.75,n) factors0..8, original normalization and fallback outside table; all-range numeric/Object.is tests passed.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "catalog-charge-reuse-ink-cost-and-inline-advance",
+      "status": "already-in-pr",
+      "reason": "Inline the charge advance closure and reuse the funded cost only when the target remains Object.is-equal; a changed target follows the original calculation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-collision-radius-specialize-field-player-keys",
+      "status": "already-in-pr",
+      "reason": "Use static Field/Player property names on ordinary source paths and retain the dynamic fallback for other kinds.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-depleted-pellet-scale-template-once-per-unit",
+      "status": "already-in-pr",
+      "reason": "Volleys cache scaled templates but compare fresh copied source values on every pellet. Parameter changes invalidate the template; every descriptor still owns independent c/b/paint objects and the original CollisionParam alias/key order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+      "status": "already-in-pr",
+      "reason": "Reuse a projectile-owned release interpolation vector after the synchronous drop/floor consumers copy coordinates.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-dualies-slide-reuse-adapter-and-stamp-runtime",
+      "status": "already-in-pr",
+      "reason": "Per-runner Dualies adapter and depth-leased stamp runtime reuse synchronous state; lazy stamp radius invalidates when width changes and retains paint/seed order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-flight-reuse-clipped-endpoint-scratch",
+      "status": "already-in-pr",
+      "reason": "Brella and Roller flight state owns a clipped endpoint vector reused only after synchronous consumers finish.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-ghostprojectile-hoist-allowed-shot-mode-list",
+      "status": "implemented",
+      "reason": "The exact 12 receiver modes now live in private frozen GHOST_CATALOG_SHOT_MODES. Its only use remains includes(meta[1]) at the same short-circuit position. The array never escapes; comparison semantics and validation boundaries are unchanged.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "catalog-impact-paint-write-footprint-scalars-without-record",
+      "status": "already-in-pr",
+      "reason": "A projectile-owned width/depth record serves immediate scalar consumers and is refreshed on every impact calculation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-nearest-paint-elide-guard-arrays-and-duplicate-yaw-trig",
+      "status": "already-in-pr",
+      "reason": "Replace nearest-paint finite-check arrays with eager scalar reads and share equal yaw sine/cosine results while retaining changed-accessor fallbacks.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-player-velocity-elide-launch-triplet-array",
+      "status": "already-in-pr",
+      "reason": "Capture launch velocity X/Y/Z eagerly and use scalar finite guards without an intermediate array.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-roller-brush-nearest-hoist-yaw-trig-and-validation-arrays",
+      "status": "already-in-pr",
+      "reason": "The same nearest-paint scalar/trigonometric implementation covers both overlapping proposals; preserve eager validation and original yaw accessor reads.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-rolling-paint-reuse-query-id-and-triangle-scratch",
+      "status": "already-in-pr",
+      "reason": "Depth-lease query ID and three-point triangle arrays; retain all live geometry queries and clear references after synchronous polygon use.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-slosher-sweep-hoist-weaponparam-rates-per-volley",
+      "status": "already-in-pr",
+      "reason": "Safe alternative: one weaponParam lookup per pellet replaces the two identical lookups; rates remain live across projectile publication callbacks rather than freezing a mutable source for the full volley.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "catalog-stringer-arrow-reuse-volley-aim-birth-vectors",
+      "status": "already-in-pr",
+      "reason": "Two invocation-local vectors serve all arrows; constrainMuzzle exposes only the stable anchor and its own direction, while spawn copies aim/birth before publication. Recursive volleys retain independent scratch.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-face-cache-unchanged-vergence-atan2",
+      "status": "already-in-pr",
+      "reason": "Memoize the exact clamped vergence distance with Object.is; assign the stored result on every call.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-face-eyeball-cap-precompute-ring-and-azimuth-kernels",
+      "status": "implemented",
+      "reason": "Exact per-call ring/azimuth operands and one derivative scratch per eye; mirrored transforms and buffers retained.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "character-face-share-mirrored-ear-crosssection-loops",
+      "status": "implemented",
+      "reason": "Read-only earLoop rows shared only inside one buildFaceSkin call; separate transforms, weights and winding retained.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "character-foot-ankle-roll-share-pitch-sincos",
+      "status": "already-in-pr",
+      "reason": "Share the same ankle pitch sine and cosine without changing subsequent operation order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-material-skip-zero-weight-pulses",
+      "status": "already-in-pr",
+      "reason": "The fixed composed Character already guards zero-weight finite material pulse calculations.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-native-pose-reuse-identical-waveform-sines",
+      "status": "already-in-pr",
+      "reason": "Reuse repeated carry, climb and hop sine values within the same pose update.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-procedural-hair-precompute-fixed-spring-gains",
+      "status": "already-in-pr",
+      "reason": "The fixed composed Character already uses IW_HAIR_COEFFS with exact mutable K/len/G invalidation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-quality-change-reuse-lod-mesh-nodes",
+      "status": "already-in-pr",
+      "reason": "Retain at most three detached quality-tier mesh sets and reuse matching part nodes. Rebind current geometry, material, skeleton, transforms, morphs, callbacks and shadow state; dispose releases retained references.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-rim-precompute-static-fallback-direction",
+      "status": "already-in-pr",
+      "reason": "Initialize the exact normalized constant rim fallback once and copy it on use.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-share-root-yaw-trig-across-native-pose-paths",
+      "status": "already-in-pr",
+      "reason": "Publish root-yaw sine/cosine and reuse them in four native consumers, recomputing on exact yaw change.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-stance-hoist-six-identical-damping-exponentials",
+      "status": "implemented",
+      "reason": "One exact alpha feeds six existing lerp expressions; original damp arithmetic association preserved.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "character-track-root-cache-unchanged-dt-smoothing-exp",
+      "status": "already-in-pr",
+      "reason": "Reuse the two exact root smoothing coefficients for unchanged positive dt; changes and nonfinite inputs recompute under the existing update guards.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "character-zero-weight-cosmetic-trig-guards",
+      "status": "needs-evidence",
+      "reason": "Pending. Exact-zero shortcuts need signed-zero/nonfinite state handling and branch-cost measurements across hem/tank/finger consumers; no unsafe blanket substitution made.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "charger-flight-pool-actor-hit-candidate-records",
+      "status": "already-in-pr",
+      "reason": "Flight-owned depth leases retain candidate rows, stable hit sorting, source damage timing and ally/full-charge semantics; finally clears all candidate actor references.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "charger-flight-recycle-retired-job-scratch",
+      "status": "needs-evidence",
+      "reason": "Job pools risk retained owner/beam/peer/defense references; full lifecycle/cancellation exception proof remains absent.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "charger-flight-reuse-per-flight-defense-probe",
+      "status": "already-in-pr",
+      "reason": "Each flight reuses its own defense probe; all owner/team/movement/damage/ghost/full fields refresh before the synchronous query and resolution.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ci-quality-gate-account-only-game-suite-waste",
+      "status": "already-in-pr",
+      "reason": "Exclusively valid account/** changes omit the separate game suite because the dedicated account workflow owns API/bundle/Worker validation. Empty, malformed, unavailable and mixed changes require game QA, including mixed account/documentation edits.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "composed-cpu-regression-direct-dependency-pr-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "Added the evidenced motion-profile/bank/path, fixture, build/composition/runtime-evidence and executed source-test inputs. Existing source and emitted comparisons, component benchmark and browser trace commands are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "constant-time-procedural-music-catchup-after-starved-ticks",
+      "status": "needs-evidence",
+      "reason": "Conditional P3: queue itself requires hardware benefit; 10-minute synthetic gap saves ~0.02ms, arithmetic boundary complexity unproven in emitted WebKit.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "crab-gyro-ci-fifteen-direct-input-pr-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "crab-tank-mirrored-leg-sine-per-pair",
+      "status": "already-in-pr",
+      "reason": "Safe alternative: cache both original sine expressions only while the Crab stride phase stays identical. The algebraic mirrored-sine shortcut was rejected because it is not bit-identical; moving poses keep both evaluations.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "crab-tank-roll-paint-elide-per-tick-vector-and-stamp-options",
+      "status": "needs-evidence",
+      "reason": "Scratch/options reuse needs nested movement/paint and retained-options proof; fresh snapshots remain.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "decor-spawn-pad-far-actor-axis-prune-hypot",
+      "status": "implemented",
+      "reason": "Axis pruning was already present; this final review proved a mixed NaN/far-axis regression (original hypot => NaN alpha, prior prune => 0.12). Added narrow !Number.isNaN(dx/dz) fallback so malformed/nonfinite combinations retain original hypot behavior while valid far actors still prune. Actual full Decor source test covers 64 NaN/Infinity/undefined/finite coordinate combinations; all 7 Decor tests pass.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "defense-selection-ci-missing-direct-runtime-and-fixture-pr-triggers",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "defer-idle-music-worker-allocation-until-procedural-player",
+      "status": "already-in-pr",
+      "reason": "music-idle starts Worker only when a non-streamed live player exists.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "defer-procedural-music-delay-reverb-graph-on-recorded-only-start",
+      "status": "already-in-pr",
+      "reason": "input-lens-queue-adapter lazy FX; music-lazy-fx tests.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "defer-speculative-reverb-prewarm-until-audio-intent-and-match-sample-rate",
+      "status": "not-adopted",
+      "reason": "Retain eager IR preparation. Starting the one-shot worker only at AudioContext creation guarantees no prepared pair for that same synchronous init; the fallback then renders on the first gesture. The proposal requires measured non-regression of first audible latency, but no Safari/device A/B trace establishes that. take(ctx) already rejects wrong-rate PCM and disposes worker/timer ownership. This is a rejected scheduling change, not a claim that speculative waste is fixed.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "defer-unneeded-procedural-grain-texture-prewarm",
+      "status": "not-adopted",
+      "reason": "Retain all five grain warm kinds. The realOnly weapon bank does not make native environmental/movement voices unreachable: composed audio still uses squelch, bubbles, bubbles_bright, rain and sizzle, including swim/climb/enemy-ink loops invoked by main. A menu/practice intent boundary with guaranteed lead time is not currently present; delaying to the first loop moves synchronous texture work into first sound. No safe unused-kind proof or required device onset trace exists.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "defer-unneeded-roller-ink-volume-pack-at-boot",
+      "status": "not-adopted",
+      "reason": "Not adopted: roller/brush and several slosher recipes share the pack, attract mode selects a random eight-weapon roster synchronously, later ghost births and instant practice weapon swaps can introduce new consumers. Removing the existing warmup barrier without migrating all these readiness boundaries risks first-shot fallback and midmatch decompression. Direct sized decompression was adopted without changing first-shot presentation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "defer-unselected-stage-descriptor-and-mural-modules",
+      "status": "not-adopted",
+      "reason": "Remaining proposal not adopted: stage data, murals and range prop packs are already lazily prepared. Remaining Cargo/Range/Scorch descriptors feed the complete synchronous MAP_LAYOUTS API and cached synchronous thumbnail getter used by game/tools/headless callers. Removing those exports requires a separate async API or authored thumbnail migration; do not claim the already-lazy portion resolves that contract change.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "diorama-ally-pin-replace-per-frame-filter-with-first-three-walk",
+      "status": "already-in-pr",
+      "reason": "Diorama ally collection stops after the first three teammates instead of walking all later actors. Original actor order and independent targets are preserved.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "diorama-pin-status-flags-skip-unchanged-dom-calls",
+      "status": "already-in-pr",
+      "reason": "Diorama pin DOM class toggles already occur inside a combined key guard containing alive/ok/hover and position. Identical state does not repeat classList mutations.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "dualies-impact-source-elide-finite-check-arrays",
+      "status": "already-in-pr",
+      "reason": "Use eager scalar finite checks for Dualies source impact channels without changing source evaluation or fallback order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "dualies-motion-elide-discarded-pre-update-prepare-snapshot",
+      "status": "implemented",
+      "reason": "First prepare call runs with snapshot=false and preserves all state effects; second returns unchanged snapshot. Three return branches tested at30/60/120Hz.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "eliminate-unused-foley-raw-noise-array",
+      "status": "implemented",
+      "reason": "Remove write-only raw scratch; preserve RNG scalar and every baseline PCM hash.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "environment-cloud-bake-yield-between-ten-gpu-strips-at-loading",
+      "status": "needs-evidence",
+      "reason": "Need measured GPU contribution and an atomic nonvisible loading transaction; do not leak partial clouds or hold renderer state across RAF.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "environment-orbit-share-sincos-for-sailboats-and-gulls",
+      "status": "already-in-pr",
+      "reason": "Composed Environment already has local ca/sa for both orbit positions and headings.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "explosher-blob-inline-look-scalars-avoid-per-glob-tuple",
+      "status": "implemented",
+      "reason": "Inline sole append writer and scalar look fields; preserve capacity, matrix/color and attribute order.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "explosher-flight-glitter-preflight-untracked-direct-ci-inputs",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "explosher-sparkle-age-phase-share-harmonic-trig",
+      "status": "not-adopted",
+      "reason": "Angle addition is not IEEE-754 identical: age=.017,seed=.062 direct0.9044121893788258 versus expanded0.904412189378826. No approximate trig under exact instance/pixel contract.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "fidelity-projectile-packet-elide-flag-index-and-legacy-length-arrays",
+      "status": "implemented",
+      "reason": "Replace fixed legacy-length literal with one-read comparisons and flag list with first-index/multiple scalars. All five marker getter reads, slice/properties/normalization and authority remain; source-loaded canonical/getter parity passed.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "fidelity-roller-spawn-share-yaw-basis-with-offset",
+      "status": "needs-evidence",
+      "reason": "Exported helper must preserve arbitrary callers/getter semantics and source-guided birth; no validated runtime patch in this batch.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "fidelity-slosher-impact-paint-remove-six-value-finite-array",
+      "status": "already-in-pr",
+      "reason": "Retain all six eager field reads and finite guards with scalars; source footprint and impact paint values remain unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "fixed-arity-actor-and-projectile-forwarders-elide-rest",
+      "status": "needs-evidence",
+      "reason": "All three specified wrappers still use rest forwarding: weapon-gates Actor.update(dt,...args), Projectiles._new(...args), and splatling Actor._horizontal(dt,squid,onEnemy,...rest). No fixed-count call/arguments fallback is present. Unrelated fixed-arity wrappers do not implement this row.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "fizzy-bomb-flight-splash-paint-unreachable",
+      "status": "needs-evidence",
+      "reason": "Needs source evidence: spacing and lateral source values exist, but flight drop initial velocity/gravity/release and landing-footprint semantics are not established. The dormant helper would substitute immediate long-ray/fallback paint and ignore the requested footprint. No fabricated constants or fake flight were enabled.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "full-charge-charger-pool-hit-candidate-rows-by-nested-shot",
+      "status": "needs-evidence",
+      "reason": "Lease must cover physics/original fire/hit/audio exception and nested-shot lifetimes; current evidence does not validate all callbacks.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "fx-droplets-empty-frame-fastpath-and-frame-drag-hoist",
+      "status": "implemented",
+      "reason": "Existing composition already hoists drag; additional zero-pool exit retains cosmetic phase advance and instanceCount=0.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "fx-flick-curtain-and-dust-ring-reuse-angle-trigonometry",
+      "status": "already-in-pr",
+      "reason": "Fully composed #1870 already contains the two per-particle sin/cos reuses; do not reapply raw-source proposal.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "fx-remove-unused-camera-world-direction-normalization",
+      "status": "implemented",
+      "reason": "Preserve actual vendored camera world/inverse matrix updates; omit only unused direction normalization.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "fxhooks-ambient-seaspray-far-edge-axis-prune-hypot",
+      "status": "implemented",
+      "reason": "Only NaN-safe far candidates omit hypot; original candidate draw/score/random sequence remains.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "fxhooks-interval-particle-cadence-preserve-60hz",
+      "status": "already-in-pr",
+      "reason": "Use the observed 5/60, 22/60 and 7/60 source periods with residual carry; all 3,600-frame 60Hz emission indices match and 30/120Hz equal-time counts agree.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "gamepad-menu-stick-repeat-elapsed-dt-instead-of-fixed-frame",
+      "status": "already-in-pr",
+      "reason": "The actual composed main already passes bounded elapsed dt into _padMenus and uses it for stick repeat. The editor ownership/neutral handoff remains independent.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "gamepad-pollpad-elide-per-frame-button-foreach-closure",
+      "status": "already-in-pr",
+      "reason": "Final pollPad already uses indexed buttons loop including sparse-list behavior; remaining forEach is one-time controller takeover.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "gate-muted-recorded-battle-mp3-preload-and-decoding",
+      "status": "not-adopted",
+      "reason": "Retain recorded BGM prime/play at START even when mixer gain is zero. It establishes the trusted-gesture media unlock and continuously advances the existing track timeline. Deferring it would require a measured Safari-compatible later gesture and accurate seek/recovery policy; simply pausing is explicitly disallowed by the proposal. No iPad mute-to-unmute acceptance trace exists, so this conditional resource saving is not adopted.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "gate-recorded-charger-rise-mp3-prefetch-by-weapon-roster",
+      "status": "not-adopted",
+      "reason": "Retain eager Charger-rise preload. The existing conditional hooks only warm local selected Chargers; nearby remote charge onset uses the same recording, and prepareWeapon explicitly declines nonurgent remote work. Removing the init warm before an announced-roster owner exists creates a cold late-remote/instant-swap onset gap. The ticket explicitly blocks increased first-onset misses; no such safe readiness gate was demonstrated.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "grain-texture-elide-per-sample-modulo-with-wrap-cursor",
+      "status": "needs-evidence",
+      "reason": "Canonical renderer still writes d[(start+i)%len]. Current recipe/math changes do not implement the cursor; report itself observes slower candidate at96kHz. Leave pending profiling.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "gyro-raw-rate-skip-redundant-orientation-omega",
+      "status": "not-adopted",
+      "reason": "Reject the raw-rate orientation-omega shortcut. The production gyro installer overrides _calibrate to record orientation rate/time on every sample, checks raw/attitude disagreement and 75 ms staleness, and performs Android fallback. The proposed early return would bypass that trust/fallback evidence even when the native base method alone looks redundant.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "gyro-reuse-lifecycle-screen-angle-in-sample",
+      "status": "already-in-pr",
+      "reason": "Gyro _sample reuses the screen angle already refreshed by the lifecycle wrapper for this event; an unwrapped gyro still uses screenAngle fallback. Raw-rate trust and sensor integration are untouched.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "gyro-world-orientation-skip-unit-gravity-rehypot",
+      "status": "not-adopted",
+      "reason": "Not adopted: removing hypot/division changes floating-point normalized gravity and gyro projection; mathematical unit length alone does not establish numerical or sensor fallback equivalence.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hair-suction-cup-reuse-normal-point-and-vector-scratch",
+      "status": "already-in-pr",
+      "reason": "Composed normal(t,th,out,scratch) and suctionCups normalScratch already remove per-vertex finite-difference vectors.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "halyard-theme-only-reuse-unchanged-marina-foam-contours",
+      "status": "needs-evidence",
+      "reason": "Scene mesh/instance transforms can change without a level identity change; cache invalidation needs authoritative geometry revisions.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "headgear-qa-six-identical-builds-and-seven-full-checkouts",
+      "status": "needs-evidence",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "headgear-visual-qa-missing-production-source-pr-triggers",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "health-recovery-rain-ci-direct-profile-runtime-fixture-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "hoist-foley-noise-attack-denominator-from-sample-loop",
+      "status": "already-in-pr",
+      "reason": "The Foley noise attack denominator is invariant within a rendered sample loop and is now computed once, preserving floating-point operation order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hoist-guided-envelope-measured-span",
+      "status": "already-in-pr",
+      "reason": "Guided envelope measured duration/span are hoisted to one calculation per render, preserving exact samples.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hoist-render-fallback-tanh-normalizer",
+      "status": "already-in-pr",
+      "reason": "Fallback rendering calculates Math.tanh(drive) once per render. Division remains division to avoid reciprocal rounding differences.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hud-ally-down-ping-elide-unchanged-opacity-writes",
+      "status": "already-in-pr",
+      "reason": "Existing input/lens changes guard opacity and actual serialized transform.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-ally-marker-stable-key-elide-tofixed",
+      "status": "already-in-pr",
+      "reason": "Marker raw scalars are compared before toFixed/string construction. The original rounded key still determines DOM thresholds, and missing markers or replacement HUD state invalidate the raw cache.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hud-beacon-spread-break-on-settled-pass",
+      "status": "already-in-pr",
+      "reason": "The composed beacon-spread relaxation loop already records whether a pass moved any pair and exits on the first settled pass.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hud-beacon-targets-bounded-ally-walk-no-filter-array",
+      "status": "already-in-pr",
+      "reason": "HUD beacon allies stop at the first three teammates. Base and live Big Bubbler jump targets are collected independently and stay available.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hud-clock-cache-formatted-time-by-visible-second",
+      "status": "already-in-pr",
+      "reason": "Existing added UI adapter caches visible timer seconds before formatting.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-fxloop-paused-elide-self-raf-until-resume",
+      "status": "already-in-pr",
+      "reason": "HUD paused state now parks its RAF while retaining effects. Resume schedules one callback with a fresh timestamp, including world-pause and pause-during-effect ownership; no long catch-up delta is injected.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "hud-ink-tank-skip-zero-turn-and-settled-level-math",
+      "status": "implemented",
+      "reason": "Skip exact zero yaw deltas and settled finite-dt ink smoothing; invalid dt behavior retained.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-map-inline-aspect-fit-without-per-frame-arrays",
+      "status": "already-in-pr",
+      "reason": "Final map sizing already uses scalar w0/h0/w1/h1.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-minimap-remote-yaw-ignore-nonrendered-heading",
+      "status": "implemented",
+      "reason": "Use zero heading for non-self dirty keys while preserving rendered self heading and other state invalidation.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-squad-status-elide-per-frame-composite-key-strings",
+      "status": "already-in-pr",
+      "reason": "Existing final squad loop compares alive/ready/self/weapon primitives and only builds key on change.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-tank-cache-responsive-canvas-metrics",
+      "status": "already-in-pr",
+      "reason": "Final _s3TankBox already caches client dimensions with ResizeObserver and live fallback without observer.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "hud-turf-ticker-skip-unchanged-locale-formatting",
+      "status": "already-in-pr",
+      "reason": "Final turf ticker already caches whole displayed value before formatting.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "ink-micro-surface-qa-runtime-source-path-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "The gate now covers inkShading, levelMaterial, texlib, build/composition/runtime-evidence and all direct inputs of the three existing source suites. Existing browser/video source-frame verification and encoding commands remain.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-mine-beakon-instant-placement-avoid-double-model-build",
+      "status": "needs-evidence",
+      "reason": "createObject builds and emits spawn; feet-placement throw subsequently deploys/replaces. Intermediate mesh may be observed by spawn/deploy callbacks; not silently skipped.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "ink-mine-cache-enemy-ink-region-scan-on-paint-version",
+      "status": "not-adopted",
+      "reason": "Not adopted: paint.version tracks ink changes, while ranked tower face origin/axes move without it. A native regionStats counterexample changes true to false with identical paint instance, version, grid and mine position. Fresh queries remain.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-mine-inline-sensor-first-match-and-radius",
+      "status": "implemented",
+      "reason": "Replaced per-tick find callback with an indexed first-match loop capturing original array length and visiting every original index, preserving holes/append/shrink/reversal and LOS side effects. Deliberately retained per-candidate sensorRadius getter evaluation because LOS callbacks may mutate it; hoisting radius across that callback is not justified. Source-loaded negative controls and real Mine trigger/oldest-Mine tests pass.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "ink-vac-absorb-los-reuse-segment-length",
+      "status": "already-in-pr",
+      "reason": "Calculate segment distance once per LOS fraction query, retaining the original intersection threshold and division order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-vac-absorption-avoid-six-value-array-find",
+      "status": "already-in-pr",
+      "reason": "Read all six candidate damage values eagerly, then select the first positive finite value with ordered scalar branches.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-vac-firstentry-scalar-quadratic-roots",
+      "status": "already-in-pr",
+      "reason": "Keep scalar roots with the same subtraction-based swap predicate as the old numeric sort, including NaN ordering, then preserve first-entry selection.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-vac-inhale-footpaint-constant-footprint-precompute",
+      "status": "implemented",
+      "reason": "Compute and freeze the fixed foot footprint once without changing cadence, rays, seed or paint arguments.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "ink-vac-per-step-bubbler-list-concat-allocation",
+      "status": "already-in-pr",
+      "reason": "Lease one combined Bubbler snapshot with stable local-then-remote ordering and nested-query isolation; release in finally.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-vac-projectile-droplets-fixed-60hz-emission-cadence",
+      "status": "needs-evidence",
+      "reason": "Cadence correction changes visible 30/120Hz emissions; needs dedicated visual acceptance.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "ink-vac-vfx-hoist-suction-particle-orthonormal-basis",
+      "status": "already-in-pr",
+      "reason": "Build the identical suction frame basis lazily once per emitted-particle update, preserving per-particle scalars and RNG sequence.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-volume-stream-decompression-direct-sized-buffer",
+      "status": "already-in-pr",
+      "reason": "Decode writes streaming chunks into one manifest-sized output, rejects oversize/truncation and cancels the stream on failure. No changed VTF sample values.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ink-volumes-splatling-visual-evidence-input-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "inkflight-head-reuse-swept-miss-length",
+      "status": "needs-evidence",
+      "reason": "Changing world-call/length evaluation order needs baseline coverage of custom sweep mutations and miss dist ownership.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "inkflight-paint-reuse-synchronous-splat-options",
+      "status": "already-in-pr",
+      "reason": "Depth-lease the full composed paint options record, refresh every field, and clear owner/stretch references in finally; nested splat values and exception cleanup match the original.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "inkflight-squid-capsule-skip-coincident-end-sphere",
+      "status": "implemented",
+      "reason": "Immutable upstream preserved. Build rewrite reuses first sphere result only when Object.is(lo,hi); standing capsules retain second test. Source-loaded full capsule comparisons pass at3 render cadences.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "inkjet-exhaust-fixed-step-temporary-closures-and-center",
+      "status": "needs-evidence",
+      "reason": "Shared predicates/center must remain safe through nested damage/LOS callbacks; no validated depth-safe lifetime change here.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "inkjet-squid-vfx-skip-unused-ground-raycast",
+      "status": "already-in-pr",
+      "reason": "Skip groundBelow only in the squid branch where its value was unused; active jet and shadow/ground consumers keep their probes.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "input-gamepad-trigger-elide-synthetic-button-objects",
+      "status": "already-in-pr",
+      "reason": "The two gamepad trigger branches keep a scalar pressed value instead of allocating replacement button objects. Held/edge thresholds and takeover/menu-block ownership are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "input-padstick-and-player-move-skip-deadzone-hypot",
+      "status": "already-in-pr",
+      "reason": "padStick uses the L1 upper bound to reject provably dead-zone vectors before radial hypot; every remaining vector follows the original radial formula. Player movement skips hypot only for the exact zero vector.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "killer-wail-idle-speaker-roster-walk",
+      "status": "already-in-pr",
+      "reason": "Track only actors with accepted remote Wail marks and skip the full actor walk when that set is empty; active drawing keeps roster order and clears stale entries.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "killer-wail-live-lasers-share-render-step-exponential-alpha",
+      "status": "already-in-pr",
+      "reason": "Compute the identical exponential smoothing alpha lazily once in the live-laser update; individual beam endpoints and update order remain unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "killer-wail-paired-beam-share-delayed-trace-sample",
+      "status": "already-in-pr",
+      "reason": "Resolve the shared delayed trace sample once per paired tick and hold its scalar coordinates across hit/event callbacks; individual origins, beam calls, seeds and event order stay separate.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "killer-wail-speaker-anchor-intermediate-roster-arrays",
+      "status": "already-in-pr",
+      "reason": "Reuse an actor-owned holder buffer for synchronous anchor mapping while preserving filter-then-map order; nested calls get independent fallback storage and references clear in finally.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "kit-paint-meta-inline-validation-without-slice",
+      "status": "not-adopted",
+      "reason": "A source-loaded semantics-preserving eager-snapshot candidate passed 100k dense/sparse/accessor checks but was slower in eight paired 300k-call VM rounds: median 404.65ms to529.02ms. Candidate removed; original validator retained.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "kraken-presentation-contact-lift-full-vertex-scan",
+      "status": "already-in-pr",
+      "reason": "Conservative bounds over 32 immutable model sample points skip blocks only when their finite lower bound cannot improve the original ordered minimum; non-finite bounds retain the exact point scan.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "kraken-vfx-filament-share-per-step-sine-and-hoist-radius",
+      "status": "already-in-pr",
+      "reason": "Keep strand radii outside the substep loop and share the identical sine within each substep without changing particle state or random calls.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-boot-mural-use-selected-layout-to-avoid-initial-atlas-resize",
+      "status": "already-in-pr",
+      "reason": "Composed boot already calls createMuralTexture(map.layout || map.id).",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-charger-beam-reuse-lifecycle-records",
+      "status": "already-in-pr",
+      "reason": "Each pooled beam mesh retains its lifecycle record; every admission resets t, life and thickness before insertion, keeping active-beam order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-charger-capsule-xz-broadphase",
+      "status": "already-in-pr",
+      "reason": "Lazily bound the horizontal capsule envelope once, reject only finite clearly distant actor positions, and restore the exact endpoint before the original solver for remaining candidates.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-decor-palm-trunk-reuse-per-ring-bezier-points",
+      "status": "already-in-pr",
+      "reason": "Final composed source already evaluates Bezier trunk centers once per ring via runtime-frame-scratch-adapter.mjs. New actual vendored-Three comparison on Tidewater/Kelpline/Halyard preserves every geometry attribute/index/normal/bound and confirms 540 fewer getPoint calls per palm; no duplicate production change.",
+      "evidenceReport": "reports/queue-extra-decor-20261025.json"
+    },
+    {
+      "slug": "legacy-decor-spawn-pad-share-static-face-and-barrier-geometries",
+      "status": "implemented",
+      "reason": "Share one static CircleGeometry and one barrier CylinderGeometry per Decor while preserving distinct team materials/uniforms. Constructor-failure resources join the same disposal Sets; successful and repeated disposal retire each once. Preserve skipped BufferGeometry UUID RNG draws using vendored MathUtils.generateUUID at the original construction positions.",
+      "evidenceReport": "reports/queue-extra-decor-20261025.json"
+    },
+    {
+      "slug": "legacy-far-reflection-cubecamera-six-faces-yield-during-loading",
+      "status": "needs-evidence",
+      "reason": "GPU profile and six-face atomic publication/cancellation/renderer-state proof required; synchronous API cannot be safely made asynchronous without that evidence.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-level-box-aabb-direct-extents-skip-eight-corners",
+      "status": "implemented",
+      "reason": "Finite nonnegative-half axis-aligned box extrema use scalar endpoints; malformed, rotated and nonfinite cases retain the original eight corners. 10,004 actual Level cases preserve signed zero/NaN and all five layout geometry bytes.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-level-geometry-avoid-js-number-array-double-peak",
+      "status": "already-in-pr",
+      "reason": "geometry-build-storage-adapter already uses typed staging and final owned buffers; actual legacy buffer comparison retained.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-level-geometry-static-face-axis-pairs",
+      "status": "implemented",
+      "reason": "Known axis 0/1/2 gets the same two ordered scalar indices; all five actual layout buffers/index bytes match.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-level-spatial-hash-share-empty-cell-arrays",
+      "status": "needs-evidence",
+      "reason": "Hash cell arrays escape publicly; sharing mutable empty arrays changes cross-cell mutation behavior. Keep independent ownership.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-lightmap-cache-validated-metadata-on-stage-reentry",
+      "status": "already-in-pr",
+      "reason": "Already effective: Game owns a bounded four-layout immutable metadata cache with layout-hash validation and stale refetch. GPU lightmaps remain freshly acquired and world-owned.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-marina-avoid-double-far-reflection-bake-on-stage-theme-transition",
+      "status": "already-in-pr",
+      "reason": "world-queue-build-adapter already combines final-theme arena rebuild; existing world-build tests retain missing-shadow-map fallback.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-match-character-warmup-bound-concurrent-actors",
+      "status": "needs-evidence",
+      "reason": "Pending. Changing startup concurrency can delay undispatched warm jobs beyond the existing 8-second race; bounded lifetime/cancellation and iPad throughput evidence required. Main startup owned by integration/world workstream.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-nav-slice-synchronous-stage-construction",
+      "status": "already-in-pr",
+      "reason": "A generator slices sampling, edges and component pruning; production awaits the detached graph before replacing the visible world. Sync API remains available and five layouts match frozen graph/cell/component order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-paint-grid-use-single-cell-containment-fastpath",
+      "status": "already-in-pr",
+      "reason": "Composed paint grid already calls pointInsideGrid with original fallback.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-paint-splat-omit-unused-position-array",
+      "status": "already-in-pr",
+      "reason": "world-queue-build-adapter already removes unused indexed-splat position attribute.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-propkit-failure-cleanup-and-collider-rollback",
+      "status": "already-in-pr",
+      "reason": "Already effective in the composed baseline: detached prop acquisition disposes failed ownership and rolls colliders back to length zero before any world publication. Raw main alone hides this adapter.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-propkit-reuse-radial-trig-tables-in-lathe-and-tube",
+      "status": "implemented",
+      "reason": "Bounded 32-entry radial tables in directly authored props-core.js; original equations, inclusive Lathe seam and exclusive Tube seam retained. Real vendored Three output bytes compared across tessellations and open/closed modes.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-propkit-slice-synchronous-placement-and-merge",
+      "status": "already-in-pr",
+      "reason": "Placement, static merge, exact bounds and mesh publication yield only at safe points; each suspended merge owns its normal matrix. Five layouts retain exact collider/attribute/index/bounds/instance/shadow state and rebuild parity.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-propkit-transfer-static-atlas-across-stage-switches",
+      "status": "needs-evidence",
+      "reason": "Font redraw callbacks, dimension/profile changes, constructor failure and ownership transfer need coordinated lifecycle proof; avoid a persistent mutable cache.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-roller-flick-reuse-pitch-sine-across-globs",
+      "status": "already-in-pr",
+      "reason": "Compute the common flick pitch sine once per admitted volley; retain each glob yaw, speed, RNG and multiplication order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-slosher-blaster-splash-squared-far-prune",
+      "status": "already-in-pr",
+      "reason": "Add a conservative squared-distance negative filter with a 1e-6 margin; near candidates keep exact distance and original splash/knockback radius semantics.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-slosher-hoist-constant-lob-trigonometry",
+      "status": "needs-evidence",
+      "reason": "No additional source transform added after final build freeze; this remains pending, not declared fixed.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "legacy-spread-save-single-tan-per-nonzero-shot",
+      "status": "implemented",
+      "reason": "Final source composition evaluates Math.tan(r) once after the original two RNG draws and perpendicular basis setup; both consumers keep their original multiplication/update order. 18,000 actual Three.js direction comparisons preserve vector bytes, RNG draws and zero/nonfinite behavior.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "legacy-stage-omit-unused-empty-grate-geometry-material",
+      "status": "already-in-pr",
+      "reason": "Existing composed main allocates grate geometry only when a visible grate face exists; all five layouts tested.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-stage-swap-skip-discarded-paint-target-clear",
+      "status": "already-in-pr",
+      "reason": "After final map fallback resolution, a changed legacy destination skips clearing the outgoing atlas that will be disposed. Same-world restarts and native rollback paths still clear it; new PaintSystem initialization remains.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "legacy-swept-world-reuse-minmax-for-query-and-aabb",
+      "status": "implemented",
+      "reason": "Share six extrema; retain original epsilon-padded AABB and separate epsilon-free query limits.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "legacy-texlib-remove-unconditional-gpu-sync-readback-from-cold-start",
+      "status": "needs-evidence",
+      "reason": "Readback remains a deliberate completion/statistics point. Need browser first-visible-frame/GPU timing evidence before moving the wait into combat.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "legacy-texlib-restore-renderer-state-and-release-on-failed-generation",
+      "status": "already-in-pr",
+      "reason": "Already effective in the composed texlib: incremental acquisition is inside try/finally, renderer target/autoClear/XR state is restored, owned output is disposed on failure and ownership transfers only on success.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-atlas-release-static-canvas-backing-after-upload",
+      "status": "not-adopted",
+      "reason": "Retain static atlas backing canvases. Three.js uses the texture source again after context restoration; zero-sizing it after the first upload loses those pixels. A replacement ImageBitmap or regeneration path needs device memory and pixel/context-restore evidence, including font readiness, which is absent. Existing LOW atlas scaling is separate and is not claimed to implement backing-store release.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-contact-skip-redundant-empty-shadow-buffer-updates",
+      "status": "already-in-pr",
+      "reason": "The baseline contact instancer already uses count=ci and only dirties matrix/color attributes for nonzero ci. Empty synthetic instances are removed.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-drip-skip-empty-instance-matrix-dirty",
+      "status": "already-in-pr",
+      "reason": "Empty lobby drip updates still set count to zero but no longer dirty the instance matrix; nonempty drips retain the upload.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-empty-slot-anchor-elide-identical-css-transform-writes",
+      "status": "already-in-pr",
+      "reason": "Existing scoped lobby adapter tracks authored/serialized empty-slot transform and external writes.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "lobby-glow-elide-static-instance-color-uploads",
+      "status": "already-in-pr",
+      "reason": "The baseline compares RGB per glow, calls setColorAt only for changed values and uploads instanceColor only when any color is dirty; animated matrix uploads remain.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-host-role-rebinding-stacks-row-event-listeners",
+      "status": "already-in-pr",
+      "reason": "Each menu element owns only one event listener set; dispatch reads the latest binding. Repeated host-role changes cannot stack callbacks, and click:false, modal and noclick conditions remain effective.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-palette-avoid-framewise-css-accent-array-join",
+      "status": "already-in-pr",
+      "reason": "The current lobby palette key already concatenates scalar palette values; the queued colors().join() allocation no longer occurs.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-renderbar-avoid-repeated-identical-colorvars",
+      "status": "already-in-pr",
+      "reason": "Lobby renderBar stores the last team-A, team-B and self color separately and only calls colorVars for an actual change. Team/self/boss selection rules are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-set-builder-release-consumed-geometry-buckets",
+      "status": "already-in-pr",
+      "reason": "SetBuilder build({consume:true}) releases only merged scratch input geometries and clears consumed buckets. Singletons remain owned by the returned mesh, and default repeat-build behavior is unchanged. The lobby and curb one-shot builders opt in.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-slot-native-cssom-qa-three-production-input-pr-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "lobby-stage-ticket-elide-unchanged-innerhtml-reconstruction",
+      "status": "already-in-pr",
+      "reason": "The stage ticket updates innerHTML only when the complete rendered string changes; stage numbering and denominator formatting are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "lobby-unchanged-guest-ping-skip-full-roster-fanout",
+      "status": "already-in-pr",
+      "reason": "Existing final composition already suppresses unchanged ping fanout and sender repeats.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "main-attract-coverage-elide-per-frame-two-element-array",
+      "status": "not-adopted",
+      "reason": "Not adopted: final PR already limits coverage inspection to 2Hz and skips it after timeout. Bypassing virtual coverage() via counts would add cross-owner coupling for two scalars at 2Hz without demonstrated benefit.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "main-weapons-ci-eight-composed-adapter-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "match-skip-remote-remote-noop-softpush-pairs",
+      "status": "needs-evidence",
+      "reason": "Deferred source adapter, requires composed match event/actor order tests and proof that pair preparation has no observer effects.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "memoize-immutable-s3-articulation-cue-plans",
+      "status": "already-in-pr",
+      "reason": "Immutable cue plans are memoized only for known own actor IDs and a bounded known event set. Unknown/custom actors and events keep the original builder path. Variant semantics and frozen rows are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "menu-focus-cursor-elide-identical-transform-size-writes",
+      "status": "already-in-pr",
+      "reason": "The composed menu cursor already caches rounded transform and size values before issuing style writes; identical frames do not write the same transform/width/height again.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "menus-delay-and-release-eager-stage-poster-decodes",
+      "status": "already-in-pr",
+      "reason": "Existing quality adapter removes global stage preload/decode and uses lazy asynchronous offscreen tickets.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "menus-dispose-release-network-news-callback-owners",
+      "status": "implemented",
+      "reason": "Unsubscribe every menu-owned network callback safely and retire all News timers, RAF, tween closures, DOM and modal owner. Correct preexisting teardown insertion that hit first engine update instead of dispose.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "menus-inkwipe-freeze-elide-identical-canvas-redraw",
+      "status": "implemented",
+      "reason": "Skip repeated successful draws at identical transition time/context/backing dimensions; keep RAF, callbacks, finish and safety timer ownership.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "menus-loading-progress-elide-identical-fill-transform",
+      "status": "already-in-pr",
+      "reason": "Final loading screen already tracks authored and serialized CSS transform.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "menus-loading-skip-settled-interpolation-exponential",
+      "status": "already-in-pr",
+      "reason": "Existing input/lens adapter skips settled finite loading interpolation.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "menus-loadout-skip-converged-stat-exp",
+      "status": "already-in-pr",
+      "reason": "Final loadout loop already skips settled stats and shares one response factor across moving rows.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "menus-self-raf-duplicates-main-engine-update",
+      "status": "already-in-pr",
+      "reason": "The menu RAF is already cancelled when the engine owns update; standalone menus retain their RAF, and the queued native callback exits once engine ownership is acquired.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "menus-spatial-navigation-avoid-repeat-layout-geometry-scans",
+      "status": "already-in-pr",
+      "reason": "One spatial navigation query retains DOM rectangles in a local Map so wrapping reuses the first scan. The next query takes fresh geometry, avoiding persistent-cache invalidation bugs.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "minimap-cache-static-spawn-pad-path2d",
+      "status": "implemented",
+      "reason": "Cache only geometric Path2D shapes by projected x/y/radius/constructor; live colors and every existing fill/stroke remain; unsupported environments retain original path construction.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "minimap-share-jump-pulse-sine-per-composite",
+      "status": "implemented",
+      "reason": "Compute pulse lazily once per composite with jump effects; no evaluation for zero jumps.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "minimap-storm-dash-reuse-canvas-pattern-arrays",
+      "status": "already-in-pr",
+      "reason": "The baseline minimap already shares STORM_LINE_DASH and SOLID_LINE_DASH arrays instead of constructing new arrays per storm/draw.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "mobile-applysettings-avoid-unrelated-full-touch-relayout",
+      "status": "already-in-pr",
+      "reason": "applySettings caches root/scale/stick mode as layout inputs and only changes opacity when its value changes. Sensitivity, volume or other unrelated settings no longer run a full touch relayout.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "mobile-editor-targeted-reflow-instead-of-all-controls",
+      "status": "already-in-pr",
+      "reason": "The editor now lays out only the edited control. Width/height, layout unit or safe-area changes invalidate to the full layout; stick home and editor coordinate display stay synchronized.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "mobile-hidden-hud-defer-dom-sync-until-touch-active",
+      "status": "already-in-pr",
+      "reason": "Hidden touch HUD updates keep only the latest scalar state in a reused object. Ready haptics still follow the state transition while hidden; current state flushes before the touch overlay becomes active.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "mobile-inactive-detach-document-nonpassive-touch-gesture-listeners",
+      "status": "already-in-pr",
+      "reason": "The original document-level touch/gesture listeners have already been replaced by root/canvas-owned listeners with AbortSignal cleanup. The cited global touch-scroll blocker is absent from composed production source. Document dblclick handling is a separate event and does not reinstate the premise.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "mobile-pointerdown-cache-touch-hitbox-visibility",
+      "status": "already-in-pr",
+      "reason": "Hit testing checks cached geometric bounds before reading offsetParent. Far controls never force visibility/layout reads, while a geometrically eligible newly hidden control is still rejected immediately; no stale visibility cache is introduced.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "mobile-stick-visual-elide-redundant-base-transform-and-state-classes",
+      "status": "implemented",
+      "reason": "Cache authored/serialized base transform with live DOM override restoration; toggle on/run classes only when membership changes.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "mobile-swipe-cache-unchanged-sensitivity-pow",
+      "status": "already-in-pr",
+      "reason": "Final MobileInput stores _touchSensMul at initialization/settings updates; move reads multiplier without pow.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "native-band-hash-deduplicate-cached-height-scalars",
+      "status": "already-in-pr",
+      "reason": "Immutable height scalars belong to each block rather than every spatial bucket. Hash replacement invalidates the arrays, and dynamic blocks retain their prior conservative path.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-bvh-memoize-nodecount-prepass",
+      "status": "already-in-pr",
+      "reason": "Subtree node counts are memoized by primitive count for both static and source BVH builders; split topology, output buffers and traversal order are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-collider-object-spatial-index-for-physics-and-inside-tests",
+      "status": "not-adopted",
+      "reason": "Not adopted: source faces and collidable static objects are already inside staticBlockCount. queryDynamicBlocks/pointInside scan only later dynamic blocks, and NativePhysics skips those scans with no dynamic blocks. The proposed 400-static-object scan is not the production path; static triangles already use a BVH. A mutable dynamic index adds retention/invalidation work without a demonstrated workload benefit.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-constrained-reentry-avoid-repeat-obj-conversion-with-bounded-derived-artifact",
+      "status": "in-other-pr",
+      "reason": "PR #1868 supplies a separate prepared/KTX2 artifact path. Do not duplicate that unfinished integration in #1870 or re-enable large IndexedDB copies on touch clients.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-display-precompute-exact-bounding-spheres-in-worker",
+      "status": "already-in-pr",
+      "reason": "Worker computes the exact THREE box-center/max-distance sphere from the final Float32 positions; main validates center/radius and falls back for legacy prepared data.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-display-precompute-object-sphere-in-source-worker",
+      "status": "already-in-pr",
+      "reason": "Covered by the same exact worker sphere implementation as native-display-precompute-exact-bounding-spheres-in-worker; no duplicate transformation or approximation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-display-spatial-batch-static-opaque-objects",
+      "status": "not-adopted",
+      "reason": "Not adopted: current object geometry uses zero-copy typed views, stable per-object identities and per-object culling/shadows. Merging disjoint objects requires new vertex/index storage and changes culling boundaries. The queue explicitly requires representative rendered/GPU/peak-memory A/B before adoption; that evidence is absent. Exact worker spheres were implemented as the behavior-preserving alternative.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-ink-overlay-release-immutable-cpu-attributes-after-upload",
+      "status": "needs-evidence",
+      "reason": "Chunk/debug/context-restore paths may read attributes; no proven regeneration lifecycle. Keep CPU geometry instead of risking vanished ink.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-ink-tile-membership-use-guarded-uint16",
+      "status": "already-in-pr",
+      "reason": "Tile-membership IDs select Uint16 only for at most 65,536 chunks, otherwise Uint32; offset/range arrays remain Uint32.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-level-share-immutable-hidden-collider-descriptors",
+      "status": "implemented",
+      "reason": "Implemented conservative subset: remove only two transient center/half Vector3 values per hidden collider. Axes/colors remain independently owned; no mutable alias introduced. Exact component operation order preserved.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-local-prepared-assets-copy-unlisted-and-unhashed",
+      "status": "already-in-pr",
+      "reason": "Prepared manifests and every listed body are verified before use and again at copy; symlinks, extras, traversal and changed bodies fail closed. Each verified buffer is copied once with output-hash verification. Parent moves this copy before build identity generation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-minimap-prune-neighbor-axis-before-hypot",
+      "status": "implemented",
+      "reason": "Reject impossible axis-separated node candidates before the original hypot threshold; actual helper ray-trace/candidate behavior compared for 1,200 positions.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-minimap-reuse-support-raster-buffers-across-rebuilds",
+      "status": "already-in-pr",
+      "reason": "Same-sized support/normal/pixel/owner/hit arrays are retained and explicitly refilled; owner changes, dimensions and source mutations still invalidate the existing support cache.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-minimap-reuse-validated-reachable-nav-layers-on-rebuild",
+      "status": "not-adopted",
+      "reason": "Not adopted: graph nodes/edges are public mutable and existing tests change node.x and nb.push without a revision. Reusing reachable layers by reference/version would be stale. An exact per-node/per-edge snapshot still requires O(V+E) validation and retained memory, so the safe support-buffer reuse was adopted while reachability remains freshly computed.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-minimap-slice-first-support-raster-before-visibility",
+      "status": "already-in-pr",
+      "reason": "The same minimap generator serves sync and 4 ms async callers; detached world preparation awaits the initial raster before publication, with cancellation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-nav-lazy-allocate-optional-transition-candidate-lists",
+      "status": "already-in-pr",
+      "reason": "Optional jump, drop and surge candidate lists allocate only for occupied cells. Candidate and edge iteration order stays exact.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-nav-reuse-spawn-seeds-on-second-reachability-prune",
+      "status": "needs-evidence",
+      "reason": "Need proof that graph/physics/spawn inputs cannot mutate across generator yields and public prune calls; do not reuse potentially stale admission seeds.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-normal-map-conditional-length-check",
+      "status": "already-in-pr",
+      "reason": "Lengths strictly below the clamp threshold bypass Math.hypot; the threshold band uses the original function to retain rounding and output bytes. Exhaustive normal-byte controls cover both encodings.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-obj-first-pass-ascii-byte-scan-avoid-utf8-line-decode",
+      "status": "needs-evidence",
+      "reason": "Unicode whitespace/BOM/classification/allocation/error equivalence plus source-backed throughput proof still needed; parser semantics retained.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-obj-remove-redundant-full-float32-finite-pass",
+      "status": "implemented",
+      "reason": "Remove only the redundant every(Number.isFinite) after every Float32 write was already validated. Keep allocation/attribute count rejection; compare 160 valid/overflow/NaN/Infinity variants.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-obj-write-direct-to-presized-vertex-index-buffers",
+      "status": "already-in-pr",
+      "reason": "Two passes retain final material classification and compact inactive offsets while writing exact final typed arrays without per-object builders.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-paintchart-hoist-triangle-sat-extrema-from-pixel-loop",
+      "status": "already-in-pr",
+      "reason": "Triangle SAT extrema, projections and margins are calculated once per triangle before the texel loop while retaining the original overlap predicates.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-pinned-inventory-avoid-repeat-worker-tree-revalidation",
+      "status": "already-in-pr",
+      "reason": "Only worker-verified scalar inventory proof is memoized in a bounded page-local map keyed by runtime pin and stage. New workers can reuse that proof when the stage tree still matches.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-png-cache-verified-channel-inference-on-stage-reentry",
+      "status": "already-in-pr",
+      "reason": "A bounded 256-entry scalar cache uses authenticated bytes, role, requested/actual dimensions and algorithm version. Every request still verifies bytes; no pixels, canvas, material or world resources are retained.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-png-decode-direct-to-capped-bitmap-on-low-memory",
+      "status": "needs-evidence",
+      "reason": "Blob direct resize and Bitmap resize can differ in color/premultiplication/filtering. Exact browser pixel proof unavailable; keep existing decode.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-png-release-temporary-inference-canvas",
+      "status": "already-in-pr",
+      "reason": "Temporary inference canvas/context live inside an outer finally; its dimensions are zeroed and references dropped on every exit.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-prepared-stage-bound-concurrent-binary-fetches",
+      "status": "already-in-pr",
+      "reason": "Prepared binary requests use 3 desktop / 2 constrained workers with linked abort, first-error admission stop and all-settled cleanup.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-quality-skip-unchanged-material-program-invalidation",
+      "status": "needs-evidence",
+      "reason": "Requires real WebGL uniform/program-shape equality across map/channel/video/colorSpace changes. Browser runtime could not be installed; leave mandatory invalidation intact.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-source-cache-slot-avoid-five-second-reinitialization-during-texture-stream",
+      "status": "needs-evidence",
+      "reason": "Requires loader-owned bounded session with explicit completion/abort/switch invalidation. Permanent TTL removal is unsafe; per-file integrity and write lock retained.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "native-source-cross-stage-content-hash-png-cache-reuse",
+      "status": "needs-evidence",
+      "reason": "Cross-stage byte cache needs quota/seal/ownership integration and real usage benefit. Retain per-file verification and bounded stage retention.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-source-git-sha1-verification-avoid-full-payload-copy",
+      "status": "not-adopted",
+      "reason": "Existing benchmark-source-sha1.mjs and prior report already reject incremental JS default due synchronous CPU overhead; preserve native WebCrypto verification. No signed SHA256 table supplied.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "native-source-inventory-pack-git-tree-hash-without-per-child-chunks",
+      "status": "already-in-pr",
+      "reason": "Each Git tree payload uses one exact final buffer, one UTF-8 encoded name per child, and direct mode/name/SHA writes; byte ordering and tree identity remain exact.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-source-obj-token-whitespace-fastpath",
+      "status": "already-in-pr",
+      "reason": "ASCII whitespace uses char codes while Unicode whitespace retains the regular-expression fallback and original token boundaries.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-source-paint-charts-transfer-packed-triangle-ids",
+      "status": "already-in-pr",
+      "reason": "Face memberships share one Uint32 backing buffer and are transferred once; derived-cache seal hashes packed bytes and view ranges without per-ID JSON object expansion.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-source-paintchart-avoid-per-triangle-string-keys",
+      "status": "already-in-pr",
+      "reason": "Paint-chart grouping uses integer hash buckets plus full component equality, retaining first-seen group order and collision correctness without triangle string keys.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-source-retention-incremental-verified-write-groups-without-full-key-rescan",
+      "status": "needs-evidence",
+      "reason": "Each writeGroup acquires a new Web Lock. Reusing accounting across owners without a persisted generation marker can trust another-tab deletion/mutation. Keep full keys/seal recovery and quota validation.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "native-source-retention-reseal-ledger-after-corrupt-cache-delete",
+      "status": "already-in-pr",
+      "reason": "The locked delete transaction reads the latest sealed ledger, marks uncertainty, deletes the body, removes known-file metadata and reseals while preserving high-water history; unknown files remain uncertain.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-source-stream-over64mib-avoid-chunks-join-peak",
+      "status": "already-in-pr",
+      "reason": "The authenticated exact-length preallocation range now covers the pinned ~126 MB OBJ (bounded at 256 MiB); unknown lengths retain fallback semantics.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-sprinkler-bomb-replay-gate-snapshot-set-to-sprinkler-only",
+      "status": "implemented",
+      "reason": "Skip only explicitly non-Sprinkler current envelopes; native Sprinkler and legacy/unknown forms preserve identity Set and replacement handling.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "native-stage-overlap-navigation-with-texture-network-waits",
+      "status": "already-in-pr",
+      "reason": "Unconstrained desktop overlaps detached navigation with texture work, with shared cancellation and rejection observation. Low-memory/touch and unknown test environments remain serial.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "native-stage-prewarm-actual-gpu-texture-and-buffer-uploads",
+      "status": "needs-evidence",
+      "reason": "Moving upload earlier can raise overlap peak RAM; requires GPU transfer instrumentation and low-memory evidence before adoption.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-static-source-mask-release-after-dead-grid-init",
+      "status": "needs-evidence",
+      "reason": "Mask identity participates in minimap/ranked cache keys and grid reinitialization; safe generation-token/reconstruction contract not established.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-texture-borrow-closed-bitmap-dimension-guard",
+      "status": "needs-evidence",
+      "reason": "Closed Bitmap is not proof of a live GPU resource on the same restored context. No renderer-liveness owner exists in the current contract; retain safe reload instead of relaxing the guard.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "native-triangleworld-drop-unused-render-buffer-aliases",
+      "status": "implemented",
+      "reason": "Preserve Object.assign extension metadata while removing only vertices/indices aliases from TriangleWorld. Display input stays on the original data/geometry owners; collision arrays and ray outputs retained.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "netmatch-owner-jitter-rolling-quantile-incremental",
+      "status": "already-in-pr",
+      "reason": "Existing final composition already wires rolling-quantile.mjs into per-peer gap/late windows.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "netmatch-pathat-bracket-reverse-lookup",
+      "status": "implemented",
+      "reason": "Reverse search only within accepted strictly ascending timestamps; same interpolation, extrapolation, teleport and endpoints.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "netmatch-remote-actor-correction-spring-axis-loop",
+      "status": "already-in-pr",
+      "reason": "The fixed composed correction path already uses scalar axis expressions; the raw upstream loop is not the deployed implementation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-bomb-birth-stage-bounds-avoid-four-value-finite-array",
+      "status": "implemented",
+      "reason": "Eagerly snapshot all four stage bound properties before finite checks; original later property reads remain.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-bomb-birth-velocity-squared-fastpath-with-boundary-fallback",
+      "status": "implemented",
+      "reason": "Bounded squared-norm gate retains Math.hypot throughout a generous original-threshold neighborhood.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-boss-crablet-interpolation-reuse-owned-row-buffers",
+      "status": "already-in-pr",
+      "reason": "Existing queue-network-ui-adapter owns distinct crabRows and keeps borrowed unmatched rows.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-combat-proof-tail-avoid-redundant-bounded-slice",
+      "status": "not-adopted",
+      "reason": "Existing actual-module counterexample shows retained-array reuse changes real combat admission on synchronous geometry reentry: false becomes true.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-combat-provenance-burst-proof-index",
+      "status": "already-in-pr",
+      "reason": "Lazily index burst proof keys and per-kind recent counts for envelopes of at least 32 events; small envelopes retain the original walk. Duplicate, paired birth and rate-limit ordering is unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-combat-raynear-avoid-per-proof-vector-array",
+      "status": "already-in-pr",
+      "reason": "Compute the existing ray delta and dot-product arithmetic with scalars in the original order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-death-paint-proof-delay-fingerprint-serialization",
+      "status": "already-in-pr",
+      "reason": "Serialize the death fingerprint only in the authorized equal-life/equal-generation duplicate comparison where it is consumed.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-kit-birth-count-fastpath-below-cap",
+      "status": "already-in-pr",
+      "reason": "The per-owner count cannot reach 128 when total births are below 128, so only that count scan is omitted. At capacity the original eviction and replay rules run.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-kit-paint-monotonic-batch-skip-dedup-sort",
+      "status": "already-in-pr",
+      "reason": "A strictly monotonic unique batch without older pending rows uses its validated order directly. Other batches retain deduplication and sorting, with all admission checks intact.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-kit-paint-proof-key-length-prefix-fastpath",
+      "status": "already-in-pr",
+      "reason": "Use an injective UTF-16 length-prefixed key for string owners and safe integer sequences; unusual inputs retain the existing JSON encoding.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-kit-paint-prune-reuse-when-authority-unchanged",
+      "status": "already-in-pr",
+      "reason": "Revalidate the complete small authority snapshot, including actor identity/owner and every member key, before reusing a large birth-ledger prune. Birth or pending insertions invalidate the snapshot; custom Map operations retain the scan.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-kit-untagged-paint-radius-skip-catalog-roster-scan",
+      "status": "implemented",
+      "reason": "Finite base-cap Float32 admission returns before catalog roster scan; extension and live authority fallback remain unchanged.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-paint-authority-inline-zero-stretch-admission",
+      "status": "not-adopted",
+      "reason": "A semantics-preserving sparse/eager-getter/custom-slice candidate was slower in eight paired 300k-call VM rounds: median35.41ms to172.21ms. Candidate removed; original predicates retained.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-paint-order-reuse-same-call-validation",
+      "status": "not-adopted",
+      "reason": "The actual paint callback can synchronously remove membership. The executed production NetMatch case proves the post-apply read must reject causal clock advancement after that change; retaining the second validation preserves authority.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-paint-stretch-guard-elide-triple-array",
+      "status": "already-in-pr",
+      "reason": "Read the three optional stretch values eagerly and run the original finite checks without a temporary tuple.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-projectile-cosmetic-guard-remove-per-validation-tuple-arrays",
+      "status": "already-in-pr",
+      "reason": "The fixed snapshot guard already uses module-scoped frozen validation ranges.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-rewind-hermite-unchanged-snapshot-skip",
+      "status": "already-in-pr",
+      "reason": "The Actor path is already optimized; the remaining Boss path reuses its rewind result only for the same buffer identity, endpoints, length and host owner.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-slosher-proof-validator-remove-slice-and-origin-tuples",
+      "status": "already-in-pr",
+      "reason": "Validate the three metadata coordinates and origin reach with eager scalar reads, without changing numeric or capability limits.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-tick-six-sidecar-objectkeys-presence-arrays",
+      "status": "already-in-pr",
+      "reason": "The fixed composed sender lazily allocates each sidecar and checks its presence directly; six Object.keys arrays are already absent.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-torpedo-receiver-birth-prune-elide-set-copy-and-empty-contact-filters",
+      "status": "implemented",
+      "reason": "Iterate private registry directly with current-record deletion; skip empty contact filter while retaining nonempty deadlines and enrollment after sweep.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "network-wipeout-confirmation-replay-exhausts-relay-rate-limit",
+      "status": "already-in-pr",
+      "reason": "Budget confirmation replay room-wide to one accepted replay per 0.5 seconds, preserve refused sends, and rotate a persistent iterator fairly. Immediate newly-created confirmations remain unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "network-wipeout-cumulative-ledger-20hz-clone-rescan",
+      "status": "already-in-pr",
+      "reason": "Share frozen append-only outgoing history rows, retain validated owned prefixes, and skip confirmation recalculation only until the next exact transition.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "news-try-close-cancel-detached-splat-tweens",
+      "status": "already-in-pr",
+      "reason": "close(try) already cancels RAF and clears tweens before immediate detach.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "object-presentation-qa-nine-production-input-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "optimize-audio-emitter-key-weakmap-and-positional-validation",
+      "status": "already-in-pr",
+      "reason": "Emitter key lookup performs a single WeakMap get on the hot path. Positional validation checks the three scalars directly instead of allocating an array; nonfinite behavior is unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "outfit-cache-limb-centrelines-across-skin-socks-and-lod",
+      "status": "implemented",
+      "reason": "At most four centreline sample tables, keyed by every exact control-point/hint coordinate. Outputs remain caller-owned.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "outfit-plate-mask-cache-constant-tank-tilt-trig",
+      "status": "implemented",
+      "reason": "Lazy Object.is tilt cache; no top-level K access; signed-zero and nonfinite tilt invalidation covered.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "outfit-tee-strap-polyline-conservative-block-culling",
+      "status": "implemented",
+      "reason": "12-segment immutable AABBs with 0.03+1e-9 margin; retained near segments keep exact traversal/formula.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "owner-clock-forged-future-origin-bypasses-tick-rate",
+      "status": "already-in-pr",
+      "reason": "Retain an independent immutable authenticated relay receipt anchor, including each queued pre-ACK packet. Forged nonce clock origins cannot buy additional progress on the negotiated current relay; missing receipts fail closed. Legacy custom transports without authenticated receipts retain their compatibility behavior.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "owner-clock-full-pending-buffer-skip-serialization",
+      "status": "already-in-pr",
+      "reason": "Reject capacity-full pending queues before JSON serialization while retaining timestamp validation, dropped counters and challenge retry behavior.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "owner-clock-pending-short-wire-utf8-allocation",
+      "status": "already-in-pr",
+      "reason": "Use the existing exact UTF-8 length helper for short serialized packets; longer packets retain TextEncoder. Byte and packet limits remain unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "pad-menu-elide-per-frame-nav-wrapper",
+      "status": "already-in-pr",
+      "reason": "The gamepad navigation closure now invokes menus.nav directly; the independent editor ownership latch remains intact.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "pages-post-deploy-ranked-503-versioned-module",
+      "status": "already-in-pr",
+      "reason": "needs-evidence: Existing diagnostic provenance is retained. The exact historical URL now returns 404; the current immutable flow module returns 200 and matches its public manifest SHA256. These current observations cannot establish the cause of the historical 503. No retry hides a release-health failure.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "pages-test-only-patch-changes-redeploy-identical-site",
+      "status": "needs-evidence",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "paint-atlas-reuse-bufferattribute-update-range-records",
+      "status": "already-in-pr",
+      "reason": "Each GPU BufferAttribute retains one update-range record whose count is updated and reused after clearUpdateRanges; CPU grid mutation/version behavior is unchanged. The pinned raw paint input is unchanged; the terminal adapter produces byte-identical composed text to the earlier implementation and all 24 upstream hashes match.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "paint-codec-skip-single-paint-dictionary-attempt",
+      "status": "not-adopted",
+      "reason": "Actual nested row toJSON counterexample: current can prefer compressed output even with one paint; unconditional raw return changes wire. A proven producer-specific plain-serialization boundary would be needed.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "paint-hotpath-parity-direct-input-pr-path-gaps",
+      "status": "already-in-pr",
+      "reason": "Added exact production paint, Three, source composition and companion quality-suite direct inputs; source-driven import/read coverage checks protect future additions. Both original suites remain.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "paint-ownership-depth-scoped-claim-context-reuse",
+      "status": "needs-evidence",
+      "reason": "Current splat wrapper still creates fresh owner/mode/order/accepted context and restores outer context in finally. Pooling needs nested accepted mutation/clear/exception and ownership-retention tests.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "paint-splat-buffer-initial-capacity-on-demand",
+      "status": "needs-evidence",
+      "reason": "Composed _initGPU still allocates all MAX_QUADS attributes. Growing buffers needs peak-demand, rebinding, GPU/context-loss and stutter acceptance; no capacity change in this batch.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "pause-gpu-source-inputs-not-triggering-visual-qa",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "pause-screen-skip-frozen-offline-snapshot-and-dom-refresh",
+      "status": "already-in-pr",
+      "reason": "Final composed pause tick already gates refresh with snap.live && (!G.match?.paused || G.netm), preserving online updates while suppressing frozen offline snapshot/DOM rebuilds.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "physics-segment-capsule-compare-squared-distances",
+      "status": "already-in-pr",
+      "reason": "Already effective in collision-hotpath adapter: squared comparisons retain a sqrt fallback for boundary rounding ties, preserving capsule hit choice.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "player-aimassist-axis-prune-before-distance",
+      "status": "needs-evidence",
+      "reason": "Fully composed _assistTarget still computes _v.length then a.pos.distanceTo before selection. No axis gates here; hypothetical finite/type/NaN guards require target-selection and prior-target transition acceptance.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "player-map-superjump-skip-idle-ally-filter",
+      "status": "already-in-pr",
+      "reason": "runtime-frame-scratch adapter replaces the eager filter with iwPickMapAlly controller-owned scratch built only on a requested ally pick; finally clears Actor references and readiness. Final composed player source contains the helper.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "pooled-legacy-round-elide-per-shot-config-object",
+      "status": "already-in-pr",
+      "reason": "Six static scalar birth helpers evaluate every argument before ordered assignment, preserve Object.assign overwrite order, all pooled fields and the complete RNG sequence.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "precompute-grain-attack-envelope-float64-with-bitexact-pcm",
+      "status": "already-in-pr",
+      "reason": "The exact attack envelope is calculated once in Float64 storage and reused inside grains; crackle semantics and original multiplication order are preserved.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "precompute-guided-spectral-bin-routing-and-band-power",
+      "status": "already-in-pr",
+      "reason": "The guided renderer precomputes exact spectral bin routing and retains per-window band power, eliminating repeated band selection and sqrt work inside bin loops while keeping PCM bytes.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "preserve-recorded-sample-lru-touches-across-async-load-commit",
+      "status": "already-in-pr",
+      "reason": "Async sample import mirrors live playback touches into the staged LRU. Recently played rows evicted only in staging can be restored with correct shared-buffer accounting; same-key staged replacements are retained, and replace/clear generations cancel safely.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "projectile-visual-capture-atomic-intro-unit-duplicate-run",
+      "status": "already-in-pr",
+      "reason": "Remove only the second identical atomic-intro unit invocation from the native visual test step; the earlier gate remains.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "projectile-visual-sparse-roller-link-group-bitmap",
+      "status": "already-in-pr",
+      "reason": "Replace per-frame dense group clears/scans with occupied-word bits while retaining linear probe placement, ascending slot traversal and link-cap priority.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-actor-input-share-pitch-cosine-per-tick",
+      "status": "implemented",
+      "reason": "Evaluate pitch cosine once in current tick, unchanged multiplication order.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-and-frame-parity-qa-checkout-omit-203mb-modeler",
+      "status": "already-in-pr",
+      "reason": "Both jobs use conservative non-cone sparse rules that retain every tracked tree except tools/inkwave-modeler. Actual Git fixture checks demonstrate that game/assets/patches/scripts and other tools/reports remain materialized. Build, browser and source/emitted commands are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-bot-clam-arc-exact-input-memo",
+      "status": "already-in-pr",
+      "reason": "Memoize the exact finite horizontal distance, height and launch speed per actor for the 211-angle search, with no quantization; refresh live output fields on each call.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-bot-steering-point-validation-skip-temporary-arrays",
+      "status": "already-in-pr",
+      "reason": "Validate ordinary coordinate arrays and eagerly read object x/y/z fields without building temporary validation arrays.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-buildframe-skip-empty-barrier-hit-splice",
+      "status": "already-in-pr",
+      "reason": "Use a private frozen empty array only for an empty hit queue; nonempty hits are still detached and owned.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clam-bot-blocked-nearest-distance-sort",
+      "status": "already-in-pr",
+      "reason": "not-adopted: The record-sort candidate did not establish a worthwhile performance win: actual botGoal Node/V8 diagnostics showed 8/16 candidates about 9%/6% slower, and 32/40 candidates only about 2.6%/0.4% faster before unusual-input guards. Required device CPU/GC evidence is absent. Keep the simpler stable ordering and unchanged reachability call order.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clam-goal-swept-aabb-before-closest-point",
+      "status": "already-in-pr",
+      "reason": "Reject only finitely bounded segments whose conservative XZ swept box cannot reach the goal, before the unchanged closest-point test. Boundary and unusual inputs fall back.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clam-minimap-power-inventory-keys-instead-of-entries",
+      "status": "implemented",
+      "reason": "Snapshot keys, store only current power IDs; preserve first actor ID precedence.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clam-projectile-drop-temporary-scaled-vector",
+      "status": "already-in-pr",
+      "reason": "Write the original axis-wise multiply/add expressions directly, preserving coordinate reads and arithmetic order.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clam-world-lazy-inventory-actor-index-on-carrier",
+      "status": "implemented",
+      "reason": "Build actor index only upon first visible held inventory; always clear stale markers.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clam-world-reuse-frame-marker-presence-set",
+      "status": "already-in-pr",
+      "reason": "Reuse a private marker-presence Set with a busy guard and finally cleanup; reentrant synchronization receives separate scratch.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clam-world-share-visual-clock-across-markers",
+      "status": "implemented",
+      "reason": "Resolve normal own data clock once per update; dynamic accessor keeps original reads.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clams-expiry-burst-single-filter-canonical-events",
+      "status": "needs-evidence",
+      "reason": "Per-expiry events can synchronously inspect incremental remaining clams; batching changes observer states. Queue small-burst benchmarks regress.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clams-hud-team-inventory-allocation-free-aggregation",
+      "status": "implemented",
+      "reason": "Walk own inventories in original key order using same sequential sums.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clams-reuse-authoritative-actor-position-triplets",
+      "status": "needs-evidence",
+      "reason": "state.actorPositions exposes mutable arrays; retained prior observers would change with in-place reuse. Keep detached value boundary.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clams-reuse-depth-scoped-pickup-actor-list",
+      "status": "already-in-pr",
+      "reason": "Use depth-scoped actor-list scratch with finally cleanup; nested pickup calls get independent buffers and escaping snapshots remain owned.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clams-skip-pickup-field-snapshot-with-no-eligible-receivers",
+      "status": "implemented",
+      "reason": "Return after live eligibility scan when no receivers, with finally lease cleanup.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-clams-spawn-broadphase-skip-distant-hypot",
+      "status": "already-in-pr",
+      "reason": "Reject spawn occupants outside either exact horizontal axis bound before calling the original hypot test.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clams-spawn-interval-skip-provably-over-threshold-count",
+      "status": "already-in-pr",
+      "reason": "When field clams already exceed the nonnegative total threshold, omit the inventory sum; boundary counts retain the original interval selection.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clams-totalclams-avoid-object-values-allocation",
+      "status": "already-in-pr",
+      "reason": "Iterate own enumerable inventory entries directly in the same key order without constructing Object.values.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clams-vec-validation-eliminate-temporary-slice",
+      "status": "already-in-pr",
+      "reason": "Use eager scalar validation for ordinary coordinate arrays; sparse slots, inherited elements, custom slice/species behavior and unusual inputs retain the prior semantics.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-clams-world-lazy-field-snapshot-only-on-drill",
+      "status": "needs-evidence",
+      "reason": "Mesh/Object3D add callbacks can synchronously mutate source array; shallow snapshot preserves current iteration boundary. Local small-N regression also reported.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-engine-lowfps-trusted-frame-skip-cold-input-clone",
+      "status": "already-in-pr",
+      "reason": "Share inputs only on internally branded frames whose exact input object is retained and every own throw value is false. External or throwing inputs still clone and disarm.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-engine-transactional-restore-spare-rule-reuse",
+      "status": "already-in-pr",
+      "reason": "not-adopted: A retained old rule can escape and the stage definition can change in place between restores. Reusing a spare rule would mutate escaped state or keep a stale Tower path; the executed negative boundaries retain fresh transactional construction.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-grounded-clam-pickup-exact-axis-broadphase",
+      "status": "already-in-pr",
+      "reason": "Use conservative axis rejection only at the actual pickup callsite; the general distance helper retains its exact numeric return contract.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-host-pose-admission-elide-packed-row-slices",
+      "status": "already-in-pr",
+      "reason": "Validate packed coordinate triples at their offsets without sliced arrays, preserving hole/custom-array behavior and all pose authority limits.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-minimap-skip-unranked-objective-snapshot",
+      "status": "implemented",
+      "reason": "Skip objective snapshot allocation until ranked exists; still clear ranked removal once.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-network-guest-skip-unused-pose-staging",
+      "status": "already-in-pr",
+      "reason": "Allocate and fill staged pose state only on the host path which consumes it; guest packet admission remains unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-network-sendtick-reuse-scoped-broadcast-hook",
+      "status": "already-in-pr",
+      "reason": "Reuse an instance callback under a scoped lease, preserve the original transport receiver, and use an independent nested fallback with finally restoration.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-rainmaker-barrier-proof-prune-in-place",
+      "status": "already-in-pr",
+      "reason": "Compact owner-private expired proof and pending lists in place, preserving order and bounded admission counts.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-rainmaker-interaction-radius-exact-axis-reject",
+      "status": "needs-evidence",
+      "reason": "Conditional broadphase needs trusted stable triples; verifying custom/foreign inputs and near-heavy performance remains necessary.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-rainmaker-skip-nonshot-fingerprint-serialization",
+      "status": "implemented",
+      "reason": "Reject event kinds that shotFromEvent always rejects before JSON serialization.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-rainmaker-sphere-candidate-elide-vector-arrays",
+      "status": "already-in-pr",
+      "reason": "Use the exact scalar sphere-entry helper for ordinary production Vector3 values; custom vector implementations retain the original array path.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-rainmaker-splashwall-los-origin-single-vector",
+      "status": "implemented",
+      "reason": "Use one cloned LOS origin; preserve addition on all axes including signed zero.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-snapshot-validator-own-entry-iteration",
+      "status": "already-in-pr",
+      "reason": "Traverse own JSON snapshot keys directly without Object.entries and a per-node forbidden-key array; depth/count/value restrictions remain unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-special-gain-event-kind-direct-branch",
+      "status": "implemented",
+      "reason": "Replace per-event literal membership with six exact comparisons.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-tower-cache-published-nav-nonnegative-proof",
+      "status": "already-in-pr",
+      "reason": "not-adopted: The published graph permits in-place node/edge changes without a revision. A reference/revision memo would skip fresh validity and nonnegative-edge proof, so the live scan is retained.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-tower-precompute-static-segment-heading-basis",
+      "status": "needs-evidence",
+      "reason": "Path/metrics remain publicly mutable; precomputed headings could become stale without publication/revision contract.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-tower-reuse-scoped-rider-offset-records",
+      "status": "needs-evidence",
+      "reason": "Scope crosses collect and sync callbacks; queue measured only 1.9% mock improvement. Retained record identity/reentry contract requires additional proof.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-tower-route-position-binary-segment-lookup",
+      "status": "needs-evidence",
+      "reason": "metrics.lengths remains externally mutable; immutable origin/monotonicity proof would need a contract change or per-call O(N) validation.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-zone-coverage-skip-unrelated-off-zone-turf-versions",
+      "status": "needs-evidence",
+      "reason": "Needs complete tracking of all CPU grid writes and network restores; missing any invalidation changes authoritative 50/70% decisions.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "ranked-zone-reuse-static-coverage-area-sums",
+      "status": "already-in-pr",
+      "reason": "Brand and freeze only engine-built static zone cell records, compute ordered total areas once, and fall back for external or replaced indices.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-zones-hud-reuse-unchanged-objective-text",
+      "status": "already-in-pr",
+      "reason": "Reuse objective text only for frozen production coverage pairs with unchanged rounded percentages, owners, language and team names; other inputs use the original formatter.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ranked-zones-minimap-reuse-center-projection-between-box-and-marker",
+      "status": "implemented",
+      "reason": "Reuse same projection within one zone draw, no cross-frame memo.",
+      "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+    },
+    {
+      "slug": "rearm-evicted-game-owned-ambient-and-movement-loops",
+      "status": "already-in-pr",
+      "reason": "Stopped game-owned ambience/movement handles rearm only when audible with a free loop slot. Full budgets do not churn or evict active loops; muted deferred handles remain owned by existing mute recovery.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "rearm-jet-arrow-bgm-on-connectivity-or-gesture-recovery",
+      "status": "already-in-pr",
+      "reason": "After the existing two bounded timed retries, transient recorded-BGM failures now rearm on recovery events. NotAllowedError waits for a trusted gesture, unsupported/decode failures do not rearm, and track switch/stop/dispose remove event listeners. Error reasons are forwarded without changing the recording.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "reefslider-dash-vfx-elide-per-frame-paired-tuples",
+      "status": "already-in-pr",
+      "reason": "Capture the two wake handles and run a numeric two-side loop, keeping left/right offsets and emission order without paired tuple arrays.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "relay-accepted-frame-attachment-avoid-redundant-key-enumeration",
+      "status": "implemented",
+      "reason": "First compare budget scalars, then retain complete key equality if unchanged. This avoids the proposed unsafe assumption that refill/decrement must always change a prior snapshot.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "relay-current-compat-start-ack-mismatch-blocks-all-host-starts",
+      "status": "already-in-pr",
+      "reason": "Target head already includes strict current compat START admission and host handshake fixes.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "relay-directed-absent-target-avoid-second-json-parse",
+      "status": "already-in-pr",
+      "reason": "validRelayPayload already returns the parsed object and the absent-target path reuses it for hit_nack after quotas.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "relay-leave-notification-drop-stale-host-authority",
+      "status": "already-in-pr",
+      "reason": "Close and remove failed LEAVE recipients through an iterative cleanup queue. Synchronous close reentry cannot resume a stale outer host broadcast after the final election.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "relay-security-composed-client-source-trigger-gap",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "relay-utf8-byte-count-ascii-fastpath",
+      "status": "not-adopted",
+      "reason": "Queue reports 7%-53% Unicode slowdowns and requires actual Workers traffic/CPU evidence. No deployment/actual-traffic evidence available; retain current byte counter.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "remote-special-screen-unbounded-payload-visual-lifetime-and-contact",
+      "status": "already-in-pr",
+      "reason": "Validate world kind, source-bounded lifetime/radius/HP/velocity and exact 15 by 9 Screen dimensions before ledger or allocation; bounded live remote admission allows corrected births after rejection and preserves existing ownership checks.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "remote-sub-objecthit-distance-elide-event-vector-allocation",
+      "status": "implemented",
+      "reason": "Replaced one throwaway Vector3 with copied event scalars and the exact Vector3 distanceTo subtraction/squared-sum/square-root order, including undefined constructor defaults. Existing authority, replay registration, reach, damage and retirement unchanged; source-function boundary/replay/getter-order tests and existing real runtime replay test pass.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "remote-sub-replaydeploy-duplicate-visual-rebuild",
+      "status": "needs-evidence",
+      "reason": "replayDeploy still calls deploy then final replaceVisual, and deploy itself replaces visuals. Removing intermediate object needs spawn/deploy callback observation and remote attachment/lifetime tests.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "remove-redundant-noise-buffer-float32-scratch",
+      "status": "already-in-pr",
+      "reason": "The second DC-filter pass writes each output directly to the channel after retaining the original predecessor sample. This removes the redundant final Float32 copy without changing noise PCM.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "respawn-actor-skip-unused-saved-array-on-normal-ticks",
+      "status": "already-in-pr",
+      "reason": "Allocate the saved-input list only while a live actor actually has rearm state. Existing cleanup behavior for an empty rearm Set is preserved.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "results-online-lobby-countdown-cache-identical-ring-css",
+      "status": "already-in-pr",
+      "reason": "Composed menus compares four-decimal ringFraction against current --f before setProperty; exact duplicate write is already suppressed.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "retarget-prebind-world-quaternions-upper-partition",
+      "status": "already-in-pr",
+      "reason": "The fixed composed retarget entries already retain worldQ, parentWorldQ and isUpper per stable bone entry.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "retire-paused-streamed-bgm-without-procedural-clock",
+      "status": "already-in-pr",
+      "reason": "music-idle has clock-aware retirement timeout/statechange observer, including closed clock.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "reuse-brella-audio-canopy-transition-snapshot",
+      "status": "already-in-pr",
+      "reason": "Brella canopy transitions reuse an instance-owned snapshot with all original scalar fields refreshed before the immediate transition comparison.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "reuse-guided-fft-frame-scratch-buffers",
+      "status": "implemented",
+      "reason": "Allocate real/imag per render; zero both for every frame; regenerate classic Worker.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "reuse-verified-crossfilename-roller-vertical-mp3-pcm",
+      "status": "implemented",
+      "reason": "Reuse verified SHA-256 PCM across filenames with equal loop category/endpoints/repair; index and scan paths agree.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "reuse-verified-niceball-source-decode-across-fire-and-spin",
+      "status": "not-adopted",
+      "reason": "No production emitter for source:Sp_NiceBall_HoldFull_00/fire was found: the name occurs only in the source registry, while Booyah spin is the established route. The ticket explicitly says to close/deprioritize if the second route is not used. Both manifest rows lack raw SHA-256, Git blob identity is not that hash, and fire versus spin has different loop-repair semantics. Adding retained unlooped PCM for an unproven dual-route benefit is not adopted.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "revoke-music-worker-blob-url-on-constructor-failure",
+      "status": "already-in-pr",
+      "reason": "idle-adapter existing constructor/postMessage/async-error ownership cleanup; music-worker-failure-366 tests.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "ribbon-pool-pack-live-segments-before-gpu-upload",
+      "status": "needs-evidence",
+      "reason": "Dynamic indices/topology/upload ranges need actual GPU raster equivalence and transfer benchmark; current dirty-view change leaves topology unchanged.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "ribbon-pool-spacing-compare-squared-distance-with-threshold-fallback",
+      "status": "needs-evidence",
+      "reason": "push retains original Math.hypot<spacing. Dirty chronological-view work is separate. Squared fastpath needs boundary, subnormal and signed/nonfinite behavior and branch-cost proof.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "ribbonpool-chronological-view-dirty-only-sync",
+      "status": "implemented",
+      "reason": "Rebuild chronological references only on structure changes; coalesced values stay shared; every frame still writes all existing geometry.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "roller-contact-gate-skip-hypot-on-clear-zero-or-motion",
+      "status": "needs-evidence",
+      "reason": "Contact/holding region also changes in gameplay PR #1872; no overlapping speculative contact fastpath added.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "roller-link-reuse-drawn-render-age",
+      "status": "implemented",
+      "reason": "Reuse the render ages written for the same synchronous draw before links.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "roller-membrane-hoist-invariant-ring-bounds",
+      "status": "implemented",
+      "reason": "Keep multiplication order and reuse radius-dependent bounds across rings.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "roller-release-footpaint-reuse-depth-scoped-center-and-yaw-trig",
+      "status": "needs-evidence",
+      "reason": "Center scratch requires retained-reference/reentrant paint validation; current fresh-center ownership is preserved.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "roller-source-pin-test-only-drop-unused-npm-install",
+      "status": "already-in-pr",
+      "reason": "Removed unused esbuild installation while retaining the exact same roller support source-pin VM suite and Node 22. The unchanged suite passed in the dependency-free local run.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "roller-visual-fallback-link-precompute-13-ring-sines",
+      "status": "implemented",
+      "reason": "Float64 sine table uses exact original PI*(ring/(RINGS-1)) expression.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "root-hair-inertia-quiescent-zero-turn-fastpath",
+      "status": "needs-evidence",
+      "reason": "Pending. Complete +0 scan plus finite coefficients/head, internal scratch and initial per-chain cache side effects require separate acceptance; current root-hair fixture explicitly observes result scratch.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "root-hair-inertia-share-per-chain-spring-coefficients",
+      "status": "already-in-pr",
+      "reason": "The fixed composed root hair already stores _iwSpring per chain and recalculates only when dt/K/D change.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "root-hair-reuse-head-transform-for-root-strands",
+      "status": "already-in-pr",
+      "reason": "Composed RootHairInertia uses e.bone.parent===c.bones.head and copies the existing head quaternion.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "runtime-frame-parity-qa-direct-input-pr-path-gaps",
+      "status": "already-in-pr",
+      "reason": "The PR gate covers literal production reads and imported adapters from all three executed suites, source composition, HUD and motion inputs. The source-driven contract rejects missing direct input coverage and unrelated documentation still does not match.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "s3-ink-sheets-hoist-per-render-attribute-list-tuples",
+      "status": "implemented",
+      "reason": "Per-renderer frozen sheet/drill attribute arrays replace two draw-call literals; upload order/size/ranges and actual Three attrs verified.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "s3-ink-sheets-hoist-static-sweep-basis-per-burst",
+      "status": "already-in-pr",
+      "reason": "Compute invariant sweep basis/quaternion once per burst draw; cone handling and dynamically rolling arrow layers retain their original per-layer path.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "saber-neutral-stick-avoid-horizontal-aim-hypot",
+      "status": "needs-evidence",
+      "reason": "Signed-zero-preserving neutral fastpath needs real actor/input tracing and benchmark; leave original history expression.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "screenfx-lazy-dry-frame-speed-and-reuse-jump-wave",
+      "status": "implemented",
+      "reason": "Avoid speed norm on dry non-emerging frames; existing composition already shares the superjump cosine.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "settings-aimassist-preview-elide-svg-trail-dom-getattribute",
+      "status": "already-in-pr",
+      "reason": "Existing scoped settings adapter keeps exact previous trail string locally.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "settings-audio-muted-preview-skip-18-bar-per-frame-trigonometry",
+      "status": "already-in-pr",
+      "reason": "The muted audio preview already draws the settled floor once and returns before all eighteen bar trigonometric updates; spectrum factors are already cached.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine",
+      "status": "already-in-pr",
+      "reason": "The disabled preview thumb no longer receives an unchanged transform each frame; fire and reticle reuse one pulse sine while preserving their animation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "settings-fov-preview-skip-unchanged-target-class-toggles",
+      "status": "implemented",
+      "reason": "Retain every wedge/caption update and inspect current target membership before toggling unchanged classes.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "settings-ui-lab-freeze-skip-zero-dt-preview-dom-ticks",
+      "status": "implemented",
+      "reason": "Narrow time-driven gyro/touch preview wrapper skips repeated dt=0 ticks after first paint; set invalidates, nonzero time resumes, visibility guard remains outermost.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "shapepool-expiry-batch-stable-compaction",
+      "status": "already-in-pr",
+      "reason": "Stable forward compaction follows reverse aging/retirement only for callback-free records; any follow/onEnd callback retains the original reverse-splice path.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "shapepool-unchanged-instance-attribute-upload",
+      "status": "already-in-pr",
+      "reason": "Compare copied Float32 components and active count, preserving signed zero and NaN with Object.is; unchanged attributes keep existing version/ranges, changed buffers upload as before.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "shared-aoe-hit-distance-pass-once",
+      "status": "needs-evidence",
+      "reason": "Both shared AoE paths still recompute distance after LOS. The second read observes synchronous LOS coordinate mutations; a safe no-mutation fallback contract is absent.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "shared-splash-flight-avoid-finite-triplet-array",
+      "status": "already-in-pr",
+      "reason": "Capture all three endpoint coordinates before scalar finite checks; preserve eager reads without a temporary validation array.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "shooter-muzzle-cache-burst-phase-trig-across-render-frames",
+      "status": "needs-evidence",
+      "reason": "Pending: final append still calculates phase/sin/cos per visible droplet. Correct caching requires invalidation on each of 32 pool overwrites and per-index lazy warming that preserves cap ordering and does not spend extra trig on fully culled bursts. Current isolated audit model does not verify actual append matrix/shape/look output across pool overwrite and capacity-zero lifetimes.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "shot-bias-reuse-reentrant-launch-context-records",
+      "status": "needs-evidence",
+      "reason": "Pending: withShotBias intentionally creates a fresh record visible through weaponRunner.s3ShotBias during synchronous launch hooks. A depth pool would change reference identity and later mutate any record retained by a hook; complete composed-consumer escape/reentrancy proof is missing. Existing finally reference restoration remains intact.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "showcase-fx-elide-redundant-tail-rescan",
+      "status": "already-in-pr",
+      "reason": "InkFX, Sparkles and InkTrail use the top index already computed in the forward update instead of rescanning every tail. Expiry, zero counts and upload decisions are retained.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "showcase-inkfx-cache-lowest-free-particle-slot",
+      "status": "implemented",
+      "reason": "Maintain lowest-free floor at successful occupied writes, all three retirements before reentrant landing births, and clear; preserve slot order, RNG and matrix bytes.",
+      "evidenceReport": "reports/queue-extra-ui-20261025.json"
+    },
+    {
+      "slug": "showcase-inkfx-sparkles-skip-idle-pool-updates",
+      "status": "already-in-pr",
+      "reason": "InkFX and Sparkles already skip empty pools, wake on spawn and retire to idle after all entries expire; the new tail removal is a separate remaining optimization.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "showcase-lobby-camera-elapsed-time-smoothing",
+      "status": "already-in-pr",
+      "reason": "Showcase update already stores bounded elapsed _fdt and both lobby camera damping formulas consume it; fixed per-frame damping is absent.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "showcase-lobby-inktrail-idle-scan-fastpath",
+      "status": "already-in-pr",
+      "reason": "InkTrail already has an explicit empty-pool flag, skips idle updates in O(1), wakes on add and clears after the last live slot expires.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "showcase-lobby-jumpout-rate-independent-ink-droplets",
+      "status": "already-in-pr",
+      "reason": "Jumpout droplets now consume the existing bounded 60 Hz cosmetic-trial clock: one reference trial at 60 Hz, two at 30 Hz and alternating trials at 120 Hz. Random call order is retained at 60 Hz; hitches cap work at two trials.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "showcase-lobby-member-walk-avoid-per-frame-map-snapshot",
+      "status": "already-in-pr",
+      "reason": "The baseline reuses a member snapshot array while retaining original snapshot semantics; a busy guard handles reentrancy and finally clears references. Direct live Map iteration would change mutation behavior.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "showcase-results-hoist-immutable-bomb-plan",
+      "status": "already-in-pr",
+      "reason": "The composed baseline already uses one frozen RESULT_BOMB_PLAN, including frozen rows; no per-frame plan construction remains.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "site-publishing-audit-unversioned-revisioned-static-twins",
+      "status": "not-adopted",
+      "reason": "Read-only completed-tree audit verifies all declared artifacts and inventories final root/revisioned path, SHA256 and byte length. The isolated final production build has 1,071 identical pairs totaling 48,990,113 root logical bytes. No additional root URL deletion is proven safe. Mandatory startup/packaging gates read root modules/lightmaps; the Service Worker explicitly preserves separate mutable-root HTTP behavior; account dev routes explicitly serve both root and revisioned static paths. Removing roots from the tested artifact would break or weaken existing checks. A publish-only pruned copy would require its own old-document, direct-URL, offline/update and Workers routing evidence, absent here. The proposed blanket deletion is therefore not adopted. Existing proven volume deduplication remains; actual additional files/bytes removed are zero.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "skip-grain-frequency-ramp-pow-after-saturation",
+      "status": "already-in-pr",
+      "reason": "Each grain caches f1/f0, and Math.pow is skipped only when the clamped exponent equals exactly one. f0*ratio and all nonsaturated arithmetic retain their original ordering.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "skip-manifest-negative-recorded-se-ensure-per-shot",
+      "status": "implemented",
+      "reason": "Skip only explicit ready-manifest negatives; preserve notMapped telemetry and recorded base fallback; unknown manifests still request.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "skip-procedural-battle-song-compilation-for-recorded-stream",
+      "status": "already-in-pr",
+      "reason": "The recorded battle branch already uses lightweight SONGS metadata and bypasses getSong procedural compilation; record failures remain recorded-only with no synthesized battle-song fallback.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "slosher-delayed-birth-reuse-initial-yaw-pitch-trig",
+      "status": "needs-evidence",
+      "reason": "Adding angle/trig cache fields to pooled rounds needs shape/memory and delayed-birth mutation evidence.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "slosher-intermediate-cache-static-source-plan-across-projectiles",
+      "status": "already-in-pr",
+      "reason": "Cache immutable static width/depth/spawn/drop plans by unit and source index with scalar invalidation. Source selection and all seeded per-projectile spacing still run for each glob.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "sloshing-machine-drill-reuse-render-slot-record-and-direction",
+      "status": "already-in-pr",
+      "reason": "Own drill records/direction vectors per admitted render slot, copy input direction after capacity admission, and clear retained point/color references on draw/clear/dispose.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "small-tank-matrix-checkout-omit-190mib-modeler-inputs",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-align-weapon-early-exit-converged-grip-projection",
+      "status": "already-in-pr",
+      "reason": "Current composition already introduces changed=false per iteration, sets it on either projection, and breaks only at iteration end if neither projection ran. The maximum 16 iterations, final fitL/gripV2 updates and source-weapon guards remain. This predates the additional motion adapter; no duplicate implementation is needed.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "source-bank-elide-unchanged-clip-base-pose-copy",
+      "status": "not-adopted",
+      "reason": "SourcePose.raw and SourceBank.data are publicly mutable without a revision. Executed same-clip counterexamples show that a raw write, base translation write or rest() must be corrected/observed by the next sample. Omitting that copy without a new ownership contract is unsafe.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-controller-actionclip-avoid-per-action-frame-array-find",
+      "status": "implemented",
+      "reason": "Ordered live Map.has branches preserve all current action fallback priorities without array/find.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-controller-cache-jump-clip-resolution",
+      "status": "already-in-pr",
+      "reason": "Resolve jump start/body/end clip references once inside the existing per-bank family table, including the historical spelling fallback.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-controller-lazy-dance-clip-fallback-scan",
+      "status": "implemented",
+      "reason": "Existing bank-keyed cache retained; full fallback roster scanned only when both preferred names are absent. Empty-roster exception remains identical.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-controller-overlay-samples-skip-unread-fk",
+      "status": "already-in-pr",
+      "reason": "The fixed composed controller already samples overlay poses with doFk=false where only local TRS is consumed.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-controller-reuse-locomotion-blend-records",
+      "status": "already-in-pr",
+      "reason": "The fixed composed baseline already owns _locoList and _locoPool with per-call active length and overwritten name/weight/profile fields.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-hair-targets-fastpath-bounded-swing-angle",
+      "status": "already-in-pr",
+      "reason": "Skip acos only safely inside the unchanged angular bound; the conservative threshold margin sends boundary and nonfinite cases through the original calculation.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-locomotion-profile-sparse-center-and-hairmean-accumulators",
+      "status": "already-in-pr",
+      "reason": "Accumulate only the consumed center and hair indices in their original order; unrelated world poses and sums are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-motion-lazy-currentclips-debug-snapshots",
+      "status": "needs-evidence",
+      "reason": "Pending. Public currentClips/debug.clips reference stability and external mutations are observable. Safe epoch snapshots require API/diagnostic changes; not replaced by mutable slots.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-motion-reuse-per-update-call-options-records",
+      "status": "already-in-pr",
+      "reason": "Reuse four controller-private option records, overwrite every consumed field, and keep their synchronous consumers and pose ownership intact.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-motion-share-frame-dt-response-gains-across-actors",
+      "status": "implemented",
+      "reason": "Six fixed response expressions share scalar exact-dt caches; no dt rounding or mutable pose sharing.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-retarget-cache-head-transform-across-hair-accessories",
+      "status": "already-in-pr",
+      "reason": "Composed applyAccessories uses headWorldQ/headWorldReady and shares root-parent orientation.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-retarget-hair-skip-overwritten-quaternions-and-prebind-rest",
+      "status": "already-in-pr",
+      "reason": "Composed HumanRetarget.addAccessory prebinds restSourceQ/restHeadRelQ; applyAccessories selects hair branch before generic source delta.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-retarget-share-hair-response-expm1-per-update",
+      "status": "already-in-pr",
+      "reason": "Composed applyAccessories computes hasHairTargets, ampScale and hairAlpha once before the accessory loop.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-retarget-skip-overwritten-native-leg-ik-after-activation",
+      "status": "already-in-pr",
+      "reason": "The fixed composed pose already guards overwritten native leg work with active source pose and the existing activation threshold. No additional readiness assumption is introduced.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "source-squid-rig-reuse-yaw-swim-climb-temporary-math",
+      "status": "already-in-pr",
+      "reason": "Composed SourceSquidRig already owns up/euler/wall vectors and selects final rotation without redundant initial overwrite.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "source-squid-skip-invisible-remote-eye-cpu-deformation",
+      "status": "already-in-pr",
+      "reason": "Composed SourceSquidRig.apply directly gates deformEyes for submerged remote characters.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "special-damageband-hit-count-and-constant-bands",
+      "status": "implemented",
+      "reason": "Local helper returns integer hitCount; only observed Zipcaster targets uses integer directly. Three fixed nested band arrays frozen. Hit/LOS/once/object callback order/count tests passed.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "special-movement-reuse-horizontal-exponential",
+      "status": "implemented",
+      "reason": "Shared one exact per-invocation alpha/drag in numeric moveActor and dampForSpecial X/Z updates. Crab/native paths, arithmetic order, vertical integration and callbacks unchanged. Actual source functions pass 30/60/120Hz and invalid-dt/signed-zero parity tests; relevant exp calls halve.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "special-vfx-bubbler-dual-roster-temporary-array",
+      "status": "already-in-pr",
+      "reason": "Capture both Bubbler rosters eagerly and visit them with a two-iteration numeric loop, preserving roster order without an outer array.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "special-vfx-drop-double-inkcol",
+      "status": "already-in-pr",
+      "reason": "Skip the second color normalization only for the default method with already normalized finite color; custom normalizers and exceptional ranges keep the original second call.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "special-vfx-reuse-attribute-update-iteration-tuples",
+      "status": "already-in-pr",
+      "reason": "Store the sprite attribute tuple once per pool rather than constructing it in each upload loop; update order and ranges are unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "special-vfx-shapepool-spawn-transient-value-arrays",
+      "status": "already-in-pr",
+      "reason": "Add a 16-scalar shape birth entry point that keeps fresh public record/Float32 storage while removing transient argument arrays.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "special-vfx-streaks-hoist-constant-ink-petal-color",
+      "status": "already-in-pr",
+      "reason": "Lazily reuse the default petal color within a streak recipe, guarded by color scalars and normalizer identity; custom normalization keeps its original calls.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "special-world-flight-kind-check-hoist-three-value-array",
+      "status": "already-in-pr",
+      "reason": "Replace the per-object three-element includes array with equivalent ordered scalar kind checks.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "special-world-hidden-native-proxy-mesh-factory",
+      "status": "already-in-pr",
+      "reason": "Installed dedicated special presentation supplies hidden transform Groups with the two legacy material scalar fields; unsupported or uninstalled presentation retains native mesh construction.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "specials-1130-batch-22-browser-runs-and-build-manifest-verification",
+      "status": "already-in-pr",
+      "reason": "Added --batch with the complete original 1 Splashdown + 18 Inkjet + 3 native-terminal case matrix in the original order and evidence paths. The full artifact hash and source proof scans run once and Chromium launches once; each case uses a new BrowserContext that closes before the next case. Existing standalone CLI behavior and native evaluation/capture/assertion bodies are preserved. Every verified file is checked at case boundaries using device/inode/size/nanosecond mtime/ctime, and served bytes are hashed against the manifest. Proof/input/artifact mutation, individual failures, launch and cleanup failures cannot pass the batch. Related workflow hashes were changed only for the authorized batch orchestration; root may recompute its authenticated baseline after merging newer PR1867 workflow changes.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "splash-drop-birth-inline-record-and-seed-helper",
+      "status": "already-in-pr",
+      "reason": "Write every pooled splash-drop field directly and call the seed helper without a local closure; preserve all seed ordinals and reset fields.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "splash-drop-lazy-retirement-list-on-nonterminal-frame",
+      "status": "implemented",
+      "reason": "Call-local retirement list becomes lazy; ordered landings and finally/epoch recycling stay unchanged.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "splash-wall-elide-duplicate-yaw-trigonometry",
+      "status": "already-in-pr",
+      "reason": "Reuse the two yaw trigonometric results at wall queries, preserving the original yaw reads and falling back if an accessor changes values.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "splatana-horizontal-splash-fallback-spec-weakmap-miss",
+      "status": "already-in-pr",
+      "reason": "Use a separate fallback-spec cache keyed by original source identity and checked scalar/nested inputs; explicit fallback gravity preserves the old spread override.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "splatling-cosmetic-tail-squared-saturation-fastpath",
+      "status": "needs-evidence",
+      "reason": "Extra vector identity/prototype/numeric guards can outweigh saved sqrt; unmeasured.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "splatling-horizontal-skip-nonspin-charge-hypot",
+      "status": "already-in-pr",
+      "reason": "Capture pre-horizontal velocity scalars, then defer their hypot until the post-horizontal Splatling/charging/input guards pass; weapon changes inside the wrapped call retain correct old velocity.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "splattercolor-screen-reuse-drop-projection-vectors",
+      "status": "needs-evidence",
+      "reason": "Current paintScreenDrops still calls o.pos.clone() per drop, then hit.point.clone() or from.clone() for its projected point. The per-sheet pair of independent projection vectors is absent. Other screen movement scratch or flight-kind changes are separate.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "sprinkler-droplet-reuse-rng-and-paint-point",
+      "status": "needs-evidence",
+      "reason": "Reusing point across synchronous paint/hit callbacks requires depth-safe leases and retained-reference verification.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "spritepool-per-render-duplicate-drag-exponential",
+      "status": "in-other-pr",
+      "reason": "PR #1876 implements the per-update scalar drag cache in special-vfx-kit.mjs; excluded per request.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "squid-heading-swim-entry-qa-four-full-tree-rehash-and-framewise-receipt-rewrites",
+      "status": "needs-evidence",
+      "reason": "Integrity checks verify no working-tree mutation between reference build/browser runs. A replacement proof and interruption receipts need dedicated negative tests before dropping guards.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "squid-heading-swim-entry-qa-seven-authored-input-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "Both focused PR gates now cover the current eight hashed authored sources plus shared lighting/parser and directly executed build/composition/budget inputs. A contract extracts the authored list from the current harness and checks its coverage. Existing exact-head A/B builds, source/emitted tests and evidence retention stay intact.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "squid-quality-cache-key-preserve-distinct-detail",
+      "status": "already-in-pr",
+      "reason": "Keep human body geometry shared while separating squid views by actual detail key, eliminating the low/medium squid cache collision.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "squid-visual-qa-direct-imports-and-environment-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "stage-long-crab-tank-idle-mp3-predecode",
+      "status": "not-adopted",
+      "reason": "Retain current Crab idle preload. Local main-shot work is already admitted ahead of kit events and supports priority promotion. Delaying the two long spin variants to gauge readiness reduces the readiness window for instant/full-gauge and late remote activation; the ticket explicitly rejects any increased missing first activation. No device/bandwidth readiness measurement supports a safe delay, and merely retaining the existing queue order is not a new optimization.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "storm-cloud-puff-bob-hoist-phase-and-loop",
+      "status": "already-in-pr",
+      "reason": "Fully composed _updateClouds has no original forEach/sin(G.time*1.6+bob) loop. Existing per-cloud elapsed closed-form cosine-sum update supersedes that raw-loop proposal and preserves pause/peer cadence.",
+      "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+    },
+    {
+      "slug": "sub-defense-defer-hit-object-materialization-until-nearest",
+      "status": "needs-evidence",
+      "reason": "Delayed onHit ownership, hit-point retention and callback mutations require production selection parity beyond arithmetic.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "sub-disposevisual-elide-per-node-single-material-arrays",
+      "status": "implemented",
+      "reason": "Scalar material path avoids wrapper arrays while preserving geometry/material deduplication.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "sub-fixedstep-air-and-ground-drag-elide-pow",
+      "status": "implemented",
+      "reason": "Only exact STEP callers use original retention base; variable dt uses original Math.pow; Fizzy x/z share one coefficient.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "sub-flight-hoist-collision-and-state-membership-arrays",
+      "status": "implemented",
+      "reason": "Frozen module lists retain includes SameValueZero semantics and call placement.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "sub-object-role-specific-weakmap-allocation",
+      "status": "already-in-pr",
+      "reason": "Allocate seenMarks only for Angle Shooter and seenToxic only for Toxic Mist; all consumers were checked against their sub role.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "sub-special-model-identity-index-buffer-removal",
+      "status": "already-in-pr",
+      "reason": "Expanded nonindexed sub/special model vertices no longer allocate an identity element buffer; positions, normals, triangle order and geometry sharing remain unchanged.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "super-chump-decoy-prepop-glow-fps-dependent",
+      "status": "needs-evidence",
+      "reason": "Correcting rendered cadence deliberately changes 30/120Hz visible birth density/phase; needs dedicated visual acceptance.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "super-chump-preview-per-render-ground-probe-burst",
+      "status": "not-adopted",
+      "reason": "Not adopted for query throttling: the existing owned preview vectors are already reused, but the same aim/physics objects can observe changed ground height on the next call. Keep all 14 fresh preview probes and independent launch vectors.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "superjump-charge-drop-reuse-angle-sincos",
+      "status": "already-in-pr",
+      "reason": "Each SuperJumpCharge droplet reuses one sine and cosine. Particle arguments, random draw order and numeric expression order otherwise remain identical.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "suspend-hidden-audio-even-with-stale-safari-resume-promise",
+      "status": "needs-evidence",
+      "reason": "Pending-resume ownership change remains separate lifecycle correction; needs non-settling/resolved out-of-order resume/suspend and trusted-gesture regression.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "swim-film-qa-shared-fixture-pr-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "Added source-loaded Actor fixture, source fixture, fixture cache and composition inputs to the PR gate. The same three film tests retain their source/fallback, 30/60/120 Hz, offscreen and shape controls.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "swim-wake-radius-select-farthest-squared-then-single-hypot",
+      "status": "needs-evidence",
+      "reason": "Actual composed SwimWake.update still scans every eligible history point with Math.hypot. Existing !s.swimming guard removes the duplicated live head only; it does not select the farthest squared vector or provide the proposed nonfinite/boundary fallback.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "swim-wake-skip-duplicate-live-head-radius-hypot",
+      "status": "already-in-pr",
+      "reason": "Skip only the second live-head radius calculation when swimming already contributed the identical head point; non-swimming behavior retains the original bound.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "tenta-hud-layoutsample-whole-document-animation-scan",
+      "status": "needs-evidence",
+      "reason": "Document/ancestor/programmatic WAAPI animations can affect measured HUD layout; a reduced scan needs freshness and visual negative controls.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "tenta-missiles-selecttargets-per-candidate-gearcurve-and-slice-map",
+      "status": "already-in-pr",
+      "reason": "Resolve the active missile/AP state once, lazily share its gear curve, and compact/map the admitted target rows in place while keeping sorted order and slice semantics.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "tenta-missiles-vfx-hud-preview-row-reuse",
+      "status": "needs-evidence",
+      "reason": "Pending: final DIRECTORS.tentaMissiles.frame still allocates inside and [Actor,x,y] rows. Pooling would retain Actor references on track state; all HUD/fallback consumers plus endTrack/clear, phase changes and nested projections need proven synchronous nonescaping ownership and stale-row release before introducing that persistent alias.",
+      "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+    },
+    {
+      "slug": "tentacle-surface-share-arclength-mapping-between-point-and-tangent",
+      "status": "implemented",
+      "reason": "One CatmullRom U-to-t mapping feeds the existing point and normalized tangent calls.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "tentacle-tube-share-angle-and-twist-trigonometry-per-ring",
+      "status": "already-in-pr",
+      "reason": "Composed tentacleTube already owns cosByK/sinByK/basis and ring ct/st, preserving custom section fallback.",
+      "evidenceReport": "reports/queue-extra-motion-dispositions-20261025.json"
+    },
+    {
+      "slug": "terminal-recovery-qa-nine-direct-runtime-build-input-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "terminal-recovery-qa-over-budget-suppresses-all-evidence",
+      "status": "already-in-pr",
+      "reason": "The 128 MiB gate returns the original full path under budget. On overflow it prepares a deterministic bounded package with original hashes/size/omission manifest, prioritized logs/identity/JSON/PNG and marked log tails where necessary. Upload eligibility is emitted before the helper preserves its nonzero failure status; original evidence is never deleted. Empty/nonregular evidence still yields a failed diagnostic manifest.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "three-focused-qa-checkouts-omit-190mib-modeler-assets",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "torpedo-anyaim-bisection-stop-at-float-convergence",
+      "status": "implemented",
+      "reason": "Stop exact inverse bisection when midpoint equals an endpoint; existing 64-step maximum and classification are unchanged.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "torpedo-fizzy-instanced-static-color-dirty-only",
+      "status": "implemented",
+      "reason": "Mark color slots dirty on birth/removal; retain per-frame matrix work and all live color bytes.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "torpedo-fizzy-retire-known-reverse-index-fastpath",
+      "status": "already-in-pr",
+      "reason": "Pass the known reverse-loop/drop-cap index to retirement, but validate list[index] identity after callbacks and fall back to indexOf whenever it changed.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "touch-frame-pacing-test-only-ci-skip-esbuild-install",
+      "status": "already-in-pr",
+      "reason": "Removed the unused esbuild/npm install from the test-only job. All four existing Node VM suites, Node version, exact-head guard and concurrency remain. Those unchanged suites passed locally without installing dependencies.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "transport-backpressure-preflight-before-json-serialization",
+      "status": "already-in-pr",
+      "reason": "Existing final composition already preflights socket readiness/backlog before JSON. No second implementation added.",
+      "evidenceReport": "reports/queue-extra-network-20261025.json"
+    },
+    {
+      "slug": "tri-slosher-splash-visual-heading-hypot-fastpath",
+      "status": "needs-evidence",
+      "reason": "Extra finite/type/axis branches can be slower than hypot. No browser workload benefit established; leave original guard.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "triple-splashdown-fist-yaw-trig-per-pose",
+      "status": "implemented",
+      "reason": "Shares the exact m.fistYaw cosine/sine once before the existing two-fist loop in each invocation; no persistent yaw cache or token/readiness assumption. Actual whole fists() comparison covers local/remote, phase/delay, signed zero and nonfinite yaw; eight trig evaluations become two.",
+      "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+    },
+    {
+      "slug": "trizooka-zero-spread-per-lobe-basis",
+      "status": "already-in-pr",
+      "reason": "Compute a nonzero spread basis once per volley and omit it for the ordinary zero-spread path; signed-zero or non-finite aim retains the original expression exactly.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "ultra-stamp-aimthrow-star-particle-render-fps-dependence",
+      "status": "needs-evidence",
+      "reason": "Cadence correction changes visible 30/120Hz emissions; needs dedicated visual acceptance.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "upstream-mirror-enforce-same-origin-and-crawl-budgets",
+      "status": "already-in-pr",
+      "reason": "Extracted the mirror into a standard-library Python module. Exact-origin validation applies before redirected requests and again to final URLs. Redirect bodies are closed without the standard unbounded drain. Streaming fetches enforce configurable per-resource/total/count/deadline/redirect limits, reject path escapes/collisions and never publish partial resources. Failure manifests survive and review/package/upload steps run after failed fetches, retaining the failed job status.",
+      "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+    },
+    {
+      "slug": "validate-update-npm-cache-workflow-hash-overinvalidates",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix.",
+      "evidenceReport": "reports/queue-extra-ci-dispositions-20261025.json"
+    },
+    {
+      "slug": "verify-rights-and-separate-public-distribution-of-recorded-audio",
+      "status": "excluded-user",
+      "reason": "Excluded by explicit prior user instruction; no work performed.",
+      "evidenceReport": "reports/queue-extra-audio-20261025.json"
+    },
+    {
+      "slug": "wave-breaker-device-mark-hoist-per-victim-radius-bound",
+      "status": "implemented",
+      "reason": "Share current device mark radius and probe bound in the fixed update.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "wave-breaker-front-axis-reject-before-distance",
+      "status": "implemented",
+      "reason": "NaN-safe distant-axis rejection retains exact hypot near boundaries; object bound uses conservative rounding margin.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "wave-breaker-markinglines-frame-viewer-cache",
+      "status": "needs-evidence",
+      "reason": "Cannot safely cache mutable actor role/order/liveness within callback-rich render traversal without a real invalidation contract.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "weapons-hoist-per-projectile-family-membership-arrays",
+      "status": "implemented",
+      "reason": "Shared frozen family list retains same includes tests at hit and registration.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    },
+    {
+      "slug": "wire-selected-prop-packs-into-production-boot",
+      "status": "already-in-pr",
+      "reason": "Composed main imports prop-packs.js and awaits selected preparePropPacks(layout, worldCurrent) before build.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "zevant-account-pr-synchronize-obsolete-runs-not-cancelled",
+      "status": "implemented",
+      "reason": "PR-only concurrency supersedes old heads; distinct PRs and every main push remain independent. No running workflow manually cancelled.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "zevant-account-test-only-diff-runs-full-workers-build",
+      "status": "implemented",
+      "reason": "Nonempty exact account/tests/*.test.mjs diff may skip build/budget/entry/Wrangler work. Always run account tests. Invalid SHA/history/fetch/diff falls back to full validation.",
+      "evidenceReport": "reports/queue-extra-world-dispositions-20261025.json"
+    },
+    {
+      "slug": "zipcaster-flight-trail-particle-birth-render-fps-dependence",
+      "status": "needs-evidence",
+      "reason": "Cadence correction changes hook/zip phase sampling and births; needs dedicated visual acceptance.",
+      "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+    }
+  ]
+}

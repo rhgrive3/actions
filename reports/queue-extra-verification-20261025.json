@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "baseHead": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "checks": {
+    "additionalFocused": {
+      "tests": 88,
+      "pass": 88,
+      "fail": 0,
+      "skipped": 0
+    },
+    "specials": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skipped": 0
+    },
+    "ownershipCiContracts": {
+      "tests": 31,
+      "pass": 31,
+      "fail": 0,
+      "skipped": 0
+    },
+    "actualThreeBundle": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "productionBuild": {
+    "contentHash": "8dd97cb15d75cf631c72ad2d788b65a3f291355c5cec7e213c66b9658c5753b9",
+    "inputHash": "f4580d89fa8914efb7d86d15a95313bf6c8fc4d6d2a67e562d90b013b89d2522",
+    "artifactCount": 2152,
+    "declaredInputCount": 1463,
+    "rawSplitCoreEmitted": false,
+    "startupBudget": "passed",
+    "directSourceMigrationFailures": []
+  },
+  "limits": [
+    "Browser installation returned HTML rather than a runnable Chromium archive; no new rendered-pixel comparison.",
+    "No iPad/Safari/retail-hardware/network or device-FPS claim.",
+    "Hosted Actions were not dispatched or rerun; final push uses skip-ci marker."
+  ],
+  "additionalPriorScopes": {
+    "ranked": "584 unique passes and one existing optional fixture skip after a five-case stale-composition retry, not a repeated full-suite run",
+    "audio": "247 passes in audio-only scope",
+    "ui": "59 prior relevant passes with two preexisting optional skips; additional focused scopes listed separately"
+  }
+}

@@ -1,0 +1,375 @@
+{
+  "date": "2026-10-25",
+  "targetPR": 1870,
+  "baselineHead": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "scope": "Network/relay/codec rows in the 513-row current inventory; excludes UI, ranked-network and world owners.",
+  "counts": {
+    "not-adopted": 6,
+    "implemented": 7,
+    "covered-in-target-pr": 25,
+    "delegated-parent": 1
+  },
+  "entries": [
+    {
+      "slug": "relay-utf8-byte-count-ascii-fastpath",
+      "status": "not-adopted",
+      "reason": "Queue reports 7%-53% Unicode slowdowns and requires actual Workers traffic/CPU evidence. No deployment/actual-traffic evidence available; retain current byte counter.",
+      "paths": [
+        "patches/network-replication/utf8-length.mjs"
+      ]
+    },
+    {
+      "slug": "network-kit-untagged-paint-radius-skip-catalog-roster-scan",
+      "status": "implemented",
+      "reason": "Finite base-cap Float32 admission returns before catalog roster scan; extension and live authority fallback remain unchanged.",
+      "paths": [
+        "patches/network-replication/kit-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-paint-authority-inline-zero-stretch-admission",
+      "status": "not-adopted",
+      "reason": "A semantics-preserving sparse/eager-getter/custom-slice candidate was slower in eight paired 300k-call VM rounds: median35.41ms to172.21ms. Candidate removed; original predicates retained.",
+      "paths": [
+        "patches/network-replication/paint-authority.mjs"
+      ]
+    },
+    {
+      "slug": "network-bomb-birth-velocity-squared-fastpath-with-boundary-fallback",
+      "status": "implemented",
+      "reason": "Bounded squared-norm gate retains Math.hypot throughout a generous original-threshold neighborhood.",
+      "paths": [
+        "patches/network-replication/snapshot-guard.mjs"
+      ]
+    },
+    {
+      "slug": "netmatch-pathat-bracket-reverse-lookup",
+      "status": "implemented",
+      "reason": "Reverse search only within accepted strictly ascending timestamps; same interpolation, extrapolation, teleport and endpoints.",
+      "paths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "network-boss-crablet-interpolation-reuse-owned-row-buffers",
+      "status": "covered-in-target-pr",
+      "reason": "Existing queue-network-ui-adapter owns distinct crabRows and keeps borrowed unmatched rows.",
+      "paths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "netmatch-owner-jitter-rolling-quantile-incremental",
+      "status": "covered-in-target-pr",
+      "reason": "Existing final composition already wires rolling-quantile.mjs into per-peer gap/late windows.",
+      "paths": [
+        "patches/reliability/queue-network-ui-adapter.mjs",
+        "patches/network-replication/rolling-quantile.mjs"
+      ]
+    },
+    {
+      "slug": "kit-paint-meta-inline-validation-without-slice",
+      "status": "not-adopted",
+      "reason": "A source-loaded semantics-preserving eager-snapshot candidate passed 100k dense/sparse/accessor checks but was slower in eight paired 300k-call VM rounds: median 404.65ms to529.02ms. Candidate removed; original validator retained.",
+      "paths": [
+        "patches/network-replication/kit-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-bomb-birth-stage-bounds-avoid-four-value-finite-array",
+      "status": "implemented",
+      "reason": "Eagerly snapshot all four stage bound properties before finite checks; original later property reads remain.",
+      "paths": [
+        "patches/network-replication/snapshot-guard.mjs"
+      ]
+    },
+    {
+      "slug": "torpedo-anyaim-bisection-stop-at-float-convergence",
+      "status": "implemented",
+      "reason": "Stop exact inverse bisection when midpoint equals an endpoint; existing 64-step maximum and classification are unchanged.",
+      "paths": [
+        "patches/network-replication/torpedo-launch-set.mjs"
+      ]
+    },
+    {
+      "slug": "relay-security-composed-client-source-trigger-gap",
+      "status": "delegated-parent",
+      "reason": "Workflow input coverage is owned and integrated by parent.",
+      "paths": [
+        ".github/workflows/inkwave-relay-security.yml"
+      ]
+    },
+    {
+      "slug": "network-combat-proof-tail-avoid-redundant-bounded-slice",
+      "status": "not-adopted",
+      "reason": "Existing actual-module counterexample shows retained-array reuse changes real combat admission on synchronous geometry reentry: false becomes true.",
+      "paths": [
+        "patches/network-replication/tests/added-combat-scans.test.mjs"
+      ]
+    },
+    {
+      "slug": "transport-backpressure-preflight-before-json-serialization",
+      "status": "covered-in-target-pr",
+      "reason": "Existing final composition already preflights socket readiness/backlog before JSON. No second implementation added.",
+      "paths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "paint-codec-skip-single-paint-dictionary-attempt",
+      "status": "not-adopted",
+      "reason": "Actual nested row toJSON counterexample: current can prefer compressed output even with one paint; unconditional raw return changes wire. A proven producer-specific plain-serialization boundary would be needed.",
+      "paths": [
+        "patches/network-replication/tests/queue-extra-codec-caution.test.mjs"
+      ]
+    },
+    {
+      "slug": "lobby-unchanged-guest-ping-skip-full-roster-fanout",
+      "status": "covered-in-target-pr",
+      "reason": "Existing final composition already suppresses unchanged ping fanout and sender repeats.",
+      "paths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "relay-accepted-frame-attachment-avoid-redundant-key-enumeration",
+      "status": "implemented",
+      "reason": "First compare budget scalars, then retain complete key equality if unchanged. This avoids the proposed unsafe assumption that refill/decrement must always change a prior snapshot.",
+      "paths": [
+        "server/src/index.js"
+      ]
+    },
+    {
+      "slug": "relay-current-compat-start-ack-mismatch-blocks-all-host-starts",
+      "status": "covered-in-target-pr",
+      "reason": "Target head already includes strict current compat START admission and host handshake fixes.",
+      "paths": [
+        "server/src/index.js"
+      ]
+    },
+    {
+      "slug": "network-torpedo-receiver-birth-prune-elide-set-copy-and-empty-contact-filters",
+      "status": "implemented",
+      "reason": "Iterate private registry directly with current-record deletion; skip empty contact filter while retaining nonempty deadlines and enrollment after sweep.",
+      "paths": [
+        "patches/network-replication/torpedo-contact-commit.mjs"
+      ]
+    },
+    {
+      "slug": "network-death-paint-proof-delay-fingerprint-serialization",
+      "status": "covered-in-target-pr",
+      "reason": "Serialize the death fingerprint only in the authorized equal-life/equal-generation duplicate comparison where it is consumed.",
+      "paths": [
+        "patches/network-replication/paint-authority.mjs",
+        "patches/network-replication/paint-authority.mjs"
+      ]
+    },
+    {
+      "slug": "network-slosher-proof-validator-remove-slice-and-origin-tuples",
+      "status": "covered-in-target-pr",
+      "reason": "Validate the three metadata coordinates and origin reach with eager scalar reads, without changing numeric or capability limits.",
+      "paths": [
+        "patches/network-replication/slosher-paint-admission.mjs",
+        "patches/network-replication/slosher-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-kit-paint-proof-key-length-prefix-fastpath",
+      "status": "covered-in-target-pr",
+      "reason": "Use an injective UTF-16 length-prefixed key for string owners and safe integer sequences; unusual inputs retain the existing JSON encoding.",
+      "paths": [
+        "patches/network-replication/kit-paint-admission.mjs",
+        "patches/network-replication/kit-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-kit-birth-count-fastpath-below-cap",
+      "status": "covered-in-target-pr",
+      "reason": "The per-owner count cannot reach 128 when total births are below 128, so only that count scan is omitted. At capacity the original eviction and replay rules run.",
+      "paths": [
+        "patches/network-replication/kit-paint-admission.mjs",
+        "patches/network-replication/kit-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-kit-paint-prune-reuse-when-authority-unchanged",
+      "status": "covered-in-target-pr",
+      "reason": "Revalidate the complete small authority snapshot, including actor identity/owner and every member key, before reusing a large birth-ledger prune. Birth or pending insertions invalidate the snapshot; custom Map operations retain the scan.",
+      "paths": [
+        "patches/network-replication/kit-paint-admission.mjs",
+        "patches/network-replication/kit-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-kit-paint-monotonic-batch-skip-dedup-sort",
+      "status": "covered-in-target-pr",
+      "reason": "A strictly monotonic unique batch without older pending rows uses its validated order directly. Other batches retain deduplication and sorting, with all admission checks intact.",
+      "paths": [
+        "patches/network-replication/kit-paint-admission.mjs",
+        "patches/network-replication/kit-paint-admission.mjs"
+      ]
+    },
+    {
+      "slug": "network-paint-stretch-guard-elide-triple-array",
+      "status": "covered-in-target-pr",
+      "reason": "Read the three optional stretch values eagerly and run the original finite checks without a temporary tuple.",
+      "paths": [
+        "patches/local-quality/drive-core-queue-adapter.mjs",
+        "patches/local-quality/drive-core-queue-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "network-paint-order-reuse-same-call-validation",
+      "status": "not-adopted",
+      "reason": "The actual paint callback can synchronously remove membership. The executed production NetMatch case proves the post-apply read must reject causal clock advancement after that change; retaining the second validation preserves authority.",
+      "paths": [
+        "patches/network-replication/adapter.mjs"
+      ]
+    },
+    {
+      "slug": "network-tick-six-sidecar-objectkeys-presence-arrays",
+      "status": "covered-in-target-pr",
+      "reason": "The fixed composed sender lazily allocates each sidecar and checks its presence directly; six Object.keys arrays are already absent.",
+      "paths": [
+        "scripts/inkwave-source-composition.mjs",
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "network-projectile-cosmetic-guard-remove-per-validation-tuple-arrays",
+      "status": "covered-in-target-pr",
+      "reason": "The fixed snapshot guard already uses module-scoped frozen validation ranges.",
+      "paths": [
+        "patches/network-replication/snapshot-guard.mjs"
+      ]
+    },
+    {
+      "slug": "owner-clock-full-pending-buffer-skip-serialization",
+      "status": "covered-in-target-pr",
+      "reason": "Reject capacity-full pending queues before JSON serialization while retaining timestamp validation, dropped counters and challenge retry behavior.",
+      "paths": [
+        "patches/network-replication/owner-clock.mjs",
+        "patches/network-replication/owner-clock.mjs"
+      ]
+    },
+    {
+      "slug": "network-combat-provenance-burst-proof-index",
+      "status": "covered-in-target-pr",
+      "reason": "Lazily index burst proof keys and per-kind recent counts for envelopes of at least 32 events; small envelopes retain the original walk. Duplicate, paired birth and rate-limit ordering is unchanged.",
+      "paths": [
+        "patches/network-replication/combat-provenance.mjs",
+        "patches/network-replication/combat-provenance.mjs"
+      ]
+    },
+    {
+      "slug": "owner-clock-pending-short-wire-utf8-allocation",
+      "status": "covered-in-target-pr",
+      "reason": "Use the existing exact UTF-8 length helper for short serialized packets; longer packets retain TextEncoder. Byte and packet limits remain unchanged.",
+      "paths": [
+        "patches/network-replication/owner-clock.mjs",
+        "patches/network-replication/owner-clock.mjs"
+      ]
+    },
+    {
+      "slug": "netmatch-remote-actor-correction-spring-axis-loop",
+      "status": "covered-in-target-pr",
+      "reason": "The fixed composed correction path already uses scalar axis expressions; the raw upstream loop is not the deployed implementation.",
+      "paths": [
+        "scripts/inkwave-source-composition.mjs",
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "network-combat-raynear-avoid-per-proof-vector-array",
+      "status": "covered-in-target-pr",
+      "reason": "Compute the existing ray delta and dot-product arithmetic with scalars in the original order.",
+      "paths": [
+        "patches/network-replication/combat-provenance.mjs",
+        "patches/network-replication/combat-provenance.mjs"
+      ]
+    },
+    {
+      "slug": "network-wipeout-confirmation-replay-exhausts-relay-rate-limit",
+      "status": "covered-in-target-pr",
+      "reason": "Budget confirmation replay room-wide to one accepted replay per 0.5 seconds, preserve refused sends, and rotate a persistent iterator fairly. Immediate newly-created confirmations remain unchanged.",
+      "paths": [
+        "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+        "patches/splatoon3/runtime/disconnect-fidelity.mjs"
+      ]
+    },
+    {
+      "slug": "relay-directed-absent-target-avoid-second-json-parse",
+      "status": "covered-in-target-pr",
+      "reason": "validRelayPayload already returns the parsed object and the absent-target path reuses it for hit_nack after quotas.",
+      "paths": [
+        "server/src/index.js"
+      ]
+    },
+    {
+      "slug": "network-rewind-hermite-unchanged-snapshot-skip",
+      "status": "covered-in-target-pr",
+      "reason": "The Actor path is already optimized; the remaining Boss path reuses its rewind result only for the same buffer identity, endpoints, length and host owner.",
+      "paths": [
+        "patches/local-quality/drive-core-queue-adapter.mjs",
+        "patches/local-quality/drive-core-queue-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "relay-leave-notification-drop-stale-host-authority",
+      "status": "covered-in-target-pr",
+      "reason": "Close and remove failed LEAVE recipients through an iterative cleanup queue. Synchronous close reentry cannot resume a stale outer host broadcast after the final election.",
+      "paths": [
+        "server/src/index.js",
+        "server/src/index.js"
+      ]
+    },
+    {
+      "slug": "network-wipeout-cumulative-ledger-20hz-clone-rescan",
+      "status": "covered-in-target-pr",
+      "reason": "Share frozen append-only outgoing history rows, retain validated owned prefixes, and skip confirmation recalculation only until the next exact transition.",
+      "paths": [
+        "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+        "patches/splatoon3/runtime/disconnect-fidelity.mjs"
+      ]
+    },
+    {
+      "slug": "owner-clock-forged-future-origin-bypasses-tick-rate",
+      "status": "covered-in-target-pr",
+      "reason": "Retain an independent immutable authenticated relay receipt anchor, including each queued pre-ACK packet. Forged nonce clock origins cannot buy additional progress on the negotiated current relay; missing receipts fail closed. Legacy custom transports without authenticated receipts retain their compatibility behavior.",
+      "paths": [
+        "patches/network-replication/owner-clock.mjs",
+        "patches/network-replication/owner-clock.mjs"
+      ]
+    }
+  ],
+  "testFiles": [
+    "patches/network-replication/tests/queue-extra-network.test.mjs",
+    "patches/network-replication/tests/queue-extra-codec-caution.test.mjs",
+    "server/tests/queue-extra-attachment.test.mjs"
+  ],
+  "limits": "Local Node/VM, real composed-source fixtures and deterministic protocol checks; no Safari/iPad/Cloudflare deployed performance or retail parity claim.",
+  "verification": [
+    {
+      "scope": "final three new test files",
+      "tests": 7,
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "scope": "refreshed full bomb-authority file plus final network/codec/attachment tests before final registry case addition",
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "scope": "broader eighteen-file paint/authority/relay/Torpedo suites; four stale concurrent motion anchors all covered by refreshed clean full-file run",
+      "tests": 148,
+      "initialPass": 144,
+      "initialFailure": 4,
+      "skip": 0,
+      "failureReason": "Earlier in-memory version of concurrent motion adapter anchor; corrected by owning agent."
+    }
+  ]
+}

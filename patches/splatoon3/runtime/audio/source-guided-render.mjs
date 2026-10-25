@@ -79,11 +79,13 @@ export function renderGuidedSample(recipe,event,variant=0,sampleRate=48000){
     bandByBin[k]=centers.findIndex(([lo,hi])=>f>=lo&&f<hi);
   }
   const ampScale=0.25;
+  // Every transform starts with silent DC/Nyquist and unmapped bins.
+  const real=new Float64Array(N),imag=new Float64Array(N);
   for(let start=-N+H;start<length;start+=H){
     const t=Math.max(0,(start+N/2)/sampleRate);
     const amps=bandsAt(source,t);
     for(let b=0;b<bandPower.length;b++)bandPower[b]=Math.pow(10,amps[b]/10)/counts[b];
-    const real=new Float64Array(N),imag=new Float64Array(N);
+    real.fill(0);imag.fill(0);
     for(let k=1;k<N/2;k++){
       const which=bandByBin[k];
       if(which<0)continue;

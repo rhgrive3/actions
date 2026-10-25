@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-25",
+  "entries": [
+    {
+      "slug": "three-focused-qa-checkouts-omit-190mib-modeler-assets",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "small-tank-matrix-checkout-omit-190mib-modeler-inputs",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "ink-volumes-splatling-visual-evidence-input-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "explosher-flight-glitter-preflight-untracked-direct-ci-inputs",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "health-recovery-rain-ci-direct-profile-runtime-fixture-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "defense-selection-ci-missing-direct-runtime-and-fixture-pr-triggers",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "lobby-slot-native-cssom-qa-three-production-input-pr-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "crab-gyro-ci-fifteen-direct-input-pr-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "main-weapons-ci-eight-composed-adapter-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "relay-security-composed-client-source-trigger-gap",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "terminal-recovery-qa-nine-direct-runtime-build-input-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "object-presentation-qa-nine-production-input-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "squid-visual-qa-direct-imports-and-environment-trigger-gaps",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "pause-gpu-source-inputs-not-triggering-visual-qa",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "headgear-visual-qa-missing-production-source-pr-triggers",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "headgear-qa-six-identical-builds-and-seven-full-checkouts",
+      "status": "needs-evidence",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "validate-update-npm-cache-workflow-hash-overinvalidates",
+      "status": "implemented",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    },
+    {
+      "slug": "pages-test-only-patch-changes-redeploy-identical-site",
+      "status": "needs-evidence",
+      "reason": "See queue-extra-ci-20261025.md and audited path matrix."
+    }
+  ]
+}

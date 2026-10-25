@@ -16,6 +16,7 @@ import { installRollerLogic } from './roller.mjs';
 import { installSplatlingJumpSpread } from './splatling-jump-spread.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 let api;
+const AGE_GRAVITY_FAMILIES=Object.freeze(['shooter', 'dualies', 'splatling']);
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
 const creationSnapshotPools = new WeakMap();
@@ -345,7 +346,7 @@ export function distanceDamage(bands, distance, linear = true) {
 export function applyProjectileHit(system, projectile, victim, amount, point) {
   if (!api) throw new Error('INKWAVE weapon patch not installed');
   const weapon = projectile.s3Weapon || projectile.owner.weapon;
-  if (['shooter', 'dualies', 'splatling'].includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
+  if (AGE_GRAVITY_FAMILIES.includes(weapon.kind)) amount = ageDamage(weapon, projectile.age, amount);
   if (weapon.kind === 'roller' && point) amount = distanceDamage(projectile.s3Vertical ? weapon.verticalDamageBands : weapon.flickDamageBands, projectile.start.distanceTo(point));
   if (weapon.kind === 'slosher' && projectile.s3DamageGroup) {
     return withMainDirectDamage(projectile.owner, victim, () => applySlosherVolleyHit(system, projectile.owner, victim, projectile.s3DamageGroup,
@@ -418,7 +419,7 @@ export function installWeapons(context, profile) {
   };
   Projectiles.prototype._push = function (p) {
     p.s3Weapon = p.s3SpecialWeapon || (p.owner ? p.owner.weapon : null);
-    if (['shooter', 'dualies', 'splatling'].includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
+    if (AGE_GRAVITY_FAMILIES.includes(p.s3Weapon?.kind) && Number.isFinite(p.s3Weapon.referenceGravity)) p.grav = p.s3Weapon.referenceGravity;
     return pushProjectile.call(this, p);
   };
   // The public shooter raises the launch ray to compensate for drop at the

@@ -429,6 +429,7 @@ export class ClamsRule {
         const actor = source[i];
         if (actor.alive !== false && canCollectClam(actor)) actors.push(actor);
       }
+      if (actors.length === 0) return;
       field.length = this.state.clams.length;
       for (let i = 0; i < field.length; i++) field[i] = this.state.clams[i];
       for (const clam of field) {

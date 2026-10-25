@@ -537,8 +537,8 @@ function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,include
   if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause);
 }
 function damageRadius(rt, actor, id, center, near, far, radius, source = id, once = null, objectCause = source) {
-  const G = rt.api.G, applied = [];
-  if (actor.remote || !G.projectiles?.applyHit) return applied;
+  const G = rt.api.G;
+  if (actor.remote || !G.projectiles?.applyHit) return;
   for (const victim of G.actors || []) {
     if (!victim?.alive || victim.team === actor.team || victim === actor || once?.has(victim)) continue;
     const dx = victim.pos.x - center.x, dy = victim.pos.y + .75 - center.y, dz = victim.pos.z - center.z;
@@ -549,15 +549,15 @@ function damageRadius(rt, actor, id, center, near, far, radius, source = id, onc
     const damage = d <= radius * .45 ? near : near + (far - near) * t;
     if (damage > 0) {
       G.projectiles.applyHit(actor, victim, damage, source);
-      once?.add(victim); applied.push(victim);
+      once?.add(victim);
     }
   }
   specialObjectRadius(rt,actor,center,radius,d=>d<=radius*.45?near:near+(far-near)*clamp(d/Math.max(radius,1e-6),0,1),objectCause);
-  return applied;
 }
+const STAMP_SWING_BANDS=Object.freeze([Object.freeze([4,40])]),CRAB_BODY_BANDS=Object.freeze([Object.freeze([1.45,40])]),KRAKEN_JUMP_BANDS=Object.freeze([Object.freeze([2.65,60])]);
 function damageBandRadius(rt, actor, center, bands, radius, source, once = null, height = 2.8, objectCause = source) {
-  const G = rt.api.G, applied = [];
-  if (actor.remote || !G.projectiles?.applyHit) return applied;
+  const G = rt.api.G;let hitCount=0;
+  if (actor.remote || !G.projectiles?.applyHit) return hitCount;
   for (const victim of G.actors || []) {
     if (!victim?.alive || victim.team === actor.team || victim === actor || once?.has(victim)) continue;
     const point = rt.v6.set(victim.pos.x, victim.pos.y + .75, victim.pos.z);
@@ -565,12 +565,12 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
     if (d > radius || Math.abs(point.y - center.y) > height) continue;
     if (G.physics?.los && !G.physics.los(center, point)) continue;
     const amount = bands.find(([r]) => d <= r)?.[1] ?? 0;
-    if (amount > 0) { G.projectiles.applyHit(actor, victim, amount, source); once?.add(victim); applied.push(victim); }
+    if (amount > 0) { G.projectiles.applyHit(actor, victim, amount, source); once?.add(victim); hitCount++; }
   }
   specialObjectRadius(rt,actor,center,radius,d=>{
     return d > radius ? 0 : bands.find(([r]) => d <= r)?.[1] ?? 0;
   },objectCause);
-  return applied;
+  return hitCount;
 }
 // 11.3.0 WeaponSpCastle.BodyParam.CollisionDashRadiusForPlayer = 1.5.
 // Test against the whole travel segment, not just the centre of one frame.
@@ -649,8 +649,8 @@ function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = tr
   }else {
     const cap = speed * (move ? Math.min(1, Math.hypot(move.x,move.z)) : 0);
     const yaw = Math.atan2(move?.x || 0, move?.z || 0);
-    if (cap > .01) { actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * (1-Math.exp(-8*dt)); actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * (1-Math.exp(-8*dt)); }
-    else { actor.vel.x *= Math.exp(-5*dt); actor.vel.z *= Math.exp(-5*dt); }
+    if (cap > .01) { const alpha=1-Math.exp(-8*dt); actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * alpha; actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * alpha; }
+    else { const drag=Math.exp(-5*dt); actor.vel.x *= drag; actor.vel.z *= drag; }
   }
   let jumped = false;
   if (jump && actor.intent?.jump && actor.grounded && !state._jumpHeld) {
@@ -667,7 +667,7 @@ function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = tr
   state._jumpHeld = !!actor.intent?.jump;
 }
 function dampForSpecial(actor, dt, gravity = 25) {
-  actor.vel.x *= Math.exp(-6*dt); actor.vel.z *= Math.exp(-6*dt);
+  const drag=Math.exp(-6*dt); actor.vel.x *= drag; actor.vel.z *= drag;
   const py = actor.pos.y;
   if (!actor.grounded) actor.vel.y = Math.max(-36, actor.vel.y - gravity * dt);
   else actor.vel.y = 0;
@@ -1219,7 +1219,7 @@ function zipImpact(rt,actor,state){
   const impactSeed=nextSeed(state),point=groundAt(rt,state.zipTarget,rt.v1);
   paintStamp(rt,actor,point,1.4,impactSeed);paintSpecialChannels(rt,actor,point,specialPaintParams('zipcaster',state.abilityPoints||0),impactSeed);
   fxBurst(rt,actor,state.zipTarget,5.25,'hit');
-  emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});
+  emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits,index:state.zips});
 }
 // WeaponSpSkewer 11.3.0 per-frame MoveAcc=MoveBrk=.031; top speed=.405.
 // A change of frame rate must not change the distance travelled in source ticks.
@@ -1407,8 +1407,10 @@ function updateWaveFront(rt,o) {
   if(radius>0){
     for(const victim of rt.api.G.actors||[]){
       if(!victim?.alive||victim.team===o.team||o.seen.has(victim))continue;
-      const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,d=Math.hypot(dx,dz);
-      if(d<previous-.75||d>radius+.75)continue;
+      const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,outer=radius+.75;
+      if((Math.abs(dx)>outer||Math.abs(dz)>outer)&&!Number.isNaN(dx)&&!Number.isNaN(dz))continue;
+      const d=Math.hypot(dx,dz);
+      if(d<previous-.75||d>outer)continue;
       // WaveParam's vertical range selects TERRAIN surfaces. The attack is
       // their intersection with the expanding cylinder, not an airborne
       // cylinder: a normal jump must clear the ground wave. Retain the
@@ -1425,7 +1427,9 @@ function updateWaveFront(rt,o) {
     o.objectSeen ||= new Set();
     for(const object of rt.system?._s3AllSpecialObjects||[]){
       if(object.dead||!(object.hp>0)||object.owner?.team===o.team||o.objectSeen.has(object))continue;
-      const dx=object.pos.x-o.pos.x,dz=object.pos.z-o.pos.z,d=Math.hypot(dx,dz),r=object.collisionRadius||.72;
+      const dx=object.pos.x-o.pos.x,dz=object.pos.z-o.pos.z,r=object.collisionRadius||.72,outer=radius+r;
+      if(Number.isFinite(outer)&&Number.isFinite(r)&&r>=0&&!Number.isNaN(dx)&&!Number.isNaN(dz)&&(Math.abs(dx)>outer+Math.max(1,outer)*1e-12||Math.abs(dz)>outer+Math.max(1,outer)*1e-12))continue;
+      const d=Math.hypot(dx,dz);
       if(d+r<previous||d-r>radius)continue;
       if(rt.api.G.physics?.los&&!rt.api.G.physics.los(o.pos,object.pos))continue;
       o.objectSeen.add(object);
@@ -1499,7 +1503,7 @@ function stampSwing(rt,actor,state,jump=false) {
       rt.api.G.projectiles.applyHit(actor,victim,100,'ultraStamp');direct.add(victim);
     }
   }
-  damageBandRadius(rt,actor,center,[[4,40]],4,'ultraStamp',direct,jump?3.5:3,'UltraStamp_Swing');
+  damageBandRadius(rt,actor,center,STAMP_SWING_BANDS,4,'ultraStamp',direct,jump?3.5:3,'UltraStamp_Swing');
   paintStamp(rt,actor,groundAt(rt,center,rt.v2),.55,nextSeed(state));
   fxBurst(rt,actor,center,4,'hit');
   emitAction(rt,actor,'ultraStamp',state.serial,jump?'jumpSwing':'swing',actor.pos,center,nextSeed(state),{index:state.swings++});
@@ -1707,11 +1711,12 @@ function updateWorld(rt,dt) {
     }else if(o.kind==='wave'){
       if(o.mesh)o.mesh.material.emissiveIntensity=.18+.4*Math.sin(o.age*9);
       const frame=deviceAge*FPS+1e-8,markRatio=frame<4?0:frame<10?.19+.21*(frame-4)/6:frame<18?.4+.215*(frame-10)/8:.615;
+      const markRadius=o.maxRadius*markRatio,probeBound=Math.max(markRadius,1.2)+1e-9;
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
-        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>Math.max(o.maxRadius*markRatio,1.2)+1e-9||Math.abs(dz)>Math.max(o.maxRadius*markRatio,1.2)+1e-9?Infinity:Math.hypot(dx,dz);
-        if(frame<=57+1e-8&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
+        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>probeBound||Math.abs(dz)>probeBound?Infinity:Math.hypot(dx,dz);
+        if(frame<=57+1e-8&&d<=markRadius&&dy>=-5.2&&dy<=2.8){
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
           // Detection has source radius records through57F; MarkingFrame45
           // is the applied status duration, not an early detector cutoff.
@@ -2044,7 +2049,7 @@ function activeStep(rt,actor,dt) {
       const progress=clamp((elapsed-state.fireStart)/(90/60),0,1),interval=12-8*Math.pow(progress,.2);
       state.nextShot=elapsed+interval/60;
     }
-    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');}
+    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,CRAB_BODY_BANDS,1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');}
     if(elapsed+1e-8>=state.duration){state.phase='finish';state.finishUntil=state.duration+25/60;crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});}return;
   }
   if(state.id==='reefslider'){
@@ -2184,7 +2189,7 @@ function activeStep(rt,actor,dt) {
     }
     if(state.jumpAttack){
       const center=rt.v0.copy(actor.pos);center.y+=.65;
-      damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
+      damageBandRadius(rt,actor,center,KRAKEN_JUMP_BANDS,2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
       // The movement branch above owns contact-gated paint for jumps too.
       // Do not project an airborne spinning attack onto a distant lower floor.
       if(actor.grounded||actor.climbing)state.jumpAttack=false;

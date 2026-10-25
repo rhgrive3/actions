@@ -72,7 +72,11 @@ export const bodyRes = (level) => RES[clamp(level | 0, 0, 4)];
 // ------------------------------------------------------------------------------------------------
 // Limb frames: arc-length parametrised centreline with a stable (lateral, forward) section frame
 // ------------------------------------------------------------------------------------------------
+// Exact rest-coordinate keys; four tables cover left/right arms and legs.
+const extraLimbPaths = [];
 function limbPath(pts, latHint) {
+  const values=[latHint.x,latHint.y,latHint.z]; for (const p of pts) values.push(p.x,p.y,p.z);
+  for (const entry of extraLimbPaths) if (entry.values.length===values.length && entry.values.every((v,i)=>Object.is(v,values[i]))) return entry.path;
   const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
   const N = 600; const P = [], S = [0];
   for (let i = 0; i <= N; i++) P.push(curve.getPoint(i / N));
@@ -93,7 +97,10 @@ function limbPath(pts, latHint) {
     out.C = C; out.d = d; out.l = l; out.f = fw;
     return out;
   };
-  return { at, len };
+  const path = { at, len };
+  // Four ordinary rest limbs; changed/debug rest coordinates replace the oldest.
+  if (extraLimbPaths.length===4) extraLimbPaths.shift(); extraLimbPaths.push({values,path});
+  return path;
 }
 
 /**
@@ -393,22 +400,40 @@ function projectedCurve(curve, n) {
   });
   return new THREE.CatmullRomCurve3(pts, false, 'centripetal');
 }
+// strapPaths owns immutable polylines. Its only distance consumer discards d > .03.
+const extraStrapBlocks = new WeakMap();
 function distToPoly(p, poly) {
+  let blocks = extraStrapBlocks.get(poly);
+  if (!blocks) {
+    blocks=[];
+    for (let first=0;first<poly.length-1;first+=12) {
+      const end=Math.min(first+12,poly.length-1), min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
+      for(let i=first;i<=end;i++){const v=poly[i];min[0]=Math.min(min[0],v.x);min[1]=Math.min(min[1],v.y);min[2]=Math.min(min[2],v.z);max[0]=Math.max(max[0],v.x);max[1]=Math.max(max[1],v.y);max[2]=Math.max(max[2],v.z);}
+      blocks.push({first,end,min,max});
+    }
+    extraStrapBlocks.set(poly,blocks);
+  }
   let best = 1e9;
-  for (let i = 0; i < poly.length - 1; i++) {
-    const a = poly[i], b = poly[i + 1];
-    const bx = b.x - a.x, by = b.y - a.y, bz = b.z - a.z, px = p.x - a.x, py = p.y - a.y, pz = p.z - a.z;
-    const t = clamp((px * bx + py * by + pz * bz) / Math.max(1e-12, bx * bx + by * by + bz * bz), 0, 1);
-    const dx = px - bx * t, dy = py - by * t, dz = pz - bz * t, d = dx * dx + dy * dy + dz * dz;
-    if (d < best) best = d;
+  for (const block of blocks) {
+    const {min,max}=block, margin=0.03+1e-9;
+    if(p.x<min[0]-margin||p.x>max[0]+margin||p.y<min[1]-margin||p.y>max[1]+margin||p.z<min[2]-margin||p.z>max[2]+margin)continue;
+    for (let i = block.first; i < block.end; i++) {
+      const a = poly[i], b = poly[i + 1];
+      const bx = b.x - a.x, by = b.y - a.y, bz = b.z - a.z, px = p.x - a.x, py = p.y - a.y, pz = p.z - a.z;
+      const t = clamp((px * bx + py * by + pz * bz) / Math.max(1e-12, bx * bx + by * by + bz * bz), 0, 1);
+      const dx = px - bx * t, dy = py - by * t, dz = pz - bz * t, d = dx * dx + dy * dy + dz * dz;
+      if (d < best) best = d;
+    }
   }
   return Math.sqrt(best);
 }
 // the tank back plate footprint on the tee (tank-local rect ±0.074 × ±0.1, tilted like the tank)
+let extraPlateTilt, extraPlateCos, extraPlateSin, extraPlateReady=false;
 function plateMask(p) {
   const c = K.TANK.center, t = K.TANK.tilt;
   const dy = p.y - c.y, dz = p.z - c.z;
-  const ly = dy * Math.cos(t) + dz * Math.sin(t);
+  if (!extraPlateReady || !Object.is(extraPlateTilt,t)) { extraPlateTilt=t; extraPlateCos=Math.cos(t); extraPlateSin=Math.sin(t); extraPlateReady=true; }
+  const ly = dy * extraPlateCos + dz * extraPlateSin;
   const u = Math.abs(p.x) / 0.078, v = Math.abs(ly) / 0.104;
   const e = Math.pow(Math.pow(u, 4) + Math.pow(v, 4), 0.25);
   return (1 - sstep(0.86, 1.02, e)) * sstep(-0.04, -0.07, p.z);

@@ -43,7 +43,7 @@ test('both main-weapon event filters cover every executed test entrypoint, inclu
  for(const event of['push','pull_request']){const patterns=paths(source,event);assert(covered(patterns));for(const missing of['issue-771-roller-speed-swerve','reverse-shot-release','source-posture','roller-flick-movement','roller','bomb-kit-fidelity','air-attack-acceleration','dynamo-handle-center','brella-physics','stringer-source-1130','stringer-tilt-motion']){const exact='patches/splatoon3/tests/'+missing+'.test.mjs';assert.equal(covered(patterns.filter(p=>p!==exact)),false,'missing route '+exact);}}
 });
 const sparseFixtureFile='scripts/tests/inkwave-ci-sparse-checkout.test.mjs';
-const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/src/editor.js'];
+const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png','tools/inkwave-modeler/src/editor.js'];
 function assertNoAuthoringDependency(file,source){
  let checked=source;
  if(file===sparseFixtureFile){

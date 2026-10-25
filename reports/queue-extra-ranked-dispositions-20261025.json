@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-25",
+  "baseHead": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "entries": [
+    {
+      "slug": "ranked-minimap-skip-unranked-objective-snapshot",
+      "status": "implemented",
+      "reason": "Skip objective snapshot allocation until ranked exists; still clear ranked removal once."
+    },
+    {
+      "slug": "ranked-clam-world-share-visual-clock-across-markers",
+      "status": "implemented",
+      "reason": "Resolve normal own data clock once per update; dynamic accessor keeps original reads."
+    },
+    {
+      "slug": "ranked-rainmaker-splashwall-los-origin-single-vector",
+      "status": "implemented",
+      "reason": "Use one cloned LOS origin; preserve addition on all axes including signed zero."
+    },
+    {
+      "slug": "bots-goal-crowding-axis-prune-before-hypot",
+      "status": "needs-evidence",
+      "reason": "Conditional queue reports near-heavy distribution regressions; live goal-distance distribution and same-device benefit missing."
+    },
+    {
+      "slug": "ranked-clams-reuse-authoritative-actor-position-triplets",
+      "status": "needs-evidence",
+      "reason": "state.actorPositions exposes mutable arrays; retained prior observers would change with in-place reuse. Keep detached value boundary."
+    },
+    {
+      "slug": "ranked-clams-skip-pickup-field-snapshot-with-no-eligible-receivers",
+      "status": "implemented",
+      "reason": "Return after live eligibility scan when no receivers, with finally lease cleanup."
+    },
+    {
+      "slug": "ranked-actor-input-share-pitch-cosine-per-tick",
+      "status": "implemented",
+      "reason": "Evaluate pitch cosine once in current tick, unchanged multiplication order."
+    },
+    {
+      "slug": "ranked-rainmaker-skip-nonshot-fingerprint-serialization",
+      "status": "implemented",
+      "reason": "Reject event kinds that shotFromEvent always rejects before JSON serialization."
+    },
+    {
+      "slug": "ranked-clams-hud-team-inventory-allocation-free-aggregation",
+      "status": "implemented",
+      "reason": "Walk own inventories in original key order using same sequential sums."
+    },
+    {
+      "slug": "ranked-clams-world-lazy-field-snapshot-only-on-drill",
+      "status": "needs-evidence",
+      "reason": "Mesh/Object3D add callbacks can synchronously mutate source array; shallow snapshot preserves current iteration boundary. Local small-N regression also reported."
+    },
+    {
+      "slug": "ranked-tower-route-position-binary-segment-lookup",
+      "status": "needs-evidence",
+      "reason": "metrics.lengths remains externally mutable; immutable origin/monotonicity proof would need a contract change or per-call O(N) validation."
+    },
+    {
+      "slug": "ranked-zones-minimap-reuse-center-projection-between-box-and-marker",
+      "status": "implemented",
+      "reason": "Reuse same projection within one zone draw, no cross-frame memo."
+    },
+    {
+      "slug": "bots-perceive-lazy-swimmer-speed-hypot",
+      "status": "needs-evidence",
+      "reason": "Deferred adapter change; requires fresh source-composed bot traces including occlusion, spawn and inherited input edge cases."
+    },
+    {
+      "slug": "ranked-clam-world-lazy-inventory-actor-index-on-carrier",
+      "status": "implemented",
+      "reason": "Build actor index only upon first visible held inventory; always clear stale markers."
+    },
+    {
+      "slug": "match-skip-remote-remote-noop-softpush-pairs",
+      "status": "needs-evidence",
+      "reason": "Deferred source adapter, requires composed match event/actor order tests and proof that pair preparation has no observer effects."
+    },
+    {
+      "slug": "ranked-tower-reuse-scoped-rider-offset-records",
+      "status": "needs-evidence",
+      "reason": "Scope crosses collect and sync callbacks; queue measured only 1.9% mock improvement. Retained record identity/reentry contract requires additional proof."
+    },
+    {
+      "slug": "ranked-clam-minimap-power-inventory-keys-instead-of-entries",
+      "status": "implemented",
+      "reason": "Snapshot keys, store only current power IDs; preserve first actor ID precedence."
+    },
+    {
+      "slug": "ranked-zone-coverage-skip-unrelated-off-zone-turf-versions",
+      "status": "needs-evidence",
+      "reason": "Needs complete tracking of all CPU grid writes and network restores; missing any invalidation changes authoritative 50/70% decisions."
+    },
+    {
+      "slug": "ranked-tower-precompute-static-segment-heading-basis",
+      "status": "needs-evidence",
+      "reason": "Path/metrics remain publicly mutable; precomputed headings could become stale without publication/revision contract."
+    },
+    {
+      "slug": "ranked-rainmaker-interaction-radius-exact-axis-reject",
+      "status": "needs-evidence",
+      "reason": "Conditional broadphase needs trusted stable triples; verifying custom/foreign inputs and near-heavy performance remains necessary."
+    },
+    {
+      "slug": "ranked-clams-expiry-burst-single-filter-canonical-events",
+      "status": "needs-evidence",
+      "reason": "Per-expiry events can synchronously inspect incremental remaining clams; batching changes observer states. Queue small-burst benchmarks regress."
+    },
+    {
+      "slug": "ranked-special-gain-event-kind-direct-branch",
+      "status": "implemented",
+      "reason": "Replace per-event literal membership with six exact comparisons."
+    },
+    {
+      "slug": "physics-segment-capsule-compare-squared-distances",
+      "status": "already-in-pr",
+      "reason": "already-effective: Already effective in collision-hotpath adapter: squared comparisons retain a sqrt fallback for boundary rounding ties, preserving capsule hit choice."
+    },
+    {
+      "slug": "ranked-clams-spawn-interval-skip-provably-over-threshold-count",
+      "status": "already-in-pr",
+      "reason": "implemented: When field clams already exceed the nonnegative total threshold, omit the inventory sum; boundary counts retain the original interval selection."
+    },
+    {
+      "slug": "ranked-network-sendtick-reuse-scoped-broadcast-hook",
+      "status": "already-in-pr",
+      "reason": "implemented: Reuse an instance callback under a scoped lease, preserve the original transport receiver, and use an independent nested fallback with finally restoration."
+    },
+    {
+      "slug": "ranked-network-guest-skip-unused-pose-staging",
+      "status": "already-in-pr",
+      "reason": "implemented: Allocate and fill staged pose state only on the host path which consumes it; guest packet admission remains unchanged."
+    },
+    {
+      "slug": "ranked-and-frame-parity-qa-checkout-omit-203mb-modeler",
+      "status": "already-in-pr",
+      "reason": "implemented: Both jobs use conservative non-cone sparse rules that retain every tracked tree except tools/inkwave-modeler. Actual Git fixture checks demonstrate that game/assets/patches/scripts and other tools/reports remain materialized. Build, browser and source/emitted commands are unchanged."
+    },
+    {
+      "slug": "ranked-engine-lowfps-trusted-frame-skip-cold-input-clone",
+      "status": "already-in-pr",
+      "reason": "implemented: Share inputs only on internally branded frames whose exact input object is retained and every own throw value is false. External or throwing inputs still clone and disarm."
+    },
+    {
+      "slug": "ranked-clam-bot-blocked-nearest-distance-sort",
+      "status": "already-in-pr",
+      "reason": "not-adopted: The record-sort candidate did not establish a worthwhile performance win: actual botGoal Node/V8 diagnostics showed 8/16 candidates about 9%/6% slower, and 32/40 candidates only about 2.6%/0.4% faster before unusual-input guards. Required device CPU/GC evidence is absent. Keep the simpler stable ordering and unchanged reachability call order."
+    },
+    {
+      "slug": "ranked-bot-steering-point-validation-skip-temporary-arrays",
+      "status": "already-in-pr",
+      "reason": "implemented: Validate ordinary coordinate arrays and eagerly read object x/y/z fields without building temporary validation arrays."
+    },
+    {
+      "slug": "ranked-grounded-clam-pickup-exact-axis-broadphase",
+      "status": "already-in-pr",
+      "reason": "implemented: Use conservative axis rejection only at the actual pickup callsite; the general distance helper retains its exact numeric return contract."
+    },
+    {
+      "slug": "ranked-host-pose-admission-elide-packed-row-slices",
+      "status": "already-in-pr",
+      "reason": "implemented: Validate packed coordinate triples at their offsets without sliced arrays, preserving hole/custom-array behavior and all pose authority limits."
+    },
+    {
+      "slug": "ranked-rainmaker-sphere-candidate-elide-vector-arrays",
+      "status": "already-in-pr",
+      "reason": "implemented: Use the exact scalar sphere-entry helper for ordinary production Vector3 values; custom vector implementations retain the original array path."
+    },
+    {
+      "slug": "ranked-snapshot-validator-own-entry-iteration",
+      "status": "already-in-pr",
+      "reason": "implemented: Traverse own JSON snapshot keys directly without Object.entries and a per-node forbidden-key array; depth/count/value restrictions remain unchanged."
+    },
+    {
+      "slug": "ranked-engine-transactional-restore-spare-rule-reuse",
+      "status": "already-in-pr",
+      "reason": "not-adopted: A retained old rule can escape and the stage definition can change in place between restores. Reusing a spare rule would mutate escaped state or keep a stale Tower path; the executed negative boundaries retain fresh transactional construction."
+    },
+    {
+      "slug": "ranked-rainmaker-barrier-proof-prune-in-place",
+      "status": "already-in-pr",
+      "reason": "implemented: Compact owner-private expired proof and pending lists in place, preserving order and bounded admission counts."
+    },
+    {
+      "slug": "ranked-buildframe-skip-empty-barrier-hit-splice",
+      "status": "already-in-pr",
+      "reason": "implemented: Use a private frozen empty array only for an empty hit queue; nonempty hits are still detached and owned."
+    },
+    {
+      "slug": "ranked-tower-cache-published-nav-nonnegative-proof",
+      "status": "already-in-pr",
+      "reason": "not-adopted: The published graph permits in-place node/edge changes without a revision. A reference/revision memo would skip fresh validity and nonnegative-edge proof, so the live scan is retained."
+    },
+    {
+      "slug": "ranked-zones-hud-reuse-unchanged-objective-text",
+      "status": "already-in-pr",
+      "reason": "implemented: Reuse objective text only for frozen production coverage pairs with unchanged rounded percentages, owners, language and team names; other inputs use the original formatter."
+    },
+    {
+      "slug": "ranked-clams-vec-validation-eliminate-temporary-slice",
+      "status": "already-in-pr",
+      "reason": "implemented: Use eager scalar validation for ordinary coordinate arrays; sparse slots, inherited elements, custom slice/species behavior and unusual inputs retain the prior semantics."
+    },
+    {
+      "slug": "ranked-clams-totalclams-avoid-object-values-allocation",
+      "status": "already-in-pr",
+      "reason": "implemented: Iterate own enumerable inventory entries directly in the same key order without constructing Object.values."
+    },
+    {
+      "slug": "ranked-bot-clam-arc-exact-input-memo",
+      "status": "already-in-pr",
+      "reason": "implemented: Memoize the exact finite horizontal distance, height and launch speed per actor for the 211-angle search, with no quantization; refresh live output fields on each call."
+    },
+    {
+      "slug": "ranked-clam-projectile-drop-temporary-scaled-vector",
+      "status": "already-in-pr",
+      "reason": "implemented: Write the original axis-wise multiply/add expressions directly, preserving coordinate reads and arithmetic order."
+    },
+    {
+      "slug": "ranked-clams-spawn-broadphase-skip-distant-hypot",
+      "status": "already-in-pr",
+      "reason": "implemented: Reject spawn occupants outside either exact horizontal axis bound before calling the original hypot test."
+    },
+    {
+      "slug": "ranked-clam-world-reuse-frame-marker-presence-set",
+      "status": "already-in-pr",
+      "reason": "implemented: Reuse a private marker-presence Set with a busy guard and finally cleanup; reentrant synchronization receives separate scratch."
+    },
+    {
+      "slug": "ranked-zone-reuse-static-coverage-area-sums",
+      "status": "already-in-pr",
+      "reason": "implemented: Brand and freeze only engine-built static zone cell records, compute ordered total areas once, and fall back for external or replaced indices."
+    },
+    {
+      "slug": "ranked-clams-reuse-depth-scoped-pickup-actor-list",
+      "status": "already-in-pr",
+      "reason": "implemented: Use depth-scoped actor-list scratch with finally cleanup; nested pickup calls get independent buffers and escaping snapshots remain owned."
+    },
+    {
+      "slug": "ranked-clam-goal-swept-aabb-before-closest-point",
+      "status": "already-in-pr",
+      "reason": "implemented: Reject only finitely bounded segments whose conservative XZ swept box cannot reach the goal, before the unchanged closest-point test. Boundary and unusual inputs fall back."
+    },
+    {
+      "slug": "pages-post-deploy-ranked-503-versioned-module",
+      "status": "already-in-pr",
+      "reason": "needs-evidence: Existing diagnostic provenance is retained. The exact historical URL now returns 404; the current immutable flow module returns 200 and matches its public manifest SHA256. These current observations cannot establish the cause of the historical 503. No retry hides a release-health failure."
+    }
+  ]
+}

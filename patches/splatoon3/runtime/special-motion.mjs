@@ -752,11 +752,12 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
     if(m.fistToken!==token){m.fistToken=token;m.centers=token.centers||tripleSlamFistCenters(a.pos,a.yaw);m.fistYaw=a.yaw;
       m.ground=m.centers.map(c=>{const y=G.level?.groundHeight?.(c.x,c.z,c.y+8);return Number.isFinite(y)?y:c.y;});}
     m.fists.visible=true;
+    const fistCos=Math.cos(m.fistYaw),fistSin=Math.sin(m.fistYaw);
     for(let i=0;i<2;i++){
       const g=m.fists.children[i],c=m.centers[i],side=i?1:-1;
       const spread=s?.phase==='fall'?clamp(s.t/.25):token.remaining!=null?1:0;
       const delay=token.remaining==null?null:clamp(token.remaining/FIST_TRAVEL);
-      const x=a.pos.x+side*.85*Math.cos(m.fistYaw)+.12*Math.sin(m.fistYaw),z=a.pos.z-side*.85*Math.sin(m.fistYaw)+.12*Math.cos(m.fistYaw);
+      const x=a.pos.x+side*.85*fistCos+.12*fistSin,z=a.pos.z-side*.85*fistSin+.12*fistCos;
       g.position.set(x+(c.x-x)*spread,delay==null?a.pos.y+1.0:m.ground[i]+.2+4*delay*delay,z+(c.z-z)*spread);
       g.rotation.set(delay==null?-.25:-Math.PI/2,m.fistYaw,side*.10);g.scale.set(side<0?1.1:-1.1,1.1,1.1);g.userData.energy.material.uniforms.age.value=G.time||0;
     }

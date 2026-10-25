@@ -32,9 +32,10 @@ function syncVisuals(projectiles){
   const pools=projectiles._s3TorpedoVisuals;if(!pools)return;
   for(const pool of pools.values()){
     let count=0;
-    for(const d of projectiles._s3TorpedoSplashes||[])if(d.visual===pool){pool.matrix.makeTranslation(d.pos.x,d.pos.y,d.pos.z);pool.mesh.setMatrixAt(count,pool.matrix);pool.mesh.setColorAt(count,d.visualColor);count++;}
+    for(const d of projectiles._s3TorpedoSplashes||[])if(d.visual===pool){pool.matrix.makeTranslation(d.pos.x,d.pos.y,d.pos.z);pool.mesh.setMatrixAt(count,pool.matrix);if(pool.dirty)pool.mesh.setColorAt(count,d.visualColor);count++;}
     pool.mesh.count=count;pool.mesh.visible=count>0;
-    if(count){pool.mesh.instanceMatrix.needsUpdate=true;pool.mesh.instanceColor.needsUpdate=true;}
+    if(count){pool.mesh.instanceMatrix.needsUpdate=true;if(pool.dirty)pool.mesh.instanceColor.needsUpdate=true;}
+    pool.dirty=false;
   }
 }
 export function spawnTorpedoSplashes(api,projectiles,source,position,kind='chase'){
@@ -60,7 +61,7 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
       index:i,kind,stage,paintRadius:spec.paintRadius,pos,prev:pos.clone(),vel,seed:(source.seed^Math.imul(i+1+stage*spec.count,0x9e3779b1))>>>0,
       subId:kind==='fizzy'?'fizzy-splash':'torpedo-splash',type:'sub',damage:kind==='find'||kind==='fizzy'?0:source.spec.splashDamage,size:.1,age:0};
     const pool=visualPool(api,projectiles);
-    if(pool){drop.visual=pool;drop.visualColor=pool.color.clone().set(source.owner.color||api.G.teamColors?.[source.team]||0xffffff);pool.users++;}
+    if(pool){drop.visual=pool;drop.visualColor=pool.color.clone().set(source.owner.color||api.G.teamColors?.[source.team]||0xffffff);pool.users++;pool.dirty=true;}
 
     drops.push(drop);registerLimitedDrop(projectiles,drop);
   }

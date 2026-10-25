@@ -121,7 +121,10 @@ export function parseSourceOBJ(text,semantics,{compactInactiveDisplay=false}={})
   }
  });flush();
  if(sourceVo!==vertexCapacity||sourceIo!==indexCapacity||vo!==displayVertices||io!==displayIndices)throw Error('Invalid source OBJ allocation');
- if(!objects.length||!allFinite||!vertices.every(Number.isFinite))throw Error('Invalid source OBJ');
+ // Every written component is checked after Float32 rounding in attribute().
+ // Missing UV components retain finite zero initialization; allocation counts
+ // above ensure no unwritten position/normal slots escape validation.
+ if(!objects.length||!allFinite)throw Error('Invalid source OBJ');
  const result={vertices,indices,objects};
  if(compactInactiveDisplay&&displayVertices!==vertexCapacity)
   result.sourceGeometry={vertices:vertexCapacity,triangles:indexCapacity/3};

@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "scope": "Final residual reconciliation of unmapped-final-slugs.json indices 18 through 25. Current Library reports and production composition audited; three separately authorized simple same-invocation/immutable-data hoists implemented and locally tested. Four ownership/exactness-sensitive proposals remain pending.",
+  "counts": {
+    "implemented": 3,
+    "already-effective": 1,
+    "pending": 4
+  },
+  "entries": [
+    {
+      "slug": "triple-splashdown-fist-yaw-trig-per-pose",
+      "status": "implemented",
+      "reason": "Shares the exact m.fistYaw cosine/sine once before the existing two-fist loop in each invocation; no persistent yaw cache or token/readiness assumption. Actual whole fists() comparison covers local/remote, phase/delay, signed zero and nonfinite yaw; eight trig evaluations become two.",
+      "path": "patches/splatoon3/runtime/special-motion.mjs:755",
+      "tests": [
+        "patches/local-quality/tests/queue-extra-residual-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "legacy-spread-save-single-tan-per-nonzero-shot",
+      "status": "implemented",
+      "reason": "Final source composition evaluates Math.tan(r) once after the original two RNG draws and perpendicular basis setup; both consumers keep their original multiplication/update order. 18,000 actual Three.js direction comparisons preserve vector bytes, RNG draws and zero/nonfinite behavior.",
+      "path": "patches/local-quality/queue-extra-motion-adapter.mjs",
+      "tests": [
+        "patches/local-quality/tests/queue-extra-residual-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "swim-wake-radius-select-farthest-squared-then-single-hypot",
+      "status": "pending",
+      "reason": "Actual composed SwimWake.update still scans every eligible history point with Math.hypot. Existing !s.swimming guard removes the duplicated live head only; it does not select the farthest squared vector or provide the proposed nonfinite/boundary fallback.",
+      "path": "inkwave-public/src/fx/swimWake.js:89",
+      "composedEvidence": "for (...) if(w.w!==BREAK) r=Math.max(r,Math.hypot(...)); if(!s.swimming) r=Math.max(r,Math.hypot(head...));"
+    },
+    {
+      "slug": "source-align-weapon-early-exit-converged-grip-projection",
+      "status": "already-effective",
+      "reason": "Current composition already introduces changed=false per iteration, sets it on either projection, and breaks only at iteration end if neither projection ran. The maximum 16 iterations, final fitL/gripV2 updates and source-weapon guards remain. This predates the additional motion adapter; no duplicate implementation is needed.",
+      "path": "patches/local-quality/adapter.mjs:380",
+      "composedEvidence": "alignWeapon: for(let k=0;k<16;k++){let changed=false; ... changed=true; ... if(!changed)break;}"
+    },
+    {
+      "slug": "splattercolor-screen-reuse-drop-projection-vectors",
+      "status": "pending",
+      "reason": "Current paintScreenDrops still calls o.pos.clone() per drop, then hit.point.clone() or from.clone() for its projected point. The per-sheet pair of independent projection vectors is absent. Other screen movement scratch or flight-kind changes are separate.",
+      "path": "patches/splatoon3/runtime/all-specials.mjs:1368"
+    },
+    {
+      "slug": "angle-shooter-tail-cache-static-bounds-and-capsule-scratch",
+      "status": "pending",
+      "reason": "Current updateAngleLine creates base=new api.THREE.Vector3() and result={t:0,dist:Infinity} per tick, and recomputes line-segment AABB once within each tick. No persistent bounds with append invalidation or depth-safe object-owned capsule scratch exists.",
+      "path": "patches/splatoon3/runtime/all-subs.mjs:672"
+    },
+    {
+      "slug": "catalog-ghostprojectile-hoist-allowed-shot-mode-list",
+      "status": "implemented",
+      "reason": "The exact 12 receiver modes now live in private frozen GHOST_CATALOG_SHOT_MODES. Its only use remains includes(meta[1]) at the same short-circuit position. The array never escapes; comparison semantics and validation boundaries are unchanged.",
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs:1503",
+      "tests": [
+        "patches/local-quality/tests/queue-extra-residual-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "fixed-arity-actor-and-projectile-forwarders-elide-rest",
+      "status": "pending",
+      "reason": "All three specified wrappers still use rest forwarding: weapon-gates Actor.update(dt,...args), Projectiles._new(...args), and splatling Actor._horizontal(dt,squid,onEnemy,...rest). No fixed-count call/arguments fallback is present. Unrelated fixed-arity wrappers do not implement this row.",
+      "path": "patches/splatoon3/runtime/weapon-gates.mjs:69",
+      "additionalPaths": [
+        "patches/splatoon3/runtime/weapon-gates.mjs:148",
+        "patches/splatoon3/runtime/splatling.mjs:157"
+      ]
+    }
+  ],
+  "verification": {
+    "focusedTests": 3,
+    "failures": 0,
+    "skips": 0,
+    "spreadCases": 18000,
+    "limitations": "Actual Three.js/production methods and receiver condition; no GPU pixel, physical-device FPS or retail-game parity claim.",
+    "catalogueRegressionTests": 33,
+    "pinResponseDanceRegressionTests": 3,
+    "specialPresentationRegressionTests": 20
+  }
+}

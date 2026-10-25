@@ -1,0 +1,341 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "basePr": 1870,
+  "baseHead": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "counts": {
+    "implemented": 10,
+    "already-effective": 26,
+    "pending": 5
+  },
+  "entries": [
+    {
+      "slug": "tentacle-surface-share-arclength-mapping-between-point-and-tangent",
+      "status": "implemented",
+      "reason": "One CatmullRom U-to-t mapping feeds the existing point and normalized tangent calls.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "character-face-share-mirrored-ear-crosssection-loops",
+      "status": "implemented",
+      "reason": "Read-only earLoop rows shared only inside one buildFaceSkin call; separate transforms, weights and winding retained.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "character-face-eyeball-cap-precompute-ring-and-azimuth-kernels",
+      "status": "implemented",
+      "reason": "Exact per-call ring/azimuth operands and one derivative scratch per eye; mirrored transforms and buffers retained.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "outfit-plate-mask-cache-constant-tank-tilt-trig",
+      "status": "implemented",
+      "reason": "Lazy Object.is tilt cache; no top-level K access; signed-zero and nonfinite tilt invalidation covered.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "outfit-cache-limb-centrelines-across-skin-socks-and-lod",
+      "status": "implemented",
+      "reason": "At most four centreline sample tables, keyed by every exact control-point/hint coordinate. Outputs remain caller-owned.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "source-controller-actionclip-avoid-per-action-frame-array-find",
+      "status": "implemented",
+      "reason": "Ordered live Map.has branches preserve all current action fallback priorities without array/find.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "outfit-tee-strap-polyline-conservative-block-culling",
+      "status": "implemented",
+      "reason": "12-segment immutable AABBs with 0.03+1e-9 margin; retained near segments keep exact traversal/formula.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "legacy-match-character-warmup-bound-concurrent-actors",
+      "status": "pending",
+      "reason": "Pending. Changing startup concurrency can delay undispatched warm jobs beyond the existing 8-second race; bounded lifetime/cancellation and iPad throughput evidence required. Main startup owned by integration/world workstream.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-motion-share-frame-dt-response-gains-across-actors",
+      "status": "implemented",
+      "reason": "Six fixed response expressions share scalar exact-dt caches; no dt rounding or mutable pose sharing.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "source-retarget-hair-skip-overwritten-quaternions-and-prebind-rest",
+      "status": "already-effective",
+      "reason": "Composed HumanRetarget.addAccessory prebinds restSourceQ/restHeadRelQ; applyAccessories selects hair branch before generic source delta.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "tentacle-tube-share-angle-and-twist-trigonometry-per-ring",
+      "status": "already-effective",
+      "reason": "Composed tentacleTube already owns cosByK/sinByK/basis and ring ct/st, preserving custom section fallback.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "hair-suction-cup-reuse-normal-point-and-vector-scratch",
+      "status": "already-effective",
+      "reason": "Composed normal(t,th,out,scratch) and suctionCups normalScratch already remove per-vertex finite-difference vectors.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-controller-lazy-dance-clip-fallback-scan",
+      "status": "implemented",
+      "reason": "Existing bank-keyed cache retained; full fallback roster scanned only when both preferred names are absent. Empty-roster exception remains identical.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "source-retarget-share-hair-response-expm1-per-update",
+      "status": "already-effective",
+      "reason": "Composed applyAccessories computes hasHairTargets, ampScale and hairAlpha once before the accessory loop.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-squid-rig-reuse-yaw-swim-climb-temporary-math",
+      "status": "already-effective",
+      "reason": "Composed SourceSquidRig already owns up/euler/wall vectors and selects final rotation without redundant initial overwrite.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "character-zero-weight-cosmetic-trig-guards",
+      "status": "pending",
+      "reason": "Pending. Exact-zero shortcuts need signed-zero/nonfinite state handling and branch-cost measurements across hem/tank/finger consumers; no unsafe blanket substitution made.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "root-hair-reuse-head-transform-for-root-strands",
+      "status": "already-effective",
+      "reason": "Composed RootHairInertia uses e.bone.parent===c.bones.head and copies the existing head quaternion.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-retarget-cache-head-transform-across-hair-accessories",
+      "status": "already-effective",
+      "reason": "Composed applyAccessories uses headWorldQ/headWorldReady and shares root-parent orientation.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "root-hair-inertia-quiescent-zero-turn-fastpath",
+      "status": "pending",
+      "reason": "Pending. Complete +0 scan plus finite coefficients/head, internal scratch and initial per-chain cache side effects require separate acceptance; current root-hair fixture explicitly observes result scratch.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "character-stance-hoist-six-identical-damping-exponentials",
+      "status": "implemented",
+      "reason": "One exact alpha feeds six existing lerp expressions; original damp arithmetic association preserved.",
+      "evidence": [
+        "patches/local-quality/tests/queue-extra-motion.test.mjs"
+      ]
+    },
+    {
+      "slug": "body-balance-skip-zero-reach-bone-parent-walks",
+      "status": "pending",
+      "reason": "Pending. Zero vector additions can normalize -0 or propagate nonfinite parent quaternions. Finite-rig guard and effect/overhead need separate testing; reach state and chains retained.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-motion-lazy-currentclips-debug-snapshots",
+      "status": "pending",
+      "reason": "Pending. Public currentClips/debug.clips reference stability and external mutations are observable. Safe epoch snapshots require API/diagnostic changes; not replaced by mutable slots.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-squid-skip-invisible-remote-eye-cpu-deformation",
+      "status": "already-effective",
+      "reason": "Composed SourceSquidRig.apply directly gates deformEyes for submerged remote characters.",
+      "evidence": [
+        "composed PR #1870 source at 8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da"
+      ]
+    },
+    {
+      "slug": "source-controller-cache-jump-clip-resolution",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Resolve jump start/body/end clip references once inside the existing per-bank family table, including the historical spelling fallback.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-track-root-cache-unchanged-dt-smoothing-exp",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Reuse the two exact root smoothing coefficients for unchanged positive dt; changes and nonfinite inputs recompute under the existing update guards.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "source-hair-targets-fastpath-bounded-swing-angle",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Skip acos only safely inside the unchanged angular bound; the conservative threshold margin sends boundary and nonfinite cases through the original calculation.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "source-retarget-skip-overwritten-native-leg-ik-after-activation",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed pose already guards overwritten native leg work with active source pose and the existing activation threshold. No additional readiness assumption is introduced.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-procedural-hair-precompute-fixed-spring-gains",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed Character already uses IW_HAIR_COEFFS with exact mutable K/len/G invalidation.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-quality-change-reuse-lod-mesh-nodes",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Retain at most three detached quality-tier mesh sets and reuse matching part nodes. Rebind current geometry, material, skeleton, transforms, morphs, callbacks and shadow state; dispose releases retained references.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-share-root-yaw-trig-across-native-pose-paths",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Publish root-yaw sine/cosine and reuse them in four native consumers, recomputing on exact yaw change.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-face-cache-unchanged-vergence-atan2",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Memoize the exact clamped vergence distance with Object.is; assign the stored result on every call.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "source-locomotion-profile-sparse-center-and-hairmean-accumulators",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Accumulate only the consumed center and hair indices in their original order; unrelated world poses and sums are unchanged.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "source-motion-reuse-per-update-call-options-records",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Reuse four controller-private option records, overwrite every consumed field, and keep their synchronous consumers and pose ownership intact.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-native-pose-reuse-identical-waveform-sines",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Reuse repeated carry, climb and hop sine values within the same pose update.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-rim-precompute-static-fallback-direction",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Initialize the exact normalized constant rim fallback once and copy it on use.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "source-controller-overlay-samples-skip-unread-fk",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed controller already samples overlay poses with doFk=false where only local TRS is consumed.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-foot-ankle-roll-share-pitch-sincos",
+      "status": "already-effective",
+      "reason": "PR #1870 existing implemented: Share the same ankle pitch sine and cosine without changing subsequent operation order.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "root-hair-inertia-share-per-chain-spring-coefficients",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed root hair already stores _iwSpring per chain and recalculates only when dt/K/D change.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "retarget-prebind-world-quaternions-upper-partition",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed retarget entries already retain worldQ, parentWorldQ and isUpper per stable bone entry.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "character-material-skip-zero-weight-pulses",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed Character already guards zero-weight finite material pulse calculations.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    },
+    {
+      "slug": "source-controller-reuse-locomotion-blend-records",
+      "status": "already-effective",
+      "reason": "PR #1870 existing already-effective: The fixed composed baseline already owns _locoList and _locoPool with per-call active length and overwritten name/weight/profile fields.",
+      "evidence": [
+        "reports/drive-queue-dispositions-20261024.json"
+      ]
+    }
+  ]
+}

@@ -48,7 +48,11 @@ export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nea
     const point = new THREE.Vector3(object.pos.x + rx * side,
       Math.max(object.pos.y, Math.min(object.pos.y + height, at.y)), object.pos.z + rz * side);
     const distance = point.distanceTo(at);
-    if (distance > radius || (G.physics?.los && !G.physics.los(at.clone().add(new THREE.Vector3(0, .05, 0)), point))) continue;
+    if (distance > radius) continue;
+    if (G.physics?.los) {
+      const origin = at.clone(); origin.x += 0; origin.y += .05; origin.z += 0;
+      if (!G.physics.los(origin, point)) continue;
+    }
     // Snapshot before HP can remove the wall: the same blast remains blocked
     // even when its direct contact or explosion destroys that shield.
     walls.push({ pos: object.pos.clone(), rx, rz, nx, nz, width, height });

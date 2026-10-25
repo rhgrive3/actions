@@ -136,10 +136,21 @@ function roundBox(w, h, d, r) {
 }
 
 // Lathe around +Y. profile = [[r, y], ...] ordered bottom→out→up→in; `null` entries split strips (hard crease).
+// Only ordinary bounded integer tessellations are retained (at most 32 tables).
+const radialTables = new Map();
+function radialTable(count,inclusive){
+ const cached = Number.isInteger(count) && count >= 3 && count <= 96;
+ const key=count*2+(inclusive?1:0);
+ if(cached && radialTables.has(key))return radialTables.get(key);
+ const cos=[],sin=[];
+ for(let k=0;inclusive?k<=count:k<count;k++){const a=(k/count)*TAU;cos.push(Math.cos(a));sin.push(Math.sin(a));}
+ const table={cos,sin};
+ if(cached){if(radialTables.size>=32)radialTables.delete(radialTables.keys().next().value);radialTables.set(key,table);}
+ return table;
+}
 function latheGeo(profile, seg, closed = false) {
   const g = new GB();
-  const cos = [], sin = [];
-  for (let k = 0; k <= seg; k++) { const ph = (k / seg) * TAU; cos.push(Math.cos(ph)); sin.push(Math.sin(ph)); }
+  const {cos,sin} = radialTable(seg,true);
   const strips = [[]];
   for (const p of profile) { if (p === null) strips.push([]); else strips[strips.length - 1].push(p); }
   for (const S of strips) {
@@ -172,8 +183,7 @@ function latheGeo(profile, seg, closed = false) {
 // Tube along a polyline (parallel-transport frames). radius may be a function of t in [0,1].
 function tubeGeo(pts, radius, radial = 8, closed = false, up = null) {
   const n = pts.length, g = new GB();
-  const cos = [], sin = [];
-  for (let k = 0; k < radial; k++) { const a = (k / radial) * TAU; cos.push(Math.cos(a)); sin.push(Math.sin(a)); }
+  const {cos,sin} = radialTable(radial,false);
   const P = pts.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
   const T = [];
   for (let i = 0; i < n; i++) {

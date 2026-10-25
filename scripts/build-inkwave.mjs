@@ -137,13 +137,14 @@ for (const file of walk(SRC)) {
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
     // These exact production inputs are reread/composed by the mandatory
     // Three bundle below, which replaces module and removes core. Copying
-    // composed source here keeps the intermediate paths/diagnostics intact
-    // without minifying two outputs that can never be published. Diagnostics
+    // neither full split file here: the bundle below reads/composes the source
+    // directly. This also prevents a stale raw core from entering graph scans
+    // or a synchronized staging tree after its later removal. Diagnostics
     // and no-shake builds still take the original standalone transform path.
     const replacedThree = !unminified && process.env.INKWAVE_NO_THREE_SHAKE !== '1' &&
       /^(?:vendor\/three\/build\/three\.(?:core|module)\.js)$/.test(rel.split(path.sep).join('/')) &&
       fs.existsSync(path.join(SRC, 'vendor/three/build/three.module.js'));
-    if (replacedThree) { fs.writeFileSync(dst, code); continue; }
+    if (replacedThree) continue;
     const esm = ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/')));
     await stageTransform(code, {
       loader: ext === '.css' ? 'css' : 'js', format: esm ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
@@ -333,9 +334,9 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
     } }],
   });
   const out = res.outputFiles[0].contents;
-  const before = fs.statSync(path.join(BUILD, 'vendor/three/build/three.module.js')).size + fs.statSync(path.join(BUILD, 'vendor/three/build/three.core.js')).size;
+  const before = fs.statSync(path.join(THREE_DIR, 'three.module.js')).size + fs.statSync(path.join(THREE_DIR, 'three.core.js')).size;
   fs.writeFileSync(path.join(BUILD, 'vendor/three/build/three.module.js'), compactEsm(Buffer.from(out).toString('utf8'), 'vendor/three/build/three.module.js'));
-  fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'));
+  fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'), { force: true });
   console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} ${reportGzip ? `(gzip ${kb(gz(Buffer.from(out)))})` : '(gzip diagnostics disabled)'}`);
 }
 

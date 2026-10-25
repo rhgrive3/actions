@@ -125,6 +125,7 @@ export function noteRankedBarrierShots(nm,from,packet,now) {
   const keys=nm.rankedBarrierEventKeys.get(from) || new Map();
   for(const e of packet.e.slice(0,256)) {
     if(!Array.isArray(e) || !['p','b','ev'].includes(e[1])) continue;
+    if ((e[1] === 'b' && e[3] !== 'bomb') || (e[1] === 'ev' && e[2] !== 'weapon:fire')) continue;
     const actorId=e[1]==='ev' ? e[3]?.actor?.n : e[2];
     const actor=nm.match.actors.find(a=>id(a)===String(actorId) && a?.alive && a.owner===from);
     if(!actor) continue;

@@ -2,6 +2,11 @@
 const patches = {
   "src/net/netmatch.js": [
     [
+      "  _pathAt(buf, t, S) {\n    let s0 = buf[0], s1 = null;\n    for (let i = 0; i < buf.length - 1; i++) { if (buf[i].t <= t && buf[i + 1].t > t) { s0 = buf[i]; s1 = buf[i + 1]; break; } }",
+      "  _pathAt(buf, t, S) {\n    let s0 = buf[0], s1 = null;\n    // Admission keeps timestamps strictly increasing. Current playback is\n    // normally near the newest entries; past/future endpoints need no scan.\n    if (t >= s0.t && t < buf[buf.length - 1].t) {\n      for (let i = buf.length - 2; i >= 0; i--) { if (buf[i].t <= t && buf[i + 1].t > t) { s0 = buf[i]; s1 = buf[i + 1]; break; } }\n    }",
+      1
+    ],
+    [
       "    const a = [], sq = Object.create(null), dr = Object.create(null), wp = Object.create(null), bw = Object.create(null), rf = Object.create(null), pg = Object.create(null);",
       "    const a = [], sjEpochs = Object.create(null);\n    let sq = null, dr = null, wp = null, bw = null, rf = null, pg = null;",
       1

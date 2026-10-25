@@ -52,7 +52,7 @@ export function renderFoleySound(recipe,event,variant=0,sampleRate=48000){
   const signal=new Float32Array(count);
   // A stable, broadband source with separate dark/bright and thin/bulky noise.
   // There are NO oscillators or frequency sweeps, including for ready/scope.
-  const sources={raw:new Float32Array(count),thump:new Float32Array(count),body:new Float32Array(count),mechanism:new Float32Array(count),air:new Float32Array(count)};
+  const sources={thump:new Float32Array(count),body:new Float32Array(count),mechanism:new Float32Array(count),air:new Float32Array(count)};
   let l0=0,l1=0,l2=0,l3=0;
   const k0=1-Math.exp(-TAU*clamp(p.body*.48,50,sr*.40)/sr);
   const k1=1-Math.exp(-TAU*clamp(p.body*2.5,130,sr*.42)/sr);
@@ -61,7 +61,6 @@ export function renderFoleySound(recipe,event,variant=0,sampleRate=48000){
   for(let i=0;i<count;i++){
     const raw=rng()*2-1;
     l0+=k0*(raw-l0);l1+=k1*(raw-l1);l2+=k2*(raw-l2);l3+=k3*(raw-l3);
-    sources.raw[i]=raw;
     sources.thump[i]=l0;
     sources.body[i]=l1-l0;
     sources.mechanism[i]=l2-l1;

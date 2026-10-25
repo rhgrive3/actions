@@ -170,8 +170,14 @@ export class RoomDurableObject {
         emoteAt: m.emoteAt ?? null,
         ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft } : {}),
       };
-      const previous = m.attachmentSnapshot, keys = Object.keys(next);
-      if (previous && Object.keys(previous).length === keys.length && keys.every(key => previous[key] === next[key])) return;
+      const previous = m.attachmentSnapshot;
+      // Accepted frames usually change at least one budget scalar. Prove a
+      // difference first; retain full key equality for general unchanged sync.
+      if (previous && previous.budgetAt === next.budgetAt
+        && previous.framesLeft === next.framesLeft && previous.bytesLeft === next.bytesLeft) {
+        const keys = Object.keys(next);
+        if (Object.keys(previous).length === keys.length && keys.every(key => previous[key] === next[key])) return;
+      }
       m.ws.serializeAttachment?.(next);
       m.attachmentSnapshot = next;
     } catch {}

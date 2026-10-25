@@ -25,7 +25,7 @@ function decodedBytes(rows){
   return total;
 }
 function canReusePCM(row,clip){
-  return row.file===clip.file && !!row.sha256 && row.sha256===clip.sha256
+  return !!row.sha256 && !!clip.sha256 && row.sha256.toLowerCase()===clip.sha256.toLowerCase()
     && LOOP_EVENTS.has(row.event)===LOOP_EVENTS.has(clip.event)
     && (row.loopStart??null)===(clip.loopStart??null)
     && (row.loopEnd??null)===(clip.loopEnd??null)
@@ -33,7 +33,7 @@ function canReusePCM(row,clip){
 }
 function pcmKey(clip) {
   return clip.sha256 && clip.seamlessLoop !== false
-    ? JSON.stringify([clip.file, clip.sha256, LOOP_EVENTS.has(clip.event), clip.loopStart ?? null, clip.loopEnd ?? null]) : null;
+    ? JSON.stringify([clip.sha256.toLowerCase(), LOOP_EVENTS.has(clip.event), clip.loopStart ?? null, clip.loopEnd ?? null]) : null;
 }
 function windupKey(clip) {
   return clip.sha256 && clip.seamlessLoop !== false ? JSON.stringify([clip.file, clip.sha256]) : null;
@@ -201,7 +201,13 @@ export class AuthorizedSamplePack {
     this._lruStage=stage;
     const remainingByFile=new Map();
     for(const clip of valid)remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
-    const hashedFiles=new Set(valid.filter(clip=>clip.sha256).map(clip=>clip.file));
+    const hashedFiles=new Set(),directHashes=new Map();
+    for(const clip of valid){
+      const hash=clip.sha256?.toLowerCase()||null;
+      if(hash)hashedFiles.add(clip.file);
+      if(!directHashes.has(clip.file))directHashes.set(clip.file,hash);
+      else if(directHashes.get(clip.file)!==hash)directHashes.set(clip.file,null);
+    }
     // The same file can back multiple variants: download/decode it once per import.
     const getDecoded=(clip)=>{
       if(decoded.has(clip.file))return decoded.get(clip.file);
@@ -222,11 +228,17 @@ export class AuthorizedSamplePack {
         // Decode only after the consuming manifest entry passes its checksum.
         // A pure unhashed file has no later byte borrower, so WebKit may take
         // ownership of its fetched ArrayBuffer directly.
-        const file={bytes,digest:null,pcm:null,scope};
+        const file={bytes,digest:null,verifiedDigest:null,pcm:null,scope};
         file.decode=()=>file.pcm||(file.pcm=scope.run(async()=>{
           if(!current())throw cancelled;
           scope.check();
-          const pcm=await this.ctx.decodeAudioData(hashedFiles.has(clip.file)?bytes.slice(0):bytes);
+          // Only uniform, signed declarations may transfer their original bytes.
+          // Verify before native decode detaches them; later rows reuse the digest.
+          const directHash=directHashes.get(clip.file);
+          if(directHash){
+            if(file.verifiedDigest!==directHash)throw new Error('Checksum must precede direct decode');
+          }
+          const pcm=await this.ctx.decodeAudioData(hashedFiles.has(clip.file)&&!directHash?bytes.slice(0):bytes);
           scope.check();
           if(!current())throw cancelled;
           if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
@@ -267,7 +279,7 @@ export class AuthorizedSamplePack {
               // Memoize only this transaction's actual fetched bytes; every
               // manifest row still compares its own declared checksum.
               if(!decodedFile.digest)decodedFile.digest=decodedFile.scope.run(()=>globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
-                .then(dig=>Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
+                .then(dig=>decodedFile.verifiedDigest=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('')));
               const sha=await decodedFile.digest;
               if(!current())return;
               if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');

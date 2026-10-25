@@ -786,6 +786,9 @@ export class RankedWorld {
     const nested = scratch.busy, present = nested ? new Set() : scratch.value;
     if (!nested) scratch.busy = true;
     try {
+    const timeDescriptor = Object.getOwnPropertyDescriptor(this.G, 'time');
+    const stableClock = timeDescriptor && 'value' in timeDescriptor;
+    let clockReady = false, visualClock = 0, spin = 0;
     for (const clam of clams) {
       if (!clam || clam.id === undefined || clam.carrier !== null && clam.carrier !== undefined) continue;
       const p = vec(clam.pos);
@@ -795,10 +798,14 @@ export class RankedWorld {
       marker.mesh.visible = true;
       marker.mesh.position.set(p[0], p[1] + (clam.kind === 'power' ? .255 : SMALL_CLAM_HALF_HEIGHT), p[2]);
       const velocity = vec(clam.velocity);
-      const clock = finite(this.G.time) ? this.G.time : 0;
-      if (velocity) marker.mesh.rotation.set(velocity[0] * 0.04, velocity[1] * 0.04 + clock * 1.4, velocity[2] * 0.04);
-      else marker.mesh.rotation.y = clock * 1.4;
-      if (clam.drilling) marker.mesh.rotation.z = clock * 24;
+      if (!clockReady || !stableClock) {
+        visualClock = finite(this.G.time) ? this.G.time : 0;
+        spin = visualClock * 1.4;
+        clockReady = true;
+      }
+      if (velocity) marker.mesh.rotation.set(velocity[0] * 0.04, velocity[1] * 0.04 + spin, velocity[2] * 0.04);
+      else marker.mesh.rotation.y = spin;
+      if (clam.drilling) marker.mesh.rotation.z = visualClock * 24;
     }
     for (const [key, marker] of this._clamMarkers) {
       if (!present.has(key)) {
@@ -817,13 +824,17 @@ export class RankedWorld {
     const nested = scratch.busy, present = nested ? new Set() : scratch.present, actors = nested ? new Map() : scratch.actors;
     if (!nested) scratch.busy = true;
     try {
-    for (const actor of this.match?.actors || []) {
-      const key = idKey(actor?.nid ?? `${actor?.team}:${actor?.slot}`);
-      if (!actors.has(key)) actors.set(key, actor);
-    }
+    let actorsReady = false;
     for (const id of Object.keys(inventories)) {
       const inventory = inventories[id];
       if (!inventory || !(inventory.small > 0 || inventory.power)) continue;
+      if (!actorsReady) {
+        for (const actor of this.match?.actors || []) {
+          const key = idKey(actor?.nid ?? `${actor?.team}:${actor?.slot}`);
+          if (!actors.has(key)) actors.set(key, actor);
+        }
+        actorsReady = true;
+      }
       const actor = actors.get(id) || null;
       if (!actor?.pos) continue;
       present.add(id);

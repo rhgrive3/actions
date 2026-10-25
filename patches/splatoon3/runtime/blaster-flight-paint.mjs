@@ -278,7 +278,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   const physics = game?.physics;
   let landed = 0, write = 0;
   let landings=null;
-  const retired=[],epoch=system._s3SplashDropEpoch||0;
+  let retired=null;const epoch=system._s3SplashDropEpoch||0;
   for (let i = 0; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
@@ -300,7 +300,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
       stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
     }
-    if (!done) queue[write++] = d;else retired.push(d);
+    if (!done) queue[write++] = d;else (retired ||= []).push(d);
   }
   // Stable linear compaction: landing a large volley no longer repeatedly
   // shifts all later drops. Survivors retain their deterministic order.
@@ -310,7 +310,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   // otherwise the earlier landing can incorrectly overwrite the later one.
   if(landings?.length>1)landings.sort((a,b)=>a.time-b.time);
   try{if(landings)for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);}
-  finally{for(const drop of retired)recycleSplashDrop(system,drop,epoch);}
+  finally{if(retired)for(const drop of retired)recycleSplashDrop(system,drop,epoch);}
   return landed;
 }
 

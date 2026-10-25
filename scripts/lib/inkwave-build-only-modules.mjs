@@ -2,6 +2,11 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/local-quality/queue-extra-world-adapter.mjs',
+  'patches/local-quality/queue-extra-decor-adapter.mjs',
+  'patches/local-quality/queue-extra-motion-adapter.mjs',
+  'patches/local-quality/queue-ui-20261025-adapter.mjs',
+  'patches/local-quality/queue-extra-weapons-fx-adapter.mjs',
   'patches/local-quality/drive-core-queue-adapter.mjs',
   'patches/splatoon3/weapon-queue-20261024-adapter.mjs',
   'patches/local-quality/drive-visual-audio-adapter.mjs',

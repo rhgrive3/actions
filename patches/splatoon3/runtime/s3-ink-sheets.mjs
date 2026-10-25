@@ -258,6 +258,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   }), MAX_DRILL);
   const da = new THREE.InstancedBufferAttribute(new Float32Array(MAX_DRILL * 4), 4).setUsage(THREE.DynamicDrawUsage);
   drillMesh.geometry.setAttribute('aDrill', da);
+  const sheetAttrs=Object.freeze([a,b]),drillAttrs=Object.freeze([da]);
   const drills = [], drillSlots = [];
   const white = new THREE.Color(1, 1, 1);
   // GTAO/depth override passes would draw the raw unit grids.
@@ -361,7 +362,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
           n++;
         }
       }
-      upload(mesh, n, [a, b], 4);
+      upload(mesh, n, sheetAttrs, 4);
       const D = da.array;
       let nd = 0;
       for (const d of drills) {
@@ -379,7 +380,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
       }
       for(const d of drills){d.at=null;d.color=null;}
       drills.length = 0;
-      upload(drillMesh, nd, [da], 4);
+      upload(drillMesh, nd, drillAttrs, 4);
       return { sheets: n, drills: nd };
     },
     clear() { bursts.length = 0; for(const d of drillSlots){d.at=null;d.color=null;} drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },

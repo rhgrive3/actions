@@ -1,0 +1,205 @@
+{
+  "base": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "rows": [
+    {
+      "slug": "constant-time-procedural-music-catchup-after-starved-ticks",
+      "status": "deferred",
+      "details": "Conditional P3: queue itself requires hardware benefit; 10-minute synthetic gap saves ~0.02ms, arithmetic boundary complexity unproven in emitted WebKit."
+    },
+    {
+      "slug": "boss-socket-audio-follow-reuse-vector3-scratch",
+      "status": "delegated",
+      "details": "UI/boss owner."
+    },
+    {
+      "slug": "avoid-unchanged-audio-bus-gain-automation-on-volume-slider",
+      "status": "already-in-pr",
+      "details": "visual-audio-queue-adapter caches actual AudioParam identity and target; existing regression includes replacement nodes/mute."
+    },
+    {
+      "slug": "defer-procedural-music-delay-reverb-graph-on-recorded-only-start",
+      "status": "already-in-pr",
+      "details": "input-lens-queue-adapter lazy FX; music-lazy-fx tests."
+    },
+    {
+      "slug": "skip-manifest-negative-recorded-se-ensure-per-shot",
+      "status": "implemented",
+      "details": "Skip only explicit ready-manifest negatives; preserve notMapped telemetry and recorded base fallback; unknown manifests still request."
+    },
+    {
+      "slug": "revoke-music-worker-blob-url-on-constructor-failure",
+      "status": "already-in-pr",
+      "details": "idle-adapter existing constructor/postMessage/async-error ownership cleanup; music-worker-failure-366 tests."
+    },
+    {
+      "slug": "avoid-charger-rise-mp3-decode-input-clone",
+      "status": "implemented",
+      "details": "Transfer exact response ArrayBuffer to native decoder; no post-decode raw-byte borrower."
+    },
+    {
+      "slug": "eliminate-unused-foley-raw-noise-array",
+      "status": "implemented",
+      "details": "Remove write-only raw scratch; preserve RNG scalar and every baseline PCM hash."
+    },
+    {
+      "slug": "reuse-verified-crossfilename-roller-vertical-mp3-pcm",
+      "status": "implemented",
+      "details": "Reuse verified SHA-256 PCM across filenames with equal loop category/endpoints/repair; index and scan paths agree."
+    },
+    {
+      "slug": "avoid-resolved-recorded-loop-option-snapshot-per-frame",
+      "status": "implemented",
+      "details": "Retain snapshots until actual loop resolves; forward later updates directly."
+    },
+    {
+      "slug": "suspend-hidden-audio-even-with-stale-safari-resume-promise",
+      "status": "deferred",
+      "details": "Pending-resume ownership change remains separate lifecycle correction; needs non-settling/resolved out-of-order resume/suspend and trusted-gesture regression."
+    },
+    {
+      "slug": "retire-paused-streamed-bgm-without-procedural-clock",
+      "status": "already-in-pr",
+      "details": "music-idle has clock-aware retirement timeout/statechange observer, including closed clock."
+    },
+    {
+      "slug": "batch-cold-start-recorded-combat-cue-imports",
+      "status": "deferred",
+      "details": "START gate and serialized AuthorizedSamplePack generations require shared per-event inFlight admission and partial-error proof; cannot parallelize independent load calls."
+    },
+    {
+      "slug": "avoid-verified-mp3-compressed-buffer-clone-after-hash-check",
+      "status": "implemented",
+      "details": "Uniform per-file signed declarations transfer bytes only after digest succeeds; mixed/unequal declarations retain copy."
+    },
+    {
+      "slug": "reuse-guided-fft-frame-scratch-buffers",
+      "status": "implemented",
+      "details": "Allocate real/imag per render; zero both for every frame; regenerate classic Worker."
+    },
+    {
+      "slug": "defer-idle-music-worker-allocation-until-procedural-player",
+      "status": "already-in-pr",
+      "details": "music-idle starts Worker only when a non-streamed live player exists."
+    },
+    {
+      "slug": "cancel-orphaned-primed-battle-mp3-on-aborted-start",
+      "status": "deferred",
+      "details": "START attempt generation ownership must precede cleanup; unconditional stop/drop would break legitimate Safari pre-GO prime."
+    },
+    {
+      "slug": "audio-source-audit-workflow-only-trigger-and-no-manual-entry",
+      "status": "delegated",
+      "details": "Root/workflow owner."
+    },
+    {
+      "slug": "optimize-audio-emitter-key-weakmap-and-positional-validation",
+      "status": "already-in-pr",
+      "details": "bank.mjs already has single WeakMap.get and scalar finite coordinates."
+    },
+    {
+      "slug": "precompute-guided-spectral-bin-routing-and-band-power",
+      "status": "already-in-pr",
+      "details": "source-guided-render already has bandByBin and per-frame bandPower."
+    },
+    {
+      "slug": "skip-grain-frequency-ramp-pow-after-saturation",
+      "status": "already-in-pr",
+      "details": "grain-texture already has exponent===1 fastpath and unchanged arithmetic ordering."
+    },
+    {
+      "slug": "gate-muted-recorded-battle-mp3-preload-and-decoding",
+      "status": "deferred",
+      "details": "Mute scheduler already exists, but skipping START prime needs Safari gesture entitlement and timeline recovery proof."
+    },
+    {
+      "slug": "skip-procedural-battle-song-compilation-for-recorded-stream",
+      "status": "already-in-pr",
+      "details": "input-lens-queue-adapter bypasses getSong for live FILE_TRACK_URLS."
+    },
+    {
+      "slug": "preserve-recorded-sample-lru-touches-across-async-load-commit",
+      "status": "already-in-pr",
+      "details": "AuthorizedSamplePack existing _lruStage touches staging inside transaction; drive-audio-lru tests."
+    },
+    {
+      "slug": "reuse-brella-audio-canopy-transition-snapshot",
+      "status": "already-in-pr",
+      "details": "runtime.mjs already reuses prior s.canopy record."
+    },
+    {
+      "slug": "hoist-foley-noise-attack-denominator-from-sample-loop",
+      "status": "already-in-pr",
+      "details": "no-bleep-foley already computes attackDenominator once per noise call."
+    },
+    {
+      "slug": "verify-rights-and-separate-public-distribution-of-recorded-audio",
+      "status": "excluded-user",
+      "details": "Excluded by explicit prior user instruction; no work performed."
+    },
+    {
+      "slug": "hoist-guided-envelope-measured-span",
+      "status": "already-in-pr",
+      "details": "source-guided-render already computes measured once and passes to dbEnvelope."
+    },
+    {
+      "slug": "stage-long-crab-tank-idle-mp3-predecode",
+      "status": "deferred",
+      "details": "Requires selected-kit/activation readiness and first audible idle-loop proof; no speculative preload removal."
+    },
+    {
+      "slug": "cache-source-guided-inverse-fft-twiddles",
+      "status": "already-in-pr",
+      "details": "source-guided-render existing fixedTwiddles cache; baseline hashes retained."
+    },
+    {
+      "slug": "precompute-grain-attack-envelope-float64-with-bitexact-pcm",
+      "status": "already-in-pr",
+      "details": "grain-texture existing Float64 attack table; baseline hashes retained."
+    },
+    {
+      "slug": "audio-reference-collector-sparse-checkout-omit-unread-game-tree",
+      "status": "delegated",
+      "details": "Root/workflow owner."
+    },
+    {
+      "slug": "settings-audio-muted-preview-skip-18-bar-per-frame-trigonometry",
+      "status": "delegated",
+      "details": "UI owner."
+    },
+    {
+      "slug": "gate-recorded-charger-rise-mp3-prefetch-by-weapon-roster",
+      "status": "deferred",
+      "details": "Other open PR #1872 changes Charger eligibility; raw init still primes all contexts. Needs roster/remote onset readiness and integration after #1872."
+    },
+    {
+      "slug": "bind-default-fetch-for-recorded-charger-rise-safari",
+      "status": "already-in-pr",
+      "details": "charger-charge-rise already binds globalThis.fetch; default-fetch regression passed."
+    },
+    {
+      "slug": "defer-speculative-reverb-prewarm-until-audio-intent-and-match-sample-rate",
+      "status": "deferred",
+      "details": "Constructor prewarm can reduce first gesture stall; defer without measured scheduling tradeoff and actual-rate readiness proof."
+    },
+    {
+      "slug": "rearm-jet-arrow-bgm-on-connectivity-or-gesture-recovery",
+      "status": "already-in-pr",
+      "details": "drive-visual-audio-adapter existing generation-owned online/focus/trusted-gesture recovery."
+    },
+    {
+      "slug": "native-source-git-sha1-verification-avoid-full-payload-copy",
+      "status": "not-adopted",
+      "details": "Existing benchmark-source-sha1.mjs and prior report already reject incremental JS default due synchronous CPU overhead; preserve native WebCrypto verification. No signed SHA256 table supplied."
+    },
+    {
+      "slug": "native-source-retention-incremental-verified-write-groups-without-full-key-rescan",
+      "status": "deferred",
+      "details": "Each writeGroup acquires a new Web Lock. Reusing accounting across owners without a persisted generation marker can trust another-tab deletion/mutation. Keep full keys/seal recovery and quota validation."
+    },
+    {
+      "slug": "native-source-cache-slot-avoid-five-second-reinitialization-during-texture-stream",
+      "status": "deferred",
+      "details": "Requires loader-owned bounded session with explicit completion/abort/switch invalidation. Permanent TTL removal is unsafe; per-file integrity and write lock retained."
+    }
+  ]
+}

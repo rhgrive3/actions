@@ -1,0 +1,8 @@
+{
+  "src/game/character.js": "3d9a80cc9241ce818e8108bd41c89c1776097ed8633d3705e0a6990680ae3f75",
+  "src/game/character-hair.js": "cf44efd45b90da95b1697da5e773c7c38338f493f542d7ebc7429a5a6641bef4",
+  "src/game/character-face.js": "62e3047c8bb5c83589aaa0a37f8303956a1ccbb8906c2ad5b4575aa78ffd1f61",
+  "src/game/character-outfit.js": "e63ce564ca2ba43efb4cc310451c1e5a81fa724ef7f55baf18a3707e006cd16c",
+  "src/game/motion/source-controller.js": "5cd5f2ef42715fa483bb199c9c80d538e5bfa9ba11b4984a1d2164e8ba179f10",
+  "src/game/weapons.js": "50b98c2d01a912ba81a02d7c0875900bd5422378c9d5bf2574222d8d0772fce0"
+}

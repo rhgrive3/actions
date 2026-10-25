@@ -1,0 +1,424 @@
+{
+  "baseline": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "scope": "additional weapon/sub/special/projectile/FX queue review; preserve original 329-row index independently",
+  "entries": [
+    {
+      "slug": "native-sprinkler-bomb-replay-gate-snapshot-set-to-sprinkler-only",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/native-sprinkler-damage.mjs"
+      ],
+      "reason": "Skip only explicitly non-Sprinkler current envelopes; native Sprinkler and legacy/unknown forms preserve identity Set and replacement handling.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "screenfx-lazy-dry-frame-speed-and-reuse-jump-wave",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-extra-weapons-fx-adapter.mjs"
+      ],
+      "reason": "Avoid speed norm on dry non-emerging frames; existing composition already shares the superjump cosine.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "ink-vac-inhale-footpaint-constant-footprint-precompute",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/kit-ink-vac.mjs"
+      ],
+      "reason": "Compute and freeze the fixed foot footprint once without changing cadence, rays, seed or paint arguments.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "roller-link-reuse-drawn-render-age",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/projectile-visuals.mjs"
+      ],
+      "reason": "Reuse the render ages written for the same synchronous draw before links.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "roller-membrane-hoist-invariant-ring-bounds",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/projectile-visuals.mjs"
+      ],
+      "reason": "Keep multiplication order and reuse radius-dependent bounds across rings.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "sub-fixedstep-air-and-ground-drag-elide-pow",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "reason": "Only exact STEP callers use original retention base; variable dt uses original Math.pow; Fizzy x/z share one coefficient.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "sub-flight-hoist-collision-and-state-membership-arrays",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "reason": "Frozen module lists retain includes SameValueZero semantics and call placement.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "sub-disposevisual-elide-per-node-single-material-arrays",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "reason": "Scalar material path avoids wrapper arrays while preserving geometry/material deduplication.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "autobomb-pose-reuse-ground-speed-hypot",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "reason": "One identical speed result supplies rotation threshold and grounded model pose.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "ribbonpool-chronological-view-dirty-only-sync",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/special-vfx-kit.mjs"
+      ],
+      "reason": "Rebuild chronological references only on structure changes; coalesced values stay shared; every frame still writes all existing geometry.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "wave-breaker-front-axis-reject-before-distance",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "reason": "NaN-safe distant-axis rejection retains exact hypot near boundaries; object bound uses conservative rounding margin.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "fx-remove-unused-camera-world-direction-normalization",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-extra-weapons-fx-adapter.mjs"
+      ],
+      "reason": "Preserve actual vendored camera world/inverse matrix updates; omit only unused direction normalization.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "splash-drop-lazy-retirement-list-on-nonterminal-frame",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/blaster-flight-paint.mjs"
+      ],
+      "reason": "Call-local retirement list becomes lazy; ordered landings and finally/epoch recycling stay unchanged.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "booyah-damage-radius-elide-unobserved-hit-list",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "reason": "Both internal callers ignore the list; retain actor hits, LOS, once and object callbacks; damageBandRadius still returns its observed list.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "roller-visual-fallback-link-precompute-13-ring-sines",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/projectile-visuals.mjs"
+      ],
+      "reason": "Float64 sine table uses exact original PI*(ring/(RINGS-1)) expression.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "explosher-blob-inline-look-scalars-avoid-per-glob-tuple",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/s3-projectile-shapes.mjs"
+      ],
+      "reason": "Inline sole append writer and scalar look fields; preserve capacity, matrix/color and attribute order.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "fx-droplets-empty-frame-fastpath-and-frame-drag-hoist",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-extra-weapons-fx-adapter.mjs"
+      ],
+      "reason": "Existing composition already hoists drag; additional zero-pool exit retains cosmetic phase advance and instanceCount=0.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "torpedo-fizzy-instanced-static-color-dirty-only",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/torpedo-splashes.mjs"
+      ],
+      "reason": "Mark color slots dirty on birth/removal; retain per-frame matrix work and all live color bytes.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "fxhooks-ambient-seaspray-far-edge-axis-prune-hypot",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-extra-weapons-fx-adapter.mjs"
+      ],
+      "reason": "Only NaN-safe far candidates omit hypot; original candidate draw/score/random sequence remains.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "wave-breaker-device-mark-hoist-per-victim-radius-bound",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "reason": "Share current device mark radius and probe bound in the fixed update.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "weapons-hoist-per-projectile-family-membership-arrays",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/weapons.mjs"
+      ],
+      "reason": "Shared frozen family list retains same includes tests at hit and registration.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "legacy-swept-world-reuse-minmax-for-query-and-aabb",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/splatoon3/runtime/weapons-collision.mjs"
+      ],
+      "reason": "Share six extrema; retain original epsilon-padded AABB and separate epsilon-free query limits.",
+      "testPaths": [
+        "patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs"
+      ]
+    },
+    {
+      "slug": "tri-slosher-splash-visual-heading-hypot-fastpath",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Extra finite/type/axis branches can be slower than hypot. No browser workload benefit established; leave original guard."
+    },
+    {
+      "slug": "saber-neutral-stick-avoid-horizontal-aim-hypot",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Signed-zero-preserving neutral fastpath needs real actor/input tracing and benchmark; leave original history expression."
+    },
+    {
+      "slug": "fidelity-roller-spawn-share-yaw-basis-with-offset",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Exported helper must preserve arbitrary callers/getter semantics and source-guided birth; no validated runtime patch in this batch."
+    },
+    {
+      "slug": "slosher-delayed-birth-reuse-initial-yaw-pitch-trig",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Adding angle/trig cache fields to pooled rounds needs shape/memory and delayed-birth mutation evidence."
+    },
+    {
+      "slug": "full-charge-charger-pool-hit-candidate-rows-by-nested-shot",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Lease must cover physics/original fire/hit/audio exception and nested-shot lifetimes; current evidence does not validate all callbacks."
+    },
+    {
+      "slug": "sprinkler-droplet-reuse-rng-and-paint-point",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Reusing point across synchronous paint/hit callbacks requires depth-safe leases and retained-reference verification."
+    },
+    {
+      "slug": "sub-defense-defer-hit-object-materialization-until-nearest",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Delayed onHit ownership, hit-point retention and callback mutations require production selection parity beyond arithmetic."
+    },
+    {
+      "slug": "ribbon-pool-pack-live-segments-before-gpu-upload",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Dynamic indices/topology/upload ranges need actual GPU raster equivalence and transfer benchmark; current dirty-view change leaves topology unchanged."
+    },
+    {
+      "slug": "inkjet-exhaust-fixed-step-temporary-closures-and-center",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Shared predicates/center must remain safe through nested damage/LOS callbacks; no validated depth-safe lifetime change here."
+    },
+    {
+      "slug": "splatling-cosmetic-tail-squared-saturation-fastpath",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Extra vector identity/prototype/numeric guards can outweigh saved sqrt; unmeasured."
+    },
+    {
+      "slug": "inkflight-head-reuse-swept-miss-length",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Changing world-call/length evaluation order needs baseline coverage of custom sweep mutations and miss dist ownership."
+    },
+    {
+      "slug": "roller-contact-gate-skip-hypot-on-clear-zero-or-motion",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Contact/holding region also changes in gameplay PR #1872; no overlapping speculative contact fastpath added."
+    },
+    {
+      "slug": "super-chump-decoy-prepop-glow-fps-dependent",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Correcting rendered cadence deliberately changes 30/120Hz visible birth density/phase; needs dedicated visual acceptance."
+    },
+    {
+      "slug": "booyah-blast-fx-render-rate-particle-trials-and-rune-rotation",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Render-rate correction changes particles and rune phase; retain for dedicated visual acceptance."
+    },
+    {
+      "slug": "legacy-slosher-hoist-constant-lob-trigonometry",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "No additional source transform added after final build freeze; this remains pending, not declared fixed."
+    },
+    {
+      "slug": "ultra-stamp-aimthrow-star-particle-render-fps-dependence",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Cadence correction changes visible 30/120Hz emissions; needs dedicated visual acceptance."
+    },
+    {
+      "slug": "zipcaster-flight-trail-particle-birth-render-fps-dependence",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Cadence correction changes hook/zip phase sampling and births; needs dedicated visual acceptance."
+    },
+    {
+      "slug": "roller-release-footpaint-reuse-depth-scoped-center-and-yaw-trig",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Center scratch requires retained-reference/reentrant paint validation; current fresh-center ownership is preserved."
+    },
+    {
+      "slug": "ink-vac-projectile-droplets-fixed-60hz-emission-cadence",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Cadence correction changes visible 30/120Hz emissions; needs dedicated visual acceptance."
+    },
+    {
+      "slug": "wave-breaker-markinglines-frame-viewer-cache",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Cannot safely cache mutable actor role/order/liveness within callback-rich render traversal without a real invalidation contract."
+    },
+    {
+      "slug": "brella-canopy-axis-far-prune-before-distance",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Prototype/override/near-density overhead and actual canopy contact acceptance need scoped before/after measurement."
+    },
+    {
+      "slug": "charger-flight-recycle-retired-job-scratch",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Job pools risk retained owner/beam/peer/defense references; full lifecycle/cancellation exception proof remains absent."
+    },
+    {
+      "slug": "crab-tank-roll-paint-elide-per-tick-vector-and-stamp-options",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Scratch/options reuse needs nested movement/paint and retained-options proof; fresh snapshots remain."
+    },
+    {
+      "slug": "burst-bomb-aim-preview-per-render-vector-and-hit-allocation",
+      "status": "needs-evidence",
+      "changedPaths": [],
+      "reason": "Preview scratch needs a depth-safe contract across ray/actor hooks and retained arc cache references."
+    },
+    {
+      "slug": "fx-flick-curtain-and-dust-ring-reuse-angle-trigonometry",
+      "status": "already-effective",
+      "changedPaths": [],
+      "reason": "Fully composed #1870 already contains the two per-particle sin/cos reuses; do not reapply raw-source proposal."
+    },
+    {
+      "slug": "spritepool-per-render-duplicate-drag-exponential",
+      "status": "covered-by-open-pr",
+      "pr": 1876,
+      "changedPaths": [],
+      "reason": "PR #1876 implements the per-update scalar drag cache in special-vfx-kit.mjs; excluded per request."
+    },
+    {
+      "slug": "torpedo-anyaim-bisection-stop-at-float-convergence",
+      "status": "delegated",
+      "changedPaths": [],
+      "reason": "Network owner implements/reports torpedo-launch-set.mjs; do not double-count here."
+    },
+    {
+      "slug": "explosher-sparkle-age-phase-share-harmonic-trig",
+      "status": "not-adopted",
+      "changedPaths": [],
+      "reason": "Angle-addition expansion changes IEEE-754 values (age=.017,seed=.062: direct 0.9044121893788258 vs expanded 0.904412189378826). Pixel/instance exactness is not established; no approximate trig substitution."
+    }
+  ],
+  "implementedRows": 22,
+  "limitations": [
+    "No iPad/Safari physical-device measurements or retail 11.3.0 parity claim.",
+    "Cadence-change proposals retained explicitly; unimplemented rows are not marked resolved.",
+    "Existing #1876 drag optimization is excluded.",
+    "Node defaultheap full-specials attempt OOM; parent full83/83 with6GiB passed before final6 residual hoists. Latest selected11 Wave/Booyah/AoE and19 new+32 packet/dualies focused tests passed after residual changes."
+  ]
+}

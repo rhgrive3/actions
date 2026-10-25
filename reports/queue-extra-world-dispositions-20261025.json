@@ -1,0 +1,180 @@
+{
+  "base": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "entries": [
+    {
+      "slug": "legacy-propkit-reuse-radial-trig-tables-in-lathe-and-tube",
+      "status": "implemented",
+      "reason": "Bounded 32-entry radial tables in directly authored props-core.js; original equations, inclusive Lathe seam and exclusive Tube seam retained. Real vendored Three output bytes compared across tessellations and open/closed modes."
+    },
+    {
+      "slug": "native-level-share-immutable-hidden-collider-descriptors",
+      "status": "implemented",
+      "reason": "Implemented conservative subset: remove only two transient center/half Vector3 values per hidden collider. Axes/colors remain independently owned; no mutable alias introduced. Exact component operation order preserved."
+    },
+    {
+      "slug": "legacy-level-box-aabb-direct-extents-skip-eight-corners",
+      "status": "implemented",
+      "reason": "Finite nonnegative-half axis-aligned box extrema use scalar endpoints; malformed, rotated and nonfinite cases retain the original eight corners. 10,004 actual Level cases preserve signed zero/NaN and all five layout geometry bytes."
+    },
+    {
+      "slug": "legacy-level-geometry-static-face-axis-pairs",
+      "status": "implemented",
+      "reason": "Known axis 0/1/2 gets the same two ordered scalar indices; all five actual layout buffers/index bytes match."
+    },
+    {
+      "slug": "native-triangleworld-drop-unused-render-buffer-aliases",
+      "status": "implemented",
+      "reason": "Preserve Object.assign extension metadata while removing only vertices/indices aliases from TriangleWorld. Display input stays on the original data/geometry owners; collision arrays and ray outputs retained."
+    },
+    {
+      "slug": "native-minimap-prune-neighbor-axis-before-hypot",
+      "status": "implemented",
+      "reason": "Reject impossible axis-separated node candidates before the original hypot threshold; actual helper ray-trace/candidate behavior compared for 1,200 positions."
+    },
+    {
+      "slug": "native-obj-remove-redundant-full-float32-finite-pass",
+      "status": "implemented",
+      "reason": "Remove only the redundant every(Number.isFinite) after every Float32 write was already validated. Keep allocation/attribute count rejection; compare 160 valid/overflow/NaN/Infinity variants."
+    },
+    {
+      "slug": "zevant-account-pr-synchronize-obsolete-runs-not-cancelled",
+      "status": "implemented",
+      "reason": "PR-only concurrency supersedes old heads; distinct PRs and every main push remain independent. No running workflow manually cancelled."
+    },
+    {
+      "slug": "zevant-account-test-only-diff-runs-full-workers-build",
+      "status": "implemented",
+      "reason": "Nonempty exact account/tests/*.test.mjs diff may skip build/budget/entry/Wrangler work. Always run account tests. Invalid SHA/history/fetch/diff falls back to full validation."
+    },
+    {
+      "slug": "legacy-paint-grid-use-single-cell-containment-fastpath",
+      "status": "already-in-pr",
+      "reason": "Composed paint grid already calls pointInsideGrid with original fallback."
+    },
+    {
+      "slug": "legacy-marina-avoid-double-far-reflection-bake-on-stage-theme-transition",
+      "status": "already-in-pr",
+      "reason": "world-queue-build-adapter already combines final-theme arena rebuild; existing world-build tests retain missing-shadow-map fallback."
+    },
+    {
+      "slug": "legacy-stage-omit-unused-empty-grate-geometry-material",
+      "status": "already-in-pr",
+      "reason": "Existing composed main allocates grate geometry only when a visible grate face exists; all five layouts tested."
+    },
+    {
+      "slug": "legacy-level-geometry-avoid-js-number-array-double-peak",
+      "status": "already-in-pr",
+      "reason": "geometry-build-storage-adapter already uses typed staging and final owned buffers; actual legacy buffer comparison retained."
+    },
+    {
+      "slug": "environment-orbit-share-sincos-for-sailboats-and-gulls",
+      "status": "already-in-pr",
+      "reason": "Composed Environment already has local ca/sa for both orbit positions and headings."
+    },
+    {
+      "slug": "legacy-paint-splat-omit-unused-position-array",
+      "status": "already-in-pr",
+      "reason": "world-queue-build-adapter already removes unused indexed-splat position attribute."
+    },
+    {
+      "slug": "wire-selected-prop-packs-into-production-boot",
+      "status": "already-in-pr",
+      "reason": "Composed main imports prop-packs.js and awaits selected preparePropPacks(layout, worldCurrent) before build."
+    },
+    {
+      "slug": "legacy-boot-mural-use-selected-layout-to-avoid-initial-atlas-resize",
+      "status": "already-in-pr",
+      "reason": "Composed boot already calls createMuralTexture(map.layout || map.id)."
+    },
+    {
+      "slug": "native-quality-skip-unchanged-material-program-invalidation",
+      "status": "needs-evidence",
+      "reason": "Requires real WebGL uniform/program-shape equality across map/channel/video/colorSpace changes. Browser runtime could not be installed; leave mandatory invalidation intact."
+    },
+    {
+      "slug": "native-texture-borrow-closed-bitmap-dimension-guard",
+      "status": "needs-evidence",
+      "reason": "Closed Bitmap is not proof of a live GPU resource on the same restored context. No renderer-liveness owner exists in the current contract; retain safe reload instead of relaxing the guard."
+    },
+    {
+      "slug": "native-nav-reuse-spawn-seeds-on-second-reachability-prune",
+      "status": "needs-evidence",
+      "reason": "Need proof that graph/physics/spawn inputs cannot mutate across generator yields and public prune calls; do not reuse potentially stale admission seeds."
+    },
+    {
+      "slug": "tenta-hud-layoutsample-whole-document-animation-scan",
+      "status": "needs-evidence",
+      "reason": "Document/ancestor/programmatic WAAPI animations can affect measured HUD layout; a reduced scan needs freshness and visual negative controls."
+    },
+    {
+      "slug": "legacy-far-reflection-cubecamera-six-faces-yield-during-loading",
+      "status": "needs-evidence",
+      "reason": "GPU profile and six-face atomic publication/cancellation/renderer-state proof required; synchronous API cannot be safely made asynchronous without that evidence."
+    },
+    {
+      "slug": "environment-cloud-bake-yield-between-ten-gpu-strips-at-loading",
+      "status": "needs-evidence",
+      "reason": "Need measured GPU contribution and an atomic nonvisible loading transaction; do not leak partial clouds or hold renderer state across RAF."
+    },
+    {
+      "slug": "native-stage-prewarm-actual-gpu-texture-and-buffer-uploads",
+      "status": "needs-evidence",
+      "reason": "Moving upload earlier can raise overlap peak RAM; requires GPU transfer instrumentation and low-memory evidence before adoption."
+    },
+    {
+      "slug": "native-source-cross-stage-content-hash-png-cache-reuse",
+      "status": "needs-evidence",
+      "reason": "Cross-stage byte cache needs quota/seal/ownership integration and real usage benefit. Retain per-file verification and bounded stage retention."
+    },
+    {
+      "slug": "legacy-level-spatial-hash-share-empty-cell-arrays",
+      "status": "needs-evidence",
+      "reason": "Hash cell arrays escape publicly; sharing mutable empty arrays changes cross-cell mutation behavior. Keep independent ownership."
+    },
+    {
+      "slug": "legacy-texlib-remove-unconditional-gpu-sync-readback-from-cold-start",
+      "status": "needs-evidence",
+      "reason": "Readback remains a deliberate completion/statistics point. Need browser first-visible-frame/GPU timing evidence before moving the wait into combat."
+    },
+    {
+      "slug": "native-png-decode-direct-to-capped-bitmap-on-low-memory",
+      "status": "needs-evidence",
+      "reason": "Blob direct resize and Bitmap resize can differ in color/premultiplication/filtering. Exact browser pixel proof unavailable; keep existing decode."
+    },
+    {
+      "slug": "native-ink-overlay-release-immutable-cpu-attributes-after-upload",
+      "status": "needs-evidence",
+      "reason": "Chunk/debug/context-restore paths may read attributes; no proven regeneration lifecycle. Keep CPU geometry instead of risking vanished ink."
+    },
+    {
+      "slug": "legacy-propkit-transfer-static-atlas-across-stage-switches",
+      "status": "needs-evidence",
+      "reason": "Font redraw callbacks, dimension/profile changes, constructor failure and ownership transfer need coordinated lifecycle proof; avoid a persistent mutable cache."
+    },
+    {
+      "slug": "native-obj-first-pass-ascii-byte-scan-avoid-utf8-line-decode",
+      "status": "needs-evidence",
+      "reason": "Unicode whitespace/BOM/classification/allocation/error equivalence plus source-backed throughput proof still needed; parser semantics retained."
+    },
+    {
+      "slug": "native-static-source-mask-release-after-dead-grid-init",
+      "status": "needs-evidence",
+      "reason": "Mask identity participates in minimap/ranked cache keys and grid reinitialization; safe generation-token/reconstruction contract not established."
+    },
+    {
+      "slug": "squid-heading-swim-entry-qa-four-full-tree-rehash-and-framewise-receipt-rewrites",
+      "status": "needs-evidence",
+      "reason": "Integrity checks verify no working-tree mutation between reference build/browser runs. A replacement proof and interruption receipts need dedicated negative tests before dropping guards."
+    },
+    {
+      "slug": "halyard-theme-only-reuse-unchanged-marina-foam-contours",
+      "status": "needs-evidence",
+      "reason": "Scene mesh/instance transforms can change without a level identity change; cache invalidation needs authoritative geometry revisions."
+    },
+    {
+      "slug": "native-constrained-reentry-avoid-repeat-obj-conversion-with-bounded-derived-artifact",
+      "status": "in-other-pr",
+      "reason": "PR #1868 supplies a separate prepared/KTX2 artifact path. Do not duplicate that unfinished integration in #1870 or re-enable large IndexedDB copies on touch clients."
+    }
+  ]
+}

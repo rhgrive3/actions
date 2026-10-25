@@ -119,12 +119,13 @@ export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true)
   const len = Math.hypot(dx, dy, dz);
   out.hit = false; out.dist = len; out.block = -1; out.face = -1;
   const r = Math.max(r0, r1);
-  const xLo = Math.min(from.x, to.x) - r - 1e-6, xHi = Math.max(from.x, to.x) + r + 1e-6;
-  const yLo = Math.min(from.y, to.y) - r - 1e-6, yHi = Math.max(from.y, to.y) + r + 1e-6;
-  const zLo = Math.min(from.z, to.z) - r - 1e-6, zHi = Math.max(from.z, to.z) + r + 1e-6;
+  const minX=Math.min(from.x,to.x),maxX=Math.max(from.x,to.x),minY=Math.min(from.y,to.y),maxY=Math.max(from.y,to.y),minZ=Math.min(from.z,to.z),maxZ=Math.max(from.z,to.z);
+  const xLo = minX - r - 1e-6, xHi = maxX + r + 1e-6;
+  const yLo = minY - r - 1e-6, yHi = maxY + r + 1e-6;
+  const zLo = minZ - r - 1e-6, zHi = maxZ + r + 1e-6;
   const ids = level.queryBlocks(
-    Math.min(from.x, to.x) - r, Math.min(from.z, to.z) - r,
-    Math.max(from.x, to.x) + r, Math.max(from.z, to.z) + r,
+    minX - r, minZ - r,
+    maxX + r, maxZ + r,
     physics._wfSweepIds || (physics._wfSweepIds = []),
   );
   let best = Infinity, chosenBlock = null, chosenIndex = -1;

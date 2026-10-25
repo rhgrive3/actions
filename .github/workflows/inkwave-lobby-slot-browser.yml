@@ -9,6 +9,9 @@ on:
       - patches/local-quality/tests/lobby-slot-transform.test.mjs
       - scripts/check-inkwave-lobby-slot-browser.mjs
       - .github/workflows/inkwave-lobby-slot-browser.yml
+      - 'inkwave-public/src/ui/menus.js'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/ui-localization-adapter.mjs'
 permissions:
   contents: read
 concurrency:

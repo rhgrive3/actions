@@ -1,0 +1,1163 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "baselineHead": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "counts": {
+    "already-effective": 53,
+    "implemented": 11,
+    "not-adopted": 4
+  },
+  "entries": [
+    {
+      "slug": "news-try-close-cancel-detached-splat-tweens",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "close(try) already cancels RAF and clears tweens before immediate detach."
+      ]
+    },
+    {
+      "slug": "boss-hud-squad-teams-reuse-ephemeral-views",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing PR scratch reuse retained; clear retained Actor rows at every BossHud.setMode and HUD disposal boundary."
+      ]
+    },
+    {
+      "slug": "boss-socket-audio-follow-reuse-vector3-scratch",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing PR per-loop follow positions own constructor-aware socket vectors; no new vector on steady follow."
+      ]
+    },
+    {
+      "slug": "hud-tank-cache-responsive-canvas-metrics",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/s3-hud-look-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final _s3TankBox already caches client dimensions with ResizeObserver and live fallback without observer."
+      ]
+    },
+    {
+      "slug": "minimap-share-jump-pulse-sine-per-composite",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Compute pulse lazily once per composite with jump effects; no evaluation for zero jumps."
+      ]
+    },
+    {
+      "slug": "menus-loading-skip-settled-interpolation-exponential",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/input-lens-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing input/lens adapter skips settled finite loading interpolation."
+      ]
+    },
+    {
+      "slug": "menus-delay-and-release-eager-stage-poster-decodes",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing quality adapter removes global stage preload/decode and uses lazy asynchronous offscreen tickets."
+      ]
+    },
+    {
+      "slug": "hud-ink-tank-skip-zero-turn-and-settled-level-math",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Skip exact zero yaw deltas and settled finite-dt ink smoothing; invalid dt behavior retained."
+      ]
+    },
+    {
+      "slug": "hud-clock-cache-formatted-time-by-visible-second",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing added UI adapter caches visible timer seconds before formatting."
+      ]
+    },
+    {
+      "slug": "menus-loadout-skip-converged-stat-exp",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final loadout loop already skips settled stats and shares one response factor across moving rows."
+      ]
+    },
+    {
+      "slug": "hud-ally-down-ping-elide-unchanged-opacity-writes",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/input-lens-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing input/lens changes guard opacity and actual serialized transform."
+      ]
+    },
+    {
+      "slug": "hud-minimap-remote-yaw-ignore-nonrendered-heading",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Use zero heading for non-self dirty keys while preserving rendered self heading and other state invalidation."
+      ]
+    },
+    {
+      "slug": "minimap-cache-static-spawn-pad-path2d",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Cache only geometric Path2D shapes by projected x/y/radius/constructor; live colors and every existing fill/stroke remain; unsupported environments retain original path construction."
+      ]
+    },
+    {
+      "slug": "menus-loading-progress-elide-identical-fill-transform",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/loading-screen-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final loading screen already tracks authored and serialized CSS transform."
+      ]
+    },
+    {
+      "slug": "menus-dispose-release-network-news-callback-owners",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Unsubscribe every menu-owned network callback safely and retire all News timers, RAF, tween closures, DOM and modal owner. Correct preexisting teardown insertion that hit first engine update instead of dispose."
+      ]
+    },
+    {
+      "slug": "settings-fov-preview-skip-unchanged-target-class-toggles",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Retain every wedge/caption update and inspect current target membership before toggling unchanged classes."
+      ]
+    },
+    {
+      "slug": "settings-ui-lab-freeze-skip-zero-dt-preview-dom-ticks",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Narrow time-driven gyro/touch preview wrapper skips repeated dt=0 ticks after first paint; set invalidates, nonzero time resumes, visibility guard remains outermost."
+      ]
+    },
+    {
+      "slug": "gamepad-pollpad-elide-per-frame-button-foreach-closure",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final pollPad already uses indexed buttons loop including sparse-list behavior; remaining forEach is one-time controller takeover."
+      ]
+    },
+    {
+      "slug": "hud-map-inline-aspect-fit-without-per-frame-arrays",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final map sizing already uses scalar w0/h0/w1/h1."
+      ]
+    },
+    {
+      "slug": "hud-turf-ticker-skip-unchanged-locale-formatting",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final turf ticker already caches whole displayed value before formatting."
+      ]
+    },
+    {
+      "slug": "showcase-inkfx-cache-lowest-free-particle-slot",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Maintain lowest-free floor at successful occupied writes, all three retirements before reentrant landing births, and clear; preserve slot order, RNG and matrix bytes."
+      ]
+    },
+    {
+      "slug": "menus-inkwipe-freeze-elide-identical-canvas-redraw",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Skip repeated successful draws at identical transition time/context/backing dimensions; keep RAF, callbacks, finish and safety timer ownership."
+      ]
+    },
+    {
+      "slug": "boss-hud-damage-numbers-elide-unchanged-opacity-writes",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/input-lens-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing input/lens guards both hidden and visible damage-number opacity."
+      ]
+    },
+    {
+      "slug": "mobile-stick-visual-elide-redundant-base-transform-and-state-classes",
+      "workstream": "ui",
+      "status": "implemented",
+      "changedPaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-ui-20261025-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Cache authored/serialized base transform with live DOM override restoration; toggle on/run classes only when membership changes."
+      ]
+    },
+    {
+      "slug": "mobile-swipe-cache-unchanged-sensitivity-pow",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Final MobileInput stores _touchSensMul at initialization/settings updates; move reads multiplier without pow."
+      ]
+    },
+    {
+      "slug": "gyro-world-orientation-skip-unit-gravity-rehypot",
+      "workstream": "ui",
+      "status": "not-adopted",
+      "changedPaths": [],
+      "evidencePaths": [],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Not adopted: removing hypot/division changes floating-point normalized gravity and gyro projection; mathematical unit length alone does not establish numerical or sensor fallback equivalence."
+      ]
+    },
+    {
+      "slug": "settings-aimassist-preview-elide-svg-trail-dom-getattribute",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/settings-hud-queue-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing scoped settings adapter keeps exact previous trail string locally."
+      ]
+    },
+    {
+      "slug": "main-attract-coverage-elide-per-frame-two-element-array",
+      "workstream": "ui",
+      "status": "not-adopted",
+      "changedPaths": [],
+      "evidencePaths": [],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Not adopted: final PR already limits coverage inspection to 2Hz and skips it after timeout. Bypassing virtual coverage() via counts would add cross-owner coupling for two scalars at 2Hz without demonstrated benefit."
+      ]
+    },
+    {
+      "slug": "hud-squad-status-elide-per-frame-composite-key-strings",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing final squad loop compares alive/ready/self/weapon primitives and only builds key on change."
+      ]
+    },
+    {
+      "slug": "lobby-empty-slot-anchor-elide-identical-css-transform-writes",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/lobby-slot-transform-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-ui-20261025.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Existing scoped lobby adapter tracks authored/serialized empty-slot transform and external writes."
+      ]
+    },
+    {
+      "slug": "hud-beacon-targets-bounded-ally-walk-no-filter-array",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "HUD beacon allies stop at the first three teammates. Base and live Big Bubbler jump targets are collected independently and stay available."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "hud-fxloop-paused-elide-self-raf-until-resume",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "HUD paused state now parks its RAF while retaining effects. Resume schedules one callback with a fresh timestamp, including world-pause and pause-during-effect ownership; no long catch-up delta is injected."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "input-gamepad-trigger-elide-synthetic-button-objects",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The two gamepad trigger branches keep a scalar pressed value instead of allocating replacement button objects. Held/edge thresholds and takeover/menu-block ownership are unchanged."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "diorama-pin-status-flags-skip-unchanged-dom-calls",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "inkwave-public/src/ui/diorama.js",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Diorama pin DOM class toggles already occur inside a combined key guard containing alive/ok/hover and position. Identical state does not repeat classList mutations."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "showcase-inkfx-sparkles-skip-idle-pool-updates",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/showcase-idle-pools-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "InkFX and Sparkles already skip empty pools, wake on spawn and retire to idle after all entries expire; the new tail removal is a separate remaining optimization."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "menus-spatial-navigation-avoid-repeat-layout-geometry-scans",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "One spatial navigation query retains DOM rectangles in a local Map so wrapping reuses the first scan. The next query takes fresh geometry, avoiding persistent-cache invalidation bugs."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "minimap-storm-dash-reuse-canvas-pattern-arrays",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/splatoon3/minimap-dirty-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The baseline minimap already shares STORM_LINE_DASH and SOLID_LINE_DASH arrays instead of constructing new arrays per storm/draw."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "showcase-lobby-camera-elapsed-time-smoothing",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Showcase update already stores bounded elapsed _fdt and both lobby camera damping formulas consume it; fixed per-frame damping is absent."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "gyro-reuse-lifecycle-screen-angle-in-sample",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Gyro _sample reuses the screen angle already refreshed by the lifecycle wrapper for this event; an unwrapped gyro still uses screenAngle fallback. Raw-rate trust and sensor integration are untouched."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "lobby-renderbar-avoid-repeated-identical-colorvars",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Lobby renderBar stores the last team-A, team-B and self color separately and only calls colorVars for an actual change. Team/self/boss selection rules are unchanged."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "input-padstick-and-player-move-skip-deadzone-hypot",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "padStick uses the L1 upper bound to reject provably dead-zone vectors before radial hypot; every remaining vector follows the original radial formula. Player movement skips hypot only for the exact zero vector."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "lobby-atlas-release-static-canvas-backing-after-upload",
+      "workstream": "ui",
+      "status": "not-adopted",
+      "changedPaths": [],
+      "evidencePaths": [
+        "inkwave-public/src/game/lobbySet.js",
+        "inkwave-public/src/game/lobbySet-tex.js",
+        "inkwave-public/vendor/three/build/three.module.js"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Retain static atlas backing canvases. Three.js uses the texture source again after context restoration; zero-sizing it after the first upload loses those pixels. A replacement ImageBitmap or regeneration path needs device memory and pixel/context-restore evidence, including font readiness, which is absent. Existing LOW atlas scaling is separate and is not claimed to implement backing-store release."
+      ],
+      "previousStatus": "not-adopted"
+    },
+    {
+      "slug": "showcase-lobby-member-walk-avoid-per-frame-map-snapshot",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/reliability/tests/queue-network-ui.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The baseline reuses a member snapshot array while retaining original snapshot semantics; a busy guard handles reentrancy and finally clears references. Direct live Map iteration would change mutation behavior."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "hud-ally-marker-stable-key-elide-tofixed",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Marker raw scalars are compared before toFixed/string construction. The original rounded key still determines DOM thresholds, and missing markers or replacement HUD state invalidate the raw cache."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "hud-beacon-spread-break-on-settled-pass",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The composed beacon-spread relaxation loop already records whether a pass moved any pair and exits on the first settled pass."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "lobby-set-builder-release-consumed-geometry-buckets",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "SetBuilder build({consume:true}) releases only merged scratch input geometries and clears consumed buckets. Singletons remain owned by the returned mesh, and default repeat-build behavior is unchanged. The lobby and curb one-shot builders opt in."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "gyro-raw-rate-skip-redundant-orientation-omega",
+      "workstream": "ui",
+      "status": "not-adopted",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/gyro.mjs",
+        "inkwave-public/src/core/gyro.js"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Reject the raw-rate orientation-omega shortcut. The production gyro installer overrides _calibrate to record orientation rate/time on every sample, checks raw/attitude disagreement and 75 ms staleness, and performs Android fallback. The proposed early return would bypass that trust/fallback evidence even when the native base method alone looks redundant."
+      ],
+      "previousStatus": "not-adopted"
+    },
+    {
+      "slug": "diorama-ally-pin-replace-per-frame-filter-with-first-three-walk",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Diorama ally collection stops after the first three teammates instead of walking all later actors. Original actor order and independent targets are preserved."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "mobile-inactive-detach-document-nonpassive-touch-gesture-listeners",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs",
+        "patches/local-quality/mobile-platform.mjs"
+      ],
+      "testPaths": [
+        "patches/reliability/tests/queue-network-ui.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The original document-level touch/gesture listeners have already been replaced by root/canvas-owned listeners with AbortSignal cleanup. The cited global touch-scroll blocker is absent from composed production source. Document dblclick handling is a separate event and does not reinstate the premise."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "showcase-lobby-inktrail-idle-scan-fastpath",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/showcase-idle-pools-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "InkTrail already has an explicit empty-pool flag, skips idle updates in O(1), wakes on add and clears after the last live slot expires."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The disabled preview thumb no longer receives an unchanged transform each frame; fire and reticle reuse one pulse sine while preserving their animation."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "lobby-glow-elide-static-instance-color-uploads",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/reliability/tests/queue-network-ui.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The baseline compares RGB per glow, calls setColorAt only for changed values and uploads instanceColor only when any color is dirty; animated matrix uploads remain."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "mobile-hidden-hud-defer-dom-sync-until-touch-active",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Hidden touch HUD updates keep only the latest scalar state in a reused object. Ready haptics still follow the state transition while hidden; current state flushes before the touch overlay becomes active."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "lobby-contact-skip-redundant-empty-shadow-buffer-updates",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/reliability/tests/queue-network-ui.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The baseline contact instancer already uses count=ci and only dirties matrix/color attributes for nonzero ci. Empty synthetic instances are removed."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "lobby-stage-ticket-elide-unchanged-innerhtml-reconstruction",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The stage ticket updates innerHTML only when the complete rendered string changes; stage numbering and denominator formatting are unchanged."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "lobby-host-role-rebinding-stacks-row-event-listeners",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Each menu element owns only one event listener set; dispatch reads the latest binding. Repeated host-role changes cannot stack callbacks, and click:false, modal and noclick conditions remain effective."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "gamepad-menu-stick-repeat-elapsed-dt-instead-of-fixed-frame",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/touch-layout/adapter.mjs",
+        "patches/local-quality/input-lens-queue-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/touch-gyro-composition.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The actual composed main already passes bounded elapsed dt into _padMenus and uses it for stick repeat. The editor ownership/neutral handoff remains independent."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "boss-hud-damage-number-projection-output-scratch",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Boss damage-number projection reuses a HUD-owned output object instead of allocating one per number per frame. The result is consumed synchronously and never retained by the number."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "settings-audio-muted-preview-skip-18-bar-per-frame-trigonometry",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The muted audio preview already draws the settled floor once and returns before all eighteen bar trigonometric updates; spectrum factors are already cached."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "showcase-lobby-jumpout-rate-independent-ink-droplets",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Jumpout droplets now consume the existing bounded 60 Hz cosmetic-trial clock: one reference trial at 60 Hz, two at 30 Hz and alternating trials at 120 Hz. Random call order is retained at 60 Hz; hitches cap work at two trials."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "mobile-pointerdown-cache-touch-hitbox-visibility",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Hit testing checks cached geometric bounds before reading offsetParent. Far controls never force visibility/layout reads, while a geometrically eligible newly hidden control is still rejected immediately; no stale visibility cache is introduced."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "lobby-palette-avoid-framewise-css-accent-array-join",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/reliability/tests/queue-network-ui.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The current lobby palette key already concatenates scalar palette values; the queued colors().join() allocation no longer occurs."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "lobby-drip-skip-empty-instance-matrix-dirty",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "Empty lobby drip updates still set count to zero but no longer dirty the instance matrix; nonempty drips retain the upload."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "mobile-applysettings-avoid-unrelated-full-touch-relayout",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "applySettings caches root/scale/stick mode as layout inputs and only changes opacity when its value changes. Sensitivity, volume or other unrelated settings no longer run a full touch relayout."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "showcase-fx-elide-redundant-tail-rescan",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "InkFX, Sparkles and InkTrail use the top index already computed in the forward update instead of rescanning every tail. Expiry, zero counts and upload decisions are retained."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "mobile-editor-targeted-reflow-instead-of-all-controls",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The editor now lays out only the edited control. Width/height, layout unit or safe-area changes invalidate to the full layout; stick home and editor coordinate display stay synchronized."
+      ],
+      "previousStatus": "implemented"
+    },
+    {
+      "slug": "menus-self-raf-duplicates-main-engine-update",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/reliability/menu-raf-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/reliability/tests/queue-network-ui.test.mjs"
+      ],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The menu RAF is already cancelled when the engine owns update; standalone menus retain their RAF, and the queued native callback exits once engine ownership is acquired."
+      ],
+      "previousStatus": "already-effective"
+    },
+    {
+      "slug": "showcase-results-hoist-immutable-bomb-plan",
+      "workstream": "ui",
+      "status": "already-effective",
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testPaths": [],
+      "verificationScope": "Node/VM final source composition; actual algorithms and vendor Three.js matrices; no rendered-pixel, Safari/iPad, retail-device, GC or FPS measurement.",
+      "reasons": [
+        "The composed baseline already uses one frozen RESULT_BOMB_PLAN, including frozen rows; no per-frame plan construction remains."
+      ],
+      "previousStatus": "already-effective"
+    }
+  ],
+  "tests": {
+    "focused": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "existingUiRegression": {
+      "passed": 59,
+      "failed": 0,
+      "skipped": 2
+    },
+    "limits": [
+      "Canvas command equivalence only; no browser bitmap measurement",
+      "Existing skip: optional browser harness absent",
+      "Existing skip: live minimap weak ownership case"
+    ]
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "baseline": "8e539eac1e5fe4a6412d3e5852d7f5eaa5d0c1da",
+  "scope": "FIRST18 residual slugs, current Library reports read and actual composed/runtime sources inspected",
+  "entries": [
+    {
+      "slug": "paint-splat-buffer-initial-capacity-on-demand",
+      "status": "needs-evidence",
+      "path": "src/world/paint.js",
+      "reason": "Composed _initGPU still allocates all MAX_QUADS attributes. Growing buffers needs peak-demand, rebinding, GPU/context-loss and stutter acceptance; no capacity change in this batch."
+    },
+    {
+      "slug": "grain-texture-elide-per-sample-modulo-with-wrap-cursor",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/runtime/audio/grain-texture.mjs",
+      "reason": "Canonical renderer still writes d[(start+i)%len]. Current recipe/math changes do not implement the cursor; report itself observes slower candidate at96kHz. Leave pending profiling."
+    },
+    {
+      "slug": "fidelity-projectile-packet-elide-flag-index-and-legacy-length-arrays",
+      "status": "implemented",
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "reason": "Replace fixed legacy-length literal with one-read comparisons and flag list with first-index/multiple scalars. All five marker getter reads, slice/properties/normalization and authority remain; source-loaded canonical/getter parity passed."
+    },
+    {
+      "slug": "dualies-motion-elide-discarded-pre-update-prepare-snapshot",
+      "status": "implemented",
+      "path": "patches/splatoon3/runtime/dualies-motion.mjs",
+      "reason": "First prepare call runs with snapshot=false and preserves all state effects; second returns unchanged snapshot. Three return branches tested at30/60/120Hz."
+    },
+    {
+      "slug": "s3-ink-sheets-hoist-per-render-attribute-list-tuples",
+      "status": "implemented",
+      "path": "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+      "reason": "Per-renderer frozen sheet/drill attribute arrays replace two draw-call literals; upload order/size/ranges and actual Three attrs verified."
+    },
+    {
+      "slug": "remote-sub-replaydeploy-duplicate-visual-rebuild",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/runtime/all-subs.mjs",
+      "reason": "replayDeploy still calls deploy then final replaceVisual, and deploy itself replaces visuals. Removing intermediate object needs spawn/deploy callback observation and remote attachment/lifetime tests."
+    },
+    {
+      "slug": "storm-cloud-puff-bob-hoist-phase-and-loop",
+      "status": "already-in-pr",
+      "path": "patches/local-quality/visual-audio-queue-adapter.mjs",
+      "reason": "Fully composed _updateClouds has no original forEach/sin(G.time*1.6+bob) loop. Existing per-cloud elapsed closed-form cosine-sum update supersedes that raw-loop proposal and preserves pause/peer cadence."
+    },
+    {
+      "slug": "paint-ownership-depth-scoped-claim-context-reuse",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/runtime/paint-ownership.mjs",
+      "reason": "Current splat wrapper still creates fresh owner/mode/order/accepted context and restores outer context in finally. Pooling needs nested accepted mutation/clear/exception and ownership-retention tests."
+    },
+    {
+      "slug": "explosher-sparkle-age-phase-share-harmonic-trig",
+      "status": "not-adopted",
+      "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+      "reason": "Angle addition is not IEEE-754 identical: age=.017,seed=.062 direct0.9044121893788258 versus expanded0.904412189378826. No approximate trig under exact instance/pixel contract."
+    },
+    {
+      "slug": "ribbon-pool-spacing-compare-squared-distance-with-threshold-fallback",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+      "reason": "push retains original Math.hypot<spacing. Dirty chronological-view work is separate. Squared fastpath needs boundary, subnormal and signed/nonfinite behavior and branch-cost proof."
+    },
+    {
+      "slug": "player-aimassist-axis-prune-before-distance",
+      "status": "needs-evidence",
+      "path": "src/game/player.js",
+      "reason": "Fully composed _assistTarget still computes _v.length then a.pos.distanceTo before selection. No axis gates here; hypothetical finite/type/NaN guards require target-selection and prior-target transition acceptance."
+    },
+    {
+      "slug": "ink-mine-beakon-instant-placement-avoid-double-model-build",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/runtime/all-subs.mjs",
+      "reason": "createObject builds and emits spawn; feet-placement throw subsequently deploys/replaces. Intermediate mesh may be observed by spawn/deploy callbacks; not silently skipped."
+    },
+    {
+      "slug": "inkflight-squid-capsule-skip-coincident-end-sphere",
+      "status": "implemented",
+      "path": "inkwave-public/src/game/inkCollision.js",
+      "reason": "Authored Direct-Source owner updated directly; no build-time rewrite. Reuse first sphere result only when Object.is(lo,hi); standing capsules retain second test. Stored pre-change source oracle and full scalar comparisons pass at3 render cadences. Pinned raw snapshots remain unchanged."
+    },
+    {
+      "slug": "avoid-rejected-one-shot-poisoning-emitter-min-gap",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/audio-adapter.mjs",
+      "reason": "Composed audio still records emitter timestamp before voice admission. Moving commit changes audible admission/failed-build behavior and LRU/backoff; needs dedicated sound/admission acceptance."
+    },
+    {
+      "slug": "shared-aoe-hit-distance-pass-once",
+      "status": "needs-evidence",
+      "path": "patches/splatoon3/runtime/all-specials.mjs",
+      "reason": "Both shared AoE paths still recompute distance after LOS. The second read observes synchronous LOS coordinate mutations; a safe no-mutation fallback contract is absent."
+    },
+    {
+      "slug": "catalog-bubble-radius-hoist-integer-pow-factors",
+      "status": "implemented",
+      "path": "patches/splatoon3/runtime/projectile-presentation.mjs",
+      "reason": "Immutable exact Math.pow(.75,n) factors0..8, original normalization and fallback outside table; all-range numeric/Object.is tests passed."
+    },
+    {
+      "slug": "results-online-lobby-countdown-cache-identical-ring-css",
+      "status": "already-in-pr",
+      "path": "patches/local-quality/input-lens-queue-adapter.mjs",
+      "reason": "Composed menus compares four-decimal ringFraction against current --f before setProperty; exact duplicate write is already suppressed."
+    },
+    {
+      "slug": "special-damageband-hit-count-and-constant-bands",
+      "status": "implemented",
+      "path": "patches/splatoon3/runtime/all-specials.mjs",
+      "reason": "Local helper returns integer hitCount; only observed Zipcaster targets uses integer directly. Three fixed nested band arrays frozen. Hit/LOS/once/object callback order/count tests passed."
+    }
+  ]
+}

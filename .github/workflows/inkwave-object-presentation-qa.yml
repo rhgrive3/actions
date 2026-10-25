@@ -51,6 +51,15 @@ on:
       - 'patches/splatoon3/tests/rainmaker-model-actor.test.mjs'
       - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
       - '.github/workflows/inkwave-object-presentation-qa.yml'
+      - 'patches/splatoon3/runtime/install.mjs'
+      - 'patches/splatoon3/profile.json'
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/core/renderer.js'
+      - 'inkwave-public/src/world/environment.js'
+      - 'inkwave-public/src/game/actor.js'
+      - 'inkwave-public/src/game/character.js'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
   workflow_dispatch:
 permissions:
   contents: read

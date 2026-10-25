@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "counts": {
+    "already-effective": 1,
+    "implemented": 1
+  },
+  "entries": [
+    {
+      "slug": "legacy-decor-palm-trunk-reuse-per-ring-bezier-points",
+      "status": "already-effective",
+      "workstream": "decor",
+      "reasons": [
+        "Final composed source already evaluates Bezier trunk centers once per ring via runtime-frame-scratch-adapter.mjs. New actual vendored-Three comparison on Tidewater/Kelpline/Halyard preserves every geometry attribute/index/normal/bound and confirms 540 fewer getPoint calls per palm; no duplicate production change."
+      ],
+      "changedPaths": [],
+      "evidencePaths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-extra-decor.test.mjs"
+      ]
+    },
+    {
+      "slug": "legacy-decor-spawn-pad-share-static-face-and-barrier-geometries",
+      "status": "implemented",
+      "workstream": "decor",
+      "reasons": [
+        "Share one static CircleGeometry and one barrier CylinderGeometry per Decor while preserving distinct team materials/uniforms. Constructor-failure resources join the same disposal Sets; successful and repeated disposal retire each once. Preserve skipped BufferGeometry UUID RNG draws using vendored MathUtils.generateUUID at the original construction positions."
+      ],
+      "changedPaths": [
+        "patches/local-quality/queue-extra-decor-adapter.mjs"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/queue-extra-decor-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-extra-decor.test.mjs"
+      ]
+    }
+  ],
+  "tests": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "verificationScope": "Actual vendored Three.js geometries and original Decor constructor/update/dispose; Node VM; all five legacy layouts; 30/60/120Hz uniform/near-actor updates; four constructor-failure points; exact post-construction RNG state and object UUID stream. Browser bitmaps/GPU/iPad/retail device unmeasured. Narrow reviewed Decor NaN/far-axis fallback restores original hypot semantics across 64 coordinate pairs."
+}

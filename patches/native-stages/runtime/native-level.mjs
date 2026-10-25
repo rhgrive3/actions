@@ -34,8 +34,9 @@ export class NativeLevel extends Level {
   for(let i=0;i<m.objects.length;i++){
    const o=m.objects[i];if(!o.collidable)continue;
    const id=this.blocks.length;this.objectBlock[i]=id;
-   this.blocks.push({id,nativeObject:i,center:new THREE.Vector3(...o.bounds[0]).add(new THREE.Vector3(...o.bounds[1])).multiplyScalar(.5),
-    half:new THREE.Vector3(...o.bounds[1]).sub(new THREE.Vector3(...o.bounds[0])).multiplyScalar(.5),
+   const lo=o.bounds[0],hi=o.bounds[1];
+   this.blocks.push({id,nativeObject:i,center:new THREE.Vector3((lo[0]+hi[0])*.5,(lo[1]+hi[1])*.5,(lo[2]+hi[2])*.5),
+    half:new THREE.Vector3((hi[0]-lo[0])*.5,(hi[1]-lo[1])*.5,(hi[2]-lo[2])*.5),
     axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],
     aabbMin:new THREE.Vector3(...o.bounds[0]),aabbMax:new THREE.Vector3(...o.bounds[1]),
     solid:true,paint:false,grate:o.grate,roof:false,rail:false,perch:false,noNav:true,hidden:true,aligned:true,

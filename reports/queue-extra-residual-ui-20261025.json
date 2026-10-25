@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "date": "2026-10-25",
+  "scope": "Current reports read; final authored/composed sources inspected. Supported same-invocation changes implemented with local tests; unresolved proposals retain concrete lifecycle/alias/visibility proof gaps.",
+  "counts": {
+    "pending": 4,
+    "already-effective": 2,
+    "implemented": 4
+  },
+  "entries": [
+    {
+      "slug": "tenta-missiles-vfx-hud-preview-row-reuse",
+      "status": "pending",
+      "reason": "Pending: final DIRECTORS.tentaMissiles.frame still allocates inside and [Actor,x,y] rows. Pooling would retain Actor references on track state; all HUD/fallback consumers plus endTrack/clear, phase changes and nested projections need proven synchronous nonescaping ownership and stale-row release before introducing that persistent alias.",
+      "path": "patches/splatoon3/runtime/special-vfx.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx.mjs"
+      ]
+    },
+    {
+      "slug": "pause-screen-skip-frozen-offline-snapshot-and-dom-refresh",
+      "status": "already-effective",
+      "reason": "Final composed pause tick already gates refresh with snap.live && (!G.match?.paused || G.netm), preserving online updates while suppressing frozen offline snapshot/DOM rebuilds.",
+      "path": "patches/local-quality/idle-adapter.mjs",
+      "evidencePaths": [
+        "patches/local-quality/idle-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "shooter-muzzle-cache-burst-phase-trig-across-render-frames",
+      "status": "pending",
+      "reason": "Pending: final append still calculates phase/sin/cos per visible droplet. Correct caching requires invalidation on each of 32 pool overwrites and per-index lazy warming that preserves cap ordering and does not spend extra trig on fully culled bursts. Current isolated audit model does not verify actual append matrix/shape/look output across pool overwrite and capacity-zero lifetimes.",
+      "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs"
+      ]
+    },
+    {
+      "slug": "special-movement-reuse-horizontal-exponential",
+      "status": "implemented",
+      "reason": "Shared one exact per-invocation alpha/drag in numeric moveActor and dampForSpecial X/Z updates. Crab/native paths, arithmetic order, vertical integration and callbacks unchanged. Actual source functions pass 30/60/120Hz and invalid-dt/signed-zero parity tests; relevant exp calls halve.",
+      "path": "patches/splatoon3/runtime/all-specials.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs"
+      ]
+    },
+    {
+      "slug": "ink-mine-inline-sensor-first-match-and-radius",
+      "status": "implemented",
+      "reason": "Replaced per-tick find callback with an indexed first-match loop capturing original array length and visiting every original index, preserving holes/append/shrink/reversal and LOS side effects. Deliberately retained per-candidate sensorRadius getter evaluation because LOS callbacks may mutate it; hoisting radius across that callback is not justified. Source-loaded negative controls and real Mine trigger/oldest-Mine tests pass.",
+      "path": "patches/splatoon3/runtime/all-subs.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs"
+      ]
+    },
+    {
+      "slug": "remote-sub-objecthit-distance-elide-event-vector-allocation",
+      "status": "implemented",
+      "reason": "Replaced one throwaway Vector3 with copied event scalars and the exact Vector3 distanceTo subtraction/squared-sum/square-root order, including undefined constructor defaults. Existing authority, replay registration, reach, damage and retirement unchanged; source-function boundary/replay/getter-order tests and existing real runtime replay test pass.",
+      "path": "patches/splatoon3/runtime/all-subs.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs"
+      ]
+    },
+    {
+      "slug": "blaster-knockback-reuse-validated-distance-on-local-impulse",
+      "status": "pending",
+      "reason": "Pending: exported applyBlasterKnockback accepts arbitrary arrays; validBlasterKnockback reads values for every/isFinite and hypot, then victim eligibility getters run before a second offset norm. Removing that later read can change accessor arrays or offset mutation during eligibility access. No proven private stable-offset path or retained public fallback was established; validation and remote rejection were not weakened.",
+      "path": "patches/splatoon3/runtime/sub-special-fidelity.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/sub-special-fidelity.mjs"
+      ]
+    },
+    {
+      "slug": "player-map-superjump-skip-idle-ally-filter",
+      "status": "already-effective",
+      "reason": "runtime-frame-scratch adapter replaces the eager filter with iwPickMapAlly controller-owned scratch built only on a requested ally pick; finally clears Actor references and readiness. Final composed player source contains the helper.",
+      "path": "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+      "evidencePaths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs"
+      ]
+    },
+    {
+      "slug": "shot-bias-reuse-reentrant-launch-context-records",
+      "status": "pending",
+      "reason": "Pending: withShotBias intentionally creates a fresh record visible through weaponRunner.s3ShotBias during synchronous launch hooks. A depth pool would change reference identity and later mutate any record retained by a hook; complete composed-consumer escape/reentrancy proof is missing. Existing finally reference restoration remains intact.",
+      "path": "patches/splatoon3/runtime/weapon-accuracy.mjs",
+      "evidencePaths": [
+        "patches/splatoon3/runtime/weapon-accuracy.mjs"
+      ]
+    },
+    {
+      "slug": "decor-spawn-pad-far-actor-axis-prune-hypot",
+      "status": "implemented",
+      "reason": "Axis pruning was already present; this final review proved a mixed NaN/far-axis regression (original hypot => NaN alpha, prior prune => 0.12). Added narrow !Number.isNaN(dx/dz) fallback so malformed/nonfinite combinations retain original hypot behavior while valid far actors still prune. Actual full Decor source test covers 64 NaN/Infinity/undefined/finite coordinate combinations; all 7 Decor tests pass.",
+      "path": "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+      "evidencePaths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs"
+      ],
+      "testPaths": [
+        "patches/local-quality/tests/queue-extra-decor.test.mjs"
+      ]
+    }
+  ],
+  "tests": {
+    "residualSourceParity": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "existingRemoteMineIntegration": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "decorGeometryAndFallback": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    }
+  }
+}

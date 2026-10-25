@@ -3,16 +3,16 @@ const read=file=>fs.readFileSync(new URL('../../'+file,import.meta.url),'utf8');
 const command=(cwd,args,options={})=>execFileSync('git',args,{cwd,stdio:['pipe','pipe','pipe'],...options});
 // Synthetic names created only inside the temporary Git fixture below.
 // The dependency guard validates this exact data declaration, not a file exemption.
-const excludedAuthoringFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/src/editor.js'];
+const excludedAuthoringFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png','tools/inkwave-modeler/src/editor.js'];
 const examples=[...excludedAuthoringFixturePaths,'tools/native-recovery-qa/workflow.test.mjs','tools/audio/collect-public-reference-recordings.py','.github/workflows/inkwave-audio-reference-fetch.yml','scripts/build-inkwave.mjs','patches/local-quality/adapter.mjs','inkwave-public/src/main.js','inkwave-public/assets/source-motion/Player00.f32.gz','reports/source/evidence.json'];
-for(const workflow of ['validate-inkwave-ranked.yml','inkwave-runtime-frame-parity.yml','inkwave-audio-reference-fetch.yml'])test(workflow+' materializes exactly its intended sparse inputs',()=>{
+for(const workflow of ['validate-inkwave-ranked.yml','inkwave-runtime-frame-parity.yml','inkwave-audio-reference-fetch.yml','inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml'])test(workflow+' materializes exactly its intended sparse inputs',()=>{
  const source=read('.github/workflows/'+workflow);assert.match(source,/sparse-checkout-cone-mode: false/);assert.doesNotMatch(source,/\n\s+filter:/);
  const patterns=source.match(/          sparse-checkout: \|\n((?:            [^\n]+\n)+)/)?.[1].trim().split('\n').map(s=>s.trim());assert(patterns?.length);
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-sparse-'));try{
   command(root,['init','-b','fixture']);for(const file of examples){fs.mkdirSync(path.dirname(path.join(root,file)),{recursive:true});fs.writeFileSync(path.join(root,file),file);}
   command(root,['add','.']);command(root,['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-m','fixture']);command(root,['sparse-checkout','set','--no-cone','--stdin'],{input:patterns.join('\n')+'\n'});
   const materialized=examples.filter(file=>fs.existsSync(path.join(root,file)));
-  assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):examples.filter(file=>!excludedAuthoringFixturePaths.includes(file)));
+  assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):examples.filter(file=>!excludedAuthoringFixturePaths.includes(file)||(['inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml'].includes(workflow)&&file.endsWith('/src/editor.js'))));
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
 test('test-only jobs keep all original test entries without an npm install',()=>{
