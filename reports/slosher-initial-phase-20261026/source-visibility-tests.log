@@ -1,0 +1,13 @@
+(node:6177) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ WeaponSlosherLauncher first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (18191.81009ms)
+✔ WeaponSlosherBathtub first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (9457.561881ms)
+✔ WeaponSlosherWashtub first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (15461.724947ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45593.825367

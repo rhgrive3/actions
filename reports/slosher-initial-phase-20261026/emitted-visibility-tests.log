@@ -1,0 +1,22 @@
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+INKWAVE built fixture /workspace/slosher-initial-phase-site contentHash=9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96
+(node:6209) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ WeaponSlosherLauncher first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (3706.046558ms)
+✔ WeaponSlosherBathtub first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (4454.475065ms)
+✔ WeaponSlosherWashtub first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (4570.353736ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13639.817854
