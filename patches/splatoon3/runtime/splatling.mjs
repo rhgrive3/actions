@@ -154,12 +154,12 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   // VelGnd_Bias_Charge (0.9, 減速カーブ) has no published definition and stays unmapped.
   if (Actor?.prototype._horizontal) {
     const horizontal = Actor.prototype._horizontal;
-    Actor.prototype._horizontal = function (dt, squid, onEnemy, ...rest) {
+    Actor.prototype._horizontal = function (dt, squid, onEnemy) {
       const runner = this.weaponRunner;
       const family=this.weapon?.catalogRecord?.family;
       const candidate=family==='splatling'||(!family&&this.weapon?.kind==='splatling')||runner?.charging;
       const beforeX=candidate?this.vel.x:0,beforeZ=candidate?this.vel.z:0;
-      const value = horizontal.call(this, dt, squid, onEnemy, ...rest);
+      const value = arguments.length<=3?horizontal.call(this,dt,squid,onEnemy):horizontal.apply(this,arguments);
       if (runner?.s3SplatlingChargeDecel) runner.s3SplatlingChargeDecel = undefined;
       if(!candidate)return value;
       const chargeDownRate = splatlingChargeDownRate(profile, this.weapon);
