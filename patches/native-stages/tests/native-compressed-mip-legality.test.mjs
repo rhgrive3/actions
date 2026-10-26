@@ -28,7 +28,7 @@ async function fixture({limit=512,format=THREE.RGBA_BPTC_Format,delayedRgba=fals
    if(rgba&&delayedRgba)pending={onLoad,onError,texture};else onLoad(texture);
   }
  }
- const context=vm.createContext({console,URL,DOMException,Blob,location:{href:'https://game.test/index.html'},
+ const context=vm.createContext({console,URL,DOMException,AbortController,Blob,location:{href:'https://game.test/index.html'},
   createImageBitmap(){calls.png++;throw Error('Exact-mip path must not decode/resize PNG');}});
  const synthetic=values=>new vm.SyntheticModule(Object.keys(values),function(){for(const [k,v]of Object.entries(values))this.setExport(k,v);},{context});
  const ready=async values=>{const m=synthetic(values);await m.link(()=>{});await m.evaluate();return m;};
