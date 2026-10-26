@@ -1,0 +1,22 @@
+INKWAVE built fixture /workspace/slosher-bomb-final-site contentHash=a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc
+INKWAVE built fixture /workspace/slosher-bomb-final-site contentHash=a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc
+INKWAVE built fixture /workspace/slosher-bomb-final-site contentHash=a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc
+INKWAVE built fixture /workspace/slosher-bomb-final-site contentHash=a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc
+INKWAVE built fixture /workspace/slosher-bomb-final-site contentHash=a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc
+INKWAVE built fixture /workspace/slosher-bomb-final-site contentHash=a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc
+(node:2234) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Curling has no post-release explosion forecast (owner) (8179.987261ms)
+✔ Curling has no post-release explosion forecast (ghost) (2191.344257ms)
+✔ Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming (1688.939168ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (owner) (1932.43491ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (ghost) (1303.873466ms)
+✔ Autobomb observed after its search window and removed bombs leave no delayed scan (1129.299961ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 23076.253963
