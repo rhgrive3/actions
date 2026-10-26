@@ -2,7 +2,7 @@
 
 公開版INKWAVEを本番ビルド・完全なGame・通常RAFで調べ、資源の寿命と転送に関する7群の原因を修正した。基準mainは `e0072a749df0ec8c2d368e383bdf337baa7b44ad`、最終計測対象は `65fa7f183d2d163af798972c2ff0ced46a92868f`。局所転送量・資源解放の直接測定に、プロセスメモリ・CPU・描画性能の比較を併記する。
 
-先行5群の修正は [PR #1883](https://github.com/rhgrive3/actions/pull/1883) の `e4bb8f934db08c14abedd41845f0799c33d936e7` までを含み、2026-10-26 06:57 UTCにmain `d0bfda9bf7cdd36da8e5a7b2b5cea19ac947b8e7` へマージされた。その後に実証したnativeの2群は [PR #1885](https://github.com/rhgrive3/actions/pull/1885) へ分離した。後者のCI・マージ結果は末尾に記録する。
+先行5群の修正は [PR #1883](https://github.com/rhgrive3/actions/pull/1883) の `e4bb8f934db08c14abedd41845f0799c33d936e7` までを含み、2026-10-26 06:57 UTCにmain `d0bfda9bf7cdd36da8e5a7b2b5cea19ac947b8e7` へマージされた。その後に実証したnativeの2群は [PR #1885](https://github.com/rhgrive3/actions/pull/1885) へ分離した。後者のCI・マージ結果も末尾に記録した。
 
 ## 修正した7群の原因
 
@@ -99,11 +99,17 @@ CodeRabbitを含む補助レビューで、漏れがあっても終了0となる
 
 ## CIと反映
 
-保護された従来workflowは基準mainと完全に同じで、固定ハッシュ・既存gate・閾値を変更していない。追加検証だけを専用workflowへ分離した。PRの旧走行だけを置換し、mainの各走行は独立したgroupで証跡を保持する。各PRの最終コミットとCI・反映結果を以下に記録する。
+今回の修正コミットでは、従来workflow・固定ハッシュ・既存gate・閾値を変更していない。測定と受入CIの待機中、別の [PR #1884](https://github.com/rhgrive3/actions/pull/1884) がmainへCI実行入口の共通化を追加した。ゲーム本体・patch・build入力は測定した65と同一であり、合流作業ツリーの一覧・実行入口検証83件も全成功した（[合流検証](base-integration-verification.json)）。追加検証だけを専用workflowへ分離した。PRの旧走行だけを置換し、mainの各走行は独立したgroupで証跡を保持する。各PRの最終コミットとCI・反映結果を以下に記録する。
 
 <!-- CI_RECORD_BEGIN -->
 
-2026-10-26時点の最終確認：追加修正 [PR #1885](https://github.com/rhgrive3/actions/pull/1885) は、対象コミット `65fa7f183d2d163af798972c2ff0ced46a92868f` に対する GitHub Actions **7件成功・1件スキップ・失敗0件** を確認した後、mainへ正常にマージされた。マージコミットは `1676aaf51008a9402851f4f878eb6b5c86d2bd43`。7件の成功には `Validate INKWAVE update`、ネイティブステージ統合、リソース回帰、A+品質ゲート、アカウントビルド等が含まれる。スキップは通常の条件付きQAゲートであり成功として数えない。この記録は測定時のソース `65fa7f...` を新しいmain SHAと取り違えない。
+追加修正 [PR #1885](https://github.com/rhgrive3/actions/pull/1885) は、source `65fa7f183d2d163af798972c2ff0ced46a92868f` の受入CI成功後、2026-10-26 09:09:13 UTCにmainへマージされた。merge SHAは `1676aaf51008a9402851f4f878eb6b5c86d2bd43`。
+
+[受入run #40285735967・attempt 2](https://github.com/rhgrive3/actions/actions/runs/40285735967/attempts/2) は必須20ジョブ成功。既存条件による診断3件とCircleCI補助gateはskipのままである。同じsourceの全workflowは7成功・条件付きQA 1 skip・失敗0。ジョブ・workflow・再実行の記録は [ci-verification.json](ci-verification.json) に保存した。
+
+初回shard 1はGitHubの「hosted runnerとサーバーの通信喪失」で終了し、同じsource・8分割・並列数2・合格条件で失敗箇所を再実行した。ローカルの同条件再現も1,143成功・失敗0で完了した。条件付きのブラウザ専用2件は [実GPUプローブ](exact-gpu/summary.json) で別途実行済みであり、合格基準の緩和や既存試験の除外は行っていない。
+
+主証拠は [PR #1886](https://github.com/rhgrive3/actions/pull/1886)（merge `af9436217f10f2a842097e69435200dc581f6c87`）でmainへ保存された。本追記は、その最終CI・合流検証・文書ハッシュを確定したもので、ゲーム本体の変更は含まない。
 
 <!-- CI_RECORD_END -->
 

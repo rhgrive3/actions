@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "baseMainSha": "db770469aa5b5ad0807a7f3368beb701c76a3e08",
+  "baseAdvancePr": 1884,
+  "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "conflicts": false,
+  "combinedTreeSha": "c9b5b01c8f463e90ec4e28f7eeb0160d8a357700",
+  "productionPathsCompared": [
+    "inkwave-public",
+    "patches",
+    "scripts/build-inkwave.mjs",
+    "scripts/inkwave-source-composition.mjs"
+  ],
+  "productionDiffPaths": [],
+  "combinedCiEntryTests": {
+    "tests": 83,
+    "pass": 83,
+    "fail": 0,
+    "skip": 0,
+    "node": "22.23.3"
+  },
+  "exactShardLocalReproduction": {
+    "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "shardCount": 8,
+    "shardIndex": 1,
+    "concurrency": 2,
+    "testFiles": 143,
+    "tests": 1145,
+    "pass": 1143,
+    "fail": 0,
+    "conditionalBrowserSkips": 2,
+    "browserSkipsCoveredBy": "exact-gpu/summary.json",
+    "node": "22.23.3",
+    "exitCode": 0
+  },
+  "reason": "Base advanced only with CI/test-entry refactoring. Production app/patch/build inputs remain byte-identical to measured source. Combined CI entry/list contracts passed without changing thresholds or omitting original tests.",
+  "actualCodeMergeSha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+  "actualCodeMergeTreeMatchesCombinedTree": true,
+  "mainAtFinalReadback": "af9436217f10f2a842097e69435200dc581f6c87",
+  "productionDiffAgainstMainAtReadback": []
+}
