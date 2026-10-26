@@ -78,7 +78,7 @@
     }
   },
   "pending": [
-    "Shooter repeated-prediction cost regression, safe reuse/world-revision invalidation and horizontal inner-marker owner diagnosis",
+    "Peer correctness review of integrated guide cache; horizontal inner-marker owner/original UI diagnosis",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "Resolve rejected PR creation; no further retry or bypass",
     "required automatic CI on eventual final head"
@@ -258,5 +258,36 @@
       "startupBudget": "passed"
     },
     "validation": "producer-phase-append/validation.json"
+  },
+  "guideConsumerAppend": {
+    "sourceHead": "21e42d804a13f9c793ea62a5edb17e2440b73217",
+    "handoff": {
+      "verifiedBranch": "handoff/20261026-shooter-guide-cache-6ef3678bf-173300",
+      "verifiedHead": "6ef3678bf19e3c9562b238ebff8cbc6d1dd115ed",
+      "onlySelectedCommits": {
+        "2eeed372d8341393e0d1fd860e9f52e963bbf6be": "efaf0e86e432d16c97f18d932494132e0ca89208",
+        "6ef3678bf19e3c9562b238ebff8cbc6d1dd115ed": "21e42d804a13f9c793ea62a5edb17e2440b73217"
+      },
+      "producerAlreadyPresent": "11aac831306b96ca271b421735bcf9f261287d9e (source fee0c005ffe129e8248c2122c41f5fad6612130d)"
+    },
+    "checks": {
+      "source": {
+        "pass": 19,
+        "fail": 0,
+        "skip": 0
+      },
+      "emitted": {
+        "pass": 19,
+        "fail": 0,
+        "skip": 0
+      },
+      "quick": "passed",
+      "optimizedBuild": "passed",
+      "startupBudget": "passed",
+      "sourceAndEmittedScope": "Collision producer6, Shooter cache6, Dualies cache3, actual-head projection/contact4"
+    },
+    "validation": "guide-consumer-append/validation.json",
+    "peerReview": "pending",
+    "status": "specific repeated-prediction CPU cost checks pass; not hardware/visual/final-CI approval"
   }
 }
