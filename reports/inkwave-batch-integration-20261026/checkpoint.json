@@ -78,17 +78,19 @@
     }
   },
   "pending": [
-    "Peer correctness review of integrated guide cache; horizontal inner-marker owner/original UI diagnosis",
+    "Reticle-owned limited nominal ShotGuide Physics-without-.level fail-closed fallback and regression",
+    "Original horizontal inner-marker owner/parallax/late-floor appearance and broader visual/hardware comparisons",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "Resolve rejected PR creation; no further retry or bypass",
-    "required automatic CI on eventual final head"
+    "required automatic CI on eventual final head",
+    "Separately owned automatic emitted selection handoff for phase/guide/producer tests; native producer source workflow remains outside /validate fan-in"
   ],
   "remoteActions": {
     "prCreated": false,
     "merged": false,
     "manualCiStarted": false,
     "integrationBranchPushed": true,
-    "lastVerifiedRemoteHead": "b7258b559e359878523b45dbae053a5240e523b0",
+    "lastVerifiedRemoteHead": "550ec3219c0b8e20a842949322efe22e516f3ce0",
     "prCreation": "denied twice; stopped, no matching PR exists"
   },
   "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
@@ -289,5 +291,45 @@
     "validation": "guide-consumer-append/validation.json",
     "peerReview": "pending",
     "status": "specific repeated-prediction CPU cost checks pass; not hardware/visual/final-CI approval"
+  },
+  "guideConsumerPeerReview": "Ordinary native path accepted; separate limited Physics-without-.level fallback remains pending",
+  "impactRevisionAppend": {
+    "sourceHead": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e",
+    "handoff": {
+      "verifiedBranch": "handoff/20261026-shooter-impact-revision-7955ee32d-181034",
+      "verifiedHead": "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9",
+      "selectedCommits": {
+        "77d07c7ab5c591cc02e33791aa207139bfa3c724": "0b65c3e0bbff5e2a7cb293da82b9fa0b485bda1f",
+        "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e"
+      }
+    },
+    "checks": {
+      "source": {
+        "pass": 28,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Cache/owner/near-cover13 and actual-impact agreement/cache lifetime15"
+      },
+      "emitted": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Shooter cache/invalidation7 and actual-head projection4"
+      },
+      "quick": "passed",
+      "optimizedBuild": "passed",
+      "startupBudget": "passed"
+    },
+    "validation": "impact-revision-append/validation.json",
+    "physicsAndAdmissionUnchanged": true,
+    "hissenAcceptedSizeChanges": 0
+  },
+  "limitedAdapterFinding": {
+    "status": "pending owner follow-up; no duplicate edit",
+    "source": "Parent independent review",
+    "scope": "Nominal ShotGuide consumer with Physics lacking .level borrows G.level.collisionRevision",
+    "counterexample": "Actual adapter collision floor changes from y0 to -2; cached guide remains y0",
+    "ordinaryNativePhysicsImplicated": false,
+    "ownership": "Reticle owner making narrow fail-closed fallback and regression"
   }
 }

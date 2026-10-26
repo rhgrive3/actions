@@ -1,0 +1,231 @@
+{
+  "status": "focused numerical source/emitted invalidation checks passed; visual scope and CI registration remain open",
+  "sourceHead": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e",
+  "priorIntegration": "550ec3219c0b8e20a842949322efe22e516f3ce0",
+  "handoff": {
+    "verifiedBranch": "handoff/20261026-shooter-impact-revision-7955ee32d-181034",
+    "verifiedHead": "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9",
+    "selectedCommits": {
+      "77d07c7ab5c591cc02e33791aa207139bfa3c724": "0b65c3e0bbff5e2a7cb293da82b9fa0b485bda1f",
+      "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e"
+    }
+  },
+  "checks": {
+    "source": {
+      "pass": 28,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Cache/owner/near-cover13 and actual-impact agreement/cache lifetime15"
+    },
+    "emitted": {
+      "pass": 11,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Shooter cache/invalidation7 and actual-head projection4"
+    },
+    "quick": "passed",
+    "optimizedBuild": "passed",
+    "startupBudget": "passed"
+  },
+  "towerTraces": {
+    "source": {
+      "beforeRevision": 8,
+      "movedRevision": 9,
+      "impactBefore": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "markerBefore": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "impactMoved": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ],
+      "markerMoved": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ],
+      "uncached": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ]
+    },
+    "emitted": {
+      "beforeRevision": 8,
+      "movedRevision": 9,
+      "impactBefore": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "markerBefore": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "impactMoved": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ],
+      "markerMoved": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ],
+      "uncached": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ]
+    }
+  },
+  "unchangedGuideSweepTraces": {
+    "source": [
+      {
+        "pitch": 0,
+        "hz": 30,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 60,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 120,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 30,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 60,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 120,
+        "initial": 1,
+        "repeated120": 0
+      }
+    ],
+    "emitted": [
+      {
+        "pitch": 0,
+        "hz": 30,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 60,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 120,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 30,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 60,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 120,
+        "initial": 1,
+        "repeated120": 0
+      }
+    ]
+  },
+  "identity": {
+    "sourceSha": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e",
+    "contentHash": "00e32b89582a0272c9c6f6d4948ddb3ccd2c0b00774e83be70a0b1b03a42d955",
+    "inputHash": "af1bec9f6c8850dea3f00ba1e3b1a8c12bb427760e43f44a2b6a56fdb0278001",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0
+  },
+  "sameContentAndInputHashesAsWorkerBuild": true,
+  "logs": {
+    "source": {
+      "path": "source.log.gz",
+      "rawSha256": "3d58bc4917462b15e7d4845b6f8844517ce724a4aef9d153e19fcf4436fe0342",
+      "gzipSha256": "207e204b4e54bca95eae79da1777af5ecc75ed59957cf7854db619b1ea217459"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "c811415126464819c2b929a89607cb40c16c3e8e24f2d1cadaf01c275db2e0a4",
+      "gzipSha256": "31605916604e9677d72b6d97c8b56049b7915fa406d945698272781280f05bf8"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "de5b063efcaeff8dbec40699ff7d3b2a42b3c9d675cad990535019aa818ca82f",
+      "gzipSha256": "ad90adf8d05565d8cd116e3f10e386d6aa2cefaa1ee7819c231aa99a939634ea"
+    },
+    "quick": {
+      "path": "quick.log.gz",
+      "rawSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "gzipSha256": "f3d8dc8809329136eada79b6f0147fcf52ffa687efcdf38ecc8d9f24bca8ed0d"
+    }
+  },
+  "review": [
+    "Only s3ShooterImpact and muzzleBlockFeedback cache admission/keys changed. Physics integrator and marker visibility admission remain unchanged.",
+    "A valid unchanged actual physics.level.collisionRevision is required for reuse. Unknown/segment-only owners recompute.",
+    "Keys cover actual Actor/Character/weapon/runner, launch/query functions, Physics/Level and native triangle-world owners, so the outer marker cannot conceal an inner cache invalidation.",
+    "Real Tower beforeActors mutation advances revision 8 to9 here; the original standalone peer scene used5 to6. No revision value is fabricated.",
+    "The fresh-solver comparison explicitly invalidates only a private cache as a CPU oracle; it is not a forced gameplay/visual-success assertion.",
+    "Actual source/output readback matches both changed runtime blobs and the complete build."
+  ],
+  "consumerPeerStatus": "Earlier nominal ShotGuide consumer accepted by parent peer review; full-flight gap addressed by this numerical follow-up",
+  "ciCoverage": {
+    "phaseGuideSource": "Existing eight patch shards automatically discover source tests; no final-head CI success claimed",
+    "producerSource": "Existing .github/workflows/validate-inkwave-native-stage5.yml source glob at line56, outside /validate fan-in",
+    "newEmittedSelection": "Three new files still await the separately owned minimal automatic selection handoff",
+    "manualDispatchOrRetry": false
+  },
+  "limits": [
+    "Controlled CPU/source/emitted prediction APIs at fixed pose/time, not natural HUD pixels, original-game parity, GPU or hardware FPS. Optional VM source-motion fallback warnings are retained.",
+    "Existing full-flight marker admission is preserved; original horizontal inner-marker/parallax/late-floor appearance remains unresolved. No 8F hide, rings, smoothing or physics changes.",
+    "Accepted Hissen size changes remain zero; baseline radius handling is not a batch fix. Spherical floor-drop and retail silhouette comparison remains unfinished.",
+    "Fixed90bb touch proof and older phase/guide checks retain their historical heads. No new browser/audio matrix run.",
+    "Local emitted passes do not establish future required CI coverage. No PR creation retry, external merge, Ready status or manual CI launch.",
+    "Final acceptance also awaits the separate nominal ShotGuide Physics-without-.level fail-closed follow-up; the current full-flight/marker fix does not resolve that different adapter path."
+  ],
+  "independentReview": "Parent confirms this Tower full-flight/marker revision fix, including rotation/removal/null transitions",
+  "separateLimitedAdapterFinding": {
+    "status": "pending owner follow-up; no duplicate edit",
+    "source": "Parent independent review",
+    "scope": "Nominal ShotGuide consumer with Physics lacking .level borrows G.level.collisionRevision",
+    "counterexample": "Actual adapter collision floor changes from y0 to -2; cached guide remains y0",
+    "ordinaryNativePhysicsImplicated": false,
+    "ownership": "Reticle owner making narrow fail-closed fallback and regression"
+  }
+}
