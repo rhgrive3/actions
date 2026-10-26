@@ -3,7 +3,7 @@ import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
 import { sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE } from './extra-source-routes.mjs';
-import { usesSplatChargerRise } from './charger-charge-rise.mjs';
+import { usesChargerRise } from './charger-charge-rise.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
 // family SFX never layer over real weapon audio or substitute missing MP3s.
@@ -118,7 +118,7 @@ export function installWeaponAudioRuntime(api){
   const oldUpdate=R.update;
   R.update=function(dt,input,...rest){
     const a=this.a,s=stateFor(this),id=mainAudioSourceId(a?.weapon?.id);
-    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});if(a?.isLocal&&usesSplatChargerRise(id))G.audio?.prewarmChargerChargeRise?.(id);}
+    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});if(a?.isLocal&&usesChargerRise(id))G.audio?.prewarmChargerChargeRise?.(id,a.weapon?.chargeTime);}
     // A selected kit may become available only after the user's first gesture
     // starts AudioContext. Preload the actual selected sub/special *events*
     // rather than decoding all 381 samples or warming every remote actor.
@@ -151,14 +151,13 @@ export function installWeaponAudioRuntime(api){
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
-        // Only the Splat Charger and its scope share this selected phrase.
-        // Squiffer/E-liter/Bamboo/Goo use their own existing MP3 onset;
-        // their ready cue follows their actual charge, not this 1.215s clip.
-        s.chargeRise=usesSplatChargerRise(id)?G.audio?.playChargerChargeRise?.({
-          volume:a.isLocal?.55:.28,weaponId:id,
+        // Every Charger plays the shared Splat Charger rise. The background
+        // WSOLA buffer keeps its pitch at 1x while using this weapon's clock.
+        // No unrelated per-weapon HoldNoise is layered over the rise.
+        s.chargeRise=usesChargerRise(id)?G.audio?.playChargerChargeRise?.({
+          volume:a.isLocal?.55:.28,weaponId:id,chargeTime:a.weapon?.chargeTime,
         })||null:null;
         if(s.chargeRise)active.add(this);
-        else play(a,'charge',a.pos,a.isLocal?.55:.35); // if asset has not loaded
       }
       if(!nowCharging){
         s.chargeRise?.stop?.(.04);s.chargeRise=null;
@@ -195,7 +194,7 @@ export function installWeaponAudioRuntime(api){
     return result;
   };
   const oldSet=Actor.prototype.setWeapon;
-  Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&usesSplatChargerRise(this.weapon?.id))G.audio?.prewarmChargerChargeRise?.(this.weapon?.id);return r;};
+  Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&usesChargerRise(this.weapon?.id))G.audio?.prewarmChargerChargeRise?.(this.weapon?.id,this.weapon?.chargeTime);return r;};
   const kit=installKitAudio(api,{listen,options});
   const installed={version:1,weapons:Object.keys(WEAPON_AUDIO).length,dispose(){for(const u of unsubs)u();for(const r of active)stop(r);kit?.dispose();}};
   Object.defineProperty(R,INSTALL,{value:installed});return installed;
