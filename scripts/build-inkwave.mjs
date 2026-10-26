@@ -434,6 +434,7 @@ visit('patches/splatoon3/bootstrap.mjs');
 // tiny live helpers in the immutable offline module graph, not extra HTML hints.
 visit('patches/splatoon3/runtime/audio/combat-hit-classifier.mjs');
 visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
+visit('patches/splatoon3/runtime/audio/music-preload-owner.mjs');
 // Worker modules have no main-thread static importer, but must retain their
 // own immutable offline dependencies. The source payload stays outside it.
 visit('patches/native-stages/runtime/native-world.mjs');
@@ -457,6 +458,7 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/audio/grain-texture.mjs',
   'patches/splatoon3/runtime/audio/grain-prewarm.mjs',
   'patches/splatoon3/runtime/audio/grain-worker.mjs',
+  'patches/splatoon3/runtime/audio/music-preload-owner.mjs',
   // User-selected Splat Charger onset WSOLA: precache both modules without an eager preload.
   'patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs',
   'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs',
