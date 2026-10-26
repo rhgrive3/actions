@@ -101,4 +101,3 @@ export function traceRollingFloor(owner, at, level, physics, contact, paintableO
   if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
     return h;
 }
-
