@@ -30,7 +30,29 @@ test('atlas scaling preserves native material bindings, logical UVs, geometry an
   const p = { pos: [0, 0, 0], team: 1 };const ac = a.add('banner', p), bc = b.add('banner', p);a.build();b.build();
   assert.deepEqual(ac.colliders, bc.colliders);assert.deepEqual(a.stats(), b.stats());
   assert.equal(b.mat.paint.map, b.atlas);assert.equal(b.mat.glow.map, b.atlas);assert.equal(b.mat.cloth.map, b.atlas);
-  assert.deepEqual(a._meshes.map(m => [...m.geometry.attributes.uv.array]), b._meshes.map(m => [...m.geometry.attributes.uv.array]));
-  assert.deepEqual(a._meshes.map(m => [...m.geometry.attributes.position.array]), b._meshes.map(m => [...m.geometry.attributes.position.array]));
+  assert.equal(a._meshes.length, b._meshes.length);
+  for (let i = 0; i < a._meshes.length; i++) {
+    const before = a._meshes[i], after = b._meshes[i], A = before.geometry.attributes, B = after.geometry.attributes;
+    if (!B.uv && A.uv) {
+      // Solid default built-in shaders consume no UV input. Every mapped or
+      // customized shader still compares its original logical UVs byte-for-byte.
+      for (const m of [before, after]) {
+        assert.ok(['MeshBasicMaterial','MeshStandardMaterial','MeshPhysicalMaterial'].includes(m.material.type));
+        assert.equal(m.material.onBeforeCompile, fixed.THREE.Material.prototype.onBeforeCompile);
+        assert.ok(!Object.values(m.material).some(v => v?.isTexture));
+        assert.equal(m.customDepthMaterial, undefined); assert.equal(m.customDistanceMaterial, undefined);
+      }
+    }
+    const keys = Object.keys(A).filter(k => k !== 'uv' || B.uv);
+    assert.deepEqual(Object.keys(B), keys);
+    for (const name of keys) {
+      assert.deepEqual([B[name].array.constructor.name,B[name].itemSize,B[name].normalized,B[name].count], [A[name].array.constructor.name,A[name].itemSize,A[name].normalized,A[name].count]);
+      assert.deepEqual(B[name].array, A[name].array, name + ' remains exact');
+    }
+    assert.deepEqual(after.geometry.index?.array, before.geometry.index?.array);
+    for (const key of ['type','transparent','opacity','side','depthWrite','depthTest','alphaTest','vertexColors','roughness','metalness','blending'])
+      assert.equal(after.material[key], before.material[key], key);
+    assert.equal(after.material.customProgramCacheKey(), before.material.customProgramCacheKey());
+  }
   a.dispose();b.dispose();reset();
 });
