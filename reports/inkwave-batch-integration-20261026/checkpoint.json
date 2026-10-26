@@ -73,7 +73,8 @@
     }
   },
   "pending": [
-    "final combined source/build/emitted/browser checks",
+    "verified minimal flat-ground fast-path correction and affected slope/cliff checks",
+    "final combined build identity and validation receipt after that correction",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "one draft PR; no merge until reviewed",
     "required automatic CI on eventual final head"
@@ -134,5 +135,22 @@
       "Hissen main size",
       "Slosher floor-drop visual correction"
     ]
+  },
+  "preFlatFastpathCandidate": {
+    "buildCommit": "8c1f83bc2ca2a77d76aafda2cca1b860787c5aec",
+    "contentHash": "bef398c7163daafa2b119a158e234b90e38155ab38189fbdebc7ff5ef4beb3b2",
+    "sourcePassed": 22,
+    "emittedPassed": 19,
+    "sourceAndEmittedSkipped": 0,
+    "audioBaseChargersPassed": 8,
+    "missingAssetNegativeControl": "passed",
+    "bowHudComponentPassed": 15,
+    "nativeTrackAndArcInlineStyling": "unchanged; computed unfilled track color/opacity stable across stages",
+    "sourceInputsMatched": 1490,
+    "artifactsHashed": 2194,
+    "mismatches": 0,
+    "budget": "passed",
+    "status": "intermediate; new flat-ground tracing cost correction pending; not final head evidence",
+    "evidenceDirectory": "pre-flat-fastpath"
   }
 }

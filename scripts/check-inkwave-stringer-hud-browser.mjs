@@ -55,6 +55,7 @@ try{
         const circle=h._chargeEl,track=h.ret.querySelector('.iw-ret__track'),svg=h.ret.querySelector('.iw-ret__svg');
         records.push({id,label,frame,first,full,stage:h.ret.dataset.chargeStage,offset:+circle.style.strokeDashoffset,
           circumference:h._chargeC,stroke:circle.style.stroke,trackOpacity:track.style.opacity,
+          computedTrackStroke:getComputedStyle(track).stroke,computedTrackOpacity:getComputedStyle(track).opacity,
           circleRadius:circle.getAttribute('r'),trackRadius:track.getAttribute('r'),circleCount:svg.querySelectorAll('circle').length,
           addedSecondCircle:!!svg.querySelector('.iw-ret__stringer-second'),scopeOpacity:h.scopeMask.style.opacity,
           actorUnchanged:JSON.stringify(actor)===before});
@@ -70,6 +71,11 @@ try{
     assert.equal(r.actorUnchanged,true);assert.equal(+r.scopeOpacity,0);
     assert.equal(r.trackOpacity,'',r.id+' native track opacity remains CSS-owned');
     assert.equal(r.stroke,'',r.id+' native arc stroke remains CSS-owned');
+    if(r.label!=='Full'){
+      const baseline=receipt.rows.find(x=>x.id===r.id&&x.label==='First half');
+      assert.equal(r.computedTrackStroke,baseline.computedTrackStroke,r.id+' no stage-owned persistent track color');
+      assert.equal(r.computedTrackOpacity,baseline.computedTrackOpacity,r.id+' unchanged native unfilled track opacity');
+    }
   }
   await page.screenshot({path:path.join(out,'stages.png'),fullPage:true});
   assert.deepEqual(receipt.errors,[]);receipt.passed=true;console.log(JSON.stringify({passed:true,cases:receipt.rows.length,contentHash:receipt.contentHash,out}));
