@@ -4,14 +4,18 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { hash, persistentDirectory, persistentBrowserTemp } from '../../../scripts/lib/inkwave-runtime-evidence.mjs';
 
 // Opt-in: real WebGL buffer uploads/readback, not a hardware frame-rate claim.
 test('Crab splash live-prefix uploads preserve GPU values and pixels', {
   skip: process.env.INKWAVE_CRAB_UPLOAD_BROWSER !== '1', timeout: 120000,
 }, async () => {
-  const { chromium } = await import('playwright');
   const root = fileURLToPath(new URL('../../../', import.meta.url));
   const site = path.resolve(process.env.INKWAVE_BUILT_SITE || root);
+  const evidence = persistentDirectory(process.env.INKWAVE_UPLOAD_EVIDENCE || path.join(root, '.ci-scratch/crab-upload'));
+  for (const key of ['TMPDIR', 'TMP', 'TEMP']) process.env[key] = persistentBrowserTemp(path.join(root, '.ci-scratch/bt'));
+  const { chromium } = await import('playwright');
   const server = http.createServer((req, res) => {
     if (req.url === '/') { res.end('<!doctype html><body></body>'); return; }
     const rel = decodeURIComponent(new URL(req.url, 'http://local').pathname).slice(1);
@@ -83,6 +87,10 @@ test('Crab splash live-prefix uploads preserve GPU values and pixels', {
       const error = gl.getError(); clearCrabSplashVisuals(system, game); renderer.dispose();
       return { frames, error, renderer: gl.getParameter(gl.RENDERER) };
     }, { built: !!process.env.INKWAVE_BUILT_SITE });
+    report.sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+    report.harnessHash = hash(fs.readFileSync(fileURLToPath(import.meta.url)));
+    report.runtimeHash = hash(fs.readFileSync(path.join(site, 'patches/splatoon3/runtime/crab-tank-splash-visual.mjs')));
+    fs.writeFileSync(path.join(evidence, 'result.json'), JSON.stringify(report, null, 2));
     assert.equal(report.error, 0);
     assert.equal(report.frames[0].measured.filter(x => x.op === 'data' && x.bytes === 32768).length, 1, 'full matrix storage allocated initially');
     assert.equal(report.frames[0].measured.filter(x => x.op === 'data' && x.bytes === 6144).length, 1, 'full color storage allocated initially');
