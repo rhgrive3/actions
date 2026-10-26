@@ -280,8 +280,8 @@ function stepSourceFlight(system,p,dt,step,game) {
       else if(frame<straight+source.brakeFrames){gravity=source.brakeGravity;resistance=source.brakeAirResist;}
     }else if(frame<straight){gravity=0;resistance=0;positionResistance=0;}
     if(gravity)p.vel.y-=gravity/FPS;
-    if(resistance)p.vel.multiplyScalar(Math.pow(1-resistance,1));
-    if(positionResistance){const retain=Math.pow(1-positionResistance,1);p.vel.x*=retain;p.vel.z*=retain;}
+    if(resistance)p.vel.multiplyScalar(1-resistance);
+    if(positionResistance){const retain=1-positionResistance;p.vel.x*=retain;p.vel.z*=retain;}
     // The source force is integrated once per source frame above. Disable the
     // native generic force pass for this substep so host render Hz cannot alter
     // the trajectory or apply the same force a second time.
@@ -312,7 +312,7 @@ function projectileDescriptor(id, ap=0) {
   const spec=specialDescription(id,power);
   if (!spec) return null;
   const paint=spec.paintRadius??spec.radius;
-  const bands=spec.splashBands.map(([r,d])=>[r,d]);
+  const bands=spec.splashBands;
   return {
     id, wid:id, kind:id, name:SPECIALS[id].name,
     type:'blast', splashRadius:spec.radius, burstRadius:spec.radius,
@@ -330,7 +330,8 @@ function directProjectileDescriptor(id, radius) {
 function launch(rt, actor, id, origin, direction, opts = {}) {
   const system = rt.api.G.projectiles;
   if (!system?._new || !system?._push || actor.remote) return null;
-  const ap=actorStates.get(actor)?.specialPowerAP||0, descriptor=projectileDescriptor(id,ap), p=system._new();
+  const ap=actorStates.get(actor)?.specialPowerAP||0;
+  const descriptor=opts.directOnly&&opts.radius!=null&&opts.damage!=null?null:projectileDescriptor(id,ap),p=system._new();
   const dir = direction.clone();
   if (dir.lengthSq() < 1e-9) dir.copy(actor.aimDir);
   dir.normalize();
@@ -530,9 +531,16 @@ function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,include
   for(const object of rt.system?._s3AllSpecialObjects||[]){
     if(object.dead||!(object.hp>0)||object.owner?.team===attack?.team)continue;
     const point=options.shapeContact?(rt.shapeObjectPoint||(rt.shapeObjectPoint=new rt.api.THREE.Vector3())).copy(object.pos):object.pos;
-    if(options.shapeContact?!options.shapeContact(object,point):point.distanceTo(center)>radius)continue;
+    const distance=options.shapeContact?null:point.distanceTo(center);
+    if(options.shapeContact?!options.shapeContact(object,point):distance>radius)continue;
+    const distanceMethod=rt.api.THREE.Vector3.prototype.distanceTo;
+    const reusable=!options.shapeContact&&point.distanceTo===distanceMethod;
+    let px,py,pz,cx,cy,cz;
+    if(reusable){px=point.x;py=point.y;pz=point.z;cx=center.x;cy=center.y;cz=center.z;}
     if(rt.api.G.physics?.los&&!rt.api.G.physics.los(center,point))continue;
-    const amount=damageAt(point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,options.shapeContact?point:center);
+    const same=reusable&&point.distanceTo===distanceMethod&&Object.is(px,point.x)&&Object.is(py,point.y)&&Object.is(pz,point.z)&&
+      Object.is(cx,center.x)&&Object.is(cy,center.y)&&Object.is(cz,center.z);
+    const amount=damageAt(same?distance:point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,options.shapeContact?point:center);
   }
   if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause);
 }
@@ -746,8 +754,8 @@ export const WORLD_MESH_KINDS = Object.freeze(['screen', 'wave', 'waveFront', 'd
 function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
   const { THREE, G } = rt.api;
   if (!G.scene?.add || !THREE?.Mesh) return null;
-  const { geometry, material } = worldMeshParts(THREE, kind, colorOf(rt,owner));
-  const mesh = new THREE.Mesh(geometry, material);
+  let mesh=rt.api.specialWorldProxy?.(kind)||null;
+  if(!mesh){const {geometry,material}=worldMeshParts(THREE,kind,colorOf(rt,owner));mesh=new THREE.Mesh(geometry,material);}
   if (kind === 'waveFront') mesh.rotation.x = -Math.PI / 2;
   mesh.position.copy(center); mesh.scale.set(...scale);
   if (kind === 'screen') mesh.position.y += 2.2;
@@ -990,13 +998,16 @@ function lockWailPair(rt,actor,state,index) {
   emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index});
 }
 function fireWailTick(rt, actor, state, pair) {
+  const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
+  const before=trace.findLast(p=>p.t<=at)||trace[0],after=trace.find(p=>p.t>at);
+  const sample=before?rt.v3.copy(before.pos):null;
+  if(sample&&after&&at>before.t)sample.lerp(after.pos,clamp((at-before.t)/(after.t-before.t),0,1));
+  // hitBeam uses the runtime vectors; scalar coordinates keep the paired
+  // sample intact through damage/event callbacks and their nested queries.
+  const sx=sample?.x,sy=sample?.y,sz=sample?.z;
   for(let i=0;i<2;i++){
-    const origin=pair.origins[i],target=pair.target;
-    const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
-    const before=trace.findLast(p=>p.t<=at)||trace[0],after=trace.find(p=>p.t>at);
-    const sample=before?rt.v3.copy(before.pos):null;
-    if(sample&&after&&at>before.t)sample.lerp(after.pos,clamp((at-before.t)/(after.t-before.t),0,1));
-    const dir=sample?rt.v2.copy(sample).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
+    const origin=pair.origins[i];
+    const dir=sample?rt.v2.set(sx,sy,sz).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
     const end=hitBeam(rt,actor,state,origin,dir,1000,3.5);
     emitAction(rt,actor,'killerWail',state.serial,'laser',origin,end,nextSeed(state),{index:pair.index*2+i,tick:pair.tick});
   }
@@ -1033,14 +1044,14 @@ function stepWailTails(rt,dt){
     if(!tails.length){rt.system._s3WailTailClock=0;break;}
   }
 }
+function inkjetExhaustDamage(actor,minY,maxY,object) {
+  const pos=object?.pos;if(!pos)return 0;
+  const dx=pos.x-actor.pos.x,dz=pos.z-actor.pos.z;
+  return dx*dx+dz*dz<=1.2*1.2&&pos.y>=minY&&pos.y<=maxY ? .5 : 0;
+}
 function inkjetExhaustFrame(rt,actor) {
   if(!actor?.alive||actor.remote||actor.intent?.squid||actor.form==='squid'||actor.specialActive?.id!=='inkjet')return;
   const radius=1.2,minY=actor.pos.y-2.4,maxY=actor.pos.y+.2;
-  const inside=object=>{
-    const pos=object?.pos;if(!pos)return false;
-    const dx=pos.x-actor.pos.x,dz=pos.z-actor.pos.z;
-    return dx*dx+dz*dz<=radius*radius&&pos.y>=minY&&pos.y<=maxY;
-  };
   for(const victim of rt.api.G.actors||[]) {
     if(!victim?.alive||victim===actor||victim.team===actor.team)continue;
     const dx=victim.pos.x-actor.pos.x,dz=victim.pos.z-actor.pos.z,dy=victim.pos.y+.75-actor.pos.y;
@@ -1050,7 +1061,9 @@ function inkjetExhaustFrame(rt,actor) {
     withObjectDamageCause(actor,()=>rt.api.G.projectiles.applyHit(actor,victim,.5,'inkjet'),'Jetpack_Jet');
   }
   const center=rt.v12.set(actor.pos.x,actor.pos.y-1.1,actor.pos.z).clone();
-  const damageAt=(_distance,object)=>inside(object)?.5:0;
+  // Keep the independent center and the one escaping predicate. Unknown
+  // damage hooks may retain them; only the redundant inside closure is gone.
+  const damageAt=(_distance,object)=>inkjetExhaustDamage(actor,minY,maxY,object);
   rt.system?.s3DamageSpecialObjects?.(actor,center,2,damageAt,'Jetpack_Jet');
   rt.system?.s3DamageSubObjects?.(actor,center,2,damageAt,'Jetpack_Jet');
 }
@@ -1101,16 +1114,18 @@ function doAreaImpact(rt, actor, id, state, center, seed=nextSeed(state), radius
 }
 function selectTargets(rt, actor, max=4, range=32, preview=false) {
   const dir=aimDirection(rt,actor,rt.v0), out=[];
+  const missiles=actor.specialActive?.id==='tentaMissiles',ap=missiles?(actorStates.get(actor)?.specialPowerAP||0):0;
+  let limit;
   for(const target of rt.api.G.actors||[]) {
     if(!target.alive||target.team===actor.team||target===actor)continue;
     const offset=rt.v1.copy(target.pos).sub(actor.pos);const d=offset.length();
     if(d>range||d<.1)continue;
     const dot=offset.normalize().dot(dir);if(dot<=0)continue;
     let x=null,y=null;
-    if(actor.specialActive?.id==='tentaMissiles'){
-      const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
+    if(missiles){
+      const camera=rt.api.G.camera;
       if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
-        const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
+        const aspect=camera.aspect||1;limit??=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
         if(preview){x=projected.x;y=projected.y;}
       }else if(dot<.94)continue;
@@ -1118,7 +1133,10 @@ function selectTargets(rt, actor, max=4, range=32, preview=false) {
     out.push(preview?{actor:target,d,dot,x,y}:{actor:target,d,dot});
   }
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
-  return out.slice(0,max).map(row=>preview?{actor:row.actor,x:row.x,y:row.y}:row.actor);
+  const end=Math.trunc(+max)||0;
+  out.length=end<0?Math.max(0,out.length+end):Math.min(out.length,end);
+  for(let i=0;i<out.length;i++){const row=out[i];out[i]=preview?{actor:row.actor,x:row.x,y:row.y}:row.actor;}
+  return out;
 }
 function prepareMissiles(rt, actor, state) {
   const targets=selectTargets(rt,actor,5,Infinity),origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
@@ -1369,19 +1387,29 @@ function paintScreenDrops(rt,o,deviceAge){
   // Running cycles; their phase and evenly spaced order remain calibration.
   const frame=Math.floor(deviceAge*FPS+1e-8);if(frame<0||frame>=620)return;
   o.screenPaintDrop ||= 0;
+  const depth=o._screenPaintDepth||0;let lease=null;
+  try {
   while(true){
     const index=o.screenPaintDrop%12,cycle=Math.floor(o.screenPaintDrop/12);
     const start=cycle===0?0:60+(cycle-1)*45;
     if(start+Math.floor(index*10/12)>frame)break;
     o.screenPaintDrop++;
-    const [x,y,z]=SCREEN_SPLASH_POSITIONS[index],from=o.pos.clone()
+    // Native raycasts consume their input synchronously. Custom raycasters
+    // retain the original fresh vectors, including reference-retaining probes.
+    const reusable=rt.nativeRaycast&&rt.api.G.physics?.raycast===rt.nativeRaycast;
+    if(reusable&&!lease){
+      const leases=o._screenPaintLeases||=([]);
+      lease=leases[depth]||=( {from:o.pos.clone(),point:o.pos.clone()} );o._screenPaintDepth=depth+1;
+    }
+    const [x,y,z]=SCREEN_SPLASH_POSITIONS[index],from=(reusable?lease.from.copy(o.pos):o.pos.clone())
       .addScaledVector(o.tangent,x).addScaledVector(rt.up,y).addScaledVector(o.direction,z);
     const hit=rt.api.G.physics?.raycast?.(from,rt.down,60,rt.hit,true);let point=null;
-    if(hit?.hit&&hit.normal?.y>.4)point=hit.point.clone().addScaledVector(hit.normal,.08);
+    if(hit?.hit&&hit.normal?.y>.4)point=(reusable?lease.point.copy(hit.point):hit.point.clone()).addScaledVector(hit.normal,.08);
     else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
-      if(finite(floor))point=from.clone().setY(floor+.08);}
+      if(finite(floor))point=(reusable?lease.point.copy(from):from.clone()).setY(floor+.08);}
     if(point)paintStamp(rt,o.owner,point,2.5,seedUnit(o.seed,o.screenPaintDrop));
   }
+  } finally {if(lease)o._screenPaintDepth=depth;}
 }
 function deployWave(rt,actor,state) {
   const pos=actor.pos.clone();pos.y+=1.1;const ap=state.specialPowerAP;
@@ -1607,17 +1635,29 @@ function stampLine(rt,actor,from,to,width,seed,depthScale=1) {
 function paintCrabRoll(rt,actor,state,from) {
   const radius=.9,to=actor.pos,length=from.distanceTo(to),steps=Math.max(1,Math.ceil(length/(radius*.5)));
   if(state.rollPaintLast&&length<1e-8&&state.rollPaintLast.distanceToSquared(to)<1e-8)return;
+  const depth=state._crabPaintOptionsDepth||0;let lease=null,seedReady=false,sourceSeed,stampSeed;
+  try {
   for(let i=0;i<=steps;i++){
     const probe=rt.v7.copy(from).lerp(to,i/steps);probe.y+=.25;
     const hit=rt.api.G.physics?.raycast?.(probe,rt.down,.6,rt.hit,true);
     if(!hit?.hit||!(hit.normal?.y>.4))continue;
     const point=rt.v8.copy(hit.point).addScaledVector(hit.normal,.005);
-    const opts={seed:seedUnit(state.rollPaintSeed),kind:'source-splash',claimOwner:actor,claimMode:'no-special'};
-    if(Number.isInteger(hit.face)&&hit.face>=0)opts.face=hit.face;
+    const seed=state.rollPaintSeed;
+    if(!seedReady||!Object.is(sourceSeed,seed)){
+      sourceSeed=seed;stampSeed=seedUnit(seed);seedReady=seed===null||(typeof seed!=='object'&&typeof seed!=='function');
+    }
+    const paint=rt.api.G.paint,net=rt.api.G.netm;
+    const reusable=rt.nativePaintSplat&&paint?.splat===rt.nativePaintSplat&&
+      (!net||net.recSplat===rt.nativeRecSplat);
+    if(reusable&&!lease){const leases=state._crabPaintOptions||=([]);lease=leases[depth]||=({});state._crabPaintOptionsDepth=depth+1;}
+    const opts=reusable?lease:{};
+    opts.seed=stampSeed;opts.kind='source-splash';opts.claimOwner=actor;opts.claimMode='no-special';
+    if(Number.isInteger(hit.face)&&hit.face>=0)opts.face=hit.face;else delete opts.face;
     const area=rt.api.G.paint?.splat?.(point,radius,actor.team,opts);
     if(finite(area)&&area>0)actor.addTurfNoSpecial?.(area);
   }
   (state.rollPaintLast||=to.clone()).copy(to);
+  } finally {if(lease){lease.claimOwner=null;state._crabPaintOptionsDepth=depth;}}
 }
 function crabLaunchGeometry(rt,actor,mode,origin,direction){
   crabTankShotGeometry(actor,mode,origin,direction);
@@ -1634,7 +1674,7 @@ function updateWorld(rt,dt) {
   for(let i=list.length-1;i>=0;i--){
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
-    if(o.phase==='flight'&&o.vel&&['marker','wave','screen'].includes(o.kind)){
+    if(o.phase==='flight'&&o.vel&&(o.kind==='marker'||o.kind==='wave'||o.kind==='screen')){
       const from=(o._flightFrom ||= o.pos.clone()).copy(o.pos);
       const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit,from);
       o.mesh?.position.copy(o.pos);
@@ -2036,10 +2076,17 @@ function activeStep(rt,actor,dt) {
     if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.nextCannon=Math.max(state.nextCannon,elapsed+20/60);state.fireStart=null;state.rollPaintLast=null;}
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
-    const rollFrom=rolling&&actor.grounded?actor.pos.clone():null;
-    moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
-    if(rolling&&actor.grounded)paintCrabRoll(rt,actor,state,rollFrom||actor.pos);
-    else state.rollPaintLast=null;
+    const rollDepth=state._rollPaintFromDepth||0;
+    let rollFrom=null;
+    if(rolling&&actor.grounded){
+      const leases=state._rollPaintFromLeases||=([]);
+      rollFrom=(leases[rollDepth]||=actor.pos.clone()).copy(actor.pos);state._rollPaintFromDepth=rollDepth+1;
+    }
+    try {
+      moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
+      if(rolling&&actor.grounded)paintCrabRoll(rt,actor,state,rollFrom||actor.pos);
+      else state.rollPaintLast=null;
+    } finally {if(rollFrom)state._rollPaintFromDepth=rollDepth;}
     if(actor.intent.sub&&!rolling&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextCannon){
       const origin=rt.v0,dir=rt.v1;crabLaunchGeometry(rt,actor,'cannon',origin,dir);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
@@ -2292,6 +2339,8 @@ function installRuntime(api) {
   if(!Actor?.prototype||!Projectiles?.prototype||!THREE?.Vector3)throw new Error('all-specials requires actual Actor, Projectiles and THREE.Vector3');
   if(Object.hasOwn(Actor.prototype,INSTALL))return runtimes.get(Projectiles)||null;
   const rt={api,Actor,Projectiles,system:api.G.projectiles||null,
+    nativeRaycast:api.Physics?.prototype?.raycast,nativePaintSplat:api.PaintSystem?.prototype?.splat,
+    nativeRecSplat:api.NetMatch?.prototype?.recSplat,
     v0:new THREE.Vector3(),v1:new THREE.Vector3(),v2:new THREE.Vector3(),v3:new THREE.Vector3(),v4:new THREE.Vector3(),v5:new THREE.Vector3(),
     v6:new THREE.Vector3(),v7:new THREE.Vector3(),v8:new THREE.Vector3(),v9:new THREE.Vector3(),v10:new THREE.Vector3(),v11:new THREE.Vector3(),
     v12:new THREE.Vector3(),v13:new THREE.Vector3(),v14:new THREE.Vector3(),v15:new THREE.Vector3(),
