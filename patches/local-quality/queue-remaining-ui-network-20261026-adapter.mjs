@@ -83,9 +83,9 @@ export function adaptQueueRemainingUiNetwork20261026(rel, code) {
         const start = code.indexOf('  _validHitAuthorityMetadata(d) {');
         const finish = start < 0 ? -1 : code.indexOf('  _hitHandoffParentEntries(', start);
         const validator = start < 0 ? '' : code.slice(start, finish < 0 ? start + 1200 : finish);
-        const countExpression = validator.match(/\\b(?:const|let)\\s+present\\s*=\\s*([^;\\n]+);/)?.[1] || '';
+        const countExpression = validator.match(/(?:const|let)[ ]+present[ ]*=[ ]*([^;]+);/)?.[1] || '';
         const countIncludesAllFields = ['hp','hr','ht','la'].every(field =>
-          new RegExp('\\\\b' + field + '\\\\b').test(countExpression));
+          countExpression.includes('d?.' + field) || countExpression.includes('d.' + field));
         const validCount = countExpression.includes('HIT_AUTHORITY_FIELDS.') || countIncludesAllFields;
         const strictGate = validator.includes('if (present === 0)') &&
           validator.includes('present !== 4') && validator.includes('d?.he === undefined');
@@ -96,7 +96,7 @@ export function adaptQueueRemainingUiNetwork20261026(rel, code) {
             code.includes('const hasAuthority = HIT_AUTHORITY_FIELDS.some('))) return;
       }
       const at = code.indexOf('  _validHitAuthorityMetadata(d) {');
-      const excerpt = at < 0 ? 'missing validator' : code.slice(at, at + 320).replace(/\\s+/g,' ');
+      const excerpt = at < 0 ? 'missing validator' : code.slice(at, at + 320).split(String.fromCharCode(10)).join(' ');
       throw Error('Remaining UI/network queue conflict: ' + label +
         ' (old=' + oldCount + ', reviewed=' + newCount + ', validator=' + excerpt + ')');
     };
