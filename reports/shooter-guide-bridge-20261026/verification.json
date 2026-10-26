@@ -1,0 +1,136 @@
+{
+  "base": "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9",
+  "codeCommit": "a94e9e9a18e32642894810d040fdc29abcefa7e0",
+  "scope": "Only the two guide-cache revision reads now require physics.level. G.level is not an ownership certificate for segment-only Physics bridges.",
+  "build": {
+    "contentHash": "d23f81a8cd4457830c6fff53367a21e63f551e8321b8bd9eef3295eb5825d0a0",
+    "inputHash": "d6f116eab6e12ae2b9e371bd77e11f8b87df8c061c6baf3285ceb933dd44eb2c",
+    "optimization": "esbuild-minify"
+  },
+  "readback": {
+    "sourcePath": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+    "sourceSha256": "857bc44e0088d0ce33488bb892fce3c4255ae886397c95be255cc39519ea2746",
+    "artifactSha256": "683279d04c0eecbaae1f88f449c89ae54209a8c9170b868ead8a27edee7a6982",
+    "sourceMatch": true,
+    "artifactMatch": true
+  },
+  "negative": {
+    "expectedExit": 1,
+    "bridgeTrace": [
+      {
+        "weapon": "shooter",
+        "before": [
+          0
+        ],
+        "changed": [
+          0
+        ],
+        "fresh": [
+          -2
+        ],
+        "impact": -2,
+        "marker": -2,
+        "repeatSweeps": 0
+      },
+      {
+        "weapon": "dualies",
+        "before": [
+          0,
+          0
+        ],
+        "changed": [
+          0,
+          0
+        ],
+        "fresh": [
+          -2,
+          -2
+        ],
+        "impact": null,
+        "marker": null,
+        "repeatSweeps": 0
+      }
+    ]
+  },
+  "source": {
+    "pass": 11,
+    "fail": 0,
+    "bridgeTrace": [
+      {
+        "weapon": "shooter",
+        "before": [
+          0
+        ],
+        "changed": [
+          -2
+        ],
+        "fresh": [
+          -2
+        ],
+        "impact": -2,
+        "marker": -2,
+        "repeatSweeps": 1
+      },
+      {
+        "weapon": "dualies",
+        "before": [
+          0,
+          0
+        ],
+        "changed": [
+          -2,
+          -2
+        ],
+        "fresh": [
+          -2,
+          -2
+        ],
+        "impact": null,
+        "marker": null,
+        "repeatSweeps": 2
+      }
+    ]
+  },
+  "emitted": {
+    "pass": 11,
+    "fail": 0,
+    "bridgeTrace": [
+      {
+        "weapon": "shooter",
+        "before": [
+          0
+        ],
+        "changed": [
+          -2
+        ],
+        "fresh": [
+          -2
+        ],
+        "impact": -2,
+        "marker": -2,
+        "repeatSweeps": 1
+      },
+      {
+        "weapon": "dualies",
+        "before": [
+          0,
+          0
+        ],
+        "changed": [
+          -2,
+          -2
+        ],
+        "fresh": [
+          -2,
+          -2
+        ],
+        "impact": null,
+        "marker": null,
+        "repeatSweeps": 2
+      }
+    ]
+  },
+  "quick": "passed",
+  "startupAllArtifactDigests": "passed",
+  "classification": "Controlled real-Actor/Character/Level/Physics prediction APIs; native Character fallback in VM; no natural HUD, GPU, or original-game appearance claim."
+}
