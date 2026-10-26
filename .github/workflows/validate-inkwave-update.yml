@@ -515,6 +515,9 @@ jobs:
           patches/splatoon3/tests/spinner-charge-family.test.mjs
           patches/splatoon3/tests/jump-recovery-airborne-native.test.mjs
           patches/splatoon3/tests/player-collision-source-1130.test.mjs
+          patches/native-stages/tests/collision-revision-producers.test.mjs
+          patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs
+          patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs
       - name: Verify built weapons fidelity measurements and packet parity
         run: |
           INKWAVE_BUILT_SITE=_site INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
