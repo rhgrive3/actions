@@ -24,7 +24,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "ddfc736d86a9df36bcad6d560a0c3a2973df3e9134b8dee8ca2ce9cb96e11611",
+  "patches/splatoon3/runtime/roller.mjs": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
