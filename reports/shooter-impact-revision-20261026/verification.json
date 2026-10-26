@@ -1,0 +1,146 @@
+{
+  "base": "550ec3219c0b8e20a842949322efe22e516f3ce0",
+  "codeCommit": "77d07c7ab5c591cc02e33791aa207139bfa3c724",
+  "branch": "fix/shooter-impact-revision-20261026",
+  "build": {
+    "root": "/tmp/inkwave-shooter-impact-revision-20261026",
+    "contentHash": "00e32b89582a0272c9c6f6d4948ddb3ccd2c0b00774e83be70a0b1b03a42d955",
+    "inputHash": "af1bec9f6c8850dea3f00ba1e3b1a8c12bb427760e43f44a2b6a56fdb0278001",
+    "optimization": "esbuild-minify"
+  },
+  "sourceInputReadback": [
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "manifestKey": "patch/runtime/weapons-fidelity.mjs",
+      "sha256": "5fa4ca6d2d2a5d7c2a1d35b63d9f101640392e153bef8092e1b8597f36d431f2"
+    },
+    {
+      "path": "patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "manifestKey": "patch/runtime/muzzle-feedback.mjs",
+      "sha256": "f7367781cbd7dc97a1ddfdba19438a1a9aafc334942c85037d62f0f7dfda5c32"
+    }
+  ],
+  "artifactReadback": [
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "sha256": "b95c7b101338d7783079671ff5a1d0f46f2542b38a6624d0a0ed5c1cb1529420"
+    },
+    {
+      "path": "patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "sha256": "f770e936fbcd9d7aab5771aa0a6de5fffbe33e173f4068d442bc8b7b38dae16d"
+    }
+  ],
+  "upstreamInputsReadBack": 203,
+  "negative": {
+    "expectedExit": 1,
+    "trace": {
+      "beforeRevision": 8,
+      "movedRevision": 9,
+      "impactBefore": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "markerBefore": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "impactMoved": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "markerMoved": [
+        -3.860633466185939e-17,
+        2.945,
+        -0.28000000000000064
+      ],
+      "uncached": [
+        -2.240276612645245e-17,
+        5.551115123125783e-17,
+        9.499870059670593
+      ]
+    }
+  },
+  "fixedSourceTrace": {
+    "beforeRevision": 8,
+    "movedRevision": 9,
+    "impactBefore": [
+      -3.860633466185939e-17,
+      2.945,
+      -0.28000000000000064
+    ],
+    "markerBefore": [
+      -3.860633466185939e-17,
+      2.945,
+      -0.28000000000000064
+    ],
+    "impactMoved": [
+      -2.240276612645245e-17,
+      5.551115123125783e-17,
+      9.499870059670593
+    ],
+    "markerMoved": [
+      -2.240276612645245e-17,
+      5.551115123125783e-17,
+      9.499870059670593
+    ],
+    "uncached": [
+      -2.240276612645245e-17,
+      5.551115123125783e-17,
+      9.499870059670593
+    ]
+  },
+  "fixedEmittedTrace": {
+    "beforeRevision": 8,
+    "movedRevision": 9,
+    "impactBefore": [
+      -3.860633466185939e-17,
+      2.945,
+      -0.28000000000000064
+    ],
+    "markerBefore": [
+      -3.860633466185939e-17,
+      2.945,
+      -0.28000000000000064
+    ],
+    "impactMoved": [
+      -2.240276612645245e-17,
+      5.551115123125783e-17,
+      9.499870059670593
+    ],
+    "markerMoved": [
+      -2.240276612645245e-17,
+      5.551115123125783e-17,
+      9.499870059670593
+    ],
+    "uncached": [
+      -2.240276612645245e-17,
+      5.551115123125783e-17,
+      9.499870059670593
+    ]
+  },
+  "tests": {
+    "source": {
+      "pass": 13,
+      "fail": 0
+    },
+    "actualImpactAndLifetimeCompatibility": {
+      "pass": 15,
+      "fail": 0
+    },
+    "emitted": {
+      "pass": 11,
+      "fail": 0
+    },
+    "quick": "passed",
+    "startupAndAllArtifactDigests": "passed"
+  },
+  "scope": "Only existing s3ShooterImpact and muzzleBlockFeedback cache admission, cache owner keys and associated tests. No physics/guide/visibility rule changes.",
+  "limitations": [
+    "Controlled prediction APIs, fixed aim/muzzle/time; not natural player input, HUD pixels or original-game visual evidence.",
+    "Native Character fallback in VM; optional dynamic source motion cannot load in that fixture.",
+    "Original inner-marker admission/parallax/late-floor appearance remains unverified."
+  ]
+}
