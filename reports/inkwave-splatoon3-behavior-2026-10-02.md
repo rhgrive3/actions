@@ -6455,6 +6455,8 @@ Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. 詳細・参照条件・検証�
 [`inkwave-charge-flight-bow-2026-10-26.md`](inkwave-charge-flight-bow-2026-10-26.md)。
 追加チャージャーの高所の線状塗りは、床への即時投影から既存 Splat Charger と同じ可視の落下レコード・着地後の塗りへ接続した。充電音は既存の選択済み Splat 録音を全 Charger で再利用し、START 時に実デコードを確認する。弓の既存 Mid/Full 発射結果を保持し、第一・第二段階の進行状態と到達音を公開した。基準は 11.3.0 の固定抽出行、ギアなし・インク十分の静止射撃。Splatune 2 録音は選択された代理音、落下の 20-unit 重力は既存 INKWAVE モデルであり、本家の実機映像・音声・落下時間の一致は未確認。新規 Nintendo メディアは追加しない。描画バッファ・単独ロジック・ブラウザ音声出力・通常入力の証拠を区別し、照準の描画接続は担当者の統合対象とする。
 
+2026-10-26 bounded coverage追補（固定26a69c1c）: E-liter／Squiffer／Goo Tuberの実カタログ保持は `catalogState.stored` を消費するが、音声の既存保持判定はnative `s3Stored` だけを読んでいた。通常Actor入力でFire保持→Squid→kidへ戻ると新規チャージのrise/full-readyが再生されるdispatch回帰を確認。別候補では実際の保持消費を1回だけ認識し、既存keep cueへ接続する。Goo部分保持後の新たなfull-ready、保持期限切れ後の新規rise、同一入力の反復、実発射／インク予約は区別する。S3 11.3.0・ギアなしの従来保持資料を継承し、音源・ゲームプレイ時計・弾道は変更しない。この追加確認はCPU合成ソース／生成物の音声dispatchであり、新規ブラウザ再生・本家keep音のタイミング一致は未確認。[変種別coverageと制約](inkwave-batch-integration-20261026/charge-bow-coverage-26a69c1c/README.md)。
+
 ## 2026-10-26: 下り坂ローラー・歩行表示・床／壁の泳ぎ飛沫
 
 基点 `48511150bbaeab182dd04c712d39bd5b26df18f3`。実Actorで下り坂の標準ローラーが

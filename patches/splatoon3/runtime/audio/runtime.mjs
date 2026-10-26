@@ -88,7 +88,8 @@ export function installWeaponAudioRuntime(api){
     // The actor:form event itself is an actual transition edge. Do not
     // retain a separate squid flag here: catalog WeaponRunner.update invokes
     // stop() on every squid frame, which resets transient audio state before
-    // this kid-form event is emitted. Rely on the gameplay s3Stored identity.
+    // this kid-form event is emitted. Native keep uses s3Stored; catalogue
+    // keep is consumed inside update and is handled at that actual edge below.
     if(e.form!=='kid'||a.alive===false)return;
     // Native Actor._events emits form after WeaponRunner.update. Use the
     // surviving gameplay-owned store rather than assuming a particular
@@ -139,6 +140,7 @@ export function installWeaponAudioRuntime(api){
     }
     }
     s.firedThisUpdate=false;
+    const priorCatalog=this.catalogState,keptFrames=priorCatalog?.stored?.frames;
     const result=oldUpdate.call(this,dt,input,...rest);
     const recipe=WEAPON_AUDIO[id],isCharger=recipe?.family==='charger';
     // Native weapon runners also tick while submerged. Their audio wrapper
@@ -151,6 +153,14 @@ export function installWeaponAudioRuntime(api){
     // from WeaponRunner.update if a remote runner is ticked for prediction.
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
+      // The catalogue consumes its own saved charge before returning here.
+      // Recognize that restore instead of replaying a fresh rise/full-ready.
+      // Partial Goo keeps must still announce a later genuine full boundary.
+      if(priorCatalog&&this.catalogState===priorCatalog&&keptFrames>0&&!priorCatalog.stored&&nowCharging&&this.charge>0){
+        s.wasCharge=true;
+        s.wasReady=keptFrames+1e-6>=a.weapon.chargeTime*60;
+        play(a,'charge',a.pos,a.isLocal?.55:.35);
+      }
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
         // Reuse the selected Splat phrase for every Charger. The offline
         // cache adapts duration without transposing; gameplay owns readiness.

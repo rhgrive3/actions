@@ -65,7 +65,7 @@ test('replicated Charger heads never create a second falling-paint claim and cle
   assert.ok(drops.every(d=>d.owner===null));assert.equal(a.stats.turf,0);
 });
 
-test('every Stringer kit exposes two source-timed charge rings, dings once per boundary and resets on release/cancel',async()=>{
+test('every Stringer kit exposes two source-timed charge stages, dings once per boundary and resets on release/cancel',async()=>{
   const f=await world(),cues=[];
   f.G.audio={ctx:{},prepareWeapon(){},playWeapon(){},duck(){},
     play(name,o){if(name==='charger_full')cues.push(o);},
@@ -80,10 +80,77 @@ test('every Stringer kit exposes two source-timed charge rings, dings once per b
       const stage=frame<p.ChargeFrameMidCharge?0:frame<p.ChargeFrameFullCharge?1:2;
       assert.equal(r.chargeStage,stage,id+' at frame '+frame);
       close(r.charge,Math.min(1,frame/p.ChargeFrameFullCharge),id+' unchanged full clock');
-      assert.equal(cues.length,stage,id+' one cue per reached ring');
+      assert.equal(cues.length,stage,id+' one cue per reached stage');
     }
     r.update(1/60,{fire:false});assert.equal(r.chargeStage,0);assert.equal(r.chargeStageProgress,0);
     f.G.projectiles.clear();r.cooldown=0;r.update(1/60,{fire:true});r.reset();
     assert.equal(r.chargeStage,0);assert.equal(r.chargeStageProgress,0);
+  }
+});
+
+async function keepAudioWorld(){
+  const f=await world(),cues=[];
+  f.G.audio={ctx:{},prepareWeapon(){},prewarmChargerChargeRise(){},duck(){},play(){},
+    playWeapon(id,event){cues.push({id,event});},
+    playChargerChargeRise(o){cues.push({id:o.weaponId,event:'rise'});return {playing:true,stop(){this.playing=false;}};},
+    loopWeapon(){return {playing:true,set(){},stop(){}};}};
+  f.installWeaponAudioRuntime(f.installedRuntime);
+  const actor=id=>{
+    const a=f.make(id);a.isLocal=true;
+    // make() suppresses frame finishing. Restore the actual event owner after
+    // Actor.update without injecting forms, charge or a saved-charge record.
+    a._finishFrame=function(){this._events({form:this.form==='squid'?'swim':'kid'});};
+    return a;
+  };
+  return {...f,cues,actor};
+}
+const kitIds=base=>[base,...ALTERNATE_WEAPON_KITS.filter(k=>k.baseId===base).map(k=>k.id)];
+
+test('catalogue Charger audio restores actual full keeps without a second rise or ready cue',async()=>{
+  const f=await keepAudioWorld();
+  for(const id of ['s3-charger-quick','s3-charger-long','s3-charger-keeper'].flatMap(kitIds)){
+    f.cues.length=0;
+    const a=f.actor(id),r=a.weaponRunner;a.intent.fire=true;f.tick(a,140);
+    // Audio identity follows the shared main source, while the kit stays equipped.
+    const events=()=>f.cues.map(c=>c.event);
+    assert.deepEqual(events(),['rise','ready'],id+' fresh full charge');
+    for(let cycle=1;cycle<=2;cycle++){
+      a.intent.squid=true;f.tick(a,3);
+      assert.equal(a.form,'squid');assert.ok(r.catalogState.stored?.frames>0,id+' real catalogue keep');
+      assert.equal(r.s3Stored,null,id+' no fabricated native store');
+      const ink=a.ink;
+      a.intent.squid=false;f.tick(a,8);
+      assert.equal(a.form,'kid');assert.equal(r.catalogState.stored,null);assert.equal(r.charge,1);
+      assert.ok(a.ink>=ink-1e-8,id+' restored reservation is not paid again');
+      assert.deepEqual(events(),['rise','ready',...Array(cycle).fill('charge')],id+' one retained-charge cue per restore');
+      f.emit('actor:form',{actor:a,form:'kid'});f.tick(a,3);
+      assert.deepEqual(events(),['rise','ready',...Array(cycle).fill('charge')],id+' duplicate form/held input stays silent');
+    }
+    const before=f.G.projectiles.list.length;a.intent.fire=false;f.tick(a,3);
+    assert.equal(f.G.projectiles.list.length-before,1,id+' one real release projectile');
+    assert.equal(f.cues.filter(c=>c.event.startsWith('fire')).length,1);
+    assert.equal(f.cues.filter(c=>c.event==='release').length,0,'a real shot has no cancel cue');
+    a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
+    assert.equal(f.cues.filter(c=>c.event==='charge').length,2,id+' weapon switch cannot replay keep');
+    f.G.projectiles.clear();
+  }
+});
+
+test('catalogue Goo partial keep still reaches ready once; expired keeps start a fresh phrase',async()=>{
+  const f=await keepAudioWorld();
+  for(const id of kitIds('s3-charger-keeper')){
+    f.cues.length=0;
+    const a=f.actor(id),r=a.weaponRunner;a.intent.fire=true;f.tick(a,12);
+    assert.ok(r.charge>0&&r.charge<1);a.intent.squid=true;f.tick(a,3);
+    assert.ok(r.catalogState.stored?.frames>0);assert.equal(r.s3Stored,null);
+    a.intent.squid=false;f.tick(a,8);
+    assert.ok(r.charge>0&&r.charge<1);
+    assert.deepEqual(f.cues.map(c=>c.event),['rise','charge'],id+' partial restore is not a new rise');
+    f.tick(a,80);
+    assert.deepEqual(f.cues.map(c=>c.event),['rise','charge','ready'],id+' genuine new full boundary stays audible');
+    a.intent.squid=true;f.tick(a,305);assert.equal(r.catalogState.stored,null);
+    a.intent.squid=false;f.tick(a,8);
+    assert.deepEqual(f.cues.map(c=>c.event),['rise','charge','ready','rise'],id+' expired keep is fresh charge, not a restore');
+    a.setWeapon('shooter');f.G.projectiles.clear();
   }
 });
