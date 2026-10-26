@@ -91,5 +91,21 @@
     "reportConflict": "All charge/movement/reticle entries retained",
     "retailInnerMarkerCutoffVerified": false,
     "pending575FixtureFollowup": true
+  },
+  "stringerOriginalReview": {
+    "source": "Independent parent-supplied reviewer of a private original Tri clip; media and private locator not copied into the repository",
+    "reviewedFrames": 31,
+    "preliminaryObservations": [
+      "One visible annular progress track; no added concentric charge-progress ring",
+      "Frames 3-10: a white arc grows on the same gray annulus",
+      "Frame 11: flash in that same annular region"
+    ],
+    "status": "preliminary structural support for retaining existing geometry; final narrow verdict pending",
+    "notEstablished": [
+      "exact stage fractions",
+      "all first/second/full stage transitions",
+      "pixel/layout/color/timing parity",
+      "ordinary-input comparison of final INKWAVE build"
+    ]
   }
 }
