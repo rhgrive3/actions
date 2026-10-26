@@ -202,12 +202,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          filter: blob:none
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
       - name: Verify immutable candidate and dispatch pair
@@ -282,7 +276,7 @@ jobs:
           node --test scripts/tests/inkwave-23pr-paint-source-pair.test.mjs
           node --test scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs
           node --test scripts/tests/inkwave-maina350-paint-admission.test.mjs scripts/tests/inkwave-mainceb58-paint-admission.test.mjs scripts/tests/inkwave-oct22-pose-pair.test.mjs scripts/tests/inkwave-queue1801-source-pairs.test.mjs
-          node --test scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs scripts/tests/inkwave-projectile-http-file.test.mjs scripts/tests/inkwave-capture-source-identity.test.mjs
+          node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs scripts/tests/inkwave-projectile-http-file.test.mjs scripts/tests/inkwave-capture-source-identity.test.mjs
       - name: Prepare isolated pinned-main audio-stabilized reference, retaining pristine main
         if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1695 && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190' || github.event.pull_request.base.sha == 'da285129eb919d094d29e6a9b388f5eeb11059e9') }}
         run: |
@@ -479,12 +473,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          filter: blob:none
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Verify immutable comparison checkout
         shell: bash
