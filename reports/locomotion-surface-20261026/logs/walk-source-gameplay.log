@@ -1,0 +1,14 @@
+(node:2711) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ step presentation decays without a rebound and is invariant at 30/60/120Hz (1.579714ms)
+✔ walking display speed smooths sample noise, pauses, and has an idle endpoint (0.464514ms)
+✔ composed Actor keeps physical walking and collision while visual step correction is monotone (72445.40986ms)
+✔ real input walking keeps identical gameplay through micro-input, acceleration, turns, firing, stop and a curb (40255.610939ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 113345.120424

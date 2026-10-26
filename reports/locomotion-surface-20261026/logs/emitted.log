@@ -1,0 +1,44 @@
+INKWAVE built fixture /workspace/scratch/locomotion-site-final contentHash=609615676035ac77da7d3d15ff32865acad3a9141c84bca162ee2950b16c1b51
+INKWAVE built fixture /workspace/scratch/locomotion-site-final contentHash=609615676035ac77da7d3d15ff32865acad3a9141c84bca162ee2950b16c1b51
+(node:2974) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an unseen film skips its shape rebuild and a rendering camera that sees it gets the exact current shape (1237.283572ms)
+✔ the bounding sphere used for the visibility test contains every film shape (4250.684537ms)
+(node:2975) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ local/remote swim and wall bodies hide immediately for source and fallback; jumps and returns draw again (31118.880608ms)
+✔ wake cadence retains elapsed time at 30/60/120 Hz and respects stealth, air and restart (13278.227565ms)
+✔ ordinary swim uses bounded curls and ballistic drops, and respects lifecycle and stealth (18438.592074ms)
+INKWAVE built fixture /workspace/scratch/locomotion-site-final contentHash=609615676035ac77da7d3d15ff32865acad3a9141c84bca162ee2950b16c1b51
+(node:2976) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ continuous film keeps its shape/time at 30/60/120Hz and remains film at low quality (9507.651948ms)
+(node:3146) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ step presentation decays without a rebound and is invariant at 30/60/120Hz (1.136774ms)
+✔ walking display speed smooths sample noise, pauses, and has an idle endpoint (0.812152ms)
+✔ composed Actor keeps physical walking and collision while visual step correction is monotone (19719.035379ms)
+✔ real input walking keeps identical gameplay through micro-input, acceleration, turns, firing, stop and a curb (46044.677432ms)
+(node:3168) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ downhill roller keeps real contact and claims slope turf at 30Hz (15731.122083ms)
+✔ downhill roller keeps real contact and claims slope turf at 60Hz (21673.910631ms)
+✔ downhill roller keeps real contact and claims slope turf at 120Hz (17335.783623ms)
+✔ excluded modules have audited build-only exports; mixed runtime adapters remain shipped (181.022265ms)
+✔ runtime helper URLs retain their exports without carrying build-time source transforms (195.442393ms)
+✔ minified static ESM imports are found without whitespace and with re-exports (1.360379ms)
+✔ emitted lossless lightmaps preserve every pixel while reducing the offline snapshot (321.470506ms)
+✔ ESM minification preserves the emitted module export interface (1826.48277ms)
+✔ network identity contains only exact paths owned by its namespace (3.361447ms)
+✔ emitted identity binds every input to one canonical tracked path including S3 dodge dependencies (1104.922094ms)
+✔ emitted gameplay profile preserves all JSON values without shipping indentation (8.914763ms)
+✔ emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes (3382.574516ms)
+✔ indexed worker precache decodes strictly before offline graph checks (3.723811ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72846.502177
