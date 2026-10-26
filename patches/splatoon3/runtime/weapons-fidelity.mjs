@@ -2363,8 +2363,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   // Issue #94: the Shooter-only weapon-side reticle previews the nominal
   // (unspread) shot's first field contact. Spawn state comes from the same
-  // _muzzle/_aimFrom/_ballistic path fireShooter uses, integration from
-  // advanceFidelityProjectile, and the field query from the composed swept
+  // installed muzzle/aim/InkFlight launch path fireShooter uses, and the field query from the composed swept
   // sweep with the sourced field collision radius, all bounded by the existing
   // projectile lifetime — so the preview point is the real impact of the center
   // shot, and geometry beyond the shot's flight never warns. Read-only: one
@@ -2382,17 +2381,27 @@ export function installWeaponsFidelity(context,profile) {
       aimPoint:new THREE.Vector3(),aimDir:new THREE.Vector3(),velocity:new THREE.Vector3(),result:null
     });
     // Observe the real muzzle every render, but only replay the up-to-72
-    // swept collisions when a simulation input or field generation changes.
+    // swept collisions when a simulation input or verified collision revision changes.
     // This is exact-pose reuse: no quantized aim, no alteration to first-hit
     // geometry, and no extra render pass / physics step.
     this._muzzle(actor,p.pos);
     this._aimFrom(actor,p.pos,dir);
-    const t=api.G.time,gen=level?.geometryGeneration??level?._geometryGeneration??level?._generation;
-    if(cache.valid&&cache.actor===actor&&cache.weapon===w&&cache.physics===physics&&
-      cache.raycast===physics.raycast&&cache.segment===physics.segment&&
+    const t=api.G.time,revision=physics.level?.collisionRevision;
+    const reusable=Number.isSafeInteger(revision)&&revision>=0;
+    const runner=actor.weaponRunner,charge=runner?.fidelitySplatlingCharge??runner?.charge??0;
+    if(reusable&&cache.valid&&cache.revision===revision&&cache.actor===actor&&cache.character===actor.character&&
+      cache.weapon===w&&cache.actorWeapon===actor.weapon&&cache.weaponId===actor.weaponId&&cache.physics===physics&&
+      cache.raycast===physics.raycast&&cache.segment===physics.segment&&cache.los===physics.los&&
       cache.level===level&&cache.blocks===level?.blocks&&cache.faces===level?.faces&&
+      cache.gameLevel===api.G.level&&cache.hash===level?.hash&&cache.queryBlocks===level?.queryBlocks&&cache.queryDynamicBlocks===level?.queryDynamicBlocks&&
+      cache.triangleWorld===level?.triangleWorld&&cache.triangleSweep===level?.triangleWorld?.sweepSphere&&
+      cache.triangleRaycast===level?.triangleWorld?.raycast&&cache.nativeData===level?.data&&cache.native===level?.native&&
+      cache.staticBlockCount===level?.staticBlockCount&&cache.inkFlight===this.inkFlight&&cache.inkWorld===this.inkFlight?.world&&
+      cache.muzzleFn===this._muzzle&&cache.aimFn===this._aimFrom&&cache.ballisticFn===this._ballistic&&
+      cache.nominalFn===this._nominalInkGuide&&cache.advanceFn===this._advanceInkGuide&&cache.contactFn===this._inkGuideContact&&
       cache.blocksLength===level?.blocks?.length&&cache.facesLength===level?.faces?.length&&
-      cache.generation===gen&&cache.form===actor.form&&cache.grounded===actor.grounded&&
+      cache.form===actor.form&&cache.grounded===actor.grounded&&cache.team===actor.team&&cache.remote===actor.remote&&
+      cache.runner===runner&&cache.charge===charge&&cache.chargeTime===w.chargeTime&&
       cache.speed===w.projSpeed&&cache.straight===w.straightTime&&
       cache.range===w.range&&cache.radius===w.impactRadius&&
       cache.guideFrame===w.shotGuideFrame&&cache.inkProfile===w.inkFlightProfile&&
@@ -2401,10 +2410,17 @@ export function installWeaponsFidelity(context,profile) {
       cache.aimPoint.equals(actor.aimPoint)&&cache.aimDir.equals(actor.aimDir)&&
       (!Number.isFinite(t)||(t>=cache.at&&t-cache.at<.2)))return cache.result;
     cache.valid=false;
-    cache.actor=actor;cache.weapon=w;cache.physics=physics;cache.raycast=physics.raycast;
+    cache.actor=actor;cache.character=actor.character;cache.weapon=w;cache.actorWeapon=actor.weapon;cache.weaponId=actor.weaponId;
+    cache.physics=physics;cache.raycast=physics.raycast;cache.los=physics.los;
     cache.segment=physics.segment;cache.level=level;cache.blocks=level?.blocks;
     cache.faces=level?.faces;cache.blocksLength=level?.blocks?.length;
-    cache.facesLength=level?.faces?.length;cache.generation=gen;
+    cache.facesLength=level?.faces?.length;cache.revision=revision;cache.gameLevel=api.G.level;cache.hash=level?.hash;
+    cache.queryBlocks=level?.queryBlocks;cache.queryDynamicBlocks=level?.queryDynamicBlocks;
+    cache.triangleWorld=level?.triangleWorld;cache.triangleSweep=level?.triangleWorld?.sweepSphere;cache.triangleRaycast=level?.triangleWorld?.raycast;
+    cache.nativeData=level?.data;cache.native=level?.native;cache.staticBlockCount=level?.staticBlockCount;
+    cache.inkFlight=this.inkFlight;cache.inkWorld=this.inkFlight?.world;cache.muzzleFn=this._muzzle;cache.aimFn=this._aimFrom;cache.ballisticFn=this._ballistic;
+    cache.nominalFn=this._nominalInkGuide;cache.advanceFn=this._advanceInkGuide;cache.contactFn=this._inkGuideContact;
+    cache.team=actor.team;cache.remote=actor.remote;cache.runner=runner;cache.charge=charge;cache.chargeTime=w.chargeTime;
     cache.form=actor.form;cache.grounded=actor.grounded;
     cache.speed=w.projSpeed;cache.straight=w.straightTime;
     cache.range=w.range;cache.radius=w.impactRadius;cache.ballistics=w.ballistics;
@@ -2439,7 +2455,7 @@ export function installWeaponsFidelity(context,profile) {
       if(hit.hit){hit.guideFrame=Math.round(p.age*60);result=hit;break;}
       if(p.pos.y<api.PLAYER.waterY-1.8||++guard>144)break;
     }
-    cache.result=result;cache.valid=true;
+    cache.result=result;cache.valid=reusable;
     return result;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;

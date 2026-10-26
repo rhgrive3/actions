@@ -12,7 +12,9 @@ class Hit {
 }
 
 test('#945: stationary Shooter reticle avoids repeat sweeps and invalidates on every source change', () => {
-  const level = { blocks: [], hash: {}, blockStamp: 1 };
+  // Isolated consumer mock implements the verified producer's revision contract.
+  // The real Level/Tower producer is covered by shooter-shot-guide-cache.
+  const level = { blocks: [], hash: {}, blockStamp: 1, collisionRevision: 0 };
   const G = { time: 1, physics: { level, raycast() {} } };
   const shared = new Hit();
   let sweeps = 0;
@@ -50,11 +52,17 @@ test('#945: stationary Shooter reticle avoids repeat sweeps and invalidates on e
   assert.equal(sweeps, 5, 'ballistics updates invalidate');
   level.blockStamp++;
   p.muzzleBlockFeedback(actor);
-  assert.equal(sweeps, 6, 'collision generation invalidates');
+  assert.equal(sweeps, 5, 'query-dedup stamps are not collision changes');
+  level.collisionRevision++;
+  p.muzzleBlockFeedback(actor);
+  assert.equal(sweeps, 6, 'verified collision revision invalidates');
   G.physics = { level, raycast() {} };
   p.muzzleBlockFeedback(actor);
   assert.equal(sweeps, 7, 'physics replacement invalidates');
   G.time += .26;
   p.muzzleBlockFeedback(actor);
-  assert.equal(sweeps, 8, 'in-place geometry refresh stays bounded to 250ms');
+  assert.equal(sweeps, 8, 'existing periodic refresh remains bounded');
+  delete level.collisionRevision;
+  p.muzzleBlockFeedback(actor);p.muzzleBlockFeedback(actor);
+  assert.equal(sweeps, 10, 'unverified collision owners are never reused');
 });
