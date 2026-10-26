@@ -1,0 +1,292 @@
+{
+  "status": "bounded native touch observation passed; unfinished batch and guide cost remain open",
+  "sourceHead": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+  "contentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+  "inputHash": "472bb723b7424abccdc8e6eb1a08978462c58d104db02d56163140f679176bbc",
+  "browser": "154.0.8037.57",
+  "execution": {
+    "commandSandboxException": "one supported require_escalated invocation accepted and executed",
+    "browserSandboxEnabled": true,
+    "noNoSandboxFlag": true,
+    "permissionOrSecuritySettingsChanged": false,
+    "unsafeSwiftshaderAndDevtoolsWarningDefaultFlagsRemoved": true,
+    "scope": "existing installed Chromium, local built assets, isolated mobile touch context"
+  },
+  "nativeInput": {
+    "menuRoute": {
+      "route": [
+        "main",
+        "mode",
+        "range"
+      ],
+      "gestures": [
+        {
+          "type": "click",
+          "trusted": true,
+          "selector": ".iw-ui [data-id=\"play\"]"
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "selector": ".iw-ui [data-id=\"mode-range\"]"
+        }
+      ]
+    },
+    "trustedFirePointerDowns": 2,
+    "totalTrustedCapturedGestures": 22,
+    "pointerLockErrors": 0,
+    "directActorChargeTimePoseWrites": false,
+    "manualSimulationFrames": false,
+    "touchReleaseEvidence": "CDP touchEnd followed by native fireInput/intent false and runner charge reset, not a state assignment"
+  },
+  "charger": {
+    "id": "s3-charger-long",
+    "renderObservations": 33,
+    "maxCharge": 1,
+    "recordedRise": [
+      {
+        "kind": "recorded-rise",
+        "weapon": "s3-charger-long",
+        "time": 9.066766666666709,
+        "wall": 119510.30000000075,
+        "playing": true,
+        "chargeTime": 1.5333333333333334
+      }
+    ],
+    "bufferSources": [
+      {
+        "weapon": "s3-charger-long",
+        "time": 9.066766666666709,
+        "wall": 119510.20000000019,
+        "rate": 1,
+        "duration": 1.863015873015873,
+        "length": 82159,
+        "args": [
+          64.45278911564625,
+          0,
+          1.863015873015873
+        ]
+      }
+    ],
+    "chargeGainTapPeak": 0.1995779126882553,
+    "chargeGainTapRms": 0.06095463948478381,
+    "firstNativeHead": {
+      "weapon": "s3-charger-long",
+      "time": 12.066766666666858,
+      "wall": 142635.40000000037,
+      "ink": 75.0000000000003,
+      "heads": [
+        {
+          "age": 0.016666666666666666,
+          "pos": [
+            0.8534886436846508,
+            1.0235558507077809,
+            -6.327128796946893
+          ],
+          "start": [
+            0.9493992763280109,
+            1.709646387955101,
+            -15.902100385690414
+          ],
+          "catalog": true
+        }
+      ],
+      "drops": []
+    },
+    "nativeDrawFrames": 2,
+    "headInRenderSnapshot": false,
+    "fallingDropInRenderSnapshot": false
+  },
+  "bow": {
+    "id": "s3-stringer-normal",
+    "renderObservations": 27,
+    "runnerStages": [
+      0,
+      1,
+      2
+    ],
+    "hudStages": [
+      "first",
+      "second",
+      "full"
+    ],
+    "stageCues": [
+      {
+        "kind": "charger_full",
+        "weapon": "s3-stringer-normal",
+        "time": 18.966766666666885,
+        "wall": 175576.60000000056,
+        "pitch": 0.8
+      },
+      {
+        "kind": "charger_full",
+        "weapon": "s3-stringer-normal",
+        "time": 19.666766666666845,
+        "wall": 178054.60000000056,
+        "pitch": 1
+      }
+    ],
+    "hudOffsetsObserved": [
+      [
+        "first",
+        "157.08"
+      ],
+      [
+        "first",
+        "78.54"
+      ],
+      [
+        "second",
+        "157.08"
+      ],
+      [
+        "second",
+        "100.98"
+      ],
+      [
+        "second",
+        "44.88"
+      ],
+      [
+        "full",
+        "0"
+      ],
+      [
+        "full",
+        "0"
+      ],
+      [
+        "full",
+        "0"
+      ],
+      [
+        "full",
+        "0"
+      ]
+    ],
+    "firstNativeVolley": {
+      "weapon": "s3-stringer-normal",
+      "time": 20.73343333333345,
+      "wall": 181744.90000000037,
+      "ink": 91.4999999999999,
+      "heads": [
+        {
+          "age": 0.016666666666666666,
+          "pos": [
+            0.4089200235877312,
+            1.4489163081385723,
+            -12.573753016149068
+          ],
+          "start": [
+            0.42734873703897147,
+            1.719964279682745,
+            -16.414155778834555
+          ],
+          "catalog": true
+        },
+        {
+          "age": 0.016666666666666666,
+          "pos": [
+            0.8089154182765275,
+            1.4489163081385723,
+            -12.571833581921451
+          ],
+          "start": [
+            0.8273441317277677,
+            1.719964279682745,
+            -16.41223634460694
+          ],
+          "catalog": true
+        },
+        {
+          "age": 0.016666666666666666,
+          "pos": [
+            1.2089108129653237,
+            1.4489163081385723,
+            -12.569914147693835
+          ],
+          "start": [
+            1.2273395264165639,
+            1.719964279682745,
+            -16.410316910379322
+          ],
+          "catalog": true
+        }
+      ],
+      "drops": []
+    },
+    "arrows": 3,
+    "masterPeak": 0.08793310821056366,
+    "masterRms": 0.01618408283765892,
+    "isolatedBowDingPcm": false
+  },
+  "errors": [],
+  "requestFailures": [
+    {
+      "url": "http://127.0.0.1:36517/_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Explosion_00.mp3",
+      "error": "net::ERR_ABORTED"
+    }
+  ],
+  "warnings": [
+    {
+      "type": "warning",
+      "text": "[]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x2d3c000fac00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x2d3c000fac00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x2d3c000fac00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x2d3c000fac00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ],
+  "loadedRuntimeHashesVerified": [
+    "_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+    "_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs",
+    "_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/audio/runtime.mjs",
+    "_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/catalog-charge-stages.mjs",
+    "_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "_versions/6a4e67b8e65127b67244835c66e86e73d21a87c33f3bb877225ccc20593cf826/patches/splatoon3/runtime/stringer-charge-hud.mjs"
+  ],
+  "receipt": {
+    "path": "result.json.gz",
+    "rawSha256": "365b1c5b4a8380d88e2e385ef6c531b920f0755e7307c6d43bb43299128412d7",
+    "gzipSha256": "3d1c2279bcc1648b11824ab963d50901d626ef715f0eb6b0533404e42f466de2"
+  },
+  "images": {
+    "s3-stringer-normal-before.png": "35273038621cc45b7b55f2480f744f9935c2e0af4d027414d624ab0f75e87bec",
+    "s3-stringer-normal-second-stage.png": "fbbaf1646c8baeabfcb462eb5038e1af630b336bb3ae80eabb4e1fde8a464d49",
+    "s3-charger-long-held-full.png": "efabe00920732deb42d288d934ac00bef4ad00bd03e34506c6c3bf62d4a6061e",
+    "s3-charger-long-charging.png": "02b33dd18ff44952ddf13ae890c0f4a75ec397c3804a145fe95a8532702d0633",
+    "s3-stringer-normal-held-full.png": "701e117d413f1283f93f7e9c714fbe6cf9d731ffe556b377ae1da34398352f79",
+    "s3-stringer-normal-first-stage.png": "ee3b22731029a095ebbc85728bd1555e2193564b379d2af79aa945cb7c795073",
+    "s3-charger-long-before.png": "cd31a8e8094be04318ab3c71ca0a7fb4c3803a5a03be8cd57b0e40023cb9ae19",
+    "s3-stringer-normal-after.png": "fa58cc0616004ded8570194aaebc88254cad214f452ff0e2f23291ad82f3e25b",
+    "s3-stringer-normal-flight.png": "24cd55fbc9cf4e3dc639f0922d78417343800cd5ab16883dafb12b2cc0b7361e",
+    "s3-stringer-normal-full.png": "5bad6c7ba3230d7b9341ca72587dba679c1349df661b31fc1a726887d16685d8",
+    "s3-charger-long-after.png": "ed080ffd618a0c5a6da4fbc41e59daa753fbe0903d8fc6390b8d964f9ae19394"
+  },
+  "limits": [
+    "This is ordinary shipping touch input in Chromium emulation, not a component fixture. It is not real iPad/Switch or original-game parity.",
+    "Native render observer runs before normal HUD update; runner state and sampled DOM can refer to adjacent natural passes. Observed offsets prove native connected progression without a same-frame latency claim.",
+    "First/second-stage PNGs are canvas-only and omit the DOM HUD. Only before/held-full/after page screenshots include shipping touch controls and HUD; mid-stage HUD pixels are not independently proven by those canvas images.",
+    "E-liter head is captured by native projectile _draw records at age 1/60s, but its short head/falling drops were not seen in a rendered snapshot. No forced clock, input or state is used to repair that gap.",
+    "Stage cue calls run through the unmocked live audio engine. Bow master PCM is nonzero but stage dings were not isolated from its other sounds or compared to retail audio.",
+    "One background Suction Bomb explosion preload aborted during kit change; no charge-asset request failure or page error.",
+    "GPU readback stalls, missing parallel shader extension and software-renderer warnings make this unsuitable as an FPS or hardware/performance benchmark.",
+    "Repeated Shooter shot-guide tracing cost remains under independent repair; no overall performance pass or final-head CI claim."
+  ]
+}

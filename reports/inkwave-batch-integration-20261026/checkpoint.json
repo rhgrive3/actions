@@ -78,6 +78,7 @@
     }
   },
   "pending": [
+    "Shooter repeated-prediction cost regression, safe reuse/world-revision invalidation and horizontal inner-marker owner diagnosis",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "Resolve rejected PR creation; no further retry or bypass",
     "required automatic CI on eventual final head"
@@ -169,5 +170,21 @@
     "browser": "passed, actual emitted Actor/Physics/GPU paint and controlled FX",
     "evidenceDirectory": "post-flat-fastpath",
     "status": "affected checks passed; partial batch, publication blocked; not final CI"
+  },
+  "nativeTouch90bb": {
+    "sourceHead": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+    "review": "native-touch-90bb/review.json",
+    "execution": "One approved require_escalated invocation; browser sandbox true; no no-sandbox, chmod/chown or browser/OS security changes",
+    "trustedFireTouchInputs": 2,
+    "charger": "full charge, actual 1x recorded source, nonzero charge-only PCM, native head fired",
+    "bow": "runner 0/1/2, actual HUD first/second/full progress, both cue calls, native three-arrow volley",
+    "pageErrors": 0,
+    "pointerLockErrors": 0,
+    "notProven": [
+      "mid-stage DOM HUD pixels from canvas-only snapshots",
+      "E-liter short-head/falling-drop rendered frames",
+      "hardware/original agreement",
+      "overall or final-head performance/CI success"
+    ]
   }
 }
