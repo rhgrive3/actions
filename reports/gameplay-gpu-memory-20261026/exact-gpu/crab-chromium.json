@@ -1,0 +1,215 @@
+{
+  "frames": [
+    {
+      "count": 1,
+      "measured": [
+        {
+          "op": "data",
+          "bytes": 756
+        },
+        {
+          "op": "data",
+          "bytes": 756
+        },
+        {
+          "op": "data",
+          "bytes": 504
+        },
+        {
+          "op": "data",
+          "bytes": 32768
+        },
+        {
+          "op": "data",
+          "bytes": 6144
+        },
+        {
+          "op": "data",
+          "bytes": 480
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 2,
+      "pixelsMatch": true
+    },
+    {
+      "count": 2,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 128
+        },
+        {
+          "op": "sub",
+          "bytes": 24
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 3,
+      "pixelsMatch": true
+    },
+    {
+      "count": 64,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 4096
+        },
+        {
+          "op": "sub",
+          "bytes": 768
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 66,
+      "pixelsMatch": true
+    },
+    {
+      "count": 1,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 64
+        },
+        {
+          "op": "sub",
+          "bytes": 12
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 2,
+      "pixelsMatch": true
+    },
+    {
+      "count": 0,
+      "measured": [],
+      "full": [],
+      "prefixMatches": true,
+      "paintedPixels": 0,
+      "pixelsMatch": true
+    },
+    {
+      "count": 3,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 192
+        },
+        {
+          "op": "sub",
+          "bytes": 36
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 5,
+      "pixelsMatch": true
+    },
+    {
+      "count": 512,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 72,
+      "pixelsMatch": true
+    },
+    {
+      "count": 1,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 64
+        },
+        {
+          "op": "sub",
+          "bytes": 12
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 32768
+        },
+        {
+          "op": "sub",
+          "bytes": 6144
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 2,
+      "pixelsMatch": true
+    }
+  ],
+  "error": 0,
+  "renderer": "WebKit WebGL",
+  "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "harnessHash": "e1be6f58bae6fe9236d71f2afed34a89add19a5e583b3b33f9f995823ed91302",
+  "runtimeHash": "0d12a2cd3ce7409a23df36e8ac371e9a3c52b6349c98ee9733c73776190324d7"
+}

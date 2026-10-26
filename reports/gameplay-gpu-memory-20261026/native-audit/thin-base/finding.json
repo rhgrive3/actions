@@ -1,0 +1,30 @@
+{
+  "reviewThread": "PRRT_kwDOUbp58s6wKqTw",
+  "reviewComment": 4374774346,
+  "probeHash": "02b15db368e687c857bc898fc89ca977ee56b97d7001f06c624c4deeb56a6381",
+  "probeResultHash": "094add4b6cf771166678642d1ab2c18d508d0732e929d65010d6a3873d1a7d5f",
+  "formats": [
+    "BC7",
+    "BC6H",
+    "DXT1",
+    "DXT5",
+    "RGTC1",
+    "RGTC2"
+  ],
+  "invalidBaseOperationCount": 102,
+  "invalidBaseError": 1282,
+  "legalBaseOperationCount": 54,
+  "legalBaseErrors": 0,
+  "legalTerminalUploads": 18,
+  "terminalErrors": 0,
+  "beforePredicate": "n===1||n===2||n%4===0",
+  "afterPredicate": "n%4===0",
+  "positiveTests": 64,
+  "positiveFailures": 0,
+  "negativeOldPredicateAdditionalFailures": 2,
+  "sourceHash": "c08ab65d913bad3fe32f5ec29b89e7f821d5df6b0c840d7b8e6c53cfd6a7370b",
+  "testHash": "c6fdd6871d39f21b20e63e932d85989dbb3196d281bd02205faebd4ffcbcc427",
+  "validationLogHash": "f1b37c4148de264edb557360d231dba7e97cb75fd8b846bafb7e5eaeafc05fc3",
+  "negativeLogHash": "06dbce5adc824def4dae0123e7463e1b1afe70729d81e964e8d4ccfbad2b4432",
+  "preservedExistingAssertionLineCount": 18
+}

@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "sourceSha": "e4bb8f934db08c14abedd41845f0799c33d936e7",
+  "scope": "Read-only local source and already-recorded native evidence. No browser, test, binary asset download or app edit.",
+  "sources": {
+    "prebuilt_load": {
+      "path": "patches/native-stages/runtime/prebuilt-load.mjs",
+      "sha256": "92ba6dc2e57bd95c6491786b378e0241f76da9a53e761a23b0b03ca6457178d8",
+      "matchesSourceSha": true
+    },
+    "source_data": {
+      "path": "patches/native-stages/runtime/source-data.mjs",
+      "sha256": "4dae4123eec4fe7fcbc07b37e40e4d4c0e6c136bc4f525c464e49276c08b3459",
+      "matchesSourceSha": true
+    },
+    "source_worker": {
+      "path": "patches/native-stages/runtime/source-worker.mjs",
+      "sha256": "b7d2883a7d4a4c38c4dd33748063d72c5b15d8f90117986b64e91c9d1f7b476b",
+      "matchesSourceSha": true
+    },
+    "native_load": {
+      "path": "patches/native-stages/runtime/native-load.mjs",
+      "sha256": "e5985c77c26f2025ba2ec4d26f24bcfd440c292058a1493bac4c5597af354108",
+      "matchesSourceSha": true
+    },
+    "native_world": {
+      "path": "patches/native-stages/runtime/native-world.mjs",
+      "sha256": "312a05c4d541180bf93e80b96a26f6a0691e3eab5c663dea341a0856c71478fb",
+      "matchesSourceSha": true
+    },
+    "native_render": {
+      "path": "patches/native-stages/runtime/native-render.mjs",
+      "sha256": "dab027cd025b4437e50601dfdf974c957ed76f00355a3ab3db9d782403b1fe49",
+      "matchesSourceSha": true
+    },
+    "source_cache": {
+      "path": "patches/native-stages/runtime/source-cache.mjs",
+      "sha256": "cd92a66d355f9719d4d64e57468260d6ec125eeeed1afa988955fb5766ae2a39",
+      "matchesSourceSha": true
+    },
+    "source_retention": {
+      "path": "patches/native-stages/runtime/source-retention.mjs",
+      "sha256": "86e7022861c1e1fcb798fc983e0d98a7343be5fbbce433f2a74fbde1ba3a5d0a",
+      "matchesSourceSha": true
+    },
+    "ktx2_loader": {
+      "path": "inkwave-public/vendor/three/jsm/loaders/KTX2Loader.js",
+      "sha256": "3a3233ce3409443076d3414b78832e1405fcfac5ecb34d367365fd0781127d6c",
+      "matchesSourceSha": true
+    },
+    "worker_pool": {
+      "path": "inkwave-public/vendor/three/jsm/utils/WorkerPool.js",
+      "sha256": "5ac7095fd566bc9ae48376055fd66edf27cb9ebbf9e1269dc206bfd4933ae9eb",
+      "matchesSourceSha": true
+    }
+  },
+  "logicalStages": 23,
+  "scorch": {
+    "id": "scorch",
+    "metadataBytes": 174831,
+    "declaredArrayBuffers": 14,
+    "arrayBytes": 34136418,
+    "displayBytes": 13563204,
+    "faceColumnBytes": 9495604,
+    "persistentTypedArrayBytesAfterDisplayUpload": 11077610,
+    "faces": 45171,
+    "arrays": {
+      "triangles": 4814532,
+      "normals": 1604844,
+      "flags": 534948,
+      "objectIds": 534948,
+      "nodes": 1048544,
+      "order": 534948,
+      "vertices": 10211616,
+      "indices": 3351588,
+      "mask": 1469898,
+      "triangleFace": 534948,
+      "faceF64": 8311464,
+      "faceI32": 722736,
+      "faceTriangleOffsets": 180688,
+      "faceTriangles": 280716
+    },
+    "metadataSha256": "1aaf93de6dd84bb9e2c47b8b5d16159691945e37d82b2f135b73afa6e655da06",
+    "pinnedBuildEntry": {
+      "stageSha256": "1aaf93de6dd84bb9e2c47b8b5d16159691945e37d82b2f135b73afa6e655da06",
+      "bytes": 174831
+    },
+    "pinMatches": true,
+    "retainedTypedArrayCountAfterDisplayUpload": 8,
+    "qualification": "The metadata is authenticated by SHA-256/integrity checking, not a digital signature. Byte totals exclude JavaScript object overhead, navigation/paint arrays and decoded/transcoded texture data."
+  },
+  "policies": {
+    "ramStagePayloads": {
+      "policy": "No module-level Map retaining completed native payloads by stage ID was found. Each prebuilt entry is fetched/verified and rebuilt into fresh arrays; current NativeLevel.data/nativeWorld own the active data. A detached candidate overlaps the active world during preparation.",
+      "refs": [
+        "source-data.mjs:2-8",
+        "prebuilt-load.mjs:26-57",
+        "native-world.mjs:72",
+        "native-world.mjs:134-162"
+      ]
+    },
+    "cachedFlag": {
+      "policy": "Prebuilt load always writes cached:false. cached:true is only a successful fallback source-worker readDerived IndexedDB hit. It does not describe RAM caching or ordinary HTTP cache hits. Touch/constrained fallback skips both derived reads and writes.",
+      "refs": [
+        "prebuilt-load.mjs:55",
+        "source-worker.mjs:24-33",
+        "source-worker.mjs:60-63"
+      ]
+    },
+    "displayAndFaces": {
+      "policy": "Publication sets data.vertices/data.indices to null. Display InterleavedBuffer/index onUpload callbacks null the CPU arrays. Prebuilt face columns are deleted after unpacking into JS face objects; NativeLevel builds additional JS geometry/physics structures.",
+      "refs": [
+        "native-world.mjs:159-162",
+        "native-render.mjs:63",
+        "native-render.mjs:86-89",
+        "prebuilt-load.mjs:50-52",
+        "prebuilt-format.mjs:9-19",
+        "native-level.mjs:17-50"
+      ]
+    },
+    "textures": {
+      "policy": "Texture provenance is WeakMap-keyed by texture. Job/alias/pack maps are local to one texture-load call; pack buffers are dropped after final slice and release(). PNG bitmap memory closes on upload; converted normal DataTexture image.data becomes null. CompressedTexture mip arrays remain owned by the current texture until object collection; no post-upload release was found for compressed mip CPU buffers. Display disposal closes images, disposes textures and clears its texture map.",
+      "refs": [
+        "native-load.mjs:7-24",
+        "native-load.mjs:61-73",
+        "native-load.mjs:158-168",
+        "native-load.mjs:226-240",
+        "native-render.mjs:120-126"
+      ]
+    },
+    "ktx2": {
+      "policy": "One module KTX2 loader is kept for the current renderer, with a WeakMap task cache. It has a WorkerPool (default maximum4) and retains transcoder resources until renderer replacement/disposal. Native texture jobs run at most2 concurrent workers with the configured cap. This can preserve worker/WASM high-water memory, but is not a per-stage completed-payload Map. Exact worker residency was not measured.",
+      "refs": [
+        "native-load.mjs:47-59",
+        "native-load.mjs:238",
+        "KTX2Loader.js:90",
+        "KTX2Loader.js:154-157",
+        "KTX2Loader.js:502-514",
+        "WorkerPool.js:12-14"
+      ]
+    },
+    "rawSourceDisk": {
+      "policy": "CacheStorage stores verified raw-source bodies. Without managed byte accounting it retains the active stage plus one most recently touched cold stage. Managed policy can keep more smaller stages inside a byte budget bounded by the two largest observed stage-body sizes and available quota minus one largest-stage headroom reserve. The policy ledger retains only stage names/counts/timestamps, not payload bytes. One active-slot promise caches the Cache wrapper for5seconds. This does not govern prebuilt normal HTTP caching.",
+      "refs": [
+        "source-cache.mjs:35-55",
+        "source-retention.mjs:35-42"
+      ]
+    },
+    "derivedDisk": {
+      "policy": "IndexedDB writes retain at most2 derived entries across keys (SOURCE_RECIPE/runtimeHash/sourceHash). Eviction is by most-recent write, not access LRU: readDerived does not refresh time. Constrained/touch fallback skips derived read and write. Each fallback worker is terminated when load finishes or aborts.",
+      "refs": [
+        "source-cache.mjs:146-158",
+        "source-worker.mjs:25-33",
+        "source-worker.mjs:60-64",
+        "source-data.mjs:12-17"
+      ]
+    }
+  },
+  "localInventoryLimit": {
+    "expandedMetadataStages": [
+      "scorch"
+    ],
+    "lfsPointerOnlyStages": [
+      "airport",
+      "barnacle",
+      "bluefin",
+      "brinewater",
+      "crableg",
+      "eeltail",
+      "flounder",
+      "hagglefish",
+      "hammerhead",
+      "humpback",
+      "inkblot",
+      "mako",
+      "manta",
+      "mincemeat",
+      "museum",
+      "robo",
+      "shipshape",
+      "sturgeon",
+      "umami",
+      "undertow",
+      "urchin",
+      "wahoo"
+    ],
+    "unavailableCount": 22,
+    "finding": "The other22 stage metadata files are LFS pointers. No decoded/collision/texture byte total for those stages can be derived from these local inputs without fetching them, which this audit did not do."
+  },
+  "existingCompletedNativeEvidence": {
+    "path": ".ci-scratch/gameplay/baseline-native-final/result.json",
+    "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+    "conditions": {
+      "crabLifecycle": false,
+      "expectedLifecycle": "released",
+      "maps": [
+        "scorch",
+        "tidewater",
+        "scorch"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 3,
+      "seconds": 20,
+      "quality": "high",
+      "mobile": true,
+      "viewport": [
+        1133,
+        744
+      ],
+      "deviceScaleFactor": 2,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "windows": [
+      {
+        "label": "released-0",
+        "map": "scorch",
+        "nativeSource": {
+          "prebuilt": true,
+          "cached": false,
+          "sourceMode": "browser-direct",
+          "vertices": 319113,
+          "triangles": 279299,
+          "atlas": 2048,
+          "textureCount": 235
+        },
+        "memory": {
+          "geometries": 464,
+          "textures": 261
+        },
+        "jsHeapUsedBytes": 129544200
+      },
+      {
+        "label": "released-1",
+        "map": "tidewater",
+        "nativeSource": null,
+        "memory": {
+          "geometries": 426,
+          "textures": 32
+        },
+        "jsHeapUsedBytes": 136897632
+      },
+      {
+        "label": "released-2",
+        "map": "scorch",
+        "nativeSource": {
+          "prebuilt": true,
+          "cached": false,
+          "sourceMode": "browser-direct",
+          "vertices": 319113,
+          "triangles": 279299,
+          "atlas": 2048,
+          "textureCount": 235
+        },
+        "memory": {
+          "geometries": 561,
+          "textures": 261
+        },
+        "jsHeapUsedBytes": 212370720
+      },
+      {
+        "label": "final",
+        "map": "scorch",
+        "nativeSource": {
+          "prebuilt": true,
+          "cached": false,
+          "sourceMode": "browser-direct",
+          "vertices": 319113,
+          "triangles": 279299,
+          "atlas": 2048,
+          "textureCount": 235
+        },
+        "memory": {
+          "geometries": 561,
+          "textures": 259
+        },
+        "jsHeapUsedBytes": 209300892
+      }
+    ],
+    "interpretation": "Scorch -> Tidewater -> Scorch removes native GPU textures on exit (261->32) and recreates them on reentry. All Scorch cached flags are false. Post-GC JS heap rises129.5MB->136.9MB->212.4MB and final209.3MB in this broader game scenario. These numbers do not attribute retained CPU memory to any particular payload/cache or prove old-stage collection. No multi-distinct-native-stage RAM census or native heap snapshot was taken."
+  },
+  "conclusion": "No unbounded stage-ID module payload Map was found. Disk caches have explicit limits; active/native loading data and decoder workers still have nontrivial CPU memory costs. Source cleanup policy is not proof that every old world is collected if another owner remains. Do not infer cache leakage from cached flag or a finite catalogue alone; no app change is proposed."
+}

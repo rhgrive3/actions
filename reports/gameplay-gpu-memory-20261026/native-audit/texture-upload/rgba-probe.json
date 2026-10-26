@@ -1,0 +1,72 @@
+{
+  "conditions": "tiny isolated actual KTX2 loader/real WebGL; no timing claim",
+  "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.KTX2Loader: Multiple active KTX2 loaders may cause performance issues. Use a single KTX2Loader instance, or call .dispose() on old instances.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glTexStorage2D: The implied base level dimensions for an S3TC, RGTC, or BPTC texture are not multiples of 4.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x13d4001b8400] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+  ],
+  "sourceSha256": "dbba919cb6c79a477294ea5b83541e9eb972bb4dbb7810a351ddaad1d92ec27b",
+  "result": {
+    "compressedFormat": 36492,
+    "rgbaFormat": 1023,
+    "rgbaExpected": 1023,
+    "selectedMip": 1,
+    "dimensions": [
+      400,
+      30
+    ],
+    "beforeErrors": [
+      1282
+    ],
+    "uploadError": 0,
+    "drawError": 0,
+    "bytes": 48000,
+    "mismatches": 0,
+    "referencePrefix": [
+      120,
+      212,
+      216,
+      255,
+      87,
+      168,
+      209,
+      255,
+      151,
+      122,
+      223,
+      255,
+      87,
+      168,
+      209,
+      255
+    ],
+    "actualPrefix": [
+      120,
+      212,
+      216,
+      255,
+      87,
+      168,
+      209,
+      255,
+      151,
+      122,
+      223,
+      255,
+      87,
+      168,
+      209,
+      255
+    ]
+  },
+  "status": "completed"
+}

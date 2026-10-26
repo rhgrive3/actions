@@ -1,0 +1,17 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+const root='/workspace/inkwave',out=root+'/.ci-scratch/gameplay/bc-base-dimensions';for(const k of ['TMPDIR','TMP','TEMP'])process.env[k]=root+'/.ci-scratch/bt';const {chromium}=await import('playwright');
+const report={conditions:'Raw WebGL2 storage/upload correctness only; no timings or rendering change',console:[],harnessHash:crypto.createHash('sha256').update(fs.readFileSync(new URL(import.meta.url))).digest('hex')};let browser;
+try{browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage();page.on('console',m=>{if(['warning','error'].includes(m.type()))report.console.push(m.text());});
+report.result=await page.evaluate(()=>{const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl2'),bptc=gl.getExtension('EXT_texture_compression_bptc'),s3tc=gl.getExtension('WEBGL_compressed_texture_s3tc'),rgtc=gl.getExtension('EXT_texture_compression_rgtc'),ext=gl.getExtension('WEBGL_debug_renderer_info');
+ const formats=[];if(bptc)formats.push(['BC7',bptc.COMPRESSED_RGBA_BPTC_UNORM_EXT,16],['BC6H',bptc.COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT,16]);if(s3tc)formats.push(['DXT1',s3tc.COMPRESSED_RGB_S3TC_DXT1_EXT,8],['DXT5',s3tc.COMPRESSED_RGBA_S3TC_DXT5_EXT,16]);if(rgtc)formats.push(['RGTC1',rgtc.COMPRESSED_RED_RGTC1_EXT,8],['RGTC2',rgtc.COMPRESSED_RED_GREEN_RGTC2_EXT,16]);
+ const dimensions=[[1,1],[2,2],[4,4],[8,8],[400,2],[8,1],[8,2],[2,512],[4,1024]],rows=[];
+ for(const [name,format,blockBytes]of formats)for(const [width,height]of dimensions){
+  const data=new Uint8Array(Math.ceil(width/4)*Math.ceil(height/4)*blockBytes);
+  for(const levels of [...new Set([1,Math.floor(Math.log2(Math.max(width,height)))+1])]){
+   const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texStorage2D(gl.TEXTURE_2D,levels,format,width,height);const storageError=gl.getError();let subError=null;if(!storageError){gl.compressedTexSubImage2D(gl.TEXTURE_2D,0,0,0,width,height,format,data);subError=gl.getError();}rows.push({name,format,width,height,levels,api:'texStorage2D',storageError,subError});gl.deleteTexture(t);
+  }
+  const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.compressedTexImage2D(gl.TEXTURE_2D,0,format,width,height,0,data);rows.push({name,format,width,height,api:'compressedTexImage2D',error:gl.getError()});gl.deleteTexture(t);
+ }
+ const terminal=[];for(const [name,format,blockBytes]of formats){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texStorage2D(gl.TEXTURE_2D,3,format,4,4);const storageError=gl.getError(),levels=[];if(!storageError)for(const [level,size]of [[0,4],[1,2],[2,1]]){gl.compressedTexSubImage2D(gl.TEXTURE_2D,level,0,0,size,size,format,new Uint8Array(blockBytes));levels.push({level,size,error:gl.getError()});}terminal.push({name,storageError,levels});gl.deleteTexture(t);}
+ return{ua:navigator.userAgent,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,formats:formats.map(x=>x[0]),rows,terminal,finalError:gl.getError()};});report.status='completed';
+}catch(e){report.status='failed';report.error=e.stack;}finally{fs.writeFileSync(out+'/result.json',JSON.stringify(report,null,2));await browser?.close();console.log('browser closed',report.status);}

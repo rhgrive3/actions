@@ -1,0 +1,357 @@
+{
+  "nodes": 2263762,
+  "edges": 6820140,
+  "visited": 2169418,
+  "actors": [
+    {
+      "cycle": 0,
+      "target": {
+        "index": 541358,
+        "id": 1082957,
+        "type": "object",
+        "name": "rt"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3694,
+            "id": 7389,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:33921"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "5 / blink::ScriptStateProtectingContext::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 1529754,
+            "id": 3059537,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:33921"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 312827,
+            "id": 626127,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 953023,
+            "id": 1906157,
+            "type": "object",
+            "name": "k"
+          },
+          "edge": {
+            "type": "property",
+            "name": "shadowCache"
+          }
+        },
+        {
+          "node": {
+            "index": 1435853,
+            "id": 2871739,
+            "type": "object",
+            "name": "Array"
+          },
+          "edge": {
+            "type": "property",
+            "name": "_skippedOut"
+          }
+        },
+        {
+          "node": {
+            "index": 867272,
+            "id": 1734643,
+            "type": "object",
+            "name": "Oa"
+          },
+          "edge": {
+            "type": "element",
+            "name": 7
+          }
+        },
+        {
+          "node": {
+            "index": 539424,
+            "id": 1079091,
+            "type": "object",
+            "name": "i"
+          },
+          "edge": {
+            "type": "property",
+            "name": "geometry"
+          }
+        },
+        {
+          "node": {
+            "index": 580581,
+            "id": 1161395,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "property",
+            "name": "_listeners"
+          }
+        },
+        {
+          "node": {
+            "index": 1154069,
+            "id": 2308245,
+            "type": "object",
+            "name": "Array"
+          },
+          "edge": {
+            "type": "property",
+            "name": "dispose"
+          }
+        },
+        {
+          "node": {
+            "index": 707743,
+            "id": 1415601,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 707744,
+            "id": 1415603,
+            "type": "object",
+            "name": "system / Context / scope @482027"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 708328,
+            "id": 1416771,
+            "type": "object",
+            "name": "system / Context / scope @482033"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "previous"
+          }
+        },
+        {
+          "node": {
+            "index": 539408,
+            "id": 1079059,
+            "type": "object",
+            "name": "Oa"
+          },
+          "edge": {
+            "type": "context",
+            "name": "object"
+          }
+        },
+        {
+          "node": {
+            "index": 539429,
+            "id": 1079101,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "property",
+            "name": "onBeforeRender"
+          }
+        },
+        {
+          "node": {
+            "index": 539332,
+            "id": 1078907,
+            "type": "object",
+            "name": "system / Context / scope @407663"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 455335,
+            "id": 911131,
+            "type": "object",
+            "name": "ni"
+          },
+          "edge": {
+            "type": "context",
+            "name": "o"
+          }
+        },
+        {
+          "node": {
+            "index": 541358,
+            "id": 1082957,
+            "type": "object",
+            "name": "rt"
+          },
+          "edge": {
+            "type": "property",
+            "name": "actor"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": 1,
+      "target": {
+        "index": 668085,
+        "id": 1336259,
+        "type": "object",
+        "name": "rt"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3694,
+            "id": 7389,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:33921"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "5 / blink::ScriptStateProtectingContext::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 1529754,
+            "id": 3059537,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:33921"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 312827,
+            "id": 626127,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 312829,
+            "id": 626131,
+            "type": "object",
+            "name": "be"
+          },
+          "edge": {
+            "type": "property",
+            "name": "screenfx"
+          }
+        },
+        {
+          "node": {
+            "index": 668085,
+            "id": 1336259,
+            "type": "object",
+            "name": "rt"
+          },
+          "edge": {
+            "type": "property",
+            "name": "_local"
+          }
+        }
+      ]
+    }
+  ]
+}

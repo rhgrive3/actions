@@ -1,0 +1,4091 @@
+{
+  "started": "2026-10-26T06:18:22.566Z",
+  "site": "/workspace/inkwave/_site",
+  "conditions": {
+    "width": 1133,
+    "height": 744,
+    "dpr": 2,
+    "mobile": true,
+    "quality": "high",
+    "observer": true,
+    "diagnosticGetErrors": "after every native WebGL call; stalls and changes error consumption; no performance claim"
+  },
+  "siteManifestHash": "488548ce983cee97e91afc1893096b057917e1d7977a97d19f8a5df9fa2547db",
+  "console": [
+    {
+      "type": "warning",
+      "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] texStorage2D 1282 Error\n    at WebGL2RenderingContext.fn [as texStorage2D] (<anonymous>:11:530)\n    at Object.lt [as texStorage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14481)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30452)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[gl-native-trace] compressedTexSubImage2D 1282 Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:530)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glTexStorage2D: The implied base level dimensions for an S3TC, RGTC, or BPTC texture are not multiples of 4."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x1e44001bba00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "boot",
+      "trace": {
+        "phase": "boot",
+        "errors": [],
+        "counts": {
+          "getExtension": 8,
+          "getShaderPrecisionFormat": 2,
+          "getParameter": 20,
+          "createTexture": 40,
+          "bindTexture": 275,
+          "texParameteri": 213,
+          "texImage2D": 17,
+          "texImage3D": 5,
+          "clearColor": 30,
+          "clearDepth": 1,
+          "clearStencil": 1,
+          "enable": 142,
+          "depthFunc": 1,
+          "frontFace": 25,
+          "cullFace": 1,
+          "createFramebuffer": 15,
+          "getContextAttributes": 1,
+          "viewport": 61,
+          "createProgram": 171,
+          "createShader": 342,
+          "shaderSource": 342,
+          "compileShader": 342,
+          "attachShader": 342,
+          "bindAttribLocation": 171,
+          "linkProgram": 171,
+          "activeTexture": 143,
+          "texParameterf": 12,
+          "bindFramebuffer": 122,
+          "generateMipmap": 17,
+          "drawBuffers": 13,
+          "scissor": 69,
+          "disable": 144,
+          "framebufferTextureLayer": 75,
+          "createBuffer": 1062,
+          "bindBuffer": 2636,
+          "bufferData": 1062,
+          "deleteShader": 154,
+          "getProgramParameter": 154,
+          "getActiveUniform": 1660,
+          "getUniformLocation": 1660,
+          "getActiveAttrib": 287,
+          "getAttribLocation": 287,
+          "useProgram": 340,
+          "uniform2f": 78,
+          "uniform1f": 774,
+          "uniform1i": 202,
+          "depthMask": 158,
+          "colorMask": 1,
+          "createVertexArray": 325,
+          "bindVertexArray": 817,
+          "enableVertexAttribArray": 1705,
+          "vertexAttribPointer": 1705,
+          "drawArrays": 249,
+          "deleteVertexArray": 24,
+          "deleteProgram": 19,
+          "deleteBuffer": 64,
+          "framebufferTexture2D": 11,
+          "clear": 28,
+          "uniform3f": 885,
+          "uniform4f": 206,
+          "createRenderbuffer": 4,
+          "bindRenderbuffer": 8,
+          "renderbufferStorage": 4,
+          "framebufferRenderbuffer": 4,
+          "uniformMatrix4fv": 1212,
+          "drawElements": 350,
+          "pixelStorei": 15,
+          "texStorage2D": 23,
+          "stencilMask": 1,
+          "blendEquationSeparate": 1,
+          "blendFuncSeparate": 20,
+          "vertexAttribDivisor": 828,
+          "drawElementsInstanced": 54,
+          "checkFramebufferStatus": 2,
+          "deleteFramebuffer": 1,
+          "deleteTexture": 9,
+          "uniformMatrix3fv": 334,
+          "texSubImage2D": 36,
+          "drawArraysInstanced": 23,
+          "isContextLost": 7,
+          "readBuffer": 1,
+          "blitFramebuffer": 4,
+          "uniform1iv": 32,
+          "uniform4fv": 36,
+          "uniform2fv": 6,
+          "uniform3fv": 70,
+          "polygonOffset": 6,
+          "bufferSubData": 54
+        },
+        "recent": [
+          {
+            "name": "deleteProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 354
+              }
+            ],
+            "phase": "boot",
+            "call": 23023
+          },
+          {
+            "name": "deleteVertexArray",
+            "args": [
+              {
+                "type": "WebGLVertexArrayObject",
+                "id": 2754
+              }
+            ],
+            "phase": "boot",
+            "call": 23024
+          },
+          {
+            "name": "deleteProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 2714
+              }
+            ],
+            "phase": "boot",
+            "call": 23025
+          },
+          {
+            "name": "deleteProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 372
+              }
+            ],
+            "phase": "boot",
+            "call": 23026
+          },
+          {
+            "name": "deleteProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 375
+              }
+            ],
+            "phase": "boot",
+            "call": 23027
+          },
+          {
+            "name": "deleteProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 384
+              }
+            ],
+            "phase": "boot",
+            "call": 23028
+          },
+          {
+            "name": "deleteVertexArray",
+            "args": [
+              {
+                "type": "WebGLVertexArrayObject",
+                "id": 2887
+              }
+            ],
+            "phase": "boot",
+            "call": 23029
+          },
+          {
+            "name": "deleteVertexArray",
+            "args": [
+              {
+                "type": "WebGLVertexArrayObject",
+                "id": 2895
+              }
+            ],
+            "phase": "boot",
+            "call": 23030
+          },
+          {
+            "name": "deleteVertexArray",
+            "args": [
+              {
+                "type": "WebGLVertexArrayObject",
+                "id": 2900
+              }
+            ],
+            "phase": "boot",
+            "call": 23031
+          },
+          {
+            "name": "deleteProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 2850
+              }
+            ],
+            "phase": "boot",
+            "call": 23032
+          }
+        ],
+        "calls": 23032
+      },
+      "state": "playing",
+      "map": "tidewater",
+      "time": 0.05,
+      "contextLost": false
+    },
+    {
+      "label": "start-resolved",
+      "trace": {
+        "phase": "start-scorch",
+        "errors": [
+          {
+            "name": "texStorage2D",
+            "args": [
+              3553,
+              9,
+              36492,
+              400,
+              30
+            ],
+            "phase": "start-scorch",
+            "call": 35572,
+            "error": 1282,
+            "at": 127304.70000000112,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as texStorage2D] (<anonymous>:11:437)\n    at Object.lt [as texStorage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14481)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30452)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "uniform1i",
+                "args": [
+                  {
+                    "type": "WebGLUniformLocation",
+                    "id": 5449
+                  },
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35563
+              },
+              {
+                "name": "createTexture",
+                "args": [],
+                "phase": "start-scorch",
+                "call": 35564
+              },
+              {
+                "name": "activeTexture",
+                "args": [
+                  33988
+                ],
+                "phase": "start-scorch",
+                "call": 35565
+              },
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              0,
+              0,
+              0,
+              400,
+              30,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 12800,
+                "bytes": 12800
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35573,
+            "error": 1282,
+            "at": 127307.5,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "createTexture",
+                "args": [],
+                "phase": "start-scorch",
+                "call": 35564
+              },
+              {
+                "name": "activeTexture",
+                "args": [
+                  33988
+                ],
+                "phase": "start-scorch",
+                "call": 35565
+              },
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              1,
+              0,
+              0,
+              200,
+              15,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 3200,
+                "bytes": 3200
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35574,
+            "error": 1282,
+            "at": 127308.60000000149,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "activeTexture",
+                "args": [
+                  33988
+                ],
+                "phase": "start-scorch",
+                "call": 35565
+              },
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              2,
+              0,
+              0,
+              100,
+              7,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 800,
+                "bytes": 800
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35575,
+            "error": 1282,
+            "at": 127309.10000000149,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              3,
+              0,
+              0,
+              50,
+              3,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 208,
+                "bytes": 208
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35576,
+            "error": 1282,
+            "at": 127309.80000000075,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              4,
+              0,
+              0,
+              25,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 112,
+                "bytes": 112
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35577,
+            "error": 1282,
+            "at": 127310.30000000075,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              5,
+              0,
+              0,
+              12,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 48,
+                "bytes": 48
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35578,
+            "error": 1282,
+            "at": 127310.90000000037,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              6,
+              0,
+              0,
+              6,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 32,
+                "bytes": 32
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35579,
+            "error": 1282,
+            "at": 127311.5,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  6,
+                  0,
+                  0,
+                  6,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 32,
+                    "bytes": 32
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35579
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              7,
+              0,
+              0,
+              3,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 16,
+                "bytes": 16
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35580,
+            "error": 1282,
+            "at": 127312.30000000075,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  6,
+                  0,
+                  0,
+                  6,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 32,
+                    "bytes": 32
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35579
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  7,
+                  0,
+                  0,
+                  3,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 16,
+                    "bytes": 16
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35580
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              8,
+              0,
+              0,
+              1,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 16,
+                "bytes": 16
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35581,
+            "error": 1282,
+            "at": 127312.90000000037,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  6,
+                  0,
+                  0,
+                  6,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 32,
+                    "bytes": 32
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35579
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  7,
+                  0,
+                  0,
+                  3,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 16,
+                    "bytes": 16
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35580
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  8,
+                  0,
+                  0,
+                  1,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 16,
+                    "bytes": 16
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35581
+              }
+            ]
+          }
+        ],
+        "counts": {
+          "getExtension": 16,
+          "getShaderPrecisionFormat": 2,
+          "getParameter": 21,
+          "createTexture": 301,
+          "bindTexture": 973,
+          "texParameteri": 1291,
+          "texImage2D": 24,
+          "texImage3D": 5,
+          "clearColor": 49,
+          "clearDepth": 1,
+          "clearStencil": 1,
+          "enable": 161,
+          "depthFunc": 1,
+          "frontFace": 41,
+          "cullFace": 1,
+          "createFramebuffer": 23,
+          "getContextAttributes": 1,
+          "viewport": 129,
+          "createProgram": 209,
+          "createShader": 418,
+          "shaderSource": 418,
+          "compileShader": 418,
+          "attachShader": 418,
+          "bindAttribLocation": 208,
+          "linkProgram": 209,
+          "activeTexture": 785,
+          "texParameterf": 248,
+          "bindFramebuffer": 235,
+          "generateMipmap": 19,
+          "drawBuffers": 20,
+          "scissor": 137,
+          "disable": 163,
+          "framebufferTextureLayer": 75,
+          "createBuffer": 1682,
+          "bindBuffer": 4135,
+          "bufferData": 1682,
+          "deleteShader": 208,
+          "getProgramParameter": 208,
+          "getActiveUniform": 2802,
+          "getUniformLocation": 2802,
+          "getActiveAttrib": 411,
+          "getAttribLocation": 411,
+          "useProgram": 501,
+          "uniform2f": 110,
+          "uniform1f": 1197,
+          "uniform1i": 339,
+          "depthMask": 170,
+          "colorMask": 1,
+          "createVertexArray": 586,
+          "bindVertexArray": 1460,
+          "enableVertexAttribArray": 2336,
+          "vertexAttribPointer": 2336,
+          "drawArrays": 378,
+          "deleteVertexArray": 77,
+          "deleteProgram": 57,
+          "deleteBuffer": 207,
+          "framebufferTexture2D": 19,
+          "clear": 54,
+          "uniform3f": 1351,
+          "uniform4f": 236,
+          "createRenderbuffer": 8,
+          "bindRenderbuffer": 16,
+          "renderbufferStorage": 6,
+          "framebufferRenderbuffer": 8,
+          "uniformMatrix4fv": 1900,
+          "drawElements": 857,
+          "pixelStorei": 19,
+          "texStorage2D": 277,
+          "stencilMask": 1,
+          "blendEquationSeparate": 1,
+          "blendFuncSeparate": 26,
+          "vertexAttribDivisor": 841,
+          "drawElementsInstanced": 58,
+          "checkFramebufferStatus": 3,
+          "deleteFramebuffer": 6,
+          "deleteTexture": 21,
+          "uniformMatrix3fv": 467,
+          "texSubImage2D": 62,
+          "drawArraysInstanced": 37,
+          "isContextLost": 142,
+          "readBuffer": 1,
+          "blitFramebuffer": 9,
+          "uniform1iv": 56,
+          "uniform4fv": 60,
+          "uniform2fv": 10,
+          "uniform3fv": 106,
+          "polygonOffset": 7,
+          "bufferSubData": 62,
+          "deleteRenderbuffer": 1,
+          "renderbufferStorageMultisample": 2,
+          "readPixels": 1,
+          "fenceSync": 1,
+          "flush": 1,
+          "clientWaitSync": 157,
+          "getBufferSubData": 1,
+          "deleteSync": 1,
+          "getQuery": 2,
+          "createQuery": 2,
+          "beginQuery": 2,
+          "compressedTexSubImage2D": 2130,
+          "vertexAttrib3fv": 1,
+          "vertexAttrib2fv": 1,
+          "endQuery": 2,
+          "getQueryParameter": 2,
+          "deleteQuery": 1
+        },
+        "recent": [
+          {
+            "name": "viewport",
+            "args": [
+              0,
+              0,
+              1359,
+              892
+            ],
+            "phase": "start-scorch",
+            "call": 40143
+          },
+          {
+            "name": "scissor",
+            "args": [
+              0,
+              0,
+              360,
+              180
+            ],
+            "phase": "start-scorch",
+            "call": 40144
+          },
+          {
+            "name": "clearColor",
+            "args": [
+              0.6235342034740585,
+              0.847061083962765,
+              0.9411773850235038,
+              1
+            ],
+            "phase": "start-scorch",
+            "call": 40145
+          },
+          {
+            "name": "clear",
+            "args": [
+              17664
+            ],
+            "phase": "start-scorch",
+            "call": 40146
+          },
+          {
+            "name": "useProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 3535
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 40147
+          },
+          {
+            "name": "bindTexture",
+            "args": [
+              3553,
+              {
+                "type": "WebGLTexture",
+                "id": 4332
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 40148
+          },
+          {
+            "name": "bindVertexArray",
+            "args": [
+              {
+                "type": "WebGLVertexArrayObject",
+                "id": 5929
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 40149
+          },
+          {
+            "name": "drawArrays",
+            "args": [
+              4,
+              0,
+              3
+            ],
+            "phase": "start-scorch",
+            "call": 40150
+          },
+          {
+            "name": "endQuery",
+            "args": [
+              35007
+            ],
+            "phase": "start-scorch",
+            "call": 40151
+          },
+          {
+            "name": "isContextLost",
+            "args": [],
+            "phase": "start-scorch",
+            "call": 40152
+          }
+        ],
+        "calls": 40152
+      },
+      "state": "intro",
+      "map": "scorch",
+      "time": 3.88317666666664,
+      "contextLost": false
+    },
+    {
+      "label": "warm-0",
+      "trace": {
+        "phase": "warm-scorch",
+        "errors": [
+          {
+            "name": "texStorage2D",
+            "args": [
+              3553,
+              9,
+              36492,
+              400,
+              30
+            ],
+            "phase": "start-scorch",
+            "call": 35572,
+            "error": 1282,
+            "at": 127304.70000000112,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as texStorage2D] (<anonymous>:11:437)\n    at Object.lt [as texStorage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14481)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30452)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "uniform1i",
+                "args": [
+                  {
+                    "type": "WebGLUniformLocation",
+                    "id": 5449
+                  },
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35563
+              },
+              {
+                "name": "createTexture",
+                "args": [],
+                "phase": "start-scorch",
+                "call": 35564
+              },
+              {
+                "name": "activeTexture",
+                "args": [
+                  33988
+                ],
+                "phase": "start-scorch",
+                "call": 35565
+              },
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              0,
+              0,
+              0,
+              400,
+              30,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 12800,
+                "bytes": 12800
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35573,
+            "error": 1282,
+            "at": 127307.5,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "createTexture",
+                "args": [],
+                "phase": "start-scorch",
+                "call": 35564
+              },
+              {
+                "name": "activeTexture",
+                "args": [
+                  33988
+                ],
+                "phase": "start-scorch",
+                "call": 35565
+              },
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              1,
+              0,
+              0,
+              200,
+              15,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 3200,
+                "bytes": 3200
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35574,
+            "error": 1282,
+            "at": 127308.60000000149,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "activeTexture",
+                "args": [
+                  33988
+                ],
+                "phase": "start-scorch",
+                "call": 35565
+              },
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              2,
+              0,
+              0,
+              100,
+              7,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 800,
+                "bytes": 800
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35575,
+            "error": 1282,
+            "at": 127309.10000000149,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "bindTexture",
+                "args": [
+                  3553,
+                  {
+                    "type": "WebGLTexture",
+                    "id": 5450
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35566
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              3,
+              0,
+              0,
+              50,
+              3,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 208,
+                "bytes": 208
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35576,
+            "error": 1282,
+            "at": 127309.80000000075,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10242,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35567
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              4,
+              0,
+              0,
+              25,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 112,
+                "bytes": 112
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35577,
+            "error": 1282,
+            "at": 127310.30000000075,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10243,
+                  10497
+                ],
+                "phase": "start-scorch",
+                "call": 35568
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              5,
+              0,
+              0,
+              12,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 48,
+                "bytes": 48
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35578,
+            "error": 1282,
+            "at": 127310.90000000037,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10240,
+                  9729
+                ],
+                "phase": "start-scorch",
+                "call": 35569
+              },
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              6,
+              0,
+              0,
+              6,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 32,
+                "bytes": 32
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35579,
+            "error": 1282,
+            "at": 127311.5,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameteri",
+                "args": [
+                  3553,
+                  10241,
+                  9987
+                ],
+                "phase": "start-scorch",
+                "call": 35570
+              },
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  6,
+                  0,
+                  0,
+                  6,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 32,
+                    "bytes": 32
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35579
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              7,
+              0,
+              0,
+              3,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 16,
+                "bytes": 16
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35580,
+            "error": 1282,
+            "at": 127312.30000000075,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texParameterf",
+                "args": [
+                  3553,
+                  34046,
+                  4
+                ],
+                "phase": "start-scorch",
+                "call": 35571
+              },
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  6,
+                  0,
+                  0,
+                  6,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 32,
+                    "bytes": 32
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35579
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  7,
+                  0,
+                  0,
+                  3,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 16,
+                    "bytes": 16
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35580
+              }
+            ]
+          },
+          {
+            "name": "compressedTexSubImage2D",
+            "args": [
+              3553,
+              8,
+              0,
+              0,
+              1,
+              1,
+              36492,
+              {
+                "type": "Uint8Array",
+                "length": 16,
+                "bytes": 16
+              }
+            ],
+            "phase": "start-scorch",
+            "call": 35581,
+            "error": 1282,
+            "at": 127312.90000000037,
+            "stack": "Error\n    at WebGL2RenderingContext.fn [as compressedTexSubImage2D] (<anonymous>:11:437)\n    at Object.k [as compressedTexSubImage2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:14324)\n    at _t (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:30585)\n    at G0.it [as setTexture2D] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4205:24097)\n    at Jc.E_ [as setValue] (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:5144)\n    at Ts.upload (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4127:9613)\n    at Cd (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:46443)\n    at ih.renderBufferDirect (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:29512)\n    at ch (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38488)\n    at Gr (http://127.0.0.1:33403/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/vendor/three/build/three.module.js:4229:38019)",
+            "recent": [
+              {
+                "name": "texStorage2D",
+                "args": [
+                  3553,
+                  9,
+                  36492,
+                  400,
+                  30
+                ],
+                "phase": "start-scorch",
+                "call": 35572
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  0,
+                  0,
+                  0,
+                  400,
+                  30,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 12800,
+                    "bytes": 12800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35573
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  1,
+                  0,
+                  0,
+                  200,
+                  15,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 3200,
+                    "bytes": 3200
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35574
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  2,
+                  0,
+                  0,
+                  100,
+                  7,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 800,
+                    "bytes": 800
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35575
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  3,
+                  0,
+                  0,
+                  50,
+                  3,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 208,
+                    "bytes": 208
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35576
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  4,
+                  0,
+                  0,
+                  25,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 112,
+                    "bytes": 112
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35577
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  5,
+                  0,
+                  0,
+                  12,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 48,
+                    "bytes": 48
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35578
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  6,
+                  0,
+                  0,
+                  6,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 32,
+                    "bytes": 32
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35579
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  7,
+                  0,
+                  0,
+                  3,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 16,
+                    "bytes": 16
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35580
+              },
+              {
+                "name": "compressedTexSubImage2D",
+                "args": [
+                  3553,
+                  8,
+                  0,
+                  0,
+                  1,
+                  1,
+                  36492,
+                  {
+                    "type": "Uint8Array",
+                    "length": 16,
+                    "bytes": 16
+                  }
+                ],
+                "phase": "start-scorch",
+                "call": 35581
+              }
+            ]
+          }
+        ],
+        "counts": {
+          "getExtension": 16,
+          "getShaderPrecisionFormat": 2,
+          "getParameter": 39,
+          "createTexture": 301,
+          "bindTexture": 6927,
+          "texParameteri": 1639,
+          "texImage2D": 24,
+          "texImage3D": 5,
+          "clearColor": 94,
+          "clearDepth": 1,
+          "clearStencil": 1,
+          "enable": 314,
+          "depthFunc": 1,
+          "frontFace": 95,
+          "cullFace": 1,
+          "createFramebuffer": 23,
+          "getContextAttributes": 1,
+          "viewport": 183,
+          "createProgram": 209,
+          "createShader": 418,
+          "shaderSource": 418,
+          "compileShader": 418,
+          "attachShader": 418,
+          "bindAttribLocation": 208,
+          "linkProgram": 209,
+          "activeTexture": 6579,
+          "texParameterf": 248,
+          "bindFramebuffer": 355,
+          "generateMipmap": 19,
+          "drawBuffers": 20,
+          "scissor": 191,
+          "disable": 316,
+          "framebufferTextureLayer": 75,
+          "createBuffer": 1884,
+          "bindBuffer": 4835,
+          "bufferData": 1884,
+          "deleteShader": 216,
+          "getProgramParameter": 216,
+          "getActiveUniform": 2965,
+          "getUniformLocation": 2965,
+          "getActiveAttrib": 429,
+          "getAttribLocation": 429,
+          "useProgram": 1768,
+          "uniform2f": 147,
+          "uniform1f": 2018,
+          "uniform1i": 393,
+          "depthMask": 212,
+          "colorMask": 1,
+          "createVertexArray": 637,
+          "bindVertexArray": 4843,
+          "enableVertexAttribArray": 2539,
+          "vertexAttribPointer": 2539,
+          "drawArrays": 1250,
+          "deleteVertexArray": 77,
+          "deleteProgram": 57,
+          "deleteBuffer": 207,
+          "framebufferTexture2D": 19,
+          "clear": 129,
+          "uniform3f": 3481,
+          "uniform4f": 337,
+          "createRenderbuffer": 8,
+          "bindRenderbuffer": 16,
+          "renderbufferStorage": 6,
+          "framebufferRenderbuffer": 8,
+          "uniformMatrix4fv": 7394,
+          "drawElements": 3431,
+          "pixelStorei": 19,
+          "texStorage2D": 277,
+          "stencilMask": 1,
+          "blendEquationSeparate": 1,
+          "blendFuncSeparate": 62,
+          "vertexAttribDivisor": 841,
+          "drawElementsInstanced": 133,
+          "checkFramebufferStatus": 3,
+          "deleteFramebuffer": 6,
+          "deleteTexture": 21,
+          "uniformMatrix3fv": 1455,
+          "texSubImage2D": 149,
+          "drawArraysInstanced": 145,
+          "isContextLost": 197,
+          "readBuffer": 1,
+          "blitFramebuffer": 18,
+          "uniform1iv": 60,
+          "uniform4fv": 276,
+          "uniform2fv": 46,
+          "uniform3fv": 250,
+          "polygonOffset": 40,
+          "bufferSubData": 306,
+          "deleteRenderbuffer": 1,
+          "renderbufferStorageMultisample": 2,
+          "readPixels": 1,
+          "fenceSync": 1,
+          "flush": 1,
+          "clientWaitSync": 157,
+          "getBufferSubData": 1,
+          "deleteSync": 1,
+          "getQuery": 20,
+          "createQuery": 20,
+          "beginQuery": 20,
+          "compressedTexSubImage2D": 2130,
+          "vertexAttrib3fv": 1,
+          "vertexAttrib2fv": 1,
+          "endQuery": 20,
+          "getQueryParameter": 38,
+          "deleteQuery": 19
+        },
+        "recent": [
+          {
+            "name": "viewport",
+            "args": [
+              0,
+              0,
+              1359,
+              892
+            ],
+            "phase": "warm-scorch",
+            "call": 73840
+          },
+          {
+            "name": "scissor",
+            "args": [
+              0,
+              0,
+              360,
+              180
+            ],
+            "phase": "warm-scorch",
+            "call": 73841
+          },
+          {
+            "name": "clearColor",
+            "args": [
+              0.6235342034740585,
+              0.847061083962765,
+              0.9411773850235038,
+              1
+            ],
+            "phase": "warm-scorch",
+            "call": 73842
+          },
+          {
+            "name": "clear",
+            "args": [
+              17664
+            ],
+            "phase": "warm-scorch",
+            "call": 73843
+          },
+          {
+            "name": "useProgram",
+            "args": [
+              {
+                "type": "WebGLProgram",
+                "id": 3535
+              }
+            ],
+            "phase": "warm-scorch",
+            "call": 73844
+          },
+          {
+            "name": "bindTexture",
+            "args": [
+              3553,
+              {
+                "type": "WebGLTexture",
+                "id": 5921
+              }
+            ],
+            "phase": "warm-scorch",
+            "call": 73845
+          },
+          {
+            "name": "bindVertexArray",
+            "args": [
+              {
+                "type": "WebGLVertexArrayObject",
+                "id": 5929
+              }
+            ],
+            "phase": "warm-scorch",
+            "call": 73846
+          },
+          {
+            "name": "drawArrays",
+            "args": [
+              4,
+              0,
+              3
+            ],
+            "phase": "warm-scorch",
+            "call": 73847
+          },
+          {
+            "name": "endQuery",
+            "args": [
+              35007
+            ],
+            "phase": "warm-scorch",
+            "call": 73848
+          },
+          {
+            "name": "isContextLost",
+            "args": [],
+            "phase": "warm-scorch",
+            "call": 73849
+          }
+        ],
+        "calls": 73849
+      },
+      "state": "playing",
+      "map": "scorch",
+      "time": 8.383176666666644,
+      "contextLost": false
+    }
+  ],
+  "status": "completed",
+  "tracerSha256": "b37f9b5b83afd7941314c706b9858fca2b8d7eac3186eb42e9b86942f81548d6",
+  "servedRuntimeHashes": {
+    "_site/patches/native-stages/runtime/engine.mjs": "e2546de2589d5a469b3838c391d9f94cbc97e21bdde1edfb2634843c4035d4e7",
+    "_site/vendor/three/jsm/loaders/KTX2Loader.js": "3a3233ce3409443076d3414b78832e1405fcfac5ecb34d367365fd0781127d6c",
+    "_site/vendor/three/build/three.module.js": "2182c8e6f3b55211927f7551f4062da1c40d5b867b0c15b5527cf3e2b5f488b8",
+    "_site/native-prebuilt/scorch/stage.json": "1aaf93de6dd84bb9e2c47b8b5d16159691945e37d82b2f135b73afa6e655da06"
+  },
+  "ktx2Header": {
+    "vkFormat": 0,
+    "typeSize": 1,
+    "width": 800,
+    "height": 60,
+    "levels": 10,
+    "supercompression": 2,
+    "sha256": "dbba919cb6c79a477294ea5b83541e9eb972bb4dbb7810a351ddaad1d92ec27b",
+    "variant": {
+      "width": 800,
+      "height": 60,
+      "offset": 2966156,
+      "bytes": 63047,
+      "sha256": "dbba919cb6c79a477294ea5b83541e9eb972bb4dbb7810a351ddaad1d92ec27b",
+      "pack": "packs/afc3b9378054d10ee8506debb5827da0.bin"
+    }
+  }
+}

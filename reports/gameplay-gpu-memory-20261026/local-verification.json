@@ -1,0 +1,214 @@
+{
+  "localExitCodes": {
+    "npm test": 0,
+    "Crab real WebGL production-build probe": 0,
+    "Torpedo real WebGL production-build probe": 0,
+    "original workflow contracts + integration": 0,
+    "profiler + integration before final CI separation": 0,
+    "latest544 npm test": 0,
+    "latest544 production build and startup budget": 0,
+    "native suite with required private numba dependency": 0,
+    "latest544 Chromium/WebKit four exact GPU probes": 0,
+    "latest544 production NativeWeak diagnostic": 0,
+    "latest65 npm test": 0,
+    "latest65 production build and startup budget": 0,
+    "latest65 native suite": 0,
+    "latest65 Chromium/WebKit four exact GPU probes": 0,
+    "latest65 production NativeWeak diagnostic": 0
+  },
+  "logs": {
+    "npm-test-final.log.gz": {
+      "sha256": "b15c1fbbac658dd5ba5a990cc874e58acc502ceb40b5348f17a98ab43ef8a3f5",
+      "uncompressedSha256": "592014a948e1ef12a8bef9d792ca7ef20ea417070a98fdb119ca86100b029c9b"
+    },
+    "final-crab-upload.log.gz": {
+      "sha256": "b8958e18133bbb3fa7822e0daf6a64d24b0369a75ba1b3e2d06c8958d396feaf",
+      "uncompressedSha256": "2b486c4c1fb9ac3d300ceb464fe36e3741ee228c13769a606d150958cf83c61a"
+    },
+    "final-torpedo-upload.log.gz": {
+      "sha256": "a450c7144fbb2f9f312fda0df5f0b267cf576825a0d67f4e3427ea649a17de0e",
+      "uncompressedSha256": "f9d68c367ffbc6a42b38ddb7ce82725ee8eedd5da54d4075305dc953ab5acf88"
+    },
+    "ci-preservation-tests.log.gz": {
+      "sha256": "88c6834adda1461acfa9878057918dd6d7f2ee9b57a6f9473e0d959aa425ab26",
+      "uncompressedSha256": "8ec4133e36caa4b1b0f9c52afbac944e8304ce027aa680325ee46edbcba5e681"
+    },
+    "native-profiler-tests.log.gz": {
+      "sha256": "31309845a8782230ced7374087b7732b53b34fdc441b1ac1a03bd8f791c07e94",
+      "uncompressedSha256": "4a0999b4ef966241990837bb104be9f4699eaca63d52b8ccbe49673ae7e222c6"
+    },
+    "sprite-nan-node22-final.log.gz": {
+      "sha256": "1cfb30b0f8faba7c9ac3268702d7cd898789635cabe91fb8c6501e216fa5a2a3",
+      "uncompressedSha256": "0d3b4ae3fce2917e5f027b44930f76f22aceced78959213267ba00321a8afd80"
+    },
+    "sprite-nan-node24-final.log.gz": {
+      "sha256": "3b7abab2884922fcaea0747ac21f585f612f0ba47669719e3182d1bdcbd3926e",
+      "uncompressedSha256": "d6a92d75d03ee3d85da8b40a6687c3d7909d6b38124938978264075c7b90ef46"
+    },
+    "final-ci-policy.log.gz": {
+      "sha256": "a6e99dd04e4828ab5210ec485ee6a394ecc1ff4ab1a81afcd60f37bf31906d28",
+      "uncompressedSha256": "c14425ed108440554f578b009a35f722fe31faadb3f5c57b574b4ef5f948156c"
+    },
+    "npm-test-retired-owner.log.gz": {
+      "sha256": "7961cbee8f7217b3f8d2866f74811691a47638f6a167be936209ecf776e29f28",
+      "uncompressedSha256": "a0cce7a852a95cc53cb455ada56c8416479de0eed2f788bd5166c4527ed7d280"
+    },
+    "build-retired-owner.log.gz": {
+      "sha256": "22abd792dca6d5f222472e02549c7a3e32195c0d6ed2a33ed9a55aee9cce20e8",
+      "uncompressedSha256": "40d754ac2610512cb277624b690050b037c2e3ef1e7be9729a0429d481f53644"
+    },
+    "retired-owner-crab-upload.log.gz": {
+      "sha256": "668913430eaf5f1683c387735ba9d807aa022be61c17d8b92aa25ec6f48955de",
+      "uncompressedSha256": "1f68bd412d8378d469190d6538a9d40e6b28702e2a39ec4127c34b846a9e3545"
+    },
+    "retired-owner-torpedo-upload.log.gz": {
+      "sha256": "b910790135b30023a76509563acf2267eaab1575bc808de27e1525e78267f951",
+      "uncompressedSha256": "da036e41805f1d93b9e3b4717b9fecc424004c4eaa100ac465e718f145737edb"
+    },
+    "retired-owner-regressions.log.gz": {
+      "sha256": "240d1fbbaaae0b75bcfea6842b53716650ce61d5c74ff8e0fb7a4de96dc2a2a9",
+      "uncompressedSha256": "b5c5fc04b6e7680bc1478bb6d56212c9d4985c87089443542004ab55c7989a1a"
+    },
+    "retired-owner-related-gc.log.gz": {
+      "sha256": "fcf112aebd5a9c4f3361887721ef321f48cfdac00967627245b27dad376d72d9",
+      "uncompressedSha256": "7cb8fde9c5182874cc6c169c9a91a80baeaa9422ad31b7424414b989cbde3cce"
+    },
+    "retired-owner-flow-transport.log.gz": {
+      "sha256": "3d73de5519ca9d118568fdebcfa4d0ecebc2dcce52584578c78ffe4c4e27b050",
+      "uncompressedSha256": "47e8e653c02c5242591b6dc2378464fff0f5a73342ba66aa0fc808fd4c94993f"
+    },
+    "ink-flight-pool-baseline-negative.log.gz": {
+      "sha256": "23b5fdc344fd4e6ac40de3430315d383b6867aadd21fbfd8eb9591f30876c9a4",
+      "uncompressedSha256": "a3947f41fd75caabcc3312c9c3d80f5d7ba842c9e2728626911e2d3952f87ae5"
+    },
+    "screenfx-local-baseline-negative.log.gz": {
+      "sha256": "8e5c65e0de9c999dc6eb2f4fbd17f7366eb714f443219b52b5219584e55bd88f",
+      "uncompressedSha256": "d59f0e777e5b087d989d080cddc22d030a55cc60deff49a21b4331662fa75537"
+    },
+    "npm-test-pending-owner-final.log.gz": {
+      "sha256": "9e608daea9af0b2183de9710a2b68c6eead81360822dc391d7bd59d4d466c080",
+      "uncompressedSha256": "9cae5e2a45c19d51859d482ad532633d3194b4192153ece7ffeb92da867f34df"
+    },
+    "build-pending-owner-final.log.gz": {
+      "sha256": "ca69c0cedd2c864953f11f81b4076e09f237b0337b94b231e0f6ee38cbdddc3b",
+      "uncompressedSha256": "e35007ee32a033342152bac8265210686a82742b2a0486f9b0b3e9932feb9fee"
+    },
+    "pending-owner-related-gc-final.log.gz": {
+      "sha256": "c8500532a12233a17253b9318afda81ebc58c139a9df6f6c94444f6d53a7406a",
+      "uncompressedSha256": "bd95a53d2cfdb5330fd58b1541c0f8869175a175a3cab2b573b93c4038b5aea1"
+    },
+    "pending-owner-crab-upload.log.gz": {
+      "sha256": "e9b829e466f3787fcbd0ac4c566694cf84919dc83dfd7033d550cc9c8b52ceff",
+      "uncompressedSha256": "6b2e328a3547d1ab26ddd14eab6c58cc97d25cf920f67de2968667d517a2651c"
+    },
+    "pending-owner-torpedo-upload.log.gz": {
+      "sha256": "dd4d138dce76d6ceb410cad71db730639ee19d19d268b4019ed00d2a4f77f6b9",
+      "uncompressedSha256": "0cf09b763890b91e2ca9f0b90f248ebf047aa2bac39169fae1f5fafd6a1f8c7d"
+    },
+    "screenfx-pending-dispose-negative.log.gz": {
+      "sha256": "e5115443f988f2912ed519059e12b9ea28c3e0131fca44588b54e95caaaf226f",
+      "uncompressedSha256": "9f04071f773d6a59b4f4355244120a3dd1162446ff9a4335fe9c2ec82b53b86a"
+    },
+    "screenfx-pending-dispose-fixed.log.gz": {
+      "sha256": "9511211b6ef692f7ae62f946a0c9aed42a21c500051a97101b54cad33e02def2",
+      "uncompressedSha256": "21253f337addf81490f1bd309f35db57fc1575d882580cf1512c206b4886f38a"
+    },
+    "npm-test-native-final.log.gz": {
+      "sha256": "1ef063ec7b7d3e292b7bec932adc5a839628ce8125ec1ac0d36fadb06759cc59",
+      "uncompressedSha256": "5a231e7f1f26366e3f2a86a929c9ba48ae3cac9bf42e032fda2eedce540e1857"
+    },
+    "build-native-final.log.gz": {
+      "sha256": "8c70f8da6052beebd86b8dabe6c3aa3da50d486e1e047e11806324ad2545912e",
+      "uncompressedSha256": "a7a6f09b1e8f5217ed93baf352bf0f79d42f7faeab28c08a9866c1b624f9e465"
+    },
+    "native-final-full-tests-with-python.log.gz": {
+      "sha256": "de1758674c4745c6b41f82e815456047c90ed7acfb96e63ef09f3cabd3a174d5",
+      "uncompressedSha256": "93380437503f34e67d9e0390b5beb5bea8639f148d7370a7a65a9adb853016cd"
+    },
+    "native-final-related-tests.log.gz": {
+      "sha256": "3118757792ece7b6c3c9521dd4c2a065d917c294070fcfbd1ce8331dc4ddbbd9",
+      "uncompressedSha256": "4947e0501b0d9642b513d3cc90b65e6864db18deb4b79c8b9db5b79cb018d991"
+    },
+    "native-context-retirement-baseline-control.log.gz": {
+      "sha256": "10f530bee270750c2365c0e6d0de0e92336b29945bdc0ec33b5364b018c45f99",
+      "uncompressedSha256": "1371c9ad2d214b8231b138bb7ce5d3d2a7268e2c601379ac6ac1f2ebdd3d4e8e"
+    },
+    "native-context-retirement-unit-repaired.log.gz": {
+      "sha256": "85f51224b94897633743454320c0424430280db91814ea0aac8904f38e302ee1",
+      "uncompressedSha256": "429706afe346d000593ebcfbdcaa79ca1d545292a6368b469ceb4a206c778ecf"
+    },
+    "npm-test-thin-final.log.gz": {
+      "sha256": "81522dd40387a936d12c545b2d028807d2e3c908acf6883a9adc204f097da9b7",
+      "uncompressedSha256": "40d89c51647b3eac46fbbce2bf5155cf8f78303adcffd65acb7e2b7605af8536"
+    },
+    "build-thin-final.log.gz": {
+      "sha256": "35e95c3b0315a2df99858c96670d7a61801822b716c3606d78282838b9583725",
+      "uncompressedSha256": "4a4e67e7dc6ab349134a9aa9598a06a15902e46d3321a58f08baf2c6d65854c5"
+    },
+    "native-thin-full-tests.log.gz": {
+      "sha256": "108fbd788b12183002e9fb78d860a321730553f32162ba814431b13c636c35be",
+      "uncompressedSha256": "7821702839691dd3ba45b94a917c602279d6aa401173c30b3b03e6e213be2738"
+    }
+  },
+  "runtimeSourceSha": "0fef49e66d01249f4531aa9b75673312ff222e18",
+  "note": "The listed historical logs preserve their actual run contents; later changes affect only CI and test isolation, not delivered runtime. Final full CI separately verifies the final head.",
+  "followupChecks": {
+    "sprite non-finite Node22.23.3": {
+      "sourceSha": "d9a0a162a0e3cd3c015a6d6b61c4bfe2bfb55014",
+      "exitCode": 0
+    },
+    "sprite non-finite Node24.19.0": {
+      "sourceSha": "d9a0a162a0e3cd3c015a6d6b61c4bfe2bfb55014",
+      "exitCode": 0
+    },
+    "workflow retention policy and original fixed-job guards": {
+      "sourceSha": "4c27b3b288ac53ac7599245aca5e240903e4772c",
+      "exitCode": 0,
+      "tests": 29
+    },
+    "retired-owner final source": {
+      "sourceSha": "61dbb48c6050c090a9c8e459106a6b9dc86e022c",
+      "newTests": 5,
+      "baselineSourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+      "baselineFailures": 5,
+      "relatedTests": 39,
+      "relatedPassed": 39,
+      "relatedSkipped": 0,
+      "npm test": 0,
+      "production build and startup budget": 0,
+      "Crab built GL": 0,
+      "Torpedo built GL": 0,
+      "new plus observer/verdict/process tests": {
+        "passed": 19,
+        "skipped": 0
+      },
+      "flow transport separately": {
+        "passed": 2,
+        "skipped": 0
+      }
+    },
+    "pending-attacker final source": {
+      "sourceSha": "e4bb8f934db08c14abedd41845f0799c33d936e7",
+      "preFixSourceSha": "61dbb48c6050c090a9c8e459106a6b9dc86e022c",
+      "newRegressionBeforeFixFailed": true,
+      "screenfxTests": 2,
+      "screenfxPass": 2,
+      "screenfxSkip": 0,
+      "relatedTests": 40,
+      "relatedPass": 40,
+      "relatedSkip": 0,
+      "npm test": 0,
+      "production build and startup budget": 0,
+      "Crab built GL": 0,
+      "Torpedo built GL": 0
+    }
+  },
+  "finalRuntimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "nativeSuite": {
+    "tests": 694,
+    "pass": 566,
+    "fail": 0,
+    "skip": 128,
+    "skipScope": "Existing conditional source-asset tests whose external original assets are absent; no criteria/skips altered."
+  }
+}
