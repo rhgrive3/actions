@@ -2298,6 +2298,18 @@ function installRuntime(api) {
     zero:new THREE.Vector3(),up:new THREE.Vector3(0,1,0),down:new THREE.Vector3(0,-1,0),hit:api.Hit ? new api.Hit() : null};
   if(!rt.hit)rt.hit={hit:false,point:new THREE.Vector3(),normal:new THREE.Vector3(),dist:0};
   runtimes.set(Projectiles,rt);
+  // Crab's rolling shell belongs to the Actor action, outside both the
+  // Character root and the deployable list cleared by Projectiles.clear().
+  // Retiring a roster must release that presentation without emitting a new
+  // combat action or touching another roster's state.
+  const retireActorPresentation=actor=>{
+    const state=actorStates.get(actor);
+    if(state?.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
+  };
+  api.on?.('actor:removed',event=>retireActorPresentation(event?.actor));
+  api.on?.('match:dispose',event=>{
+    for(const actor of event?.match?.actors||[])retireActorPresentation(actor);
+  });
   // Only native completed attacks/jumps retire wall protection. Input held
   // through hook flight / hookWait may still be denied by the action runner.
   api.on?.('weapon:fire',event=>updateZipcasterArmor(event?.actor,{fire:true}));
