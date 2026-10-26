@@ -6,13 +6,14 @@ import vm from 'node:vm';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {claimPreloadedMusic,cancelPreloadedMusic} from '../../splatoon3/runtime/audio/music-preload-owner.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const SITE=process.env.INKWAVE_MATERIAL_HANDOFF_SITE?path.resolve(process.env.INKWAVE_MATERIAL_HANDOFF_SITE):null;
 const {beginMaterialHandoff,installMaterialHandoffCancellation,MATERIAL_HANDOFF_MS}=await import(pathToFileURL(path.join(SITE||ROOT,'patches/local-quality/material-handoff.mjs')));
 const CONTROL=process.env.INKWAVE_MATERIAL_HANDOFF_RUNTIME_CONTROL_SITE;
 function runtimeSource(rel){return SITE?fs.readFileSync(path.join(CONTROL||SITE,rel),'utf8'):adaptBuildSource(rel,fs.readFileSync(path.join(ROOT,'inkwave-public',rel),'utf8'));}
 function aliasScope(code,bindings){
- const out={...bindings};
+ const out={...bindings,claimPreloadedMusic,cancelPreloadedMusic};
  if('DEV_STAGE' in bindings){const m=code.match(/mannequins:\s*(?:!this\._staticMenuAttract\s*&&\s*)?([A-Za-z_$][\w$]*)/);assert(m,'native dev-stage binding');out[m[1]]=bindings.DEV_STAGE;}
  for(const match of code.matchAll(/import\s*\{([^}]+)\}\s*from\s*["'][^"']+["']/g))for(const spec of match[1].split(',')){const [name,alias]=spec.trim().split(/\s+as\s+/);if(name in bindings)out[alias||name]=bindings[name];}
  for(const match of code.matchAll(/import\s*\*\s*as\s+(\w+)\s*from\s*["']three["']/g))out[match[1]]=T;
