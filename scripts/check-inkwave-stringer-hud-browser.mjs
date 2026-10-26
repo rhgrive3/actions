@@ -36,9 +36,9 @@ try{
   await page.goto('http://127.0.0.1:'+server.address().port+'/__bow_hud.html');
   receipt.rows=await page.evaluate(async()=>{
     const {HUD}=await import('/src/ui/hud.js'),api=await import('/src/config.js');
-    const {registerMainWeaponCatalog}=await import('/patches/splatoon3/runtime/main-weapon-catalog.mjs');
+    const {install}=await import('/patches/splatoon3/runtime/install.mjs');
     const {G}=await import('/src/core/ctx.js');
-    if(!api.WEAPONS['s3-stringer-normal'])registerMainWeaponCatalog({...api,LANG:'en'});
+    install(await (await fetch('/patches/splatoon3/profile.json')).json());
     const records=[],grid=document.querySelector('.grid'),el=html=>{const d=document.createElement('div');d.innerHTML=html||'';return d;};
     for(const id of ['s3-stringer-normal','s3-stringer-short','s3-stringer-explosion']){
       const w=api.WEAPONS[id],p=w.catalogRecord.parameters.spl__WeaponStringerParam.ChargeParam;

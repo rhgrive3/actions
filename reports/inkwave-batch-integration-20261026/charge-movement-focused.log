@@ -1,0 +1,35 @@
+(node:4197) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ local/remote swim and wall bodies hide immediately for source and fallback; jumps and returns draw again (26342.995779ms)
+✔ wake cadence retains elapsed time at 30/60/120 Hz and respects stealth, air and restart (13059.876519ms)
+✔ ordinary swim uses bounded curls and ballistic drops, and respects lifecycle and stealth (12970.942416ms)
+(node:4198) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ continuous film keeps its shape/time at 30/60/120Hz and remains film at low quality (8148.042554ms)
+(node:4199) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ step presentation decays without a rebound and is invariant at 30/60/120Hz (1.674941ms)
+✔ walking display speed smooths sample noise, pauses, and has an idle endpoint (1.752841ms)
+✔ composed Actor keeps physical walking and collision while visual step correction is monotone (24802.98793ms)
+✔ real input walking keeps identical gameplay through micro-input, acceleration, turns, firing, stop and a curb (50985.350181ms)
+(node:4230) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every catalogue Charger, including scope/Bamboo/Pencil kits, draws falling ink before it paints at 30/60/120Hz (4133.79182ms)
+✔ replicated Charger heads never create a second falling-paint claim and clear retires live leases (1541.853868ms)
+✔ every Stringer kit exposes two source-timed charge rings, dings once per boundary and resets on release/cancel (1717.228807ms)
+(node:4237) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ downhill roller keeps real contact and claims slope turf at 30Hz (18791.136748ms)
+✔ downhill roller keeps real contact and claims slope turf at 60Hz (19629.366634ms)
+✔ downhill roller keeps real contact and claims slope turf at 120Hz (14300.698733ms)
+✔ every Stringer kit fills the existing native circle once per actual charge stage, with no added geometry (2.145256ms)
+✔ HUD wrapper preserves native projection, calls and return values, and clears Stringer styling on switch (1.620787ms)
+✔ Stringer adapter appends only an installer after the complete HUD owner and stays build-only (217.080209ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76894.744242

@@ -1,0 +1,56 @@
+{
+  "base": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "localBranch": "integrate/inkwave-bug-batch-20261026-charge-owner",
+  "productHeadAtBuild": "4de58c67266c40b2f5d6068856ca4c19c4676688",
+  "chargeCommits": [
+    "9a89494320a7f9cfed62c83e0830bfe52d72f76e",
+    "4bc974451bf3147080a9fb76ea7d27341d79a3a0",
+    "63a7413688f08c8c42909be7cf04dd13dd6ba389"
+  ],
+  "movementHandoff": {
+    "verifiedBranch": "codex/inkwave-movement-20261026-153847-6142e490",
+    "verifiedHead": "6142e49045700b7c8ad70a902f963c1a64fe8c70",
+    "cherryPicks": {
+      "1d993e3fdd007695c9db9aadbe06b9bb8a05d80b": "4d55d75be8580140a8d9cabb4bd538e94ba0720c",
+      "3dfa67552ba835462ea230a52469ac870e314ce1": "d1c7cd4283be5b701ac65ad3738f8a13d59dec91",
+      "4360948d4cb970d56daacea644ac760a9c25ff76": "a7b6835942429c2b3679f9a641d80085d7b98141",
+      "6142e49045700b7c8ad70a902f963c1a64fe8c70": "4de58c67266c40b2f5d6068856ca4c19c4676688"
+    },
+    "conflictsResolved": [
+      "main-weapon-catalog imports combined; Charger helper retained beside extracted rolling-floor caller",
+      "both behavior-report entries retained",
+      "both build-only adapter registrations retained"
+    ]
+  },
+  "validation": {
+    "sourceFocused": {
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "bowHudComponent": {
+      "passed": 15,
+      "additionalCircles": 0,
+      "nativeChargeRadius": 25,
+      "nativeTrackRadius": 25,
+      "retailParity": false,
+      "ordinaryInput": false
+    },
+    "build": "passed",
+    "startupBudget": "passed",
+    "identity": "charge-movement-identity.json"
+  },
+  "pending": [
+    "verified reticle worker branch and follow-up",
+    "verified effects worker branch",
+    "combined emitted checks and final review",
+    "one PR only after parent authorizes readiness"
+  ],
+  "remoteActions": {
+    "prCreated": false,
+    "merged": false,
+    "manualCiStarted": false,
+    "integrationBranchPushed": false
+  },
+  "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI."
+}
