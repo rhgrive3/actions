@@ -135,3 +135,11 @@ and [before-fix actual Actor trace](kept-audio-followup/before-actor-dispatch.js
 preserve the distinction. This records the separate candidate handoff. The
 parent's subsequent independent event-dispatch acceptance and integration are
 recorded in [the integration receipt](../kept-charge-audio-append/validation.json).
+
+The later fixed-f8 Pencil review is a separate
+[five-shot event/flight candidate](../pencil-five-shot-candidate/README.md).
+Both kits now have full five-shot/depletion/interruption dispatch and drawn
+flight coverage on that branch, including two demonstrated input/cancellation
+fixes. Actual five-shot sound playback, ordinary native input and original
+pixel/timing agreement remain open; this does not turn the historical26a
+coverage read into a new playback receipt.

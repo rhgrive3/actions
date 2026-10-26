@@ -1,0 +1,132 @@
+{
+  "status": "separate bounded Pencil event/flight candidate; parent acceptance pending",
+  "base": "f8b5eafc38f8d80641d823c950cbe7d560c9bfc0",
+  "sourceHead": "68cf341170a4c5c19d9ac76ea68c8974cfdbd591",
+  "branch": "fix/pencil-five-shot-cycle-20261026",
+  "productionFiles": [
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+  ],
+  "demonstratedDefects": [
+    "Rounds2-5 emit on Fire press instead of release; the first shot already uses release.",
+    "Unused loaded Pencil rounds survive actual squid form and fire after returning despite the catalogue no-keep policy."
+  ],
+  "implementation": "Move the existing rounds branch to detect the real previous-held/current-released edge, preserving cooldown. Include rounds in the existing squid cancellation admission. No new state owner, clock, media, numeric stat or refund rule.",
+  "reference": {
+    "releaseAction": "Nintendo SplatoonJP official2022-11-17 announcement, indexed primary-source text says one shot per ZR release, up to5",
+    "url": "https://x.com/SplatoonJP/status/1593167058514026497",
+    "retrieval": "Search-index text available; direct open403. No clip/frame downloaded or inspected.",
+    "squidCancellation": "Existing pinned11.3.0 Pencil catalogue has no WeaponKeepChargeParam; canKeepCharge is false and existing input regression disallows Pencil keep. This restores that same source/runtime policy to remaining divided rounds.",
+    "retail11_3FullCycleMeasurement": false
+  },
+  "checks": {
+    "source": {
+      "pass": 7,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Existing charge/flight/Bow/keep file plus2new Pencil cases"
+    },
+    "existingPaymentAndKeep": {
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    "freshEmitted": {
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    "sourceNegativeOnF8": {
+      "pass": 1,
+      "expectedFailures": 2,
+      "actualFailures": 2
+    },
+    "emittedNegativeOnF8": {
+      "pass": 0,
+      "expectedFailures": 2,
+      "actualFailures": 2
+    },
+    "freshBuildCount": 1,
+    "optimizedBuild": "passed",
+    "startupBudget": "passed",
+    "diffCheck": "passed"
+  },
+  "boundedCoverage": {
+    "ids": [
+      "s3-charger-pencil",
+      "s3-charger-pencil-01"
+    ],
+    "fullCycleSimulationHz": 60,
+    "shotsPerKit": 5,
+    "audioDispatch": "One initial rise/ready,5fire_full events, no new rise/ready on rounds2-5 and no cancel cue layered on shots; sixth press starts new partial charge and rise.",
+    "flight": "All10 actual admitted heads move and match native instance-buffer positions; each produces drawn falling ink and5delayed CPU turf stamps; heads/drops retire.",
+    "interruptions": [
+      "actual Squid intent",
+      "actual sub intent",
+      "public runner reset",
+      "weapon change away and back"
+    ],
+    "statsPreserved": {
+      "chargeFrames": 72,
+      "postDelayFrames": 15,
+      "shots": 5,
+      "fullInkReservationPercent": 37.5,
+      "damage": 68,
+      "speedWUPerSecond": 288,
+      "rangeWU": 26.037
+    },
+    "sourceDataHashUnchanged": true
+  },
+  "identity": {
+    "sourceSha": "68cf341170a4c5c19d9ac76ea68c8974cfdbd591",
+    "contentHash": "69d67eabf58f3e095f94f361fa2f6c816f79835dcac14344037c81c4b7d6837e",
+    "inputHash": "ea811609d3791196bec6f288af7758ca661f88a0df001c3eca7a8f6d65914262",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0,
+    "failures": [],
+    "unchangedPackagedAudioFiles": 390,
+    "changedAudioFiles": []
+  },
+  "logs": {
+    "source": {
+      "path": "source.log.gz",
+      "rawSha256": "0075591ae8a140a2df53d52b49b68c0e9341ee62de3bd7b4b6c441b3aab052b6",
+      "gzipSha256": "adb17e1131123bef2c67f9844ce969e8dccb2204af2a63ccbec6fb9e60e8ff9c"
+    },
+    "source-existing": {
+      "path": "source-existing.log.gz",
+      "rawSha256": "521a9f4933c018f325aaebed495e0ccb48e467c1e07122871a5496dc37aadad6",
+      "gzipSha256": "8303b1933688ad9a595a9c82aa74f7b8e153e9c0c3692c8296c5195668643756"
+    },
+    "source-negative": {
+      "path": "source-negative.log.gz",
+      "rawSha256": "d9bc5de4fdbd2426c1bcdf70b02e5d784833614ecd936cd7601b817935e628cd",
+      "gzipSha256": "9bec6133ae4c752620f4c53cd2ded0d13ef60e9d10f21ef8f3a05a59c6b05d29"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "4eb1d177e06feec3e957f03ab3eff3db386fda4c1946397c2f056e5048b428ac",
+      "gzipSha256": "3949db26bb795a9f6d1e7d80ac448ed0385e85f81663f3e803bad3cc96da0581"
+    },
+    "emitted-negative": {
+      "path": "emitted-negative.log.gz",
+      "rawSha256": "721e141e4725fed6ddf9e761eec5d11b70131681476c124c5874e916fcc11ff3",
+      "gzipSha256": "949e803bce6669180a7134a424a298ecdfed513bd1b6bdbe93af90a900adecb6"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "3ee0aaaa5288dcf717f0ed561da5c65e1a1820ca3f33d562d2b73ddcb9a5e7e8",
+      "gzipSha256": "c5d81992d01608c0350ad45842f1cdf988450b30f6f2a5b2881a68389bda41b3"
+    }
+  },
+  "automaticCoverage": "Both new cases extend existing emitted-registered catalog-charge-flight-stages.test.mjs; existing source shards discover them. No workflow change, manual dispatch or CI retry.",
+  "limitations": [
+    "Controlled CPU Actor input and simplified Character/disabled integration at elevated fixed position, not ordinary native gameplay or a jumping-Actor capture.",
+    "Mock audio-event dispatch, no new sound playback or speaker/device measurement.",
+    "Draw-buffer positions and CPU paint are not presented pixels or original-game visual proof.",
+    "No new retail11.3.0 full-cycle/interval/pixel/audio timing comparison; direct official post fetch403.",
+    "Unused-round ink settlement/refund versus retail remains unmeasured; no guessed refund or input buffer behavior is introduced.",
+    "Specific cycle is60Hz; the existing source high-flight case separately covers30/60/120Hz and is not a five-shot cycle at those rates.",
+    "Protected integration stays f8 pending independent acceptance. No PR retry, merge or manual CI."
+  ]
+}

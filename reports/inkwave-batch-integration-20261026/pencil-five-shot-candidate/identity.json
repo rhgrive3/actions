@@ -1,0 +1,11 @@
+{
+  "sourceSha": "68cf341170a4c5c19d9ac76ea68c8974cfdbd591",
+  "contentHash": "69d67eabf58f3e095f94f361fa2f6c816f79835dcac14344037c81c4b7d6837e",
+  "inputHash": "ea811609d3791196bec6f288af7758ca661f88a0df001c3eca7a8f6d65914262",
+  "sourceInputs": 1490,
+  "artifacts": 2194,
+  "mismatches": 0,
+  "failures": [],
+  "unchangedPackagedAudioFiles": 390,
+  "changedAudioFiles": []
+}
