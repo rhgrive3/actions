@@ -517,6 +517,130 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results > :is(.iw-res__head, .iw-res__body) { position: relative; z-index: 1; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { height: auto; min-height: 56px; }
+
+/* Touch menu shells: only the content scrolls, never the launch/continue dock.
+   Keep safe-area padding on the shell so rotation cannot move actions under
+   the home indicator. These nodes are arranged by runtime/menu-layout.mjs. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-setup.has-mobile-flow, .iw-results.has-mobile-flow) {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px; overflow: hidden;
+  padding: calc(var(--sat) + 12px) calc(var(--sar) + 16px) calc(var(--sab) + 14px) calc(var(--sal) + 16px);
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow > .iw-head { grid-column: 1; margin: 0; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-head__title { font-size: clamp(23px, 4vw, 32px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-head__sub { font-size: 12px; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.s3-setup-scroll, .s3-results-scroll) {
+  position: relative; z-index: 1; min-width: 0; min-height: 0;
+  overflow: hidden auto; overscroll-behavior: contain; touch-action: pan-y;
+  scroll-padding-block: 12px; scrollbar-width: thin; scrollbar-color: #746d88 transparent;
+  -webkit-overflow-scrolling: touch;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-setup-scroll {
+  display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px; padding: 8px 6px 16px;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left { display: contents; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left > .iw-seclabel { grid-row: 1; margin: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list { grid-row: 2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list.is-many {
+  max-height: min(42dvh, 300px); min-height: 144px; flex-shrink: 0; gap: 10px; padding: 8px;
+  mask-image: none; -webkit-mask-image: none; scroll-padding-block: 8px;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ticket { flex-shrink: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ticket__name { white-space: normal; overflow-wrap: anywhere; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__hero { grid-column: 1; grid-row: 3; padding: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__frame { min-height: 120px; aspect-ratio: 16 / 7; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__caption { margin: 12px 4px 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__blurb { font-size: 14px; line-height: 1.5; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__time { margin-top: 12px; padding: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match { grid-row: 4; margin: 0; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot {
+  position: relative; z-index: 3; grid-column: 1; grid-row: 3;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 10px;
+  border-radius: 16px; background: #191422; box-shadow: 0 -2px 0 #ffffff26;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip { display: grid; grid-template-columns: 24px minmax(0, 1fr) 20px; gap: 6px; height: 48px; min-height: 48px; margin: 0; padding: 6px 8px; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__edit { padding: 0; background: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text { overflow: hidden; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text :is(b, small) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text b { font-size: 13px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text small { font-size: 10px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__icon { width: 28px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-lchip__av { width: 24px; height: 28px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { --bg: var(--a); --fill: #fff; --fill-ink: var(--a-ink); height: auto; min-height: 64px; margin: 0; padding: 10px 16px; font-size: 23px; color: var(--a-ink); transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-btn--start .iw-btn__sub { font-size: 12px; white-space: normal; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-start__map { display: inline; }
+
+/* Compact cards expose both choices sooner and keep the touch target still
+   while focused. The existing artwork, descriptions and selection stay live. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel { gap: 12px; padding-top: calc(var(--sat) + 12px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-head__title { font-size: clamp(25px, 4vw, 36px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-head__sub { font-size: 12px; line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row { position: relative; inset: auto; translate: none; width: 100%; max-width: none; margin: 0; gap: 20px; padding: 8px 6px 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode { height: auto; min-height: 0; transform: none; translate: none; scale: 1; border-radius: 18px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__art { height: clamp(88px, 18dvh, 156px); aspect-ratio: auto; border-radius: 18px 18px 4px 4px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__tape { margin: -16px 12px 0; rotate: 0deg; scale: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__tape .iw-display { font-size: clamp(22px, 3.5vw, 32px); line-height: 1.25; white-space: normal; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__blurb { display: block; margin: 10px 14px; font-size: 13px; line-height: 1.5; overflow: visible; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-mode__chips { margin: auto 14px 10px; padding: 0; flex-wrap: wrap; gap: 6px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__go { display: flex; position: relative; inset: auto; align-self: flex-end; margin: 0 12px 12px; font-size: 13px; }
+@media (max-aspect-ratio: 5 / 4) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row { grid-template-columns: minmax(0, 1fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px 12px; padding: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__art { grid-column: 1; grid-row: 1 / 5; height: 100%; border-radius: 10px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__tape { grid-column: 2; grid-row: 1; margin: 0; max-width: 100%; padding: 4px 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__tape .iw-display { font-size: clamp(19px, 5vw, 25px); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__blurb { grid-column: 2; grid-row: 2; margin: 0; font-size: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-mode__chips { grid-column: 2; grid-row: 3; margin: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__go { grid-column: 2; grid-row: 4; justify-self: end; margin: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__kicker { left: 18px; top: 18px; max-width: 64px; font-size: 9px; padding: 4px; }
+}
+
+/* Scores have their own scroller. Awards/XP follow the tables; all original
+   continuation/leave callbacks remain in an always visible footer. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow { grid-template-rows: minmax(0, 1fr) auto; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .s3-results-scroll { padding: 8px 6px 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__head { position: relative; inset: auto; margin-bottom: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__splat { opacity: .35; width: 150px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__title { font-size: clamp(36px, 6vw, 58px); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__metarow { margin-top: 10px; gap: 8px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__body { position: relative; inset: auto; gap: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__teams { gap: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__medals { margin: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow > .iw-res__foot {
+  position: relative; z-index: 3; margin: 0; padding: 10px; gap: 0;
+  border-radius: 16px; background: #191422; box-shadow: 0 -2px 0 #ffffff26;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn { width: 100%; min-width: 0; min-height: 54px; padding: 10px; gap: 8px; font-size: 15px; margin: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn--primary { grid-column: 1 / -1; order: -1; font-size: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns .iw-btn__icon { width: 22px; height: 22px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns .iw-btn__label { line-height: 1.4; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__lobby { grid-column: 1 / -1; width: 100%; min-height: 44px; height: auto; }
+@media (max-width: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__head { display: flex; padding: 8px 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__head .iw-ttable__col { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow { padding: 10px; gap: 10px 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow [data-stat-label] { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; font-size: 15px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow [data-stat-label]::before { content: attr(data-stat-label); font: 700 10px/1.3 'Rubik', 'IW JP Body', sans-serif; color: var(--muted); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__turf small { display: none; }
+}
+@media (min-width: 701px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .s3-setup-scroll { grid-template-columns: minmax(240px, 1fr) minmax(0, 1fr); gap: 20px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left { display: flex; grid-column: 1; grid-row: 1; gap: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__hero { grid-column: 2; grid-row: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.3fr); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { grid-column: 3; min-height: 56px; }
+}
+@media (max-height: 500px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow { gap: 8px; padding-block: calc(var(--sat) + 8px) calc(var(--sab) + 10px); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-head__title { font-size: 22px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.5fr); gap: 8px; padding: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { grid-column: 3; min-height: 56px; font-size: 20px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__art { height: 80px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn--primary { grid-column: auto; font-size: 18px; }
+}
 /* the key hints sit top-right on results: at the bottom they covered the end of the action row */
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(var(--u) * 2.2 + var(--sat)); bottom: auto; }
 

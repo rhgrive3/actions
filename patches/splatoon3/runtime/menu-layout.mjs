@@ -21,6 +21,9 @@ import { GLYPHS } from '../../../src/ui/ui-icons.js';
 const INSTALLED = Symbol.for('inkwave.s3.menu-layout.v1');
 export const ENTRANCE_STAGGER_CAP = 14;
 const L = (en, ja) => (isJa ? ja : en);
+// Device detection owns the document class; keyboards on a phone must not
+// switch back to the desktop layout. Hybrids can also opt in through touch.
+const touchMenu = menus => menus._input === 'touch' || !!globalThis.document?.documentElement?.classList.contains('iw-touch');
 
 export function capEntranceStagger(root, cap = ENTRANCE_STAGGER_CAP) {
   if (!root?.querySelectorAll) return 0;
@@ -75,6 +78,70 @@ function decorateSetup(menus, scr) {
     if (sel) requestAnimationFrame(() => { if (sel.isConnected) keepInView(sel, list, { smooth: false, center: true }); });
     return result;
   };
+  // Keep the native nodes, bindings and focus graph. Only the middle section
+  // scrolls on touch devices; the equipment and launch actions stay in reach.
+  if (touchMenu(menus)) {
+    const content = document.createElement('div');
+    content.className = 's3-setup-scroll';
+    const left = scr.el.querySelector('.iw-ss__left');
+    const hero = scr.el.querySelector('.iw-ss__hero');
+    scr.el.querySelector('.iw-ss__foot').before(content);
+    content.append(hero, left);
+    scr.el.classList.add('has-mobile-flow');
+  }
+  return scr;
+}
+
+function decorateMode(menus, scr) {
+  const onNav = scr.onNav;
+  scr.onNav = dir => {
+    // Read the real grid on each move: the six-rule catalogue, portrait rows
+    // and a rotation can all have different column counts from the native graph.
+    if (touchMenu(menus) && ['up', 'down', 'left', 'right'].includes(dir)) {
+      const row = scr.el.querySelector('.iw-modesel__row');
+      const cards = [...row.querySelectorAll('.iw-mode')];
+      const i = cards.indexOf(menus._focus);
+      const cols = Math.max(1, globalThis.getComputedStyle(row).gridTemplateColumns.trim().split(/\s+/).length);
+      if (i >= 0) {
+        const step = dir === 'up' ? -cols : dir === 'down' ? cols : dir === 'left' ? -1 : 1;
+        const n = i + step;
+        const sameRow = dir === 'up' || dir === 'down' || Math.floor(i / cols) === Math.floor(n / cols);
+        if (sameRow && cards[n]) menus._moveFocus(cards[n], dir);
+        return true;
+      }
+    }
+    return onNav?.(dir);
+  };
+  return scr;
+}
+
+function decorateResults(menus, scr) {
+  if (!touchMenu(menus)) return scr;
+  const head = scr.el.querySelector('.iw-res__head');
+  const body = scr.el.querySelector('.iw-res__body');
+  const foot = body.querySelector('.iw-res__foot');
+  const scroll = document.createElement('div');
+  scroll.className = 's3-results-scroll';
+  // Awards and progression follow the scores, while the original action
+  // nodes remain in their original footer with their original callbacks.
+  const medals = head.querySelector('.iw-res__medals');
+  if (medals) body.append(medals);
+  const xp = foot.querySelector('.iw-xp');
+  if (xp) body.append(xp);
+  scr.el.insertBefore(scroll, head);
+  scroll.append(head, body);
+  scr.el.append(foot);
+  scr.el.classList.add('has-mobile-flow');
+  for (const table of scr.el.querySelectorAll('.iw-ttable')) {
+    const boss = table.classList.contains('iw-ttable--boss');
+    const labels = boss
+      ? [L('Damage', 'ダメージ'), L('Weak hits', '弱点'), L('Splats', 'たおした'), L('Deaths', 'やられた'), L('Turf', '塗り')]
+      : [L('Turf', '塗り'), L('Splats', 'たおした'), L('Deaths', 'やられた'), 'SP'];
+    for (const row of table.querySelectorAll('.iw-prow')) {
+      const stats = row.querySelectorAll('.iw-prow__turf, .iw-prow__n');
+      stats.forEach((stat, i) => { stat.dataset.statLabel = labels[i] || ''; });
+    }
+  }
   return scr;
 }
 
@@ -192,6 +259,7 @@ export function installMenuLayout(api) {
   if (!P || Object.hasOwn(P, INSTALLED)) return false;
   Object.defineProperty(P, INSTALLED, { value: true });
   const swap = P._swap, moveFocus = P._moveFocus, setup = P._scr_setup, loadout = P._scr_loadout;
+  const mode = P._scr_mode, results = P._scr_results;
   if (swap) P._swap = function (...args) {
     const result = swap.apply(this, args);
     if (this._scr?.el) { capEntranceStagger(this._scr.el); localizeContinuation(this._scr.el); }
@@ -208,6 +276,8 @@ export function installMenuLayout(api) {
     return result;
   };
   if (setup) P._scr_setup = function (...args) { return decorateSetup(this, setup.apply(this, args)); };
+  if (mode) P._scr_mode = function (...args) { return decorateMode(this, mode.apply(this, args)); };
+  if (results) P._scr_results = function (...args) { return decorateResults(this, results.apply(this, args)); };
   if (loadout) P._scr_loadout = function (...args) { return decorateLoadout(this, loadout.apply(this, args), api); };
   return true;
 }

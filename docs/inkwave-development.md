@@ -91,6 +91,15 @@ node scripts/check-inkwave-browser.mjs \
 
 証跡とプロファイルは作業ごとに別の永続ディレクトリを用意します。`/tmp`、`/var/tmp`、`/dev/shm` は拒否されます。再実行時も保存先を分けると比較できます。タッチ・練習場・原典ステージなどは各領域の専用チェッカーも必要です。Chromium の成功を WebKit、実 iPad、Switch での確認に読み替えないでください。
 
+ステージ選択・モード選択・リザルトのスマホ導線は、次の焦点チェックで検証できます。8画面サイズの主要ボタンの表示範囲、6モード・全ステージの選択、装備変更からの再戦、二重開始、オンライン続行・退出キャンセル、回転を確認します。Chromium では実タッチイベントによる一覧スクロールも検証します。`--cases phone,short-landscape` で対象を絞れます。API はオフラインfixtureで、実対戦・実機の確認とは区別します。
+
+```sh
+node scripts/check-inkwave-mobile-menus.mjs --source _site --engine chromium --evidence-dir .browser-evidence/mobile/chromium --profile-dir .browser-profile-mobile/chromium
+node scripts/check-inkwave-mobile-menus.mjs --source _site --engine webkit --evidence-dir .browser-evidence/mobile/webkit --profile-dir .browser-profile-mobile/webkit
+```
+
+システムの Chromium を使う場合は `CHROMIUM_PATH` を指定できます。このチェックは統合CIの `responsive` 群にも登録しています。
+
 ## Cloudflare Workers 向けの本番ビルド（アカウント機能つき）
 
 `npm run build:prod`（`vite build`）は、ログイン UI を Vite でバンドルしてから同じ `scripts/build-inkwave.mjs` を実行し、`dist/` に Workers 用の配信物を作ります。Vite 8 のため Node.js 22.12 以上が必要です。
