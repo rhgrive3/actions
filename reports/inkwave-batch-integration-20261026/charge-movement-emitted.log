@@ -1,0 +1,21 @@
+INKWAVE built fixture /workspace/scratch/integration-charge-movement-site contentHash=863bc1135a667d5e9e32353e93929f8fac10ed8e65f94bf8ee31f04fe64eee2e
+INKWAVE built fixture /workspace/scratch/integration-charge-movement-site contentHash=863bc1135a667d5e9e32353e93929f8fac10ed8e65f94bf8ee31f04fe64eee2e
+INKWAVE built fixture /workspace/scratch/integration-charge-movement-site contentHash=863bc1135a667d5e9e32353e93929f8fac10ed8e65f94bf8ee31f04fe64eee2e
+(node:4887) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every catalogue Charger, including scope/Bamboo/Pencil kits, draws falling ink before it paints at 30/60/120Hz (2316.405269ms)
+✔ replicated Charger heads never create a second falling-paint claim and clear retires live leases (659.816323ms)
+✔ every Stringer kit exposes two source-timed charge rings, dings once per boundary and resets on release/cancel (751.629057ms)
+(node:4888) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ downhill roller keeps real contact and claims slope turf at 30Hz (11420.831919ms)
+✔ downhill roller keeps real contact and claims slope turf at 60Hz (10353.966813ms)
+✔ downhill roller keeps real contact and claims slope turf at 120Hz (11189.305961ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33771.289753

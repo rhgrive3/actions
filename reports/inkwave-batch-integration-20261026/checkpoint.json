@@ -38,7 +38,25 @@
     },
     "build": "passed",
     "startupBudget": "passed",
-    "identity": "charge-movement-identity.json"
+    "identity": "charge-movement-identity.json",
+    "emittedFocused": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "cases": [
+        "catalogue Charger falling paint and draw at 30/60/120Hz",
+        "ghost paint exclusion and clearing",
+        "Stringer stage publication/reset for all kits",
+        "native downhill Roller turf at 30Hz",
+        "native downhill Roller turf at 60Hz",
+        "native downhill Roller turf at 120Hz"
+      ]
+    },
+    "audioRegressionScope": {
+      "unchangedFromEightKindRealAudioBuild": 426,
+      "changed": 0,
+      "meaning": "All emitted audio-tree artifacts, src/audio/audio.js, and catalog charge-stage helper hashes match the already-played charge build; playback was not redundantly rerun for movement-only changes."
+    }
   },
   "pending": [
     "verified reticle worker branch and follow-up",
