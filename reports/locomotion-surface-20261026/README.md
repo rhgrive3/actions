@@ -96,3 +96,14 @@ iOS/iPad・実GPU・二端末対戦・Switch実機、親担当の統合PR/CIは�
 PNGはINKWAVEの自作実装の描画だけ。Nintendo媒体の取得物を含まない。
 
 負対照と初回失敗ログは末尾空白を含む元バイト列をgzip保存し、raw SHA256と圧縮ファイルSHA256を併記した。
+
+### 引き渡し時の同一性
+
+末尾空行1行だけの整理を含むsource commit:
+`4360948d4cb970d56daacea644ac760a9c25ff76`。
+再ビルドの全生成物content hashは上記23回帰・GPU描画で試した
+`60961567…` と**完全同一**。全2,182生成物のハッシュを再照合済み。
+ブラウザが受領した425ファイルと全runtime 1,022ファイルも全てbyte同一。
+入力1,483件は整理後のコミットへ再結合している。
+`handoff-build-identity.json` と `handoff-runtime-equality.json` が受領記録。
+同じ生成物であるため挙動テストの重複実行はしていない。
