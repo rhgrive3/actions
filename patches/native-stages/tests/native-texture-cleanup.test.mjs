@@ -7,9 +7,9 @@ async function run(fault,options={}){
  const bitmaps=[],textures=[];let calls=0,transfers=0;
  const signal={aborted:!!options.abort};
  const fail=()=>{throw Error(fault)};
- class Texture {constructor(image){if(fault==='texture')fail();this.image=image;this.disposed=0;textures.push(this)}dispose(){this.disposed++}}
+ class Texture extends EventTarget {constructor(image){super();if(fault==='texture')fail();this.image=image;this.disposed=0;textures.push(this)}dispose(){this.disposed++;this.dispatchEvent(new Event('dispose'));}}
  class TransferMap extends Map {set(key,value){super.set(key,value);if(value instanceof Texture){transfers++;if(options.abortAfterTransfer)signal.aborted=true;}return this;}}
- const context=vm.createContext({Map:TransferMap,Blob,Uint8Array,DOMException,AbortController,console,createImageBitmap:async(input,opts)=>{
+ const context=vm.createContext({AbortController,Map:TransferMap,Blob,Uint8Array,DOMException,console,createImageBitmap:async(input,opts)=>{
   calls++;if(calls===2&&fault==='resize')fail();
   const b={width:opts.resizeWidth||options.size||2048,height:opts.resizeHeight||options.size||2048,closed:0,close(){this.closed++}};bitmaps.push(b);return b;
  },OffscreenCanvas:class {constructor(w,h){this.width=w;this.height=h}getContext(){return {drawImage(){if(fault==='canvas')fail()},getImageData(){return {data:new Uint8Array(4)}}}}}});
