@@ -612,6 +612,8 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn { width: 100%; min-width: 0; min-height: 54px; padding: 10px; gap: 8px; font-size: 15px; margin: 0; }
+/* Focus glow remains; avoid the desktop 1.045x translate/scale pushing touch docks outside 1024px landscape viewports. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn.is-focus { transform: none; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn--primary { grid-column: 1 / -1; order: -1; font-size: 20px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns .iw-btn__icon { width: 22px; height: 22px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns .iw-btn__label { line-height: 1.4; }
