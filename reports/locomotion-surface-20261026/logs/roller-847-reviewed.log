@@ -1,0 +1,128 @@
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:134:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:151:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:153:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:179:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:211:15)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:245:17)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:246:18)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:247:18)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:309:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:310:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:331:22)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:343:20)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:2393) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 847 flat rolling unchanged on full production composition (35713.552709ms)
+✔ 847 no-stick residual keeps the drum down but stops native paint, ink drain, and damage without changing velocity (264.63529ms)
+✔ 847 airborne wall drum contact preserves rolling (12.164559ms)
+✔ 847 ledge drum void suspends contact while retaining the held lowered pose (44.790011ms)
+✔ 847 support probe falls back to feet grounding without stage collision (0.632818ms)
+✔ 847 owner and remote share native contact; NetMatch drops remote damage and native hit updates survive (55.048225ms)
+✔ 847 frozen b34 roller source retains its recorded single-module identity (1.033571ms)
+✔ 847 prior scratch epoch retains its historical hash independently of current source (28.276476ms)
+✔ 847 rejects missing or modified fault inputs before VM linking and keeps exact fault anchors (15.09828ms)
+✔ 847 explicit current-source admission faults expose the guarded regressions (16331.698038ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54432.96135
