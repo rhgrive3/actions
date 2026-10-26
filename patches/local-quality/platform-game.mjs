@@ -139,11 +139,25 @@ function scheduleHiddenHostDeadline(saved, game, G, env, r) {
   }, delay);
 }
 
-export function installPlatformGame(Game, G, env = globalThis) {
+export function installPlatformGame(Game, G, env = globalThis, { importProfiler = () => import('./range-frame-profiler.mjs') } = {}) {
   const P = Game.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   const owner = getPlatformLifecycle(env), unlock = P._onPointerUnlock;
+  // Settings can change while the game is paused and the frame driver is
+  // suspended. Invalidate an active profile immediately, not on the next RAF.
+  const setSettings = P._setSettings;
+  if (typeof setSettings === 'function') {
+    P._setSettings = function (...args) {
+      const result = setSettings.apply(this, args);
+      const partial = args[0];
+      if (partial && Object.hasOwn(partial, 'debugMode')) {
+        if (partial.debugMode === false && this.platform) this.platform.profilerUrlOptIn = false;
+        this.platform?.syncProfiler?.();
+      }
+      return result;
+    };
+  }
   function ensure(game) {
     if (game.platform) return game.platform;
     const r = game.platform = { owner, driver: null, off: null, canvas: null, disposers: [], rendererLost: false };
@@ -168,18 +182,40 @@ export function installPlatformGame(Game, G, env = globalThis) {
       if (finishing) { scheduleHiddenHostResult(finishing, game, G, env, r); return true; }
       return false;
     };
-    // The platform driver replaces Game._loop. Install the opt-in frame
-    // profiler on this REAL frame owner, not on the unreachable legacy loop.
-    if (game._rangeFrameProbe === undefined) {
+    // The platform driver replaces the source Game._loop. Own both the
+    // settings toggle and legacy ?profileRange=1 on the actual RAF owner.
+    // Read the URL exactly once; ordinary OFF frames do not parse anything.
+    r.profilerUrlOptIn = new URLSearchParams(env.location?.search || '').get('profileRange') === '1';
+    r.profilerEnabled = false;
+    r.profilerEpoch = 0;
+    game._rangeFrameProbe ??= null;
+    r.syncProfiler = () => {
+      const enabled = game.settings?.debugMode === true || r.profilerUrlOptIn;
+      if (enabled === r.profilerEnabled) return game._rangeFrameProbe;
+      r.profilerEnabled = enabled;
+      const epoch = ++r.profilerEpoch;
+      game._rangeFrameProbe?.dispose?.();
       game._rangeFrameProbe = null;
-      if (new URLSearchParams(env.location?.search || '').get('profileRange') === '1') {
-        import('./range-frame-profiler.mjs').then(({ createFrameTimingProbe }) => {
-          if (game.platform === r && !r.disposed) {
-            game._rangeFrameProbe = createFrameTimingProbe({ env, game });
+      if (enabled) {
+        Promise.resolve().then(importProfiler).then(({ createFrameTimingProbe }) => {
+          if (!ownsPlatformRuntime(game, r) || !r.profilerEnabled || r.profilerEpoch !== epoch) return;
+          game._rangeFrameProbe = createFrameTimingProbe({ env, game });
+        }).catch(error => {
+          if (ownsPlatformRuntime(game, r) && r.profilerEpoch === epoch) {
+            r.profilerEnabled = false;
+            env.console?.warn?.('Optional range profiler unavailable:', error);
           }
-        }).catch(error => env.console?.warn?.('Optional range profiler unavailable:', error));
+        });
       }
-    }
+      return game._rangeFrameProbe;
+    };
+    r.disposeProfiler = () => {
+      r.profilerEnabled = false;
+      r.profilerEpoch++;
+      game._rangeFrameProbe?.dispose?.();
+      game._rangeFrameProbe = null;
+    };
+    r.syncProfiler();
     game.timer?.disconnect?.();
     game.menus?.setPlatformDriven?.(true);
     if (game.input?.mobile) game.input.mobile._platformCanRun = () => G.mode === 'match' && !!game.match && !game.match.paused && !game.menus?.current;
@@ -257,7 +293,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
       r.disposers.push(() => { canvas.removeEventListener('webglcontextlost', lost); canvas.removeEventListener('webglcontextrestored', restored); });
     }
     r.driver = new PlatformFrameDriver(owner, dt => {
-      const probe = game._rangeFrameProbe;
+      const probe = r.syncProfiler();
       probe?.callback(dt);
       if (watchGuestMatchEnd(game, G, env, r) || game.frozen) return;
       const cap = frameRate();
@@ -305,7 +341,7 @@ export function installPlatformGame(Game, G, env = globalThis) {
     r.guestEndWait = null;
     r.hiddenHostClock = null;
     clearHiddenHostDeadline(r, env); clearHiddenHostResult(r, env);
-    r.driver.dispose(); r.off(); this._rangeFrameProbe?.dispose(); this._rangeFrameProbe = null;
+    r.driver.dispose(); r.off(); r.disposeProfiler?.();
     r.notice?.remove(); for (const dispose of r.disposers) dispose();
     this.menus?.setPlatformDriven?.(false); this.input?.disposePlatform?.();
     G.audio?.disposePlatform?.();
