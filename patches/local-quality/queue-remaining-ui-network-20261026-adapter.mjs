@@ -74,9 +74,31 @@ export function adaptQueueRemainingUiNetwork20261026(rel, code) {
     const reconcileReviewed = (oldText, reviewedText, label) => {
       const oldCount = code.split(oldText).length - 1;
       const newCount = code.split(reviewedText).length - 1;
-      if (oldCount === 1 && newCount === 0) patch(oldText, reviewedText, label);
-      else if (oldCount !== 0 || newCount !== 1)
-        throw Error('Remaining UI/network queue conflict: ' + label + ' (old=' + oldCount + ', reviewed=' + newCount + ')');
+      if (oldCount === 1 && newCount === 0) { patch(oldText, reviewedText, label); return; }
+      if (oldCount === 0 && newCount === 1) return;
+      if (oldCount === 0 && newCount === 0) {
+        // Some independently reviewed network integrations change only the
+        // formatting of these two hot-path expressions. Retain their existing
+        // producer IF and ONLY IF the same all-or-none authority gate remains.
+        const start = code.indexOf('  _validHitAuthorityMetadata(d) {');
+        const finish = start < 0 ? -1 : code.indexOf('  _hitHandoffParentEntries(', start);
+        const validator = start < 0 ? '' : code.slice(start, finish < 0 ? start + 1200 : finish);
+        const countExpression = validator.match(/\\b(?:const|let)\\s+present\\s*=\\s*([^;\\n]+);/)?.[1] || '';
+        const countIncludesAllFields = ['hp','hr','ht','la'].every(field =>
+          new RegExp('\\\\b' + field + '\\\\b').test(countExpression));
+        const validCount = countExpression.includes('HIT_AUTHORITY_FIELDS.') || countIncludesAllFields;
+        const strictGate = validator.includes('if (present === 0)') &&
+          validator.includes('present !== 4') && validator.includes('d?.he === undefined');
+        if (label === 'fixed authority presence count' && validCount && strictGate) return;
+        if (label === 'validated all-or-none authority presence' &&
+          code.includes('if (!this._validHitAuthorityMetadata(d)) return;') &&
+          (code.includes('const hasAuthority = d.hp') ||
+            code.includes('const hasAuthority = HIT_AUTHORITY_FIELDS.some('))) return;
+      }
+      const at = code.indexOf('  _validHitAuthorityMetadata(d) {');
+      const excerpt = at < 0 ? 'missing validator' : code.slice(at, at + 320).replace(/\\s+/g,' ');
+      throw Error('Remaining UI/network queue conflict: ' + label +
+        ' (old=' + oldCount + ', reviewed=' + newCount + ', validator=' + excerpt + ')');
     };
     reconcileReviewed('    const present = HIT_AUTHORITY_FIELDS.filter((key) => d?.[key] !== undefined).length;',
       '    const present = Number(d?.hp !== undefined) + Number(d?.hr !== undefined) + Number(d?.ht !== undefined) + Number(d?.la !== undefined);', 'fixed authority presence count');
