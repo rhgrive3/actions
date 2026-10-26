@@ -1689,11 +1689,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         runner.firingT=.35; a.lastFire=0;
       }return;
     }
-    if(input.fire && !s.pending && runner.cooldown<=EPS) {
-      if(s.rounds>0){
-        if(input.firePressed){emitSingle(runner,r,'normal',1);s.rounds--;runner.cooldown=finite(t.PostDelayFrame,15)/HZ;}
-        return;
+    // R-PEN's remaining divided shots share the first shot's release edge.
+    // Holding ZR aims the loaded round; it must not emit on the new press.
+    if(s.rounds>0){
+      if(!input.fire&&s.pressed&&!s.pending&&runner.cooldown<=EPS){
+        emitSingle(runner,r,'normal',1);s.rounds--;runner.cooldown=finite(t.PostDelayFrame,15)/HZ;
       }
+      return;
+    }
+    if(input.fire && !s.pending && runner.cooldown<=EPS) {
       if(s.stored){s.chargeF=s.stored.frames;s.paid=s.stored.paid;s.stored=null;}
       if(s.stream>0){
         s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(a);

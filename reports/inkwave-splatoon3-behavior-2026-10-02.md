@@ -6457,6 +6457,8 @@ Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. 詳細・参照条件・検証�
 
 2026-10-26 bounded coverage追補（固定26a69c1c）: E-liter／Squiffer／Goo Tuberの実カタログ保持は `catalogState.stored` を消費するが、音声の既存保持判定はnative `s3Stored` だけを読んでいた。通常Actor入力でFire保持→Squid→kidへ戻ると新規チャージのrise/full-readyが再生されるdispatch回帰を確認。別候補では実際の保持消費を1回だけ認識し、既存keep cueへ接続する。Goo部分保持後の新たなfull-ready、保持期限切れ後の新規rise、同一入力の反復、実発射／インク予約は区別する。S3 11.3.0・ギアなしの従来保持資料を継承し、音源・ゲームプレイ時計・弾道は変更しない。この追加確認はCPU合成ソース／生成物の音声dispatchであり、新規ブラウザ再生・本家keep音のタイミング一致は未確認。[変種別coverageと制約](inkwave-batch-integration-20261026/charge-bow-coverage-26a69c1c/README.md)。
 
+2026-10-26 Pencil release-only追補（固定f8b5eafc）: 残弾2～5がFire押下で発射される挙動を再現し、最初の1発と同じreleaseへ変更する。[任天堂公式2022-11-17発表](https://x.com/SplatoonJP/status/1593167058514026497)の検索取得本文と親の独立reviewはrelease発射を支持する。元の72F／15F・5発・37.5%予約・68damage・288WU/s・26.037WUを保持し、5H/5Bの全5発event／head移動・描画バッファ／落下後塗り、空マガジン後の新規charge、既存cooldown拒否と重複releaseを区別して確認する。別候補68cf34117のSquid残弾破棄hunkは根拠不足として除外し、元候補1d6df6d8を変更せず保存する。チャージキープ不可という説明から発射済みpackの残弾破棄・ink精算までは確定しない。直接公式本文取得403・映像未取得、実音声／通常入力／本家pixel・発射間隔・Squid残弾semanticsは未確認。[採用範囲と負例](inkwave-batch-integration-20261026/pencil-release-only/README.md)。
+
 ## 2026-10-26: 下り坂ローラー・歩行表示・床／壁の泳ぎ飛沫
 
 基点 `48511150bbaeab182dd04c712d39bd5b26df18f3`。実Actorで下り坂の標準ローラーが

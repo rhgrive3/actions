@@ -154,3 +154,92 @@ test('catalogue Goo partial keep still reaches ready once; expired keeps start a
     a.setWeapon('shooter');f.G.projectiles.clear();
   }
 });
+
+test('both Pencil kits emit five release-owned full-shot cues and finite drawn flight before depletion starts a new charge',async()=>{
+  const f=await keepAudioWorld();
+  for(const id of kitIds('s3-charger-pencil')){
+    const {paint}=makePaintWorld(f);f.cues.length=0;
+    const a=f.actor(id),r=a.weaponRunner,p=a.weapon.catalogRecord.parameters;
+    a.pos.set(0,8,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,9.05,100);
+    const shots=[],stamps=[];let current=null;
+    const unsub=f.on('weapon:fire',e=>{if(e.actor===a){
+      const head=f.G.projectiles.list.at(-1);
+      current={index:shots.length+1,head,charge:e.charge,speed:head.vel.length(),damage:head.damage,
+        range:head.catalog.descriptor.range,start:head.pos.clone(),moved:false,drawnHead:false,drops:false,drawnDrop:false};
+      shots.push(current);
+    }});
+    const splat=paint.splat;paint.splat=function(at,radius,team,o){stamps.push({time:f.G.time,owner:o?.claimOwner});return splat.call(this,at,radius,team,o);};
+    const drawn=pos=>{
+      const mesh=f.G.projectiles.blobs,m=mesh.instanceMatrix.array;
+      for(let j=0;j<mesh.count;j++)if(Math.hypot(m[j*16+12]-pos.x,m[j*16+13]-pos.y,m[j*16+14]-pos.z)<1e-4)return true;
+      return false;
+    };
+    const step=(n=1)=>{for(let i=0;i<n;i++){
+      f.tick(a);f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);
+      if(current){
+        if(f.G.projectiles.list.includes(current.head)){
+          current.moved ||= current.head.pos.distanceTo(current.start)>0;
+          current.drawnHead ||= drawn(current.head.pos);
+        }
+        for(const drop of f.G.projectiles.chargerDrops){current.drops=true;current.drawnDrop ||= drawn(drop.pos);}
+      }
+    }};
+    a.intent.fire=true;step(p.WeaponParam.ChargeFrameFullCharge);
+    assert.deepEqual(f.cues.map(c=>c.event),['rise','ready'],id+' one full charge phrase/ready');
+    const paidInk=a.ink;close(paidInk,100-p.WeaponParam.InkConsumeFullCharge*100,id+' unchanged full payment');
+    const trace=[];
+    for(let shot=1;shot<=p.WeaponDivideChargerParam.FullChargeDivideNum;shot++){
+      if(shot>1){
+        a.intent.fire=true;step(3);
+        assert.equal(shots.length,shot-1,id+' holding trigger must not fire stored shot');
+      }
+      a.intent.fire=false;const time=f.G.time,stampsBefore=stamps.length;step();
+      assert.equal(shots.length,shot,id+' exactly one shot on release');
+      assert.equal(r.catalogState.rounds,5-shot,id+' reservoir decremented once');
+      assert.equal(f.cues.filter(c=>c.event==='fire_full').length,shot,id+' one full-shot cue per actual birth');
+      assert.equal(stamps.length,stampsBefore,id+' high release cannot immediately paint');
+      step(120);
+      assert.equal(current.charge,1);close(current.speed,p.MoveParam.SpawnSpeedFullCharge*60,id+' source speed');
+      close(current.range,p.MoveParam.DistanceFullCharge,id+' source range');close(current.damage,p.DamageParam.ValueFullCharge/10,id+' source damage');
+      assert.ok(current.moved&&current.drawnHead,id+' head moves and enters native draw buffer');
+      assert.ok(current.drops&&current.drawnDrop,id+' each shot has drawn airborne paint');
+      assert.ok(stamps.length>stampsBefore&&stamps.slice(stampsBefore).every(s=>s.time>time+.5&&s.owner===a),id+' turf only after falling paint lands');
+      assert.equal(f.G.projectiles.chargerDrops.length,0);assert.equal(f.G.projectiles.list.length,0);
+      assert.ok(a.ink>=paidInk-1e-8,id+' no second payment for retained shots');
+      trace.push({shot,reserve:r.catalogState.rounds,charge:current.charge,speed:current.speed,damage:current.damage,range:current.range,
+        moved:current.moved,drawnHead:current.drawnHead,drawnDrop:current.drawnDrop,landingStamps:stamps.length-stampsBefore});
+    }
+    assert.equal(f.cues.filter(c=>c.event==='rise').length,1);assert.equal(f.cues.filter(c=>c.event==='ready').length,1);
+    assert.equal(f.cues.filter(c=>c.event==='release').length,0,'shots do not add cancellation cues');
+    a.intent.fire=true;step();assert.equal(shots.length,5,'depleted reservoir has no free sixth shot');
+    assert.ok(r.charging&&r.charge>0&&r.charge<1,'depletion starts an actual new charge');
+    assert.equal(f.cues.filter(c=>c.event==='rise').length,2,'fresh pack starts a new phrase');
+    console.log('PENCIL_CYCLE',JSON.stringify({id,trace,freshCharge:r.charge,fullShotCues:5}));
+    unsub();a.setWeapon('shooter');f.G.projectiles.clear();
+  }
+});
+
+test('Pencil release edge respects the existing cooldown and never repeats a loaded shot while idle',async()=>{
+  const f=await keepAudioWorld();
+  for(const id of kitIds('s3-charger-pencil')){
+    f.cues.length=0;
+    const a=f.actor(id),r=a.weaponRunner;a.intent.fire=true;f.tick(a,72);a.intent.fire=false;f.tick(a);
+    const shots=()=>f.cues.filter(c=>c.event==='fire_full').length;
+    assert.equal(shots(),1);assert.equal(r.catalogState.rounds,4);
+    const ink=a.ink;
+    a.intent.fire=true;f.tick(a);a.intent.fire=false;f.tick(a);
+    assert.equal(shots(),1,'release inside existing cooldown does not admit another round');
+    assert.equal(r.catalogState.rounds,4);
+    f.tick(a,20);assert.equal(shots(),1,'idle after denied release adds no new input buffer');
+    a.intent.fire=true;f.tick(a,3);
+    assert.equal(shots(),1,id+' aiming held round remains silent after cooldown');
+    a.intent.fire=false;f.tick(a);
+    assert.equal(shots(),2,id+' next eligible physical release admits one round');
+    assert.equal(r.catalogState.rounds,3);assert.ok(a.ink>=ink-1e-8,'retained round is not paid twice');
+    f.tick(a,20);assert.equal(shots(),2,'repeated released input cannot emit another round');
+    assert.equal(f.cues.filter(c=>c.event==='rise').length,1);
+    assert.equal(f.cues.filter(c=>c.event==='ready').length,1);
+    console.log('PENCIL_RELEASE_BOUNDARY',JSON.stringify({id,admittedFullShots:shots(),remaining:r.catalogState.rounds,duplicateReleaseShots:0}));
+    a.setWeapon('shooter');f.G.projectiles.clear();
+  }
+});
