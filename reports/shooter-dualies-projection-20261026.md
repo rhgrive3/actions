@@ -53,3 +53,7 @@ cutoff の由来を明確にする: `profile.json` の `weapons.shooter.shotGuid
 | 通常マウス操作の実発射 | 0、pointerlockerror 1 | 0、pointerlockerror 1 |
 
 候補の content hash は `024bfccbf2401ce05e91ae1d528b56e9c91f466a044dc1973f07abec48700bb0`、基準は `7031d167d31a6aedf55686be1c17bde5998073f1e35e7c511602c717f030aad0`。通常の optimized build、quick compatibility、startup budget は成功。限定ソース回帰39/39、最終 emitted の新規回帰4/4。初期のブラウザ診断は fade 完了前の画像、roll 前に fire input を反映しない手順、`freeze(false)` を unfreeze と誤認した手順を含んだため最終証拠には採用しない。最終 probe は native fade の実値を待ち、roll 前に入力を1tick反映し、通常操作試行には既存 `debug.unfreeze()` を使う。
+
+## 統合レビュー: 8F cutoff は採用しない
+
+統合担当は、上記候補の「ShotGuideFrame を超える接触を inner marker にしない」という新しい非表示条件を runtime から切り離した。8F という抽出フィールドは本家の inner-marker 消去規則の根拠にはならないため、元の full-flight marker admission を維持する。実際の head と同じ first-contact 予測、床への guide clamp、移動・地形変更の cache invalidation、SVG projection と shot-kick の分離、bounded Animation owner は保持する。新規回帰と browser checker は全寿命の実接触を保証し、未確認の非表示条件を成功要件にしない。元ブランチの画像・数値はその候補時点の履歴証跡であり、最終統合の cutoff 採用を意味しない。この表示条件はドラフトPRの未解決項目に残す。

@@ -55,12 +55,13 @@ test('Shooter and each Dualies guide stop at the actual downward head contact be
   }
 });
 
-test('Shooter horizontal falling-ink contact is available to physics but does not become an inner obstruction cue',async()=>{
+test('Shooter full-flight contact remains available without inventing an inner-marker age cutoff',async()=>{
   const s=await scene('shooter',0),{a,ps}=s;
   const impact=ps.s3ShooterImpact(a,a.weapon),actual=firstHeadContact(s);
   assert.ok(impact);assert.ok(impact.point.distanceTo(actual.point)<1e-8);
   assert.ok(impact.guideFrame>a.weapon.shotGuideFrame,'floor is reached after the aiming envelope');
-  assert.equal(ps.muzzleBlockFeedback(a),null,'a clear horizontal lane has no floor obstruction marker');
+  const marker=ps.muzzleBlockFeedback(a);
+  assert.ok(marker?.point.distanceTo(impact.point)<1e-8,'preserve full-flight marker admission pending original UI evidence');
 });
 
 test('Dualies contact cache invalidates when in-place floor geometry changes its generation',async()=>{

@@ -94,7 +94,9 @@ try {
       const points=row.weapon==='shooter'?[row.guide]:row.pairs;
       assert(points?.every(p=>(p.y??p[1])>=-1e-8),'floor guides must not project a subterranean trajectory');
     }
-    assert.equal(receipt.scenarios.find(r=>r.weapon==='shooter'&&r.name==='horizontal').marker,null,'clear lane has no late falling-ink obstruction cue');
+    const horizontal=receipt.scenarios.find(r=>r.weapon==='shooter'&&r.name==='horizontal');
+    assert(horizontal.marker&&horizontal.impact,'full-flight marker remains available pending original visibility evidence');
+    assert(Math.hypot(...horizontal.marker.map((v,i)=>v-horizontal.impact.point[i]))<1e-8,'marker retains the actual full-flight contact');
     const before=receipt.kick[0].glyphs.filter(g=>g.class.includes('twin'));
     const active=receipt.kick.filter(r=>r.glyphs.some(g=>g.class.includes('twin')&&g.animations.length));
     assert(active.length,'browser must observe an actual active kick');

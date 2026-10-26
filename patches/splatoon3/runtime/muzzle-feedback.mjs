@@ -30,13 +30,10 @@ export function installMuzzleFeedback(api) {
       m.straight === w.straightTime && m.range === w.range &&
       m.radius === w.impactRadius) return m.hit;
 
-    const impact = this.s3ShooterImpact(actor, w);
-    // A field contact after the nominal guide age is falling ink beyond the
-    // aiming envelope, not an obstruction of the current sight. Keep that
-    // full-flight query available, but do not advertise a distant floor as
-    // the inner target marker when the camera ray is horizontal and clear.
-    const fresh = impact && !(Number.isFinite(impact.guideFrame) && Number.isFinite(w.shotGuideFrame)
-      && impact.guideFrame > w.shotGuideFrame) ? impact : null;
+    // Preserve the existing full-flight marker admission. ShotGuideFrame is
+    // a sourced outer-guide age, not evidence of Nintendo's inner-marker
+    // visibility cutoff; that separate UI condition remains unverified.
+    const fresh = this.s3ShooterImpact(actor, w);
     const cache = m || { hitCopy: new Hit() };
     cache.actor = actor; cache.character = actor.character; cache.weapon = w;
     cache.physics = physics; cache.level = level; cache.blocks = level?.blocks;
