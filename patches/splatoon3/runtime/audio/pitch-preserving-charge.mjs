@@ -1,7 +1,7 @@
 /**
- * Charge-onset timing without transposition. Recorded Charger HoldNoise clips
- * are short, independent attacks (roughly 0.24-0.42 seconds), NOT complete
- * rising/charging phrases. We change only an available onset's duration.
+ * Charge-onset timing without transposition. The Splat Charger recording is our single shared charge-up rise for ALL
+ * Charger-family weapons. Stretch its 1.215s excerpt, never weapon-specific
+ * 0.2-0.4s HoldNoise clicks or ready/fire/release recordings.
  * Never stretch fire/ready/release events or synthesize absent recordings.
  *
  * The actual WSOLA work is done in an isolated module Worker at loadout time.
@@ -11,7 +11,7 @@
 
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 export const CHARGE_REFERENCE_SECONDS = 1; // legacy/base Splat Charger gameplay clock
-export const CHARGE_SPEED_LIMITS = Object.freeze({ minRatio: .42, maxRatio: 1.65 });
+export const CHARGE_SPEED_LIMITS = Object.freeze({ minRatio: .30, maxRatio: 1.65 });
 
 /** Return null for unknown clocks. Quantize to 60 Hz to bound cache variants. */
 export function chargerOnsetRatio(chargeTime) {
