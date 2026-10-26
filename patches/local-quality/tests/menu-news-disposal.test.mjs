@@ -30,7 +30,7 @@ function fixture(source) {
   const news = new News(menu); Object.assign(news, { _t: 10, _raf: 20, _pre: [{}], el: { remove: () => removed.push('news') } });
   news._tweens.push({});
   Object.assign(menu, { _news: news, _modal: news.el, _raf: 30, _fitQ: 40, _swapToken: 0,
-    _cur: {}, _tick() {}, wipe: { cancel() {} }, el: { remove: () => removed.push('menu') } });
+    _cur: {}, _tick() {}, _cancelHeroWait() {}, wipe: { cancel() {} }, el: { remove: () => removed.push('menu') } });
   return { menu, news, timers, frames, removed };
 }
 
