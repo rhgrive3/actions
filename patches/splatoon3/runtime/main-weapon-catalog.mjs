@@ -698,6 +698,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         splashRadius:splash?.widthHalf??0,splashSpacing:splash?.spacing??0,
         sloshFall:splash?{drawRadius:splash.drawRadius,spec:splash.drop}:null};
       p.catalog.nextSplash=splash?.targetLength??0;p.catalog.splashTravel=0;
+    }else if(descriptor.key==='slosh'&&descriptor.sloshFall){
+      const splash=descriptor.packet.SplashAndSplashWallHitSpawnPrm?.SplashParam?.[0]?.SpawnParam;
+      const min=splash?.FirstSplashRateForLengthMin,max=splash?.FirstSplashRateForLengthMax;
+      // Slosher first-distance fields are rates of SpawnBetweenLength, not
+      // Shooter SpawnNearestLength. Reuse the admitted glob seed, as the
+      // native Slosher resolver does, without changing the random budget.
+      if(Number.isFinite(min)&&Number.isFinite(max)&&min>=0&&max>=min)
+        p.catalog.nextSplash=lerp(min,max,clamp(p.seed))*descriptor.splashSpacing;
     }
     // Keep the five-entry catalogue tuple readable by existing peers. Older
     // receivers ignore these named visual-only extensions on the same object.
