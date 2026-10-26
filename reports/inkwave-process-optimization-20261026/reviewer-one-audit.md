@@ -119,3 +119,33 @@ Integration sources and tests inspected: old 48511150 → d88aa68 changes to pat
 - Resolved worker.test integration contains both main's three streamed-response cases (oversize/valid/503-body readability) and our 25-path ordered, exactly-once, peak-two installation test. Conflict markers are absent. Existing real-HTTP followup tests remain intact; this reviewer read them but did not execute them.
 
 Integration conclusion: reviewer 1 reaffirms simulation/rendering/services prior scope signoffs for the actual d88aa68 → 7b5da66 PR delta. No integration blocker or remaining evidence-backed low-downside optimization identified in these latest owners. Root coordinates final production build and execution evidence. This does not broaden the source audit into a claim of exhaustive backend, recipe corpus, retail or browser equivalence testing.
+
+## PR1894 CI followup review: Rainmaker oracle clock and composed CPU setup
+
+Read-only independent review of both followup scopes on 2026-10-26. No tests/builds executed and no repository files edited by reviewer 1. Reviewed the ranked failure log, actual runtime host input/owner binding and Rainmaker update paths, final checker/helper/native fixture test, both workflow changes, unchanged existing APT helper and extended workflow-inputs contract. Initial runtime optimization code is unchanged by these followups.
+
+### Ranked browser checker: no blockers
+
+Reviewed scripts/check-inkwave-ranked-browser.mjs, scripts/lib/ranked-rainmaker-charge.mjs, patches/splatoon3/tests/ranked-charge-browser-clock.test.mjs, .github/workflows/validate-inkwave-ranked.yml. Runtime context read: ranked/install.mjs buildFrame and advanceRanked, ranked/network.mjs serialized tick/admission, ranked/pose-admission.mjs bindRankedInput/rankedInputFor, ranked/rainmaker.mjs _updateShot, netmatch 20Hz cadence and fixed clock.
+
+Failure mechanism is consistent with exact source: remote held command expires at host G.time age >= .75, one startup frame leaves 44/60 charge = .733333333333334, and the old checker later observed full charge while retaining that earlier partial shot as events[0]. Follower advanceRanked never advances the authoritative rule. The correct fix controls oracle clocks, preserving the production expiry/authority behavior.
+
+Final helper freezes both native simulation clocks before held input, drives real Player→Actor input through a later ordinary 20Hz packet, waits for host-side rankedInputFor-branded receipt with current actor/match/session/owner/life/matchId, monotonic sequence and exact fire state, then revalidates that accepted sequence/fire/age inside the host step before advancing the same <=5-frame batch. Wall-clock relay delivery does not age frozen host G.time. Release follows the same native false-input receipt path. Earlier shot/dirty starting state is fatal; events, charge/rule state, TTL and packet content are never reset by the helper. Restoration uses captured mouse identity, skipRender/frozen state, and all-settled partial installation/cleanup with original failure precedence.
+
+Caller retains strict exactly-one-shot, full charge 1, direct damage60/blast180, authoritative-vs-visual replica equivalence, native wall60+360 and guest damage packet60+180/cause assertions. Four-mode default remains unchanged; optional RANKED_MODE only permits an explicit focused subset. Workflow triggers now include the new imported helper. Test source covers the actual composed Input/Player/Actor/fixed-clock/20Hz JSON/native admission path, current receipt/epoch/TTL rejection, cleanup failure/partial installation, untouched earlier partial shots and exact negative reproduction. Component evidence is distinguished from root's planned one actual online browser subset.
+
+Reviewed file hashes: checker 7c18911ed58a771c2f835b19b421415937f36dbe585bf43119b52aab7045aa1f; helper eb05d97791ad240ba79c05f56b9a4b08137c3451476d5c1ae77e48fc7266141e; native test 3c131b83be99d50b4b56841e80407bd572745613f98836e678433742aa5cc6ff.
+
+### Composed CPU workflow setup/contract: no blockers
+
+Reviewed .github/workflows/inkwave-composed-cpu.yml, scripts/tests/inkwave-workflow-inputs.test.mjs and unchanged scripts/prepare-inkwave-ci-apt.py. Workflow adds the existing exact Azure archive URL replacement helper before the unchanged Playwright --with-deps Chromium install, with its path in relevant triggers. The helper only rewrites matching Ubuntu archive URLs to the existing signed HTTPS archive and does not disable package signature verification.
+
+Exact PR-head checkout/source-SHA verification, source composition and motion regressions, production build/startup budget, emitted motion parity, component benchmark, actual browser CPU recorder with --source-sha and 30 frames, stages/quality/evidence settings, required unconditional gates, artifact handling and20-minute cap all remain. Extended contract checks direct input trigger coverage and rejects lost setup, reversed install order, weakened timeout/frame count, removed startup gate or conditional recorder. No performance/gameplay threshold was relaxed.
+
+Reviewed file hashes: composed CPU workflow e6b06df80817192f869002bca8c6c4c5f33797cfb1fc456019c2779ca55a8fa1; workflow-inputs test 68f12122a7d364422bddb2b836f11fd92254885ed79f4aa487bb982735c00a0c.
+
+Reviewer1 all-followup conclusion: no blocker in either final followup scope, no remaining evidence-backed low-downside candidate in these reviewed paths. Root owns execution and the single online Rainmaker browser subset; no new browser/retail performance claim is made by this source review.
+
+### Additional frozen-HUD fixture repair signoff
+
+Reviewed the final scripts/tests/inkwave-frozen-hud-capture.test.mjs diff (SHA256 c2743da30d017032bb30deebf052e7daac5b7f9e6c922ad6b63f73e192ce1155). Only fixture construction changes: window DPR, desktop mobile flags, quality ratio/dynamic scale, mutable native renderer pixel ratio getter/setter and drawing-buffer sizing, plus composer.setPixelRatio stub. These satisfy current inherited Renderer.resize dependencies and preserve the requested ratio in fractional-DPR viewport cases. Exact native resize/render extraction, real crop adapter and all17 original assertions remain unchanged. Frozen/no-frame simulation sentinel, viewport/crop/DPR/negative/cleanup evidence remains intact. No runtime edit or lowered assertion identified. No blocker; prior two followup signoffs unchanged. Reviewer1 ran no tests/builds and made no repository edits; root/fix agent own focused17-pass and actual delayed online Rainmaker browser execution evidence.

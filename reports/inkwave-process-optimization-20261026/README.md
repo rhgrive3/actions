@@ -45,3 +45,16 @@
 ボスのヒューリスティックはgrid 1セルあたり8 bytesとヒープの数値配列最大容量を保持する。例の40×40 gridでは12,800 bytes。原典スイープの結果はlevelごとのWeakMap、ロッカーの定常scratchはbackdropごとに保持する。KTX2の旧loaderは実callbackが残る間だけ保持する。割当を減らすために必要な限定的な保持コストを隠さず記録する。
 
 文字列圧縮の12,000 literal合成ケースでは同じ222,116文字を生成し、1回の観測で4,595ms→100msだった。これはビルド内の合成ケースであり、ゲームFPS・実端末・ビルド全体の速度向上率ではない。画質、物理式、ゲーム速度、乱数、ネットワーク権限、音声品質を下げる変更はない。本家実機／iPad／Safariの新たな一致・性能測定は行っていない。
+
+## CIで見つかった検証・セットアップの修正
+
+初回head `70cc3b1` では24 workflowが成功した。残るランク戦検証の失敗、CPU検証のセットアップ中断、全体統合の古いfixtureを修正し、同じ3体が最終差分を再確認した。ゲーム本体の最適化コードはこの追補で変更していない。
+
+- [ランク戦の失敗](https://github.com/rhgrive3/actions/actions/runs/40362215329/job/121710371513): ホストが後でチャージ1へ到達しても、以前の入力lease切れによる部分チャージ発射が先頭イベントに残り、旧検証がそれを読むことがある。変更していない実ルールでログと同じ `0.733333333333334` を再現した。元CIには入力受信の時系列記録が無いため、実際のパケット停止を直接観測したとは扱わない。[根拠](ranked-lease-reproduction.md)と[修正監査](ranked-charge-fix-audit.md)を参照。
+- 検証用helperは両方のシミュレーション時計を止め、通常のゲスト入力→20Hz送信→ホストの実受理seq/fire/owner/life/match→同数の固定フレームという順序を守る。ホストが権威を持つ。入力lease・ルール・チャージ値・イベント履歴は変更せず、途中発射は失敗にする。チャージ1／直撃60／爆風180／1発のみ／相手への反映／壁・試合終了の条件を維持する。通常CIの既定4モードも維持する。
+- 追加したnative回帰は **7/7成功**。実Input・Player・Actor・clock・NetMatch・Transport・受理判定・ルールと、古いseq／不正fire／寿命切れ／所有者変更／途中失敗の後始末を確認した。
+- **実Chromium 154、200msのローカルrelay遅延、オンライン・ガチホコだけの確認が成功**。本体は既存の同じ `_site` を使い、再ビルドしていない。1発の `1/60/180`、双方のイベント、壁への2命中、双方のfinish、エラー0を確認した。[要約](ranked-charge-browser-summary.json)、[21 batchの受理記録](ranked-charge-receipts.json)、[実行ログ](logs/ranked-charge-browser-final.log)を保存する。
+- [CPU検証の中断](https://github.com/rhgrive3/actions/actions/runs/40362215063/job/121710368745): ソース・生成物の回帰を通過後、Azure Ubuntu mirrorから25.9MBを取得する処理が長時間かかり20分制限に到達。既存の `prepare-inkwave-ci-apt.py` をPlaywright install直前に使い、署名付きUbuntu archiveをHTTPSで取得する。制限時間、依存関係、source SHA、30フレームの実CPU traceと全ゲートを保つ。契約テスト **10/10成功**。
+- [統合CIのfixture失敗](https://github.com/rhgrive3/actions/actions/runs/40362214873/job/121731511320): main由来のRenderer.resizeを実行するfixtureにmobile／quality／DPR等の依存が無かった。fixtureだけを補い、実メソッドの抽出・crop adapter・全ての既存アサーションを保持した。**17/17成功**。後続artifactの欠落はこの先行失敗により実行されなかった工程に起因するため、artifact条件は緩めない。
+
+追補の局所検証は7・10・17件をそれぞれ成功として記録し、再実行分を重複加算しない。最終headのCIは、この追補を含むcommitに対して改めて確認する。
