@@ -3,7 +3,7 @@
 function once(code,from,to,label){if(!code.includes(from))throw new Error('audio adapter anchor: '+label);return code.replace(from,to);}
 export function adaptWeaponAudio(rel,code){
   if(rel==='src/audio/audio.js'){
-    code="import { TEX, texture } from '../../patches/splatoon3/runtime/audio/grain-texture.mjs';\nimport { prewarmGrainTextures, installGrainPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/grain-prewarm.mjs';\nimport { ReverbPrewarm, installReverbPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/reverb-prewarm.mjs';\nimport { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
+    code="import { TEX, texture } from '../../patches/splatoon3/runtime/audio/grain-texture.mjs';\nimport { prewarmGrainTextures, installGrainPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/grain-prewarm.mjs';\nimport { ReverbPrewarm, installReverbPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/reverb-prewarm.mjs';\nimport { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { installAudioSpatialDsp } from '../../patches/splatoon3/runtime/audio/spatial-dsp.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
     const grainStart = code.indexOf('const TEX = {'), grainEnd = code.indexOf('/* ------------------------------------------------------------------------------------------------------------\n * Engine', grainStart);
     if (grainStart < 0 || grainEnd < grainStart) throw new Error('audio adapter anchor: shared grain implementation');
     code = code.slice(0, grainStart) + 'export { texture };\n\n' + code.slice(grainEnd);
@@ -17,9 +17,10 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,'const t = Math.max(now, o.at ?? now) + (o.delay || 0);',`const t = Math.max(now, Number.isFinite(o.at) ? o.at : now) + Math.max(0, Number.isFinite(o.delay) ? o.delay : 0);
     const emitterKey = name + ':' + audioEmitterKey(o);
     const priority = Number.isFinite(o.priority) ? o.priority : (/^(ui_|match_|count|last_|special_ready|low_ink)/.test(name) ? 98 : (d.priority ?? 35));`,'scheduled time');
-    code=code.replace('this.last.get(name)','this.last.get(emitterKey)').replace('this.last.set(name, t);',`this.last.set(emitterKey, t);
+    code=code.replace('this.last.get(name)','this.last.get(emitterKey)').replace('this.last.set(name, t);',`// Commit emitter time only after a voice has been admitted and built.
     if(this.last.size>512)this.last.delete(this.last.keys().next().value);
     if(this.byName.size>128)for(const [key,rows] of this.byName){if(!rows.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}`).replace('this.byName.get(name)','this.byName.get(emitterKey)').replace('this.byName.set(name,','this.byName.set(emitterKey,');
+    code=once(code,'list.push(voice); this.voices.push(voice);','this.last.set(emitterKey,t); if(this.last.size>512)this.last.delete(this.last.keys().next().value);\n    list.push(voice); this.voices.push(voice);','only successful one-shots commit min-gap timestamp');
     code=once(code,'while (this.voices.length >= MAX_VOICES) this._steal(this.voices.shift(), now);',`while (this.voices.length >= MAX_VOICES) {
         const victim=selectVictim(this.voices,priority);
         if(!victim){this.counts.dropped++;return null;}
@@ -28,6 +29,7 @@ export function adaptWeaponAudio(rel,code){
     code=once(code,'const voice = this._voice(d, t, o.pos, vol);',`const voice = this._voice(d, t, validPos(o.pos) ? o.pos : undefined, vol);
     voice.priority=priority;
     const obstruction=Math.min(1,Math.max(0,Number(o.occlusion)||0));
+    voice.occlusion=obstruction;
     if(obstruction&&voice.lp){voice.lp.frequency.value=Math.min(voice.lp.frequency.value,22000*Math.pow(.055,obstruction));voice.vol*=1-obstruction*.38;voice.out.gain.value=voice.vol;}`,'spatial priority');
     code=once(code,'    if (this.loops.size >= MAX_LOOPS) this.loops.values().next().value.stop(0.05);',`    const priority = Number.isFinite(o.priority) ? o.priority : 35;
     if (this.loops.size >= MAX_LOOPS) {
@@ -37,7 +39,7 @@ export function adaptWeaponAudio(rel,code){
       victim.stop(0.05);
     }`,'loop priority admission before graph creation');
     code=once(code,'    let stopped = false;\n    const h = {\n      name,','    let stopped = false;\n    const h = {\n      name, priority,','retain live loop admission priority');
-    code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
+    code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallAudioSpatialDsp(AudioEngine,distCut);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
@@ -126,10 +128,15 @@ export function adaptWeaponAudio(rel,code){
   }
   if(rel==='src/main.js'){
     code=once(code,
+      "    const hs = alive ? Math.hypot(a.vel.x, a.vel.z) : 0;\n    want('swim', alive && a.anim.form === 'swim' && hs > 0.5, Math.min(0.6, hs / 11.8 * 0.6 + 0.08), 0.6 + Math.min(1, hs / 11.8));",
+      "    const swimming = alive && a.anim.form === 'swim';\n    if (swimming || L.swim) {\n      const hs = alive ? Math.hypot(a.vel.x, a.vel.z) : 0;\n      want('swim', swimming && hs > 0.5, Math.min(0.6, hs / 11.8 * 0.6 + 0.08), 0.6 + Math.min(1, hs / 11.8));\n    }",
+      'skip inactive swim sound math while preserving its fading handle');
+    code=once(code,
       'G.audio = audioMod.audio; G.music = musicMod.music;',
       "G.audio = audioMod.audio; G.music = musicMod.music; if (G.music) G.music.onFileError = () => this.menus?.toast?.(this.settings?.lang === 'en' ? 'Jet Arrow could not play. Check your connection or audio settings. No substitute music will play.' : 'Jet Arrowを再生できません。通信・音声設定を確認してください。旧BGMには切り替えません。', { kind: 'error', ms: 7000 });",
       'visible Jet Arrow error without old-BGM fallback');
-    code="import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n" +
+    code="import { claimPreloadedMusic, cancelPreloadedMusic } from '../patches/splatoon3/runtime/audio/music-preload-owner.mjs';\n" +
+         "import { sourceChargerHitCue } from '../patches/splatoon3/runtime/audio/combat-hit-classifier.mjs';\n" +
          "import { blasterHitCueKind } from '../patches/splatoon3/runtime/audio/blaster-hit.mjs';\n"+code;
     code=once(code,'prepareMatch: () => self._prepareGyro(),',
       'prepareMatch: () => { G.audio?.init?.(); self._applyAudioVolumes(); if(self.menus?._setup?.mode!==\'boss\') G.music?.preloadFile?.(\'battle\',{prime:true}); G.audio?.prepareWeapon?.(self.profile.weapon||\'shooter\',{urgent:true}); self._prepareGyro(); },',
@@ -155,6 +162,7 @@ export function adaptWeaponAudio(rel,code){
         '    G.audio?.init?.();\n    if (!flow.current()) return;',
         '    G.audio?.init?.();\n    if (!flow.current()) return;\n' +
         "    if (" + (label === 'offline' ? "o?.mode" : "cfg?.mode") + " !== 'boss') G.music?.preloadFile?.('battle', { prime: true });\n" +
+        '    const battlePreload=claimPreloadedMusic(G.music,flow); this._battlePreload=battlePreload;\n    let battleAdmitted=false;\n    try {\n' +
         "    if(typeof G.audio?.requireRecordedMainShot!=='function') throw new Error('Recorded weapon audio is not installed');\n" +
         '    const selectedShotReady=G.audio.requireRecordedMainShot('+selected+').then(value=>({value}),error=>({error}));',
         label+' start selected recorded MP3');
@@ -163,8 +171,11 @@ export function adaptWeaponAudio(rel,code){
         '    await this._fade(1, 350);\n    if (!flow.current()) return;\n' +
         '    const selectedShotState=await selectedShotReady;\n    if (!flow.current()) return;\n    if(selectedShotState.error)throw selectedShotState.error;',
         label+' wait for MP3 before gameplay');
+      if(!/\n  }\s*$/.test(method))throw new Error('audio adapter start completion boundary: '+label);
+      method=method.replace(/\n  }\s*$/, '\n    battleAdmitted=true;\n    } finally { if(!battleAdmitted)cancelPreloadedMusic(battlePreload); }\n  }\n');
       code=code.slice(0,lo)+method+code.slice(hi);
     };
+    code=once(code,'  _startAttract() {','  _startAttract() {\n    cancelPreloadedMusic(this._battlePreload); this._battlePreload=null;','abandoned online wait releases only its own primed media');
     // Native-stage admission rewrites the offline signature before the audio pass.
     patchStartShot('  async startMatch(o = {}, flow = null) {',
       '\n  // ---- online (src/net/session.js', "this.profile.weapon||'shooter'",'offline');

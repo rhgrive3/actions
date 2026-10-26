@@ -367,7 +367,9 @@ export class RoomDurableObject {
     if (typeof rawData === 'string') s = rawData;
     else if (rawData instanceof ArrayBuffer) s = decoder.decode(rawData);
     else if (ArrayBuffer.isView(rawData)) s = decoder.decode(rawData);
-    if (!s || !this.members.has(id) || this.members.get(id).ws !== ws) return;
+    if (!s) return;
+    const member = this.members.get(id);
+    if (!member || member.ws !== ws) return;
 
     // Enforce byte quotas before JSON.parse or forwarding to up to seven peers.
     const size = s.length > MAX_FRAME_BYTES ? s.length : utf8ByteLength(s);
@@ -376,7 +378,7 @@ export class RoomDurableObject {
       this._cleanupMember(id, ws);
       return;
     }
-    const m = this.members.get(id), now = Date.now();
+    const m = member, now = Date.now();
     const elapsed = Math.max(0, Math.min(4, (now - m.budgetAt) / 1000));
     m.budgetAt = now;
     m.framesLeft = Math.min(FRAME_BURST, m.framesLeft + elapsed * FRAME_RATE);

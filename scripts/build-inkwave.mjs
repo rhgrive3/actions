@@ -371,10 +371,10 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
 const audioOrphan = path.join(BUILD, REVIEWED_AUDIO_ORPHAN);
 if (fs.existsSync(audioOrphan)) {
   const modules = new Map(walk(BUILD).filter(file => /\.m?js$/.test(file)).map(file =>
-    [path.relative(BUILD, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8')]));
+    [path.relative(BUILD, file).split(path.sep).join('/'), () => fs.readFileSync(file, 'utf8')]));
   // These modules are copied by prepareLoading after this graph pass.
   for (const file of [...walk(path.join(LOADING_ROOT, 'runtime')), path.join(LOADING_ROOT, 'sw.js')].filter(file => /\.m?js$/.test(file)))
-    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
+    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), () => fs.readFileSync(file, 'utf8'));
   let inline = 0;
   for (const htmlFile of walk(BUILD).filter(file => file.endsWith('.html'))) {
     const html = fs.readFileSync(htmlFile, 'utf8');
