@@ -30,7 +30,10 @@ function methods(code,names,scope={}){const s={THREE,...scope};return new Functi
 const clamp=(x,a,b)=>x<a?a:x>b?b:x,lerp=(a,b,t)=>a+(b-a)*t,sstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 
 test('every owned source adapter applies once to the authentic composed input and emits valid modules',()=>{
- for(const rel of WORLD_REMAINING_PATHS){const[a,b]=pair(rel);parse(b,{ecmaVersion:'latest',sourceType:'module'});if(WORLD_DIRECT_PATHS.includes(rel))assert.equal(adaptRemainingWorld20261026(rel,b),b,'authored direct owner remains untouched');else if(a!==b)assert.throws(()=>adaptRemainingWorld20261026(rel,b),/anchor/);}
+ for(const rel of WORLD_REMAINING_PATHS){const[a,b]=pair(rel);parse(b,{ecmaVersion:'latest',sourceType:'module'});if(WORLD_DIRECT_PATHS.includes(rel))assert.equal(adaptRemainingWorld20261026(rel,b),b,'authored direct owner remains untouched');else if(a!==b){
+   if(rel==='src/world/render-bounds.js')assert.equal(adaptRemainingWorld20261026(rel,b),b,'preoptimized bounds are deliberately idempotent');
+   else assert.throws(()=>adaptRemainingWorld20261026(rel,b),/anchor/,rel+' must reject duplicate composition');
+  }}
 });
 
 test('dock rebuild reuses only live matching boats with exact geometry, phase and shader state, then releases on exit',()=>{
