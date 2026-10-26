@@ -78,7 +78,6 @@
     }
   },
   "pending": [
-    "Reticle-owned limited nominal ShotGuide Physics-without-.level fail-closed fallback and regression",
     "Original horizontal inner-marker owner/parallax/late-floor appearance and broader visual/hardware comparisons",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "Resolve rejected PR creation; no further retry or bypass",
@@ -89,7 +88,7 @@
     "merged": false,
     "manualCiStarted": false,
     "integrationBranchPushed": true,
-    "lastVerifiedRemoteHead": "530e689544119ca8c1042b6e75dce7256a0a7657",
+    "lastVerifiedRemoteHead": "e92a43b9391bbbd5d4e95d9f6fe09d5eab8c6bb9",
     "prCreation": "denied twice; stopped, no matching PR exists"
   },
   "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
@@ -291,7 +290,7 @@
     "peerReview": "pending",
     "status": "specific repeated-prediction CPU cost checks pass; not hardware/visual/final-CI approval"
   },
-  "guideConsumerPeerReview": "Ordinary native path accepted; separate limited Physics-without-.level fallback remains pending",
+  "guideConsumerPeerReview": "Ordinary consumer accepted; unsupported bridge fallback now independently accepted. Original visual and remote-CI gates remain open.",
   "impactRevisionAppend": {
     "sourceHead": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e",
     "handoff": {
@@ -324,12 +323,13 @@
     "hissenAcceptedSizeChanges": 0
   },
   "limitedAdapterFinding": {
-    "status": "pending owner follow-up; no duplicate edit",
+    "status": "Resolved by a94e9e9a; local source11/emitted11 and independent narrow acceptance pass",
     "source": "Parent independent review",
     "scope": "Nominal ShotGuide consumer with Physics lacking .level borrows G.level.collisionRevision",
     "counterexample": "Actual adapter collision floor changes from y0 to -2; cached guide remains y0",
     "ordinaryNativePhysicsImplicated": false,
-    "ownership": "Reticle owner making narrow fail-closed fallback and regression"
+    "ownership": "Reticle owner making narrow fail-closed fallback and regression",
+    "resolution": "guide-bridge-append/validation.json"
   },
   "emittedSelectionAppend": {
     "sourceHead": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
@@ -382,5 +382,44 @@
       "newEmittedTests": "All three are now in existing validate_core emitted step with inherited INKWAVE_BUILT_SITE pointing at the complete _site build",
       "remoteCi": "No final-head run/success claim. PR creation hold remains; no manual workflow dispatch or retry"
     }
+  },
+  "guideBridgeAppend": {
+    "sourceHead": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb",
+    "handoff": {
+      "verifiedBranch": "handoff/20261026-guide-bridge-9446f5d9d-182858",
+      "verifiedHead": "9446f5d9dc46fe3944bfad2c5fdc4697c7e3986d",
+      "onlySelectedCommits": {
+        "a94e9e9a18e32642894810d040fdc29abcefa7e0": "cdd2747bd9c161024c969bcc32fc324d7f90bcb0",
+        "9446f5d9dc46fe3944bfad2c5fdc4697c7e3986d": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb"
+      }
+    },
+    "checks": {
+      "source": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0
+      },
+      "emitted": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0
+      },
+      "scope": "Shooter/bridge/full-flight cache8 and existing Dualies cache3",
+      "quick": "passed",
+      "freshOptimizedBuild": "passed",
+      "startupBudget": "passed"
+    },
+    "independentAcceptance": {
+      "source": "Parent-provided separate bounded reviewer, not presented as an additional local run",
+      "accepted": true,
+      "observations": [
+        "Shooter and both Dualies follow floor0 to-2 and match fresh solver",
+        "Unsupported bridges recompute",
+        "Supported owners add0 sweeps over10 repeated calls, including return from a bridge",
+        "Full-flight impact and marker also correct"
+      ],
+      "remainingDefectInThatNarrowAcceptance": false
+    },
+    "validation": "guide-bridge-append/validation.json"
   }
 }

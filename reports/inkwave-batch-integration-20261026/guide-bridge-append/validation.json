@@ -1,0 +1,238 @@
+{
+  "status": "narrow bridge source/emitted and independent acceptance passed; original fidelity and remote CI remain separate",
+  "sourceHead": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb",
+  "priorIntegration": "e92a43b9391bbbd5d4e95d9f6fe09d5eab8c6bb9",
+  "handoff": {
+    "verifiedBranch": "handoff/20261026-guide-bridge-9446f5d9d-182858",
+    "verifiedHead": "9446f5d9dc46fe3944bfad2c5fdc4697c7e3986d",
+    "onlySelectedCommits": {
+      "a94e9e9a18e32642894810d040fdc29abcefa7e0": "cdd2747bd9c161024c969bcc32fc324d7f90bcb0",
+      "9446f5d9dc46fe3944bfad2c5fdc4697c7e3986d": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb"
+    }
+  },
+  "runtimeReview": "Exactly two revision lookups now read physics.level.collisionRevision rather than borrowing G.level. Existing keys and supported-world reuse remain; missing-owner bridges fail closed and recompute. No other cache/physics/admission/visibility rule changed.",
+  "checks": {
+    "source": {
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    "emitted": {
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    "scope": "Shooter/bridge/full-flight cache8 and existing Dualies cache3",
+    "quick": "passed",
+    "freshOptimizedBuild": "passed",
+    "startupBudget": "passed"
+  },
+  "bridgeTraces": {
+    "source": [
+      {
+        "weapon": "shooter",
+        "before": [
+          0
+        ],
+        "changed": [
+          -2
+        ],
+        "fresh": [
+          -2
+        ],
+        "impact": -2,
+        "marker": -2,
+        "repeatSweeps": 1
+      },
+      {
+        "weapon": "dualies",
+        "before": [
+          0,
+          0
+        ],
+        "changed": [
+          -2,
+          -2
+        ],
+        "fresh": [
+          -2,
+          -2
+        ],
+        "impact": null,
+        "marker": null,
+        "repeatSweeps": 2
+      }
+    ],
+    "emitted": [
+      {
+        "weapon": "shooter",
+        "before": [
+          0
+        ],
+        "changed": [
+          -2
+        ],
+        "fresh": [
+          -2
+        ],
+        "impact": -2,
+        "marker": -2,
+        "repeatSweeps": 1
+      },
+      {
+        "weapon": "dualies",
+        "before": [
+          0,
+          0
+        ],
+        "changed": [
+          -2,
+          -2
+        ],
+        "fresh": [
+          -2,
+          -2
+        ],
+        "impact": null,
+        "marker": null,
+        "repeatSweeps": 2
+      }
+    ]
+  },
+  "supportedGuideTraces": {
+    "source": [
+      {
+        "pitch": 0,
+        "hz": 30,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 60,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 120,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 30,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 60,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 120,
+        "initial": 1,
+        "repeated120": 0
+      }
+    ],
+    "emitted": [
+      {
+        "pitch": 0,
+        "hz": 30,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 60,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 120,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 30,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 60,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 120,
+        "initial": 1,
+        "repeated120": 0
+      }
+    ]
+  },
+  "identity": {
+    "sourceSha": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb",
+    "contentHash": "d23f81a8cd4457830c6fff53367a21e63f551e8321b8bd9eef3295eb5825d0a0",
+    "inputHash": "d6f116eab6e12ae2b9e371bd77e11f8b87df8c061c6baf3285ceb933dd44eb2c",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0
+  },
+  "logs": {
+    "source": {
+      "path": "source.log.gz",
+      "rawSha256": "e3fdce9908e4495e72fa4de10d6842ec7ccda31667f9689e2aa6e867453adf14",
+      "gzipSha256": "2a0bfc93236eb666158f7d3234f60948fc687020ddf490fcea0143ccd91f8a65"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "4190f3666ec5eb4fcdf6702396c0d8616bfbd1b9fa5cbdcdca70c2bfcbabd7c8",
+      "gzipSha256": "9ed64d94ee93839de412ea97fcc3080739610ba9d4e679ce439c5ed655e2f86d"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "10361b421e170cc4c53cf58988737dbc8c410c33797df5ccf96138604e610980",
+      "gzipSha256": "1ffdce88f91c4078da3093286599f9d97d6c0ac3d759b546bc1309131d80ce4c"
+    },
+    "quick": {
+      "path": "quick.log.gz",
+      "rawSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "gzipSha256": "f3d8dc8809329136eada79b6f0147fcf52ffa687efcdf38ecc8d9f24bca8ed0d"
+    }
+  },
+  "independentAcceptance": {
+    "source": "Parent-provided separate bounded reviewer, not presented as an additional local run",
+    "accepted": true,
+    "observations": [
+      "Shooter and both Dualies follow floor0 to-2 and match fresh solver",
+      "Unsupported bridges recompute",
+      "Supported owners add0 sweeps over10 repeated calls, including return from a bridge",
+      "Full-flight impact and marker also correct"
+    ],
+    "remainingDefectInThatNarrowAcceptance": false
+  },
+  "ci": {
+    "emittedRegistration": "The bridge regression is inside the already registered shooter-shot-guide-cache.test.mjs; no additional selector edit",
+    "sourceProducer": "Separate native-stage source workflow remains in coverage accounting",
+    "latestParentObservedRemoteHead": "e92a43b9391bbbd5d4e95d9f6fe09d5eab8c6bb9",
+    "parentObservationTime": "18:29:50 as reported",
+    "observedCheckRuns": 0,
+    "observedWorkflowRuns": 0,
+    "interpretation": "Unrun, not green; this historical lookup does not establish remote CI on this append",
+    "manualLaunchOrRetry": false
+  },
+  "limits": [
+    "Controlled CPU/source/emitted APIs and Character fallback in VM, not natural HUD pixels, device FPS, hardware or original-game visual agreement.",
+    "No additional cache expansion is implemented or proposed absent a concrete regression.",
+    "Original horizontal inner-marker/parallax/late-floor fidelity remains unresolved; rejected hide/ring/visibility candidates remain excluded.",
+    "Accepted Hissen size changes remain0; baseline radius handling is not a batch fix. Ground-drop shape/original comparison remains unfinished.",
+    "No PR retry, external merge, Ready status or manual CI launch; eventual final-head required remote CI pending direct user response."
+  ]
+}
