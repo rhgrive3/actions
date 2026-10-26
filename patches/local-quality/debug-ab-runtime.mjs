@@ -16,6 +16,14 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
   const trials={idle:null,fire:null};
   let active=null, disposed=false, lastUI=0, notice='';
   const G=()=>env?.__G || {};
+  const resources=()=>{
+    const g=G(), r=game?.R?.renderer || g.renderer, info=r?.info || {};
+    return { geometries:info.memory?.geometries ?? null,
+      textures:info.memory?.textures ?? null, programs:info.programs?.length ?? null,
+      paintAtlasSize:g.paint?.size ?? null, liveProjectiles:g.projectiles?.list?.length ?? null,
+      detachedDrops:g.projectiles?.inkFlight?.drops?.length ?? null,
+      paintGrowthRecords:g.paint?.growing?.length ?? null };
+  };
   const metadata=()=>{
     const g=G(),match=g.match || game?.match,settings=game?.settings || {};
     return {stage:g.level?.layout?.id || g.level?.manifest?.id || game?.mapDef?.id || null,
@@ -27,7 +35,7 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
   };
   function finish(reason='complete') {
     if (!active) return;
-    const window=active;active=null;window.finishedAt=now();window.reason=reason;
+    const window=active;active=null;window.finishedAt=now();window.reason=reason;window.resourcesAtEnd=resources();
     trials[window.kind]=window.frames.length ? window : null;
     notice=(window.kind==='idle'?'待機':'連射')+' '+window.frames.length+' frames ('+reason+')';
     refresh(true);
@@ -36,7 +44,7 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
     if (disposed || !['idle','fire'].includes(kind)) return false;
     if (active) finish('interrupted');
     trials[kind]=null;
-    active={kind,startedAt:now(),finishedAt:0,frames:[],meta:metadata()};
+    active={kind,startedAt:now(),finishedAt:0,frames:[],meta:metadata(),resourcesAtStart:resources()};
     notice='';
     refresh(true);
     return true;
@@ -46,7 +54,14 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
     const elapsed=now()-active.startedAt;
     if (elapsed>=WARM_MS && elapsed<TRIAL_MS && active.frames.length<MAX_FRAMES) {
       const rec=tracer.lastFrameMetrics();
-      if (rec && rec.frameGapMs>0) active.frames.push(rec);
+      if (rec && rec.frameGapMs>0) {
+        const perf=game?.perf || {}, heap=env?.performance?.memory?.usedJSHeapSize;
+        // Completed frame snapshot. No extra GL query or blocking readback.
+        rec.drawCalls=Number.isFinite(perf.calls)?perf.calls:null;
+        rec.triangles=Number.isFinite(perf.tris)?perf.tris:null;
+        rec.jsHeapMiB=Number.isFinite(heap)?heap/1048576:null;
+        active.frames.push(rec);
+      }
     }
     if (elapsed>=TRIAL_MS || active.frames.length>=MAX_FRAMES)
       finish(elapsed>=TRIAL_MS?'complete':'frame-limit');
@@ -77,6 +92,10 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
       warmupExcludedMs:WARM_MS,
       frameGapMs:gaps, observedFPS:gaps?.p50>0?round(1000/gaps.p50):null,
       gameFrameWorkMs:stats(frames.map(r=>r.workMs)),
+      drawCalls:stats(frames.map(r=>r.drawCalls)),
+      triangles:stats(frames.map(r=>r.triangles)),
+      jsHeapMiB:stats(frames.map(r=>r.jsHeapMiB)),
+      resourcesAtStart:w.resourcesAtStart || null, resourcesAtEnd:w.resourcesAtEnd || null,
       ownerMeanMs,ownerP95Ms,callsPerFrame,
       gpuSceneCommandsMs:gpuScene,gpuPaintCommandsMs:gpuPaint,
       scaleRange:scales.length?[round(Math.min(...scales)),round(Math.max(...scales))]:null};
@@ -110,6 +129,8 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
         medianFrameGapMs:round((fire.frameGapMs?.p50||0)-(idle.frameGapMs?.p50||0)),
         p95FrameGapMs:round((fire.frameGapMs?.p95||0)-(idle.frameGapMs?.p95||0)),
         avgGameFrameWorkMs:round((fire.gameFrameWorkMs?.mean||0)-(idle.gameFrameWorkMs?.mean||0)),
+        avgDrawCalls:round((fire.drawCalls?.mean||0)-(idle.drawCalls?.mean||0)),
+        avgTriangles:round((fire.triangles?.mean||0)-(idle.triangles?.mean||0)),
         ownerExtraMeanMs:extra},
       cautions, limitations:[
         'Inclusive timings overlap (e.g. paint-stamp is inside simulation or projectiles). Never add them.',
