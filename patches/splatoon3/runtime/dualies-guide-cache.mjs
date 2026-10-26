@@ -23,7 +23,9 @@ export function dualiesGuideInputsChanged(system, actor, weapon, game, camera=ga
   const physics=game.physics,level=physics?.level||game.level;
   value(s,physics);value(s,physics?.los);value(s,physics?.raycast);value(s,level);value(s,level?.blocks);value(s,level?.faces);
   value(s,level?.blocks?.length);value(s,level?.version);value(s,level?.revision);value(s,level?.collisionGeneration);
-  value(s,system._muzzleHand);value(s,system._aimFrom);
+  value(s,level?.faces?.length);value(s,level?.geometryGeneration??level?._geometryGeneration??level?._generation);
+  value(s,level?.hash);value(s,level?.blockStamp);value(s,physics?.segment);
+  value(s,system._muzzleHand);value(s,system._aimFrom);value(s,system._inkGuideContact);
   value(s,camera);matrix(s,camera?.matrixWorld);matrix(s,camera?.projectionMatrix);
   s.ready=true;return s.dirty;
 }

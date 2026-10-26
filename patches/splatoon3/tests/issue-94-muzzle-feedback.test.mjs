@@ -176,9 +176,9 @@ test('#94 presentation query is read-only and clears when the field line is clea
 
 test('#94 stationary Shooter HUD reuses first-hit sweep, invalidating on aim, stage and time', async () => {
   const { api, actor, projectiles } = await nearCoverScene();
-  const original = projectiles._ballistic;
+  const original = projectiles._nominalInkGuide;
   let solved = 0;
-  projectiles._ballistic = function (...args) { solved++; return original.apply(this, args); };
+  projectiles._nominalInkGuide = function (...args) { solved++; return original.apply(this, args); };
   try {
     assert.ok(projectiles.muzzleBlockFeedback(actor)?.hit);
     const initial = solved;
@@ -197,7 +197,7 @@ test('#94 stationary Shooter HUD reuses first-hit sweep, invalidating on aim, st
     api.G.level.blocks.length = 0;
     assert.equal(projectiles.muzzleBlockFeedback(actor), null, 'a removed obstacle removes the contact marker');
     assert.equal(solved, initial + 4, 'block collection mutation invalidates immediately');
-  } finally { projectiles._ballistic = original; }
+  } finally { projectiles._nominalInkGuide = original; }
 });
 
 

@@ -23,7 +23,8 @@ test('#1158 post-roll Dualies exposes one centered ring and preserves normal twi
   assert.match(code, /<circle cx="0" cy="0" r="6\.2" class="iw-ret__ring thin iw-ret__merged"\/>/);
   assert.match(code, /this\._twin = \[r\.querySelector\('\.iw-ret__twin\.r'\)/);
   const css = fs.readFileSync(path.join(ROOT, 'patches/splatoon3/ui.css'), 'utf8');
-  assert.match(css, /\.iw-ret--dualies\.is-lock \.iw-ret__merged \{ opacity: 1; \}/);
+  assert.match(css, /\.iw-ret--dualies \.iw-ret__merged \{\s*opacity: 0;\s*visibility: hidden;\s*transition: none;/);
+  assert.match(css, /\.iw-ret--dualies\.is-lock \.iw-ret__merged \{ opacity: 1; visibility: visible; \}/);
   assert.match(css, /\.iw-ret--dualies\.is-lock \.iw-ret__twin,[\s\S]*?visibility: hidden/);
   assert.match(css, /\.iw-ret--dualies\.is-lock \.iw-ret__lock/);
 });

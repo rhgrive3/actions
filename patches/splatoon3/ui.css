@@ -289,9 +289,10 @@
    reticle. Normal two-hand guides and their shot kick remain independent. */
 .iw-ret--dualies .iw-ret__merged {
   opacity: 0;
-  transition: opacity .18s var(--spring);
+  visibility: hidden;
+  transition: none;
 }
-.iw-ret--dualies.is-lock .iw-ret__merged { opacity: 1; }
+.iw-ret--dualies.is-lock .iw-ret__merged { opacity: 1; visibility: visible; }
 .iw-ret--dualies.is-lock .iw-ret__twin,
 .iw-ret--dualies.is-lock .iw-ret__lock {
   visibility: hidden;

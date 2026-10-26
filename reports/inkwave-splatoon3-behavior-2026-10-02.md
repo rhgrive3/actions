@@ -6465,3 +6465,9 @@ Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. 詳細・参照条件・検証�
 [担当記録](locomotion-surface-20261026/README.md)を参照。
 公式説明は取得できたが、既存比較の公式MP4再取得はHTTP 403で拒否されている。
 本家の未公開の歩行曲線・低速／壁の飛沫曲線の一致は未確認のまま維持する。
+
+## 2026-10-26 UTC: Shooter / Dualies の床向き照準と射撃キック
+
+基準 main は `48511150bbaeab182dd04c712d39bd5b26df18f3`。Long Lane、Splattershot / Splat Dualies、pitch 0 / -0.8 で、指定フレーム後の床下を投影するガイド、水平時に遅い落下を内側マーカーへ出す経路、Dualies の SVG 投影 transform を射撃時の WAAPI transform が上書きする経路を分けて確認した。ガイドは native head と同じ球 sweep の最初の field 接触に止め、Shooter 接触予測を実際の InkFlight へ接続する。全飛行の接触と照準フレーム内の遮蔽物表示は区別する。左右の projection group と shot-kick circle を分離し、各手1個の Animation、武器／非表示時の cleanup、DOM 再構築時の cache invalidation を追加する。turret の判定は既存 `s3Turret` を維持し、merged ring を実際のガイドへ投影して解除後の3個重複をなくす。
+
+新規回帰は実 Character / Level / Physics / 発射した head と、-0.45 / -0.8 / -1.05、30 / 60 / 120Hz で床接触を照合する。基準 emitted の負例3件は全失敗、候補 emitted は移動時試験も含む4件成功。限定ソース回帰39件成功。旧 #575 emitted のイベント `mode` 期待不一致は基準と候補で同じことを記録した。原典の `ShotGuideFrame` 8 / 7 は不変。公式画像と実ゲーム画像の直接取得は HTTP 403 であり、今回の数値試験を本家の視覚証明にはしていない。内側表示の cutoff と本家での同条件映像・Switch／実 GPU は未確認。ブラウザの実測値、操作と fixture の区別、制約は [個別記録](shooter-dualies-projection-20261026.md) を参照する。
