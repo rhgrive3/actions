@@ -152,8 +152,8 @@ test('far weapon material/color hoist preserves every decimated buffer and corne
   const source=read('src/game/character-lod.js');
   assert.equal(patch('src/game/character-lod.js'),source,'migrated LOD module has zero build-time rewrite');
   const legacy=replaceOnce(source,`      let same = true;
-      for (let k = 0; k < sourceMat.itemSize; k++) if (sourceMat.getComponent(original, k) !== clusterMat.getComponent(cluster, k)) { same = false; break; }
-      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if (sourceColor.getComponent(original, k) !== clusterColor.getComponent(cluster, k)) { same = false; break; }`,
+      for (let k = 0; k < sourceMat.itemSize; k++) if ((sm?sm[original*sourceMat.itemSize+k]:sourceMat.getComponent(original,k)) !== (cm?cm[cluster*clusterMat.itemSize+k]:clusterMat.getComponent(cluster,k))) { same = false; break; }
+      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if ((sc?sc[original*sourceColor.itemSize+k]:sourceColor.getComponent(original,k)) !== (cc?cc[cluster*clusterColor.itemSize+k]:clusterColor.getComponent(cluster,k))) { same = false; break; }`,
     `      const same = ['aMat', 'color'].every(name => {
         const a = A[name], b = attributes[name];
         for (let k = 0; k < a.itemSize; k++) if (a.getComponent(original, k) !== b.getComponent(cluster, k)) return false;
