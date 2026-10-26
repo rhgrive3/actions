@@ -293,7 +293,9 @@ test('final shipped main and platform override both connect the opt-in profiler'
   const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const main=adaptBuildSource('src/main.js',raw);
   assert.match(main,/createFrameTimingProbe\(\{ env: globalThis, game: this \}\)/);
-  assert.match(main,/if \(enabled\) import\('\.\.\/patches\/local-quality\/range-frame-profiler\.mjs'\)/);
+  assert.match(main,/if \\(probeEnabled\\) import\\('\\.\\.\\/patches\\/local-quality\\/range-frame-profiler\\.mjs'\\)/);
+  assert.match(main,/settings\\?\\.debugMode === true/);
+  assert.match(main,/_iwProfilerEpoch === epoch/, 'stale async opt-in setup never revives a disabled profiler');
   assert.ok(!main.includes("from '../patches/local-quality/range-hitch-tracer.mjs'"),
     'GPU profiler must not enter static game imports');
   assert.doesNotThrow(()=>new vm.SourceTextModule(main));
