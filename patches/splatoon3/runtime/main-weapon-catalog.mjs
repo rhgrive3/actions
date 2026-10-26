@@ -1,3 +1,5 @@
+import { queueChargerPaintDrop } from './charger-paint-drop.mjs';
+import { catalogChargeStage } from './catalog-charge-stages.mjs';
 import { toxicMistScale } from './toxic-mist.mjs';
 import { brushRollIgnoresEnemyInk } from './brush-roll-ink.mjs';
 import { paintCatalogBlasterBurst } from './catalog-blaster-paint.mjs';
@@ -209,6 +211,7 @@ function definition(r, api) {
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,
     fireInterval:Math.max(1,rate)/HZ, chargeTime:charge?chargeFrames(r)/HZ:0,
+    ...(r.family==='stringer'?{firstChargeTime:t.ChargeFrameMidCharge/HZ}:{}),
     ...(r.family==='slosher'?{windup:finite(t.SwingLiftFrame,12)/HZ}:{}),
     moveSpeedFiring:(r.family==='splatana'?finite(p.spl__WeaponSaberParam.SwingParam.WeakSwingMoveVelLimit,.06):finite(t.MoveSpeed, finite(t.SwingMoveSpeed, finite(t.MoveSpeedFullCharge,.072))))*HZ,
     // Saber charge uses DU/frame while simple-family speed fields use source
@@ -386,6 +389,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; s.canopy.age = 0; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
+    runner.chargeStage=0;runner.chargeStageProgress=0;
     runner.s3RollerSuspendedHold = false;
     runner.slosh = -1;
   }
@@ -402,7 +406,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return result;
   };
-  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null; return legacyReset.apply(this,args); };
+  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null;this.chargeStage=0;this.chargeStageProgress=0; return legacyReset.apply(this,args); };
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
@@ -552,6 +556,20 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     base.copy(at); base.y += .15;
     const h = G.physics.raycast(base,down,Math.max(4,at.y-owner.pos.y+2),floorHit,true);
     if (h.hit) paint(owner,h.point,radius,depth,direction,h.face,footprint);
+  }
+
+  function chargerLinePaint(system, projectile, at, stripe) {
+    const h=G.physics.raycast(at,down,Math.max(3.5,Math.min(512,at.y-PLAYER.waterY+6)),floorHit,true);
+    if(h.hit&&h.dist<=3.5) {
+      paint(projectile.owner,h.point,stripe.width,stripe.depth/stripe.width,
+        projectile.vel,h.face,mainInkFootprint(projectile.catalog.r));
+      return;
+    }
+    // No floor projection from a high shot: hold the real paint claim on the
+    // same visible falling bead that Splat Charger uses, until its landing.
+    queueChargerPaintDrop(system,{from:at,hit:h,radius:stripe.width,depth:stripe.depth,
+      direction:projectile.vel,owner:projectile.owner,team:projectile.team,
+      seed:projectile.seed,waterY:PLAYER.waterY});
   }
 
   // Trace the centre path on actual collision polygons, never paint-chart
@@ -1454,7 +1472,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           // segment overpainted short frames and erased Bamboo's SkipNum gaps.
           while(s.nextChargerPaint<endTravel-EPS){
             sample.copy(p.prev).lerp(p.pos,clamp((s.nextChargerPaint-travelBefore)/len));
-            floorPaint(p.owner,sample,stripe.width,stripe.depth/stripe.width,p.vel,mainInkFootprint(s.r));
+            chargerLinePaint(this,p,sample,stripe);
             s.nextChargerPaint+=stripe.interval;
           }
         }
@@ -1742,6 +1760,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(cost>0){if(!pay(runner,cost))return;s.paid+=cost;}
       s.chargeF=target;
       runner.charging=true;runner.charge=s.chargeF/full;runner.chargeT=runner.charge;a.lastFire=0;
+      if(r.family==='stringer'){const phase=catalogChargeStage(a.weapon,runner.charge);runner.chargeStage=phase.stage;runner.chargeStageProgress=phase.progress;}
       return;
     }
     if(s.chargeF>0 && !input.fire && !s.pending) {
@@ -1801,7 +1820,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const n=p.WeaponDivideChargerParam?.FullChargeDivideNum;
         if(c+EPS>=1&&n>1)s.rounds=n-1;
       }
-      s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;
+      s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;runner.chargeStage=0;runner.chargeStageProgress=0;
       // Endpoints are explicit 1130 fields. Linear recovery between them is
       // the catalogue's interpolation model, not a recovered engine rule.
       if(r.family==='stringer')runner.cooldown=stageValue(r,{

@@ -1,3 +1,4 @@
+import {chargerRiseBuffer} from '../runtime/audio/charger-charge-rise.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -83,6 +84,12 @@ test('all eleven unsourced mains and variants only emit their already-decoded or
  const buf={ok:true,headers:{get(){return null;}},arrayBuffer:async()=>new ArrayBuffer(64)};
  audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>manifest});
  bank.authorized.fetcher=async()=>buf;
+ // Independently prime the newly required shared charge asset. Keep the
+ // pack decoder below dedicated to the event recordings this test counts.
+ const decode=ctx.decodeAudioData;
+ ctx.decodeAudioData=async()=>ctx.createBuffer(1,Math.round(ctx.sampleRate*1.82857),ctx.sampleRate);
+ await chargerRiseBuffer(ctx,{fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(36571)})});
+ ctx.decodeAudioData=decode;
  const variants=ALTERNATE_WEAPON_KITS.filter(k=>isBorrowedRecordedMain(k.baseId));
  for(const [target,source] of owners){
    // START may complete only after the real downloaded family recording is resident.

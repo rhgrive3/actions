@@ -84,7 +84,7 @@ export function adaptWeaponAudio(rel,code){
       'native Splatling motor phase transition');
   }
   if(rel==='src/net/netmatch.js'){
-    code="import { usesSplatChargerRise } from '../../patches/splatoon3/runtime/audio/charger-charge-rise.mjs';\n"+code;
+    code="import { usesChargerRise } from '../../patches/splatoon3/runtime/audio/charger-charge-rise.mjs';\n"+code;
     code=code.replace(/G\.audio\?\.play\('dualies_roll'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     // Network-owned Charger begins at the observed charge edge. Do not create
     // a repeating remote HoldNoise. Preserve Splatling/Roller loop handling.
@@ -92,7 +92,7 @@ export function adaptWeaponAudio(rel,code){
     // joins this onset route. Other catalogue families keep their existing audio.
     code=once(code,
       "let h = this._voiceLoop(a, near, 'charge', wr.charging && k === 'charger', 'charger_charge');\n      if (h) h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 });",
-      "if (a.net.loops?.charge) { a.net.loops.charge.stop?.(.05); a.net.loops.charge=null; }\n      const chargerStarting = wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger');\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { a.net._chargerRise = usesSplatChargerRise(a.weapon.id)?G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:a.weapon.id})||null:null; if(!a.net._chargerRise)G.audio?.playWeapon?.(a.weapon.id,'charge',{actor:a,pos:a.pos,volume:.35}); }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
+      "if (a.net.loops?.charge) { a.net.loops.charge.stop?.(.05); a.net.loops.charge=null; }\n      const chargerStarting = wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger');\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { G.audio?.prewarmChargerChargeRise?.(a.weapon.id,a.weapon.chargeTime); a.net._chargerRise = usesChargerRise(a.weapon.id)?G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:a.weapon.id,chargeTime:a.weapon.chargeTime})||null:null; }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
       'network Charger onset is a one-shot, never a remote loop');
     code=once(code,
       "_stopLoops(a) { const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }",

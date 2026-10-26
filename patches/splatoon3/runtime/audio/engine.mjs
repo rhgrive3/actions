@@ -1,7 +1,7 @@
 import { audioLoadDeadline } from './load-deadline.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
-import { chargerRiseBuffer, playChargerRise, disposeChargerRise, usesSplatChargerRise } from './charger-charge-rise.mjs';
+import { chargerRiseBuffer, playChargerRise, disposeChargerRise, usesChargerRise, prewarmChargerRise } from './charger-charge-rise.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
@@ -124,6 +124,10 @@ export function installWeaponAudioEngine(Engine){
       if(!bank.authorized.byEvent.has(id+':'+event))
         throw new Error('本家チャージ・射撃MP3の準備に失敗しました: '+id+'/'+event);
     }
+    // All Charger onsets use the selected Splat phrase. Admit START only after
+    // its real buffer has decoded; a cold one-shot must not silently disappear.
+    if(usesChargerRise(requested)&&!await chargerRiseBuffer(this.ctx,{retry:true}))
+      throw new Error('チャージ音の録音を読み込めません。通信を確認してSTARTを押してください');
     // AudioContext can be temporarily suspended by the browser. The caller
     // must enter the game only after the selected recording and device are live.
     if(this.ctx.state&&this.ctx.state!=='running'){
@@ -252,9 +256,9 @@ export function installWeaponAudioEngine(Engine){
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
   p.disposeWeaponAudio=function(){disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmWeapons?.clear();};
-  p.prewarmChargerChargeRise=function(weaponId='charger'){
-    if(!this.ctx||!usesSplatChargerRise(weaponId))return false;
-    chargerRiseBuffer(this.ctx,{retry:true}).catch(()=>{});
+  p.prewarmChargerChargeRise=function(weaponId='charger',chargeTime=1){
+    if(!this.ctx||!usesChargerRise(weaponId))return false;
+    void prewarmChargerRise(this,{weaponId,chargeTime,retry:true}).catch(()=>{});
     return true;
   };
   p.playChargerChargeRise=function(options){

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fixture } from './source-fixture.mjs';
 import { WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.mjs';
-import { usesSplatChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
+import { usesChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
 
 async function scene(){
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
@@ -18,14 +18,14 @@ async function scene(){
   return {...f,calls,rises};
 }
 
-test('each charger uses its own charge onset and ready edge; only Splat Charger uses its recorded phrase',async()=>{
+test('every Charger uses the shared recorded rise and its own gameplay-owned ready edge',async()=>{
   const f=await scene();
   for(const r of Object.values(WEAPON_AUDIO).filter(r=>r.family==='charger')){
     f.G.projectiles.clear();f.G.actors.length=0;f.calls.length=0;f.rises.length=0;
     const a=f.make(r.id);a.form='kid';a.isLocal=true;a.ink=100;a.intent.fire=true;
     f.tick(a,150);
-    assert.equal(f.rises.length,usesSplatChargerRise(r.id)?1:0,r.id+' must use correct phrase');
-    assert.equal(f.calls.filter(c=>c.id===r.id&&c.event==='charge').length,usesSplatChargerRise(r.id)?0:1,r.id+' one onset');
+    assert.equal(f.rises.length,usesChargerRise(r.id)?1:0,r.id+' must use correct phrase');
+    assert.equal(f.calls.filter(c=>c.id===r.id&&c.event==='charge').length,usesChargerRise(r.id)?0:1,r.id+' one onset');
     // Native Splat Charger's ready sound remains native. Catalogue ready is
     // the first actual full-charge edge, independently of MP3 duration.
     if(a.weapon.catalogRecord){

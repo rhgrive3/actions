@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { WEAPON_AUDIO, mainAudioSourceId } from '../runtime/audio/weapon-recipes.mjs';
 import { VARIANT_BASE_WEAPON } from '../runtime/alternate-weapon-kits-data.mjs';
-import { usesSplatChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
+import { usesChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
 
 const chargerBases = Object.values(WEAPON_AUDIO).filter(r => r.family === 'charger').map(r => r.id);
 const chargerIds = [...chargerBases, ...Object.keys(VARIANT_BASE_WEAPON).filter(id => chargerBases.includes(VARIANT_BASE_WEAPON[id]))];
@@ -75,7 +75,7 @@ test('all native and catalogue Charger kits emit one remote onset per decoded ch
   const f = await scene();
   assert.equal(chargerIds.length, 18);
   for (const id of chargerIds) for (const hz of [30, 60, 120]) {
-    const p = f.pair(id), source = mainAudioSourceId(id), phrase = usesSplatChargerRise(id);
+    const p = f.pair(id), source = mainAudioSourceId(id), phrase = usesChargerRise(id);
     p.publish(false); p.voices(hz);
     assert.equal(p.onsets(), 0, id + ' idle is silent');
     for (let cycle = 1; cycle <= 3; cycle++) {

@@ -87,9 +87,9 @@ test('Charger onset occurs once on initial hold and again only after real stored
  const f=await setup(),id='s3-charger-long',a=f.make(id);
  a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
  const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
- assert.equal(onsets().length,1,'E-liter uses its own Heavy onset exactly once');
- assert.equal(f.prewarms.length,0,'E-liter does not prewarm the Splat Charger phrase');
- assert.equal(f.rises.length,0,'E-liter cannot share the Splat Charger rise');
+ assert.equal(onsets().length,0,'fresh E-liter does not layer a HoldNoise onset');
+ assert.ok(f.prewarms.includes(id),'E-liter prewarms the shared Splat phrase');
+ assert.equal(f.rises.length,1,'E-liter shares the selected Splat rise exactly once');
  assert.equal(f.calls.filter(c=>c.id===id&&c.event==='ready').length,1);
  assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
  // The actual S3 charger owner stores this structure while diving after
@@ -103,14 +103,14 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.ok(a.weaponRunner.s3Stored?.charge>0,'real underwater frame preserves charge keep');
  a.form='kid';a.submerged=false;
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'squid-frame stop may not erase real emergence onset');
+ assert.equal(onsets().length,1,'squid-frame stop may not erase real emergence onset');
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'duplicate form events cannot repeat a click');
+ assert.equal(onsets().length,1,'duplicate form events cannot repeat a click');
  // A fresh dive whose stored charge was lost must not play the keep cue.
  f.emit('actor:form',{actor:a,form:'squid'});
  a.weaponRunner.s3Stored=null;
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'expired/cancelled charge keep is silent on resurfacing');
+ assert.equal(onsets().length,1,'expired/cancelled charge keep is silent on resurfacing');
  // A scoped model is not eligible for S3 charge-keep audio even if an
  // invalid saved charge is injected. Keep the catalog weapon immutable.
  const scoped=f.make('s3-charger-normalscope');
@@ -130,8 +130,8 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.equal(f.calls.filter(c=>c.id==='s3-charger-keeper'&&c.event==='charge').length,1,
    'stored partial charge on Goo Tuber triggers one emergence cue');
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
- assert.equal(f.rises.length,0,'switching never introduces the unrelated rising tone');
+ assert.equal(onsets().length,1,'weapon switching clears Charger onset routing');
+ assert.equal(f.rises.length,1,'switching does not introduce an extra rising tone');
 });
 
 test('all 14 actual sub admissions produce the corresponding sub sound',async()=>{

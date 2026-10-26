@@ -6448,3 +6448,9 @@ production composition と実 Projectiles・Match を使う `crab-ball-lifecycle
 Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physicsが残り、実ヒープのcanvas context-lossリスナーから最初の読込スコープへの強参照を確認した。判定関数をmodule直下へ移し、現在のG.level.nativeを動的に確認する従来の動作と1canvas1listenerを維持する。古いステージの物理・塗り・navデータを監視コールバックで保持する必要はない。新規の合成済みpublication/GC回帰は全GCアサーションを保持し、旧inline判定だけへ戻す対照でlevel/data保持を再現した。
 
 原典HIGHの読み込み直後には、旧版・途中版ともBC7の400×30 base mipでGL1282を記録した。既存normal上限512が800×60のUASTCソースから同mipを選ぶが、BC系base寸法の4ブロック境界に合わなかった。該当するuniversal KTX2だけ同ソース・同mipのRGBA32へ変換し、寸法・既存cap・色空間・通常の圧縮経路を維持する。RGBAの局所容量増加を記録し、縮小mipやPNG再resizeによる画質低下へ置き換えない。実loadNativeTextures→KTX2Loader→GPUの対照で同400×30、48,000RGBAバイト一致、GL0を確認した。物理・CPU塗り・当たり判定・通信には変更を加えない。
+
+## 2026-10-26: Charger shared onset, airborne stripe landing and Stringer stages
+
+Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. 詳細・参照条件・検証範囲は
+[`inkwave-charge-flight-bow-2026-10-26.md`](inkwave-charge-flight-bow-2026-10-26.md)。
+追加チャージャーの高所の線状塗りは、床への即時投影から既存 Splat Charger と同じ可視の落下レコード・着地後の塗りへ接続した。充電音は既存の選択済み Splat 録音を全 Charger で再利用し、START 時に実デコードを確認する。弓の既存 Mid/Full 発射結果を保持し、第一・第二段階の進行状態と到達音を公開した。基準は 11.3.0 の固定抽出行、ギアなし・インク十分の静止射撃。Splatune 2 録音は選択された代理音、落下の 20-unit 重力は既存 INKWAVE モデルであり、本家の実機映像・音声・落下時間の一致は未確認。新規 Nintendo メディアは追加しない。描画バッファ・単独ロジック・ブラウザ音声出力・通常入力の証拠を区別し、照準の描画接続は担当者の統合対象とする。

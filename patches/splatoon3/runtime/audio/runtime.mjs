@@ -1,9 +1,10 @@
+import { catalogChargeStage } from '../catalog-charge-stages.mjs';
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
 import { sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE } from './extra-source-routes.mjs';
-import { usesSplatChargerRise } from './charger-charge-rise.mjs';
+import { usesChargerRise } from './charger-charge-rise.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
 // family SFX never layer over real weapon audio or substitute missing MP3s.
@@ -52,7 +53,7 @@ export function installWeaponAudioRuntime(api){
     return o;
   }
   function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume,true));return null;}
-  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
+  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){if(!enabled&&!r?._mainAudioState?.loops[event])return;const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
@@ -118,7 +119,7 @@ export function installWeaponAudioRuntime(api){
   const oldUpdate=R.update;
   R.update=function(dt,input,...rest){
     const a=this.a,s=stateFor(this),id=mainAudioSourceId(a?.weapon?.id);
-    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});if(a?.isLocal&&usesSplatChargerRise(id))G.audio?.prewarmChargerChargeRise?.(id);}
+    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});if(a?.isLocal&&usesChargerRise(id))G.audio?.prewarmChargerChargeRise?.(id,a.weapon?.chargeTime);}
     // A selected kit may become available only after the user's first gesture
     // starts AudioContext. Preload the actual selected sub/special *events*
     // rather than decoding all 381 samples or warming every remote actor.
@@ -151,14 +152,13 @@ export function installWeaponAudioRuntime(api){
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
-        // Only the Splat Charger and its scope share this selected phrase.
-        // Squiffer/E-liter/Bamboo/Goo use their own existing MP3 onset;
-        // their ready cue follows their actual charge, not this 1.215s clip.
-        s.chargeRise=usesSplatChargerRise(id)?G.audio?.playChargerChargeRise?.({
-          volume:a.isLocal?.55:.28,weaponId:id,
+        // Reuse the selected Splat phrase for every Charger. The offline
+        // cache adapts duration without transposing; gameplay owns readiness.
+        s.chargeRise=usesChargerRise(id)?G.audio?.playChargerChargeRise?.({
+          volume:a.isLocal?.55:.28,pos:a.isLocal?undefined:a.pos,weaponId:id,chargeTime:a.weapon?.chargeTime,
         })||null:null;
         if(s.chargeRise)active.add(this);
-        else play(a,'charge',a.pos,a.isLocal?.55:.35); // if asset has not loaded
+
       }
       if(!nowCharging){
         s.chargeRise?.stop?.(.04);s.chargeRise=null;
@@ -180,7 +180,15 @@ export function installWeaponAudioRuntime(api){
     if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
     keepLoop(this,'roll',!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
-    if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
+    const bowPhase=catalogChargeStage(a.weapon,q);
+    if(bowPhase){
+      const previous=s.chargeStage||0;
+      // The retained pack has no Stringer ready recording. Use the existing
+      // INKWAVE stage ding explicitly; this is not a claimed retail cue.
+      for(let stage=previous+1;charging&&stage<=bowPhase.stage;stage++)
+        G.audio?.play('charger_full',{...options(a,a.pos,.45),pitch:stage===1?.8:1});
+      s.chargeStage=charging?bowPhase.stage:0;
+    }else if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
     if(s.wasCharge&&!charging&&!s.firedThisUpdate)play(a,'release',a.pos,.27);
     if(r.scope&&charging&&!s.wasCharge)play(a,'scope',a.pos,.26);
     // Brush_Move is a sustained floor-contact loop, not a swing windup.
@@ -195,7 +203,7 @@ export function installWeaponAudioRuntime(api){
     return result;
   };
   const oldSet=Actor.prototype.setWeapon;
-  Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&usesSplatChargerRise(this.weapon?.id))G.audio?.prewarmChargerChargeRise?.(this.weapon?.id);return r;};
+  Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&usesChargerRise(this.weapon?.id))G.audio?.prewarmChargerChargeRise?.(this.weapon?.id,this.weapon?.chargeTime);return r;};
   const kit=installKitAudio(api,{listen,options});
   const installed={version:1,weapons:Object.keys(WEAPON_AUDIO).length,dispose(){for(const u of unsubs)u();for(const r of active)stop(r);kit?.dispose();}};
   Object.defineProperty(R,INSTALL,{value:installed});return installed;
