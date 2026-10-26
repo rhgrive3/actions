@@ -60,6 +60,11 @@ export function replayWithSubBirthCommit(nm,from,event,replay) {
 
 // This is only the current native sprinkler kit envelope, not generic bomb
 // authority and not an alternate ac/sub route. Native payload guards remain.
+function finiteSprinklerPose(event) {
+  // slice(4,10).every skips holes and includes inherited numeric properties.
+  for(let i=4;i<10;i++)if(i in event&&!finite(event[i]))return false;
+  return true;
+}
 export function stageAcceptedSprinklerBirth(nm,from,event,packetTime,ownerTick) {
   const s=states.get(nm);
   if(!live(nm,s)||!Array.isArray(event)||event.length!==16||event[1]!=='b'||event[3]!=='bomb'||event[11]!=='sprinkler')return false;
@@ -67,7 +72,7 @@ export function stageAcceptedSprinklerBirth(nm,from,event,packetTime,ownerTick) 
   if(!peer||!nm.s?._members?.has(from)||!actor?.remote||actor.owner!==from||actor.weapon?.sub!=='sprinkler'||
     !Array.isArray(meta)||meta.length!==3||meta[0]!=='inkwave-kit-birth-v1'||meta[1]!==nm.cfg?.id||!safe(meta[2])||meta[2]<0||
     meta[2]!==Math.max(actor.netLife||0,actor.net?.lastLife||0)||
-    event[10]!==null||!finite(event[12])||event[12]<0||event[12]>1||!event.slice(4,10).every(finite)||
+    event[10]!==null||!finite(event[12])||event[12]<0||event[12]>1||!finiteSprinklerPose(event)||
     event._netPeer!==from||!safe(event._netSeq)||event._netSeq<1||event._netSeq!==event[15]||
     !safe(event._netTick)||event._netTick<0||event._netTick!==event[14]||!safe(ownerTick)||event._netTick>ownerTick||
     !finite(packetTime)||!finite(event[0])||event[0]>packetTime||snap?.t!==packetTime||snap.life!==meta[2]||![snap.x,snap.y,snap.z].every(finite))return false;

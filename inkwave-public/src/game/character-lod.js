@@ -1,3 +1,4 @@
+let IW_NORMAL_SCRATCH=new Float32Array(0);
 // INKWAVE — squidkid LOD kit (used by character.js only).
 //   • tier policy: hero / game / far picked by the kid's projected screen height, per quality setting, with hysteresis
 //   • screen-door dither cross-fade: per-kid clones of the body materials that discard complementary pixel sets, so two
@@ -242,7 +243,12 @@ export function clusterDecimate(src, cell, precomputed = null) {
     out.setAttribute(name, new THREE.BufferAttribute(arr, s, a.normalized));
   }
   if (N) {
-    const acc = new Float32Array(nc * 3);
+    // Dense normal attributes have no callbacks, so this scratch cannot be
+    // reentered while borrowed. Keep unusual accessor attributes independent.
+    const reusable=!!nArr&&nc*3<=262144;
+    if(reusable&&IW_NORMAL_SCRATCH.length<nc*3)IW_NORMAL_SCRATCH=new Float32Array(nc*3);
+    const acc=reusable?IW_NORMAL_SCRATCH:new Float32Array(nc*3);
+    if(reusable)acc.fill(0,0,nc*3);
     for (let i = 0; i < n; i++) { const c = vc[i] * 3, i3 = i * 3; acc[c] += nArr ? nArr[i3] : N.getX(i); acc[c + 1] += nArr ? nArr[i3 + 1] : N.getY(i); acc[c + 2] += nArr ? nArr[i3 + 2] : N.getZ(i); }
     const onArr = out.attributes.normal.array;
     for (let c = 0; c < nc; c++) {
@@ -258,11 +264,15 @@ export function clusterDecimate(src, cell, precomputed = null) {
   if (A.aMat && A.color) {
     const attributes = out.attributes, extras = [], splits = new Map(), remapped = [];
     const sourceMat = A.aMat, sourceColor = A.color, clusterMat = attributes.aMat, clusterColor = attributes.color;
+    const sm=!sourceMat.normalized&&!sourceMat.isInterleavedBufferAttribute?sourceMat.array:null;
+    const sc=!sourceColor.normalized&&!sourceColor.isInterleavedBufferAttribute?sourceColor.array:null;
+    const cm=!clusterMat.normalized&&!clusterMat.isInterleavedBufferAttribute?clusterMat.array:null;
+    const cc=!clusterColor.normalized&&!clusterColor.isInterleavedBufferAttribute?clusterColor.array:null;
     for (let i = 0; i < tris.length; i++) {
       const cluster = tris[i], original = sourceCorners[i];
       let same = true;
-      for (let k = 0; k < sourceMat.itemSize; k++) if (sourceMat.getComponent(original, k) !== clusterMat.getComponent(cluster, k)) { same = false; break; }
-      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if (sourceColor.getComponent(original, k) !== clusterColor.getComponent(cluster, k)) { same = false; break; }
+      for (let k = 0; k < sourceMat.itemSize; k++) if ((sm?sm[original*sourceMat.itemSize+k]:sourceMat.getComponent(original,k)) !== (cm?cm[cluster*clusterMat.itemSize+k]:clusterMat.getComponent(cluster,k))) { same = false; break; }
+      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if ((sc?sc[original*sourceColor.itemSize+k]:sourceColor.getComponent(original,k)) !== (cc?cc[cluster*clusterColor.itemSize+k]:clusterColor.getComponent(cluster,k))) { same = false; break; }
       if (same) { remapped.push(cluster); continue; }
       const values = [cluster];
       for (let k = 0; k < sourceMat.itemSize; k++) values.push(sourceMat.getComponent(original, k));

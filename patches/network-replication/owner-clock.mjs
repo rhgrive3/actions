@@ -27,7 +27,7 @@ const enabled = nm => nm.s?.ownerClockVersion === OWNER_CLOCK_VERSION
 const member = (nm, from) => typeof from === 'string' && from !== nm.myId && nm.s?._members?.has(from);
 function state(nm) {
   let s = states.get(nm);
-  if (!s) { s = { closed: false, peers: new Map() }; states.set(nm, s); }
+  if (!s) { s = { closed: false, peers: new Map(), unproven: 0 }; states.set(nm, s); }
   return s;
 }
 function peer(nm, from) {
@@ -38,6 +38,7 @@ function peer(nm, from) {
     p = { required: true, origin: null, relayAnchor: null, pending: null, queue: [], bytes: 0,
       dropped: 0, answeredAt: -Infinity };
     s.peers.set(from, p);
+    s.unproven++;
   }
   return p;
 }
@@ -66,12 +67,17 @@ export function beginOwnerClock(nm, at) {
 }
 export function advanceOwnerClock(nm, at) {
   if (!enabled(nm) || !nm.match || states.get(nm)?.closed) return;
-  for (const [from, p] of state(nm).peers)
+  const s=state(nm);
+  if(!s.unproven)return;
+  for (const [from, p] of s.peers)
     if (p.required && !p.origin) request(nm, from, p, at);
 }
-export function retireOwnerClock(nm, from) { states.get(nm)?.peers.delete(from); }
+export function retireOwnerClock(nm, from) {
+  const s=states.get(nm),p=s?.peers.get(from);
+  if(p){if(!p.origin)s.unproven--;s.peers.delete(from);}
+}
 export function closeOwnerClock(nm) {
-  const s = state(nm); s.closed = true; s.peers.clear();
+  const s = state(nm); s.closed = true; s.peers.clear(); s.unproven=0;
 }
 
 // Run before paint-codec and birth normalization: queued wire messages must
@@ -100,6 +106,7 @@ export function handleOwnerClockMessage(nm, from, d, at) {
       && !validOwnerTickAdvance(d.ts, previous.lastTs, at, previous.lastReceiveAt)) return true;
     p.required = true;
     p.origin = { timestamp: d.ts, sentAt: q.at };
+    state(nm).unproven--;
     p.pending = null;
     const queued = p.queue; p.queue = []; p.bytes = 0;
     for (const { wire, receipt } of queued) {
