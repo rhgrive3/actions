@@ -86,8 +86,12 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
   for (const required of [REVIEWED_AUDIO_ORPHAN, 'patches/splatoon3/bootstrap.mjs', 'patches/loading-cache/runtime/startup.mjs', 'patches/loading-cache/sw.js', 'entry-script-1.mjs'])
     if (!modules.has(required)) return keep('missing graph root: ' + required);
   const sites = new Map(); let reference = null, parseFailure = null;
-  for (const [file, source] of modules) {
+  for (const [file, value] of modules) {
     if (file === REVIEWED_AUDIO_ORPHAN) continue;
+    let source;
+    try { source = typeof value === 'function' ? value() : value; }
+    catch { return keep('unreadable module: ' + file); }
+    if (typeof source !== 'string') return keep('unreadable module: ' + file);
     const digest = createHash('sha256').update(source).digest('hex');
     if (sealedWorkerScripts.get(file) === digest) continue;
     const sealedLoader = sealedLoaders.get(file) === digest;

@@ -1,4 +1,11 @@
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
+import { adaptRemainingGameplay20261026 } from '../patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs';
+import { adaptRemainingInkFlight20261026 } from '../patches/local-quality/queue-remaining-inkflight-20261026-adapter.mjs';
+import { adaptQueueRemainingUiNetwork20261026 } from '../patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs';
+import { adaptRemainingWorld20261026 } from '../patches/local-quality/queue-remaining-world-20261026-adapter.mjs';
+import { adaptRemainingPaint20261026 } from '../patches/local-quality/queue-remaining-paint-20261026-adapter.mjs';
+import { adaptHistoricalCharacter20261026 } from '../patches/local-quality/queue-historical-character-20261026-adapter.mjs';
+import { adaptHistoricalSourceMotion20261026 } from '../patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs';
 import { adaptWeaponQueue20261024 } from '../patches/splatoon3/weapon-queue-20261024-adapter.mjs';
 import { adaptDriveVisualAudio } from '../patches/local-quality/drive-visual-audio-adapter.mjs';
 import { adaptQueueWorld20261024 } from '../patches/local-quality/queue-world-20261024-adapter.mjs';
@@ -96,7 +103,14 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueExtraWorld(rel, code);
   code = adaptQueueExtraWeaponsFx(rel, code);
   code = adaptQueueUi20261025(rel, code);
-  return adaptQueueExtraDecor(rel, code);
+  code = adaptQueueExtraDecor(rel, code);
+  code = adaptRemainingGameplay20261026(rel, code);
+  code = adaptRemainingInkFlight20261026(rel, code);
+  code = adaptQueueRemainingUiNetwork20261026(rel, code);
+  code = adaptRemainingWorld20261026(rel, code);
+  code = adaptRemainingPaint20261026(rel, code);
+  code = adaptHistoricalSourceMotion20261026(rel, code);
+  return adaptHistoricalCharacter20261026(rel, code);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

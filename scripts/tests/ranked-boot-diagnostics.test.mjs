@@ -7,6 +7,14 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {publicBuildIdentity,verifyPublishedSource,verifyPublicResponse} from '../lib/inkwave-public-boot-evidence.mjs';
 import {criticalBootRequest,rankedBootState,observeRankedBoot,rankedHttpFailureDetails} from '../lib/ranked-boot-diagnostics.mjs';
+import {stepRollingVelocity} from '../../patches/splatoon3/runtime/movement-physics.mjs';
+import {rollerDrumSupport} from '../../patches/splatoon3/runtime/roller.mjs';
+import {FixedClock,STEP} from '../../patches/splatoon3/runtime/clock.mjs';
+import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
+import * as THREE from '../../inkwave-public/vendor/three/build/three.module.js';
+import {PLAYER as BASE_PLAYER} from '../../inkwave-public/src/config.js';
+import {PATTERN,C,B,R} from '../../inkwave-public/src/world/mapkit.js';
+import {on as onNativeEvent,emit as emitNativeEvent} from '../../inkwave-public/src/core/ctx.js';
 const url='https://rhgrive3.github.io/actions/?relay=x';
 const moduleUrl='https://rhgrive3.github.io/actions/_versions/abc/patches/splatoon3/runtime/audio/weapon-recipes.mjs';
 function page(state={ready:true}) {const p=new EventEmitter();p.waitForFunction=async(fn,arg,options)=>{assert.equal(fn,rankedBootState);assert.equal(options.timeout,180000);assert.equal(options.polling,250,'must not depend on a renderer requestAnimationFrame');return {jsonValue:async()=>state,dispose:async()=>{p.disposed=true;}};};return p;}
@@ -110,6 +118,32 @@ test('critical HTTP failures retain immutable expected hash, safe edge headers a
 // browser. These tests establish sequencing and fail-closed diagnostics only;
 // real two-context WebAudio recovery still requires the ranked browser gate.
 const rankedCheckerSource=fs.readFileSync(new URL('../check-inkwave-ranked-browser.mjs',import.meta.url),'utf8');
+function checkerInitializer(name){
+ const found=[];const visit=n=>{if(!n||typeof n!=='object')return;if(n.type==='VariableDeclarator'&&n.id.name===name)found.push(n.init);for(const v of Object.values(n))if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);};
+ visit(parse(rankedCheckerSource,{ecmaVersion:'latest',sourceType:'module'}));assert.equal(found.length,1,name);return rankedCheckerSource.slice(found[0].start,found[0].end);
+}
+function pulseHarness({own=false,frameError=null}={}){
+ const keys=new Set(),timers=new Map(),state={},events=[],calls=[];let nextTimer=1;
+ const RG={input:{keys,mouse:{left:false},down:key=>keys.has(key)}};
+ const frame=function(...args){assert(keys.has('KeyW'));assert.equal(RG.game._frame,frame);calls.push({receiver:this,args});if(frameError)throw frameError;return args[1];};
+ RG.game=Object.create({_frame:frame});if(own)Object.defineProperty(RG.game,'_frame',{value:frame,writable:true,configurable:true,enumerable:false});
+ const descriptor=Object.getOwnPropertyDescriptor(RG.game,'_frame');
+ const window={dispatchEvent:event=>{events.push(event);if(event.type==='keydown')keys.add(event.code);else keys.delete(event.code);}};
+ const KeyboardEvent=class{constructor(type,{code}){this.type=type;this.code=code;}};
+ const setTimer=(fn,ms)=>{const id=nextTimer++;timers.set(id,{fn,ms});return id;},clearTimer=id=>timers.delete(id);
+ const setInput=new Function('RG','__rankedReplication','window','KeyboardEvent','setTimeout','clearTimeout','return ('+checkerInitializer('setInput')+');')(RG,state,window,KeyboardEvent,setTimer,clearTimer);
+ const run=(fire=true,input=['KeyW'])=>setInput({evaluate:(fn,arg)=>fn(arg)},fire,input);
+ const expire=ms=>{const entry=[...timers].find(([,t])=>t.ms===ms);assert(entry,ms);timers.delete(entry[0]);entry[1].fn();};
+ return {RG,state,keys,timers,events,calls,frame,descriptor,run,expire};
+}
+function dodgeWitnessHarness(){
+ const state={},runner={_rollToken:0,dodge:null},actor={nid:7,weaponRunner:runner},G={time:10,game:{_frameN:3}};
+ const build=name=>new Function('state','a','dodgeRunner','G','return ('+checkerInitializer(name)+');')(state,actor,runner,G);
+ const arm=build('armDodgeWitness'),observe=build('observeDodgeWitness'),off=onNativeEvent('weapon:dodge',observe);
+ const cleanupSource=rankedCheckerSource.match(/s\.offDodge\?\.\(\);/);assert(cleanupSource);
+ const cleanup=()=>new Function('s',cleanupSource[0])({offDodge:off});
+ return {state,runner,actor,G,arm,cleanup,emit:payload=>emitNativeEvent('weapon:dodge',payload)};
+}
 const recoveryStart=rankedCheckerSource.indexOf('  // Recovery must re-admit native contact');
 const recoveryEnd=rankedCheckerSource.indexOf("  phase('recovered-real-audio'",recoveryStart);
 assert(recoveryStart>=0&&recoveryEnd>recoveryStart);
@@ -122,7 +156,7 @@ function recoveryHarness({rejectAdmission=false}={}){
   if(waits.length===1){calls.push('remote-readiness');return new Promise((resolve,reject)=>{pending.resolve=resolve;pending.reject=reject;if(rejectAdmission)reject(Error('recovery admission timeout'));});}
   calls.push('positive-audio');return Promise.resolve({remote:'positive-real-audio'});
  }};
- const run=()=>executeRecovery(host,guest,async()=>{calls.push('place');},async(_page,fire,keys=[])=>{assert.equal(fire,true);calls.push(keys.length?'pulse':'held-at-rest');}, {supported:[1,2,3],yaw:0},{timeout:30000},[{nid:7}],async p=>p);
+ const run=()=>executeRecovery(host,guest,async(_page,position,yaw)=>{assert.deepEqual(position,[1,2,3]);assert.equal(yaw,Math.PI);calls.push('place');},async(_page,fire,keys=[])=>{assert.equal(fire,true);if(keys.length)assert.deepEqual(keys,['KeyW']);calls.push(keys.length?'pulse':'held-at-rest');}, {supported:[1,2,3],yaw:0,travelYaw:Math.PI},{timeout:30000},[{nid:7}],async p=>p);
  return {calls,waits,pending,run};
 }
 function withRankedRead(state,fn){const previous=globalThis.__rankedReplication;globalThis.__rankedReplication={read:nid=>{assert.equal(nid,7);return state;}};try{return fn();}finally{globalThis.__rankedReplication=previous;}}
@@ -137,7 +171,114 @@ test('ranked recovery waits for native and real remote loop admission before its
  assert.equal(withRankedRead(recoveredAtRest,()=>h.waits[1](7)),false,'zero-volume readiness cannot pass the positive audio gate');
  const positive={...recoveredAtRest,realRollLoops:[{playing:true,registered:true,volume:.2}]};
  assert.equal(withRankedRead(positive,()=>h.waits[1](7)),positive);
- assert.match(rankedCheckerSource,/if\(keys.includes\('KeyS'\)\)state.motionTimer=setTimeout\(\(\)=>RG.input.keys.delete\('KeyS'\),250\)/,'movement remains bounded to 250 ms');
+ assert.match(rankedCheckerSource,/if\(keys.includes\('KeyW'\)\)state.motionTimer=setTimeout\(\(\)=>RG.input.keys.delete\('KeyW'\),250\)/,'forward movement retains the same 250 ms wall-clock bound');
+});
+test('ranked movement pulse starts at the next actual native frame and retains the 250ms timer and exact frame ownership',async()=>{
+ for(const own of [false,true]){
+  const h=pulseHarness({own}),pending=h.run(),marker={};
+  assert.equal(h.keys.has('KeyW'),false);assert.equal(h.calls.length,0);assert.deepEqual([...h.timers.values()].map(t=>t.ms),[30000]);
+  assert.equal(h.RG.game._frame(.25,marker),marker);await pending;
+  assert.equal(h.calls.length,1);assert.equal(h.calls[0].receiver,h.RG.game);assert.deepEqual(h.calls[0].args,[.25,marker]);
+  assert.deepEqual(Object.getOwnPropertyDescriptor(h.RG.game,'_frame'),h.descriptor);assert.equal(h.state.cancelMotionStart,null);
+  assert.deepEqual(h.events.map(e=>[e.type,e.code]),[['keydown','KeyW']]);assert.deepEqual([...h.timers.values()].map(t=>t.ms),[250]);
+  h.expire(250);assert.equal(h.keys.has('KeyW'),false);
+ }
+});
+test('ranked pending native input fails closed on timeout, cancellation or a native frame exception',async()=>{
+ const timeout=pulseHarness(),a=timeout.run(),ar=assert.rejects(a,/within 30000ms/);timeout.expire(30000);await ar;
+ assert.equal(timeout.RG.game._frame,timeout.frame);assert.equal(timeout.calls.length,0);assert.equal(timeout.keys.size,0);assert.equal(timeout.state.cancelMotionStart,null);
+ const cancel=pulseHarness({own:true}),b=cancel.run(),br=assert.rejects(b,/superseded/);await cancel.run(false,[]);await br;
+ assert.deepEqual(Object.getOwnPropertyDescriptor(cancel.RG.game,'_frame'),cancel.descriptor);assert.equal(cancel.keys.size,0);assert.equal(cancel.calls.length,0);
+ const error=new Error('actual frame failed'),thrown=pulseHarness({frameError:error}),c=thrown.run(),cr=assert.rejects(c,e=>e===error);
+ assert.throws(()=>thrown.RG.game._frame(.25),e=>e===error);await cr;assert.equal(thrown.RG.game._frame,thrown.frame);thrown.expire(250);assert.equal(thrown.keys.size,0);
+});
+test('ranked Dodge witness requires the exact armed actor, runner, live state and fresh native token; cleanup preserves other listeners',()=>{
+ const h=dodgeWitnessHarness();let otherCalls=0;const otherOff=onNativeEvent('weapon:dodge',()=>otherCalls++);
+ try{
+  h.runner._rollToken=1;h.runner.dodge={token:1};h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,undefined);
+  h.arm();h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,null,'an old token cannot satisfy a new input');
+  h.runner._rollToken=2;h.runner.dodge={token:2};h.emit({actor:{nid:h.actor.nid,weaponRunner:h.runner}});assert.equal(h.state.dodgeReceipt,null);
+  h.actor.weaponRunner={};h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,null);h.actor.weaponRunner=h.runner;
+  h.runner.dodge=null;h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,null);
+  h.runner.dodge={token:1};h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,null);
+  h.runner.dodge={token:3};h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,null,'event/live token must match the producer token');
+  h.runner.dodge={token:2};h.emit({actor:h.actor});const receipt=h.state.dodgeReceipt;assert.deepEqual(receipt,{token:2,nativeTime:10,renderFrame:3});assert.equal(h.state.dodgeArm,null);
+  h.runner.dodge=null;h.G.time=20;h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,receipt,'only the observation is retained after the real transient ends');
+  h.arm();assert.equal(h.state.dodgeReceipt,null);h.cleanup();h.runner._rollToken=3;h.runner.dodge={token:3};const previous=otherCalls;h.emit({actor:h.actor});assert.equal(h.state.dodgeReceipt,null);assert.equal(otherCalls,previous+1);
+ }finally{h.cleanup();otherOff();}
+});
+test('actual FixedClock can finish the calibrated 16-tick Dodge transient before a render poll while its synchronous witness remains',()=>{
+ const h=dodgeWitnessHarness(),clock=new FixedClock();let tick=0,admissions=0;
+ try{
+  h.arm();
+  // Real browser diagnostics establish native admission and its 4+12 tick
+  // lifetime. This test isolates observer scheduling with the actual clock.
+  assert.equal(clock.advance(16*STEP,()=>{
+   h.G.time+=STEP;
+   if(tick===0){admissions++;h.runner._rollToken=1;h.runner.dodge={token:1};h.emit({actor:h.actor});}
+   if(++tick===16)h.runner.dodge=null;
+  }),16);
+  assert.equal(admissions,1);assert.equal(!!h.runner.dodge,false,'the old render poll misses the completed native-duration transient');
+  assert.equal(h.state.dodgeReceipt.token,1);assert.equal(clock.ticks,16);
+  assert.match(rankedCheckerSource,/RG\.match\.local\.weaponRunner\.s3Turret===true&&!RG\.match\.local\.weaponRunner\.dodge/,'the independent live turret gate remains mandatory');
+ }finally{h.cleanup();}
+});
+test('ranked positive-control placement faces the corridor and clears only its initial linear/angular motion',async()=>{
+ let initializer;
+ function visit(n){if(!n||typeof n!=='object')return;if(n.type==='VariableDeclarator'&&n.id.name==='place')initializer=n.init;for(const v of Object.values(n))if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);}
+ visit(parse(rankedCheckerSource,{ecmaVersion:'latest',sourceType:'module'}));assert(initializer);
+ const place=new Function('return ('+rankedCheckerSource.slice(initializer.start,initializer.end)+');')();
+ const previousRG=globalThis.RG,previousDocument=globalThis.document;
+ const runner={rolling:true,s3RollerSuspendedHold:false},actor={pos:new THREE.Vector3(),vel:new THREE.Vector3(3,4,5),yaw:0,aimYaw:0,yawVel:9,_faceTarget:.7,groundN:new THREE.Vector3(),ground:{},weaponRunner:runner};
+ const rig={yaw:0,pitch:.3};let probes=0;
+ globalThis.RG={match:{local:actor},rig,physics:{groundProbe(x,y,z,a,b,r,out){probes++;assert.deepEqual([x,y,z],[1,2,3]);assert(r>0);return Object.assign(out,{hit:true,y:2,normal:new THREE.Vector3(0,1,0)});}}};
+ globalThis.document={baseURI:new URL('../../inkwave-public/',import.meta.url).href};
+ try{
+  await place({evaluate:(fn,arg)=>fn(arg)},[1,2,3],Math.PI/2);
+  assert.deepEqual(actor.pos.toArray(),[1,2,3]);assert.deepEqual(actor.vel.toArray(),[0,0,0]);assert.equal(actor.yaw,Math.PI/2);assert.equal(actor.aimYaw,Math.PI/2);assert.equal(rig.yaw,Math.PI/2);
+  assert.equal(actor.yawVel,0);assert.equal(actor._faceTarget,null);assert.equal(actor.weaponRunner,runner);assert.equal(runner.rolling,true);assert.equal(runner.s3RollerSuspendedHold,false);assert.equal(probes,1);
+ }finally{globalThis.RG=previousRG;globalThis.document=previousDocument;}
+});
+test('actual roller motion exposes the old reverse-pulse counterexample and advances inside the forward corridor at 30/60/120 Hz',()=>{
+ const edgeYaw=-Math.PI/2,travelYaw=edgeYaw+Math.PI;
+ const old={yaw:edgeYaw,vel:{x:0,z:0}};
+ // The old KeyS setup requested +X while the drum/body still faced -X.
+ // Native movement happens before the facing spring can turn the body.
+ stepRollingVelocity(old,1,0,4.4,20,1/60);
+ assert(old.vel.x<0,'a reverse stick does not make a roller travel backwards immediately');
+ for(const speed of [4.4,6.48,7.92])for(const hz of [30,60,120]){
+  const actor={yaw:travelYaw,vel:{x:0,z:0}},dt=1/hz;let distance=0;
+  for(let i=0;i<Math.floor(.25*hz);i++){
+   stepRollingVelocity(actor,Math.sin(travelYaw),Math.cos(travelYaw),speed,80,dt);
+   assert(actor.vel.x>0);assert(Math.abs(actor.vel.z)<1e-12);distance+=actor.vel.x*dt;
+  }
+  assert(distance>0&&distance<2,'the native forward pulse stays within the unchanged two-metre corridor bound');
+ }
+});
+test('ranked native lane queries reject the real Tidewater cover overlap even when ground and roller drum have support',()=>{
+ const source=file=>fs.readFileSync(new URL('../../inkwave-public/src/'+file,import.meta.url),'utf8');
+ const initializer=(text,name)=>{
+  const found=[];const visit=n=>{if(!n||typeof n!=='object')return;if(n.type==='VariableDeclarator'&&n.id.name===name)found.push(n.init);for(const v of Object.values(n))if(Array.isArray(v))v.forEach(visit);else if(v&&typeof v==='object')visit(v);};
+  visit(parse(text,{ecmaVersion:'latest',sourceType:'module'}));assert.equal(found.length,1,name);return text.slice(found[0].start,found[0].end);
+ };
+ const moduleBody=text=>text.replace(/^import .*;\r?\n/gm,'').replace(/^export /gm,'');
+ const {Physics,GroundHit}=new Function('THREE',moduleBody(source('game/physics.js'))+'\nreturn {Physics,GroundHit};')(THREE);
+ const Level=new Function('THREE','PATTERN',moduleBody(source('world/level.js'))+'\nreturn Level;')(THREE,PATTERN);
+ const layout=new Function('PATTERN','C','B','R','return ('+initializer(source('world/maps.js'),'TIDEWATER')+');')(PATTERN,C,B,R);
+ const profile=JSON.parse(fs.readFileSync(new URL('../../patches/splatoon3/profile.json',import.meta.url),'utf8'));
+ const PLAYER={...BASE_PLAYER,...profile.player},level=new Level(layout),physics=new Physics(level),G={level,physics};
+ const V=THREE.Vector3,scratch={ids:[],start:new V(),delta:new V(),normalY:0,contactPoint:new V(),wallPoint:new V()};
+ const query=new Function('G','PLAYER','V','rollerDrumSupport','scratch','return ('+initializer(rankedCheckerSource,'query')+');')(G,PLAYER,V,rollerDrumSupport,scratch);
+ const position=new V(-1.9,2.8,0),yaw=Math.PI/2,radius=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale;
+ const ground=physics.groundProbe(position.x,position.y,position.z,.3,.3,PLAYER.footRadius,new GroundHit(),false);
+ assert(ground.hit);assert.equal(ground.y,2.8);assert(rollerDrumSupport({pos:position,yaw,grounded:true},G,scratch).floor,'the old ground/drum-only candidate passed');
+ assert.equal(physics.bodyFits(position,radius,PLAYER.stepUp,PLAYER.height,false),false);
+ assert.equal(query(position.x,position.y,position.z,yaw),null,'the actual harness query rejects the overlapping candidate');
+ const contacts={groundNormal:new V(),wallNormal:new V()},resolved=position.clone();
+ physics.collideBody(resolved,radius,PLAYER.stepUp,PLAYER.height,contacts,true,false);
+ assert(contacts.wall);assert.equal(contacts.wallBlock,2);assert(Math.abs(resolved.x-(-1.9501))<1e-12,'the real solver reproduces both browser failure positions');
+ for(let distance=0;distance<=2;distance+=.25){const at=query(-1.9+distance,2.8,2,yaw);assert(at?.support.floor,'nearby unobstructed native support remains eligible');}
+ assert.match(rankedCheckerSource,/if\(corridor.length===9\)/,'all nine original corridor samples remain required');
 });
 test('ranked recovery rejects suspended, stale-bit, ungrounded, distant and non-live loops before a pulse',async()=>{
  const h=recoveryHarness(),run=h.run();await new Promise(resolve=>setImmediate(resolve));
