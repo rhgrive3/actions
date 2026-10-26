@@ -64,12 +64,14 @@ test('Shooter full-flight contact remains available without inventing an inner-m
   assert.ok(marker?.point.distanceTo(impact.point)<1e-8,'preserve full-flight marker admission pending original UI evidence');
 });
 
-test('Dualies contact cache invalidates when in-place floor geometry changes its generation',async()=>{
+test('Dualies contact cache observes notified in-place floor geometry changes',async()=>{
   const s=await scene('dualies',-.8),{a,ps,G}=s;
   const first=ps.s3DualiesGuides(a,a.weapon).map(p=>p.clone());
-  G.level.blocks[0].center.y=-2;G.level.geometryGeneration=1;
+  const floor=G.level.blocks[0];floor.center.y=-2;floor.aabbMin.y-=1.75;floor.aabbMax.y-=1.75;
+  G.level.markCollisionChanged();
   const changed=ps.s3DualiesGuides(a,a.weapon);
   assert.ok(changed.every((p,i)=>p.distanceTo(first[i])>.5),'both hand contacts react to the changed field');
+  assert.ok(changed.every(p=>Math.abs(p.y+1.75)<1e-8),'both guides remain on the new physical floor surface');
 });
 
 test('moving Shooter prediction uses the actual spawn-velocity addition and invalidates same-pose cache',async()=>{
