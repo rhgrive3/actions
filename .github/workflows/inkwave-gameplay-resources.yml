@@ -1,0 +1,126 @@
+name: INKWAVE gameplay resource regressions
+
+on:
+  pull_request:
+    paths:
+      - 'inkwave-public/src/game/inkFlightRuntime.js'
+      - 'inkwave-public/src/fx/screenfx.js'
+      - 'patches/splatoon3/tests/ink-flight-pool-lifecycle.test.mjs'
+      - 'patches/local-quality/tests/screenfx-local-lifecycle.test.mjs'
+      - 'patches/splatoon3/runtime/all-specials.mjs'
+      - 'patches/splatoon3/runtime/crab-tank-splash-visual.mjs'
+      - 'patches/splatoon3/runtime/torpedo-splashes.mjs'
+      - 'patches/splatoon3/tests/crab-ball-lifecycle.test.mjs'
+      - 'patches/splatoon3/tests/crab-tank-splash-visual.test.mjs'
+      - 'patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs'
+      - 'patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs'
+      - 'patches/splatoon3/tests/crab-splash-upload-browser.test.mjs'
+      - 'patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs'
+      - 'scripts/check-inkwave-gameplay-resources.mjs'
+      - 'scripts/lib/inkwave-gameplay-*.mjs'
+      - 'scripts/lib/inkwave-chromium-process-memory.mjs'
+      - 'scripts/lib/inkwave-runtime-evidence.mjs'
+      - 'scripts/tests/inkwave-gameplay-*.test.mjs'
+      - 'scripts/tests/inkwave-chromium-process-memory.test.mjs'
+      - 'scripts/prepare-inkwave-ci-apt.py'
+      - '.github/workflows/inkwave-gameplay-resources.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'inkwave-public/src/game/inkFlightRuntime.js'
+      - 'inkwave-public/src/fx/screenfx.js'
+      - 'patches/splatoon3/tests/ink-flight-pool-lifecycle.test.mjs'
+      - 'patches/local-quality/tests/screenfx-local-lifecycle.test.mjs'
+      - 'patches/splatoon3/runtime/all-specials.mjs'
+      - 'patches/splatoon3/runtime/crab-tank-splash-visual.mjs'
+      - 'patches/splatoon3/runtime/torpedo-splashes.mjs'
+      - 'patches/splatoon3/tests/crab-ball-lifecycle.test.mjs'
+      - 'patches/splatoon3/tests/crab-tank-splash-visual.test.mjs'
+      - 'patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs'
+      - 'patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs'
+      - 'patches/splatoon3/tests/crab-splash-upload-browser.test.mjs'
+      - 'patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs'
+      - 'scripts/check-inkwave-gameplay-resources.mjs'
+      - 'scripts/lib/inkwave-gameplay-*.mjs'
+      - 'scripts/lib/inkwave-chromium-process-memory.mjs'
+      - 'scripts/lib/inkwave-runtime-evidence.mjs'
+      - 'scripts/tests/inkwave-gameplay-*.test.mjs'
+      - 'scripts/tests/inkwave-chromium-process-memory.test.mjs'
+      - 'scripts/prepare-inkwave-ci-apt.py'
+      - '.github/workflows/inkwave-gameplay-resources.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  CI_STORAGE: ${{ github.workspace }}/.ci-scratch/gameplay-gpu-ci
+  TMPDIR: ${{ github.workspace }}/.ci-scratch/bt
+  TMP: ${{ github.workspace }}/.ci-scratch/bt
+  TEMP: ${{ github.workspace }}/.ci-scratch/bt
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.ci-scratch/playwright
+
+jobs:
+  resource-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Assert exact source checkout and prepare workspace storage
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          mkdir -p "$TMPDIR" "$CI_STORAGE/evidence/crab-upload" "$CI_STORAGE/evidence/torpedo-upload" "$PLAYWRIGHT_BROWSERS_PATH"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned build and browser tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - name: Verify source resource lifetimes and upload bounds
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/crab-ball-lifecycle.test.mjs patches/splatoon3/tests/crab-tank-splash-visual.test.mjs patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs patches/splatoon3/tests/ink-flight-pool-lifecycle.test.mjs patches/local-quality/tests/screenfx-local-lifecycle.test.mjs
+      - name: Verify gameplay profiler measurement contracts
+        run: |
+          node --test scripts/tests/inkwave-gameplay-observer.test.mjs scripts/tests/inkwave-gameplay-flow-transport.test.mjs scripts/tests/inkwave-gameplay-verdict.test.mjs scripts/tests/inkwave-chromium-process-memory.test.mjs
+      - name: Build production site and verify startup budget
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          node scripts/check-inkwave-startup-budget.mjs .built-site/_site
+          node --input-type=module -e "import {verifyRuntimeBuild} from './scripts/lib/inkwave-runtime-evidence.mjs'; verifyRuntimeBuild('.built-site/_site', process.cwd(), process.env.SOURCE_SHA);"
+      - name: Prepare signed Ubuntu package sources and Chromium
+        run: |
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps chromium
+      - name: Verify live Crab and Torpedo GPU buffers and rendered pixels sequentially
+        run: |
+          CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; process.stdout.write(chromium.executablePath());")"
+          export CHROMIUM_PATH
+          gpu_status=0
+          INKWAVE_BUILT_SITE=.built-site/_site INKWAVE_CRAB_UPLOAD_BROWSER=1 INKWAVE_UPLOAD_EVIDENCE="$CI_STORAGE/evidence/crab-upload" node --test patches/splatoon3/tests/crab-splash-upload-browser.test.mjs || gpu_status=$?
+          INKWAVE_BUILT_SITE=.built-site/_site INKWAVE_TORPEDO_UPLOAD_BROWSER=1 INKWAVE_UPLOAD_EVIDENCE="$CI_STORAGE/evidence/torpedo-upload" node --test patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs || gpu_status=$?
+          exit "$gpu_status"
+      - name: Upload Crab raw numeric evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crab-gpu-upload-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.CI_STORAGE }}/evidence/crab-upload/result.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Torpedo raw numeric evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: torpedo-gpu-upload-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.CI_STORAGE }}/evidence/torpedo-upload/result.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

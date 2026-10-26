@@ -112,8 +112,12 @@ test('Torpedo/Fizzy share exact geometry while individual birth colors, cap evic
  const api={THREE:{...THREE,SphereGeometry:Geometry,MeshBasicMaterial:Material,Mesh},G:{scene,physics:{segment(a,b,h){h.hit=false;return h;} }},Hit:class{}};
  const p={},owner={color:new THREE.Color('#ff0000'),remote:false},source={seed:42,owner,team:0,chasedTarget:true,spec:{gravity:24,splashDamage:12,splashAround:{count:8,pitchDegrees:65,velocityMin:2,velocityMax:3,paintRadius:.5}}};
  spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,1);assert.equal(materials,1);const first=p._s3TorpedoSplashes[0],shared=first.visual.mesh.geometry;assert.deepEqual(shared.args,[.1,6,4]);
+ assert.deepEqual(first.visual.mesh.instanceMatrix.updateRanges,[{start:0,count:8*16}]);
+ assert.deepEqual(first.visual.mesh.instanceColor.updateRanges,[{start:0,count:8*3}]);
  owner.color.set('#0000ff');spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,1);assert.notEqual(first.visualColor.getHex(),p._s3TorpedoSplashes.at(-1).visualColor.getHex());
  first.pos.y=-101;first.vel.set(0,0,0);stepTorpedoSplashes(api,p,1/60,()=>assert.fail('below-world cleanup is not a burst'));assert.equal(disposed,0);assert.equal(p._s3TorpedoSplashes.length,15);
+ assert.deepEqual(p._s3TorpedoSplashes[0].visual.mesh.instanceMatrix.updateRanges,[{start:0,count:15*16}]);
+ assert.deepEqual(p._s3TorpedoSplashes[0].visual.mesh.instanceColor.updateRanges,[{start:0,count:15*3}]);
  for(let i=0;i<100;i++)spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(p._s3TorpedoSplashes.length,768);assert.equal(created,1);assert.equal(disposed,0);
  clearTorpedoSplashes(p);assert.equal(disposed,1);assert.equal(materials,0);assert.equal(scene.children.size,0);assert.equal(p._s3TorpedoVisuals.size,0);
  spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,2);clearTorpedoSplashes(p);assert.equal(disposed,2);

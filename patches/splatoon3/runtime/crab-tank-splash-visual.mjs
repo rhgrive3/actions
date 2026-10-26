@@ -37,7 +37,8 @@ function createPool(THREE) {
     shooterDrawRadiusFallback: SHOOTER_DRAW_RADIUS_FALLBACK,
     shooterDrawRadiusStatus: 'local visual fallback; absent from pinned PvP JSON',
   };
-  return { mesh, matrix: new THREE.Matrix4(), color: new THREE.Color() };
+  return { mesh, matrix: new THREE.Matrix4(), color: new THREE.Color(),
+    matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } };
 }
 
 function setDropColor(color, drop, game) {
@@ -90,6 +91,14 @@ export function updateCrabSplashVisuals(system, game, THREE) {
       mesh.boundingSphere.center.set((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
       mesh.boundingSphere.radius = Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) / 2 + 1e-5;
       if (mesh.parent !== scene) scene.add(mesh);
+      // Storage remains at queue capacity. Only the live prefix was rewritten;
+      // Three still allocates the complete buffer on its first GPU upload.
+      pool.matrixRange.count = count * mesh.instanceMatrix.itemSize;
+      mesh.instanceMatrix.updateRanges.length = 0;
+      mesh.instanceMatrix.updateRanges.push(pool.matrixRange);
+      pool.colorRange.count = count * mesh.instanceColor.itemSize;
+      mesh.instanceColor.updateRanges.length = 0;
+      mesh.instanceColor.updateRanges.push(pool.colorRange);
       mesh.instanceMatrix.needsUpdate = true;
       mesh.instanceColor.needsUpdate = true;
     }
