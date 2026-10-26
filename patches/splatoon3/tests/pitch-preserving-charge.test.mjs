@@ -47,14 +47,15 @@ class FakeWorker {
 test('scaling follows 60 Hz weapon charge clocks, but never invents unknown clocks', () => {
   assert.equal(chargerOnsetRatio(1), 1);
   assert.ok(Math.abs(chargerOnsetRatio(.45) - .45) < .001);
-  assert.equal(chargerOnsetRatio(.1), .42);
+  assert.ok(Math.abs(chargerOnsetRatio(20/60) - 1/3) < .001, 'Bamboo 20-frame clock must not clamp to 0.42');
+  assert.equal(chargerOnsetRatio(.1), .30);
   assert.equal(chargerOnsetRatio(2), 1.65);
   for (const invalid of [undefined, 0, -1, NaN, Infinity, '0.5'])
     assert.equal(chargerOnsetRatio(invalid), null);
 });
 
 test('WSOLA compresses and lengthens an onset without transposing its fundamental', () => {
-  for (const [seconds, ratio] of [[.2351, .45], [.2351, 1.6], [.417959, .65], [.417959, 1.35]]) {
+  for (const [seconds, ratio] of [[1.215, 1/3], [1.215, .75], [1.215, 1.533333], [.2351, 1.6], [.417959, .65]]) {
     const original = sine(seconds, 440);
     const [rendered] = stretchChargerPCM([original], SR, ratio);
     assert.equal(rendered.length, Math.round(original.length * ratio));
