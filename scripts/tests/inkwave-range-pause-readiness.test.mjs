@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -87,7 +88,7 @@ test('late successful protocol response does not admit beyond absolute deadline'
 test('general verifier stays portable and CI executes this regression',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-range.mjs',import.meta.url),'utf8');
  assert.ok(!source.includes('FROZEN_SOURCE'));assert.ok(!source.includes('FROZEN_CONTENT'));assert.ok(!source.includes("option('--source')"));
- const workflow=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
+ const workflow=expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8'));
  assert.ok(workflow.includes('scripts/tests/inkwave-range-pause-readiness.test.mjs'));
 });
 test('serialized evidence preserves pending opacity-zero entrance without mutation',t=>{

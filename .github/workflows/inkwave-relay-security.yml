@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - "scripts/ci/**"
       - "server/**"
       - "scripts/lib/inkwave-local-relay-fixture.mjs"
       - "patches/reliability/tests/relay-compatibility.test.mjs"
@@ -19,6 +20,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "scripts/ci/**"
       - "server/**"
       - "scripts/lib/inkwave-local-relay-fixture.mjs"
       - "patches/reliability/tests/relay-compatibility.test.mjs"
@@ -62,6 +64,6 @@ jobs:
       - name: Check server syntax
         run: node --check server/src/index.js
       - name: Relay security and existing hit NACK regressions
-        run: node --experimental-vm-modules --test server/tests/*.test.mjs
+        run: node scripts/ci/run-inkwave-test-suite.mjs relay
       - name: Production-composed client compatibility and legacy rejection
         run: node --experimental-vm-modules --test patches/reliability/tests/relay-compatibility.test.mjs

@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -94,7 +95,7 @@ function assertTurfWorkflowRoute(workflow) {
  assert(evidence.includes('          path: .ci-scratch/turf-finish/\n') && evidence.includes('          if-no-files-found: error\n'));
  assert(evidence.includes('          name: inkwave-turf-finish-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}\n'));
 }
-const turfWorkflow=()=>fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
+const turfWorkflow=()=>expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8'));
 test('default CI executes every isolated Turf case on genuine emitted build and retains evidence',()=>assertTurfWorkflowRoute(turfWorkflow()));
 test('Turf workflow guard rejects list-only, source-only, wrong site, optional execution and lost evidence',()=>{
  const source=turfWorkflow();

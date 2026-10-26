@@ -1,0 +1,216 @@
+{
+  "direct-source": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "scripts/tests/inkwave-direct-source-ownership.test.mjs",
+          "scripts/tests/inkwave-pages-source-identity.test.mjs",
+          "scripts/tests/inkwave-lossless-lightmap.test.mjs"
+        ]
+      }
+    ]
+  },
+  "relay": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "server/tests/*.test.mjs"
+        ]
+      }
+    ]
+  },
+  "account": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "account/tests/*.test.mjs"
+        ]
+      }
+    ]
+  },
+  "quality": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--experimental-global-webcrypto",
+          "--test",
+          "patches/local-quality/tests/nav-heuristic.test.mjs",
+          "patches/local-quality/tests/pose-rotation.test.mjs",
+          "patches/local-quality/tests/motion-fk-hotpath.test.mjs",
+          "patches/local-quality/tests/squid-rapid-idle-regression.test.mjs",
+          "patches/local-quality/tests/prop-atlas.test.mjs",
+          "patches/local-quality/tests/prop-retention.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "patches/local-quality/tests/performance-v2-ao.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "patches/local-quality/tests/performance-v2-geometry.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "patches/local-quality/tests/performance-v2-topology.test.mjs"
+        ]
+      }
+    ]
+  },
+  "queue-recovery": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "patches/local-quality/tests/queue-30-lifecycle.test.mjs",
+          "patches/local-quality/tests/queue-30-audio.test.mjs",
+          "patches/local-quality/tests/queue-30-ribbons.test.mjs",
+          "patches/local-quality/tests/special-vfx-zero-drag-parity.test.mjs",
+          "patches/local-quality/tests/lobby-reflection-lifecycle.test.mjs"
+        ]
+      }
+    ]
+  },
+  "memory": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--experimental-global-webcrypto",
+          "--max-old-space-size=768",
+          "--test",
+          "--test-concurrency=1",
+          "patches/local-quality/tests/hidden-showcase-retirement.test.mjs",
+          "patches/local-quality/tests/portrait-target-lifetime.test.mjs",
+          "patches/local-quality/tests/portrait-work.test.mjs",
+          "patches/local-quality/tests/resource-budget.test.mjs",
+          "patches/local-quality/tests/music-dispose-resources.test.mjs",
+          "patches/local-quality/tests/music-lazy-fx.test.mjs",
+          "patches/local-quality/tests/idle-resources.test.mjs",
+          "patches/local-quality/tests/pause-gpu.test.mjs",
+          "patches/local-quality/tests/static-menu-art.test.mjs",
+          "patches/local-quality/tests/composer-target-adapter.test.mjs",
+          "scripts/tests/inkwave-static-menu-gpu-budget.test.mjs"
+        ]
+      }
+    ]
+  },
+  "backup": {
+    "steps": [
+      {
+        "program": "python3",
+        "args": [
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tools/backup/tests",
+          "-p",
+          "test_*.py",
+          "-v"
+        ]
+      }
+    ]
+  },
+  "verifier": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "scripts/tests/inkwave-source-remainder.test.mjs",
+          "scripts/tests/inkwave-quality-shallow-history.test.mjs",
+          "scripts/tests/inkwave-optimization-workflows.test.mjs",
+          "scripts/tests/inkwave-test-shards.test.mjs",
+          "scripts/tests/inkwave-accepted-default-probe.test.mjs",
+          "scripts/tests/inkwave-motion-gates.test.mjs",
+          "scripts/tests/inkwave-integration-workflow.test.mjs",
+          "scripts/tests/inkwave-runtime-evidence.test.mjs",
+          "scripts/tests/inkwave-queued-workflow-policy.test.mjs",
+          "scripts/tests/inkwave-ci-queue-relief.test.mjs",
+          "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+          "scripts/tests/inkwave-ci-source-admission.test.mjs",
+          "scripts/tests/inkwave-main9fe-paint-admission.test.mjs",
+          "scripts/tests/inkwave-maine1f-paint-admission.test.mjs",
+          "scripts/tests/inkwave-pad-map-evidence.test.mjs",
+          "scripts/tests/inkwave-range-pause-readiness.test.mjs",
+          "scripts/tests/inkwave-range-profile-receipt.test.mjs",
+          "scripts/tests/inkwave-range-menu-entry.test.mjs",
+          "scripts/tests/inkwave-range-trusted-entry.test.mjs",
+          "scripts/tests/inkwave-responsive-fixture.test.mjs",
+          "scripts/tests/inkwave-responsive-diagnostics.test.mjs",
+          "scripts/tests/inkwave-ballpoint-evidence.test.mjs",
+          "scripts/tests/inkwave-streamed-music-diagnostics.test.mjs",
+          "scripts/tests/inkwave-active-media-diagnostics.test.mjs",
+          "scripts/tests/inkwave-context-raf-diagnostics.test.mjs",
+          "scripts/tests/inkwave-static-menu-gpu-budget.test.mjs",
+          "scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs",
+          "scripts/tests/inkwave-roller-blob-worker-binding.test.mjs",
+          "scripts/tests/inkwave-exact-checkout-head.test.mjs",
+          "scripts/tests/inkwave-responsive-progress-summary.test.mjs",
+          "scripts/tests/inkwave-frozen-hud-capture.test.mjs",
+          "scripts/tests/inkwave-ui-visual-probe-errors.test.mjs"
+        ]
+      }
+    ]
+  },
+  "acceptance": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--max-old-space-size=384",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/tests/run-inkwave-turf-finish-isolated.test.mjs",
+          "scripts/tests/run-inkwave-turf-finish-supervision.test.mjs",
+          "scripts/tests/inkwave-paint-snapshot-storage.test.mjs",
+          "scripts/tests/inkwave-wiper-current-binding.test.mjs",
+          "scripts/tests/inkwave-exact-head-workflow-routes.test.mjs",
+          "scripts/tests/inkwave-queue1801-source-pairs.test.mjs",
+          "scripts/tests/inkwave-23pr-paint-source-pair.test.mjs",
+          "scripts/tests/inkwave-29pr-paint-source-pair.test.mjs",
+          "scripts/tests/inkwave-31pr-paint-source-pair.test.mjs",
+          "scripts/tests/inkwave-main26a4-production-epoch.test.mjs",
+          "scripts/tests/run-inkwave-turf-finish-selection.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--max-old-space-size=128",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/tests/continuous-browser-video.test.mjs"
+        ]
+      }
+    ]
+  },
+  "runner-contracts": {
+    "steps": [
+      {
+        "program": "node",
+        "args": [
+          "--test",
+          "scripts/tests/inkwave-test-suites.test.mjs"
+        ]
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,5 +12,5 @@ test('only a complete account-only change can omit the separate game suite',()=>
  assert.equal(qualityScope('a'.repeat(40),'b'.repeat(40),()=>{throw Error('unavailable');}).relevant,true);
 });
 test('the account workflow still owns every account path and its real tests/build',()=>{
- const source=fs.readFileSync(new URL('../../.github/workflows/zevant-account.yml',import.meta.url),'utf8');assert.equal((source.match(/- "account\/\*\*"/g)||[]).length,2);assert.match(source,/node --test account\/tests\/\*\.test\.mjs/);assert.match(source,/npx vite build/);assert.match(source,/wrangler deploy --dry-run/);
+ const source=expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/zevant-account.yml',import.meta.url),'utf8'));assert.equal((source.match(/- "account\/\*\*"/g)||[]).length,2);assert.match(source,/node --test account\/tests\/\*\.test\.mjs/);assert.match(source,/npx vite build/);assert.match(source,/wrangler deploy --dry-run/);
 });

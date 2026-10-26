@@ -22,6 +22,7 @@ workflows:
             server/.* run-inkwave true
             account/.* run-inkwave true
             scripts/.*inkwave.* run-inkwave true
+            scripts/ci/.* run-inkwave true
             scripts/verify-completion-sources.mjs run-inkwave true
             scripts/check-weapons-reference.mjs run-inkwave true
             scripts/run-logged-test-process.mjs run-inkwave true

@@ -28,6 +28,8 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /package.json
+            /.circleci/config.yml
+            account
             /.gitattributes
             /.gitignore
             /README.md
@@ -71,6 +73,10 @@ jobs:
           python-version: '3.11'
 
       - if: steps.scope.outputs.relevant == 'true'
+        name: Verify shared test suite runner
+        run: npm run test:ci-config
+
+      - if: steps.scope.outputs.relevant == 'true'
         name: Verify immutable CI source admission contracts
         run: node --test scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs
 
@@ -84,23 +90,19 @@ jobs:
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Run Direct-Source & Lossless Lightmap Regression Suite
-        run: node --test scripts/tests/inkwave-direct-source-ownership.test.mjs scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-lossless-lightmap.test.mjs
+        run: npm run test:direct-source
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Run Local-Quality & Motion Regression Suite
-        run: |
-          node --experimental-vm-modules --experimental-global-webcrypto --test patches/local-quality/tests/nav-heuristic.test.mjs patches/local-quality/tests/pose-rotation.test.mjs patches/local-quality/tests/motion-fk-hotpath.test.mjs patches/local-quality/tests/prop-atlas.test.mjs patches/local-quality/tests/prop-retention.test.mjs
-          node patches/local-quality/tests/performance-v2-ao.test.mjs
-          node patches/local-quality/tests/performance-v2-geometry.test.mjs
-          node patches/local-quality/tests/performance-v2-topology.test.mjs
+        run: npm run test:quality
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Run Relay Security & Hibernation Test Suite
-        run: node --test server/tests/relay-security.test.mjs server/tests/local-relay-fixture.test.mjs server/tests/browser-relay-fixture.test.mjs server/tests/issue-1033-relay-hit-nack.test.mjs
+        run: npm run test:relay
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Run Backup, Restore & Transactional Patch Applier Tests
-        run: python3 -m unittest discover -s tools/backup/tests -p "test_*.py" -v
+        run: npm run test:backup
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Run Production Diagnostic Build & Startup Budget Gate
