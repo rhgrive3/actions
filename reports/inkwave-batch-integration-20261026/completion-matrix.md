@@ -132,6 +132,26 @@ No further cache expansion is part of this checkpoint. Original visual fidelity
 and Hissen/ground-drop comparison remain separate unfinished gates. The parent's
 18:29:50 lookup found 0 checks and 0 workflow runs on e92: unrun, not green.
 
+## Catalogue Charger kept-charge audio followup
+
+The accepted separate candidate `3b7be8b8c` / evidence `e707d30fa` is integrated
+by fast-forward from protected26a, preserving both exact commits. The bounded
+coverage read found actual catalogue keeps consume `catalogState.stored`, while
+older audio keep tests injected native `s3Stored`. The restored full charge
+therefore replayed fresh rise/ready. The fix uses the existing keep cue once at
+the actual restore and retains Goo's later partial-to-full ready boundary.
+
+Fresh integration build and3 selected emitted cases pass: all6 eligible
+catalogue kit full keeps, Goo partial/expiry and native Charger redive. All1490
+input /2194 artifact hashes match; the contentHash exactly matches the accepted
+candidate. The parent-supplied independent3-case event-dispatch review is
+accepted separately. See `kept-charge-audio-append/validation.json` and the
+variant-by-variant `charge-bow-coverage-26a69c1c/README.md`. This adds no new
+playback/browser/retail timing evidence. Alternate/native-scope playback,
+Pencil's full5-shot A/V cycle, short/high-flight pixels, LACT/Wellstring native
+stage/keep and original/hardware agreement remain open. All18 Charger kits are
+not claimed visually proven. Hissen accepted size changes remain0.
+
 The branch push succeeded. Draft PR creation was rejected twice by automatic
 approval review, including one retry after explicit parent appointment. No PR
 exists for this head branch; creation is stopped without an alternate API or

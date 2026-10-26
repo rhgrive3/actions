@@ -1,0 +1,56 @@
+{
+  "status": "accepted narrow dispatch fix integrated; original visual/playback and remote CI gates remain open",
+  "priorIntegration": "26a69c1c8795e5177808028fd818c7f0a5036de8",
+  "sourceHead": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+  "handoff": {
+    "verifiedBranch": "fix/catalog-charger-kept-audio-20261026",
+    "verifiedHead": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+    "commitsPreservedByFastForward": [
+      "3b7be8b8c205d34f26bb29db712f9edbf8fea879",
+      "e707d30faed3f4d772f8da2690069e3781bbfa58"
+    ]
+  },
+  "review": "Parent-supplied independent reviewer accepted3selected cases; this is separately reported event-dispatch acceptance, not an additional local playback run.",
+  "checks": {
+    "freshEmitted": {
+      "pass": 3,
+      "fail": 0,
+      "skip": 0,
+      "selection": "Actual catalogue full keep, partial Goo/expiry, native Charger redive"
+    },
+    "freshOptimizedBuild": "passed",
+    "startupBudget": "passed",
+    "exactIdentity": {
+      "sourceSha": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+      "contentHash": "69291e5f1c92f807fed830b126ee0ec3b90be3539b5876537fa25db095cd3fb6",
+      "inputHash": "f120f4b24b08b036f1b6c89208a42c79bba668406af88c5f330329c2539922f0",
+      "sourceInputs": 1490,
+      "artifacts": 2194,
+      "mismatches": 0,
+      "failures": [],
+      "matchesAcceptedCandidateBuild": true
+    },
+    "candidateHistoricalChecks": "Candidate source11/emitted11 plus existing handler/native2/2 retained at their actual source/content hashes; no redundant matrix rerun"
+  },
+  "productionScope": "Only runtime/audio/runtime.mjs changes. It recognizes consumed catalogState.stored before the fresh-onset/readiness edges. Source clocks, ink/physics/projectiles, Bow/reticle geometry and audio recordings are unchanged.",
+  "coverage": "The two catalogue regressions are inside already-registered catalog-charge-flight-stages.test.mjs. No workflow selection/trigger/permission changes.",
+  "logs": {
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "93678bd231cdcc686eb941220f60996aea923774cffb86c895722291d807a211",
+      "gzipSha256": "329d36c0bdb7723dfbf47b6fe2a020b068258a3211377c7efaca26083b4a812f"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "94033c7b61a9a066456a2e719157369d09b67de043cc28a88666d17b0cea11b3",
+      "gzipSha256": "b72ca989dbdca1357fbe12dac4f8ee90028b93e6b660498bc6528de7c285e38b"
+    }
+  },
+  "limitations": [
+    "No newly captured audio playback, native-input browser session, hardware measurement or original-game comparison.",
+    "All18 Charger kits are not visually proven; retain explicit alternate/native-scope playback, Pencil five-shot A/V, short/high-flight pixels and LACT/Wellstring native stage/keep gaps in the coverage read.",
+    "Exact catalogue restore/emergence sound timing versus retail11.3.0 remains unverified; selected Splat recording remains a proxy.",
+    "Hissen accepted size changes remain0; effects and original visual gates stay separately unfinished.",
+    "No PR retry, merge, Ready status, manual CI dispatch or retry. Required eventual final-head remote checks remain pending."
+  ]
+}

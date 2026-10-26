@@ -132,5 +132,6 @@ or PCM matrix was run. The restore cue occurs at the actual catalogue consume
 edge; exact retail emergence/keep sound timing is still unverified.
 [Validation, negative controls and limits](kept-audio-followup/validation.json)
 and [before-fix actual Actor trace](kept-audio-followup/before-actor-dispatch.json)
-preserve the distinction. The protected integration branch remains at26a until
-the parent accepts this separate candidate.
+preserve the distinction. This records the separate candidate handoff. The
+parent's subsequent independent event-dispatch acceptance and integration are
+recorded in [the integration receipt](../kept-charge-audio-append/validation.json).
