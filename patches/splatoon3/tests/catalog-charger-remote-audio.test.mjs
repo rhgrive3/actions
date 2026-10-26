@@ -158,7 +158,7 @@ test('remote non-Chargers never enter the Charger onset path and native continuo
     assert.equal(p.onsets(), 0, r.id + ' charging flag alone cannot identify a Charger');
     assert.equal(f.calls.filter(c => c.event === 'ready').length, 0);
     if (p.remote.weapon.kind === 'splatling')
-      assert.equal(f.loops.filter(c => c.event === 'spin').length, 1, 'native Spinner loop preserved');
+      assert.equal(f.loops.filter(c => c.event === 'charge').length, 1, 'native Spinner uses recorded Motor while charging');
     p.publish(false); p.voices(60, 2);
     p.remote.weaponRunner.rolling = true; p.remote.grounded = true;
     p.voices(60, 2);
