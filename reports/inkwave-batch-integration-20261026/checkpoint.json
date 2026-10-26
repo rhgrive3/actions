@@ -56,12 +56,21 @@
       "unchangedFromEightKindRealAudioBuild": 426,
       "changed": 0,
       "meaning": "All emitted audio-tree artifacts, src/audio/audio.js, and catalog charge-stage helper hashes match the already-played charge build; playback was not redundantly rerun for movement-only changes."
+    },
+    "reticleSourceFocused": {
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "nativeDynamicImportWarnings": "Existing VM source-motion fallback; not browser or retail visual proof.",
+      "quick": "passed",
+      "emittedAfterThisMerge": "pending final combined build"
     }
   },
   "pending": [
-    "verified reticle worker branch and follow-up",
-    "verified effects worker branch",
-    "combined emitted checks and final review",
+    "verified reticle #575 strict audio-adapter fixture follow-up",
+    "verified effects worker branch and completed visual work",
+    "private original Stringer reference review (no reference media copied to this repository)",
+    "final combined build, emitted checks and review",
     "one PR only after parent authorizes readiness"
   ],
   "remoteActions": {
@@ -70,5 +79,17 @@
     "manualCiStarted": false,
     "integrationBranchPushed": false
   },
-  "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI."
+  "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
+  "reticleHandoff": {
+    "verifiedBranch": "handoff/20261026-shooter-dualies-68ba135e7-154402",
+    "verifiedHead": "68ba135e704db79cdb126a298ea653daef60adb6",
+    "cherryPicks": {
+      "85e7967a7986817951089b9339add558fbe3bb58": "931950cfe2ab632c1c11d36408623fffb33db489",
+      "68ba135e704db79cdb126a298ea653daef60adb6": "4964afaa80748468cc55d6fc56d5715aca0bc2ba"
+    },
+    "sourceConflicts": [],
+    "reportConflict": "All charge/movement/reticle entries retained",
+    "retailInnerMarkerCutoffVerified": false,
+    "pending575FixtureFollowup": true
+  }
 }
