@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -95,7 +96,7 @@ for (const name of names) {
 
 // Verify actual test arguments in the existing core QA invocation, not mere
 // filename presence elsewhere in the workflow or patch-only shard discovery.
-const coreWorkflow = readFileSync(join(root, '.github/workflows/validate-inkwave-update.yml'), 'utf8');
+const coreWorkflow = expandTestSuiteSteps(readFileSync(join(root, '.github/workflows/validate-inkwave-update.yml'), 'utf8'));
 const requiredCoreTests = ["scripts/tests/inkwave-exact-checkout-head.test.mjs", "scripts/tests/inkwave-responsive-progress-summary.test.mjs", "scripts/tests/inkwave-frozen-hud-capture.test.mjs", "scripts/tests/inkwave-ui-visual-probe-errors.test.mjs"];
 function assertCoreTestSelection(source) {
   const commands = [...source.matchAll(/^      - name: Verify motion verifier regressions\n        run: (.+)$/gm)];

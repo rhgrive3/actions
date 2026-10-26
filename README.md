@@ -9,6 +9,7 @@
 | INKWAVE をローカルでビルド・確認する | [開発ガイド](docs/inkwave-development.md) |
 | 修正先とパッチの役割を調べる | [パッチ構成](patches/README.md) |
 | 並行作業で変更を持ち込む | [コントリビューション手順](CONTRIBUTING.md) |
+| テスト群と CI の役割・追加手順を調べる | [テストと CI の管理](docs/testing-and-ci.md) |
 | テスト結果・比較資料を探す | [ドキュメント案内](docs/README.md) |
 | ゲームアカウント（ログイン）と Cloudflare Workers 配信 | [アカウントと Workers 配信](account/README.md) |
 | 他リポジトリでコマンド・テストを実行する | [PR Worker の運用](docs/pr-worker.md) |

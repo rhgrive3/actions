@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import {assertSourceRemainderCoverage} from '../run-inkwave-source-remainder.mjs';
 import './inkwave-live-test-log.test.mjs';
 import { test } from 'node:test';
@@ -7,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
+const workflow = expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8'));
 const weaponWorkflow = fs.readFileSync(new URL('../../.github/workflows/inkwave-main-weapons.yml', import.meta.url), 'utf8');
 
 test('hosted apt mirror lists retain suites, signing keys and packages while switching only the stalled Azure URL', t => {

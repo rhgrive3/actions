@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -17,7 +18,7 @@ test('missing history fetches only exact SHAs; every lookup/diff failure retains
  assert.equal(classifyAccountChange(base,head,args=>({status:0,stdout:args[0]==='diff'?'account/tests/a.test.mjs':undefined})),false);
 });
 test('workflow keeps tests unconditional and full latest-head checks for every production change',()=>{
- const s=fs.readFileSync(new URL('../../.github/workflows/zevant-account.yml',import.meta.url),'utf8');
+ const s=expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/zevant-account.yml',import.meta.url),'utf8'));
  assert.match(s,/cancel-in-progress: \$\{\{ github.event_name == 'pull_request' \}\}/);
  const tests=s.slice(s.indexOf('- name: Account API'),s.indexOf('- name: Install build tools'));
  assert.doesNotMatch(tests,/if:/);assert.match(tests,/node --test account\/tests\/\*\.test\.mjs/);

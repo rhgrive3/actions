@@ -43,6 +43,8 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory _site
 
 ## テストを選ぶ
 
+共有テスト群の一覧・ローカルと CI の対応・登録手順は [テストと CI の管理](testing-and-ci.md) を参照してください。`npm run test:list` で一覧、`node scripts/ci/run-inkwave-test-suite.mjs --dry-run <suite>` で実行内容を確認できます。
+
 最初に変更箇所のテストを探します。
 
 ```sh

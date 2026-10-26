@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {expectedBallpointPngs,validateBallpointEvidence,inspectBallpointPng} from '../check-inkwave-ballpoint-evidence.mjs';
 function fixture(){const sha='a'.repeat(40),artifacts={'registry.mjs':'b'.repeat(64)},revision='c'.repeat(64);const rows=[];for(const tier of ['game','far'])for(const background of ['#101321','#eef3f8'])for(const inkColor of ['#ff8825','#484ce8'])rows.push({tier,background,inkColor,glassVisible:true,rangeRestored:true,drawCalls:12,withoutGlassDrawCalls:10,glNonzeroDrawCalls:11,glZeroCountCalls:1,withoutGlassGlDraws:{nonzero:10,zero:0}});
@@ -9,7 +10,7 @@ test('original PNG dimensions and bytes are pinned, malformed or resized headers
 
 test('current workflow uses one build and active exact-head evidence, retaining send acceptance checks', async () => {
  const fs=await import('node:fs');
- const workflow=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
+ const workflow=expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8'));
  const emitted=workflow.match(/      - name: Verify existing Ballpoint glass[^]*?(?=      - name:)/)?.[0];
  const native=workflow.match(/      - name: Verify existing Ballpoint gallery[^]*?(?=      - name:)/)?.[0];
  assert.ok(emitted);assert.ok(native);assert.match(emitted,/INKWAVE_BUILT_SITE: \$\{\{ github.workspace \}\}\/_site/);

@@ -2,6 +2,7 @@ name: ZEVANT account and Workers build
 on:
   pull_request:
     paths:
+      - "scripts/ci/**"
       - "account/**"
       - "vite.config.mjs"
       - "package.json"
@@ -17,6 +18,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "scripts/ci/**"
       - "account/**"
       - "vite.config.mjs"
       - "package.json"
@@ -61,7 +63,7 @@ jobs:
           node --test scripts/tests/inkwave-account-ci-scope.test.mjs
           node scripts/lib/inkwave-account-ci-scope.mjs
       - name: Account API and bundle tests
-        run: node --test account/tests/*.test.mjs
+        run: node scripts/ci/run-inkwave-test-suite.mjs account
       - name: Install build tools
         if: steps.scope.outputs.test_only != 'true'
         run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 vite@8.3.3
