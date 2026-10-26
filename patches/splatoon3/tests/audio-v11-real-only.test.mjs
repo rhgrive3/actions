@@ -243,7 +243,7 @@ test('network Charger voices use the shared Splat rise instead of an indefinite 
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/net/netmatch.js',source);
  assert.ok(adapted.includes('a.net._chargerOnsetActive = chargerStarting;'));
- assert.ok(adapted.includes('usesChargerRise(wid)?G.audio?.playChargerChargeRise'),'all remote Chargers share the Splat phrase');
+ assert.ok(adapted.includes('chargerStarting?G.audio?.playChargerChargeRise'),'all remote Charger identities use the Splat phrase');
  assert.ok(adapted.includes('chargeTime=a.weapon.chargeTime'),'remote rise follows weapon clock');
  assert.ok(!adapted.includes("G.audio?.playWeapon?.(a.weapon.id,'charge'"),'no individual HoldNoise on fresh hold');
  assert.ok(!adapted.includes("this._voiceLoop(a, near, 'charge', wr.charging"),

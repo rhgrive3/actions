@@ -14,7 +14,19 @@ const patches=JSON.parse(adapter.slice(node.start,node.end));
 const replaceOnce=(s,a,b,label)=>{assert.equal(s.indexOf(a),s.lastIndexOf(a),label+' unique');assert.ok(s.includes(a),label+' present');return s.replace(a,b);};
 // The test runs before or after the central composer registers this adapter.
 // Undo only these exact transformations to construct the same composed control.
-function baseline(rel,raw){let s=adaptBuildSource(rel,raw);for(const p of patches.filter(p=>p.rel===rel).reverse())if(s.includes(p.after))s=replaceOnce(s,p.after,p.before,p.label);return s;}
+function baseline(rel,raw){
+ let s=adaptBuildSource(rel,raw);
+ // Later queue adapters may modify the class declaration following the known
+ // scalar helper block. Undo that exact helper block independently so that
+ // this test does not accidentally inject it twice when reconstructing control.
+ const helper=patches.find(p=>p.rel===rel&&p.before==='export class Projectiles {');
+ if(helper&&!s.includes(helper.after)){
+  const prefix=helper.after.slice(0,-helper.before.length);
+  if(s.includes(prefix)){assert.equal(s.split(prefix).length,2,'one authentic scalar helper block');s=s.replace(prefix,'');}
+ }
+ for(const p of patches.filter(p=>p.rel===rel).reverse())if(s.includes(p.after))s=replaceOnce(s,p.after,p.before,p.label);
+ return s;
+}
 const candidate=(rel,raw)=>adaptWeaponQueue20261024(rel,baseline(rel,raw),replaceOnce);
 function method(source,cls,key,bindings={}){const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'}),c=ast.body.map(n=>n.declaration||n).find(n=>n.type==='ClassDeclaration'&&n.id.name===cls),m=c.body.body.find(n=>n.key.name===key);return new Function(...Object.keys(bindings),'return ({'+source.slice(m.start,m.end)+'})['+JSON.stringify(key)+'];')(...Object.values(bindings));}
 function declaration(source,name){let found;function walk(n){if(!n||typeof n!=='object')return;if(n.type==='FunctionDeclaration'&&n.id.name===name)found=source.slice(n.start,n.end);for(const v of Object.values(n))if(Array.isArray(v))v.forEach(walk);else if(v&&typeof v==='object')walk(v);}walk(parse(source,{ecmaVersion:'latest',sourceType:'module'}));return found;}
