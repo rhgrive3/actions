@@ -16,8 +16,10 @@ export function adaptRangeFramePacing(rel, code) {
     requestAnimationFrame(() => this._loop());
     this.timer.update();
     const rawDt = this.timer.getDelta();
+    // Cache URL flag once: diagnostics OFF has no repeated URL allocations.
     const probeEnabled = this.settings?.debugMode === true ||
-      (typeof location !== 'undefined' && new URLSearchParams(location.search).get('profileRange') === '1');
+      (this._iwProfilerQueryFlag ??= (typeof location !== 'undefined' &&
+        new URLSearchParams(location.search).get('profileRange') === '1'));
     if (probeEnabled !== this._iwProfilerEnabled) {
       this._iwProfilerEnabled = probeEnabled;
       const epoch = this._iwProfilerEpoch = (this._iwProfilerEpoch || 0) + 1;
