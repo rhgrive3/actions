@@ -220,7 +220,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   }`, 'ink look instance upload');
   if (code.includes('    const inkProfile = profileFor(w);')) {
     patch("import { profileFor, launchSpeed, correctInkAim, referenceReach } from './inkFlight.js';",
-      "import { profileFor, launchSpeed, correctInkAim, referenceReach, advanceInkFrame, INK_MODEL } from './inkFlight.js';",
+      "import { profileFor, launchSpeed, correctInkAim, referenceReach, advanceInkFrame, INK_MODEL, INK_LENGTH_SCALE } from './inkFlight.js';",
       'share canonical InkFlight predictor with HUD');
     patch('  _configureInkRound(p, actor, weapon) {', `  _nominalInkGuide(p, actor, weapon, from, dir, target, speed) {
     const profile = profileFor(weapon);
@@ -233,6 +233,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     return true;
   }
   _advanceInkGuide(p) { p.prev.copy(p.pos); advanceInkFrame(p, p.inkProfile); }
+  _inkGuideContact(p, hit) { return this.inkFlight.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, hit); }
   _nominalInkReach(weapon, charge) {
     const profile=profileFor(weapon); if(!profile)return null;
     const speed=launchSpeed(profile,(charge || 0)*(weapon.chargeTime || 0));

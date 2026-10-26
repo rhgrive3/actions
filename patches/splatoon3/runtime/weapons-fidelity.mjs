@@ -2293,6 +2293,7 @@ export function installWeaponsFidelity(context,profile) {
     const shots=this._s3DualiesGuideProjectiles||(this._s3DualiesGuideProjectiles=[0,1].map(()=>({
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     })));
+    const hit=this._s3DualiesGuideHit||(this._s3DualiesGuideHit=new context.Hit());
     for(let hand=0;hand<2;hand++){
       const p=shots[hand];
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
@@ -2312,7 +2313,14 @@ export function installWeaponsFidelity(context,profile) {
       this._aimFrom(actor,p.start,dir,targets[hand]);
       const ink=this._nominalInkGuide?.(p,actor,w,p.start,dir,targets[hand],w.projSpeed);
       let remaining=Math.max(0,frame/60);
-      while(remaining>EPSILON){const step=Math.min(1/60,remaining);if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,step);remaining-=step;}
+      while(remaining>EPSILON){
+        const step=Math.min(1/60,remaining);
+        if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,step);
+        if(ink)this._inkGuideContact(p,hit);
+        else sweptWorldHit(context.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+        if(hit.hit){p.pos.copy(hit.point);break;}
+        remaining-=step;
+      }
       out.copy(p.pos);
     }
     if(actor.weaponRunner?.s3Turret){
@@ -2369,7 +2377,7 @@ export function installWeaponsFidelity(context,profile) {
     const dir=this._s3ShooterImpactDir||(this._s3ShooterImpactDir=new THREE.Vector3());
     const cache=this._s3ShooterImpactCache||(this._s3ShooterImpactCache={
       valid:false, muzzle:new THREE.Vector3(),dir:new THREE.Vector3(),
-      aimPoint:new THREE.Vector3(),aimDir:new THREE.Vector3(),result:null
+      aimPoint:new THREE.Vector3(),aimDir:new THREE.Vector3(),velocity:new THREE.Vector3(),result:null
     });
     // Observe the real muzzle every render, but only replay the up-to-72
     // swept collisions when a simulation input or field generation changes.
@@ -2385,6 +2393,8 @@ export function installWeaponsFidelity(context,profile) {
       cache.generation===gen&&cache.form===actor.form&&cache.grounded===actor.grounded&&
       cache.speed===w.projSpeed&&cache.straight===w.straightTime&&
       cache.range===w.range&&cache.radius===w.impactRadius&&
+      cache.guideFrame===w.shotGuideFrame&&cache.inkProfile===w.inkFlightProfile&&
+      cache.yaw===actor.yaw&&cache.velocity.equals(actor.vel)&&
       cache.ballistics===w.ballistics&&cache.muzzle.equals(p.pos)&&cache.dir.equals(dir)&&
       cache.aimPoint.equals(actor.aimPoint)&&cache.aimDir.equals(actor.aimDir)&&
       (!Number.isFinite(t)||(t>=cache.at&&t-cache.at<.2)))return cache.result;
@@ -2396,10 +2406,10 @@ export function installWeaponsFidelity(context,profile) {
     cache.form=actor.form;cache.grounded=actor.grounded;
     cache.speed=w.projSpeed;cache.straight=w.straightTime;
     cache.range=w.range;cache.radius=w.impactRadius;cache.ballistics=w.ballistics;
+    cache.guideFrame=w.shotGuideFrame;cache.inkProfile=w.inkFlightProfile;
+    cache.yaw=actor.yaw;cache.velocity.copy(actor.vel);
     cache.muzzle.copy(p.pos);cache.dir.copy(dir);cache.aimPoint.copy(actor.aimPoint);
     cache.aimDir.copy(actor.aimDir);cache.at=t;
-    // fireShooter pitches the nominal launch toward the aim point before spread.
-    this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
     p.owner=actor;p.team=actor.team;p.type='shot';p.ghost=false;p.delay=0;p.vol=null;
     p.s3DamageGroup=null;p.fidelitySloshUnit=null;p.fidelityRollerUnit=null;p.fidelityMode=null;
     p.fidelityWallDrop=null;p.fidelityImpactActor=null;p.fidelityImpactT=null;
@@ -2408,12 +2418,23 @@ export function installWeaponsFidelity(context,profile) {
     p.prev.copy(p.pos);p.start.copy(p.pos);
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
+    // Use the installed live launch/integrator/collision owner. The source
+    // Shooter now uses InkFlight; the former legacy _ballistic + fidelity
+    // replay could put a cue on a different floor contact from the real shot.
+    this._aimFrom(actor,p.start,dir);
+    const ink=this._nominalInkGuide?.(p,actor,w,p.start,dir,actor.aimPoint,w.projSpeed);
+    if(ink){p.s3ShooterForwardApplied=false;applyShooterSpawnVelocity(p);}
+    else {
+      this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
+      p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    }
     const hit=this._s3ShooterImpactHit||(this._s3ShooterImpactHit=new api.Hit());
     let guard=0,result=null;
     while(p.age+EPSILON<p.life){
-      advanceFidelityProjectile(p,1/60);
-      sweptWorldHit(physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
-      if(hit.hit){result=hit;break;}
+      if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,1/60);
+      if(ink)this._inkGuideContact(p,hit);
+      else sweptWorldHit(physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+      if(hit.hit){hit.guideFrame=Math.round(p.age*60);result=hit;break;}
       if(p.pos.y<api.PLAYER.waterY-1.8||++guard>144)break;
     }
     cache.result=result;cache.valid=true;
@@ -2581,6 +2602,7 @@ function guideScratch() {
       age: 0, life: 1, straight: 0, grav: 0, drag: 0, fidelityMove: null, fidelityPhase: 0, fidelityPrevAge: 0,
     },
     state: { x: 0, y: 0, z: 0, frames: 0 },
+    hit: guideApi.Hit ? new guideApi.Hit() : null,
   });
 }
 
@@ -2597,6 +2619,7 @@ function guideLaunchState(actor, weapon, out) {
   const speed = weapon.kind === 'splatling' ? splatlingLaunchSpeed(weapon, charge) : weapon.projSpeed;
   if (!Number.isFinite(speed) || speed <= 0) return null;
   probe.owner=actor; probe.s3Weapon=weapon; probe.s3ShooterForwardApplied=false;
+  probe.type='shot';probe.ghost=false;
   if (guideApi.G.projectiles._nominalInkGuide?.(probe,actor,weapon,out.muzzle,out.dir,actor.aimPoint,speed)) {
     applyShooterSpawnVelocity(probe);
     return probe;
@@ -2631,6 +2654,13 @@ export function computeShotGuide(actor) {
   for (let i = 0; i < frames; i++) {
     if(probe.inkProfile)guideApi.G.projectiles._advanceInkGuide(probe);
     else advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
+    // Shooter guide frame is a maximum age, not permission to draw through
+    // the field. Stop on the actual shot's sphere contact when aiming down.
+    if(weapon.kind==='shooter'&&s.hit){
+      if(probe.inkProfile)guideApi.G.projectiles._inkGuideContact(probe,s.hit);
+      else sweptWorldHit(guideApi.G.physics,probe.prev,probe.pos,fieldRadiusAt(probe,probe.fidelityPrevAge),fieldRadiusAt(probe,probe.age),s.hit,true);
+      if(s.hit.hit){probe.pos.copy(s.hit.point);break;}
+    }
   }
   s.state.x = probe.pos.x; s.state.y = probe.pos.y; s.state.z = probe.pos.z; s.state.frames = frames;
   return s.state;

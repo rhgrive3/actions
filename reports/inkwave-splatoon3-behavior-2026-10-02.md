@@ -6448,3 +6448,9 @@ production composition と実 Projectiles・Match を使う `crab-ball-lifecycle
 Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physicsが残り、実ヒープのcanvas context-lossリスナーから最初の読込スコープへの強参照を確認した。判定関数をmodule直下へ移し、現在のG.level.nativeを動的に確認する従来の動作と1canvas1listenerを維持する。古いステージの物理・塗り・navデータを監視コールバックで保持する必要はない。新規の合成済みpublication/GC回帰は全GCアサーションを保持し、旧inline判定だけへ戻す対照でlevel/data保持を再現した。
 
 原典HIGHの読み込み直後には、旧版・途中版ともBC7の400×30 base mipでGL1282を記録した。既存normal上限512が800×60のUASTCソースから同mipを選ぶが、BC系base寸法の4ブロック境界に合わなかった。該当するuniversal KTX2だけ同ソース・同mipのRGBA32へ変換し、寸法・既存cap・色空間・通常の圧縮経路を維持する。RGBAの局所容量増加を記録し、縮小mipやPNG再resizeによる画質低下へ置き換えない。実loadNativeTextures→KTX2Loader→GPUの対照で同400×30、48,000RGBAバイト一致、GL0を確認した。物理・CPU塗り・当たり判定・通信には変更を加えない。
+
+## 2026-10-26 UTC: Shooter / Dualies の床向き照準と射撃キック
+
+基準 main は `48511150bbaeab182dd04c712d39bd5b26df18f3`。Long Lane、Splattershot / Splat Dualies、pitch 0 / -0.8 で、指定フレーム後の床下を投影するガイド、水平時に遅い落下を内側マーカーへ出す経路、Dualies の SVG 投影 transform を射撃時の WAAPI transform が上書きする経路を分けて確認した。ガイドは native head と同じ球 sweep の最初の field 接触に止め、Shooter 接触予測を実際の InkFlight へ接続する。全飛行の接触と照準フレーム内の遮蔽物表示は区別する。左右の projection group と shot-kick circle を分離し、各手1個の Animation、武器／非表示時の cleanup、DOM 再構築時の cache invalidation を追加する。turret の判定は既存 `s3Turret` を維持し、merged ring を実際のガイドへ投影して解除後の3個重複をなくす。
+
+新規回帰は実 Character / Level / Physics / 発射した head と、-0.45 / -0.8 / -1.05、30 / 60 / 120Hz で床接触を照合する。基準 emitted の負例3件は全失敗、候補 emitted は移動時試験も含む4件成功。限定ソース回帰39件成功。旧 #575 emitted のイベント `mode` 期待不一致は基準と候補で同じことを記録した。原典の `ShotGuideFrame` 8 / 7 は不変。公式画像と実ゲーム画像の直接取得は HTTP 403 であり、今回の数値試験を本家の視覚証明にはしていない。内側表示の cutoff と本家での同条件映像・Switch／実 GPU は未確認。ブラウザの実測値、操作と fixture の区別、制約は [個別記録](shooter-dualies-projection-20261026.md) を参照する。

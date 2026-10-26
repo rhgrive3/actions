@@ -25,10 +25,18 @@ export function installMuzzleFeedback(api) {
       m.dx === dir.x && m.dy === dir.y && m.dz === dir.z &&
       m.px === pos.x && m.py === pos.y && m.pz === pos.z &&
       m.team === actor.team && m.speed === w.projSpeed &&
+      m.guideFrame === w.shotGuideFrame && m.inkProfile === w.inkFlightProfile && m.yaw === actor.yaw &&
+      m.vx === actor.vel?.x && m.vy === actor.vel?.y && m.vz === actor.vel?.z &&
       m.straight === w.straightTime && m.range === w.range &&
       m.radius === w.impactRadius) return m.hit;
 
-    const fresh = this.s3ShooterImpact(actor, w);
+    const impact = this.s3ShooterImpact(actor, w);
+    // A field contact after the nominal guide age is falling ink beyond the
+    // aiming envelope, not an obstruction of the current sight. Keep that
+    // full-flight query available, but do not advertise a distant floor as
+    // the inner target marker when the camera ray is horizontal and clear.
+    const fresh = impact && !(Number.isFinite(impact.guideFrame) && Number.isFinite(w.shotGuideFrame)
+      && impact.guideFrame > w.shotGuideFrame) ? impact : null;
     const cache = m || { hitCopy: new Hit() };
     cache.actor = actor; cache.character = actor.character; cache.weapon = w;
     cache.physics = physics; cache.level = level; cache.blocks = level?.blocks;
@@ -42,6 +50,8 @@ export function installMuzzleFeedback(api) {
     cache.dx = dir.x; cache.dy = dir.y; cache.dz = dir.z;
     cache.px = pos.x; cache.py = pos.y; cache.pz = pos.z;
     cache.team = actor.team; cache.speed = w.projSpeed;
+    cache.guideFrame = w.shotGuideFrame; cache.inkProfile = w.inkFlightProfile; cache.yaw = actor.yaw;
+    cache.vx = actor.vel?.x; cache.vy = actor.vel?.y; cache.vz = actor.vel?.z;
     cache.straight = w.straightTime; cache.range = w.range; cache.radius = w.impactRadius;
     if (fresh) {
       const h = cache.hitCopy;
