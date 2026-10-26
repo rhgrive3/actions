@@ -90,7 +90,8 @@ export function createRainmakerPresentation(THREE, mesh) {
   const point = new THREE.Vector3(), aim = new THREE.Vector3(), forward = new THREE.Vector3(0, 0, 1);
   const parentQ = new THREE.Quaternion(), aimQ = new THREE.Quaternion();
   const motionQ = new THREE.Quaternion(), pitchAxis = new THREE.Vector3(1, 0, 0);
-  let actor = null;
+  let actor = null, emissiveMaterial = null, emissiveColor = null, emissiveFull;
+  let emissiveR, emissiveG, emissiveB;
   function release() {
     for (const [pivot, visible] of hidden) pivot.visible = visible;
     if (actor?.character?._rainmakerPose) actor.character._rainmakerPose = false;
@@ -128,8 +129,15 @@ export function createRainmakerPresentation(THREE, mesh) {
     } else {
       mesh.position.set(0, 1, 0); mesh.quaternion.identity(); mesh.scale.setScalar(1); delete mesh.userData.carrier;
     }
-    mesh.material.emissive.setHex(charge >= 1 ? 0xffdc5c : 0x000000);
-    mesh.material.emissiveIntensity = charge >= 1 ? .45 : 0;
+    const material = mesh.material, full = charge >= 1;
+    if (material !== emissiveMaterial || material.emissive !== emissiveColor || full !== emissiveFull
+      || material.emissive.r !== emissiveR || material.emissive.g !== emissiveG || material.emissive.b !== emissiveB) {
+      material.emissive.setHex(full ? 0xffdc5c : 0x000000);
+      emissiveMaterial = material; emissiveColor = material.emissive; emissiveFull = full;
+      emissiveR = emissiveColor.r; emissiveG = emissiveColor.g; emissiveB = emissiveColor.b;
+    }
+    const intensity = full ? .45 : 0;
+    if (material.emissiveIntensity !== intensity) material.emissiveIntensity = intensity;
   }
   return { update, release };
 }
