@@ -1,3 +1,11 @@
+// Positions and normals stay Float64 until winding/degeneracy decisions are
+// complete. Colors and integer indices can use their final precision at once.
+class IWMarinaStaging {
+ constructor(){this.p=new Float64Array(192);this.n=new Float64Array(192);this.c=new Float32Array(192);this._i=new Uint32Array(192);this._vc=0;this._ic=0;this._max=-1;}
+ _vertex(x,y,z,nx,ny,nz,r,g,b){const o=this._vc*3;if(o+3>this.p.length){const cap=Math.ceil(this.p.length*1.5/3)*3;for(const key of ['p','n','c']){const a=new this[key].constructor(cap);a.set(this[key]);this[key]=a;}}this.p[o]=x;this.p[o+1]=y;this.p[o+2]=z;this.n[o]=nx;this.n[o+1]=ny;this.n[o+2]=nz;this.c[o]=r;this.c[o+1]=g;this.c[o+2]=b;return this._vc++;}
+ _triangle(a,b,c){const o=this._ic;if(o+3>this._i.length){const next=new Uint32Array(Math.ceil(this._i.length*1.5/3)*3);next.set(this._i);this._i=next;}this._i[o]=a;this._i[o+1]=b;this._i[o+2]=c;this._ic+=3;this._max=Math.max(this._max,a,b,c);}
+ _geometry(THREE){const g=new THREE.BufferGeometry(),n=this._vc*3;g.setAttribute('position',new THREE.Float32BufferAttribute(this.p.subarray(0,n),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n.subarray(0,n),3));g.setAttribute('color',new THREE.BufferAttribute(this.c.slice(0,n),3));const I=this._max>=65535?Uint32Array:Uint16Array;g.setIndex(new THREE.BufferAttribute(new I(this._i.subarray(0,this._ic)),1));return g;}
+}
 // Halyard Marina — vessel prop pack. Detail meshes that dress the playable vessel blocks of
 // the HALYARD layout (ferry, tug on blocks, houseboat, dinghy) plus the non-playable moored boats around the arena.
 // Registered into the PropKit by props.js; placements are exported below and merged into the stage dressing.
@@ -60,13 +68,11 @@ export function registerMarinaVessels(D, H) {
   }
 
   // Mesh builder with per-vertex colour; triangles auto-orient to agree with the supplied normals (like props.js GB).
-  class MB {
-    constructor() { this.p = []; this.n = []; this.c = []; this.i = []; }
+  class MB extends IWMarinaStaging {
+    constructor() { super(); }
     v(x, y, z, nx, ny, nz, c) {
       const l = Math.hypot(nx, ny, nz) || 1;
-      this.p.push(x, y, z); this.n.push(nx / l, ny / l, nz / l);
-      if (c) this.c.push(c.r, c.g, c.b); else this.c.push(1, 1, 1);
-      return this.p.length / 3 - 1;
+      return this._vertex(x,y,z,nx/l,ny/l,nz/l,c?c.r:1,c?c.g:1,c?c.b:1);
     }
     tri(a, b, c) {
       const P = this.p, N = this.n;
@@ -76,16 +82,11 @@ export function registerMarinaVessels(D, H) {
       const cx = e1y * e2z - e1z * e2y, cy = e1z * e2x - e1x * e2z, cz = e1x * e2y - e1y * e2x;
       if (cx * cx + cy * cy + cz * cz < 1e-18) return;
       const s = cx * (N[a * 3] + N[b * 3] + N[c * 3]) + cy * (N[a * 3 + 1] + N[b * 3 + 1] + N[c * 3 + 1]) + cz * (N[a * 3 + 2] + N[b * 3 + 2] + N[c * 3 + 2]);
-      if (s < 0) this.i.push(a, c, b); else this.i.push(a, b, c);
+      if (s < 0) this._triangle(a,c,b); else this._triangle(a,b,c);
     }
     quad(a, b, c, d) { this.tri(a, b, c); this.tri(a, c, d); }
     geo() {
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
-      g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
-      g.setIndex(this.i);
-      return g;
+      return this._geometry(THREE);
     }
   }
 
