@@ -82,15 +82,14 @@
     "Original horizontal inner-marker owner/parallax/late-floor appearance and broader visual/hardware comparisons",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "Resolve rejected PR creation; no further retry or bypass",
-    "required automatic CI on eventual final head",
-    "Separately owned automatic emitted selection handoff for phase/guide/producer tests; native producer source workflow remains outside /validate fan-in"
+    "required automatic CI on eventual final head"
   ],
   "remoteActions": {
     "prCreated": false,
     "merged": false,
     "manualCiStarted": false,
     "integrationBranchPushed": true,
-    "lastVerifiedRemoteHead": "550ec3219c0b8e20a842949322efe22e516f3ce0",
+    "lastVerifiedRemoteHead": "530e689544119ca8c1042b6e75dce7256a0a7657",
     "prCreation": "denied twice; stopped, no matching PR exists"
   },
   "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
@@ -331,5 +330,57 @@
     "counterexample": "Actual adapter collision floor changes from y0 to -2; cached guide remains y0",
     "ordinaryNativePhysicsImplicated": false,
     "ownership": "Reticle owner making narrow fail-closed fallback and regression"
+  },
+  "emittedSelectionAppend": {
+    "sourceHead": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+    "handoff": {
+      "verifiedBranch": "codex/emitted-phase-guide-registration-20261026",
+      "verifiedHead": "3387554035db4f9a8580ba27c2ac2c69e3ca8fe1",
+      "sourceCommit": "3387554035db4f9a8580ba27c2ac2c69e3ca8fe1",
+      "integratedCommit": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+      "sourceDiff": "Only three additive test selections in the existing validate-inkwave-update.yml emitted step"
+    },
+    "checks": {
+      "newlySelectedEmitted": {
+        "pass": 22,
+        "fail": 0,
+        "skip": 0,
+        "files": [
+          "patches/native-stages/tests/collision-revision-producers.test.mjs",
+          "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+          "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+        ],
+        "caseCounts": {
+          "producer": 6,
+          "guideCache": 7,
+          "phase": 9
+        },
+        "workerHistoricalPass": 21,
+        "countDifference": "The accepted full-flight follow-up adds a seventh guide-cache case to the current integration."
+      },
+      "workflowRunnerContracts": {
+        "pass": 35,
+        "fail": 0,
+        "skip": 0,
+        "files": [
+          "scripts/tests/inkwave-integration-workflow.test.mjs",
+          "scripts/tests/inkwave-test-suites.test.mjs"
+        ]
+      },
+      "missingBuild": {
+        "exit": 1,
+        "mustFailWithoutSourceFallback": true,
+        "missingArtifactMessage": true,
+        "successfulCaseCount": 0
+      },
+      "yamlAndByteDiff": "passed; removing exactly the three added lines reconstructs the prior workflow byte for byte"
+    },
+    "validation": "emitted-selection-append/validation.json",
+    "coverage": {
+      "phaseGuideSource": "Automatically discovered by existing eight patch source shards; no source coverage removed",
+      "producerSource": "Existing .github/workflows/validate-inkwave-native-stage5.yml source glob (line56), separate from /validate fan-in",
+      "newEmittedTests": "All three are now in existing validate_core emitted step with inherited INKWAVE_BUILT_SITE pointing at the complete _site build",
+      "remoteCi": "No final-head run/success claim. PR creation hold remains; no manual workflow dispatch or retry"
+    }
   }
 }

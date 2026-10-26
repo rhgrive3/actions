@@ -109,8 +109,18 @@ invalidation evidence, not a new visibility rule or original HUD proof.
 | --- | --- | --- |
 | Phase/guide source tests | Eight patch source shards | Automatically discovered; no final-head remote success claimed |
 | Collision producer source | `validate-inkwave-native-stage5.yml` source glob, outside `/validate` fan-in | Keep this separate workflow in final coverage accounting |
-| Three new emitted test files | Existing emitted selection | Minimal selection handoff is pending; local emitted passes do not establish automatic coverage |
+| Three new emitted test files | Existing `validate_core` emitted step with `INKWAVE_BUILT_SITE` | Registered by `338755403`: producer/guide/phase cases pass 22/22 locally on the current integration; missing build exits nonzero without runtime-source fallback. Required remote run is still pending |
 | Eventual final-head required CI | Normal PR-triggered checks | Pending direct user response to the PR creation hold; no manual dispatch/retry |
+
+`emitted-selection-append/validation.json` records the narrow three-line workflow
+addition, 22 current emitted cases (the guide follow-up adds one beyond the
+worker's historical 21), missing-build fail-closed proof and 35 workflow/runner
+contract passes. Removing exactly those lines reconstructs the previous workflow
+byte for byte; triggers, permissions, concurrency and every other byte remain.
+The existing optimized site is reused only after exact input/output identity
+verification, because no runtime/build input changed. Producer source coverage
+remains in its separate native-stage workflow. These are local coverage checks,
+not a claim that eventual final-head GitHub checks have run or succeeded.
 
 The branch push succeeded. Draft PR creation was rejected twice by automatic
 approval review, including one retry after explicit parent appointment. No PR
