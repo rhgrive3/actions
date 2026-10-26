@@ -101,7 +101,7 @@ function platformFixture(search='') {
   }
   const G={mode:'menu'};
   installPlatformGame(Game,G,env,{
-    importProfiler:()=>new Promise(resolve=>pending.push(resolve))
+    importProfiler:()=>new Promise((resolve,reject)=>pending.push({resolve,reject}))
   });
   const game=new Game();
   game.settings={debugMode:false,frameRate:'display'};
@@ -116,7 +116,7 @@ function platformFixture(search='') {
   const flush=()=>new Promise(resolve=>setImmediate(resolve));
   const deliver=async()=>{
     assert.ok(pending.length>0,'the lazy profiler import is requested');
-    pending.shift()({createFrameTimingProbe});
+    pending.shift().resolve({createFrameTimingProbe});
     await flush();
   };
   const counters=()=>({frames,installed,disposed,pending:pending.length,warnings:warnings.length});
@@ -175,6 +175,29 @@ test('disposing a platform invalidates pending imports across new runtime owners
   await f.flush();assert.equal(f.counters().pending,1);
   await f.deliver();
   assert.equal(f.counters().installed,1,'new owner may opt in after reinstallation');
+  f.game.disposePlatform();
+  assert.equal(f.counters().disposed,1);
+});
+
+test('failed lazy import is reported once rather than retried every RAF',async()=>{
+  const f=platformFixture();
+  f.game._loop();
+  f.game._setSettings({debugMode:true});
+  await f.flush();
+  assert.equal(f.pending.length,1);
+  f.pending.shift().reject(new Error('offline import'));
+  await f.flush();
+  assert.equal(f.counters().warnings,1);
+  assert.match(f.game.platform.profilerLoadError,/offline import/);
+  for(let i=0;i<20;i++)f.game.platform.syncProfiler();
+  await f.flush();
+  assert.equal(f.pending.length,0,'no repeated dynamic imports while enabled');
+  f.game._setSettings({debugMode:false});
+  f.game._setSettings({debugMode:true});
+  await f.flush();
+  assert.equal(f.pending.length,1,'a new deliberate ON retries after failure');
+  await f.deliver();
+  assert.equal(f.counters().installed,1);
   f.game.disposePlatform();
   assert.equal(f.counters().disposed,1);
 });
