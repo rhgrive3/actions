@@ -1,0 +1,29 @@
+{
+  "base": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "checkedAt": "2026-10-26",
+  "openPullRequests": [
+    {
+      "number": 1890,
+      "title": "fix(ui): スマホの開始・再戦ボタンを常時表示し、モード選択を改善",
+      "head": "f52796dd72ec526034ceda854ce9cd18db19de7f",
+      "overlap": [
+        "patches/splatoon3/ui.css",
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md"
+      ]
+    },
+    {
+      "number": 1889,
+      "title": "CIのソース回帰を8分割へ統合し、単発workflowと重複実行を整理する",
+      "head": "70eebd77efbef48b13b9253acb0210a01aeb8ffc",
+      "overlap": []
+    },
+    {
+      "number": 1882,
+      "title": "perf: apply INKWAVE Library queue optimizations onto latest main",
+      "head": "efcbdf3232653b20690f1867de73b586cddd0117",
+      "overlap": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ]
+    }
+  ]
+}
