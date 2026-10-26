@@ -98,6 +98,8 @@ test('steady updates reuse GPU/CPU resources without random calls or gameplay mu
     assert.equal(mesh.instanceMatrix, matrix); assert.equal(mesh.instanceColor, colors);
     assert.equal(matrix.array, matrixBuffer); assert.equal(colors.array, colorBuffer);
     assert.equal(matrix.version, version + 180);
+    assert.deepEqual(matrix.updateRanges, [{ start: 0, count: 16 }]);
+    assert.deepEqual(colors.updateRanges, [{ start: 0, count: 3 }]);
     assert.equal(JSON.stringify(d), before);
   } finally { Math.random = random; clearCrabSplashVisuals(system, game); }
 });
@@ -117,6 +119,8 @@ test('queue removal hides landed drops and empty frames retain the pool for reus
     system._s3SplashDrops = [a]; updateCrabSplashVisuals(system, game, THREE);
     assert.equal(meshOf(game), mesh); assert.equal(mesh.visible, true);
     assert.equal(mesh.count, 1);
+    assert.deepEqual(mesh.instanceMatrix.updateRanges, [{ start: 0, count: 16 }]);
+    assert.deepEqual(mesh.instanceColor.updateRanges, [{ start: 0, count: 3 }]);
   } finally { clearCrabSplashVisuals(system, game); }
 });
 

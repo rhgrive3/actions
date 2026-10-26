@@ -9,6 +9,7 @@ const workflows = [
   'validate-inkwave-native-stage5.yml',
   'validate-inkwave-ranked.yml',
   'inkwave-reopened-six.yml',
+  'inkwave-gameplay-resources.yml',
 ];
 const expression = "${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}";
 const read = name => fs.readFileSync(new URL('../../.github/workflows/' + name, import.meta.url), 'utf8');

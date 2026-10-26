@@ -39,7 +39,7 @@ function visualPool(api,projectiles){
   if(!pool){const T=api.THREE,mesh=new T.InstancedMesh(new T.SphereGeometry(.1,6,4),new T.MeshBasicMaterial({color:0xffffff}),MAX_DROPS);
     mesh.name='s3-torpedo-fizzy-detached-splashes';mesh.count=0;mesh.frustumCulled=false;
     mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
-    pool={scene,mesh,matrix:new T.Matrix4(),color:new T.Color(),users:0,dirty:true,idleTimer:null,canvas:api.G.renderer?.domElement};
+    pool={scene,mesh,matrix:new T.Matrix4(),color:new T.Color(),users:0,dirty:true,idleTimer:null,canvas:api.G.renderer?.domElement,matrixRange:{start:0,count:0},colorRange:{start:0,count:0}};
     pool.onContextLost=()=>{if(pool.users===0)disposePool(projectiles,pool);};
     pool.canvas?.addEventListener?.('webglcontextlost',pool.onContextLost);
     pools.set(scene,pool);scene.add(mesh);}
@@ -53,7 +53,19 @@ function syncVisuals(projectiles){
     let count=0;
     for(const d of projectiles._s3TorpedoSplashes||[])if(d.visual===pool){pool.matrix.makeTranslation(d.pos.x,d.pos.y,d.pos.z);pool.mesh.setMatrixAt(count,pool.matrix);if(pool.dirty)pool.mesh.setColorAt(count,d.visualColor);count++;}
     pool.mesh.count=count;pool.mesh.visible=count>0;
-    if(count){pool.mesh.instanceMatrix.needsUpdate=true;if(pool.dirty)pool.mesh.instanceColor.needsUpdate=true;}
+    if(count){
+      // Preserve the unchanged capacity, upload only rewritten live matrices.
+      const matrix=pool.mesh.instanceMatrix;
+      pool.matrixRange.count=count*matrix.itemSize;
+      matrix.updateRanges.length=0;matrix.updateRanges.push(pool.matrixRange);
+      matrix.needsUpdate=true;
+      if(pool.dirty){
+        const color=pool.mesh.instanceColor;
+        pool.colorRange.count=count*color.itemSize;
+        color.updateRanges.length=0;color.updateRanges.push(pool.colorRange);
+        color.needsUpdate=true;
+      }
+    }
     pool.dirty=false;
   }
 }
