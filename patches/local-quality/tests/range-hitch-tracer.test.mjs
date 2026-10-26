@@ -264,12 +264,12 @@ test('long task observer is optional; sustained frame spikes are captured with b
   tracer.dispose();
 });
 test('opt-in profileRange=1 dynamically attaches tracer to existing page recorder, no normal runtime import',async()=>{
-  const f=worldFixture(),handlers={};
+  const f=worldFixture();
   const nodes=[];
   const doc={body:{appendChild(x){nodes.push(x);}},documentElement:{lang:'en'},
     createElement(name){return {nodeName:name,style:{},dataset:{},children:[],setAttribute(){},
       appendChild(child){this.children.push(child);},
-      addEventListener(event,fn){handlers[event]=fn;},
+      addEventListener(event,fn){(this.listeners ||= {})[event]=fn;},
       remove(){this.removed=true;},focus(){},select(){}}}};
   f.env.document=doc;
   f.env.navigator={clipboard:{writeText:async text=>{f.copied=text;}}};
@@ -286,7 +286,7 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.equal(snap.trace.capturedFrames,1);
   assert.ok(snap.trace.latest.stages.paint>=2);
   assert.equal(typeof p.report(),'string');
-  await handlers.click();
+  await nodes.find(n=>n.id==='inkwave-copy-frame-trace').listeners.click();
   assert.match(f.copied,/"schema": "inkwave-frame-trace-v1"/);
   assert.equal(nodes.filter(n=>n.nodeName==='button').length,1);
   p.dispose();
