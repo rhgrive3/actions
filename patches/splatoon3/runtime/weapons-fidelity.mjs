@@ -6,7 +6,7 @@ import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
 import { queueRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
 import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops, clearSplashDrops } from './blaster-flight-paint.mjs';
 import { applyBlasterBurstKnockback } from './main-knockback.mjs';
-import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
+import { dualiesGuideInputsChanged, shooterGuideCache } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
@@ -1824,6 +1824,8 @@ export function installWeaponsFidelity(context,profile) {
     // Presentation predictions never enter list/pool. Retire their match-owned
     // cache keys too, while retaining the reusable projectile/vector storage.
     this._s3GuideCache=null;this._s3ShooterImpactCache=null;this._s3MuzzleFeedbackCache=null;
+    const shooterGuide=this._s3ShooterGuideCache;
+    if(shooterGuide){shooterGuide.ready=false;shooterGuide.values.length=0;}
     for(const p of [this._s3ShooterImpact,this._s3SlosherGuideProjectile,this._s3BlasterGuideProjectile,
       ...(this._s3DualiesGuideProjectiles||[])])if(p)p.owner=null;
     if(context.G?.projectiles===this&&context._shotGuide?.probe)context._shotGuide.probe.owner=null;
@@ -2651,6 +2653,15 @@ export function computeShotGuide(actor) {
   s.state.frames = 0;
   const probe = guideLaunchState(actor, weapon, s);
   if (!probe) return null;
+  // Keep native muzzle safety/convergence live, then reuse only a deterministic
+  // launch in a verified, unchanged collision world. Projection remains separate.
+  const cached = weapon.kind==='shooter'
+    ? shooterGuideCache(guideApi.G.projectiles,actor,weapon,guideApi.G,probe) : null;
+  if(cached&&!cached.dirty){
+    s.state.x=cached.point.x;s.state.y=cached.point.y;s.state.z=cached.point.z;s.state.frames=cached.point.frames;
+    return s.state;
+  }
+  if(cached)cached.ready=false;
   for (let i = 0; i < frames; i++) {
     if(probe.inkProfile)guideApi.G.projectiles._advanceInkGuide(probe);
     else advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
@@ -2663,6 +2674,10 @@ export function computeShotGuide(actor) {
     }
   }
   s.state.x = probe.pos.x; s.state.y = probe.pos.y; s.state.z = probe.pos.z; s.state.frames = frames;
+  if(cached){
+    cached.point.x=s.state.x;cached.point.y=s.state.y;cached.point.z=s.state.z;cached.point.frames=frames;
+    cached.ready=cached.cacheable;
+  }
   return s.state;
 }
 
