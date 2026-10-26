@@ -6520,3 +6520,6 @@ source/emittedとも水平・下向き、30/60/120Hzの同一入力120回で追�
 統合 `550ec3219c0b8e20a842949322efe22e516f3ce0` に残る `s3ShooterImpact` / `muzzleBlockFeedback` の衝突revision未照合を修正した。実Towerの移動でrevision8→9となっても両方が古いpole接触 z=-.28を再利用し、fresh solverの床接触 z=9.4998700597と不一致になる負例を既存counterで確認した。2つの既存consumerだけを実 `physics.level.collisionRevision` とworld/query/triangleWorld/ownerの照合へ接続し、未計装ownerは再計算する。物理、nominal guide、full-flight接触表示の採用条件、入力は不変であり、新しいhide規則は加えていない。
 
 source13件＋実弾一致／寿命15件、最終emitted11件、通常build・quick・startup全artifact digestが成功した。修正後はimpact・marker・fresh solverが同一点となり、実native地形交換、query/owner交換、未知world、静止時の再利用も確認した。[追補記録](shooter-impact-revision-20261026/README.md)に負例・実測・hashを保存した。固定aim/muzzle/timeのprediction API検証であり、自然なプレイヤー操作のHUD画像や本家inner-markerの見え方の証明とは扱わない。
+## 2026-10-26 Unsupported Physics bridge guide fallback
+
+`.level`を公開しないPhysics bridgeが別の`G.level.collisionRevision`を借りると、実衝突床0→-2の変更後もShooter／Dualies両手のguideだけが0に残る限定adapterケースを確認した。revision取得2か所を実`physics.level`だけに限定し、owner不明のbridgeは再計算する。[最小回帰と記録](shooter-guide-bridge-20261026/README.md)は実Physicsへのdelegateと別の正常Levelを使い、実ownerへの通知後もG.levelのrevisionが不変という条件で負例・修正を確認する。source11件・最終emitted11件、通常build・quick・startupの全artifact digestが成功し、通常Level／NativePhysicsの再利用は維持した。物理・producer・表示条件を変更せず、本家inner-markerの外見の未確認とは分離する。
