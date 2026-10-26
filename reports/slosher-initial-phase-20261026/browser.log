@@ -1,0 +1,9 @@
+entry main
+entry main
+entry main/mode
+entry main/mode
+entry main/mode/range
+case s3-slosher-launcher {"cues":0,"roundFrames":18,"paused":false,"ink":100}
+case s3-slosher-bathtub {"cues":0,"roundFrames":84,"paused":false,"ink":100}
+case s3-slosher-washtub {"cues":0,"roundFrames":14,"paused":false,"ink":100}
+{"status":"observed","contentHash":"9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96","cases":[{"id":"s3-slosher-launcher","cues":0,"roundFrames":18},{"id":"s3-slosher-bathtub","cues":0,"roundFrames":84},{"id":"s3-slosher-washtub","cues":0,"roundFrames":14}],"errors":[]}

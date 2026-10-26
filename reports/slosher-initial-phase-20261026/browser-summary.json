@@ -1,0 +1,233 @@
+{
+  "status": "observed",
+  "browser": "154.0.8037.57",
+  "contentHash": "9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96",
+  "errors": [],
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  },
+  "verified": [
+    "_versions/71c1f399cfa445cbabcb8f9a716b87bf5fce1f014170fcc4e1f84f0c9f1da88a/patches/splatoon3/runtime/bomb-cues.mjs",
+    "_versions/71c1f399cfa445cbabcb8f9a716b87bf5fce1f014170fcc4e1f84f0c9f1da88a/patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "_versions/71c1f399cfa445cbabcb8f9a716b87bf5fce1f014170fcc4e1f84f0c9f1da88a/src/fx/fxHooks.js",
+    "_versions/71c1f399cfa445cbabcb8f9a716b87bf5fce1f014170fcc4e1f84f0c9f1da88a/src/game/weapons.js"
+  ],
+  "gestures": 17,
+  "allGesturesTrusted": true,
+  "end": {
+    "time": 24.899866666666576,
+    "frame": 1533,
+    "audio": {
+      "voices": 0,
+      "loops": 0,
+      "state": "running",
+      "played": 15,
+      "dropped": 0,
+      "stolen": 0,
+      "weaponBank": {
+        "realOnly": true,
+        "audibleShotFallback": true,
+        "bytes": 0,
+        "budget": 12582912,
+        "entries": 0,
+        "hits": 0,
+        "misses": 0,
+        "evicted": 0,
+        "pending": 0,
+        "generatedOffThread": 0,
+        "worker": false,
+        "workerFallback": false,
+        "workerError": null,
+        "authorized": {
+          "source": "user-supplied",
+          "clips": 23,
+          "bytes": 21577384,
+          "limitBytes": 41943040,
+          "errors": 0,
+          "repairedLoops": 0,
+          "pending": 0,
+          "rights": "Operator supplied third-party game audio; verify rights separately; no public redistributions.",
+          "targetVersion": "2022-extracted (NOT 11.3.0)"
+        }
+      },
+      "realS3Loader": {
+        "status": "ready",
+        "loadedKinds": 13,
+        "pendingKinds": 0,
+        "errors": [],
+        "unmappedEvents": 12,
+        "manifestURL": "http://127.0.0.1:33745/_versions/71c1f399cfa445cbabcb8f9a716b87bf5fce1f014170fcc4e1f84f0c9f1da88a/patches/splatoon3/runtime/audio/real-s3-installed.json",
+        "cacheBytes": 21577384
+      },
+      "realAudioSuppressed": 4,
+      "authoredFallbackShots": 0,
+      "baseLatencySeconds": 0.01,
+      "outputLatencySeconds": 0.032,
+      "latencyMeaning": "reported Web Audio components; not measured end-to-end input latency"
+    }
+  },
+  "canvasFrames": [
+    {
+      "id": "s3-slosher-launcher",
+      "time": 6.7332000000000205,
+      "scan": [],
+      "drops": [
+        {
+          "actor": "WeaponSlosherLauncher",
+          "pos": [
+            0.8815374441848111,
+            1.4855641929211518,
+            -15.457032193196769
+          ],
+          "drawRadius": 0.2
+        }
+      ],
+      "main": [
+        {
+          "age": 0.05,
+          "start": [
+            0.8815374441848111,
+            1.553109757924615,
+            -16.42234826725138
+          ],
+          "pos": [
+            0.8815374441848111,
+            1.4627807442769265,
+            -12.033042007277851
+          ]
+        }
+      ],
+      "file": "s3-slosher-launcher-native-render.png",
+      "sha256": "c3fc7b8fe3f0f50edf4239285e7b19fc99326c8e18cb4a15500a499343012f98"
+    }
+  ],
+  "cases": [
+    {
+      "id": "s3-slosher-launcher",
+      "nativeDrawCallbacks": 18,
+      "pointerErrors": 0,
+      "paused": false,
+      "phaseSteps": 13,
+      "initialDistances": [
+        {
+          "seed": 0.6728005138859541,
+          "expected": 0.9655204624973586,
+          "actual": 0.9655204624973586
+        }
+      ],
+      "firstReleases": [
+        {
+          "age": 0.016666666666666666,
+          "threshold": 0.9655204624973586,
+          "travelBefore": 0,
+          "travelAfter": 1.4634118724006797,
+          "born": [
+            {
+              "release": [
+                0.8815374441848111,
+                1.5332441929211518,
+                -15.457032193196769
+              ],
+              "drawRadius": 0.2,
+              "radius": 1.559,
+              "actor": "WeaponSlosherLauncher"
+            }
+          ]
+        }
+      ],
+      "capture": {
+        "time": 6.98320000000002
+      }
+    },
+    {
+      "id": "s3-slosher-bathtub",
+      "nativeDrawCallbacks": 84,
+      "pointerErrors": 0,
+      "paused": false,
+      "phaseSteps": 70,
+      "initialDistances": [
+        {
+          "seed": 0.34812494086546997,
+          "expected": 3.0,
+          "actual": 3
+        }
+      ],
+      "firstReleases": [
+        {
+          "age": 0.09999999999999999,
+          "threshold": 3,
+          "travelBefore": 2.6699696705246088,
+          "travelAfter": 3.189992350627828,
+          "born": [
+            {
+              "release": [
+                0.8650505019074765,
+                1.6746985266080356,
+                -13.393306266319675
+              ],
+              "drawRadius": 0.2,
+              "radius": 1.645,
+              "actor": "WeaponSlosherBathtub"
+            }
+          ]
+        }
+      ],
+      "capture": {
+        "time": 13.416533333333618
+      }
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "nativeDrawCallbacks": 14,
+      "pointerErrors": 0,
+      "paused": false,
+      "phaseSteps": 15,
+      "initialDistances": [
+        {
+          "seed": 0.6918111517526923,
+          "expected": 1.6572307285216674,
+          "actual": 1.6572307285216674
+        }
+      ],
+      "firstReleases": [
+        {
+          "age": 0.03333333333333333,
+          "threshold": 1.6572307285216674,
+          "travelBefore": 1.4006530813742006,
+          "travelAfter": 2.8013061627484013,
+          "born": [
+            {
+              "release": [
+                0.8639248863585871,
+                1.2711590614646464,
+                -14.749465949842339
+              ],
+              "drawRadius": 0.1,
+              "radius": 1.344,
+              "actor": "WeaponSlosherWashtub"
+            }
+          ]
+        }
+      ],
+      "capture": {
+        "time": 20.71653333333348
+      }
+    }
+  ]
+}

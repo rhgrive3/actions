@@ -1,0 +1,117 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "rows": [
+    {
+      "actor": "WeaponSlosherLauncher",
+      "id": "s3-slosher-launcher",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSlosherLauncher.game__GameParameterTable.json",
+      "sourceSha256": "3b6d7326f487efd5f8999c7286d0688e97cc5bb9d1e3938fba5e4ea6c69c9a9a",
+      "unit": 0,
+      "combination": [
+        {
+          "OrderNum": 0,
+          "SplashArrayOrderNum": 0,
+          "SplashWallHitArrayOrderNum": 0,
+          "TotalNum": 4
+        }
+      ],
+      "splash": {
+        "DrawSizeCollisionPaintParam": {
+          "CollisionParam": {
+            "ChangeFrameForField": 0,
+            "ChangeFrameForPlayer": 0,
+            "EndRadiusForField": 0.1,
+            "EndRadiusForPlayer": 0.1,
+            "FriendThroughFrameForPlayer": 0,
+            "InitRadiusForField": 0.1,
+            "InitRadiusForPlayer": 0.1
+          },
+          "DrawRadius": 0.2,
+          "PaintDepthScale": 2.2,
+          "PaintWidthHalf": 1.559
+        },
+        "SpawnParam": {
+          "FirstSplashRateForLengthMax": 0.35,
+          "FirstSplashRateForLengthMin": 0.1,
+          "SpawnBetweenLength": 3.6,
+          "SpawnNum": 4
+        }
+      }
+    },
+    {
+      "actor": "WeaponSlosherBathtub",
+      "id": "s3-slosher-bathtub",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSlosherBathtub.game__GameParameterTable.json",
+      "sourceSha256": "203ff1f8b529bcda8224d4cd5b247aeb3ebb1b54a62f1838c980957a4718d4af",
+      "unit": 0,
+      "combination": [
+        {
+          "OrderNum": 0,
+          "SplashArrayOrderNum": 0,
+          "SplashWallHitArrayOrderNum": -1,
+          "TotalNum": 5
+        }
+      ],
+      "splash": {
+        "DrawSizeCollisionPaintParam": {
+          "CollisionParam": {
+            "ChangeFrameForField": 0,
+            "ChangeFrameForPlayer": 0,
+            "EndRadiusForField": 0.15,
+            "EndRadiusForPlayer": 0.15,
+            "FriendThroughFrameForPlayer": 0,
+            "InitRadiusForField": 0.15,
+            "InitRadiusForPlayer": 0.15
+          },
+          "DrawRadius": 0.2,
+          "PaintDepthScale": 1.84,
+          "PaintWidthHalf": 1.645
+        },
+        "SpawnParam": {
+          "FirstSplashRateForLengthMax": 1,
+          "FirstSplashRateForLengthMin": 1,
+          "SpawnBetweenLength": 3,
+          "SpawnNum": 5
+        }
+      }
+    },
+    {
+      "actor": "WeaponSlosherWashtub",
+      "id": "s3-slosher-washtub",
+      "sourcePath": "data/parameter/1130/weapon/WeaponSlosherWashtub.game__GameParameterTable.json",
+      "sourceSha256": "d7b73f92338b9e2fa320092b56ca768c395d9a26ec1f0e90ccf1be2dc0fbcf1b",
+      "unit": 0,
+      "combination": [
+        {
+          "OrderNum": 0,
+          "SplashArrayOrderNum": 0,
+          "SplashWallHitArrayOrderNum": 0,
+          "TotalNum": 7
+        }
+      ],
+      "splash": {
+        "DrawSizeCollisionPaintParam": {
+          "CollisionParam": {
+            "ChangeFrameForField": 0,
+            "ChangeFrameForPlayer": 0,
+            "EndRadiusForField": 0.15,
+            "EndRadiusForPlayer": 0,
+            "FriendThroughFrameForPlayer": 0,
+            "InitRadiusForField": 0.15,
+            "InitRadiusForPlayer": 0
+          },
+          "DrawRadius": 0.1,
+          "PaintDepthScale": 2,
+          "PaintWidthHalf": 1.344
+        },
+        "SpawnParam": {
+          "FirstSplashRateForLengthMax": 0.55,
+          "FirstSplashRateForLengthMin": 0.5,
+          "SpawnBetweenLength": 3.1,
+          "SpawnNum": 7
+        }
+      }
+    }
+  ]
+}
