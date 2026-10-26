@@ -10,6 +10,7 @@ const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null 
 const source = path.resolve(arg('--source') || '_site');
 const evidence = path.resolve(arg('--evidence-dir') || '.browser-evidence/mobile-menus');
 const audit = process.argv.includes('--audit');
+const resizableViewport = process.argv.includes('--resizable-viewport');
 const engineName = arg('--engine') || 'chromium';
 const engine = {chromium,webkit}[engineName];
 assert(engine, 'Unknown browser engine');
@@ -55,16 +56,16 @@ const cases = [
   ['tablet',768,1024], ['split-view',507,768], ['desktop',1440,900],
 ];
 const selected = (arg('--cases') || '').split(',').filter(Boolean);
-const result = { source, audit, engine:engineName, contentHash:manifest.contentHash,inputHash:manifest.inputHash,revision:manifest.build.revision,realDeviceVerified:false, cases:[], errors:[] };
+const result = { source, audit, engine:engineName,viewportModel:resizableViewport?'resizable-touch':'mobile-emulation',contentHash:manifest.contentHash,inputHash:manifest.inputHash,revision:manifest.build.revision,realDeviceVerified:false, cases:[], errors:[] };
 const server = createResponsiveAssetServer({ source, html });
 await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
 const chromiumPath = process.env.CHROMIUM_PATH;
-let context;
+let context, page;
 try {
   for (const [name,width,height] of cases.filter(([n])=>!selected.length || selected.includes(n))) {
     const touch = name !== 'desktop';
-    context = await engine.launchPersistentContext(path.join(profile,name),{headless:true,...(touch ? devices['iPhone 13'] : {}),viewport:{width,height},deviceScaleFactor:1,reducedMotion:'reduce',...(engineName==='chromium'?{...(chromiumPath?{executablePath:chromiumPath}:{}),args:['--no-sandbox','--disable-dev-shm-usage']}:{} )});
-    const page = context.pages()[0] || await context.newPage();
+    context = await engine.launchPersistentContext(path.join(profile,name),{headless:true,...(touch ? devices['iPhone 13'] : {}),...(resizableViewport?{isMobile:false}:{}),viewport:{width,height},deviceScaleFactor:1,reducedMotion:'reduce',...(engineName==='chromium'?{...(chromiumPath?{executablePath:chromiumPath}:{}),args:['--no-sandbox','--disable-dev-shm-usage']}:{} )});
+    page = context.pages()[0] || await context.newPage();
     page.on('pageerror',error=>result.errors.push({name,error:error.message}));
     await page.goto(`http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`);
     await page.waitForFunction(()=>window.menuReady);
@@ -179,14 +180,31 @@ try {
       await tap('[data-id="modal-0"]');await page.waitForFunction(()=>!menus._modal);
       check(await page.evaluate(()=>!calls.some(c=>c.kind==='quit')),'cancel leave preserves the room');
       // Rotation and changing browser chrome must preserve mounted screen state.
-      if(touch) {
+      if(touch && (engineName!=='webkit' || resizableViewport)) {
         await show('setup');
-        await page.setViewportSize({width:height,height:width});await page.waitForTimeout(300);
+        const state=await page.evaluate(()=>JSON.stringify(menus._setup));
+        await page.setViewportSize({width:height,height:width});
+        // Wait for both the window and CSS media viewport before asserting.
+        await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&matchMedia(`(width: ${width}px)`).matches&&matchMedia(`(height: ${height}px)`).matches,{width:height,height:width});
+        await page.waitForFunction(()=>{const r=document.querySelector('[data-id="start"]').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;});
         check(await page.locator('[data-id="start"]').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;}),'start remains visible after rotation');
+        check(await page.evaluate(()=>JSON.stringify(menus._setup))===state,'rotation preserves stage, time and match options');
+        await page.screenshot({path:path.join(evidence,`${name}-rotated-setup.png`)});
+      } else if(touch) {
+        // Playwright WebKit mobile emulation changes innerWidth/innerHeight
+        // without resizing visualViewport or CSS media queries. Both static
+        // orientations run above; a separate resizable-touch run owns rotation.
+        entry.rotation={status:'separate-resizable-viewport-check'};
       }
     }
     await context.close();console.log(`${name}: ${entry.checks.length} checks`);
   }
   assert.deepEqual(result.errors,[]);result.status='passed';
-}catch(error){result.status='failed';result.failure=error.stack;process.exitCode=1;}
+}catch(error){
+  result.status='failed';result.failure=error.stack;process.exitCode=1;
+  if(page&&!page.isClosed()) {
+    await page.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});
+    result.layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,nodes:[...document.querySelectorAll('.iw-screen:not(.is-leaving), .s3-setup-scroll, .iw-ss__foot, [data-id="start"]')].map(el=>({cls:el.className,rect:el.getBoundingClientRect().toJSON(),rows:getComputedStyle(el).gridTemplateRows,padding:getComputedStyle(el).padding}))})).catch(()=>null);
+  }
+}
 finally{await context?.close();await new Promise(resolve=>server.close(resolve));fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(`${result.status}: ${evidence}`);if(result.failure)console.error(result.failure);}

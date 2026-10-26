@@ -21,9 +21,9 @@ import { GLYPHS } from '../../../src/ui/ui-icons.js';
 const INSTALLED = Symbol.for('inkwave.s3.menu-layout.v1');
 export const ENTRANCE_STAGGER_CAP = 14;
 const L = (en, ja) => (isJa ? ja : en);
-// Device detection owns the document class; keyboards on a phone must not
-// switch back to the desktop layout. Hybrids can also opt in through touch.
-const touchMenu = menus => menus._input === 'touch' || !!globalThis.document?.documentElement?.classList.contains('iw-touch');
+// Follow the stable device profile when moving nodes. A temporary input-mode
+// switch on a hybrid laptop must not leave mobile nodes in a desktop layout.
+const touchMenu = () => !!globalThis.document?.documentElement?.classList.contains('iw-touch');
 
 export function capEntranceStagger(root, cap = ENTRANCE_STAGGER_CAP) {
   if (!root?.querySelectorAll) return 0;
@@ -80,7 +80,7 @@ function decorateSetup(menus, scr) {
   };
   // Keep the native nodes, bindings and focus graph. Only the middle section
   // scrolls on touch devices; the equipment and launch actions stay in reach.
-  if (touchMenu(menus)) {
+  if (touchMenu()) {
     const content = document.createElement('div');
     content.className = 's3-setup-scroll';
     const left = scr.el.querySelector('.iw-ss__left');
@@ -97,7 +97,7 @@ function decorateMode(menus, scr) {
   scr.onNav = dir => {
     // Read the real grid on each move: the six-rule catalogue, portrait rows
     // and a rotation can all have different column counts from the native graph.
-    if (touchMenu(menus) && ['up', 'down', 'left', 'right'].includes(dir)) {
+    if ((touchMenu() || menus._input === 'touch') && ['up', 'down', 'left', 'right'].includes(dir)) {
       const row = scr.el.querySelector('.iw-modesel__row');
       const cards = [...row.querySelectorAll('.iw-mode')];
       const i = cards.indexOf(menus._focus);
@@ -116,7 +116,7 @@ function decorateMode(menus, scr) {
 }
 
 function decorateResults(menus, scr) {
-  if (!touchMenu(menus)) return scr;
+  if (!touchMenu()) return scr;
   const head = scr.el.querySelector('.iw-res__head');
   const body = scr.el.querySelector('.iw-res__body');
   const foot = body.querySelector('.iw-res__foot');

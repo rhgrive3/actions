@@ -969,6 +969,7 @@ jobs:
         run: |
           node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine chromium --evidence-dir "$CI_STORAGE/evidence/mobile-menus/chromium" --profile-dir "$CI_STORAGE/cache/mobile-menus/chromium"
           node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine webkit --evidence-dir "$CI_STORAGE/evidence/mobile-menus/webkit" --profile-dir "$CI_STORAGE/cache/mobile-menus/webkit"
+          node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine webkit --resizable-viewport --cases phone,landscape --evidence-dir "$CI_STORAGE/evidence/mobile-menus/webkit-resize" --profile-dir "$CI_STORAGE/cache/mobile-menus/webkit-resize"
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3

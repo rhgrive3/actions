@@ -96,9 +96,10 @@ node scripts/check-inkwave-browser.mjs \
 ```sh
 node scripts/check-inkwave-mobile-menus.mjs --source _site --engine chromium --evidence-dir .browser-evidence/mobile/chromium --profile-dir .browser-profile-mobile/chromium
 node scripts/check-inkwave-mobile-menus.mjs --source _site --engine webkit --evidence-dir .browser-evidence/mobile/webkit --profile-dir .browser-profile-mobile/webkit
+node scripts/check-inkwave-mobile-menus.mjs --source _site --engine webkit --resizable-viewport --cases phone,landscape --evidence-dir .browser-evidence/mobile/webkit-resize --profile-dir .browser-profile-mobile/webkit-resize
 ```
 
-システムの Chromium を使う場合は `CHROMIUM_PATH` を指定できます。このチェックは統合CIの `responsive` 群にも登録しています。
+システムの Chromium を使う場合は `CHROMIUM_PATH` を指定できます。PlaywrightのWebKitモバイルエミュレーションは途中のリサイズでCSSメディアクエリのviewportを更新しないため、縦横の独立したモバイル表示と、`--resizable-viewport`（タッチ入力・モバイルUAを保った通常viewport）の動的リサイズを分けて検証します。3コマンドとも統合CIの `responsive` 群に登録しています。
 
 ## Cloudflare Workers 向けの本番ビルド（アカウント機能つき）
 
