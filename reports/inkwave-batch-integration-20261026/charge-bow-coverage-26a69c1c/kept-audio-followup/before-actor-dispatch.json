@@ -1,0 +1,233 @@
+{
+  "kind": "controlled actual Actor input/keep path; mock audio dispatch only, not playback",
+  "result": [
+    {
+      "id": "charger",
+      "rows": [
+        {
+          "label": "charged",
+          "form": "kid",
+          "q": 1,
+          "charging": true,
+          "nativeStored": null,
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "charger",
+              "time": 0.03333333333333333
+            },
+            {
+              "type": "ready",
+              "id": "charger",
+              "time": 1.016666666666668
+            }
+          ]
+        },
+        {
+          "label": "kept underwater",
+          "form": "squid",
+          "q": 0,
+          "charging": false,
+          "nativeStored": {
+            "charge": 1
+          },
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "charger",
+              "time": 0.03333333333333333
+            },
+            {
+              "type": "ready",
+              "id": "charger",
+              "time": 1.016666666666668
+            }
+          ]
+        },
+        {
+          "label": "returned, Fire still held",
+          "form": "kid",
+          "q": 1,
+          "charging": false,
+          "nativeStored": {
+            "charge": 1
+          },
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "charger",
+              "time": 0.03333333333333333
+            },
+            {
+              "type": "ready",
+              "id": "charger",
+              "time": 1.016666666666668
+            },
+            {
+              "type": "charge",
+              "id": "charger",
+              "time": 2.449999999999996
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s3-charger-long",
+      "rows": [
+        {
+          "label": "charged",
+          "form": "kid",
+          "q": 1,
+          "charging": true,
+          "nativeStored": null,
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "s3-charger-long",
+              "time": 0.016666666666666666
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-long",
+              "time": 1.5333333333333328
+            }
+          ]
+        },
+        {
+          "label": "kept underwater",
+          "form": "squid",
+          "q": 0,
+          "charging": false,
+          "nativeStored": null,
+          "catalogStored": {
+            "frames": 92
+          },
+          "events": [
+            {
+              "type": "rise",
+              "id": "s3-charger-long",
+              "time": 0.016666666666666666
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-long",
+              "time": 1.5333333333333328
+            }
+          ]
+        },
+        {
+          "label": "returned, Fire still held",
+          "form": "kid",
+          "q": 1,
+          "charging": true,
+          "nativeStored": null,
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "s3-charger-long",
+              "time": 0.016666666666666666
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-long",
+              "time": 1.5333333333333328
+            },
+            {
+              "type": "rise",
+              "id": "s3-charger-long",
+              "time": 2.533333333333329
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-long",
+              "time": 2.533333333333329
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s3-charger-keeper",
+      "rows": [
+        {
+          "label": "charged",
+          "form": "kid",
+          "q": 1,
+          "charging": true,
+          "nativeStored": null,
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "s3-charger-keeper",
+              "time": 0.016666666666666666
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-keeper",
+              "time": 1.183333333333334
+            }
+          ]
+        },
+        {
+          "label": "kept underwater",
+          "form": "squid",
+          "q": 0,
+          "charging": false,
+          "nativeStored": null,
+          "catalogStored": {
+            "frames": 71
+          },
+          "events": [
+            {
+              "type": "rise",
+              "id": "s3-charger-keeper",
+              "time": 0.016666666666666666
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-keeper",
+              "time": 1.183333333333334
+            }
+          ]
+        },
+        {
+          "label": "returned, Fire still held",
+          "form": "kid",
+          "q": 1,
+          "charging": true,
+          "nativeStored": null,
+          "catalogStored": null,
+          "events": [
+            {
+              "type": "rise",
+              "id": "s3-charger-keeper",
+              "time": 0.016666666666666666
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-keeper",
+              "time": 1.183333333333334
+            },
+            {
+              "type": "rise",
+              "id": "s3-charger-keeper",
+              "time": 2.533333333333329
+            },
+            {
+              "type": "ready",
+              "id": "s3-charger-keeper",
+              "time": 2.533333333333329
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
