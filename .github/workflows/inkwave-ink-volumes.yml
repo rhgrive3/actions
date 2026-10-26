@@ -44,6 +44,12 @@ jobs:
       # Manual runs remain pinned to the immutable SHA selected by their dispatch ref.
       - uses: actions/checkout@v4
         with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Assert exact alpha source checkout
         env:
@@ -85,6 +91,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: ink-volume-render-evidence
           path: |
             .ci-scratch/evidence
