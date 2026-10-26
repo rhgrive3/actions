@@ -14,7 +14,7 @@ async function scenario(source,{cancelAt='decode',count=8,resize=false,noSignal=
  const controller=new AbortController(),bitmaps=[],textures=[],pending=[],reads=[];let decode=0,fetches=0;const intended=new Error('intentional '+failure+' failure');
  const bytes=new Uint8Array([137,80,78,71,1,2,3,4]),sha=crypto.createHash('sha256').update(bytes).digest('hex');
  const cache={async match(url){if(url.includes('stamp'))return new Response('0');reads.push(url);if(failure==='cache'&&url.endsWith('texture0.png'))throw intended;if(cancelAt==='cache'&&reads.length===1)controller.abort();return new Response(bytes);},async put(){},async delete(){return true;}};
- class Texture extends EventTarget{constructor(image){super();this.image=image;this.disposes=0;textures.push(this);}dispose(){this.disposes++;this.dispatchEvent(new Event('dispose'));}set needsUpdate(value){if(failure==='setup'&&textures.length===1)throw intended;this.updated=value;if(cancelAt==='transferred'&&textures.length===1)controller.abort();}}
+ class Texture{constructor(image){this.image=image;this.disposes=0;textures.push(this);}dispose(){this.disposes++;}set needsUpdate(value){if(failure==='setup'&&textures.length===1)throw intended;this.updated=value;if(cancelAt==='transferred'&&textures.length===1)controller.abort();}}
  const context=vm.createContext({console,TextEncoder,TextDecoder,Uint8Array,Float32Array,Uint32Array,Int32Array,Blob,Response,DOMException,AbortController,performance,crypto:crypto.webcrypto,
   caches:{async keys(){return[];},async open(){return cache;},async delete(){return true;}},
   fetch:async()=>{fetches++;if(failure==='cache')throw intended;throw Error('Unexpected network');},
@@ -62,10 +62,10 @@ async function run(source,resize,failResize=false){
  const bitmap=[],textures=[],bytes=new Map(),integrity={};let fetches=0,reads=0;
  for(const [i,n] of names.entries()){const a=new Uint8Array(26);a.set([137,80,78,71]);a[8]=i;a[25]=6;bytes.set(n+'.png',a);integrity[n+'.png']={bytes:a.length,sha256:crypto.createHash('sha256').update(a).digest('hex')};}
  const store={async match(u){reads++;return new Response(bytes.get(u.split('/').at(-1)))},async put(){}};
- class Texture extends EventTarget{constructor(image){super();this.image=image;this.disposed=0;textures.push(this)}dispose(){this.disposed++;this.dispatchEvent(new Event('dispose'));}}
+ class Texture{constructor(image){this.image=image;this.disposed=0;textures.push(this)}dispose(){this.disposed++}}
  class DataTexture extends Texture{constructor(data,width,height){super({data,width,height});this.dataTexture=true}}
  class Canvas{constructor(w,h){this.width=w;this.height=h}getContext(){const canvas=this;return {drawImage(b){canvas.bitmap=b},getImageData(){const b=canvas.bitmap;const data=new Uint8ClampedArray(canvas.width*canvas.height*4);for(let i=0;i<data.length;i+=4)data.set(rgba[b.name],i);return{data}}}}}
- const context=vm.createContext({AbortController,console,crypto:crypto.webcrypto,TextEncoder,TextDecoder,Blob,Response,DOMException,Uint8Array,Uint8ClampedArray,Float32Array,Uint32Array,Int32Array,performance,OffscreenCanvas:Canvas,
+ const context=vm.createContext({console,crypto:crypto.webcrypto,TextEncoder,TextDecoder,Blob,Response,DOMException,AbortController,Uint8Array,Uint8ClampedArray,Float32Array,Uint32Array,Int32Array,performance,OffscreenCanvas:Canvas,
  caches:{async keys(){return[]},async open(){return store}},fetch(){fetches++;throw Error('Unexpected network')},
  async createImageBitmap(input,options){let name;if(input instanceof Blob){assert.equal(options.imageOrientation,'flipY');name=names[new Uint8Array(await input.arrayBuffer())[8]]}else{name=input.name;assert.equal(options.resizeQuality,'high');if(failResize&&!failedResize){failedResize=true;throw intended}}
  const b={name,width:options.resizeWidth||8,height:options.resizeHeight||8,closes:0,close(){this.closes++}};bitmap.push(b);return b;}});

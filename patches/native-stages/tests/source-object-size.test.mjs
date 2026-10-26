@@ -33,7 +33,7 @@ async function run(stage,constrainedClient=false){
  // and derived storage are replaced at their boundary; no download is needed.
  const catalog=new vm.SourceTextModule(catalogSource,{context});
  await catalog.link(spec=>{assert.equal(spec,'./build-config.mjs');return synthetic({nativeStageBuild:{stages:[stage]}});});await catalog.evaluate();
- const cache=synthetic({readDerived:async()=>null,writeDerived:async()=>{},sourceTree:async()=>({tree:[{type:'blob',path:stage.internal+'.mtl',size:3,sha:'mtl'}]}),sourceBytes:async(id,url,pin,signal,progress)=>{calls.push({url,pin,progress});if(progress)progress({bytes:3,total:sourceObjectBytes(stage)||3});return new Uint8Array([65,66,67]).buffer;}});
+ const cache=synthetic({readDerived:async()=>null,writeDerived:async()=>{},sourceTree:async()=>({tree:[{type:'blob',path:stage.internal+'.mtl',size:3,sha:'1'.repeat(40)}]}),sourceBytes:async(id,url,pin,signal,progress)=>{calls.push({url,pin,progress});if(progress)progress({bytes:3,total:sourceObjectBytes(stage)||3});return new Uint8Array([65,66,67]).buffer;}});
  const worker=new vm.SourceTextModule(workerSource,{context});
  await worker.link(spec=>spec==='./source-catalog.mjs'?catalog:spec==='./source-cache.mjs'?cache:synthetic({convertSource:()=>Object.fromEntries(arrays.map(k=>[k,new Uint8Array(1)]))}));
  await worker.evaluate();await context.self.onmessage({data:{id:stage.id,runtimeSha256:'fixture',constrainedClient}});
