@@ -14,7 +14,9 @@
     "latest65 production build and startup budget": 0,
     "latest65 native suite": 0,
     "latest65 Chromium/WebKit four exact GPU probes": 0,
-    "latest65 production NativeWeak diagnostic": 0
+    "latest65 production NativeWeak diagnostic": 0,
+    "source65 complete Node22 shard1 reproduction": 0,
+    "combined main1884 + source65 CI-entry contracts": 0
   },
   "logs": {
     "npm-test-final.log.gz": {
@@ -148,6 +150,18 @@
     "native-thin-full-tests.log.gz": {
       "sha256": "108fbd788b12183002e9fb78d860a321730553f32162ba814431b13c636c35be",
       "uncompressedSha256": "7821702839691dd3ba45b94a917c602279d6aa401173c30b3b03e6e213be2738"
+    },
+    "main1884-integration-tests.log.gz": {
+      "sha256": "35b588c53de8a9aa1323869c33fba95e11d2f70589db1e3255f81cd3270b90e8",
+      "uncompressedSha256": "a7361f7b1e4eba2023b7e9b063e81133886c2864c1637c17c48626a2645ec590"
+    },
+    "ci65-shard1-local-runner.log.gz": {
+      "sha256": "093822f73452cf893b7e028e81b598867b5a2ad268340529fc188ee02922a2df",
+      "uncompressedSha256": "548f047ee18c226aab12e6a939464161121bb4c39d857ee2644f52a97997c037"
+    },
+    "ci65-shard1-local-patch-tests.log.gz": {
+      "sha256": "1ef2dd5df78b2bceda3e21190c7181a150fe16ecadf8852c8ce026e43bc2c54a",
+      "uncompressedSha256": "f58f690cc21d7339606a5bc8e63cfe13a5785c3a255d1d495450333c7cf874db"
     }
   },
   "runtimeSourceSha": "0fef49e66d01249f4531aa9b75673312ff222e18",

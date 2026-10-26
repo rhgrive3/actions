@@ -13,7 +13,7 @@
     "native-audit/thin-base/files.json",
     "local-verification.json"
   ],
-  "checkedIndexedFiles": 102,
+  "checkedIndexedFiles": 105,
   "allGzipFilesIndexed": true,
   "finalRuns": {
     "baseline-crab-clean": {
@@ -282,15 +282,15 @@
     "CPU observed counters exclude before-first-observation work and processes without CDP CPU counters.",
     "API draw totals count intercepted draw functions; renderer.info frame-end snapshots remain partial.",
     "No whole-game causal FPS/process-memory improvement claim or full-cache plateau claim.",
-    "Main README and final CI/merge links require a separate review after assembly."
+    "Final CI/merge provenance is reviewed separately from the descriptive runtime measurements; publishReady is evidence metadata, not a user approval requirement."
   ],
   "assembledReportReview": {
-    "status": "passed-with-explicit-pending-CI-record",
-    "publishReady": false,
+    "status": "passed",
+    "publishReady": true,
     "reviewedFiles": {
       "README.md": {
-        "sha256": "3830b8e85c5fc8865089ce18ab20da3a825485ffbe91f55217a39b050e7c8e26",
-        "bytes": 18892
+        "sha256": "b3dca6e070345be7d153739a1cb293030ec3a1b1b751597303fee57204b95c4b",
+        "bytes": 20457
       },
       "measurement-tables.md": {
         "sha256": "a1589187daa2aedcbcf3028a92b97e99ef50ba822bb0e88f94ee4b568043c4be",
@@ -307,10 +307,18 @@
       "verify-evidence.py": {
         "sha256": "8e2d64300c3699bbde2e97f47b1812a1e5dbeef8a87f9268c9f039ec8da04334",
         "bytes": 12916
+      },
+      "ci-verification.json": {
+        "sha256": "0fa05c7deb36ca8ed8b4507006eee54409192d09e03ac34dc7bdec2ca709993a",
+        "bytes": 32710
+      },
+      "base-integration-verification.json": {
+        "sha256": "07778092be4f7fde7b71d433a4b900b0726de9bee9e0f855b629208143380411",
+        "bytes": 1394
       }
     },
     "localLinksExist": {
-      "README.md": 26,
+      "README.md": 29,
       "measurement-tables.md": 0
     },
     "measurementTablesByteMatchVerifiedGeneratedTables": true,
@@ -325,12 +333,11 @@
       "seven cause groups, finalsource65 and historical artifacts excluded"
     ],
     "limitations": [
-      "CI_RECORD intentionally remains pending; this is not CI/merge or publication acceptance.",
-      "README hash must be refreshed after final CI/merge record insertion.",
-      "No source changes, benchmark reruns or GPU work were performed."
+      "Physical iPad/hardware FPS, hours-long stability and complete catalogue plateau were not measured.",
+      "Whole-game FPS improvement is not established; reported process/timing deltas remain descriptive."
     ],
-    "portablePlotScriptReview": "Uses only final-comparison.json relative to its own report directory; preserves verified plot inputs, labels and deterministic SVG settings; removes private preview output. Not executed during this refresh.",
-    "readOnlyVerifierRerun": "verify-evidence.py completed with exit0 after parser artifact and index regeneration; all102 indexed receipts and all6primary runs passed."
+    "portablePlotScriptReview": "Uses only final-comparison.json relative to its own report directory; preserves verified plot inputs, labels and deterministic SVG settings; removes private preview output. Not executed during this refresh. Root executed the portable script and obtained the identical SVG SHA256.",
+    "readOnlyVerifierRerun": "verify-evidence.py completed with exit0 after CI/base provenance and three diagnostic log additions; all105 indexed receipts and all6primary runs passed."
   },
   "productionSiteVerification": {
     "site": ".built-site/thin-final",
@@ -424,5 +431,90 @@
         }
       ]
     }
+  },
+  "finalCiAndMergeVerification": {
+    "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "codeMergeSha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+    "initialReportMergeSha": "af9436217f10f2a842097e69435200dc581f6c87",
+    "acceptanceRun": {
+      "id": 40285735967,
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967",
+      "created_at": "2026-10-26T07:25:48Z",
+      "updated_at": "2026-10-26T09:07:54Z"
+    },
+    "requiredJobsSuccessful": 20,
+    "workflowConclusions": {
+      "success": 7,
+      "existingConditionalSkip": 1
+    },
+    "sameSourceRunnerLossRetriedWithoutCriteriaChanges": true,
+    "combinedBaseEntryTests": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skip": 0,
+      "node": "22.23.3"
+    },
+    "actualCodeMergeTreeMatchesLocalCombinedTree": true,
+    "productionPathsIdenticalToMeasuredSource": true
+  },
+  "finalizationReview": {
+    "status": "passed",
+    "publishReadyMeaning": "Evidence/document finalization bookkeeping only; this flag does not create a user approval requirement.",
+    "readOnlyVerifierExitCode": 0,
+    "indexedReceiptsRechecked": 105,
+    "reviewedReadmeSha256": "b3dca6e070345be7d153739a1cb293030ec3a1b1b751597303fee57204b95c4b",
+    "reviewedCiReceiptSha256": "0fa05c7deb36ca8ed8b4507006eee54409192d09e03ac34dc7bdec2ca709993a",
+    "reviewedBaseIntegrationSha256": "07778092be4f7fde7b71d433a4b900b0726de9bee9e0f855b629208143380411",
+    "allReviewedFileHashesAndByteCountsCurrent": true,
+    "allRelativeReadmeLinksExist": true,
+    "localReadmeLinkCount": 29,
+    "acceptance": {
+      "runId": 40285735967,
+      "attempt": 2,
+      "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "requiredJobsSuccessful": 20,
+      "existingConditionalJobsSkipped": 4,
+      "sameSourceWorkflowConclusions": {
+        "success": 7,
+        "skipped": 1
+      }
+    },
+    "codeMerge": {
+      "sha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+      "mergedAt": "2026-10-26T09:09:13Z",
+      "actualGitTreeSha": "c9b5b01c8f463e90ec4e28f7eeb0160d8a357700",
+      "equalsRecordedLocalCombinedTree": true
+    },
+    "initialReportMergeSha": "af9436217f10f2a842097e69435200dc581f6c87",
+    "productionDiffFromMeasuredSourceToCodeMergeAndRecordedMain": [],
+    "combinedCiEntryTests": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skip": 0,
+      "node": "22.23.3"
+    },
+    "exactShardLocalReproduction": {
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "shardCount": 8,
+      "shardIndex": 1,
+      "concurrency": 2,
+      "testFiles": 143,
+      "tests": 1145,
+      "pass": 1143,
+      "fail": 0,
+      "conditionalBrowserSkips": 2,
+      "browserSkipsCoveredBy": "exact-gpu/summary.json",
+      "node": "22.23.3",
+      "exitCode": 0
+    },
+    "noPendingCiStateInReadmeOrReviewStatus": true,
+    "reviewScope": "Current report files and archived GitHub CI receipts checked; merge tree and production-path equality independently read from local Git objects. No fresh GitHub API query or runtime rerun performed.",
+    "codeChanges": false
   }
 }
