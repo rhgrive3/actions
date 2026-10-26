@@ -1,0 +1,408 @@
+{
+  "scope": "Existing acceptance scripts on local production build, local relay, software WebGL; no physical-device FPS or acoustic-listening claim",
+  "finalBuildRetest": "passed",
+  "results": {
+    "offline": {
+      "status": "passed",
+      "path": "reports/queue-local-ranked-final-offline-20261026/result.json",
+      "sha256": "4e3dd21af2d3f903a3bf87b12fbd7beaf47c6c31de9f9a45e26216ecc96a6ab8",
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef",
+      "modes": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "errors": [],
+      "browser": {
+        "version": "153.0.8010.0",
+        "channel": "custom-executable"
+      },
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-source-final/offline",
+      "log": "reports/queue-local-evidence-20261026/source-audit/ranked-final-offline.log",
+      "representativeScreenshots": [
+        "reports/queue-local-ranked-final-offline-20261026/zones-objective.jpg",
+        "reports/queue-local-ranked-final-offline-20261026/rainmaker-offline.jpg"
+      ],
+      "screenshotEvidence": [
+        {
+          "path": "reports/queue-local-ranked-final-offline-20261026/zones-objective.jpg",
+          "sha256": "f4fe173564169bc469e683ff8158d2ede4c5879221badc5e2b81126e5dbe5f9e"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-offline-20261026/rainmaker-offline.jpg",
+          "sha256": "b060343a9ee41255ae2d204bcbf5f96141beed4a6408353b2cbf0c465d650f72"
+        }
+      ],
+      "harnessSourceEvidence": {
+        "path": "reports/queue-local-evidence-20261026/source-audit/check-inkwave-ranked-browser.mjs.clearance-stage.source.txt",
+        "sha256": "86e0c0c49fdb9e48f3dfded3906439383e5895784c3134b8a45d3e63d5b96527",
+        "scope": "Exact checker source at this run; the later pulse/witness changes affect only the online contact/gear test."
+      }
+    },
+    "online": {
+      "status": "passed",
+      "path": "reports/queue-local-ranked-final-online-20261026/result.json",
+      "sha256": "ea0aa9408347123b43e026095de848580eb32da641780954dcd879456ab3c75d",
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef",
+      "modes": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "errors": [],
+      "browser": {
+        "version": "153.0.8010.0",
+        "channel": "custom-executable"
+      },
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-accepted-final/online",
+      "log": "reports/queue-local-evidence-20261026/source-audit/ranked-final-online.log",
+      "representativeScreenshots": [
+        "reports/queue-local-ranked-final-online-20261026/zones-online-0.jpg",
+        "reports/queue-local-ranked-final-online-20261026/clams-online-1.jpg"
+      ],
+      "screenshotEvidence": [
+        {
+          "path": "reports/queue-local-ranked-final-online-20261026/zones-online-0.jpg",
+          "sha256": "64604a61c7b9dd83996fc06c8359148323603820bffcc5ff4b5735b6eb29e957"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-online-20261026/clams-online-1.jpg",
+          "sha256": "a77917f21a8ad6d300a2c4fc1b049d2dc784fc564470951d195532172df98bb2"
+        }
+      ],
+      "harnessSourceEvidence": {
+        "path": "scripts/check-inkwave-ranked-browser.mjs",
+        "sha256": "3b26567052579b68c5d305781b33ec3f65719e02a3311a987a894cc8d46e31c4",
+        "scope": "Exact checker source at this run; the later pulse/witness changes affect only the online contact/gear test."
+      }
+    },
+    "remoteAudioAndGear": {
+      "status": "passed",
+      "path": "reports/queue-local-ranked-final-online-20261026/remote-contact-gear.json",
+      "sha256": "7ca6013ace2fa557f7e07ff5e9b4cf8e87cf580924e3acd1d69ec15265727261",
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef",
+      "phases": [
+        "native-ledge",
+        "supported-real-audio",
+        "suspended-owner-to-remote",
+        "recovered-real-audio",
+        "released",
+        "gear-1-turret-0",
+        "gear-0-turret-0",
+        "gear-0-turret-1",
+        "gear-1-turret-1",
+        "gear-1-turret-0"
+      ],
+      "scope": "native two-context gameplay, real relay and WebAudio lifecycle; not acoustic listening",
+      "nativeDodgeStart": {
+        "token": 1,
+        "nativeTime": 14.283333333333623,
+        "renderFrame": 222
+      },
+      "liveTurretAndRelayGearGates": "passed independently"
+    }
+  },
+  "localEnvironmentRepair": "reports/queue-local-evidence-20261026/source-audit/browser-webgl-environment.json",
+  "harnessSetupChanged": true,
+  "harnessSetupCorrection": {
+    "scope": "Local browser harness input scheduling and observation only; production gameplay, clock, physics, speed, ink and native admission code unchanged",
+    "baselineCounterexample": "stepRollingVelocity is byte-identical to PR1878 baseline dd90aa24; actual helper sends the old first tick toward -X despite +X input.",
+    "correction": [
+      "Retain the two-metre movement bound and all nine quarter-metre corridor samples, oriented along travelYaw = edgeYaw + pi",
+      "Place positive controls facing travelYaw and use forward KeyW input",
+      "Zero initial yawVel/_faceTarget along with the existing position/linear-velocity setup and restore their original values in finally",
+      "Require the real lifted humanoid capsule to fit at each native candidate and all nine corridor samples using Physics.bodyFits",
+      "Start only the bounded KeyW motion pulse at the next real native frame; restore the exact original frame descriptor and delegate with original receiver, arguments, return and throw behavior. Retain the 250ms wall-clock timer, two-metre movement limit and 30-second deadlines.",
+      "Observe native weapon:dodge synchronously after arming immediately before the physical Space key event. Require exact actor identity, unchanged runner identity, a live native Dodge and a fresh safe-integer token matching the runner producer token. Store scalar evidence only and unsubscribe in finally.",
+      "Keep the subsequent live native turret predicate, actual relay gear sequence, release checks and all positive/negative audio predicates as separate mandatory gates. A start receipt cannot satisfy any of them."
+    ],
+    "preserved": [
+      "250 ms wall-clock movement bound",
+      "30-second timeout",
+      "positive live WebAudio volume > 0",
+      "playing and registered live loop required",
+      "real owner/relay/remote state and accepted gear sequence",
+      "all existing negative predicates and failure receipts",
+      "two-metre native movement bound",
+      "independent live native turret gate",
+      "fresh native Dodge admission witnessed synchronously"
+    ],
+    "test": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+    "testResult": {
+      "tests": 28,
+      "pass": 28,
+      "fail": 0
+    },
+    "log": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-tests.log",
+    "runtimeFunctionSha256": "bc9046762101ae223560818239ad6e0f1f487a48f7a077a29f8f1ef57bd515bb",
+    "browserRetest": {
+      "status": "passed-final",
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef",
+      "offlineRules": 4,
+      "onlineRules": 4,
+      "contactGearPhases": [
+        "native-ledge",
+        "supported-real-audio",
+        "suspended-owner-to-remote",
+        "recovered-real-audio",
+        "released",
+        "gear-1-turret-0",
+        "gear-0-turret-0",
+        "gear-0-turret-1",
+        "gear-1-turret-1",
+        "gear-1-turret-0"
+      ],
+      "resultPaths": [
+        "reports/queue-local-ranked-final-offline-20261026/result.json",
+        "reports/queue-local-ranked-final-online-20261026/result.json"
+      ]
+    },
+    "verifiedInitialSetupIssue": "The unchanged PR1878 stepRollingVelocity moves along body yaw before its facing spring responds to reverse input. Actual helper tests reproduce the old edge-facing KeyS pulse travelling toward -X. Aligning body yaw and KeyW removes that input-direction mismatch; this does not establish the sole cause of the browser audio failure.",
+    "observations": [
+      {
+        "buildContentHash": "f1db5c105e5568692e0c6bceed53d876b693b6d44e153a93da50dce1b5b6f23e",
+        "setup": "original edge-facing / KeyS",
+        "result": "first positive real audio passed, recovery positive volume failed; final owner x=-1.9501, velocity zero"
+      },
+      {
+        "buildContentHash": "5ca32e600b43cabd7e507eacc807bd968546d5eb82f745320bd5755a279c7db1",
+        "setup": "aligned inward body yaw / KeyW / cleared angular state",
+        "result": "first positive real audio volume failed; owner x=-1.9501, velocity zero; real remote loop playing and registered with zero volume"
+      }
+    ],
+    "verifiedInitialOverlap": "Both independent PR1878 and candidate browsers stop at x=-1.9501 with zero velocity and a playing/registered remote loop at volume zero. The actual Tidewater cover begins at x=-1.6; the candidate x=-1.9 lies 0.05m inside the 0.35m terrain capsule. Actual Physics.bodyFits rejects it and collideBody reproduces the observed x=-1.9501. Ground/drum support alone was insufficient.",
+    "comparisonEvidence": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-clearance-comparison.json",
+    "nativeObservationEvidence": {
+      "path": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-proof.json",
+      "sha256": "11f4fa1129c25891f8588c611647f1047feb034fb3c0e29057917a540a8936fe"
+    },
+    "currentHarnessSourceEvidence": [
+      {
+        "path": "scripts/check-inkwave-ranked-browser.mjs",
+        "sha256": "3b26567052579b68c5d305781b33ec3f65719e02a3311a987a894cc8d46e31c4"
+      },
+      {
+        "path": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+        "sha256": "aff3b8438052650254b30d9920659207269e44e28a2610bd2ce27e47f04577e5"
+      }
+    ]
+  },
+  "intermediateResults": {
+    "offline": {
+      "status": "passed",
+      "path": "reports/queue-local-ranked-intermediate-offline-20261026/result.json",
+      "sha256": "0683c3da61e8b81e6ece29a4bcf479481a83d22a18888eb2aef373c294a22bbd",
+      "inputHash": "47065fe25fa4b161c0c595073d3d5386733007a65dd75a81dd62c0437ddfc32b",
+      "contentHash": "5ca32e600b43cabd7e507eacc807bd968546d5eb82f745320bd5755a279c7db1",
+      "revision": "819ec274580dfb6a2b1e385720bc953577e9715fc14f3d44917beac89921e02c",
+      "errors": [],
+      "modes": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-final/offline"
+    },
+    "online": {
+      "status": "failed",
+      "path": "reports/queue-local-ranked-intermediate-online-20261026/result.json",
+      "sha256": "676a21eee0119ff79e326a8b17d09607edb57af9228187597d3f4fd23dce954b",
+      "inputHash": "47065fe25fa4b161c0c595073d3d5386733007a65dd75a81dd62c0437ddfc32b",
+      "contentHash": "5ca32e600b43cabd7e507eacc807bd968546d5eb82f745320bd5755a279c7db1",
+      "revision": "819ec274580dfb6a2b1e385720bc953577e9715fc14f3d44917beac89921e02c",
+      "errors": [],
+      "modes": [],
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-final/online"
+    },
+    "clearanceCorrectedOnline": {
+      "status": "passed",
+      "role": "intermediate build; historical motion restoration still pending",
+      "path": "reports/queue-local-ranked-intermediate-clearance-online-20261026/result.json",
+      "sha256": "e0a19741df5cd604998f428c5dff6b0740f54f10941cf3f352630f596ed3f9e9",
+      "inputHash": "47065fe25fa4b161c0c595073d3d5386733007a65dd75a81dd62c0437ddfc32b",
+      "contentHash": "5ca32e600b43cabd7e507eacc807bd968546d5eb82f745320bd5755a279c7db1",
+      "revision": "819ec274580dfb6a2b1e385720bc953577e9715fc14f3d44917beac89921e02c",
+      "errors": [],
+      "modes": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-intermediate-clearance/online",
+      "contactGearReceipt": "reports/queue-local-ranked-intermediate-clearance-online-20261026/remote-contact-gear.json",
+      "contactGearSha256": "af3b6bedc9a982ab3382dd13840ea0125a2cb0ee08fb06d5146097d6fb9259c9",
+      "contactGearPhases": [
+        "native-ledge",
+        "supported-real-audio",
+        "suspended-owner-to-remote",
+        "recovered-real-audio",
+        "released",
+        "gear-1-turret-0",
+        "gear-0-turret-0",
+        "gear-0-turret-1",
+        "gear-1-turret-1",
+        "gear-1-turret-0"
+      ],
+      "representativeScreenshot": "reports/queue-local-ranked-intermediate-clearance-online-20261026/zones-online-1.jpg"
+    }
+  },
+  "baselineComparison": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-clearance-comparison.json",
+  "preliminaryResults": {
+    "offline": {
+      "status": "passed",
+      "path": "reports/queue-local-ranked-offline-20261026-swiftshader/result.json",
+      "sha256": "acd1f9c88996e0e5954008b33575caf578d9e48cb9bfd569a93935d090088aa4",
+      "contentHash": "f1db5c105e5568692e0c6bceed53d876b693b6d44e153a93da50dce1b5b6f23e",
+      "inputHash": "dd51d95fada923e542ddd65ee229958bc6330e0e531b885bfb7f79cebb361c2c",
+      "revision": "259d84c35c74e672d8d79a8330373274102434480905629b939481b9acb5b321",
+      "modes": [
+        "zones",
+        "tower",
+        "rainmaker",
+        "clams"
+      ],
+      "errors": []
+    },
+    "online": {
+      "status": "failed",
+      "path": "reports/queue-local-ranked-online-20261026/result.json",
+      "sha256": "1502cffbbdef56be6e4e3fec78f5ef7ff0bb1cb52389b7dad12966221dda46b5",
+      "contentHash": "f1db5c105e5568692e0c6bceed53d876b693b6d44e153a93da50dce1b5b6f23e",
+      "inputHash": "dd51d95fada923e542ddd65ee229958bc6330e0e531b885bfb7f79cebb361c2c",
+      "revision": "259d84c35c74e672d8d79a8330373274102434480905629b939481b9acb5b321"
+    },
+    "remoteAudio": {
+      "status": "failed",
+      "path": "reports/queue-local-ranked-online-20261026/remote-contact-gear.json",
+      "sha256": "5dff9b927fd666fb43a4982202a0e1d999741d365376c4b496183616c62bc4dd",
+      "contentHash": "f1db5c105e5568692e0c6bceed53d876b693b6d44e153a93da50dce1b5b6f23e",
+      "inputHash": "dd51d95fada923e542ddd65ee229958bc6330e0e531b885bfb7f79cebb361c2c",
+      "revision": "259d84c35c74e672d8d79a8330373274102434480905629b939481b9acb5b321",
+      "passedPhases": [
+        "native-ledge",
+        "supported-real-audio",
+        "suspended-owner-to-remote"
+      ],
+      "failureAfter": "suspended-owner-to-remote",
+      "remaining": "Superseded by the baseline/candidate initial-overlap comparison, actual Physics regression, and successful final-build run with all original gates retained."
+    }
+  },
+  "finalBuildIdentity": {
+    "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+    "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+    "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+  },
+  "sourceBuildRoot": "/workspace/scratch/2f4c74953bc6/inkwave-verified-final-20261026",
+  "testedStage": "tidewater",
+  "completedUtc": "2026-10-25T20:53:57.957705+00:00",
+  "gameplayAcceptanceRequirementsAndLimitsUnchanged": true,
+  "acceptanceObservationChanged": "Native Dodge onset is recorded synchronously with exact actor, runner, live Dodge and fresh token checks; subsequent live turret and real relay gear gates remain independent. The same 250ms keyboard pulse begins at the next actual native frame.",
+  "nativeObservationEvidence": {
+    "path": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-proof.json",
+    "sha256": "11f4fa1129c25891f8588c611647f1047feb034fb3c0e29057917a540a8936fe"
+  },
+  "retainedFinalIdentityAttempts": [
+    {
+      "label": "failed-dodge-poll",
+      "status": "failed",
+      "scope": "Failed full acceptance attempt; audio and initial gear phases passed, then the live-Dodge render poll timed out. No direct native admission history was recorded.",
+      "result": {
+        "path": "reports/queue-local-ranked-failed-dodge-poll-20261026/result.json",
+        "sha256": "3c81c31f4b54e39539e006d86b205f251a70266186bfc31573b8510b8583514d"
+      },
+      "contactGear": {
+        "path": "reports/queue-local-ranked-failed-dodge-poll-20261026/remote-contact-gear.json",
+        "sha256": "ddd48dea31d3a49560f85f95368a7a1dee9fc82be5e2fd1b4797205ff87419cb"
+      },
+      "log": {
+        "path": "reports/queue-local-evidence-20261026/source-audit/ranked-failed-dodge-poll.log",
+        "sha256": "c13ae845e499a29fc5dbb6c8ef6838ad143feed75b398770230b1dd309e88e01"
+      },
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-source-final/online",
+      "countedAsFinalAcceptance": false,
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+    },
+    {
+      "label": "diagnostic-audio-scheduling",
+      "status": "failed",
+      "scope": "Observational diagnostic failed at the first positive audio gate before any Dodge input or tryDodge call. This is audio pulse scheduling evidence only.",
+      "result": {
+        "path": "reports/queue-local-ranked-diagnostic-audio-scheduling-20261026/result.json",
+        "sha256": "d9ee24851f8e55fcd943d18bb56d26c647ba2b707ed232e962d1d189e8c9e519"
+      },
+      "contactGear": {
+        "path": "reports/queue-local-ranked-diagnostic-audio-scheduling-20261026/remote-contact-gear.json",
+        "sha256": "0cec635060f586262c538bb99579cc5441b7816684811af90017afc0e2c60df6"
+      },
+      "log": {
+        "path": "reports/queue-local-evidence-20261026/source-audit/ranked-diagnostic-audio-scheduling.log",
+        "sha256": "4f89297092bd9ecbf507b2984982e46e16b9be444b13e8a8c81b283979a272d1"
+      },
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-dodge-diagnostic/online",
+      "countedAsFinalAcceptance": false,
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+    },
+    {
+      "label": "diagnostic-dodge",
+      "status": "passed",
+      "scope": "Focused native Dodge and gear diagnostic. Earlier roller/audio phases and the four ranked rule modes were omitted; this is not full browser acceptance.",
+      "result": {
+        "path": "reports/queue-local-ranked-diagnostic-dodge-20261026/result.json",
+        "sha256": "c1520d3f9eba0e1402a9898b79f3f5b15d34e12fcac5687bc01d36370087baaf"
+      },
+      "contactGear": {
+        "path": "reports/queue-local-ranked-diagnostic-dodge-20261026/remote-contact-gear.json",
+        "sha256": "5393f7dc3b317ea10cd20a657738b694590e197eddd862b14f141cbf74b25613"
+      },
+      "log": {
+        "path": "reports/queue-local-evidence-20261026/source-audit/ranked-diagnostic-dodge.log",
+        "sha256": "1d6bbe973289097434ad19ae76c74b2b43fc6e59eef969b0bfe4890dcd2dd868"
+      },
+      "rawArtifacts": "/workspace/scratch/2f4c74953bc6/validation/browser-dodge-only/online",
+      "countedAsFinalAcceptance": false,
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+    }
+  ],
+  "visualInspection": {
+    "result": "PASS",
+    "screenshots": [
+      "reports/queue-local-ranked-final-offline-20261026/zones-objective.jpg",
+      "reports/queue-local-ranked-final-offline-20261026/rainmaker-offline.jpg",
+      "reports/queue-local-ranked-final-online-20261026/zones-online-0.jpg",
+      "reports/queue-local-ranked-final-online-20261026/clams-online-1.jpg"
+    ],
+    "observed": "The representative captures show the 3D stage, characters, Japanese HUD and minimap without a blank canvas or context-loss message. The online JSON reports eight actors; this does not claim all eight are simultaneously visible.",
+    "limits": "Local software WebGL evidence on Tidewater only; no physical-device frame-rate measurement, all-stage visual comparison or acoustic-listening claim."
+  },
+  "manifestArtifactHashVerification": {
+    "result": "PASS",
+    "entries": 2176,
+    "scope": "Every entry in build.artifacts was read and SHA256-checked by the unchanged checker before each browser launch."
+  },
+  "interruptedSourceIdentityCheck": {
+    "status": "aborted-by-orchestrator",
+    "receipt": "reports/queue-local-ranked-interrupted-source-check-20261026/run-control.json",
+    "sha256": "88f639f2fe74bf9571830281df9b0d813cd6e069a76f531cdbeaa07514f76edc",
+    "reason": "Parent requested interruption for a trailing-space-only source consistency check and fresh build. AST, composed modules and rebuilt identity were unchanged; the complete final runs above supersede this incomplete run.",
+    "countedAsProductFailure": false,
+    "countedAsPass": false
+  }
+}

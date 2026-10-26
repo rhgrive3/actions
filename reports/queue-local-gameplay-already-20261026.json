@@ -1,0 +1,1434 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Read-only verification of 38 assigned gameplay candidates against direct and independently composed PR1878 code, plus the subsequently authorized guarded Crab pair implementation. Splash Wall is recorded only in the separate sub report.",
+  "auditCount": 38,
+  "itemsCount": 37,
+  "counts": {
+    "already-in-pr": 34,
+    "implemented-local": 1,
+    "not-adopted": 2
+  },
+  "method": {
+    "direct": "Read git archive of the exact PR1878 base head, isolated from the current worktree.",
+    "composed": "Composed seven pinned source modules using only scripts/inkwave-source-composition.mjs and adapters from the same isolated base archive.",
+    "evidence": "Every recorded needle is asserted present and includes the exact base file SHA-256, line and nearby excerpt. Historical labels are context only.",
+    "tests": "No new blanket gameplay test claim is made by this source audit; executed Crab tests are recorded on that item."
+  },
+  "auditedButRecordedElsewhere": [
+    {
+      "index": 193,
+      "key": "splash-wall-elide-duplicate-yaw-trigonometry",
+      "status": "implemented-local",
+      "report": "reports/queue-local-subs-20261026.json",
+      "reason": "Base still recomputed the wall tangent sine/cosine. The local sub implementation reuses nX/nZ; omit this item here to avoid double counting.",
+      "baseEvidence": {
+        "path": "patches/splatoon3/runtime/all-subs.mjs",
+        "mode": "direct",
+        "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+        "sha256": "a1e9adfa6e0035db23df82232c64667a25bb84edf615d65147202425ca963675",
+        "snippets": [
+          {
+            "line": 1565,
+            "needle": "const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),now=G.time||0;",
+            "excerpt": "    if((G.time||0)>=object.activeAt){\n      const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),now=G.time||0;\n      { const __iwHostiles = hostileActors(api,object.owner);\n        try {"
+          }
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "No browser, WebKit, GPU, audio-output, multiplayer or hardware performance measurement is implied by the source audit or numeric Crab tests.",
+    "The guarded Crab optimization changes only presentation arithmetic within the explicitly measured range; exceptional inputs retain original evaluation."
+  ],
+  "items": [
+    {
+      "index": 6,
+      "key": "big-bubbler-active-tick-snapshot-array-reuse",
+      "title": "# [QUEUE][INKWAVE][Optimization] Big Bubblerのローカル/遠隔更新で毎tick発生するドーム配列コピーを再利用する",
+      "status": "already-in-pr",
+      "reason": "Local and remote Bubbler ticks use separate depth-leased SnapshotPool snapshots, with finally release after the original forward visits.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/kit-big-bubbler.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "e08209d3e0601f5bc2ac5305d8729858c1ea09de301b906a4973eb1fdddd109d",
+          "snippets": [
+            {
+              "line": 1005,
+              "needle": "const domeTickSnapshots = new SnapshotPool(), remoteDomeTickSnapshots = new SnapshotPool();",
+              "excerpt": "// paint, or start the TimeDamage burn. No epsilon fudge.\nconst domeTickSnapshots = new SnapshotPool(), remoteDomeTickSnapshots = new SnapshotPool();\nexport function tickBigBubblers(dt) {\n  if (!(dt > 0) || !domes.length) return;"
+            },
+            {
+              "line": 1008,
+              "needle": "const snapshot = domeTickSnapshots.take(domes);",
+              "excerpt": "  if (!(dt > 0) || !domes.length) return;\n  const snapshot = domeTickSnapshots.take(domes);\n  try { for (const dome of snapshot) {\n    if (dome.dead) continue;"
+            },
+            {
+              "line": 1047,
+              "needle": "finally { domeTickSnapshots.release(snapshot); }",
+              "excerpt": "    syncVisual(dome);\n  } } finally { domeTickSnapshots.release(snapshot); }\n}\n"
+            },
+            {
+              "line": 1088,
+              "needle": "finally { remoteDomeTickSnapshots.release(snapshot); }",
+              "excerpt": "    syncVisual(dome);\n  } } finally { remoteDomeTickSnapshots.release(snapshot); }\n}\n"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_fb2cbe9e990881919acdbc5b63ee0436",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] big-bubbler-active-tick-snapshot-array-reuse.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 11,
+      "key": "booyah-growth-reuse-contact-plane-tile-layout",
+      "title": "# [QUEUE][INKWAVE][Optimization] ナイスダマ塗り拡大中の接地面タイルレイアウト再生成を削減",
+      "status": "already-in-pr",
+      "reason": "Booyah growth keeps a per-object contact-plane tile layout cache, validating the live plan, radius, point/normal scalars and samples before reuse.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "c994589d98a372dd7d2d0523f9727e8978b326d7612b7f826b607719bb58aca6",
+          "snippets": [
+            {
+              "line": 409,
+              "needle": "function paintDiskLayout(rt, point, radius, plan = null, cache = null)",
+              "excerpt": "}\nfunction paintDiskLayout(rt, point, radius, plan = null, cache = null) {\n  // Tile in the nearby contact plane. Keeping every tile at the same world Y\n  // leaves large holes on slopes; projecting each tile from above can instead"
+            },
+            {
+              "line": 420,
+              "needle": "if(cache?.layout&&cache.plan===centres&&Object.is(cache.radius,radius)&&",
+              "excerpt": "  const centres=plan || paintDiskCentres(radius);\n  if(cache?.layout&&cache.plan===centres&&Object.is(cache.radius,radius)&&\n     Object.is(cache.x,point.x)&&Object.is(cache.y,point.y)&&Object.is(cache.z,point.z)&&\n     Object.is(cache.nx,normal.x)&&Object.is(cache.ny,normal.y)&&Object.is(cache.nz,normal.z)&&"
+            },
+            {
+              "line": 468,
+              "needle": "const layoutCache=object.paintDiskLayoutCache||={};",
+              "excerpt": "  const plan=object.paintDiskPlan.centres;\n  const layoutCache=object.paintDiskLayoutCache||={};\n  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan,layoutCache),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;\n  let area=0;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_d229c7d61fbc8191b1282e2e2ba3ec06",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] booyah-growth-reuse-contact-plane-tile-layout.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 44,
+      "key": "crab-tank-mirrored-leg-sine-per-pair",
+      "title": "# [QUEUE][INKWAVE][Optimization] カニタンク左右3組の脚アニメーションでsinをペア共有",
+      "status": "implemented-local",
+      "reason": "The base only cached the two independent sine expressions for idle phases. This local change shares a freshly computed native left sine for a present right leg when |angle| <= 65536 and 0 <= k <= 1. Large/nonfinite phases, absent left legs, custom sine functions and mid-pose function replacement retain the original right expression. Group and Math.sin getter order, custom call receiver, accumulated phase and pose clock remain unchanged. The requested presentation-only rounding difference is bounded by actual model-matrix comparisons.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/sub-models.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "1dc3abe0636905f5261cd3168272d0eb53771b064039dda8818df38352213c77",
+          "snippets": [
+            {
+              "line": 848,
+              "needle": "const legSines=st.crabLegSines||=([]);",
+              "excerpt": "      const k = Math.min(1, v / 2);\n      const legSines=st.crabLegSines||=([]);\n      for (let i = 0; i < 3; i++) {\n        const [l, r] = CRAB_LEGS[i];"
+            },
+            {
+              "line": 859,
+              "needle": "row.left=Math.sin(angle);",
+              "excerpt": "        }\n        if(g[l]){if(!row.leftReady){row.left=Math.sin(angle);row.leftReady=true;}g[l].rotation.y=row.left*0.22*k;}\n        if(g[r]){if(!row.rightReady){row.right=Math.sin(angle+Math.PI);row.rightReady=true;}g[r].rotation.y=row.right*0.22*k;}\n      }"
+            },
+            {
+              "line": 860,
+              "needle": "row.right=Math.sin(angle+Math.PI);",
+              "excerpt": "        if(g[l]){if(!row.leftReady){row.left=Math.sin(angle);row.leftReady=true;}g[l].rotation.y=row.left*0.22*k;}\n        if(g[r]){if(!row.rightReady){row.right=Math.sin(angle+Math.PI);row.rightReady=true;}g[r].rotation.y=row.right*0.22*k;}\n      }\n      break;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_8d4acd06d17481919155932b4bf36333",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] crab-tank-mirrored-leg-sine-per-pair.md",
+      "prior_status": "already-in-pr",
+      "currentLocalEvidence": [
+        {
+          "path": "patches/splatoon3/runtime/sub-models.mjs",
+          "mode": "direct",
+          "commit": null,
+          "sha256": "965539db8802473a25d00abe886778d6ec695fc50f643a095652960e6408e7d6",
+          "snippets": [
+            {
+              "line": 28,
+              "needle": "const CRAB_NATIVE_SIN = Math.sin;",
+              "excerpt": "const SHARED_FLAG = 's3Shared';\nconst CRAB_NATIVE_SIN = Math.sin;\nconst CRAB_CALL_SIN = (fn, receiver, angle) => Reflect.apply(fn, receiver, [angle]);\n"
+            },
+            {
+              "line": 29,
+              "needle": "const CRAB_CALL_SIN = (fn, receiver, angle) => Reflect.apply(fn, receiver, [angle]);",
+              "excerpt": "const CRAB_NATIVE_SIN = Math.sin;\nconst CRAB_CALL_SIN = (fn, receiver, angle) => Reflect.apply(fn, receiver, [angle]);\n\nexport const SUB_MODEL_IDS = Object.freeze(["
+            },
+            {
+              "line": 875,
+              "needle": "row.right=leftSin===CRAB_NATIVE_SIN&&sin===leftSin&&Number.isFinite(angle)&&angle>=-65536&&angle<=65536&&k>=0&&k<=1",
+              "excerpt": "            const sin=Math.sin;\n            row.right=leftSin===CRAB_NATIVE_SIN&&sin===leftSin&&Number.isFinite(angle)&&angle>=-65536&&angle<=65536&&k>=0&&k<=1\n              ?-leftSine:sin===CRAB_NATIVE_SIN?sin(angle+Math.PI):CRAB_CALL_SIN(sin,Math,angle+Math.PI);\n            row.rightReady=true;"
+            }
+          ]
+        }
+      ],
+      "validation": {
+        "newTestFile": "patches/splatoon3/tests/queue-crab-pose-local-20261026.test.mjs",
+        "testsPassed": 4,
+        "poses": 8336,
+        "modelNodes": 58,
+        "cadences": [
+          30,
+          60,
+          120
+        ],
+        "maxRotationError": 8.141542995332429e-13,
+        "maxWorldMatrixError": 7.457368056407176e-13,
+        "customGetterOrder": "compared against extracted base function",
+        "normalMovingSineCalls": {
+          "before": 6,
+          "after": 3
+        },
+        "relatedSuites": [
+          {
+            "file": "patches/splatoon3/tests/queue-weapons-20261024.test.mjs",
+            "subtestsPassed": 13
+          },
+          {
+            "file": "patches/splatoon3/tests/sub-models.test.mjs",
+            "subtestsPassed": 8,
+            "warning": "Optional source-motion VM dynamic-import callback absent; existing warning was non-fatal."
+          }
+        ]
+      },
+      "finalBuildAdjustment": {
+        "reason": "The generic Function identifier legitimately enables the existing orphan scanner conservative reachability gate. Keep that gate unchanged.",
+        "change": "CRAB_CALL_SIN now invokes custom sine functions with Reflect.apply(fn, receiver, [angle]); the one-element array exists only on the custom-function fallback. Native sine sharing and exact native fallback use their existing direct calls.",
+        "validation": "Reran queue-crab-pose-local-20261026.test.mjs (4/4) and sub-models.test.mjs (8/8). No Function identifier remains in this runtime module."
+      }
+    },
+    {
+      "index": 58,
+      "key": "fx-flick-curtain-and-dust-ring-reuse-angle-trigonometry",
+      "title": "# [QUEUE][INKWAVE][Optimization] FX roller flick curtain / dust ring: reuse per-particle angular sin/cos",
+      "status": "already-in-pr",
+      "reason": "The composed dust ring and both flick-curtain loops compute each angle sine/cosine once and reuse them for birth position and velocity.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/fx/fx.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "edd44f682140da532d361106942b3039b1730b051608888db1c5e459dc07994c",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 1292,
+              "needle": "const ca = Math.cos(a), sa = Math.sin(a);",
+              "excerpt": "      const a = a0 + (i / count) * TAU + (rand() - 0.5) * 0.4, sp = speed * (0.6 + rand() * 0.6);\n      const ca = Math.cos(a), sa = Math.sin(a);\n      this._sprite(this.puffs, pos.x + ca * 0.25, pos.y + 0.12 + rand() * 0.12, pos.z + sa * 0.25, ca * sp, 0.3 + rand() * 0.5, sa * sp,\n        col, 0.16 + rand() * 0.1, 0.5 + rand() * 0.35, 0.55 + rand() * 0.35, 0.3, 3.2, 0.25, P_DUST, 0.05, 1.2);"
+            },
+            {
+              "line": 1838,
+              "needle": "const cu = Math.cos(up), sa = Math.sin(a), ca = Math.cos(a);",
+              "excerpt": "      const up = 0.35 + rand() * 0.35, sp = 6 + rand() * 5 * (1 - 0.4 * Math.abs(t));\n      const cu = Math.cos(up), sa = Math.sin(a), ca = Math.cos(a);\n      const sz = 0.03 + rand() * 0.04;\n      const drop = this._spawnDrop(pos.x + sa * 0.4, pos.y + (rand() - 0.3) * 0.4, pos.z + ca * 0.4, sa * cu * sp, Math.sin(up) * sp, ca * cu * sp, col, sz, 1.4, 1, 1.2, sz > 0.055 ? paint : 0);"
+            },
+            {
+              "line": 1846,
+              "needle": "const sa = Math.sin(a), ca = Math.cos(a);",
+              "excerpt": "      const a = yaw + (i - 1) * (sources?.[0]?.s3Vertical ? 0 : spread) * 0.35;\n      const sa = Math.sin(a), ca = Math.cos(a);\n      const puff = this._sprite(this.puffs, pos.x + sa * 0.8, pos.y + 0.2, pos.z + ca * 0.8, sa * 3, 1.0, ca * 3, this._colB, sources?.[0]?.s3Vertical ? 0.12 : 0.2, sources?.[0]?.s3Vertical ? 0.3 : 0.7, sources?.[0]?.s3Vertical ? 0.16 : 0.4, 0.3, 4);\n      if (sources?.length) {"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_fd6845cd9f788191ae1c0715d0f462f7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fx-flick-curtain-and-dust-ring-reuse-angle-trigonometry.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 72,
+      "key": "ink-volume-stream-decompression-direct-sized-buffer",
+      "title": "# [QUEUE][INKWAVE][Optimization] 3Dインクgzip展開時の43.2 MiB一時複製を除去",
+      "status": "already-in-pr",
+      "reason": "Stream decompression writes directly into a manifest-sized Uint8Array, bounds every incoming chunk, cancels the reader on error and rejects a final length mismatch.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/ink-volume/pack.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "a8d4e742a672a5f620fee34843cd24efb2c9f02193639984fa93971d71d46865",
+          "snippets": [
+            {
+              "line": 24,
+              "needle": "const bytes = new Uint8Array(manifest.byteLength);",
+              "excerpt": "  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('gzip')), reader = stream.getReader();\n  const bytes = new Uint8Array(manifest.byteLength);\n  let length = 0;\n  try {"
+            },
+            {
+              "line": 30,
+              "needle": "bytes.set(value, length); length += value.byteLength;",
+              "excerpt": "      if (value.byteLength > bytes.length - length) throw Error('Ink decompression exceeds declared size');\n      bytes.set(value, length); length += value.byteLength;\n    }\n  } catch (error) { await reader.cancel().catch(() => {}); throw error; }"
+            },
+            {
+              "line": 32,
+              "needle": "await reader.cancel().catch(() => {});",
+              "excerpt": "    }\n  } catch (error) { await reader.cancel().catch(() => {}); throw error; }\n  if (length !== manifest.byteLength) throw Error('Ink decompression length mismatch');\n  return bytes.buffer;"
+            },
+            {
+              "line": 33,
+              "needle": "if (length !== manifest.byteLength)",
+              "excerpt": "  } catch (error) { await reader.cancel().catch(() => {}); throw error; }\n  if (length !== manifest.byteLength) throw Error('Ink decompression length mismatch');\n  return bytes.buffer;\n}"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_8b8fd35d1ac88191ae7dbb466f8f9b4d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-volume-stream-decompression-direct-sized-buffer.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 77,
+      "key": "inkflight-head-reuse-swept-miss-length",
+      "title": "# [QUEUE][INKWAVE][Optimization] InkFlight head: reuse level sweep's no-hit segment length",
+      "status": "already-in-pr",
+      "reason": "Composed InkFlight reuses world.dist for a native swept miss only; custom world implementations and hit paths retain their prior distance calculation.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/inkFlightRuntime.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "a87838f57e9a035aa60a14d5ea07af776127ef1e37486e0f87ce55b6062334c2",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 72,
+              "needle": "const reuseLength = !!G.physics.level && this.world === sourceLengthWorld;",
+              "excerpt": "      p.inkPeak = Math.max(p.inkPeak, p.pos.y);\n      const reuseLength = !!G.physics.level && this.world === sourceLengthWorld;\n      const fallbackLength = reuseLength ? null : p.prev.distanceTo(p.pos);\n      const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);"
+            },
+            {
+              "line": 75,
+              "needle": "const length = reuseLength ? (!world.hit ? world.dist : p.prev.distanceTo(p.pos)) : fallbackLength;",
+              "excerpt": "      const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      const length = reuseLength ? (!world.hit ? world.dist : p.prev.distanceTo(p.pos)) : fallbackLength;\n      let barrier = this.system.rankedBarrierCandidate?.(p) || null;\n      const device = this.system.nativeSprinklerCandidate?.(p, p.prev, p.pos);"
+            },
+            {
+              "line": 249,
+              "needle": "const sourceLengthWorld = InkFlightRuntime.prototype.world;",
+              "excerpt": "\nconst sourceLengthWorld = InkFlightRuntime.prototype.world;\n"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_8624bf66e4908191b4250b22f55b1274",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkflight-head-reuse-swept-miss-length.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "index": 78,
+      "key": "inkflight-paint-reuse-synchronous-splat-options",
+      "title": "# [QUEUE][INKWAVE][Optimization] inkflight-paint-reuse-synchronous-splat-options",
+      "status": "already-in-pr",
+      "reason": "Synchronous InkFlight splat options use depth-leased records and finally clear owner/stretch references and restore nesting depth.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/inkFlightRuntime.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "a87838f57e9a035aa60a14d5ea07af776127ef1e37486e0f87ce55b6062334c2",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 205,
+              "needle": "const depth=this._paintOptionsDepth||0, leases=this._paintOptionsLeases||=([]);",
+              "excerpt": "    if (projected > EPS && shape.centreBack > 0) this.point.addScaledVector(this.heading, -shape.centreBack);\n    const depth=this._paintOptionsDepth||0, leases=this._paintOptionsLeases||=([]);\n    const options=leases[depth]||=( {} );this._paintOptionsDepth=depth+1;\n    try {"
+            },
+            {
+              "line": 211,
+              "needle": "finally { options.claimOwner=null;options.stretch=undefined;this._paintOptionsDepth=depth; }",
+              "excerpt": "      p.owner.addTurf(G.paint.splat(this.point,shape.radius,p.team,options));\n    } finally { options.claimOwner=null;options.stretch=undefined;this._paintOptionsDepth=depth; }\n  }\n  impact(p, hit) {"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_d8796ac7aa648191b47009708356682a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkflight-paint-reuse-synchronous-splat-options.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 89,
+      "key": "legacy-charger-capsule-xz-broadphase",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy Charger beam: reject distant actor capsules before 24-sample hit solver",
+      "status": "already-in-pr",
+      "reason": "Legacy charger lazily computes an XZ capsule broadphase once per sweep and retains the precise hit query for candidates.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "72daf743e1143f82e963211b385a2ddaa248fc54a7bce5927e1a8fa1a1522ccc",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 1259,
+              "needle": "let victim = null, boundsReady=false,minX,maxX,minZ,maxZ,endX,endY,endZ;",
+              "excerpt": "    // first enemy along the beam\n    let victim = null, boundsReady=false,minX,maxX,minZ,maxZ,endX,endY,endZ;\n    for (const e of G.actors) {\n      if (e.team === a.team || !e.alive) continue;"
+            },
+            {
+              "line": 1266,
+              "needle": "minZ=Math.min(m.z,endZ)-reach;maxZ=Math.max(m.z,endZ)+reach;boundsReady=true;",
+              "excerpt": "        minX=Math.min(m.x,endX)-reach;maxX=Math.max(m.x,endX)+reach;\n        minZ=Math.min(m.z,endZ)-reach;maxZ=Math.max(m.z,endZ)+reach;boundsReady=true;\n      }\n      if(Number.isFinite(e.pos.x)&&Number.isFinite(e.pos.z)&&"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_0b2696cca2008191b7411cef29e6156b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-charger-capsule-xz-broadphase.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 92,
+      "key": "legacy-paint-grid-use-single-cell-containment-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy塗りグリッド初期化で既存の単一ハッシュセル高速判定を使う",
+      "status": "already-in-pr",
+      "reason": "Legacy paint dead-cell construction uses the grid containment fast path when offered, preserving pointInside fallback.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/world/paint.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "be44f5422271574adc85dd28c6f6f4062e31397ed4fe59d65e2672ab4f148267",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 353,
+              "needle": "if (lvl.pointInsideGrid ? lvl.pointInsideGrid(p, f.block) : lvl.pointInside(p, 0, f.block)) this.dead[k] = 1;",
+              "excerpt": "        const k = f.grid + j * f.nu + i;\n        if (lvl.pointInsideGrid ? lvl.pointInsideGrid(p, f.block) : lvl.pointInside(p, 0, f.block)) this.dead[k] = 1;\n        else if (f.turf) { this.turfTotal++; this.turfArea += f.cu * f.cv; }\n      }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_3d5041ac984c819183e7916d27622251",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-paint-grid-use-single-cell-containment-fastpath.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 95,
+      "key": "legacy-paint-splat-omit-unused-position-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy Paint: スプラット専用メッシュのシェーダー未使用position配列を削除",
+      "status": "already-in-pr",
+      "reason": "The base adapter explicitly removes the unused MAX_QUADS position buffer. The composed splat geometry binds its real shader attributes without that dummy allocation.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/world-queue-build-adapter.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "02f899f72898b41a9ac4b6e2ae25acbdf9abd43fecb27c0ad6f3d767aa7e2ef7",
+          "snippets": [
+            {
+              "line": 4,
+              "needle": "g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_QUADS * 4 * 3), 3));",
+              "excerpt": "  if (rel === 'src/world/paint.js') code = once(code,\n    \"    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_QUADS * 4 * 3), 3));\\n\", '', 'indexed splats need only their shader inputs');\n  if (rel === 'src/world/environment.js') {\n    // Keep the public two-argument call compatible; the third argument is transaction-local."
+            },
+            {
+              "line": 4,
+              "needle": "indexed splats need only their shader inputs",
+              "excerpt": "  if (rel === 'src/world/paint.js') code = once(code,\n    \"    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAX_QUADS * 4 * 3), 3));\\n\", '', 'indexed splats need only their shader inputs');\n  if (rel === 'src/world/environment.js') {\n    // Keep the public two-argument call compatible; the third argument is transaction-local."
+            }
+          ]
+        },
+        {
+          "path": "inkwave-public/src/world/paint.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "be44f5422271574adc85dd28c6f6f4062e31397ed4fe59d65e2672ab4f148267",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 387,
+              "needle": "g.setAttribute('aPos', mk(this.aPos, 2));",
+              "excerpt": "    const mk = (arr, n) => { const a = new THREE.BufferAttribute(arr, n); a.setUsage(THREE.DynamicDrawUsage); return a; };\n    g.setAttribute('aPos', mk(this.aPos, 2));\n    g.setAttribute('aLocal', mk(this.aLocal, 3));\n    g.setAttribute('aSplat', mk(this.aSplat, 4));"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_b4bfbd9ee8d08191b0410cdeb0d7cf3d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-paint-splat-omit-unused-position-array.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 96,
+      "key": "legacy-roller-flick-reuse-pitch-sine-across-globs",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy Roller flick reuses invariant launch-pitch sine across globs",
+      "status": "already-in-pr",
+      "reason": "Legacy roller flick computes its common pitch sine once and reuses it across globs, retaining the original multiply order.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "72daf743e1143f82e963211b385a2ddaa248fc54a7bce5927e1a8fa1a1522ccc",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 1218,
+              "needle": "const upSine = Math.sin(up);",
+              "excerpt": "    const up = clamp(a.aimPitch, -0.2, 0.5) + 0.32;\n    const upSine = Math.sin(up);\n    let projectileFirst;\n    for (let i = 0; i < w.flickDrops; i++) {"
+            },
+            {
+              "line": 1230,
+              "needle": "p.vel.set(Math.sin(ang) * cu * sp, upSine * sp, Math.cos(ang) * cu * sp);",
+              "excerpt": "      const cu = Math.cos(up + (Math.random() - 0.5) * 0.12);\n      p.vel.set(Math.sin(ang) * cu * sp, upSine * sp, Math.cos(ang) * cu * sp);\n      // The active attack parameters own physics. Finalize before _push records\n      // them; the gameplay overlay formerly assigned these only after publication."
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_123e3f6b3ec881919fb1785c68d55b2e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-roller-flick-reuse-pitch-sine-across-globs.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 97,
+      "key": "legacy-slosher-blaster-splash-squared-far-prune",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy Slosher/Blaster radial splash: conservative squared-distance far-target rejection",
+      "status": "already-in-pr",
+      "reason": "Legacy slosher and blaster paths reject only clearly distant finite candidates with squared distances; the original distance and boundary checks still decide admitted cases.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "72daf743e1143f82e963211b385a2ddaa248fc54a7bce5927e1a8fa1a1522ccc",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 1178,
+              "needle": "if(Number.isFinite(farRadius)&&farRadius>=0&&_v3.distanceToSquared(at)>(farRadius+1e-6)**2)continue;",
+              "excerpt": "      const farRadius=w.splashRadius+0.3;\n      if(Number.isFinite(farRadius)&&farRadius>=0&&_v3.distanceToSquared(at)>(farRadius+1e-6)**2)continue;\n      if (_v3.distanceTo(at) > farRadius) continue;\n      if (!G.physics.los(_v2.copy(at).setY(at.y + 0.25), _v3)) continue;"
+            },
+            {
+              "line": 1749,
+              "needle": "if(Number.isFinite(farRadius)&&farRadius>=0&&_v.distanceToSquared(c)>(farRadius+1e-6)**2)continue;",
+              "excerpt": "      const farRadius=Math.max(damageRadius,p.s3TerrainBurst||p.s3SpecialWeapon?0:BLASTER_KNOCKBACK.distance);\n      if(Number.isFinite(farRadius)&&farRadius>=0&&_v.distanceToSquared(c)>(farRadius+1e-6)**2)continue;\n      const d = _v.distanceTo(c);\n      if (d > farRadius) continue;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_5375ce6dc52481919ea3277730080e7b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-slosher-blaster-splash-squared-far-prune.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 104,
+      "key": "match-skip-remote-remote-noop-softpush-pairs",
+      "title": "# [QUEUE][INKWAVE][Optimization] Match の remote–remote 無効なソフトプッシュ判定を早期省略",
+      "status": "already-in-pr",
+      "reason": "The PR1878 composed softpush loop already skips a pair when both actors are remote, before computing the pair distance. Subsequent local loop-preparation improvements are separate work.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/match.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "9250f0c40a5cb002a6889427860c9f00444c6752613f31d460bbf165d804c38f",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 234,
+              "needle": "if (!a.alive || !b.alive || (a.remote && b.remote)) continue;",
+              "excerpt": "      const a = this.actors[i], b = this.actors[j];\n      if (!a.alive || !b.alive || (a.remote && b.remote)) continue;\n      const dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z, dy = b.pos.y - a.pos.y;\n      const d2 = dx * dx + dz * dz;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_911a552fa0308191b37beb939c045e0a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] match-skip-remote-remote-noop-softpush-pairs.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "index": 106,
+      "key": "native-bomb-arc-limit-line-distance-to-draw-range",
+      "title": "# [QUEUE][INKWAVE][Optimization] 通常ボム軌道ガイドの破棄される線分距離計算を削減",
+      "status": "already-in-pr",
+      "reason": "Bomb-arc line distance updates reuse the fixed attribute and accumulate only through n visible vertices, with an update range limited to n.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "72daf743e1143f82e963211b385a2ddaa248fc54a7bce5927e1a8fa1a1522ccc",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 2015,
+              "needle": "this.arcGeo.setDrawRange(0, n);",
+              "excerpt": "      pos.needsUpdate = true;\n      this.arcGeo.setDrawRange(0, n);\n      // Match THREE.Line.computeLineDistances() exactly, but reuse the fixed BufferAttribute.\n      // Accumulate in JS Number precision and only round on Float32 store, preserving the old data bytes."
+            },
+            {
+              "line": 2018,
+              "needle": "const dist = this.arcGeo.attributes.lineDistance;",
+              "excerpt": "      // Accumulate in JS Number precision and only round on Float32 store, preserving the old data bytes.\n      const dist = this.arcGeo.attributes.lineDistance;\n      let total = 0;\n      dist.setX(0, 0);"
+            },
+            {
+              "line": 2021,
+              "needle": "for (let i = 1; i < n; i++) {",
+              "excerpt": "      dist.setX(0, 0);\n      for (let i = 1; i < n; i++) {\n        _v2.fromBufferAttribute(pos, i - 1);\n        _v3.fromBufferAttribute(pos, i);"
+            },
+            {
+              "line": 2028,
+              "needle": "dr.count = n * dist.itemSize;",
+              "excerpt": "      const dr = dist._arcRange || (dist._arcRange = { start: 0, count: 0 });\n      dr.count = n * dist.itemSize;\n      dist.updateRanges.length = 0; dist.updateRanges.push(dr);\n      dist.needsUpdate = true;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_bd5574b11a3c81919873d9c52ea73b8c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-bomb-arc-limit-line-distance-to-draw-range.md",
+      "prior_status": null
+    },
+    {
+      "index": 111,
+      "key": "paint-atlas-reuse-bufferattribute-update-range-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] Paint atlas: reuse 5 BufferAttribute GPU update-range records",
+      "status": "already-in-pr",
+      "reason": "Paint atlas uploads reuse each attribute range object and insert it directly after clearing update ranges.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/world/paint.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "be44f5422271574adc85dd28c6f6f4062e31397ed4fe59d65e2672ab4f148267",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 932,
+              "needle": "const range=at._paintRange||(at._paintRange={start:0,count:0});",
+              "excerpt": "        const at = g.attributes[name];\n        const range=at._paintRange||(at._paintRange={start:0,count:0});\n        range.count=n*at.itemSize;\n        at.clearUpdateRanges(); at.updateRanges.push(range); at.needsUpdate = true;"
+            },
+            {
+              "line": 934,
+              "needle": "at.updateRanges.push(range);",
+              "excerpt": "        range.count=n*at.itemSize;\n        at.clearUpdateRanges(); at.updateRanges.push(range); at.needsUpdate = true;\n      }\n    }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_00c38079616c8191ab7cf8b9895b857c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] paint-atlas-reuse-bufferattribute-update-range-records.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 116,
+      "key": "player-map-superjump-skip-idle-ally-filter",
+      "title": "# [QUEUE][INKWAVE][Optimization] マップを開いた無入力フレームでSuper Jump用の味方filter配列を作らない",
+      "status": "already-in-pr",
+      "reason": "Player map ally collection is lazy: only the actual Digit1/2/3 or corresponding controller/touch requests invoke iwPickMapAlly, which builds once for that update.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/player.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "6133ff339b9e036fcd7aeb15bf55269a6d15fdb0d54c181e96c87ec2beb3aa3c",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 32,
+              "needle": "function iwPickMapAlly(controller, index)",
+              "excerpt": "\nfunction iwPickMapAlly(controller, index) {\n  const a = controller.a;\n  let allies = controller._iwMapAllies;"
+            },
+            {
+              "line": 35,
+              "needle": "if (!controller._iwMapAlliesReady) {",
+              "excerpt": "  let allies = controller._iwMapAllies;\n  if (!controller._iwMapAlliesReady) {\n    if (!allies) allies = controller._iwMapAllies = [];\n    allies.length = 0;"
+            },
+            {
+              "line": 218,
+              "needle": "if (inp.wasPressed('Digit1') || (!standardPad && inp.padPressed.has(14)) || tj === 0) iwPickMapAlly(this, 0);",
+              "excerpt": "      const tj = touch?.consumeJumpTarget?.() ?? -1;\n      if (inp.wasPressed('Digit1') || (!standardPad && inp.padPressed.has(14)) || tj === 0) iwPickMapAlly(this, 0);\n      if (inp.wasPressed('Digit2') || (!standardPad && inp.padPressed.has(12)) || tj === 1) iwPickMapAlly(this, 1);\n      if (inp.wasPressed('Digit3') || (!standardPad && inp.padPressed.has(15)) || tj === 2) iwPickMapAlly(this, 2);"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_ee14511a390c8191a13b2937287743f6",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] player-map-superjump-skip-idle-ally-filter.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 117,
+      "key": "pooled-legacy-round-elide-per-shot-config-object",
+      "title": "# [QUEUE][INKWAVE][Optimization] pooled-legacy-round-elide-per-shot-config-object",
+      "status": "already-in-pr",
+      "reason": "Pooled legacy rounds use ordered scalar assignment helpers instead of per-shot object literals; real firing/replay call sites invoke them.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "72daf743e1143f82e963211b385a2ddaa248fc54a7bce5927e1a8fa1a1522ccc",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 689,
+              "needle": "function _assignWeaponQueueRound0(p,",
+              "excerpt": "\nfunction _assignWeaponQueueRound0(p,v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20,v21,v22,v23,v24,v25){p[\"type\"]=v0;p[\"wid\"]=v1;p[\"owner\"]=v2;p[\"team\"]=v3;p[\"age\"]=v4;p[\"life\"]=v5;p[\"straight\"]=v6;p[\"radius\"]=v7;p[\"damage\"]=v8;p[\"size\"]=v9;p[\"trail\"]=v10;p[\"trailEvery\"]=v11;p[\"trailRadius\"]=v12;p[\"grav\"]=v13;p[\"drag\"]=v14;p[\"seed\"]=v15;p[\"delay\"]=v16;p[\"head\"]=v17;p[\"vis\"]=v18;p[\"tail0\"]=v19;p[\"tailK\"]=v20;p[\"wob\"]=v21;p[\"wobF\"]=v22;p[\"nose\"]=v23;p[\"sats\"]=v24;p[\"ghost\"]=v25;return p;}\nfunction _assignWeaponQueueRound1(p,v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18,v19,v20,v21){p[\"type\"]=v0;p[\"owner\"]=v1;p[\"team\"]=v2;p[\"age\"]=v3;p[\"life\"]=v4;p[\"straight\"]=v5;p[\"radius\"]=v6;p[\"damage\"]=v7;p[\"size\"]=v8;p[\"trail\"]=v9;p[\"trailEvery\"]=v10;p[\"trailRadius\"]=v11;p[\"grav\"]=v12;p[\"drag\"]=v13;p[\"seed\"]=v14;p[\"vis\"]=v15;p[\"tail0\"]=v16;p[\"tailK\"]=v17;p[\"wob\"]=v18;p[\"wobF\"]=v19;p[\"nose\"]=v20;p[\"sats\"]=v21;return p;}\nfunction _assignWeaponQueueRound2(p,v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15){p[\"type\"]=v0;p[\"wid\"]=v1;p[\"owner\"]=v2;p[\"team\"]=v3;p[\"age\"]=v4;p[\"life\"]=v5;p[\"straight\"]=v6;p[\"radius\"]=v7;p[\"damage\"]=v8;p[\"size\"]=v9;p[\"trail\"]=v10;p[\"trailEvery\"]=v11;p[\"trailRadius\"]=v12;p[\"grav\"]=v13;p[\"drag\"]=v14;p[\"seed\"]=v15;return p;}"
+            },
+            {
+              "line": 863,
+              "needle": "_assignWeaponQueueRound0(p,type,wid || null,a,a.team,0,life,",
+              "excerpt": "    const p = this._new();\n    _assignWeaponQueueRound0(p,type,wid || null,a,a.team,0,life,straight,radius,0,size,-1.5,trailEvery,0.45,grav,drag,Math.random(),delay,!!head,vis,tail0,tailK,wob,wobF,nose,sats,true);\n    p.pos.set(px, py, pz); p.prev.copy(p.pos); p.start.copy(p.pos);\n    p.vel.set(vx, vy, vz);"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_86d3b8085e3c8191ace73d00d7c65e7c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] pooled-legacy-round-elide-per-shot-config-object.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 120,
+      "key": "ranked-bot-steering-point-validation-skip-temporary-arrays",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチルールBOTの座標変換で検証用短命配列を削減する",
+      "status": "already-in-pr",
+      "reason": "Ranked bot point validation uses firstThreeFinite for arrays and eager x/y/z scalar reads for objects instead of temporary coordinate arrays.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/bots.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "74fbd5d9ef3ad52c98ee52d5fabe5458ae949f1e16c3bdedb706e9792969b738",
+          "snippets": [
+            {
+              "line": 21,
+              "needle": "if (firstThreeFinite(value)) return { x: value[0], y: value[1], z: value[2] };",
+              "excerpt": "const point = value => {\n  if (firstThreeFinite(value)) return { x: value[0], y: value[1], z: value[2] };\n  if (!value) return null;\n  const x = value.x, y = value.y, z = value.z;"
+            },
+            {
+              "line": 23,
+              "needle": "const x = value.x, y = value.y, z = value.z;",
+              "excerpt": "  if (!value) return null;\n  const x = value.x, y = value.y, z = value.z;\n  return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)\n    ? { x: value.x, y: value.y, z: value.z } : null;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_e6d974c4539c8191b89a9353811c0585",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-bot-steering-point-validation-skip-temporary-arrays.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 127,
+      "key": "ranked-clams-reuse-depth-scoped-pickup-actor-list",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-clams-reuse-depth-scoped-pickup-actor-list",
+      "status": "already-in-pr",
+      "reason": "Clam pickup uses per-depth field snapshots and actor buffers; finally clears both arrays and restores the previous depth.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "snippets": [
+            {
+              "line": 405,
+              "needle": "const depth = this._pickupDepth || 0, snapshots = this._pickupSnapshots || (this._pickupSnapshots = []);",
+              "excerpt": "  _processPickups(frame) {\n    const depth = this._pickupDepth || 0, snapshots = this._pickupSnapshots || (this._pickupSnapshots = []);\n    const buffers = this._pickupActorBuffers || (this._pickupActorBuffers = []);\n    const actors = buffers[depth] || (buffers[depth] = []), field = snapshots[depth] || (snapshots[depth] = []);"
+            },
+            {
+              "line": 406,
+              "needle": "const buffers = this._pickupActorBuffers || (this._pickupActorBuffers = []);",
+              "excerpt": "    const depth = this._pickupDepth || 0, snapshots = this._pickupSnapshots || (this._pickupSnapshots = []);\n    const buffers = this._pickupActorBuffers || (this._pickupActorBuffers = []);\n    const actors = buffers[depth] || (buffers[depth] = []), field = snapshots[depth] || (snapshots[depth] = []);\n    this._pickupDepth = depth + 1;"
+            },
+            {
+              "line": 422,
+              "needle": "finally { field.length = 0; actors.length = 0; this._pickupDepth = depth; }",
+              "excerpt": "      }\n    } finally { field.length = 0; actors.length = 0; this._pickupDepth = depth; }\n  }\n"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_b6dde79d9c5881919d0592a34bdabd8f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-reuse-depth-scoped-pickup-actor-list.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 134,
+      "key": "ranked-engine-transactional-restore-spare-rule-reuse",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ranked 5Hz snapshot restore: reuse a verified transactional spare rule",
+      "status": "not-adopted",
+      "reason": "The base and local code deliberately construct a fresh candidate rule before transactional restore. Published rules may escape to callers and stage route descriptors can change in place; reusing a prior rule would mutate retained objects or retain stale Tower/Rainmaker derived route data. The proposal itself requires a sound alias and stage-epoch guard. An identity-only spare cache does not meet that requirement.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/engine.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "7c75558ba331295b205c5ce4c6ff6d4150c999c1b2f4b6bae7e727f36ff3bcac",
+          "snippets": [
+            {
+              "line": 121,
+              "needle": "const candidate = new RULES[this.mode](this, this.stage, { seedInitial: false });",
+              "excerpt": "    // replace the clock/result or leave the next host with unusable state.\n    const candidate = new RULES[this.mode](this, this.stage, { seedInitial: false });\n    try { candidate.restore(s.rule, { returnSnapshot: false }); } catch { return false; }\n    for (const k of ['revision', 'time', 'elapsed', 'leader', 'overtime', 'overtimeTeam', 'overtimeElapsed', 'winner', 'reason', 'knockout']) this[k] = s[k];"
+            },
+            {
+              "line": 125,
+              "needle": "this.rule = candidate;",
+              "excerpt": "    this.counts = [...s.counts]; this.penalties = [...s.penalties];\n    this.rule = candidate; this.events.length = 0;\n    return true;\n  }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_37c5c92718f081918107acc649a8b32d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-engine-transactional-restore-spare-rule-reuse.md",
+      "prior_status": "already-in-pr",
+      "currentLocalEvidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/engine.mjs",
+          "mode": "direct",
+          "commit": null,
+          "sha256": "7c75558ba331295b205c5ce4c6ff6d4150c999c1b2f4b6bae7e727f36ff3bcac",
+          "snippets": [
+            {
+              "line": 121,
+              "needle": "const candidate = new RULES[this.mode](this, this.stage, { seedInitial: false });",
+              "excerpt": "    // replace the clock/result or leave the next host with unusable state.\n    const candidate = new RULES[this.mode](this, this.stage, { seedInitial: false });\n    try { candidate.restore(s.rule, { returnSnapshot: false }); } catch { return false; }\n    for (const k of ['revision', 'time', 'elapsed', 'leader', 'overtime', 'overtimeTeam', 'overtimeElapsed', 'winner', 'reason', 'knockout']) this[k] = s[k];"
+            },
+            {
+              "line": 125,
+              "needle": "this.rule = candidate;",
+              "excerpt": "    this.counts = [...s.counts]; this.penalties = [...s.penalties];\n    this.rule = candidate; this.events.length = 0;\n    return true;\n  }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 136,
+      "key": "ranked-host-pose-admission-elide-packed-row-slices",
+      "title": "# [QUEUE][INKWAVE][Optimization] Host ranked pose admission: skip packed-row temporary slices on normal network arrays",
+      "status": "already-in-pr",
+      "reason": "Ranked packed host pose/jump admission calls finiteTripleAt at each tuple offset before constructing owned accepted outputs, avoiding temporary slice validation arrays.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/pose-admission.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "2df9f365e54806f47fd5e01399bc85b8c6b87e3228bb31a8d225c2e8ef359ccf",
+          "snippets": [
+            {
+              "line": 110,
+              "needle": "const from = finiteTripleAt(j, 3, finite) ? [j[3],j[4],j[5]] : null;",
+              "excerpt": "  if (!Array.isArray(j) || j.length !== 16 || j[0] !== 1) return null;\n  const from = finiteTripleAt(j, 3, finite) ? [j[3],j[4],j[5]] : null;\n  const to = finiteTripleAt(j, 6, finite) ? [j[6],j[7],j[8]] : null;\n  return from && to ? { from, to } : null;"
+            },
+            {
+              "line": 111,
+              "needle": "const to = finiteTripleAt(j, 6, finite) ? [j[6],j[7],j[8]] : null;",
+              "excerpt": "  const from = finiteTripleAt(j, 3, finite) ? [j[3],j[4],j[5]] : null;\n  const to = finiteTripleAt(j, 6, finite) ? [j[6],j[7],j[8]] : null;\n  return from && to ? { from, to } : null;\n}"
+            },
+            {
+              "line": 153,
+              "needle": "!finiteTripleAt(row, 1, finite)",
+              "excerpt": "  if (!state || !Array.isArray(row) || row.length < 21 || !finite(ts) ||\n      !finiteTripleAt(row, 1, finite) || !Number.isSafeInteger(row[10]) ||\n      !Number.isSafeInteger(row[16]) || row[16] < 0) return false;\n  const next = [row[1],row[2],row[3]], flags = row[10], prev = state.last;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_44c8b7ae9e908191a7c033d2ae89ef69",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-host-pose-admission-elide-packed-row-slices.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 143,
+      "key": "ranked-rainmaker-sphere-candidate-elide-vector-arrays",
+      "title": "# [QUEUE][INKWAVE][Optimization] Rainmaker barrier collision: replace transient vector arrays with the existing scalar sphere-entry primitive",
+      "status": "already-in-pr",
+      "reason": "Ranked Rainmaker candidate collision uses scalar sphereEntryComponents for known native vectors; overridden toArray paths keep their original array conversion.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "22f710aedf1483507bb06ab9cb8c9c20f6c369f24be65b047b997890197b85ec",
+          "snippets": [
+            {
+              "line": 19,
+              "needle": "export function sphereEntryComponents(sx, sy, sz, ex, ey, ez, cx, cy, cz, radius)",
+              "excerpt": "// Same left-to-right reductions as sphereEntry's Array.reduce, without temporary arrays.\nexport function sphereEntryComponents(sx, sy, sz, ex, ey, ez, cx, cy, cz, radius) {\n  const dx = ex - sx, dy = ey - sy, dz = ez - sz, ox = sx - cx, oy = sy - cy, oz = sz - cz;\n  const aa = ((0 + dx * dx) + dy * dy) + dz * dz;"
+            },
+            {
+              "line": 49,
+              "needle": "p.prev.toArray === THREE.Vector3.prototype.toArray && p.pos.toArray === THREE.Vector3.prototype.toArray;",
+              "excerpt": "    const scalar = p.prev instanceof THREE.Vector3 && p.pos instanceof THREE.Vector3 &&\n      p.prev.toArray === THREE.Vector3.prototype.toArray && p.pos.toArray === THREE.Vector3.prototype.toArray;\n    const center = scalar ? null : [...s.pos];\n    if (center) center[1] += 1;"
+            },
+            {
+              "line": 54,
+              "needle": "const t = scalar ? sphereEntryComponents(",
+              "excerpt": "    const radius = 1.5 + 1.2 * Math.abs(s.barrier.balance || 0) / (s.barrier.max || 1000);\n    const t = scalar ? sphereEntryComponents(p.prev.x,p.prev.y,p.prev.z,p.pos.x,p.pos.y,p.pos.z,cx,cy,cz,radius + (p.size || 0))\n      : sphereEntry(p.prev.toArray(), p.pos.toArray(), center, radius + (p.size || 0));\n    if (t === null) return null;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_19d4163f35ac8191923a40fb927d33be",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-sphere-candidate-elide-vector-arrays.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 145,
+      "key": "ranked-snapshot-validator-own-entry-iteration",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ranked 5Hz スナップショット検証の Object.entries 多重一時配列を削減",
+      "status": "already-in-pr",
+      "reason": "Ranked snapshot object validation enumerates properties directly with an own-property guard rather than allocating Object.entries tuples, while retaining key/value/depth checks.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/engine.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "7c75558ba331295b205c5ce4c6ff6d4150c999c1b2f4b6bae7e727f36ff3bcac",
+          "snippets": [
+            {
+              "line": 154,
+              "needle": "for (const k in v) {",
+              "excerpt": "    if (typeof v !== 'object') return false;\n    for (const k in v) {\n      if (!Object.hasOwn(v, k)) continue;\n      if (k === '__proto__' || k === 'prototype' || k === 'constructor' || k.length >= 80 || !visit(v[k], depth + 1)) return false;"
+            },
+            {
+              "line": 155,
+              "needle": "if (!Object.hasOwn(v, k)) continue;",
+              "excerpt": "    for (const k in v) {\n      if (!Object.hasOwn(v, k)) continue;\n      if (k === '__proto__' || k === 'prototype' || k === 'constructor' || k.length >= 80 || !visit(v[k], depth + 1)) return false;\n    }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_e02f788778a081919152a56a805afe6c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-snapshot-validator-own-entry-iteration.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 147,
+      "key": "ranked-tower-cache-published-nav-nonnegative-proof",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-tower-cache-published-nav-nonnegative-proof",
+      "status": "not-adopted",
+      "reason": "The published nav graph exposes mutable node/edge arrays without a reliable revision for in-place edits. A cross-call nonnegative-proof memo could admit stale pruning after an edge cost becomes negative/NaN. Both base and local towerApproachPath retain a fresh lazy scan once per route decision, preserving dynamic/custom graph behavior.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/bots.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "74fbd5d9ef3ad52c98ee52d5fabe5458ae949f1e16c3bdedb706e9792969b738",
+          "snippets": [
+            {
+              "line": 104,
+              "needle": "let best = null, nonNegativeRouteCosts;",
+              "excerpt": "  const lowY = target.y - jumpHeight - 0.2;\n  let best = null, nonNegativeRouteCosts;\n  for (const id of nav.validIds || []) {\n    const node = nav.nodes[id];"
+            },
+            {
+              "line": 126,
+              "needle": "if (nonNegativeRouteCosts === undefined) nonNegativeRouteCosts = nav.nodes.every(n => n.nb.every(edge => Number.isFinite(edge.cost) && edge.cost >= 0));",
+              "excerpt": "    if (best && lowerScore >= best.score) {\n      if (nonNegativeRouteCosts === undefined) nonNegativeRouteCosts = nav.nodes.every(n => n.nb.every(edge => Number.isFinite(edge.cost) && edge.cost >= 0));\n      if (nonNegativeRouteCosts) continue;\n    }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_771c2d99a8608191b3b87f8595dda2d9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-tower-cache-published-nav-nonnegative-proof.md",
+      "prior_status": "already-in-pr",
+      "currentLocalEvidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/bots.mjs",
+          "mode": "direct",
+          "commit": null,
+          "sha256": "aebd12bce5e16c6a956f35f17f827c19ab2c3ad74fe289dbd1ac015697b2a3a1",
+          "snippets": [
+            {
+              "line": 104,
+              "needle": "let best = null, nonNegativeRouteCosts;",
+              "excerpt": "  const lowY = target.y - jumpHeight - 0.2;\n  let best = null, nonNegativeRouteCosts;\n  for (const id of nav.validIds || []) {\n    const node = nav.nodes[id];"
+            },
+            {
+              "line": 118,
+              "needle": "if (nonNegativeRouteCosts === undefined) nonNegativeRouteCosts = nav.nodes.every(n => n.nb.every(edge => Number.isFinite(edge.cost) && edge.cost >= 0));",
+              "excerpt": "    if (best && lowerScore >= best.score) {\n      if (nonNegativeRouteCosts === undefined) nonNegativeRouteCosts = nav.nodes.every(n => n.nb.every(edge => Number.isFinite(edge.cost) && edge.cost >= 0));\n      if (nonNegativeRouteCosts) continue;\n    }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 148,
+      "key": "ranked-tower-precompute-static-segment-heading-basis",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-tower-precompute-static-segment-heading-basis",
+      "status": "already-in-pr",
+      "reason": "Ranked world construction precomputes horizontal Tower segment bearings; update selects the stored bearing by segment length instead of re-normalizing and redoing angle trigonometry every frame.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "snippets": [
+            {
+              "line": 103,
+              "needle": "this._towerBearings = [];",
+              "excerpt": "    this._towerPathTotal = this._towerLengths.at(-1) || 0;\n    this._towerBearings = [];\n    for (let i = 1; i < this._towerPath.length; i++) {\n      const a = this._towerPath[i - 1], b = this._towerPath[i], dx = b[0] - a[0], dz = b[2] - a[2], d = Math.hypot(dx, dz);"
+            },
+            {
+              "line": 106,
+              "needle": "this._towerBearings.push(d > EPSILON ? [dx / d, dz / d] : [0, 1]);",
+              "excerpt": "      const a = this._towerPath[i - 1], b = this._towerPath[i], dx = b[0] - a[0], dz = b[2] - a[2], d = Math.hypot(dx, dz);\n      this._towerBearings.push(d > EPSILON ? [dx / d, dz / d] : [0, 1]);\n    }\n    this._towerHalfWidth = this.mode === 'tower' ? Math.max(0.8, Math.min(1.4, Number(stage?.tower?.halfSize) || 1.4)) : 1.4;"
+            },
+            {
+              "line": 618,
+              "needle": "if (at <= length || i === this._towerBearings.length - 1) { bearing = this._towerBearings[i]; break; }",
+              "excerpt": "      const length = this._towerSegmentLengths[i];\n      if (at <= length || i === this._towerBearings.length - 1) { bearing = this._towerBearings[i]; break; }\n      at -= length;\n    }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_f03eb2a1d2cc81919ca86d112f7a7db8",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-tower-precompute-static-segment-heading-basis.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "index": 156,
+      "key": "remote-special-screen-unbounded-payload-visual-lifetime-and-contact",
+      "title": "# [INKWAVE/ZEVANT][Bug/Optimization][P1] Remote Screen special accepts extreme lifetime and dimensions, persisting VFX and widening local contact",
+      "status": "already-in-pr",
+      "reason": "Remote special world payload admission constrains authored lifetime/radius/HP and exact Screen dimensions, limits object counts and runs before replay allocation. Catalogue encoding also invokes the same validator.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-world-payload.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "3ea7935240cef48ded524beca30b349de40f8f8bee5566c78c754da29a40557e",
+          "snippets": [
+            {
+              "line": 17,
+              "needle": "export function validSpecialWorldPayload(event)",
+              "excerpt": "function optionalRange(event,key,min,max){const value=event[key];return value===undefined||typeof value==='number'&&finite(value)&&value>=min&&value<=max;}\nexport function validSpecialWorldPayload(event){\n  if(!Number.isSafeInteger(event?.object)||event.object<=0||event.action==='objectHit')return true;\n  const kinds=WORLD_KINDS[event.id];"
+            },
+            {
+              "line": 27,
+              "needle": "if(kind==='screen'&&((event.width!==undefined&&event.width!==15)||(event.height!==undefined&&event.height!==9)))return false;",
+              "excerpt": "     !optionalRange(event,'specialPowerAP',0,57)||!optionalRange(event,'waveFrame',0,216/60))return false;\n  if(kind==='screen'&&((event.width!==undefined&&event.width!==15)||(event.height!==undefined&&event.height!==9)))return false;\n  if(!optionalRange(event,'vx',-500,500)||!optionalRange(event,'vy',-500,500)||!optionalRange(event,'vz',-500,500)||\n     !optionalRange(event,'gravity',0,1000)||!optionalRange(event,'airResist',0,1-Number.EPSILON))return false;"
+            },
+            {
+              "line": 34,
+              "needle": "export const REMOTE_WORLD_OBJECTS_PER_ACTOR=64;",
+              "excerpt": "// One actor can retain several complete 12-decoy volleys before this guard.\nexport const REMOTE_WORLD_OBJECTS_PER_ACTOR=64;\nexport const REMOTE_WORLD_OBJECTS_TOTAL=512;\nexport function admitsRemoteWorldBirth(objects,actor,event){"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "c994589d98a372dd7d2d0523f9727e8978b326d7612b7f826b607719bb58aca6",
+          "snippets": [
+            {
+              "line": 2733,
+              "needle": "if(!validSpecialWorldPayload(event)||!admitsRemoteWorldBirth((rt.system||api.G.projectiles)?._s3AllSpecialObjects||[],actor,event))return false;",
+              "excerpt": "  // Validate before the replay ledger and before any mesh/device allocation.\n  if(!validSpecialWorldPayload(event)||!admitsRemoteWorldBirth((rt.system||api.G.projectiles)?._s3AllSpecialObjects||[],actor,event))return false;\n  let cheerOwner=null,cheerState=null;\n  if(event.action==='cheer'){"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/catalogue-payload.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "79256c6c98a461b3850ccbe9a31d4b79839ecc3fbd463ce97e561480336bd2b7",
+          "snippets": [
+            {
+              "line": 14,
+              "needle": "return validSpecialWorldPayload(payload)&&JSON.stringify(payload).length<=4096?payload:null;",
+              "excerpt": "  }\n  return validSpecialWorldPayload(payload)&&JSON.stringify(payload).length<=4096?payload:null;\n}\n"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_dc9fb18767ac81919c92f842bba028c5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] remote-special-screen-unbounded-payload-visual-lifetime-and-contact.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 158,
+      "key": "respawn-actor-skip-unused-saved-array-on-normal-ticks",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] リスポーン再入力制限がない通常Actor更新で空の退避配列を作らない",
+      "status": "already-in-pr",
+      "reason": "Respawn wrapping returns directly for dead actors or absent rearm blocks before allocating the temporary saved list; the real blocked branch retains cleanup.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "ad6184ee583b2e801e05db1f05b3a41c721cf76588ac0b82fb91cc5be028f489",
+          "snippets": [
+            {
+              "line": 369,
+              "needle": "const blocked = this.s3?.respawnRearm;",
+              "excerpt": "    }\n    const blocked = this.s3?.respawnRearm;\n    if (!this.alive || !blocked) return update.call(this, dt);\n    const saved = [];"
+            },
+            {
+              "line": 370,
+              "needle": "if (!this.alive || !blocked) return update.call(this, dt);",
+              "excerpt": "    const blocked = this.s3?.respawnRearm;\n    if (!this.alive || !blocked) return update.call(this, dt);\n    const saved = [];\n    if (this.alive && blocked) {"
+            },
+            {
+              "line": 371,
+              "needle": "const saved = [];",
+              "excerpt": "    if (!this.alive || !blocked) return update.call(this, dt);\n    const saved = [];\n    if (this.alive && blocked) {\n      for (const key of blocked) {"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_429deb246cac8191ab4ee971c61b7d1b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] respawn-actor-skip-unused-saved-array-on-normal-ticks.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 171,
+      "key": "shapepool-expiry-batch-stable-compaction",
+      "title": "# [QUEUE][INKWAVE][Optimization] ShapePoolの期限切れレコード除去で繰り返すArray.spliceを安定一括圧縮",
+      "status": "already-in-pr",
+      "reason": "ShapePool expiry batches retirement and stable compaction only for callback-free records, retaining reverse-splice processing when follow/onEnd callbacks can observe or mutate the roster.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+          "snippets": [
+            {
+              "line": 821,
+              "needle": "for (const r of this.recs) if (r.follow || r.onEnd) { plain = false; break; }",
+              "excerpt": "    let plain = true;\n    for (const r of this.recs) if (r.follow || r.onEnd) { plain = false; break; }\n    if (plain) {\n      const expired = this._expired ||= [], count = this.recs.length;"
+            },
+            {
+              "line": 823,
+              "needle": "const expired = this._expired ||= [], count = this.recs.length;",
+              "excerpt": "    if (plain) {\n      const expired = this._expired ||= [], count = this.recs.length;\n      for (let i = count - 1; i >= 0; i--) {\n        const r = this.recs[i];r.t += dt;"
+            },
+            {
+              "line": 830,
+              "needle": "for (let i = 0; i < count; i++) if (!expired[i]) this.recs[out++] = this.recs[i];",
+              "excerpt": "      let out = 0;\n      for (let i = 0; i < count; i++) if (!expired[i]) this.recs[out++] = this.recs[i];\n      this.recs.length = out;expired.length = 0;\n    } else for (let i = this.recs.length - 1; i >= 0; i--) {"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_94d5d89736188191bb0916d821e9ac37",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shapepool-expiry-batch-stable-compaction.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 188,
+      "key": "special-vfx-reuse-attribute-update-iteration-tuples",
+      "title": "# [QUEUE][INKWAVE][Optimization] Special VFXで属性アップロード用の固定配列リテラルを毎描画更新に作らない",
+      "status": "already-in-pr",
+      "reason": "SpritePool stores its attribute iteration tuple at construction and reuses that array in every upload.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+          "snippets": [
+            {
+              "line": 232,
+              "needle": "this.updateAttributes = [this.aPos, this.aDir, this.aCol, this.aPar];",
+              "excerpt": "    this.aPar = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);\n    this.updateAttributes = [this.aPos, this.aDir, this.aCol, this.aPar];\n    g.setAttribute('iPos', this.aPos); g.setAttribute('iDir', this.aDir); g.setAttribute('iCol', this.aCol); g.setAttribute('iPar', this.aPar);\n    g.instanceCount = 1;"
+            },
+            {
+              "line": 324,
+              "needle": "for (const a of this.updateAttributes) {",
+              "excerpt": "    const count = this.n + 1;\n    for (const a of this.updateAttributes) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }\n    this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;this._drawCount=this.n;\n  }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_b8dd8d49961c81918e725a594140ffb0",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-vfx-reuse-attribute-update-iteration-tuples.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 189,
+      "key": "special-vfx-shapepool-spawn-transient-value-arrays",
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャルShapePool生成時の16要素一時配列を排除",
+      "status": "already-in-pr",
+      "reason": "ShapePool provides scalar addRaw and all four relevant sphere/ring/cone/beam producers pass scalar values directly, removing transient input arrays while retaining owned public records.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+          "snippets": [
+            {
+              "line": 809,
+              "needle": "addRaw(life, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15, follow = null)",
+              "excerpt": "  // Scalar births retain fresh public handles while avoiding the transient values array.\n  addRaw(life, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15, follow = null) {\n    if (this.recs.length >= this.cap - 1) this._retire(this.recs.shift());\n    const rec = { v: new Float32Array(16), t: 0, life, follow, dead: false }, v = rec.v;"
+            }
+          ]
+        },
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "b880935ccaf1cfa060e41e36579efcc7a443eb2fcee0fecfbc81e4fc6d8a2bb4",
+          "snippets": [
+            {
+              "line": 165,
+              "needle": "return pool.addRaw(life, pos.x, pos.y, pos.z, o.hemi ? 1 : 0,",
+              "excerpt": "    const ease = o.ease || easeOut;\n    return pool.addRaw(life, pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {\n      const t = r.life > 0 ? clamp01(r.t / r.life) : 0, s = s0 + (s1 - s0) * ease(t);\n      r.v[4] = s; r.v[5] = s * (o.sy ?? 1); r.v[6] = s; r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t;"
+            },
+            {
+              "line": 176,
+              "needle": "return pool.addRaw(life, pos.x, pos.y, pos.z, r0,",
+              "excerpt": "    const pool = add ? this.kit.discs : this.kit.inkDiscs, seed = vfxRandom(), ease = o.ease || easeOut;\n    return pool.addRaw(life, pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {\n      const t = r.life > 0 ? clamp01(r.t / r.life) : 0;\n      r.v[3] = r0 + (r1 - r0) * ease(t); r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;"
+            },
+            {
+              "line": 185,
+              "needle": "return pool.addRaw(life, pos.x, pos.y, pos.z, rnd(TAU),",
+              "excerpt": "    const pool = add ? this.kit.bands : this.kit.inkBands, seed = vfxRandom(), ease = o.ease || easeOut;\n    return pool.addRaw(life, pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1, (r, dt) => {\n      const t = r.life > 0 ? clamp01(r.t / r.life) : 0;\n      r.v[4] = r0 + (r1 - r0) * ease(t); r.v[5] = h0 + (h1 - h0) * ease(t); r.v[3] = (r._spinOrigin ??= r.v[3]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;"
+            },
+            {
+              "line": 194,
+              "needle": "return pool.addRaw(life, a.x, a.y, a.z, r0,",
+              "excerpt": "    const pool = add ? this.kit.beams : this.kit.inkBeams;\n    return pool.addRaw(life, a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6, o.follow || null);\n  }\n  setBeam(r, a, b, r0, r1, alpha) {"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_07f84dbe1ca481918b56322623695d6e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-vfx-shapepool-spawn-transient-value-arrays.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 196,
+      "key": "splatling-horizontal-skip-nonspin-charge-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] Splatling ground-brake wrapper: skip discarded pre-update speed magnitude for non-Splatling charge",
+      "status": "already-in-pr",
+      "reason": "Splatling movement first determines whether the actor is a plausible spin/charge candidate, captures scalar velocity only then and returns for other actors before horizontal hypot work.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/splatling.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "baa1296180a788c441854812172a1425f688c6c7315c5e91976cf2717a450508",
+          "snippets": [
+            {
+              "line": 160,
+              "needle": "const candidate=family==='splatling'||(!family&&this.weapon?.kind==='splatling')||runner?.charging;",
+              "excerpt": "      const family=this.weapon?.catalogRecord?.family;\n      const candidate=family==='splatling'||(!family&&this.weapon?.kind==='splatling')||runner?.charging;\n      const beforeX=candidate?this.vel.x:0,beforeZ=candidate?this.vel.z:0;\n      const value = horizontal.call(this, dt, squid, onEnemy, ...rest);"
+            },
+            {
+              "line": 164,
+              "needle": "if(!candidate)return value;",
+              "excerpt": "      if (runner?.s3SplatlingChargeDecel) runner.s3SplatlingChargeDecel = undefined;\n      if(!candidate)return value;\n      const chargeDownRate = splatlingChargeDownRate(profile, this.weapon);\n      if (!(dt > 0) || !(chargeDownRate > 0) || squid || onEnemy || !this.grounded ||"
+            },
+            {
+              "line": 170,
+              "needle": "const before=Math.hypot(beforeX,beforeZ);",
+              "excerpt": "      if (input < .01) return value;\n      const before=Math.hypot(beforeX,beforeZ);\n      const target = runner.moveSpeed() * input, after = Math.hypot(this.vel.x, this.vel.z);\n      if (!(before > target + 1e-9) || !(after > 1e-9)) return value;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_762a315fc4ec8191a9f963a06fa72a4b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] splatling-horizontal-skip-nonspin-charge-hypot.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 200,
+      "key": "spritepool-per-render-duplicate-drag-exponential",
+      "title": "# [QUEUE][INKWAVE][Optimization] SpritePool の同一 drag 係数に対する毎描画 Math.exp 重複評価",
+      "status": "already-in-pr",
+      "reason": "The base SpritePool already caches the most recent drag exponential within an update and handles exact zero drag without Math.exp for finite dt, retaining nonfinite propagation.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+          "snippets": [
+            {
+              "line": 299,
+              "needle": "let lastDrag = NaN, lastDragFactor = 0;",
+              "excerpt": "    const finiteTime = Number.isFinite(dt);\n    let lastDrag = NaN, lastDragFactor = 0;\n    for (let j = this.n - 1; j >= 0; j--) {\n      const i = j * S; p[i + 6] += dt;"
+            },
+            {
+              "line": 305,
+              "needle": "const drag = finiteTime && rate === lastDrag ? lastDragFactor",
+              "excerpt": "      const rate = p[i + 10];\n      const drag = finiteTime && rate === lastDrag ? lastDragFactor\n        : (lastDrag = rate, lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt));\n      p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;"
+            },
+            {
+              "line": 306,
+              "needle": ": (lastDrag = rate, lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt));",
+              "excerpt": "      const drag = finiteTime && rate === lastDrag ? lastDragFactor\n        : (lastDrag = rate, lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt));\n      p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;\n      p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_f371566fefd88191985a6ccc55f64385",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] spritepool-per-render-duplicate-drag-exponential.md",
+      "prior_status": "in-other-pr"
+    },
+    {
+      "index": 201,
+      "key": "storm-cloud-puff-bob-hoist-phase-and-loop",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ink Storm: hoist shared puff-bob phase and remove per-cloud `forEach` callback",
+      "status": "already-in-pr",
+      "reason": "The queue targets the former per-frame children.forEach and G.time-based additive sine. PR1878 already replaces that whole path with an explicit loop and a closed-form fixed-step sine sum anchored at birth; the requested old expression no longer exists. Applying the stale one-line patch would overwrite that later elapsed-time behavior.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "72daf743e1143f82e963211b385a2ddaa248fc54a7bce5927e1a8fa1a1522ccc",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 1866,
+              "needle": "// Closed form of the old 60 Hz sine sum, anchored to creation phase.",
+              "excerpt": "      for (const m of c.group.children) {\n        // Closed form of the old 60 Hz sine sum, anchored to creation phase.\n        // Local elapsed time freezes with this cloud, including pause/resume.\n        const bob = m.userData._stormBob || (m.userData._stormBob = { y: m.position.y, phase: (c.bobPhase ?? (G.time - stepDt) * 1.6) + m.userData.bob, age: 0 });"
+            },
+            {
+              "line": 1868,
+              "needle": "const bob = m.userData._stormBob || (m.userData._stormBob = { y: m.position.y, phase: (c.bobPhase ?? (G.time - stepDt) * 1.6) + m.userData.bob, age: 0 });",
+              "excerpt": "        // Local elapsed time freezes with this cloud, including pause/resume.\n        const bob = m.userData._stormBob || (m.userData._stormBob = { y: m.position.y, phase: (c.bobPhase ?? (G.time - stepDt) * 1.6) + m.userData.bob, age: 0 });\n        bob.age += stepDt;\n        m.position.y = bob.y + .0025 * (Math.cos(bob.phase + 1.6 / 120) - Math.cos(bob.phase + bob.age * 1.6 + 1.6 / 120)) / (2 * Math.sin(1.6 / 120));"
+            },
+            {
+              "line": 1869,
+              "needle": "bob.age += stepDt;",
+              "excerpt": "        const bob = m.userData._stormBob || (m.userData._stormBob = { y: m.position.y, phase: (c.bobPhase ?? (G.time - stepDt) * 1.6) + m.userData.bob, age: 0 });\n        bob.age += stepDt;\n        m.position.y = bob.y + .0025 * (Math.cos(bob.phase + 1.6 / 120) - Math.cos(bob.phase + bob.age * 1.6 + 1.6 / 120)) / (2 * Math.sin(1.6 / 120));\n      }"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_7140ac88879c8191a68a27c750d2ac51",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] storm-cloud-puff-bob-hoist-phase-and-loop.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 206,
+      "key": "sub-special-model-identity-index-buffer-removal",
+      "title": "# [QUEUE][INKWAVE][Optimization] サブ・SPモデルのマージ済みメッシュに作る恒等indexバッファを省く",
+      "status": "already-in-pr",
+      "reason": "Sub/special geometry merge emits expanded triangle positions/normals in drawArrays order and intentionally omits an identity index buffer.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/sub-models.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "1dc3abe0636905f5261cd3168272d0eb53771b064039dda8818df38352213c77",
+          "snippets": [
+            {
+              "line": 101,
+              "needle": "// Expanded triangles already have the exact drawArrays order. An identity",
+              "excerpt": "  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));\n  // Expanded triangles already have the exact drawArrays order. An identity\n  // element buffer duplicates that order without sharing a single vertex.\n  out.computeBoundingSphere();"
+            },
+            {
+              "line": 102,
+              "needle": "// element buffer duplicates that order without sharing a single vertex.",
+              "excerpt": "  // Expanded triangles already have the exact drawArrays order. An identity\n  // element buffer duplicates that order without sharing a single vertex.\n  out.computeBoundingSphere();\n  return out;"
+            },
+            {
+              "line": 103,
+              "needle": "out.computeBoundingSphere();",
+              "excerpt": "  // element buffer duplicates that order without sharing a single vertex.\n  out.computeBoundingSphere();\n  return out;\n}"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_ffcf369305288191b42cdb75359320ae",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] sub-special-model-identity-index-buffer-removal.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 209,
+      "key": "superjump-charge-drop-reuse-angle-sincos",
+      "title": "# [QUEUE][INKWAVE][Optimization] スーパージャンプ溜め中の飛沫1粒につき重複する三角関数2回を共有",
+      "status": "already-in-pr",
+      "reason": "Super Jump charging drops compute angle cosine/sine once and reuse them for spawn position and tangential velocity.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/fx/fx.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "edd44f682140da532d361106942b3039b1730b051608888db1c5e459dc07994c",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 1292,
+              "needle": "const ca = Math.cos(a), sa = Math.sin(a);",
+              "excerpt": "      const a = a0 + (i / count) * TAU + (rand() - 0.5) * 0.4, sp = speed * (0.6 + rand() * 0.6);\n      const ca = Math.cos(a), sa = Math.sin(a);\n      this._sprite(this.puffs, pos.x + ca * 0.25, pos.y + 0.12 + rand() * 0.12, pos.z + sa * 0.25, ca * sp, 0.3 + rand() * 0.5, sa * sp,\n        col, 0.16 + rand() * 0.1, 0.5 + rand() * 0.35, 0.55 + rand() * 0.35, 0.3, 3.2, 0.25, P_DUST, 0.05, 1.2);"
+            },
+            {
+              "line": 2120,
+              "needle": "this._spawnDrop(pos.x + ca * r, pos.y + 0.05, pos.z + sa * r, -sa * 1.8, 2.5 + rand() * 3 * (0.5 + k), ca * 1.8,",
+              "excerpt": "      const ca = Math.cos(a), sa = Math.sin(a);\n      this._spawnDrop(pos.x + ca * r, pos.y + 0.05, pos.z + sa * r, -sa * 1.8, 2.5 + rand() * 3 * (0.5 + k), ca * 1.8, col, 0.025 + rand() * 0.025, 0.7, 0.8, 1.3, F_QUIET);\n    }\n    this._colB.copy(col).lerp(_white, 0.2).multiplyScalar(1.4 + 2 * k);"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_f2f46efb20bc8191a05e0ee1dbc6d378",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] superjump-charge-drop-reuse-angle-sincos.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 211,
+      "key": "swim-wake-skip-duplicate-live-head-radius-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] 泳ぎ跡の半径計算からライブ先端の重複 Math.hypot を除去",
+      "status": "already-in-pr",
+      "reason": "Swimming wake head radius is already covered by the live segment loop, so the extra head hypot runs only when the actor is no longer swimming.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/fx/swimWake.js",
+          "mode": "composed",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "20ee23078acad72417a7d8c6633486ddb0cdbea8bcd147b9cd78227eebea633a",
+          "composition": "scripts/inkwave-source-composition.mjs from the same base commit",
+          "snippets": [
+            {
+              "line": 108,
+              "needle": "if (!s.swimming) r = Math.max(r, Math.hypot(s.head.x - cx, s.head.y - cy, s.head.z - cz));",
+              "excerpt": "          for (let i = 0; i < n; i++) { const w = W[base + i]; if (w.w !== BREAK) r = Math.max(r, Math.hypot(w.x - cx, w.y - cy, w.z - cz)); }\n          if (!s.swimming) r = Math.max(r, Math.hypot(s.head.x - cx, s.head.y - cy, s.head.z - cz));\n          B[si].set(cx, cy, cz, r + 1.6);\n        } else B[si].set(0, -999, 0, 0);"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_0f531c23307c819196992e68cd7bfb26",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] swim-wake-skip-duplicate-live-head-radius-hypot.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "index": 219,
+      "key": "trizooka-zero-spread-per-lobe-basis",
+      "title": "# [QUEUE][INKWAVE][Optimization] ウルトラショット3弾のゼロ拡散で不要な軸外ベクトル構築を回避",
+      "status": "already-in-pr",
+      "reason": "Trizooka computes spread and its optional perpendicular basis once per volley. Ordinary finite zero-spread aim omits the lateral basis and sine; signed-zero and nonfinite cases retain the old lateral expression.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/kit-trizooka.mjs",
+          "mode": "direct",
+          "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+          "sha256": "76f3f673869edfe636d1b7ea0f3987181a55cf798aa41ea8843e8f276c68717b",
+          "snippets": [
+            {
+              "line": 258,
+              "needle": "const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;",
+              "excerpt": "  const volleyDamage = new Map();\n  const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;\n  // Adding a signed zero can change -0 even with no spread. Keep the original\n  // expression for that boundary and for non-finite custom aim inputs."
+            },
+            {
+              "line": 261,
+              "needle": "const lateral=spread!==0||Object.is(aim.x,-0)||Object.is(aim.y,-0)||Object.is(aim.z,-0)||",
+              "excerpt": "  // expression for that boundary and for non-finite custom aim inputs.\n  const lateral=spread!==0||Object.is(aim.x,-0)||Object.is(aim.y,-0)||Object.is(aim.z,-0)||\n    !Number.isFinite(aim.x)||!Number.isFinite(aim.y)||!Number.isFinite(aim.z)?perpendicularBasis(aim):null;\n  for (let i = 0; i < count; i++) {"
+            },
+            {
+              "line": 300,
+              "needle": "if(lateral)p.vel.addScaledVector(lateral.u,Math.sin(k*spread));",
+              "excerpt": "    p.vel.copy(aim);\n    if(lateral)p.vel.addScaledVector(lateral.u,Math.sin(k*spread));\n    p.vel.normalize().multiplyScalar(TRIZOOKA.spawnSpeed);\n    p.pos.copy(muzzle);"
+            }
+          ]
+        }
+      ],
+      "library_file_id": "libfile_f3bda03c29348191b3ef8cef3c24ee2b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] trizooka-zero-spread-per-lobe-basis.md",
+      "prior_status": "already-in-pr"
+    }
+  ]
+}

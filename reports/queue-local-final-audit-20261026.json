@@ -1,0 +1,1087 @@
+{
+  "schema": 1,
+  "auditedUtc": "2026-10-25T20:38:10.487206+00:00",
+  "auditor": "repo_pr_base independent final pass",
+  "status": "passed",
+  "codeChangedByAudit": false,
+  "reconciliation": {
+    "path": "reports/queue-local-reconciliation-20261026.json",
+    "activeQueueCount": 552,
+    "uniqueDispositions": 552,
+    "missing": [],
+    "extra": [],
+    "rawReportItems": 555,
+    "deduplicatedCrossOwnerItems": [
+      {
+        "key": "catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+        "reportCount": 2,
+        "countedOnce": true
+      },
+      {
+        "key": "special-world-flight-kind-check-hoist-three-value-array",
+        "reportCount": 2,
+        "countedOnce": true
+      },
+      {
+        "key": "special-world-hidden-native-proxy-mesh-factory",
+        "reportCount": 2,
+        "countedOnce": true
+      }
+    ],
+    "counts": {
+      "implemented-local": 236,
+      "already-in-current-pr": 216,
+      "not-adopted": 94,
+      "needs-evidence": 2,
+      "implemented-partially": 2,
+      "excluded-user": 2
+    },
+    "sourceDispositionReceipts": [
+      {
+        "path": "reports/queue-local-audio-20261026.json",
+        "items": 48,
+        "dispositionContentSHA256": "bb3fc1e23d01a1900d73f9c3e8c220bb40512ec66bca35c5edd5338829fe2b06"
+      },
+      {
+        "path": "reports/queue-local-subs-20261026.json",
+        "items": 16,
+        "dispositionContentSHA256": "36908455c7ec117f5e3988ab8da898c028e3131924f2a6fed6820468ebb70ba9"
+      },
+      {
+        "path": "reports/queue-local-world-20261026.json",
+        "items": 144,
+        "dispositionContentSHA256": "24196d89db718f13f9b0e414c02e294432571f5fcf76b94791dcd30c12afda71"
+      },
+      {
+        "path": "reports/queue-local-world-supplemental-20261026.json",
+        "items": 11,
+        "dispositionContentSHA256": "8e9a04e878aa12e2fd16e4a8c59edfae43f77bce934a9f81504adb4bd1541c62"
+      },
+      {
+        "path": "reports/queue-local-paint-20261026.json",
+        "items": 3,
+        "dispositionContentSHA256": "7dd34d304735fd9e2a6b596e1eb17331b6f944f1545fc4522fa832e33efec974"
+      },
+      {
+        "path": "reports/queue-local-gameplay-20261026.json",
+        "items": 110,
+        "dispositionContentSHA256": "a5a2efd6ca82f12af4d3fd0df25c7f80c3ecd8eb010624e4138a1bd74bf6b2f7"
+      },
+      {
+        "path": "reports/queue-local-flight-specials-20261026.json",
+        "items": 13,
+        "dispositionContentSHA256": "e153ab783058b93dfa435fcf6d7a4b5b99734dbdbad17e77ce4763b8733be816"
+      },
+      {
+        "path": "reports/queue-local-ui-network-20261026.json",
+        "items": 134,
+        "dispositionContentSHA256": "34b662c348f314da7822b19e987c31c2910cadd178bc7eb0b5fec1c2e6178e58"
+      },
+      {
+        "path": "reports/queue-local-special-presentation-20261026.json",
+        "items": 27,
+        "dispositionContentSHA256": "d7b461ae4c5da1d6050b6174879bbd425e9a533c2a748938a3784176c8de79a6"
+      },
+      {
+        "path": "reports/queue-local-ui-supplemental-20261026.json",
+        "items": 12,
+        "dispositionContentSHA256": "c998e3ea9b567b68599cd7c234e1dc2ea25bd51fa9681beee253f82684db3409"
+      },
+      {
+        "path": "reports/queue-local-gameplay-already-20261026.json",
+        "items": 37,
+        "dispositionContentSHA256": "5c1931003058d9aa2aa0d77bcc893525d171126eb558b2f9f9c6ac5c12e6977c"
+      }
+    ],
+    "receiptScope": "Disposition hashes cover counts and complete items; verification-log-only metadata does not change them. Full-file report hashes are refreshed by the parent reconciliation after all validation metadata is final.",
+    "dispositionContentSHA256MatchedAtAudit": true,
+    "fullFileReportHashRefresh": "Parent reconciliation refreshes full-file sourceReports hashes after pending validation-log metadata updates.",
+    "receiptEncoding": "SHA256 of UTF-8 JSON {counts,items} with lexicographically sorted object keys, ensure_ascii=False, and compact comma/colon separators."
+  },
+  "subsetCounts": [
+    {
+      "path": "reports/queue-local-audio-20261026.json",
+      "items": 48,
+      "counts": {
+        "implemented-local": 15,
+        "already-in-pr": 25,
+        "not-adopted": 7,
+        "excluded-user": 1
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-subs-20261026.json",
+      "items": 16,
+      "counts": {
+        "implemented-local": 12,
+        "not-adopted": 3,
+        "needs-evidence": 1
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-world-20261026.json",
+      "items": 144,
+      "counts": {
+        "implemented-local": 62,
+        "not-adopted": 32,
+        "already-in-pr": 49,
+        "excluded-user": 1
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-world-supplemental-20261026.json",
+      "items": 11,
+      "counts": {
+        "already-in-pr": 11
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-paint-20261026.json",
+      "items": 3,
+      "counts": {
+        "implemented-local": 3
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-gameplay-20261026.json",
+      "items": 110,
+      "counts": {
+        "implemented-local": 81,
+        "not-adopted": 29
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-flight-specials-20261026.json",
+      "items": 13,
+      "counts": {
+        "implemented-local": 12,
+        "implemented-partially": 1
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-ui-network-20261026.json",
+      "items": 134,
+      "counts": {
+        "already-in-pr": 87,
+        "implemented": 30,
+        "not-adopted": 16,
+        "implemented-partially": 1
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-special-presentation-20261026.json",
+      "items": 27,
+      "counts": {
+        "implemented": 22,
+        "not-adopted": 5
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-ui-supplemental-20261026.json",
+      "items": 12,
+      "counts": {
+        "already-in-pr": 10,
+        "needs-evidence": 1,
+        "implemented": 1
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-gameplay-already-20261026.json",
+      "items": 37,
+      "counts": {
+        "already-in-pr": 34,
+        "implemented-local": 1,
+        "not-adopted": 2
+      },
+      "countsMatch": true
+    }
+  ],
+  "references": {
+    "referenceCount": 1783,
+    "uniquePathModePairs": 433,
+    "needleCount": 680,
+    "missingPaths": [],
+    "currentSHA256Mismatches": [],
+    "currentNeedleFailures": [],
+    "historicalDirectEvidenceMatched": 28,
+    "historicalComposedEvidenceMatched": 16,
+    "baselineFileChecksMatched": 102,
+    "libraryReferenceFieldsMatched": 1196,
+    "queueByteDigestsMatched": 39,
+    "historicalNeedlesIntentionallyReplaced": [
+      {
+        "report": "reports/queue-local-gameplay-already-20261026.json",
+        "key": "crab-tank-mirrored-leg-sine-per-pair",
+        "group": "evidence",
+        "path": "patches/splatoon3/runtime/sub-models.mjs",
+        "needle": "row.left=Math.sin(angle);",
+        "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc"
+      },
+      {
+        "report": "reports/queue-local-gameplay-already-20261026.json",
+        "key": "crab-tank-mirrored-leg-sine-per-pair",
+        "group": "evidence",
+        "path": "patches/splatoon3/runtime/sub-models.mjs",
+        "needle": "row.right=Math.sin(angle+Math.PI);",
+        "commit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc"
+      }
+    ],
+    "historicalNeedleExplanation": "The two Crab sin expressions belong to explicitly recorded PR1878 evidence; separate currentLocalEvidence needles and current SHA match the guarded local implementation.",
+    "directoryEvidence": [
+      {
+        "report": "reports/queue-local-audio-20261026.json",
+        "key": "gate-muted-recorded-battle-mp3-preload-and-decoding",
+        "group": "evidence",
+        "path": "inkwave-public/"
+      },
+      {
+        "report": "reports/queue-local-audio-20261026.json",
+        "key": "gate-muted-recorded-battle-mp3-preload-and-decoding",
+        "group": "evidence",
+        "path": "inkwave-public/assets/audio/"
+      }
+    ],
+    "authorizationReference": "The audio exclusion is an explicit parent-retained scope instruction, also recorded in reports/queue-local-provenance-20261026.json; it is not treated as a nonexistent source-code file.",
+    "currentNeedleCount": 565,
+    "archivedHistoricalEvidenceFilesVerified": 29,
+    "pairCountMeaning": "Unique source path, direct/composed mode, historical commit, and discovery flag tuples; current and historical bytes are deliberately separate.",
+    "discoveryEvidence": "All ten initially missing records still point to their immutable 5ca32e600b43 source snapshots. Their old hashes and missing optimization needles were verified and were not rewritten as current evidence.",
+    "currentReferenceReceipt": {
+      "path": "evidence/final-audit/references-after-whitespace.json",
+      "sha256": "1e998d10c595bfc3133ae6e6f7430225ce8db12f61e5360104f26199545cb97b",
+      "bytes": 1022942
+    }
+  },
+  "reportMetadataRefresh": [
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-propkit-transfer-static-atlas-across-stage-switches",
+      "group": "codeChecks",
+      "path": "src/world/props-core.js",
+      "oldSha": "24b392a6f66a497f72acbfdb21ea2a404f94b9dbf5ad44c39016215b05b4b758",
+      "currentSha": "e439c0168239ae05398108eb893b2b4ca5647a699366ff605d5f9024b43c627c",
+      "mode": "composed"
+    },
+    {
+      "report": "reports/queue-local-special-presentation-20261026.json",
+      "key": "kraken-presentation-contact-lift-full-vertex-scan",
+      "group": "test_source_evidence",
+      "path": "patches/splatoon3/tests/queue-weapons-20261024.test.mjs",
+      "oldSha": "edce2f6d7e9056c8c9feff0687278dc3dfc44ad82ab8681af129073ba1613307",
+      "currentSha": "e22450be2e66913c11aaf811db89c37f7979344bd970f4277bdf51865e45e20b",
+      "mode": "direct"
+    },
+    {
+      "report": "reports/queue-local-ui-supplemental-20261026.json",
+      "key": "pages-post-deploy-ranked-503-versioned-module",
+      "group": "test_source_evidence",
+      "path": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+      "oldSha": "0a51282fa787b5625025590ee98f0923c0fc0f8fd35a310fa6eaeeb417017406",
+      "currentSha": "5232558eb13d04a537734be1fc2720ce292e6c45a72b4b008721cc7a0cd814ad",
+      "mode": "direct"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "character-material-skip-zero-weight-pulses",
+      "group": "codeChecks",
+      "path": "src/game/character.js",
+      "mode": "composed",
+      "oldSha": "bb78fdea91f52e1eae7c12c628fb5878131e68d846825157587183cb90175842",
+      "currentSha": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "character-procedural-hair-precompute-fixed-spring-gains",
+      "group": "codeChecks",
+      "path": "src/game/character.js",
+      "mode": "composed",
+      "oldSha": "bb78fdea91f52e1eae7c12c628fb5878131e68d846825157587183cb90175842",
+      "currentSha": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "character-zero-weight-cosmetic-trig-guards",
+      "group": "codeChecks",
+      "path": "src/game/character.js",
+      "mode": "composed",
+      "oldSha": "bb78fdea91f52e1eae7c12c628fb5878131e68d846825157587183cb90175842",
+      "currentSha": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "hair-suction-cup-reuse-normal-point-and-vector-scratch",
+      "group": "codeChecks",
+      "path": "src/game/character-hair.js",
+      "mode": "composed",
+      "oldSha": "cf44efd45b90da95b1697da5e773c7c38338f493f542d7ebc7429a5a6641bef4",
+      "currentSha": "63046a30431472c26564e9ba7f6d605271e397d2016d6f4d326f76efc65a7e4d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-controller-memoize-direction-clip-resolution",
+      "group": "codeChecks",
+      "path": "src/game/motion/source-controller.js",
+      "mode": "composed",
+      "oldSha": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+      "currentSha": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-controller-overlay-samples-skip-unread-fk",
+      "group": "codeChecks",
+      "path": "src/game/motion/source-controller.js",
+      "mode": "composed",
+      "oldSha": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+      "currentSha": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-controller-reuse-locomotion-blend-records",
+      "group": "codeChecks",
+      "path": "src/game/motion/source-controller.js",
+      "mode": "composed",
+      "oldSha": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+      "currentSha": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-motion-lazy-currentclips-debug-snapshots",
+      "group": "codeChecks",
+      "path": "src/game/motion/source-controller.js",
+      "mode": "composed",
+      "oldSha": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+      "currentSha": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-retarget-skip-overwritten-native-leg-ik-after-activation",
+      "group": "codeChecks",
+      "path": "src/game/character.js",
+      "mode": "composed",
+      "oldSha": "bb78fdea91f52e1eae7c12c628fb5878131e68d846825157587183cb90175842",
+      "currentSha": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "tentacle-tube-share-angle-and-twist-trigonometry-per-ring",
+      "group": "codeChecks",
+      "path": "src/game/character-hair.js",
+      "mode": "composed",
+      "oldSha": "cf44efd45b90da95b1697da5e773c7c38338f493f542d7ebc7429a5a6641bef4",
+      "currentSha": "63046a30431472c26564e9ba7f6d605271e397d2016d6f4d326f76efc65a7e4d"
+    },
+    {
+      "report": "reports/queue-local-world-supplemental-20261026.json",
+      "key": "source-align-weapon-early-exit-converged-grip-projection",
+      "group": "codeChecks",
+      "path": "src/game/motion/source-controller.js",
+      "mode": "composed",
+      "oldSha": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+      "currentSha": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+    },
+    {
+      "report": "reports/queue-local-world-supplemental-20261026.json",
+      "key": "source-align-weapon-early-exit-converged-grip-projection",
+      "group": "codeChecks",
+      "path": "src/game/motion/source-controller.js",
+      "mode": "composed",
+      "oldSha": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+      "currentSha": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "composed-cpu-regression-direct-dependency-pr-trigger-gaps",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "gyro-world-orientation-skip-unit-gravity-rehypot",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "ink-micro-surface-qa-runtime-source-path-trigger-gaps",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "input-gamepad-trigger-elide-synthetic-button-objects",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "mobile-swipe-cache-unchanged-sensitivity-pow",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "network-tick-six-sidecar-objectkeys-presence-arrays",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "paint-hotpath-parity-direct-input-pr-path-gaps",
+      "group": "evidence",
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "mode": "direct",
+      "oldSha": "c44921688836fc28bced2d2a90988a71df83bbf25cabbe8b8e772bb4f2807787",
+      "currentSha": "6ebba654fe9edd860d44f90bc155b9d990053baa3a8e99424b93f21f9ab1cb1a"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "paint-hotpath-parity-direct-input-pr-path-gaps",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "ranked-and-frame-parity-qa-checkout-omit-203mb-modeler",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "relay-current-compat-start-ack-mismatch-blocks-all-host-starts",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "runtime-frame-parity-qa-direct-input-pr-path-gaps",
+      "group": "evidence",
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "mode": "direct",
+      "oldSha": "c44921688836fc28bced2d2a90988a71df83bbf25cabbe8b8e772bb4f2807787",
+      "currentSha": "6ebba654fe9edd860d44f90bc155b9d990053baa3a8e99424b93f21f9ab1cb1a"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "runtime-frame-parity-qa-direct-input-pr-path-gaps",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-ui-network-20261026.json",
+      "key": "swim-film-qa-shared-fixture-pr-trigger-gaps",
+      "group": "evidence",
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mode": "direct",
+      "oldSha": "8a21e71b27de1cb24731b394ad8410d457eacfc5df1cc84d39b51c2300b686c0",
+      "currentSha": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "character-warmall-error-leaves-hidden-lod-visible",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "camera-rig-skip-nonswim-horizontal-hypot",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "character-face-ao-27-neighbor-hash-offset-table",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "character-geo-sweep-cache-radial-angle-basis",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-decor-lamps-elide-per-piece-buffergeometry-template-clones",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-environment-reuse-moored-boat-meshes-between-stage-rebuilds",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-level-bevel-edgecache-replace-map-string-keys-with-twelve-slots",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-marina-foam-field-prune-covered-pixels-before-hypot",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-marina-prop-builder-elide-js-number-array-double-peak",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-prop-instance-envelope-reuse-box3-transform-scratch",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "legacy-sea-polar-mesh-build-direct-typed-buffers",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "showcase-lobby-camera-cache-fit-key-on-rect-refresh",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "showcase-lobby-jumpout-rate-independent-ink-droplets",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-controller-prebind-locomotion-foot-toe-indices",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "source-hair-targets-elide-per-entry-mean-vector-copy",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    },
+    {
+      "report": "reports/queue-local-world-20261026.json",
+      "key": "squid-surface-normal-reuse-three-vector-scratch",
+      "group": "codeChecks",
+      "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+      "mode": "direct",
+      "oldSha": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+      "currentSha": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+    }
+  ],
+  "unchangedBinaryEvidence": "The MP3 evidence digest matches the raw binary bytes. A preliminary UTF-8 decode digest was a false positive and was not applied.",
+  "rootGameplay105": {
+    "key": "match-softpush-hoist-invariant-radius-and-outer-actor",
+    "status": "not-adopted",
+    "reasonVerified": "The report records the observed synchronous actor replacement and mutable radius; original live per-pair reads are preserved."
+  },
+  "nativePrebuilt": {
+    "report": "reports/queue-local-native-regeneration-20261026.json",
+    "currentAdmission": 23,
+    "stale": [],
+    "missing": [],
+    "currentConverterSHA256": "cdd78fca40a96c15f303dc7f7fb87c8f06a3a4be3bed7f42b5796108ad5da3d5",
+    "allCurrentStageRecordSHA256MatchRegenerationReport": true,
+    "arrayBytesEqualToPR1878": 913151369,
+    "exactPreparedSpheres": 3474,
+    "fingerprintAndPayloadAdmissionUnmodified": true,
+    "postHistoricalFreezeRecheck": {
+      "converterFileSHA256Matches": 4,
+      "stageRecordSHA256Matches": 23,
+      "mismatches": [],
+      "note": "Converter inputs and all regenerated stage records still match the previously passed full production parity/admission evidence. No new binary-array benchmark is claimed by this metadata-only pass."
+    }
+  },
+  "sourceProvenance": {
+    "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+    "baseTree": "7df23a99a243a0df16dab38389a8f515d92a3a8b",
+    "mainMergeCommitProof": {
+      "url": "https://api.github.com/repos/rhgrive3/actions/git/commits/f6d9fb06f86a5affb963d1ee5ae199e907f30961",
+      "commit": "f6d9fb06f86a5affb963d1ee5ae199e907f30961",
+      "tree": "7df23a99a243a0df16dab38389a8f515d92a3a8b",
+      "parents": [
+        "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+        "dd90aa241aabd5f0b972cc3471386ba3d4da86dc"
+      ],
+      "sameTreeAsReviewedPR": true
+    },
+    "driveMetadataMatchesProvenanceReport": true,
+    "researchArtifacts": {
+      "zipFiles": 50,
+      "unsafe": [],
+      "zipBytes": 538193,
+      "zipSHA256": "8eafdb93ab432ea4bec5b6f119f000874273afd2eb2a6c9ef178c85fa33b2ad8",
+      "pdfBytes": 1375316,
+      "pdfSHA256": "851a32a5e9527081183121ee05e69c0dee848f0aa21d733aa91656cef90fac4d",
+      "pdfPages": 54,
+      "activeLibrary": {
+        "queues": 552,
+        "localFiles": 552,
+        "uniqueKeys": 552,
+        "uniqueLibraryIds": 552
+      }
+    },
+    "all50ExtractedResearchFilesMatchOriginalZip": true,
+    "researchScope": "Provided research report/source pack, not the game source, raw retail telemetry or independently verified retail physics constants.",
+    "historicalScopeArchive": "evidence/historical-scope/manifest.json"
+  },
+  "limitations": [
+    "Two active partial implementations and two active needs-evidence items remain explicitly distinguished; the additional historical safe subset and one rejected dance shortcut are also recorded separately.",
+    "The final current-source reference audit is complete; runtime and browser validation outcomes are owned by their corresponding execution reports, and this audit does not infer those outcomes from test source.",
+    "No physical-device GPU/FPS gain or full retail-equivalence claim is made."
+  ],
+  "historicalSubsetCounts": [
+    {
+      "path": "reports/queue-local-historical-character-20261026.json",
+      "items": 7,
+      "counts": {
+        "implemented-local": 7
+      },
+      "countsMatch": true
+    },
+    {
+      "path": "reports/queue-local-historical-motion-20261026.json",
+      "items": 3,
+      "counts": {
+        "implemented-local": 2,
+        "not-adopted": 1
+      },
+      "countsMatch": true
+    }
+  ],
+  "completeScope": {
+    "active": {
+      "sourceRows": 555,
+      "uniqueQueues": 552,
+      "counts": {
+        "implemented-local": 236,
+        "already-in-current-pr": 216,
+        "not-adopted": 94,
+        "excluded-user": 2,
+        "needs-evidence": 2,
+        "implemented-partially": 2
+      },
+      "duplicateKeys": [
+        "catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+        "special-world-flight-kind-check-hoist-three-value-array",
+        "special-world-hidden-native-proxy-mesh-factory"
+      ],
+      "missing": 0
+    },
+    "historical": {
+      "pr1870": 107,
+      "fixed": 31,
+      "uniqueRecords": 138,
+      "initialMissing": 10,
+      "followup": {
+        "implemented-local": 9,
+        "not-adopted": 1
+      },
+      "finalClassification": {
+        "retained-current-implementation": 96,
+        "retained-safe-subset": 1,
+        "implemented-local": 9,
+        "not-adopted": 1,
+        "retained-current-fix": 31
+      },
+      "unresolved": 0,
+      "reportResolutionMerge": "Owned and refreshed by the parent. The two origin corrections are recorded in the separate base-origin audit; immutable discovery evidence is preserved.",
+      "finalClassificationBasis": "Presence at the earlier local discovery point; this label does not imply PR1878 origin. See historicalByPR1878Origin and the base-origin supplement for final implementation accounting."
+    },
+    "allLibrary": {
+      "metadataRecords": 693,
+      "queueAndFixRecords": 690,
+      "context": 2,
+      "container": 1,
+      "activeHistoricalIdOverlap": 0,
+      "scopeNote": "This is the original direct-folder metadata snapshot. The additional51 Archive records are fully classified in archiveFinalSupplement; total reviewed records including Archive are741."
+    },
+    "historicalByPR1878Origin": {
+      "implemented-local": 11,
+      "already-in-current-pr": 95,
+      "not-adopted": 1
+    },
+    "fixedByPR1878Origin": {
+      "already-in-current-pr": 31
+    },
+    "aggregateByPR1878Origin": {
+      "implemented-local": 247,
+      "already-in-current-pr": 342,
+      "not-adopted": 95,
+      "implemented-partially": 2,
+      "needs-evidence": 2,
+      "excluded-user": 2
+    }
+  },
+  "portableReferenceRefresh": [
+    {
+      "key": "gamepad-pollpad-elide-per-frame-button-foreach-closure",
+      "oldPath": "source-audit/supplement-input.js",
+      "path": "reports/queue-local-evidence-20261026/source-audit/supplement-input.js",
+      "sha256": "d11971de71dde1b3287e2b5768b3176d16e93616f537eee4e0e541df9e3937ea"
+    },
+    {
+      "key": "pause-screen-skip-frozen-offline-snapshot-and-dom-refresh",
+      "oldPath": "source-audit/supplement-menus.js",
+      "path": "reports/queue-local-evidence-20261026/source-audit/supplement-menus.js",
+      "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+    },
+    {
+      "key": "settings-aimassist-preview-elide-svg-trail-dom-getattribute",
+      "oldPath": "source-audit/supplement-menu-art.js",
+      "path": "reports/queue-local-evidence-20261026/source-audit/supplement-menu-art.js",
+      "sha256": "d9f83d560bc45bfaf668c7162d7800fabb887ce22b7cd7ac2b65ba8578a509cb"
+    },
+    {
+      "key": "settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine",
+      "oldPath": "source-audit/supplement-menu-art.js",
+      "path": "reports/queue-local-evidence-20261026/source-audit/supplement-menu-art.js",
+      "sha256": "d9f83d560bc45bfaf668c7162d7800fabb887ce22b7cd7ac2b65ba8578a509cb"
+    },
+    {
+      "key": "projectile-visual-capture-atomic-intro-unit-duplicate-run",
+      "oldPath": "source-audit/ui-root-ci-duplicate-verification.json",
+      "path": "reports/queue-local-evidence-20261026/source-audit/ui-root-ci-duplicate-verification.json",
+      "sha256": "f1ef973e8413644f7ae77a5402c871055b2addda17df459ae80a12cb379e4d8e"
+    }
+  ],
+  "evidenceArtifacts": [
+    {
+      "path": "evidence/final-audit/references-after-historical.json",
+      "sha256": "b6f948090f3d1072087bd678397414ca0d89177ebcdad19152b52d3fa7f26ad1",
+      "bytes": 1022942,
+      "role": "Immutable reference-audit snapshot before final whitespace-only cleanup; superseded for current hashes by references-after-whitespace.json."
+    },
+    {
+      "path": "evidence/final-audit/metadata-refreshed.json",
+      "sha256": "8215af35ed9086a0a4310a12824ebcb8d35fcccc28c48ec5fa979a16072fb646",
+      "bytes": 12953
+    },
+    {
+      "path": "evidence/final-audit/portable-paths-refreshed.json",
+      "sha256": "b35f82f405059a3e2a5ed5ea313f4b8c572c3d2f2156b45a4780c8c66f7624ef",
+      "bytes": 1554
+    },
+    {
+      "path": "evidence/final-audit/complete-scope-check.json",
+      "sha256": "332c8291cc1e7bd213c59c67d4363d76266f21a1c7df6947fd96465160dc6320",
+      "bytes": 1217
+    },
+    {
+      "path": "evidence/final-audit/composed-source-identities.json",
+      "sha256": "6edf620ae3e2ce11411bc1a18a28f1b859e7090665b54e84a66bd52789602213",
+      "bytes": 18707
+    },
+    {
+      "path": "evidence/final-audit/references-after-whitespace.json",
+      "sha256": "1e998d10c595bfc3133ae6e6f7430225ce8db12f61e5360104f26199545cb97b",
+      "bytes": 1022942
+    },
+    {
+      "path": "evidence/final-audit/whitespace-composition-recheck.json",
+      "sha256": "eb1c2728d05e366c650478b687d48ecf8f2cc3affc3446a8af024d880197485c",
+      "bytes": 24124
+    },
+    {
+      "path": "evidence/final-audit/whitespace-reference-updates.json",
+      "sha256": "3f78367a8ef51e1a1c2becce90c52d5a6e7aabffa0dff1bc333d8dc052f8f931",
+      "bytes": 8768
+    },
+    {
+      "path": "reports/queue-local-evidence-20261026/final-root/whitespace-identity.json",
+      "sha256": "3cb1921acb70d1caa3695684231ff381606f5ff8b9e1e126b6fb911811ebf604",
+      "bytes": 464
+    },
+    {
+      "path": "evidence/historical-pr1878-origin/baseline-composed.json",
+      "sha256": "fa13786f9accdcd9fa22524056888f1b58d2b639acc84293a21294fee664a70b",
+      "bytes": 1675270,
+      "sourceCommit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc"
+    },
+    {
+      "path": "evidence/historical-pr1878-origin/baseline-direct.json",
+      "sha256": "a08ce29ffb8a1c4ee4f3741575e1f165c970fa966e888d08ccc4c14ca7394021",
+      "bytes": 2123183,
+      "sourceCommit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc"
+    }
+  ],
+  "formatOnlySupplement": {
+    "status": "passed",
+    "adapter": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+    "changedBlankLines": 4,
+    "beforeSha256": "dfa3e479422fc33511a722ce6db757f735cb1e4337df6c9a0c3847229a41e8ee",
+    "afterSha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d",
+    "executableAstAndGeneratedStringIdentityReceipt": {
+      "path": "reports/queue-local-evidence-20261026/final-root/whitespace-identity.json",
+      "sha256": "3cb1921acb70d1caa3695684231ff381606f5ff8b9e1e126b6fb911811ebf604",
+      "bytes": 464
+    },
+    "independentComposedSourceReceipt": {
+      "path": "evidence/final-audit/whitespace-composition-recheck.json",
+      "sha256": "eb1c2728d05e366c650478b687d48ecf8f2cc3affc3446a8af024d880197485c",
+      "bytes": 24124
+    },
+    "currentReferenceUpdatesReceipt": {
+      "path": "evidence/final-audit/whitespace-reference-updates.json",
+      "sha256": "3f78367a8ef51e1a1c2becce90c52d5a6e7aabffa0dff1bc333d8dc052f8f931",
+      "bytes": 8768
+    },
+    "finalReferencesReceipt": {
+      "path": "evidence/final-audit/references-after-whitespace.json",
+      "sha256": "1e998d10c595bfc3133ae6e6f7430225ce8db12f61e5360104f26199545cb97b",
+      "bytes": 1022942
+    },
+    "currentReferenceEntriesUpdated": 16,
+    "composedModulesCompared": 117,
+    "identicalComposedModuleSHA256AndBytes": 117,
+    "missingReferences": 0,
+    "currentSHA256Mismatches": 0,
+    "needleFailures": 0,
+    "historicalScopeResolutionPreserved": {
+      "already-covered-current": 128,
+      "implemented-local": 9,
+      "not-adopted": 1
+    },
+    "scopeNote": "Only current hashes for the one whitespace-cleaned adapter were refreshed. Earlier reference snapshots and immutable pre-restoration fixtures retain their historical hashes; current references are in references-after-whitespace.json.",
+    "historicalScopeResolutionTiming": "The preserved counts in this format-only receipt describe that earlier audit event; the subsequent base-origin correction is recorded separately in baseOriginClassificationSupplement."
+  },
+  "baseOriginClassificationSupplement": {
+    "status": "passed",
+    "report": {
+      "path": "reports/queue-local-historical-pr1878-origin-20261026.json",
+      "sha256": "f90076bcb845107a0deca69f68d5d0ca504e4ac60c93a9418b6d11ef851c2301"
+    },
+    "immutableBaseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+    "counts": {
+      "historicalRetainedAudited": 97,
+      "alreadyInPR1878": 95,
+      "coveredByLocalWork": 2,
+      "unclassified": 0,
+      "fixedRecordsAudited": 31,
+      "fixedAlreadyInPR1878": 31,
+      "fixedEquivalentNeedleReplacements": 1
+    },
+    "reclassifiedKeys": [
+      "legacy-spread-save-single-tan-per-nonzero-shot",
+      "native-obj-remove-redundant-full-float32-finite-pass"
+    ],
+    "aggregateBeforeAfter": {
+      "before": {
+        "implemented-local": 245,
+        "already-in-current-pr": 344
+      },
+      "after": {
+        "implemented-local": 247,
+        "already-in-current-pr": 342
+      },
+      "effect": "Classification only. No code changes or newly missing implementation."
+    },
+    "overall690Counts": {
+      "implemented-local": 247,
+      "already-in-current-pr": 342,
+      "not-adopted": 95,
+      "implemented-partially": 2,
+      "needs-evidence": 2,
+      "excluded-user": 2
+    },
+    "historical107Counts": {
+      "implemented-local": 11,
+      "already-in-current-pr": 95,
+      "not-adopted": 1
+    },
+    "fixed31Counts": {
+      "already-in-current-pr": 31
+    },
+    "currentSourceReferencesChanged": false,
+    "productionCodeChanged": false,
+    "reason": "The earlier retained-current label described the 5ca local discovery snapshot after active work, not immutable PR1878. Actual PR1878 sources contain 95 of those 97 optimizations. Two were already implemented locally before the historical audit and must be counted as local implementations."
+  },
+  "rankedHarnessFinalSupplement": {
+    "status": "passed",
+    "checkedAt": "2026-10-25T20:56:53.542685+00:00",
+    "receipt": {
+      "path": "evidence/final-audit/ranked-harness-final-reference-audit.json",
+      "sha256": "74e9b3a94797ca7c3b2988d5828325eaa8b68173a487a67af5394fadf41ef435",
+      "bytes": 14754
+    },
+    "scope": "Only the two final ranked harness source files and their current/historical evidence references; no production or browser tests rerun.",
+    "afterCodeCommit": "2a185b042745ab52ec6da5c9be2bfc1582c40613",
+    "currentSources": [
+      {
+        "path": "scripts/check-inkwave-ranked-browser.mjs",
+        "sha256": "3b26567052579b68c5d305781b33ec3f65719e02a3311a987a894cc8d46e31c4",
+        "bytes": 52790
+      },
+      {
+        "path": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+        "sha256": "aff3b8438052650254b30d9920659207269e44e28a2610bd2ce27e47f04577e5",
+        "bytes": 32150
+      }
+    ],
+    "counts": {
+      "currentFiles": 2,
+      "currentNeedles": 20,
+      "hashBearingReferences": 13,
+      "currentSourceReferences": 8,
+      "historicalSnapshotReferences": 5,
+      "missing": 0,
+      "mismatched": 0
+    },
+    "historical1783Reference680NeedleAuditPreserved": true,
+    "historicalReferencesObjectSha256": "6920d281cc516f7a330ff468c4dd8a3ebbf6b5587c75079578d015d0a20d01a0",
+    "historicalSourceSnapshotsByteIdenticalToCodeCommit": true,
+    "retainedValidation": {
+      "cpuTests": 28,
+      "cpuPass": 28,
+      "cpuFail": 0,
+      "offlineRules": 4,
+      "onlineRules": 4,
+      "remoteContactAudioGearPhases": 10,
+      "browserErrors": []
+    },
+    "buildIdentity": {
+      "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+      "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+    },
+    "productionGameplayChanged": false,
+    "testsRerunByAudit": false
+  },
+  "archiveFinalSupplement": {
+    "status": "passed",
+    "scope": "Additional51 Archive files, separately audited after the direct-folder690 classification.",
+    "report": {
+      "path": "reports/queue-local-archive-audit-20261026.json",
+      "sha256": "fd094d93abdceb8867194e2ea50b02b10b4c1266ffe03107b943a828f2e26665"
+    },
+    "counts": {
+      "archiveEntries": 52,
+      "archiveFiles": 51,
+      "archiveSubfolders": 1,
+      "audited": 51,
+      "unclassified": 0,
+      "directFolderDispositionRecordsUnchanged": 690,
+      "status": {
+        "already-covered-baseline": 29,
+        "already-covered-guarded-baseline": 1,
+        "disproven-current-production": 1,
+        "duplicate-covered-baseline": 5,
+        "not-adopted-current-contract": 7,
+        "not-adopted-measured-slowdown": 3,
+        "not-adopted-measured-submission-increase": 2,
+        "not-adopted-no-established-gain": 1,
+        "not-adopted-under-current-evidence": 1,
+        "retained-safe-subset-remainder-not-adopted": 1
+      },
+      "archivedLabels": {
+        "ALREADY FIXED": 28,
+        "ARCHIVED": 1,
+        "DISPROVEN": 1,
+        "DUPLICATE": 5,
+        "NOT ADOPTED": 16
+      },
+      "candidatesReassessedUnderCurrentTolerance": 1,
+      "unresolvedReassessmentCandidates": 0
+    },
+    "rootResolution": {
+      "all51RecordsDispositioned": true,
+      "independentNewImplementationAdopted": 0,
+      "optionalProposalReassessedAndNotAdopted": 1,
+      "unresolved": 0,
+      "direct690CountsChanged": false
+    },
+    "direct690CountsChanged": false,
+    "productionCodeChanged": false
+  }
+}
