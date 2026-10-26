@@ -316,3 +316,17 @@ test('player icon and background are validated and saved', async () => {
   const rename = await call('PATCH', '/api/account/profile', { cookie: session, body: { displayName: 'Next' } });
   assert.equal(rename.data.user.avatarIcon, 'octo', 'icon kept on rename');
 });
+
+test('revoking other sessions returns the sliding persistent cookie renewal', async () => {
+  const { call, session } = await registered();
+  const t0 = Date.now();
+  await withNow(t0 + 20 * 60 * 1000, async () => {
+    const response = await call('POST', '/api/account/sessions/revoke', { cookie: session, body: { scope: 'others' } });
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.data.sessions.map(s => s.current), [true]);
+    assert.ok(response.cookie, 'renewed server expiry must also renew the browser cookie');
+    assert.equal(response.cookie.pair, session);
+    assert.match(response.cookie.header, /Max-Age=2592000/);
+    assert.equal(response.data.sessions[0].expiresAt, Date.now() + PERSISTENT_TTL);
+  });
+});
