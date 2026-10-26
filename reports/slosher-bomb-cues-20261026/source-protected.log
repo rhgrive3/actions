@@ -1,0 +1,52 @@
+(node:1875) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher and Dread Wringer share Bucket art but retain source envelopes, including alternate kits (2246.942031ms)
+✔ real FX hooks give catalogue Bucket sheets the same flight droplets and head spacing as native Bucket (2000.33467ms)
+(node:1876) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #723 owner 30Hz contact, flight pause and resumed remaining fuse (870.60651ms)
+✔ #723 owner 60Hz contact, flight pause and resumed remaining fuse (878.200156ms)
+✔ #723 owner 120Hz contact, flight pause and resumed remaining fuse (835.856461ms)
+✔ #723 ghost 30Hz contact, flight pause and resumed remaining fuse (780.941345ms)
+✔ #723 ghost 60Hz contact, flight pause and resumed remaining fuse (813.771539ms)
+✔ #723 ghost 120Hz contact, flight pause and resumed remaining fuse (799.983837ms)
+✔ first floor/wall contact arms once; separation pauses instead of resetting the fuse (1582.427274ms)
+✔ unarmed free flight and frozen peer advance no fuse; water still releases (839.789089ms)
+✔ old unconditional fuse is an executable negative control on the same native method (816.056277ms)
+✔ a real ledge exit pauses and uninterrupted floor support spends exactly 60 ticks (1854.222254ms)
+✔ ghost catch-up consumes owner contact ticks once, independent of recipient dt (2524.150443ms)
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:76:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/bomb-kit-fidelity.test.mjs:241:17)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:1890) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Suction and Curling explosions paint their own BlastParam footprint, not the Splat Bomb one (4753.491616ms)
+✔ blast knockback reaches Splat (12), Suction (12) and Curling (9) victims with the pinned tuples (9466.759945ms)
+✔ per-sub launch: Curling SpawnSpeedY/YWorldMin and X/Z/Y player-velocity rates, Suction ZRate (0.496121ms)
+✔ real Curling throw launches at 7.2/s up and its fuse runs from release (210F tap, 90F full) (2155.261502ms)
+✔ Curling flight drag and BaseSpeed law are per elapsed time, not per contact (60/30/120 Hz) (6823.204753ms)
+✔ Curling hides both aim arc and predicted blast ring while real ground roll and wall bounce still resolve (11952.027155ms)
+✔ Splat Bomb ground resistance applies while resting between swept hits (bounded slide) (11706.88616ms)
+✔ thrown models: per-sub silhouette, native fuse pulse rebound to the model, Curling lights and Suction cup (25156.142542ms)
+✔ replayed (ghost) bombs take the model of the packet sub id; unknown ids stay Splat Bomb (2471.921402ms)
+✔ held prop follows the owner kit through the real Character update, and team recolour reaches it (23398.80135ms)
+✔ model parts follow the S3 icons: framed Splat pyramid, ringed Suction can on a dome cup, panelled Curling puck (2473.294635ms)
+(node:1897) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (2139.777427ms)
+✔ Tri-Slosher floor bead never rotates into a vertical launch when gravity first acts (1967.677759ms)
+✔ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (7046.750247ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106258.077452

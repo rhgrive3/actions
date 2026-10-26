@@ -67,8 +67,10 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const finite = (v, fallback) => Number.isFinite(v) ? v : fallback;
 // Stable INKWAVE body origin, taken from Projectiles._muzzle's existing
 // player-centred fallback. It is not an extracted Nintendo muzzle position.
-// Tri-Slosher's cosmetic low rim otherwise shortens the horizontal trajectory.
-const TRI_SLOSHER_ORIGIN=Object.freeze({X:0,Y:1.05,Z:.3});
+// Tri-Slosher/Dread Wringer's cosmetic low rims otherwise put a horizontal
+// camera launch below the aimed line. Keep the same body fallback for both;
+// this does not alter sourced speed, lift, range, damage or paint parameters.
+const BODY_SLOSHER_ORIGIN=Object.freeze({X:0,Y:1.05,Z:.3});
 function playerLocalOrigin(actor,offset,out){
   const yaw=Math.atan2(actor.aimDir.x,actor.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
   const x=finite(offset.X,0),z=finite(offset.Z,0);
@@ -795,7 +797,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // the 1F follow-up swings start from the low sweep pose, so the rendered tip
     // dropped every swing's birth from 1.6 m to 0.36 m (owner review 2026-10-18).
     const bodyOrigin=key==='brush'?BRUSH_SWING_ORIGIN:
-      key==='slosh'&&r.sourceActor==='WeaponSlosherDiffusion'?TRI_SLOSHER_ORIGIN:null;
+      key==='slosh'&&(r.sourceActor==='WeaponSlosherDiffusion'||r.sourceActor==='WeaponSlosherDouble')?BODY_SLOSHER_ORIGIN:null;
     origin(a,null,bodyOrigin);
     // Roller swings leave from the shared player-relative base plus each
     // glob's sourced Spawn* offset (weapons-fidelity ROLLER_SPAWN_BASE), as the

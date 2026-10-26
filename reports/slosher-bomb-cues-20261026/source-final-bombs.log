@@ -1,0 +1,16 @@
+(node:2025) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Curling has no post-release explosion forecast (owner) (3144.614409ms)
+✔ Curling has no post-release explosion forecast (ghost) (2326.911821ms)
+✔ Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming (2203.280088ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (owner) (1950.26431ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (ghost) (2030.900626ms)
+✔ Autobomb observed after its search window and removed bombs leave no delayed scan (1828.546428ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15418.887455
