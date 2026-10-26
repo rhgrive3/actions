@@ -643,6 +643,113 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn--primary { grid-column: auto; font-size: 18px; }
 }
+/* Phones play in landscape. Use the available width for choices and scores;
+   only the stage catalogue and optional result details need to scroll. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-modesel, .iw-setup.has-mobile-flow, .iw-results.has-mobile-flow) {
+    --menu-gap: 10px; gap: 6px;
+    padding: calc(var(--sat) + 6px) calc(var(--sar) + 10px) calc(var(--sab) + 8px) calc(var(--sal) + 10px);
+  }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-modesel, .iw-setup.has-mobile-flow) > .iw-head { margin: 0; gap: 12px; min-height: 44px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-modesel, .iw-setup.has-mobile-flow) .iw-head__title { font-size: 22px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.iw-modesel, .iw-setup.has-mobile-flow) .iw-head__sub { display: none; }
+
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr));
+    min-height: 0; align-content: stretch; gap: 10px; padding: 6px; overflow: auto; touch-action: pan-y;
+  }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode { display: flex; flex-direction: column; min-height: 96px; height: 100%; padding: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 2px #ffffff80; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode.is-focus { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--mc); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__art { height: 24px; min-height: 24px; border-radius: 12px 12px 0 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__hero { opacity: .4; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__kicker { top: 5px; left: 7px; font-size: 8px; padding: 2px 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__beta { top: 5px; left: auto; right: 8px; font-size: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__new { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__tape { flex: none; max-width: calc(100% - 12px); margin: 3px 6px 0; padding: 2px 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__tape .iw-display { font-size: clamp(15px, 2.6vw, 20px); line-height: 1.2; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__blurb { margin: 4px 8px; font-size: 11px; line-height: 1.3; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-mode__chips { margin: auto 8px 6px; gap: 4px; flex-wrap: nowrap; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-chip { font-size: 9px; padding: 3px 4px; white-space: nowrap; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__go { display: none; }
+
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .s3-setup-scroll {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(142px, .95fr); grid-template-rows: minmax(0, 1fr);
+    align-content: stretch; gap: 10px; padding: 4px; overflow: hidden;
+  }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left { display: flex; grid-column: 1; grid-row: 1; flex-direction: column; min-height: 0; gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left > .iw-seclabel { font-size: 11px; flex: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list.is-many { flex: 1 1 0; min-height: 0; max-height: none; padding: 4px; gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list .iw-ticket { height: 52px; min-height: 52px; border-radius: 10px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list .iw-ticket__num { left: 6px; width: 22px; height: 22px; font-size: 11px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list .iw-ticket__name { left: 34px; right: 8px; font-size: 12px; line-height: 1.3; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ticket__time { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__hero { display: grid; grid-column: 2; grid-row: 1; grid-template-rows: minmax(64px, 1fr) auto; min-height: 0; gap: 6px; overflow: hidden; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__frame { grid-column: 1; grid-row: 1; height: 100%; min-height: 64px; aspect-ratio: auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__caption { position: relative; grid-column: 1; grid-row: 1; align-self: end; inset: auto; z-index: 2; margin: 0; padding: 4px; gap: 0; background: linear-gradient(transparent, #15121ce6); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__tape { transform: none; padding: 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__name { font-size: 13px; line-height: 1.3; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow :is(.iw-ss__blurb, .iw-ss__layout, .iw-ss__bosstag, .iw-ss__splat, .iw-ss__drips, .iw-ss__timetext) { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__count { top: 5px; left: 5px; padding: 4px; font-size: 9px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__count b { font-size: 11px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__time { grid-column: 1; grid-row: 2; margin: 0; padding: 4px; gap: 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__timehead { font-size: 10px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-daytgl { height: 44px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-daytgl__opt { font-size: 13px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match { grid-column: 3; grid-row: 1; min-height: 0; margin: 0; padding: 5px; gap: 4px; overflow: auto; touch-action: pan-y; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match .iw-setrow { gap: 4px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-setrow__label { font-size: 11px; line-height: 1.2; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match .iw-seg__opt { min-width: 0; min-height: 44px; padding: 4px 2px; font-size: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow :is(.iw-pips, .iw-setup__desc) { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot { grid-template-columns: minmax(0, .9fr) minmax(0, .9fr) minmax(0, 1.2fr); gap: 8px; padding: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { grid-column: 3; min-height: 52px; height: 52px; padding: 4px 10px; font-size: 19px; gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-btn--start .iw-btn__sub { max-width: none; white-space: nowrap; margin-top: 2px; font-size: 11px; line-height: 1.2; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow :is(.iw-start__map, .iw-start__chev, .iw-start__ready) { display: none; }
+
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .s3-results-scroll { padding: 0 4px 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__title { font-size: 26px; line-height: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__metarow { margin: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__meta { font-size: 11px; padding: 4px 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__body { gap: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-cover__names { margin-bottom: 3px; font-size: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-cover { height: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__teams { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable :is(.iw-ttable__head, .iw-prow) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 4px; padding: 2px 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable--boss :is(.iw-ttable__head, .iw-prow) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__head { grid-template-rows: 12px 10px; margin-bottom: 2px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__team { grid-column: 1 / -1; grid-row: 1; font-size: 11px; line-height: 1.2; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__head .iw-ttable__col { display: flex; grid-row: 2; justify-content: center; font-size: 0; letter-spacing: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__col::after { content: attr(data-compact-label); font-size: 10px; line-height: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-ttable__col i { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow { position: relative; height: 32px; min-height: 32px; margin-top: 2px; grid-template-rows: 14px 12px; border-radius: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__w { position: absolute; left: 6px; top: 2px; width: 18px; height: 16px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__name { grid-column: 1 / -1; grid-row: 1; padding-left: 23px; font-size: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__name em { font-size: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow [data-stat-label] { grid-row: 2; display: flex; flex-direction: row; justify-content: center; gap: 1px; font-size: 12px; line-height: 1; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow [data-stat-label]::before { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__turf small { display: inline; font-size: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__turfbar { bottom: -2px; height: 2px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__aw { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__stamp { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow.is-mvp .iw-prow__name::after { content: 'MVP'; flex: none; margin-left: auto; padding-left: 4px; color: #ffd54a; font-size: 9px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow > .iw-res__foot { padding: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn { min-height: 46px; height: 46px; padding: 6px 8px; font-size: 14px; gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn--primary { grid-column: auto; font-size: 17px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow.is-boss .iw-res__btns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__boss { min-height: 36px; height: 36px; padding: 4px 6px 4px 40px; gap: 6px; flex-wrap: nowrap; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__emb { width: 34px; height: 34px; left: 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__main { flex: 1 1 0; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__row { gap: 4px; flex-wrap: nowrap; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__name { font-size: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__bar { height: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__stamp { top: 0; right: 6px; font-size: 11px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-rb__time { padding: 3px 6px; }
+}
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-chip:nth-child(n+3) { display: none; }
+}
 /* the key hints sit top-right on results: at the bottom they covered the end of the action row */
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(var(--u) * 2.2 + var(--sat)); bottom: auto; }
 

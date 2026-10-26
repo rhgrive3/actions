@@ -86,13 +86,30 @@ function decorateSetup(menus, scr) {
     const left = scr.el.querySelector('.iw-ss__left');
     const hero = scr.el.querySelector('.iw-ss__hero');
     scr.el.querySelector('.iw-ss__foot').before(content);
-    content.append(hero, left);
+    content.append(left, hero, left.querySelector('.iw-ss__match'));
     scr.el.classList.add('has-mobile-flow');
   }
   return scr;
 }
 
 function decorateMode(menus, scr) {
+  if (touchMenu()) {
+    const summaries = {
+      turf: L('Ink the most ground. 4 vs 4.', '塗った面積で勝負。4対4のバトル。'),
+      zones: L('Hold the zones to count down.', 'エリアを確保してカウントを進めよう。'),
+      tower: L('Ride the tower to the enemy goal.', 'ヤグラに乗って相手のゴールへ。'),
+      rainmaker: L('Carry the Rainmaker to the goal.', 'ガチホコを運んで相手のゴールへ。'),
+      clams: L('Collect clams and score in the basket.', 'アサリを集めて相手のゴールへ。'),
+      boss: L('Team up with eight to defeat the boss.', '8人で協力して巨大ボスを倒そう。'),
+    };
+    for (const card of scr.el.querySelectorAll('.iw-mode')) {
+      const blurb = card.querySelector('.iw-mode__blurb');
+      if (blurb && summaries[card._mode]) {
+        blurb.title = blurb.textContent;
+        blurb.textContent = summaries[card._mode];
+      }
+    }
+  }
   const onNav = scr.onNav;
   scr.onNav = dir => {
     // Read the real grid on each move: the six-rule catalogue, portrait rows
@@ -125,6 +142,13 @@ function decorateResults(menus, scr) {
   // Awards and progression follow the scores, while the original action
   // nodes remain in their original footer with their original callbacks.
   const medals = head.querySelector('.iw-res__medals');
+  const tags = [...head.querySelectorAll('.iw-res__tag')];
+  if (tags.length) {
+    const awards = document.createElement('div');
+    awards.className = 's3-result-tags';
+    awards.append(...tags);
+    body.append(awards);
+  }
   if (medals) body.append(medals);
   const xp = foot.querySelector('.iw-xp');
   if (xp) body.append(xp);
@@ -132,11 +156,17 @@ function decorateResults(menus, scr) {
   scroll.append(head, body);
   scr.el.append(foot);
   scr.el.classList.add('has-mobile-flow');
+  const change = foot.querySelector('[data-id="change-gear-continue"]');
+  if (change) {
+    change.setAttribute('aria-label', t('CHANGE GEAR, THEN GO!'));
+    change.querySelector('.iw-btn__label').textContent = L('Change gear', '装備変更');
+  }
   for (const table of scr.el.querySelectorAll('.iw-ttable')) {
     const boss = table.classList.contains('iw-ttable--boss');
     const labels = boss
       ? [L('Damage', 'ダメージ'), L('Weak hits', '弱点'), L('Splats', 'たおした'), L('Deaths', 'やられた'), L('Turf', '塗り')]
       : [L('Turf', '塗り'), L('Splats', 'たおした'), L('Deaths', 'やられた'), 'SP'];
+    table.querySelectorAll('.iw-ttable__col').forEach((column, i) => { column.dataset.compactLabel = labels[i] || ''; });
     for (const row of table.querySelectorAll('.iw-prow')) {
       const stats = row.querySelectorAll('.iw-prow__turf, .iw-prow__n');
       stats.forEach((stat, i) => { stat.dataset.statLabel = labels[i] || ''; });

@@ -51,9 +51,9 @@ window.addEventListener('keydown',e=>{if(menus.handleKey(e)&&document.activeElem
 window.menuReady=true;
 </script></html>`;
 const cases = [
-  ['small-phone',320,568], ['phone',390,844], ['android',360,640],
-  ['short-landscape',568,320], ['landscape',844,390],
-  ['tablet',768,1024], ['split-view',507,768], ['desktop',1440,900],
+  ['small-phone',568,320], ['phone',844,390], ['android',740,360],
+  ['standard',667,375], ['landscape',932,430], ['browser-bars',740,280],
+  ['notched',844,390], ['tablet',1024,768], ['desktop',1440,900],
 ];
 const selected = (arg('--cases') || '').split(',').filter(Boolean);
 const result = { source, audit, engine:engineName,viewportModel:resizableViewport?'resizable-touch':'mobile-emulation',contentHash:manifest.contentHash,inputHash:manifest.inputHash,revision:manifest.build.revision,realDeviceVerified:false, cases:[], errors:[] };
@@ -69,7 +69,11 @@ try {
     page.on('pageerror',error=>result.errors.push({name,error:error.message}));
     await page.goto(`http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`);
     await page.waitForFunction(()=>window.menuReady);
+    if(name==='notched')await page.evaluate(()=>{
+      for(const [key,value] of [['--sal','44px'],['--sar','44px'],['--sab','21px']])menus.el.style.setProperty(key,value);
+    });
     const entry = {name,width,height,screens:{},checks:[]};result.cases.push(entry);
+    const landscapePhone=touch&&height<=500;
     const check = (ok,label) => { entry.checks.push({label,ok});if(!audit)assert(ok,`${name}: ${label}`); };
     const show = async screen => {
       await page.evaluate(screen=>{menus.wipe.cancel();menus.show(screen,{wipe:false,light:false,force:true});},screen);
@@ -88,6 +92,7 @@ try {
     if (touch) {
       check(entry.screens.mode.every(r=>r.x>=-1&&r.x+r.width<=width+1),'mode cards fit screen');
       check(entry.screens.mode.every(r=>r.height<=Math.max(290,height-110)),'mode cards fit short screens');
+      if(landscapePhone)check(entry.screens.mode.length===6&&entry.screens.mode.every(r=>r.inViewport),'all six modes visible together in landscape');
     }
     if(!audit&&touch) {
       const expected = await page.locator('.iw-mode').evaluateAll(els=>{
@@ -110,6 +115,13 @@ try {
     check(await page.evaluate(()=>menus._setup.mode==='boss'),'boss mode opens its own setup');
     await show('setup');await capture('setup','.iw-ss__foot button');
     if(touch)check(entry.screens.setup.every(r=>r.inViewport),'equipment and start visible without scrolling');
+    if(landscapePhone) {
+      check(await page.locator('.iw-daytgl, .iw-ss__match .iw-seg__opt').evaluateAll(els=>els.every(el=>{
+        const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+        return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&r.height>=43&&(hit===el||el.contains(hit));
+      })),'time, difficulty and duration are visible and touchable together');
+      check(await page.locator('.s3-setup-scroll').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1),'setup uses horizontal panels without page scrolling');
+    }
     const tickets=page.locator('.iw-ticket');
     const last=tickets.last(),id=await last.evaluate(el=>el._mid);
     await last.scrollIntoViewIfNeeded();await (touch?last.tap():last.click());
@@ -154,6 +166,10 @@ try {
       const screen=boss?'boss-results':'results';await capture(screen,'.iw-res__foot button');
       if(touch)check(entry.screens[screen].every(r=>r.inViewport),'results actions visible without scrolling: '+screen);
       check(await page.locator('.iw-prow').count()===8,'all eight players retained: '+screen);
+      if(landscapePhone) {
+        check(await page.locator('.iw-res__teams').evaluate(el=>{const [a,b]=el.children;return Math.abs(a.getBoundingClientRect().top-b.getBoundingClientRect().top)<2;}),'both teams share the landscape row: '+screen);
+        if(height>=320)check(await page.locator('.iw-prow').evaluateAll(els=>els.every(el=>{const r=el.getBoundingClientRect(),foot=el.closest('.iw-results').querySelector('.iw-res__foot').getBoundingClientRect();return r.top>=0&&r.bottom<=foot.top;})),'all eight scores visible above actions: '+screen);
+      }
       check(await page.locator('.iw-prow').evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth+1)),'score rows do not clip: '+screen);
       if(!audit&&touch)check(await page.locator('.iw-res__foot button').evaluateAll(els=>els.every(el=>{
         const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
@@ -179,17 +195,18 @@ try {
       check(await page.locator('.iw-modal__btns button').evaluateAll(els=>els.every(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth;})),'leave confirmation fits the viewport');
       await tap('[data-id="modal-0"]');await page.waitForFunction(()=>!menus._modal);
       check(await page.evaluate(()=>!calls.some(c=>c.kind==='quit')),'cancel leave preserves the room');
-      // Rotation and changing browser chrome must preserve mounted screen state.
+      // Browser bars change usable height while gameplay remains landscape.
       if(touch && (engineName!=='webkit' || resizableViewport)) {
         await show('setup');
         const state=await page.evaluate(()=>JSON.stringify(menus._setup));
-        await page.setViewportSize({width:height,height:width});
+        const resized={width,height:Math.max(240,height-40)};
+        await page.setViewportSize(resized);
         // Wait for both the window and CSS media viewport before asserting.
-        await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&matchMedia(`(width: ${width}px)`).matches&&matchMedia(`(height: ${height}px)`).matches,{width:height,height:width});
+        await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&matchMedia(`(width: ${width}px)`).matches&&matchMedia(`(height: ${height}px)`).matches,resized);
         await page.waitForFunction(()=>{const r=document.querySelector('[data-id="start"]').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;});
-        check(await page.locator('[data-id="start"]').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;}),'start remains visible after rotation');
-        check(await page.evaluate(()=>JSON.stringify(menus._setup))===state,'rotation preserves stage, time and match options');
-        await page.screenshot({path:path.join(evidence,`${name}-rotated-setup.png`)});
+        check(await page.locator('[data-id="start"]').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;}),'start remains visible with browser bars');
+        check(await page.evaluate(()=>JSON.stringify(menus._setup))===state,'height changes preserve stage, time and match options');
+        await page.screenshot({path:path.join(evidence,`${name}-shorter-setup.png`)});
       } else if(touch) {
         // Playwright WebKit mobile emulation changes innerWidth/innerHeight
         // without resizing visualViewport or CSS media queries. Both static
