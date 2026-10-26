@@ -64,8 +64,7 @@ export function paintCrabFlight(game, p, end, remainder = 0, waterY = -Infinity)
   // its endpoint so 30Hz cannot add a render frame of falling-ink latency.
   const current=game?.projectiles?._s3SplashDrops;
   if(remainder>0&&current?.length>before){
-    const newborn=current.splice(before),subset={_s3SplashDrops:newborn};
-    advanceSplashDrops(subset,remainder,game,waterY);current.push(...newborn);
+    advanceSplashDrops(game.projectiles,remainder,game,waterY,before);
   }
   return released;
 }
