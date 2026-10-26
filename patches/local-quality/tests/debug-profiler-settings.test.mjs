@@ -80,3 +80,124 @@ test('disabled measurement adds no game probe and reports unavailable timers',as
   assert.match(data.debugModePrivacy,/Device-local/);
   probe.dispose();
 });
+
+import { installPlatformGame } from '../platform-game.mjs';
+
+function platformFixture(search='') {
+  let frames=0, installed=0, disposed=0;
+  const pending=[], active=[], warnings=[];
+  const listener={addEventListener(){},removeEventListener(){}};
+  const env={
+    ...listener,document:{...listener,hidden:false,hasFocus(){return true}},
+    location:{search},navigator:{},screen:{orientation:listener},
+    performance:{now:()=>0},Date:{now:()=>0},
+    requestAnimationFrame(){return 1;},cancelAnimationFrame(){},
+    console:{warn:(...args)=>warnings.push(args)},
+  };
+  class Game {
+    _setSettings(partial){Object.assign(this.settings,partial);return 'settings-applied';}
+    _frame(){frames++;}
+    _dynRes(){}
+  }
+  const G={mode:'menu'};
+  installPlatformGame(Game,G,env,{
+    importProfiler:()=>new Promise((resolve,reject)=>pending.push({resolve,reject}))
+  });
+  const game=new Game();
+  game.settings={debugMode:false,frameRate:'display'};
+  game.fpsAcc=0;game.fpsN=0;
+  game.menus={setPlatformDriven(){}};
+  const createFrameTimingProbe=()=>{
+    installed++;
+    const probe={callback(){},skipped(){},record(){},dispose(){disposed++;}};
+    active.push(probe);
+    return probe;
+  };
+  const flush=()=>new Promise(resolve=>setImmediate(resolve));
+  const deliver=async()=>{
+    assert.ok(pending.length>0,'the lazy profiler import is requested');
+    pending.shift().resolve({createFrameTimingProbe});
+    await flush();
+  };
+  const counters=()=>({frames,installed,disposed,pending:pending.length,warnings:warnings.length});
+  return {game,env,pending,flush,deliver,counters};
+}
+
+test('platform-owned profiler enable/disable is immediate while paused and disposes all hooks',async()=>{
+  const f=platformFixture();
+  f.game._loop();
+  assert.equal(f.game._rangeFrameProbe,null,'OFF never imports or installs instrumentation');
+  await f.flush();assert.equal(f.counters().pending,0);
+  assert.equal(f.game._setSettings({debugMode:true}),'settings-applied');
+  await f.flush();assert.equal(f.counters().pending,1);
+  f.game._setSettings({debugMode:false});
+  await f.deliver();
+  assert.deepEqual(f.counters(),{frames:0,installed:0,disposed:0,pending:0,warnings:0},
+    'stale import must not reactivate the disabled profiler');
+  f.game._setSettings({debugMode:true});
+  await f.flush();await f.deliver();
+  assert.equal(f.counters().installed,1);
+  assert.ok(f.game._rangeFrameProbe);
+  f.game._setSettings({debugMode:false});
+  assert.deepEqual([f.game._rangeFrameProbe,f.counters().disposed],[null,1],
+    'OFF immediately releases the current profiler before a new frame');
+  f.game.disposePlatform();
+  assert.equal(f.counters().disposed,1,'teardown is idempotent');
+});
+
+test('legacy profileRange opt-in remains available, but explicit OFF has priority',async()=>{
+  const f=platformFixture('?profileRange=1');
+  f.game._loop();
+  await f.flush();assert.equal(f.counters().pending,1);
+  await f.deliver();assert.equal(f.counters().installed,1);
+  f.game._setSettings({debugMode:false});
+  assert.equal(f.game.platform.profilerUrlOptIn,false);
+  assert.equal(f.counters().disposed,1);
+  assert.equal(f.game._rangeFrameProbe,null);
+  f.game.platform.syncProfiler();
+  await f.flush();assert.equal(f.counters().pending,0,'OFF must not retry URL opt-in');
+  f.game._setSettings({debugMode:true});
+  await f.flush();await f.deliver();
+  assert.equal(f.counters().installed,2,'turning the setting ON still works');
+  f.game.disposePlatform();
+  assert.equal(f.counters().disposed,2);
+});
+
+test('disposing a platform invalidates pending imports across new runtime ownership',async()=>{
+  const f=platformFixture();
+  f.game.settings.debugMode=true;
+  f.game._loop();
+  await f.flush();assert.equal(f.counters().pending,1);
+  f.game.disposePlatform();
+  await f.deliver();
+  assert.equal(f.counters().installed,0,'disposed owner must reject imported module');
+  f.game._loop();
+  await f.flush();assert.equal(f.counters().pending,1);
+  await f.deliver();
+  assert.equal(f.counters().installed,1,'new owner may opt in after reinstallation');
+  f.game.disposePlatform();
+  assert.equal(f.counters().disposed,1);
+});
+
+test('failed lazy import is reported once rather than retried every RAF',async()=>{
+  const f=platformFixture();
+  f.game._loop();
+  f.game._setSettings({debugMode:true});
+  await f.flush();
+  assert.equal(f.pending.length,1);
+  f.pending.shift().reject(new Error('offline import'));
+  await f.flush();
+  assert.equal(f.counters().warnings,1);
+  assert.match(f.game.platform.profilerLoadError,/offline import/);
+  for(let i=0;i<20;i++)f.game.platform.syncProfiler();
+  await f.flush();
+  assert.equal(f.pending.length,0,'no repeated dynamic imports while enabled');
+  f.game._setSettings({debugMode:false});
+  f.game._setSettings({debugMode:true});
+  await f.flush();
+  assert.equal(f.pending.length,1,'a new deliberate ON retries after failure');
+  await f.deliver();
+  assert.equal(f.counters().installed,1);
+  f.game.disposePlatform();
+  assert.equal(f.counters().disposed,1);
+});
