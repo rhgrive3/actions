@@ -6495,3 +6495,14 @@ visibility cutoff was excluded because source data alone did not establish an
 original UI rule. Horizontal inner-marker behavior, Hissen size and Slosher
 floor-droplet visual corrections remain open in the
 [completion matrix](inkwave-batch-integration-20261026/completion-matrix.md).
+
+## 2026-10-26: Collision revision producers for safe reticle reuse
+
+The composed Level/NativeLevel now publishes `collisionRevision` on real block
+append/index rebuild, and ranked Tower transform/removal/solid-disable. Queries
+and unchanged Tower updates do not advance it. This supplies an actual terrain
+mutation signal for the separately owned reticle cache; unknown worlds remain
+unversioned. Source tests exercise real mutation methods and physical contacts,
+not manually injected generation values. This is internal INKWAVE cache
+correctness and cost control, not a Nintendo frame/layout or visual-parity claim.
+See the [bounded producer contract and verification](collision-revision-producers-20261026/README.md).
