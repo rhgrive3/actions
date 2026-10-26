@@ -64,8 +64,7 @@ export function installWeaponAudioEngine(Engine){
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
-      for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
-        loader?.ensure(cue,'fire')?.catch(()=>{});
+      loader?.ensureMany(['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'].map(id=>({id,event:'fire'})))?.catch(()=>{});
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
@@ -118,9 +117,9 @@ export function installWeaponAudioEngine(Engine){
     const family=AUDIO_RECIPES[id]?.family;
     const required=family==='charger'?['charge','ready','fire_full']:
       family==='splatling'?['charge','spin','ready']:[];
-    for(const event of required){
-      if(loader.declares(id,event)!==true)continue;
-      await audioLoadDeadline(loader.ensure(id,event,{priority:true}),12000);
+    const requiredRecordings=required.filter(event=>loader.declares(id,event)===true);
+    if(requiredRecordings.length)await audioLoadDeadline(loader.ensureMany(requiredRecordings.map(event=>({id,event})),{priority:true}),12000);
+    for(const event of requiredRecordings){
       if(!bank.authorized.byEvent.has(id+':'+event))
         throw new Error('本家チャージ・射撃MP3の準備に失敗しました: '+id+'/'+event);
     }
@@ -141,9 +140,10 @@ export function installWeaponAudioEngine(Engine){
     // first playable hit for every weapon. Lightweight audio is decoded once
     // into the shared bounded bank. Tests/operator packs that do not declare
     // these independent cues may still use their own isolated sound fixtures.
-    for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
-      if(loader.declares(cue,'fire')!==true)continue;
-      const row=await audioLoadDeadline(loader.ensure(cue,'fire',{priority:true}),12000);
+    const combatRecordings=['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'].filter(cue=>loader.declares(cue,'fire')===true);
+    const combatImport=combatRecordings.length?await audioLoadDeadline(loader.ensureMany(combatRecordings.map(id=>({id,event:'fire'})),{priority:true}),12000):null;
+    for(const cue of combatRecordings){
+      const row=combatImport;
       if(!bank.authorized.byEvent.has(cue+':fire')){
         const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
