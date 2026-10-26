@@ -54,7 +54,12 @@ export function adaptRemainingWorld20261026(rel,code){
  }
 
  if(rel==='src/world/render-bounds.js'){
-  patch('    for (const r of recs) box.union(local.clone().applyMatrix4(r.m));','    const transformed = new THREE.Box3();\n    for (const r of recs) box.union(transformed.copy(local).applyMatrix4(r.m));');
+  const old='    for (const r of recs) box.union(local.clone().applyMatrix4(r.m));';
+  const optimized='    const transformed = new THREE.Box3();\n    for (const r of recs) box.union(transformed.copy(local).applyMatrix4(r.m));';
+  // The immutable upstream already includes this exact allocation reduction.
+  // Preserve the fail-closed anchor on any third, unrecognized implementation.
+  if(code.includes(old))patch(old,optimized);
+  else if(!code.includes(optimized))throw Error('Remaining world queue anchor: render-bounds unexpected source');
  }
  if(rel==='src/world/level.js'){
   patch('      const edgeCache = new Map();','      const edgeCache = new Uint8Array(12);');
