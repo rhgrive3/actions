@@ -1,7 +1,7 @@
 import { audioLoadDeadline } from './load-deadline.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
-import { chargerRiseBuffer, playChargerRise, disposeChargerRise, usesSplatChargerRise } from './charger-charge-rise.mjs';
+import { chargerRiseBuffer, playChargerRise, prewarmChargerRise, disposeChargerRise, usesChargerRise } from './charger-charge-rise.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
@@ -252,9 +252,11 @@ export function installWeaponAudioEngine(Engine){
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
   p.disposeWeaponAudio=function(){disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmWeapons?.clear();};
-  p.prewarmChargerChargeRise=function(weaponId='charger'){
-    if(!this.ctx||!usesSplatChargerRise(weaponId))return false;
-    chargerRiseBuffer(this.ctx,{retry:true}).catch(()=>{});
+  p.prewarmChargerChargeRise=function(weaponId='charger',chargeTime=1){
+    if(!this.ctx||!usesChargerRise(weaponId))return false;
+    // Pre-stretch the real Splat Charger recording in a Worker after decode.
+    // Non-urgent preloads never hold a frame or change the source recording.
+    void prewarmChargerRise(this,{weaponId,chargeTime,retry:true}).catch(()=>{});
     return true;
   };
   p.playChargerChargeRise=function(options){
