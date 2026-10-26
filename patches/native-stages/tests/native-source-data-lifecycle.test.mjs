@@ -9,9 +9,11 @@ const file=new URL('../runtime/source-data.mjs',import.meta.url);
 const runtime=fs.readFileSync(file,'utf8');
 async function harness({prebuilt=true,load=async()=>({manifest:{id:'stage'},sourceMetrics:{prebuilt:true}}),reply={result:{manifest:{id:'stage'}}}}={}){
  const workers=[],warnings=[],events=[],loads=[];
+ const config={runtimeSha256:'runtime-pin',...(prebuilt?{prebuilt:{stages:{stage:{stageSha256:'record-pin',bytes:123}}}}:{})};
+ const stages=Array.from({length:26},(_,i)=>({id:i?'stage'+i:'stage',tree:(i+1).toString(16).padStart(40,'0')}));
  class Worker {
   constructor(url,options){this.url=String(url);this.options=options;this.terminated=0;workers.push(this);}
-  postMessage(message){this.message=message;if(reply)queueMicrotask(()=>this.onmessage?.({data:reply}));}
+  postMessage(message){this.message=structuredClone(message);if(reply)queueMicrotask(()=>this.onmessage?.({data:reply}));}
   terminate(){this.terminated++;}
  }
  const context=vm.createContext({URL,Worker,DOMException,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},
@@ -25,9 +27,9 @@ async function harness({prebuilt=true,load=async()=>({manifest:{id:'stage'},sour
    await prebuilt.link(()=>assert.fail('unexpected prebuilt dependency'));await prebuilt.evaluate();return prebuilt;
   },
  });
- await module.link(spec=>{assert.equal(spec,'./build-config.mjs');return synthetic({nativeStageBuild:{runtimeSha256:'runtime-pin',...(prebuilt?{prebuilt:{stages:{stage:{stageSha256:'record-pin',bytes:123}}}}:{})}});});
+ await module.link(spec=>{if(spec==='./source-catalog.mjs')return synthetic({SOURCE_RECIPE:'recipe',SOURCE_STAGES:stages});assert.equal(spec,'./build-config.mjs');return synthetic({nativeStageBuild:config});});
  await module.evaluate();
- return {run:module.namespace.loadBrowserSource,workers,warnings,events,loads};
+ return {run:module.namespace.loadBrowserSource,workers,warnings,events,loads,config,stages};
 }
 
 test('admitted prebuilt data is published directly without starting a converter worker',async()=>{
@@ -76,4 +78,29 @@ test('aborting a pending fallback worker terminates it and ignores late result p
  controller.abort();await assert.rejects(pending,{name:'AbortError'});const worker=h.workers[0];assert.equal(worker.terminated,1);
  worker.onmessage({data:{result:{manifest:{id:'late'}}}});
  assert.equal(worker.terminated,1);assert.deepEqual(h.events.map(e=>e.detail.phase),['failed']);
+});
+
+const inventory=(h,id='stage')=>({id,runtimeSha256:h.config.runtimeSha256,recipe:'recipe',tree:h.stages.find(s=>s.id===id).tree,inventory:{sha:h.stages.find(s=>s.id===id).tree,truncated:false,tree:[{type:'blob',path:'source.mtl',sha:'a'.repeat(40),size:3}]}});
+const emit=(worker,data)=>worker.onmessage({data:structuredClone(data)});
+test('only successful pinned workers publish private metadata; warm messages receive independent clones',async()=>{
+ const h=await harness({prebuilt:false,reply:null}),p=h.run('stage',undefined,{verifiedInventory:{untrusted:true}}),first=h.workers.at(-1);
+ assert.equal(first.message.verifiedInventory,undefined);emit(first,{sourceInventory:inventory(h)});emit(first,{result:{ok:true}});await p;
+ const q=h.run('stage'),second=h.workers.at(-1);assert.deepEqual(second.message.verifiedInventory,inventory(h));second.message.verifiedInventory.inventory.tree[0].sha='f'.repeat(40);emit(second,{result:{ok:true}});await q;
+ const r=h.run('stage'),third=h.workers.at(-1);assert.equal(third.message.verifiedInventory.inventory.tree[0].sha,'a'.repeat(40));emit(third,{result:{ok:true}});await r;
+});
+test('failed/aborted workers and all late inventory/result events never seed metadata',async()=>{
+ for(const abort of [false,true]){
+  const h=await harness({prebuilt:false,reply:null}),controller=new AbortController(),p=h.run('stage',controller.signal),first=h.workers.at(-1);emit(first,{sourceInventory:inventory(h)});
+  if(abort)controller.abort();else emit(first,{error:'injected failure'});await assert.rejects(p);
+  emit(first,{sourceInventory:inventory(h)});emit(first,{result:{ok:true}});
+  const q=h.run('stage'),second=h.workers.at(-1);assert.equal(second.message.verifiedInventory,undefined);emit(second,{result:{ok:true}});await q;
+ }
+});
+test('runtime, stage tree and stage identity invalidate inventory reuse; retention is bounded to 24 entries',async()=>{
+ const h=await harness({prebuilt:false,reply:null});
+ async function complete(id){const p=h.run(id),w=h.workers.at(-1);emit(w,{sourceInventory:inventory(h,id)});emit(w,{result:{ok:true}});await p;return w;}
+ await complete('stage');h.config.runtimeSha256='new-runtime';assert.equal((await complete('stage')).message.verifiedInventory,undefined);
+ h.stages[0].tree='f'.repeat(40);assert.equal((await complete('stage')).message.verifiedInventory,undefined);
+ for(let i=1;i<=25;i++)assert.equal((await complete('stage'+i)).message.verifiedInventory,undefined);
+ assert.equal((await complete('stage')).message.verifiedInventory,undefined);
 });
