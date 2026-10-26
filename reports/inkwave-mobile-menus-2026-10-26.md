@@ -21,6 +21,8 @@ PCでは元のDOM配置を維持する。縦持ちでのプレイには既存の
 | ステージ選択 | ![変更前のステージ選択](inkwave-mobile-menus-2026-10-26/setup-before.png) | ![横持ちで一覧・プレビュー・設定を表示](inkwave-mobile-menus-2026-10-26/setup-after.png) |
 | リザルト | ![変更前のリザルト](inkwave-mobile-menus-2026-10-26/results-before.png) | ![横持ちで8人分の成績と再戦操作を表示](inkwave-mobile-menus-2026-10-26/results-after.png) |
 
+[小型スマホ568×320の設定画面](inkwave-mobile-menus-2026-10-26/small-landscape-setup.png)と[ガチルールのカウント・ペナルティ・成績](inkwave-mobile-menus-2026-10-26/ranked-results.png)も保存した。
+
 ## 再現・検証
 
 `scripts/check-inkwave-mobile-menus.mjs` は最適化ビルドの実Menus・CSS・本番installerをロードする。実対戦APIはオフラインの記録用fixtureで、実対戦の成立とは区別する。再現コマンドは[開発ガイド](../docs/inkwave-development.md#ブラウザで生成物を検証する)を参照。
@@ -29,9 +31,10 @@ PCでは元のDOM配置を維持する。縦持ちでのプレイには既存の
 - タブレット1024×768とPC1440×900の回帰確認。
 - 6モードの同時表示、時間帯・難しさ・試合時間の同時操作、全体スクロールなしのステージ設定、両チーム8人の成績と再戦ボタンの同時表示。
 - 全26ステージの選択、装備画面との往復、変更したブキでの一度だけの再戦、二重開始、オンライン続行の一度だけの送信、退出キャンセル。
+- 全6ルールのリザルト。ガチ4ルールのカウント・ペナルティと、塗り割合の誤表示がないこと。
 - Chromiumの実タッチイベントによる一覧スワイプと誤選択の抑止。横持ちのままブラウザバーで高さが変化した場合の選択内容・開始ボタンの保持。
 
-最終ビルドのハッシュ、エンジン別の確認項目と結果は[検証結果](inkwave-mobile-menus-2026-10-26/validation.json)に保存する。
+実装 `85a4561` の最適化ビルドで、Chromiumは9条件418項目、WebKitは9条件386項目、WebKitの高さ変更は2条件143項目が成功した。関連回帰110件・CI契約14件は失敗・スキップなし。quick互換チェック・起動予算も成功した。ビルドハッシュ、コマンド、各確認項目は[検証結果](inkwave-mobile-menus-2026-10-26/validation.json)に保存した。
 
 PlaywrightのWebKitモバイルエミュレーションは途中のリサイズで `visualViewport` とCSSのメディアクエリが旧寸法に残るため、横持ちの独立した表示と、タッチ入力・モバイルUAを保った通常viewportでの高さ変更を分けて検証する。ローカルWebKitは不足するDebianライブラリを作業ディレクトリへ展開して使用する。実機iPhone/iPad、実ブラウザバー・ノッチ・ホームインジケーター、実ネットワーク対戦は未確認。
 
