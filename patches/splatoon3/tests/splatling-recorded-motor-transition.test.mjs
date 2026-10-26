@@ -66,12 +66,15 @@ test('native Barrel Splatling transitions Motor to MotorFire once and never play
 });
 
 test('remote Barrel and catalog Spinners switch independent source loop keys without overlapping',async()=>{
-  const f=await scene(),net=Object.create(f.NetMatch.prototype);
-  net.byNid=new Map();
+  const f=await scene();
   for(const id of ['splatling','s3-spinner-quick','s3-spinner-hyper']){
-    f.calls.length=0;net.byNid.clear();
+    // Remote actor/NetMatch ownership is per replica; never reuse an old
+    // transport instance with another catalog's internal voice state.
+    const net=Object.create(f.NetMatch.prototype);
+    net.byNid=new Map();f.calls.length=0;
     const a=f.make(id);a.remote=true;a.isLocal=false;a.alive=true;
     a._nearCamera=()=>true;a.net||={};a.net.loops||={};net.byNid.set(id,a);
+    assert.equal(a.weapon?.id,id,'the fixture really registered this catalog weapon');
     const r=a.weaponRunner;
     r.charging=true;r.streaming=false;r.charge=.4;
     net._voices(1/60);
