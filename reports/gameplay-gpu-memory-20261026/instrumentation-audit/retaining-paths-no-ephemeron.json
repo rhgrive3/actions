@@ -5,6 +5,7 @@
   "actors": [
     {
       "cycle": 0,
+      "reachable": true,
       "target": {
         "index": 541358,
         "id": 1082957,
@@ -252,6 +253,7 @@
     },
     {
       "cycle": 1,
+      "reachable": true,
       "target": {
         "index": 668085,
         "id": 1336259,

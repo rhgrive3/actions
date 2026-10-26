@@ -117,7 +117,7 @@ CodeRabbitを含む補助レビューで、漏れがあっても終了0となる
 | LOW 18連戦 | [raw](baseline-raf-18.json.gz) | [raw](candidate-raf-18.json.gz) |
 | 原典HIGH 3試合 | [raw](baseline-native-final.json.gz) | [raw](candidate-native-final.json.gz) |
 
-- [独立検証receipt](independent-verification.json): source・生成物・全6走行・集計算術・索引ハッシュの照合。
+- [独立検証receipt](independent-verification.json): source・生成物・全6走行・集計算術・索引ハッシュの照合。標準Pythonで `python3 reports/gameplay-gpu-memory-20261026/verify-evidence.py` を実行すると、[検算スクリプト](verify-evidence.py)が保存rawから再検証する。図の再生成には [plot-memory.py](plot-memory.py) とMatplotlib 3.10.8を使用する。
 - [局所GPU試験](exact-gpu/summary.json)と[索引](exact-gpu/files.json): Chromium/WebKit 4件のraw、ログ、同じassertionのWebKit launcher版。
 - [native保持経路](native-audit/native-retirement-audit.md)、[回収対照](native-audit/native-retirement-positive-proof.md)、[数値とハッシュ索引](native-audit/files.json): 大型ヒープ本体はローカル保管。
 - [不正ミップ修正](native-audit/texture-upload/proposed-fix.md)、[実RGBA読戻し](native-audit/texture-upload/rgba-integrated-probe.json)、[薄いBC baseの実GL対照](native-audit/thin-base/README.md)。後者のrawには意図した不正呼出の1282を残す。

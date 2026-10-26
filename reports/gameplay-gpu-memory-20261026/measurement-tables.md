@@ -59,7 +59,7 @@ Every row is released-N after explicit GC. API resource counts mean created minu
 
 ## HIGH native individual combat windows
 
-These are three individual windows, not stage-level pooled percentiles. Drawing buffer and dynamic scale are the actual capture values; the game’s own quality controls remain enabled.
+Inputs: baseline-native-final.json.gz / candidate-native-final.json.gz, source e007 / 65. Historical native-high files are excluded. These are three individual windows, not stage-level pooled percentiles. Drawing buffer and dynamic scale are the actual capture values; the game’s own quality controls remain enabled.
 
 | Cycle | Stage | Frames | Combat wall s | Observed FPS | Window interval p95 ms | Frame elapsed mean ms | R.render GPU query mean ms | GPU samples | Drawing buffer | Dynamic scale |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -82,7 +82,7 @@ Actual intercepted drawArrays/drawElements and their instanced variants are cumu
 
 ## Frame-end renderer.info rendering counters
 
-These are sample-weighted means of renderer.info.render.calls and renderer.info.render.triangles read at frame end. Each field is weighted by its own recorded sample count, never by a ratio of calls to triangles. These snapshots are not cumulative totals of every multipass, paint or UI draw in the frame; they also differ from the observer’s cumulative raw WebGL draw-call counter.
+HIGH rows use baseline-native-final.json.gz / candidate-native-final.json.gz (not the historical native-high pair). These are sample-weighted means of renderer.info.render.calls and renderer.info.render.triangles read at frame end. Each field is weighted by its own recorded sample count, never by a ratio of calls to triangles. These snapshots are not cumulative totals of every multipass, paint or UI draw in the frame; they also differ from the observer’s cumulative raw WebGL draw-call counter.
 
 | Combat group/window | Frame-end draw calls mean | Frame-end triangles mean | Call samples | Triangle samples |
 | --- | --- | --- | --- | --- |
