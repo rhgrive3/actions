@@ -82,5 +82,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: inkwave-ranked-browser
           path: reports/ranked-browser
