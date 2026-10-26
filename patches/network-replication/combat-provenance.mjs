@@ -137,7 +137,7 @@ function record(nm,from,packet,t,acceptedSub=null) {
     if(Object.hasOwn(r,1)&&Object.hasOwn(r,2)&&Object.hasOwn(r,3)){
       const x=r[1],y=r[2],z=r[3];
       if(!finite(x)||Math.abs(x)>2000||!finite(y)||Math.abs(y)>2000||!finite(z)||Math.abs(z)>2000)continue;
-      if(ownerActor(nm,from,r[0]))poses.set(r[0],[x,y,z]);
+      if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
     }else{
       // Sparse/custom rows retain slice/every semantics (holes are skipped).
       if(!v3(r.slice(1,4)))continue;
