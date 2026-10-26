@@ -1,0 +1,50 @@
+{
+  "status": "observed",
+  "contentHash": "a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc",
+  "inputHash": "57ac7fd299c02d5e8f15b787828867f4dcf6221f56f6ac84b054242d3f463ed8",
+  "browser": "154.0.8037.57",
+  "canvasFrames": [
+    {
+      "id": "blaster",
+      "time": 8.26660000000001,
+      "scan": [
+        {
+          "style": 7,
+          "radius": 13.4408597946167
+        }
+      ],
+      "main": [],
+      "file": "blaster-native-render.png",
+      "sha256": "46dd75c65e144639982b927199a9273732067f834ea7d6fc34a1a0075b07b885"
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "time": 20.383266666666813,
+      "scan": [],
+      "main": [
+        {
+          "age": 0.05,
+          "start": [
+            0.9904027378916139,
+            2.05,
+            -16.622429031925957
+          ],
+          "pos": [
+            0.9904027378916139,
+            1.975043529354849,
+            -12.98011198956888
+          ]
+        }
+      ],
+      "file": "s3-slosher-diffusion-native-render.png",
+      "sha256": "4a95246a6fd678c4b334b7babbad6ac597243687c04f206950f83257f93f17f6"
+    }
+  ],
+  "errors": [],
+  "verified": [
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/patches/splatoon3/runtime/bomb-cues.mjs",
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/src/fx/fxHooks.js",
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/src/game/weapons.js"
+  ]
+}

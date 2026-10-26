@@ -41,7 +41,7 @@ try{
  });
  result.entry=await enterRangeFromMenu(page,address,{touch:true,timeout:120000,onProgress:r=>console.log('entry',r.route.join('/'))});
  await page.evaluate(()=>{
-  window.qaCues=[];window.qaRounds=[];window.qaBombFrames=[];window.qaGestures=[];window.qaPointerErrors=0;
+  window.qaCues=[];window.qaRounds=[];window.qaBombFrames=[];window.qaCanvasFrames=[];window.qaGestures=[];window.qaPointerErrors=0;
   document.addEventListener('pointerlockerror',()=>window.qaPointerErrors++);
   for(const type of ['pointerdown','pointerup','click'])document.addEventListener(type,e=>{
    const el=e.target.closest('[data-c],[data-id]');if(el)window.qaGestures.push({type,trusted:e.isTrusted,control:el.dataset.c||el.dataset.id});
@@ -53,6 +53,17 @@ try{
     return original.apply(this,args);
    };
   }
+  const render=g.R.render;
+  g.R.render=function(...args){
+   const output=render.apply(this,args),id=G.local.weaponId;
+   if(window.qaCanvasFrames.some(f=>f.id===id))return output;
+   const rings=G.fx.rings,styles=rings.geo.attributes.aMisc.array,positions=rings.geo.attributes.aPosR.array;
+   const scan=Array.from({length:rings.geo.instanceCount},(_,i)=>({style:styles[i*4+1],radius:positions[i*4+3]})).filter(s=>s.style===7&&s.radius>10);
+   const main=G.projectiles.list.filter(p=>p.owner===G.local&&p.delay<=0&&p.age>0&&p.age<.051&&p.catalog?.descriptor?.unit===0&&p.catalog?.index===0);
+   if(id==='blaster'&&scan.length||['s3-slosher-double','s3-slosher-diffusion'].includes(id)&&main.length)
+    window.qaCanvasFrames.push({id,time:G.time,scan,main:main.map(p=>({age:p.age,start:p.start.toArray(),pos:p.pos.toArray()})),dataURL:this.renderer.domElement.toDataURL('image/png')});
+   return output;
+  };
   const draw=G.projectiles._draw;G.projectiles._draw=function(...args){
    const output=draw.apply(this,args);
    if(window.qaBombFrames.length<1600&&this.bombs.length)window.qaBombFrames.push({time:G.time,weapon:G.local.weaponId,bombs:this.bombs.map(b=>({id:b.s3Sub,age:b.age,fuse:b.fuse,pos:b.pos.toArray(),phase:b.s3Auto?.phase}))});
@@ -76,7 +87,8 @@ try{
   const chip=page.locator('[data-id="w-'+id+'"]');await chip.scrollIntoViewIfNeeded();await chip.tap();
   await page.waitForFunction(id=>window.__G.local.weaponId===id&&!window.__G.match.paused,id);
  }
- for(const [id,control] of [['roller','sub'],['charger','sub'],['blaster','sub'],['s3-slosher-double','fire'],['s3-slosher-diffusion','fire']]){
+ const selected=process.env.INKWAVE_CUE_CASES?.split(',');
+ for(const [id,control] of [['roller','sub'],['charger','sub'],['blaster','sub'],['s3-slosher-double','fire'],['s3-slosher-diffusion','fire']].filter(([id])=>!selected||selected.includes(id))){
   await equip(id);await page.waitForTimeout(700);
   const from=await page.evaluate(()=>({cue:qaCues.length,round:qaRounds.length,bomb:qaBombFrames.length,time:__G.time}));
   await hold(control,control==='sub'?250:650);
@@ -96,6 +108,8 @@ try{
   row.capture=capture;result.cases.push(row);await page.screenshot({path:path.join(out,id+'-after.png')});
   console.log('case',id,JSON.stringify({cues:row.cues.length,roundFrames:row.rounds.length,paused:row.paused,ink:row.ink}));
  }
+ const canvasFrames=await page.evaluate(()=>qaCanvasFrames);result.canvasFrames=[];
+ for(const {dataURL,...frame} of canvasFrames){const file=frame.id+'-native-render.png',bytes=Buffer.from(dataURL.split(',')[1],'base64');fs.writeFileSync(path.join(out,file),bytes);result.canvasFrames.push({...frame,file,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});}
  result.allCues=await page.evaluate(()=>qaCues);result.gestures=await page.evaluate(()=>qaGestures);result.end=await page.evaluate(()=>({time:__G.time,frame:__inkwave.s3Clock?.ticks,audio:__G.audio?.stats?.()}));
  await Promise.allSettled([...pending]);result.verified=[...verified].sort();
  result.status=result.errors.length?'failed':'observed';

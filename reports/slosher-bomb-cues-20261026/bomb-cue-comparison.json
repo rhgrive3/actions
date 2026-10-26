@@ -1,0 +1,113 @@
+{
+  "kind": "Executed INKWAVE upstream FX counterfactual, not Nintendo reference",
+  "runs": {
+    "base": {
+      "curling": {
+        "initial": [
+          {
+            "name": "dangerRing",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 7
+          }
+        ],
+        "moved": [
+          {
+            "name": "dangerRing",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 7
+          }
+        ]
+      },
+      "bomb": {
+        "initial": [
+          {
+            "name": "dangerRing",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 7
+          }
+        ],
+        "moved": [
+          {
+            "name": "dangerRing",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 7
+          }
+        ]
+      },
+      "autobomb": {
+        "initial": [],
+        "moved": []
+      }
+    },
+    "candidate": {
+      "curling": {
+        "initial": [],
+        "moved": []
+      },
+      "bomb": {
+        "initial": [
+          {
+            "name": "dangerRing",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 7
+          }
+        ],
+        "moved": [
+          {
+            "name": "dangerRing",
+            "position": [
+              3,
+              0.02,
+              0
+            ],
+            "radius": 7
+          }
+        ]
+      },
+      "autobomb": {
+        "initial": [
+          {
+            "name": "mark",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 13.440860215053762
+          }
+        ],
+        "moved": [
+          {
+            "name": "mark",
+            "position": [
+              0,
+              0.02,
+              0
+            ],
+            "radius": 13.440860215053762
+          }
+        ]
+      }
+    }
+  }
+}
