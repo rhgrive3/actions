@@ -75,16 +75,23 @@ test('Shooter cache observes launch, owner, weapon/mode, camera and collision-qu
 });
 
 test('unverified custom collision worlds recompute and immediately observe unversioned obstacle edits',async()=>{
-  const s=await scene(-.8),{G,f,a}=s,level=G.level;
+  const s=await scene(-.8),{G,f,a,ps}=s,level=G.level;
   // Deliberately not a registered native Level producer. No invented revision.
   G.level={blocks:level.blocks,faces:level.faces,queryBlocks:level.queryBlocks.bind(level)};
   G.physics=new f.Physics(G.level);s.controller.computeAim();
   const first=point(f.computeShotGuide(a)),before=s.sweeps();
   for(let i=0;i<20;i++)f.computeShotGuide(a);
   assert.ok(s.sweeps()>before,'unsupported worlds do not acquire an idle cache hit');
+  ps.s3ShooterImpact(a,a.weapon);ps.muzzleBlockFeedback(a);
+  const beforeImpact=s.sweeps();ps.s3ShooterImpact(a,a.weapon);
+  assert.ok(s.sweeps()>beforeImpact,'unverified full-flight predictions are recomputed');
+  const beforeMarker=s.sweeps();ps.muzzleBlockFeedback(a);
+  assert.ok(s.sweeps()>beforeMarker,'unverified marker predictions are recomputed');
   const floor=level.blocks[0];floor.center.y-=2;floor.aabbMin.y-=2;floor.aabbMax.y-=2;
   const changed=point(f.computeShotGuide(a));
   assert.ok(changed.y<first.y-1,'same-array floor movement cannot remain hidden behind a cache');
+  assert.ok(Math.abs(ps.s3ShooterImpact(a,a.weapon).point.y+2)<1e-8);
+  assert.ok(Math.abs(ps.muzzleBlockFeedback(a).point.y+2)<1e-8,'marker follows the unversioned floor immediately');
 });
 
 test('Shooter guide reuse does not cache target flags or retain retired owner/world references',async()=>{
@@ -117,12 +124,22 @@ test('real append/rebuild, notified solid changes and Tower movement/removal inv
   const delta=origin.clone().sub(ps._muzzle(a,new f.THREE.Vector3()));
   a.pos.add(delta);a.character.root.position.add(delta);a.character.root.updateMatrixWorld(true);
   a.aimDir.set(0,0,1);a.aimPoint.copy(origin).add(new f.THREE.Vector3(0,0,70));
-  const tower=point(f.computeShotGuide(a)),before=s.sweeps(),revision=level.collisionRevision;
+  const tower=point(f.computeShotGuide(a)),revision=level.collisionRevision;
+  const impactBefore=ps.s3ShooterImpact(a,a.weapon).point.clone(),markerBefore=ps.muzzleBlockFeedback(a).point.clone();
+  const before=s.sweeps();
   world.beforeActors({rule:{state:{progress:world._towerProgress}}});
   assert.equal(level.collisionRevision,revision,'unchanged actual Tower transform does not advance its revision');
   f.computeShotGuide(a);assert.equal(s.sweeps(),before,'no-op Tower update does not replay a stationary guide');
   world.beforeActors({rule:{state:{progress:.1}}});
   const moved=point(f.computeShotGuide(a));assert.notDeepEqual(moved,tower,'real in-place Tower motion is visible immediately');
+  const impactMoved=ps.s3ShooterImpact(a,a.weapon).point.clone(),markerMoved=ps.muzzleBlockFeedback(a).point.clone();
+  ps._s3ShooterImpactCache.valid=false;
+  const uncached=ps.s3ShooterImpact(a,a.weapon).point.clone();
+  console.log('Tower first-field cache agreement',JSON.stringify({beforeRevision:revision,movedRevision:level.collisionRevision,
+    impactBefore:impactBefore.toArray(),markerBefore:markerBefore.toArray(),impactMoved:impactMoved.toArray(),markerMoved:markerMoved.toArray(),uncached:uncached.toArray()}));
+  assert.ok(impactBefore.distanceTo(uncached)>1,'actual Tower movement changes the full-flight first field contact');
+  assert.ok(impactMoved.distanceTo(uncached)<1e-8,'full-flight prediction observes the actual collision revision immediately');
+  assert.ok(markerMoved.distanceTo(uncached)<1e-8,'outer marker cache cannot mask a changed first field contact');
   ps._s3ShooterGuideCache.ready=false;assert.deepEqual(point(f.computeShotGuide(a)),moved);
   const beforeDispose=s.sweeps();world.dispose();const removed=point(f.computeShotGuide(a));
   assert.ok(s.sweeps()>beforeDispose,'real Tower removal invalidates even with unchanged block arrays');
@@ -138,13 +155,37 @@ function nativeFloor(f,y=0) {
   });
 }
 test('actual native triangleWorld replacement invalidates without relying on block-table or revision changes',async()=>{
-  const s=await scene(-.8),{f,G,a}=s;
+  const s=await scene(-.8),{f,G,a,ps}=s;
   G.level=nativeFloor(f);G.physics=new f.NativePhysics(G.level);s.controller.computeAim();
-  const first=point(f.computeShotGuide(a)),before=s.sweeps(),revision=G.level.collisionRevision;
+  const first=point(f.computeShotGuide(a)),revision=G.level.collisionRevision;
+  assert.ok(Math.abs(ps.s3ShooterImpact(a,a.weapon).point.y)<1e-8);
+  assert.ok(Math.abs(ps.muzzleBlockFeedback(a).point.y)<1e-8);
+  const before=s.sweeps();
   for(let i=0;i<120;i++)f.computeShotGuide(a);
   assert.equal(s.sweeps(),before,'unchanged native source triangles reuse the guide');
   G.level.triangleWorld=nativeFloor(f,.35).triangleWorld;
   assert.equal(G.level.collisionRevision,revision,'identity check covers a source-world replacement independently');
   const changed=point(f.computeShotGuide(a));assert.ok(s.sweeps()>before);
   assert.ok(Math.abs(first.y)<1e-8&&Math.abs(changed.y-.35)<1e-6,'guide follows the new real triangle surface');
+  assert.ok(Math.abs(ps.s3ShooterImpact(a,a.weapon).point.y-.35)<1e-6,'full-flight prediction follows the new source triangles');
+  assert.ok(Math.abs(ps.muzzleBlockFeedback(a).point.y-.35)<1e-6,'marker follows the new source triangles');
+});
+
+test('full-flight and marker caches invalidate on actual owner and query-function replacement',async()=>{
+  const s=await scene(),{f,G,a,ps}=s;s.controller.computeAim();
+  const nativeImpact=ps.s3ShooterImpact;let calls=0;
+  ps.s3ShooterImpact=function(...args){calls++;return nativeImpact.apply(this,args);};
+  const changes=[()=>{a.character=Object.create(a.character);},()=>{a.weaponRunner=Object.create(a.weaponRunner);},
+    ()=>{const q=G.level.queryBlocks;G.level.queryBlocks=function(...args){return q.apply(this,args);};},
+    ()=>{const q=ps.inkFlight.world;ps.inkFlight.world=function(...args){return q.apply(this,args);};},
+    ()=>{const q=ps._nominalInkGuide;ps._nominalInkGuide=function(...args){return q.apply(this,args);};},
+    ()=>{G.physics=new f.Physics(G.level);}];
+  for(const change of changes){
+    ps.s3ShooterImpact(a,a.weapon);ps.muzzleBlockFeedback(a);change();
+    const before=s.sweeps(),impact=ps.s3ShooterImpact(a,a.weapon).point.clone();
+    assert.ok(s.sweeps()>before,'owner/query replacement replays the native full-flight solver');
+    const beforeMarker=calls,marker=ps.muzzleBlockFeedback(a).point.clone();
+    assert.equal(calls,beforeMarker+1,'outer marker cache forwards the changed source owner');
+    assert.ok(marker.distanceTo(impact)<1e-8,'marker still copies the exact same field contact');
+  }
 });
