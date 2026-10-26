@@ -1,6 +1,7 @@
 // Build-only settings fixes. Preserve the captured input and the native controls.
 export function adaptSettingsUi(rel, code, once) {
   if (rel === 'src/config.js') {
+    if (code.includes('debugMode: false,')) throw new Error('debug profiler default already installed');
     return once(code, '  showFps: false,', '  showFps: false,\n  debugMode: false,', 'debug profiler setting default OFF');
   }
   if (rel === 'styles/ui.css') {
@@ -9,6 +10,7 @@ export function adaptSettingsUi(rel, code, once) {
   }
   if (rel !== 'src/ui/menus.js') return code;
   const patch = (before, after, label) => { code = once(code, before, after, 'settings UI: ' + label); };
+  if (code.includes("key: 'debugMode'")) throw new Error('debug profiler setting already installed');
   patch(
     "    { key: 'showFps', label: 'Show FPS counter', type: 'toggle', help: 'Displays frames per second in the corner during matches.' },",
     "    { key: 'showFps', label: 'Show FPS counter', type: 'toggle', help: 'Displays frames per second in the corner during matches.' },\n" +
