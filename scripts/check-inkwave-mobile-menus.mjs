@@ -158,12 +158,17 @@ try {
       await page.waitForFunction(()=>calls.some(c=>c.kind==='start'));
       check(await page.evaluate(()=>calls.filter(c=>c.kind==='start').length===1),'double start activates the existing match API once');
     }
-    for(const boss of [false,true]) {
-      await page.evaluate(boss=>{const d=menus._demoResults();if(boss){d.mode='boss';d.boss={defeated:true,time:142,hpLeft:0,phase:3};d.players=d.players.map((p,i)=>({...p,team:0,damage:5000-i*340,weakHits:12+i}));}menus._results=d;},boss);
+    for(const mode of (name==='phone'?['turf','boss','zones','tower','rainmaker','clams']:['turf','boss','zones'])) {
+      await page.evaluate(mode=>{const d=menus._demoResults();d.mode=mode;if(mode==='boss'){d.boss={defeated:true,time:142,hpLeft:0,phase:3};d.players=d.players.map((p,i)=>({...p,team:0,damage:5000-i*340,weakHits:12+i}));}else if(mode!=='turf'){d.counts=[0,65];d.penalties=[0,12];d.knockout=true;d.winner=0;}menus._results=d;},mode);
       await show('results');
       await tap('.iw-res__title');
       await page.waitForFunction(()=>menus._scr.el.classList.contains('is-done'));
-      const screen=boss?'boss-results':'results';await capture(screen,'.iw-res__foot button');
+      const screen=mode==='turf'?'results':mode+'-results';await capture(screen,'.iw-res__foot button');
+      if(mode!=='turf'&&mode!=='boss') {
+        check(JSON.stringify(await page.locator('.iw-ranked-result__team strong').allTextContents())===JSON.stringify(['0','65']),'ranked counts retained: '+mode);
+        check(await page.locator('.iw-ranked-result__team small').nth(1).textContent().then(text=>text.includes('12')),'ranked penalty retained: '+mode);
+        check(await page.locator('.iw-cover').count()===0,'ranked results do not show turf percentages: '+mode);
+      }
       if(touch)check(entry.screens[screen].every(r=>r.inViewport),'results actions visible without scrolling: '+screen);
       check(await page.locator('.iw-prow').count()===8,'all eight players retained: '+screen);
       if(landscapePhone) {
