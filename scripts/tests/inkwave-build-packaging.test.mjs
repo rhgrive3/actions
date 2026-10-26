@@ -31,6 +31,7 @@ const runtimeHelpers = [
 // Never infer this from '*-adapter' names: the emitted graph audit below must
 // still reject every static/dynamic runtime reference to an excluded module.
 const auditedBuildExports = new Map([
+  ['patches/local-quality/queue-remaining-world-20261026-adapter.mjs', ['WORLD_DIRECT_PATHS', 'WORLD_REMAINING_PATHS']],
   ['patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs', ['restoreHistoricalSourceMotion20261026']],
   ['patches/local-quality/static-menu-adapter.mjs', ['deferPrimaryWeaponIcon']],
   ['patches/local-quality/ink-volume/vtf.mjs', ['decodeVTF']],
