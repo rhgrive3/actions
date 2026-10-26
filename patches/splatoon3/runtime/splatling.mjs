@@ -24,7 +24,7 @@ function cancelSplatlingStream(runner, refund, inkMax) {
   runner.s3Spin = null;
   runner.charging = runner.streaming = false;
   runner.charge = runner.chargeT = runner.burstT = runner.burstFrac = 0;
-  runner.spinLoop?.stop(.12); runner.spinLoop = null;
+  runner.spinLoop?.stop?.(.12); runner.spinLoop = null;
 }
 
 export function exportSplatlingReservation(runner) {
@@ -231,7 +231,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       if (this.burstT <= EPS) {
         this.streaming = false; this.charge = this.burstFrac = 0;
         this.s3Spin = null; this.cooldown = Math.max(this.cooldown, w.postStreamDelay ?? .22);
-        this.spinLoop?.stop(.12); this.spinLoop = null;
+        this.spinLoop?.stop?.(.12); this.spinLoop = null;
         // No verified post-stream source clip is installed. Do not reintroduce
         // the old procedural "splatling_wind" over recorded MotorFire's fade.
       }
@@ -245,7 +245,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
         // Old splatling_spin used generated oscillators and produced a low
         // pulsing layer ("won-won") over the actual recorded gunshot.
         // Use the selected weapon's native Motor MP3, never G.audio.loop.
-        this.spinLoop?.stop(.04);
+        this.spinLoop?.stop?.(.04);
         this.spinLoop = ownAudio
           ? G.audio?.loopWeapon?.(w.id,'charge',{actor:a,pos,volume:a.isLocal?.6:.4,pitch:1})||null
           : null;
@@ -290,7 +290,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       this.cooldown = this.bloom = 0;
       // Charge Motor must stop when trigger releases. MotorFire starts exactly
       // once for an admitted stream; both are source-recorded loops at 1x.
-      this.spinLoop?.stop(.04);
+      this.spinLoop?.stop?.(.04);
       this.spinLoop = this.streaming && ownAudio
         ? G.audio?.loopWeapon?.(w.id,'spin',{actor:a,pos,volume:a.isLocal?.6:.4,pitch:1})||null
         : null;

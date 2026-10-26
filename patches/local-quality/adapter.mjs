@@ -168,7 +168,7 @@ const IDENTITY_FILES = [
   // Full terminal composer owns these additional build-only queue transformers.
   'queue-remaining-gameplay-20261026-adapter.mjs', 'queue-remaining-inkflight-20261026-adapter.mjs',
   'queue-remaining-ui-network-20261026-adapter.mjs', 'queue-remaining-world-20261026-adapter.mjs',
-  'queue-remaining-paint-20261026-adapter.mjs', 'queue-historical-character-20261026-adapter.mjs',
+  'queue-remaining-paint-20261026-adapter.mjs', 'queue-reviewed-world-carryover-20261026-adapter.mjs', 'queue-historical-character-20261026-adapter.mjs',
   'queue-historical-source-motion-20261026-adapter.mjs',
   'added-ui-motion-adapter.mjs', 'drive-core-queue-adapter.mjs',
   'drive-visual-audio-adapter.mjs', 'fx-empty-pools-adapter.mjs',
