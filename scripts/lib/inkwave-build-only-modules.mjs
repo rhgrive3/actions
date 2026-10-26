@@ -3,6 +3,8 @@
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/splatoon3/stringer-charge-hud-adapter.mjs',
+
+  'patches/local-quality/walk-presentation-adapter.mjs',
   'patches/local-quality/queue-extra-world-adapter.mjs',
   'patches/local-quality/queue-extra-decor-adapter.mjs',
   'patches/local-quality/queue-ui-20261025-adapter.mjs',

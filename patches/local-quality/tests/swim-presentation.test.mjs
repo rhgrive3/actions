@@ -48,7 +48,8 @@ test('wake cadence retains elapsed time at 30/60/120 Hz and respects stealth, ai
       assert.equal(count, 120, '60 film activation samples/sec at ' + hz + ' Hz');
     }
     const quiet = () => { const n = count; a._finishFrame(.1); assert.equal(count, n); assert.equal(a._wakeT, 0); };
-    a.vel.set(0, 0, 1); quiet(); // Slow swim.
+    a.vel.set(0, 0, 1); const slowCount=count; a._finishFrame(.1); assert.equal(count,slowCount+6,'low-speed surface remains continuous');
+    a.vel.set(0,0,0); quiet();
     a.vel.set(0, 0, 8); a.s3.modifiers.ninjaSquid = true;
     a.s3.swimStealth.since = f.G.time - 2; quiet();
     a.s3.modifiers.ninjaSquid = false; a.grounded = false; quiet();
@@ -57,7 +58,7 @@ test('wake cadence retains elapsed time at 30/60/120 Hz and respects stealth, ai
   } finally { f.reset(); }
 });
 
-test('ordinary swim uses connected animated film, emits no beads, and respects lifecycle and stealth', async () => {
+test('ordinary swim uses bounded curls and ballistic drops, and respects lifecycle and stealth', async () => {
   const f = await sourceLoadedActorFixture({ random: () => .4, extraExports: "export { FX } from './src/fx/fx.js';" });
   const fx = new f.FX(f.G.scene, { quality: 'high' });
   try {
@@ -66,7 +67,7 @@ test('ordinary swim uses connected animated film, emits no beads, and respects l
     for(let n=0;n<20;n++){a._finishFrame(1/60);fx.update(1/60,cam);}
     assert.equal(fx.dN,0,'no continuous swimming droplet pool');assert.equal(fx.glows.n,0,'no swimming bubble glows');
     const slot=fx.swimSurface.slots.find(s=>s.actor===a),mesh=slot.mesh;
-    assert(mesh.visible);assert(mesh.geometry.index.count>3000,'continuous indexed surface, not billboards');
+    assert(mesh.visible);assert.equal(mesh.geometry.userData.patches.length,11,'three surface curls and eight fixed drops');assert(mesh.geometry.attributes.position.count<=700,'bounded geometry budget');
     const coords=mesh.geometry.attributes.position.array,before=coords.slice();
     assert(Math.max(...coords.filter((_v,i)=>i%3===1))>.1,'actual lifted liquid crests');
     assert(Math.min(...coords.filter((_v,i)=>i%3===1))<.01,'film roots stay in the ink');
@@ -81,6 +82,23 @@ test('ordinary swim uses connected animated film, emits no beads, and respects l
     a.groundN.set(0,1,1).normalize();a._finishFrame(1/60);fx.update(1/60,cam);
     const up=new f.THREE.Vector3(0,1,0).applyQuaternion(mesh.quaternion);
     assert(up.distanceTo(a.groundN)<1e-6,'film lies on the supporting slope');a.groundN.set(0,1,0);
+    // Every nonzero ordinary speed has a smaller disturbance; no old 2 m/s
+    // gate or sneak-speed cliff remains in the VFX owner.
+    let lastHeight=0;
+    for(const speed of [.1,.5,1,1.99,2.01,3,5]){
+      a.vel.set(0,0,speed);a._finishFrame(1/60);fx.update(0,cam);
+      assert(mesh.visible,'visible surface at speed '+speed);
+      const y=mesh.geometry.attributes.position.array.filter((_v,i)=>i%3===1),height=Math.max(...y);
+      assert(height>lastHeight,'amplitude grows continuously at fixed sample phase');lastHeight=height;
+    }
+    // The real climb plane is separated from the body's wall clearance.
+    a.climbing=true;a.grounded=false;a.submerged=false;a.pos.set(0,1,.35);
+    a.anim.wallNormal.set(0,0,1);a.wallHit.hit=true;a.wallHit.point.set(0,1,0);a.vel.set(0,2,-1.2);
+    a._finishFrame(1/60);fx.update(1/60,cam);assert(mesh.visible,'vertical travel emits wall splash');
+    const wallUp=new f.THREE.Vector3(0,1,0).applyQuaternion(mesh.quaternion);
+    assert(wallUp.distanceTo(a.anim.wallNormal)<1e-6);assert(Math.abs(mesh.position.z)<1e-8,'roots lie on the actual wall');
+    a.vel.set(0,0,-1.2);a._finishFrame(1/60);fx.update(1/60,cam);assert(!mesh.visible,'wall-hug velocity alone is not swimming');
+    a.climbing=false;a.grounded=true;a.submerged=true;a.pos.set(0,0,0);a.vel.set(0,0,11.8);a._finishFrame(1/60);fx.update(1/60,cam);
     const remotes=Array.from({length:8},(_v,i)=>({pos:new f.THREE.Vector3(i*.5,0,0),vel:a.vel.clone(),groundN:a.groundN.clone(),form:'squid',submerged:true,grounded:true,climbing:false,alive:true,color:a.color,s3:a.s3,isLocal:false}));
     f.G.actors=[a,...remotes];for(const r of remotes)fx.wake(r.pos,dir,r.color,11.8,r.groundN,r);
     fx.update(1/60,cam);assert.equal(fx.swimSurface.slots.length,4,'bounded shared pool');

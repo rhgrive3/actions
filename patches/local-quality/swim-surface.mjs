@@ -1,5 +1,5 @@
-// Continuous ink film, not a particle emitter. Shapes are INKWAVE approximations
-// of the connected, torn liquid crests in Nintendo's JP squid-swimming footage.
+// Bounded surface curls and ballistic droplets. These are INKWAVE visual
+// settings; their curves are not claimed as extracted retail VFX parameters.
 import * as THREE from 'three';
 import { G } from '../../src/core/ctx.js';
 import { swimSplashVisible } from '../splatoon3/runtime/swim-stealth.mjs';
@@ -12,84 +12,76 @@ const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 
 export function createSwimFilmGeometry() {
   const positions=[],data=[],indices=[],patches=[];
-  // A breaking bow, swept-back shoulders and a perforated trailing web.
   const grid=(kind,nu,nv)=>{
     const start=positions.length/3;
-    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){positions.push(0,0,0);data.push(i/nu,j/nv,kind);}
+    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){positions.push(0,0,0);data.push(i/nu,j/nv,6);}
     for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){
       const a=start+j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;
       indices.push(a,c,b,b,c,d);
     }
     patches.push({kind,start,nu,nv});
   };
-  grid(0,48,6);grid(1,40,6);grid(2,24,8);grid(3,24,8);
-  // Forked ribbons stay rooted on the film and collapse into the surface.
-  for(const kind of [4,5,7,8])grid(kind,12,4);grid(6,32,9);
+  // Three small, rooted curls. Eight tiny drops share this one indexed mesh;
+  // there are no separate particle objects or broad suspended membranes.
+  grid(0,24,4);grid(1,24,4);grid(2,20,4);
+  for(let i=0;i<8;i++)grid(3+i,6,4);
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
-  g.setAttribute('filmData',new THREE.Float32BufferAttribute(data,3));
-  g.setIndex(indices);g.userData.patches=patches;g.userData.filmHoles=Array.from({length:6},()=>new THREE.Vector4());
-  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.2,-.25),1.6);
-  updateSwimFilmGeometry(g,0,1);
-  return g;
+  g.setAttribute('filmData',new THREE.Float32BufferAttribute(data,3));g.setIndex(indices);
+  g.userData.patches=patches;g.userData.filmHoles=Array.from({length:6},()=>new THREE.Vector4());
+  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.15,-.15),1.2);
+  updateSwimFilmGeometry(g,0,1);return g;
 }
 
+const hash=n=>fract(Math.sin(n*127.1+311.7)*43758.5453);
 export function updateSwimFilmGeometry(g,time,speedK,turn=0) {
-  const p=g.attributes.position.array,k=clamp(speedK),flow=time*24;
-  const holes=g.userData.filmHoles;
-  // Openings travel aft and grow as the skin stretches. Wrap beyond the
-  // chart's ends so a tear cannot abruptly pop into the middle of a sheet.
-  for(let i=0;i<6;i++){
-    const age=fract(time*(.63+i*.047)+i*.381966);
-    holes[i].set(-.3+age*1.6,.48+.29*fract(i*.618034)+.06*Math.sin(time*3.7+i*2.3),.045+age*.09,.07+age*.13);
-  }
+  const p=g.attributes.position.array,k=clamp(speedK),spread=Math.sqrt(k);
   for(const patch of g.userData.patches){
     const {kind,start,nu,nv}=patch;
+    // Birth-to-return ballistic arcs vary per birth and actor phase. The drop
+    // collapses at BOTH surface crossings, so reseeding cannot pop in midair.
+    const id=kind-3,clock=time*(2.3+Math.max(0,id)*.173)+Math.max(0,id)*.618034;
+    const cycle=Math.floor(clock),age=fract(clock),seed=hash(cycle*19+id*73);
+    const pulse=Math.sin(Math.PI*age),side=id%2?-1:1;
     for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){
       const u=i/nu,v=j/nv;let x,y,z;
-      if(kind<2){
-        // Curling shoulder curtains with an overhang, not a height field or
-        // a closed mound. Asymmetric profiles prevent a crown/fence outline.
-        const side=kind===0?1:-1;
-        const edge=.58+.38*(.5+.5*Math.sin(u*19-flow*.74+.7*Math.sin(u*13+flow*.22+kind)))**3;
-        const curve=v*Math.PI*.94*edge,along=Math.sin(Math.PI*u);
-        const lift=(kind===0?.16:.14)+k*.06+.035*Math.sin(u*13-flow*.7+kind*2.1);
-        x=side*(.25+.05*along-.13*Math.sin(curve));
-        z=.32-u*(kind===0?.86:.96)-.04*v+.035*Math.sin(u*17-flow)*v;
-        y=.006+lift*(1-Math.cos(curve))*.5*(.45+.55*along);
-        x+=side*.015*Math.sin(u*19+v*11-flow*.8)*v;
-        for(const hole of holes){const d=Math.hypot((u-hole.x)/(hole.z*1.3),(v-hole.y)/(hole.w*1.3));y+=.009*k*Math.exp(-(((d-1)/.3)**2));}
-      }else if(kind===2){
-        const angle=(u-.5)*1.8,curve=v*Math.PI*.78;
-        const radius=.18-.10*Math.sin(curve);
-        x=Math.sin(angle)*(radius+.12);
-        z=.10+Math.cos(angle)*(radius+.15);
-        y=.006+(.08+.08*k+.025*Math.sin(u*13-flow))*(1-Math.cos(curve))*.5;
-      }else if(kind===3){
-        // A very open stretched wake joins the two shoulders behind the bow.
-        x=(u*2-1)*(.28-.08*v+.04*Math.sin(v*11-flow));z=.12-v*1.12;
-        y=.006+Math.sin(Math.PI*u)*Math.sin(Math.PI*v)*(.04+.05*k+.035*k*Math.sin(u*11+v*13-flow*.7));
-        x+=turn*.04*v*v;
-      }else if(kind===6){
-        const a=u*Math.PI*2,r=v,edge=1-r*r;
-        x=Math.sin(a)*r*.22;z=.21+Math.cos(a)*r*.25;
-        y=.006+(.09+.035*k+.015*Math.sin(flow*1.3))*edge*edge+.025*k*Math.sin(a*4-flow*1.1)*Math.sin(Math.PI*r)**2;
+      if(kind<3){
+        const shoulder=kind<2,sign=kind===0?1:-1;
+        const irregular=.72+.17*Math.sin(u*17-time*12+kind*2.7)+.11*Math.sin(u*29-time*8.13);
+        const curl=v*Math.PI*.84,edge=Math.sin(Math.PI*u),height=k*(shoulder?.075:.055)*irregular;
+        if(shoulder){x=sign*(.20-.07*Math.sin(curl));z=.18-u*.68;}
+        else{const a=(u-.5)*2.5;x=Math.sin(a)*(.18-.05*Math.sin(curl));z=.10+Math.cos(a)*.16;}
+        y=.002+height*edge*(1-Math.cos(curl));
+        x*=spread;z*=spread;x+=turn*.025*u*u;
       }else{
-        const piece=kind<6?kind-4:kind-5,side=piece%2?-1:1;
-        const age=fract(time*(1.7+piece*.137)+piece*.269);
-        const pulse=Math.sin(Math.PI*age)**2,fan=piece<2?1:-.35;
-        const width=(.025+.065*pulse)*Math.sin(Math.PI*u)**.6;
-        x=side*(.23+u*(.18+.13*pulse)*fan)+width*(v-.5);
-        z=-.24-piece*.045-u*(.48+.16*pulse);
-        // Roots stay on the main film; thin forks stretch, sag and return to
-        // the ink, with each branch on a different smooth time envelope.
-        y=.007+Math.sin(Math.PI*u)*(.03+.08*k)*pulse*Math.sin(Math.PI*v);
-        x+=turn*.035*u*u;
+        const radius=(.010+.009*seed)*Math.sqrt(k)*Math.sqrt(Math.max(0,pulse));
+        const theta=TAU*u,phi=Math.PI*v;
+        // y = 4 h age(1-age) is the bounded ballistic rise and fall. A drop
+        // travels away from its surface birth instead of levitating in place.
+        x=side*(.13+age*(.16+.10*seed))*spread+Math.cos(theta)*Math.sin(phi)*radius;
+        z=(.17-id*.065-age*(.20+.15*seed))*spread+Math.sin(theta)*Math.sin(phi)*radius;
+        y=.002+4*k*(.09+.075*seed)*age*(1-age)+(1+Math.cos(phi))*radius*.8;
       }
       const n=(start+j*(nu+1)+i)*3;p[n]=x;p[n+1]=y;p[n+2]=z;
     }
   }
   g.attributes.position.needsUpdate=true;g.computeVertexNormals();
+}
+
+// Sneaking keeps only a small local surface disturbance. Ninja Squid and an
+// explicit replicated splash suppression still hide it; no gameplay flags,
+// trail visibility, audio or network visibility decisions are changed here.
+export function swimSurfaceSpeed(a){
+  if(!a?.vel)return 0;
+  if(!a.climbing)return Math.hypot(a.vel.x,a.vel.z);
+  const n=a.anim?.wallNormal,nn=n?.lengthSq();
+  if(!(nn>.5))return 0;
+  const vn=a.vel.dot(n);return Math.sqrt(Math.max(0,a.vel.lengthSq()-vn*vn/nn));
+}
+
+export function swimSurfaceVisible(a){
+  if(a.remote&&a.s3?.netSwimVisibility?.splash===false)return false;
+  return !a.s3?.modifiers?.ninjaSquid||swimSplashVisible(a);
 }
 
 function material(light,filmHoles) {
@@ -154,8 +146,8 @@ function material(light,filmHoles) {
   return m;
 }
 
-// The film's bounding sphere (r 1.6) holds every shape the generator can make (vertices stay within ~0.91 of its
-// centre) and the vertex shader does not move them, so a camera whose frustum misses the sphere cannot see the film.
+// The conservative local sphere contains the bounded curls and eight drops.
+// The vertex shader does not move them; an unseen sphere cannot draw a splash.
 function seenBy(camera,mesh){
   if(!camera?.projectionMatrix||!camera.matrixWorldInverse||camera.isArrayCamera)return true;
   _view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
@@ -202,19 +194,30 @@ class SwimSurface {
   update(fx,camera){
     this.time=fx._time;
     for(const s of this.slots){
-      const a=s.actor,sp=a?Math.hypot(a.vel.x,a.vel.z):0;
-      const alive=a&&a.alive!==false&&a.form==='squid'&&a.submerged&&a.grounded&&!a.climbing&&sp>2&&swimSplashVisible(a)&&this.time-s.last<.08&&(!G.actors||G.actors.includes(a));
+      const a=s.actor,wall=!!a?.climbing,sp=swimSurfaceSpeed(a);
+      const alive=a&&a.alive!==false&&a.form==='squid'&&(wall&&a.wallHit?.hit||a.submerged&&a.grounded)&&sp>1e-4&&swimSurfaceVisible(a)&&this.time-s.last<.08&&(!G.actors||G.actors.includes(a));
       s.mesh.visible=!!alive;
       if(!alive){s.actor=null;s.pending=false;continue;}
       const yaw=Math.atan2(a.vel.x,a.vel.z),delta=Math.atan2(Math.sin(yaw-s.yaw),Math.cos(yaw-s.yaw));s.yaw=yaw;
-      s.up.copy(a.groundN||THREE.Object3D.DEFAULT_UP).normalize();
-      s.forward.set(a.vel.x,0,a.vel.z).addScaledVector(s.up,-s.up.dot(a.vel)).normalize();
+      s.up.copy((wall?a.anim?.wallNormal:a.groundN)||THREE.Object3D.DEFAULT_UP).normalize();
+      if(s.up.lengthSq()<.5){s.mesh.visible=false;s.actor=null;s.pending=false;continue;}
+      s.forward.copy(a.vel).addScaledVector(s.up,-s.up.dot(a.vel));
+      if(s.forward.lengthSq()<1e-8){s.mesh.visible=false;s.actor=null;s.pending=false;continue;}
+      s.forward.normalize();
       s.right.crossVectors(s.up,s.forward).normalize();s.forward.crossVectors(s.right,s.up).normalize();
       s.basis.makeBasis(s.right,s.up,s.forward);
-      s.mesh.position.copy(a.pos);s.mesh.quaternion.setFromRotationMatrix(s.basis);s.mesh.material.color.copy(a.color);s.mesh.material.emissive.copy(a.color).multiplyScalar(.06);
+      s.mesh.position.copy(a.pos);
+      if(wall)s.mesh.position.addScaledVector(s.up,s.up.dot(a.wallHit.point)-s.up.dot(a.pos));
+      else{
+        // Grounded Actor clearance and step presentation are not the liquid
+        // plane. Anchor to the actual supporting collision face, including
+        // slopes, rather than making the splash float above it.
+        const face=G.level?.faces?.[a.ground?.face];
+        if(face?.origin)s.mesh.position.addScaledVector(s.up,s.up.dot(face.origin)-s.up.dot(a.pos));
+      }s.mesh.quaternion.setFromRotationMatrix(s.basis);s.mesh.material.color.copy(a.color);s.mesh.material.emissive.copy(a.color).multiplyScalar(.06);
       const t=this.time+s.phase;s.mesh.material.userData.filmTime.value=t;
 
-      // Rebuilding ~1,700 vertices and their normals is the film's whole CPU cost; skip it while no camera sees it.
+      // Bounded pooled geometry; skip its shape update while no camera sees it.
       s.shapeTime=this.time+s.phase;s.shapeSpeed=sp/11.8;s.shapeTurn=clamp(delta/Math.max(1e-4,fx._dt)*.04,-1,1);s.pending=true;
       if(camera===undefined||(s.mesh.updateMatrixWorld(),seenBy(camera,s.mesh)))this.shape(s);
     }
