@@ -141,6 +141,27 @@ export function installHitchTracer(game, {
       ['showcase', game.showcase, 'render'],
       ['hud', game, '_updateHud'],
     ];
+    // Opt-in live Shooter/paint diagnosis, including the normal Practice Range.
+    // Inclusive nested scopes are NOT additive. Count very hot block queries
+    // without per-call clocks to avoid adding profiler overhead to every ray.
+    owners.push(
+      ['shooter-fire', G.projectiles, 'fireShooter'],
+      ['shooter-hud-preview', G.projectiles, 'muzzleBlockFeedback'],
+      ['shooter-impact-preview', G.projectiles, 's3ShooterImpact'],
+      ['projectile-step', G.projectiles, '_step'],
+      ['ink-head-step', G.projectiles?.inkFlight, 'stepHead'],
+      ['ink-detached-drops', G.projectiles?.inkFlight, 'updateDrops'],
+      ['paint-stamp', G.paint, 'splat'],
+      ['paint-cpu-grid', G.paint, '_cpuSplat'],
+      ['paint-atlas-submit', G.paint, '_drawQuads'],
+      ['paint-simulation', G.paint, 'advanceSimulation'],
+      ['world-ray', G.physics, 'raycast'],
+      ['world-segment', G.physics, 'segment'],
+      ['block-query', G.level, 'queryBlocks'],
+      ['fx-droplets', G.fx, '_updateDrops'],
+      ['fx-muzzle', G.fx, 'muzzle'],
+      ['audio-voice', G.audio, 'play']
+    );
     // Deep attribution runs ONLY in the existing opt-in ?profileRange=1.
     // Inclusive nested timings deliberately overlap: a bot/character call
     // is part of simulation, a ground ray is part of physics, etc.
@@ -194,7 +215,7 @@ export function installHitchTracer(game, {
       const original = owner[method];
       const wrapper = function (...args) {
         const rec = active;
-        const countOnly = name === 'source-capsule-distance';
+        const countOnly = name === 'source-capsule-distance' || name === 'block-query';
         const t = rec && !countOnly ? now() : 0;
         let gpuStarted = false, timer = null;
         if (rec && (name === 'render' || name === 'paint')) {
@@ -390,6 +411,10 @@ export function installHitchTracer(game, {
     events:rec.events, cause:rec.cause,
   });
   const result = {
+    // Access the exact latest recorded frame without scanning or sorting the
+    // rolling history on every sample. Used by the on-device A/B comparator.
+    lastFrameMetrics() { return current.length ? current[current.length - 1] : null; },
+    pollGpu() { attachGpu(); },
     startCapture({ durationMs = 30000, frameLimit = 4000, byteLimit = 4 * 1024 * 1024 } = {}) {
       if (disposed) throw new Error('tracer has been disposed');
       if (!Number.isFinite(durationMs) || durationMs <= 0 || durationMs > 30000)
