@@ -5,6 +5,45 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
+import {SHAPE_CASES,SHAPE_PHASES,readShapeSample,assertShapeSample,runShapesRecipe} from './lib/reticle-next/shapes-recipe.mjs';
+import {DUALIES_PHASES,readDualiesSample,assertDualiesSample,runDualiesRecipe} from './lib/reticle-next/dualies-recipe.mjs';
+import {CHARGER_CASES,BAMBOO_PHASES,PENCIL_PHASES,readChargerSnapshot,assertChargerSnapshot,runChargerRecipe,installChargerObservation,stopNativeShotObserver,SCOPE_CONTROL_ID} from './lib/reticle-next/charger-recipe.mjs';
+export const NEXT_BASELINE_SHA='e0072a749df0ec8c2d368e383bdf337baa7b44ad';
+export const nextRenderHz=suite=>suite==='next-dualies'?60:30;
+export const NEXT_SUITES=Object.freeze(['next-shapes','next-dualies','next-bamboo','next-pencil']);
+export const EXCLUDED_NEXT_SUITES=Object.freeze({'next-mobile-layout':'Not implemented; requires mobile actual accepted Pencil hit card then Wiper partial with card preserved.'});
+export function nextSuiteCases(suite){
+  if(suite==='next-shapes')return SHAPE_CASES;
+  if(suite==='next-dualies')return [{name:'dualies',id:'dualies',kind:'dualies',profile:null,next:true}];
+  if(suite==='next-bamboo'||suite==='next-pencil')return CHARGER_CASES.filter(c=>c.name===suite.slice(5)).map(c=>({...c,next:true}));
+  return null;
+}
+export function expectedNextStates(suite){
+  assert(NEXT_SUITES.includes(suite));
+  return nextSuiteCases(suite).flatMap(c=>{
+    const phases=c.name==='dualies'?DUALIES_PHASES:c.name==='bamboo'?BAMBOO_PHASES:c.name==='pencil'?PENCIL_PHASES:SHAPE_PHASES;
+    return phases.map(phase=>({viewportName:'desktop',weaponId:phase.startsWith('scope-')?SCOPE_CONTROL_ID:c.id,phase}));
+  });
+}
+export function assertMatchedProjection(before,after){
+  assert.deepEqual(after.viewport,before.viewport,'paired viewport');assert.equal(after.dpr,before.dpr,'paired DPR');
+  assert.deepEqual(after.canvas,before.canvas,'paired production canvas');
+  for(const key of ['position','camera']){assert.equal(after[key].length,before[key].length);assert(after[key].every((v,i)=>Number.isFinite(v)&&Math.abs(v-before[key][i])<=1e-5),'paired native '+key);}
+  for(const key of ['fov','aspect','yaw','pitch'])assert(Number.isFinite(after[key])&&Math.abs(after[key]-before[key])<=1e-5,'paired native '+key);
+}
+export function assertNextSnapshot(row,scenario,phase,before=false){
+  const expected=phase.startsWith('scope-')?SCOPE_CONTROL_ID:scenario.id;
+  assert.equal(row.weaponId,expected);assert.equal(row.hudWeapon,expected);assert.equal(row.kind,scenario.kind);
+  assert(row.retConnected&&row.hudVisible,'native active connected HUD');
+  if(!before)assert.equal(row.installed,true,'candidate reticle installer active');
+  if(scenario.name==='dualies')assertDualiesSample(row.next,phase,{before});
+  else if(['bamboo','pencil'].includes(scenario.name))assertChargerSnapshot(row.next,scenario,phase,{before});
+  else assertShapeSample(row.next,scenario,phase,{before});
+}
+async function readNextSample(page,scenario){
+  return page.evaluate(scenario.name==='dualies'?readDualiesSample:['bamboo','pencil'].includes(scenario.name)?readChargerSnapshot:readShapeSample);
+}
+
 
 export const BASELINE_SHA = '7f863ea2d65671abd1453fdae1b61de00f1d10e2';
 export const VIEWPORTS = Object.freeze([
@@ -29,7 +68,7 @@ export const SPLATLING_PHASES=Object.freeze(['idle','first-ready','second-chargi
 export function captureMatrix(flags=[]) {
   const suite=flags.find(f=>f.startsWith('--suite='))?.slice(8)||'first-four';
   const viewport=flags.find(f=>f.startsWith('--viewport='))?.slice(11)||'all';
-  assert(['first-four','affected-brella-splatling','affected-brella','affected-nautilus','affected-ballpoint'].includes(suite),'unknown capture suite');
+  assert(['first-four','affected-brella-splatling','affected-brella','affected-nautilus','affected-ballpoint',...NEXT_SUITES].includes(suite),'unknown capture suite');
   assert(['all','desktop','mobile'].includes(viewport),'unknown capture viewport');
   // New affected coverage is explicitly desktop-only and bounded. The prior
   // first-four/mobile acceptance matrix remains the default, unchanged.
@@ -37,12 +76,15 @@ export function captureMatrix(flags=[]) {
   const brella=CASES.find(c=>c.name==='brella'),charger={...CASES.find(c=>c.name==='native-charger-fallback'),idleOnly:true};
   const suites={'first-four':CASES,'affected-brella-splatling':[brella,...SPLATLING_CASES,charger],
     'affected-brella':[brella],'affected-nautilus':[SPLATLING_CASES[0],charger],'affected-ballpoint':[SPLATLING_CASES[1]]};
-  const renderHz=Number(flags.find(f=>f.startsWith('--render-hz='))?.slice(12)||60);
+  const nextCases=nextSuiteCases(suite);
+  if(nextCases)assert(nextCases.length>0,'implemented next suite must own actual cases');
+  const renderHz=Number(flags.find(f=>f.startsWith('--render-hz='))?.slice(12)||(nextCases?nextRenderHz(suite):60));
   assert([30,60].includes(renderHz),'only source-supported 30/60Hz render cadence allowed');
+  if(nextCases)assert.equal(renderHz,nextRenderHz(suite),'exact per-suite source-supported render cadence required');
   if(suite==='first-four')assert.equal(renderHz,60,'prior default matrix retains its original60Hz protocol');
   return {suite,viewports:VIEWPORTS.filter(v=>viewport==='all'||v.name===viewport),
-    cases:suites[suite],renderHz,dt:1/renderHz,
-    screenshotStateCount:({'affected-brella-splatling':19,'affected-brella':4,'affected-nautilus':8,'affected-ballpoint':7})[suite]??null};
+    cases:nextCases||suites[suite],renderHz,dt:1/renderHz,
+    screenshotStateCount:({'affected-brella-splatling':19,'affected-brella':4,'affected-nautilus':8,'affected-ballpoint':7,'next-shapes':SHAPE_CASES.length*SHAPE_PHASES.length,'next-dualies':DUALIES_PHASES.length,'next-bamboo':BAMBOO_PHASES.length,'next-pencil':PENCIL_PHASES.length})[suite]??null};
 }
 export const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 export function pngDimensions(bytes) {
@@ -289,7 +331,7 @@ export async function main(argv=process.argv.slice(2)) {
   const before=flags.includes('--before'),site=fs.realpathSync(siteArg),out=path.resolve(outArg),matrix=captureMatrix(flags);
   const sourceSha=process.env.SOURCE_SHA;
   assert(/^[a-f0-9]{40}$/.test(sourceSha||''),'SOURCE_SHA must pin the checked-out commit');
-  if(before)assert.equal(sourceSha,BASELINE_SHA);
+  if(before)assert.equal(sourceSha,NEXT_SUITES.includes(matrix.suite)?NEXT_BASELINE_SHA:BASELINE_SHA);
   fs.mkdirSync(out,{recursive:true});
   const script=fs.readFileSync(new URL(import.meta.url));
   fs.writeFileSync(path.join(out,'probe.mjs.txt'),script);
@@ -302,13 +344,13 @@ export async function main(argv=process.argv.slice(2)) {
     assert.equal(sha256(bytes),build.artifacts[relative],'emitted identity: '+relative);
   }
   const receipt={schema:1,before,sourceSha,contentHash:build.contentHash,inputHash:build.inputHash,
-    probeSha256:sha256(script),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
+    probeSha256:sha256(script),recipeSha256:Object.fromEntries(NEXT_SUITES.includes(matrix.suite)?['shapes-recipe.mjs','dualies-recipe.mjs','charger-recipe.mjs'].map(file=>[file,sha256(fs.readFileSync(new URL('./lib/reticle-next/'+file,import.meta.url)))]):[]),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
     coverage:{suite:matrix.suite,actualWeapons:matrix.cases.map(c=>c.id),expectedScreenshotStates:matrix.screenshotStateCount,
       splatlingMobile:matrix.suite!=='first-four'?'not covered in this affected desktop gate':'not part of the unchanged first-four matrix',
       switches:matrix.cases.filter(c=>c.switchAt).map(c=>({weaponId:c.id,phase:c.switchAt,fallback:'charger',metadataOnly:true}))},
     scope:'Actual production range/HUD DOM and browser screenshots; software GPU only. Reference-guided approximation, NOT Nintendo pixel/behavior parity or full CI.',
     captureProtocol:{browser:process.env.CHROMIUM_PATH?'custom-executable':'chromium-full-headless',scale:'device',screenshotDeadlineMs:20000,nativeRenderOnly:true,animations:'unchanged',
-      baseRenderHz:matrix.renderHz,baseDt:matrix.dt,physicsHz:60,adaptive:'60Hz near source-owned first-only stream boundary; actual tick deltas recorded',ownedBrowserServerHost:'127.0.0.1'},
+      baseRenderHz:matrix.renderHz,baseDt:matrix.dt,physicsHz:60,adaptive:NEXT_SUITES.includes(matrix.suite)?'none; native60 physics with exact per-suite render cadence and recorded native tick deltas':'60Hz near source-owned first-only stream boundary; actual tick deltas recorded',ownedBrowserServerHost:'127.0.0.1'},
     comparison:'Pair same viewport/weapon/phase crop against immutable main; retail reference review is separate, not certified by this gate.'};
   const write=()=>fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
   fs.copyFileSync(path.join(site,'inkwave-build.json'),path.join(out,'inkwave-build.json'));
@@ -355,23 +397,41 @@ export async function main(argv=process.argv.slice(2)) {
         localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',lang:'en',shadows:false,bloom:false,minimap:false}));
       });
       const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{touch:view.touch,timeout:180000});
-      await page.evaluate(()=>{
+      if(NEXT_SUITES.includes(matrix.suite))await page.mouse.up({button:'left'});
+      await page.evaluate(isNext=>{
         const g=window.__inkwave,G=window.__G,a=G.local;
-        g.debug.freeze();g.debug.freezeBots();G.match.range.movingTargets=false;g.debug.fire(false);
-        // Native spawn resets fixed-clock interpolation; direct pos writes did not.
-        a.spawnAt(a.pos.clone().set(-14.6,.04,0),0);g.rig.yaw=0;g.rig.pitch=-.12;g.rig.follow(a,true);
-      });
+        g.debug.freeze();g.debug.freezeBots();G.match.range.setMovingTargets(false);
+        if(isNext)G.match.range.travel('lane');
+        else {
+          g.debug.fire(false);
+          // Original protocol retained. Native spawn resets interpolation.
+          a.spawnAt(a.pos.clone().set(-14.6,.04,0),0);g.rig.yaw=0;g.rig.pitch=-.12;g.rig.follow(a,true);
+        }
+      },NEXT_SUITES.includes(matrix.suite));
       for(const scenario of matrix.cases) {
         console.log(view.name,scenario.id,'start');
-        await page.evaluate(async id=>{
-          const g=window.__inkwave;g.debug.fire(false);window.__G.match.range.setWeapon(id);
+        if(scenario.next)await page.mouse.up({button:'left'});
+        await page.evaluate(async ({id,next})=>{
+          if(!next)window.__inkwave.debug.fire(false);
+          window.__G.match.range.setWeapon(id);
           await window.__G.local.character.sourceMotion.ready;
-        },scenario.id);
+        },{id:scenario.id,next:!!scenario.next});
         const cameraSettlement=await settleCamera(page,180,matrix.dt);
-        const capture=async phase=>{
+        if(scenario.next){
+          await page.evaluate(installChargerObservation,{before:before||!['bamboo','pencil'].includes(scenario.name)});
+          {
+            // Trusted native canvas gesture owns pointer-lock admission. No
+            // synthetic input flags, charge, ammunition or form assignments.
+            const box=await page.evaluate(()=>window.__G.renderer.domElement.getBoundingClientRect().toJSON());
+            await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+            await page.waitForFunction(()=>window.__G.input.locked,null,{timeout:10000});
+          }
+        }
+        const capture=async (phase,recipeMeta=null)=>{
           requireActive();
           console.log(before?'baseline':'candidate',view.name,scenario.id,phase,'capture');
           const row=await readSnapshot(page);
+          if(scenario.next){row.next=await readNextSample(page,scenario);row.recipe=recipeMeta;}
           console.log(JSON.stringify({head:sourceSha,before,viewport:view.name,actualWeaponId:row.weaponId,phase,profile:row.profiles,viewportCss:row.viewport,dpr:row.dpr,settings:row.settings}));
           const basename=`${view.name}-${scenario.name}-${phase}`;
           const crop=reticleCrop(row.rect,view);
@@ -388,7 +448,9 @@ export async function main(argv=process.argv.slice(2)) {
           requireActive();
           row.surfaceAfter=await page.evaluate(inspectCaptureSurface,{redraw:false});
           assertSurfaceInvariant(row.surfaceBefore,row.surfaceAfter);
-          const afterCapture=await readSnapshot(page);assertSnapshot(afterCapture,scenario,phase,before);
+          const afterCapture=await readSnapshot(page);
+          if(scenario.next){afterCapture.next=await readNextSample(page,scenario);assertNextSnapshot(afterCapture,scenario,phase,before);assert.deepEqual(afterCapture.next,row.next,'screenshot must not change native recipe state');}
+          else assertSnapshot(afterCapture,scenario,phase,before);
           row.afterCapture={weaponId:afterCapture.weaponId,charge:afterCapture.charge,charging:afterCapture.charging,profiles:afterCapture.profiles,
             xhClasses:afterCapture.xhClasses,effectiveOpacity:afterCapture.effectiveOpacity,color:afterCapture.color,inRange:afterCapture.inRange,
             muzzleBlock:afterCapture.muzzleBlock,projectedShotGuide:afterCapture.projectedShotGuide};
@@ -396,8 +458,23 @@ export async function main(argv=process.argv.slice(2)) {
           assert.deepEqual(row.imagePixels.frame,{width:view.width*view.deviceScaleFactor,height:view.height*view.deviceScaleFactor});
           assert.deepEqual(row.imagePixels.crop,{width:crop.width*view.deviceScaleFactor,height:crop.height*view.deviceScaleFactor});
           row.imageSha256={frame:sha256(fs.readFileSync(path.join(out,row.files.frame))),crop:sha256(fs.readFileSync(path.join(out,row.files.crop)))};
-          assertSnapshot(row,scenario,phase,before);write();
+          if(scenario.next)assertNextSnapshot(row,scenario,phase,before);else assertSnapshot(row,scenario,phase,before);write();
         };
+        if(scenario.next){
+          const options={scenario,pace,capture,before,settleCamera,dt:matrix.dt,
+            selectWeapon:async id=>{await page.mouse.up({button:'left'});await page.evaluate(id=>window.__G.match.range.setWeapon(id),id);await pace(page,2,matrix.dt);}};
+          let recipeError;
+          try {
+            if(scenario.name==='dualies')await runDualiesRecipe(page,options);
+            else if(['bamboo','pencil'].includes(scenario.name))await runChargerRecipe(page,options);
+            else await runShapesRecipe(page,options);
+          }catch(error){recipeError=error;throw error;}
+          finally {
+            try{await stopNativeShotObserver(page);}
+            catch(error){if(!recipeError)throw error;receipt.observerCleanupFailure=String(error);write();}
+          }
+          continue;
+        }
         await capture('idle');
         if(scenario.idleOnly)continue;
         if(scenario.splatling) {
@@ -452,6 +529,11 @@ export async function main(argv=process.argv.slice(2)) {
       await context.close();page=null;
     }
     if(matrix.screenshotStateCount!=null)assert.equal(receipt.scenarios.filter(s=>s.files).length,matrix.screenshotStateCount,'exact bounded affected screenshot coverage');
+    if(NEXT_SUITES.includes(matrix.suite)){
+      const keys=rows=>rows.map(r=>[r.viewportName,r.weaponId,r.phase].join('|')).sort();
+      assert.deepEqual(keys(receipt.scenarios.filter(r=>r.files)),keys(expectedNextStates(matrix.suite)),'exact named source-owned next states, no duplicates or omissions');
+      receipt.coverage.actualCapturedWeapons=[...new Set(receipt.scenarios.filter(r=>r.files).map(r=>r.weaponId))];
+    }
     requireActive();receipt.status=before?'baseline-recorded':'passed';
   } catch(error) {
     receipt.status=interruption?'interrupted':'failed';receipt.failure=String(error.stack||error);
@@ -466,3 +548,4 @@ export async function main(argv=process.argv.slice(2)) {
   return receipt;
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url)await main();
+
