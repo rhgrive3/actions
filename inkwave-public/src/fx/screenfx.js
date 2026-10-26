@@ -648,6 +648,11 @@ export class ScreenFX {
       // your own slam: you expect it — keep the punch, soften the blur/glow so the payoff stays readable
       if (actor && actor.isLocal) { this.s.blast *= 0.55; this.s.chroma *= 0.7; }
     });
+    // Hidden menus may skip update(), which normally forgets the local Actor.
+    // Retire only this roster's pointer, leaving lens and effect state alone.
+    on('match:dispose', ({ match }) => {
+      if (this._local && match?.actors?.includes(this._local)) this._local = null;
+    });
     on('match:state', ({ state, match }) => {
       if (!match || match.attract) return;
       const s = this.s;

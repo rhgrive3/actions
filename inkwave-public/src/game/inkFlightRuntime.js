@@ -21,6 +21,9 @@ export class InkFlightRuntime {
   }
   clear() {
     this.pool.push(...this.drops); this.drops.length = 0; this.time = 0;
+    // Pooled drops have no remaining paint/draw work. Keep their reusable
+    // vectors, but release retired Actors (including drops pooled earlier).
+    for (const p of this.pool) p.owner = null;
     Object.assign(this.stats, { spawned: 0, landed: 0, headImpacts: 0, peakDrops: 0 });
   }
   configure(p, key, sequence, seed, locked = false) {
@@ -148,7 +151,7 @@ export class InkFlightRuntime {
         }
         if (p.age + EPS >= INK_MODEL.dropLife || p.pos.y < PLAYER.waterY - 1.8) { dead = true; break; }
       }
-      if (dead) { this.drops[i] = this.drops[this.drops.length - 1]; this.drops.pop(); this.pool.push(p); }
+      if (dead) { this.drops[i] = this.drops[this.drops.length - 1]; this.drops.pop(); p.owner = null; this.pool.push(p); }
     }
   }
   paint(p, hit, shape, heading, kind) {

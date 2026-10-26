@@ -6432,3 +6432,10 @@ PR #1878 の `dd90aa241` から派生した `fix/inkwave-original-behavior-20261
 対象基準版は `e0072a749df0ec8c2d368e383bdf337baa7b44ad`。本家比較版は既存カニタンク実装と同じ S3 11.3.0。カニタンク発動中にイカ入力を保持して球形になり、そのまま再戦・メニューへ戻ると、Character の外側に作る球形メッシュが対戦破棄後も scene に残った。`all-specials.mjs` で `match:dispose` と `actor:removed` を受け、対象 Actor の球形メッシュだけを取り除き、専有 geometry/material を解放する。通常の操作・移動物理・球形解除・スペシャル時間・ダメージとネットワーク攻撃イベントは変更しない。退役した表示が次の対戦へ残る問題を解消する資源管理の修正であり、本家のフレーム定数や実機での一致を新たに確認したものではない。
 
 production composition と実 Projectiles・Match を使う `crab-ball-lifecycle.test.mjs` は、同一ステージ相当の6回の対戦破棄、geometry/material の各1回の解放、重複通知、Actor 単独離脱、別 Actor の進行中の球形維持と通常解除を確認する。基準版 runtime に戻す対照では新規2試験とも scene 残留で失敗した。ブラウザの通常 RAF・実 GPU・Safari/iPad・本家実機はこのロジック試験とは別の未確認項目。
+
+
+## 2026-10-26 UTC: 退役Actorへのプール・画面効果参照の解放
+
+同じ基準mainとS3 11.3.0の既存挙動を維持する。通常RAFの球形退出を追加調査し、実ゲームのInkFlight飛沫プール2レコードに退役Actorが残ること、非表示メニューではScreenFXの通常updateが止まり `_local` が最後のActorを保持することを確認した。飛沫は着弾の塗り・通知・traceを完了した後とclear時にownerを外し、ベクトル・配列・プール順を維持する。ScreenFXは破棄対象rosterに属する `_local` だけを外し、レンズ・演出状態をリセットしない。未使用状態の所有参照の修正で、弾道・塗り・ダメージ・色・通信を変更しない。
+
+実production compositionの新規回帰は通常着弾・寿命切れ・ghost・clear済みプール・同じスロットの再利用と新所有者だけへの塗り加点、更新のないメニュー退出、重複/無関係/古いrosterの通知を確認する。基準mainの公開ソースを使う負例では新規5件が失敗する。WeakRefの数だけをリークの根拠にせず、補助inventory自身の強参照の副作用も別に特定した。修正版の通常RAF再測定はGPU・メモリ調査記録に保存する。物理iPad/Safariの性能や本家実機の新たな一致を主張する修正ではない。
