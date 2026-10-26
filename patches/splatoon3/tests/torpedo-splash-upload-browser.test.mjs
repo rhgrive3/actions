@@ -122,11 +122,11 @@ test('Torpedo and Fizzy live-prefix uploads preserve GPU values and pixels', {
       assert.equal(frame.prefixMatches, true, 'GPU live prefix ' + frame.count);
       assert.equal(frame.pixelsMatch, true, 'pixel parity ' + frame.count);
       if (frame.count) assert.ok(frame.paintedPixels > 0, 'visible ink must render pixels');
-      if (i && frame.count !== 3) {
+      if (i) {
         const expected = frame.count * (i === 1 ? 64 : 76);
         assert.equal(frame.measured.reduce((sum, x) => sum + x.bytes, 0), expected, 'live upload bytes ' + frame.count);
       }
-      if (frame.count === 3) assert.equal(frame.measured.filter(x => x.op === 'data' && x.bytes === 49152).length, 1, 'reactivation allocates fresh storage');
+      if (frame.count === 3) assert.equal(frame.measured.filter(x => x.op === 'data' && x.bytes === 49152).length, 0, 'idle-pool reactivation reuses existing GPU allocation');
       assert.equal(frame.full.reduce((sum, x) => sum + x.bytes, 0), frame.count ? (i === 1 ? 49152 : 58368) : 0, 'legacy full upload bytes');
     }
     console.log(JSON.stringify(report));
