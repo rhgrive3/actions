@@ -9,7 +9,7 @@ export function requiresGameQuality(paths) {
   // Account CI already owns its API, bundle and Worker build. A mixed change
   // retains game QA even when its other path is documentation.
   if (paths.every(file => file.startsWith('account/'))) return false;
-  return paths.some(file => !/^(?:README\.md$|docs\/[^\0]*\.md$|lanes\/|bootstrap\/|\.github\/workflows\/hex-[^/]+\.ya?ml$)/.test(file));
+  return paths.some(file => !/^(?:README\.md$|docs\/[^\0]*\.md$|lanes\/|bootstrap\/|\.github\/workflows\/hex-[^/]+\.ya?ml$|\.github\/workflow-archive\/[^/]+\.(?:ya?ml|md)$)/.test(file));
 }
 const immutableSha = value => /^[a-f0-9]{40}$/.test(value || '') && !/^0+$/.test(value);
 const invokeGit = args => execFileSync('git', args, {encoding:'utf8',stdio:['ignore','pipe','pipe']});

@@ -8,6 +8,9 @@ test('only a complete account-only change can omit the separate game suite',()=>
  for(const other of ['scripts/build-inkwave.mjs','inkwave-public/src/main.js','patches/local-quality/adapter.mjs','package.json','vite.config.mjs','unknown.file','docs/account.md'])assert.equal(requiresGameQuality(['account/src/worker.js',other]),true,other);
  for(const paths of [[],null,['account/'],['account/../scripts/build-inkwave.mjs'],['account//worker.js'],['account/./worker.js'],['account/worker.js\0'],[12],['README.md.js']])assert.equal(requiresGameQuality(paths),true,JSON.stringify(paths));
  assert.equal(requiresGameQuality(['README.md','docs/notes.md']),false);
+ assert.equal(requiresGameQuality(['.github/workflow-archive/retired.yml','.github/workflow-archive/README.md']),false);
+ for(const file of ['scripts/ci/run-inkwave-test-suite.mjs','patches/reliability/adapter.mjs','.github/workflows/retired.yml','.github/workflow-archive/live.mjs'])
+  assert.equal(requiresGameQuality(['.github/workflow-archive/retired.yml',file]),true,file);
  const actual=qualityScope('a'.repeat(40),'b'.repeat(40),args=>{assert(args.includes('--no-renames'));return 'account/deleted.js\0account/renamed.js\0';});assert.equal(actual.relevant,false);
  assert.equal(qualityScope('a'.repeat(40),'b'.repeat(40),()=>{throw Error('unavailable');}).relevant,true);
 });
