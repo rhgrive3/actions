@@ -135,3 +135,10 @@ and [before-fix actual Actor trace](kept-audio-followup/before-actor-dispatch.js
 preserve the distinction. This records the separate candidate handoff. The
 parent's subsequent independent event-dispatch acceptance and integration are
 recorded in [the integration receipt](../kept-charge-audio-append/validation.json).
+
+The later fixed-f8 [Pencil release-only acceptance](../pencil-release-only/README.md)
+adds all5-shot event/drawn-flight, depletion, cooldown/release and payment checks
+for both kits. It does not establish actual five-shot sound playback or native
+pixels. The earlier mixed candidate's squid-round discard hunk is excluded and
+preserved on its separate branch; post-first-shot squid/ink-settlement semantics
+remain unverified. No historical native-input receipt is relabelled as this run.

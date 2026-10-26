@@ -1,0 +1,86 @@
+{
+  "status": "Only independently supported release-edge change accepted for integration; squid-round semantics remain unverified",
+  "base": "f8b5eafc38f8d80641d823c950cbe7d560c9bfc0",
+  "sourceHead": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+  "workingBranch": "fix/pencil-release-only-20261026",
+  "productionScope": "Exactly one hunk in main-weapon-catalog.mjs moves loaded divided shots to the real held-to-released edge. Existing cooldown, payment, stats and squid block retained.",
+  "preservedUnintegratedCandidate": {
+    "branch": "fix/pencil-five-shot-cycle-20261026",
+    "head": "1d6df6d8af4c41aeecda1589e25f5e7727274122",
+    "code": "68cf341170a4c5c19d9ac76ea68c8974cfdbd591",
+    "excludedHunk": "Adding ||s.rounds>0 to squid cancellation",
+    "reviewCorrection": "No-charge-keep wording alone does not establish post-first-shot remaining-round discard or its ink settlement. Do not mark that semantic verified or completed."
+  },
+  "independentReview": "Parent provided independent release-edge acceptance based on official indexed Nintendo wording and payment/hold/depletion checks. The split intentionally excludes the unverified squid-discard inference.",
+  "reference": {
+    "url": "https://x.com/SplatoonJP/status/1593167058514026497",
+    "date": "2022-11-17",
+    "supported": "Nintendo indexed announcement says release-owned shots, up to5",
+    "limits": "Indexed text, direct post open403; no original footage/pixels measured. No new retrieval in this split."
+  },
+  "checks": {
+    "source": {
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    "freshEmitted": {
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    "selection": "All5 Pencil event/drawn-flight cycle for both kits, cooldown/duplicate release boundaries, existing full-pack payment/damage test",
+    "emittedNegativeOnF8": {
+      "expectedFailures": 2,
+      "actualFailures": 2
+    },
+    "optimizedBuild": "passed",
+    "freshBuildCount": 1,
+    "startupBudget": "passed",
+    "diffCheck": "passed",
+    "identity": {
+      "sourceSha": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+      "contentHash": "56105e36758c15f89e0f2c69db020bf6a1f0d6124efb05acda9653c71e91d69e",
+      "inputHash": "a736650292dd13b932bf3877b3923d8cf5b1b1ecec8163053b1765ac415c6ea5",
+      "sourceInputs": 1490,
+      "artifacts": 2194,
+      "mismatches": 0,
+      "failures": [],
+      "unchangedPackagedAudioFiles": 390,
+      "changedAudioFiles": [],
+      "sourceDataUnchanged": true,
+      "squidBlockByteIdenticalToF8": true
+    }
+  },
+  "coverage": "New cases extend already emitted-registered catalog-charge-flight-stages.test.mjs; source discovery unchanged. No workflow change or manual CI.",
+  "logs": {
+    "source": {
+      "path": "source.log.gz",
+      "rawSha256": "47c27b6bc0db1994712973474ba5e0ffbd9ff4eb96c251ecde59f0ba6b9baad8",
+      "gzipSha256": "cb8bd16489e0c7cf8a8e1df2c512a48c6818d581dff97d13d8ae292c4e4d7a40"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "5b8ed126302b96bc402416863255e3af56f13bd3699e1e3b68e825e3ac58dc5c",
+      "gzipSha256": "fe3f6eefa4e60f35494f4cecb6300e399d66aad5049848c7cd2240ed2be4e9c5"
+    },
+    "negative": {
+      "path": "negative.log.gz",
+      "rawSha256": "120142486202188c028ae3bdc178dbf91b1af70b27a80d6118c1a950e2789211",
+      "gzipSha256": "608cca693b1602168b44e6b70614c81cc995f0333686a94cf887ac34fedc4c24"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "f6fe211f3e1a6ae521790a2a12ac671e253edbcf9f90fbe4e58b41fbfa2a20be",
+      "gzipSha256": "dcad6d5cff97e0a90cd91f1fc937ff3be3cb9ae2cfd5b48de8214052b6d8e6c2"
+    }
+  },
+  "remainingGates": [
+    "Actual sound playback, native-input browser capture, original/hardware pixels and retail timing remain unverified.",
+    "Pencil post-first-shot squid discard/remaining-round ink settlement remain unverified; existing behavior is retained, not certified.",
+    "Draw buffers/CPU paint and mock audio dispatch are not presented pixels or playback. Full-cycle fixture is60Hz with simplified Character and frozen elevated Actor integration.",
+    "All18 Charger kits are not visually proven; alternate/native-scope playback, short/high-flight pixels and LACT/Wellstring native stage/keep gaps remain.",
+    "Hissen accepted size changes remain0; separate original comparison unfinished.",
+    "No PR retry, merge, Ready status or manual CI launch. Eventual final-head required remote CI remains pending."
+  ]
+}

@@ -152,6 +152,25 @@ Pencil's full5-shot A/V cycle, short/high-flight pixels, LACT/Wellstring native
 stage/keep and original/hardware agreement remain open. All18 Charger kits are
 not claimed visually proven. Hissen accepted size changes remain0.
 
+## Pencil release-only scope
+
+`pencil-release-only/validation.json` accepts only code `a9d32888f` on fixedf8.
+The first shot already used release; loaded shots2–5 now use the same held-to-
+released edge, preserving existing cooldown/payment. Both kits complete all5
+event/drawn-flight shots and depletion; cooldown/repeated-release and existing
+payment checks pass source3/emitted3. The two new tests fail against f8's emitted
+runtime. Build/startup and all1490 input/2194 artifact hashes pass with no mismatch;
+weapon data and390 audio files are unchanged.
+
+The earlier mixed candidate `68cf34117` / evidence `1d6df6d8` is preserved
+unchanged on `fix/pencil-five-shot-cycle-20261026`, not integrated. Its added
+squid-round discard condition is excluded: no-charge-keep wording does not
+directly establish post-first-shot remaining-round discard/ink settlement.
+The squid block stays byte-identical to f8, without a retail-correctness claim.
+Actual playback, ordinary native input, original pixels/timing, Pencil squid
+semantics and other unfinished gates remain open. No extra browser matrix or
+manual CI is part of this acceptance.
+
 The branch push succeeded. Draft PR creation was rejected twice by automatic
 approval review, including one retry after explicit parent appointment. No PR
 exists for this head branch; creation is stopped without an alternate API or

@@ -81,16 +81,17 @@
     "Original horizontal inner-marker owner/parallax/late-floor appearance and broader visual/hardware comparisons",
     "Hissen/slosher unfinished work and original-comparison scope review",
     "Resolve rejected PR creation; no further retry or bypass",
-    "required automatic CI on eventual final head"
+    "required automatic CI on eventual final head",
+    "Original Pencil post-first-shot squid-round discard and remaining-round ink-settlement semantics"
   ],
   "remoteActions": {
     "prCreated": false,
     "merged": false,
     "manualCiStarted": false,
     "integrationBranchPushed": true,
-    "lastVerifiedRemoteHead": "26a69c1c8795e5177808028fd818c7f0a5036de8",
+    "lastVerifiedRemoteHead": "f8b5eafc38f8d80641d823c950cbe7d560c9bfc0",
     "prCreation": "denied twice; stopped, no matching PR exists",
-    "lastVerifiedRemoteHeadScope": "Readback before kept-charge-audio append; post-push exact head is reported to parent separately"
+    "lastVerifiedRemoteHeadScope": "Readback before release-only append; exact post-push head reported to parent separately"
   },
   "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
   "reticleHandoff": {
@@ -459,5 +460,53 @@
     "validation": "kept-charge-audio-append/validation.json",
     "eventDispatchOnly": true,
     "retailTimingAndNewPlaybackVerified": false
+  },
+  "pencilReleaseOnlyAppend": {
+    "sourceHead": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+    "base": "f8b5eafc38f8d80641d823c950cbe7d560c9bfc0",
+    "validation": "pencil-release-only/validation.json",
+    "productionScope": "Exactly one hunk in main-weapon-catalog.mjs moves loaded divided shots to the real held-to-released edge. Existing cooldown, payment, stats and squid block retained.",
+    "excludedCandidate": {
+      "branch": "fix/pencil-five-shot-cycle-20261026",
+      "head": "1d6df6d8af4c41aeecda1589e25f5e7727274122",
+      "code": "68cf341170a4c5c19d9ac76ea68c8974cfdbd591",
+      "excludedHunk": "Adding ||s.rounds>0 to squid cancellation",
+      "reviewCorrection": "No-charge-keep wording alone does not establish post-first-shot remaining-round discard or its ink settlement. Do not mark that semantic verified or completed."
+    },
+    "checks": {
+      "source": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "freshEmitted": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "selection": "All5 Pencil event/drawn-flight cycle for both kits, cooldown/duplicate release boundaries, existing full-pack payment/damage test",
+      "emittedNegativeOnF8": {
+        "expectedFailures": 2,
+        "actualFailures": 2
+      },
+      "optimizedBuild": "passed",
+      "freshBuildCount": 1,
+      "startupBudget": "passed",
+      "diffCheck": "passed",
+      "identity": {
+        "sourceSha": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+        "contentHash": "56105e36758c15f89e0f2c69db020bf6a1f0d6124efb05acda9653c71e91d69e",
+        "inputHash": "a736650292dd13b932bf3877b3923d8cf5b1b1ecec8163053b1765ac415c6ea5",
+        "sourceInputs": 1490,
+        "artifacts": 2194,
+        "mismatches": 0,
+        "failures": [],
+        "unchangedPackagedAudioFiles": 390,
+        "changedAudioFiles": [],
+        "sourceDataUnchanged": true,
+        "squidBlockByteIdenticalToF8": true
+      }
+    },
+    "actualPlaybackAndOriginalPixelsVerified": false
   }
 }
