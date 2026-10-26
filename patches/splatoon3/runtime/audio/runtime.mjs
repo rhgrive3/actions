@@ -41,7 +41,13 @@ export function installWeaponAudioRuntime(api){
     const listener=G.camera?.position||G.local?.pos;
     if(!a?.isLocal&&a&&finite3(pos)&&finite3(listener)&&typeof G.physics?.los==='function'){
       let cached=obstruction.get(a);const now=G.time||0;
-      if(!cached||now<cached.at||now-cached.at>=.1){let clear=true;try{clear=G.physics.los(listener,pos);}catch{}cached={at:now,value:clear?0:.78};obstruction.set(a,cached);}
+      if(!cached||now<cached.at||now-cached.at>=.1||cached.lx!==listener.x||cached.ly!==listener.y||cached.lz!==listener.z||cached.px!==pos.x||cached.py!==pos.y||cached.pz!==pos.z){
+        const lx=listener.x,ly=listener.y,lz=listener.z,px=pos.x,py=pos.y,pz=pos.z;
+        let clear=true;try{clear=G.physics.los(listener,pos);}catch{}
+        if(!cached){cached={};obstruction.set(a,cached);}
+        cached.at=now;cached.value=clear?0:.78;
+        cached.lx=lx;cached.ly=ly;cached.lz=lz;cached.px=px;cached.py=py;cached.pz=pz;
+      }
       return cached.value;
     }
     return 0;
@@ -179,7 +185,8 @@ export function installWeaponAudioRuntime(api){
     const charging=!!this.charging,q=clamp(Number(this.charge)||0,0,1);
     if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
-    keepLoop(this,'roll',!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
+    const rollingSE=!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold;
+    keepLoop(this,'roll',rollingSE,rollingSE ? .8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25 : .8);
     if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
     if(s.wasCharge&&!charging&&!s.firedThisUpdate)play(a,'release',a.pos,.27);
     if(r.scope&&charging&&!s.wasCharge)play(a,'scope',a.pos,.26);

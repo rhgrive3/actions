@@ -167,11 +167,11 @@ export function renderS3Articulation(recipe,event,variant=0,sampleRate=48000){
     let phase=random()*TAU,lp=0,hi=0,previous=0;
     const lowFilter=1-Math.exp(-TAU*clamp(cue.baseHz*.78,70,sampleRate*.3)/sampleRate);
     const hiFilter=1-Math.exp(-TAU*clamp(cue.baseHz*2.2,500,sampleRate*.46)/sampleRate);
+    const drift=cue.kind==='blade'?.63:cue.kind==='string'?.78:cue.kind==='droplet'?1.32:1;
     for(let j=0;j<num;j++){
       const t=j/sampleRate,env=(1-Math.exp(-t/(cue.kind==='fabric'?.008:.0008)))*Math.exp(-t/cue.decay),noise=random()*2-1;
       lp+=lowFilter*(noise-lp);hi+=hiFilter*(noise-hi);const band=hi-lp;
-      const drift=cue.kind==='blade'?.63:cue.kind==='string'?.78:cue.kind==='droplet'?1.32:1;
-      const frequency=cue.baseHz*(drift+(1-drift)*Math.exp(-t/.045));phase+=TAU*Math.min(sampleRate*.45,frequency)/sampleRate;
+      const frequency=drift===1?cue.baseHz:cue.baseHz*(drift+(1-drift)*Math.exp(-t/.045));phase+=TAU*Math.min(sampleRate*.45,frequency)/sampleRate;
       const tone=Math.sin(phase)+.22*Math.sin(2.07*phase),click=noise-previous;previous=noise;
       let v;
       switch(cue.kind){

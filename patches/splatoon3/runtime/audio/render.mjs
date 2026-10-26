@@ -76,7 +76,7 @@ export function renderSound(recipe,event='fire',variant=0,sampleRate=48000) {
     const len=Math.min(n,Math.ceil(dur*4*sampleRate));
     for(let j=0;j<len;j++){const t=j/sampleRate,idx=st+j;if(!loop&&idx>=n)break;
       phase+=TAU*Math.min(sampleRate*.42,f0*(1+1.8*Math.exp(-t/.01)))/sampleRate;
-      out[idx%n]+=amp*Math.sin(phase)*(1-Math.exp(-t/.0008))*Math.exp(-t/dur);}
+      out[loop?idx%n:idx]+=amp*Math.sin(phase)*(1-Math.exp(-t/.0008))*Math.exp(-t/dur);}
   }
   let mean=0;for(const x of out)mean+=x;mean/=n;
   const tanhDrive=Math.tanh(drive);
