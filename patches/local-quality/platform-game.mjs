@@ -197,12 +197,15 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
       game._rangeFrameProbe?.dispose?.();
       game._rangeFrameProbe = null;
       if (enabled) {
+        // Reset failure state only on a new explicit OFF→ON transition. If
+        // importing fails, do not retry every frame on poor mobile networks.
+        r.profilerLoadError = null;
         Promise.resolve().then(importProfiler).then(({ createFrameTimingProbe }) => {
           if (!ownsPlatformRuntime(game, r) || !r.profilerEnabled || r.profilerEpoch !== epoch) return;
           game._rangeFrameProbe = createFrameTimingProbe({ env, game });
         }).catch(error => {
           if (ownsPlatformRuntime(game, r) && r.profilerEpoch === epoch) {
-            r.profilerEnabled = false;
+            r.profilerLoadError = String(error?.message || error);
             env.console?.warn?.('Optional range profiler unavailable:', error);
           }
         });
