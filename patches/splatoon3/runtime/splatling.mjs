@@ -10,7 +10,7 @@ function updateSpinLoop(runner,pos){
   // Recorded Motor/MotorFire sounds stay at their original 1x pitch.
   // Only position follows the actor; old synthesized pitch modulation is gone.
   const update=runner._s3SpinLoopUpdate ||= {pos:undefined};
-  update.pos=pos;runner.spinLoop?.set(update);
+  update.pos=pos;runner.spinLoop?.set?.(update);
 }
 let lastSpeedMedian=NaN,lastSpeedExponent=0;
 
