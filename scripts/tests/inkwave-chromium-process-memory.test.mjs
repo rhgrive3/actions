@@ -54,3 +54,10 @@ test('a vanished browser does not accidentally sample another browser or orphane
  assert.throws(()=>sampleChromiumProcessMemory([],{procRoot}),/Exactly one browser/);
  assert.throws(()=>sampleChromiumProcessMemory([{id:100,type:'browser'},{id:200,type:'browser'}],{procRoot}),/Exactly one browser/);
 });
+
+test('classifies a Chromium zygote whose setproctitle combines arguments in argv zero',t=>{
+ const {procRoot,add}=fixture(t);add(100,1);add(101,100);
+ fs.writeFileSync(path.join(procRoot,'101','cmdline'),'chromium --type=zygote --no-sandbox\0');
+ const result=sampleChromiumProcessMemory([{id:100,type:'browser'}],{procRoot});
+ assert.equal(result.processes[1].type,'zygote');assert.equal(result.processes[1].ussKiB,30);
+});

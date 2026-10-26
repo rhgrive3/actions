@@ -36,7 +36,7 @@ export function sampleChromiumProcessMemory(processInfo,{procRoot='/proc',maxDia
   }catch(error){note(pid,'memory',error);continue;}
   const cdp=metadata.get(pid);let type=cdp?.type;
   if(!type){
-   try{const args=fs.readFileSync(path.join(procRoot,String(pid),'cmdline'),'utf8').split('\0');const kind=args.find(arg=>/^--type=[a-zA-Z0-9_.-]+$/.test(arg));type=kind?kind.slice(7):'browser-child';}
+   try{const args=fs.readFileSync(path.join(procRoot,String(pid),'cmdline'),'utf8').split('\0');const kind=args.map(arg=>/(?:^|\s)--type=([a-zA-Z0-9_.-]+)(?=\s|$)/.exec(arg)).find(Boolean);type=kind?kind[1]:'browser-child';}
    catch(error){note(pid,'command',error);type='browser-child';}
   }
   processes.push({pid,ppid:parents.get(pid),type,source:cdp?'cdp':'proc-descendant',cpuSeconds:cdp?.cpuTime??null,rssKiB:values.Rss,pssKiB:values.Pss,ussKiB:values.Private_Clean+values.Private_Dirty+(values.Private_Hugetlb||0)});
