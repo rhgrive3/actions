@@ -1,0 +1,249 @@
+{
+  "frames": [
+    {
+      "count": 8,
+      "measured": [
+        {
+          "op": "data",
+          "bytes": 420
+        },
+        {
+          "op": "data",
+          "bytes": 420
+        },
+        {
+          "op": "data",
+          "bytes": 280
+        },
+        {
+          "op": "data",
+          "bytes": 49152
+        },
+        {
+          "op": "data",
+          "bytes": 9216
+        },
+        {
+          "op": "data",
+          "bytes": 216
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 21,
+      "pixelsMatch": true
+    },
+    {
+      "count": 8,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 512
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 21,
+      "pixelsMatch": true
+    },
+    {
+      "count": 16,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 1024
+        },
+        {
+          "op": "sub",
+          "bytes": 192
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 37,
+      "pixelsMatch": true
+    },
+    {
+      "count": 64,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 4096
+        },
+        {
+          "op": "sub",
+          "bytes": 768
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 68,
+      "pixelsMatch": true
+    },
+    {
+      "count": 1,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 64
+        },
+        {
+          "op": "sub",
+          "bytes": 12
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 2,
+      "pixelsMatch": true
+    },
+    {
+      "count": 0,
+      "measured": [],
+      "full": [],
+      "prefixMatches": true,
+      "paintedPixels": 0,
+      "pixelsMatch": true
+    },
+    {
+      "count": 3,
+      "measured": [
+        {
+          "op": "data",
+          "bytes": 420
+        },
+        {
+          "op": "data",
+          "bytes": 420
+        },
+        {
+          "op": "data",
+          "bytes": 280
+        },
+        {
+          "op": "data",
+          "bytes": 49152
+        },
+        {
+          "op": "data",
+          "bytes": 9216
+        },
+        {
+          "op": "data",
+          "bytes": 216
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 6,
+      "pixelsMatch": true
+    },
+    {
+      "count": 768,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 72,
+      "pixelsMatch": true
+    },
+    {
+      "count": 1,
+      "measured": [
+        {
+          "op": "sub",
+          "bytes": 64
+        },
+        {
+          "op": "sub",
+          "bytes": 12
+        }
+      ],
+      "full": [
+        {
+          "op": "sub",
+          "bytes": 49152
+        },
+        {
+          "op": "sub",
+          "bytes": 9216
+        }
+      ],
+      "prefixMatches": true,
+      "paintedPixels": 2,
+      "pixelsMatch": true
+    }
+  ],
+  "error": 0,
+  "renderer": "WebKit WebGL",
+  "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "harnessHash": "d34ef2ff1b1737eb42f1aee84bb4a112aa0efdbc0388156fa74b89555ba22f9c",
+  "runtimeHash": "eeba590c511da1d291224d6fe78a174f0e0c9b50630aef8b881625a07a663f08"
+}

@@ -1,0 +1,520 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "baselineSourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+  "candidateSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "sharedFinalHarnessHash": "101a74df5a39de3730c06c3dbd677a2c0fbf702f1df9d71408b4da285170fdb2",
+  "scope": "Independent arithmetic/hash review of completed saved evidence only; no browser, build, app/harness edits, hardware-performance or CI/merge acceptance claim. Historical artifacts are hash-checked but excluded from the six-run final comparison.",
+  "checkedIndexFiles": [
+    "evidence-hashes.json",
+    "instrumentation-audit/files.json",
+    "exact-gpu/files.json",
+    "native-audit/files.json",
+    "native-audit/thin-base/files.json",
+    "local-verification.json"
+  ],
+  "checkedIndexedFiles": 105,
+  "allGzipFilesIndexed": true,
+  "finalRuns": {
+    "baseline-crab-clean": {
+      "seconds": 287.667,
+      "peakPssMiB": 1741.7890625,
+      "peakUssMiB": 1615.359375,
+      "finalHeapMiB": 64.4416389465332,
+      "combatFrames": 53,
+      "combatWallSeconds": 36.40799999999996,
+      "aggregateCombatFps": 1.4557240166996281,
+      "frameCpuWallMeanMs": 131.20377358499002,
+      "renderGpuMeanMs": 287.2501890909091,
+      "drawCallsMean": 141.56603773584905,
+      "observedGlErrors": {},
+      "observedCpuSecondsByType": {
+        "browser": 3.44,
+        "GPU": 854.46,
+        "network.mojom.NetworkService": 0.5900000000000001,
+        "storage.mojom.StorageService": 0.0,
+        "renderer": 87.33,
+        "audio.mojom.AudioService": 1.64
+      },
+      "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+      "contentHash": "83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898"
+    },
+    "candidate-crab-clean": {
+      "seconds": 292.179,
+      "peakPssMiB": 1668.134765625,
+      "peakUssMiB": 1541.2890625,
+      "finalHeapMiB": 64.16429901123047,
+      "combatFrames": 47,
+      "combatWallSeconds": 38.342999999999954,
+      "aggregateCombatFps": 1.2257778473254586,
+      "frameCpuWallMeanMs": 135.4893617020484,
+      "renderGpuMeanMs": 315.7794187727273,
+      "drawCallsMean": 152.53191489361703,
+      "observedGlErrors": {},
+      "observedCpuSecondsByType": {
+        "browser": 3.67,
+        "GPU": 858.86,
+        "network.mojom.NetworkService": 0.6399999999999999,
+        "storage.mojom.StorageService": 0.0,
+        "renderer": 88.68,
+        "audio.mojom.AudioService": 1.7999999999999998
+      },
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "contentHash": "3eb1f3dc5eade6c994053877fbb38bd054a33ce0e7714d2159a1106591ea605b"
+    },
+    "baseline-raf-18": {
+      "seconds": 1450.095,
+      "peakPssMiB": 2001.9267578125,
+      "peakUssMiB": 1871.67578125,
+      "finalHeapMiB": 91.67411422729492,
+      "combatFrames": 772,
+      "combatWallSeconds": 557.5889999999997,
+      "aggregateCombatFps": 1.3845323347483547,
+      "frameCpuWallMeanMs": 86.64041450775802,
+      "renderGpuMeanMs": 225.27086389036546,
+      "drawCallsMean": 133.07642487046633,
+      "observedGlErrors": {},
+      "observedCpuSecondsByType": {
+        "browser": 13.07,
+        "GPU": 4793.21,
+        "network.mojom.NetworkService": 1.01,
+        "storage.mojom.StorageService": 0.049999999999999996,
+        "renderer": 371.53999999999996,
+        "audio.mojom.AudioService": 8.79
+      },
+      "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+      "contentHash": "83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898"
+    },
+    "candidate-raf-18": {
+      "seconds": 1486.688,
+      "peakPssMiB": 1894.083984375,
+      "peakUssMiB": 1765.24609375,
+      "finalHeapMiB": 70.73791122436523,
+      "combatFrames": 726,
+      "combatWallSeconds": 558.2590000000002,
+      "aggregateCombatFps": 1.3004716448816762,
+      "frameCpuWallMeanMs": 98.12685950411888,
+      "renderGpuMeanMs": 249.8890475910653,
+      "drawCallsMean": 140.61432506887053,
+      "observedGlErrors": {},
+      "observedCpuSecondsByType": {
+        "browser": 14.85,
+        "GPU": 4863.54,
+        "network.mojom.NetworkService": 1.0899999999999999,
+        "storage.mojom.StorageService": 0.04,
+        "renderer": 403.31,
+        "audio.mojom.AudioService": 10.84
+      },
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "contentHash": "3eb1f3dc5eade6c994053877fbb38bd054a33ce0e7714d2159a1106591ea605b"
+    },
+    "baseline-native-final": {
+      "seconds": 584.171,
+      "peakPssMiB": 2420.2333984375,
+      "peakUssMiB": 2291.51171875,
+      "finalHeapMiB": 199.60488510131836,
+      "combatFrames": 30,
+      "combatWallSeconds": 80.38999999999999,
+      "aggregateCombatFps": 0.37318074387361616,
+      "frameCpuWallMeanMs": 750.9399999999752,
+      "renderGpuMeanMs": 2556.1997019230766,
+      "drawCallsMean": 216.03333333333333,
+      "observedGlErrors": {
+        "warm-0": 1282,
+        "warm-2": 1282
+      },
+      "observedCpuSecondsByType": {
+        "browser": 6.86,
+        "GPU": 2107.0899999999997,
+        "network.mojom.NetworkService": 0.72,
+        "storage.mojom.StorageService": 0.02,
+        "renderer": 90.19999999999999,
+        "audio.mojom.AudioService": 3.08
+      },
+      "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+      "contentHash": "1cce60c8fc2f1d76a01ca89780aaa033eaa89fb98e14f9f71024d42855bbb036"
+    },
+    "candidate-native-final": {
+      "seconds": 600.97,
+      "peakPssMiB": 2248.478515625,
+      "peakUssMiB": 2119.95703125,
+      "finalHeapMiB": 125.07087326049805,
+      "combatFrames": 25,
+      "combatWallSeconds": 65.00600000000001,
+      "aggregateCombatFps": 0.3845798849336983,
+      "frameCpuWallMeanMs": 693.6960000002384,
+      "renderGpuMeanMs": 2879.276408,
+      "drawCallsMean": 219.24,
+      "observedGlErrors": {},
+      "observedCpuSecondsByType": {
+        "browser": 6.5200000000000005,
+        "GPU": 2170.7400000000002,
+        "network.mojom.NetworkService": 0.73,
+        "storage.mojom.StorageService": 0.03,
+        "renderer": 93.30999999999999,
+        "audio.mojom.AudioService": 3.48
+      },
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "contentHash": "3eb1f3dc5eade6c994053877fbb38bd054a33ce0e7714d2159a1106591ea605b"
+    }
+  },
+  "actualCombatApiDrawTables": {
+    "baseline-raf-18": {
+      "tidewater": {
+        "drawCalls": 38122,
+        "frames": 291,
+        "drawCallsPerFrame": 131.00343642611685
+      },
+      "kelpline": {
+        "drawCalls": 28390,
+        "frames": 223,
+        "drawCallsPerFrame": 127.30941704035874
+      },
+      "halyard": {
+        "drawCalls": 36223,
+        "frames": 258,
+        "drawCallsPerFrame": 140.39922480620154
+      }
+    },
+    "candidate-raf-18": {
+      "tidewater": {
+        "drawCalls": 37136,
+        "frames": 274,
+        "drawCallsPerFrame": 135.53284671532847
+      },
+      "kelpline": {
+        "drawCalls": 31224,
+        "frames": 225,
+        "drawCallsPerFrame": 138.77333333333334
+      },
+      "halyard": {
+        "drawCalls": 33726,
+        "frames": 227,
+        "drawCallsPerFrame": 148.5726872246696
+      }
+    },
+    "baseline-native-final": {
+      "combat-0": {
+        "drawCalls": 2026,
+        "frames": 8,
+        "drawCallsPerFrame": 253.25
+      },
+      "combat-1": {
+        "drawCalls": 2089,
+        "frames": 13,
+        "drawCallsPerFrame": 160.69230769230768
+      },
+      "combat-2": {
+        "drawCalls": 2366,
+        "frames": 9,
+        "drawCallsPerFrame": 262.8888888888889
+      }
+    },
+    "candidate-native-final": {
+      "combat-0": {
+        "drawCalls": 1458,
+        "frames": 6,
+        "drawCallsPerFrame": 243.0
+      },
+      "combat-1": {
+        "drawCalls": 1921,
+        "frames": 11,
+        "drawCallsPerFrame": 174.63636363636363
+      },
+      "combat-2": {
+        "drawCalls": 2102,
+        "frames": 8,
+        "drawCallsPerFrame": 262.75
+      }
+    }
+  },
+  "fourExactGpuProbes": [
+    {
+      "name": "crab-chromium",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "frames": 8,
+      "allPrefixesAndPixelsMatch": true
+    },
+    {
+      "name": "torpedo-chromium",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "frames": 9,
+      "allPrefixesAndPixelsMatch": true
+    },
+    {
+      "name": "crab-webkit",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "frames": 8,
+      "allPrefixesAndPixelsMatch": true
+    },
+    {
+      "name": "torpedo-webkit",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "frames": 9,
+      "allPrefixesAndPixelsMatch": true
+    }
+  ],
+  "nativeWeak65": {
+    "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "finalLaterTaskGcs": 3,
+    "targetsPerGc": 8,
+    "allFinalRetainedFalse": true,
+    "publicationTransientExplicitlyExcluded": true
+  },
+  "checks": {
+    "allSixCompletedPassedWithEmptyErrors": true,
+    "sourcesConditionsHarnessAndContentReceiptsConsistent": true,
+    "baselineNativeOnlyWarm0AndWarm2Gl1282": true,
+    "allCandidateCapturesGl0": true,
+    "noContextLossFreezeOrRenderSuppression": true,
+    "processPssUssCpuAndWeightedMeansRecomputed": true,
+    "finalComparisonAndMeasurementsMatchRaw": true,
+    "actualApiDrawCounterDeltasAndMarkdownVerified": true,
+    "allIndexedCompressedAndDecompressedHashesMatch": true,
+    "noIntermediateRunInFinalPairs": true,
+    "exactProbeSummaryLogHashesMatchDecodedLogs": true
+  },
+  "limitations": [
+    "CPU observed counters exclude before-first-observation work and processes without CDP CPU counters.",
+    "API draw totals count intercepted draw functions; renderer.info frame-end snapshots remain partial.",
+    "No whole-game causal FPS/process-memory improvement claim or full-cache plateau claim.",
+    "Final CI/merge provenance is reviewed separately from the descriptive runtime measurements; publishReady is evidence metadata, not a user approval requirement."
+  ],
+  "assembledReportReview": {
+    "status": "passed",
+    "publishReady": true,
+    "reviewedFiles": {
+      "README.md": {
+        "sha256": "b3dca6e070345be7d153739a1cb293030ec3a1b1b751597303fee57204b95c4b",
+        "bytes": 20457
+      },
+      "measurement-tables.md": {
+        "sha256": "a1589187daa2aedcbcf3028a92b97e99ef50ba822bb0e88f94ee4b568043c4be",
+        "bytes": 10225
+      },
+      "memory-trends.svg": {
+        "sha256": "4be49106403a7d6dd04c42d7289b7f76f92abd6701ec8a8d6f0a826b6dc84d04",
+        "bytes": 50003
+      },
+      "plot-memory.py": {
+        "sha256": "05dad0e7b762e707a1aa005c4778259a6c94435f7183dbccb8aec51e69c8853f",
+        "bytes": 1809
+      },
+      "verify-evidence.py": {
+        "sha256": "8e2d64300c3699bbde2e97f47b1812a1e5dbeef8a87f9268c9f039ec8da04334",
+        "bytes": 12916
+      },
+      "ci-verification.json": {
+        "sha256": "0fa05c7deb36ca8ed8b4507006eee54409192d09e03ac34dc7bdec2ca709993a",
+        "bytes": 32710
+      },
+      "base-integration-verification.json": {
+        "sha256": "07778092be4f7fde7b71d433a4b900b0726de9bee9e0f855b629208143380411",
+        "bytes": 1394
+      }
+    },
+    "localLinksExist": {
+      "README.md": 29,
+      "measurement-tables.md": 0
+    },
+    "measurementTablesByteMatchVerifiedGeneratedTables": true,
+    "chartReview": "SVG parsed and plot source/preview inspected; LOW exit heap/geometries and HIGH exit heap use exact final-comparison rows. Caption states software renderer, continuing cache warming and native-baseline GL1282.",
+    "numericClaimsChecked": [
+      "summary duration/PSS/USS/final heap",
+      "Crab6 scene/disposal counts and CPU-only geometry bytes",
+      "final pooled-owner census7/9\u21920 and all candidate exits owner0",
+      "LOW observed FPS1.385\u21921.300 and R.render225.27\u2192249.89ms without improvement claim",
+      "RGBA cost17232\u219263588bytes, independent same-source RGBA oracle rather than BC7 identity",
+      "native test694 total566pass128conditional skips",
+      "seven cause groups, finalsource65 and historical artifacts excluded"
+    ],
+    "limitations": [
+      "Physical iPad/hardware FPS, hours-long stability and complete catalogue plateau were not measured.",
+      "Whole-game FPS improvement is not established; reported process/timing deltas remain descriptive."
+    ],
+    "portablePlotScriptReview": "Uses only final-comparison.json relative to its own report directory; preserves verified plot inputs, labels and deterministic SVG settings; removes private preview output. Not executed during this refresh. Root executed the portable script and obtained the identical SVG SHA256.",
+    "readOnlyVerifierRerun": "verify-evidence.py completed with exit0 after CI/base provenance and three diagnostic log additions; all105 indexed receipts and all6primary runs passed."
+  },
+  "productionSiteVerification": {
+    "site": ".built-site/thin-final",
+    "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "contentHash": "3eb1f3dc5eade6c994053877fbb38bd054a33ce0e7714d2159a1106591ea605b",
+    "allArtifactHashesAndGitSourceInputsVerified": true
+  },
+  "archivedParserRecomputation": {
+    "parser": "instrumentation-audit/parse-retired-actors-no-ephemeron.mjs.txt",
+    "parserSha256": "4558f907b19aaba8e457cb142f4112b3d90f6bb8241551919cd828416b63c12a",
+    "inputHeapLocalOnlyBytes": 157980411,
+    "inputIdsMatchArchivedBytes": true,
+    "output": "instrumentation-audit/retaining-paths-no-ephemeron.json",
+    "outputSha256": "6faa1c9b3fcab869898f63a1ff7c8cd9ef1d635d7ba13724f852a0ae9058a10b",
+    "reachableByCycle": {
+      "0": true,
+      "1": true
+    },
+    "allOtherArchivedValuesUnchanged": true,
+    "exactArchivedParserRerun": true,
+    "allIndexedChecksRerunPassed": true,
+    "heapCommitted": false,
+    "inputHeapLocalOnlySha256": "ce9a2cc58a99ca4b657bb05237938a3a1da3b1c3cdcdd675f2f207be867c6465",
+    "inputIdsSha256": "88f3c8ab1e7c394c839915aa29dec4d9692d0e3226faca46f4eba40308b70c6f",
+    "indexSha256AfterRegeneration": "9c18d7e2fc93f4a372aac373e2485e3dfe771877319c112660435855b18fbda1"
+  },
+  "nativeFinalWindowMetrics": {
+    "baseline-native-final": {
+      "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+      "contentHash": "1cce60c8fc2f1d76a01ca89780aaa033eaa89fb98e14f9f71024d42855bbb036",
+      "windows": [
+        {
+          "label": "combat-0",
+          "map": "scorch",
+          "frames": 8,
+          "frameElapsedMeanMs": 1373.100000000326,
+          "rRenderGpuMeanMs": 3963.4344670000005,
+          "frameEndDrawCallsMean": 253.25,
+          "frameEndTrianglesMean": 747285
+        },
+        {
+          "label": "combat-1",
+          "map": "tidewater",
+          "frames": 13,
+          "frameElapsedMeanMs": 213.29230769222173,
+          "rRenderGpuMeanMs": 1690.6570486666667,
+          "frameEndDrawCallsMean": 160.69230769230768,
+          "frameEndTrianglesMean": 652839.3846153846
+        },
+        {
+          "label": "combat-2",
+          "map": "scorch",
+          "frames": 9,
+          "frameElapsedMeanMs": 974.5111111108628,
+          "rRenderGpuMeanMs": 2799.087608,
+          "frameEndDrawCallsMean": 262.8888888888889,
+          "frameEndTrianglesMean": 770501.2222222222
+        }
+      ]
+    },
+    "candidate-native-final": {
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "contentHash": "3eb1f3dc5eade6c994053877fbb38bd054a33ce0e7714d2159a1106591ea605b",
+      "windows": [
+        {
+          "label": "combat-0",
+          "map": "scorch",
+          "frames": 6,
+          "frameElapsedMeanMs": 1648.050000000124,
+          "rRenderGpuMeanMs": 4160.04776675,
+          "frameEndDrawCallsMean": 243,
+          "frameEndTrianglesMean": 659517.5
+        },
+        {
+          "label": "combat-1",
+          "map": "tidewater",
+          "frames": 11,
+          "frameElapsedMeanMs": 315.8090909092941,
+          "rRenderGpuMeanMs": 2016.4130922,
+          "frameEndDrawCallsMean": 174.63636363636363,
+          "frameEndTrianglesMean": 646054.9090909091
+        },
+        {
+          "label": "combat-2",
+          "map": "scorch",
+          "frames": 8,
+          "frameElapsedMeanMs": 497.52500000037253,
+          "rRenderGpuMeanMs": 2677.084194,
+          "frameEndDrawCallsMean": 262.75,
+          "frameEndTrianglesMean": 745274.875
+        }
+      ]
+    }
+  },
+  "finalCiAndMergeVerification": {
+    "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "codeMergeSha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+    "initialReportMergeSha": "af9436217f10f2a842097e69435200dc581f6c87",
+    "acceptanceRun": {
+      "id": 40285735967,
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967",
+      "created_at": "2026-10-26T07:25:48Z",
+      "updated_at": "2026-10-26T09:07:54Z"
+    },
+    "requiredJobsSuccessful": 20,
+    "workflowConclusions": {
+      "success": 7,
+      "existingConditionalSkip": 1
+    },
+    "sameSourceRunnerLossRetriedWithoutCriteriaChanges": true,
+    "combinedBaseEntryTests": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skip": 0,
+      "node": "22.23.3"
+    },
+    "actualCodeMergeTreeMatchesLocalCombinedTree": true,
+    "productionPathsIdenticalToMeasuredSource": true
+  },
+  "finalizationReview": {
+    "status": "passed",
+    "publishReadyMeaning": "Evidence/document finalization bookkeeping only; this flag does not create a user approval requirement.",
+    "readOnlyVerifierExitCode": 0,
+    "indexedReceiptsRechecked": 105,
+    "reviewedReadmeSha256": "b3dca6e070345be7d153739a1cb293030ec3a1b1b751597303fee57204b95c4b",
+    "reviewedCiReceiptSha256": "0fa05c7deb36ca8ed8b4507006eee54409192d09e03ac34dc7bdec2ca709993a",
+    "reviewedBaseIntegrationSha256": "07778092be4f7fde7b71d433a4b900b0726de9bee9e0f855b629208143380411",
+    "allReviewedFileHashesAndByteCountsCurrent": true,
+    "allRelativeReadmeLinksExist": true,
+    "localReadmeLinkCount": 29,
+    "acceptance": {
+      "runId": 40285735967,
+      "attempt": 2,
+      "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "requiredJobsSuccessful": 20,
+      "existingConditionalJobsSkipped": 4,
+      "sameSourceWorkflowConclusions": {
+        "success": 7,
+        "skipped": 1
+      }
+    },
+    "codeMerge": {
+      "sha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+      "mergedAt": "2026-10-26T09:09:13Z",
+      "actualGitTreeSha": "c9b5b01c8f463e90ec4e28f7eeb0160d8a357700",
+      "equalsRecordedLocalCombinedTree": true
+    },
+    "initialReportMergeSha": "af9436217f10f2a842097e69435200dc581f6c87",
+    "productionDiffFromMeasuredSourceToCodeMergeAndRecordedMain": [],
+    "combinedCiEntryTests": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skip": 0,
+      "node": "22.23.3"
+    },
+    "exactShardLocalReproduction": {
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "shardCount": 8,
+      "shardIndex": 1,
+      "concurrency": 2,
+      "testFiles": 143,
+      "tests": 1145,
+      "pass": 1143,
+      "fail": 0,
+      "conditionalBrowserSkips": 2,
+      "browserSkipsCoveredBy": "exact-gpu/summary.json",
+      "node": "22.23.3",
+      "exitCode": 0
+    },
+    "noPendingCiStateInReadmeOrReviewStatus": true,
+    "reviewScope": "Current report files and archived GitHub CI receipts checked; merge tree and production-path equality independently read from local Git objects. No fresh GitHub API query or runtime rerun performed.",
+    "codeChanges": false
+  }
+}

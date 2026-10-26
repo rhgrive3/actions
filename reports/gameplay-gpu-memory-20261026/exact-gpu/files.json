@@ -1,0 +1,42 @@
+{
+  "torpedo-chromium.json": {
+    "sha256": "b02c9e458a83920685df86680d48630685523d266a800caee2f2df953e0a5a69"
+  },
+  "torpedo-chromium.log.gz": {
+    "sha256": "908fd35966813e78024a8801cd3e99d5daffcf35cd14e7e5172f9fd86728d6f9",
+    "uncompressedSha256": "82220b826f7249b8e0b5f29d4e672591f675e14f1d0e63f2daec143a754cf9e5"
+  },
+  "crab-webkit.log.gz": {
+    "sha256": "4cc569ae3d68e70edf5579555dc23db4844ec9f822ffddac2530a277918f339b",
+    "uncompressedSha256": "4ce473f7fd1085385e809cc1555188c8bb4d0f4541769cd1454a208b7d71be07"
+  },
+  "crab-chromium.json": {
+    "sha256": "8d55e93411ff66f3d2ee7d4a9a7e03e0d9e6130b26004e52472529fb5919a519"
+  },
+  "torpedo-webkit.json": {
+    "sha256": "00bb892936231d71774eeb0a6f2880ffe5f2e2996874dd9795dd5eb8d321108f"
+  },
+  "crab-webkit.json": {
+    "sha256": "250c9dfd643a4efeb3b785617606cb67c3c474a3402e0c86d8c0fc8ba72b668a"
+  },
+  "summary.json": {
+    "sha256": "a789dfa8b883120fcb742cc60d95c79ca8f0309e749ab5cd1d9cf5849eff5867"
+  },
+  "torpedo-webkit-probe.test.mjs.txt": {
+    "sha256": "3adcc4350aa9bd19e7eb1df41ed79bfa8147c335228d4c2f9151c8b1dfbd6b3d"
+  },
+  "torpedo-webkit.log.gz": {
+    "sha256": "413a3640fde067dc00473d8f3f1269f3579689b9a09868d391146a41e89e9148",
+    "uncompressedSha256": "2d12bb981b176ae6f330a5af6f4a33efecabbeab5b626fb0b5f0718135dbf5af"
+  },
+  "crab-webkit-probe.test.mjs.txt": {
+    "sha256": "3fed91426084697e4abde086b6e2ce9754b17aced24b9d66a117f55c3533206b"
+  },
+  "pw-local.sh.txt": {
+    "sha256": "85be1e375c09549b9a214356de399d7a1da6cd7408f2aa1ad40e3cde56756817"
+  },
+  "crab-chromium.log.gz": {
+    "sha256": "b80fdb166bbd1802722fa62e035b09f0c81e55c1350dec55a4b44692292b2e06",
+    "uncompressedSha256": "80b7ab612ea461c3f0f7312fac6c3d7515155c874c322a0203dc5f75e8162ad5"
+  }
+}

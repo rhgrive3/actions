@@ -12,12 +12,8 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
   if (rel === 'src/game/physics.js') {
     // Only canonical legacy Physics can consume borrowed hash columns. Public
     // raycast overrides and custom/native Level owners retain their old calls.
-    change('raycast(origin, dir, maxDist, out = new Hit(), skipGrates = false) {',
-      'raycast(origin, dir, maxDist, out = new Hit(), skipGrates = false, candidates = null) {',
-      'optional internal ground ray candidates');
-    change('    const ids = this.level.queryBlocks(Math.min(origin.x, ex), Math.min(origin.z, ez), Math.max(origin.x, ex), Math.max(origin.z, ez), this._ids);',
-      '    const ids = candidates || this.level.queryBlocks(Math.min(origin.x, ex), Math.min(origin.z, ez), Math.max(origin.x, ex), Math.max(origin.z, ez), this._ids);',
-      'reuse exact ground column without query copy');
+    // The borrowed-column raycast API lives in the direct source. Keep the
+    // canonical-owner guard and per-probe column acquisition here.
     change('    const len = up + down;\n    let cy = -Infinity, have = false;',
       `    const len = up + down;
     const columns = Number.isFinite(y + up) && Number.isFinite(len) && this.raycast === Physics.prototype.raycast && this.level.queryGroundColumns?.(

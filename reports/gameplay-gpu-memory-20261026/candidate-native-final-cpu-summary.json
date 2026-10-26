@@ -1,0 +1,377 @@
+{
+  "combat-0.cpuprofile": {
+    "sha256": "be08aa4f6313b86701f7602e6efd16bec915f5109fa519184bb6e4a2492945e3",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 10081.108
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 9007.744
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 1200.769
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 98.178
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 28.992
+      },
+      {
+        "function": "ray",
+        "file": "engine.mjs",
+        "lineZeroBased": 2,
+        "milliseconds": 26.121
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 23.783
+      },
+      {
+        "function": "M",
+        "file": "combat-info.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 22.916
+      },
+      {
+        "function": "_drawLegacy",
+        "file": "weapons.js",
+        "lineZeroBased": 112,
+        "milliseconds": 22.7
+      },
+      {
+        "function": "queryBox",
+        "file": "engine.mjs",
+        "lineZeroBased": 2,
+        "milliseconds": 22.58
+      },
+      {
+        "function": "_tail",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 20.616
+      },
+      {
+        "function": "M.e.splat",
+        "file": "render.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 14.439
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 13.811
+      },
+      {
+        "function": "fireShooter",
+        "file": "weapons.js",
+        "lineZeroBased": 112,
+        "milliseconds": 12.532
+      },
+      {
+        "function": "g",
+        "file": "respawn-lifecycle.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 11.725
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 10.822
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 9.955
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 9.25
+      },
+      {
+        "function": "applyBoneTransform",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 9.193
+      },
+      {
+        "function": "Yt",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 9.182
+      }
+    ]
+  },
+  "combat-1.cpuprofile": {
+    "sha256": "43cfce29ce5088404307b1e5205b3a664dd02a1bf074c67f8795ba2afc888b6a",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 16408.255
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 2308.809
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 817.745
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 73.185
+      },
+      {
+        "function": "g",
+        "file": "respawn-lifecycle.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 29.781
+      },
+      {
+        "function": "T.s.update",
+        "file": "conditional-gear.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 26.057
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 25.147
+      },
+      {
+        "function": "W.e._integrate",
+        "file": "spawn-exclusion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 17.975
+      },
+      {
+        "function": "P",
+        "file": "catalogue.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 17.834
+      },
+      {
+        "function": "Ot",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 17.77
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 16.462
+      },
+      {
+        "function": "setFromRotationMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 14.879
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 14.61
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 14.598
+      },
+      {
+        "function": "render",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 14.117
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 13.962
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 13.489
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 13.347
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 12.43
+      },
+      {
+        "function": "createBiquadFilter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 12.134
+      }
+    ]
+  },
+  "combat-2.cpuprofile": {
+    "sha256": "9088e7d64f63fd0f27c59cbf6a548c2005e0b30f90f8d2e3b8867256c61fc462",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 15903.135
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 2716.936
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 395.767
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 86.585
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 43.607
+      },
+      {
+        "function": "_acquireStack",
+        "file": "engine.mjs",
+        "lineZeroBased": 2,
+        "milliseconds": 42.684
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 34.768
+      },
+      {
+        "function": "_markPaintBounds",
+        "file": "engine.mjs",
+        "lineZeroBased": 2,
+        "milliseconds": 34.765
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 32.355
+      },
+      {
+        "function": "_pushQuad",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 28.169
+      },
+      {
+        "function": "triangleOverlapsBounds",
+        "file": "engine.mjs",
+        "lineZeroBased": 2,
+        "milliseconds": 22.03
+      },
+      {
+        "function": "I",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 18.28
+      },
+      {
+        "function": "add",
+        "file": "hair-targets.js",
+        "lineZeroBased": 0,
+        "milliseconds": 17.793
+      },
+      {
+        "function": "_drawLegacy",
+        "file": "weapons.js",
+        "lineZeroBased": 112,
+        "milliseconds": 16.642
+      },
+      {
+        "function": "setFromEuler",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 15.868
+      },
+      {
+        "function": "g",
+        "file": "respawn-lifecycle.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 15.202
+      },
+      {
+        "function": "Cd",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 14.165
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 13.624
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 13.602
+      },
+      {
+        "function": "o",
+        "file": "three.module.js",
+        "lineZeroBased": 3831,
+        "milliseconds": 12.946
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{"size":1024,"baseline":{"canvas":2,"reads":2,"pixelBytes":8388608,"fullReads":2},"candidate":{"canvas":1,"reads":17,"pixelBytes":8388608,"fullReads":1,"maxClassificationBytes":262144},"scope":"Controlled native module API allocations, not browser RSS or GPU measurement"}
+(node:25899) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ unorm exact successful output and readback allocation (17.894578ms)
+✔ signed exact successful output and readback allocation (11.122624ms)
+✔ rgb exact successful output and readback allocation (7.001619ms)
+✔ baked exact successful output and readback allocation (7.174549ms)
+✔ roughness exact successful output and readback allocation (10.672369ms)
+✔ opacity exact successful output and readback allocation (7.34919ms)
+✔ alpha exact successful output and readback allocation (4.860274ms)
+✔ ownership on draw failure (4.44404ms)
+✔ ownership on read failure (5.695629ms)
+✔ ownership on construct failure (8.414749ms)
+✔ ownership on setup failure (8.420929ms)
+✔ 1024 normal keeps one full owned reconstruction and bounded classification readbacks, byte-exact output (2888.421168ms)
+✔ abort ownership at decode (4.191211ms)
+✔ abort ownership at setup (8.302562ms)
+✔ resized normal reuses only final-sized pixels (5.365583ms)
+✔ two normal textures retain independent conversion and ownership (12.99889ms)
+✔ unknown baked encoding preserves bitmap fallback without readback (3.600304ms)
+{"cancelAt":"before","reads":0,"decode":0,"textures":0,"dimensions":[],"closes":[],"disposes":[],"error":"AbortError"}
+(node:25900) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cached textures before (22.917718ms)
+{"cancelAt":"cache","reads":2,"decode":0,"textures":0,"dimensions":[],"closes":[],"disposes":[],"error":"AbortError"}
+✔ cached textures cache (14.537771ms)
+{"cancelAt":"decode","reads":2,"decode":2,"textures":0,"dimensions":[],"closes":[1,1],"disposes":[],"error":"AbortError"}
+✔ cached textures decode (5.758282ms)
+{"cancelAt":"never","reads":8,"decode":8,"textures":8,"dimensions":[[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8],[8,8]],"closes":[1,1,1,1,1,1,1,1],"disposes":[1,1,1,1,1,1,1,1],"error":null}
+✔ cached textures never (10.217636ms)
+{"cancelAt":"resize","resize":true,"reads":2,"decode":4,"textures":0,"dimensions":[],"closes":[1,1,1,1],"disposes":[],"error":"AbortError"}
+✔ resized cached textures resize (5.30291ms)
+{"cancelAt":"never","resize":true,"reads":8,"decode":16,"textures":8,"dimensions":[[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024],[1024,1024]],"closes":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"disposes":[1,1,1,1,1,1,1,1],"error":null}
+✔ resized cached textures never (7.09591ms)
+✔ optional signal retains success (7.02194ms)
+✔ inactive stage objects do not decode unused textures, preserving every active map (6.797383ms)
+✔ worker decode failure retains original error and once-only cleanup (4.868657ms)
+✔ worker setup failure retains original error and once-only cleanup (4.580665ms)
+✔ worker cache failure retains original error and once-only cleanup (4.318962ms)
+{"cancelAt":"transferred","reads":2,"decode":1,"textures":1,"dimensions":[[8,8]],"closes":[1],"disposes":[1],"error":"AbortError"}
+✔ abort after first ownership transfer disposes retained texture once (4.672723ms)
+✔ browser-direct pixel metadata and ownership, resize=false (17.114518ms)
+✔ browser-direct pixel metadata and ownership, resize=true (7.118855ms)
+✔ resize rejection preserves sibling cleanup and original error (4.801817ms)
+(node:25901) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ success transfers resized bitmap ownership to returned texture (5.215538ms)
+✔ failed resize closes original bitmap once (2.505951ms)
+✔ property setup failure closes bitmap and disposes unregistered texture (2.307754ms)
+✔ texture constructor failure closes resized bitmap once (3.087914ms)
+✔ unresized successful bitmap remains live (2.409026ms)
+✔ normal conversion closes input once and transfers DataTexture (2.774174ms)
+✔ canvas failure closes input once (2.116496ms)
+✔ DataTexture setup failure does not double-close input (2.337599ms)
+✔ abort after successful transfer cleans returned-map ownership (2.667874ms)
+✔ abort before work creates no bitmap or texture (2.216166ms)
+(node:25925) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Balanced to High to Balanced reuses exact colour/cutout handles and transfers sole ownership (12.188744ms)
+✔ different cap, source identity, inferred metadata, role or texture properties force authenticated reload (34.067513ms)
+✔ abort during High-only downloads leaves borrowed current maps usable and never closes them (4.504982ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3092.733984

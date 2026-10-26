@@ -292,7 +292,20 @@ export class NativeInkMesh extends THREE.Mesh {
       // An atlas write outside the bound chart list: fail open to tiles.
       this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
     } else if (painted[id]) return;
-    else {painted[id] = 1;this._paintedFaceWords[id>>>5]|=1<<(id&31);}
+    else {
+      painted[id] = 1;
+      this._paintedFaceWords[id>>>5]|=1<<(id&31);
+      // A newly painted chart outside the already selected visible tiles
+      // does not change today's draw index; keep the bit for a future view.
+      if (!this._faceCulling) return;
+      if (!this._faceDirty) {
+        let visible = false;
+        for (let tri = this._faceStart[id], end = this._faceStart[id+1]; tri < end; tri++) {
+          if (this._visible[this._triangleTile[tri]]) { visible = true; break; }
+        }
+        if (!visible) return;
+      }
+    }
     this._faceDirty = true;
     this._lastViewValid = false;
   }

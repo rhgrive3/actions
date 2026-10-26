@@ -1,0 +1,917 @@
+{
+  "schema": 1,
+  "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "codePr": 1885,
+  "codeMergeSha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+  "codeMergedAt": "2026-10-26T09:09:13Z",
+  "acceptanceRun": {
+    "id": 40285735967,
+    "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "run_attempt": 2,
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967",
+    "created_at": "2026-10-26T07:25:48Z",
+    "updated_at": "2026-10-26T09:07:54Z"
+  },
+  "requiredJobs": [
+    "browser (active, chromium webkit)",
+    "browser (catalog, chromium)",
+    "browser (network, chromium webkit)",
+    "browser (range, chromium webkit)",
+    "browser (responsive, chromium webkit)",
+    "browser (startup, chromium webkit)",
+    "browser (ui, chromium webkit)",
+    "build_site",
+    "patch_tests (0)",
+    "patch_tests (1)",
+    "patch_tests (2)",
+    "patch_tests (3)",
+    "patch_tests (4)",
+    "patch_tests (5)",
+    "patch_tests (6)",
+    "patch_tests (7)",
+    "resource_paint_continuation",
+    "seven_claims",
+    "validate",
+    "validate_core"
+  ],
+  "requiredJobCount": 20,
+  "conditionalJobsUnchanged": [
+    "circleci_offload_gate",
+    "network-opening-diagnostic",
+    "render-diagnostic",
+    "wall-render-diagnostic"
+  ],
+  "latestJobs": {
+    "browser (active, chromium webkit)": {
+      "id": 121477249851,
+      "name": "browser (active, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:38Z",
+      "completed_at": "2026-10-26T08:30:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249851"
+    },
+    "browser (catalog, chromium)": {
+      "id": 121477249460,
+      "name": "browser (catalog, chromium)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:13:11Z",
+      "completed_at": "2026-10-26T08:24:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249460"
+    },
+    "browser (network, chromium webkit)": {
+      "id": 121477249897,
+      "name": "browser (network, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:01Z",
+      "completed_at": "2026-10-26T08:16:08Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249897"
+    },
+    "browser (range, chromium webkit)": {
+      "id": 121477250446,
+      "name": "browser (range, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:07Z",
+      "completed_at": "2026-10-26T08:23:37Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477250446"
+    },
+    "browser (responsive, chromium webkit)": {
+      "id": 121477249839,
+      "name": "browser (responsive, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:38Z",
+      "completed_at": "2026-10-26T08:39:04Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249839"
+    },
+    "browser (startup, chromium webkit)": {
+      "id": 121477250605,
+      "name": "browser (startup, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:00Z",
+      "completed_at": "2026-10-26T08:21:46Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477250605"
+    },
+    "browser (ui, chromium webkit)": {
+      "id": 121477249602,
+      "name": "browser (ui, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:11Z",
+      "completed_at": "2026-10-26T08:26:11Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249602"
+    },
+    "build_site": {
+      "id": 121477289582,
+      "name": "build_site",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:34:01Z",
+      "completed_at": "2026-10-26T07:34:31Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477289582"
+    },
+    "circleci_offload_gate": {
+      "id": 121477309236,
+      "name": "circleci_offload_gate",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:46:00Z",
+      "completed_at": "2026-10-26T08:45:27Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477309236"
+    },
+    "network-opening-diagnostic": {
+      "id": 121477289421,
+      "name": "network-opening-diagnostic",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:57Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477289421"
+    },
+    "patch_tests (0)": {
+      "id": 121477311862,
+      "name": "patch_tests (0)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:59:54Z",
+      "completed_at": "2026-10-26T08:13:08Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477311862"
+    },
+    "patch_tests (1)": {
+      "id": 121477247967,
+      "name": "patch_tests (1)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:45:54Z",
+      "completed_at": "2026-10-26T09:04:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477247967"
+    },
+    "patch_tests (2)": {
+      "id": 121477285584,
+      "name": "patch_tests (2)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:07:59Z",
+      "completed_at": "2026-10-26T08:20:56Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477285584"
+    },
+    "patch_tests (3)": {
+      "id": 121477294743,
+      "name": "patch_tests (3)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:50:33Z",
+      "completed_at": "2026-10-26T08:03:17Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477294743"
+    },
+    "patch_tests (4)": {
+      "id": 121477305065,
+      "name": "patch_tests (4)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:51:01Z",
+      "completed_at": "2026-10-26T08:01:35Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477305065"
+    },
+    "patch_tests (5)": {
+      "id": 121477250152,
+      "name": "patch_tests (5)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:42:03Z",
+      "completed_at": "2026-10-26T07:57:24Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477250152"
+    },
+    "patch_tests (6)": {
+      "id": 121477314146,
+      "name": "patch_tests (6)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:58:15Z",
+      "completed_at": "2026-10-26T08:10:09Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477314146"
+    },
+    "patch_tests (7)": {
+      "id": 121477249843,
+      "name": "patch_tests (7)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:59:16Z",
+      "completed_at": "2026-10-26T08:13:34Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249843"
+    },
+    "render-diagnostic": {
+      "id": 121477302060,
+      "name": "render-diagnostic",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:59Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477302060"
+    },
+    "resource_paint_continuation": {
+      "id": 121477248945,
+      "name": "resource_paint_continuation",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:06:10Z",
+      "completed_at": "2026-10-26T08:09:59Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477248945"
+    },
+    "seven_claims": {
+      "id": 121477314154,
+      "name": "seven_claims",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:01:05Z",
+      "completed_at": "2026-10-26T08:07:57Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477314154"
+    },
+    "validate": {
+      "id": 121484807957,
+      "name": "validate",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T09:07:51Z",
+      "completed_at": "2026-10-26T09:07:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121484807957"
+    },
+    "validate_core": {
+      "id": 121477249691,
+      "name": "validate_core",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:09:39Z",
+      "completed_at": "2026-10-26T08:45:27Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249691"
+    },
+    "wall-render-diagnostic": {
+      "id": 121477298025,
+      "name": "wall-render-diagnostic",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:58Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477298025"
+    }
+  },
+  "jobAttemptHistory": [
+    {
+      "id": 121450235507,
+      "name": "build_site",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:34:01Z",
+      "completed_at": "2026-10-26T07:34:31Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235507"
+    },
+    {
+      "id": 121450235697,
+      "name": "patch_tests (5)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:42:03Z",
+      "completed_at": "2026-10-26T07:57:24Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235697"
+    },
+    {
+      "id": 121450235720,
+      "name": "patch_tests (4)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:51:01Z",
+      "completed_at": "2026-10-26T08:01:35Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235720"
+    },
+    {
+      "id": 121450235792,
+      "name": "seven_claims",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:01:05Z",
+      "completed_at": "2026-10-26T08:07:57Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235792"
+    },
+    {
+      "id": 121450235870,
+      "name": "patch_tests (1)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-10-26T07:51:49Z",
+      "completed_at": "2026-10-26T08:41:49Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235870"
+    },
+    {
+      "id": 121450235914,
+      "name": "patch_tests (3)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:50:33Z",
+      "completed_at": "2026-10-26T08:03:17Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235914"
+    },
+    {
+      "id": 121450235936,
+      "name": "patch_tests (0)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:59:54Z",
+      "completed_at": "2026-10-26T08:13:08Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235936"
+    },
+    {
+      "id": 121450235937,
+      "name": "resource_paint_continuation",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:06:10Z",
+      "completed_at": "2026-10-26T08:09:59Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235937"
+    },
+    {
+      "id": 121450235970,
+      "name": "patch_tests (7)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:59:16Z",
+      "completed_at": "2026-10-26T08:13:34Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235970"
+    },
+    {
+      "id": 121450235993,
+      "name": "patch_tests (6)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:58:15Z",
+      "completed_at": "2026-10-26T08:10:09Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235993"
+    },
+    {
+      "id": 121450236030,
+      "name": "patch_tests (2)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:07:59Z",
+      "completed_at": "2026-10-26T08:20:56Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450236030"
+    },
+    {
+      "id": 121450236871,
+      "name": "network-opening-diagnostic",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T07:30:10Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450236871"
+    },
+    {
+      "id": 121450237236,
+      "name": "render-diagnostic",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T07:30:10Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450237236"
+    },
+    {
+      "id": 121450282427,
+      "name": "wall-render-diagnostic",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T07:30:18Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450282427"
+    },
+    {
+      "id": 121451669419,
+      "name": "validate_core",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:09:39Z",
+      "completed_at": "2026-10-26T08:45:27Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669419"
+    },
+    {
+      "id": 121451669545,
+      "name": "browser (network, chromium webkit)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:01Z",
+      "completed_at": "2026-10-26T08:16:08Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669545"
+    },
+    {
+      "id": 121451669548,
+      "name": "browser (ui, chromium webkit)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:11Z",
+      "completed_at": "2026-10-26T08:26:11Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669548"
+    },
+    {
+      "id": 121451669557,
+      "name": "browser (responsive, chromium webkit)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:38Z",
+      "completed_at": "2026-10-26T08:39:04Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669557"
+    },
+    {
+      "id": 121451669564,
+      "name": "browser (range, chromium webkit)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:07Z",
+      "completed_at": "2026-10-26T08:23:37Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669564"
+    },
+    {
+      "id": 121451669574,
+      "name": "browser (startup, chromium webkit)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:00Z",
+      "completed_at": "2026-10-26T08:21:46Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669574"
+    },
+    {
+      "id": 121451669631,
+      "name": "browser (catalog, chromium)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:13:11Z",
+      "completed_at": "2026-10-26T08:24:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669631"
+    },
+    {
+      "id": 121451669651,
+      "name": "browser (active, chromium webkit)",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:38Z",
+      "completed_at": "2026-10-26T08:30:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121451669651"
+    },
+    {
+      "id": 121477095982,
+      "name": "validate",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-10-26T08:45:31Z",
+      "completed_at": "2026-10-26T08:45:34Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477095982"
+    },
+    {
+      "id": 121477097206,
+      "name": "circleci_offload_gate",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:28Z",
+      "completed_at": "2026-10-26T08:45:27Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477097206"
+    },
+    {
+      "id": 121477247967,
+      "name": "patch_tests (1)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:45:54Z",
+      "completed_at": "2026-10-26T09:04:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477247967"
+    },
+    {
+      "id": 121477248945,
+      "name": "resource_paint_continuation",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:06:10Z",
+      "completed_at": "2026-10-26T08:09:59Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477248945"
+    },
+    {
+      "id": 121477249460,
+      "name": "browser (catalog, chromium)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:13:11Z",
+      "completed_at": "2026-10-26T08:24:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249460"
+    },
+    {
+      "id": 121477249602,
+      "name": "browser (ui, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:11Z",
+      "completed_at": "2026-10-26T08:26:11Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249602"
+    },
+    {
+      "id": 121477249691,
+      "name": "validate_core",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:09:39Z",
+      "completed_at": "2026-10-26T08:45:27Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249691"
+    },
+    {
+      "id": 121477249839,
+      "name": "browser (responsive, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:38Z",
+      "completed_at": "2026-10-26T08:39:04Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249839"
+    },
+    {
+      "id": 121477249843,
+      "name": "patch_tests (7)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:59:16Z",
+      "completed_at": "2026-10-26T08:13:34Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249843"
+    },
+    {
+      "id": 121477249851,
+      "name": "browser (active, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:38Z",
+      "completed_at": "2026-10-26T08:30:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249851"
+    },
+    {
+      "id": 121477249897,
+      "name": "browser (network, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:10:01Z",
+      "completed_at": "2026-10-26T08:16:08Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477249897"
+    },
+    {
+      "id": 121477250152,
+      "name": "patch_tests (5)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:42:03Z",
+      "completed_at": "2026-10-26T07:57:24Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477250152"
+    },
+    {
+      "id": 121477250446,
+      "name": "browser (range, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:07Z",
+      "completed_at": "2026-10-26T08:23:37Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477250446"
+    },
+    {
+      "id": 121477250605,
+      "name": "browser (startup, chromium webkit)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:11:00Z",
+      "completed_at": "2026-10-26T08:21:46Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477250605"
+    },
+    {
+      "id": 121477285584,
+      "name": "patch_tests (2)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:07:59Z",
+      "completed_at": "2026-10-26T08:20:56Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477285584"
+    },
+    {
+      "id": 121477289421,
+      "name": "network-opening-diagnostic",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:57Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477289421"
+    },
+    {
+      "id": 121477289582,
+      "name": "build_site",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:34:01Z",
+      "completed_at": "2026-10-26T07:34:31Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477289582"
+    },
+    {
+      "id": 121477294743,
+      "name": "patch_tests (3)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:50:33Z",
+      "completed_at": "2026-10-26T08:03:17Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477294743"
+    },
+    {
+      "id": 121477298025,
+      "name": "wall-render-diagnostic",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:58Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477298025"
+    },
+    {
+      "id": 121477302060,
+      "name": "render-diagnostic",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:45:59Z",
+      "completed_at": "2026-10-26T07:30:10Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477302060"
+    },
+    {
+      "id": 121477305065,
+      "name": "patch_tests (4)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:51:01Z",
+      "completed_at": "2026-10-26T08:01:35Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477305065"
+    },
+    {
+      "id": 121477309236,
+      "name": "circleci_offload_gate",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-26T08:46:00Z",
+      "completed_at": "2026-10-26T08:45:27Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477309236"
+    },
+    {
+      "id": 121477311862,
+      "name": "patch_tests (0)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:59:54Z",
+      "completed_at": "2026-10-26T08:13:08Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477311862"
+    },
+    {
+      "id": 121477314146,
+      "name": "patch_tests (6)",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T07:58:15Z",
+      "completed_at": "2026-10-26T08:10:09Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477314146"
+    },
+    {
+      "id": 121477314154,
+      "name": "seven_claims",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T08:01:05Z",
+      "completed_at": "2026-10-26T08:07:57Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121477314154"
+    },
+    {
+      "id": 121484807957,
+      "name": "validate",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-26T09:07:51Z",
+      "completed_at": "2026-10-26T09:07:53Z",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121484807957"
+    }
+  ],
+  "workflows": [
+    {
+      "id": 40285735810,
+      "name": "INKWAVE A+ Quality & Security Gate",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735810"
+    },
+    {
+      "id": 40285735821,
+      "name": "INKWAVE combined QA dependency validation",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735821"
+    },
+    {
+      "id": 40285735833,
+      "name": "INKWAVE terminal recovery native QA",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735833"
+    },
+    {
+      "id": 40285735860,
+      "name": "ZEVANT account and Workers build",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735860"
+    },
+    {
+      "id": 40285735866,
+      "name": "INKWAVE gameplay resource regressions",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735866"
+    },
+    {
+      "id": 40285735875,
+      "name": "Non-Drive queue regression",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735875"
+    },
+    {
+      "id": 40285735880,
+      "name": "Validate INKWAVE native stage integration",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735880"
+    },
+    {
+      "id": 40285735967,
+      "name": "Validate INKWAVE update",
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "run_attempt": 2,
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967"
+    }
+  ],
+  "initialRunnerLoss": {
+    "jobId": 121450235870,
+    "annotations": [
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/rhgrive3/actions/blob/65fa7f183d2d163af798972c2ff0ced46a92868f/.github",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "annotation_level": "failure",
+        "title": "",
+        "message": "The hosted runner lost communication with the server. Anything in your workflow that terminates the runner process, starves it for CPU/Memory, or blocks its network access can cause this error.",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/rhgrive3/actions/blob/65fa7f183d2d163af798972c2ff0ced46a92868f/.github",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "annotation_level": "notice",
+        "title": "",
+        "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+        "raw_details": ""
+      }
+    ],
+    "retry": "Same source, same eight-way partition and concurrency; only failed work rerun without changing acceptance criteria."
+  },
+  "protectedWorkflowSha256": "ce2e0403914b6cb243b850cc6483664254fd836bdac6e06704ad5446fde82f54",
+  "acceptanceWorkflowAtMeasuredSourceUnchangedFromInitialMain": true,
+  "baseIntegration": {
+    "schema": 1,
+    "baseMainSha": "db770469aa5b5ad0807a7f3368beb701c76a3e08",
+    "baseAdvancePr": 1884,
+    "runtimeSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "conflicts": false,
+    "combinedTreeSha": "c9b5b01c8f463e90ec4e28f7eeb0160d8a357700",
+    "productionPathsCompared": [
+      "inkwave-public",
+      "patches",
+      "scripts/build-inkwave.mjs",
+      "scripts/inkwave-source-composition.mjs"
+    ],
+    "productionDiffPaths": [],
+    "combinedCiEntryTests": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skip": 0,
+      "node": "22.23.3"
+    },
+    "exactShardLocalReproduction": {
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "shardCount": 8,
+      "shardIndex": 1,
+      "concurrency": 2,
+      "testFiles": 143,
+      "tests": 1145,
+      "pass": 1143,
+      "fail": 0,
+      "conditionalBrowserSkips": 2,
+      "browserSkipsCoveredBy": "exact-gpu/summary.json",
+      "node": "22.23.3",
+      "exitCode": 0
+    },
+    "reason": "Base advanced only with CI/test-entry refactoring. Production app/patch/build inputs remain byte-identical to measured source. Combined CI entry/list contracts passed without changing thresholds or omitting original tests.",
+    "actualCodeMergeSha": "1676aaf51008a9402851f4f878eb6b5c86d2bd43",
+    "actualCodeMergeTreeMatchesCombinedTree": true,
+    "mainAtFinalReadback": "af9436217f10f2a842097e69435200dc581f6c87",
+    "productionDiffAgainstMainAtReadback": []
+  }
+}

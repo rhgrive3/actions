@@ -1,0 +1,46 @@
+{
+  "baseline": {
+    "admitted": {
+      "scorch": {
+        "stageSha256": "1aaf93de6dd84bb9e2c47b8b5d16159691945e37d82b2f135b73afa6e655da06",
+        "bytes": 174831
+      }
+    },
+    "stale": [],
+    "missing": [],
+    "converter": {
+      "schema": 2,
+      "recipe": "inkwave-browser-source-v4",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "files": {
+        "patches/native-stages/runtime/source-convert.mjs": "bfabbff973e461b57c52ed0fbcd06eadc793a310b503b7db2b373aa7ca88f374",
+        "patches/native-stages/runtime/source-worker.mjs": "b7d2883a7d4a4c38c4dd33748063d72c5b15d8f90117986b64e91c9d1f7b476b",
+        "patches/native-stages/tools/prebuild-native.mjs": "79d148e2d452bc5de80a7891ef70644a337a4051d78723a26ea28933d3719c4f",
+        "patches/native-stages/tools/prebuild_textures.py": "7d84811605bd5c84dc5ca7e29110638bd78d53a4c61c431cc22cf4019692fcc1"
+      },
+      "sha256": "2c8ac61161f48c483c55e7c1b9cbd071f8b13e1cf6c6b7de615a64e9cad242af"
+    }
+  },
+  "candidate": {
+    "admitted": {
+      "scorch": {
+        "stageSha256": "1aaf93de6dd84bb9e2c47b8b5d16159691945e37d82b2f135b73afa6e655da06",
+        "bytes": 174831
+      }
+    },
+    "stale": [],
+    "missing": [],
+    "converter": {
+      "schema": 2,
+      "recipe": "inkwave-browser-source-v4",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "files": {
+        "patches/native-stages/runtime/source-convert.mjs": "bfabbff973e461b57c52ed0fbcd06eadc793a310b503b7db2b373aa7ca88f374",
+        "patches/native-stages/runtime/source-worker.mjs": "b7d2883a7d4a4c38c4dd33748063d72c5b15d8f90117986b64e91c9d1f7b476b",
+        "patches/native-stages/tools/prebuild-native.mjs": "79d148e2d452bc5de80a7891ef70644a337a4051d78723a26ea28933d3719c4f",
+        "patches/native-stages/tools/prebuild_textures.py": "7d84811605bd5c84dc5ca7e29110638bd78d53a4c61c431cc22cf4019692fcc1"
+      },
+      "sha256": "2c8ac61161f48c483c55e7c1b9cbd071f8b13e1cf6c6b7de615a64e9cad242af"
+    }
+  }
+}

@@ -1,0 +1,2172 @@
+{
+  "crab": {
+    "harnessHash": "101a74df5a39de3730c06c3dbd677a2c0fbf702f1df9d71408b4da285170fdb2",
+    "conditions": {
+      "crabLifecycle": true,
+      "maps": [
+        "tidewater",
+        "kelpline",
+        "halyard"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 6,
+      "seconds": 5,
+      "quality": "low",
+      "mobile": true,
+      "viewport": [
+        480,
+        300
+      ],
+      "deviceScaleFactor": 1,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "runs": {
+      "baseline-crab-clean": {
+        "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+        "observedGlErrors": {},
+        "cpuObservedDeltaSecondsByType": {
+          "browser": 3.44,
+          "GPU": 854.46,
+          "network.mojom.NetworkService": 0.5900000000000001,
+          "storage.mojom.StorageService": 0.0,
+          "renderer": 87.33,
+          "audio.mojom.AudioService": 1.64
+        },
+        "cpuScope": "CDP process counters: sum of per-PID observed max minus min, excludes zygotes without counters and CPU before first observation",
+        "peakPssMiBByType": {
+          "browser": 116.1201171875,
+          "zygote": 27.380859375,
+          "GPU": 790.181640625,
+          "network.mojom.NetworkService": 54.01171875,
+          "storage.mojom.StorageService": 6.0185546875,
+          "renderer": 742.5126953125,
+          "audio.mojom.AudioService": 22.919921875
+        },
+        "seconds": 287.667,
+        "peakPssMiB": 1741.7890625,
+        "peakUssMiB": 1615.359375,
+        "finalHeapMiB": 64.4416389465332,
+        "combatFrames": 53,
+        "combatWallSeconds": 36.40799999999996,
+        "aggregateCombatFps": 1.4557240166996281,
+        "frameCpuWallMeanMs": 131.20377358499002,
+        "renderGpuMeanMs": 287.2501890909091,
+        "drawCallsMean": 141.56603773584905,
+        "perWindowIntervalP95Ms": [
+          1076.199999999255,
+          1435.800000000745,
+          2061.800000000745,
+          1039.4000000003725,
+          928.5,
+          2306.10000000149
+        ],
+        "released": [
+          {
+            "cycle": 1,
+            "map": "tidewater",
+            "elapsedSeconds": 69.524,
+            "heapMiB": 52.106544494628906,
+            "geometries": 341,
+            "textures": 28,
+            "programs": 168,
+            "apiLive": {
+              "Buffer": 1412,
+              "Texture": 32,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 168,
+              "Shader": 206,
+              "VertexArray": 406,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 2,
+              "retiredOwners": 2,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1324.2470703125,
+              1291.7099609375
+            ]
+          },
+          {
+            "cycle": 2,
+            "map": "kelpline",
+            "elapsedSeconds": 105.59,
+            "heapMiB": 55.121585845947266,
+            "geometries": 385,
+            "textures": 30,
+            "programs": 156,
+            "apiLive": {
+              "Buffer": 1646,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 156,
+              "Shader": 206,
+              "VertexArray": 467,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 2,
+              "retiredOwners": 2,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1437.0078125,
+              1455.1015625,
+              1320.3203125
+            ]
+          },
+          {
+            "cycle": 3,
+            "map": "halyard",
+            "elapsedSeconds": 151.943,
+            "heapMiB": 60.3909912109375,
+            "geometries": 410,
+            "textures": 31,
+            "programs": 161,
+            "apiLive": {
+              "Buffer": 1760,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 161,
+              "Shader": 208,
+              "VertexArray": 503,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 6,
+              "retiredOwners": 6,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1505.8916015625,
+              1443.7001953125
+            ]
+          },
+          {
+            "cycle": 4,
+            "map": "tidewater",
+            "elapsedSeconds": 193.681,
+            "heapMiB": 68.42926788330078,
+            "geometries": 431,
+            "textures": 30,
+            "programs": 161,
+            "apiLive": {
+              "Buffer": 1872,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 161,
+              "Shader": 210,
+              "VertexArray": 544,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 6,
+              "retiredOwners": 6,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1549.033203125,
+              1443.986328125
+            ]
+          },
+          {
+            "cycle": 5,
+            "map": "kelpline",
+            "elapsedSeconds": 229.529,
+            "heapMiB": 70.21834182739258,
+            "geometries": 468,
+            "textures": 30,
+            "programs": 163,
+            "apiLive": {
+              "Buffer": 2064,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 163,
+              "Shader": 212,
+              "VertexArray": 595,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 6,
+              "retiredOwners": 6,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1505.388671875,
+              1425.986328125
+            ]
+          },
+          {
+            "cycle": 6,
+            "map": "halyard",
+            "elapsedSeconds": 272.431,
+            "heapMiB": 64.67326354980469,
+            "geometries": 505,
+            "textures": 32,
+            "programs": 163,
+            "apiLive": {
+              "Buffer": 2240,
+              "Texture": 36,
+              "Framebuffer": 21,
+              "Renderbuffer": 12,
+              "Program": 163,
+              "Shader": 212,
+              "VertexArray": 646,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1578.19921875,
+              1486.64453125
+            ]
+          }
+        ],
+        "finalCrab": [
+          {
+            "cycle": 0,
+            "created": 1,
+            "geometryId": 15229,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 0,
+            "materialDisposed": 0,
+            "seenInScene": true,
+            "inScene": true,
+            "actorRetained": false,
+            "meshRetained": true
+          },
+          {
+            "cycle": 1,
+            "created": 1,
+            "geometryId": 20705,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 0,
+            "materialDisposed": 0,
+            "seenInScene": true,
+            "inScene": true,
+            "actorRetained": false,
+            "meshRetained": true
+          },
+          {
+            "cycle": 2,
+            "created": 1,
+            "geometryId": 25898,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 0,
+            "materialDisposed": 0,
+            "seenInScene": true,
+            "inScene": true,
+            "actorRetained": false,
+            "meshRetained": true
+          },
+          {
+            "cycle": 3,
+            "created": 1,
+            "geometryId": 30075,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 0,
+            "materialDisposed": 0,
+            "seenInScene": true,
+            "inScene": true,
+            "actorRetained": false,
+            "meshRetained": true
+          },
+          {
+            "cycle": 4,
+            "created": 1,
+            "geometryId": 34126,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 0,
+            "materialDisposed": 0,
+            "seenInScene": true,
+            "inScene": true,
+            "actorRetained": false,
+            "meshRetained": true
+          },
+          {
+            "cycle": 5,
+            "created": 1,
+            "geometryId": 39079,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 0,
+            "materialDisposed": 0,
+            "seenInScene": true,
+            "inScene": true,
+            "actorRetained": true,
+            "meshRetained": true
+          }
+        ],
+        "finalPool": {
+          "pooled": 7,
+          "owners": 7,
+          "retiredOwners": 7,
+          "active": 0
+        }
+      },
+      "candidate-crab-clean": {
+        "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+        "observedGlErrors": {},
+        "cpuObservedDeltaSecondsByType": {
+          "browser": 3.67,
+          "GPU": 858.86,
+          "network.mojom.NetworkService": 0.6399999999999999,
+          "storage.mojom.StorageService": 0.0,
+          "renderer": 88.68,
+          "audio.mojom.AudioService": 1.7999999999999998
+        },
+        "cpuScope": "CDP process counters: sum of per-PID observed max minus min, excludes zygotes without counters and CPU before first observation",
+        "peakPssMiBByType": {
+          "browser": 118.4169921875,
+          "zygote": 27.373046875,
+          "GPU": 782.25390625,
+          "network.mojom.NetworkService": 53.4892578125,
+          "storage.mojom.StorageService": 6.0263671875,
+          "renderer": 717.541015625,
+          "audio.mojom.AudioService": 22.9189453125
+        },
+        "seconds": 292.179,
+        "peakPssMiB": 1668.134765625,
+        "peakUssMiB": 1541.2890625,
+        "finalHeapMiB": 64.16429901123047,
+        "combatFrames": 47,
+        "combatWallSeconds": 38.342999999999954,
+        "aggregateCombatFps": 1.2257778473254586,
+        "frameCpuWallMeanMs": 135.4893617020484,
+        "renderGpuMeanMs": 315.7794187727273,
+        "drawCallsMean": 152.53191489361703,
+        "perWindowIntervalP95Ms": [
+          1824.8999999985099,
+          1407.2999999970198,
+          2854.89999999851,
+          1073.3999999985099,
+          976,
+          2022.4000000022352
+        ],
+        "released": [
+          {
+            "cycle": 1,
+            "map": "tidewater",
+            "elapsedSeconds": 69.518,
+            "heapMiB": 51.44757080078125,
+            "geometries": 346,
+            "textures": 30,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 1441,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 170,
+              "Shader": 206,
+              "VertexArray": 413,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1390.6357421875,
+              1308.453125
+            ]
+          },
+          {
+            "cycle": 2,
+            "map": "kelpline",
+            "elapsedSeconds": 108.118,
+            "heapMiB": 55.892547607421875,
+            "geometries": 380,
+            "textures": 30,
+            "programs": 155,
+            "apiLive": {
+              "Buffer": 1617,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 155,
+              "Shader": 206,
+              "VertexArray": 459,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1375.904296875,
+              1317.396484375
+            ]
+          },
+          {
+            "cycle": 3,
+            "map": "halyard",
+            "elapsedSeconds": 150.832,
+            "heapMiB": 60.49810791015625,
+            "geometries": 420,
+            "textures": 31,
+            "programs": 160,
+            "apiLive": {
+              "Buffer": 1813,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 160,
+              "Shader": 208,
+              "VertexArray": 512,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1471.931640625,
+              1442.173828125
+            ]
+          },
+          {
+            "cycle": 4,
+            "map": "tidewater",
+            "elapsedSeconds": 194.085,
+            "heapMiB": 61.12263870239258,
+            "geometries": 438,
+            "textures": 30,
+            "programs": 159,
+            "apiLive": {
+              "Buffer": 1910,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 159,
+              "Shader": 210,
+              "VertexArray": 548,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1591.052734375,
+              1421.810546875
+            ]
+          },
+          {
+            "cycle": 5,
+            "map": "kelpline",
+            "elapsedSeconds": 231.414,
+            "heapMiB": 62.843467712402344,
+            "geometries": 467,
+            "textures": 30,
+            "programs": 160,
+            "apiLive": {
+              "Buffer": 2060,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 160,
+              "Shader": 212,
+              "VertexArray": 593,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1577.244140625,
+              1430.115234375
+            ]
+          },
+          {
+            "cycle": 6,
+            "map": "halyard",
+            "elapsedSeconds": 276.914,
+            "heapMiB": 64.2022476196289,
+            "geometries": 513,
+            "textures": 31,
+            "programs": 162,
+            "apiLive": {
+              "Buffer": 2286,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 162,
+              "Shader": 214,
+              "VertexArray": 654,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1556.5263671875,
+              1496.7958984375
+            ]
+          }
+        ],
+        "finalCrab": [
+          {
+            "cycle": 0,
+            "created": 1,
+            "geometryId": 15228,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 1,
+            "materialDisposed": 1,
+            "seenInScene": true,
+            "inScene": false,
+            "actorRetained": false,
+            "meshRetained": false
+          },
+          {
+            "cycle": 1,
+            "created": 1,
+            "geometryId": 20113,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 1,
+            "materialDisposed": 1,
+            "seenInScene": true,
+            "inScene": false,
+            "actorRetained": false,
+            "meshRetained": false
+          },
+          {
+            "cycle": 2,
+            "created": 1,
+            "geometryId": 26827,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 1,
+            "materialDisposed": 1,
+            "seenInScene": true,
+            "inScene": false,
+            "actorRetained": false,
+            "meshRetained": false
+          },
+          {
+            "cycle": 3,
+            "created": 1,
+            "geometryId": 29908,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 1,
+            "materialDisposed": 1,
+            "seenInScene": true,
+            "inScene": false,
+            "actorRetained": false,
+            "meshRetained": false
+          },
+          {
+            "cycle": 4,
+            "created": 1,
+            "geometryId": 33606,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 1,
+            "materialDisposed": 1,
+            "seenInScene": true,
+            "inScene": false,
+            "actorRetained": false,
+            "meshRetained": false
+          },
+          {
+            "cycle": 5,
+            "created": 1,
+            "geometryId": 38966,
+            "geometryCpuBytes": 4008,
+            "geometryDisposed": 1,
+            "materialDisposed": 1,
+            "seenInScene": true,
+            "inScene": false,
+            "actorRetained": true,
+            "meshRetained": false
+          }
+        ],
+        "finalPool": {
+          "pooled": 9,
+          "owners": 0,
+          "retiredOwners": 0,
+          "active": 0
+        }
+      }
+    }
+  },
+  "raf18": {
+    "harnessHash": "101a74df5a39de3730c06c3dbd677a2c0fbf702f1df9d71408b4da285170fdb2",
+    "conditions": {
+      "crabLifecycle": false,
+      "maps": [
+        "tidewater",
+        "kelpline",
+        "halyard"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 18,
+      "seconds": 30,
+      "quality": "low",
+      "mobile": true,
+      "viewport": [
+        480,
+        300
+      ],
+      "deviceScaleFactor": 1,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "runs": {
+      "baseline-raf-18": {
+        "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+        "observedGlErrors": {},
+        "cpuObservedDeltaSecondsByType": {
+          "browser": 13.07,
+          "GPU": 4793.21,
+          "network.mojom.NetworkService": 1.01,
+          "storage.mojom.StorageService": 0.049999999999999996,
+          "renderer": 371.53999999999996,
+          "audio.mojom.AudioService": 8.79
+        },
+        "cpuScope": "CDP process counters: sum of per-PID observed max minus min, excludes zygotes without counters and CPU before first observation",
+        "peakPssMiBByType": {
+          "browser": 116.0185546875,
+          "zygote": 27.3857421875,
+          "GPU": 908.130859375,
+          "network.mojom.NetworkService": 57.1015625,
+          "storage.mojom.StorageService": 6.005859375,
+          "renderer": 1009.2626953125,
+          "audio.mojom.AudioService": 22.94140625
+        },
+        "seconds": 1450.095,
+        "peakPssMiB": 2001.9267578125,
+        "peakUssMiB": 1871.67578125,
+        "finalHeapMiB": 91.67411422729492,
+        "combatFrames": 772,
+        "combatWallSeconds": 557.5889999999997,
+        "aggregateCombatFps": 1.3845323347483547,
+        "frameCpuWallMeanMs": 86.64041450775802,
+        "renderGpuMeanMs": 225.27086389036546,
+        "drawCallsMean": 133.07642487046633,
+        "perWindowIntervalP95Ms": [
+          1500.5,
+          1374.800000000745,
+          1099.0999999996275,
+          1083.699999999255,
+          1734.4000000003725,
+          1513.199999999255,
+          1070.0999999996275,
+          1230.7000000011176,
+          1176.8999999985099,
+          1059.4000000003725,
+          1124.9000000003725,
+          1084.0999999996275,
+          914.7000000011176,
+          1162.4000000003725,
+          1352.7000000011176,
+          1000.4000000003725,
+          1490.1000000014901,
+          1167.4000000003725
+        ],
+        "released": [
+          {
+            "cycle": 1,
+            "map": "tidewater",
+            "elapsedSeconds": 107.121,
+            "heapMiB": 53.97486877441406,
+            "geometries": 366,
+            "textures": 30,
+            "programs": 179,
+            "apiLive": {
+              "Buffer": 1511,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 179,
+              "Shader": 202,
+              "VertexArray": 468,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 3,
+              "owners": 3,
+              "retiredOwners": 3,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1402.1875,
+              1337.18359375
+            ]
+          },
+          {
+            "cycle": 2,
+            "map": "kelpline",
+            "elapsedSeconds": 181.03,
+            "heapMiB": 56.7471923828125,
+            "geometries": 404,
+            "textures": 30,
+            "programs": 166,
+            "apiLive": {
+              "Buffer": 1708,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 166,
+              "Shader": 204,
+              "VertexArray": 535,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 4,
+              "owners": 4,
+              "retiredOwners": 4,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1413.4462890625,
+              1356.9033203125
+            ]
+          },
+          {
+            "cycle": 3,
+            "map": "halyard",
+            "elapsedSeconds": 259.337,
+            "heapMiB": 61.80573654174805,
+            "geometries": 437,
+            "textures": 31,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 1867,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 171,
+              "Shader": 206,
+              "VertexArray": 588,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 6,
+              "retiredOwners": 6,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1523.6025390625,
+              1479.9580078125
+            ]
+          },
+          {
+            "cycle": 4,
+            "map": "tidewater",
+            "elapsedSeconds": 345.793,
+            "heapMiB": 70.99016571044922,
+            "geometries": 481,
+            "textures": 30,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 2037,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 170,
+              "Shader": 204,
+              "VertexArray": 690,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 6,
+              "retiredOwners": 6,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1530.2197265625,
+              1528.6923828125,
+              1472.1962890625
+            ]
+          },
+          {
+            "cycle": 5,
+            "map": "kelpline",
+            "elapsedSeconds": 421.113,
+            "heapMiB": 72.36450576782227,
+            "geometries": 504,
+            "textures": 30,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 2158,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 171,
+              "Shader": 206,
+              "VertexArray": 734,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 6,
+              "owners": 6,
+              "retiredOwners": 6,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1600.130859375,
+              1490.16015625
+            ]
+          },
+          {
+            "cycle": 6,
+            "map": "halyard",
+            "elapsedSeconds": 501.575,
+            "heapMiB": 65.0988655090332,
+            "geometries": 553,
+            "textures": 31,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 2391,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 171,
+              "Shader": 208,
+              "VertexArray": 819,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1630.03515625,
+              1565.375
+            ]
+          },
+          {
+            "cycle": 7,
+            "map": "tidewater",
+            "elapsedSeconds": 578.195,
+            "heapMiB": 75.45613861083984,
+            "geometries": 636,
+            "textures": 30,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 2624,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 171,
+              "Shader": 210,
+              "VertexArray": 999,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1881.70703125,
+              1571.5390625
+            ]
+          },
+          {
+            "cycle": 8,
+            "map": "kelpline",
+            "elapsedSeconds": 650.609,
+            "heapMiB": 75.96939468383789,
+            "geometries": 669,
+            "textures": 30,
+            "programs": 172,
+            "apiLive": {
+              "Buffer": 2796,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 172,
+              "Shader": 212,
+              "VertexArray": 1061,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1689.1953125,
+              1684.2890625,
+              1566.15234375
+            ]
+          },
+          {
+            "cycle": 9,
+            "map": "halyard",
+            "elapsedSeconds": 730.914,
+            "heapMiB": 76.85855865478516,
+            "geometries": 697,
+            "textures": 31,
+            "programs": 172,
+            "apiLive": {
+              "Buffer": 2925,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 172,
+              "Shader": 214,
+              "VertexArray": 1117,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1677.87890625,
+              1692.7265625,
+              1623.80078125
+            ]
+          },
+          {
+            "cycle": 10,
+            "map": "tidewater",
+            "elapsedSeconds": 806.813,
+            "heapMiB": 87.0713005065918,
+            "geometries": 716,
+            "textures": 30,
+            "programs": 172,
+            "apiLive": {
+              "Buffer": 3027,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 172,
+              "Shader": 216,
+              "VertexArray": 1160,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1910.4580078125,
+              1625.1455078125
+            ]
+          },
+          {
+            "cycle": 11,
+            "map": "kelpline",
+            "elapsedSeconds": 879.896,
+            "heapMiB": 97.06219863891602,
+            "geometries": 741,
+            "textures": 30,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3157,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 173,
+              "Shader": 218,
+              "VertexArray": 1206,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 7,
+              "retiredOwners": 7,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1688.5849609375,
+              1634.1728515625
+            ]
+          },
+          {
+            "cycle": 12,
+            "map": "halyard",
+            "elapsedSeconds": 962.32,
+            "heapMiB": 71.3205451965332,
+            "geometries": 769,
+            "textures": 31,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3288,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 173,
+              "Shader": 220,
+              "VertexArray": 1257,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              2001.9267578125,
+              1641.6806640625
+            ]
+          },
+          {
+            "cycle": 13,
+            "map": "tidewater",
+            "elapsedSeconds": 1040.762,
+            "heapMiB": 80.25067901611328,
+            "geometries": 804,
+            "textures": 30,
+            "programs": 172,
+            "apiLive": {
+              "Buffer": 3410,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 172,
+              "Shader": 220,
+              "VertexArray": 1332,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1916.46875,
+              1939.09765625,
+              1652.986328125
+            ]
+          },
+          {
+            "cycle": 14,
+            "map": "kelpline",
+            "elapsedSeconds": 1111.801,
+            "heapMiB": 81.30521774291992,
+            "geometries": 828,
+            "textures": 30,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3539,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 173,
+              "Shader": 222,
+              "VertexArray": 1387,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1702.84765625,
+              1637.47265625
+            ]
+          },
+          {
+            "cycle": 15,
+            "map": "halyard",
+            "elapsedSeconds": 1196.107,
+            "heapMiB": 81.71420288085938,
+            "geometries": 857,
+            "textures": 31,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3673,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 173,
+              "Shader": 224,
+              "VertexArray": 1444,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1772.53515625,
+              1775.576171875,
+              1705.6796875
+            ]
+          },
+          {
+            "cycle": 16,
+            "map": "tidewater",
+            "elapsedSeconds": 1273.335,
+            "heapMiB": 90.5363883972168,
+            "geometries": 872,
+            "textures": 30,
+            "programs": 172,
+            "apiLive": {
+              "Buffer": 3755,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 172,
+              "Shader": 226,
+              "VertexArray": 1489,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1836.42578125,
+              1714.2734375
+            ]
+          },
+          {
+            "cycle": 17,
+            "map": "kelpline",
+            "elapsedSeconds": 1350.131,
+            "heapMiB": 90.82580184936523,
+            "geometries": 888,
+            "textures": 30,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3841,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 173,
+              "Shader": 228,
+              "VertexArray": 1521,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1809.2265625,
+              1687.7734375
+            ]
+          },
+          {
+            "cycle": 18,
+            "map": "halyard",
+            "elapsedSeconds": 1434.799,
+            "heapMiB": 91.58709716796875,
+            "geometries": 919,
+            "textures": 31,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3987,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 173,
+              "Shader": 230,
+              "VertexArray": 1567,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 9,
+              "owners": 9,
+              "retiredOwners": 9,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1794.8046875,
+              1760.51953125
+            ]
+          }
+        ],
+        "finalCrab": [],
+        "finalPool": {
+          "pooled": 9,
+          "owners": 9,
+          "retiredOwners": 9,
+          "active": 0
+        }
+      },
+      "candidate-raf-18": {
+        "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+        "observedGlErrors": {},
+        "cpuObservedDeltaSecondsByType": {
+          "browser": 14.85,
+          "GPU": 4863.54,
+          "network.mojom.NetworkService": 1.0899999999999999,
+          "storage.mojom.StorageService": 0.04,
+          "renderer": 403.31,
+          "audio.mojom.AudioService": 10.84
+        },
+        "cpuScope": "CDP process counters: sum of per-PID observed max minus min, excludes zygotes without counters and CPU before first observation",
+        "peakPssMiBByType": {
+          "browser": 113.0595703125,
+          "zygote": 27.375,
+          "GPU": 903.8505859375,
+          "network.mojom.NetworkService": 56.4501953125,
+          "storage.mojom.StorageService": 6.021484375,
+          "renderer": 886.9462890625,
+          "audio.mojom.AudioService": 23.0615234375
+        },
+        "seconds": 1486.688,
+        "peakPssMiB": 1894.083984375,
+        "peakUssMiB": 1765.24609375,
+        "finalHeapMiB": 70.73791122436523,
+        "combatFrames": 726,
+        "combatWallSeconds": 558.2590000000002,
+        "aggregateCombatFps": 1.3004716448816762,
+        "frameCpuWallMeanMs": 98.12685950411888,
+        "renderGpuMeanMs": 249.8890475910653,
+        "drawCallsMean": 140.61432506887053,
+        "perWindowIntervalP95Ms": [
+          1575.199999999255,
+          1079.6000000014901,
+          1424.8999999985099,
+          832.5,
+          1400.8999999985099,
+          1416.6000000014901,
+          879.0999999977648,
+          1287,
+          1150.5,
+          1339.3999999985099,
+          1570.8999999985099,
+          1384.199999999255,
+          1044,
+          1093.3999999985099,
+          967.3999999985099,
+          1514.8999999985099,
+          1753.2999999970198,
+          1517.300000000745
+        ],
+        "released": [
+          {
+            "cycle": 1,
+            "map": "tidewater",
+            "elapsedSeconds": 108.133,
+            "heapMiB": 54.29823303222656,
+            "geometries": 369,
+            "textures": 30,
+            "programs": 179,
+            "apiLive": {
+              "Buffer": 1517,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 179,
+              "Shader": 202,
+              "VertexArray": 471,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1410.7568359375,
+              1333.7998046875
+            ]
+          },
+          {
+            "cycle": 2,
+            "map": "kelpline",
+            "elapsedSeconds": 181.624,
+            "heapMiB": 57.69890594482422,
+            "geometries": 406,
+            "textures": 30,
+            "programs": 164,
+            "apiLive": {
+              "Buffer": 1709,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 164,
+              "Shader": 200,
+              "VertexArray": 544,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 3,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1621.494140625,
+              1377.087890625
+            ]
+          },
+          {
+            "cycle": 3,
+            "map": "halyard",
+            "elapsedSeconds": 266.541,
+            "heapMiB": 61.98776626586914,
+            "geometries": 443,
+            "textures": 31,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 1886,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 170,
+              "Shader": 202,
+              "VertexArray": 601,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 5,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1556.1474609375,
+              1488.1435546875
+            ]
+          },
+          {
+            "cycle": 4,
+            "map": "tidewater",
+            "elapsedSeconds": 346.837,
+            "heapMiB": 62.826473236083984,
+            "geometries": 455,
+            "textures": 30,
+            "programs": 169,
+            "apiLive": {
+              "Buffer": 1953,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 169,
+              "Shader": 204,
+              "VertexArray": 637,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 5,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1518.2666015625,
+              1458.4853515625
+            ]
+          },
+          {
+            "cycle": 5,
+            "map": "kelpline",
+            "elapsedSeconds": 422.151,
+            "heapMiB": 64.13328552246094,
+            "geometries": 494,
+            "textures": 30,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 2153,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 170,
+              "Shader": 206,
+              "VertexArray": 706,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 5,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1584.7158203125,
+              1472.2275390625
+            ]
+          },
+          {
+            "cycle": 6,
+            "map": "halyard",
+            "elapsedSeconds": 504.556,
+            "heapMiB": 64.95209884643555,
+            "geometries": 534,
+            "textures": 31,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 2340,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 171,
+              "Shader": 208,
+              "VertexArray": 770,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 5,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1591.3017578125,
+              1545.0244140625
+            ]
+          },
+          {
+            "cycle": 7,
+            "map": "tidewater",
+            "elapsedSeconds": 583.236,
+            "heapMiB": 65.00127792358398,
+            "geometries": 548,
+            "textures": 30,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 2416,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 170,
+              "Shader": 210,
+              "VertexArray": 805,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 5,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1654.4931640625,
+              1512.2470703125
+            ]
+          },
+          {
+            "cycle": 8,
+            "map": "kelpline",
+            "elapsedSeconds": 658.456,
+            "heapMiB": 66.39989852905273,
+            "geometries": 583,
+            "textures": 30,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 2598,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 171,
+              "Shader": 212,
+              "VertexArray": 862,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 5,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1647.6728515625,
+              1514.0771484375
+            ]
+          },
+          {
+            "cycle": 9,
+            "map": "halyard",
+            "elapsedSeconds": 742.462,
+            "heapMiB": 68.15855026245117,
+            "geometries": 634,
+            "textures": 31,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 2843,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 171,
+              "Shader": 214,
+              "VertexArray": 944,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1640.7197265625,
+              1595.9697265625
+            ]
+          },
+          {
+            "cycle": 10,
+            "map": "tidewater",
+            "elapsedSeconds": 820.942,
+            "heapMiB": 67.65761947631836,
+            "geometries": 667,
+            "textures": 30,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 3015,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 170,
+              "Shader": 216,
+              "VertexArray": 1017,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1627.724609375,
+              1633.216796875,
+              1577.994140625
+            ]
+          },
+          {
+            "cycle": 11,
+            "map": "kelpline",
+            "elapsedSeconds": 901.931,
+            "heapMiB": 67.94642639160156,
+            "geometries": 689,
+            "textures": 30,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 3135,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 171,
+              "Shader": 218,
+              "VertexArray": 1066,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1690.447265625,
+              1568.36328125
+            ]
+          },
+          {
+            "cycle": 12,
+            "map": "halyard",
+            "elapsedSeconds": 986.36,
+            "heapMiB": 68.86180114746094,
+            "geometries": 723,
+            "textures": 31,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 3295,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 171,
+              "Shader": 220,
+              "VertexArray": 1133,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1685.568359375,
+              1627.521484375
+            ]
+          },
+          {
+            "cycle": 13,
+            "map": "tidewater",
+            "elapsedSeconds": 1063.778,
+            "heapMiB": 69.04817199707031,
+            "geometries": 746,
+            "textures": 30,
+            "programs": 170,
+            "apiLive": {
+              "Buffer": 3409,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 170,
+              "Shader": 222,
+              "VertexArray": 1196,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1697.568359375,
+              1609.267578125
+            ]
+          },
+          {
+            "cycle": 14,
+            "map": "kelpline",
+            "elapsedSeconds": 1141.898,
+            "heapMiB": 69.64677810668945,
+            "geometries": 773,
+            "textures": 30,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 3549,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 171,
+              "Shader": 224,
+              "VertexArray": 1250,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1664.572265625,
+              1607.623046875
+            ]
+          },
+          {
+            "cycle": 15,
+            "map": "halyard",
+            "elapsedSeconds": 1223.299,
+            "heapMiB": 70.6778793334961,
+            "geometries": 781,
+            "textures": 31,
+            "programs": 171,
+            "apiLive": {
+              "Buffer": 3578,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 171,
+              "Shader": 226,
+              "VertexArray": 1265,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1718.970703125,
+              1662.400390625
+            ]
+          },
+          {
+            "cycle": 16,
+            "map": "tidewater",
+            "elapsedSeconds": 1303.804,
+            "heapMiB": 70.01738357543945,
+            "geometries": 802,
+            "textures": 30,
+            "programs": 172,
+            "apiLive": {
+              "Buffer": 3691,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 172,
+              "Shader": 228,
+              "VertexArray": 1315,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1789.798828125,
+              1645.716796875
+            ]
+          },
+          {
+            "cycle": 17,
+            "map": "kelpline",
+            "elapsedSeconds": 1387.194,
+            "heapMiB": 70.39212417602539,
+            "geometries": 839,
+            "textures": 30,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3885,
+              "Texture": 34,
+              "Framebuffer": 14,
+              "Renderbuffer": 6,
+              "Program": 173,
+              "Shader": 230,
+              "VertexArray": 1382,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1769.787109375,
+              1639.638671875
+            ]
+          },
+          {
+            "cycle": 18,
+            "map": "halyard",
+            "elapsedSeconds": 1471.346,
+            "heapMiB": 70.6666030883789,
+            "geometries": 860,
+            "textures": 31,
+            "programs": 173,
+            "apiLive": {
+              "Buffer": 3979,
+              "Texture": 35,
+              "Framebuffer": 20,
+              "Renderbuffer": 12,
+              "Program": 173,
+              "Shader": 232,
+              "VertexArray": 1414,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 7,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1820.802734375,
+              1835.712890625,
+              1711.318359375
+            ]
+          }
+        ],
+        "finalCrab": [],
+        "finalPool": {
+          "pooled": 7,
+          "owners": 0,
+          "retiredOwners": 0,
+          "active": 0
+        }
+      }
+    }
+  },
+  "native": {
+    "harnessHash": "101a74df5a39de3730c06c3dbd677a2c0fbf702f1df9d71408b4da285170fdb2",
+    "conditions": {
+      "crabLifecycle": false,
+      "maps": [
+        "scorch",
+        "tidewater",
+        "scorch"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 3,
+      "seconds": 20,
+      "quality": "high",
+      "mobile": true,
+      "viewport": [
+        1133,
+        744
+      ],
+      "deviceScaleFactor": 2,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "runs": {
+      "baseline-native-final": {
+        "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+        "observedGlErrors": {
+          "warm-0": 1282,
+          "warm-2": 1282
+        },
+        "cpuObservedDeltaSecondsByType": {
+          "browser": 6.86,
+          "GPU": 2107.0899999999997,
+          "network.mojom.NetworkService": 0.72,
+          "storage.mojom.StorageService": 0.02,
+          "renderer": 90.19999999999999,
+          "audio.mojom.AudioService": 3.08
+        },
+        "cpuScope": "CDP process counters: sum of per-PID observed max minus min, excludes zygotes without counters and CPU before first observation",
+        "peakPssMiBByType": {
+          "browser": 115.6962890625,
+          "zygote": 27.3837890625,
+          "GPU": 1002.509765625,
+          "network.mojom.NetworkService": 67.9423828125,
+          "storage.mojom.StorageService": 6.0390625,
+          "renderer": 1240.3525390625,
+          "audio.mojom.AudioService": 23.0927734375
+        },
+        "seconds": 584.171,
+        "peakPssMiB": 2420.2333984375,
+        "peakUssMiB": 2291.51171875,
+        "finalHeapMiB": 199.60488510131836,
+        "combatFrames": 30,
+        "combatWallSeconds": 80.38999999999999,
+        "aggregateCombatFps": 0.37318074387361616,
+        "frameCpuWallMeanMs": 750.9399999999752,
+        "renderGpuMeanMs": 2556.1997019230766,
+        "drawCallsMean": 216.03333333333333,
+        "perWindowIntervalP95Ms": [
+          9841.599999999627,
+          5534.5999999996275,
+          7931
+        ],
+        "released": [
+          {
+            "cycle": 1,
+            "map": "scorch",
+            "elapsedSeconds": 276.879,
+            "heapMiB": 123.54297637939453,
+            "geometries": 464,
+            "textures": 261,
+            "programs": 150,
+            "apiLive": {
+              "Buffer": 1762,
+              "Texture": 265,
+              "Framebuffer": 15,
+              "Renderbuffer": 6,
+              "Program": 150,
+              "Shader": 204,
+              "VertexArray": 585,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 2,
+              "retiredOwners": 2,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1930.0400390625,
+              1950.603515625,
+              1960.1396484375
+            ]
+          },
+          {
+            "cycle": 2,
+            "map": "tidewater",
+            "elapsedSeconds": 418.234,
+            "heapMiB": 130.55575561523438,
+            "geometries": 426,
+            "textures": 32,
+            "programs": 162,
+            "apiLive": {
+              "Buffer": 1877,
+              "Texture": 36,
+              "Framebuffer": 15,
+              "Renderbuffer": 6,
+              "Program": 162,
+              "Shader": 206,
+              "VertexArray": 542,
+              "Query": 1,
+              "Sync": 1
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 2,
+              "retiredOwners": 2,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1957.4091796875,
+              1938.0654296875
+            ]
+          },
+          {
+            "cycle": 3,
+            "map": "scorch",
+            "elapsedSeconds": 568.642,
+            "heapMiB": 202.53250122070312,
+            "geometries": 561,
+            "textures": 261,
+            "programs": 150,
+            "apiLive": {
+              "Buffer": 2249,
+              "Texture": 265,
+              "Framebuffer": 15,
+              "Renderbuffer": 6,
+              "Program": 150,
+              "Shader": 208,
+              "VertexArray": 745,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 2,
+              "retiredOwners": 2,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              2277.8818359375,
+              2239.1435546875
+            ]
+          }
+        ],
+        "finalCrab": [],
+        "finalPool": {
+          "pooled": 2,
+          "owners": 2,
+          "retiredOwners": 2,
+          "active": 0
+        }
+      },
+      "candidate-native-final": {
+        "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+        "observedGlErrors": {},
+        "cpuObservedDeltaSecondsByType": {
+          "browser": 6.5200000000000005,
+          "GPU": 2170.7400000000002,
+          "network.mojom.NetworkService": 0.73,
+          "storage.mojom.StorageService": 0.03,
+          "renderer": 93.30999999999999,
+          "audio.mojom.AudioService": 3.48
+        },
+        "cpuScope": "CDP process counters: sum of per-PID observed max minus min, excludes zygotes without counters and CPU before first observation",
+        "peakPssMiBByType": {
+          "browser": 116.8544921875,
+          "zygote": 27.3779296875,
+          "GPU": 1022.009765625,
+          "network.mojom.NetworkService": 67.0263671875,
+          "storage.mojom.StorageService": 6.0185546875,
+          "renderer": 1061.001953125,
+          "audio.mojom.AudioService": 22.9326171875
+        },
+        "seconds": 600.97,
+        "peakPssMiB": 2248.478515625,
+        "peakUssMiB": 2119.95703125,
+        "finalHeapMiB": 125.07087326049805,
+        "combatFrames": 25,
+        "combatWallSeconds": 65.00600000000001,
+        "aggregateCombatFps": 0.3845798849336983,
+        "frameCpuWallMeanMs": 693.6960000002384,
+        "renderGpuMeanMs": 2879.276408,
+        "drawCallsMean": 219.24,
+        "perWindowIntervalP95Ms": [
+          8737.89999999851,
+          2689.300000000745,
+          6765.5
+        ],
+        "released": [
+          {
+            "cycle": 1,
+            "map": "scorch",
+            "elapsedSeconds": 275.197,
+            "heapMiB": 123.33765029907227,
+            "geometries": 463,
+            "textures": 262,
+            "programs": 150,
+            "apiLive": {
+              "Buffer": 1758,
+              "Texture": 266,
+              "Framebuffer": 16,
+              "Renderbuffer": 7,
+              "Program": 150,
+              "Shader": 204,
+              "VertexArray": 582,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1921.017578125,
+              1956.673828125,
+              1947.794921875
+            ]
+          },
+          {
+            "cycle": 2,
+            "map": "tidewater",
+            "elapsedSeconds": 424.117,
+            "heapMiB": 58.44696807861328,
+            "geometries": 441,
+            "textures": 36,
+            "programs": 163,
+            "apiLive": {
+              "Buffer": 2001,
+              "Texture": 40,
+              "Framebuffer": 16,
+              "Renderbuffer": 7,
+              "Program": 163,
+              "Shader": 208,
+              "VertexArray": 555,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              1765.880859375,
+              1687.822265625
+            ]
+          },
+          {
+            "cycle": 3,
+            "map": "scorch",
+            "elapsedSeconds": 585.529,
+            "heapMiB": 128.46031951904297,
+            "geometries": 558,
+            "textures": 266,
+            "programs": 155,
+            "apiLive": {
+              "Buffer": 2254,
+              "Texture": 270,
+              "Framebuffer": 16,
+              "Renderbuffer": 7,
+              "Program": 155,
+              "Shader": 210,
+              "VertexArray": 756,
+              "Query": 1,
+              "Sync": 0
+            },
+            "inkFlightPool": {
+              "pooled": 2,
+              "owners": 0,
+              "retiredOwners": 0,
+              "active": 0
+            },
+            "menuPssSampleMiB": [
+              2092.310546875,
+              2064.001953125,
+              2041.779296875
+            ]
+          }
+        ],
+        "finalCrab": [],
+        "finalPool": {
+          "pooled": 2,
+          "owners": 0,
+          "retiredOwners": 0,
+          "active": 0
+        }
+      }
+    }
+  }
+}

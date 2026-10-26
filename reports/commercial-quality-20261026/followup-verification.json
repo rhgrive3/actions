@@ -1,0 +1,261 @@
+{
+  "createdUtc": "2026-10-26T12:00:21.859140+00:00",
+  "status": "local-selected-suites-passed; release-acceptance-incomplete",
+  "node": "v22.16.0",
+  "uniqueTests": 140,
+  "passed": 139,
+  "failed": 0,
+  "skipped": 1,
+  "newRegressionCases": 49,
+  "suites": [
+    {
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "account/tests/client-cross-tab.test.mjs",
+        "account/tests/client-lifecycle.test.mjs",
+        "account/tests/client-session-gate.test.mjs",
+        "account/tests/d1-bindings.test.mjs",
+        "account/tests/http-body-limit.test.mjs",
+        "account/tests/http-integration.test.mjs",
+        "account/tests/panel-completion.test.mjs",
+        "account/tests/session-cap.test.mjs",
+        "account/tests/session-concurrency.test.mjs",
+        "account/tests/store-watch.test.mjs",
+        "account/tests/worker.test.mjs"
+      ],
+      "log": "final-account.tap",
+      "exitCode": 0,
+      "elapsedSeconds": 0.982,
+      "tests": 98,
+      "pass": 98,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "patches/loading-cache/tests/worker.test.mjs",
+        "patches/loading-cache/tests/worker-http-followup.test.mjs",
+        "server/tests/broadcast-delivery-failure.test.mjs"
+      ],
+      "log": "final-cache-relay.tap",
+      "exitCode": 0,
+      "elapsedSeconds": 0.741,
+      "tests": 42,
+      "pass": 41,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    }
+  ],
+  "repeatEvidenceNotAdditionalTests": [
+    {
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "account/tests/client-cross-tab.test.mjs",
+        "account/tests/session-concurrency.test.mjs",
+        "account/tests/http-integration.test.mjs",
+        "patches/loading-cache/tests/worker-http-followup.test.mjs"
+      ],
+      "log": "concurrency-repeat-1.tap",
+      "exitCode": 0,
+      "elapsedSeconds": 0.621,
+      "tests": 38,
+      "pass": 38,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "account/tests/client-cross-tab.test.mjs",
+        "account/tests/session-concurrency.test.mjs",
+        "account/tests/http-integration.test.mjs",
+        "patches/loading-cache/tests/worker-http-followup.test.mjs"
+      ],
+      "log": "concurrency-repeat-2.tap",
+      "exitCode": 0,
+      "elapsedSeconds": 0.621,
+      "tests": 38,
+      "pass": 38,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    {
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "account/tests/client-cross-tab.test.mjs",
+        "account/tests/session-concurrency.test.mjs",
+        "account/tests/http-integration.test.mjs",
+        "patches/loading-cache/tests/worker-http-followup.test.mjs"
+      ],
+      "log": "concurrency-repeat-3.tap",
+      "exitCode": 0,
+      "elapsedSeconds": 0.617,
+      "tests": 38,
+      "pass": 38,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  ],
+  "syntax": [
+    {
+      "path": "account/client/src/api.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/client/src/panel.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/client/src/store.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/client/src/strings.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/browser_acceptance.py",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/client-cross-tab.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/client-runtime-fixture.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/client-session-gate.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/d1-bindings.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/d1-fake.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/http-integration.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/local-browser-server.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/panel-completion.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/session-concurrency.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/tests/store-watch.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/worker/account.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "account/worker/store.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "patches/loading-cache/sw.js",
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "path": "patches/loading-cache/tests/worker-http-followup.test.mjs",
+      "exitCode": 0,
+      "stderr": ""
+    }
+  ],
+  "validatedSourceHashes": {
+    "account/client/src/api.js": "e0725a0e1f15eab173379a9c5c84cca0cff4ce61d5d21c7f832fbc6d4205167c",
+    "account/client/src/panel.js": "44e21ea3d3f14ccad6a26dd47f6cf588fd43b759a309f00f6562a6313538a95a",
+    "account/client/src/store.js": "15775b1a07d9a03fc1fb2883fd3c13052fc3c704a1b5b736a3b04e0c5e0ed05d",
+    "account/client/src/strings.js": "888821ce291577630538c65aabd1b2f463d834612982627c82a15cfe0139099a",
+    "account/tests/browser_acceptance.py": "32d4c4a1f11ded96460a202ddf2dbe69f32110944b4fc2adce8a5e752b9658c9",
+    "account/tests/client-cross-tab.test.mjs": "958b84e527a909800fd7e978293440ebd88d88889ad547fff651964b4d0da38b",
+    "account/tests/client-runtime-fixture.mjs": "f38ca926efb6d57b98aa4b7764b591b7979c619cbe97659353244b96e570448e",
+    "account/tests/client-session-gate.test.mjs": "f7dfea3469b4d186046dc67c9df085dd43782cf7c7508b3a05271010f89a015b",
+    "account/tests/d1-bindings.test.mjs": "a21da5d8a852c7be9255371d76ce50fb6cefc9dca561eed8c5c64c481952fdd3",
+    "account/tests/d1-fake.mjs": "11873f800ca53dec88a245541c685f17293714ba4e1eafb5a39fd2c7eb8c149c",
+    "account/tests/http-integration.test.mjs": "d438bd92729938e00c403af19d7a076d502d883ffd9a295dc2fe48272b2c02e1",
+    "account/tests/local-browser-server.mjs": "09331b558c8375cfa2d4e4da41cd982557d59f3887201b92d899c991796c8223",
+    "account/tests/panel-completion.test.mjs": "1c7a899ce523f0a38ead14d762b40a005f29c21acaa0966ffb60ab7b4f9cf2e3",
+    "account/tests/session-concurrency.test.mjs": "3de916afaacffaec76dcf220a5f7ea1dd05676d2eb5adfe79a7dcec0661c500b",
+    "account/tests/store-watch.test.mjs": "b4a95cbc7528480e91cbd0b6adaed1d0fa67b84af22f25b19502b2d73c6df09a",
+    "account/worker/account.js": "21a73feb88ca5617748b4fe44c25b54ba39cf3f4e93f075de27d3462c6052301",
+    "account/worker/store.js": "84675a42b1cf554ee9d0f87878392d4e12fe24942d712748f806a75c45b5e490",
+    "patches/loading-cache/sw.js": "d49ab486c20de18cac3d3eecca4dedec9135623ac0ad71b296b0c079bb6565c2",
+    "patches/loading-cache/tests/worker-http-followup.test.mjs": "fbfa2c1a7c0ad01b8d013116f428b0eb961ae6b653bd9b4462d50935fae7c108"
+  },
+  "nativeBrowser": {
+    "attemptedCases": 15,
+    "casesReachingTestBody": 0,
+    "passed": 0,
+    "setupErrors": 15,
+    "reason": "net::ERR_BLOCKED_BY_ADMINISTRATOR",
+    "policyBypassAttempted": false,
+    "runnerUpdatedAfterAttempt": "One preflight, deterministic cleanup and deadlines; syntax checked only, not browser rerun."
+  },
+  "productionBuildRerun": false,
+  "fullNpmTestRerun": false,
+  "physicalDeviceValidation": false,
+  "liveCloudflareD1Validation": false,
+  "gameplayAndInputReverifiedThisTurn": false,
+  "previousEvidenceIsHistorical": true,
+  "oversizedResponseExperiment": {
+    "transport": "Node native fetch over actual local HTTP",
+    "workerEventsAndCacheStorage": "contract fixture, not native browser",
+    "maxPlannedChunksAcrossTwoAttempts": 200,
+    "sentChunksFinalCombinedRun": 4,
+    "sentChunksStandaloneAfterRun": 3,
+    "abortedAttempts": 2,
+    "performanceClaim": "no FPS claim"
+  }
+}

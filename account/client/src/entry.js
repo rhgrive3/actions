@@ -7,6 +7,7 @@ import { t } from './i18n.js';
 import { avatarSVG, CORE_ICONS as ICONS } from './art.js';
 
 let panelMod = null, panelLoading = null, openPanel = null;
+let opening = null, openEpoch = 0;
 
 function loadPanel() {
   if (panelMod) return Promise.resolve(panelMod);
@@ -15,20 +16,43 @@ function loadPanel() {
 }
 
 /** Opens the account dialog. `view`: 'login' | 'register' | 'account' (default: by sign-in state). */
-async function open(view) {
-  if (openPanel) return openPanel;
-  for (const el of document.querySelectorAll('.zva-chip, .zva-tchip')) el.classList.add('is-busy');
-  try {
-    const { mountPanel } = await loadPanel();
-    openPanel = mountPanel({ view, onClose: () => { openPanel = null; } });
-    return openPanel;
-  } catch (e) {
-    console.error('[account] dialog failed to load', e);
-    game.sfx('ui_error');
-    return null;
-  } finally {
-    for (const el of document.querySelectorAll('.zva-chip, .zva-tchip')) el.classList.remove('is-busy');
-  }
+function open(view) {
+  if (openPanel) return Promise.resolve(openPanel);
+  if (opening) return opening;
+  const epoch = ++openEpoch;
+  setBusy(true);
+  opening = (async () => {
+    try {
+      const { mountPanel } = await loadPanel();
+      if (epoch !== openEpoch) return null;
+      const panel = mountPanel({ view, onClose: () => { if (openPanel === panel) openPanel = null; } });
+      openPanel = panel;
+      return panel;
+    } catch (e) {
+      if (epoch === openEpoch) {
+        console.error('[account] dialog failed to load', e);
+        game.sfx('ui_error');
+      }
+      return null;
+    } finally {
+      if (epoch === openEpoch) { opening = null; setBusy(false); }
+    }
+  })();
+  return opening;
+}
+
+function setBusy(busy) {
+  for (const el of document.querySelectorAll('.zva-chip, .zva-tchip')) el.classList.toggle('is-busy', busy);
+}
+
+function close() {
+  // A close during dynamic import also cancels the eventual mount. A later
+  // open may share the module download, but owns a different dialog epoch.
+  ++openEpoch;
+  opening = null;
+  const panel = openPanel; openPanel = null;
+  panel?.close();
+  setBusy(false);
 }
 
 const h = (tag, cls, html) => { const el = document.createElement(tag); if (cls) el.className = cls; if (html != null) el.innerHTML = html; return el; };
@@ -135,7 +159,7 @@ function start() {
   watchMenus();
   window.zevantAccount = Object.freeze({
     open: (view) => open(view),
-    close: () => openPanel?.close(),
+    close,
     get status() { return account.status; },
     get user() { return account.user ? { ...account.user } : null; },
     subscribe: (fn) => account.subscribe((a) => fn({ status: a.status, user: a.user ? { ...a.user } : null })),

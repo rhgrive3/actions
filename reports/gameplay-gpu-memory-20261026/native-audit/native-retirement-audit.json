@@ -1,0 +1,2125 @@
+{
+  "schema": 1,
+  "sourceSha": "e4bb8f934db08c14abedd41845f0799c33d936e7",
+  "contentHash": "7fdcf7b17ee32caf9341a1fd4a470d6060f99398eae37a2bd0311aae91d8aed2",
+  "status": "passed",
+  "purpose": "Old native world reachability after Scorch -> Tidewater; no performance claim",
+  "conditions": {
+    "crabLifecycle": false,
+    "expectedLifecycle": "released",
+    "maps": [
+      "scorch",
+      "tidewater"
+    ],
+    "processScope": "Linux browser process tree including zygotes",
+    "cycles": 2,
+    "seconds": 5,
+    "quality": "low",
+    "mobile": true,
+    "viewport": [
+      480,
+      300
+    ],
+    "deviceScaleFactor": 1,
+    "seed": 20261026,
+    "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+    "cpu": "AMD EPYC 9V74 80-Core Processor"
+  },
+  "watch": {
+    "map": "scorch",
+    "typedArrayBytes": {
+      "triangles": 4814532,
+      "normals": 1604844,
+      "flags": 534948,
+      "objectIds": 534948,
+      "nodes": 1048544,
+      "order": 534948,
+      "mask": 1469898,
+      "triangleFace": 534948
+    },
+    "faceCount": 45171
+  },
+  "lateGC": [
+    {
+      "label": "replacement-published-1",
+      "receipt": [
+        {
+          "name": "level",
+          "retained": true
+        },
+        {
+          "name": "data",
+          "retained": true
+        },
+        {
+          "name": "physics",
+          "retained": true
+        },
+        {
+          "name": "world",
+          "retained": false
+        },
+        {
+          "name": "triangles",
+          "retained": true
+        },
+        {
+          "name": "nodes",
+          "retained": true
+        },
+        {
+          "name": "mask",
+          "retained": true
+        },
+        {
+          "name": "faces",
+          "retained": true
+        }
+      ]
+    },
+    {
+      "label": "final-later-task-1",
+      "receipt": [
+        {
+          "name": "level",
+          "retained": true
+        },
+        {
+          "name": "data",
+          "retained": true
+        },
+        {
+          "name": "physics",
+          "retained": true
+        },
+        {
+          "name": "world",
+          "retained": false
+        },
+        {
+          "name": "triangles",
+          "retained": true
+        },
+        {
+          "name": "nodes",
+          "retained": true
+        },
+        {
+          "name": "mask",
+          "retained": true
+        },
+        {
+          "name": "faces",
+          "retained": true
+        }
+      ]
+    },
+    {
+      "label": "final-later-task-2",
+      "receipt": [
+        {
+          "name": "level",
+          "retained": true
+        },
+        {
+          "name": "data",
+          "retained": true
+        },
+        {
+          "name": "physics",
+          "retained": true
+        },
+        {
+          "name": "world",
+          "retained": false
+        },
+        {
+          "name": "triangles",
+          "retained": true
+        },
+        {
+          "name": "nodes",
+          "retained": true
+        },
+        {
+          "name": "mask",
+          "retained": true
+        },
+        {
+          "name": "faces",
+          "retained": true
+        }
+      ]
+    },
+    {
+      "label": "final-later-task-3",
+      "receipt": [
+        {
+          "name": "level",
+          "retained": true
+        },
+        {
+          "name": "data",
+          "retained": true
+        },
+        {
+          "name": "physics",
+          "retained": true
+        },
+        {
+          "name": "world",
+          "retained": false
+        },
+        {
+          "name": "triangles",
+          "retained": true
+        },
+        {
+          "name": "nodes",
+          "retained": true
+        },
+        {
+          "name": "mask",
+          "retained": true
+        },
+        {
+          "name": "faces",
+          "retained": true
+        }
+      ]
+    }
+  ],
+  "artifacts": {
+    "runner": {
+      "path": ".ci-scratch/gameplay/native-weak-retirement-diagnostic.mjs",
+      "bytes": 15938,
+      "sha256": "f82adcf80f05b560a16458845ec21a5b549745066f12de705c3184b0046e9385"
+    },
+    "result": {
+      "path": ".ci-scratch/gameplay/native-weak-retirement-diagnostic/result.json",
+      "bytes": 172232,
+      "sha256": "a341a17ea4da78ec3fec33cf5a682b0822b4caf723385a8786f4a424fcf5f575"
+    },
+    "heap": {
+      "path": ".ci-scratch/gameplay/native-weak-retirement-diagnostic/old-native-world.heapsnapshot",
+      "bytes": 459723222,
+      "sha256": "2aaef22e7412e670766f201b87211aa50052e40447b7a06c2125f941bf7272ee"
+    },
+    "ids": {
+      "path": ".ci-scratch/gameplay/native-weak-retirement-diagnostic/old-native-world-ids.json",
+      "bytes": 484,
+      "sha256": "0770c5f05aee8f79231f185feeaf646cff6342395664b17e720cf82d5534ac67"
+    },
+    "paths": {
+      "path": ".ci-scratch/gameplay/native-weak-retirement-diagnostic/retaining-paths.json",
+      "bytes": 47621,
+      "sha256": "183b5a252529d0abd868989d716a4418579e3fe30b8c101ff7ed6c8aabf8829b"
+    },
+    "locations": {
+      "path": ".ci-scratch/gameplay/native-weak-retirement-diagnostic/callback-locations.json",
+      "bytes": 572,
+      "sha256": "65f25d3e92b9f1bf7362a1521f2edce5bfc8812ba4de80700b6ea13d7787b728"
+    }
+  },
+  "heapNodes": 7358800,
+  "heapEdges": 18652188,
+  "retainingPaths": [
+    {
+      "cycle": "level",
+      "reachable": true,
+      "target": {
+        "index": 3201185,
+        "id": 6402385,
+        "type": "object",
+        "name": "Ae"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 6507459,
+            "id": 13014919,
+            "type": "object",
+            "name": "system / Context / scope @9155685"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "previous"
+          }
+        },
+        {
+          "node": {
+            "index": 3201205,
+            "id": 6402425,
+            "type": "object",
+            "name": "_t"
+          },
+          "edge": {
+            "type": "context",
+            "name": "s"
+          }
+        },
+        {
+          "node": {
+            "index": 3201185,
+            "id": 6402385,
+            "type": "object",
+            "name": "Ae"
+          },
+          "edge": {
+            "type": "property",
+            "name": "level"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": "data",
+      "reachable": true,
+      "target": {
+        "index": 3201193,
+        "id": 6402401,
+        "type": "object",
+        "name": "Object"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 3201193,
+            "id": 6402401,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "context",
+            "name": "b"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": "mask",
+      "reachable": true,
+      "target": {
+        "index": 3201195,
+        "id": 6402405,
+        "type": "object",
+        "name": "Uint8Array"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 3201193,
+            "id": 6402401,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "context",
+            "name": "b"
+          }
+        },
+        {
+          "node": {
+            "index": 3201195,
+            "id": 6402405,
+            "type": "object",
+            "name": "Uint8Array"
+          },
+          "edge": {
+            "type": "property",
+            "name": "mask"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": "physics",
+      "reachable": true,
+      "target": {
+        "index": 4728293,
+        "id": 9456921,
+        "type": "object",
+        "name": "qe"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 6507459,
+            "id": 13014919,
+            "type": "object",
+            "name": "system / Context / scope @9155685"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "previous"
+          }
+        },
+        {
+          "node": {
+            "index": 3201205,
+            "id": 6402425,
+            "type": "object",
+            "name": "_t"
+          },
+          "edge": {
+            "type": "context",
+            "name": "s"
+          }
+        },
+        {
+          "node": {
+            "index": 3201185,
+            "id": 6402385,
+            "type": "object",
+            "name": "Ae"
+          },
+          "edge": {
+            "type": "property",
+            "name": "level"
+          }
+        },
+        {
+          "node": {
+            "index": 3201206,
+            "id": 6402427,
+            "type": "object",
+            "name": "k"
+          },
+          "edge": {
+            "type": "property",
+            "name": "nativeNav"
+          }
+        },
+        {
+          "node": {
+            "index": 4728293,
+            "id": 9456921,
+            "type": "object",
+            "name": "qe"
+          },
+          "edge": {
+            "type": "property",
+            "name": "physics"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": "triangles",
+      "reachable": true,
+      "target": {
+        "index": 4783286,
+        "id": 9566861,
+        "type": "object",
+        "name": "Float32Array"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 3201193,
+            "id": 6402401,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "context",
+            "name": "b"
+          }
+        },
+        {
+          "node": {
+            "index": 4783286,
+            "id": 9566861,
+            "type": "object",
+            "name": "Float32Array"
+          },
+          "edge": {
+            "type": "property",
+            "name": "triangles"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": "nodes",
+      "reachable": true,
+      "target": {
+        "index": 5197680,
+        "id": 10395563,
+        "type": "object",
+        "name": "Float32Array"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 3201193,
+            "id": 6402401,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "context",
+            "name": "b"
+          }
+        },
+        {
+          "node": {
+            "index": 5197680,
+            "id": 10395563,
+            "type": "object",
+            "name": "Float32Array"
+          },
+          "edge": {
+            "type": "property",
+            "name": "nodes"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": "faces",
+      "reachable": true,
+      "target": {
+        "index": 5675142,
+        "id": 11350349,
+        "type": "object",
+        "name": "Array"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3710,
+            "id": 7421,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "25 / gin::ContextHolder::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 3536128,
+            "id": 7072295,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:42123"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 3537184,
+            "id": 7074407,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 4538943,
+            "id": 9077937,
+            "type": "object",
+            "name": "m"
+          },
+          "edge": {
+            "type": "property",
+            "name": "input"
+          }
+        },
+        {
+          "node": {
+            "index": 4628183,
+            "id": 9256421,
+            "type": "native",
+            "name": "<canvas data-engine=\"three.js r186\" id=\"game-canvas\" width=\"270\" height=\"168\" style=\"display: block; width: 480px; height: 300px; opacity: 1; clip-path: none;\">"
+          },
+          "edge": {
+            "type": "property",
+            "name": "canvas"
+          }
+        },
+        {
+          "node": {
+            "index": 7308162,
+            "id": 37076,
+            "type": "native",
+            "name": "blink::EventTargetData"
+          },
+          "edge": {
+            "type": "element",
+            "name": 17
+          }
+        },
+        {
+          "node": {
+            "index": 7308163,
+            "id": 37078,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<std::pair<blink::AtomicString, cppgc::internal::BasicMember<blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308164,
+            "id": 37080,
+            "type": "native",
+            "name": "blink::BasicHeapVector<blink::internal::HeapCollectionType::kGCed, cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>, 1>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7308165,
+            "id": 37082,
+            "type": "native",
+            "name": "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::RegisteredEventListener, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293993,
+            "id": 8738,
+            "type": "native",
+            "name": "blink::RegisteredEventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 5
+          }
+        },
+        {
+          "node": {
+            "index": 7293991,
+            "id": 8734,
+            "type": "native",
+            "name": "EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 7293992,
+            "id": 8736,
+            "type": "native",
+            "name": "V8EventListener"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 6211937,
+            "id": 12423901,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 4895378,
+            "id": 9790937,
+            "type": "object",
+            "name": "system / Context / scope @9150507"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 4895379,
+            "id": 9790939,
+            "type": "closure",
+            "name": ""
+          },
+          "edge": {
+            "type": "context",
+            "name": "t"
+          }
+        },
+        {
+          "node": {
+            "index": 4895496,
+            "id": 9791173,
+            "type": "object",
+            "name": "system / Context / scope @9154975"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "context"
+          }
+        },
+        {
+          "node": {
+            "index": 3201193,
+            "id": 6402401,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "context",
+            "name": "b"
+          }
+        },
+        {
+          "node": {
+            "index": 3201192,
+            "id": 6402399,
+            "type": "object",
+            "name": "Object"
+          },
+          "edge": {
+            "type": "property",
+            "name": "manifest"
+          }
+        },
+        {
+          "node": {
+            "index": 5675142,
+            "id": 11350349,
+            "type": "object",
+            "name": "Array"
+          },
+          "edge": {
+            "type": "property",
+            "name": "faces"
+          }
+        }
+      ]
+    }
+  ],
+  "callbackLocations": [
+    {
+      "node": 4895379,
+      "scriptId": 69,
+      "scriptNodeName": "system / Script / http://127.0.0.1:42123/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/patches/native-stages/runtime/engine.mjs",
+      "lineZeroBased": 2,
+      "columnZeroBased": 67009
+    },
+    {
+      "node": 6211937,
+      "scriptId": 69,
+      "scriptNodeName": "system / Script / http://127.0.0.1:42123/_versions/8acd8afe981fcb55ef32b62ba0b93efdb7df6b2db129f564b87a6abe4811f3c8/patches/native-stages/runtime/engine.mjs",
+      "lineZeroBased": 2,
+      "columnZeroBased": 57880
+    }
+  ],
+  "conclusion": "The first native load predicate passed to the one-per-canvas context-loss watcher retains the per-build lexical environment. Old NativeLevel/data/physics and large arrays remain after world disposal; nativeWorld itself is collected. This is bounded to the first native build per canvas, rather than a stage-ID cache, but retains a materially large mobile CPU graph.",
+  "sourceRefs": [
+    "patches/native-stages/runtime/native-world.mjs:151",
+    "patches/native-stages/runtime/native-gpu-budget.mjs:152-156"
+  ],
+  "snapshotOrder": "No strong CDP target handle existed during collection/snapshot. Resolve snapshot IDs from WeakRefs only afterward, then releaseObjectGroup. No inventory render hook, geometry listeners, or per-frame weak polling were installed.",
+  "caveats": [
+    "WeakRefs only show target reachability, not retained-byte totals.",
+    "The minimum known retained original native typed-array payload is11,077,610 bytes; JS face/block/nav/paint graphs and texture CPU buffers are additional and not quantified here.",
+    "BFS excludes weak and ephemeron-table edges. The reported canvas listener path requires neither and is directly backed by callback locations in the exact emitted native engine.",
+    "This is one candidate e4 LOW diagnostic, not a baseline/candidate timing comparison or hardware memory-residency test.",
+    "Heap is local diagnostic evidence only; do not commit the459MB snapshot."
+  ]
+}

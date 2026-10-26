@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const dir=process.argv[2],j=JSON.parse(fs.readFileSync(dir+'/retired-actors.heapsnapshot','utf8')),ids=JSON.parse(fs.readFileSync(dir+'/retired-actor-ids.json','utf8'));
+const nf=j.snapshot.meta.node_fields,ef=j.snapshot.meta.edge_fields,nw=nf.length,ew=ef.length,nt=j.snapshot.meta.node_types[0],et=j.snapshot.meta.edge_types[0],nodes=j.nodes,edges=j.edges,strings=j.strings;
+const ntype=nf.indexOf('type'),name=nf.indexOf('name'),id=nf.indexOf('id'),ec=nf.indexOf('edge_count'),etype=ef.indexOf('type'),ename=ef.indexOf('name_or_index'),to=ef.indexOf('to_node'),N=nodes.length/nw;
+const starts=new Uint32Array(N+1);for(let i=0;i<N;i++)starts[i+1]=starts[i]+nodes[i*nw+ec]*ew;
+const targets=new Map(ids.map(x=>[Number(x.heapSnapshotObjectId),x.cycle])),found=new Map();for(let i=0;i<N;i++)if(targets.has(nodes[i*nw+id]))found.set(targets.get(nodes[i*nw+id]),i);
+const parent=new Int32Array(N).fill(-1),via=new Int32Array(N).fill(-1),queue=new Uint32Array(N);let head=0,tail=1;queue[0]=0;parent[0]=0;
+while(head<tail){const p=queue[head++];for(let e=starts[p];e<starts[p+1];e+=ew){if(et[edges[e+etype]]==='weak'||String(strings[edges[e+ename]]).includes('part of key'))continue;const child=edges[e+to]/nw;if(parent[child]>=0)continue;parent[child]=p;via[child]=e;queue[tail++]=child;}}
+const describe=i=>({index:i,id:nodes[i*nw+id],type:nt[nodes[i*nw+ntype]],name:strings[nodes[i*nw+name]]});
+const en=e=>{const ty=et[edges[e+etype]];return {type:ty,name:['element','hidden'].includes(ty)?edges[e+ename]:strings[edges[e+ename]]};};
+const report={nodes:N,edges:edges.length/ew,visited:tail,actors:[]};
+for(const [cycle,target]of found){const path=[];let p=target;while(p!==0&&parent[p]>=0){path.push({node:describe(p),edge:en(via[p])});p=parent[p];}path.push({node:describe(p)});report.actors.push({cycle,reachable:parent[target]>=0,target:describe(target),strongRootPath:path.reverse()});}
+fs.writeFileSync(dir+'/retaining-paths-no-ephemeron.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

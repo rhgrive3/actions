@@ -33,10 +33,12 @@ export class Physics {
 
   // Ray vs all blocks. dir must be normalized. Ignores blocks containing the origin.
   // opts.skipGrates: ink, shots, droplets and the camera pass straight through grates
-  raycast(origin, dir, maxDist, out = new Hit(), skipGrates = false) {
+  // Internal ground probes may borrow an ordered candidate column. anyHit is
+  // Boolean-only: callers must not read the other Hit fields on that path.
+  raycast(origin, dir, maxDist, out = new Hit(), skipGrates = false, candidates = null, anyHit = false) {
     out.hit = false; out.dist = maxDist; out.block = -1; out.face = -1;
     const ex = origin.x + dir.x * maxDist, ez = origin.z + dir.z * maxDist;
-    const ids = this.level.queryBlocks(Math.min(origin.x, ex), Math.min(origin.z, ez), Math.max(origin.x, ex), Math.max(origin.z, ez), this._ids);
+    const ids = candidates || this.level.queryBlocks(Math.min(origin.x, ex), Math.min(origin.z, ez), Math.max(origin.x, ex), Math.max(origin.z, ez), this._ids);
     const blocks = this.level.blocks;
     let best = maxDist, bestK = -1, bestSign = 0, bestB = -1;
     for (let i = 0; i < ids.length; i++) {
@@ -56,6 +58,9 @@ export class Physics {
         if (tmin > tmax) { miss = true; break; }
       }
       if (miss || tmax < 0 || tmin < 0 || tmin > best) continue;
+      // LOS needs only existence, so neither nearest-hit traversal nor face UVs
+      // are useful once the unchanged slab test accepts an occluder.
+      if (anyHit) { out.hit = true; return out; }
       best = tmin; bestK = kmin; bestSign = smin; bestB = b.id;
     }
     if (bestB < 0) return out;
@@ -86,7 +91,7 @@ export class Physics {
     const len = _ab.length();
     if (len < 1e-4) return true;
     const dir = _n.copy(_ab).multiplyScalar(1 / len);
-    return !this.raycast(a, dir, len - 0.05, this._losHit || (this._losHit = new Hit()), true).hit;
+    return !this.raycast(a, dir, len - 0.05, this._losHit || (this._losHit = new Hit()), true, null, true).hit;
   }
 
   closestOnBlock(b, p, out) {

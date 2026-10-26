@@ -83,6 +83,14 @@
           "patches/local-quality/tests/special-vfx-zero-drag-parity.test.mjs",
           "patches/local-quality/tests/lobby-reflection-lifecycle.test.mjs"
         ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "scripts/tests/inkwave-fx-drop-color-upload.test.mjs"
+        ]
       }
     ]
   },

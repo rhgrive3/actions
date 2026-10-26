@@ -6,28 +6,29 @@ export function composerGradeKeepsPackedTargetNonnegative(grade) {
   // This checks the environment-controlled Grade inputs. The remaining live
   // controls are bounded in main.js (uHurt approaches 0..0.8) and uFlash stays
   // at its zero default; the focused acceptance test pins those source facts.
-  const components = (value, fallback) => {
-    if (value == null) return fallback;
-    if (Array.isArray(value) || ArrayBuffer.isView(value)) return Array.from(value);
-    if (Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.z)) {
-      return [value.x, value.y, value.z];
-    }
-    return null;
-  };
-
   const lift = grade?.uLift ?? 0;
   const exposure = grade?.uExposure ?? 1;
   const vignette = grade?.uVignette ?? 0.22;
   const contrast = grade?.uContrast ?? 1.07;
   const saturation = grade?.uSat ?? 1.08;
   const vibrance = grade?.uVib ?? 0.12;
-  const shadow = components(grade?.uShadowTint, [0.975, 0.99, 1.035]);
-  const high = components(grade?.uHighTint, [1.025, 1.0, 0.972]);
-
-  if (![lift, exposure, vignette, contrast, saturation, vibrance].every(Number.isFinite)) return false;
+  if (!Number.isFinite(lift) || !Number.isFinite(exposure) || !Number.isFinite(vignette)
+    || !Number.isFinite(contrast) || !Number.isFinite(saturation) || !Number.isFinite(vibrance)) return false;
   if (lift < 0 || exposure < 0 || vignette > 1) return false;
-  for (const tint of [shadow, high]) {
-    if (!tint || tint.length !== 3 || !tint.every((value) => Number.isFinite(value) && value >= 0)) return false;
+  // render() validates this on every frame, including live in-place grade
+  // changes. Read scalars without allocating fallback, copied or work arrays.
+  for (let i = 0; i < 2; i++) {
+    const tint = i === 0 ? grade?.uShadowTint : grade?.uHighTint;
+    if (tint == null) continue; // both authored fallback tints are finite and positive
+    let x, y, z;
+    if (Array.isArray(tint) || ArrayBuffer.isView(tint)) {
+      if (tint.length !== 3) return false;
+      x = tint[0]; y = tint[1]; z = tint[2];
+    } else {
+      x = tint.x; y = tint.y; z = tint.z;
+    }
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)
+      || x < 0 || y < 0 || z < 0) return false;
   }
 
   return true;

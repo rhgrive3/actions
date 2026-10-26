@@ -56,14 +56,34 @@ async function verify(response, expected) {
   if (!response || response.status !== 200 || response.type === 'opaque' || response.redirected) {
     throw new Error('Uncacheable');
   }
-  // Clone before exposing the response. Never clone a response whose body the page already consumed.
-  const bytes = await response.clone().arrayBuffer();
-  // Asset entries are compact tuples; the HTML build descriptor is the
-  // named {bytes, sha256} record emitted by the same builder.
+  // Asset entries are compact tuples; HTML uses a named descriptor. Validate
+  // the byte budget before reading, including for streams without Content-Length.
   const descriptor=Array.isArray(expected)?expected:expected?[expected.bytes,expected.sha256]:null;
   if (!descriptor || descriptor.length !== 2 || !Number.isSafeInteger(descriptor[0]) || descriptor[0]<0 ||
-      typeof descriptor[1]!=='string' || !/^[a-f0-9]{64}$/.test(descriptor[1]) ||
-      bytes.byteLength !== descriptor[0] || await digest(bytes) !== descriptor[1]) {
+      descriptor[0]>MAX_REVISION_BYTES || typeof descriptor[1]!=='string' || !/^[a-f0-9]{64}$/.test(descriptor[1])) {
+    throw new Error('Asset integrity mismatch');
+  }
+  const bytes = new Uint8Array(descriptor[0]);
+  let size = 0;
+  // Clone before exposing the response. Keep verification bounded by the
+  // manifest, rather than buffering an arbitrarily large body before checking.
+  const reader = response.clone().body?.getReader();
+  if (reader) {
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value.byteLength > bytes.length - size) {
+          // Don't await tee cancellation: its sibling is retained for the page.
+          void reader.cancel().catch(() => {});
+          throw new Error('Asset integrity mismatch');
+        }
+        bytes.set(value, size);
+        size += value.byteLength;
+      }
+    } finally { reader.releaseLock(); }
+  }
+  if (size !== descriptor[0] || await digest(bytes) !== descriptor[1]) {
     throw new Error('Asset integrity mismatch');
   }
   return response;
@@ -71,12 +91,26 @@ async function verify(response, expected) {
 async function timedFetch(request, timeout, inspect) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
+  let response;
   try {
-    const response = await fetch(request, { signal: controller.signal });
+    response = await fetch(request, { signal: controller.signal });
     // fetch resolves at headers. Keep its signal live through integrity reads
     // so a stalled body cannot outlive the existing download deadline.
     if (inspect) await inspect(response);
     return response;
+  }
+  catch (error) {
+    // A rejected integrity read also abandons the unconsumed original branch.
+    // Stop it immediately instead of leaving its network download alive.
+    // Error-status responses can still be forwarded to the page unchanged.
+    if (response?.ok) {
+      // Drop the unused branch before aborting the transport. Verification
+      // cloned the response; leaving its sibling unread can keep a tee alive
+      // or surface an unhandled stream rejection on aborted native fetches.
+      if (response.body && !response.body.locked) void response.body.cancel().catch(() => {});
+      controller.abort();
+    }
+    throw error;
   }
   finally { clearTimeout(timer); }
 }

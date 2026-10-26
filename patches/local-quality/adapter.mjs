@@ -115,7 +115,7 @@ const IDENTITY_FILES = [
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
   'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
-  'settings-ui-adapter.mjs', 'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs', 'locker-stage.mjs',
+  'settings-ui-adapter.mjs', 'ios-paused-menu-gpu-guard.mjs', 'menu-navigation-timer-adapter.mjs', 'static-menu-adapter.mjs', 'locker-stage.mjs',
   'assets/menu/weapon.webp', 'assets/menu/lobby.webp', 'assets/menu/locker.webp',
   'loading-screen-adapter.mjs', 'assets/loading/arena.webp',
   'mural-atlas-adapter.mjs',
@@ -162,7 +162,7 @@ const IDENTITY_FILES = [
   'root-hair-spring-adapter.mjs',
   'collision-hotpath-adapter.mjs',
   'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
-  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
+  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'debug-ab-runtime.mjs', 'range-frame-pacing-adapter.mjs',
   // Terminal composition dependencies are build inputs even when this layer's
   // adaptQualitySource does not directly invoke them. Preserve existing order.
   // Full terminal composer owns these additional build-only queue transformers.

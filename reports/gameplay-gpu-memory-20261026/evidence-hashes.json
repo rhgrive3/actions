@@ -1,0 +1,52 @@
+{
+  "baseline-raf-final.json.gz": {
+    "sha256": "e232fe43f2f37ed4ebad78adae95e9feb979ac691c3638d4044b62c41d8b24a9",
+    "uncompressedSha256": "19a47d5be720bf73b3df3d40fa79c7a1db4c0e3038651f5f0ed3af37f72c4dd3",
+    "bytes": 396046
+  },
+  "candidate-raf-final.json.gz": {
+    "sha256": "07d3b383bbfbbcda06c3899c6161df98715644d88432ca646049f8d69eb418c7",
+    "uncompressedSha256": "3eb750d828211ee643b57f1717f1cf0f0cee3075e6dfa08750d8c1e18a3f0980",
+    "bytes": 396377
+  },
+  "baseline-crab-clean.json.gz": {
+    "sha256": "d9cf3c2860710aeaa467b34be800537d38d3025923ea2ef7454a852e355d7223",
+    "uncompressedSha256": "a9f30165ffa7e8081af16c176ef1dd17b095bb3ae1bb7c4deb8ce7b6d8028474",
+    "bytes": 385508
+  },
+  "candidate-crab-clean.json.gz": {
+    "sha256": "dc6d61e28c1ee04086ec54c3b6a9ccf85eeba94cc225c7973b90dd0914523b24",
+    "uncompressedSha256": "3976c5e4e47c4899bf0aff9ee6ea0eaa0de794eef2a762cf17f322cfcf78af07",
+    "bytes": 388780
+  },
+  "baseline-native-high.json.gz": {
+    "sha256": "b29c9b4581663e3e80068f572ed9ccf31f35642647cd5d3e550be1152bf15407",
+    "uncompressedSha256": "57621406f3c48e9555c2ef50d44ab2c2398b37dfe362eb1335c6b45d7d045927",
+    "bytes": 421653
+  },
+  "candidate-native-high.json.gz": {
+    "sha256": "ba2f1519e55ec38b41e10ab7328fa373f210e05ff31e0fa70c889d77c74a4604",
+    "uncompressedSha256": "1b999b556a7b878f1fc8cda45f6d5d5e66747b0f8ef41b17ed7324a970d9a543",
+    "bytes": 435605
+  },
+  "baseline-raf-18.json.gz": {
+    "sha256": "8434e22743342c60fd41ef0a19ad0d61dd345e6beea428a254b6635397361648",
+    "uncompressedSha256": "04319e9d63b0afa13d562ae43d137d1049f39d4d7df3bb8f39ef1ed3a8d2ca50",
+    "bytes": 1368086
+  },
+  "candidate-raf-18.json.gz": {
+    "sha256": "d6e7c53dd6900fda3eb7498f49ca270b453913dfb6b7d6cc9e7839fb0d684b5a",
+    "uncompressedSha256": "2984b8e3d7499c29b499b41f7e9aafc56260aa01506b3cf254fa4d3f48a0a872",
+    "bytes": 1386976
+  },
+  "baseline-native-final.json.gz": {
+    "sha256": "b366dc6a6d34807790d7492418a8497bf6d19d3324d923e5c3c404edbe4ba166",
+    "uncompressedSha256": "46b8523365b9b9f5e7869109ca9e4fdd33cc8f478131942546b9b51fdbcd23fb",
+    "bytes": 428975
+  },
+  "candidate-native-final.json.gz": {
+    "sha256": "e910f000eabeaab918c981961f624ca6d2b1531fb55db7996c9d8b1e9eda096e",
+    "uncompressedSha256": "6cefb414743d5c644821a974dcef8b8d17badc57c6e166937dc24bcb17300cb0",
+    "bytes": 439294
+  }
+}

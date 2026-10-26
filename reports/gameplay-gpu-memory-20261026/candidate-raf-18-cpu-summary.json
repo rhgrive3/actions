@@ -1,0 +1,2252 @@
+{
+  "combat-0.cpuprofile": {
+    "sha256": "882b9010569f8c3b542564506f62569f5370b6049b0b9bb0396a3fbc094a5926",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 21078.237
+      },
+      {
+        "function": "setSize",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 3129.017
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 1390.345
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 1001.536
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 123.871
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 97.997
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 56.809
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 55.174
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 54.265
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 52.997
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 51.707
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 51.171
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 46.976
+      },
+      {
+        "function": "raycast",
+        "file": "physics.js",
+        "lineZeroBased": 0,
+        "milliseconds": 45.967
+      },
+      {
+        "function": "Y.t.update",
+        "file": "offline-offscreen-budget.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 45.737
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 42.647
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 38.71
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 36.724
+      },
+      {
+        "function": "J.r.update",
+        "file": "sub-ready.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 32.593
+      },
+      {
+        "function": "setValue",
+        "file": "three.module.js",
+        "lineZeroBased": 4126,
+        "milliseconds": 30.666
+      }
+    ]
+  },
+  "combat-1.cpuprofile": {
+    "sha256": "128fd2d54d10ced36d6408b87eb3a7f2e85c1410553e0ccff9e3510dfb93b0a0",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 24002.153
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 697.566
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 686.252
+      },
+      {
+        "function": "setSize",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 582.167
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 101.638
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 79.311
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 78.488
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 76.718
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 73.989
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 56.452
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 56.059
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 55.672
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 54.09
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 52.979
+      },
+      {
+        "function": "compose",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 52.167
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 50.713
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 45.404
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 43.973
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 43.343
+      },
+      {
+        "function": "W.e.update",
+        "file": "spawn-exclusion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 40.674
+      }
+    ]
+  },
+  "combat-10.cpuprofile": {
+    "sha256": "c03506bef3c97f13934ec0e75f7e16d92bfac8a3915a2bca30fe343e16ffa793",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 26990.895
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 673.915
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 149.246
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 83.425
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 60.767
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 56.691
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 51.544
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 51.094
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 50.669
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 50.54
+      },
+      {
+        "function": "bindFramebuffer",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 45.089
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 40.7
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 36.501
+      },
+      {
+        "function": "ft",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 30.086
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 29.686
+      },
+      {
+        "function": "W.e.update",
+        "file": "spawn-exclusion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 27.826
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 26.777
+      },
+      {
+        "function": "E.t.update",
+        "file": "issue-eight-followup.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 26.125
+      },
+      {
+        "function": "F.r.update",
+        "file": "movement-motion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 25.477
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25.253
+      }
+    ]
+  },
+  "combat-11.cpuprofile": {
+    "sha256": "9fc57c44a2a2d12bd8ef388861fa570671ea7c4f79fdbb6828bdc09a91c96e6d",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25843.818
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 599.063
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 197.634
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 128.482
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 90.018
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 87.832
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 83.993
+      },
+      {
+        "function": "flush",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 70.527
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 60.545
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 59.644
+      },
+      {
+        "function": "j.update",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 49.094
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 47.373
+      },
+      {
+        "function": "ye",
+        "file": "kit-subs.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 45.877
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 45.855
+      },
+      {
+        "function": "Ot",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 44.524
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 43.392
+      },
+      {
+        "function": "K",
+        "file": "locomotion-profile.js",
+        "lineZeroBased": 0,
+        "milliseconds": 41.963
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 40.643
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 38.695
+      },
+      {
+        "function": "Gt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 38.371
+      }
+    ]
+  },
+  "combat-12.cpuprofile": {
+    "sha256": "b06ff3524d278ff652a5b9b789bfe20148ce4c6ccf3fcd88daf5735840791c8e",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25051.281
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 826.02
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 207.009
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 106.265
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 94.973
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 93.141
+      },
+      {
+        "function": "compose",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 81.31
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 79.621
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 64.562
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 62.637
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 58.684
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 47.709
+      },
+      {
+        "function": "W.e.update",
+        "file": "spawn-exclusion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 46.811
+      },
+      {
+        "function": "update",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 44.056
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 42.945
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 42.67
+      },
+      {
+        "function": "_steer",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 42.592
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 41.535
+      },
+      {
+        "function": "flush",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 39.484
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 39.471
+      }
+    ]
+  },
+  "combat-13.cpuprofile": {
+    "sha256": "b2f1f95c2d9665a6cbee83af8628d2bb6638a47517772d2361462a52442099d6",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 26194.997
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 695.024
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 191.677
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 85.028
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 75.306
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 71.54
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 68.717
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 68.19
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 68.165
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 67.005
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 60.857
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 60.243
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 57.349
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 56.337
+      },
+      {
+        "function": "update",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 47.974
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 40.201
+      },
+      {
+        "function": "createPanner",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 32.571
+      },
+      {
+        "function": "T",
+        "file": "kit-subs.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 32.569
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 31.456
+      },
+      {
+        "function": "renderBufferDirect",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 29.507
+      }
+    ]
+  },
+  "combat-14.cpuprofile": {
+    "sha256": "f12f5041b2d2dc032a59f5fb1beef6fc3d096e4426cc3e1ee9bd6282548dc764",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25019.686
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 779.263
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 212.161
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 157.961
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 134.197
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 81.952
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 70.124
+      },
+      {
+        "function": "raycast",
+        "file": "physics.js",
+        "lineZeroBased": 0,
+        "milliseconds": 69.603
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 65.488
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 61.076
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 52.829
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 51.707
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 49.021
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 46.779
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 43.752
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 40.608
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 40.324
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 39.645
+      },
+      {
+        "function": "Y.t.update",
+        "file": "offline-offscreen-budget.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 38.278
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 37.35
+      }
+    ]
+  },
+  "combat-15.cpuprofile": {
+    "sha256": "0e66d0651eaeedf5ab66fc94808f38361cbc4b1a3ea0e50b71aba5d5ee215f33",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25620.352
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 620.918
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 106.636
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 99.917
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 89.16
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 87.492
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 72.888
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 71.981
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 71.696
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 64.591
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 62.807
+      },
+      {
+        "function": "flush",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 55.445
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 53.609
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 47.423
+      },
+      {
+        "function": "j.update",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 44.785
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 43.256
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 41.768
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 40.603
+      },
+      {
+        "function": "ze",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 40.242
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 38.885
+      }
+    ]
+  },
+  "combat-16.cpuprofile": {
+    "sha256": "ae632b77b0a6af66ceff1498930aef0b5599fb87437eef98b55ea3145705306d",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 26704.969
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 604.241
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 81.353
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 80.11
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 64.29
+      },
+      {
+        "function": "mix",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 53.379
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 52.7
+      },
+      {
+        "function": "e._horizontal",
+        "file": "issue-five-hotfix-a.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 50.728
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 50.041
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 48.561
+      },
+      {
+        "function": "copy",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 44.458
+      },
+      {
+        "function": "setFromRotationMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 42.473
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 41.175
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 40.542
+      },
+      {
+        "function": "_face",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 38.613
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 38.118
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 36.026
+      },
+      {
+        "function": "connect",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 33.629
+      },
+      {
+        "function": "W.e.update",
+        "file": "spawn-exclusion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 33.543
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 32.482
+      }
+    ]
+  },
+  "combat-17.cpuprofile": {
+    "sha256": "8b627e2b9f639c2bd1b70cbba4ca5fcd548f58e99bd3b63985b13d1fa0372a74",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 26545.075
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 675.871
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 103.079
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 79.295
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 75.262
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 65.998
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 54.401
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 47.806
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 45.64
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 42.349
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 39.861
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 39.757
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 39.026
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 38.686
+      },
+      {
+        "function": "copy",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 37.822
+      },
+      {
+        "function": "update",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 36.675
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 35.787
+      },
+      {
+        "function": "W.e.update",
+        "file": "spawn-exclusion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 32.602
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 30.601
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 29.903
+      }
+    ]
+  },
+  "combat-2.cpuprofile": {
+    "sha256": "5f27f83a30ec4b45188872e2d680f43d1f735bbdcc1215a488179d16bf743391",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25893.705
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 732.608
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 195.446
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 96.813
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 89.293
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 77.52
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 55.303
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 53.537
+      },
+      {
+        "function": "createPanner",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 53.085
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 52.932
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 51.768
+      },
+      {
+        "function": "$t",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 51.008
+      },
+      {
+        "function": "Y._step",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 48.429
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 40.753
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 38.371
+      },
+      {
+        "function": "createBiquadFilter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 37.08
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 34.435
+      },
+      {
+        "function": "bindFramebuffer",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 34.266
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 31.778
+      },
+      {
+        "function": "copy",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 31.599
+      }
+    ]
+  },
+  "combat-3.cpuprofile": {
+    "sha256": "9ceef86a4d8bbba0bd370f570d96b45043759ae2f5fe35ba8c393a834161dd8d",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25163.225
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 717.662
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 200.157
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 102.688
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 94.549
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 93.072
+      },
+      {
+        "function": "queryBlocks",
+        "file": "level.js",
+        "lineZeroBased": 0,
+        "milliseconds": 87.799
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 74.813
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 72.32
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 71.244
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 69.028
+      },
+      {
+        "function": "update",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 62.062
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 61.08
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 60.912
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 56.557
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 55.816
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 46.505
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 41.279
+      },
+      {
+        "function": "Tt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 39.79
+      },
+      {
+        "function": "Cd",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 39.561
+      }
+    ]
+  },
+  "combat-4.cpuprofile": {
+    "sha256": "7ea855e12e865174d6f4bed83557b3be12eb6548621367042ff40aa9a32de37e",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 26526.306
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 573.922
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 86.132
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 75.053
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 52.739
+      },
+      {
+        "function": "_cpuSplat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 51.222
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 44.124
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 42.135
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 41.064
+      },
+      {
+        "function": "u._applyPose",
+        "file": "weapon-handoff-motion.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 40.99
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 40.782
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 40.084
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 37.402
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 35.443
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 34.806
+      },
+      {
+        "function": "dt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 33.975
+      },
+      {
+        "function": "_updTank",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 33.704
+      },
+      {
+        "function": "_pushQuad",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 31.803
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 29.677
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 28.682
+      }
+    ]
+  },
+  "combat-5.cpuprofile": {
+    "sha256": "ad3edd7dd9e9bb20b14a66a9a1f7c46bd174b546c19c1d4e8759060174038ac8",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25325.08
+      },
+      {
+        "function": "getProgramParameter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 790.474
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 629.514
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 124.739
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 87.211
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 85.403
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 78.349
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 72.018
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 67.792
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 61.721
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 49.242
+      },
+      {
+        "function": "queryBlocks",
+        "file": "level.js",
+        "lineZeroBased": 0,
+        "milliseconds": 46.845
+      },
+      {
+        "function": "compose",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 44.843
+      },
+      {
+        "function": "j.update",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 44.21
+      },
+      {
+        "function": "update",
+        "file": "weapons.js",
+        "lineZeroBased": 1,
+        "milliseconds": 41.757
+      },
+      {
+        "function": "Cd",
+        "file": "three.module.js",
+        "lineZeroBased": 4228,
+        "milliseconds": 41.58
+      },
+      {
+        "function": "_applyPose",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 41.333
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 40.834
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 37.341
+      },
+      {
+        "function": "T",
+        "file": "kit-subs.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 36.6
+      }
+    ]
+  },
+  "combat-6.cpuprofile": {
+    "sha256": "7607fba70555b62c61605a8e9ab009bbf8b9989338ba5d4a505b0ba125c5fa9b",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25293.357
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 652.234
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 114.281
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 91.937
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 90.799
+      },
+      {
+        "function": "updateMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 76.184
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 73.67
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 70.345
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 69.936
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 63.78
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 59.11
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 58.928
+      },
+      {
+        "function": "applyBody",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 58.153
+      },
+      {
+        "function": "M.e._emitGrowth",
+        "file": "render.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 57.696
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 53.817
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 50.243
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 49.527
+      },
+      {
+        "function": "_panner",
+        "file": "audio.js",
+        "lineZeroBased": 1,
+        "milliseconds": 49.445
+      },
+      {
+        "function": "ft",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 47.579
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 44.858
+      }
+    ]
+  },
+  "combat-7.cpuprofile": {
+    "sha256": "2aa3ffd508d69528f303c905282eaf8d6cbcff4b986c56923efee2f4766e5a8e",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25665.983
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 709.673
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 158.095
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 103.773
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 93.835
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 83.38
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 63.256
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 57.597
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 57.164
+      },
+      {
+        "function": "T",
+        "file": "kit-subs.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 56.504
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 54.641
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 53.45
+      },
+      {
+        "function": "_pushQuad",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 50.49
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 46.655
+      },
+      {
+        "function": "createGain",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 46.334
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 45.24
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 39.354
+      },
+      {
+        "function": "createBiquadFilter",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 37.179
+      },
+      {
+        "function": "updateMatrixWorld",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 36.314
+      },
+      {
+        "function": "owner.<computed>",
+        "file": "",
+        "lineZeroBased": 33,
+        "milliseconds": 34.655
+      }
+    ]
+  },
+  "combat-8.cpuprofile": {
+    "sha256": "2bf7a34be6a7aa35a02a7abee72641f0c80c41210e627d4f658fb5bdc18b8320",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25434.808
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 684.261
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 398.318
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 100.472
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 85.799
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 68.432
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 66.312
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 62.57
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 60.923
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 60.257
+      },
+      {
+        "function": "update",
+        "file": "bots.js",
+        "lineZeroBased": 1,
+        "milliseconds": 47.588
+      },
+      {
+        "function": "Y._step",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 45.764
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 44.138
+      },
+      {
+        "function": "bindFramebuffer",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 41.43
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 40.365
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 39.934
+      },
+      {
+        "function": "setFromRotationMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 39.381
+      },
+      {
+        "function": "_finishFrame",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 37.019
+      },
+      {
+        "function": "raycast",
+        "file": "physics.js",
+        "lineZeroBased": 0,
+        "milliseconds": 36.599
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 36.148
+      }
+    ]
+  },
+  "combat-9.cpuprofile": {
+    "sha256": "c213193c345de50ff13bedd4dcd1419ecbb4a351219ad4d448b99c37f9068df5",
+    "topSelfMilliseconds": [
+      {
+        "function": "(idle)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 25514.949
+      },
+      {
+        "function": "(program)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 799.811
+      },
+      {
+        "function": "(garbage collector)",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 243.429
+      },
+      {
+        "function": "advance",
+        "file": "source-controller.js",
+        "lineZeroBased": 1,
+        "milliseconds": 77.884
+      },
+      {
+        "function": "slerp",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 74.819
+      },
+      {
+        "function": "sample",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 73.344
+      },
+      {
+        "function": "updateWorldMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 70.391
+      },
+      {
+        "function": "update",
+        "file": "character.js",
+        "lineZeroBased": 11,
+        "milliseconds": 62.901
+      },
+      {
+        "function": "_cpuSplat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 54.919
+      },
+      {
+        "function": "multiplyMatrices",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 53.218
+      },
+      {
+        "function": "splat",
+        "file": "paint.js",
+        "lineZeroBased": 199,
+        "milliseconds": 52.794
+      },
+      {
+        "function": "_restart",
+        "file": "hud.js",
+        "lineZeroBased": 16,
+        "milliseconds": 48.632
+      },
+      {
+        "function": "update",
+        "file": "actor.js",
+        "lineZeroBased": 1,
+        "milliseconds": 48.239
+      },
+      {
+        "function": "resize",
+        "file": "renderer.js",
+        "lineZeroBased": 51,
+        "milliseconds": 47.875
+      },
+      {
+        "function": "setFromRotationMatrix",
+        "file": "three.module.js",
+        "lineZeroBased": 5,
+        "milliseconds": 42.643
+      },
+      {
+        "function": "Y._step",
+        "file": "main-weapon-catalog.mjs",
+        "lineZeroBased": 1,
+        "milliseconds": 40.613
+      },
+      {
+        "function": "bt",
+        "file": "paint-ownership.mjs",
+        "lineZeroBased": 6,
+        "milliseconds": 36.295
+      },
+      {
+        "function": "fk",
+        "file": "source-bank.js",
+        "lineZeroBased": 1,
+        "milliseconds": 34.336
+      },
+      {
+        "function": "bufferSubData",
+        "file": "",
+        "lineZeroBased": -1,
+        "milliseconds": 34.099
+      },
+      {
+        "function": "b",
+        "file": "flow-effects.mjs",
+        "lineZeroBased": 0,
+        "milliseconds": 31.461
+      }
+    ]
+  }
+}

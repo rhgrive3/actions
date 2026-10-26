@@ -915,7 +915,8 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
     const eventKind = e[1], eventPeer = this.peers.get(from);
-    if (!['s','p','pe','b','tr','ev','bm','bc'].includes(eventKind)) return;
+    if (eventKind !== 's' && eventKind !== 'p' && eventKind !== 'pe' && eventKind !== 'b'
+      && eventKind !== 'tr' && eventKind !== 'ev' && eventKind !== 'bm' && eventKind !== 'bc') return;
     if (eventKind === 'p' && (!validNetworkProjectileTiming(e[11], e[12])
       || !validNetworkProjectileCosmetics(e))) return;
     if (eventKind === 'b' && !validNetworkBombBirth(e, G.level?.bounds)) return;
@@ -1852,7 +1853,9 @@ function firstSplatStateFor(session,cfg) {
   }
 
   _validHitAuthorityMetadata(d) {
-    const present = HIT_AUTHORITY_FIELDS.filter((key) => d?.[key] !== undefined).length;
+    let present = 0;
+    for (let i = 0; i < HIT_AUTHORITY_FIELDS.length; i++)
+      if (d?.[HIT_AUTHORITY_FIELDS[i]] !== undefined) present++;
     if (present === 0) return d?.he === undefined;
     if (present !== 4 || !hitSafe(d.h) || d.h < 1
       || !hitSafe(d.v) || d.v < 0 || !hitSafe(d.a) || d.a < 0

@@ -642,11 +642,12 @@ function withInstanceAttrs(base, cap, attrs) {
   return g;
 }
 // Upload only the live part of every dynamic attribute. Reuses one range object per attribute (no per-frame garbage).
-function markUpdated(geo, count) {
+function markUpdated(geo, count, staticAttribute = null) {
   if (count === 0) return;
   const list = geo.userData.dyn;
   for (let i = 0; i < list.length; i++) {
     const a = list[i];
+    if (a === staticAttribute) continue;
     const r = a._fxRange || (a._fxRange = { start: 0, count: 0 });
     r.start = 0; r.count = Math.max(1, count) * a.itemSize;
     a.updateRanges.length = 0;
@@ -727,6 +728,7 @@ export class FX {
   _initDrops(cap) {
     this.dCap = cap;
     this.dN = 0;
+    this._dropColorStart = cap; this._dropColorEnd = 0;
     this.dP = new Float32Array(cap * 3);   // position
     this.dV = new Float32Array(cap * 3);   // velocity
     this.dC = new Float32Array(cap * 3);   // colour
@@ -756,6 +758,8 @@ export class FX {
     this.dC[i3] = col.r; this.dC[i3 + 1] = col.g; this.dC[i3 + 2] = col.b;
     const A = this.dA;
     A[i8] = size; A[i8 + 1] = 0; A[i8 + 2] = life; A[i8 + 3] = grav; A[i8 + 4] = stretch; A[i8 + 5] = rand(); A[i8 + 6] = 0; A[i8 + 7] = flags;
+    this._dropColorStart = Math.min(this._dropColorStart, i);
+    this._dropColorEnd = Math.max(this._dropColorEnd, i + 1);
     return i;
   }
   _killDrop(i) {
@@ -766,6 +770,8 @@ export class FX {
       this.dC.copyWithin(i * 3, last * 3, last * 3 + 3);
       this.dK.copyWithin(i * 3, last * 3, last * 3 + 3);
       this.dA.copyWithin(i * 8, last * 8, last * 8 + 8);
+      this._dropColorStart = Math.min(this._dropColorStart, i);
+      this._dropColorEnd = Math.max(this._dropColorEnd, i + 1);
     }
   }
   // Ripple through the ink surface (the level shader draws it — fxHooks wires onRipple to paint.ripple); without a
@@ -844,7 +850,7 @@ export class FX {
       }
     }
     // --- write instance attributes ---
-    const aP = this.dGeo.attributes.aPosR.array, aV = this.dGeo.attributes.aVelS.array, aC = this.dGeo.attributes.aColA.array;
+    const aP = this.dGeo.attributes.aPosR.array, aV = this.dGeo.attributes.aVelS.array;
     for (let i = 0; i < this.dN; i++) {
       const i3 = i * 3, i4 = i * 4, i8 = i * 8;
       const size = A[i8], age = A[i8 + 1], life = A[i8 + 2];
@@ -857,10 +863,30 @@ export class FX {
       const fade = Math.min(1, (life - age) / 0.12);
       aP[i4] = P[i3]; aP[i4 + 1] = P[i3 + 1]; aP[i4 + 2] = P[i3 + 2]; aP[i4 + 3] = size * grow * fade;
       aV[i4] = vx; aV[i4 + 1] = vy; aV[i4 + 2] = vz; aV[i4 + 3] = Math.max(1, stretch);
-      aC[i4] = this.dC[i3]; aC[i4 + 1] = this.dC[i3 + 1]; aC[i4 + 2] = this.dC[i3 + 2]; aC[i4 + 3] = (A[i8 + 7] & F_MATTE) ? 0 : 1;
     }
+    // Colour and matte flags only change on birth/recycling or swap compaction.
+    // Keep motion uploads independent so settled live colours cost no transfer.
+    const color = this.dGeo.attributes.aColA, aC = color.array;
+    const start = this._dropColorStart, end = Math.min(this._dropColorEnd, this.dN);
+    if (start < end) {
+      for (let i = start; i < end; i++) {
+        const i3 = i * 3, i4 = i * 4;
+        aC[i4] = this.dC[i3]; aC[i4 + 1] = this.dC[i3 + 1]; aC[i4 + 2] = this.dC[i3 + 2]; aC[i4 + 3] = (A[i * 8 + 7] & F_MATTE) ? 0 : 1;
+      }
+      let first = start * 4, last = end * 4;
+      // Multiple simulation updates may precede one render. Preserve all dirty
+      // colour writes until WebGLAttributes consumes and clears the ranges.
+      for (const pending of color.updateRanges) {
+        first = Math.min(first, pending.start);
+        last = Math.max(last, pending.start + pending.count);
+      }
+      const range = color._fxRange || (color._fxRange = { start: 0, count: 0 });
+      range.start = first; range.count = last - first;
+      color.updateRanges.length = 0; color.updateRanges.push(range); color.needsUpdate = true;
+    }
+    this._dropColorStart = this.dCap; this._dropColorEnd = 0;
     this.dGeo.instanceCount = this.dN;
-    markUpdated(this.dGeo, this.dN);
+    markUpdated(this.dGeo, this.dN, color);
   }
 
   // ------------------------------------------------------------------ sprites (puffs = alpha, glows = additive)
@@ -2232,6 +2258,7 @@ export class FX {
 
   clear() {
     this.dN = 0; this.dGeo.instanceCount = 0;
+    this._dropColorStart = this.dCap; this._dropColorEnd = 0;
     for (const p of [this.puffs, this.glows, this.rings, this.shells, this.beams]) { p.n = 0; p.geo.instanceCount = 0; }
     this.marks.n = 0; this.pillars.n = 0; this._sqN = 0;
   }

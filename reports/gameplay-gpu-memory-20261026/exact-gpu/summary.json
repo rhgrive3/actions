@@ -1,0 +1,52 @@
+{
+  "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+  "site": ".built-site/thin-final",
+  "sourceChanges": false,
+  "allAssertionsPreserved": true,
+  "results": [
+    {
+      "name": "crab-chromium",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "pixelsMatch": true,
+      "gpuPrefixMatch": true,
+      "runtimeHash": "0d12a2cd3ce7409a23df36e8ac371e9a3c52b6349c98ee9733c73776190324d7",
+      "harnessHash": "e1be6f58bae6fe9236d71f2afed34a89add19a5e583b3b33f9f995823ed91302",
+      "resultHash": "8d55e93411ff66f3d2ee7d4a9a7e03e0d9e6130b26004e52472529fb5919a519",
+      "logHash": "80b7ab612ea461c3f0f7312fac6c3d7515155c874c322a0203dc5f75e8162ad5"
+    },
+    {
+      "name": "torpedo-chromium",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "pixelsMatch": true,
+      "gpuPrefixMatch": true,
+      "runtimeHash": "eeba590c511da1d291224d6fe78a174f0e0c9b50630aef8b881625a07a663f08",
+      "harnessHash": "d34ef2ff1b1737eb42f1aee84bb4a112aa0efdbc0388156fa74b89555ba22f9c",
+      "resultHash": "b02c9e458a83920685df86680d48630685523d266a800caee2f2df953e0a5a69",
+      "logHash": "82220b826f7249b8e0b5f29d4e672591f675e14f1d0e63f2daec143a754cf9e5"
+    },
+    {
+      "name": "crab-webkit",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "pixelsMatch": true,
+      "gpuPrefixMatch": true,
+      "runtimeHash": "0d12a2cd3ce7409a23df36e8ac371e9a3c52b6349c98ee9733c73776190324d7",
+      "harnessHash": "3fed91426084697e4abde086b6e2ce9754b17aced24b9d66a117f55c3533206b",
+      "resultHash": "250c9dfd643a4efeb3b785617606cb67c3c474a3402e0c86d8c0fc8ba72b668a",
+      "logHash": "4ce473f7fd1085385e809cc1555188c8bb4d0f4541769cd1454a208b7d71be07"
+    },
+    {
+      "name": "torpedo-webkit",
+      "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "glError": 0,
+      "pixelsMatch": true,
+      "gpuPrefixMatch": true,
+      "runtimeHash": "eeba590c511da1d291224d6fe78a174f0e0c9b50630aef8b881625a07a663f08",
+      "harnessHash": "3adcc4350aa9bd19e7eb1df41ed79bfa8147c335228d4c2f9151c8b1dfbd6b3d",
+      "resultHash": "00bb892936231d71774eeb0a6f2880ffe5f2e2996874dd9795dd5eb8d321108f",
+      "logHash": "2d12bb981b176ae6f330a5af6f4a33efecabbeab5b626fb0b5f0718135dbf5af"
+    }
+  ]
+}
