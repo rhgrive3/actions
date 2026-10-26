@@ -1,16 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture as sourceFixture } from './source-fixture.mjs';
-import { adaptSource } from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
-import { adaptRange } from '../../practice-range/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const STEP = 1 / 60;
-const adaptBuildSource = (rel, code) => adaptRange(rel,
-  adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 async function nativeFixture({ grounded = true, wire = false } = {}) {
@@ -31,6 +24,7 @@ async function nativeFixture({ grounded = true, wire = false } = {}) {
       export { Character } from './src/game/character.js';
       export { NetMatch } from './src/net/netmatch.js';
       export { installSubSpecialFidelity } from './patches/splatoon3/runtime/sub-special-fidelity.mjs';
+      export { installWeaponAudioRuntime } from './patches/splatoon3/runtime/audio/runtime.mjs';
       export { installWeaponsFidelity, installShotGuide, advanceFidelityProjectile } from './patches/splatoon3/runtime/weapons-fidelity.mjs';
     `,
   });
@@ -68,6 +62,7 @@ async function nativeFixture({ grounded = true, wire = false } = {}) {
   actor.character.root.updateMatrixWorld(true);
   f.G.actors = [actor];
   actor.weaponRunner.reset();
+  f.installWeaponAudioRuntime(f);
 
   const muzzles = [0, 1].map(hand => {
     const out = new V(); projectiles._muzzleHand(actor, hand, out); return out;
@@ -137,13 +132,15 @@ function advanceToGuideFrame(f, round, frames) {
 function actualShots(fixture, { frames = 90, startTick = 0 } = {}) {
   const { f, projectiles, actor } = fixture, runner = actor.weaponRunner;
   const rows = [];
+  let lastFire = null;
+  const offFire = f.on('weapon:fire', event => { if (event.actor === actor) lastFire = event; });
   let tick = startTick, draws = 0;
   f.setRandom(() => { draws++; return 0; });
   const fire = projectiles.fireDualies;
   projectiles.fireDualies = function (...args) {
     const beforeDraws = draws;
     const result = fire.apply(this, args);
-    rows.push({ hand: args[3], spread: args[2], draws: draws - beforeDraws, tick, round: this.list.at(-1), turret: !!runner.s3Turret });
+    rows.push({ hand: args[3], spread: args[2], draws: draws - beforeDraws, tick, round: this.list.at(-1), turret: !!runner.s3Turret, audioMode: lastFire?.mode });
     return result;
   };
   try {
@@ -153,6 +150,7 @@ function actualShots(fixture, { frames = 90, startTick = 0 } = {}) {
     }
   } finally {
     projectiles.fireDualies = fire;
+    offFire();
     f.restoreRandom();
   }
   return rows;
@@ -179,6 +177,7 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
       'both native live launches reuse the guide launch-plan object');
     assert.deepEqual(shots.map(row => row.hand), [1, 0], 'NativeRunner preserves alternating left/right hand order');
     assert.ok(shots.every(row => !row.turret), 'normal-fire launches remain outside the post-roll turret owner');
+    assert.deepEqual(shots.map(row => row.audioMode), ['normal', 'normal'], 'production source includes exact normal shot articulation metadata');
     assert.equal(shots[1].tick - shots[0].tick, Math.round(actor.weapon.fireInterval / STEP),
       'normal-fire cadence remains the native weapon interval');
     // #891: Angular median comes from runner state, without a Bernoulli gate.
@@ -212,21 +211,26 @@ test('native grounded and airborne Dualies keep two independent aim centers and 
         ['p', 'ev', 'p', 'ev'], 'spawn/event ordering stays paired per alternating hand');
       for (let i = 0; i < fireRecords.length; i++) {
         const payload = fireRecords[i][3];
-        assert.deepEqual(Object.keys(payload).sort(), ['actor', 'dir', 'hand', 'muzzle', 'weapon']);
+        assert.deepEqual(Object.keys(payload).sort(), ['actor', 'dir', 'hand', 'mode', 'muzzle', 'weapon']);
         assert.equal(payload.actor.n, actor.nid);
         assert.equal(payload.weapon, 'dualies');
         assert.equal(payload.hand, shots[i].hand);
+        assert.equal(payload.mode, 'normal', 'normal native shots carry the production audio-mode metadata');
       }
       const fxRows = [];
       f.G.fx.muzzle = (muzzle, direction) => fxRows.push({ muzzle: muzzle.toArray(), direction: direction.toArray() });
       const audioRows = [];
-      f.G.audio.play = (name, options) => audioRows.push({ name, options });
+      const legacyAudioRows = [];
+      f.G.audio.play = (name, options) => legacyAudioRows.push({ name, options });
+      f.G.audio.playWeapon = (id, event, options) => { audioRows.push({ id, event, options }); return { playing: true }; };
       const beforePlayback = projectiles.list.length;
       assert.equal(receiver.byNid.get(spawnRecords[0][2]), remoteActor, 'receiver resolves the owner ID to the remote actor');
       for (const record of spawnRecords) receiver._play('owner', record);
       for (const record of fireRecords) receiver._play('owner', record);
       assert.equal(projectiles.list.length, beforePlayback + 2, 'wire playback adds only the two remote ghost rounds');
       assert.equal(audioRows.length, 2, 'weapon:fire playback remains presentation-only');
+      assert.equal(legacyAudioRows.length, 0, 'native legacy procedural shot audio is not layered over the production audio event');
+      assert.deepEqual(audioRows.map(row => [row.id, row.event]), [['dualies', 'fire_left'], ['dualies', 'fire']], 'alternating left/right replay selects each exact production articulation once');
       assert.equal(fxRows.length, 2, 'each played weapon:fire uses its recorded hand ray');
       for (let i = 0; i < spawnRecords.length; i++) {
         const ghost = projectiles.list[beforePlayback + i], spawn = spawnRecords[i], payload = fireRecords[i][3];
@@ -263,6 +267,7 @@ test('NativeRunner roll transition alone merges turret targets, then release res
   const shots = actualShots(fixture, { frames: 120, startTick: 120 });
   assert.equal(shots.length, 2, 'two actual alternating post-roll rounds leave the NativeRunner');
   assert.ok(shots.every(row => row.turret), 'the real fire calls remain owned by post-roll turret state');
+  assert.deepEqual(shots.map(row => row.audioMode), ['turret', 'turret'], 'production source includes exact post-roll articulation metadata');
   const basis = planeBasis(fixture);
   const hits = shots.map(row => targetPlaneHit(f, actor, row.round, basis));
   assert.ok(distance(hits[0], hits[1]) < 1e-8, 'post-roll launch paths share one target plane center');
