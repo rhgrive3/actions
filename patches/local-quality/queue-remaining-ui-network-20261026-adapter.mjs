@@ -86,7 +86,12 @@ export function adaptQueueRemainingUiNetwork20261026(rel, code) {
         const countExpression = validator.match(/(?:const|let)[ ]+present[ ]*=[ ]*([^;]+);/)?.[1] || '';
         const countIncludesAllFields = ['hp','hr','ht','la'].every(field =>
           countExpression.includes('d?.' + field) || countExpression.includes('d.' + field));
-        const validCount = countExpression.includes('HIT_AUTHORITY_FIELDS.') || countIncludesAllFields;
+        // Adopt the separately reviewed constant-size loop too. It visits
+        // the same four authority leaves as the original filter, without the
+        // transient Array allocation. Never accept an unknown loop shape.
+        const countedLoop = /let present = 0;\s*for \(let i = 0; i < HIT_AUTHORITY_FIELDS\.length; i\+\+\)\s*if \(d\?\.\[HIT_AUTHORITY_FIELDS\[i\]\] !== undefined\) present\+\+;/.test(validator)
+          && /const HIT_AUTHORITY_FIELDS = \['hp', 'hr', 'ht', 'la'\];/.test(code);
+        const validCount = countExpression.includes('HIT_AUTHORITY_FIELDS.') || countIncludesAllFields || countedLoop;
         const strictGate = validator.includes('if (present === 0)') &&
           validator.includes('present !== 4') && validator.includes('d?.he === undefined');
         if (label === 'fixed authority presence count' && validCount && strictGate) return;
