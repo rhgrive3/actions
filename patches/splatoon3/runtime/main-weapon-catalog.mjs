@@ -31,6 +31,7 @@ import { withBlasterSplashHit } from './audio/blaster-hit.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { sampleSplatlingSpeed } from './splatling.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
+import { coherentMotionStart } from './actor-motion.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
@@ -669,7 +670,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     sloshFallSpecs.set(splash,{draw,depth,radius:draw.DrawRadius,result});return result;
   }
   function collisionScratch(p) {
-    const scratch=p._catalogCollisionScratch||=( {hit:new Hit(),seen:new Set(),capacity:[],active:[]} );
+    const scratch=p._catalogCollisionScratch||=( {hit:new Hit(),seen:new Set(),capacity:[],active:[],motionBase:new THREE.Vector3(),motionEnd:new THREE.Vector3()} );
     scratch.seen.clear();scratch.active.length=0;
     const h=scratch.hit;h.hit=false;h.block=h.face=-1;h.dist=0;
     h.point.set(0,0,0);h.normal.set(0,0,0);
@@ -1126,7 +1127,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       q.to.set(p.pos.x+ox,p.pos.y+y,p.pos.z+oz);q.param=params[i];
     }return s.lobes;
   }
-  function spiralContactClear(p,q,actor,t){
+  function spiralContactClear(p,q,actor,t,motion,fraction){
     const s=p.catalog;
     // Machine's outer, damage-only units have no terrain radius. A clear
     // central flight path therefore cannot establish visibility to a victim
@@ -1135,7 +1136,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const c=s.spiralCover||(s.spiralCover={from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit()});
     c.from.lerpVectors(q.from,q.to,t);
     const radius=hurtboxRadius(actor,PLAYER),height=hurtboxHeight(actor,PLAYER);
-    c.to.set(actor.pos.x,clamp(c.from.y,actor.pos.y+radius,actor.pos.y+Math.max(radius,height-radius)),actor.pos.z);
+    const at=t*fraction;
+    const x=motion?lerp(motion.x0,actor.pos.x,at):actor.pos.x;
+    const y=motion?lerp(motion.y0,actor.pos.y,at):actor.pos.y;
+    const z=motion?lerp(motion.z0,actor.pos.z,at):actor.pos.z;
+    c.to.set(x,clamp(c.from.y,y+radius,y+Math.max(radius,height-radius)),z);
     const distance=c.from.distanceTo(c.to);
     if(distance<=radius+EPS)return true;
     // End at the nearest capsule surface, rather than at the feet or centre:
@@ -1262,11 +1267,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return recycle.call(this,p,...args);
   };
   P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;p.catalogVisual=null;return p;};
+  function applyPlayerContact(system,p,target,t){
+    const s=p.catalog,d=s.descriptor;
+    if(p.ghost||target.team===p.team)return;
+    const amount=impactDamage(p,target,t);if(!(amount>0))return;
+    const owner=p.owner,previous=owner._sourceChargerAudioHit;
+    if(s.r.family==='charger')owner._sourceChargerAudioHit={chargerDirect:true,charge:d.charge};
+    try{withObjectDamageCause(p,()=>withProjectileHitGeometry(system,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>system.applyHit(owner,target,amount,p.wid)));}
+    finally{if(s.r.family==='charger')owner._sourceChargerAudioHit=previous;}
+  }
   P._step=function(p,dt){
     if(!p.catalog)return step.call(this,p,dt);
     if(!releaseCatalogBirth(this,p,G))return true;
     const s=p.catalog,d=s.descriptor;
     const unitCanDamage=(s.r.family!=='roller'&&s.r.family!=='brush')||catalogFieldUnitCanDamage(d.packet);
+    // Only a live, complete fixed tick shares the actor snapshot's interval.
+    // Ghost catch-up and accumulated/subdivided calls have no matching history.
+    const coherentTick=!p.ghost&&Math.abs(dt-DT)<=EPS&&s.carry<=EPS;
     s.carry+=dt;
     while(s.carry+EPS>=DT){
       s.carry=Math.max(0,s.carry-DT);
@@ -1274,6 +1291,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const travelBefore=s.travel;
       this.projectileVisuals?.beginPhysicsStep(p);
       const len=advance(p);
+      // A range-clipped segment ends before the tick does. Sample target
+      // motion only until that same time, as the native Charger owner does.
+      const fullDistance=p.vel.length()*DT;
+      const motionFraction=fullDistance>EPS?Math.min(1,len/fullDistance):1;
       const splashBefore=d.splashHorizontal?s.splashTravel:travelBefore;
       const splashLength=d.splashHorizontal?Math.hypot(p.pos.x-p.prev.x,p.pos.z-p.prev.z):len;
       if(d.splashHorizontal)s.splashTravel+=splashLength;
@@ -1334,6 +1355,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=unitCanDamage?this.kitDefenseCandidate?.(p):null;
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
+      const piercing=s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false;
+      const pierced=piercing?(s.piercingHits||=[]):null;
+      if(pierced)pierced.length=0;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
       if(unitCanDamage)for(let i=0;i<shapes.length;i++){
@@ -1346,18 +1370,31 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(!unitCanDamage)break;
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
+        const motion=coherentTick?coherentMotionStart(a):null;
+        const scratch=s.collisionScratch;
+        const base=motion?scratch.motionBase.set(motion.x0,motion.y0,motion.z0):a.pos;
         let entry=null;
         for(const q of shapes){
           if(q.stop<0)continue;
           const pr0=q.playerRadius0,radius=q.playerRadius1;
-          const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
+          const end=motion?scratch.motionEnd.set(q.to.x-(a.pos.x-motion.x0)*motionFraction,
+            q.to.y-(a.pos.y-motion.y0)*motionFraction,q.to.z-(a.pos.z-motion.z0)*motionFraction):q.to;
+          const contact=capsuleEntry(q.from,end,base,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
-          if(contact!=null&&!spiralContactClear(p,q,a,contact))continue;
+          if(contact!=null&&!spiralContactClear(p,q,a,contact,motion,motionFraction))continue;
           if(contact!=null&&(entry==null||contact<entry))entry=contact;
         }
         if(friendly&&entry!=null&&((p.age-DT)+DT*entry)*HZ<d.c.FriendThroughFrameForPlayer)continue;
-        if(entry!=null&&entry<stop-EPS){stop=entry;target=a;defense=null;}
+        if(entry!=null&&entry<stop-EPS){
+          if(piercing){
+            // Keep all contacts in travel order. Piercing consumes neither
+            // the rest of this tick nor additional weapon range.
+            let index=pierced.length;
+            while(index>0&&pierced[index-1].t>entry){pierced[index]=pierced[index-1];index--;}
+            pierced[index]={actor:a,t:entry};
+          }else{stop=entry;target=a;defense=null;}
+        }
       }
       if(unitCanDamage&&G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
         if(t<stop-EPS){stop=t;boss=b;target=null;defense=null;}}
@@ -1425,6 +1462,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(!p.ghost&&s.rollerFlight&&len>EPS)
         paintDistanceFlight(G,p,s.rollerFlight,p.prev.clone().lerp(p.pos,clamp(Math.min(1,stop))));
+      if(pierced?.length){
+        const end=(s.piercingEnd||=new THREE.Vector3()).copy(p.pos);
+        try{
+          for(const contact of pierced){
+            if(contact.t>=stop-EPS)break; // terrain, devices and bosses still stop the beam
+            p.pos.lerpVectors(p.prev,end,contact.t);
+            applyPlayerContact(this,p,contact.actor,contact.t);
+            s.seen.add(contact.actor);
+          }
+        }finally{p.pos.copy(end);pierced.length=0;}
+      }
       if(stop<=1){
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){
@@ -1438,13 +1486,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           defense.onHit(p);return true;
         }
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target,stop);if(amount>0){
-            const owner=p.owner,previous=owner._sourceChargerAudioHit;
-            if(s.r.family==='charger')owner._sourceChargerAudioHit={chargerDirect:true,charge:d.charge};
-            try{withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(owner,target,amount,p.wid)));}
-            finally{if(s.r.family==='charger')owner._sourceChargerAudioHit=previous;}
-          }}
-          if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
+          applyPlayerContact(this,p,target,stop);
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
           return true;

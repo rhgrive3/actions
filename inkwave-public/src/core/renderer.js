@@ -177,12 +177,12 @@ export class Renderer {
     this._buildComposer();
   }
 
-  _disposeComposer() {
+  _disposeComposer(preservedPass = this.extraPass) {
     const comp = this.composer;
     if (!comp) return;
     // ScreenFX owns extraPass and intentionally survives quality rebuilds.
     for (const pass of comp.passes || []) {
-      if (!pass || pass === this.extraPass) continue;
+      if (!pass || pass === preservedPass) continue;
       try { pass.dispose?.(); } catch (e) { console.warn('[inkwave] post pass dispose', e); }
     }
     comp.dispose?.();
@@ -190,9 +190,9 @@ export class Renderer {
     this.renderPass = this.gtao = this.bloom = this.grade = this.fxaa = null;
   }
 
-  _buildComposer() {
+  _buildComposer(preservedPass = this.extraPass) {
     const r = this.renderer, q = this.q;
-    this._disposeComposer();
+    this._disposeComposer(preservedPass);
     this.dynScale = this.dynScale || 1;
     const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
     const pr = Math.min(window.devicePixelRatio || 1, q.pixelRatio, mobileCap) * this.dynScale;
@@ -236,6 +236,7 @@ export class Renderer {
     this._fxaaTexel(w, h, pr);
     r.shadowMap.enabled = this.settings.shadows !== false;
     this._w = w; this._h = h;
+    this._dpr = window.devicePixelRatio || 1;
     this.grade.uniforms.uAspect.value = w / h;
   }
 
@@ -249,7 +250,9 @@ export class Renderer {
     // A new pass may impose different packed-color constraints after a native
     // target exists. Rebuild that case through the existing format selector.
     if (gradeIndex < 0 || typeof comp.insertPass !== 'function' || typeof comp.removePass !== 'function' || (pass && this._composerUsesPackedTarget)) {
-      this._buildComposer();
+      // The old pass is still owned by its ScreenFX, even after extraPass
+      // points at the replacement. Only dispose renderer-owned passes.
+      this._buildComposer(previous);
       return;
     }
     if (previous) comp.removePass(previous);
@@ -290,12 +293,24 @@ export class Renderer {
     this._fxaaTexel(this._w, this._h, pr);
   }
   _fxaaTexel(w, h, pr = this.renderer.getPixelRatio()) {
-    if (this.fxaa) this.fxaa.uniforms.uTexel.value.set(1 / Math.max(1, Math.round(w * pr)), 1 / Math.max(1, Math.round(h * pr)));
+    if (this.fxaa) this.fxaa.uniforms.uTexel.value.set(1 / Math.max(1, Math.floor(w * pr)), 1 / Math.max(1, Math.floor(h * pr)));
   }
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    if (w === this._w && h === this._h) return;
+    const dpr = window.devicePixelRatio || 1;
+    if (w === this._w && h === this._h && dpr === this._dpr) return;
+    if (dpr !== this._dpr) {
+      // A monitor/display-density change can leave CSS dimensions unchanged.
+      // Preserve quality and dynamic-resolution limits while updating pixels.
+      const mobileCap = this.mobile.touch ? (this.mobile.ios ? 1.2 : 1.35) : Infinity;
+      const pr = Math.round(Math.min(dpr, this.q.pixelRatio, mobileCap) * (this.dynScale || 1) * 1e6) / 1e6;
+      if (pr !== this.renderer.getPixelRatio()) {
+        this.renderer.setPixelRatio(pr);
+        this.composer.setPixelRatio(pr);
+      }
+    }
+    this._dpr = dpr;
     this._w = w; this._h = h;
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);

@@ -10,13 +10,22 @@ export function adaptRespawnNavigation(rel, code) {
     const priorNavigationDevice = this.navigationDevice;
     if (v !== 'pad' || !this._navigationPolling || this.padPressed.size ||
         this.pad?.index !== this._navigationPadIndex || this.pad?.id !== this._navigationPadId ||
-        navigationAxisZones(this.pad).some((zone, i) => zone !== this._navigationAxisZones?.[i])) this._navigationDevice = v;
+        navigationAxesChanged(this.pad, this._navigationAxisZones)) this._navigationDevice = v;
     // A held-axis repoll may change presentation owner without deliberate input.
     // Only a fresh navigation owner can retire the touch-specific map latch.
     if (this.navigationDevice !== priorNavigationDevice && this.navigationDevice !== 'touch' && this.mobile?.mapOpen) this.mobile.setMap(false);`, 'explicit navigation owner');
     code += `
-function navigationAxisZones(pad) {
-  return Array.from({length: 4}, (_, i) => Math.abs(pad?.axes?.[i] || 0) > 0.3 ? Math.sign(pad.axes[i]) : 0);
+function navigationAxisZone(pad, i) {
+  const axis = pad?.axes?.[i] || 0;
+  return Math.abs(axis) > 0.3 ? Math.sign(axis) : 0;
+}
+function navigationAxesChanged(pad, previous) {
+  for (let i = 0; i < 4; i++) if (navigationAxisZone(pad, i) !== previous?.[i]) return true;
+  return false;
+}
+function navigationAxisZones(pad, out = [0, 0, 0, 0]) {
+  for (let i = 0; i < 4; i++) out[i] = navigationAxisZone(pad, i);
+  return out;
 }
 const navigationPollPad = Input.prototype.pollPad;
 Input.prototype.pollPad = function (...args) {
@@ -26,7 +35,7 @@ Input.prototype.pollPad = function (...args) {
   finally {
     this._navigationPolling = false;
     this._navigationPadIndex = this.pad?.index; this._navigationPadId = this.pad?.id;
-    this._navigationAxisZones = navigationAxisZones(this.pad);
+    this._navigationAxisZones = navigationAxisZones(this.pad, this._navigationAxisZones);
   }
 };
 `;

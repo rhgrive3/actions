@@ -58,14 +58,19 @@ async function verifyTurnstile(cfg, token, request) {
 }
 
 // ------------------------------------------------------------------------------------- sessions
-async function startSession(env, request, url, user, persistent, now) {
+async function prepareSession(env, request, url, user, persistent, now) {
   const token = randomToken();
   const ttl = persistent ? PERSISTENT_TTL : SHORT_TTL;
-  await db.insertSession(env.DB, {
+  const session = {
     id: crypto.randomUUID(), tokenHash: await sha256Hex(token), userId: user.id, now, expiresAt: now + ttl, persistent,
     userAgent: str(request.headers.get('User-Agent'), 256) || null, country: str(request.cf?.country, 8) || null,
-  });
-  return sessionCookie(env, url, token, persistent ? ttl / 1000 : null);
+  };
+  return { session, cookie: sessionCookie(env, url, token, persistent ? ttl / 1000 : null) };
+}
+async function startSession(env, request, url, user, persistent, now) {
+  const { session, cookie } = await prepareSession(env, request, url, user, persistent, now);
+  if (!await db.insertSession(env.DB, session, user.password_hash)) throw new ApiError(401, 'invalid_credentials');
+  return cookie;
 }
 
 /** The signed-in session for this request, sliding its expiry. `cookie` is a Set-Cookie to send back, if any. */
@@ -84,9 +89,15 @@ async function resolveSession(env, request, url, now) {
   return { row, token, cookie };
 }
 
-async function requireSession(env, request, url, now) {
+async function requireSession(env, request, url, now, expectedUserId) {
   const s = await resolveSession(env, request, url, now);
   if (!s.row) throw new ApiError(401, 'not_signed_in', {}, s.cookie ? { 'Set-Cookie': s.cookie } : {});
+  // A same-origin tab can change the shared cookie after a form was opened.
+  // Never apply that old form to a different signed-in account. The field is
+  // optional for compatibility with older clients; all current protected UI
+  // operations capture their owner and send it explicitly.
+  if (expectedUserId !== undefined && expectedUserId !== s.row.id)
+    throw new ApiError(409, 'account_changed', {}, s.cookie ? { 'Set-Cookie': s.cookie } : {});
   return s;
 }
 
@@ -145,7 +156,7 @@ async function login({ env, request, url, now, cfg }) {
   const norm = normalizeLoginId(loginId);
   const idKey = 'login:' + norm, ipK = await ipKey('loginip', request);
   await assertNotLocked(env, [idKey, ipK], now);
-  const user = norm.length <= 64 ? await db.userByLogin(env.DB, norm) : null;
+  let user = norm.length <= 64 ? await db.userByLogin(env.DB, norm) : null;
   const ok = await verifyPassword(password, user?.password_hash ?? null, cfg.iterations);
   if (!user || !ok) {
     const [a, b] = [await db.throttleHit(env.DB, idKey, now, LIMITS.loginId), await db.throttleHit(env.DB, ipK, now, LIMITS.loginIp)];
@@ -155,8 +166,20 @@ async function login({ env, request, url, now, cfg }) {
   }
   await db.throttleClear(env.DB, idKey);
   // upgrade hashes made with fewer iterations than the current setting
-  if (hashIterations(user.password_hash) < cfg.iterations) await db.setPasswordHash(env.DB, user.id, await hashPassword(password, cfg.iterations), now, false);
-  await db.touchLogin(env.DB, user.id, now);
+  if (hashIterations(user.password_hash) < cfg.iterations) {
+    const upgraded = await hashPassword(password, cfg.iterations);
+    if (await db.upgradePasswordHash(env.DB, user.id, user.password_hash, upgraded)) {
+      user.password_hash = upgraded;
+    } else {
+      // Another valid login may have upgraded the same password, not changed
+      // it. Reverify the current hash once; never overwrite the winner or
+      // authorize with the old snapshot. Session insertion still compares
+      // this newly verified hash atomically, so a later change remains safe.
+      const current = await db.userById(env.DB, user.id);
+      if (!current || !await verifyPassword(password, current.password_hash, cfg.iterations)) throw new ApiError(401, 'invalid_credentials');
+      user = current;
+    }
+  }
   const cookie = await startSession(env, request, url, user, body.remember !== false, now);
   return json(200, { user: db.publicUser(user) }, { 'Set-Cookie': cookie });
 }
@@ -167,31 +190,36 @@ async function logout({ env, request, url }) {
   return json(204, null, { 'Set-Cookie': clearCookie(env, url) });
 }
 
-async function sessions({ env, request, url, now }) {
-  const { row, cookie } = await requireSession(env, request, url, now);
+async function sessions({ env, request, url, now }, resolved) {
+  const expectedUserId = url.searchParams.has('expectedUserId') ? url.searchParams.get('expectedUserId') : undefined;
+  const { row, cookie } = resolved || await requireSession(env, request, url, now, expectedUserId);
   const list = (await db.listSessions(env.DB, row.id, now)).map((s) => ({
     id: s.id, current: s.id === row.session_id, createdAt: s.created_at, lastSeenAt: s.last_seen_at,
     expiresAt: s.expires_at, persistent: !!s.persistent, device: deviceLabel(s.user_agent), country: s.country || '',
   }));
+  if (!list.some(session => session.current)) throw new ApiError(401, 'not_signed_in');
   return json(200, { sessions: list }, cookie ? { 'Set-Cookie': cookie } : {});
 }
 
 async function revokeSessions({ env, request, url, now }) {
   const body = await readJson(request);
-  const { row } = await requireSession(env, request, url, now);
-  if (body.scope === 'others') await db.deleteOtherSessions(env.DB, row.id, row.session_id);
+  const resolved = await requireSession(env, request, url, now, body.expectedUserId);
+  const { row } = resolved;
+  if (body.scope === 'others') await db.deleteOtherSessions(env.DB, row.id, row.session_id, row.session_id, now);
   else {
     const id = str(body.id, 64);
     if (!id) throw fieldError('id', 'session_required');
     if (id === row.session_id) throw fieldError('id', 'session_current');
-    await db.deleteSession(env.DB, id, row.id);
+    await db.deleteSession(env.DB, id, row.id, row.session_id, now);
   }
-  return sessions({ env, request, url, now });
+  // Reuse the resolution: a second lookup sees the touched timestamp and
+  // loses the Set-Cookie renewal earned by this request.
+  return sessions({ env, request, url, now }, resolved);
 }
 
 async function updateProfile({ env, request, url, now }) {
   const body = await readJson(request);
-  const { row, cookie } = await requireSession(env, request, url, now);
+  const { row, cookie } = await requireSession(env, request, url, now, body.expectedUserId);
   const patch = {};
   if (body.displayName !== undefined) {
     patch.displayName = cleanDisplayName(str(body.displayName, 128));
@@ -207,31 +235,33 @@ async function updateProfile({ env, request, url, now }) {
     if (checkAvatarColor(patch.avatarColor)) throw fieldError('avatarColor', 'avatar_invalid');
   }
   if (!Object.keys(patch).length) throw fieldError('displayName', 'display_name_required');
-  await db.setProfile(env.DB, row.id, patch, now);
-  return json(200, { user: db.publicUser(await db.userById(env.DB, row.id)) }, cookie ? { 'Set-Cookie': cookie } : {});
+  const updated = await db.setAuthorizedProfile(env.DB, row, patch, now);
+  if (!updated) throw new ApiError(401, 'not_signed_in');
+  return json(200, { user: db.publicUser(updated) }, cookie ? { 'Set-Cookie': cookie } : {});
 }
 
 async function changePassword({ env, request, url, now, cfg }) {
   const body = await readJson(request);
-  const { row } = await requireSession(env, request, url, now);
+  const { row } = await requireSession(env, request, url, now, body.expectedUserId);
   const current = str(body.currentPassword, PASSWORD_MAX + 1), next = str(body.newPassword, PASSWORD_MAX + 1);
   const code = checkPassword(next, row.login_id);
   if (code) throw fieldError('newPassword', code);
   if (next === current) throw fieldError('newPassword', 'password_same');
   await requirePassword(env, row, current, cfg, now);
-  await db.setPasswordHash(env.DB, row.id, await hashPassword(next, cfg.iterations), now);
-  // a new password signs every other device out; this device gets a fresh token
-  await db.deleteOtherSessions(env.DB, row.id, '');
-  const cookie = await startSession(env, request, url, row, !!row.persistent, now);
-  return json(200, { user: db.publicUser(await db.userById(env.DB, row.id)) }, { 'Set-Cookie': cookie });
+  const nextHash = await hashPassword(next, cfg.iterations);
+  const { session, cookie } = await prepareSession(env, request, url, row, !!row.persistent, now);
+  if (!await db.rotatePassword(env.DB, row, nextHash, session)) throw new ApiError(401, 'not_signed_in');
+  const updated = await db.userById(env.DB, row.id);
+  if (!updated) throw new ApiError(401, 'not_signed_in');
+  return json(200, { user: db.publicUser(updated) }, { 'Set-Cookie': cookie });
 }
 
 async function deleteAccount({ env, request, url, now, cfg }) {
   const body = await readJson(request);
-  const { row } = await requireSession(env, request, url, now);
+  const { row } = await requireSession(env, request, url, now, body.expectedUserId);
   if (str(body.confirm, 64).trim().toLowerCase() !== row.login_id_norm) throw fieldError('confirm', 'confirm_mismatch');
   await requirePassword(env, row, str(body.password, PASSWORD_MAX + 1), cfg, now);
-  await db.deleteUser(env.DB, row.id);
+  if (!await db.deleteAuthorizedUser(env.DB, row, now)) throw new ApiError(401, 'not_signed_in');
   await db.throttleClear(env.DB, 'login:' + row.login_id_norm);
   return json(204, null, { 'Set-Cookie': clearCookie(env, url) });
 }
