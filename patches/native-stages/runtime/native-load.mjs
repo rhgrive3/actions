@@ -72,15 +72,16 @@ function prebuiltPacks(stage,rows){
   return pack.slice(variant.offset,variant.offset+variant.bytes);
  },release(){pending.clear();}};
 }
-// BC-family base levels require block-aligned dimensions (or the terminal
-// 1/2-texel dimensions). A legal source can acquire an illegal base after a
+// BC-family base levels require block-aligned dimensions. Terminal 1/2-texel
+// mips are legal below such a base, but not after promotion to a new base.
+// A legal source can acquire an illegal base after a
 // mobile mip cap, e.g. 800x60 -> 400x30. Keep that exact mip via RGBA32 rather
 // than changing the cap, resampling the PNG, or dropping to a coarser level.
 const BLOCK4_FORMATS=new Set([THREE.RGBA_BPTC_Format,THREE.RGB_BPTC_SIGNED_Format,THREE.RGB_BPTC_UNSIGNED_Format,
  THREE.RGB_S3TC_DXT1_Format,THREE.RGBA_S3TC_DXT1_Format,THREE.RGBA_S3TC_DXT3_Format,THREE.RGBA_S3TC_DXT5_Format,
  THREE.RED_RGTC1_Format,THREE.SIGNED_RED_RGTC1_Format,THREE.RED_GREEN_RGTC2_Format,THREE.SIGNED_RED_GREEN_RGTC2_Format].filter(Number.isFinite));
 const exactMipRgba=new WeakSet();
-const blockDimension=n=>n===1||n===2||n%4===0;
+const blockDimension=n=>n%4===0;
 function mipIndex(mips,limit){let drop=0;if(Number.isFinite(limit))while(drop<mips.length-1&&Math.max(mips[drop].width,mips[drop].height)>limit)drop++;return drop;}
 export function needsExactMipRgba(texture,limit){
  const mips=texture.mipmaps;if(!texture.isCompressedTexture||!BLOCK4_FORMATS.has(texture.format)||!mips?.length)return false;
