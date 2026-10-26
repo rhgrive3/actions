@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "baselineSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
-  "state": "armed",
+  "state": "run",
   "scope": "reticle-next-visual-review",
   "fullAcceptance": false,
   "captureProtocol": "chromium-owned-next-native60-mixedrender-v1",
