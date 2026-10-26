@@ -216,7 +216,8 @@
         "program": "node",
         "args": [
           "--test",
-          "scripts/tests/inkwave-test-suites.test.mjs"
+          "scripts/tests/inkwave-test-suites.test.mjs",
+          "scripts/tests/cxx-openttd-projection.test.mjs"
         ]
       }
     ]

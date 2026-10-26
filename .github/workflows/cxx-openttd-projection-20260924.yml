@@ -1,24 +1,8 @@
 name: CXX OpenTTD projection diagnostic
 
+# This probes a fixed historical external branch, not the PR's source.
+# Keep it available for deliberate diagnosis without running on unrelated CI edits.
 on:
-  push:
-    branches:
-      - diag/cxx-openttd-projection-20260924
-  pull_request:
-    branches:
-      - main
-    # This diagnostic checks Hex/OpenTTD, not INKWAVE gameplay.
-    paths:
-      - ".github/workflows/*hex*.yml"
-      - ".github/workflows/cxx-*.yml"
-      - "scripts/*hex*.mjs"
-      - "scripts/*cxx*.mjs"
-      - "scripts/tests/hex-*.mjs"
-      - "scripts/tests/cxx-*.mjs"
-      - "patches/hex-*/**"
-      - "patches/hex-*"
-      - "staged/hex-*/**"
-      - "triggers/hex-*"
   workflow_dispatch:
 
 jobs:
@@ -84,11 +68,13 @@ jobs:
           const bytes = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
           const image = openBinary(bytes);
           const rawSymbols = image.symbols || [];
+          // Undefined ELF symbols have no address and cannot enter an address index.
+          const indexedSymbols = rawSymbols.filter(symbol => symbol.address != null);
           const symbols = new SymbolIndex({
-            addrs: rawSymbols.map(s => s.address),
-            names: rawSymbols.map(s => s.name),
-            kinds: rawSymbols.map(() => 0),
-            flags: rawSymbols.map(() => 0),
+            addrs: indexedSymbols.map(s => s.address),
+            names: indexedSymbols.map(s => s.name),
+            kinds: indexedSymbols.map(() => 0),
+            flags: indexedSymbols.map(() => 0),
           });
           const sizeByAddress = new Map();
           for (const symbol of rawSymbols) {
