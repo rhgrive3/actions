@@ -1,0 +1,128 @@
+{
+  "baseline_commit": "e781229bac5e8ba61f9bcf7f1c965e54db55afb4",
+  "branch": "optimize/fps-20261026",
+  "repository": "rhgrive3/actions",
+  "scope": "public INKWAVE runtime, including effective build composition",
+  "changes": [
+    {
+      "area": "FX droplet attributes",
+      "bottleneck": "Every live colour/matte slot was rewritten and scheduled for upload every frame although it stays constant between birth, recycling and swap deletion.",
+      "implementation": "Track dirty slot bounds, write only those colours, preserve the union of pending upload ranges, reset tracking on clear/reinitialization.",
+      "expected_effect": "Less CPU attribute work and GPU buffer traffic during effect bursts; no additional per-droplet buffers.",
+      "verified_local_result": "Stable live colours: 16 bytes per droplet per update to zero scheduled colour bytes. Single new or swapped slot: 16 scheduled bytes. Position/velocity attribute updates remain unchanged. These are attribute-range/model observations, not actual WebGL transfer or FPS measurements.",
+      "tests": {
+        "passed": 2,
+        "file": "scripts/tests/inkwave-fx-drop-color-upload.test.mjs"
+      }
+    },
+    {
+      "area": "Native stage ink",
+      "bottleneck": "First paint on an offscreen chart dirtied and regenerated the visible source-order triangle index stream.",
+      "implementation": "Record painted bits, but defer visible index invalidation when the chart has no triangles in the current visible tile set. Existing camera/transform/new-tile/toggle invalidation remains active.",
+      "expected_effect": "Fewer CPU index scans and GPU index upload requests when distant battles paint additional charts.",
+      "verified_local_result": "Focused observable regression keeps index.version unchanged for offscreen paint and reveals exactly the original ordered triangles after camera movement. No shader or atlas equation changed.",
+      "tests": {
+        "passed": 13,
+        "skipped_external_assets": 5,
+        "files": [
+          "patches/native-stages/tests/ink-offscreen-chart.test.mjs",
+          "patches/native-stages/tests/ink-chunks.test.mjs"
+        ]
+      }
+    },
+    {
+      "area": "Legacy visibility rays",
+      "bottleneck": "Boolean LOS continued all candidate intersections and computed nearest-hit point, normal and UV after an occluder was already known.",
+      "implementation": "Explicit anyHit option after the existing candidate-column argument; only LOS uses early return after the unchanged slab acceptance test. Normal raycasts and native overrides retain their paths.",
+      "expected_effect": "Lower CPU work for occluded bot, aim and visibility queries.",
+      "verified_local_result": "Fixed 64-candidate occlusion fixture visits 64 to 1 candidates. This is an operation count, not CPU timing or FPS.",
+      "tests": {
+        "passed": 12,
+        "files": [
+          "patches/local-quality/tests/legacy-los-any-hit.test.mjs",
+          "patches/local-quality/tests/collision-hotpath.test.mjs"
+        ]
+      }
+    },
+    {
+      "area": "Source animation sampling",
+      "bottleneck": "Each curve clamped a time value already bounded by its clip.",
+      "implementation": "Validate full clip-domain coverage once when constructing the clip layout, skip redundant curve clamps only for qualifying clips, retain the general path for custom domains.",
+      "expected_effect": "Less CPU arithmetic per character pose without reducing update frequency or changing poses.",
+      "verified_local_result": "All 39,799 bound shipped curves qualify. WalkHold sampling Math.min calls 81 to 1; matching Math.max clamps are removed. All 548 clips and 1,644 sampled poses match the frozen oracle exactly across raw/local/world values. No FPS or CPU timing measured.",
+      "tests": {
+        "passed": 3,
+        "file": "patches/local-quality/tests/source-curve-clip-domain.test.mjs"
+      }
+    },
+    {
+      "area": "Per-frame compositor grade validation",
+      "bottleneck": "Temporary fallback/copied/work arrays and callbacks were allocated for each render-time safety check.",
+      "implementation": "Validate scalar and tint components directly, keeping live in-place mutations, finite/nonnegative guards and RGBA fallback decisions.",
+      "expected_effect": "Lower transient allocation and CPU/GC work each rendered frame. Render targets, pass order, colour precision and image settings are unchanged.",
+      "verified_local_result": "Scalar/tint/boundary/mutation cases and existing packed/fallback/resize/lifetime cases pass. No device performance measurement.",
+      "tests": {
+        "passed": 9,
+        "file": "patches/local-quality/tests/composer-residual-642.test.mjs"
+      }
+    },
+    {
+      "area": "Network event validation",
+      "bottleneck": "Every replicated event created a literal type array; hit-authority checks created a filter result and callback.",
+      "implementation": "Use equivalent ordered strict comparisons and a scalar field-count loop.",
+      "expected_effect": "Less transient allocation and CPU/GC work when combat events arrive in bursts. Payloads, ordering and rejection conditions stay unchanged.",
+      "verified_local_result": "Existing network hardening and composed hit packet regressions pass. No packet protocol or timing change.",
+      "tests": {
+        "passed": 12,
+        "files": [
+          "patches/network-replication/tests/queue-network-hardening.test.mjs",
+          "patches/network-replication/tests/composed-hit-unit-packet.test.mjs"
+        ]
+      }
+    }
+  ],
+  "validation": {
+    "targeted_runtime_tests": {
+      "passed": 51,
+      "failed": 0,
+      "skipped_external_assets": 5
+    },
+    "composed_source_syntax": {
+      "passed_modules": 117,
+      "changed_patch_modules": 5,
+      "log": "/workspace/scratch/fps-composed-syntax.log"
+    },
+    "upstream_compatibility": "node scripts/check-inkwave-patches.mjs --quick: passed; only the two changed locked sources were reviewed and repinned; numeric reference 11.3.0 unchanged",
+    "test_registration": "New FX test registered in queue-recovery; suite dry-run and one focused registration contract pass",
+    "diff_check": "git diff --check: passed",
+    "test_limits": "No full suite, CI execution, production build, browser setup, repeated benchmark or match play. One native targeted invocation initially failed during a concurrent adapter edit and succeeded after that edit stabilized.",
+    "independent_review": "Native ink invalidation and LOS early return independently reviewed without repeating tests."
+  },
+  "not_measured": [
+    "average FPS",
+    "1% Low FPS",
+    "real GPU time",
+    "GC pause durations",
+    "resident CPU/GPU memory",
+    "physical iPad mini 6/Safari behavior"
+  ],
+  "remaining_limitations": [
+    "Five existing native-asset tests skipped because the optional native stage assets are unavailable in this checkout.",
+    "No real-device/browser pixel comparison or production output build was performed; verification is limited to focused logic, attribute-range, lifecycle and composed-source checks.",
+    "No new critical issue identified in the verified scope; maximum practical FPS and complete regression freedom are not established by these checks."
+  ],
+  "reviewed_without_changes": [
+    "Audio listener/loop deduplication, prewarming and voice/cache resource limits already present.",
+    "Character FK branch updates, hair spring caches and HUD/minimap scratch objects already present.",
+    "Network wipeout history recomputation already has a receipt-aware cache.",
+    "Constant animation curves optimization rejected because none of the shipped bound curves has one key.",
+    "Tiny audio positivity shortcut rejected because it changes underflow behavior."
+  ],
+  "delivery": "User subsequently authorized reflection to main. This commit is prepared for a guarded fast-forward from the recorded baseline; the final remote branch receipt is reported separately. No pull request, force update or unrelated changes are planned.",
+  "main_reflection": {
+    "authorization": "User: メイン反映までやれ",
+    "base_commit": "e781229bac5e8ba61f9bcf7f1c965e54db55afb4",
+    "verification_reuse": "Remote main still matches the tested baseline; prior focused checks are reused without repeating the scenarios.",
+    "ci_status": "Local focused verification is recorded above. Hosted CI and production deployment are separate and are not claimed as complete."
+  }
+}

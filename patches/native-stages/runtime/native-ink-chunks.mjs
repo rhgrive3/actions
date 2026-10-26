@@ -283,7 +283,24 @@ export class NativeInkMesh extends THREE.Mesh {
       // An atlas write outside the bound chart list: fail open to tiles.
       this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
     } else if (painted[id]) return;
-    else {painted[id] = 1;this._paintedFaceWords[id>>>5]|=1<<(id&31);}
+    else {
+      painted[id] = 1;
+      this._paintedFaceWords[id>>>5]|=1<<(id&31);
+      // Reaching a chart in an already culled tile cannot change the current
+      // index stream. Keep its paint bit for the next camera/transform change,
+      // but avoid rebuilding and uploading every visible chart this frame.
+      // Newly reached tiles still invalidate through _markPaintBounds below.
+      // Tile-only selection does not consume chart bits at all; toggling the
+      // diagnostic faceCulling switch already invalidates that selection.
+      if (!this._faceCulling) return;
+      if (!this._faceDirty) {
+        let visible = false;
+        for (let tri = this._faceStart[id], end = this._faceStart[id + 1]; tri < end; tri++) {
+          if (this._visible[this._triangleTile[tri]]) { visible = true; break; }
+        }
+        if (!visible) return;
+      }
+    }
     this._faceDirty = true;
     this._lastViewValid = false;
   }

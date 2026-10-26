@@ -287,6 +287,28 @@ test('#642 acceptance: unsupported WebGL, incomplete FBO and unproven ScreenFX f
     'the expected scene, Grade, ScreenFX, output and FXAA stages remain ordered');
 });
 
+test('per-frame grade validation preserves scalar, tint and in-place mutation guards', () => {
+  for (const tint of [undefined, null, [0, -0, 1], new Float32Array([0, 1, 2]), { x: 0, y: 1, z: 2 }]) {
+    assert.equal(composerGradeKeepsPackedTargetNonnegative({ uShadowTint: tint, uHighTint: tint }), true);
+  }
+  for (const tint of [[], [1, 2], [1, 2, 3, 4], [1, NaN, 1], [1, Infinity, 1], [1, -0.01, 1],
+    [1, , 1], new DataView(new ArrayBuffer(12)), { x: 1, y: 1 }, { x: 1, y: -1, z: 1 }]) {
+    for (const key of ['uShadowTint', 'uHighTint']) {
+      assert.equal(composerGradeKeepsPackedTargetNonnegative({ [key]: tint }), false);
+    }
+  }
+  for (const key of ['uLift', 'uExposure', 'uVignette', 'uContrast', 'uSat', 'uVib']) {
+    for (const value of [NaN, Infinity, '1']) assert.equal(composerGradeKeepsPackedTargetNonnegative({ [key]: value }), false);
+  }
+  const grade = { uShadowTint: [1, 1, 1] };
+  assert.equal(composerGradeKeepsPackedTargetNonnegative(grade), true);
+  grade.uShadowTint[1] = -0.01;
+  assert.equal(composerGradeKeepsPackedTargetNonnegative(grade), false);
+  grade.uShadowTint[1] = 1;
+  grade.uVignette = 1.01;
+  assert.equal(composerGradeKeepsPackedTargetNonnegative(grade), false);
+});
+
 test('#642 acceptance: negative grade output selects HalfFloat, shipped grades remain eligible, and desktop keeps HDR', async () => {
   const ns = await linkEntry(
     `export * as THREE from 'three';\n` +

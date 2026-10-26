@@ -167,10 +167,15 @@ export class SourcePose {
 function clipLayout(bank, c) {
   const data = bank.data, n = bank.bones.length, rotCh = c.rotationMode === 'quaternion' ? 4 : 3;
   const animated = new Uint8Array(n), dst = new Int32Array(c.curveCount), sorted = new Uint8Array(c.curveCount);
+  // sample() already bounds frame to the clip. Shipped curves cover that
+  // entire interval, so their per-curve clamps would repeat the same work.
+  // Keep the general path for custom clips with shorter or invalid domains.
+  let coversClip = Number.isFinite(c.frames) && c.frames > 0;
   for (let i = 0; i < c.curveCount; i++) {
     const o = c.curves + i * CURVE, d = data[o]; dst[i] = d;
     if (d >= 0) { const ch = d % STRIDE; if (ch >= 6 && ch < 6 + rotCh) animated[Math.floor(d / STRIDE)] = 1; }
     const fo = data[o + 7], m = data[o + 8]; let ok = true;
+    if (d >= 0 && !(data[fo] <= 0 && data[fo + m - 1] >= c.frames)) coversClip = false;
     for (let k = 1; k < m && ok; k++) ok = data[fo + k - 1] <= data[fo + k];
     sorted[i] = ok ? 1 : 0;
   }
@@ -180,7 +185,7 @@ function clipLayout(bank, c) {
     if (animated[b]) { fixed.push(null); continue; }
     rotationFromRaw(q, c.rotationMode, raw, b * STRIDE); fixed.push([q._x, q._y, q._z, q._w]);
   }
-  return {dst, sorted, fixed, baseView: data.subarray(c.base, c.base + n * STRIDE)};
+  return {dst, sorted, fixed, coversClip, baseView: data.subarray(c.base, c.base + n * STRIDE)};
 }
 
 export class SourceBank {
@@ -222,7 +227,7 @@ export class SourceBank {
     const segments = out.segments || (out.segments = new Map());
     let seg = segments.get(c);
     if (!seg) { seg = new Int32Array(c.curveCount).fill(-1); segments.set(c, seg); }
-    const {dst, sorted} = layout;
+    const {dst, sorted, coversClip} = layout;
     for (let i = 0; i < c.curveCount; i++) {
       const d = dst[i];
       // Preserve unbound tracks in the bank and oracle, but do not invent their missing skeleton.
@@ -230,7 +235,7 @@ export class SourceBank {
       const o = c.curves + i * CURVE;
       if (!sorted[i]) { raw[d] = curveValue(data, o, frame); continue; }
       const fo = data[o + 7], n = data[o + 8];
-      const f = clamp(frame, data[fo], data[fo + n - 1]);
+      const f = coversClip ? frame : clamp(frame, data[fo], data[fo + n - 1]);
       let k = seg[i];
       if (!(k >= 0 && data[fo + k] <= f && (k + 1 >= n || data[fo + k + 1] > f))) {
         k++;
