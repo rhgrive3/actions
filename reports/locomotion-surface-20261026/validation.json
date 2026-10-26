@@ -249,5 +249,15 @@
     "Browser rolling stamps use normal random morphology; cell counts across rates are not claimed byte-identical. Fixed-clock/source gameplay comparisons are separate.",
     "iOS/iPad, real GPU, network match, audio fidelity and Switch measurements were not performed.",
     "No pushes, PRs, CI launches, merges or external publications by this worker."
-  ]
+  ],
+  "handoffSourceCommit": "4360948d4cb970d56daacea644ac760a9c25ff76",
+  "handoffIdentity": {
+    "sourceSha": "4360948d4cb970d56daacea644ac760a9c25ff76",
+    "contentHash": "609615676035ac77da7d3d15ff32865acad3a9141c84bca162ee2950b16c1b51",
+    "inputHash": "ff5cd4a92b691d3b84395f3f3b3981683bb39748c52bff6e38c7e4d15db07024",
+    "sourceInputs": 1483,
+    "artifacts": 2182,
+    "mismatches": 0
+  },
+  "handoffEquality": "handoff-runtime-equality.json"
 }
