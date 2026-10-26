@@ -64,7 +64,7 @@ test('frame observation follows replaced match and paint owners without duplicat
 
 test('crab receipts observe native disposal and retain only weak actor and mesh handles',()=>{
  const {context,game,probe}=fixture();
- const geometry=new EventTarget(),materials=[new EventTarget(),new EventTarget()];
+ const geometry=new EventTarget();geometry.id=71;const vertices=new Float32Array(12);geometry.attributes={position:{array:vertices},alias:{array:vertices}};geometry.index={array:new Uint16Array(6)};const materials=[new EventTarget(),new EventTarget()];
  const mesh={geometry,material:materials,parent:{}},actor={_s3AllSpecialState:{ballMesh:mesh}};
  context.__watchCrabBall(actor,7);game._frame(.02);game._frame(.02);
  const record=probe.crab[0];
@@ -72,7 +72,7 @@ test('crab receipts observe native disposal and retain only weak actor and mesh 
  assert.equal(record.actor.deref(),actor);assert.equal(record.mesh.deref(),mesh);
  for(const value of Object.values(record))assert.ok(value===null||typeof value!=='object'||value instanceof WeakRef,'observer record must not own game objects');
  let receipt=context.__crabReceipts()[0];
- assert.equal(receipt.created,1);assert.equal(receipt.inScene,true);assert.equal(receipt.seenInScene,true);
+ assert.equal(receipt.created,1);assert.equal(receipt.geometryId,71);assert.equal(receipt.geometryCpuBytes,60);assert.equal(receipt.inScene,true);assert.equal(receipt.seenInScene,true);
  geometry.dispatchEvent(new Event('dispose'));for(const material of materials)material.dispatchEvent(new Event('dispose'));
  mesh.parent=null;actor._s3AllSpecialState=null;
  game._frame(.02);receipt=context.__crabReceipts()[0];

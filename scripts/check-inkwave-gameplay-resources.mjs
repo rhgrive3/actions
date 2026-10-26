@@ -4,17 +4,22 @@
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import os from 'node:os';import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
 import {installGameplayObserver} from './lib/inkwave-gameplay-observer.mjs';
+import {gameplayVerdict,validateLifecycleExpectation} from './lib/inkwave-gameplay-verdict.mjs';
+import {sampleChromiumProcessMemory} from './lib/inkwave-chromium-process-memory.mjs';
 import {verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,sampleStats,hash} from './lib/inkwave-runtime-evidence.mjs';
 const opt=(k,d)=>{const i=process.argv.indexOf(k);return i<0?d:process.argv[i+1];};
 const root=process.cwd(),site=path.resolve(opt('--site','_site')),out=persistentDirectory(opt('--evidence-dir','.ci-scratch/gameplay/run'));
 const sha=opt('--source-sha',execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()),build=verifyRuntimeBuild(site,root,sha);
 const crabLifecycle=process.argv.includes('--crab-lifecycle');
-const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
+const expectedLifecycle=validateLifecycleExpectation(opt('--expect-lifecycle','released'),crabLifecycle,process.argv.includes('--expect-lifecycle'));
+const maps=opt('--maps','tidewater,kelpline,halyard').split(',');
+if(!maps.length||maps.some(id=>!id||!/^[-a-z0-9]+$/.test(id)))throw Error('Nonempty comma-separated map IDs required');
+const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
 const width=Number(opt('--width','480')),height=Number(opt('--height','300'));
 const cycles=Number(opt('--cycles','6')),seconds=Number(opt('--seconds','60')),quality=opt('--quality','high'),mobile=process.argv.includes('--mobile');
 if(!Number.isInteger(cycles)||cycles<1||!Number.isFinite(seconds)||seconds<=0)throw Error('Positive cycles and combat seconds required');
 for(const key of ['TMPDIR','TMP','TEMP'])process.env[key]=persistentBrowserTemp(path.join(root,'.ci-scratch/bt'));
-const report={schema:1,status:'running',sourceSha:sha,contentHash:build.contentHash,harnessHash:hash(JSON.stringify(harnessFiles)),harnessFiles,conditions:{crabLifecycle,cycles,seconds,quality,mobile,viewport:[width,height],deviceScaleFactor:1,seed:20261026,clock:'native RAF; no manual frames, fences, finish, freeze or render suppression',cpu:os.cpus()[0].model},samples:[],windows:[],errors:[]};
+const report={schema:1,status:'running',sourceSha:sha,contentHash:build.contentHash,harnessHash:hash(JSON.stringify(harnessFiles)),harnessFiles,conditions:{crabLifecycle,expectedLifecycle,maps,processScope:'Linux browser process tree including zygotes',cycles,seconds,quality,mobile,viewport:[width,height],deviceScaleFactor:1,seed:20261026,clock:'native RAF; no manual frames, fences, finish, freeze or render suppression',cpu:os.cpus()[0].model},samples:[],windows:[],errors:[]};
 const checkpoint=()=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(report,null,2));
 const mime={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://x'),file=path.resolve(site,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));if(!file.startsWith(site+'/'))throw Error('path');const body=fs.readFileSync(file);res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(body);}catch{res.statusCode=404;res.end();}});
@@ -28,21 +33,23 @@ try{
  await page.addInitScript(({quality})=>{let seed=20261026;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality,frameRate:60}));},{quality});
  system=await browser.newBrowserCDPSession();cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
  const sample=async()=>{if(sampling)return;sampling=true;try{
-  const {processInfo}=await system.send('SystemInfo.getProcessInfo');const processes=[];
-  for(const p of processInfo){try{const s=fs.readFileSync('/proc/'+p.id+'/smaps_rollup','utf8'),v=Object.fromEntries([...s.matchAll(/^(Rss|Pss|Private_Clean|Private_Dirty|Private_Hugetlb):\s+(\d+)/gm)].map(m=>[m[1],Number(m[2])]));processes.push({pid:p.id,type:p.type,cpuSeconds:p.cpuTime,rssKiB:v.Rss,pssKiB:v.Pss,ussKiB:(v.Private_Clean||0)+(v.Private_Dirty||0)+(v.Private_Hugetlb||0)});}catch{}}
-  report.samples.push({elapsedSeconds:(Date.now()-began)/1000,phase,processes});checkpoint();
+  const {processInfo}=await system.send('SystemInfo.getProcessInfo'),memory=sampleChromiumProcessMemory(processInfo);
+  if(!memory.processes.some(p=>p.pid===memory.browserPid))throw Error('Browser process memory unavailable');
+  report.samples.push({elapsedSeconds:(Date.now()-began)/1000,phase,...memory});checkpoint();
  }catch(e){report.errors.push('sample: '+e.message);}finally{sampling=false;}};
  const began=Date.now();sampler=setInterval(()=>void sample(),5000);await sample();
  await page.goto('http://127.0.0.1:'+server.address().port+'/?skipTitle&autopilot',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__inkwave?.debug&&window.__G?.s3?.installed,null,{timeout:300000});
  report.environment=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return{browser:navigator.userAgent,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,timerQuery:!!gl.getExtension('EXT_disjoint_timer_query_webgl2'),touch:__inkwave.mobile?.touch,quality:__inkwave.settings.quality};});
+ report.environment.chromiumVersion=await browser.version();
  await page.evaluate(()=>__startGameplayObserver());console.log('ready',JSON.stringify(report.environment));
  const capture=async(label,gc=false)=>{if(gc)await cdp.send('HeapProfiler.collectGarbage');
   const metrics=Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(x=>[x.name,x.value]));
-  const state=await page.evaluate(()=>{const G=__G,g=__inkwave,p=__gameplayProbe,gl=G.renderer.getContext();const r={mode:G.mode,state:g.match?.state,map:g.mapDef.id,time:G.time,matchTime:g.match?.time,actors:G.actors.length,coverage:G.paint.coverage(),projectiles:G.projectiles.list.length,bombs:G.projectiles.bombs?.length,clouds:G.projectiles.clouds?.length,resources:structuredClone(p.gpu),memory:{...G.renderer.info.memory},programs:G.renderer.info.programs?.length,frames:p.frames,frameCpu:p.frameCpu,calls:p.calls,triangles:p.triangles,gpuRenderMs:p.gpuRenderMs,gpuTimer:structuredClone(p.gpuTimer),contextLost:p.contextLost,crab:__crabReceipts(),owners:p.owners,totalFrames:p.totalFrames,windowFrames:p.windowFrames,dynamicScale:g.R.dynScale,quality:g.settings.quality,frozen:!!g.frozen,skipRender:!!g._skipRender,glError:gl.getError()};p.frames=[];p.frameCpu=[];p.calls=[];p.triangles=[];p.gpuRenderMs=[];p.owners={};p.windowFrames=0;return r;});
+  const state=await page.evaluate(()=>{const G=__G,g=__inkwave,p=__gameplayProbe,gl=G.renderer.getContext();const r={native:!!G.level?.native,drawingBuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight],mode:G.mode,state:g.match?.state,map:g.mapDef.id,time:G.time,matchTime:g.match?.time,actors:G.actors.length,coverage:G.paint.coverage(),projectiles:G.projectiles.list.length,bombs:G.projectiles.bombs?.length,clouds:G.projectiles.clouds?.length,resources:structuredClone(p.gpu),memory:{...G.renderer.info.memory},programs:G.renderer.info.programs?.length,frames:p.frames,frameCpu:p.frameCpu,calls:p.calls,triangles:p.triangles,gpuRenderMs:p.gpuRenderMs,gpuTimer:structuredClone(p.gpuTimer),contextLost:p.contextLost,crab:__crabReceipts(),owners:p.owners,totalFrames:p.totalFrames,windowFrames:p.windowFrames,dynamicScale:g.R.dynScale,quality:g.settings.quality,frozen:!!g.frozen,skipRender:!!g._skipRender,glError:gl.getError()};p.frames=[];p.frameCpu=[];p.calls=[];p.triangles=[];p.gpuRenderMs=[];p.owners={};p.windowFrames=0;return r;});
   for(const key of ['frames','frameCpu','calls','triangles','gpuRenderMs'])state[key]=sampleStats(state[key]);report.windows.push({label,gc,elapsedSeconds:(Date.now()-began)/1000,metrics,...state});await sample();console.log(label,JSON.stringify({memory:state.memory,programs:state.programs,resources:state.resources.resources,frames:state.frames,heap:metrics.JSHeapUsedSize}));checkpoint();};
  await capture('boot',true);
- const maps=['tidewater','kelpline','halyard'];
+ const availableMaps=await page.evaluate(()=>__inkwave.api.maps.map(m=>m.id));
+ for(const id of maps)if(!availableMaps.includes(id))throw Error('Unknown map: '+id);
  for(let cycle=0;cycle<cycles;cycle++){
   const mapId=maps[cycle%maps.length];phase='start-'+cycle+'-'+mapId;checkpoint();
   if(crabLifecycle)await page.evaluate(()=>{const g=__inkwave,id=Object.keys(g.api.weapons).find(id=>g.api.weapons[id].special==='crabTank');if(!id)throw Error('No real Crab Tank kit');g.profile.weapon=id;});
@@ -72,6 +79,6 @@ try{
   phase='menu-'+cycle;await page.evaluate(async()=>{await __inkwave.quitToMenu();});await page.waitForTimeout(5000);await capture('released-'+cycle,true);
   if(crabLifecycle){const receipt=report.windows.at(-1).crab.find(r=>r.cycle===cycle);receipt.removedAfterQuit=!receipt.inScene;receipt.disposedAfterQuit=receipt.geometryDisposed>0&&receipt.materialDisposed>0;report.lifecycleStatus=report.windows.filter(w=>w.label.startsWith('released-')).every(w=>{const r=w.crab.find(r=>r.cycle===Number(w.label.slice(9)));return r?.removedAfterQuit&&r?.disposedAfterQuit;})?'released':'leak-observed';checkpoint();}
  }
- phase='final-idle';await page.waitForTimeout(15000);await capture('final',true);report.status=report.errors.length?'failed':'passed';
+ phase='final-idle';await page.waitForTimeout(15000);await capture('final',true);report.status=gameplayVerdict({errors:report.errors,crabLifecycle,lifecycleStatus:report.lifecycleStatus,expectedLifecycle});
 }catch(e){report.status='failed';report.errors.push(e.stack);console.error(e);}finally{clearInterval(sampler);if(page&&!page.isClosed())await page.evaluate(()=>globalThis.__stopGameplayObserver?.()).catch(()=>{});checkpoint();await browser?.close();await new Promise(r=>server.close(r));}
 if(report.status!=='passed')process.exitCode=1;

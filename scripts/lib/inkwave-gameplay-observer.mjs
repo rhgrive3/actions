@@ -49,14 +49,14 @@ export function installGameplayObserver() {
  // Keep only WeakRefs and numeric receipts. No observer closure captures actors,
  // meshes, geometry or materials across match teardown.
  globalThis.__watchCrabBall=(actor,cycle)=>{
-  const record={cycle,actor:new WeakRef(actor),mesh:null,created:0,geometryDisposed:0,materialDisposed:0,seenInScene:false};
+  const record={cycle,actor:new WeakRef(actor),mesh:null,created:0,geometryId:-1,geometryCpuBytes:0,geometryDisposed:0,materialDisposed:0,seenInScene:false};
   data.crab.push(record);return record;
  };
  globalThis.__pollCrabBalls=()=>{
   for(const record of data.crab){const actor=record.actor.deref(),mesh=actor?._s3AllSpecialState?.ballMesh;
-   if(mesh&&!record.mesh){record.mesh=new WeakRef(mesh);record.created++;mesh.geometry?.addEventListener('dispose',()=>record.geometryDisposed++);for(const mat of Array.isArray(mesh.material)?mesh.material:[mesh.material])mat?.addEventListener('dispose',()=>record.materialDisposed++);}
+   if(mesh&&!record.mesh){record.mesh=new WeakRef(mesh);record.created++;record.geometryId=mesh.geometry?.id??-1;const arrays=new Set();for(const attribute of [mesh.geometry?.index,...Object.values(mesh.geometry?.attributes||{})])if(attribute?.array&&!arrays.has(attribute.array)){arrays.add(attribute.array);record.geometryCpuBytes+=attribute.array.byteLength;}mesh.geometry?.addEventListener('dispose',()=>record.geometryDisposed++);for(const mat of Array.isArray(mesh.material)?mesh.material:[mesh.material])mat?.addEventListener('dispose',()=>record.materialDisposed++);}
    if(record.mesh?.deref()?.parent)record.seenInScene=true;
   }
  };
- globalThis.__crabReceipts=()=>data.crab.map(r=>({cycle:r.cycle,created:r.created,geometryDisposed:r.geometryDisposed,materialDisposed:r.materialDisposed,seenInScene:r.seenInScene,inScene:!!r.mesh?.deref()?.parent,actorRetained:!!r.actor.deref(),meshRetained:!!r.mesh?.deref()}));
+ globalThis.__crabReceipts=()=>data.crab.map(r=>({cycle:r.cycle,created:r.created,geometryId:r.geometryId,geometryCpuBytes:r.geometryCpuBytes,geometryDisposed:r.geometryDisposed,materialDisposed:r.materialDisposed,seenInScene:r.seenInScene,inScene:!!r.mesh?.deref()?.parent,actorRetained:!!r.actor.deref(),meshRetained:!!r.mesh?.deref()}));
 }
