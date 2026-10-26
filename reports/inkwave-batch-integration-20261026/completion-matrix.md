@@ -11,6 +11,7 @@ Worker-head evidence is distinguished from final combined-head checks below.
 | Bow two-stage charge | Source-specific Mid/Full stages, stage sound/pulse, two successive fills of the existing native annulus; release/reset/switch cleanup. Existing charge-dependent arrows/damage/speed/spread/cost/keep/explosions retained | Tri 30/72F, LACT 12/34F, Fluid 40/80F from pinned source. No added circle/marker/path/CSS; native track/arc colors remain unchanged after original-pixel review. Component 15 cases passed. Fixed-90bb native touch Tri crossed 0/1/2, updated first/second/full DOM progress, emitted both boundary cues and released three arrows. Mid-stage captures are canvas-only, so they do not prove HUD pixels. Exact original phase fractions, complete cycle and timing remain unobserved. |
 | Downward Shooter / Dualies guide | Guides stop on the actual head's first field contact; native launch/integrator/contact and moving-actor cache inputs are used | Worker source/emitted negative controls and actual-head comparison; combined source recheck. Original outer-guide pixel/retail timing comparison remains incomplete. |
 | Repeated Shooter-guide cost | **Open regression; not performance-approved.** Reticle owner is preparing safe reuse/invalidation alongside the actual owner-projection diagnosis | Independent review of fixed 90bb measured 120 identical horizontal Shooter calls → 960 sphere sweeps (baseline 0), downward calls → 120; static Dualies cache → 0. Integration adds no competing cache change. World-revision invalidation is independently under review. |
+| Collision revision producers | Audited Level/NativeLevel append/index rebuild and actual Tower transform/removal publish collision revisions; queries and unchanged Tower transforms do not | Producer `fee0c005f` integrated separately from the pending consumer. Unknown worlds remain unversioned; invalid/exhausted revisions disable reuse. Source mutation/contact and emitted regressions pass. This supplies an invalidation contract, not a completed guide-cost fix or retail UI evidence. |
 | Dualies shot-kick jump / accumulated effects / turret display | Projection has a parent SVG group; kick has one bounded Animation per hand; cleanup and DOM/cache reset; merged guide follows actual turret target | Worker controlled emitted browser active-kick center 60.55px → 0, animation owners 50/hand → 1 and hidden → 0, native admitted roll display 1 then 2. Controlled component evidence is not ordinary-input or original pixel proof. |
 | Horizontal Shooter inner-marker visibility | **Unresolved.** The new `contact age > ShotGuideFrame` hide condition was removed from production in integration commit `1ad7af7b3`; existing full-flight admission is preserved | `ShotGuideFrame=8` is source data, not original UI cutoff evidence. Independent reticle review supplied a concrete counterexample: an actual projectile launched from 1.25 m contacts a wall 12 m away at 9F with prediction error 0, but the proposed 8F cutoff hides that valid obstacle marker. This is additional evidence against blanket hiding; it does not solve the horizontal-floor owner projection. Tests retain contact accuracy without certifying the heuristic. |
 | Walking step and speed presentation | Monotone visual step correction and smoothed display speed; gameplay walking/collision remain unchanged | Worker source/CPU and controlled render checks, combined 17-case checkpoint. Original unpublished locomotion curves and live hardware comparison remain unverified. |
@@ -21,6 +22,7 @@ Worker-head evidence is distinguished from final combined-head checks below.
 | Splat / Curling / Autobomb cues | Rolling Splat warning follows current supported surface and clears stale support; Curling forecast removed; Autobomb landing acquisition rim uses existing search radius/window | Worker source/emitted cue and render-readback evidence; final combined tests selected. Native fuse/collision/search/paint are unchanged. Thin-rim/fade pixels remain unmeasured retail art. |
 | Hissen main blob size | **Unfinished; no size fix is claimed.** | New private original references are under review. No reference media or private locator is added to this repository. |
 | Slosher falling floor droplets | **Unfinished; no family-wide visual correction is claimed.** | Existing native render/readback evidence is diagnostic only; generic falling bead shape is not accepted as original agreement. |
+| Machine / Bloblobber / Explosher first falling-splash distance | Replace the absent Shooter-nearest-field fallback distance 1 with each explicit Slosher first-rate interval × runtime spacing, using the already admitted seed | Safe `f41a353` + `a40ca317` above accepted `67ea075`; rejected visibility candidate excluded. Distances .36–1.26 / 3 / 1.55–1.705; no extra RNG draw or suppression of positive-radius drops. Combined phase/protected source 28 and selected emitted checks pass. Main physics/damage/count/size remain preserved. Generic travel metric and original silhouettes remain unverified. |
 
 ## Integration and evidence ownership
 
@@ -69,6 +71,16 @@ command-sandbox exception. Render snapshots missed E-liter's short head and all
 falling drops; mid-stage canvas PNGs omit the DOM HUD. This is neither component
 input injection nor hardware/original pixel/performance proof. The new repeated
 Shooter-guide cost above keeps the final head open.
+
+`producer-phase-append/validation.json` records the next bounded integration:
+producer `fee0c005f`, the safe two-commit Slosher phase branch and newer upstream
+main `d88aa683074f8c85765308b274a04a03feeb99f6`. Producer/upstream source 29 and
+selected Tower 2 passed before the phase append; phase/protected source 28 and
+emitted 23 passed on the combined build. All 1490 inputs / 2194 artifacts match,
+with build/budget/quick gates passing. New upstream Charger piercing and
+moving-target changes were preserved, not reimplemented by this batch.
+The reticle consumer is still pending, and no guide-cost acceptance is claimed.
+Fixed-90bb touch evidence stays historical; no new browser/audio matrix was run.
 
 The branch push succeeded. Draft PR creation was rejected twice by automatic
 approval review, including one retry after explicit parent appointment. No PR

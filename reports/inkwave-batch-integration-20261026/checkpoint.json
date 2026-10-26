@@ -186,5 +186,77 @@
       "hardware/original agreement",
       "overall or final-head performance/CI success"
     ]
+  },
+  "producerPhaseAppend": {
+    "sourceHead": "669f4d616f04e1014ee9453ed6149b933871ca84",
+    "upstreamMainMerged": "d88aa683074f8c85765308b274a04a03feeb99f6",
+    "producer": {
+      "branch": "codex/inkwave-collision-revision-20261026-fee0c005f",
+      "source": "fee0c005ffe129e8248c2122c41f5fad6612130d",
+      "integrated": "11aac831306b96ca271b421735bcf9f261287d9e",
+      "contract": "Audited Level/NativeLevel block append/rebuild and Tower actual transform/removal producers. No query stamp use, no per-frame all-static scan. Unknown worlds remain unversioned; invalid/exhausted revisions disable reuse. No consumer included."
+    },
+    "phase": {
+      "branch": "codex/slosher-initial-phase-20261026",
+      "verifiedHead": "a40ca3179fa6a483d43f6b7773fa61c29d04c5bf",
+      "acceptedBase": "67ea07501387f282464ac8b76d93842650c976d1",
+      "commitsAboveBase": [
+        "f41a35346caff97b5eed55a953c7893b344acf09",
+        "a40ca3179fa6a483d43f6b7773fa61c29d04c5bf"
+      ],
+      "integrated": [
+        "72277deadd4e2f36df9bb1fecc56badcd15cfdd0",
+        "669f4d616f04e1014ee9453ed6149b933871ca84"
+      ],
+      "rejectedVisibilityCandidateExcluded": true,
+      "sourceReview": "Only initializes generic Slosher nextSplash using dimensionless source rates times already-runtime-unit splashSpacing, reusing p.seed. No additional RNG calls, suppression or physical size/velocity/damage/count change.",
+      "firstDistances": {
+        "Machine": [
+          0.36,
+          1.26
+        ],
+        "Bloblobber": [
+          3,
+          3
+        ],
+        "Explosher": [
+          1.55,
+          1.705
+        ]
+      },
+      "independentParentReport": "24 emitted frames/family preserve main births/damage/physics, RNG counts 10/8/2 and positive drop visibility; not rerun or presented as this local measurement"
+    },
+    "checks": {
+      "producerUpstreamSource": {
+        "head": "af0dbbcfb951a1bfa20e87f667ebb9a3da11a3e1",
+        "pass": 29,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Producer6 plus catalogue charge/flight/stages3, new upstream piercing5 and motion-contact15"
+      },
+      "selectedTowerSource": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "phaseSource": {
+        "head": "669f4d616f04e1014ee9453ed6149b933871ca84",
+        "pass": 28,
+        "fail": 0,
+        "skip": 0,
+        "scope": "New phase9 plus protected Slosher flight/contact/main attack/origin/visibility/paint cases"
+      },
+      "emitted": {
+        "head": "669f4d616f04e1014ee9453ed6149b933871ca84",
+        "pass": 23,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Producer6, phase9 including positive drawing, catalogue charge/flight/stages3, upstream Charger piercing5"
+      },
+      "quick": "passed",
+      "optimizedBuild": "passed",
+      "startupBudget": "passed"
+    },
+    "validation": "producer-phase-append/validation.json"
   }
 }
