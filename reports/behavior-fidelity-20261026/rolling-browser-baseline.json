@@ -1,0 +1,22 @@
+{
+  "baselineCommit": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "overlaidRuntime": [
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "patches/splatoon3/runtime/resources.mjs"
+  ],
+  "candidateFailure": {
+    "id": "roller",
+    "hz": 30,
+    "gripL": 0.06185055270428701,
+    "gripR": 0.02571300596933043,
+    "direction": "forward"
+  },
+  "baselineFailure": {
+    "id": "roller",
+    "hz": 30,
+    "gripL": 0.06185055270428701,
+    "gripR": 0.02571300596933043,
+    "direction": "forward"
+  },
+  "identical": true
+}

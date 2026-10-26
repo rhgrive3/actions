@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import { fixture } from '../../patches/splatoon3/tests/source-fixture.mjs';
 
 const snapshot = P => JSON.parse(JSON.stringify(P.list.map(p => ({
@@ -58,4 +59,63 @@ test('harness resets only at scenario boundary after native cleanup',()=>{
   const source=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
   assert.equal((source.match(/G\.projectiles\.pool\.length = 0;/g)||[]).length,1);
   assert.match(source,/G\.projectiles\.clear\(\);\s*\/\/ Independent captures[\s\S]*?G\.projectiles\.pool\.length = 0;\s*G\.fx\.clear\(\); G\.paint\.clear\(\);/);
+});
+
+test('capture releases the actual catalog Explosher through Actor input, never ordinary fireSlosh', async()=>{
+  const source=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+  const prefix='const birthResult = await page.evaluate(({ method, seed, expectedWall }) => {';
+  const begin=source.indexOf(prefix), end=source.indexOf('}, { method: scenario.method, seed: scenario.seed, expectedWall: setup.wall });',begin);
+  assert(begin>0&&end>begin,'one existing native contact birth callback');
+  const body=source.slice(begin+prefix.length,end);
+  const loaded=new Map(),hash=value=>createHash('sha256').update(value).digest('hex');
+  const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true,vmMathRandom:()=>.5,
+    adaptRuntime:(rel,raw)=>{loaded.set(rel,hash(raw));return raw;},
+    adaptNative:(rel,raw)=>{loaded.set('inkwave-public/'+rel,hash(raw));return raw;}});
+  const identities={};
+  for(const rel of ['patches/splatoon3/runtime/s3-projectile-shapes.mjs','patches/splatoon3/runtime/main-weapon-catalog.mjs','inkwave-public/src/game/weapons.js']){
+    const expected=hash(fs.readFileSync(new URL('../../'+rel,import.meta.url)));
+    assert.equal(loaded.get(rel),expected,'Fixture must consume the actual capture checkout: '+rel);
+    identities[rel]=loaded.get(rel);
+  }
+  console.log('EXPLOSHER_CAPTURE_FIXTURE_SOURCES '+JSON.stringify(identities));
+  const {G}=f,P=G.projectiles;
+  G.physics.level=null;G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};G.physics.raycast=(_a,_b,_d,h)=>{h.hit=false;return h;};
+  G.fx=new Proxy({update(){}},{get:(o,k)=>k in o?o[k]:()=>{}});G.paint.flush??=()=>{};G.camera=new f.THREE.PerspectiveCamera();
+  const a=f.make('s3-slosher-washtub');a.form='kid';a.ink=100;a.grounded=true;a.vel.set(0,0,0);a.aimYaw=0;a.aimPitch=0;a.aimPoint.set(0,1.05,70);
+  G.match.local=a;
+  P.fireSlosh=()=>{throw Error('ordinary Slosher bypass is forbidden for Explosher capture');};
+  let state=13,draws=0;
+  const reset=seed=>{state=seed;draws=0;f.setRandom(()=>{draws++;state=(Math.imul(state,1664525)+1013904223)>>>0;return state/2**32;});return{snapshot:()=>({seed,draws,state})};};
+  const window={__G:G,__inkwave:{time:0},__iwResetScenarioRandom:reset};
+  const capture=new Function('window','method','seed','expectedWall',body);
+  const result=capture(window,'controller-washtub',13,null);
+  assert.equal(result.births.length,1);const born=result.births[0];
+  assert.equal(born.weapon,'s3-slosher-washtub');assert.equal(born.sourceActor,'WeaponSlosherWashtub');
+  assert.equal(born.route,'MainWeaponCatalog.P._step');assert.equal(born.catalogUnit,0);assert(born.life>0);
+  assert.equal(result.controllerProbe.sourceActor,'WeaponSlosherWashtub');assert(result.controllerProbe.heldFrames>=1&&result.controllerProbe.heldFrames<=60);
+  assert.equal(a.intent.fire,false);assert.equal(!!P.list[0].catalog.birthPending,false);
+  // Exercise the exact resource observer with real native Three buffer owners.
+  // The renderer/context below is a unit double, not a WebGL/image claim.
+  const resourcePrefix='const runtime = await page.evaluate(scenario => {';
+  const resourceStart=source.indexOf(resourcePrefix),resourceEnd=source.indexOf('}, scenario);',resourceStart);
+  assert(resourceStart>0&&resourceEnd>resourceStart);
+  const resourceBody=source.slice(resourceStart+resourcePrefix.length,resourceEnd);
+  const observe=new Function('window','innerWidth','innerHeight','scenario',resourceBody);
+  window.__iwScenarioRandomRecorder={snapshot:()=>({seed:13,draws,state})};
+  window.__iwAssertProjectileCaptureProjection=()=>{};window.__iwProjectileRosterSnapshot=()=>({});
+  G.renderer={getContext:()=>({NO_ERROR:0,getError:()=>0,drawingBufferWidth:800,drawingBufferHeight:450}),
+    info:{reset(){},render:{calls:1,triangles:1},memory:{geometries:1,textures:0},programs:[]}};
+  G.game={R:{render:()=>P._draw()}};
+  const resource=observe(window,800,450,'floor-washtub').washtubResources;
+  assert.equal(resource.liveRounds,1);assert.equal(resource.sparkles,28);assert.equal(resource.totalBufferBytes,2560);
+  assert.deepEqual(resource.arrayLengths,[480,160]);assert.equal(resource.repeatedDraws,2);
+  assert.equal(observe(window,800,450,'floor-washtub').washtubResources.stableOwners,true);
+  const position=P._s3Shapes.sparkPos;P._s3Shapes.sparkPos=position.clone();
+  assert.throws(()=>observe(window,800,450,'floor-washtub'),/resource owner\/buffer replaced/);P._s3Shapes.sparkPos=position;
+  const nativeDraw=P._draw;P._draw=function(...args){const result=nativeDraw.apply(this,args);draws++;return result;};
+  assert.throws(()=>observe(window,800,450,'floor-washtub'),/changes scenario RNG/);P._draw=nativeDraw;
+  const original=a.weaponId;a.weaponId='slosher';
+  assert.throws(()=>capture(window,'controller-washtub',13,null),/Wrong native Explosher/);a.weaponId=original;
+  assert.match(source,/name === 'floor-washtub' \? 's3-slosher-washtub'/);
+  assert.match(source,/visualProtocol: 2/);
 });

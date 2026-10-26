@@ -12,6 +12,9 @@ function fixture(rate) {
     const make = f.ctx[method];
     f.ctx[method] = (...args) => {
       const n = make(...args), row = {method,args,edges:[],node:n};
+      // Non-filter nodes have no type. Avoid the generic audio double creating
+      // a fresh callable AudioParam proxy when the graph observer reads it.
+      n.type = undefined;
       nodes.push(row);
       n.connect = other => row.edges.push(nodes.findIndex(x=>x.node===other));
       if (method === 'createConvolver') Object.defineProperty(n,'buffer',{get:()=>buffers.at(-1),set:value=>buffers.push(value),configurable:true});
@@ -22,7 +25,7 @@ function fixture(rate) {
 }
 function graph(f) {
   return f.nodes.map(({method,args,edges,node})=>({method,args,edges,
-    type:node.type, gain:node.gain.value, frequency:node.frequency.value,Q:node.Q.value,
+    type:typeof node.type === 'string' ? node.type : null, gain:node.gain.value, frequency:node.frequency.value,Q:node.Q.value,
     pan:node.pan.value,delay:node.delayTime.value, threshold:node.threshold.value,
     knee:node.knee.value,ratio:node.ratio.value,attack:node.attack.value,release:node.release.value}));
 }
@@ -34,6 +37,10 @@ test('actual lazy music FX preserves node topology, parameters and every determi
     before._init(old.ctx,{}, {offline:true}); after._init(next.ctx,{}, {offline:true});
     assert.equal(next.buffers.length,0); assert.equal(after.dlyIn,null); assert.equal(next.nodes.length,4);
     after._ensureProceduralFx(); assert.deepEqual(graph(next),graph(old));
+    const actualGain = next.nodes[0].node.gain.value;
+    next.nodes[0].node.gain.value = actualGain + .01;
+    assert.notDeepEqual(graph(next), graph(old), 'a changed real graph parameter must still fail the oracle');
+    next.nodes[0].node.gain.value = actualGain;
     assert.equal(after._nodes.length,before._nodes.length);
     for(let channel=0;channel<2;channel++) assert.deepEqual(next.buffers[0].getChannelData(channel),old.buffers[0].getChannelData(channel));
     const count=next.nodes.length;after._ensureProceduralFx();assert.equal(next.nodes.length,count);

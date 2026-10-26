@@ -17,6 +17,8 @@ on:
       - 'scripts/*inkwave-projectile*.mjs'
       - 'reports/ink-volume/**'
       - '.github/workflows/inkwave-ink-volumes.yml'
+      - 'scripts/lib/inkwave-splatling-render-evidence.mjs'
+      - 'patches/splatoon3/runtime/splatling-cosmetics.mjs'
   workflow_dispatch:
     inputs:
       video_lifecycle_pilot:

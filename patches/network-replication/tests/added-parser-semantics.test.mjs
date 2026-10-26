@@ -3,16 +3,20 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {actualModule} from './added-actual-module.mjs';
 const profile=JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8'));
-const markerOld=`  const flagIndices = [];
-  for (let index = 31; index <= 35; index++) if (event[index] === true) flagIndices.push(index);
-  if (flagIndices.length > 1) return null;
-  const markerIndex = flagIndices[0] ?? -1;`;
+const markerCurrent=`  let markerIndex=-1,multipleMarkers=false;
+  for(let index=31;index<=35;index++)if(event[index]===true){if(markerIndex<0)markerIndex=index;else multipleMarkers=true;}
+  if(multipleMarkers)return null;`;
 const markerProposed=`  let markerIndex=-1;
   for(let index=31;index<=35;index++)if(event[index]===true){if(markerIndex>=0)return null;markerIndex=index;}`;
 async function load(candidate=false){
  const f=await actualModule('patches/splatoon3/runtime/weapons-fidelity.mjs',{
-  transform:s=>candidate?s.replace(markerOld,markerProposed).replace('!packet.slice(5,19).every(Number.isFinite)',
-   '!packetFiniteFields(packet)'):s,
+  transform:s=>{
+   if(!candidate)return s;
+   assert.equal(s.split(markerCurrent).length,2,'unique current full-scan marker parser');
+   assert.equal(s.split('!packet.slice(5,19).every(Number.isFinite)').length,2,'unique current finite-field parser');
+   return s.replace(markerCurrent,markerProposed).replace('!packet.slice(5,19).every(Number.isFinite)',
+    '!packetFiniteFields(packet)');
+  },
   extra:`export {prepareFidelityProjectilePacket};
   export function setTestApi(value,data){api=value;completion=data;}
   function packetFiniteFields(packet){for(let i=5;i<19;i++)if(i in packet&&!Number.isFinite(packet[i]))return false;return true;}`});
@@ -22,7 +26,7 @@ function event(){const e=Array(34).fill(0);Object.assign(e,{0:100,1:'p',2:1,3:'s
 
 test('actual proposed scalar marker early-return skips an observable later marker getter',async()=>{
  const original=await load(),candidate=await load(true);
- for(const f of [original,candidate])assert(f.source.includes(markerOld));
+ for(const f of [original,candidate])assert(f.source.includes(markerCurrent));
  const run=f=>{const e=event();let reads=0;e[31]=e[32]=true;Object.defineProperty(e,35,{get(){reads++;return false;}});assert.equal(f.api.prepareFidelityProjectilePacket(e),null);return reads;};
  assert.equal(run(original),1);assert.equal(run(candidate),0,'proposal changes current parser evaluation order');
 });

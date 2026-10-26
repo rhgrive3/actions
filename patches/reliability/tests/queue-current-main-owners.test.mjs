@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptQueueNetworkUi } from '../queue-network-ui-adapter.mjs';
 
-// Execute the actual production pipeline up to the terminal queue owner. Only
-// that one imported function is replaced by an observer; other layers and their
-// fail-closed anchors remain authoritative instead of duplicating the pipeline.
+// Observe the queue owner's input while executing the full production pipeline.
+// The observer calls the real owner so subsequent layers retain their required
+// transformations and fail-closed anchors instead of duplicating the pipeline.
 const compositionURL = new URL('../../../scripts/inkwave-source-composition.mjs', import.meta.url);
 const composition = fs.readFileSync(compositionURL, 'utf8')
   .replace("import { adaptQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs';",
-    'export const observedQueueInputs = new Map(); const adaptQueueNetworkUi = (rel, code) => { observedQueueInputs.set(rel, code); return code; };')
+    "import { adaptQueueNetworkUi as actualQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs'; export const observedQueueInputs = new Map(); const adaptQueueNetworkUi = (rel, code) => { observedQueueInputs.set(rel, code); return actualQueueNetworkUi(rel, code); };")
   .replace(/from '([^']+)'/g, (_match, specifier) => "from '" + new URL(specifier, compositionURL).href + "'");
 const observed = await import('data:text/javascript;base64,' + Buffer.from(composition).toString('base64'));
 function input(rel) {

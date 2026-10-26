@@ -17,7 +17,7 @@ import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
 const STEP = 1 / 60;
-const OLD_FLIGHT_DAMAGE = 'const amount=job.full?job.weapon.damageMax:job.weapon.damageMin+(job.weapon.damagePartialMax-job.weapon.damageMin)*job.charge;';
+const OLD_FLIGHT_DAMAGE = 'amount=job.full?job.weapon.damageMax:job.weapon.damageMin+(job.weapon.damagePartialMax-job.weapon.damageMin)*job.charge;';
 
 function near(actual, expected, epsilon = 1e-7) {
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
@@ -39,7 +39,7 @@ async function boot({ omitFlightDamageFix = false } = {}) {
     let source = adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, raw))));
     if (omitFlightDamageFix && file === path.join(ROOT, 'patches/splatoon3/runtime/weapons-charger-flight.mjs')) {
       const before = source;
-      source = source.replace('const amount=job.damage;', OLD_FLIGHT_DAMAGE);
+      source = source.replace('amount=job.damage;', OLD_FLIGHT_DAMAGE);
       assert.notEqual(source, before, 'baseline control must remove the active flight damage snapshot');
     }
     const mod = new vm.SourceTextModule(source, {

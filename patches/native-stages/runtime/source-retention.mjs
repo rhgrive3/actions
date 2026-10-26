@@ -83,5 +83,11 @@ export async function managedSourceSlot(id,prefix){
   group.entries.push({url:String(url),bytes,resolve,reject});group.bytes+=bytes.byteLength;
   if(created)writeGroup(group).then(()=>{for(const entry of group.entries)entry.resolve();},error=>{for(const entry of group.entries)entry.reject(error);}).finally(()=>{group.entries.length=0;if(admission===group)admission=null;});
  });
- return {match:url=>cache.match(url),delete:url=>{if(admission)admission.accepting=false;return lock(async()=>{const state=await stateFor(prefix);await save(state,true);await cache.put(META,await envelope({},true));return cache.delete(url);});},put:async(url,response)=>putBytes(url,await response.arrayBuffer()),_nativePut:putBytes};
+ return {match:url=>cache.match(url),delete:url=>{if(admission)admission.accepting=false;return lock(async()=>{
+  const state=await stateFor(prefix),row=await readRow(name);cache=row.cache;
+  await save(state,true);await cache.put(META,await envelope(row.files||{},true));
+  const removed=await cache.delete(url);
+  if(row.files){delete row.files[String(url)];row.bytes=sizeOf(row.files);await cache.put(META,await envelope(row.files));}
+  observe(state,row);await trim(state,name);await save(state);return removed;
+ });},put:async(url,response)=>putBytes(url,await response.arrayBuffer()),_nativePut:putBytes};
 }

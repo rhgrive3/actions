@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import { readFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,11 +26,37 @@ git('commit', '-qam', 'head');
 const head = git('rev-parse', 'HEAD');
 process.on('exit', () => rmSync(repo, { recursive: true, force: true }));
 
+// Pin each reviewed sparse profile exactly; no action or executable step may
+// be inserted between immutable checkout and the mandatory identity assertion.
+const reviewedCheckoutOptionHashes = {
+  "inkwave-paint-hotpath": "568beeb11b18b04b4991b7db25dd0f61dba7fbe26929b4de89df77414e82e7f1",
+  "inkwave-runtime-frame-parity": "f43c4f896621cf82ef9d09967456375d5ae463ed98486df17c6823c388caef62",
+  "inkwave-touch-frame-pacing": "568beeb11b18b04b4991b7db25dd0f61dba7fbe26929b4de89df77414e82e7f1",
+  "inkwave-pause-gpu": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+};
+const checkoutPrefix="      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha || github.sha }}\n";
+function assertCheckoutSequence(yaml,name) {
+ assert.equal(yaml.split(checkoutPrefix).length,2,name+': one exact immutable checkout');
+ const rest=yaml.split(checkoutPrefix)[1],marker='      - name: Verify exact checkout head\n';
+ assert(rest.includes(marker),name+': immediate mandatory head assertion');
+ const options=rest.slice(0,rest.indexOf(marker));
+ assert.equal(createHash('sha256').update(options).digest('hex'),reviewedCheckoutOptionHashes[name],name+': exact reviewed checkout options before head assertion');
+ return options;
+}
+
 for (const name of names) {
   const yaml = readFileSync(join(root, '.github/workflows', `${name}.yml`), 'utf8');
   const match = yaml.match(/      - name: Verify exact checkout head\n([\s\S]*?)      - uses: actions\/setup-node@v4/);
   assert.ok(match, `${name}: assertion must immediately follow checkout and precede setup`);
-  assert.match(yaml, /- uses: actions\/checkout@v4\n        with:\n          ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}\n      - name: Verify exact checkout head/);
+  const reviewedOptions=assertCheckoutSequence(yaml,name);
+  test(`${name}: checkout pin, sparse options and immediate head assertion cannot be omitted or altered`,()=>{
+    for(const changed of [
+      yaml.replace('ref: ${{ github.event.pull_request.head.sha || github.sha }}','ref: main'),
+      yaml.replace('      - name: Verify exact checkout head','      - run: echo unverified checkout\n      - name: Verify exact checkout head'),
+      yaml.replace('      - uses: actions/checkout@v4','      - uses: actions/checkout@v3'),
+      ...(reviewedOptions?[yaml.replace(reviewedOptions,''),yaml.replace(reviewedOptions,reviewedOptions+'          persist-credentials: true\n')]:[]),
+    ])assert.throws(()=>assertCheckoutSequence(changed,name));
+  });
   assert.match(match[1], /EXPECTED_SHA: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
   assert.match(match[1], /PR_HEAD_SHA: \$\{\{ github.event.pull_request.head.sha \}\}/);
   assert.match(match[1], /EVENT_SHA: \$\{\{ github.sha \}\}/);

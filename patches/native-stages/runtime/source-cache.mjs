@@ -68,7 +68,7 @@ export async function sourceBytes(id,url,expected,signal,onProgress){
  if(onProgress&&r.body){
   // Only authenticated per-asset metadata may size the allocation. An HTTP
   // header controls the displayed total, never an unbounded upfront buffer.
-  const pinned=Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&expected.bytes<=64*1024*1024;
+  const pinned=Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&expected.bytes<=256*1024*1024;
   const result=pinned?new Uint8Array(expected.bytes):null,chunks=result?null:[];
   const reader=r.body.getReader();let count=0,last=0,total=Number(r.headers.get('content-length'))||expected.bytes||0,complete=false;
   try{
@@ -134,7 +134,15 @@ function openDB(){return new Promise((resolve,reject)=>{
 });}
 function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.transaction(mode==='readwrite'?['stages','stage-times']:'stages',mode),s=t.objectStore('stages');let result;run(s,value=>{result=value;},t);t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
 const arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
-async function seal(data){const hashes=await Promise.all(arrays.map(k=>crypto.subtle.digest('SHA-256',data[k])));hashes.push(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(data.manifest))));return hashes.map(hex).join('/');}
+async function seal(data){
+ const keys=data.faceTriangles?[...arrays,'faceTriangles']:arrays;
+ const hashes=await Promise.all(keys.map(k=>crypto.subtle.digest('SHA-256',data[k])));
+ // Packed IDs are already hashed as bytes. Serialize each shared view's exact
+ // range instead of expanding hundreds of thousands of numeric object keys.
+ const manifest=JSON.stringify(data.manifest,(_key,value)=>data.faceTriangles&&value instanceof Uint32Array&&value.buffer===data.faceTriangles.buffer
+  ?{packedTriangleOffset:value.byteOffset-data.faceTriangles.byteOffset,packedTriangleLength:value.length}:value);
+ hashes.push(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(manifest)));return hashes.map(hex).join('/');
+}
 export async function readDerived(key){
  let db;try{db=await openDB();const row=await transact(db,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done(r.result);});if(!row||await seal(row.data)!==row.seal)return null;return row.data;}catch{return null;}finally{db?.close();}
 }

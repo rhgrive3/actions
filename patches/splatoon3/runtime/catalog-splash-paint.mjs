@@ -47,7 +47,7 @@ import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DR
 // defaults share the provenance documented in blaster-flight-paint.mjs.
 // Families without these source fields stay on their existing path; this does
 // not invent missing slosher/roller/stringer physics or certify retail parity.
-const dropSpecCache=new WeakMap();
+const dropSpecCache=new WeakMap(), fallbackDropSpecCache=new WeakMap();
 const DROP_SPEC_FIELDS=Object.freeze([
   ['MoveParam','FreeGravity'],['MoveParam','$type'],
   ['SplashPaintParam','DepthScaleMax'],['SplashPaintParam','DepthScaleMin'],
@@ -55,9 +55,10 @@ const DROP_SPEC_FIELDS=Object.freeze([
   ['SplashSpawnParam','RandomSpawnVelXMax'],['SplashSpawnParam','RandomSpawnVelYMax'],
   ['SplashSpawnParam','RandomSpawnVelZMin'],['SplashSpawnParam','RandomSpawnVelZMax'],
 ]);
-export function catalogSplashDropSpec(source, sourceActor = null, shotMode = 'normal') {
-  const cached=source&&dropSpecCache.get(source);
-  if(cached&&cached.actor===sourceActor&&cached.mode===shotMode&&cached.move===source.MoveParam&&
+export function catalogSplashDropSpec(source, sourceActor = null, shotMode = 'normal', gravityOverride) {
+  const cache = gravityOverride===undefined?dropSpecCache:fallbackDropSpecCache;
+  const cached=source&&cache.get(source);
+  if(cached&&Object.is(cached.gravityOverride,gravityOverride)&&cached.actor===sourceActor&&cached.mode===shotMode&&cached.move===source.MoveParam&&
       cached.spawn===source.SplashSpawnParam&&cached.paint===source.SplashPaintParam&&
       cached.hasGravity===Object.hasOwn(source.MoveParam||{},'FreeGravity')){
     let same=true;
@@ -75,7 +76,7 @@ export function catalogSplashDropSpec(source, sourceActor = null, shotMode = 'no
   const typedSimple = move?.$type === 'spl__BulletSimpleMoveParam' ||
     sourceActor === 'WeaponShooterTripleQuick' || sourceActor === 'WeaponShooterTripleMiddle' ||
     shotMode === 'turret' && (sourceActor === 'WeaponManeuverGallon' || sourceActor === 'WeaponManeuverLong');
-  const gravity = Number.isFinite(move?.FreeGravity) ? move.FreeGravity
+  const gravity = gravityOverride!==undefined?gravityOverride:Number.isFinite(move?.FreeGravity) ? move.FreeGravity
     : missing && typedSimple ? 0.016 : undefined;
   const spawn=source?.SplashSpawnParam, paintSource=source?.SplashPaintParam;
   if(!(Number.isFinite(gravity)&&gravity>0)||!spawn||!paintSource)return null;
@@ -88,8 +89,8 @@ export function catalogSplashDropSpec(source, sourceActor = null, shotMode = 'no
     dropHeightMax:paint.DepthMaxDropHeight,dropHeightMin:paint.DepthMinDropHeight,
     randomVelocity:Object.freeze({x:random.RandomSpawnVelXMax*60,y:random.RandomSpawnVelYMax*60,
       zMin:random.RandomSpawnVelZMin*60,zMax:random.RandomSpawnVelZMax*60})});
-  dropSpecCache.set(source,{actor:sourceActor,mode:shotMode,move,spawn,paint:paintSource,
-    hasGravity:Object.hasOwn(move,'FreeGravity'),values:DROP_SPEC_FIELDS.map(([group,key])=>source[group]?.[key]),result});
+  cache.set(source,{actor:sourceActor,mode:shotMode,gravityOverride,move,spawn,paint:paintSource,
+    hasGravity:Object.hasOwn(move||{},'FreeGravity'),values:DROP_SPEC_FIELDS.map(([group,key])=>source[group]?.[key]),result});
   return result;
 }
 

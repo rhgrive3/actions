@@ -21,6 +21,9 @@ export function texture(ctx, kind) {
   const rnd = mulberry32(seed);
   const lerp = (r, x) => r[0] + (r[1] - r[0]) * x;
   const n = Math.floor(s.rate * s.dur), atk = 0.0012 * sr;
+  // Float64 preserves the exact JS Number factor before Float32 accumulation.
+  const attack = s.crackle ? null : new Float64Array(Math.min(len, Math.ceil(s.d[1] * sr * 5) + 1));
+  if (attack) for (let i = 0; i < attack.length; i++) attack[i] = 1 - Math.exp(-i / atk);
   for (let k = 0; k < n; k++) {
     const start = Math.floor(rnd() * len);
     const dec = lerp(s.d, rnd()) * sr, amp = lerp(s.amp, Math.pow(rnd(), 3));
@@ -29,11 +32,13 @@ export function texture(ctx, kind) {
       for (let i = 0; i < L; i++) d[(start + i) % len] += amp * (rnd() * 2 - 1) * Math.exp(-i / dec);
     } else {
       const f0 = lerp(s.f, rnd()), f1 = f0 * lerp(s.rise, rnd());
+      const ratio = f1 / f0, dec2 = dec * 2;
       let ph = rnd() * 0.2;
       for (let i = 0; i < L; i++) {
-        const f = f0 * Math.pow(f1 / f0, Math.min(1, i / (dec * 2)));
+        const exponent = Math.min(1, i / dec2);
+        const f = f0 * (exponent === 1 ? ratio : Math.pow(ratio, exponent));
         ph += (2 * Math.PI * f) / sr;
-        d[(start + i) % len] += amp * (1 - Math.exp(-i / atk)) * Math.exp(-i / dec) * Math.sin(ph);
+        d[(start + i) % len] += amp * attack[i] * Math.exp(-i / dec) * Math.sin(ph);
       }
     }
   }

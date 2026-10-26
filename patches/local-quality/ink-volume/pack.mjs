@@ -20,19 +20,17 @@ export async function decodeVolumeBinary(manifest, data) {
   if (!Number.isSafeInteger(manifest.byteLength) || manifest.byteLength < 0 || manifest.byteLength > 128 * 1024 * 1024) throw Error('Invalid volume size');
   if (!manifest.compression) return data;
   if (manifest.compression !== 'gzip' || typeof DecompressionStream !== 'function') throw Error('Unsupported ink compression');
-  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('gzip')), reader = stream.getReader(), chunks = [];
+  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('gzip')), reader = stream.getReader();
+  const bytes = new Uint8Array(manifest.byteLength);
   let length = 0;
   try {
     for (;;) {
       const { value, done } = await reader.read(); if (done) break;
-      length += value.byteLength;
-      if (length > manifest.byteLength) throw Error('Ink decompression exceeds declared size');
-      chunks.push(value);
+      if (value.byteLength > bytes.length - length) throw Error('Ink decompression exceeds declared size');
+      bytes.set(value, length); length += value.byteLength;
     }
   } catch (error) { await reader.cancel().catch(() => {}); throw error; }
   if (length !== manifest.byteLength) throw Error('Ink decompression length mismatch');
-  const bytes = new Uint8Array(length); let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return bytes.buffer;
 }
 export async function loadVolumePack(url, { signal } = {}) {

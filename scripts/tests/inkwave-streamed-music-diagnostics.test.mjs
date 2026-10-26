@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import { serveProjectileCaptureFile } from '../lib/inkwave-projectile-http-file.mjs';
 import { observeStreamedMusic } from '../lib/inkwave-streamed-music-diagnostics.mjs';
 import { installProjectileCaptureUiGate, withProjectileCaptureUi } from '../lib/inkwave-projectile-capture-ui.mjs';
 import { installProjectileCaptureProjection } from '../lib/inkwave-projectile-capture-projection.mjs';
@@ -54,12 +58,32 @@ test('unavailable CDP and closed-page snapshots remain diagnostic failures',asyn
 test('observer does not call playback, seek, network mutation, or schedule timers',async()=>{
  const f=await fixture();Object.defineProperty(f.media,'currentTime',{get:()=>1,set:()=>assert.fail('seek')});f.media.play=()=>assert.fail('play');f.media.pause=()=>assert.fail('pause');f.media.load=()=>assert.fail('load');await f.observer.snapshot('observe');assert.deepEqual(f.calls,['Network.enable','Media.enable']);
 });
+// Reviewed protocol-2 capture-only additions: recover the exact 22a runner
+// first, then retain the historical workload/error restoration below unchanged.
+// Hunk bodies are fixed review inputs, never derived from the executing runner.
+const PROTOCOL2_RUNNER_HUNKS=[["const report = {\n  schema: 1,\n  visualProtocol: 2,\n  mode,\n  site,\n","const report = {\n  schema: 1,\n  mode,\n  site,\n"],["async function renderAndCapture(page, scenario, phase, perspective, seed) {\n  const camera = await setCamera(page, perspective);\n  const runtime = await page.evaluate(scenario => {\n    const G = window.__G;\n    G.paint.flush(1 / 60);\n","async function renderAndCapture(page, scenario, phase, perspective, seed) {\n  const camera = await setCamera(page, perspective);\n  const runtime = await page.evaluate(() => {\n    const G = window.__G;\n    G.paint.flush(1 / 60);\n"],["      throw new Error(`WebGL reported errors around native render (pre=${staleGlErrors.join(',') || 'none'}; post=${glErrors.join(',') || 'none'})`);\n    }\n    let washtubResources = null;\n    if (scenario === 'floor-washtub') {\n      const P = G.projectiles, R = P._s3Shapes;\n      if (!R?.sparks?.isPoints || !R.sparkPos || !R.sparkSize) throw Error('Missing native Explosher sparkle owner');\n      const refs = [R, R.sparks, R.sparks.geometry, R.sparks.material, R.sparkPos, R.sparkSize, R.sparkPos.array, R.sparkSize.array];\n      const previous = window.__iwWashtubResourceRefs;\n      if (previous && refs.some((r, i) => r !== previous[i])) throw Error('Explosher resource owner/buffer replaced between captures');\n      window.__iwWashtubResourceRefs = refs;\n      const count = P.list.filter(p => p.delay <= 0 && p.catalog?.r?.sourceActor === 'WeaponSlosherWashtub').length;\n      const rngBefore = window.__iwScenarioRandomRecorder?.snapshot?.();\n      const countsBefore = JSON.stringify(P.s3ShapeCounts);\n      P._draw(); P._draw();\n      if (refs.some((r, i) => r !== [P._s3Shapes, R.sparks, R.sparks.geometry, R.sparks.material, R.sparkPos, R.sparkSize, R.sparkPos.array, R.sparkSize.array][i])) throw Error('Repeated native draw replaces Explosher buffers');\n      const rngAfter = window.__iwScenarioRandomRecorder?.snapshot?.();\n      if (!rngBefore || !rngAfter || ['seed','draws','state'].some(k => rngBefore[k] !== rngAfter[k])) throw Error('Repeated Explosher draw changes scenario RNG');\n      if (JSON.stringify(P.s3ShapeCounts) !== countsBefore) throw Error('Repeated Explosher draw changes native shape counts');\n      const sparkles = P.s3ShapeCounts?.sparkles;\n      const arrayLengths = [R.sparkPos.array.length, R.sparkSize.array.length];\n      const positionCount = R.sparks.geometry.getAttribute('position')?.count, sizeCount = R.sparks.geometry.getAttribute('aSize')?.count;\n      if (count > 1 || sparkles !== count * 28 || positionCount !== 160 || sizeCount !== 160 || arrayLengths[0] !== 480 || arrayLengths[1] !== 160) throw Error('Explosher fixed sparkle budget violated');\n      if (R.sparks.geometry.getAttribute('position') !== R.sparkPos || R.sparks.geometry.getAttribute('aSize') !== R.sparkSize || R.sparks.material.map != null) throw Error('Explosher attribute/texture ownership changed');\n      washtubResources = { protocol: 1, scope: 'one native catalog Explosher round; fixed existing sparkle resources, not whole-scene GPU cost',\n        liveRounds: count, sparkles, positionCount, sizeCount, arrayLengths, totalBufferBytes: R.sparkPos.array.byteLength + R.sparkSize.array.byteLength,\n        stableOwners: true, stableArrays: true, repeatedDraws: 2, rngUnchanged: true, shapeCountsUnchanged: true, textureOwners: 0 };\n    }\n    const read = G.projectiles.list.map(p => ({\n      type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(),\n      mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),\n      seed: p.seed, unit: p.fidelitySloshUnitIndex ?? p.fidelityRollerUnitIndex ?? null,\n      ...(p.wid === 's3-slosher-washtub' ? { weapon:p.wid, life:p.life, damage:p.damage, sourceActor:p.catalog?.r?.sourceActor, catalogUnit:p.catalog?.descriptor?.unit, shape:p.s3Shape } : {}),\n    }));\n    const visibleHeadProjectiles = G.projectiles.list.filter(p => p.delay <= 0 && !p._s3SloshBirthPending);\n","      throw new Error(`WebGL reported errors around native render (pre=${staleGlErrors.join(',') || 'none'}; post=${glErrors.join(',') || 'none'})`);\n    }\n    const read = G.projectiles.list.map(p => ({\n      type: p.type, age: p.age, delay: p.delay || 0, pos: p.pos.toArray(), vel: p.vel.toArray(),\n      mode: p.fidelityMode || (p.s3Vertical ? 'vertical' : p.s3FlickUnit === undefined ? null : 'horizontal'),\n      seed: p.seed, unit: p.fidelitySloshUnitIndex ?? p.fidelityRollerUnitIndex ?? null,\n    }));\n    const visibleHeadProjectiles = G.projectiles.list.filter(p => p.delay <= 0 && !p._s3SloshBirthPending);\n"],["    return {\n      projectiles: read,\n      washtubResources,\n      roster: window.__iwProjectileRosterSnapshot(),\n      projectileScreen,\n","    return {\n      projectiles: read,\n      roster: window.__iwProjectileRosterSnapshot(),\n      projectileScreen,\n"],["      drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],\n    };\n  }, scenario);\n  if ((perspective === 'front' || perspective === 'side') && runtime.liveHeadCount > 0 &&\n      (runtime.visibleCenters <= 0 || !runtime.projectileCrop)) {\n","      drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],\n    };\n  });\n  if ((perspective === 'front' || perspective === 'side') && runtime.liveHeadCount > 0 &&\n      (runtime.visibleCenters <= 0 || !runtime.projectileCrop)) {\n"],["        wallDropTransition: extra.wallDropTransition ?? null,\n        impactPaintContact: extra.impactPaintContact ?? null,\n        washtubContact: extra.washtubContact ?? null,\n      });\n    };\n","        wallDropTransition: extra.wallDropTransition ?? null,\n        impactPaintContact: extra.impactPaintContact ?? null,\n      });\n    };\n"],["      // returns. Treat that face-bearing receipt plus retirement as the\n      // production contact state; validate the face against live stage geometry.\n      let washtubContact = null;\n      if (retired && p.catalog?.r?.sourceActor === 'WeaponSlosherWashtub' && p.catalog.lobes?.length === 1) {\n        const chosen = p.catalog.lobes[0].hit;\n        const point = chosen?.point?.toArray?.(), normal = chosen?.normal?.toArray?.();\n        const stageFace = chosen?.hit ? stageFaceFor(chosen.face, point) : null;\n        const paint = stepContext.paintReceipts.find(r => r.face === chosen?.face && r.stageFace?.valid && r.matchingNativeRaycast && r.matchingNativeRaycast.face === chosen.face);\n        if (chosen?.hit && stageFace?.valid && normal?.[1] > .68 && point && p.pos.distanceTo(chosen.point) < 1e-7 && paint) {\n          washtubContact = { source: 'sole catalog lobe native swept hit equals retired explosion centre and native floor paint face',\n            valid: true, sourceActor: p.catalog.r.sourceActor, seed:p.seed, weapon:p.wid, catalogUnit:p.catalog.descriptor.unit, life:p.life, damage:p.damage, point, normal, face: chosen.face, block: stageFace.block,\n            retiredPosition: p.pos.toArray(), matchingNativeRaycast: paint.matchingNativeRaycast, paintReceipt: paint };\n          record('MainWeaponCatalog.P._step:washtub', p, { ...chosen, block: stageFace.block }, { retired: true, stageFace, paintReceipts: stepContext.paintReceipts, washtubContact });\n        }\n      }\n      const paintContact = p.catalog && retired ? stepContext.paintReceipts.find(receipt =>\n        receipt.stageFace?.valid && receipt.sourceHint === 'non-raycast-paint') : null;\n","      // returns. Treat that face-bearing receipt plus retirement as the\n      // production contact state; validate the face against live stage geometry.\n      const paintContact = p.catalog && retired ? stepContext.paintReceipts.find(receipt =>\n        receipt.stageFace?.valid && receipt.sourceHint === 'non-raycast-paint') : null;\n"],["  window.__iwResetProjectileRoster();\n  const weapon = impact === 'wall' ? 'shooter' :\n    name === 'floor-washtub' ? 's3-slosher-washtub' : name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';\nasync function resetCaptureCharacter(actor) {\n  const old = actor.character, parent = old.root.parent;\n","  window.__iwResetProjectileRoster();\n  const weapon = impact === 'wall' ? 'shooter' :\n    name === 'shooter' ? 'shooter' : name.startsWith('roller') ? 'roller' : 'slosher';\nasync function resetCaptureCharacter(actor) {\n  const old = actor.character, parent = old.root.parent;\n"],["    { name: 'wall-shooter', seed: 0x7a11, method: 'controller-shooter', impact: 'wall', maxFrames: 120 },\n    { name: 'floor-slosher9', seed: 0x7a12, method: 'slosher9', impact: 'floor', maxFrames: 150 },\n    { name: 'floor-washtub', seed: 0x7a13, method: 'controller-washtub', impact: 'floor', maxFrames: 150 },\n  ]) {\n    const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });\n","    { name: 'wall-shooter', seed: 0x7a11, method: 'controller-shooter', impact: 'wall', maxFrames: 120 },\n    { name: 'floor-slosher9', seed: 0x7a12, method: 'slosher9', impact: 'floor', maxFrames: 150 },\n  ]) {\n    const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });\n"],["      const fireRng = window.__iwResetScenarioRandom(seed);\n      const beforeNativeFire = fireRng.snapshot();\n      if (method === 'controller-washtub') {\n        if (a.weaponId !== 's3-slosher-washtub' || a.weapon?.catalogRecord?.sourceActor !== 'WeaponSlosherWashtub') throw Error('Wrong native Explosher catalog selection');\n        const actorBefore = a.pos.toArray(), prior = G.projectiles.list.length, dt = 1 / 60;\n        if (prior || a.s3?.squidSpawn) throw Error('Explosher controller setup is not neutral');\n        a.intent.fire = true;\n        for (let i = 0; i < 60 && !G.projectiles.list.some(p => p.owner === a && p.delay <= 0 && !p.catalog?.birthPending); i++) {\n          controllerFramesHeld = i + 1;\n          G.time += dt; window.__inkwave.time += dt; a.update(dt);\n          G.projectiles.update(dt); G.fx.update(dt, G.camera); window.__inkwave.fxHooks?.update?.(dt); G.paint.flush(dt);\n        }\n        a.intent.fire = false;\n        const rounds = G.projectiles.list.filter(p => p.owner === a);\n        if (rounds.length !== 1 || rounds[0].wid !== 's3-slosher-washtub' || rounds[0].catalog?.r?.sourceActor !== 'WeaponSlosherWashtub' || rounds[0].catalog?.birthPending || rounds[0].delay > 0) throw Error('Native controller did not release exactly one admitted catalog Explosher round');\n        controllerProbe = { source: 'normal Actor.update intent.fire path after native Actor.spawnAt reset', heldFrames: controllerFramesHeld,\n          actorBefore, actorAtBirth: a.pos.toArray(), weapon: a.weaponId, sourceActor: rounds[0].catalog.r.sourceActor,\n          unit: rounds[0].catalog.descriptor.unit, lifecycleAtBirth: a.s3?.squidSpawn ? { phase: a.s3.squidSpawn.phase ?? null } : null };\n        if (controllerProbe.lifecycleAtBirth || controllerProbe.unit !== 0) throw Error('Explosher birth lifecycle/unit mismatch');\n      } else if (method === 'controller-shooter') {\n        const prior = G.projectiles.list.length, dt = 1 / 60;\n        const V = G.camera.position.constructor;\n","      const fireRng = window.__iwResetScenarioRandom(seed);\n      const beforeNativeFire = fireRng.snapshot();\n      if (method === 'controller-shooter') {\n        const prior = G.projectiles.list.length, dt = 1 / 60;\n        const V = G.camera.position.constructor;\n"],["        route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime.stepHead' : 'legacy-projectile-step',\n        sourceActor: p.catalog?.r?.sourceActor ?? p.s3Weapon?.sourceActor ?? p.inkKey ?? null,\n        controllerInput: method.startsWith('controller-') ? 'Actor.update intent.fire=true' : null,\n        controllerFramesHeld, ...(method === 'controller-washtub' ? { weapon:p.wid, life:p.life, damage:p.damage, catalogUnit:p.catalog?.descriptor?.unit } : {}) }));\n      return { births, controllerProbe, rng: { afterVisualSetup: window.__iwCurrentVisualSetupRng ?? null,\n        betweenSetupAndFire, beforeNativeFire, afterNativeFire: fireRng.snapshot() } };\n","        route: p.catalog ? 'MainWeaponCatalog.P._step' : p.inkProfile ? 'InkFlightRuntime.stepHead' : 'legacy-projectile-step',\n        sourceActor: p.catalog?.r?.sourceActor ?? p.s3Weapon?.sourceActor ?? p.inkKey ?? null,\n        controllerInput: method === 'controller-shooter' ? 'Actor.update intent.fire=true' : null,\n        controllerFramesHeld }));\n      return { births, controllerProbe, rng: { afterVisualSetup: window.__iwCurrentVisualSetupRng ?? null,\n        betweenSetupAndFire, beforeNativeFire, afterNativeFire: fireRng.snapshot() } };\n"],["          paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };\n      });\n      if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {\n        if (!row.afterCount) throw Error('Explosher retired before required early/midflight view');\n        await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);\n      }\n      captureFrame = frame;\n      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts,\n","          paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };\n      });\n      captureFrame = frame;\n      flightHistory.push({ frame, heads: row.heads, retired: row.retired, attempts: row.attempts,\n"],["          hit.block === setup.wall?.block && hit.face === setup.wall?.face &&\n          hit.normal.reduce((sum, value, i) => sum + value * setup.wall.normal[i], 0) > 0.9)\n        : scenario.name === 'floor-washtub' ? row.surfaceHits.find(hit => hit.route === 'MainWeaponCatalog.P._step:washtub' && hit.retired === true && hit.nativeStageContact === true && hit.washtubContact?.valid === true)\n        : row.surfaceHits.find(hit => hit.route === 'Projectiles._impact' && hit.retired === true && hit.nativeStageContact === true &&\n          hit.stageFace && hit.normal && hit.normal[1] > 0.68 && hit.impactPaintContact?.valid === true &&\n","          hit.block === setup.wall?.block && hit.face === setup.wall?.face &&\n          hit.normal.reduce((sum, value, i) => sum + value * setup.wall.normal[i], 0) > 0.9)\n        : row.surfaceHits.find(hit => hit.route === 'Projectiles._impact' && hit.retired === true && hit.nativeStageContact === true &&\n          hit.stageFace && hit.normal && hit.normal[1] > 0.68 && hit.impactPaintContact?.valid === true &&\n"],["      evidence: scenario.impact === 'wall'\n        ? 'The actor controller fired the legacy shooter; InkFlightRuntime.world returned the chosen valid live-stage Hit, and the same step entered the retained fidelityWallDrop phase at hit.point + hit.normal × 0.025.'\n        : scenario.name === 'floor-washtub' ? 'Actual catalog Explosher Actor input released one round; its sole native swept lobe hit equals its retired explosion centre on the live floor face, matching native floor-raycast blast paint.'\n        : 'Projectiles._impact received a validated native floor Hit; its scoped impact paint matched the source .14-normal offset and CPU PaintSystem recorded the same live face.' });\n  }\n","      evidence: scenario.impact === 'wall'\n        ? 'The actor controller fired the legacy shooter; InkFlightRuntime.world returned the chosen valid live-stage Hit, and the same step entered the retained fidelityWallDrop phase at hit.point + hit.normal × 0.025.'\n        : 'Projectiles._impact received a validated native floor Hit; its scoped impact paint matched the source .14-normal offset and CPU PaintSystem recorded the same live face.' });\n  }\n"]];
+const PRE_PROTOCOL2_RUNNER_SHA256="15633a814076abc11c5fbe8a5a0d9cfa156943f3e0ff69c2c7b096c30945a827";
+function restoreProtocol2Runner(source){
+ let restored=source;
+ for(const [current,prior]of PROTOCOL2_RUNNER_HUNKS){
+  assert.equal(restored.split(current).length,2,'exact singular reviewed protocol-2 runner hunk');
+  restored=restored.replace(current,prior);
+ }
+ assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),PRE_PROTOCOL2_RUNNER_SHA256,
+  'Only approved protocol-2 additions may precede the exact 22a runner');
+ return restored;
+}
 test('runner keeps historical workload and failure gates after reviewed capture updates',()=>{
  const runner=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
  const gate="page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));";
- assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
- let restored=runner;
+ assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
+ let restored=restoreProtocol2Runner(runner);
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+ // The verified local S3 cancellation gate is exercised below using the actual
+ // listeners and manifest verifier. Restore only that reviewed hunk here so
+ // the historical hash still protects every unrelated workload/error gate.
+ const cancellationGate=runner.match(/page\.on\('requestfailed', r => \{[\s\S]*?\n  \}\);/);
+ assert.ok(cancellationGate);revert(cancellationGate[0],gate);
  // The current-pair verifier adds only exact-build admission before the
  // historical workload. Its own strict source/site negative controls stay active.
  revert("import {verifyCurrentPairCaptureBuild} from './lib/inkwave-projectile-current-pair.mjs';\n", "");
@@ -166,6 +190,28 @@ test('runner keeps historical workload and failure gates after reviewed capture 
  revert('finally { await visual.close(); }','finally { await visual.context.close(); }');
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),'1fc5fa3f71f92e5b267b3db306ae0112900f255231791780a01ecd4fd941f9d3','Removing observation-only hunks restores the exact 67db runner, including workload and error gate');
  assert.equal(runner.match(/await close\(\);/g).length,1);assert.equal(runner.match(/await visual.close\(\);/g).length,1);
+});
+
+
+test('protocol-2 reversal rejects missing, duplicate, unknown and failure-gate runner changes',()=>{
+ const runner=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
+ assert.equal(PROTOCOL2_RUNNER_HUNKS.length,14);
+ assert.equal(crypto.createHash('sha256').update(restoreProtocol2Runner(runner)).digest('hex'),PRE_PROTOCOL2_RUNNER_SHA256);
+ for(const [current,prior]of PROTOCOL2_RUNNER_HUNKS){
+  assert.throws(()=>restoreProtocol2Runner(runner.replace(current,prior)),'missing reviewed hunk');
+  assert.throws(()=>restoreProtocol2Runner(runner+'\n'+current),'duplicate reviewed hunk');
+ }
+ const mutations=[
+  ['visualProtocol: 2','visualProtocol: 3'],
+  ["report.status = report.errors.length ? 'failed' : 'passed';","report.status = 'passed';"],
+  ["throw new Error('Built artifact checksum mismatch: ' + file)","void ('ignored checksum ' + file)"],
+  ["throw error;","return null;"],
+  ["if (!performanceFailed) throw cleanupError;","if (false) throw cleanupError;"],
+  ['sparkles !== count * 28','sparkles !== count * 29'],
+ ];
+ for(const [current,changed]of mutations){assert(runner.includes(current));assert.throws(()=>restoreProtocol2Runner(runner.replace(current,changed)),current);}
+ assert.throws(()=>restoreProtocol2Runner('// unreviewed runner addition\n'+runner),'unknown addition');
+ assert.throws(()=>restoreProtocol2Runner(restoreProtocol2Runner(runner)),'old runner is not current protocol-2 input');
 });
 
 test('snapshot cap is explicit and close failures keep their original rejection',async()=>{
@@ -339,4 +385,110 @@ test('missing projection installer fails initialization and still closes the obs
  const f=await lifecycleFixture();delete f.realm.installProjectileCaptureProjection;
  await assert.rejects(f.realm.openGameContext(),/installProjectileCaptureProjection is not defined/);assertClosed(f);
  assert.equal(f.calls.includes('goto'),false);
+});
+
+// Execute the runner's actual failure listeners, not a copy of their predicate.
+// These bounded API doubles test classification, not native audio playback.
+const cancellationAddress='http://127.0.0.1:9999/';
+const cancellationRevision='a'.repeat(64);
+const cancellationAsset='patches/splatoon3/runtime/audio/s3-real/probe.mp3';
+const cancellationVersioned=`_versions/${cancellationRevision}/${cancellationAsset}`;
+const cancellationURL=new URL(cancellationVersioned,cancellationAddress).href;
+function cancellationFixture({artifacts={[cancellationAsset]:'verified-root',[cancellationVersioned]:'verified-versioned'}}={}) {
+ const callbacks=new Map(),mimeErrors=[],report={browserDiagnostics:[]};
+ const page={on(name,fn){const rows=callbacks.get(name)||[];rows.push(fn);callbacks.set(name,rows);}};
+ const text=functionText("  page.on('crash',",'  await page.addInitScript(installAudioTimingObserver);');
+ vm.runInNewContext(text,{page,mimeErrors,report,mobile:false,URL,Date,address:cancellationAddress,manifest:{build:{revision:cancellationRevision},artifacts}});
+ const emit=(name,value)=>{for(const fn of callbacks.get(name)||[])fn(value);};
+ return {mimeErrors,report,emit,request(url=cancellationURL,error='net::ERR_ABORTED'){
+  emit('requestfailed',{url:()=>url,failure:()=>error===null?null:{errorText:error}});
+ }};
+}
+test('runner accepts only verified same-origin versioned S3 MP3 cancellation',()=>{
+ for(const suffix of ['', '?cache=1']) {
+  const f=cancellationFixture();f.request(cancellationURL+suffix);
+  assert.deepEqual(f.mimeErrors,[]);assert.equal(f.report.browserDiagnostics.length,1);
+  assert.equal(f.report.browserDiagnostics[0].event,'verified-audio-fetch-cancelled');
+  assert.equal(f.report.browserDiagnostics[0].asset,cancellationAsset);
+ }
+});
+test('runner rejects other origins, revisions, missing manifest leaves, and non-S3/non-MP3 aborts',()=>{
+ const cases=[
+  ['other host',cancellationURL.replace('127.0.0.1','localhost')],
+  ['other port',cancellationURL.replace(':9999',':9998')],
+  ['other scheme',cancellationURL.replace('http:','https:')],
+  ['other revision',cancellationURL.replace(cancellationRevision,'b'.repeat(64))],
+  ['unlisted MP3',cancellationURL.replace('probe.mp3','missing.mp3')],
+  ['non-MP3',cancellationURL.replace('probe.mp3','probe.json')],
+  ['nested MP3',cancellationURL.replace('probe.mp3','nested/probe.mp3')],
+  ['unversioned MP3',new URL(cancellationAsset,cancellationAddress).href],
+  ['other audio directory',new URL(`_versions/${cancellationRevision}/assets/audio/Jet_Arrow.mp3`,cancellationAddress).href],
+  ['missing root manifest leaf',cancellationURL,{[cancellationVersioned]:'verified-versioned'}],
+  ['missing served manifest leaf',cancellationURL,{[cancellationAsset]:'verified-root'}],
+ ];
+ for(const [label,url,artifacts]of cases){
+  const f=cancellationFixture(artifacts?{artifacts}:{});f.request(url);
+  assert.equal(f.report.browserDiagnostics.length,0,label);assert.equal(f.mimeErrors.length,1,label);
+  assert.match(f.mimeErrors[0],/request failed .*net::ERR_ABORTED/,label);
+ }
+});
+test('runner retains all non-abort and unknown request failures for known MP3s',()=>{
+ for(const error of ['net::ERR_FAILED','net::ERR_CONNECTION_RESET','net::ERR_TIMED_OUT','net::ERR_FILE_NOT_FOUND','unknown',null]){
+  const f=cancellationFixture();f.request(cancellationURL,error);
+  assert.equal(f.report.browserDiagnostics.length,0);assert.equal(f.mimeErrors.length,1);
+  assert.ok(f.mimeErrors[0].endsWith(error||'unknown'));
+ }
+});
+test('404 and corrupt-audio console/page errors remain fatal beside an accepted cancellation',()=>{
+ const f=cancellationFixture();f.request();
+ f.emit('console',{type:()=> 'error',text:()=> 'Failed to load resource: the server responded with a status of 404 (Not Found)'});
+ f.emit('console',{type:()=> 'error',text:()=> 'MP3 decode failed: corrupt data'});
+ f.emit('pageerror',new Error('audio decode rejected'));
+ assert.equal(f.report.browserDiagnostics.length,1);
+ assert.deepEqual(f.mimeErrors,[
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'MP3 decode failed: corrupt data','audio decode rejected',
+ ]);
+});
+function cancellationBuildFixture(t) {
+ const site=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-audio-cancellation-'));
+ t.after(()=>fs.rmSync(site,{recursive:true,force:true}));
+ const bytes=Buffer.from('synthetic bytes for integrity/network tests, not playback');
+ const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+ const artifacts={};
+ for(const relative of [cancellationAsset,cancellationVersioned]){
+  const file=path.join(site,relative);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes);artifacts[relative]=hash(bytes);
+ }
+ const manifest={build:{revision:cancellationRevision},artifacts,contentHash:hash(JSON.stringify(artifacts))};
+ fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));
+ const startup=functionText('const manifest = JSON.parse',"const { serveProjectileCaptureFile }");
+ const verify=()=>vm.runInNewContext(startup,{fs,path,site,hash});
+ return {site,bytes,manifest,verify};
+}
+test('actual startup verifier rejects corrupt or missing root and served-version MP3 bytes',t=>{
+ const f=cancellationBuildFixture(t);f.verify();
+ for(const relative of [cancellationAsset,cancellationVersioned]){
+  const file=path.join(f.site,relative);fs.writeFileSync(file,'corrupt');
+  assert.throws(f.verify,/Built artifact checksum mismatch/);
+  fs.unlinkSync(file);assert.throws(f.verify,/Built artifact checksum mismatch/);
+  fs.writeFileSync(file,f.bytes);f.verify();
+ }
+ f.manifest.artifacts[cancellationVersioned]='0'.repeat(64);
+ fs.writeFileSync(path.join(f.site,'inkwave-build.json'),JSON.stringify(f.manifest));
+ assert.throws(f.verify,/Build artifact manifest identity mismatch/);
+});
+test('actual loopback file handler serves the verified leaf and still returns 404 for missing assets',async t=>{
+ const f=cancellationBuildFixture(t);f.verify();
+ const serverText=functionText('const server = http.createServer','await new Promise(resolve => server.listen');
+ const realm={fs,path,http,URL,site:f.site,mime:{},serveProjectileCaptureFile};
+ vm.runInNewContext(serverText+'\nglobalThis.captureServer=server;',realm);
+ const server=realm.captureServer;
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const url=`http://127.0.0.1:${server.address().port}/${cancellationVersioned}`;
+ const valid=await fetch(url);assert.equal(valid.status,200);assert.equal(valid.headers.get('content-type'),'audio/mp3');
+ assert.deepEqual(Buffer.from(await valid.arrayBuffer()),f.bytes);
+ const missing=await fetch(url.replace('probe.mp3','missing.mp3'));assert.equal(missing.status,404);assert.equal(await missing.text(),'Not found');
+ fs.unlinkSync(path.join(f.site,cancellationVersioned));
+ const removed=await fetch(url);assert.equal(removed.status,404);assert.equal(await removed.text(),'Not found');
 });

@@ -199,8 +199,19 @@ export class MobileInput {
 
     window.addEventListener('blur', () => this.reset(), { signal: sig });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); else this.gyro.resync(); }, { signal: sig });
-    const relayout = () => {
-      // Input and gyro cancellation remain synchronous for every native viewport event.
+    // WebKit can dispatch a redundant resize after pointerdown with exactly
+    // the same layout and visual viewport. Do not discard a live gesture when
+    // no viewport dimensions changed; real rotations still cancel instantly.
+    const viewportKey = () => {
+      const visual = window.visualViewport;
+      return [innerWidth, innerHeight, visual?.width ?? innerWidth, visual?.height ?? innerHeight, visual?.scale ?? 1].join(':');
+    };
+    let lastViewportKey = viewportKey();
+    const relayout = (event) => {
+      const currentViewportKey = viewportKey();
+      if (event?.type === 'resize' && currentViewportKey === lastViewportKey) return;
+      lastViewportKey = currentViewportKey;
+      // Input and gyro cancellation remain synchronous for every actual viewport change or orientation event.
       this.gyro.resync(); this.resetPointers();
       // Safari may emit resize, orientationchange and screen.orientation.change
       // before one frame. Measure the final viewport only once per frame.

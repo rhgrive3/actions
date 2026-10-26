@@ -1,0 +1,61 @@
+(node:3167) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Stringer admitted volleys paint one sourced nearest mask on nearby grounded floor (1098.789073ms)
+✔ all four Brellas retain a single physical nearest volley drop before their first interval (413.719199ms)
+✔ Tri-Stringer nearest flight slot uses WidthHalfNearest instead of the intermediate width (75.970165ms)
+✔ Tri-Slosher and Dread Wringer release only the source Combination globs across 30/60/120 Hz (1236.836416ms)
+✔ Octobrush roll reads the full source half width and small flicks reach their source far width (254.104437ms)
+✔ real Tri-Slosher rig cannot lower horizontal physics births, including delayed globs (63264.827924ms)
+✔ horizontal Tri-Slosher reaches a standing opponent at 12.0 units but misses at 12.1 across 30/60/120 Hz (650.06015ms)
+(node:3579) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-stringer-normal has independently falling flight splashes above a lower floor (5638.500027ms)
+✔ s3-stringer-short has independently falling flight splashes above a lower floor (4279.801862ms)
+✔ s3-stringer-explosion has independently falling flight splashes above a lower floor (4580.684203ms)
+✔ s3-saber-normal has independently falling flight splashes above a lower floor (4411.192047ms)
+✔ s3-saber-lite has independently falling flight splashes above a lower floor (4329.870729ms)
+✔ s3-saber-heavy has independently falling flight splashes above a lower floor (4570.495537ms)
+✔ s3-shelter-normal emits one shared volley drop per source distance, after landing only (2223.536176ms)
+✔ s3-shelter-wide emits one shared volley drop per source distance, after landing only (2548.364021ms)
+✔ s3-shelter-compact emits one shared volley drop per source distance, after landing only (4016.408959ms)
+✔ s3-shelter-focus emits one shared volley drop per source distance, after landing only (3902.229556ms)
+✔ REEF-LUX launch spread narrows 10.5 -> 5 -> 0.5 degrees with charge and preserves arrow margin (6987.309824ms)
+✔ explosive arrows paint on lodging, then detonate once after the source fuse (1817.090719ms)
+✔ Saber foot mask requires nearby grounded floor; expiry releases its explicit terminal radius (12301.424022ms)
+✔ Brella collector survives a blocked centre pellet without crossing the wall or duplicating budgets (830.527983ms)
+✔ s3-stringer-short preserves final floor paint at 30/60/120Hz and has no ghost authority (7556.446964ms)
+✔ s3-saber-lite preserves final floor paint at 30/60/120Hz and has no ghost authority (7728.154893ms)
+✔ s3-shelter-focus preserves final floor paint at 30/60/120Hz and has no ghost authority (8401.938834ms)
+✔ s3-maneuver-short slide uses source half-width and does not paint in midair (3754.44393ms)
+✔ s3-maneuver-gallon slide uses source half-width and does not paint in midair (4309.745622ms)
+✔ s3-maneuver-dual slide uses source half-width and does not paint in midair (3122.376263ms)
+✔ s3-maneuver-stepper slide uses source half-width and does not paint in midair (4372.613824ms)
+✔ s3-maneuver-long slide uses source half-width and does not paint in midair (3514.294025ms)
+✔ s3-stringer-short releases all and only splash distances before a wall contact (2342.760897ms)
+✔ s3-saber-lite releases all and only splash distances before a wall contact (2272.03952ms)
+✔ an already fired Brella volley still lands after its owner is splatted, then clear removes every queued drop (4400.611108ms)
+✔ launched Brella paints a bounded trail, stops at terrain and cannot project from a high ledge at 30Hz (3600.530385ms)
+✔ launched Brella paints a bounded trail, stops at terrain and cannot project from a high ledge at 60Hz (5227.312174ms)
+✔ launched Brella paints a bounded trail, stops at terrain and cannot project from a high ledge at 120Hz (13257.393014ms)
+(node:3738) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ multiple splash thresholds in one fixed step emit at their distance rather than at the endpoint (15266.980441ms)
+✔ a collision retains earlier splash releases but emits no splash beyond the obstruction (3370.232866ms)
+✔ splash exactly at head-impact distance is suppressed (no double stamp) (3521.181828ms)
+✔ remote ghost contact emits no authoritative splash (2348.339193ms)
+✔ falling catalog projectiles release from the explicit source distance for their SplitNum slot (1336.082264ms)
+✔ release distances stop at range/lifetime {"range":2.5} (2085.062783ms)
+✔ release distances stop at range/lifetime {"life":0.004166666666666667} (1829.391659ms)
+✔ release distances stop at range/lifetime {"range":2.5,"life":0.004166666666666667} (2334.230458ms)
+(node:3806) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ grounded drum-support loss earns no dash time on the discovery tick at 30/60/120 Hz (2203.903806ms)
+✔ all existing airborne held movement values stay unchanged for five Rollers and three Brushes (33.548804ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 257826.47043

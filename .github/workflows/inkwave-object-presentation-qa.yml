@@ -51,6 +51,15 @@ on:
       - 'patches/splatoon3/tests/rainmaker-model-actor.test.mjs'
       - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
       - '.github/workflows/inkwave-object-presentation-qa.yml'
+      - 'patches/splatoon3/runtime/install.mjs'
+      - 'patches/splatoon3/profile.json'
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/core/renderer.js'
+      - 'inkwave-public/src/world/environment.js'
+      - 'inkwave-public/src/game/actor.js'
+      - 'inkwave-public/src/game/character.js'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -68,13 +77,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          filter: blob:none
+          # Keep every runtime, test and evidence input; omit the offline authoring workbench.
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Fetch only suite-declared immutable baseline objects
         run: |
           baselines="$(node --input-type=module -e "import {BASE,SUITES} from './tools/object-presentation-qa/config.mjs'; console.log([...new Set([BASE,...Object.values(SUITES).map(s=>s.beforeBase).filter(Boolean)])].join(' '))")"
           for baseline in $baselines; do
             [[ "$baseline" =~ ^[0-9a-f]{40}$ ]]
-            git fetch --no-tags --depth=1 origin "$baseline"
+            git fetch --no-tags --depth=1 --filter=blob:none origin "$baseline"
             git cat-file -e "$baseline^{commit}"
           done
       - name: Verify exact candidate

@@ -17,7 +17,7 @@ const address='http://127.0.0.1:'+server.address().port,browser=await chromium.l
 try{
  const c=await browser.newContext({viewport:{width:960,height:640}}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0})));
- await p.goto(address+'/?map='+primary,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
+ await p.goto(address+'/?map='+primary,{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>globalThis.__G?.game?.menus&&globalThis.__G.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');await p.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI));if(G!==globalThis.__G)throw Error('Native probe context owner mismatch');globalThis.NG=G;});
  await p.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;});console.log('lifecycle boot');
  // Preserve all authorities across an actual production quality update.
  result.quality=await p.evaluate(async()=>{
@@ -28,13 +28,25 @@ try{
   return {cpuGridUnchanged:true,trianglePositionsUnchanged:true,authoritiesRetained:true,finalAtlas:paint.size,textureCount:g.nativeWorld.metrics.textureCount};
  });console.log('quality passed');
  // Reject a corrupt asset while retaining the current stage and its resources.
+ const corruptionRoute=await p.evaluate(async failureId=>{
+  const {nativeStageBuild:build}=await import(new URL('patches/native-stages/runtime/build-config.mjs',document.baseURI));
+  const entry=build.prebuilt?.stages?.[failureId];
+  if(!entry)return '**/_native-reference-assets/'+failureId+'/vertices.bin';
+  const stageURL=new URL(build.prebuilt.baseURL+failureId+'/stage.json',document.baseURI),response=await fetch(stageURL);
+  if(!response.ok)throw Error('Corruption probe stage manifest HTTP '+response.status);
+  const bytes=await response.arrayBuffer(),digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+  if(bytes.byteLength!==entry.bytes||digest!==entry.stageSha256)throw Error('Corruption probe stage manifest integrity mismatch');
+  const record=JSON.parse(new TextDecoder().decode(bytes)),chunk=record.arrays?.vertices?.chunks?.[0];
+  if(record.id!==failureId||!chunk?.file||!(chunk.bytes>4))throw Error('Corruption probe vertex chunk missing');
+  return new URL(chunk.file,stageURL).href;
+ },failureId);
  let corruptRequests=0;
- await p.route('**/_native-reference-assets/'+failureId+'/vertices.bin',route=>{corruptRequests++;return route.fulfill({status:200,body:Buffer.alloc(4),contentType:'application/octet-stream'});});
+ await p.route(corruptionRoute,route=>{corruptRequests++;return route.fulfill({status:200,body:Buffer.alloc(4),contentType:'application/octet-stream'});});
  result.failureRollback=await p.evaluate(async({failureId,singleStage})=>{
   const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI)),level=G.level,paint=G.paint,display=g.nativeWorld.display;let rejected=false;
   try{const map=MAPS.find(m=>m.id===failureId);if(singleStage){const {buildNativeWorld}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));await buildNativeWorld(g,map,()=>true);}else await g._buildWorld(map);}catch(e){globalThis.nativeLifecycleError=e.message;rejected=/integrity mismatch/.test(e.message);}
   return {rejected,levelRetained:G.level===level,paintRetained:G.paint===paint,displayRetained:g.nativeWorld.display===display};
- },{failureId,singleStage});result.corruptionProbe={requests:corruptRequests,error:await p.evaluate(()=>globalThis.nativeLifecycleError||null)};assert(corruptRequests>0,'corruption route was never exercised');assert(Object.values(result.failureRollback).every(Boolean));await p.unroute('**/_native-reference-assets/'+failureId+'/vertices.bin');console.log('rollback passed');
+ },{failureId,singleStage});result.corruptionProbe={route:corruptionRoute,requests:corruptRequests,error:await p.evaluate(()=>globalThis.nativeLifecycleError||null)};assert(corruptRequests>0,'corruption route was never exercised');assert(Object.values(result.failureRollback).every(Boolean));await p.unroute(corruptionRoute);console.log('rollback passed');
  result.singleStageSeam=singleStage?'Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.':undefined;
  result.cancellation=await p.evaluate(async({failureId,lastId,singleStage})=>{
   const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI));
@@ -55,7 +67,7 @@ try{
  for(const id of mobileIds){
   console.log('mobile '+id);const c=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};});
-  await p.goto(address+'/?map='+id,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
+  await p.goto(address+'/?map='+id,{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>globalThis.__G?.game?.menus&&globalThis.__G.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');await p.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI));if(G!==globalThis.__G)throw Error('Native probe context owner mismatch');globalThis.NG=G;});
   await p.evaluate(async id=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);},id);
   const metrics=await p.evaluate(()=>{
    const G=NG,g=G.game,times=[];for(let i=0;i<180;i++){const start=performance.now();g._frame(1/60);times.push(performance.now()-start);}times.sort((a,b)=>a-b);

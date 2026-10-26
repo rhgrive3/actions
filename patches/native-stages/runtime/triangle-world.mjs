@@ -7,7 +7,11 @@ const V=()=>new THREE.Vector3();
 /** Read-only source-triangle BVH. The render model is never substituted with boxes. */
 export class TriangleWorld {
  constructor(data) {
-  Object.assign(this,data);this.triangleCount=this.triangles.length/9;
+  // Collision owns its BVH inputs, never display-only upload buffers.
+  // Keep other metadata extensions compatible without retaining render aliases.
+  Object.assign(this,data);
+  delete this.vertices;delete this.indices;
+  this.triangleCount=this.triangles.length/9;
   this._box=new THREE.Box3();this._ta=V();this._tb=V();this._tc=V();this._triangle=new THREE.Triangle();
   this._u=V();this._v=V();this._w=V();this._p=V();this._q=V();this._cp=V();this._sp=V();this._bestp=V();this._bests=V();this._d=V();this._s0=V();this._s1=V();this._center=V();this._normal=V();
   this.queryCount=0;this.triangleTests=0;

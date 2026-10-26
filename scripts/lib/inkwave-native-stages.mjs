@@ -4,9 +4,10 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {BASE_SOURCE_STAGES,SOURCE_RECIPE,SOURCE_COMMIT} from '../../patches/native-stages/runtime/source-catalog.mjs';
 import {assertSourceTerrainObjects} from '../../patches/native-stages/runtime/source-terrain-contract.mjs';
+import {PREBUILT_ROOT,admitPrebuiltStages} from './inkwave-native-prebuilt.mjs';
 export const NATIVE_ROOT=path.resolve((import.meta.dirname || fileURLToPath(new URL(".", import.meta.url))),'../../patches/native-stages');
 // Stateful ordinary movement stays the already-installed browser singleton.
-export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs','../../splatoon3/runtime/clock.mjs'];
+export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','../../../vendor/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs','../../splatoon3/runtime/clock.mjs'];
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function nativeStageIdentity(){
  const files={};const walk=dir=>{for(const d of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))){const file=path.join(dir,d.name);if(d.isDirectory())walk(file);else if(!file.includes('/tests/')&&!file.includes('/tools/')&&(file.endsWith('.mjs')||(file.includes('/definitions/')||file.includes('/source-inventories/'))&&file.endsWith('.json')))files[path.relative(NATIVE_ROOT,file)]=hash(fs.readFileSync(file));}};walk(NATIVE_ROOT);return files;
@@ -37,31 +38,72 @@ export function nativeStageCatalog(definitions=path.join(NATIVE_ROOT,'definition
 /** Keep the large third-party payload outside the revision/PWA snapshot. The
  * runtime verifies it with a pinned integrity manifest. Only opt-in builds get it. */
 export function nativeBrowserStageIntegrity(s){return hash(JSON.stringify([SOURCE_RECIPE,s.sourceSha256,s.tree,s.sourceSemantics||null,s.bounds,s.spawnPads,...(s.sourceNavigation?[s.sourceNavigation]:[])]));}
-export function prepareNativeStageBuild(assetPath,sourceIdentity=nativeStageIdentity()){
+function checkedPreparedFiles(root,id,pinned,onFile){
+ const dir=path.join(root,id);let manifest;
+ if(fs.lstatSync(dir).isSymbolicLink())throw Error('Native asset symlink: '+id);
+ if(!fs.lstatSync(path.join(dir,'integrity.json')).isFile()||fs.lstatSync(path.join(dir,'integrity.json')).isSymbolicLink())throw Error('Native asset symlink or non-file: '+id+'/integrity.json');
+ const raw=fs.readFileSync(path.join(dir,'integrity.json'));
+ if(pinned&&hash(raw)!==pinned)throw Error('Native integrity manifest changed: '+id);
+ const integrity=JSON.parse(raw);
+ if(!integrity||typeof integrity!=='object'||Array.isArray(integrity)||!Object.hasOwn(integrity,'manifest.json'))throw Error('Native manifest must be integrity listed: '+id);
+ const allowed=new Set(['integrity.json',...Object.keys(integrity)]);
+ const walk=(base,relative='')=>{for(const entry of fs.readdirSync(base,{withFileTypes:true})){const rel=relative+entry.name,file=path.join(base,entry.name);if(entry.isSymbolicLink())throw Error('Native asset symlink: '+id+'/'+rel);if(entry.isDirectory())walk(file,rel+'/');else if(!entry.isFile()||!allowed.has(rel))throw Error('Unlisted native asset: '+id+'/'+rel);}};walk(dir);
+ for(const [rel,expected]of Object.entries(integrity)){
+  if(path.isAbsolute(rel)||rel.includes('\\')||rel.includes('\0')||rel.split('/').some(p=>!p||p==='.'||p==='..')||rel==='integrity.json')throw Error('Native asset traversal');
+  if(!expected||!Number.isSafeInteger(expected.bytes)||expected.bytes<0||!/^[a-f0-9]{64}$/.test(expected.sha256))throw Error('Invalid native integrity entry: '+rel);
+  const bytes=fs.readFileSync(path.join(dir,rel));
+  if(bytes.length!==expected.bytes||hash(bytes)!==expected.sha256)throw Error('Native build integrity mismatch: '+id+'/'+rel);
+  if(rel==='manifest.json')manifest=JSON.parse(bytes);onFile?.(rel,bytes);
+ }
+ return {raw,manifest};
+}
+export function prepareNativeStageBuild(assetPath,sourceIdentity=nativeStageIdentity(),prebuiltRoot=PREBUILT_ROOT){
  const available=nativeStageCatalog(),runtimeSha256=hash(JSON.stringify(sourceIdentity));
- if(!assetPath)return {root:null,config:{schema:1,mode:'browser-direct',runtimeSha256,unavailableStages:available.unavailableStages,stages:available.stages.map(s=>({...s,integritySha256:nativeBrowserStageIntegrity(s)}))}};
+ if(!assetPath){
+  const stages=available.stages.map(s=>({...s,integritySha256:nativeBrowserStageIntegrity(s)}));
+  const config={schema:1,mode:'browser-direct',runtimeSha256,unavailableStages:available.unavailableStages,stages};
+  // Prebuilt records of the same conversion, served from this origin outside
+  // the revision/PWA snapshot. Stale or missing stages convert in the browser.
+  const prebuilt=process.env.INKWAVE_NATIVE_PREBUILT==='0'?null:admitPrebuiltStages(stages,prebuiltRoot);
+  if(prebuilt?.missing.length)console.warn('native prebuilt: payload absent or unverified for '+prebuilt.missing.join(', ')+' (git lfs pull?) — browser conversion is used');
+  if(prebuilt?.stale.length)console.warn('native prebuilt: stale records ignored for '+prebuilt.stale.join(', ')+' (re-run patches/native-stages/tools/prebuild-native.mjs)');
+  if(prebuilt&&Object.keys(prebuilt.admitted).length)config.prebuilt={baseURL:'../../native-prebuilt/',converterSha256:prebuilt.converter.sha256,stages:prebuilt.admitted};
+  return {root:null,prebuiltRoot,config};
+ }
  const root=fs.realpathSync(path.resolve(assetPath)),catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json')));
  if(catalog.schema!==1||catalog.sourceCommit!==SOURCE_COMMIT||!Array.isArray(catalog.stages)||!catalog.stages.length||new Set(catalog.stages.map(s=>s.id)).size!==catalog.stages.length)throw Error('Native build requires unique pinned stage conversions');
  const stages=catalog.stages.map(s=>{
   const definition=available.stages.find(d=>d.id===s.id);
   if(!definition||s.internal!==definition.internal||s.sourceSha256!==definition.sourceSha256||JSON.stringify(s.bounds)!==JSON.stringify(definition.bounds)||JSON.stringify(s.spawnPads)!==JSON.stringify(definition.spawnPads)||JSON.stringify(s.sourceSemantics||null)!==JSON.stringify(definition.sourceSemantics||null))throw Error('Native conversion differs from reviewed stage definition: '+s.id);
-  const file=path.join(root,s.id,'integrity.json'),integrity=JSON.parse(fs.readFileSync(file));
-  for(const [rel,expected] of Object.entries(integrity)){
-   if(path.isAbsolute(rel)||rel.split('/').includes('..'))throw Error('Native asset traversal');
-   const bytes=fs.readFileSync(path.join(root,s.id,rel));
-   if(bytes.length!==expected.bytes||hash(bytes)!==expected.sha256)throw Error('Native build integrity mismatch: '+s.id+'/'+rel);
-  }
-  const manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')));
+  const checked=checkedPreparedFiles(root,s.id),manifest=checked.manifest;
   if(s.diagnosticOnly||manifest.diagnosticOnly||manifest.placementReceipt)throw Error('Diagnostic placement conversion cannot enable a playable native stage: '+s.id);
   assertSourceTerrainObjects(manifest);
   if(JSON.stringify(s.sourceNavigation||null)!==JSON.stringify(definition.sourceNavigation||null))throw Error('Native navigation differs from reviewed definition: '+s.id);
-  return {...definition,integritySha256:hash(fs.readFileSync(file)),version1130Verified:false};
+  return {...definition,integritySha256:hash(checked.raw),version1130Verified:false};
  });
  return {root,config:{schema:1,mode:'local-prepared',baseURL:'../../_native-reference-assets/',runtimeSha256,unavailableStages:available.unavailableStages,stages}};
+}
+/** Copy admitted prebuilt stages and only the texture packs they reference. */
+export function copyPrebuiltNativeAssets(build,prepared){
+ const stages=prepared?.config?.prebuilt?.stages;if(!stages)return null;
+ const target=path.join(build,'native-prebuilt'),packs=new Set();let bytes=0,files=0;
+ for(const id of Object.keys(stages)){
+  const dir=path.join(prepared.prebuiltRoot,id),record=JSON.parse(fs.readFileSync(path.join(dir,'stage.json')));
+  fs.mkdirSync(path.join(target,id),{recursive:true});
+  for(const file of ['stage.json',...Object.values(record.arrays).flatMap(a=>a.chunks.map(c=>c.file))]){fs.copyFileSync(path.join(dir,file),path.join(target,id,file));bytes+=fs.statSync(path.join(dir,file)).size;files++;}
+  for(const p of record.manifest.prebuiltTexturePacks||[])packs.add(p.file);
+ }
+ for(const file of packs){fs.mkdirSync(path.dirname(path.join(target,file)),{recursive:true});fs.copyFileSync(path.join(prepared.prebuiltRoot,file),path.join(target,file));bytes+=fs.statSync(path.join(target,file)).size;files++;}
+ return {stages:Object.keys(stages).length,files,bytes};
 }
 export function copyLocalNativeAssets(build,prepared){
  if(!prepared?.root)return;
  const target=path.join(build,'_native-reference-assets');fs.mkdirSync(target,{recursive:true});
- for(const s of prepared.config.stages)fs.cpSync(path.join(prepared.root,s.id),path.join(target,s.id),{recursive:true});
+ try{for(const s of prepared.config.stages){
+  const out=path.join(target,s.id);fs.mkdirSync(out,{recursive:true});
+  // Copy one just-verified file at a time, closing the read/check/copy gap.
+  const copy=(rel,bytes)=>{const file=path.join(out,rel);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes);if(hash(fs.readFileSync(file))!==hash(bytes))throw Error('Native output integrity mismatch: '+s.id+'/'+rel);};
+  const {raw}=checkedPreparedFiles(prepared.root,s.id,s.integritySha256,copy);copy('integrity.json',raw);
+ }}catch(error){fs.rmSync(target,{recursive:true,force:true});throw error;}
  fs.writeFileSync(path.join(target,'LOCAL-ONLY.txt'),'Third-party extracted models. Redistribution rights and 11.3.0 placements unverified. Do not deploy this build.\n');
 }

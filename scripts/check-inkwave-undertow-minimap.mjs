@@ -14,11 +14,15 @@ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless
 const errors=[],result={status:'running',errors};
 try{
  const page=await browser.newPage({viewport:{width:960,height:640}});page.on('pageerror',e=>errors.push(e.message));
+ page.on('console',message=>{if(message.type()==='error')console.error('browser:',message.text());});
+ page.on('requestfailed',request=>console.error('requestfailed:',request.url(),request.failure()?.errorText));
+ page.on('response',response=>{if(response.status()>=400)console.error('http:',response.status(),response.url());});
  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=undertow',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
- await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
+ // Wait once within the original boot budget, then bind the current game owner.
+ await page.waitForFunction(()=>globalThis.__G?.game?.menus&&globalThis.__G.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  assert.equal(await page.locator('#boot-error').textContent(),'');
+ await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI));if(G!==globalThis.__G)throw Error('Native probe context owner mismatch');globalThis.NG=G;});
  await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'undertow',mode:'turf',difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();});
  result.proof=await page.evaluate(()=>{
   const G=NG,map=G.game.minimap,level=G.level,nav=G.nav,w=level.triangleWorld,origin=level.spawnPads[0].clone(),down=origin.clone().set(0,-1,0);

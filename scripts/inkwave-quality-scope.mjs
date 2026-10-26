@@ -2,10 +2,14 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 
-// Only these positively identified documentation/Hex-only trees may omit the
+// Only these positively identified documentation/Hex-only or account-only trees may omit the
 // expensive game suite. Unknown paths and unavailable history require it.
 export function requiresGameQuality(paths) {
-  return !paths.length || paths.some(file => !/^(?:README\.md|docs\/[^\0]*\.md$|lanes\/|bootstrap\/|\.github\/workflows\/hex-[^/]+\.ya?ml$)/.test(file));
+  if (!Array.isArray(paths) || !paths.length || paths.some(file => typeof file !== 'string' || /[\0-\x1f\\]/.test(file) || file.split('/').some(part => !part || part === '.' || part === '..'))) return true;
+  // Account CI already owns its API, bundle and Worker build. A mixed change
+  // retains game QA even when its other path is documentation.
+  if (paths.every(file => file.startsWith('account/'))) return false;
+  return paths.some(file => !/^(?:README\.md$|docs\/[^\0]*\.md$|lanes\/|bootstrap\/|\.github\/workflows\/hex-[^/]+\.ya?ml$)/.test(file));
 }
 const immutableSha = value => /^[a-f0-9]{40}$/.test(value || '') && !/^0+$/.test(value);
 const invokeGit = args => execFileSync('git', args, {encoding:'utf8',stdio:['ignore','pipe','pipe']});

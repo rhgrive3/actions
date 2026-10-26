@@ -1,3 +1,4 @@
+import { adaptRollerContact } from './roller-contact-adapter.mjs';
 import { adaptTransientGear } from './transient-gear-adapter.mjs';
 import { adaptPaintAuthority } from './paint-authority-adapter.mjs';
 import { adaptQueuedBugRecovery } from './queue-recovery-adapter.mjs';
@@ -27,7 +28,7 @@ export function networkIdentity() {
   // S3 runtime dependencies are already tracked under canonical patch/runtime/
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
-  return Object.fromEntries(['adapter.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
+  return Object.fromEntries(['adapter.mjs', 'roller-contact-adapter.mjs', 'roller-contact.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
     'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'utf8-length.mjs', 'rolling-quantile.mjs', 'ghost-live-index.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
@@ -2742,5 +2743,6 @@ function canAllocateNetworkGhost(projectiles, actor) {
       '    if (!validOwnerClockTick(this, from, d, receivedAt, previous, useRelay ? relayAt : receivedAt,\n      useRelay ? previous?.lastRelayAt : previous?.lastReceiveAt)) return;',
       'fixed fresh origin cannot gain grace from repeated arrivals');
   }
+  code = adaptRollerContact(rel, code, once);
   return code;
 }

@@ -41,7 +41,9 @@ for (const phase of ['intro', 'playing', 'finish']) for (const id of ['beakon', 
         w.owner.weapon = { ...w.owner.weapon, special: id };
         w.n._play('A', [1, 'ac', 'special', 7, 0, { id, kind: id === 'waveBreaker' ? 'wave' : 'screen',
           action: 'deploy', activation: 1, object: 1, seed: 1, pos: [12, 0, 0], target: [12, 0, 1],
-          phase: 'active', age: 0, landedAt: 0, duration: 10, radius: 20, specialPowerAP: 0, hp: 480 }]);
+          phase: 'active', age: 0, landedAt: 0,
+          duration: id === 'waveBreaker' ? 6 : 10, radius: id === 'waveBreaker' ? 20 : 15,
+          specialPowerAP: 0, hp: id === 'waveBreaker' ? 480 : 0 }]);
         replica = G.projectiles._s3AllSpecialObjects.find(o => o.owner === w.owner); assert.ok(replica?.remote);
       } else {
         w.owner.weapon = { ...w.owner.weapon, special: 'inkVac' };

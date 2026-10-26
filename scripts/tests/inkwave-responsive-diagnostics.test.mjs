@@ -754,3 +754,63 @@ test('required screenshot failure cannot publish a completed continuation stage'
   item.resolve(); await assert.rejects(h.capture(), value => value === error);
   assert(h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
 });
+
+// Run the actual setup await boundaries without a browser. Each injected failure
+// must survive unchanged and must retain the precise pending fixed operation.
+const setupCore = fs.readFileSync(new URL('../check-inkwave-responsive-core.mjs', import.meta.url), 'utf8');
+const setupStart = setupCore.indexOf("    onOperation('setup-stage-count', 'before');");
+const setupEnd = setupCore.indexOf("  if (!audit) {\n    // Exercise actual native", setupStart);
+assert(setupStart >= 0 && setupEnd > setupStart);
+const setupBody = 'if (!audit) {\n' + setupCore.slice(setupStart, setupEnd);
+const setupLabels = [...new Set([...setupBody.matchAll(/onOperation\('(setup-[^']+)', 'before'\)/g)].map(m => m[1]))];
+assert.equal(setupLabels.length, 18);
+const setupFunction = body => new (Object.getPrototypeOf(async function(){}).constructor)(
+  'page', 'assert', 'audit', 'settle', 'tap', 'show', 'capture', 'onStageComplete', 'onOperation', body);
+async function exerciseSetup(body, failAt = null) {
+  const d = createResponsiveDiagnostics(); const original = Error('original setup crash'); const calls = [];
+  let ordinal = 0;
+  const perform = async (name, value) => {
+    calls.push(name); ordinal++;
+    if (d.snapshot().pendingOperation === failAt && failAt !== null) throw original;
+    return value;
+  };
+  const locator = selector => ({
+    count: () => perform('count', 1), nth: () => locator(selector),
+    evaluate: fn => perform('locator-evaluate', String(fn).includes('el._mid') ? 'map0' : true),
+    scrollIntoViewIfNeeded: () => perform('scroll'), tap: () => perform('ticket-tap')
+  });
+  const page = { locator, evaluate: fn => perform('page-evaluate', String(fn).includes('.times[') ? 'dusk' : 'map0'),
+    waitForFunction: () => perform('wait-loadout') };
+  try {
+    await setupFunction(body)(page, assert, false, () => perform('settle'), () => perform('tap'),
+      () => perform('show'), () => perform('capture'), name => d.stage(name), (id, boundary) => d.operation(id, boundary));
+    return { d, calls, original, error: null };
+  } catch (error) { d.fail(error); return { d, calls, original, error }; }
+}
+test('setup instrumentation preserves exact browser operation sequence and clears pending state', async () => {
+  const stripped = setupBody.replace(/^\s*onOperation\('setup-[^']+', '(?:before|after)'\);\n/gm, '');
+  const plain = await exerciseSetup(stripped), marked = await exerciseSetup(setupBody);
+  assert.equal(plain.error, null); assert.equal(marked.error, null);
+  assert.deepEqual(marked.calls, plain.calls); assert.equal(marked.calls.length, 19);
+  assert.equal(marked.d.snapshot().pendingOperation, null);
+  assert.equal(marked.d.snapshot().lastCompletedStage, 'setup-stage:map0');
+  assert(marked.d.snapshot().events.length <= 32);
+});
+for (const label of setupLabels) test(`setup pending await survives its actual failure: ${label}`, async () => {
+  const result = await exerciseSetup(setupBody, label);
+  assert.strictEqual(result.error, result.original);
+  assert.equal(result.d.snapshot().pendingOperation, label);
+  assert.equal(result.d.snapshot().firstError.message, result.original.message);
+  assert.equal(result.d.snapshot().events.at(-1).type, 'first-error');
+  assert(result.d.snapshot().events.length <= 32);
+  assert.equal(result.d.snapshot().events.filter(e => e.type === 'operation-after' && e.detail === label).length, 0);
+});
+test('setup labels reject dynamic selectors, stage IDs and forged operation labels', async () => {
+  const { responsiveOperationId } = await import('../lib/inkwave-responsive-diagnostics.mjs');
+  for (const label of setupLabels) assert.equal(responsiveOperationId(label), label);
+  for (const label of ['setup-stage:secret', 'setup-stage-tap:secret', '.iw-ticket', 'setup-unknown']) {
+    assert.equal(responsiveOperationId(label), null);
+    const d = createResponsiveDiagnostics(); d.operation(label, 'before');
+    assert.equal(d.snapshot().pendingOperation, null); assert.deepEqual(d.snapshot().events, []);
+  }
+});

@@ -1,0 +1,29 @@
+  update(dt) {
+    this._heapValid=false;this._heapBlocked=false;
+    const p = this.p, S = this.S;
+    if(this.n===0&&this._emptyUploaded)return;
+    for (let j = this.n - 1; j >= 0; j--) {
+      const i = j * S; p[i + 6] += dt;
+      if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
+      // Exact zero drag needs no exponential for finite dt; preserve NaN for non-finite time deltas.
+      const drag = p[i + 10] === 0 && Number.isFinite(dt) ? 1 : Math.exp(-p[i + 10] * dt);
+      p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;
+      p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;
+    }
+    const P = this.aPos.array, D = this.aDir.array, C = this.aCol.array, R = this.aPar.array;
+    // instance 0 is the degenerate warm-up instance
+    P[0] = P[1] = P[2] = 0; P[3] = 0; C[3] = 0;
+    for (let j = 0; j < this.n; j++) {
+      const i = j * S, o = (j + 1) * 4, t = p[i + 6] / p[i + 7];
+      const fi = Math.min(1, p[i + 6] / Math.max(1e-3, p[i + 21])), fo = 1 - t * t;
+      P[o] = p[i]; P[o + 1] = p[i + 1]; P[o + 2] = p[i + 2]; P[o + 3] = p[i + 8] + (p[i + 9] - p[i + 8]) * t;
+      const st = p[i + 20];
+      if (st > 0) { D[o] = p[i + 3]; D[o + 1] = p[i + 4]; D[o + 2] = p[i + 5]; D[o + 3] = Math.hypot(p[i + 3], p[i + 4], p[i + 5]) * st; }
+      else { D[o] = D[o + 1] = D[o + 2] = D[o + 3] = 0; }
+      C[o] = p[i + 12]; C[o + 1] = p[i + 13]; C[o + 2] = p[i + 14]; C[o + 3] = p[i + 15] * fi * (this.additive ? fo : 1 - Math.pow(t, 1.6));
+      R[o] = p[i + 16]; R[o + 1] = p[i + 17]; R[o + 2] = t; R[o + 3] = p[i + 19];
+    }
+    const count = this.n + 1;
+    for (const a of [this.aPos, this.aDir, this.aCol, this.aPar]) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
+    this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;this._drawCount=this.n;
+  }

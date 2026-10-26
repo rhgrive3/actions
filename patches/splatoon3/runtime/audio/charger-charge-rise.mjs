@@ -1,3 +1,12 @@
+import { mainAudioSourceId } from './weapon-recipes.mjs';
+
+// This excerpt is a Splat Charger phrase, not a family-wide charge clock.
+// Other chargers use their own registered onset and gameplay-owned ready edge.
+export function usesSplatChargerRise(id) {
+  const source = mainAudioSourceId(id);
+  return source === 'charger' || source === 's3-charger-normalscope';
+}
+
 /**
  * Recorded Splatune 2 first-Charger phrase: start mechanical sound through
  * the first complete rising tone, stopping at the first silence.
@@ -16,7 +25,12 @@ export const RECORDED_CHARGER_FIRST=Object.freeze({
   minimumDecodedSeconds:1.75,
   nominalFrameSeconds:70*1152/44100,
 });
-const FILE_URL=new URL('../../../../assets/audio/charger-first-splatune2-reference.mp3',import.meta.url);
+const recordedChargerURL=sourceUrl=>{
+  if(sourceUrl)return sourceUrl;
+  // vm.SourceTextModule test fixtures may have no import.meta.url. Never resolve
+  // an external asset at module evaluation: this is an opt-in prewarm path.
+  return import.meta.url ? new URL('../../../../assets/audio/charger-first-splatune2-reference.mp3',import.meta.url).href : null;
+};
 const slots=new WeakMap();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const RETRY_BACKOFF_MS=4000,MAX_ATTEMPTS=3,LOAD_TIMEOUT_MS=8000;
@@ -39,8 +53,9 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   const state=stateFor(ctx);
   if(state.buffer)return state.buffer;
   if(state.promise)return state.promise;
-  const fetchAudio=fetcher||(typeof fetch==='function'?fetch:null);
-  if(!fetchAudio)return null;
+  const fetchAudio=fetcher||(typeof globalThis.fetch==='function'?globalThis.fetch.bind(globalThis):null);
+  const assetURL=recordedChargerURL(sourceUrl);
+  if(!fetchAudio||!assetURL)return null;
   if(state.error&&(!retry||!state.retryable||state.attempts>=MAX_ATTEMPTS||now()<state.retryAfter))return null;
   const generation=++state.generation;
   state.attempts++;
@@ -49,7 +64,7 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   let timer;
   const operation=(async()=>{
     let response;
-    try{response=await fetchAudio(sourceUrl||FILE_URL.href,{credentials:'same-origin',cache:'force-cache',...(controller?{signal:controller.signal}:{})});}
+    try{response=await fetchAudio(assetURL,{credentials:'same-origin',cache:'force-cache',...(controller?{signal:controller.signal}:{})});}
     catch(error){throw new ChargerLoadError('recorded Charger network failure: '+String(error?.message||error),true);}
     if(state.generation!==generation||slots.get(ctx)!==state||controller?.signal.aborted||ctx.state==='closed')return null;
     if(!response?.ok){
@@ -62,7 +77,7 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
     if(state.generation!==generation||slots.get(ctx)!==state||controller?.signal.aborted||ctx.state==='closed')return null;
     if(!(bytes instanceof ArrayBuffer)||bytes.byteLength<10000||bytes.byteLength>512*1024)
       throw new ChargerLoadError('invalid recorded Charger audio payload');
-    const buffer=await ctx.decodeAudioData(bytes.slice(0));
+    const buffer=await ctx.decodeAudioData(bytes);
     if(!buffer||!Number.isFinite(buffer.duration)||
        buffer.duration<RECORDED_CHARGER_FIRST.minimumDecodedSeconds||
        buffer.duration>3||
@@ -86,7 +101,8 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   }).finally(()=>{clearTimeout(timer);if(state.generation===generation){state.promise=null;state.controller=null;}});
   return state.promise;
 }
-export function playChargerRise(audio,{volume=.55,pos=null}={}){
+export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger'}={}){
+  if(!usesSplatChargerRise(weaponId))return null;
   const ctx=audio?.ctx,target=audio?.sfxIn;
   const buffer=ctx?slots.get(ctx)?.buffer:null;
   if(!buffer||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;

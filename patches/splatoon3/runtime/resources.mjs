@@ -1,3 +1,4 @@
+import { brushRollIgnoresEnemyInk } from './brush-roll-ink.mjs';
 import { turfCombatAllowed } from './turf-combat.mjs';
 import { stormRecoveryState } from './storm-effects.mjs';
 import { isChargerFullCharge } from './weapons.mjs';
@@ -18,7 +19,7 @@ export function resourceSurface(a) {
   a._surface();
   const isSquid = a.form === 'squid';
   a.submerged = isSquid && a.grounded && a.groundTeam === 1;
-  a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged;
+  a.onEnemy = a.grounded && a.groundTeam === 2 && !a.submerged && !brushRollIgnoresEnemyInk(a);
   return isSquid;
 }
 export function enemyInkDamageRate(rate, referenceHz = 60, quantum = 0.1) {

@@ -1046,7 +1046,8 @@ function copyProjectilePacketProperties(from, to) {
 }
 function projectilePacketShape(packet) {
   if (!Array.isArray(packet)) return null;
-  if ([27, 30, 32].includes(packet.length)) return { legacy: true, depleted: false, birthOffset: 0 };
+  const legacyLength=packet.length;
+  if (legacyLength===27||legacyLength===30||legacyLength===32) return { legacy: true, depleted: false, birthOffset: 0 };
   const hasInkMeta = packet[27] === null || typeof packet[27] === 'object';
   const accepted = hasInkMeta
     ? packet.length === 34 || packet.length === 36 || packet.length === 37
@@ -1091,10 +1092,9 @@ function prepareFidelityProjectilePacket(event) {
     const shape = projectilePacketShape(event);
     return normalizedProjectilePacketValid(event, shape, prepared.depleted) ? event : null;
   }
-  const flagIndices = [];
-  for (let index = 31; index <= 35; index++) if (event[index] === true) flagIndices.push(index);
-  if (flagIndices.length > 1) return null;
-  const markerIndex = flagIndices[0] ?? -1;
+  let markerIndex=-1,multipleMarkers=false;
+  for(let index=31;index<=35;index++)if(event[index]===true){if(markerIndex<0)markerIndex=index;else multipleMarkers=true;}
+  if(multipleMarkers)return null;
   const depleted = markerIndex >= 0;
   const packet = event.slice();
   if (depleted) packet.splice(markerIndex, 1);

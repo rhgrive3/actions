@@ -10,6 +10,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { adaptTouchLayout, touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
 import { installTouchLayoutDiagnostics, touchLayoutFailureLog } from './lib/inkwave-touch-layout-diagnostics.mjs';
+import { settleTouchViewport } from './lib/inkwave-touch-viewport.mjs';
 
 const option = name => { const at = process.argv.indexOf(name); return at < 0 ? null : process.argv[at + 1]; };
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -218,7 +219,9 @@ try {
         await page.locator('[data-e="cancel"]').tap();
         entry.checks.push('storage-failure-retains-draft');
         // Relocate the floating stick to the right, then exercise gameplay routing there.
-        if (name === 'small-phone-portrait') await page.setViewportSize({ width: 568, height: 320 });
+        // Viewport acknowledgement can precede the native resize that cancels a
+        // gesture. Finish that event and its layout before starting another one.
+        if (name === 'small-phone-portrait') await settleTouchViewport(page, { width: 568, height: 320 });
         await page.evaluate(() => { mobile.openEditor(); mobile._layoutPosition('stick', innerWidth * .65, innerHeight * .25); mobile._closeEditor(true); mobile.setVisible(true); });
         const moved = await box(page, 'stick');
         assert.equal(await page.evaluate(({ x, y }) => mobile._hitButton(x, y), moved), null, 'Stick test must avoid overlapping action buttons');
@@ -237,7 +240,10 @@ try {
         const beforeRotation = page.viewportSize();
         await pointer(page, 'pointerdown', 81, beforeRotation.width * .45, beforeRotation.height * .4);
         assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1);
-        await page.setViewportSize({ width: beforeRotation.height, height: beforeRotation.width });
+        // Spurious same-size WebKit resize must not cancel this live edit.
+        await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+        assert.equal(await page.evaluate(() => mobile._edit?.pts.size), 1, 'same-size resize preserves edit pointer');
+        await settleTouchViewport(page, { width: beforeRotation.height, height: beforeRotation.width });
         await page.waitForFunction(() => mobile._edit === null && mobile._H === Math.max(300, Math.min(460, Math.min(innerWidth, innerHeight))));
         const bounds = await page.evaluate(() => Object.keys(mobile.els).map(id => ({ id, ...mobile._box(id), w: innerWidth, h: innerHeight })));
         for (const b of bounds) assert(b.x - b.d / 2 >= 0 && b.x + b.d / 2 <= b.w + 1 && b.y - b.d / 2 >= 0 && b.y + b.d / 2 <= b.h + 1, `${b.id} survives rotation`);

@@ -1,3 +1,4 @@
+import { SnapshotPool } from './snapshot-pool.mjs';
 import { gearCurve } from './gear.mjs';
 import { createBubblerHardware, disposeSpecialModel } from './special-motion.mjs';
 import { startSpecialGauge, endSpecialGauge } from './tacticooler-gauge.mjs';
@@ -1001,9 +1002,11 @@ export function kitBarrierHitRecord(candidate) {
 //
 // dt <= 0 is a STRICT no-op: a paused match must not grow a dome, ignite it,
 // paint, or start the TimeDamage burn. No epsilon fudge.
+const domeTickSnapshots = new SnapshotPool(), remoteDomeTickSnapshots = new SnapshotPool();
 export function tickBigBubblers(dt) {
   if (!(dt > 0) || !domes.length) return;
-  for (const dome of [...domes]) {
+  const snapshot = domeTickSnapshots.take(domes);
+  try { for (const dome of snapshot) {
     if (dome.dead) continue;
     advanceBubblerTower(dome);
     const previousAge = dome.t;
@@ -1041,7 +1044,7 @@ export function tickBigBubblers(dt) {
       }
     }
     syncVisual(dome);
-  }
+  } } finally { domeTickSnapshots.release(snapshot); }
 }
 
 // ------------------------------------------------------- remote presentation
@@ -1054,7 +1057,8 @@ export function tickBigBubblers(dt) {
 // authoritative one. dt <= 0 is a strict no-op here too.
 export function tickRemoteBigBubblers(dt) {
   if (!(dt > 0) || !remoteDomes.length) return;
-  for (const dome of [...remoteDomes]) {
+  const snapshot = remoteDomeTickSnapshots.take(remoteDomes);
+  try { for (const dome of snapshot) {
     if (dome.dead) continue;
     advanceBubblerTower(dome);
     const previousAge = dome.t;
@@ -1081,7 +1085,7 @@ export function tickRemoteBigBubblers(dt) {
       }
     }
     syncVisual(dome);
-  }
+  } } finally { remoteDomeTickSnapshots.release(snapshot); }
 }
 
 const LIMITS = Object.freeze({

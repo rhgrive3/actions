@@ -20,7 +20,8 @@ export function registerLimitedTorpedo(nm,parent,receipt,event,G,notify){
  if(event[5]?.subPowerAP!==ap||parent.owner.s3?.modifiers?.subPower!==speed/spec.throwSpeedTiers.low||!eligibleLimitedTorpedoBirth({receipt,snapshot:receipt.motion,event:event[5],spec,speed:gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high),normalMoveTarget:receipt.normalMoveTarget}))return false;
  const world=G.projectiles;
  let set=registries.get(nm);if(!set){set=new Set();registries.set(nm,set);}
- for(const old of [...set]){if(!live(old))continue;old.contacts=old.contacts.filter(c=>performance.now()/1000-c.at<=.95);if(old.parent.dead&&old.dropCount===0&&!old.contacts.length)retire(old);}
+ // This private sweep only removes current records; enrollment occurs below.
+ for(const old of set){if(!live(old))continue;if(old.contacts.length)old.contacts=old.contacts.filter(c=>performance.now()/1000-c.at<=.95);if(old.parent.dead&&old.dropCount===0&&!old.contacts.length)retire(old);}
  if(set.size>=160)return false;
  if(!worlds.has(world)){const clear=world.clear,worldRecords=new Set();world.clear=function(...args){for(const r of worldRecords)retire(r);worldRecords.clear();return clear.apply(this,args);};worlds.set(world,worldRecords);}
  const r={gearKey:validGear?receipt.torpedoGear.key:null,nm,G,world,parent,owner:parent.owner,ownerNet:parent.owner.net,from:receipt.from,life:receipt.life,peer:nm.peers.get(receipt.from),match:nm.match,epoch:nm.cfg.id,level:G.level,physics:G.physics,notify,contacts:[],dropCount:0,retired:false,birthAt:performance.now()/1000};

@@ -1,5 +1,13 @@
 import {nativeStageBuild} from './build-config.mjs';
-export function loadBrowserSource(id,signal,{constrained=false}={}){
+export async function loadBrowserSource(id,signal,options={}){
+ // Prebuilt records are the same conversion; a failed fetch falls back to it.
+ if(nativeStageBuild?.prebuilt?.stages?.[id]){
+  try{const {loadPrebuiltSource}=await import('./prebuilt-load.mjs');return await loadPrebuiltSource(id,signal);}
+  catch(error){if(error?.name==='AbortError'||signal?.aborted)throw error;console.warn('[native] prebuilt stage unavailable, converting source: '+error.message);}
+ }
+ return convertBrowserSource(id,signal,options);
+}
+function convertBrowserSource(id,signal,{constrained=false}={}){
  return new Promise((resolve,reject)=>{
   const worker=new Worker(new URL('./source-worker.mjs',import.meta.url),{type:'module'});
   let ended=false;

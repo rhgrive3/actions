@@ -50,7 +50,16 @@ export const S3_STRUCTURED_ACTORS=Object.freeze(Object.keys(S3_GAMEPLAY_CUES));
  * Tests use this intermediate event graph instead of trying to infer attacks
  * from PCM hashes alone. Pulses from one attack share one buffer.
  */
+const cuePlans=new Map();
+const CACHED_CUE_EVENTS=new Set(['fire','fire_full','fire_vertical','fire_alt','fire_left','charge','ready','windup','dodge','mode_change','open','close','purge','shield_hit','break','impact','explosion','roll','spin','release','scope']);
 export function s3CuePlan(actor,event,variant=0){
+  if(!Object.hasOwn(S3_GAMEPLAY_CUES,actor)||!CACHED_CUE_EVENTS.has(event))return buildCuePlan(actor,event,variant);
+  let events=cuePlans.get(actor);if(!events){events=new Map();cuePlans.set(actor,events);}
+  let result=events.get(event);
+  if(!result){result=buildCuePlan(actor,event,variant);events.set(event,result);}
+  return result;
+}
+function buildCuePlan(actor,event,variant=0){
   if(!S3_GAMEPLAY_CUES[actor])return null;
   const charged=event==='fire_full',vertical=event==='fire_vertical',attack=event==='fire'||charged||vertical||event==='fire_alt'||event==='fire_left';
   const result=[];

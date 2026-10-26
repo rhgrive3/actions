@@ -13,6 +13,7 @@ import { respawnPunisherEquipped, withHitPunisher } from '../../splatoon3/runtim
 import { validDamageGroup } from '../../splatoon3/runtime/final-damage.mjs';
 import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
+import { clearRemoteRollerSuspension, packRollerSuspensionFlag } from '../roller-contact.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { KIT_FORWARD } from '../../splatoon3/runtime/kit-network.mjs';
 import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock } from '../../splatoon3/runtime/catalog-dualies-motion.mjs';
@@ -39,11 +40,11 @@ const productionPackActor = new Function(
   'PLAYER', 'F', 'SPAWN_ARMOR_FLAG', 'RESPAWN_PUNISHER_FLAG', 'chargerSightVisible', 'slamProtected',
   'spawnProtectionRemaining', 'respawnPunisherEquipped', 'swimTrailVisible', 'swimSplashVisible', 'r2', 'r3',
   'packAdoptionState', 'packC1088SurgePresentation', 'objectShredderEquipped', 'OBJECT_SHREDDER_FLAG', 'splashdownProtected',
-  'dualiesNetworkAction', 'dualiesNetworkDirection', 'dualiesNetworkLock',
+  'dualiesNetworkAction', 'dualiesNetworkDirection', 'dualiesNetworkLock', 'packRollerSuspensionFlag',
   `${hitAuthoritySource}\n${sourceFunction('packActor')}\nreturn packActor;`,
 )({ hp: 100 }, {}, 0, 0, () => false, () => false, () => 0, () => false, () => true, () => true,
   (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG, splashdownProtected,
-  dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock);
+  dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock, packRollerSuspensionFlag);
 const productionUnpackActor = new Function('PLAYER',
   `${hitAuthoritySource}\n${sourceFunction('unpackActor')}\nreturn unpackActor;`,
 )({ hp: 100 });
@@ -60,7 +61,7 @@ function methodFrom(code, name, optional = false) {
 }
 const method = (name, optional = false) => methodFrom(source, name, optional);
 
-function makeWorld(id) {
+function makeWorld(id, { omitBossHandoffCleanup = false } = {}) {
   const events = [], sent = [], listeners = new Map(), calls = [];
   const on = (name, callback) => {
     const set = listeners.get(name) || new Set();
@@ -110,11 +111,11 @@ function makeWorld(id) {
   const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
   assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
   const hitLimits = source.match(/^const IW_CATALOGUE_SUB_HIT_MAX = [^\n]+;/m)[0] + '\n' + source.slice(limitsStart, limitsEnd);
-  const methods = methodNames.map((name) => method(name, name.startsWith('_retire') || name.startsWith('_retry'))).join('\n');
+  const methods = methodNames.map((name) => { let body=method(name,name.startsWith('_retire')||name.startsWith('_retry')); if(name==='onLeave'&&omitBossHandoffCleanup){const cleanup='    if (hostChanged) this.bossHitPending.length = 0;';assert.equal(body.split(cleanup).length,2,'unique production boss handoff cleanup');body=body.replace(cleanup,'');}return body;}).join('\n');
   const NetMatchHarness = new Function(
     'G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'mapNoBots', 'now',
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
-    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
+    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteRollerSuspension', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD', 'acceptPaintTick', 'forgetPaintPeer', 'transferPaintOwner',
     'beginOwnerClock', 'closeOwnerClock', 'handleOwnerClockMessage', 'retireOwnerClock',
     `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
@@ -132,14 +133,14 @@ ${methods}
     G, { hp: 100, spawnInvuln: 3 }, on, emit, (x) => Math.round(x * 100) / 100,
     180, new Set(['shooter']), mapNoBots, () => 1,
     () => {}, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge,
-    WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
+    WEAPONS, validDamageGroup, clearRemoteRollerPresentation, clearRemoteRollerSuspension, C1088_SURGE_TAG,
     retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD, acceptPaintTick, forgetPaintPeer, transferPaintOwner,
     beginOwnerClock, closeOwnerClock, handleOwnerClockMessage, retireOwnerClock,
   );
   const net = new NetMatchHarness();
   Object.assign(net, {
     myId: id, isHost: id === 'H' || id === 'C', cfg: { id: 'match-1', map: 'normal' },
-    byNid: new Map(), hitNextSeq: 0, hitPending: new Map(), _pendingHits: new Map(),
+    byNid: new Map(), hitNextSeq: 0, hitPending: new Map(), bossHitPending: [], _pendingHits: new Map(),
     peers: new Map(), unsubs: [],
     match: { boss: null, follower: true, removeActor() {} },
     s: { hostId: 'H', _members: new Set(['H', 'S', 'V', 'C']), tr: {
@@ -864,17 +865,23 @@ test('bind, disposal, and the production session close path retire hit state bef
   const lost = room();
   lost.S.net.bind({ actors: [], boss: null });
   lost.S.net.sendHit(lost.S.attacker, lost.S.victim, 36, 'shooter');
-  const SessionHarness = new Function('G', 'MAPS', 'MATCH', 'TEAM', 'mapNoBots',
-    `return class SessionHarness { ${methodFrom(sessionSource, '_closed')} ${methodFrom(sessionSource, 'leave')} ${methodFrom(sessionSource, '_blankLobby')} }`)
-    (lost.S.G, [{ id: 'tidewater' }], { defaultDuration: 180 }, 4, mapNoBots);
+  const cancelledStartTimers = [], startTimer = setTimeout(() => {}, 60000);
+  startTimer.unref?.();
+  try {
+  const SessionHarness = new Function('G', 'MAPS', 'MATCH', 'TEAM', 'mapNoBots', 'clearTimeout',
+    `return class SessionHarness { ${methodFrom(sessionSource, '_closed')} ${methodFrom(sessionSource, '_cancelStartRequest')} ${methodFrom(sessionSource, 'leave')} ${methodFrom(sessionSource, '_blankLobby')} }`)
+    (lost.S.G, [{ id: 'tidewater' }], { defaultDuration: 180 }, 4, mapNoBots, timer => { cancelledStartTimers.push(timer); clearTimeout(timer); });
   const aborted = [];
   const session = Object.assign(new SessionHarness(), {
     state: 'match', match: lost.S.net, tr: { close() {} }, code: 'ROOM', error: null,
-    _roomAttempt: 0, _members: new Map(), _goT: null,
+    _roomAttempt: 0, _members: new Map(), _goT: null, _startAckT: startTimer, _pendingStart: { id: 'pending-start' },
     _setState(state) { this.state = state; }, _emit(name, detail) { aborted.push({ name, detail }); },
   });
   lost.S.G.game = { netMatchAborted(reason) { aborted.push({ name: 'aborted', reason }); } };
   session._closed('lost');
+  assert.equal(cancelledStartTimers.filter(timer => timer === startTimer).length, 1, 'session close cancels the actual pending start timer once');
+  assert.equal(session._startAckT, null);
+  assert.equal(session._pendingStart, null);
   assert.equal(session.match, null);
   assert.equal(lost.S.net.hitPending.size, 0, 'connection close disposes the old delivery queue');
   assert.equal(lost.S.net._pendingHits.size, 0, 'connection close disposes the old combat queue');
@@ -886,4 +893,13 @@ test('bind, disposal, and the production session close path retire hit state bef
   assert.equal(reconnected.net.sendHit(reconnected.attacker, reconnected.victim, 36, 'shooter'), true);
   assert.equal(reconnected.sent[0].data.h, 1, 'a new match starts with a fresh hit identity space');
   assert.equal(reconnected.net.hitPending.size, 1);
+  } finally { clearTimeout(startTimer); }
+});
+
+test('composed host changes clear locally refused boss hits before a missing match can return',()=>{
+ assert.ok(method('constructor').includes('this.bossHitPending = [];'),'fixture queue matches actual composed constructor');
+ const oracle=(f,withoutMatch)=>{const pending=f.net.bossHitPending;pending.push({k:'bhit',q:7});f.net.onLeave('V',false);assert.strictEqual(f.net.bossHitPending,pending);assert.equal(pending.length,1,'ordinary peer leave preserves locally refused host packets');if(withoutMatch)f.net.match=null;f.net.s.hostId='C';f.net.onLeave('H',true);assert.strictEqual(f.net.bossHitPending,pending,'cleanup clears existing queue in place');assert.equal(pending.length,0,'host change retires locally refused boss-hit queue');};
+ for(const withoutMatch of [false,true])oracle(makeWorld('S'),withoutMatch);
+ assert.throws(()=>oracle(makeWorld('S',{omitBossHandoffCleanup:true}),true),/host change retires locally refused boss-hit queue/,'deleting real cleanup is detected by queue assertion');
+ const broken=makeWorld('S');delete broken.net.bossHitPending;assert.throws(()=>broken.net.onLeave('H',true),TypeError,'missing constructor field reproduces original fixture failure');
 });

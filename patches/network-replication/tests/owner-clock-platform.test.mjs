@@ -11,10 +11,11 @@ async function graph({ eager = false, TextEncoder: Encoder } = {}) {
   if (Encoder) globals.TextEncoder = Encoder;
   const context = vm.createContext(globals);
   const guard = new vm.SourceTextModule(fs.readFileSync(new URL('../snapshot-guard.mjs', import.meta.url), 'utf8'), { context });
+  const utf8 = new vm.SourceTextModule(fs.readFileSync(new URL('../utf8-length.mjs', import.meta.url), 'utf8'), { context });
   let source = fs.readFileSync(new URL('../owner-clock.mjs', import.meta.url), 'utf8');
   if (eager) source = source.replace('let encoder;', 'const encoder = new TextEncoder();');
   const module = new vm.SourceTextModule(source, { context });
-  await module.link(() => guard); await module.evaluate(); return module.namespace;
+  await module.link(specifier => specifier === './utf8-length.mjs' ? utf8 : guard); await module.evaluate(); return module.namespace;
 }
 
 test('offline module import works without TextEncoder; exact eager declaration reproduces import failure', async () => {
@@ -37,11 +38,11 @@ test('mandatory online queue still lazily uses real UTF-8 byte length and fixed 
   actual.beginOwnerClock(nm, 10);
   const packet = { k: 't', oc: 1, ocm: 'match', ts: 20, payload: 'あ' };
   assert.equal(actual.handleOwnerClockMessage(nm, 'peer', packet, 10), true);
-  assert.equal(constructions, 1); assert.equal(calls, 1);
+  assert.equal(constructions, 0); assert.equal(calls, 0, 'short UTF-8 packet needs no encoder allocation');
   assert.equal(actual.ownerClockStatus(nm, 'peer').pendingBytes, new TextEncoder().encode(JSON.stringify(packet)).byteLength);
   const large = { ...packet, payload: 'あ'.repeat(actual.OWNER_CLOCK_PENDING_BYTES) };
   actual.handleOwnerClockMessage(nm, 'peer', large, 10);
   assert.equal(actual.ownerClockStatus(nm, 'peer').pendingPackets, 1);
   assert.equal(actual.ownerClockStatus(nm, 'peer').dropped, 1);
-  assert.equal(constructions, 1); assert.equal(calls, 2);
+  assert.equal(constructions, 1); assert.equal(calls, 1, 'large packets retain the native encoder');
 });

@@ -20,6 +20,15 @@ on:
       - 'scripts/tests/inkwave-*-recovery*.test.mjs'
       - 'tools/native-recovery-qa/**'
       - '.github/workflows/inkwave-terminal-recovery-qa.yml'
+      - 'patches/native-stages/runtime/native-load.mjs'
+      - 'patches/native-stages/runtime/native-level.mjs'
+      - 'patches/native-stages/runtime/native-physics.mjs'
+      - 'patches/native-stages/runtime/native-render.mjs'
+      - 'patches/native-stages/runtime/native-ink-chunks.mjs'
+      - 'patches/native-stages/runtime/native-texture-budget.mjs'
+      - 'patches/native-stages/runtime/native-gpu-budget.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
   workflow_dispatch:
 permissions:
   contents: read

@@ -283,13 +283,28 @@ test('Kraken Royale charges while held, starts its 35F dash on release, and supp
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  ready(a);const state=a._s3AllSpecialState;assert.ok(state.direction instanceof f.THREE.Vector3);
  deployInput(a,f);assert.equal(state.phase,'charge');assert.ok(state.direction.z>.99);
- for(let i=0;i<35;i++)a._updateSpecial(1/60);assert.equal(state.phase,'charge','holding after the charge threshold does not start the dash');
+ assert.ok(Math.abs(state.chargeT-1/60)<1e-9,'the initial held input counts as the first charge frame');
+ for(let i=0;i<34;i++)a._updateSpecial(1/60);assert.ok(Math.abs(state.chargeT-35/60)<1e-9);assert.equal(state.phase,'charge','holding at the charge threshold does not start the dash');
  a.intent.fire=false;a._updateSpecial(1/60);assert.equal(state.phase,'dash','release after35F begins the dash');
  a._updateSpecial(1/60);assert.ok(hits.some(h=>h[1]===victim&&h[2]===120&&h[3]==='krakenRoyale'),'charge dash uses its attack path and owner hit routing');
 
  const cancel=f.make();equip(cancel,'krakenRoyale');f.G.actors.push(cancel);ready(cancel);deployInput(cancel,f);
- for(let i=0;i<34;i++)cancel._updateSpecial(1/60);cancel.intent.fire=false;cancel._updateSpecial(1/60);
+ for(let i=0;i<33;i++)cancel._updateSpecial(1/60);assert.ok(Math.abs(cancel._s3AllSpecialState.chargeT-34/60)<1e-9,'initial input plus 33 updates holds exactly 34F');cancel.intent.fire=false;cancel._updateSpecial(1/60);
  assert.equal(cancel._s3AllSpecialState.phase,'active','release before35F cancels the charged attack');
+});
+
+test('Kraken charge release keeps the 34F/35F boundary at 30, 60, and 120 Hz',async()=>{
+ const f=await setup();
+ for(const hz of [30,60,120])for(const frames of [34,35,36]){
+  const a=f.make();equip(a,'krakenRoyale');f.G.actors=[a];ready(a);a.intent.fire=true;
+  const held=frames/60;let elapsed=0;
+  while(elapsed+1e-10<held){const dt=Math.min(1/hz,held-elapsed);a._updateSpecial(dt);elapsed+=dt;}
+  const state=a._s3AllSpecialState;
+  assert.equal(state.phase,'charge',`${hz} Hz ${frames}F remains held until release`);
+  assert.ok(Math.abs(state.chargeT-held)<1e-9,`${hz} Hz ${frames}F includes the initial held input`);
+  a.intent.fire=false;a._updateSpecial(1/hz);
+  assert.equal(state.phase,frames<35?'active':'dash',`${hz} Hz ${frames}F release boundary`);
+ }
 });
 
 test('Inkjet fires native rounds, descends in squid form, and starts a Super Jump return at expiry',async()=>{

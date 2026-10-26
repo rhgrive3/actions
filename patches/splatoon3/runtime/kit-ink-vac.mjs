@@ -61,6 +61,7 @@ const SPAWN_SPEED_Y = 0.08;      // pinned SpawnSpeedY and SpawnSpeedYMaxCharge
 const MIN_PLAYER_RADIUS = 0.4;   // pinned ExhaleCollisionParam.RadiusForPlayerMinCharge
 const MUZZLE_OFFSET = 1, MUZZLE_RADIUS = 1.2; // pinned InhaleParam.MuzzleCollision*
 const FOOT_PAINT_FRAMES=20, FOOT_PAINT_WIDTH=1.5, FOOT_PAINT_DEPTH=2;
+const FOOT_PAINT_SHAPE=Object.freeze(splashPaintFootprint({radius:FOOT_PAINT_WIDTH,stretch:FOOT_PAINT_DEPTH-1}));
 const FLY_GRAVITY = 0.003;        // pinned per frame^2
 const FLY_AIR_RESIST = 0.01;      // pinned per frame
 const SPAWN_BLAST_WAIT = 50;      // pinned frames: native projectile LIFETIME before detonation
@@ -690,7 +691,7 @@ function paintInhaleFeet(state,eligible){
     const from=state._foot.set(a.pos.x-.3*c-.7*s,a.pos.y+INK_VAC_CALIBRATION.breathOriginHeight-.7,a.pos.z+.3*s-.7*c);
     const hit=G.physics?.raycast?.(from,state._footDown,3.5,state._footHit,true);
     if(!hit?.hit)continue;
-    const direction=state._footForward.set(s,0,c),shape=splashPaintFootprint({radius:FOOT_PAINT_WIDTH,stretch:FOOT_PAINT_DEPTH-1});
+    const direction=state._footForward.set(s,0,c),shape=FOOT_PAINT_SHAPE;
     from.copy(hit.point).addScaledVector(hit.normal,.05).addScaledVector(direction,-shape.centreBack);
     const area=G.paint?.splat?.(from,shape.radius,a.team,{seed:Math.random(),stretch:direction,stretchAmt:shape.stretch,
       kind:'drop',claimOwner:a,claimMode:'no-special'});

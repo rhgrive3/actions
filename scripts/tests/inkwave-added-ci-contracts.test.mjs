@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
 const root=new URL('../../',import.meta.url);
 const read=name=>fs.readFileSync(new URL('.github/workflows/'+name,root),'utf8');
 const expression="${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}";
@@ -22,17 +23,35 @@ test('required checks keep their identities and cancellation cannot skip the req
  assert.match(quality,/^  verify-aplus-suite:\n/m);assert.doesNotMatch(quality,/^    if:.*cancelled\(\)/m);
  const source=read('validate-inkwave-update.yml'),gate=source.slice(source.indexOf('  validate:'),source.indexOf('  browser:'));
  assert.match(gate,/if: \$\{\{ always\(\) && inputs\.diagnostic_only != true \}\}/);
- assert.match(gate,/needs: \[validate_core, patch_tests\]/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);
+ assert.match(gate,/needs: \[validate_core, patch_tests, circleci_offload_gate\]/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
 });
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
-function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>m[1]);}
+// Only Validate core executes the CircleCI parity gate that reads this config.
+const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
+function assertCurrentCheckouts(name,source,count){
+ const blocks=checkouts(source);assert.equal(blocks.length,count);
+ if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+}
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
- for(const[name,count]of[['validate-inkwave-update.yml',9],['inkwave-main-weapons.yml',4]]){
-  const blocks=checkouts(read(name));assert.equal(blocks.length,count);
-  for(const block of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,profile);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
- }
+ for(const[name,count]of[['validate-inkwave-update.yml',10],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
  const weapon=read('inkwave-main-weapons.yml');assert.match(weapon,/ref: 83f27e5d59db944458a85122a95d1154e3543393[\s\S]*path: work\/roller-grip-baseline/);assert.match(weapon,/git fetch --no-tags --depth=1 origin "\$DIFF_BASE"/);
+});
+test('exact job-bound sparse profiles reject missing, unexpected and misplaced CircleCI inputs',()=>{
+ const name='validate-inkwave-update.yml',source=read(name),circle='            /.circleci/config.yml\n';
+ assertCurrentCheckouts(name,source,10);
+ for(const altered of [
+  source.replace(circle,''),
+  source.replace(circle,circle+'            /unexpected-input/\n'),
+  source.replace(circle,circle+circle),
+  source.replace(circle+'            /inkwave-public/\n','            /inkwave-public/\n'+circle),
+  source.replace('  validate_core:\n','  renamed_core:\n'),
+  source.replace('            /.github/\n','            /.github/\n'+circle),
+ ]){assert.notEqual(altered,source);assert.throws(()=>assertCurrentCheckouts(name,altered,10));}
+ const weapon=read('inkwave-main-weapons.yml');
+ assert.throws(()=>assertCurrentCheckouts('inkwave-main-weapons.yml',weapon.replace('            /.github/\n','            /.github/\n'+circle),4));
 });
 function matches(pattern,file){let out='^';for(let i=0;i<pattern.length;i++){const c=pattern[i];if(c==='*'){if(pattern[i+1]==='*'){out+='.*';i++;}else out+='[^/]*';}else if(c==='?')out+='[^/]';else out+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}return new RegExp(out+'$').test(file);}
 function paths(source,event){const section=event==='push'?source.slice(source.indexOf('  push:'),source.indexOf('  pull_request:')):source.slice(source.indexOf('  pull_request:'),source.indexOf('  workflow_dispatch:'));return [...section.matchAll(/^      - '([^']+)'$/gm)].map(m=>m[1]);}
@@ -41,7 +60,88 @@ test('both main-weapon event filters cover every executed test entrypoint, inclu
  const covered=patterns=>entries.every(file=>patterns.some(p=>matches(p,file)));
  for(const event of['push','pull_request']){const patterns=paths(source,event);assert(covered(patterns));for(const missing of['issue-771-roller-speed-swerve','reverse-shot-release','source-posture','roller-flick-movement','roller','bomb-kit-fidelity','air-attack-acceleration','dynamo-handle-center','brella-physics','stringer-source-1130','stringer-tilt-motion']){const exact='patches/splatoon3/tests/'+missing+'.test.mjs';assert.equal(covered(patterns.filter(p=>p!==exact)),false,'missing route '+exact);}}
 });
+const sparseFixtureFile='scripts/tests/inkwave-ci-sparse-checkout.test.mjs';
+const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png','tools/inkwave-modeler/src/editor.js'];
+function assertNoAuthoringDependency(file,source){
+ let checked=source;
+ if(file===sparseFixtureFile){
+  // Only the reviewed literal data in this temporary-repository fixture is
+  // exempt. Imports, filesystem references and the rest of its code are scanned.
+  const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
+  const bindings=ast.body.filter(n=>n.type==='VariableDeclaration'&&n.kind==='const').flatMap(n=>n.declarations);
+  const declarations=bindings.filter(n=>n.id.type==='Identifier'&&n.id.name==='excludedAuthoringFixturePaths');
+  assert.equal(declarations.length,1,'one explicit synthetic fixture declaration');
+  const declaration=declarations[0],data=declaration.init;
+  assert.equal(data?.type,'ArrayExpression','fixture paths are data, never executable expressions');
+  assert.deepEqual(data.elements.map(n=>n?.type==='Literal'?n.value:null),excludedFixturePaths);
+  const examples=bindings.find(n=>n.id.type==='Identifier'&&n.id.name==='examples')?.init;
+  const visit=(node,parent,grandparent)=>{
+   if(!node||typeof node!=='object')return;
+   if(node.type==='Identifier'&&node.name==='excludedAuthoringFixturePaths'&&node!==declaration.id){
+    const list=parent?.type==='SpreadElement'&&grandparent===examples&&examples?.type==='ArrayExpression';
+    const membership=parent?.type==='MemberExpression'&&parent.object===node&&!parent.computed&&parent.property.name==='includes'
+     &&grandparent?.type==='CallExpression'&&grandparent.callee===parent;
+    assert(list||membership,'synthetic paths cannot become an import or filesystem dependency');
+   }
+   for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,node,parent);}else if(value&&typeof value==='object')visit(value,node,parent);
+  };
+  visit(ast);
+  checked=source.slice(0,data.start)+'[]'+source.slice(data.end);
+ }
+ assert.doesNotMatch(checked,/tools\/inkwave-modeler\//,'excluded authoring dependency in '+file);
+}
 test('the excluded authoring workbench is not referenced by runtime/test/build input code',()=>{
  const files=execFileSync('git',['ls-files','-z','inkwave-public','patches','scripts','server','tests'],{cwd:root,encoding:'utf8'}).split('\0').filter(f=>/\.(?:mjs|js|py)$/.test(f)&&f!=='scripts/tests/inkwave-added-ci-contracts.test.mjs');
- for(const file of files)assert.doesNotMatch(fs.readFileSync(new URL(file,root),'utf8'),/tools\/inkwave-modeler\//,'excluded authoring dependency in '+file);
+ for(const file of files)assertNoAuthoringDependency(file,fs.readFileSync(new URL(file,root),'utf8'));
+});
+
+test('authoring dependency guard rejects executable fixture paths and extra consumers',()=>{
+ const fixture=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
+ assertNoAuthoringDependency(sparseFixtureFile,fixture);
+ for(const mutation of [
+  fixture.replace("'tools/inkwave-modeler/blender/large.blend'","String('tools/inkwave-modeler/blender/large.blend')"),
+  fixture+"\nfs.readFileSync(excludedAuthoringFixturePaths[0]);\n",
+  fixture+"\nimport 'tools/inkwave-modeler/src/editor.js';\n",
+  fixture.replace('const examples=[...excludedAuthoringFixturePaths,','const examples=[...excludedAuthoringFixturePaths.map(x=>x),'),
+ ])assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,mutation));
+ assert.throws(()=>assertNoAuthoringDependency('scripts/runtime.mjs',"import 'tools/inkwave-modeler/src/editor.js';"));
+});
+
+test('synthetic sparse paths cannot hide real authoring imports or filesystem reads',()=>{
+ const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
+ assertNoAuthoringDependency(sparseFixtureFile,source);
+ for(const extra of [
+  "import editor from '../../tools/inkwave-modeler/src/editor.js';",
+  "await import('../../tools/inkwave-modeler/src/editor.js');",
+  "fs.readFileSync(new URL('../../tools/inkwave-modeler/src/editor.js',import.meta.url));",
+  "fs.readFileSync('tools/inkwave-modeler/blender/large.blend');",
+  'await import(excludedAuthoringFixturePaths[1]);',
+  'fs.readFileSync(excludedAuthoringFixturePaths[0]);',
+  'fs.readFileSync(...excludedAuthoringFixturePaths);',
+ ])assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,source+'\n'+extra));
+ assert.throws(()=>assertNoAuthoringDependency('inkwave-public/src/main.js',source),'fixture data is not a general source exemption');
+ assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,source.replace("['tools/inkwave-modeler/blender/large.blend'","[fs.readFileSync('tools/inkwave-modeler/blender/large.blend')")),'fixture initializer cannot execute a read');
+});
+
+// Exercise the installed final gate, rather than merely finding status words.
+// This proves no partial, failed or canceled native/offloaded fan-in is green.
+test('actual Validate shell requires precisely the native or offloaded complete fan-in',()=>{
+ const workflow=read('validate-inkwave-update.yml');
+ const gate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
+ const body=gate.split('        run: |\n')[1];assert(body,'required gate shell');
+ const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
+ const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,...env},encoding:'utf8'});
+ for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
+  const env={OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
+  const result=run(shell,env);assert.ifError(result.error);
+  assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
+ }
+ for(const [needle,env]of [
+  ['test "$CORE_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
+  ['test "$PATCH_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
+  ['test "$CIRCLECI_RESULT" = success',{OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
+ ]){
+  const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
+  assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
+ }
 });

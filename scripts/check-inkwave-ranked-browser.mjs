@@ -8,6 +8,7 @@ import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+import {installRankedLiveAudioReader} from './lib/ranked-live-audio.mjs';
 const site=path.resolve(process.argv[2]||'_site-ranked'),out=path.resolve(process.argv[3]||'reports/ranked-browser');fs.mkdirSync(out,{recursive:true});
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const publicUrl=process.env.RANKED_PUBLIC_URL;
@@ -34,7 +35,18 @@ relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(text,deliver)=>{if(de
 const url=`${publicUrl||'http://127.0.0.1:'+server.address().port+'/'}?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
 const errors=[],results=[],contexts=[],pages=[],bootAttempts=[];let browser,browserInfo=null;
 async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start({screenshots:true,snapshots:true,sources:false});const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));const receipt={context:contexts.length-1,inputHash:build.inputHash,revision:build.build.revision,runAttempt:process.env.GITHUB_RUN_ATTEMPT||null,contentHash:build.contentHash};bootAttempts.push(receipt);await observeRankedBoot(p,url,receipt,async()=>{await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});},{artifacts:build.artifacts});return p;}
-async function advance(p,n){return p.evaluate(n=>{const g=RG.game,previous=g._skipRender;g._skipRender=true;try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=previous;}RG.renderer.render(RG.scene,RG.camera);},n);}
+async function advance(p,n){
+ return p.evaluate(async n=>{
+  const g=RG.game,previous=g._skipRender;
+  g._skipRender=true;
+  try{for(let i=0;i<n;i++)g._frame(1/60);}finally{g._skipRender=previous;}
+  // Preserve the atomic simulation sequence. Let the same recorded sounds
+  // required by START settle before the explicit SwiftShader draw can block
+  // their wall-clock load deadline. Keep every readiness failure fatal.
+  await RG.audio.requireRecordedMainShot(g.profile.weapon||'shooter');
+  RG.renderer.render(RG.scene,RG.camera);
+ },n);
+}
 async function capture(p,options){
  const label=path.basename(options.path),started=Date.now();
  const state=await p.evaluate(async()=>{
@@ -62,6 +74,180 @@ async function capture(p,options){
   return image;
  }catch(error){console.error('ranked capture failed',label,Date.now()-started);throw error;}
 }
+async function checkRankedRemoteContactGear(host, guest, save) {
+ const pages=[host,guest],receipt={status:'running',scope:'native two-context gameplay, real relay and WebAudio lifecycle; not acoustic listening',phases:[]};
+ const timeout={timeout:30000};
+ const snapshot=async pending=>{const handle=await pending;try{return await handle.jsonValue();}finally{await handle.dispose();}};
+ const phase=(name,value)=>{receipt.phases.push({name,...value});save(receipt);};
+ // Native keyboard events own both held keys and physical press edges. A
+ // keys-only Space hold cannot admit a jump/dodge through Player -> Actor.
+ // Dispatch only transitions so repeated helper calls never replay an edge.
+ const setInput=(page,fire,keys=[])=>page.evaluate(({fire,keys})=>{const state=__rankedReplication;clearTimeout(state.motionTimer);RG.input.mouse.left=fire;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])if(RG.input.down(key)&&!keys.includes(key))window.dispatchEvent(new KeyboardEvent('keyup',{code:key}));for(const key of keys)if(!RG.input.down(key))window.dispatchEvent(new KeyboardEvent('keydown',{code:key}));if(keys.includes('KeyS'))state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyS'),250);},{fire,keys});
+ const place=(page,position,yaw)=>page.evaluate(async({position,yaw})=>{
+  const {PLAYER}=await import(new URL('src/config.js',document.baseURI)),a=RG.match.local;
+  a.pos.fromArray(position);a.vel.set(0,0,0);a.yaw=a.aimYaw=yaw;RG.rig.yaw=yaw;RG.rig.pitch=0;
+  const ground=RG.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,.3,.3,PLAYER.footRadius,a.ground,false);
+  if(!ground.hit)throw Error('Replication acceptance setup has no native foot support');
+  a.pos.y=ground.y;a.grounded=true;a.groundN.copy(ground.normal);
+ },{position,yaw});
+ const read=(page,nid)=>page.evaluate(nid=>__rankedReplication.read(nid),nid);
+ let identities,previousFrozen;
+ try {
+  previousFrozen=await Promise.all(pages.map(p=>p.evaluate(()=>{const value=RG.game.frozen;RG.game.debug.unfreeze();return value;})));
+  await Promise.all(pages.map(p=>p.waitForFunction(()=>RG.match.local.alive&&!RG.match.local.s3?.squidSpawn&&!RG.match.local.superJumpState&&!RG.match.local.specialActive,null,timeout)));
+  identities=await Promise.all(pages.map((p,index)=>p.evaluate(async frozen=>{
+   const G=RG,a=G.match.local,{objectShredderEquipped}=await import(new URL('patches/splatoon3/runtime/object-gear.mjs',document.baseURI));
+   if(globalThis.__rankedReplication)throw Error('Replication acceptance already installed');
+   const state={frozen,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,aimYaw:a.aimYaw,aimPitch:a.aimPitch,rigYaw:G.rig.yaw,rigPitch:G.rig.pitch,profileWeapon:G.game.profile.weapon,invuln:a.invuln,
+    loadout:structuredClone(a.s3.loadout),bots:G.actors.filter(a=>a.bot&&!a.isLocal).map(a=>[a.bot,a.bot.update]),
+    socket:G.net.tr.ws,send:G.net.tr.ws.send,loop:G.audio.loop,wire:[],audio:[],objectShredderEquipped};
+   globalThis.__rankedReplication=state;
+   // Observe the exact serialized text handed to the real WebSocket. Delegate
+   // first, preserve return/throw behavior, and retain at most 64 tick receipts.
+   state.socket.send=function(text,...args){const result=state.send.call(this,text,...args);
+    if(typeof text==='string'&&text.startsWith('b|')){const packet=JSON.parse(text.slice(2));if(packet.k==='t'){
+     const row=packet.a?.find(row=>row[0]===a.nid);if(row){state.wire.push({ts:packet.ts,f:row[10],life:packet.l?.[a.nid],gear:packet.gg?.[a.nid]??null});if(state.wire.length>64)state.wire.shift();}}}
+    return result;
+   };
+   // Retain public request handles for exact cleanup. The installed reader
+   // resolves their owned live voices in AudioEngine.loops; loader/request
+   // wrappers alone never qualify. Calls still reach real WebAudio unchanged.
+   G.audio.loop=function(name,options,...args){const h=state.loop.call(this,name,options,...args);
+    if(h&&options?.actor?.remote){const record={nid:options.actor.nid,name,options,handle:h,volume:options.volume??1,stops:0};state.audio.push(record);
+     const set=h.set,stop=h.stop;h.set=function(p,...rest){if(p?.volume!=null)record.volume=p.volume;return set.call(this,p,...rest);};
+     h.stop=function(...rest){record.stops++;return stop.apply(this,rest);};}
+    return h;
+   };
+   state.read=nid=>{const actor=G.netm.byNid.get(nid);if(!actor)return null;const cur=actor.net?.cur,proof=actor.s3?.objectGearSnapshot;
+    return {nid,owner:actor.owner,remote:actor.remote,alive:actor.alive,weapon:actor.weaponId,grounded:actor.grounded,held:!!actor.weaponRunner.rolling,
+     suspended:actor.weaponRunner.s3RollerSuspendedHold===true,ready:!!actor.net?.ready,f:cur?.f??null,sampledOwner:cur?.rollerContactOwner??null,
+     life:actor.netLife,sampledLife:cur?.life??null,near:actor._nearCamera(),rollLoop:!!actor.net?.loops?.roll?.playing,
+     realRollLoops:state.readAudio(nid),
+     audioState:G.audio.ctx?.state??'none',audioTime:G.audio.ctx?.currentTime??null,
+     equipment:objectShredderEquipped(actor),gearOverride:typeof actor.s3?.objectHitGear==='boolean'?actor.s3.objectHitGear:null,proof:proof?{...proof}:null,acceptedSequence:actor.net?._adoptionSeq??null,
+     sampledGear:cur?.adoption?.gear?.loadout?.[2]?.main??null,turret:!!actor.character.s3RemoteTurretPose};
+   };
+   a.invuln=999;G.game.debug.freezeBots();G.audio.init();
+   return {nid:a.nid,owner:a.owner,weapon:a.weaponId,position:state.position,yaw:state.yaw};
+  },previousFrozen[index])));
+  assert.equal(identities[0].weapon,'roller');assert.equal(identities[1].weapon,'dualies');
+  await Promise.all(pages.map(p=>p.evaluate(installRankedLiveAudioReader)));
+  // A real browser gesture unlocks the real context. No silent/mock handles or
+  // autoplay policy relaxation qualify as the positive audio control.
+  for(const p of pages){await p.mouse.click(12,12);await p.waitForFunction(()=>RG.audio.ctx?.state==='running',null,timeout);}
+  const lane=await host.evaluate(async()=>{
+   const {rollerDrumSupport}=await import(new URL('patches/splatoon3/runtime/roller.mjs',document.baseURI));
+   const {PLAYER}=await import(new URL('src/config.js',document.baseURI));
+   const G=RG,a=G.match.local,V=a.pos.constructor,scratch={ids:[],start:new V(),delta:new V(),normalY:0,contactPoint:new V(),wallPoint:new V()};
+   const query=(x,y,z,yaw)=>{const point=new V(x,y,z),probe={normal:new V()};
+    if(G.level.spawnPads.some(p=>Math.hypot(x-p.x,z-p.z)<G.level.spawnBarrier+PLAYER.radius))return null;
+    G.physics.groundProbe(x,y,z,.3,.3,PLAYER.footRadius,probe,false);if(!probe.hit||G.level.blocks[probe.block]?.roof||G.level.blocks[probe.block]?.rail||Math.abs(probe.y-y)>.1)return null;
+    point.y=probe.y;const support=rollerDrumSupport({pos:point,yaw,grounded:true},G,scratch);return {pos:point.toArray(),support};};
+   let attempts=0;
+   // Existing native solid tops only. No new floor, collision stub, model or
+   // guessed water coordinate. Failure to find a real edge fails the scenario.
+   for(const block of G.level.blocks){if(!block.solid||block.roof||block.rail||!block.axes||Math.abs(block.axes[1].y)<.999)continue;
+    for(const axis of [0,2])for(const sign of [-1,1])for(const inset of [.1,.2,.3]){
+     if(++attempts>6000)throw Error('Native ledge search exceeded bounded budget');
+     const dir=block.axes[axis],dx=dir.x*sign,dz=dir.z*sign,len=axis===0?block.half.x:block.half.z;
+     if(len<3)continue;const y=block.center.y+block.half.y,yaw=Math.atan2(dx,dz);
+     const x=block.center.x+dx*(len-inset),z=block.center.z+dz*(len-inset);
+     const edge=query(x,y,z,yaw),supported=query(x-dx*3,y,z-dz*3,yaw),observer=query(x-dx*5-dz*3,y,z-dz*5+dx*3,yaw+Math.PI);
+     if(edge&&!edge.support.supported&&supported?.support.floor&&observer?.support.floor){
+      const corridor=[];for(let distance=0;distance<=2;distance+=.25){const at=query(x-dx*(3+distance),y,z-dz*(3+distance),yaw);if(!at?.support.floor)break;corridor.push(at.pos);}
+      if(corridor.length===9)return {attempts,block:block.id,yaw,edge:edge.pos,supported:supported.pos,observer:observer.pos,edgeSupport:edge.support,corridor};
+     }
+    }
+   }
+   throw Error('Native ranked stage has no eligible feet-supported/drum-unsupported lane');
+  });
+  phase('native-ledge',{lane,identities});
+  await place(host,lane.supported,lane.yaw);await place(guest,lane.observer,lane.yaw+Math.PI);
+  await Promise.all(pages.map(p=>p.evaluate(()=>{RG.input.mouse.left=RG.input.mouse.right=false;RG.input.keys.clear();RG.game.debug.unfreeze();})));
+  await setInput(host,true);
+  await host.waitForFunction(()=>RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
+  // First require the real remote roll buffer/handle at zero speed. Then a
+  // bounded 250ms native input pulse uses the verified two-metre corridor;
+  // a cold recording can never drive movement for the whole async timeout.
+  await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&!s.suspended&&s.near&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
+  await setInput(host,true,['KeyS']);
+  const supported=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;},identities[0].nid,timeout));
+  await setInput(host,true);
+  const movement=await host.evaluate(origin=>({position:RG.match.local.pos.toArray(),distance:Math.hypot(...RG.match.local.pos.toArray().map((v,i)=>v-origin[i]))}),lane.supported);
+  assert(movement.distance<=2,'native movement pulse stayed inside verified support corridor');
+  phase('supported-real-audio',{remote:supported,movement});
+  await place(host,lane.edge,lane.yaw);
+  await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&RG.match.local.weaponRunner.s3RollerSuspendedHold===true,null,timeout);
+  const suspended=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.ready&&s.remote&&s.alive&&s.grounded&&s.held&&s.suspended&&s.near&&s.audioState==='running'&&!!(s.f&(1<<28))&&!s.rollLoop&&s.realRollLoops.every(h=>!h.playing)?s:false;},identities[0].nid,timeout));
+  const wire=await host.evaluate(()=>__rankedReplication.wire.at(-1));
+  assert.equal(suspended.sampledOwner,identities[0].owner);assert.equal(suspended.sampledLife,suspended.life);
+  assert(wire.f&(1<<28));assert(wire.f&16);assert(wire.f&256);assert(suspended.audioTime>supported.audioTime);
+  assert(suspended.realRollLoops.some(h=>h.stops>0),'real supported loop was stopped');
+  phase('suspended-owner-to-remote',{wire,remote:suspended});
+  // Recovery must re-admit native contact and a real remote live loop at rest
+  // before the bounded movement pulse. Relay/interpolation delay must not
+  // consume that pulse while the remote is still observing suspension.
+  await place(host,lane.supported,lane.yaw);await setInput(host,true);
+  await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
+  await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
+  await setInput(host,true,['KeyS']);
+  const recovered=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;},identities[0].nid,timeout));
+  phase('recovered-real-audio',{remote:recovered});await setInput(host,false);
+  await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s&&!s.held&&!s.suspended&&s.near&&s.audioState==='running'&&!(s.f&(1<<28))&&!s.rollLoop&&s.realRollLoops.every(h=>!h.playing);},identities[0].nid,timeout);
+  phase('released',{remote:await read(guest,identities[0].nid)});
+
+  await place(guest,identities[1].position,identities[1].yaw);
+  const equip=value=>guest.evaluate(value=>{const a=RG.match.local;a.s3.loadout=a.s3.loadout.map(piece=>({...piece,subs:[...piece.subs]}));a.s3.loadout[2].main=value?'objectShredder':'none';a.s3RefreshGear();},value);
+  async function gearState(equipped,turret){
+   const remote=await snapshot(host.waitForFunction(({nid,equipped,turret})=>{const s=__rankedReplication.read(nid);return s?.ready&&s.proof?.source==='accepted-gear'&&s.proof.owner===s.owner&&s.proof.life===s.life&&s.proof.sequence===s.acceptedSequence&&s.proof.equipped===equipped&&s.gearOverride===null&&s.equipment===equipped&&s.sampledGear===(equipped?'objectShredder':'none')&&s.turret===turret&&!!(s.f&(1<<27))===turret&&!(s.f&(1<<28))?s:false;},{nid:identities[1].nid,equipped,turret},timeout));
+   const wire=await guest.evaluate(()=>__rankedReplication.wire.at(-1));
+   assert.equal(!!(wire.f&(1<<27)),turret);assert.equal(!!(wire.f&(1<<28)),false);assert(wire.gear,'real serialized gear sidecar is present');
+   phase('gear-'+Number(equipped)+'-turret-'+Number(turret),{wire,remote});
+  }
+  await setInput(guest,false);await equip(true);await gearState(true,false);
+  await equip(false);await gearState(false,false);
+  // Native input starts and completes the genuine dodge. Do not set s3Turret,
+  // dodge timers, flags, receiver loadout, or any accepted receipt directly.
+  await setInput(guest,true,['KeyD','Space']);
+  await guest.waitForFunction(()=>!!RG.match.local.weaponRunner.dodge,null,timeout);
+  await setInput(guest,true);
+  await guest.waitForFunction(()=>RG.match.local.weaponRunner.s3Turret===true&&!RG.match.local.weaponRunner.dodge,null,timeout);
+  await gearState(false,true);await equip(true);await gearState(true,true);
+  await setInput(guest,false);await gearState(true,false);
+  receipt.status='passed';save(receipt);return receipt;
+ }catch(error){
+  receipt.status='failed';receipt.error=error?.stack||String(error);
+  receipt.failureAfter=receipt.phases.at(-1)?.name??'initialization';
+  // Capture before finally restores actors and stops voices. Diagnostics are
+  // observational only and must neither replace the original failure nor
+  // turn a closed/unreadable page into a successful acceptance receipt.
+  receipt.failureState=await Promise.all(pages.map(async(p,index)=>{
+   try{return {context:index,...await p.evaluate(nid=>{
+    const G=globalThis.RG,a=G?.match?.local,s=globalThis.__rankedReplication;
+    return {local:a?{nid:a.nid,alive:a.alive,grounded:a.grounded,held:!!a.weaponRunner?.rolling,suspended:a.weaponRunner?.s3RollerSuspendedHold===true,
+     position:a.pos?.toArray()??null,velocity:a.vel?.toArray()??null,ink:a.ink}:null,
+     remote:s&&nid!=null?s.read(nid):null,wire:s?.wire?.at(-1)??null};
+   },identities?.[0]?.nid)};}catch(diagnosticError){return {context:index,diagnosticError:diagnosticError?.message||String(diagnosticError)};}
+  }));
+  save(receipt);throw error;
+ }
+ finally{
+  const cleanupErrors=[];receipt.restoration=[];
+  for(const [index,p]of pages.entries())try{receipt.restoration.push(await p.evaluate(frozen=>{
+   const s=globalThis.__rankedReplication;if(!s){if(frozen)RG.game.debug.freeze();return;}const G=RG,a=G.match.local;
+   clearTimeout(s.motionTimer);G.input.mouse.left=G.input.mouse.right=false;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])G.input.keys.delete(key);
+   s.socket.send=s.send;G.audio.loop=s.loop;for(const r of s.audio)r.handle.stop(.05);
+   a.weaponRunner.reset();a.s3.loadout=s.loadout;a.s3RefreshGear();a.pos.fromArray(s.position);a.vel.fromArray(s.velocity);a.yaw=s.yaw;a.aimYaw=s.aimYaw;a.aimPitch=s.aimPitch;G.rig.yaw=s.rigYaw;G.rig.pitch=s.rigPitch;a.invuln=s.invuln;
+   for(const [bot,update]of s.bots)bot.update=update;
+   if(s.frozen)G.game.debug.freeze();else G.game.debug.unfreeze();
+   const restored={profileWeapon:G.game.profile.weapon,profileUnchanged:G.game.profile.weapon===s.profileWeapon,rigYaw:G.rig.yaw,rigPitch:G.rig.pitch,frozen:G.game.frozen,gear:structuredClone(a.s3.loadout)};
+   delete globalThis.__rankedReplication;if(!restored.profileUnchanged)throw Error('Replication acceptance changed the persistent profile weapon');return restored;
+  },previousFrozen?.[index]));}catch(error){cleanupErrors.push(error?.message||String(error));}
+  save(receipt);
+  if(cleanupErrors.length){const wasPassed=receipt.status==='passed';receipt.status='failed';receipt.cleanupErrors=cleanupErrors;save(receipt);if(wasPassed)throw Error('Replication acceptance cleanup failed: '+cleanupErrors.join('; '));}
+ }
+}
+
 try{
  const launchOptions={headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
  if(process.env.CHROMIUM_EXECUTABLE)launchOptions.executablePath=process.env.CHROMIUM_EXECUTABLE;
@@ -215,6 +401,10 @@ try{
   await p.waitForFunction(()=>RG.net.lobby.players.length===2);await guest.waitForFunction(()=>RG.net.lobby.players.length===2);
   await p.evaluate(mode=>{RG.net.setSettings({mode,bots:true,map:'tidewater'});},mode);
   await guest.waitForFunction(mode=>RG.net.lobby.mode===mode,mode,{timeout:30000});
+  if(mode==='zones'){
+   await p.evaluate(()=>RG.net.setMe({weapon:'roller'}));await guest.evaluate(()=>RG.net.setMe({weapon:'dualies'}));
+   await p.waitForFunction(()=>RG.net.lobby.players.some(a=>a.id===RG.net.myId&&a.weapon==='roller')&&RG.net.lobby.players.some(a=>a.id!==RG.net.myId&&a.weapon==='dualies'),null,{timeout:30000});
+  }
   await p.evaluate(()=>{if(!RG.net.confirmTeams())throw Error('Team confirmation failed');});
   await guest.waitForFunction(()=>RG.net.lobby.teamsConfirmed);
   await guest.evaluate(()=>RG.net.setMe({ready:true}));await p.evaluate(()=>RG.net.setMe({ready:true}));
@@ -223,6 +413,7 @@ try{
   await p.evaluate(()=>{RG.game.debug.freeze();RG.game.debug.freezeBots();RG.match.ranked.setCount(0,65);RG.match.ranked.revision++;RG.netm._sendNow({k:'rkstate',rk:{match:RG.netm.cfg.id,host:RG.netm.s.hostId,state:RG.match.ranked.snapshot(),gains:RG.match.rankedGains}});});
   await guest.waitForFunction(()=>RG.match.ranked.counts[0]===65,null,{timeout:30000});
   const online=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({mode:RG.match.mode,counts:[...RG.match.ranked.counts],follower:RG.match.follower,actors:RG.match.actors.length,time:RG.match.time}))));assert.deepEqual(online[0].counts,online[1].counts);assert.equal(online[0].mode,mode);assert.equal(online[1].mode,mode);
+  const remoteContactGear=mode==='zones'?await checkRankedRemoteContactGear(p,guest,value=>fs.writeFileSync(path.join(out,'remote-contact-gear.json'),JSON.stringify({contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,...value},null,2))):null;
   let onlineWeapon = null, onlineWall = null;
   if(mode==='rainmaker'){
    await Promise.all([p,guest].map(pg=>pg.waitForFunction(()=>!document.querySelector('.iw-lineup')&&!document.querySelector('.iw-bn--go'),null,{timeout:15000})));
@@ -289,7 +480,7 @@ try{
    await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
    await capture(pg,{path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
   }
-  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;if(onlineWall)record.onlineWall=onlineWall;
+  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;if(onlineWall)record.onlineWall=onlineWall;if(remoteContactGear)record.remoteContactGear=remoteContactGear;
   await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
   await guest.waitForFunction(()=>RG.match.ranked.winner===0&&RG.match.ranked.knockout&&RG.match.state==='finish',null,{timeout:30000});
   record.terminal=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({winner:RG.match.ranked.winner,knockout:RG.match.ranked.knockout,counts:[...RG.match.ranked.counts],state:RG.match.state}))));

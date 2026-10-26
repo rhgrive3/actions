@@ -1,4 +1,6 @@
 import { SPLATLING_RETICLE_CORNER_CSS } from '../local-quality/splatling-reticle-corners.mjs';
+import { css as CHARGER_DECORATION_CSS } from '../local-quality/charger-decoration-prototype.mjs';
+import { DUALIES_DIAGONAL_PROTOTYPE_CSS } from '../local-quality/dualies-diagonal-prototype.mjs';
 
 // Build-only catalog bridge: weapon IDs identify entries, while kind/modelKind
 // select the shared visuals. Upstream sources remain locked and unmodified.
@@ -19,7 +21,7 @@ function replaceAllExpected(code, before, after, expected, label) {
 }
 
 export function adaptWeaponCatalog(rel, code) {
-  if (rel === 'styles/hud.css') return code + '\n' + SPLATLING_RETICLE_CORNER_CSS;
+  if (rel === 'styles/hud.css') return code + '\n' + [SPLATLING_RETICLE_CORNER_CSS, CHARGER_DECORATION_CSS, DUALIES_DIAGONAL_PROTOTYPE_CSS].join('\n');
   if (rel === 'src/game/weapons.js') {
     // Consume the remaining fixed-step time of newly born catalog splashes
     // before native draw copies their positions into the visible instance
@@ -141,8 +143,12 @@ export function adaptWeaponCatalog(rel, code) {
     // Install after the final composed HUD class is evaluated. Gameplay family
     // mapping and all existing source-composition anchors remain untouched.
     return "import { installWeaponReticlePresentation } from '../../patches/local-quality/weapon-reticle-installer.mjs';\n" +
-      "import { installSplatlingReticleCorners } from '../../patches/local-quality/splatling-reticle-corners.mjs';\n" + code +
-      "\ninstallWeaponReticlePresentation(HUD, WEAPONS);\ninstallSplatlingReticleCorners(HUD, WEAPONS);\n";
+      "import { installSplatlingReticleCorners } from '../../patches/local-quality/splatling-reticle-corners.mjs';\n" +
+      "import { installDraftChargerDecoration } from '../../patches/local-quality/charger-decoration-prototype.mjs';\n" +
+      "import { installDualiesDiagonalPrototype } from '../../patches/local-quality/dualies-diagonal-prototype.mjs';\n" +
+      "import { installEvidenceSlosherDiagonal } from '../../patches/local-quality/slosher-diagonal-installer-prototype.mjs';\n" +
+      "import { installEvidenceBlasterDiagonal } from '../../patches/local-quality/blaster-diagonal-installer-prototype.mjs';\n" + code +
+      "\ninstallWeaponReticlePresentation(HUD, WEAPONS);\ninstallSplatlingReticleCorners(HUD, WEAPONS);\ninstallDraftChargerDecoration(HUD, WEAPONS);\ninstallDualiesDiagonalPrototype(HUD, WEAPONS);\ninstallEvidenceSlosherDiagonal(HUD, WEAPONS);\ninstallEvidenceBlasterDiagonal(HUD, WEAPONS);\n";
   }
 
   if (rel === 'src/main.js') {

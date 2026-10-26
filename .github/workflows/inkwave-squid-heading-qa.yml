@@ -2,6 +2,28 @@ name: INKWAVE squid heading input native QA
 on:
   pull_request:
     paths:
+      - 'inkwave-public/src/game/actor.js'
+      - 'inkwave-public/src/game/character-geo.js'
+      - 'inkwave-public/src/game/character-mats.js'
+      - 'inkwave-public/src/game/character.js'
+      - 'inkwave-public/src/game/motion/source-controller.js'
+      - 'inkwave-public/src/game/motion/squid-rig.js'
+      - 'inkwave-public/src/game/physics.js'
+      - 'inkwave-public/src/game/player.js'
+      - 'inkwave-public/src/world/level.js'
+      - 'patches/loading-cache/vendor/acorn.mjs'
+      - 'patches/local-quality/s3-squid-look-adapter.mjs'
+      - 'patches/local-quality/squid-form-ease-adapter.mjs'
+      - 'patches/splatoon3/runtime/install.mjs'
+      - 'patches/splatoon3/runtime/swim-motion.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/check-inkwave-startup-budget.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/tests/inkwave-workflow-inputs.test.mjs'
+      - 'tools/squid-heading-qa/reference.mjs'
+      - 'tools/squid-heading-qa/run.mjs'
+      - 'tools/squid-heading-qa/three-contract.mjs'
+      - 'tools/squid-production-qa/lighting.mjs'
       - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
       - patches/local-quality/squid-motion-binding-adapter.mjs
       - patches/local-quality/tests/squid-heading-*.test.mjs
@@ -27,6 +49,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify direct QA input trigger coverage
+        run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Install existing native QA tools
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1

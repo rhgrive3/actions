@@ -39,7 +39,7 @@ test('the subsequent weapon batch binds actual Git commits to its exact integrat
 test('relay dispatch retains checkout and both regression suites',()=>{
  assert.match(relay,/on:\n  workflow_dispatch:\n/);
  assert.match(relay,/test "\$actual_source_sha" = "\$EXPECTED_SOURCE_SHA"/);
- assert.match(relay,/node --test server\/tests\/\*\.test\.mjs/);
+ assert.match(relay,/node --experimental-vm-modules --test server\/tests\/\*\.test\.mjs/);
  assert.match(relay,/node --experimental-vm-modules --test patches\/reliability\/tests\/relay-compatibility.test.mjs/);
 });
 test('dispatch has five required explicit inputs and no mutable baseline fallback',()=>{

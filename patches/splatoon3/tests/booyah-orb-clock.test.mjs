@@ -4,18 +4,32 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {compactModuleStrings} from '../../../scripts/lib/inkwave-source-compaction.mjs';
+import {nonWailVfxTicks} from '../runtime/nonwail-vfx-clock.mjs';
 
 // Executes the actual director and retained-shell callback, not a copied curve.
 // This is source-only presentation verification, not GPU or retail-frame evidence.
 const source = adaptBuildSource('patches/splatoon3/runtime/special-vfx.mjs', fs.readFileSync(new URL('../runtime/special-vfx.mjs', import.meta.url), 'utf8'));
+// Use the real retained-record methods; only GPU construction is unnecessary
+// for this callback clock test. Both scalar and array births stay authoritative.
+const kitSource = adaptBuildSource('patches/splatoon3/runtime/special-vfx-kit.mjs', fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs', import.meta.url), 'utf8'));
+const poolStart = kitSource.indexOf('class ShapePool {');
+const poolEnd = kitSource.indexOf('// The kit attached to one FX instance', poolStart);
+assert.ok(poolStart > 0 && poolEnd > poolStart, 'actual retained pool extraction');
+const ShapePool = new Function(kitSource.slice(poolStart, poolEnd) + '\nreturn ShapePool;')();
 const transformBody = body => process.env.SPECIAL_VFX_ESBUILD ? compactModuleStrings(createRequire(import.meta.url)(process.env.SPECIAL_VFX_ESBUILD).transformSync('function recipe(){'+body+'}', {loader:'js', minify:true, charset:'utf8',keepNames:true}).code).code + ';return recipe();' : body;
 function orb(raw = source) {
   const actor = raw.slice(raw.indexOf('  booyahBomb: {', raw.indexOf('const DIRECTORS =')), raw.indexOf('  // ---------------------------------------------------------------- Ultra Stamp'));
   const shell = raw.slice(raw.indexOf('  shell(add,'), raw.indexOf('  disc(add,'));
   assert.ok(actor.startsWith('  booyahBomb: {') && shell.startsWith('  shell(add,'));
   const clamp01 = n => Math.max(0, Math.min(1, n));
-  const api = Function('clamp01', 'easeOut', 'vfxRandom', 'SHELL', 'DISC', transformBody(`return {${shell},${actor}};`))(clamp01, n => 1 - (1 - clamp01(n)) ** 3, () => 0.5, {ORB: 0}, {RUNE: 0});
-  const pool = {add(life, values, follow) { return {life, v: new Float32Array(values), t: 0, follow}; }};
+  const api = Function('clamp01', 'easeOut', 'vfxRandom', 'SHELL', 'DISC', 'nonWailVfxTicks', transformBody(`return {${shell},${actor}};`))(clamp01, n => 1 - (1 - clamp01(n)) ** 3, () => 0.5, {ORB: 0}, {RUNE: 0}, nonWailVfxTicks);
+  const pool = Object.assign(Object.create(ShapePool.prototype), { cap: 16, recs: [] });
+  const addRaw = pool.addRaw;
+  pool.addRaw = function(life, ...values) {
+    assert.equal(values.length, 17, 'sixteen scalar birth values plus follow');
+    assert.equal(typeof values.at(-1), 'function');
+    return addRaw.call(this, life, ...values);
+  };
   const director = {kit:{shells:pool}, time:0, v:[{set(x,y,z){Object.assign(this,{x,y,z});return this;}}], up:{}, hdr:c=>c, shell:api.shell, disc:()=>({})};
   const actorState = {pos:{x:2,y:3,z:4},_s3AllSpecialState:{charge:0.5}};
   const track={color:[1,0,0],d:{},start:0};
@@ -39,7 +53,10 @@ test('irregular cadence and repeated zero-time callbacks do not advance the orb'
   assert.equal(r.v[7],3);
 });
 test('negative control detects the previous render-count-dependent rotation',()=>{
-  const old=source.replace('rec.v[7] = rec.t * 3;', 'rec.v[7] += 0.05;');
+  // Model the former per-callback rotation fault, not literal historical source: the current shell resets its angle before this callback.
+  const rotation = 'rec.v[7] = rec.t * 3;';
+  assert.equal(source.split(rotation).length - 1, 1);
+  const old=source.replace(rotation, 'rec.v[7] = (rec._booyahRenderCount = (rec._booyahRenderCount || 0) + 1) * 0.05;');
   assert.notEqual(old,source);
   const at30=advance(old,Array(30).fill(1/30)).record.v[7];
   const at120=advance(old,Array(120).fill(1/120)).record.v[7];

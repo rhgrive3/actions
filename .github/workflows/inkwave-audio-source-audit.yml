@@ -2,12 +2,19 @@ name: INKWAVE audio source audit
 on:
   pull_request:
     paths:
+      - 'inkwave-public/src/audio/**'
+      - 'patches/splatoon3/audio-adapter.mjs'
+      - 'patches/splatoon3/runtime/audio/**'
+      - 'reports/*audio*.md'
+      - 'scripts/*audio*.mjs'
+      - 'tools/audio/**'
       - '.github/workflows/inkwave-audio-source-audit.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: audio-source-audit-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: audio-source-audit-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   inputs:
     runs-on: ubuntu-latest
@@ -15,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Export tracked research and test inputs only
         run: |

@@ -25,6 +25,7 @@ function recordBirth(h,p,age,x,y,z,vx,vy,vz){
 // repeated realm-global Math/Number lookups otherwise dominate mesh generation.
 const sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max,sin=Math.sin,cos=Math.cos,pow=Math.pow,isFiniteNumber=Number.isFinite;
 const RINGS = 13, SIDES = 12, BODY_VERTICES = RINGS * SIDES;
+const ROLLER_LINK_RING_SIN=Float64Array.from({length:RINGS},(_,ring)=>Math.sin(Math.PI*(ring/(RINGS-1))));
 const SECTION_COS=new Float64Array(SIDES),SECTION_SIN=new Float64Array(SIDES),SECTION_ANGLE=new Float64Array(SIDES);
 const SECTION_COS3=new Float64Array(SIDES),SECTION_SIN3=new Float64Array(SIDES),SECTION_COS4=new Float64Array(SIDES);
 const SECTION_COS5=new Float64Array(SIDES),SECTION_SIN5=new Float64Array(SIDES);
@@ -78,20 +79,16 @@ const sourceOf = p => PROJECTILE_VISUAL_SOURCE[actorOf(p)];
 // freezes flight age. The visual timeline follows that clock without editing
 // the projectile age, integration, collision, paint or network state.
 const visualAge = p => finite(p?.age)+finite(p?.fidelityWallDrop?.frame)/HISTORY_HZ;
-// Reuse Bucket's complete drawn envelope, not just the texture. The catalogue
-// derivatives previously kept their own short/zero-offset draw radii and tails,
-// so the same atlas still appeared as separate little beads. Their trajectories,
-// unit counts, fan angles, birth delays and damage remain owned by gameplay.
+// Reuse the Bucket sheet topology while retaining each weapon's drawn source
+// envelope. Substituting Bucket's radius made Tri-Slosher/Dread Wringer heads
+// too small, and clamping their glob indices invented extra visible fragments.
 export function sharedBucketDraw(p) {
   const actor = actorOf(p);
   if (actor !== 'WeaponSlosherDiffusion' && actor !== 'WeaponSlosherDouble') return null;
-  const rear = p.catalog?.descriptor?.unit === 1;
-  return PROJECTILE_VISUAL_SOURCE.WeaponSlosherStrong.slosh[rear ? 2 : 1].drawSize;
+  return PROJECTILE_VISUAL_SOURCE[actor].slosh[p.catalog?.descriptor?.unit ?? 0]?.drawSize ?? null;
 }
 export function sharedBucketDrawIndex(p) {
-  // Bucket has four front and five rear fragments. Longer derivative streams
-  // keep the final Bucket envelope instead of extrapolating it through zero.
-  return Math.max(0,Math.min(p.catalog?.descriptor?.unit===1?4:3,p.catalog?.index??p.catalog?.descriptor?.index??0));
+  return Math.max(0,p.catalog?.index??p.catalog?.descriptor?.index??0);
 }
 export function sharedBucketTailLength(p, speed) {
   const d = sharedBucketDraw(p);
@@ -584,6 +581,7 @@ export class ProjectileVisualRuntime {
   _rollerMembrane(p,q,radius,start,end) {
     const h=p._iwVisualHistory,k=q._iwVisualHistory,c=this.centers,w=this.widths,t=this.thicknesses,f=this.membraneFrames;
     let runStart=-1,bestStart=-1,bestEnd=-1;
+    const minGap2=radius*radius*.36,maxGap2=radius*radius*9,minGap=radius*.6-EPS,maxGap=radius*3+EPS,thicknessScale=radius*.08;
     // The same authored .6..3 source-radius distance bound is applied to real
     // shared-time positions, rather than only today's separated head centers.
     // Retain the latest contiguous close interval; no bridge spans a gap that
@@ -592,7 +590,7 @@ export class ProjectileVisualRuntime {
       const age=start+(end-start)*ring/(RINGS-1);h.sample(age,this.sample);k.sample(age,this.sample2);
       const dx=this.sample2[0]-this.sample[0],dy=this.sample2[1]-this.sample[1],dz=this.sample2[2]-this.sample[2];
       const gap2=dx*dx+dy*dy+dz*dz;
-      if(gap2>=radius*radius*.36&&gap2<=radius*radius*9) {
+      if(gap2>=minGap2&&gap2<=maxGap2) {
         if(runStart<0)runStart=ring;
         if(ring>runStart){bestStart=runStart;bestEnd=ring;}
       } else runStart=-1;
@@ -606,7 +604,7 @@ export class ProjectileVisualRuntime {
       const gap=sqrt(dx*dx+dy*dy+dz*dz);
       // A curved interpolation can have a different gap between probe times.
       // Fail closed instead of rendering vertices outside the distance bound.
-      if(gap<radius*.6-EPS||gap>radius*3+EPS)return false;
+      if(gap<minGap||gap>maxGap)return false;
       const rx=dx/gap,ry=dy/gap,rz=dz/gap;
       let vx=this.sample[3]+this.sample2[3],vy=this.sample[4]+this.sample2[4],vz=this.sample[5]+this.sample2[5];
       let nx=vy*rz-vz*ry,ny=vz*rx-vx*rz,nz=vx*ry-vy*rx;
@@ -621,7 +619,7 @@ export class ProjectileVisualRuntime {
       f[j+6]=ry*nz-rz*ny;f[j+7]=rz*nx-rx*nz;f[j+8]=rx*ny-ry*nx;
       c[o]=(this.sample[0]+this.sample2[0])*.5;c[o+1]=(this.sample[1]+this.sample2[1])*.5;c[o+2]=(this.sample[2]+this.sample2[2])*.5;
       c[o+3]=f[j+6];c[o+4]=f[j+7];c[o+5]=f[j+8];
-      const cap=SHAPE_PROFILES.shooter.width[ring];w[ring]=gap*.5*cap;t[ring]=radius*.08*cap;
+      const cap=SHAPE_PROFILES.shooter.width[ring];w[ring]=gap*.5*cap;t[ring]=thicknessScale*cap;
     }
     const color=p.owner.color;
     this._writeMembrane(c,w,t,f,color.r,color.g,color.b);
@@ -664,7 +662,7 @@ export class ProjectileVisualRuntime {
         if(Math.abs(p._iwVisualEpoch-q._iwVisualEpoch)>EPS)continue;
         if(Number.isFinite(pi)&&Number.isFinite(qi)&&Math.abs(pi-qi)!==1)continue;
         if(!Number.isFinite(pi)&&!Number.isFinite(qi)&&p.fidelityRollerUnitIndex!==q.fidelityRollerUnitIndex)continue;
-        const age=renderAge(p,alpha),qage=renderAge(q,alpha);
+        const age=p._iwVisualRenderAge,qage=q._iwVisualRenderAge;
         const radius=Math.min(projectileDrawRadius(p,age),projectileDrawRadius(q,qage));
         if(!(radius>0)||this.bodies>=this.capacity)continue;
         const start=max(p._iwVisualRenderStart,q._iwVisualRenderStart),end=min(age,qage);
@@ -679,7 +677,7 @@ export class ProjectileVisualRuntime {
         const dx=this.sample2[0]-this.sample[0],dy=this.sample2[1]-this.sample[1],dz=this.sample2[2]-this.sample[2];
         for(let ring=0;ring<RINGS;ring++){const u=ring/(RINGS-1),o=ring*6;
           c[o]=this.sample[0]+dx*u;c[o+1]=this.sample[1]+dy*u;c[o+2]=this.sample[2]+dz*u;
-          c[o+3]=dx;c[o+4]=dy;c[o+5]=dz;w[ring]=radius*.30*Math.sin(Math.PI*u);t[ring]=w[ring]*.42;
+          c[o+3]=dx;c[o+4]=dy;c[o+5]=dz;w[ring]=radius*.30*ROLLER_LINK_RING_SIN[ring];t[ring]=w[ring]*.42;
         }
         const color=p.owner.color;this._writeBody(c,w,t,'roller-link',color.r,color.g,color.b,finite(p.seed),0,0);
         this.stats.linkedRollerPairs++;break;

@@ -88,7 +88,19 @@ export class NativePhysics extends Physics {
  _sourceBodyFits(pos,radius,lift,height,skipGrates,margin){
   const w=this.world,s0=w._s0.set(pos.x,pos.y+lift+radius,pos.z),s1=w._s1.set(pos.x,pos.y+Math.max(lift+radius,height-radius),pos.z);
   min.copy(s0).min(s1).addScalar(-radius);max.copy(s0).max(s1).addScalar(radius);let fits=true;
-  w.queryBox(min,max,id=>{if(!fits||(skipGrates&&(w.flags[id]&4)))return;const pad=Math.max(radius,radius-margin);if(w.triangleOverlapsBounds?.(id,Math.min(s0.x,s1.x)-pad,Math.min(s0.y,s1.y)-pad,Math.min(s0.z,s1.z)-pad,Math.max(s0.x,s1.x)+pad,Math.max(s0.y,s1.y)+pad,Math.max(s0.z,s1.z)+pad)===false)return;if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}},true);
+  // A fit query never moves its capsule. Keep the exact precheck bounds once,
+  // but leave empty/grate-only queries free of the extra bounds calculation.
+  let boundsReady=false,x0,y0,z0,x1,y1,z1;
+  w.queryBox(min,max,id=>{
+   if(!fits||(skipGrates&&(w.flags[id]&4)))return;
+   if(!boundsReady){
+    const pad=Math.max(radius,radius-margin);
+    x0=Math.min(s0.x,s1.x)-pad;y0=Math.min(s0.y,s1.y)-pad;z0=Math.min(s0.z,s1.z)-pad;
+    x1=Math.max(s0.x,s1.x)+pad;y1=Math.max(s0.y,s1.y)+pad;z1=Math.max(s0.z,s1.z)+pad;boundsReady=true;
+   }
+   if(w.triangleOverlapsBounds?.(id,x0,y0,z0,x1,y1,z1)===false)return;
+   if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}
+  },true);
   return fits;
  }
  /** A raised source foot snap follows the body solve. Reconcile only a new

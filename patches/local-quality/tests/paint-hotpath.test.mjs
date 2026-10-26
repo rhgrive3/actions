@@ -103,12 +103,12 @@ test('native GPU quad submission preserves attribute uploads, render sequence an
   const [original,optimized]=await Promise.all([loadNative(ORIGINAL),loadNative(FIXED)]);
   const go=realm=>{
     const calls=[];
-    const attributes=Object.fromEntries(['aPos','aLocal','aSplat','aStretch','aGrow'].map(name=>[name,{
-      itemSize:({aPos:2,aLocal:3,aSplat:4,aStretch:3,aGrow:4})[name],
-      clearUpdateRanges(){calls.push(name+':clear');},
-      addUpdateRange(a,b){calls.push(name+':add:'+a+':'+b);},
-      set needsUpdate(v){calls.push(name+':dirty:'+v);}
-    }]));
+    const attributes=Object.fromEntries(['aPos','aLocal','aSplat','aStretch','aGrow'].map(name=>{
+      const attribute=new realm.exports.THREE.BufferAttribute(new Float32Array(128),({aPos:2,aLocal:3,aSplat:4,aStretch:3,aGrow:4})[name]);
+      const clear=attribute.clearUpdateRanges.bind(attribute);
+      attribute.clearUpdateRanges=()=>{calls.push(name+':clear');clear();};
+      return [name,attribute];
+    }));
     const obj={quads:3,geo:{attributes,setDrawRange(a,b){calls.push('drawRange:'+a+':'+b);}},
       dryMesh:{visible:false},mesh:{visible:false},rt:{id:'atlas'},scene:{id:'scene'},cam:{id:'camera'},
       renderer:{autoClear:true,getRenderTarget(){return null;},
@@ -116,7 +116,7 @@ test('native GPU quad submission preserves attribute uploads, render sequence an
         render(s,c){calls.push('render:'+s.id+':'+c.id);}
       }};
     realm.exports.PaintSystem.prototype._drawQuads.call(obj);
-    return {calls,quads:obj.quads,visible:obj.mesh.visible};
+    return {calls,quads:obj.quads,visible:obj.mesh.visible,uploads:Object.fromEntries(Object.entries(attributes).map(([name,a])=>[name,{version:a.version,ranges:Array.from(a.updateRanges,r=>({start:r.start,count:r.count}))}]))};
   };
   assert.deepEqual(go(optimized),go(original));
 });

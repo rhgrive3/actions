@@ -1,0 +1,47 @@
+INKWAVE built fixture /workspace/actions/_site contentHash=f1c8893ce039a9eaf545c60961889ff0e8490e7c78ee511c2371931fccdad599
+(node:3325) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-blaster-short timed burst paints at the burst and creates a separate falling drop (72.008064ms)
+✔ s3-blaster-short terrain contact uses collision paint sizes and keeps the drop outside the wall (4.153935ms)
+✔ s3-blaster-long timed burst paints at the burst and creates a separate falling drop (3.272814ms)
+✔ s3-blaster-long terrain contact uses collision paint sizes and keeps the drop outside the wall (2.547547ms)
+✔ s3-blaster-lightshort timed burst paints at the burst and creates a separate falling drop (2.964177ms)
+✔ s3-blaster-lightshort terrain contact uses collision paint sizes and keeps the drop outside the wall (2.452599ms)
+✔ s3-blaster-light timed burst paints at the burst and creates a separate falling drop (2.90434ms)
+✔ s3-blaster-light terrain contact uses collision paint sizes and keeps the drop outside the wall (2.080819ms)
+✔ s3-blaster-lightlong timed burst paints at the burst and creates a separate falling drop (3.55154ms)
+✔ s3-blaster-lightlong terrain contact uses collision paint sizes and keeps the drop outside the wall (3.643919ms)
+✔ s3-blaster-precision timed burst paints at the burst and creates a separate falling drop (2.358063ms)
+✔ s3-blaster-precision terrain contact uses collision paint sizes and keeps the drop outside the wall (1.726616ms)
+✔ s3-blaster-precision airborne timed burst paints at the burst and creates a separate falling drop (1.763667ms)
+✔ s3-blaster-precision airborne terrain contact uses collision paint sizes and keeps the drop outside the wall (1.368789ms)
+✔ replicated catalogue Blaster bursts create neither paint nor falling owner drops (14.906162ms)
+✔ direct player hits keep direct damage once and choose collision paint sizes (42.244006ms)
+✔ high airburst drops fall onto real collision geometry with identical 30/60/120 Hz landings (124.61097ms)
+✔ terrain/direct Blaster player bursts use the source compressed radius and half damage; timed bursts stay full (117.404549ms)
+INKWAVE built fixture /workspace/actions/_site contentHash=f1c8893ce039a9eaf545c60961889ff0e8490e7c78ee511c2371931fccdad599
+(node:3392) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-brush-mini uses its source contact width at 30/60/120 Hz, with real CPU ownership (1940.64598ms)
+✔ s3-brush-normal uses its source contact width at 30/60/120 Hz, with real CPU ownership (2398.685578ms)
+✔ s3-brush-heavy uses its source contact width at 30/60/120 Hz, with real CPU ownership (2061.093203ms)
+INKWAVE built fixture /workspace/actions/_site contentHash=f1c8893ce039a9eaf545c60961889ff0e8490e7c78ee511c2371931fccdad599
+(node:3514) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all 58 added main owners retain Poison Mist speed scaling exactly once across idle, fire and charge states (227.116764ms)
+✔ the seven legacy owners retain their existing single Mist multiplier (15.343127ms)
+✔ catalogue grounded and airborne movement uses the same cloud membership at 30/60/120Hz and recovers immediately on exit (121.263392ms)
+INKWAVE built fixture /workspace/actions/_site contentHash=f1c8893ce039a9eaf545c60961889ff0e8490e7c78ee511c2371931fccdad599
+(node:3525) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source Inkbrush moving roll keeps dry-ground speed while crossing enemy ink (55.099782ms)
+✔ real Actor resource phase ignores floor damage and allows normal healing during moving Inkbrush roll (13.360376ms)
+✔ stationary, released, empty, airborne, sub-ready, pending swing and other brushes receive no exemption (7.062831ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 23799.024327

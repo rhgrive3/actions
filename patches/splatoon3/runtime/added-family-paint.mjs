@@ -25,7 +25,11 @@ export function brellaSplashPlan(source) {
   const p=source?.SplashParam;
   if (!p || ![p.SplashPaintWidthFullActive,p.SplashPaintWidthOneActive,
     p.SplashPaintDepthScaleFullActive,p.SplashPaintDepthScaleOneActive].every(v=>Number.isFinite(v)&&v>0)) return null;
-  return { first:finite(p.CreateSplashLength,ADDED_PAINT_MODEL.brellaSpacing),
+  // CreateSplashLength is the interval between shared volley drops. Starting
+  // at one whole interval skipped the birth/feet member and left a dry gap.
+  // Start at birth and retain the same total budget; exact retail phase still
+  // needs a capture (the sparse table does not publish that initial phase).
+  return { first:0,
     spacing:finite(p.CreateSplashLength,ADDED_PAINT_MODEL.brellaSpacing),
     count:Math.max(0,Math.floor(finite(p.CreateSplashNum,ADDED_PAINT_MODEL.brellaCount))), source:p };
 }
@@ -47,7 +51,9 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
   node.distance=limit;node.ended=ended;if(ended)node.endFrame=finite(projectile.age,0)*60;
   while(volley.next<plan.count){
     const i=volley.next,at=plan.first+i*plan.spacing;
-    if(!volley.nodes.every(n=>n.ended||n.distance+1e-9>=at))break;
+    // At the zero-distance nearest member, an untouched node also has
+    // distance=0. Require its actual sample before computing the centroid.
+    if(!volley.nodes.every(n=>n.ended||n.samples.has(i)))break;
     let centre=null,count=0,birthFrame=-Infinity;
     for(const n of volley.nodes){
       const sample=n.samples.get(i);

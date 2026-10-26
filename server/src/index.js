@@ -6,7 +6,10 @@
 // client's gameplay compatibility token, not UI-only asset revisions.
 const WIRE_MAJOR = '2';
 // Older pinned rooms keep their original START exchange during relay rollouts.
-const START_ADMISSION_COMPAT = 'iw-gameplay-20261023-start-admission-v1';
+const START_ADMISSION_COMPATS = new Set([
+  'iw-gameplay-20261023-start-admission-v1',
+  'iw-gameplay-20261024-spawn-start-admission-v1',
+]);
 const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
 const COMPAT_TOKEN = /^[a-zA-Z0-9_-]{8,80}$/;
 const MAX_FRAME_BYTES = 64 * 1024;
@@ -166,8 +169,14 @@ export class RoomDurableObject {
         emoteAt: m.emoteAt ?? null,
         ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft } : {}),
       };
-      const previous = m.attachmentSnapshot, keys = Object.keys(next);
-      if (previous && Object.keys(previous).length === keys.length && keys.every(key => previous[key] === next[key])) return;
+      const previous = m.attachmentSnapshot;
+      // Accepted frames usually change at least one budget scalar. Prove a
+      // difference first; retain full key equality for general unchanged sync.
+      if (previous && previous.budgetAt === next.budgetAt
+        && previous.framesLeft === next.framesLeft && previous.bytesLeft === next.bytesLeft) {
+        const keys = Object.keys(next);
+        if (Object.keys(previous).length === keys.length && keys.every(key => previous[key] === next[key])) return;
+      }
       m.ws.serializeAttachment?.(next);
       m.attachmentSnapshot = next;
     } catch {}
@@ -392,7 +401,7 @@ export class RoomDurableObject {
       const payload = s.slice(2);
       const data = validRelayPayload(payload);
       if (!data || !this._admitSemantic(m, data)) return;
-      if (data.k === 'start' && this.compat === START_ADMISSION_COMPAT) {
+      if (data.k === 'start' && START_ADMISSION_COMPATS.has(this.compat)) {
         // Admission and this check run synchronously in the same DO event. A
         // JOIN accepted before this point must appear once in the human roster.
         if (id !== this.hostId) return;
@@ -479,6 +488,21 @@ export class RoomDurableObject {
   }
 
   _cleanupMember(id, ws) {
+    // Close failed control recipients and elect again. Drain iteratively so a
+    // synchronous close callback cannot resume an outer stale-host broadcast.
+    const queue = this._cleanupQueue || (this._cleanupQueue = []);
+    queue.push({ id, ws });
+    if (this._cleaningMembers) return;
+    this._cleaningMembers = true;
+    try {
+      while (queue.length) {
+        const next = queue.shift();
+        this._cleanupMemberOnce(next.id, next.ws);
+      }
+    } finally { this._cleaningMembers = false; }
+  }
+
+  _cleanupMemberOnce(id, ws) {
     if (!this.members.has(id)) return;
     const current = this.members.get(id);
     if (ws && current.ws !== ws) return;
@@ -502,7 +526,10 @@ export class RoomDurableObject {
     // Broadcast leave notification to remaining members
     const leaveMsg = JSON.stringify({ t: 'leave', id, host: this.hostId });
     for (const [_, member] of this.members) {
-      relaySend(member.ws, leaveMsg);
+      if (!relaySend(member.ws, leaveMsg)) {
+        try { member.ws.close(1013, 'Membership delivery failed'); } catch {}
+        this._cleanupMember(member.id, member.ws);
+      }
     }
   }
 }

@@ -11,6 +11,18 @@ on:
       - 'scripts/inkwave-source-composition.mjs'
       - 'scripts/build-inkwave.mjs'
       - '.github/workflows/inkwave-health-recovery-rain.yml'
+      - 'patches/splatoon3/profile.json'
+      - 'patches/splatoon3/runtime/turf-combat.mjs'
+      - 'patches/splatoon3/runtime/weapons.mjs'
+      - 'patches/splatoon3/runtime/tidal-slam-gauge.mjs'
+      - 'patches/splatoon3/runtime/final-damage.mjs'
+      - 'patches/splatoon3/tests/storm-effects-fixture.mjs'
+      - 'patches/splatoon3/tests/fixture-cache.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/reliability/special-water-adapter.mjs'
+      - 'patches/touch-layout/adapter.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/local-quality/adapter.mjs'
   workflow_dispatch:
 permissions:
   contents: read

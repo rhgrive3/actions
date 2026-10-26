@@ -27,7 +27,8 @@ test('Tri-Slosher floor drops use the Bucket visual scale and captured paint hea
     const d={owner:{color},pos:new THREE.Vector3(1,2,3),vel:new THREE.Vector3(0,-6,0),dirX:1,dirZ:0,
       drawRadius:.2,radius:.94,sourceActor:actor};system._s3SplashDrops=[d];system._draw();
     system.blobs.getMatrixAt(0,matrix);matrix.decompose(position,rotation,scale);
-    assert.ok(Math.abs(scale.x-(actor==='WeaponSlosherLauncher' ? .08 : .2))<1e-7,'other weapons retain their size');
+    assert.ok(Math.abs(scale.x-(actor==='WeaponSlosherLauncher' ? .08 : actor==='WeaponSlosherDouble' ? .1 : .2))<1e-7,
+      'Dread Wringer shares the main sheet scale; unrelated weapons retain their size');
     assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).y<-.99999,'other weapons retain their direction');
   }
 });

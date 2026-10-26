@@ -255,9 +255,13 @@ export function throwVolley(System, actor, descriptor) {
   const aim = System._aimFrom(actor, muzzle, seed.vel).clone();
   const fired = [];
   const volleyDamage = new Map();
+  const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
+  // Adding a signed zero can change -0 even with no spread. Keep the original
+  // expression for that boundary and for non-finite custom aim inputs.
+  const lateral=spread!==0||Object.is(aim.x,-0)||Object.is(aim.y,-0)||Object.is(aim.z,-0)||
+    !Number.isFinite(aim.x)||!Number.isFinite(aim.y)||!Number.isFinite(aim.z)?perpendicularBasis(aim):null;
   for (let i = 0; i < count; i++) {
     const p = i === 0 ? seed : System._new();
-    const spread = VOLLEY_CONFIG.spreadDeg * Math.PI / 180;
     // The calibrated fan stays symmetric about lobe 0. Authority is independent
     // of that visual/aim index: all three local globs are full Trizooka rounds.
     const k = i === VOLLEY_CONFIG.damageLobeIndex ? 0 : (i === 1 ? -1 : 1);
@@ -292,9 +296,9 @@ export function throwVolley(System, actor, descriptor) {
     // the ONLY deviation from the native aim ray is the calibrated lateral lobe
     // fan: the native `_spread` is random, this one is deterministic so a volley
     // is reproducible and so a test can assert the carrier is on the ray
-    const lateral = perpendicularBasis(aim);
-    p.vel.copy(aim).addScaledVector(lateral.u, Math.sin(k * spread))
-      .normalize().multiplyScalar(TRIZOOKA.spawnSpeed);
+    p.vel.copy(aim);
+    if(lateral)p.vel.addScaledVector(lateral.u,Math.sin(k*spread));
+    p.vel.normalize().multiplyScalar(TRIZOOKA.spawnSpeed);
     p.pos.copy(muzzle);
     p.prev.copy(p.pos); p.start.copy(p.pos);
     p.s3SpecialWeapon = descriptor;            // parent preserves this before _push

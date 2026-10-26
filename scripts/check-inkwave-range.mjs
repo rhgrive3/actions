@@ -17,6 +17,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { profileRangeAcceptanceSnapshot } from './inkwave-range-profile-acceptance.mjs';
+import { runProfilerLifecycleBrowserChecks } from './lib/inkwave-profiler-lifecycle-browser.mjs';
 import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
@@ -33,6 +34,18 @@ const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));
 if (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build identity mismatch');
 if (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) throw new Error('Build does not include the practice range layer');
+// The normal Practice Range build includes its baked AO pair. The completed
+// artifact inventory and emitted runtime index must agree before browser checks.
+const rangeLightmapFiles=['assets/lightmaps/range.json','assets/lightmaps/range.png'];
+const rangeLightmapCount=rangeLightmapFiles.filter(f=>Object.hasOwn(manifest.artifacts,f)).length;
+if (rangeLightmapCount===1) throw new Error('Incomplete baked range AO pair');
+// Game._loadLightmap only loads registered assets; neither a missing pair nor
+// a packaged but unregistered pair may silently disable Range AO acceptance.
+const emittedLightmaps=(await import(pathToFileURL(path.join(site,'src/world/lightmap-assets.js')).href)).LIGHTMAP_LAYOUTS;
+if (!Array.isArray(emittedLightmaps) || emittedLightmaps.some(id=>typeof id!=='string')) throw new Error('Invalid emitted lightmap index');
+const rangeLightmapAvailable=emittedLightmaps.includes('range');
+if (rangeLightmapAvailable !== (rangeLightmapCount===2)) throw new Error('Range lightmap asset pair and emitted index disagree');
+if (!rangeLightmapAvailable) throw new Error('Practice Range is missing required baked AO assets and registration');
 
 const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
@@ -103,7 +116,7 @@ for (const run of RUNS) {
       };
     });
     const st = out.checks.stage;
-    if (st.layout !== 'range' || !st.lightmap || !st.signage || st.targets !== 11 || st.pads !== 14 || st.weaponPads !== 7 || st.separation < 1.9 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
+    if (st.layout !== 'range' || st.lightmap !== rangeLightmapAvailable || !st.signage || st.targets !== 11 || st.pads !== 14 || st.weaponPads !== 7 || st.separation < 1.9 || st.bots !== 0 || !st.rosterHidden || !st.telemetry) throw new Error('stage check ' + JSON.stringify(st));
     // #589: inspect the real constrained atlas and a separate desktop-HIGH instance.
     const signageEvidence=await page.evaluate(async desktop=>{
       const G=window.__G,g=window.__inkwave;
@@ -421,6 +434,7 @@ for (const run of RUNS) {
           !perf.tracerRuntimeInstalled || perf.gpuStatus === 'error') {
         throw new Error('Practice Range opt-in performance diagnostic: ' + JSON.stringify(perf));
       }
+      out.checks.profilerLifecycle = await runProfilerLifecycleBrowserChecks(page, manifest.artifacts);
     }
     if (out.errors.length) throw new Error('page errors: ' + out.errors.join(' | '));
     if (out.missing.length) throw new Error('missing assets: ' + out.missing.join(' | '));

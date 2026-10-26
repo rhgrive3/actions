@@ -1,3 +1,4 @@
+import { installRankedDocument } from './ranked-dom-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../reliability/tests/controls-fixture.mjs';
@@ -10,8 +11,7 @@ const stage = { id: 'ranked-send-acceptance', zones: [{ center: [0,0,0], size: [
 async function world(hz = 60) {
   let clock = 10;
   const f = await fixture({ ranked: true, network: true, session: true, production: true, clock: { now: () => clock * 1000 } });
-  f.context.document.createElement = () => ({ dataset: {} });
-  f.context.document.head = { appendChild() {} }; f.context.structuredClone = structuredClone;
+  installRankedDocument(f.context.document); f.context.structuredClone = structuredClone;
   f.installRanked(f); f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
   const owner = f.make(), proxy = f.make(), hostActor = f.make();
   Object.assign(owner, { nid: 1, team: 0, slot: 0, owner: 'guest', isLocal: true, netLife: 1, invuln: 0 });

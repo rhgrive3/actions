@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {copyLocalNativeAssets} from '../../../scripts/lib/inkwave-native-stages.mjs';
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+function fixture(){const root=fs.mkdtempSync(path.join(os.tmpdir(),'native-prepared-')),source=path.join(root,'source'),stage=path.join(source,'tiny'),build=path.join(root,'build');fs.mkdirSync(stage,{recursive:true});const files={'manifest.json':Buffer.from('{"schema":1}'),'nested/vertices.bin':Buffer.from([1,2,3,4])},integrity={};for(const [rel,bytes]of Object.entries(files)){const file=path.join(stage,rel);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes);integrity[rel]={bytes:bytes.length,sha256:hash(bytes)};}const raw=JSON.stringify(integrity);fs.writeFileSync(path.join(stage,'integrity.json'),raw);return {root,stage,build,files,prepared:{root:source,config:{stages:[{id:'tiny',integritySha256:hash(raw)}]}}};}
+test('local prepared copies precisely authenticated bytes and the explicit local-only marker',()=>{const f=fixture();try{copyLocalNativeAssets(f.build,f.prepared);for(const [rel,bytes]of Object.entries(f.files))assert.deepEqual(fs.readFileSync(path.join(f.build,'_native-reference-assets/tiny',rel)),bytes);assert.ok(fs.existsSync(path.join(f.build,'_native-reference-assets/LOCAL-ONLY.txt')));}finally{fs.rmSync(f.root,{recursive:true,force:true});}});
+for(const kind of ['extra','symlink','modified-body','modified-inventory'])test('prepared output fails closed and removes partial assets: '+kind,()=>{const f=fixture();try{if(kind==='extra')fs.writeFileSync(path.join(f.stage,'extra.bin'),'unlisted');else if(kind==='symlink')fs.symlinkSync('manifest.json',path.join(f.stage,'extra.bin'));else if(kind==='modified-body')fs.writeFileSync(path.join(f.stage,'nested/vertices.bin'),'changed');else fs.writeFileSync(path.join(f.stage,'integrity.json'),'{}');assert.throws(()=>copyLocalNativeAssets(f.build,f.prepared));assert.equal(fs.existsSync(path.join(f.build,'_native-reference-assets')),false);}finally{fs.rmSync(f.root,{recursive:true,force:true});}});

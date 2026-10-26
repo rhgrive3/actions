@@ -5,8 +5,8 @@ import crypto from 'node:crypto';
 import {assertReviewedMinimapSources,REVIEWED_MINIMAP_SOURCE_EPOCHS} from '../lib/minimap-canvas-probe.mjs';
 const epochs=REVIEWED_MINIMAP_SOURCE_EPOCHS;
 test('all independently reviewed minimap source epochs retain their exact pins',()=>{
- assert.equal(epochs.length,3);
- for(const epoch of epochs){assert.equal(Object.keys(epoch.pins).length,epoch===epochs.at(-1)?5:4);assert.equal(assertReviewedMinimapSources(epoch.pins),epoch.name);}
+ assert.equal(epochs.length,5);
+ for(const epoch of epochs){assert.equal(Object.keys(epoch.pins).length,Object.hasOwn(epoch.pins,'patches/native-stages/runtime/native-minimap.mjs')?5:4);assert.equal(assertReviewedMinimapSources(epoch.pins),epoch.name);}
  const actual=Object.fromEntries(Object.keys(epochs.at(-1).pins).map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(new URL('../../'+file,import.meta.url))).digest('hex')]));
  assert.equal(assertReviewedMinimapSources(actual),epochs.at(-1).name);
 });

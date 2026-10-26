@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {observeColdEnvironment,inspectColdBoot,retireDesktopForCold,launchColdMobileBrowser,closeProbeOwner} from '../check-inkwave-idle-resources.mjs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {observeColdEnvironment,inspectColdBoot,retireDesktopForCold,launchColdMobileBrowser,closeProbeOwner,serveIdleArtifact} from '../check-inkwave-idle-resources.mjs';
 let sequence=0;
 async function rig(run){
  const oldWindow=globalThis.window,oldDocument=globalThis.document;
@@ -45,17 +48,33 @@ test('existing startup profiler phases and stage milestones are bounded and obse
  assert.deepEqual([Object.keys(got.startup.marks).length,got.startup.phases.length,got.startup.longTasks.length,got.startup.errors.length],[64,64,32,20]);
  assert.deepEqual(got.startup.phases.at(-1),{name:'boot/stage-build',end:null});assert.equal(report.phases.length,100);assert.equal(got.hasColdEnvironment,false);
 }));
-test('actual cold route tracks bounded unresolved requests and retires every completed request',async()=>{
+test('actual cold route tracks bounded unresolved requests and retires every completed request',async t=>{
  const s=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8'),start=s.indexOf("await coldPage.route(address+'**',"),end=s.indexOf("\n   await coldPage.goto",start);
  assert.ok(start>=0&&end>start);const callback=s.slice(start+"await coldPage.route(address+'**',".length,end).trim().replace(/\);$/,'');
- const context={URL,Date,manifest:{artifacts:{}},coldLoaded:new Set(),coldPending:new Map(),pendingSerial:0,pendingDropped:0,errors:[],hooked:true,mainReleased:false};
+ const site=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'idle-cold-routes-'))),manifest={artifacts:{}};
+ t.after(()=>fs.rmSync(site,{recursive:true,force:true}));
+ const body=Buffer.from('export const fixture=1;'),digest=crypto.createHash('sha256').update(body).digest('hex');
+ const context={URL,Date,site,manifest,serveIdleArtifact,coldLoaded:new Set(),coldPending:new Map(),pendingSerial:0,pendingDropped:0,errors:[],hooked:true,mainReleased:false};
  const routeHandler=vm.runInNewContext('('+callback+')',context),resolvers=[],work=[];let fulfilled=0;
- for(let i=0;i<258;i++){const url='http://localhost/test-'+i+'.js';work.push(routeHandler({request:()=>({url:()=>url,resourceType:()=> 'script'}),fetch:()=>new Promise(resolve=>resolvers.push(()=>resolve({url:()=>url,body:async()=>''}))),fulfill:async()=>{fulfilled++;},abort:async()=>assert.fail('unexpected abort')}));}
+ for(let i=0;i<258;i++){
+  const key='test-'+i+'.js',url='http://localhost/'+key;fs.writeFileSync(path.join(site,key),body);manifest.artifacts[key]=digest;
+  work.push(routeHandler({request:()=>({url:()=>url,method:()=> 'GET',resourceType:()=> 'script'}),
+   fetch:()=>assert.fail('listed immutable bytes must not use HTTP'),continue:()=>assert.fail('listed immutable bytes must not bypass verification'),
+   fulfill:async response=>{assert.equal(response.status,200);assert.deepEqual(response.body,body);await new Promise(resolve=>resolvers.push(resolve));fulfilled++;},
+   abort:async()=>assert.fail('unexpected abort')}));
+ }
  assert.equal(context.coldPending.size,256);assert.equal(context.pendingDropped,2);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(resolvers.length,258,'all verified replies remain pending until their actual fulfill completes');
  for(const resolve of resolvers)resolve();await Promise.all(work);
  assert.equal(context.coldPending.size,0);assert.equal(context.coldLoaded.size,258);assert.equal(fulfilled,258);assert.deepEqual(context.errors,[]);
- await routeHandler({request:()=>({url:()=> 'http://localhost/fail.js',resourceType:()=> 'script'}),fetch:async()=>{throw Error('network failure');},abort:async()=>{}});
+ let aborted=0;
+ await routeHandler({request:()=>({url:()=> 'http://localhost/fail.js',method:()=> 'GET',resourceType:()=> 'script'}),
+  fetch:()=>assert.fail('unlisted requests must use their original HTTP route'),continue:async()=>{throw Error('network failure');},abort:async()=>{aborted++;}});
  assert.equal(context.coldPending.size,0);assert.match(context.errors[0],/network failure/);
+ manifest.artifacts['changed.js']=digest;fs.writeFileSync(path.join(site,'changed.js'),'changed');
+ await routeHandler({request:()=>({url:()=> 'http://localhost/changed.js',method:()=> 'GET',resourceType:()=> 'script'}),
+  fetch:()=>assert.fail('immutable hash failures must not retry HTTP'),fulfill:()=>assert.fail('changed bytes must not be released'),abort:async()=>{aborted++;}});
+ assert.equal(aborted,2);assert.equal(context.coldPending.size,0);assert.equal(context.coldLoaded.has('changed.js'),false);assert.match(context.errors[1],/Loaded byte mismatch/);
 });
 
 

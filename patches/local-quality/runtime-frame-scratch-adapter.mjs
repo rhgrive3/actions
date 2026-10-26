@@ -509,7 +509,7 @@ export class PlayerController {`, 'one shared map target picker with controller-
       'evaluate each palm trunk Bezier ring once');
     // Keep Math.hypot on contributing samples, retaining its exact rounding.
     patch('        const d = Math.hypot(a.pos.x - p.g.position.x, a.pos.z - p.g.position.z);',
-      '        const dx = a.pos.x - p.g.position.x, dz = a.pos.z - p.g.position.z;\n        const reach = this.level.spawnBarrier + 4;\n        if (Number.isFinite(reach) && reach >= 0 && (Math.abs(dx) > reach || Math.abs(dz) > reach)) continue;\n        const d = Math.hypot(dx, dz);',
+      '        const dx = a.pos.x - p.g.position.x, dz = a.pos.z - p.g.position.z;\n        const reach = this.level.spawnBarrier + 4;\n        if (Number.isFinite(reach) && reach >= 0 && !Number.isNaN(dx) && !Number.isNaN(dz) && (Math.abs(dx) > reach || Math.abs(dz) > reach)) continue;\n        const d = Math.hypot(dx, dz);',
       'reject distant spawn barrier samples before hypot');
   }
   if (rel === 'src/core/renderer.js') {

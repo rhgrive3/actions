@@ -46,3 +46,60 @@ test('actual public identity gate accepts exact artifact and rejects stale or ch
   const bad=await run(altered);await assert.rejects(bad.result,/Published build did not match/);assert.equal(bad.fetches(),30);
  }
 });
+
+const updateWorkflow=read('.github/workflows/validate-inkwave-update.yml');
+const settingsHudTest=read('patches/local-quality/tests/settings-hud-queue.test.mjs');
+const pagesBrowserSetup='          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8\n          npx --no-install playwright install --with-deps chromium\n';
+const coreBrowserSetup='      - name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          npx --no-install playwright install --with-deps chromium\n';
+function verifySettingsBrowserConsumers(p,u,s){
+ const build=p.slice(p.indexOf('      - name: Build optimized site'),p.indexOf('      - name: Upload INKWAVE site'));
+ const core=u.slice(u.indexOf('  validate_core:'),u.indexOf('  patch_tests:'));
+ const shards=u.slice(u.indexOf('  patch_tests:'),u.indexOf('\n  # Required /validate'));
+ assert.equal(build.split(pagesBrowserSetup).length,2,'Pages installs exact dependencies and managed Chromium once');
+ assert.equal(core.split(coreBrowserSetup).length,2,'core installs exact dependencies and managed Chromium once');
+ assert.ok(build.indexOf(pagesBrowserSetup)<build.indexOf('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'));
+ assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('      - name: Run requested focused source regressions'));
+ assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('node scripts/run-inkwave-source-remainder.mjs quality'));
+ // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
+ assert.doesNotMatch(shards.replace(/^          key: .*\n/gm,''),/playwright|chromium/);
+ assert.ok(u.includes('    needs: [validate_core, patch_tests, circleci_offload_gate]'));
+ assert.doesNotMatch(p.slice(p.indexOf('      - name: Verify deployed ranked modes')),/npm install|npx .*playwright install/);
+ assert.ok(p.includes('node scripts/check-inkwave-ranked-browser.mjs _site reports/ranked-public-browser'));
+ assert.ok(s.includes("const executablePath=process.env.CI?chromium.executablePath():"));
+ assert.ok(s.includes("if(process.env.CI){"));
+ assert.ok(s.includes("if(!fs.existsSync(executablePath))throw new Error('Required settings HUD Chromium is not installed');"));
+ assert.ok(s.includes("return t.skip('Chromium is not installed');"));
+ assert.ok(s.indexOf("if(!fs.existsSync(executablePath))throw new Error")<s.indexOf("return t.skip('Chromium is not installed');"));
+ assert.ok(s.includes("assert.notEqual(result.serialized,result.authored,'the fixture exercises native CSS canonicalization')"));
+ assert.ok(s.includes('assert.ok(result.restored)'));
+ assert.ok(s.includes('assert.equal(n,0,JSON.stringify(result))'));
+}
+test('both settings HUD consumers provision matching browsers before required source tests without touching CPU shards',()=>verifySettingsBrowserConsumers(pages,updateWorkflow,settingsHudTest));
+test('settings browser dependency, ordering, mandatory coverage and failure controls reject mutations',()=>{
+ const mutations=[
+  [pages.replace(pagesBrowserSetup,''),updateWorkflow,settingsHudTest],
+  [pages.replace('playwright@1.62.1','playwright@1.62.0'),updateWorkflow,settingsHudTest],
+  [pages.replace('--with-deps chromium','--with-deps webkit'),updateWorkflow,settingsHudTest],
+  [pages.replace(pagesBrowserSetup,'').replace('      - name: Upload INKWAVE site',pagesBrowserSetup+'      - name: Upload INKWAVE site'),updateWorkflow,settingsHudTest],
+  [pages,updateWorkflow.replace(coreBrowserSetup,''),settingsHudTest],
+  [pages,updateWorkflow.replace(coreBrowserSetup,coreBrowserSetup.replace('--with-deps chromium','--with-deps chromium || true')),settingsHudTest],
+  [pages,updateWorkflow.replace(coreBrowserSetup,'').replace('      - name: Verify migrated direct game source ownership',coreBrowserSetup+'      - name: Verify migrated direct game source ownership'),settingsHudTest],
+  [pages,updateWorkflow,settingsHudTest.replace("if(!fs.existsSync(executablePath))throw new Error('Required settings HUD Chromium is not installed');",'')],
+  [pages,updateWorkflow,settingsHudTest.replace('process.env.CI?chromium.executablePath():','')],
+  [pages,updateWorkflow,settingsHudTest.replace('assert.ok(result.restored)','')]
+ ];
+ for(const args of mutations)assert.throws(()=>verifySettingsBrowserConsumers(...args));
+});
+test('CI missing browser fails and local missing browser keeps explicit skip without launching Chromium',()=>{
+ const start=settingsHudTest.indexOf(' const executablePath='),end=settingsHudTest.indexOf(' const browser=await chromium.launch',start);
+ assert.ok(start>=0&&end>start);
+ const select=new Function('process','chromium','fs','t',settingsHudTest.slice(start,end)+'return executablePath;');
+ const chromium={executablePath:()=>'/managed/chromium'},skips=[];
+ const t={skip:message=>{skips.push(message);return 'skipped';}};
+ assert.throws(()=>select({env:{CI:'true',CHROMIUM_EXECUTABLE:'/external/chromium'}},chromium,{existsSync:()=>false},t),/Required settings HUD Chromium/);
+ assert.equal(skips.length,0);
+ assert.equal(select({env:{CI:'true',CHROMIUM_EXECUTABLE:'/external/chromium'}},chromium,{existsSync:p=>p==='/managed/chromium'},t),'/managed/chromium');
+ assert.equal(select({env:{}},chromium,{existsSync:()=>false},t),'skipped');
+ assert.deepEqual(skips,['Chromium is not installed']);
+ assert.equal(select({env:{CHROMIUM_EXECUTABLE:'/local/chromium'}},chromium,{existsSync:p=>p==='/local/chromium'},t),'/local/chromium');
+});

@@ -57,27 +57,67 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
   await show(page, 'setup');
   await capture('setup', '.iw-ticket, .iw-ticket__time, .iw-daytgl__opt, .iw-ss__match .iw-seg__opt, .iw-ss__foot button, .iw-setup .iw-backbtn');
   if (!audit) {
+    onOperation('setup-stage-count', 'before');
     for (let i = 0; i < await page.locator('.iw-ticket').count(); i++) {
+      onOperation('setup-stage-count', 'after');
       const candidate = page.locator('.iw-ticket').nth(i);
+      onOperation('setup-stage-read-id', 'before');
       const id = await candidate.evaluate((el) => el._mid);
-      await candidate.scrollIntoViewIfNeeded(); await candidate.tap();
+      onOperation('setup-stage-read-id', 'after');
+      onOperation('setup-stage-scroll', 'before');
+      await candidate.scrollIntoViewIfNeeded();
+      onOperation('setup-stage-scroll', 'after');
+      onOperation('setup-stage-tap', 'before');
+      await candidate.tap();
+      onOperation('setup-stage-tap', 'after');
+      onOperation('setup-stage-verify-id', 'before');
       assert.equal(await page.evaluate(() => menus._setup.mapId), id, 'every stage remains reachable');
+      onOperation('setup-stage-verify-id', 'after');
+      onOperation('setup-stage-settle', 'before');
       await settle(page);
+      onOperation('setup-stage-settle', 'after');
+      onOperation('setup-stage-name', 'before');
       assert(await page.locator('.iw-ss__name').evaluate((el) => el.scrollWidth <= el.clientWidth + 1), 'every stage caption must fit its ink ticket');
+      onOperation('setup-stage-name', 'after');
+      onOperation('setup-stage-caption', 'before');
       assert(await page.locator('.iw-ss__caption').evaluate((el) => el.getBoundingClientRect().bottom <= el.parentElement.querySelector('.iw-ss__time').getBoundingClientRect().top + 1), 'time controls must not cover the stage name and description');
+      onOperation('setup-stage-caption', 'after');
       onStageComplete('setup-stage:' + id);
+      onOperation('setup-stage-count', 'before');
     }
+    onOperation('setup-stage-count', 'after');
     const ticket = page.locator('.iw-ticket').nth(1);
+    onOperation('setup-repeat-read-id', 'before');
     const stage = await ticket.evaluate((el) => el._mid);
-    await ticket.scrollIntoViewIfNeeded(); await ticket.tap();
+    onOperation('setup-repeat-read-id', 'after');
+    onOperation('setup-repeat-scroll', 'before');
+    await ticket.scrollIntoViewIfNeeded();
+    onOperation('setup-repeat-scroll', 'after');
+    onOperation('setup-repeat-tap', 'before');
+    await ticket.tap();
+    onOperation('setup-repeat-tap', 'after');
+    onOperation('setup-repeat-verify-id', 'before');
     assert.equal(await page.evaluate(() => menus._setup.mapId), stage);
+    onOperation('setup-repeat-verify-id', 'after');
+    onOperation('setup-dusk-tap', 'before');
     await tap(page, '.iw-daytgl__opt.is-dusk');
+    onOperation('setup-dusk-tap', 'after');
+    onOperation('setup-dusk-verify', 'before');
     assert.equal(await page.evaluate(() => menus._setup.times[menus._setup.mapId]), 'dusk');
+    onOperation('setup-dusk-verify', 'after');
+    onOperation('setup-loadout-tap', 'before');
     await tap(page, '.iw-ss__foot [data-id="weapon"]');
+    onOperation('setup-loadout-tap', 'after');
+    onOperation('setup-loadout-wait', 'before');
     await page.waitForFunction(() => menus.current === 'loadout');
+    onOperation('setup-loadout-wait', 'after');
   }
+  onOperation('setup-loadout-show', 'before');
   await show(page, 'loadout');
+  onOperation('setup-loadout-show', 'after');
+  onOperation('setup-loadout-capture', 'before');
   await capture('loadout', '.iw-loadout .iw-wcard, .iw-loadout__look button, .iw-loadout .iw-backbtn');
+  onOperation('setup-loadout-capture', 'after');
   if (!audit) {
     // Exercise actual native selects/storage, rather than only inspecting the
     // ABILITIES object. Only head-main may offer the three conditional powers.

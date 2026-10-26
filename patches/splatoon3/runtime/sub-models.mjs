@@ -98,9 +98,8 @@ function merge(THREE, list) {
   const out = new THREE.BufferGeometry();
   out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-  const idx = new (n > 65535 ? Uint32Array : Uint16Array)(n);
-  for (let i = 0; i < n; i++) idx[i] = i;
-  out.setIndex(new THREE.BufferAttribute(idx, 1));
+  // Expanded triangles already have the exact drawArrays order. An identity
+  // element buffer duplicates that order without sharing a single vertex.
   out.computeBoundingSphere();
   return out;
 }
@@ -846,10 +845,19 @@ export function poseSubModel(model, s = {}) {
       const v = Number.isFinite(s.speed) ? s.speed : 0;
       st.stride = (st.stride || 0) + dt * v * 6;
       const k = Math.min(1, v / 2);
+      const legSines=st.crabLegSines||=([]);
       for (let i = 0; i < 3; i++) {
         const [l, r] = CRAB_LEGS[i];
-        if (g[l]) g[l].rotation.y = Math.sin(st.stride + i * 2.1) * 0.22 * k;
-        if (g[r]) g[r].rotation.y = Math.sin(st.stride + i * 2.1 + Math.PI) * 0.22 * k;
+        const angle=st.stride+i*2.1;
+        if(!g[l]&&!g[r])continue;
+        const row=legSines[i]||=( {} );
+        // sin(angle + PI) is not bit-identical to -sin(angle). Retain both
+        // original expressions, reusing them only while the pose phase is idle.
+        if(!Object.is(row.angle,angle)||row.sin!==Math.sin){
+          row.angle=angle;row.sin=Math.sin;row.leftReady=row.rightReady=false;
+        }
+        if(g[l]){if(!row.leftReady){row.left=Math.sin(angle);row.leftReady=true;}g[l].rotation.y=row.left*0.22*k;}
+        if(g[r]){if(!row.rightReady){row.right=Math.sin(angle+Math.PI);row.rightReady=true;}g[r].rotation.y=row.right*0.22*k;}
       }
       break;
     }

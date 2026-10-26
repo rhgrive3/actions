@@ -79,9 +79,8 @@ jobs:
       - name: Build optimized site
         run: |
           set -euo pipefail
-          if [ "${{ steps.esbuild-cache.outputs.cache-hit }}" != "true" ]; then
-            npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
-          fi
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx --no-install playwright install --with-deps chromium
           node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
           node scripts/check-inkwave-patches.mjs --quick
           node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
@@ -110,8 +109,6 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          npm install --no-save --no-package-lock playwright@1.62.1 ws@8
-          npx playwright install --with-deps chromium
           node scripts/check-inkwave-ranked-browser.mjs _site reports/ranked-public-browser
       - uses: actions/upload-artifact@v4
         if: always() && steps.deployment.outcome == 'success' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/main'

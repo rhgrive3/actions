@@ -1,0 +1,43 @@
+export function perpendicularBasis(dir) {
+  const ax = Math.abs(dir.x), ay = Math.abs(dir.y), az = Math.abs(dir.z);
+  const helper = ax <= ay && ax <= az ? { x: 1, y: 0, z: 0 }
+    : ay <= az ? { x: 0, y: 1, z: 0 } : { x: 0, y: 0, z: 1 };
+  // u = normalize(helper x dir)
+  let ux = helper.y * dir.z - helper.z * dir.y;
+  let uy = helper.z * dir.x - helper.x * dir.z;
+  let uz = helper.x * dir.y - helper.y * dir.x;
+  const ul = Math.hypot(ux, uy, uz) || 1;
+  ux /= ul; uy /= ul; uz /= ul;
+  // v = dir x u  (already unit when dir and u are unit and perpendicular)
+  return {
+    u: { x: ux, y: uy, z: uz },
+    v: { x: dir.y * uz - dir.z * uy, y: dir.z * ux - dir.x * uz, z: dir.x * uy - dir.y * ux },
+  };
+}
+
+export function trizookaOrbitOffset(p, dt) {
+  const age = p?.age ?? 0;
+  const w = TRIZOOKA_ORBIT.transitionFrames > 0 ? TRIZOOKA_ORBIT.transitionFrames : 1;
+  const k = Math.min(1, age / w);
+  const radius = TRIZOOKA_ORBIT.startRadius + (TRIZOOKA_ORBIT.endRadius - TRIZOOKA_ORBIT.startRadius) * k;
+  // The 4F birth stagger must not stagger the orbit clock too: all three
+  // lobes remain 120 degrees apart at the same volley time.
+  const index=p?.s3VolleyIndex ?? 0;
+  const phase = TRIZOOKA_ORBIT.turnRate * (age+index*VOLLEY_CONFIG.lobeInterval) + index * TRIZOOKA_ORBIT.lobePhase;
+  // the flight axis: the launch velocity, falling back to the yaw so the basis
+  // stays stable before the native step has moved anything
+  const axis = (p?.vel && p.vel.lengthSq() > 1e-9)
+    ? { x: p.vel.x, y: p.vel.y, z: p.vel.z }
+    : { x: Math.sin(p?.s3Yaw ?? 0), y: 0, z: Math.cos(p?.s3Yaw ?? 0) };
+  const len = Math.hypot(axis.x, axis.y, axis.z) || 1;
+  const dir = { x: axis.x / len, y: axis.y / len, z: axis.z / len };
+  const { u, v } = perpendicularBasis(dir);
+  const c = Math.cos(phase) * radius;
+  const s = Math.sin(phase) * radius;
+  return {
+    x: u.x * c + v.x * s,
+    y: u.y * c + v.y * s,
+    z: u.z * c + v.z * s,
+    radius, phase, axis: dir,
+  };
+}

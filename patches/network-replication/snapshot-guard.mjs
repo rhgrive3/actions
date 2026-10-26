@@ -87,9 +87,16 @@ export function allowGhostBombBirth(bombs, actor, ownerId, kind = 'bomb', roster
 export function validNetworkBombBirth(e, stageBounds = null) {
   if (!Array.isArray(e) || e[1] !== 'b' || (e[3] !== 'bomb' && e[3] !== 'storm')) return false;
   for (let i = 4; i <= 9; i++) if (!bounded(e[i], -4096, 4096)) return false;
-  if (Math.hypot(e[7], e[8], e[9]) > 1024) return false;
+  const vx = e[7], vy = e[8], vz = e[9], speedSquared = vx * vx + vy * vy + vz * vz;
+  // Keep the original rounded norm at the admission boundary. The generous
+  // squared-unit margin dwarfs rounding error for the bounded components.
+  if (speedSquared > 1024 * 1024 + .002
+    || (speedSquared >= 1024 * 1024 - .002 && Math.hypot(vx, vy, vz) > 1024)) return false;
   const b = stageBounds;
-  if (b && [b.minX,b.maxX,b.minZ,b.maxZ].every(finite)
+  // Snapshot all four values before validation, as the old array literal did.
+  let minX, maxX, minZ, maxZ;
+  if (b) { minX = b.minX; maxX = b.maxX; minZ = b.minZ; maxZ = b.maxZ; }
+  if (b && finite(minX) && finite(maxX) && finite(minZ) && finite(maxZ)
     && b.minX <= b.maxX && b.minZ <= b.maxZ) {
     if (e[4] < b.minX - 256 || e[4] > b.maxX + 256
       || e[6] < b.minZ - 256 || e[6] > b.maxZ + 256) return false;
@@ -266,12 +273,13 @@ export function validActorSnapshotRow(row, timestamp) {
 }
 export function validRemoteActorPose(sample, correction) {
   if (!sample || !correction) return false;
-  for (const key of SNAPSHOT_FIELDS_5)
-    if (!finite(sample[key])) return false;
+  for (let i = 0; i < SNAPSHOT_FIELDS_5.length; i++)
+    if (!finite(sample[SNAPSHOT_FIELDS_5[i]])) return false;
   if (!integer(sample.f, 0, 0x7fffffff)) return false;
   if (!bounded(sample.x + correction.x, -1e6, 1e6)
       || !bounded(sample.y + correction.y, -1e6, 1e6)
       || !bounded(sample.z + correction.z, -1e6, 1e6)) return false;
-  for (const key of SNAPSHOT_FIELDS_6) if (!finite(correction[key])) return false;
+  for (let i = 0; i < SNAPSHOT_FIELDS_6.length; i++)
+    if (!finite(correction[SNAPSHOT_FIELDS_6[i]])) return false;
   return true;
 }

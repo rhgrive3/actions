@@ -290,6 +290,9 @@ export class NativeInkMesh extends THREE.Mesh {
 
   _detachPaint() {
     this._lastPaintBounds=null;
+    // A face-list entry retains its face, chunks and their shared attributes.
+    // Keep this cache within one paint binding/geometry lifetime.
+    this._faceChunkLists=null;
     this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
     const binding = this._paintBinding;
     if (!binding) return;
@@ -299,6 +302,17 @@ export class NativeInkMesh extends THREE.Mesh {
   }
 
   selectVisible(camera) {
+    // No chart has reached the atlas yet (or paint was cleared). There are
+    // no ink vertices to select, regardless of the camera or stage transform.
+    // Keep the view invalid so the first paint always evaluates its current
+    // camera, including after an AO override or a camera move while empty.
+    if (this._painted !== null && this._paintedCount === 0) {
+      this.geometry.setDrawRange(0, 0);
+      this._lastVisibleCount = 0;
+      this._fullDraw = false;
+      this._lastViewValid = false;
+      return 0;
+    }
     // World transform and renderer depth convention are part of the
     // frustum contract, including transformed stage objects and reverse Z.
     this._view.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
@@ -426,5 +440,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._geometry?.dispose();
     this._geometry = null;
     this._triangleTile = this._runTiles = this._runStarts = this._runEnds = null;
+    this._drawIndex = this._visible = this._painted = null;
+    this._paintedCount = 0;
   }
 }

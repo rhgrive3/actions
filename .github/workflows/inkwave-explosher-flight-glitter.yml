@@ -18,6 +18,18 @@ on:
       - 'patches/splatoon3/tests/explosher-capture-guards.test.mjs'
       - 'patches/splatoon3/tests/explosher-rng-trace.test.mjs'
       - '.github/workflows/inkwave-explosher-flight-glitter.yml'
+      - 'scripts/lib/inkwave-explosher-common-build.mjs'
+      - 'scripts/lib/inkwave-explosher-inverse-contract.mjs'
+      - 'scripts/lib/inkwave-explosher-volume-barrier.mjs'
+      - 'scripts/lib/inkwave-explosher-video-gate.mjs'
+      - 'scripts/lib/inkwave-explosher-stage-admission.mjs'
+      - 'scripts/lib/inkwave-projectile-capture-ui.mjs'
+      - 'scripts/lib/inkwave-range-menu-entry.mjs'
+      - 'scripts/render-inkwave-projectile-shapes.mjs'
+      - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/compile-inkwave-explosher-inverse-pair.mjs'
+      - 'scripts/compile-inkwave-explosher-controlled-main.mjs'
+      - 'scripts/fixtures/explosher-inverse-baseline.mjs'
 permissions:
   contents: read
 concurrency:
