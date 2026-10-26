@@ -5,6 +5,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
+import {acquireNativeCaptureInput} from './lib/reticle-next/native-input-admission.mjs';
 import {SHAPE_CASES,SHAPE_PHASES,readShapeSample,assertShapeSample,runShapesRecipe} from './lib/reticle-next/shapes-recipe.mjs';
 import {DUALIES_PHASES,readDualiesSample,assertDualiesSample,runDualiesRecipe} from './lib/reticle-next/dualies-recipe.mjs';
 import {CHARGER_CASES,BAMBOO_PHASES,PENCIL_PHASES,readChargerSnapshot,assertChargerSnapshot,runChargerRecipe,installChargerObservation,stopNativeShotObserver,SCOPE_CONTROL_ID} from './lib/reticle-next/charger-recipe.mjs';
@@ -344,7 +345,7 @@ export async function main(argv=process.argv.slice(2)) {
     assert.equal(sha256(bytes),build.artifacts[relative],'emitted identity: '+relative);
   }
   const receipt={schema:1,before,sourceSha,contentHash:build.contentHash,inputHash:build.inputHash,
-    probeSha256:sha256(script),recipeSha256:Object.fromEntries(NEXT_SUITES.includes(matrix.suite)?['shapes-recipe.mjs','dualies-recipe.mjs','charger-recipe.mjs'].map(file=>[file,sha256(fs.readFileSync(new URL('./lib/reticle-next/'+file,import.meta.url)))]):[]),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
+    probeSha256:sha256(script),recipeSha256:Object.fromEntries(NEXT_SUITES.includes(matrix.suite)?['shapes-recipe.mjs','dualies-recipe.mjs','charger-recipe.mjs','native-input-admission.mjs'].map(file=>[file,sha256(fs.readFileSync(new URL('./lib/reticle-next/'+file,import.meta.url)))]):[]),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
     coverage:{suite:matrix.suite,actualWeapons:matrix.cases.map(c=>c.id),expectedScreenshotStates:matrix.screenshotStateCount,
       splatlingMobile:matrix.suite!=='first-four'?'not covered in this affected desktop gate':'not part of the unchanged first-four matrix',
       switches:matrix.cases.filter(c=>c.switchAt).map(c=>({weaponId:c.id,phase:c.switchAt,fallback:'charger',metadataOnly:true}))},
@@ -419,13 +420,9 @@ export async function main(argv=process.argv.slice(2)) {
         const cameraSettlement=await settleCamera(page,180,matrix.dt);
         if(scenario.next){
           await page.evaluate(installChargerObservation,{before:before||!['bamboo','pencil'].includes(scenario.name)});
-          {
-            // Trusted native canvas gesture owns pointer-lock admission. No
-            // synthetic input flags, charge, ammunition or form assignments.
-            const box=await page.evaluate(()=>window.__G.renderer.domElement.getBoundingClientRect().toJSON());
-            await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
-            await page.waitForFunction(()=>window.__G.input.locked,null,{timeout:10000});
-          }
+          await acquireNativeCaptureInput(page,{onUpdate:record=>{
+            receipt.inputAdmission={weaponId:scenario.id,...record};write();
+          }});
         }
         const capture=async (phase,recipeMeta=null)=>{
           requireActive();

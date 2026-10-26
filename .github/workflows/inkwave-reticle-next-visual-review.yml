@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs scripts/tests/inkwave-reticle-next-visual-review.test.mjs scripts/tests/reticle-next-charger-recipe.test.mjs scripts/tests/reticle-next-dualies-recipe.test.mjs patches/local-quality/tests/next-reticle-owners.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
+          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs scripts/tests/inkwave-reticle-next-visual-review.test.mjs scripts/tests/reticle-next-charger-recipe.test.mjs scripts/tests/reticle-next-dualies-recipe.test.mjs scripts/tests/reticle-native-input-admission.test.mjs patches/local-quality/tests/next-reticle-owners.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
       - name: Check out immutable main comparison
         uses: actions/checkout@v4
         with:
@@ -96,6 +96,17 @@ jobs:
           ln -s "$GITHUB_WORKSPACE/node_modules" .reticle-baseline/node_modules
           (cd .reticle-baseline && node scripts/build-inkwave.mjs inkwave-public "$RUNNER_TEMP/reticle-baseline-site") 2>&1 | tee "$EVIDENCE/baseline-build.log"
           node scripts/build-inkwave.mjs inkwave-public "$RUNNER_TEMP/reticle-candidate-site" 2>&1 | tee "$EVIDENCE/candidate-build.log"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const expected={baseline:'83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898',candidate:'d8c9728a31eaf5a01015527cec272e677557f1ff4a6a646fa4fbd5e6cfc22aaf'};
+          const actual={};
+          for(const head of ['baseline','candidate']){
+            const build=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/reticle-'+head+'-site/inkwave-build.json'));
+            actual[head]={contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build?.revision};
+            assert.equal(build.contentHash,expected[head],'harness-only retry must preserve production '+head+' bytes');
+          }
+          fs.writeFileSync(process.env.EVIDENCE+'/content-hash-preservation.json',JSON.stringify({priorRun:40251760390,expected,actual},null,2));
+          NODE
       - name: Capture actual baseline game and production HUD
         id: baseline-capture
         timeout-minutes: 12

@@ -34,7 +34,7 @@ test('shape evidence fails closed on missing art, wrong ring, invented airborne/
 });
 test('production capture keeps exact source and recipe identity, original PNGs, after-capture state checks and owned cleanup',()=>{
  for(const fragment of ['recipeSha256','probeSha256','contentHash','imageSha256','imagePixels','surfaceBefore','surfaceAfter','assertNextSnapshot(afterCapture','afterCapture.next,row.next','row.recipe=recipeMeta'])assert(runner.includes(fragment),fragment);
- assert.match(runner,/page\.mouse\.click/);assert.match(runner,/waitForFunction\(\(\)=>window\.__G\.input\.locked/);
+ assert.match(runner,/acquireNativeCaptureInput\(page/);assert.match(runner,/receipt\.inputAdmission=/);
  assert.doesNotMatch(runner,/\.setContent\(|debug\.step\(|pkill|killall/);
 });
 test('next workflow is isolated, source-pinned, all four siblings independent and no mobile/retail/full gate claim',()=>{

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "baselineSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
-  "state": "run",
+  "state": "armed",
   "scope": "reticle-next-visual-review",
   "fullAcceptance": false,
   "captureProtocol": "chromium-owned-next-native60-mixedrender-v1",
@@ -13,5 +13,8 @@
   ],
   "viewport": "desktop",
   "renderPolicy": "native60-render30-dualies60",
-  "runtimeSourceCommit": "a0a39beb520440f81486ac27bf0c0165f02bb2a7"
+  "runtimeSourceCommit": "a0a39beb520440f81486ac27bf0c0165f02bb2a7",
+  "attempt": 2,
+  "previousRun": 40251760390,
+  "reason": "native pause-resume input admission; runtime unchanged"
 }
