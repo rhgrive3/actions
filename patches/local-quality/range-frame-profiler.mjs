@@ -11,7 +11,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
   const cpu = new Float32Array(maxSamples);
   let dc = 0, cc = 0, nc = 0, at=0, prev=0, lastText=0, skipped=0;
   let mode = 'other', cap=60, displayHz=0, dynScale=1, perf=null;
-  let tracer = null, traceError = null, disposed = false;
+  let tracer = null, traceError = null, disposed = false, ab = null;
   const insert = (arr, count, value) => {
     arr[count % arr.length] = value;
     return count + 1;
@@ -48,6 +48,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
       prev=stamp;
       nc=insert(cpu,nc,Math.max(0,duration));
       tracer?.record(stamp,duration,{frameRateHz:cap,phase:mode,scale:dynScale});
+      ab?.frame();
       if (stamp-lastText>=1000) {
         lastText=stamp;
         const s=snapshot();
@@ -69,8 +70,14 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     },
     reset() { dc=cc=nc=0; prev=0; skipped=0; lastText=0; tracer?.reset(); },
     snapshot,
-    report() { return tracer?.report() || JSON.stringify(snapshot(),null,2); },
-    dispose() { disposed = true; tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
+    beginTrial(kind) { return ab?.start(kind) || false; },
+    comparison() { return ab?.comparison() || {status:'unavailable'}; },
+    report() {
+      const raw=tracer ? JSON.parse(tracer.report()) : snapshot();
+      return JSON.stringify({...raw, shooterAB:ab?.comparison() || {status:'unavailable'},
+        debugModePrivacy:'Device-local only; no automatic upload or retained log.'},null,2);
+    },
+    dispose() { disposed = true; ab?.dispose(); ab=null; tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
   };
   let label=null, copyButton=null;
   const doc=env?.document;
@@ -83,14 +90,18 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     doc.body.appendChild(label);
   }
   if (env) env.__inkwaveRangePerf=probe;
-  // This module is loaded only for ?profileRange=1. The large GPU/CPU
+  // Loaded only when Debug profiler or ?profileRange=1 is enabled. GPU/CPU
   // attribution layer is a further lazy import, never a normal game import.
   probe.ready = game
-    ? import('./range-hitch-tracer.mjs').then(({installHitchTracer}) => {
+    ? import('./range-hitch-tracer.mjs').then(async ({installHitchTracer}) => {
         if (disposed) return null;
         tracer = installHitchTracer(game,{env,now});
+        const {installDebugAB} = await import('./debug-ab-runtime.mjs');
+        if (disposed) { tracer?.dispose(); tracer=null; return null; }
+        ab = installDebugAB({probe,tracer,game,env,now});
         return tracer;
       }).catch(error => {
+        ab?.dispose();tracer?.dispose();tracer=null;
         traceError = String(error?.message || error);
         return null;
       })
@@ -99,7 +110,7 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     copyButton = doc.createElement('button');
     copyButton.id = 'inkwave-copy-frame-trace';
     copyButton.type = 'button';
-    copyButton.textContent = 'Copy frame trace';
+    copyButton.textContent = 'Copy trace / A-B';
     copyButton.style.cssText = 'position:fixed;top:6px;right:6px;z-index:10001;padding:7px 10px;border:1px solid #aaa;border-radius:5px;background:#181818;color:#fff;font:12px sans-serif;cursor:pointer';
     copyButton.addEventListener?.('click', async () => {
       const report = probe.report();

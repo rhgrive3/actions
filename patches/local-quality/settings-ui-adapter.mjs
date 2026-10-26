@@ -1,11 +1,23 @@
 // Build-only settings fixes. Preserve the captured input and the native controls.
 export function adaptSettingsUi(rel, code, once) {
+  if (rel === 'src/config.js') {
+    if (code.includes('debugMode: false,')) throw new Error('debug profiler default already installed');
+    return once(code, '  showFps: false,', '  showFps: false,\n  debugMode: false,', 'debug profiler setting default OFF');
+  }
   if (rel === 'styles/ui.css') {
     if (code.includes('/* Settings tabs keep each label together. */')) throw new Error('settings UI: repeated CSS transform');
     return code + '\n/* Settings tabs keep each label together. */\n.iw-settings .iw-tab { flex: 1 0 auto; }\n.iw-settings .iw-tab > span { white-space: nowrap; }\n';
   }
   if (rel !== 'src/ui/menus.js') return code;
   const patch = (before, after, label) => { code = once(code, before, after, 'settings UI: ' + label); };
+  if (code.includes("key: 'debugMode'")) throw new Error('debug profiler setting already installed');
+  patch(
+    "    { key: 'showFps', label: 'Show FPS counter', type: 'toggle', help: 'Displays frames per second in the corner during matches.' },",
+    "    { key: 'showFps', label: 'Show FPS counter', type: 'toggle', help: 'Displays frames per second in the corner during matches.' },\n" +
+    "    { key: 'debugMode', label: LANG === 'ja' ? 'デバッグ計測' : 'Debug profiler', type: 'toggle', help: LANG === 'ja' ? 'FPS・CPU・GPU・塗り・射撃処理を測定。待機と連射を比較してコピーできます。OFFでは計測処理を外します。' : 'Profile FPS, CPU/GPU, paint, and shooting. Compare idle and firing. All hooks detach when OFF.' },",
+    'opt-in profiler toggle in Video settings'
+  );
+
   patch(`    track.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();
       try { track.setPointerCapture(e.pointerId); } catch (err) { /* synthetic events */ }

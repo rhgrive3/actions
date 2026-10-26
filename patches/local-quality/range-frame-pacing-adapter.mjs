@@ -16,15 +16,24 @@ export function adaptRangeFramePacing(rel, code) {
     requestAnimationFrame(() => this._loop());
     this.timer.update();
     const rawDt = this.timer.getDelta();
-    if (this._rangeFrameProbe === undefined) {
-      const enabled = typeof location !== 'undefined' &&
-        new URLSearchParams(location.search).get('profileRange') === '1';
+    // Cache URL flag once: diagnostics OFF has no repeated URL allocations.
+    const probeEnabled = this.settings?.debugMode === true ||
+      (this._iwProfilerQueryFlag ??= (typeof location !== 'undefined' &&
+        new URLSearchParams(location.search).get('profileRange') === '1'));
+    if (probeEnabled !== this._iwProfilerEnabled) {
+      this._iwProfilerEnabled = probeEnabled;
+      const epoch = this._iwProfilerEpoch = (this._iwProfilerEpoch || 0) + 1;
+      this._rangeFrameProbe?.dispose?.();
       this._rangeFrameProbe = null;
-      if (enabled) import('../patches/local-quality/range-frame-profiler.mjs')
+      if (probeEnabled) import('../patches/local-quality/range-frame-profiler.mjs')
         .then(({ createFrameTimingProbe }) => {
-          this._rangeFrameProbe = createFrameTimingProbe({ env: globalThis, game: this });
+          if (this._iwProfilerEnabled && this._iwProfilerEpoch === epoch)
+            this._rangeFrameProbe = createFrameTimingProbe({ env: globalThis, game: this });
         })
-        .catch(error => console.warn('Optional range profiler unavailable:', error));
+        .catch(error => {
+          if (this._iwProfilerEnabled && this._iwProfilerEpoch === epoch)
+            console.warn('Optional range profiler unavailable:', error);
+        });
     }
     this._rangeFrameProbe?.callback(rawDt);
     if (this.frozen) return;`,
