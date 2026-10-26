@@ -1,0 +1,75 @@
+{
+  "inventory-function-factory.mjs": {
+    "sha256": "bcbb61a12339908fae344470eb26f38af3a877ef68874f27c8d217b78b4dc60e",
+    "bytes": 1723
+  },
+  "retaining-paths-no-ephemeron.json": {
+    "sha256": "6faa1c9b3fcab869898f63a1ff7c8cd9ef1d635d7ba13724f852a0ae9058a10b",
+    "bytes": 7885
+  },
+  "actor-retention-diagnostic.mjs.txt": {
+    "sha256": "d7e106e02ee88539eacb1a06dfe3e8e910d27c73a25ad6b089929740dec3a521",
+    "bytes": 12604
+  },
+  "retaining-paths-without-observer-object.json": {
+    "sha256": "f7267f1f18820b3adb4f14195b919509df6fa3767319a09dad9bc6eabb48976e",
+    "bytes": 2761
+  },
+  "inventory-function-original.mjs": {
+    "sha256": "923e892f0208afc0ac4c84bf47d9b8b57cea971b6bad03d8e969a35f922bf9b7",
+    "bytes": 1584
+  },
+  "actor-retention-factory-diagnostic.json.gz": {
+    "sha256": "00882fb73a53b9299e740a1daa4ab975ac9befaf7db812eff4bce57ac8e1c449",
+    "bytes": 103568,
+    "uncompressedSha256": "404a6c16c16dec4096630c084411292e669c44683cc645ecb233a40f0c8a30b0"
+  },
+  "parse-retired-actors-without-observer.mjs.txt": {
+    "sha256": "9ba3f1bcd67e293b6e7828955329295f1e1ccb343a27633b1bed6d37fa03427c",
+    "bytes": 2151
+  },
+  "actor-retention-diagnostic.json.gz": {
+    "sha256": "e00f0eb5b65726c2f3e348e2e8f678d500e12d5ad4aceb1f556e88c5b8b230bb",
+    "bytes": 99971,
+    "uncompressedSha256": "8260a253e5e69980d298c79fa2a1a06f933fe5431ec0841499e19f28b33934d5"
+  },
+  "retired-actor-ids.json": {
+    "sha256": "88f3c8ab1e7c394c839915aa29dec4d9692d0e3226faca46f4eba40308b70c6f",
+    "bytes": 128
+  },
+  "actor-retention-factory-diagnostic.mjs.txt": {
+    "sha256": "cb33c25486c7c9f5ccc149399c60737f945b44d2a7fc13b7a051ced9d40ff365",
+    "bytes": 13371
+  },
+  "baseline-crab-final-confounded.json.gz": {
+    "sha256": "ca446b08421aeedd65940408946a1ee7d08e9d48cf67547b86d1f63e6c22f461",
+    "bytes": 311855,
+    "uncompressedSha256": "0029897c7508fc354731caf33921c349e0df645fb9d78f7e0afa864216ab4830"
+  },
+  "actor-retention-heap-diagnostic.json.gz": {
+    "sha256": "863e24b8ac848f3a726f6437d77d8e307584e6974b36ba4d1518c6f92cc2ed9b",
+    "bytes": 99606,
+    "uncompressedSha256": "7729ef07b0aaccc6e4c46ec8bac94078c2f79fa8a82f41110bf52fd5fda01e94"
+  },
+  "actor-retention-heap-diagnostic.mjs.txt": {
+    "sha256": "f2c7c1a0326c4a1ba6d15a3ae13e2ec3fbde799b520563abaac2815e4092f2e3",
+    "bytes": 13655
+  },
+  "parse-retired-actors-no-ephemeron.mjs.txt": {
+    "sha256": "4558f907b19aaba8e457cb142f4112b3d90f6bb8241551919cd828416b63c12a",
+    "bytes": 2049
+  },
+  "inventory-retainer-audit.md": {
+    "sha256": "ebc7e431713d8eb806f28c0f4fd93d6959df1b95ab0516be25e13739c40fa400",
+    "bytes": 4602
+  },
+  "candidate-crab-final-confounded.json.gz": {
+    "sha256": "dd5cf42335f1f99bca8c582cc5f88bdebca7bf6b4889cc753a8a3b013b5b71c7",
+    "bytes": 317560,
+    "uncompressedSha256": "89662ed530f0633d5166cbc3d395c835a72fdecc0769d917db76c1fbbd73a437"
+  },
+  "inventory-retainer-audit.json": {
+    "sha256": "5b87d807e23927fae256d7692c6b12c0a93d5c9d53de3518842d7d2ddea3ffdb",
+    "bytes": 17842
+  }
+}

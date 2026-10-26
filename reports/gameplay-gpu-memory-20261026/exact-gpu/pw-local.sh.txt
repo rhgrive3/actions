@@ -1,0 +1,6 @@
+#!/bin/sh
+export WEBKIT_EXEC_PATH="/home/agent/.cache/ms-playwright/webkit-2336/minibrowser-wpe/bin"
+export WEBKIT_INJECTED_BUNDLE_PATH="/home/agent/.cache/ms-playwright/webkit-2336/minibrowser-wpe/lib"
+export WEBKIT_INSPECTOR_RESOURCES_PATH="/home/agent/.cache/ms-playwright/webkit-2336/minibrowser-wpe/share"
+export LD_LIBRARY_PATH="/home/agent/.cache/ms-playwright/webkit-2336/minibrowser-wpe/lib:/home/agent/.cache/ms-playwright/webkit-2336/minibrowser-wpe/sys/lib:/workspace/inkwave/.ci-scratch/webkit-runtime/root/usr/lib/x86_64-linux-gnu"
+exec "/home/agent/.cache/ms-playwright/webkit-2336/minibrowser-wpe/bin/MiniBrowser" "$@"

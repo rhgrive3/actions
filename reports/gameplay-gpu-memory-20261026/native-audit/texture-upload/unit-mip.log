@@ -1,0 +1,29 @@
+(node:25871) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ illegal capped BC7 base retranscodes the identical source and keeps selected mip/pixels without PNG (7.936232ms)
+✔ legal selected compressed mip retains the existing format, exact bytes and single loader (9.863454ms)
+✔ RGBA and ASTC paths are not reclassified as incompatible BC-family base levels (2.131489ms)
+✔ aborted exceptional transcode never publishes a late texture or disposes its worker prematurely (12.610958ms)
+(node:25872) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ paint faces round-trip exactly, including key order (2.037549ms)
+✔ admission takes only current, complete records (4.222768ms)
+✔ site copy holds admitted stages and only their texture packs (1.236727ms)
+✔ runtime loader reassembles verified chunks into the worker data shape (8.696548ms)
+✔ runtime loader rejects tampered chunks, stage records and incomplete faces (9.027149ms)
+✔ KTX2 textures skip PNG decoding and start their mip chain within the cap (4.607255ms)
+✔ a failed KTX2 texture falls back to its pinned PNG; an abort does not (7.419626ms)
+✔ a renderer replacement waits for pending KTX2 parses before disposing the old loader (6.622941ms)
+✔ an abort during a KTX2 transcode settles the load; the late texture is disposed (4.993045ms)
+✔ relieved touch budgets fall back to the uncompressed budget for PNG and RGBA32 output (8.04846ms)
+✔ images a partial prebuilt table does not cover keep the uncompressed fallback budget (7.638335ms)
+✔ committed prebuilt data stays a few hundred files (4.721096ms)
+✔ builder input identity hashes every scripts/lib helper it runs (1.839822ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 139.466882

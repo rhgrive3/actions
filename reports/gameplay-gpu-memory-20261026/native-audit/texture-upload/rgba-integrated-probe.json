@@ -1,0 +1,114 @@
+{
+  "nativeLoadSourceSha256": "5d799c22a006f5f20283f7aa0ce9183f792a2aa66df995c5a9424e378ec8df57",
+  "conditions": "tiny isolated actual KTX2 loader/real WebGL; no timing claim",
+  "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.KTX2Loader: Multiple active KTX2 loaders may cause performance issues. Use a single KTX2Loader instance, or call .dispose() on old instances.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glTexStorage2D: The implied base level dimensions for an S3TC, RGTC, or BPTC texture are not multiples of 4.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+    "THREE.KTX2Loader: Multiple active KTX2 loaders may cause performance issues. Use a single KTX2Loader instance, or call .dispose() on old instances."
+  ],
+  "sourceSha256": "dbba919cb6c79a477294ea5b83541e9eb972bb4dbb7810a351ddaad1d92ec27b",
+  "result": {
+    "compressedFormat": 36492,
+    "rgbaFormat": 1023,
+    "rgbaExpected": 1023,
+    "selectedMip": 1,
+    "dimensions": [
+      400,
+      30
+    ],
+    "beforeErrors": [
+      1282
+    ],
+    "uploadError": 0,
+    "drawError": 0,
+    "bytes": 48000,
+    "mismatches": 0,
+    "referencePrefix": [
+      120,
+      212,
+      216,
+      255,
+      87,
+      168,
+      209,
+      255,
+      151,
+      122,
+      223,
+      255,
+      87,
+      168,
+      209,
+      255
+    ],
+    "actualPrefix": [
+      120,
+      212,
+      216,
+      255,
+      87,
+      168,
+      209,
+      255,
+      151,
+      122,
+      223,
+      255,
+      87,
+      168,
+      209,
+      255
+    ]
+  },
+  "status": "completed",
+  "diagnosticConsole": {
+    "negativeControlGLWarnings": [
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glTexStorage2D: The implied base level dimensions for an S3TC, RGTC, or BPTC texture are not multiples of 4.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist.",
+      "[.WebGL-0x2784001b9c00] GL_INVALID_OPERATION: glCompressedTexSubImage2D: Texture level does not exist."
+    ],
+    "loaderAdvisories": [
+      "THREE.KTX2Loader: Multiple active KTX2 loaders may cause performance issues. Use a single KTX2Loader instance, or call .dispose() on old instances.",
+      "THREE.KTX2Loader: Multiple active KTX2 loaders may cause performance issues. Use a single KTX2Loader instance, or call .dispose() on old instances."
+    ],
+    "other": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "testReceipts": {
+    "unit-mip.log": {
+      "sha256": "2b6d35e9bb8e846815e0064fc5dbfc8da497a047b9b655afd054395662bbe66b",
+      "path": ".ci-scratch/gameplay/gl-native-trace/unit-mip.log"
+    },
+    "unit-neighbors.log": {
+      "sha256": "e85c818b78638a71b7d50030256fc63c9a0747f2a10af4956c830fcb25a412aa",
+      "path": ".ci-scratch/gameplay/gl-native-trace/unit-neighbors.log"
+    }
+  },
+  "probeSha256": "d0af3e885b3341caa9f592f1361b09a83afadc64267df8ee57885e1222ae0791",
+  "testSourceHash": "52259cbd2c9d8810d5820a0db47096cc7a6c2b3f3c4f12f1fbcaa0545b67c620",
+  "representationBytes": {
+    "selectedMipRGBA32": 48000,
+    "allSelectedRGBA32Mips": 63588,
+    "sameSelectedBC7MipBytes": 12800,
+    "allSameBC7Mips": 17232,
+    "note": "same selected dimensions/mips; local RGBA representation costs more bytes, no higher resolution and no global compression disable or GPU memory saving claim"
+  }
+}

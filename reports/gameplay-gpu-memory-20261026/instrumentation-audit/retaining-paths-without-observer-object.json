@@ -1,0 +1,131 @@
+{
+  "nodes": 2263762,
+  "edges": 6820140,
+  "visited": 1577212,
+  "actors": [
+    {
+      "cycle": 0,
+      "reachable": false,
+      "target": {
+        "index": 541358,
+        "id": 1082957,
+        "type": "object",
+        "name": "rt"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 541358,
+            "id": 1082957,
+            "type": "object",
+            "name": "rt"
+          }
+        }
+      ]
+    },
+    {
+      "cycle": 1,
+      "reachable": true,
+      "target": {
+        "index": 668085,
+        "id": 1336259,
+        "type": "object",
+        "name": "rt"
+      },
+      "strongRootPath": [
+        {
+          "node": {
+            "index": 0,
+            "id": 1,
+            "type": "synthetic",
+            "name": ""
+          }
+        },
+        {
+          "node": {
+            "index": 1,
+            "id": 3,
+            "type": "synthetic",
+            "name": "(GC roots)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 1
+          }
+        },
+        {
+          "node": {
+            "index": 11,
+            "id": 23,
+            "type": "synthetic",
+            "name": "(Global handles)"
+          },
+          "edge": {
+            "type": "element",
+            "name": 10
+          }
+        },
+        {
+          "node": {
+            "index": 3694,
+            "id": 7389,
+            "type": "native",
+            "name": "system / NativeContext / http://127.0.0.1:33921"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "5 / blink::ScriptStateProtectingContext::context_"
+          }
+        },
+        {
+          "node": {
+            "index": 1529754,
+            "id": 3059537,
+            "type": "object",
+            "name": "Window [JSGlobalObject] / http://127.0.0.1:33921"
+          },
+          "edge": {
+            "type": "internal",
+            "name": "global_object"
+          }
+        },
+        {
+          "node": {
+            "index": 312827,
+            "id": 626127,
+            "type": "object",
+            "name": "j"
+          },
+          "edge": {
+            "type": "property",
+            "name": "__inkwave"
+          }
+        },
+        {
+          "node": {
+            "index": 312829,
+            "id": 626131,
+            "type": "object",
+            "name": "be"
+          },
+          "edge": {
+            "type": "property",
+            "name": "screenfx"
+          }
+        },
+        {
+          "node": {
+            "index": 668085,
+            "id": 1336259,
+            "type": "object",
+            "name": "rt"
+          },
+          "edge": {
+            "type": "property",
+            "name": "_local"
+          }
+        }
+      ]
+    }
+  ]
+}

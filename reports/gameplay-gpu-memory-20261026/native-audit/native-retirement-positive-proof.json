@@ -1,0 +1,609 @@
+{
+  "schema": 1,
+  "purpose": "Production native-world GC negative/positive comparison; not a performance comparison",
+  "negative": {
+    "status": "passed",
+    "sourceSha": "e4bb8f934db08c14abedd41845f0799c33d936e7",
+    "contentHash": "7fdcf7b17ee32caf9341a1fd4a470d6060f99398eae37a2bd0311aae91d8aed2",
+    "runnerHash": "f82adcf80f05b560a16458845ec21a5b549745066f12de705c3184b0046e9385",
+    "conditions": {
+      "crabLifecycle": false,
+      "expectedLifecycle": "released",
+      "maps": [
+        "scorch",
+        "tidewater"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 2,
+      "seconds": 5,
+      "quality": "low",
+      "mobile": true,
+      "viewport": [
+        480,
+        300
+      ],
+      "deviceScaleFactor": 1,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "watch": {
+      "map": "scorch",
+      "typedArrayBytes": {
+        "triangles": 4814532,
+        "normals": 1604844,
+        "flags": 534948,
+        "objectIds": 534948,
+        "nodes": 1048544,
+        "order": 534948,
+        "mask": 1469898,
+        "triangleFace": 534948
+      },
+      "faceCount": 45171
+    },
+    "lateGC": [
+      {
+        "label": "replacement-published-1",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": true
+          },
+          {
+            "name": "data",
+            "retained": true
+          },
+          {
+            "name": "physics",
+            "retained": true
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": true
+          },
+          {
+            "name": "nodes",
+            "retained": true
+          },
+          {
+            "name": "mask",
+            "retained": true
+          },
+          {
+            "name": "faces",
+            "retained": true
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-1",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": true
+          },
+          {
+            "name": "data",
+            "retained": true
+          },
+          {
+            "name": "physics",
+            "retained": true
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": true
+          },
+          {
+            "name": "nodes",
+            "retained": true
+          },
+          {
+            "name": "mask",
+            "retained": true
+          },
+          {
+            "name": "faces",
+            "retained": true
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-2",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": true
+          },
+          {
+            "name": "data",
+            "retained": true
+          },
+          {
+            "name": "physics",
+            "retained": true
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": true
+          },
+          {
+            "name": "nodes",
+            "retained": true
+          },
+          {
+            "name": "mask",
+            "retained": true
+          },
+          {
+            "name": "faces",
+            "retained": true
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-3",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": true
+          },
+          {
+            "name": "data",
+            "retained": true
+          },
+          {
+            "name": "physics",
+            "retained": true
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": true
+          },
+          {
+            "name": "nodes",
+            "retained": true
+          },
+          {
+            "name": "mask",
+            "retained": true
+          },
+          {
+            "name": "faces",
+            "retained": true
+          }
+        ]
+      }
+    ],
+    "heapTaken": true,
+    "errors": []
+  },
+  "positive": {
+    "status": "passed",
+    "sourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+    "contentHash": "3eb1f3dc5eade6c994053877fbb38bd054a33ce0e7714d2159a1106591ea605b",
+    "runnerHash": "f82adcf80f05b560a16458845ec21a5b549745066f12de705c3184b0046e9385",
+    "conditions": {
+      "crabLifecycle": false,
+      "expectedLifecycle": "released",
+      "maps": [
+        "scorch",
+        "tidewater"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 2,
+      "seconds": 5,
+      "quality": "low",
+      "mobile": true,
+      "viewport": [
+        480,
+        300
+      ],
+      "deviceScaleFactor": 1,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "watch": {
+      "map": "scorch",
+      "typedArrayBytes": {
+        "triangles": 4814532,
+        "normals": 1604844,
+        "flags": 534948,
+        "objectIds": 534948,
+        "nodes": 1048544,
+        "order": 534948,
+        "mask": 1469898,
+        "triangleFace": 534948
+      },
+      "faceCount": 45171
+    },
+    "lateGC": [
+      {
+        "label": "replacement-published-1",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": true
+          },
+          {
+            "name": "data",
+            "retained": true
+          },
+          {
+            "name": "physics",
+            "retained": true
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": true
+          },
+          {
+            "name": "nodes",
+            "retained": true
+          },
+          {
+            "name": "mask",
+            "retained": true
+          },
+          {
+            "name": "faces",
+            "retained": true
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-1",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": false
+          },
+          {
+            "name": "data",
+            "retained": false
+          },
+          {
+            "name": "physics",
+            "retained": false
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": false
+          },
+          {
+            "name": "nodes",
+            "retained": false
+          },
+          {
+            "name": "mask",
+            "retained": false
+          },
+          {
+            "name": "faces",
+            "retained": false
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-2",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": false
+          },
+          {
+            "name": "data",
+            "retained": false
+          },
+          {
+            "name": "physics",
+            "retained": false
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": false
+          },
+          {
+            "name": "nodes",
+            "retained": false
+          },
+          {
+            "name": "mask",
+            "retained": false
+          },
+          {
+            "name": "faces",
+            "retained": false
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-3",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": false
+          },
+          {
+            "name": "data",
+            "retained": false
+          },
+          {
+            "name": "physics",
+            "retained": false
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": false
+          },
+          {
+            "name": "nodes",
+            "retained": false
+          },
+          {
+            "name": "mask",
+            "retained": false
+          },
+          {
+            "name": "faces",
+            "retained": false
+          }
+        ]
+      }
+    ],
+    "heapTaken": false,
+    "errors": [],
+    "rawResultPath": ".ci-scratch/gameplay/native-weak-retirement-65final/result.json"
+  },
+  "sameRunner": true,
+  "artifacts": {
+    ".ci-scratch/gameplay/native-weak-retirement-diagnostic/result.json": {
+      "sha256": "a341a17ea4da78ec3fec33cf5a682b0822b4caf723385a8786f4a424fcf5f575",
+      "bytes": 172232
+    },
+    ".ci-scratch/gameplay/native-weak-retirement-fixed/result.json": {
+      "sha256": "b44083f9a428c41809833754cf40925ad3be6aa1d9d45058a5154a8280ce17ad",
+      "bytes": 165619
+    },
+    ".ci-scratch/gameplay/native-weak-retirement-diagnostic.mjs": {
+      "sha256": "f82adcf80f05b560a16458845ec21a5b549745066f12de705c3184b0046e9385",
+      "bytes": 15938
+    },
+    ".ci-scratch/gameplay/native-weak-retirement-65final/result.json": {
+      "sha256": "0f9533255836c22c8b9558f2404ecc5c11945249c3c1dcfe0c3c7a27380dfddd",
+      "bytes": 168885
+    }
+  },
+  "verdict": "Latest fixed production65fa7f retires all watched old NativeLevel/data/physics/world and large payload targets at every final later-task GC; e4 retained level/data/physics/payloads at all equivalent final GCs. Intermediate544 also passed and is preserved separately. Initial replacement-publication GC still saw transient references; collection is established only at later captures.",
+  "scope": "Both use actual game/native RAF, LOW480x300 mobile DPR1,Scorch->Tidewater,2cycles5seconds. No inventory listeners,perframe weak polling,manual frames,freeze orGPUperformanceclaims.",
+  "browserClosed": true,
+  "sourceEditsDuringPositive": false,
+  "intermediatePositive544": {
+    "status": "passed",
+    "sourceSha": "544bb901bc7b14a8fc3eedb2e2c18adfe2b62345",
+    "contentHash": "decbb66c315a1e0397e55618cab6b3870082fe26954737f922775d8471bff6ca",
+    "runnerHash": "f82adcf80f05b560a16458845ec21a5b549745066f12de705c3184b0046e9385",
+    "conditions": {
+      "crabLifecycle": false,
+      "expectedLifecycle": "released",
+      "maps": [
+        "scorch",
+        "tidewater"
+      ],
+      "processScope": "Linux browser process tree including zygotes",
+      "cycles": 2,
+      "seconds": 5,
+      "quality": "low",
+      "mobile": true,
+      "viewport": [
+        480,
+        300
+      ],
+      "deviceScaleFactor": 1,
+      "seed": 20261026,
+      "clock": "native RAF; no manual frames, fences, finish, freeze or render suppression",
+      "cpu": "AMD EPYC 9V74 80-Core Processor"
+    },
+    "watch": {
+      "map": "scorch",
+      "typedArrayBytes": {
+        "triangles": 4814532,
+        "normals": 1604844,
+        "flags": 534948,
+        "objectIds": 534948,
+        "nodes": 1048544,
+        "order": 534948,
+        "mask": 1469898,
+        "triangleFace": 534948
+      },
+      "faceCount": 45171
+    },
+    "lateGC": [
+      {
+        "label": "replacement-published-1",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": true
+          },
+          {
+            "name": "data",
+            "retained": true
+          },
+          {
+            "name": "physics",
+            "retained": true
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": true
+          },
+          {
+            "name": "nodes",
+            "retained": true
+          },
+          {
+            "name": "mask",
+            "retained": true
+          },
+          {
+            "name": "faces",
+            "retained": true
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-1",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": false
+          },
+          {
+            "name": "data",
+            "retained": false
+          },
+          {
+            "name": "physics",
+            "retained": false
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": false
+          },
+          {
+            "name": "nodes",
+            "retained": false
+          },
+          {
+            "name": "mask",
+            "retained": false
+          },
+          {
+            "name": "faces",
+            "retained": false
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-2",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": false
+          },
+          {
+            "name": "data",
+            "retained": false
+          },
+          {
+            "name": "physics",
+            "retained": false
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": false
+          },
+          {
+            "name": "nodes",
+            "retained": false
+          },
+          {
+            "name": "mask",
+            "retained": false
+          },
+          {
+            "name": "faces",
+            "retained": false
+          }
+        ]
+      },
+      {
+        "label": "final-later-task-3",
+        "receipt": [
+          {
+            "name": "level",
+            "retained": false
+          },
+          {
+            "name": "data",
+            "retained": false
+          },
+          {
+            "name": "physics",
+            "retained": false
+          },
+          {
+            "name": "world",
+            "retained": false
+          },
+          {
+            "name": "triangles",
+            "retained": false
+          },
+          {
+            "name": "nodes",
+            "retained": false
+          },
+          {
+            "name": "mask",
+            "retained": false
+          },
+          {
+            "name": "faces",
+            "retained": false
+          }
+        ]
+      }
+    ],
+    "heapTaken": false,
+    "errors": [],
+    "rawResultPath": ".ci-scratch/gameplay/native-weak-retirement-fixed/result.json"
+  },
+  "finalProofSourceSha": "65fa7f183d2d163af798972c2ff0ced46a92868f"
+}
