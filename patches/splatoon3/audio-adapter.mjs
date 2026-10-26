@@ -103,8 +103,8 @@ export function adaptWeaponAudio(rel,code){
     // A remote spinner has two separate recorded motor phases. Do not keep
     // MotorFire alive during charging, and do not invoke old splatling_spin.
     code=once(code,
-      "h = this._voiceLoop(a, near, 'spin', (wr.charging || wr.streaming) && k === 'splatling', 'splatling_spin');\\n      if (h) h.set({ pos: a.pos, volume: 0.4, pitch: wr.streaming ? 1.5 : 0.6 + 0.85 * wr.charge });",
-      "const isSpinner = k === 'splatling' || (k === 'catalog' && a.weapon.behaviorKind === 'splatling');\\n      h = this._voiceLoop(a, near, 'spinnerCharge', isSpinner && wr.charging && !wr.streaming, 'splatling_spin');\\n      if (h) h.set({ pos: a.pos, volume: 0.4 });\\n      h = this._voiceLoop(a, near, 'spin', isSpinner && wr.streaming, 'splatling_spin');\\n      if (h) h.set({ pos: a.pos, volume: 0.4 });",
+      "h = this._voiceLoop(a, near, 'spin', (wr.charging || wr.streaming) && k === 'splatling', 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4, pitch: wr.streaming ? 1.5 : 0.6 + 0.85 * wr.charge });",
+      "const isSpinner = k === 'splatling' || (k === 'catalog' && a.weapon.behaviorKind === 'splatling');\n      h = this._voiceLoop(a, near, 'spinnerCharge', isSpinner && wr.charging && !wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4 });\n      h = this._voiceLoop(a, near, 'spin', isSpinner && wr.streaming, 'splatling_spin');\n      if (h) h.set({ pos: a.pos, volume: 0.4 });",
       'remote Spinner charges with Motor and streams with MotorFire, never one sustained old motor');
     code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='spinnerCharge'?'charge':key==='spin'?'spin':'roll', {actor:a,pos:a.pos,volume:0})");
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
