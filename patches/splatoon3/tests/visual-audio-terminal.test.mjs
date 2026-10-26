@@ -18,9 +18,9 @@ test('HUD scheduling retains historical canonical methods except exact reviewed 
  const changes=[
   ['      if (!this.paused && this._fxMap?.size && !this._rafId) {','      if (this._fxMap?.size && !this._rafId) {'],
   ['    if (!this._rafId && !this._worldPaused && !this.paused) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }','    if (!this._rafId && !this._worldPaused) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }'],
-  ['_fxLoop(t) {\\n    this._rafId = 0;','_fxLoop(t) {'],
+  ['_fxLoop(t) {\n    this._rafId = 0;','_fxLoop(t) {'],
   ['    if (this.paused) { this._rafId = 0; return; }','    if (this.paused) { this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0; return; }'],
-  ['    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }','    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;'],
+  ['    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }','    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;'],
  ];
  for(const [changed,original] of changes){
    assert.equal(actual.split(changed).length,2,'one exact reviewed HUD queue correction');
@@ -38,7 +38,7 @@ test('showcase jumpout preserves canonical method and emission RNG at 30/60/120H
 function simulate(code,hz){const fn=vm.runInNewContext('new(class {'+code+'})',{G:{audio:{play(){}}},nonWailVfxTicks})._lobIdle;let random=0;const self={rand(){random++;return .9;}};const m={c:{trigger(){},root:{}},a:{},pos:{x:0,y:0,z:0},act:{kind:'jumpout',t0:0,flag:0},q:[],gT:Infinity,idleT:Infinity};const fx={crown(){},ripple(){},drop(){}};let count=0;for(let i=0;i<200&&m.act;i++){fn.call(self,m,i/hz,1/hz,fx);count++;}return {random,count,phase:m.phase,visible:m.c.root.visible};}
 const old=baseline['showcase.js'].methods,now=methods(source('src/game/showcase.js'),['_lobIdle']);
  const oldDrop='          if (this.rand() < 0.8) fx.drop(P.x + (this.rand() - 0.5) * 0.14, P.y + y - 0.2, P.z + (this.rand() - 0.5) * 0.14, (this.rand() - 0.5) * 0.5, -1, (this.rand() - 0.5) * 0.5, 0.012 + this.rand() * 0.016, 1, 2);';
- const newDrop='          for (let trial=0,count=nonWailVfxTicks(A,dt);trial<count;trial++)\\n            if (this.rand() < 0.8) fx.drop(P.x + (this.rand() - 0.5) * 0.14, P.y + y - 0.2, P.z + (this.rand() - 0.5) * 0.14, (this.rand() - 0.5) * 0.5, -1, (this.rand() - 0.5) * 0.5, 0.012 + this.rand() * 0.016, 1, 2);';
+ const newDrop='          for (let trial=0,count=nonWailVfxTicks(A,dt);trial<count;trial++)\n            if (this.rand() < 0.8) fx.drop(P.x + (this.rand() - 0.5) * 0.14, P.y + y - 0.2, P.z + (this.rand() - 0.5) * 0.14, (this.rand() - 0.5) * 0.5, -1, (this.rand() - 0.5) * 0.5, 0.012 + this.rand() * 0.016, 1, 2);';
  assert.equal(now.split(newDrop).length,2,'one reviewed 60Hz VFX cadence replacement');
  assert.equal(old.split(oldDrop).length,2,'historical Splat jumpout uses original RNG point');
  assert.equal(now.replace(newDrop,oldDrop),old,'all unrelated showcase bytes stay identical');
