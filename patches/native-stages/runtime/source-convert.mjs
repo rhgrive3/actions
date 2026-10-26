@@ -3,6 +3,13 @@
 import {SOURCE_COMMIT,SOURCE_RECIPE} from './source-catalog.mjs';
 import {applySourcePlacements} from './source-placement.mjs';
 const F=Math.fround;
+const OBJ_SPACE=/\s/;
+const objSpace=(line,index)=>{const c=line.charCodeAt(index);return c===32||(c>=9&&c<=13)||(c>127&&OBJ_SPACE.test(line[index]));};
+function sourceBVHNodeCount(count){
+ const sizes=new Map();
+ const countNodes=n=>{if(n<=12)return 1;let result=sizes.get(n);if(result===undefined){result=1+countNodes(n>>>1)+countNodes(n-(n>>>1));sizes.set(n,result);}return result;};
+ return count?countNodes(count):0;
+}
 /** Positive-area overlap between a source triangle and a grid cell. A centre
  * sample alone drops paintable strips at the original polygon boundary. */
 export function sourceTriangleCellOverlap(ax,ay,bx,by,cx,cy,x0,y0,x1,y1){
@@ -20,13 +27,6 @@ export function sourceTriangleCellOverlap(ax,ay,bx,by,cx,cy,x0,y0,x1,y1){
  }
  return true;
 }
-class BufferBuilder{
- constructor(Type,initial=0){this.Type=Type;this.array=new Type(initial);this.length=0;}
- reserve(count){if(this.length+count>this.array.length){const a=new this.Type(Math.max(this.length+count,Math.max(16,this.array.length*2)));a.set(this.array);this.array=a;}}
- push2(x,y){this.reserve(2);const n=this.length;this.array[n]=x;this.array[n+1]=y;this.length=n+2;}
- push3(x,y,z){this.reserve(3);const n=this.length;this.array[n]=x;this.array[n+1]=y;this.array[n+2]=z;this.length=n+3;}
- finish(){return this.array.slice(0,this.length);}
-}
 function lines(text,visit){
  // Decode complete UTF-8 lines without retaining a second full-sized string.
  if(typeof text!=='string'){
@@ -40,6 +40,29 @@ function lines(text,visit){
   return;
  }
  let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}
+}
+// Capacity counting does not consume numeric attributes. Decode object/material
+// names and Unicode face separators, preserving the ordinary UTF-8 path there.
+// The full writing pass still validates every number, index and attribute.
+function sourceOBJCountLines(text,visit){
+ if(typeof text==='string'){lines(text,visit);return;}
+ const bytes=text instanceof Uint8Array?text:new Uint8Array(text),decoder=new TextDecoder('utf-8',{ignoreBOM:true});let start=0;
+ while(start<bytes.length){
+  const newline=bytes.indexOf(10,start),end=newline<0?bytes.length:newline;
+  let at=start;
+  if(start===0&&bytes[at]===239&&bytes[at+1]===187&&bytes[at+2]===191)at+=3;
+  const first=bytes[at],second=bytes[at+1];
+  if(first===118&&second===32)visit('v ');
+  else if(first===102&&second===32){
+   let words=0,inside=false,unicode=false;
+   for(let i=at+2;i<end;i++){const c=bytes[i];if(c>127){unicode=true;break;}if(c===32||(c>=9&&c<=13))inside=false;else if(!inside){inside=true;words++;}}
+   if(!unicode)visit('f ',words);
+   else visit(decoder.decode(bytes.subarray(at,end)).trimEnd());
+  }else if((first===111&&second===32)||(first===117&&second===115&&bytes[at+2]===101&&bytes[at+3]===109&&bytes[at+4]===116&&bytes[at+5]===108&&bytes[at+6]===32)){
+   visit(decoder.decode(bytes.subarray(at,end)).trimEnd());
+  }
+  start=end+1;
+ }
 }
 const any=(s,words)=>words.some(w=>s.includes(w));
 function classify(name,material,semantics,compiledSemantics){
@@ -59,83 +82,72 @@ function classify(name,material,semantics,compiledSemantics){
  return {background,collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
 }
 export function parseSourceOBJ(text,semantics,{compactInactiveDisplay=false}={}){
- // First pass keeps the original global capacities and, on worker opt-in,
- // reserves display storage only for objects classified as active.
+ // The first pass fixes final storage and object admission before writing any
+ // vertices. Attribute/index lines then write directly into their final views.
  let vertexCapacity=0,indexCapacity=0,packedVertices=0,packedIndices=0;
  let countedName=null,countedMaterial=null,countedVertices=0,countedIndices=0;
- const gap=/\s/,countedSemantics=Object.create(null);
+ const plans=[],compiledSemantics=Object.create(null);
  const flushCount=()=>{
   if(!countedName||!countedVertices)return;
-  if(classify(countedName,countedMaterial,semantics,countedSemantics).active){
-   packedVertices+=countedVertices;packedIndices+=countedIndices;
-  }
+  const classification=compactInactiveDisplay?classify(countedName,countedMaterial,semantics,compiledSemantics):null,keep=!compactInactiveDisplay||classification.active;
+  plans.push({classification,keep});
+  if(keep){packedVertices+=countedVertices;packedIndices+=countedIndices;}
   countedVertices=countedIndices=0;
  };
- lines(text,line=>{
-  if(compactInactiveDisplay&&line.startsWith('o ')){flushCount();countedName=line.slice(2).trim();countedMaterial=null;}
-  else if(compactInactiveDisplay&&line.startsWith('usemtl '))countedMaterial=line.slice(7).trim();
-  if(line.startsWith('v ')){vertexCapacity++;if(compactInactiveDisplay)countedVertices++;}
+ sourceOBJCountLines(text,(line,faceWords)=>{
+  if(line.startsWith('o ')){flushCount();countedName=line.slice(2).trim();countedMaterial=null;}
+  else if(line.startsWith('usemtl '))countedMaterial=line.slice(7).trim();
+  if(line.startsWith('v ')){vertexCapacity++;countedVertices++;}
   else if(line.startsWith('f ')){
-   let words=0,inside=false;for(let i=2;i<line.length;i++){if(gap.test(line[i]))inside=false;else if(!inside){inside=true;words++;}}
-   const count=Math.max(0,words-2)*3;indexCapacity+=count;if(compactInactiveDisplay)countedIndices+=count;
+   let words=faceWords??0;if(faceWords===undefined){let inside=false;for(let i=2;i<line.length;i++){if(objSpace(line,i))inside=false;else if(!inside){inside=true;words++;}}}
+   const count=Math.max(0,words-2)*3;indexCapacity+=count;countedIndices+=count;
   }
- });
- if(compactInactiveDisplay)flushCount();
+ });flushCount();
  const displayVertices=compactInactiveDisplay?packedVertices:vertexCapacity,displayIndices=compactInactiveDisplay?packedIndices:indexCapacity;
- const vertices=new Float32Array(displayVertices*8),indices=new Uint32Array(displayIndices),objects=[],compiledSemantics=Object.create(null);
- let v=new BufferBuilder(Float32Array),n=new BufferBuilder(Float32Array),uv=new BufferBuilder(Float32Array),ix=new BufferBuilder(Uint32Array);
+ const vertices=new Float32Array(displayVertices*8),indices=new Uint32Array(displayIndices),objects=[];
  let name=null,material=null,vo=0,io=0,sourceVo=0,sourceIo=0,allFinite=true,uvOffset=0,normalOffset=0;
+ let vc=0,nc=0,uc=0,ic=0,min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+ const keep=()=>plans[objects.length]?.keep!==false;
  function flush(){
-  const count=v.length/3;if(!name||!count)return;
-  if(n.length!==v.length||(uv.length!==0&&uv.length/2!==count))throw Error('Unsupported split OBJ attributes: '+name);
-  const classification=classify(name,material,semantics,compiledSemantics);
-  const keep=!compactInactiveDisplay||classification.active;
-  const g=keep?new Float32Array(vertices.buffer,vo*32,count*8):null;
-  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
-  for(let i=0;i<count;i++){
-   for(let k=0;k<3;k++){
-    const p=v.array[i*3+k],normal=n.array[i*3+k];
-    if(!Number.isFinite(p)||!Number.isFinite(normal))allFinite=false;
-    if(keep){g[i*8+k]=p;g[i*8+3+k]=normal;}
-    min[k]=Math.min(min[k],p);max[k]=Math.max(max[k],p);
-   }
-   if(uv.length){
-    const u=uv.array[i*2],v0=uv.array[i*2+1];
-    if(!Number.isFinite(u)||!Number.isFinite(v0))allFinite=false;
-    if(keep){g[i*8+6]=u;g[i*8+7]=v0;}
-   }
-  }
-  if(keep)indices.set(ix.array.subarray(0,ix.length),io);
-  objects.push({name,material,vo,vc:keep?count:0,io,ic:keep?ix.length:0,bounds:[min,max],sourceHasUV:!!uv.length,...classification});
-  sourceVo+=count;sourceIo+=ix.length;
-  if(keep){vo+=count;io+=ix.length;}
-  uvOffset+=uv.length/2;normalOffset+=n.length/3;
-  v.length=n.length=uv.length=ix.length=0;
+  if(!name||!vc)return;
+  if(nc!==vc||(uc!==0&&uc!==vc))throw Error('Unsupported split OBJ attributes: '+name);
+  const plan=plans[objects.length],retained=keep();
+  objects.push({name,material,vo,vc:retained?vc:0,io,ic:retained?ic:0,bounds:[min,max],sourceHasUV:!!uc,...(plan.classification||classify(name,material,semantics,compiledSemantics))});
+  sourceVo+=vc;sourceIo+=ic;
+  if(retained){vo+=vc;io+=ic;}
+  uvOffset+=uc;normalOffset+=nc;
+  vc=nc=uc=ic=0;min=[Infinity,Infinity,Infinity];max=[-Infinity,-Infinity,-Infinity];
  }
  let line='',cursor=0;
- const whitespace=/\s/;
- const token=()=>{while(cursor<line.length&&whitespace.test(line[cursor]))cursor++;const start=cursor;while(cursor<line.length&&!whitespace.test(line[cursor]))cursor++;return start===cursor?undefined:line.slice(start,cursor);};
+ const token=()=>{while(cursor<line.length&&objSpace(line,cursor))cursor++;const start=cursor;while(cursor<line.length&&!objSpace(line,cursor))cursor++;return start===cursor?undefined:line.slice(start,cursor);};
+ const attribute=(offset,count,index,bounds)=>{
+  const retained=keep(),at=(vo+index)*8+offset;
+  for(let k=0;k<count;k++){const value=F(Number(token()));if(!Number.isFinite(value))allFinite=false;if(retained)vertices[at+k]=value;if(bounds){min[k]=Math.min(min[k],value);max[k]=Math.max(max[k],value);}}
+ };
  lines(text,l=>{
   line=l;cursor=l.indexOf(' ')+1;
   if(l.startsWith('o ')){flush();name=l.slice(2).trim();material=null;}
-  else if(l.startsWith('v '))v.push3(Number(token()),Number(token()),Number(token()));
-  else if(l.startsWith('vn '))n.push3(Number(token()),Number(token()),Number(token()));
-  else if(l.startsWith('vt '))uv.push2(Number(token()),Number(token()));
+  else if(l.startsWith('v ')){attribute(0,3,vc,true);vc++;}
+  else if(l.startsWith('vn ')){attribute(3,3,nc,false);nc++;}
+  else if(l.startsWith('vt ')){attribute(6,2,uc,false);uc++;}
   else if(l.startsWith('usemtl '))material=l.slice(7).trim();
   else if(l.startsWith('f ')){
    let count=0,first,previous,t;
    while((t=token())!==undefined){
     const slash=t.indexOf('/'),next=slash<0?-1:t.indexOf('/',slash+1),last=next<0?-1:t.indexOf('/',next+1);
     const vi=Number(slash<0?t:t.slice(0,slash)),ui=slash<0?undefined:t.slice(slash+1,next<0?t.length:next),ni=next<0?NaN:Number(t.slice(next+1,last<0?t.length:last)),local=vi-1-sourceVo;
-    if(!Number.isSafeInteger(vi)||!Number.isSafeInteger(ni)||(ui&&!Number.isSafeInteger(Number(ui)))||ni-1-normalOffset!==local||(ui&&Number(ui)-1-uvOffset!==local)||local<0||local>=v.length/3)throw Error('Unsupported separate OBJ indices: '+name);
-    if(count===0)first=local;else if(count>=2)ix.push3(first,previous,local);
+    if(!Number.isSafeInteger(vi)||!Number.isSafeInteger(ni)||(ui&&!Number.isSafeInteger(Number(ui)))||ni-1-normalOffset!==local||(ui&&Number(ui)-1-uvOffset!==local)||local<0||local>=vc)throw Error('Unsupported separate OBJ indices: '+name);
+    if(count===0)first=local;else if(count>=2){if(keep()){indices[io+ic]=first;indices[io+ic+1]=previous;indices[io+ic+2]=local;}ic+=3;}
     previous=local;count++;
    }
    if(count<3)throw Error('Incomplete OBJ face: '+name);
   }
  });flush();
  if(sourceVo!==vertexCapacity||sourceIo!==indexCapacity||vo!==displayVertices||io!==displayIndices)throw Error('Invalid source OBJ allocation');
- if(!objects.length||!allFinite||!vertices.every(Number.isFinite))throw Error('Invalid source OBJ');
+ // Every written component is checked after Float32 rounding in attribute().
+ // Missing UV components retain finite zero initialization; allocation counts
+ // above ensure no unwritten position/normal slots escape validation.
+ if(!objects.length||!allFinite)throw Error('Invalid source OBJ');
  const result={vertices,indices,objects};
  if(compactInactiveDisplay&&displayVertices!==vertexCapacity)
   result.sourceGeometry={vertices:vertexCapacity,triangles:indexCapacity/3};
@@ -175,8 +187,7 @@ export function buildSourceBVH(triangles,{compactCenters=false}={}){
   order[i]=i;
   for(let k=0;k<3;k++){const a=Math.min(triangles[i*9+k],triangles[i*9+3+k],triangles[i*9+6+k]),b=Math.max(triangles[i*9+k],triangles[i*9+3+k],triangles[i*9+6+k]);min[i*3+k]=a;max[i*3+k]=b;center[i*3+k]=F(F(a+b)/2);}
  }
- const nodeCount=n=>n<=12?1:1+nodeCount(n>>>1)+nodeCount(n-(n>>>1));
- const nodes=new Float32Array(count?nodeCount(count)*8:0),bounds=new Float64Array(12);let used=0;
+ const nodes=new Float32Array(sourceBVHNodeCount(count)*8),bounds=new Float64Array(12);let used=0;
  function partition(left,right,target,axis){
   while(left<right){const pivot=center[order[(left+right)>>>1]*3+axis];let i=left,j=right;
    while(i<=j){while(center[order[i]*3+axis]<pivot)i++;while(center[order[j]*3+axis]>pivot)j--;if(i<=j){const t=order[i];order[i++]=order[j];order[j--]=t;}}
@@ -202,8 +213,7 @@ function buildSourceBVHCompact(triangles){
  // Bounds already contain the exact Float32 extrema. Derive each center with
  // the original rounding order instead of retaining another 12 bytes/triangle.
  const centerAt=(id,axis)=>{const i=id*3+axis;return F(F(min[i]+max[i])/2);};
- const nodeCount=n=>n<=12?1:1+nodeCount(n>>>1)+nodeCount(n-(n>>>1));
- const nodes=new Float32Array(count?nodeCount(count)*8:0),bounds=new Float64Array(12);let used=0;
+ const nodes=new Float32Array(sourceBVHNodeCount(count)*8),bounds=new Float64Array(12);let used=0;
  function partition(left,right,target,axis){
   while(left<right){const pivot=centerAt(order[(left+right)>>>1],axis);let i=left,j=right;
    while(i<=j){while(centerAt(order[i],axis)<pivot)i++;while(centerAt(order[j],axis)>pivot)j--;if(i<=j){const t=order[i];order[i++]=order[j];order[j--]=t;}}
@@ -224,16 +234,20 @@ const roundEven=x=>{const floor=Math.floor(x),f=x-floor;return f===.5?(floor%2?f
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 function paintCharts(data){
- const {triangles:T,normals:N,flags,objectIds,areas}=data,groups=new Map(),count=flags.length;
+ const {triangles:T,normals:N,flags,objectIds,areas}=data,groups=new Map(),ordered=[],count=flags.length;
  for(let i=0;i<count;i++){
   if(!(flags[i]&2)||N[i*3+1]<=-.5||areas[i]<=.0004)continue;
   const j=i*9,k=i*3,nx=N[k],ny=N[k+1],nz=N[k+2],distance=F(F(F(T[j]*nx)+F(T[j+1]*ny))+F(T[j+2]*nz));
   const k0=objectIds[i],k1=roundEven(F(nx*10000)),k2=roundEven(F(ny*10000)),k3=roundEven(F(nz*10000)),k4=roundEven(F(distance*1000));
   const k5=Math.floor(F(F(F(T[j]+T[j+3])+T[j+6])/3)/8),k6=Math.floor(F(F(F(T[j+1]+T[j+4])+T[j+7])/3)/8),k7=Math.floor(F(F(F(T[j+2]+T[j+5])+T[j+8])/3)/8);
-  const str=k0+','+k1+','+k2+','+k3+','+k4+','+k5+','+k6+','+k7;
-  const group=groups.get(str);if(group)group.ids.push(i);else groups.set(str,{key:[k0,k1,k2,k3,k4,k5,k6,k7],ids:[i]});
+  // Integer hashes only select a bucket. Compare all numeric components so
+  // collisions and large rounded coordinates preserve the original grouping.
+  const hash=(Math.imul(k0,73856093)^Math.imul(k1,19349663)^Math.imul(k2,83492791)^Math.imul(k3,49979687)^Math.imul(k4,86028121)^Math.imul(k5,104395301)^Math.imul(k6,122949829)^Math.imul(k7,141650939))>>>0;
+  let bucket=groups.get(hash),group;
+  if(bucket)for(const candidate of bucket){const key=candidate.key;if(key[0]===k0&&key[1]===k1&&key[2]===k2&&key[3]===k3&&key[4]===k4&&key[5]===k5&&key[6]===k6&&key[7]===k7){group=candidate;break;}}
+  if(group)group.ids.push(i);else{group={key:[k0,k1,k2,k3,k4,k5,k6,k7],ids:[i]};if(bucket)bucket.push(group);else groups.set(hash,[group]);ordered.push(group);}
  }
- const ordered=[...groups.values()].sort((a,b)=>{for(let k=0;k<a.key.length;k++){const d=a.key[k]-b.key[k];if(d)return d;}return 0;});
+ ordered.sort((a,b)=>{for(let k=0;k<a.key.length;k++){const d=a.key[k]-b.key[k];if(d)return d;}return 0;});
  // Retain only five projection scalars per chart, rather than one mask allocation per face.
  const faces=[],projection=new Float64Array(ordered.length*5),triangleFace=new Int32Array(count).fill(-1);let grid=0,maxError=0;
  for(const {ids} of ordered){
@@ -265,24 +279,26 @@ function paintCharts(data){
     const ex=T[k]-origin[0],ey=T[k+1]-origin[1],ez=T[k+2]-origin[2];maxError=Math.max(maxError,Math.abs(ex*n[0]+ey*n[1]+ez*n[2]));
    }
    const ax=xy[0],ay=xy[1],bx=xy[2],by=xy[3],cx=xy[4],cy=xy[5],den=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy);if(Math.abs(den)<1e-12)continue;
-   const x0=Math.max(0,Math.trunc(Math.min(ax,bx,cx)/cu)),x1=Math.min(nu,Math.trunc(Math.max(ax,bx,cx)/cu)+1),y0=Math.max(0,Math.trunc(Math.min(ay,by,cy)/cv)),y1=Math.min(nv,Math.trunc(Math.max(ay,by,cy)/cv)+1);
+   const minX=Math.min(ax,bx,cx),maxX=Math.max(ax,bx,cx),minY=Math.min(ay,by,cy),maxY=Math.max(ay,by,cy);
+   const x0=Math.max(0,Math.trunc(minX/cu)),x1=Math.min(nu,Math.trunc(maxX/cu)+1),y0=Math.max(0,Math.trunc(minY/cv)),y1=Math.min(nv,Math.trunc(maxY/cv)+1);
    for(let edge=0;edge<3;edge++){
     const ex=edge===0?bx-ax:edge===1?cx-bx:ax-cx,ey=edge===0?by-ay:edge===1?cy-by:ay-cy,nx=-ey,ny=ex,k=edge*7;
-    edges[k]=nx;edges[k+1]=ny;edges[k+2]=ax*nx+ay*ny;edges[k+3]=bx*nx+by*ny;edges[k+4]=cx*nx+cy*ny;edges[k+5]=Math.abs(nx);edges[k+6]=Math.abs(ny);
+    const a=ax*nx+ay*ny,b=bx*nx+by*ny,c=cx*nx+cy*ny;
+    edges[k]=nx;edges[k+1]=ny;edges[k+2]=Math.max(a,b,c);edges[k+3]=Math.min(a,b,c);edges[k+4]=1e-9*(Math.abs(nx)+Math.abs(ny));edges[k+5]=Math.abs(nx);edges[k+6]=Math.abs(ny);
    }
-   for(let j=y0;j<y1;j++)for(let k=x0;k<x1;k++)if(sourceTrianglePreparedOverlap(ax,ay,bx,by,cx,cy,k*cu,j*cv,(k+1)*cu,(j+1)*cv,edges))mask[grid+j*nu+k]=1;
+   for(let j=y0;j<y1;j++)for(let k=x0;k<x1;k++)if(sourceTrianglePreparedOverlap(minX,maxX,minY,maxY,k*cu,j*cv,(k+1)*cu,(j+1)*cv,edges))mask[grid+j*nu+k]=1;
   }
  }
  if(maxError>.005)throw Error('Unsupported source paint charts');
  return {faces,mask,triangleFace,chartMaxPlaneError:maxError};
 }
-function sourceTrianglePreparedOverlap(ax,ay,bx,by,cx,cy,x0,y0,x1,y1,edges){
+function sourceTrianglePreparedOverlap(minX,maxX,minY,maxY,x0,y0,x1,y1,edges){
  const epsilon=1e-9;
- if(Math.max(ax,bx,cx)<=x0+epsilon||Math.min(ax,bx,cx)>=x1-epsilon||Math.max(ay,by,cy)<=y0+epsilon||Math.min(ay,by,cy)>=y1-epsilon)return false;
+ if(maxX<=x0+epsilon||minX>=x1-epsilon||maxY<=y0+epsilon||minY>=y1-epsilon)return false;
  const mx=(x0+x1)*.5,my=(y0+y1)*.5,hx=(x1-x0)*.5,hy=(y1-y0)*.5;
  for(let edge=0;edge<3;edge++){
-  const k=edge*7,nx=edges[k],ny=edges[k+1],a=edges[k+2],b=edges[k+3],c=edges[k+4],p=mx*nx+my*ny,r=edges[k+5]*hx+edges[k+6]*hy,margin=epsilon*(edges[k+5]+edges[k+6]);
-  if(Math.max(a,b,c)<=p-r+margin||Math.min(a,b,c)>=p+r-margin)return false;
+  const k=edge*7,nx=edges[k],ny=edges[k+1],max=edges[k+2],min=edges[k+3],p=mx*nx+my*ny,r=edges[k+5]*hx+edges[k+6]*hy,margin=edges[k+4];
+  if(max<=p-r+margin||min>=p+r-margin)return false;
  }
  return true;
 }

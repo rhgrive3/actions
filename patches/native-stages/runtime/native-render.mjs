@@ -50,10 +50,11 @@ export function nativeInkGeometry(level,paint){
   g.computeBoundingSphere();return g;
 }
 
-function objectBoundingSphere(g,bounds){
+function objectBoundingSphere(g,bounds,prepared){
  if(!Array.isArray(bounds)||bounds.length!==2||!bounds.every(row=>Array.isArray(row)&&row.length===3&&row.every(Number.isFinite))||bounds[0].some((x,i)=>x>bounds[1][i])){g.computeBoundingSphere();return;}
  const box=g.boundingBox=new THREE.Box3(new THREE.Vector3(...bounds[0]),new THREE.Vector3(...bounds[1]));
  const sphere=g.boundingSphere=new THREE.Sphere();box.getCenter(sphere.center);
+ if(prepared&&Number.isFinite(prepared.radius)&&prepared.radius>=0&&Array.isArray(prepared.center)&&prepared.center.length===3&&prepared.center.every((value,i)=>value===sphere.center.getComponent(i))){sphere.radius=prepared.radius;return;}
  const position=g.getAttribute('position'),point=new THREE.Vector3();let radiusSq=0;
  for(let i=0;i<position.count;i++){point.fromBufferAttribute(position,i);radiusSq=Math.max(radiusSq,sphere.center.distanceToSquared(point));}
  sphere.radius=Math.sqrt(radiusSq);
@@ -83,7 +84,7 @@ export function nativeDisplay(data,textures,quality){
    mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&opacity==='r'?'r':'g'}-${mat.roughnessMap&&rough==='r'?'r':'g'}`;mat.name=o.material;cache.set(o.material,mat);materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null);
+  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
   // Bounds are final above and nothing raycasts the display: once the GPU
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).
   inter.onUpload(releaseArray);g.index.onUpload(releaseArray);
@@ -112,10 +113,11 @@ export function nativeDisplay(data,textures,quality){
   mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
  }
  return {group,currentTextures(){return liveTextures;},updateTextures(next,quality){
-  for(const [name,mat] of cache){const src=m.materials[name]||{};mat.map=next.get(src.albedo)||null;mat.alphaMap=next.get(src.maps?.opacity)||null;
-   mat.normalMap=quality==='high'?(next.get(src.maps?.normal)||null):null;mat.normalScale.set(.28,.28);
-   mat.roughnessMap=quality==='high'?(next.get(src.maps?.roughness)||null):null;mat.emissiveMap=quality==='high'?(next.get(src.maps?.emissive)||null):null;
-   mat.emissive.set(mat.emissiveMap?0xffffff:0x000000);mat.emissiveIntensity=.13;mat.needsUpdate=true;
+  for(const [name,mat] of cache){const src=m.materials[name]||{},map=next.get(src.albedo)||null,alpha=next.get(src.maps?.opacity)||null,
+   normal=quality==='high'?(next.get(src.maps?.normal)||null):null,rough=quality==='high'?(next.get(src.maps?.roughness)||null):null,emissive=quality==='high'?(next.get(src.maps?.emissive)||null):null;
+   const changed=mat.map!==map||mat.alphaMap!==alpha||mat.normalMap!==normal||mat.roughnessMap!==rough||mat.emissiveMap!==emissive;
+   mat.map=map;mat.alphaMap=alpha;mat.normalMap=normal;mat.normalScale.set(.28,.28);mat.roughnessMap=rough;mat.emissiveMap=emissive;
+   mat.emissive.set(emissive?0xffffff:0x000000);mat.emissiveIntensity=.13;if(changed)mat.needsUpdate=true;
   }
   if(liveTextures!==next){
    const retained=new Set(next.values());

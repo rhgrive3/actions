@@ -66,6 +66,13 @@ export async function buildNativeWorld(game,map,current){
  let snapshot=null,published=false,committed=false;
  const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
+ // Watch the detached candidate before its first GPU allocation. The token
+ // belongs to this operation; an old cancellation cannot clear a newer load.
+ game._nativePendingBuild={controller,current};
+ watchNativeContextLoss(G.renderer.domElement,()=>{
+  const pending=game._nativePendingBuild;
+  return !!G.level?.native||!!(pending&&!pending.controller.signal.aborted&&pending.current());
+ });
  try{
   // Pass the authoritative main-thread touch profile: iPadOS can advertise a Macintosh UA in WorkerNavigator.
   // Constrained stages must not clone large derived arrays through IndexedDB during activation.
@@ -106,7 +113,7 @@ export async function buildNativeWorld(game,map,current){
   let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
-  inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
+  inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint,{knownEmpty:true});
   // Link the stage's display/ink programs now (parallel compile where
   // available) instead of synchronously on the first battle frames. Any
   // render target selects the composer's key: linear output, no tone map.
@@ -148,7 +155,6 @@ export async function buildNativeWorld(game,map,current){
   game.stageLightmap=null;game.props=null;
   G.scene.add(display.group,inkMesh);
   applyNativeGpuBudget(game,G,gpuBudget);
-  watchNativeContextLoss(G.renderer.domElement,()=>!!G.level?.native);
   game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
   game.swimWake=wake;game.minimap=minimap;game.nativeWorld=nextWorld;
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
@@ -198,7 +204,7 @@ export async function buildNativeWorld(game,map,current){
    safely(()=>showNativeWorldRecovery(game),'recovery dialog');
   }
   if(error.name!=='AbortError'&&current())throw error;
- }finally{safely(()=>status.close(),'loading status');}
+ }finally{if(game._nativePendingBuild?.controller===controller)game._nativePendingBuild=null;safely(()=>status.close(),'loading status');}
 }
 
 export function releaseNativeWorld(game){
