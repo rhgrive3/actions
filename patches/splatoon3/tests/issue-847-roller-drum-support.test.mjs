@@ -24,7 +24,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3",
+  "patches/splatoon3/runtime/roller.mjs": "ddfc736d86a9df36bcad6d560a0c3a2973df3e9134b8dee8ca2ce9cb96e11611",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
@@ -62,6 +62,16 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     const raw = read(rel);
     assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
     assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
+    if(rel==='patches/splatoon3/runtime/roller.mjs'){
+      // The downhill fix adds only a shared collision-floor import and this
+      // admission fallback. Undo those exact reviewed edits and prove the
+      // entire previous pinned source is byte-identical; no pin is relaxed.
+      const previous=exactFault(exactFault(raw,
+        "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
+        "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
+      assert.equal(createHash('sha256').update(previous).digest('hex'),
+        '121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3', 'previous reviewed #847 roller input');
+    }
     let source = adaptProductionSource(rel, raw);
     if (rel === 'patches/splatoon3/runtime/roller.mjs') {
       source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');

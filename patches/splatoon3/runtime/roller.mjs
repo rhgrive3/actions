@@ -1,3 +1,4 @@
+import { traceRollingFloor } from './rolling-floor.mjs';
 import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { createVerticalShaftReturn } from './roller-vertical-shaft-return.mjs';
@@ -218,6 +219,15 @@ export function rollerDrumSupport(a, G, scratch) {
       scratch.wallPoint.z = scratch.contactPoint.z;
     }
     if (floor && wall) break;
+  }
+  // The lowered drum follows continuous floor, including a descending ramp.
+  // A fixed world-height tolerance mistakes the ramp's forward drop for a
+  // ledge. Reuse the paint path's collision intervals: missing floor or an
+  // actual height discontinuity still rejects support.
+  if (!floor && a.grounded && a.ground?.hit) {
+    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );
+    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);
+    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;
   }
   // On low stage slabs, the actor's admitted ground pose may sit 0.05m
   // above the rendered top. The drum has a 0.4m radius, so an exact

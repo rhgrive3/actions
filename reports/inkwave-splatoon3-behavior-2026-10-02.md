@@ -6448,3 +6448,14 @@ production composition と実 Projectiles・Match を使う `crab-ball-lifecycle
 Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physicsが残り、実ヒープのcanvas context-lossリスナーから最初の読込スコープへの強参照を確認した。判定関数をmodule直下へ移し、現在のG.level.nativeを動的に確認する従来の動作と1canvas1listenerを維持する。古いステージの物理・塗り・navデータを監視コールバックで保持する必要はない。新規の合成済みpublication/GC回帰は全GCアサーションを保持し、旧inline判定だけへ戻す対照でlevel/data保持を再現した。
 
 原典HIGHの読み込み直後には、旧版・途中版ともBC7の400×30 base mipでGL1282を記録した。既存normal上限512が800×60のUASTCソースから同mipを選ぶが、BC系base寸法の4ブロック境界に合わなかった。該当するuniversal KTX2だけ同ソース・同mipのRGBA32へ変換し、寸法・既存cap・色空間・通常の圧縮経路を維持する。RGBAの局所容量増加を記録し、縮小mipやPNG再resizeによる画質低下へ置き換えない。実loadNativeTextures→KTX2Loader→GPUの対照で同400×30、48,000RGBAバイト一致、GL0を確認した。物理・CPU塗り・当たり判定・通信には変更を加えない。
+
+## 2026-10-26: 下り坂ローラー・歩行表示・床／壁の泳ぎ飛沫
+
+基点 `48511150bbaeab182dd04c712d39bd5b26df18f3`。実Actorで下り坂の標準ローラーが
+連続する床を未支持とする問題を再現し、塗り側の衝突面追跡を支持判定と共通化した。
+歩行は表示用の段差スプリングと歩調用の速度だけを平滑化。泳ぎは低速の完全非表示・
+壁除外を修正し、床／壁面を根元に持つ小さなカールと固定数の短い滴へ置換した。
+詳細、再現操作、原作根拠、ソース／生成物／GPUの確認範囲は
+[担当記録](locomotion-surface-20261026/README.md)を参照。
+公式説明は取得できたが、既存比較の公式MP4再取得はHTTP 403で拒否されている。
+本家の未公開の歩行曲線・低速／壁の飛沫曲線の一致は未確認のまま維持する。
