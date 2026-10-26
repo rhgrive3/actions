@@ -1,8 +1,9 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const workflow = readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
+const workflow = expandTestSuiteSteps(readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8'));
 const job = (text, name) => {
   const marker = `  ${name}:\n`, start = text.indexOf(marker, text.indexOf('\njobs:\n'));
   assert.ok(start >= 0, `Missing ${name}`);

@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import {e1fPaintEpochSource} from './fixtures/inkwave-paint-e1f-sources.mjs';
 import {paintEpochSource} from './fixtures/inkwave-paint-source-epochs.mjs';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {verifyDeclaredPaintSources} from '../lib/inkwave-declared-paint-source-p
 import {MAIN_INK_BASELINE_PATHS, planMainInkBaseline} from '../lib/inkwave-main-ink-baseline.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const readWorkflow = name => fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8');
+const readWorkflow = name => expandTestSuiteSteps(fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8'));
 const sourceExpression = '${{ github.event.pull_request.head.sha || github.sha }}';
 // H51 immutable dispatch contract; do not auto-detect or accept legacy moving-main routes.
 const exactBranch = 'inkwave/exact-head-ci-main144-20261022';

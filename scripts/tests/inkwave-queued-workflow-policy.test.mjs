@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,7 +12,7 @@ const workflows = [
   'inkwave-reopened-six.yml',
 ];
 const expression = "${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}";
-const read = name => fs.readFileSync(new URL('../../.github/workflows/' + name, import.meta.url), 'utf8');
+const read = name => expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/' + name, import.meta.url), 'utf8'));
 function policy(source) {
   const blocks = [...source.matchAll(/^concurrency:\n((?:[ \t].*(?:\n|$))*)/gm)];
   assert.equal(blocks.length, 1, 'one workflow-level concurrency policy');

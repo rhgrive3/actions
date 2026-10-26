@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -115,7 +116,7 @@ for (const screenshotFails of [false, true]) test(`completed-stage receipt follo
 
 
 test('required CI explicitly includes diagnostic tests in its existing unit step', () => {
-  const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
+  const workflow = expandTestSuiteSteps(fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8'));
   const step = workflow.match(/- name: Verify motion verifier regressions\n[ \t]+run: ([^\n]+)/);
   assert(step, 'existing required unit step remains present');
   assert.match(step[1], /^node --test /);

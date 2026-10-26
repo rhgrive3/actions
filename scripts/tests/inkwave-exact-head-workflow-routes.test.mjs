@@ -1,3 +1,4 @@
+import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import fs from 'node:fs';
@@ -6,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 const root = new URL('../../', import.meta.url);
 const projectile = fs.readFileSync(new URL('.github/workflows/inkwave-projectile-visuals.yml', root), 'utf8');
-const relay = fs.readFileSync(new URL('.github/workflows/inkwave-relay-security.yml', root), 'utf8');
+const relay = expandTestSuiteSteps(fs.readFileSync(new URL('.github/workflows/inkwave-relay-security.yml', root), 'utf8'));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'workflow-route-'));
 // Stubs exercise workflow shell routing only, not Git identity/source admission itself.
 fs.writeFileSync(path.join(tmp, 'git'), '#!/bin/sh\nprintf "%s\\n" "$ACTUAL_SHA"\n', {mode:0o755});
