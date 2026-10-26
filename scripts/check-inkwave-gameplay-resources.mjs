@@ -46,7 +46,8 @@ try{
  for(let cycle=0;cycle<cycles;cycle++){
   const mapId=maps[cycle%maps.length];phase='start-'+cycle+'-'+mapId;checkpoint();
   if(crabLifecycle)await page.evaluate(()=>{const g=__inkwave,id=Object.keys(g.api.weapons).find(id=>g.api.weapons[id].special==='crabTank');if(!id)throw Error('No real Crab Tank kit');g.profile.weapon=id;});
-  await page.evaluate(({mapId})=>__inkwave.startMatch({mapId,difficulty:'normal',duration:180}),{mapId});
+  // Flow APIs resolve to a Match instance; never serialize its scene/rig graph.
+  await page.evaluate(async({mapId})=>{await __inkwave.startMatch({mapId,difficulty:'normal',duration:180});},{mapId});
   await page.waitForFunction(()=>__G.match?.state==='playing',null,{timeout:180000});
   await page.waitForTimeout(5000);await capture('warm-'+cycle);phase='combat-'+cycle;
   await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
@@ -60,7 +61,7 @@ try{
    phase='crab-active-'+cycle;
    await page.waitForFunction(()=>__G.local?.alive&&!__G.local.specialActive&&!__G.local.superJumpState,null,{timeout:180000});
    await page.evaluate(cycle=>{const a=__G.local;if(a.weapon.special!=='crabTank'||!a.bot)throw Error('Crab setup needs actual kit and native autopilot bot');const original=a.bot.update;a.bot.update=function(dt){const result=original.call(this,dt);const actor=this.a||this.actor||__G.local;actor.intent.squid=true;actor.intent.fire=actor.intent.sub=actor.intent.special=actor.intent.jump=false;actor.intent.move.set(0,0,0);return result;};__watchCrabBall(a,cycle);a.special=a.specialCost();a._startSpecial();if(a.specialActive?.id!=='crabTank')throw Error('Crab activation rejected');},cycle);
-   await page.waitForFunction(()=>__G.local?._s3AllSpecialState?.ballMesh?.parent,null,{timeout:180000});
+   await page.waitForFunction(()=>!!(__G.local?._s3AllSpecialState?.ballMesh?.parent),null,{timeout:180000});
    await capture('crab-active-'+cycle);
    const active=report.windows.at(-1).crab.find(r=>r.cycle===cycle);if(!active?.created||!active.inScene)throw Error('Crab ball not observed before quit');
   }else{
@@ -68,7 +69,7 @@ try{
   await page.waitForFunction(()=>['results','ended'].includes(__G.match?.state)||__G.mode==='results',null,{timeout:180000});
   await page.waitForTimeout(2500);await capture('results-'+cycle);
   }
-  phase='menu-'+cycle;await page.evaluate(()=>__inkwave.quitToMenu());await page.waitForTimeout(5000);await capture('released-'+cycle,true);
+  phase='menu-'+cycle;await page.evaluate(async()=>{await __inkwave.quitToMenu();});await page.waitForTimeout(5000);await capture('released-'+cycle,true);
   if(crabLifecycle){const receipt=report.windows.at(-1).crab.find(r=>r.cycle===cycle);receipt.removedAfterQuit=!receipt.inScene;receipt.disposedAfterQuit=receipt.geometryDisposed>0&&receipt.materialDisposed>0;report.lifecycleStatus=report.windows.filter(w=>w.label.startsWith('released-')).every(w=>{const r=w.crab.find(r=>r.cycle===Number(w.label.slice(9)));return r?.removedAfterQuit&&r?.disposedAfterQuit;})?'released':'leak-observed';checkpoint();}
  }
  phase='final-idle';await page.waitForTimeout(15000);await capture('final',true);report.status=report.errors.length?'failed':'passed';
