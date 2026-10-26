@@ -17,7 +17,7 @@ async function run(source,quality,sourceMode,count=96,{width=8,height=8,limit=4,
   files.set(file,bytes);integrity[file]={bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};
  }
  const names=Object.fromEntries([...files].map(([f,b])=>[b[8],f]));
- class Texture{constructor(image){this.image=image;this.disposed=0;textures.push(this);}dispose(){this.disposed++;}}
+ class Texture extends EventTarget{constructor(image){super();this.image=image;this.disposed=0;textures.push(this);}dispose(){this.disposed++;this.dispatchEvent(new Event('dispose'));}}
  class DataTexture extends Texture{constructor(data,width,height){super({data,width,height});}}
  let reads=0;
  const readbacks=[];
@@ -26,7 +26,7 @@ async function run(source,quality,sourceMode,count=96,{width=8,height=8,limit=4,
  if(pattern){if(n.startsWith('n'))rgba=pattern%3===0?[127,127,1,255]:pattern%3===1?[128,128,0,255]:[(k*13)%256,(k*57)%256,0,255];else if(n.startsWith('r')||n.startsWith('o'))rgba=[pattern%2?2+(k%5):5,pattern%4===0?1:0,0,255];else rgba=[(k*17)%256,(k*61)%256,k%256,k===c.width*64?249:250];}
  bytes.set(rgba,(row*w+col)*4);}return {data:bytes};}};}}
  const counts={materialsValues:0,mapsValues:0},maps=new Set(Object.values(materials).map(m=>m.maps));
- const context=vm.createContext({console,Blob,Uint8Array,Float32Array,Uint32Array,Int32Array,TextDecoder,TextEncoder,DOMException,crypto:{subtle:{digest:async(algorithm,bytes)=>{const b=crypto.createHash(algorithm.toLowerCase().replace('-','')).update(new Uint8Array(bytes)).digest();return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);}}},OffscreenCanvas:Canvas,
+ const context=vm.createContext({AbortController,console,Blob,Uint8Array,Float32Array,Uint32Array,Int32Array,TextDecoder,TextEncoder,DOMException,crypto:{subtle:{digest:async(algorithm,bytes)=>{const b=crypto.createHash(algorithm.toLowerCase().replace('-','')).update(new Uint8Array(bytes)).digest();return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);}}},OffscreenCanvas:Canvas,
   async fetch(url){const name=String(url).split('/').pop();return {ok:true,arrayBuffer:async()=>files.get(name).buffer};},
   async createImageBitmap(input,options){const name=input instanceof Blob?names[new Uint8Array(await input.arrayBuffer())[8]]:input.name;const b={name,width:options.resizeWidth||width,height:options.resizeHeight||height,closed:0,close(){this.closed++;}};bitmaps.push(b);return b;}});
  const values=vm.runInContext('Object.values',context);
