@@ -197,8 +197,11 @@ test('news disposal cancels page/close/open timers, RAF, tween closures and moda
   const code=composed('src/ui/news.js'),cancelled=[],timers=[];
   const dispose=fn(between(code,'  dispose() {','\n}'),'dispose',{clearTimeout:x=>timers.push(x),cancelAnimationFrame:x=>cancelled.push(x)});
   const el={remove(){this.removed=true;}},M={_modal:el};
-  const o={M,el,_pre:[{}],_t:1,_nextTimer:2,_closeTimer:3,_raf:4,_tweens:[()=>{}],card:{},inkHost:{},confetti:{},_busy:true};
+  let heroWaits=0;
+  const o={M,el,_pre:[{}],_t:1,_nextTimer:2,_closeTimer:3,_raf:4,_tweens:[()=>{}],card:{},inkHost:{},confetti:{},_busy:true,
+    _heroWait:()=>heroWaits++, _cancelHeroWait(){const cancel=this._heroWait;this._heroWait=null;cancel?.();}};
   dispose.call(o);dispose.call(o);
+  assert.equal(heroWaits,1,'dispose also releases the registered image load waiter exactly once');
   assert.deepEqual(timers.slice(0,3),[1,2,3]);assert.equal(cancelled[0],4);assert.equal(M._modal,null);assert.equal(o.el,null);assert.equal(o._tweens.length,0);assert.equal(o.card,null);
 });
 
