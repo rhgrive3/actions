@@ -23,7 +23,7 @@ export function readDualiesSample() {
   camera:[...G.camera.position.toArray(),...G.camera.quaternion.toArray(),G.camera.fov],
   fire:a.intent.fire===true,move:[a.intent.move.x,a.intent.move.z],
   keys:Object.fromEntries(['KeyA','KeyD','Space'].map(k=>[k,G.input.down(k)])),
-  dodge:r.dodge?{t:r.dodge.t,dur:r.dodge.dur}:null,lockT:r.lockT,s3Turret:r.s3Turret===true,
+  dodge:r.dodge?{t:r.dodge.t,dur:r.dodge.dur,startup:r.dodge.startup,startupDur:r.dodge.startupDur}:null,lockT:r.lockT,s3Turret:r.s3Turret===true,
   fireStartup:r.s3DualiesStart||0,shotGate:Math.max(r.s3DodgeShotPending||0,r.s3DodgeShotRemaining||0),
   charging:r.charging===true,charge:r.charge||0,ink:a.ink,hand:r.hand,
   sourceFrames:{startup:w.humanoidFirstShotDelay*60,roll:w.rollTime*60,gate:w.rollShotDelay*60,lock:w.lockTime*60},
@@ -41,8 +41,10 @@ export function assertDualiesSample(s,phase,{before=false}={}) {
  assert(!s.charging&&s.charge===0,'Dualies recipe never charges');
  assert(s.position.every(Number.isFinite));
  assert(s.position[0]>13&&s.position[0]<33&&s.position[2]>1&&s.position[2]<21,'remain within the native Dodge Pad');
- for(const [key,value] of Object.entries({startup:4,roll:12,gate:4,lock:32}))
+ // startup here is FIRST FIRE (2F), not the separate issue477 pre-roll (4F).
+ for(const [key,value] of Object.entries({startup:2,roll:12,gate:4,lock:32}))
   assert(Math.abs(s.sourceFrames[key]-value)<1e-6,'source-owned '+key+' frame contract');
+ if(s.dodge)assert(Math.abs(s.dodge.startupDur*60-4)<1e-6,'source-owned separate pre-roll startup is4F');
  assert.equal(s.twins.length,2);assert(s.twins.every(t=>t.radius===6.2),'native twin radii stay 6.2');
  const merged=s.s3Turret&&s.classes.includes('is-lock');
  assert.equal(s.classes.includes('is-lock'),s.s3Turret,'native HUD lock follows actual s3Turret, not lockT');
@@ -50,7 +52,7 @@ export function assertDualiesSample(s,phase,{before=false}={}) {
  if(['idle','release','unlocked'].includes(phase)){assert(!s.fire&&!s.dodge&&!s.s3Turret&&s.lockT<=EPS);}
  if(phase==='fire-startup'){assert(s.fire&&s.fireStartup>EPS&&!s.dodge&&s.events.length===0);}
  if(phase==='firing'){assert(s.fire&&s.events.length>0&&!s.dodge&&!s.s3Turret);assert(s.observedKick,'accepted native shot must retain scale1.55→1/130ms WAAPI kick');}
- if(phase==='rolling'){assert(s.fire&&s.dodge&&s.keys.KeyD);assert(s.classes.includes('is-roll'));}
+ if(phase==='rolling'){assert(s.fire&&s.dodge&&s.dodge.startup<=EPS&&s.dodge.t>0&&s.keys.KeyD);assert(s.classes.includes('is-roll'));}
  if(phase==='post-roll-gate')assert(s.fire&&!s.dodge&&s.shotGate>EPS&&s.s3Turret&&s.lockT>EPS);
  if(phase==='turret-lock')assert(s.fire&&!s.dodge&&s.shotGate<=EPS&&s.s3Turret&&s.lockT>EPS);
  if(phase==='held-after-lock')assert(s.fire&&!s.dodge&&s.s3Turret&&s.lockT<=EPS&&!s.keys.KeyD);

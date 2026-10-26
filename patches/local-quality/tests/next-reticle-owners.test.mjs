@@ -11,6 +11,7 @@ import {WEAPONS as nativeWeapons} from '../../../inkwave-public/src/config.js';
 import {MAIN_WEAPON_CATALOG} from '../../splatoon3/runtime/main-weapon-catalog-data.mjs';
 import {ALTERNATE_WEAPON_KITS} from '../../splatoon3/runtime/alternate-weapon-kits-data.mjs';
 import {registerAlternateWeaponKits} from '../../splatoon3/runtime/alternate-weapon-kits.mjs';
+import {installGear} from '../../splatoon3/runtime/gear.mjs';
 import {applyShotGuide} from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import {selectedSub,selectedSubCost} from '../../splatoon3/runtime/kit-composition.mjs';
 import {chargerScopeFactor} from '../../../inkwave-public/src/game/chargerTuning.js';
@@ -191,7 +192,8 @@ test('Pencil loaded visibility honors no-active-action, strict live/identity gat
     ['dead',f=>f.actor.alive=false],['special',f=>f.actor.specialActive=true],['jump',f=>f.actor.superJumpState={}],
     ['squid',f=>f.actor.form='squid'],['hidden HUD',f=>f.h._visible=false],['world paused',f=>f.h._worldPaused=true],
     ['not live',f=>f.h._live=()=>false],['detached runner actor',f=>f.runner.a={}],
-    ['actor-local weapon copy',f=>f.actor.weapon={...WEAPONS['s3-charger-pencil']}],
+    ['mismatched source record',f=>f.actor.weapon={...WEAPONS['s3-charger-pencil'],catalogRecord:{...WEAPONS['s3-charger-pencil'].catalogRecord}}],
+    ...['id','kind','behaviorKind','modelKind','variantOf'].map(field=>['mismatched view '+field,f=>f.actor.weapon={...WEAPONS['s3-charger-pencil'],[field]:'lookalike'}]),
   ];
   for(const [label,change] of changes){
     const f=rig();loadPencil(f,2);f.draw('s3-charger-pencil',0);assert(!f.h.ret.classList.contains('is-idle'));
@@ -203,4 +205,39 @@ test('Pencil loaded visibility honors no-active-action, strict live/identity gat
   }
   const f=rig();loadPencil(f,2);f.draw('s3-charger-pencil');f.actor.form='squid';f.draw('s3-charger-pencil');assert.equal(f.h.ret.style.visibility,'hidden');
   f.actor.form='kid';f.draw('s3-charger-pencil');assert.equal(f.h.ret.style.visibility,'');assert(!f.h.ret.classList.contains('is-idle'));
+});
+
+// Execute the source-owned gear installer, not a duplicate {...base} fixture.
+function equipNativeGearView(f,id){
+  class Actor { setWeapon(weaponId){this.weaponId=weaponId;this.weapon=WEAPONS[weaponId];} }
+  class WeaponRunner {}
+  class Projectiles {}
+  const tuning=JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json',import.meta.url),'utf8'));
+  installGear({Actor,WeaponRunner,Projectiles,WEAPONS,SUB,G:{match:{},time:0},on(){},emit(){}},tuning);
+  // Non-local controlled actor supplies gear without localStorage/UI dependencies.
+  f.actor.isLocal=false;f.actor.s3={loadout:[
+    {main:'inkSaverMain',subs:['inkSaverMain','none','none']},
+    {main:'specialCharge',subs:['none','none','none']},
+    {main:'none',subs:['none','none','none']},
+  ]};
+  Actor.prototype.setWeapon.call(f.actor,id);
+}
+
+test('actual emitted HUD admits native gear-owned Pencil views and preserves adjusted stats/catalog provenance',()=>{
+  for(const id of ['s3-charger-pencil','s3-charger-pencil-01']){
+    const f=rig();loadPencil(f,4);f.draw(id);equipNativeGearView(f,id);
+    assert.notEqual(f.actor.weapon,WEAPONS[id],'native gear makes actor-local copy');
+    assert.equal(f.actor.weapon.catalogRecord,WEAPONS[id].catalogRecord,'native gear retains exact source provenance');
+    const view=f.actor.weapon,before=f.state();
+    if(Number.isFinite(WEAPONS[id].specialCost))assert(view.specialCost<WEAPONS[id].specialCost,'native gear-adjusted numeric stats remain allowed');
+    assert.equal(pencilLoadedReticleEligible(f.h,id,WEAPONS),true);
+    for(let i=0;i<30;i++)f.h._updCrosshair({weapon:id,charge:0,crosshair:{spread:18.3,inRange:true}},1/60);
+    assert(!f.h.ret.classList.contains('is-idle'),'loaded4/zero-charge actual gear view remains visible');
+    assert(!f.h.ret.classList.contains('is-charging'));assert(!f.h.ret.classList.contains('is-full'));
+    assert.equal(f.actor.weapon,view);assert.equal(f.state(),before,'HUD does not mutate equipped view or gameplay');
+    view.catalogRecord={...view.catalogRecord};
+    f.h._updCrosshair({weapon:id,charge:0,crosshair:{spread:18.3,inRange:true}},1/60);
+    assert(f.h.ret.classList.contains('is-idle'),'record lookalike cannot impersonate registered provenance');
+  }
+  assert.equal(JSON.stringify(WEAPONS),registryBefore);
 });

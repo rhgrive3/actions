@@ -1,20 +1,35 @@
 {
   "schema": 1,
   "baselineSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
-  "state": "run",
+  "state": "armed",
   "scope": "reticle-next-visual-review",
   "fullAcceptance": false,
   "captureProtocol": "chromium-owned-next-native60-mixedrender-v1",
   "suites": [
     "next-shapes",
     "next-dualies",
-    "next-bamboo",
     "next-pencil"
   ],
   "viewport": "desktop",
   "renderPolicy": "native60-render30-dualies60",
-  "runtimeSourceCommit": "a0a39beb520440f81486ac27bf0c0165f02bb2a7",
-  "attempt": 2,
-  "previousRun": 40251760390,
-  "reason": "native pause-resume input admission; runtime unchanged"
+  "attempt": 3,
+  "previousRun": 40253349486,
+  "expectedRuntimeBlobs": {
+    "patches/local-quality/pencil-loaded-visibility-proposal.mjs": "bdd7a0ab6c157f25b94af204c24e9fd79936ce63",
+    "patches/local-quality/dualies-diagonal-prototype.mjs": "5f966749993d5925ddf38c3336f0ad2a0c6214a1",
+    "patches/local-quality/charger-decoration-prototype.mjs": "7de66e5eb06a5efdf061d4974c2bc7ed46a1204e",
+    "patches/local-quality/blaster-diagonal-installer-prototype.mjs": "f7c9ea96954281eb4bedc46e5c998a213c110885",
+    "patches/local-quality/blaster-diagonal-proposal.mjs": "75bb3661aedd516e967eaa90bba2daa95d7f7daf",
+    "patches/local-quality/diagonal-slash-primitive.mjs": "be71f81fa28617469ed4a359fe59085f18cb08d4",
+    "patches/local-quality/slosher-diagonal-installer-prototype.mjs": "9f712d45177323d72a838b75eef58078ed1ac2e6",
+    "patches/local-quality/slosher-diagonal-proposal.mjs": "ab09d3b78980adee0b638c99ccad683b7737373f",
+    "patches/local-quality/splatling-reticle-corners.mjs": "96870ade7760d2968befaea16e030a7ab856d131",
+    "patches/local-quality/weapon-reticle-geometry.mjs": "a65a55273f6c7a5947c796cb4079d07f665c044f",
+    "patches/local-quality/weapon-reticle-installer.mjs": "abb4186d6f30226efa7ba5a632b9ec5eff71fdc5",
+    "patches/local-quality/weapon-reticle-presentation.mjs": "00d71cbdaf9b5942b0ba885f16a042dd2836a560",
+    "scripts/inkwave-source-composition.mjs": "c7b7cf30ab2d866bc01bb96d75f2c4273f7932c9",
+    "patches/splatoon3/weapon-catalog-adapter.mjs": "dbf44f88901719de787f107dcaff3f67959292a9"
+  },
+  "expectedCandidateContentHash": "9f48932c68c44f0b44581087eda18bb9002f59b6cbb6b36655369862ddd715f8",
+  "expectedBaselineContentHash": "83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898"
 }

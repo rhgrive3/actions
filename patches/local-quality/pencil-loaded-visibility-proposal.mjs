@@ -8,14 +8,18 @@ export function pencilLoadedReticleEligible(hud,weaponId,registry){
  if(!hud||hud._visible!==true||hud._worldPaused===true||hud._live?.()!==true||
     hud._L?.weapon!==weaponId||hud._L?.kind!=='charger'||typeof weaponId!=='string'||
     !registry||!Object.hasOwn(registry,weaponId))return false;
- const w=registry[weaponId],a=hud._local?.(),r=a?.weaponRunner,s=r?.catalogState;
+ const w=registry[weaponId],a=hud._local?.(),view=a?.weapon,r=a?.weaponRunner,s=r?.catalogState;
  const baseId=w?.variantOf||weaponId,base=registry['s3-charger-pencil'];
  if(baseId!=='s3-charger-pencil'||!Object.hasOwn(registry,'s3-charger-pencil')||
-    base?.id!=='s3-charger-pencil'||base.kind!=='catalog'||base.behaviorKind!=='charger'||base.modelKind!=='charger'||w?.id!==weaponId||a?.weaponId!==weaponId||a.weapon!==w||
+    base?.id!=='s3-charger-pencil'||base.kind!=='catalog'||base.behaviorKind!=='charger'||base.modelKind!=='charger'||w?.id!==weaponId||a?.weaponId!==weaponId||
+    !view||view.id!==w.id||view.kind!==w.kind||view.behaviorKind!==w.behaviorKind||
+    view.modelKind!==w.modelKind||view.variantOf!==w.variantOf||view.catalogRecord!==w.catalogRecord||
     w.kind!=='catalog'||w.behaviorKind!=='charger'||w.modelKind!=='charger'||
     w.catalogRecord!==base.catalogRecord||w.catalogRecord?.id!==baseId||w.catalogRecord.family!=='charger'||
     !a.alive||a.form!=='kid'||a.specialActive||a.superJumpState||r?.a!==a||r.aimingSub||
     r.charging!==false||r.streaming!==false||r.charge!==0||s?.id!==baseId||s.chargeF!==0||s.pending||s.stored)return false;
+ // Gear owns an actor-local shallow weapon view and adjusts numeric stats.
+ // Match catalog provenance and identity fields, not the canonical object.
  const max=w.catalogRecord.parameters?.WeaponDivideChargerParam?.FullChargeDivideNum;
  return Number.isInteger(max)&&max>1&&Number.isInteger(s.rounds)&&s.rounds>0&&s.rounds<max;
 }

@@ -1,3 +1,4 @@
+import {SUPPORTED_CAPTURE_SUITES} from '../lib/reticle-next/suite-plan.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -39,7 +40,9 @@ test('production capture keeps exact source and recipe identity, original PNGs, 
 });
 test('next workflow is isolated, source-pinned, all four siblings independent and no mobile/retail/full gate claim',()=>{
  assert.match(workflow,/paths: \['diagnostics\/inkwave-reticle-next-visuals\.trigger\.json'\]/);
- assert.match(workflow,/suite: \[next-shapes, next-dualies, next-bamboo, next-pencil\]/);
+ assert.deepEqual(SUPPORTED_CAPTURE_SUITES,NEXT_SUITES);
+ assert(workflow.includes('matrix: ${{ fromJSON(needs.plan_suites.outputs.matrix) }}'));
+ assert.match(workflow,/needs: plan_suites/);
  assert.match(workflow,/BASELINE_SHA: e0072a749df0ec8c2d368e383bdf337baa7b44ad/);
  assert.match(workflow,/ref: e0072a749df0ec8c2d368e383bdf337baa7b44ad/);
  assert.match(workflow,/ref: \$\{\{ github\.sha \}\}/);assert.match(workflow,/fail-fast: false/);

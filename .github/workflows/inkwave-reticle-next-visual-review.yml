@@ -13,21 +13,53 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  plan_suites:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/improve/inkwave-weapon-reticles-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on invalid suite selection before browser matrix expansion
+        id: plan
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node --test scripts/tests/reticle-suite-plan.test.mjs
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {planCaptureTrigger} from './scripts/lib/reticle-next/suite-plan.mjs';
+          const trigger=JSON.parse(fs.readFileSync('diagnostics/inkwave-reticle-next-visuals.trigger.json'));
+          const matrix=planCaptureTrigger(trigger,{sourceSha:process.env.SOURCE_SHA});
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,'matrix='+JSON.stringify(matrix)+'\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'Selected isolated reticle suites: '+matrix.include.map(row=>row.suite).join(', ')+'. Unselected suites are not rerun; prior evidence is not relabeled as this head.\n');
+          NODE
   reticle-browser-review:
+    needs: plan_suites
     if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/improve/inkwave-weapon-reticles-20261025'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       max-parallel: 3
-      matrix:
-        suite: [next-shapes, next-dualies, next-bamboo, next-pencil]
+      matrix: ${{ fromJSON(needs.plan_suites.outputs.matrix) }}
     timeout-minutes: 40
     env:
       SOURCE_SHA: ${{ github.sha }}
       BASELINE_SHA: e0072a749df0ec8c2d368e383bdf337baa7b44ad
       EVIDENCE: .qa-evidence/reticle-next-visual-review/${{ matrix.suite }}
       CAPTURE_SUITE: ${{ matrix.suite }}
-      CAPTURE_RENDER_HZ: ${{ matrix.suite == 'next-dualies' && '60' || '30' }}
+      CAPTURE_RENDER_HZ: ${{ matrix.renderHz }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +83,9 @@ jobs:
           assert.equal(trigger.state,'run');
           assert.equal(trigger.scope,'reticle-next-visual-review');
           assert.equal(trigger.captureProtocol,'chromium-owned-next-native60-mixedrender-v1');
-          assert.deepEqual(trigger.suites,['next-shapes','next-dualies','next-bamboo','next-pencil']);
+          const {planCaptureTrigger}=await import('./scripts/lib/reticle-next/suite-plan.mjs');
+          const plan=planCaptureTrigger(trigger,{sourceSha:process.env.SOURCE_SHA});
+          assert(plan.include.some(row=>row.suite===process.env.CAPTURE_SUITE&&row.renderHz===Number(process.env.CAPTURE_RENDER_HZ)),'matrix job must be selected by this exact trigger');
           assert.equal(trigger.viewport,'desktop');assert.equal(trigger.renderPolicy,'native60-render30-dualies60');
           assert.equal(trigger.fullAcceptance,false);
           NODE
@@ -69,7 +103,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs scripts/tests/inkwave-reticle-next-visual-review.test.mjs scripts/tests/reticle-next-charger-recipe.test.mjs scripts/tests/reticle-next-dualies-recipe.test.mjs scripts/tests/reticle-native-input-admission.test.mjs patches/local-quality/tests/next-reticle-owners.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
+          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs scripts/tests/inkwave-reticle-next-visual-review.test.mjs scripts/tests/reticle-next-charger-recipe.test.mjs scripts/tests/reticle-next-dualies-recipe.test.mjs scripts/tests/reticle-next-dualies-source-owners.test.mjs scripts/tests/reticle-native-input-admission.test.mjs scripts/tests/reticle-suite-plan.test.mjs scripts/tests/reticle-shapes-capture-settlement-unit.test.mjs patches/local-quality/tests/next-reticle-owners.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
+      - name: Verify shape CSS settlement in controlled real-browser contracts (not game acceptance)
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test scripts/tests/reticle-shapes-capture-settlement.test.mjs 2>&1 | tee "$EVIDENCE/shapes-settlement-browser-contracts.log"
       - name: Check out immutable main comparison
         uses: actions/checkout@v4
         with:
@@ -98,14 +138,14 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public "$RUNNER_TEMP/reticle-candidate-site" 2>&1 | tee "$EVIDENCE/candidate-build.log"
           node --input-type=module <<'NODE'
           import fs from 'node:fs';import assert from 'node:assert/strict';
-          const expected={baseline:'83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898',candidate:'d8c9728a31eaf5a01015527cec272e677557f1ff4a6a646fa4fbd5e6cfc22aaf'};
+          const expected={baseline:'83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898',candidate:'9f48932c68c44f0b44581087eda18bb9002f59b6cbb6b36655369862ddd715f8'};
           const actual={};
           for(const head of ['baseline','candidate']){
             const build=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/reticle-'+head+'-site/inkwave-build.json'));
             actual[head]={contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build?.revision};
-            assert.equal(build.contentHash,expected[head],'harness-only retry must preserve production '+head+' bytes');
+            assert.equal(build.contentHash,expected[head],'exact independent production rebuild must match '+head+' bytes');
           }
-          fs.writeFileSync(process.env.EVIDENCE+'/content-hash-preservation.json',JSON.stringify({priorRun:40251760390,expected,actual},null,2));
+          fs.writeFileSync(process.env.EVIDENCE+'/content-hash-preservation.json',JSON.stringify({priorReferenceRun:40251760390,rebuildProofSha256:'f6d136c7668cd1b0fe1deedbfc83aa4bd86867877b61662e4d1f710690bdb637',candidateChange:'Pencil native gear-owned view eligibility only',expected,actual},null,2));
           NODE
       - name: Capture actual baseline game and production HUD
         id: baseline-capture
