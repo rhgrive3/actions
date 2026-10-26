@@ -73,11 +73,10 @@
     }
   },
   "pending": [
-    "verified reticle #575 strict audio-adapter fixture follow-up",
-    "verified effects worker branch and completed visual work",
-    "private original Stringer reference review (no reference media copied to this repository)",
-    "final combined build, emitted checks and review",
-    "one PR only after parent authorizes readiness"
+    "final combined source/build/emitted/browser checks",
+    "Hissen/slosher unfinished work and original-comparison scope review",
+    "one draft PR; no merge until reviewed",
+    "required automatic CI on eventual final head"
   ],
   "remoteActions": {
     "prCreated": false,
@@ -96,7 +95,13 @@
     "sourceConflicts": [],
     "reportConflict": "All charge/movement/reticle entries retained",
     "retailInnerMarkerCutoffVerified": false,
-    "pending575FixtureFollowup": true
+    "pending575FixtureFollowup": false,
+    "fixture575Followup": {
+      "verifiedSource": "ad38e1f96bb2938f879b7fd0276f344bdbee65c7",
+      "integrated": "692dcc486",
+      "assertions": "six exact keys, normal/turret, left/right, replay/dedup retained"
+    },
+    "cutoffRuntimeStatus": "Excluded by integration review in 1ad7af7b3; full-flight marker admission retained pending original UI evidence"
   },
   "stringerOriginalReview": {
     "source": "Independent parent-supplied reviewer of a private original Tri clip; media and private locator not copied into the repository",
@@ -115,5 +120,19 @@
       "ordinary-input comparison of final INKWAVE build"
     ],
     "nativeStyleCorrection": "Removed stage-owned stroke/opacity overrides; stage installer now modifies progress and the existing pulse only"
+  },
+  "effectsHandoff": {
+    "verifiedBranch": "codex/slosher-bomb-handoff-20261026-67ea075-4d8f2a9c",
+    "verifiedHead": "67ea07501387f282464ac8b76d93842650c976d1",
+    "cherryPicks": {
+      "6370967b31ac51d0f8955800cde701bdcd4c835c": "2b39bb96fc6f10ae11f72452ea0faebdd785f706",
+      "8fc7b34848bdb84d150f29845570eb638ed7da95": "97c0281053a322a8c408fb15bd5b6e6d8aa8247c",
+      "67ea07501387f282464ac8b76d93842650c976d1": "7f0ec3e5ebe53d351063de0b8410914553c09004"
+    },
+    "scope": "Dread Wringer birth origin and native bomb cues only",
+    "unfinished": [
+      "Hissen main size",
+      "Slosher floor-drop visual correction"
+    ]
   }
 }
