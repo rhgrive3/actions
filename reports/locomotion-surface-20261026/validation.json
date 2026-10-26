@@ -44,20 +44,24 @@
       "skipped": 0
     },
     "roller-before-control": {
-      "file": "reports/locomotion-surface-20261026/logs/roller-before-control.log",
-      "sha256": "7821ef639fa536cc1f394c423a0b3bb7f767e5381cf2a3fbd73df2019128e23a",
+      "file": "reports/locomotion-surface-20261026/logs/roller-before-control.raw.log.gz",
+      "sha256": "d9b3da60e3b7603e30c68f585dbe32c135644ca6fde71156a39d5d735a3dd586",
       "tests": 3,
       "pass": 0,
       "fail": 3,
-      "skipped": 0
+      "skipped": 0,
+      "rawSha256": "7821ef639fa536cc1f394c423a0b3bb7f767e5381cf2a3fbd73df2019128e23a",
+      "encoding": "gzip; exact raw test output"
     },
     "related-source-initial": {
-      "file": "reports/locomotion-surface-20261026/logs/related-source-initial.log",
-      "sha256": "4c15e415ea5d98190351efb6b9d672f730f0aafb1e743d6c97d4c5b8e3628036",
+      "file": "reports/locomotion-surface-20261026/logs/related-source-initial.raw.log.gz",
+      "sha256": "9362b58a95d34e38638d525bbd4206c8a63402158f31caebff8ed7fc6aca7426",
       "tests": 41,
       "pass": 34,
       "fail": 2,
-      "skipped": 5
+      "skipped": 5,
+      "rawSha256": "4c15e415ea5d98190351efb6b9d672f730f0aafb1e743d6c97d4c5b8e3628036",
+      "encoding": "gzip; exact raw test output"
     },
     "roller-847-reviewed": {
       "file": "reports/locomotion-surface-20261026/logs/roller-847-reviewed.log",
