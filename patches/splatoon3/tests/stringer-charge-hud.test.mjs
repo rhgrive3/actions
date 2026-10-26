@@ -9,7 +9,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 const rows=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='stringer');
 function hud(){
-  const circle={style:{}},track={style:{}},classes=new Set(),flashes=[];
+  const circle={style:{stroke:'native-arc'}},track={style:{stroke:'native-gray',opacity:'.45'}},classes=new Set(),flashes=[];
   const h={_chargeEl:circle,_chargeC:Math.PI*50,ret:{dataset:{},
     classList:{add:k=>classes.add(k),remove:k=>classes.delete(k),toggle(k,on){on?classes.add(k):classes.delete(k);}},
     querySelector:key=>key==='.iw-ret__track'?track:null},_restart:(_ret,name)=>flashes.push(name)};
@@ -21,14 +21,14 @@ test('every Stringer kit fills the existing native circle once per actual charge
     const weapon=Object.freeze({id,catalogRecord:row}),p=row.parameters.spl__WeaponStringerParam.ChargeParam;
     const {h,circle,track,flashes,classes}=hud(),boundary=p.ChargeFrameMidCharge/p.ChargeFrameFullCharge;
     updateStringerChargeHud(h,weapon,boundary/2);close(+circle.style.strokeDashoffset,h._chargeC*.5,id+' first lap');
-    assert.equal(h.ret.dataset.chargeStage,'first');assert.equal(track.style.opacity,'');
+    assert.equal(h.ret.dataset.chargeStage,'first');assert.equal(track.style.opacity,'.45');
     updateStringerChargeHud(h,weapon,boundary);close(+circle.style.strokeDashoffset,h._chargeC,id+' second lap begins empty');
-    assert.equal(h.ret.dataset.chargeStage,'second');assert.equal(track.style.opacity,'1');assert.equal(circle.style.stroke,'#fff');
+    assert.equal(h.ret.dataset.chargeStage,'second');assert.equal(track.style.opacity,'.45');assert.equal(track.style.stroke,'native-gray');assert.equal(circle.style.stroke,'native-arc');
     assert.equal(flashes.length,1,id+' first completion flashes once');assert.equal(classes.has('is-full'),false);
     updateStringerChargeHud(h,weapon,(1+boundary)/2);close(+circle.style.strokeDashoffset,h._chargeC*.5,id+' second lap');
     updateStringerChargeHud(h,weapon,1);close(+circle.style.strokeDashoffset,0,id+' full');assert.ok(classes.has('is-full'));
     updateStringerChargeHud(h,weapon,1);assert.equal(flashes.length,1,'HUD does not add a duplicate full-charge flash');
-    updateStringerChargeHud(h,weapon,0);close(+circle.style.strokeDashoffset,h._chargeC,id+' reset');assert.equal(track.style.opacity,'');assert.equal(classes.has('is-full'),false);
+    updateStringerChargeHud(h,weapon,0);close(+circle.style.strokeDashoffset,h._chargeC,id+' reset');assert.equal(track.style.opacity,'.45');assert.equal(classes.has('is-full'),false);
     assert.equal(h._chargeEl,circle);assert.equal(h.ret.querySelector('.iw-ret__track'),track,'same native geometry owns both laps');
   }
 });
@@ -39,9 +39,9 @@ test('HUD wrapper preserves native projection, calls and return values, and clea
   class HUD { _updCrosshair(frame,dt){nativeCalls++;this.projected=[frame.crosshair.guide.x,dt];return 71;} }
   installStringerChargeHud(HUD,{bow,shooter});installStringerChargeHud(HUD,{bow,shooter});Object.setPrototypeOf(h,HUD.prototype);
   assert.equal(h._updCrosshair({weapon:'bow',charge:.8,crosshair:{guide:{x:37}}},1/120),71);
-  assert.deepEqual(h.projected,[37,1/120]);assert.equal(nativeCalls,1);assert.equal(track.style.opacity,'1');
+  assert.deepEqual(h.projected,[37,1/120]);assert.equal(nativeCalls,1);assert.equal(track.style.opacity,'.45');
   h._updCrosshair({weapon:'shooter',charge:0,crosshair:{guide:{x:-13}}},1/30);
-  assert.deepEqual(h.projected,[-13,1/30]);assert.equal(nativeCalls,2);assert.equal(track.style.opacity,'');assert.equal(circle.style.stroke,'');
+  assert.deepEqual(h.projected,[-13,1/30]);assert.equal(nativeCalls,2);assert.equal(track.style.opacity,'.45');assert.equal(track.style.stroke,'native-gray');assert.equal(circle.style.stroke,'native-arc');
   assert.equal(h._stringerChargeHud,null);assert.equal(h.ret.dataset.chargeStage,undefined);
 });
 

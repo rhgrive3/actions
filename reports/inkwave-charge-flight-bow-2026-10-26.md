@@ -170,8 +170,8 @@ It wraps the completed native `_updCrosshair` method after projection, scope and
 input feedback have run. No Shooter/Dualies projection hunk is rewritten.
 
 The native circle and track stay at radius 25. The same circle fills from 0 to 1
-on the first clock, then from 0 to 1 on the second clock; the existing track
-retains the completed first-lap color while the second lap fills in white.
+on the first clock, then from 0 to 1 on the second clock. The native track and
+arc colors/opacity are never overridden by the stage installer.
 Release resets both semantics and weapon switching clears the styling. A first
 boundary flash reuses the existing HUD animation. No new concentric circle,
 marker, path or CSS is added. An initial uncommitted extra-ring proposal was
@@ -187,12 +187,14 @@ component check is not ordinary-input or original-game visual proof.
 
 
 Independent original-reference review update: the parent supplied an independent
-reviewer's preliminary inspection of all 31 frames of a private original
-Tri-Stringer clip. The reviewer saw one annular progress track, a white arc
-advancing on the same gray annulus in frames 3–10, and a flash in that same
-annular region at frame 11. This supports retaining the native single-circle
-geometry and rejecting an additional concentric progress circle. It does not
-establish the exact stage fractions, every stage transition, or pixel/color/
-timing equivalence. The final narrow reviewer verdict remains pending. This
-agent has not independently viewed that private clip; no private locator or
-reference media is included here.
+reviewer's final narrow inspection of all 31 frames of a private original
+Tri-Stringer clip. Zero-based frame 0 has a gray annulus; frame 1 has a yellow
+center/halo pulse; frames 2–10 show a growing clockwise white arc on the same
+gray annulus; frames 11–16 show a full white annulus while the center/halo fades.
+Unfilled portions in frames 3–9 remain gray. This supports retaining the native
+single-circle geometry and rejects both an additional concentric progress ring
+and a newly invented persistent completed-first-stage track color. The latter
+color was removed from the stage installer, and focused checks now preserve
+the native track and arc styling. Exact stage fractions, the complete cycle,
+and pixel/timing parity remain unobserved. This agent has not independently
+viewed the private clip; no private locator or reference media is included here.

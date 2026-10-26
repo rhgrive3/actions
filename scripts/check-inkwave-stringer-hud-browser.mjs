@@ -68,7 +68,8 @@ try{
     assert.equal(r.stage,r.label==='Full'?'full':r.label==='First ready'||r.label==='Second half'?'second':'first');
     assert.equal(r.circleRadius,'25');assert.equal(r.trackRadius,'25');assert.equal(r.addedSecondCircle,false);
     assert.equal(r.actorUnchanged,true);assert.equal(+r.scopeOpacity,0);
-    assert.equal(r.trackOpacity,r.label==='First ready'||r.label==='Second half'||r.label==='Full'?'1':'');
+    assert.equal(r.trackOpacity,'',r.id+' native track opacity remains CSS-owned');
+    assert.equal(r.stroke,'',r.id+' native arc stroke remains CSS-owned');
   }
   await page.screenshot({path:path.join(out,'stages.png'),fullPage:true});
   assert.deepEqual(receipt.errors,[]);receipt.passed=true;console.log(JSON.stringify({passed:true,cases:receipt.rows.length,contentHash:receipt.contentHash,out}));

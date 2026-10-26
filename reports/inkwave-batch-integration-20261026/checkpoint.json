@@ -34,7 +34,8 @@
       "nativeChargeRadius": 25,
       "nativeTrackRadius": 25,
       "retailParity": false,
-      "ordinaryInput": false
+      "ordinaryInput": false,
+      "status": "prior checkpoint superseded for color by the native-style correction; final combined rerun pending"
     },
     "build": "passed",
     "startupBudget": "passed",
@@ -64,6 +65,11 @@
       "nativeDynamicImportWarnings": "Existing VM source-motion fallback; not browser or retail visual proof.",
       "quick": "passed",
       "emittedAfterThisMerge": "pending final combined build"
+    },
+    "bowHudNativeStyleSource": {
+      "passed": 3,
+      "failed": 0,
+      "nativeTrackAndArcStyleUnchanged": true
     }
   },
   "pending": [
@@ -96,16 +102,18 @@
     "source": "Independent parent-supplied reviewer of a private original Tri clip; media and private locator not copied into the repository",
     "reviewedFrames": 31,
     "preliminaryObservations": [
-      "One visible annular progress track; no added concentric charge-progress ring",
-      "Frames 3-10: a white arc grows on the same gray annulus",
-      "Frame 11: flash in that same annular region"
+      "Frame 0 gray annulus; frame 1 yellow center/halo pulse",
+      "Frames 2-10 white arc grows clockwise on the same gray annulus",
+      "Frames 11-16 full white annulus while center/halo fades",
+      "Unfilled parts in frames 3-9 remain gray; no persistent completed-first-stage color"
     ],
-    "status": "preliminary structural support for retaining existing geometry; final narrow verdict pending",
+    "status": "final narrow structural/color verdict; exact stages and timing remain unobserved",
     "notEstablished": [
       "exact stage fractions",
       "all first/second/full stage transitions",
       "pixel/layout/color/timing parity",
       "ordinary-input comparison of final INKWAVE build"
-    ]
+    ],
+    "nativeStyleCorrection": "Removed stage-owned stroke/opacity overrides; stage installer now modifies progress and the existing pulse only"
   }
 }
