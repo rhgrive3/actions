@@ -12,6 +12,13 @@ import { NativeInkMesh } from './native-ink-chunks.mjs';
 import { nativeStageTextureCaps } from './native-texture-budget.mjs';
 import { nativeGpuTier,nativeRenderCaps,nativeTextureProfile,nativeCompressedTextureSupport,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
 import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
+// The WebGL context-loss listener persists across stage changes. It must never
+// close over a single build's World/Level/Physics or its Promise scope.
+let ACTIVE_NATIVE_PENDING = null;
+function nativeStageActive(){
+ const pending=ACTIVE_NATIVE_PENDING;
+ return !!G.level?.native||!!(pending&&!pending.controller.signal.aborted&&pending.current());
+}
 
 // Snapshot keeps the previous playable world alive until every fallible
 // publication step has completed. Never dispose active resources first.
@@ -68,11 +75,10 @@ export async function buildNativeWorld(game,map,current){
  const status=sourceLoadingStatus(map.name);
  // Watch the detached candidate before its first GPU allocation. The token
  // belongs to this operation; an old cancellation cannot clear a newer load.
- game._nativePendingBuild={controller,current};
- watchNativeContextLoss(G.renderer.domElement,()=>{
-  const pending=game._nativePendingBuild;
-  return !!G.level?.native||!!(pending&&!pending.controller.signal.aborted&&pending.current());
- });
+ const pendingBuild={controller,current};
+ game._nativePendingBuild=pendingBuild;
+ ACTIVE_NATIVE_PENDING=pendingBuild;
+ watchNativeContextLoss(G.renderer.domElement,nativeStageActive);
  try{
   // Pass the authoritative main-thread touch profile: iPadOS can advertise a Macintosh UA in WorkerNavigator.
   // Constrained stages must not clone large derived arrays through IndexedDB during activation.
@@ -204,7 +210,11 @@ export async function buildNativeWorld(game,map,current){
    safely(()=>showNativeWorldRecovery(game),'recovery dialog');
   }
   if(error.name!=='AbortError'&&current())throw error;
- }finally{if(game._nativePendingBuild?.controller===controller)game._nativePendingBuild=null;safely(()=>status.close(),'loading status');}
+ }finally{
+  if(game._nativePendingBuild===pendingBuild)game._nativePendingBuild=null;
+  if(ACTIVE_NATIVE_PENDING===pendingBuild)ACTIVE_NATIVE_PENDING=null;
+  safely(()=>status.close(),'loading status');
+ }
 }
 
 export function releaseNativeWorld(game){
