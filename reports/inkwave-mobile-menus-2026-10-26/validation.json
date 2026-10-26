@@ -1,0 +1,4902 @@
+{
+  "sourceCommit": "f9fbeb62705c4d4b7b8d21ea1fd8d697e1332baf",
+  "baseCommit": "e781229bac5e8ba61f9bcf7f1c965e54db55afb4",
+  "rebasedOn": "693e42a",
+  "inputHash": "dd7959f6b44f43d343aad1df3d23045242ba5678c0ea4b30ec1d8d79c32bb89c",
+  "contentHash": "68fc3597dea7b0d07509b390000ff59d008da1064e8524d3901a7c73e8b1dec6",
+  "buildRevision": "dd36006ecc6eead868041b45765f248eb9d82ea30c0188efdff32d6279d82dc4",
+  "sourceSha256": {
+    "patches/splatoon3/runtime/menu-layout.mjs": "dd7061873c039283796bfeb106d1975aa40ceda9c93c65259b5e5002e54cd692",
+    "patches/splatoon3/ui.css": "fc7503afdca5516e2ab3974e3c929fe9650d40fca02ceb2594e2ee55cf58d7e6",
+    "scripts/check-inkwave-mobile-menus.mjs": "5b466c0a96b80829a49eddd017c904151923554ab3ef61696a6afac5fc6fd90a"
+  },
+  "realDeviceVerified": false,
+  "liveMatchVerified": false,
+  "browserFixture": "Production emitted Menus, CSS and installers; offline recorded match/network API",
+  "playwright": "1.62.1",
+  "chromium": "154.0.8037.57",
+  "webkitBundle": "webkit-2336 / 26.5",
+  "browsers": {
+    "chromium": {
+      "status": "passed",
+      "engine": "chromium",
+      "viewportModel": "mobile-emulation",
+      "assertions": 242,
+      "cases": [
+        {
+          "name": "small-phone",
+          "width": 320,
+          "height": 568,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.1875,
+                "width": 276,
+                "height": 205.828125,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 318.015625,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 518.25,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 718.484375,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 918.71875,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1118.953125,
+                "width": 276,
+                "height": 205.828125,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 399.109375,
+                "width": 129,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 165,
+                "y": 399.109375,
+                "width": 129,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 457.109375,
+                "width": 268,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 25.57000732421875,
+                "y": 416.7850036621094,
+                "width": 280.05999755859375,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 482,
+                "width": 129,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 165,
+                "y": 482,
+                "width": 129,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 25.57000732421875,
+                "y": 424.7850036621094,
+                "width": 280.05999755859375,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 490,
+                "width": 129,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "phone",
+          "width": 390,
+          "height": 844,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.1875,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 275.046875,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 457.90625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 640.765625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 823.625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1006.484375,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 675.109375,
+                "width": 164,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 200,
+                "y": 675.109375,
+                "width": 164,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 733.109375,
+                "width": 338,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 23.995010375976562,
+                "y": 692.7849731445312,
+                "width": 353.21002197265625,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 758,
+                "width": 164,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 200,
+                "y": 758,
+                "width": 164,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 23.995010375976562,
+                "y": 700.7849731445312,
+                "width": 353.21002197265625,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 766,
+                "width": 164,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: turf",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: zones",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: tower",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: rainmaker",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: clams",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: boss",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: tidewater",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: kelpline",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: halyard",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: scorch",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: hagglefish",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: inkblot",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: mako",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: brinewater",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: airport",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: barnacle",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: bluefin",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: crableg",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: eeltail",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: flounder",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: hammerhead",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: humpback",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: manta",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: mincemeat",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: museum",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: robo",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: shipshape",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: sturgeon",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: umami",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: undertow",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: urchin",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: wahoo",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "android",
+          "width": 360,
+          "height": 640,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.1875,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 274.421875,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 456.65625,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 638.890625,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 821.125,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1003.359375,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 471.109375,
+                "width": 149,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 185,
+                "y": 471.109375,
+                "width": 149,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 529.109375,
+                "width": 308,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 24.670013427734375,
+                "y": 488.7850036621094,
+                "width": 321.8599853515625,
+                "height": 56.429962158203125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 554,
+                "width": 149,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 185,
+                "y": 554,
+                "width": 149,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 24.670013427734375,
+                "y": 496.7850036621094,
+                "width": 321.8599853515625,
+                "height": 56.429962158203125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 562,
+                "width": 149,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "short-landscape",
+          "width": 568,
+          "height": 320,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.1875,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 294,
+                "y": 92.1875,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 344.875,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 294,
+                "y": 344.875,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 597.5625,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 294,
+                "y": 597.5625,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 24,
+                "y": 236.421875,
+                "width": 152.71875,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 184.71875,
+                "y": 236.421875,
+                "width": 122.1875,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 314.90625,
+                "y": 218.859375,
+                "width": 229.09375,
+                "height": 83.140625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 27.88011932373047,
+                "y": 232.60499572753906,
+                "width": 172.76788330078125,
+                "height": 64.78999328613281,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 201.328125,
+                "y": 234,
+                "width": 165.328125,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 376.65625,
+                "y": 234,
+                "width": 165.328125,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 27.88011932373047,
+                "y": 240.78500366210938,
+                "width": 172.76788330078125,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 201.328125,
+                "y": 242,
+                "width": 165.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "landscape",
+          "width": 844,
+          "height": 390,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 26.25,
+                "y": 101.953125,
+                "width": 385.75,
+                "height": 242.109375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 432,
+                "y": 101.953125,
+                "width": 385.75,
+                "height": 242.109375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 26.25,
+                "y": 364.0625,
+                "width": 385.75,
+                "height": 242.109375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 432,
+                "y": 364.0625,
+                "width": 385.75,
+                "height": 242.109375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 26.25,
+                "y": 626.171875,
+                "width": 385.75,
+                "height": 242.109375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 432,
+                "y": 626.171875,
+                "width": 385.75,
+                "height": 242.109375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 24,
+                "y": 306.421875,
+                "width": 236.359375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 268.359375,
+                "y": 306.421875,
+                "width": 189.09375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 465.453125,
+                "y": 288.859375,
+                "width": 354.546875,
+                "height": 83.140625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 26.118133544921875,
+                "y": 310.7850036621094,
+                "width": 268.9078674316406,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 293.328125,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 560.65625,
+                "y": 312,
+                "width": 257.34375,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 26.118133544921875,
+                "y": 310.7850036621094,
+                "width": 268.9078674316406,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 293.328125,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "tablet",
+          "width": 768,
+          "height": 1024,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 24.421875,
+                "y": 98.90625,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 274.34375,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 449.78125,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 625.21875,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 800.65625,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 976.09375,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 932.546875,
+                "width": 224.515625,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 260.515625,
+                "y": 932.546875,
+                "width": 179.609375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 450.125,
+                "y": 913.109375,
+                "width": 291.859375,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 15.490020751953125,
+                "y": 880.7849731445312,
+                "width": 748.219970703125,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 946,
+                "width": 353,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 389,
+                "y": 946,
+                "width": 353,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 15.490020751953125,
+                "y": 880.7849731445312,
+                "width": 748.219970703125,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 946,
+                "width": 353,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "split-view",
+          "width": 507,
+          "height": 768,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.1875,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 281.921875,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 471.65625,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 661.390625,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 851.125,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1040.859375,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 599.109375,
+                "width": 222.5,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 258.5,
+                "y": 599.109375,
+                "width": 222.5,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 657.109375,
+                "width": 455,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 21.362518310546875,
+                "y": 624.7849731445312,
+                "width": 475.4749755859375,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 690,
+                "width": 222.5,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 258.5,
+                "y": 690,
+                "width": 222.5,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 21.362518310546875,
+                "y": 624.7849731445312,
+                "width": 475.4749755859375,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 690,
+                "width": 222.5,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "native finger swipe scrolls the stage list",
+              "ok": true
+            },
+            {
+              "label": "scrolling does not select a different stage",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "desktop",
+          "width": 1440,
+          "height": 900,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 150.4452362060547,
+                "y": 127.70915985107422,
+                "width": 380.43768310546875,
+                "height": 278.15667724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 536.2058715820312,
+                "y": 146.81228637695312,
+                "width": 367.5726318359375,
+                "height": 268.75042724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 915.5339965820312,
+                "y": 146.81210327148438,
+                "width": 367.58819580078125,
+                "height": 268.75079345703125,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 156.87774658203125,
+                "y": 424.8122863769531,
+                "width": 367.5726318359375,
+                "height": 268.7503967285156,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 536.2058715820312,
+                "y": 424.8122863769531,
+                "width": 367.5726318359375,
+                "height": 268.7503967285156,
+                "inViewport": true
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 915.5339965820312,
+                "y": 424.8121032714844,
+                "width": 367.58819580078125,
+                "height": 268.7508239746094,
+                "inViewport": true
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 460.796875,
+                "y": 633.59375,
+                "width": 269.296875,
+                "height": 83.515625,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 745.921875,
+                "y": 633.59375,
+                "width": 269.296875,
+                "height": 83.515625,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 1031.046875,
+                "y": 633.59375,
+                "width": 360,
+                "height": 83.515625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 600.4964599609375,
+                "y": 735.257568359375,
+                "width": 265.85455322265625,
+                "height": 72.21923828125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 863.5,
+                "y": 736.8125,
+                "width": 254.40625,
+                "height": 69.109375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 1130.859375,
+                "y": 736.8125,
+                "width": 254.40625,
+                "height": 69.109375,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 597.488525390625,
+                "y": 735.257568359375,
+                "width": 405.5579833984375,
+                "height": 72.21923828125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 997.1875,
+                "y": 736.8125,
+                "width": 388.09375,
+                "height": 69.109375,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    "webkit": {
+      "status": "passed",
+      "engine": "webkit",
+      "viewportModel": "mobile-emulation",
+      "assertions": 214,
+      "cases": [
+        {
+          "name": "small-phone",
+          "width": 320,
+          "height": 568,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.6875,
+                "width": 276,
+                "height": 205.828125,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 318.515625,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 518.75,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 718.984375,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 919.21875,
+                "width": 276,
+                "height": 180.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1119.453125,
+                "width": 276,
+                "height": 205.828125,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 399.109375,
+                "width": 129,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 165,
+                "y": 399.109375,
+                "width": 129,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 457.109375,
+                "width": 268,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 25.56999969482422,
+                "y": 416.7850036621094,
+                "width": 280.05999755859375,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 482,
+                "width": 129,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 165,
+                "y": 482,
+                "width": 129,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 25.56999969482422,
+                "y": 424.7850036621094,
+                "width": 280.05999755859375,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 490,
+                "width": 129,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "phone",
+          "width": 390,
+          "height": 844,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.6875,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 275.546875,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 458.40625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 641.265625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 824.125,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1006.984375,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 675.109375,
+                "width": 164,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 200,
+                "y": 675.109375,
+                "width": 164,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 733.109375,
+                "width": 338,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 23.9950008392334,
+                "y": 692.7849731445312,
+                "width": 353.2099914550781,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 758,
+                "width": 164,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 200,
+                "y": 758,
+                "width": 164,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 23.9950008392334,
+                "y": 700.7849731445312,
+                "width": 353.2099914550781,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 766,
+                "width": 164,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: turf",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: zones",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: tower",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: rainmaker",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: clams",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: boss",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: tidewater",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: kelpline",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: halyard",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: scorch",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: hagglefish",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: inkblot",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: mako",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: brinewater",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: airport",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: barnacle",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: bluefin",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: crableg",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: eeltail",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: flounder",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: hammerhead",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: humpback",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: manta",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: mincemeat",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: museum",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: robo",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: shipshape",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: sturgeon",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: umami",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: undertow",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: urchin",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: wahoo",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "android",
+          "width": 360,
+          "height": 640,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.6875,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 274.921875,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 457.15625,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 639.390625,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 821.625,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1003.859375,
+                "width": 316,
+                "height": 162.234375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 471.109375,
+                "width": 149,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 185,
+                "y": 471.109375,
+                "width": 149,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 529.109375,
+                "width": 308,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 24.670000076293945,
+                "y": 488.7850036621094,
+                "width": 321.8599853515625,
+                "height": 56.430023193359375,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 554,
+                "width": 149,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 185,
+                "y": 554,
+                "width": 149,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 24.670000076293945,
+                "y": 496.7850036621094,
+                "width": 321.8599853515625,
+                "height": 56.430023193359375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 562,
+                "width": 149,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "short-landscape",
+          "width": 568,
+          "height": 320,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.6875,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 294,
+                "y": 92.6875,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 345.375,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 294,
+                "y": 345.375,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 598.0625,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 294,
+                "y": 598.0625,
+                "width": 252,
+                "height": 232.6875,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 24,
+                "y": 236.421875,
+                "width": 152.71875,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 184.71875,
+                "y": 236.421875,
+                "width": 122.1875,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 314.90625,
+                "y": 218.859375,
+                "width": 229.09375,
+                "height": 83.140625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 27.887500762939453,
+                "y": 232.60499572753906,
+                "width": 172.7678985595703,
+                "height": 64.78999328613281,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 201.328125,
+                "y": 234,
+                "width": 165.328125,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 376.65625,
+                "y": 234,
+                "width": 165.34375,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 27.887500762939453,
+                "y": 240.78500366210938,
+                "width": 172.7678985595703,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 201.328125,
+                "y": 242,
+                "width": 165.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "landscape",
+          "width": 844,
+          "height": 390,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 26.25,
+                "y": 101.4375,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 432,
+                "y": 101.4375,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 26.25,
+                "y": 363.53125,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 432,
+                "y": 363.53125,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 26.25,
+                "y": 625.625,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 432,
+                "y": 625.625,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 24,
+                "y": 306.421875,
+                "width": 236.359375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 268.359375,
+                "y": 306.421875,
+                "width": 189.09375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 465.453125,
+                "y": 288.859375,
+                "width": 354.546875,
+                "height": 83.140625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 26.125499725341797,
+                "y": 310.7850036621094,
+                "width": 268.90789794921875,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 293.328125,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 560.65625,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 26.125499725341797,
+                "y": 310.7850036621094,
+                "width": 268.90789794921875,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 293.328125,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "tablet",
+          "width": 768,
+          "height": 1024,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 24.421875,
+                "y": 98.90625,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 274.34375,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 449.78125,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 625.21875,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 800.65625,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 24.421875,
+                "y": 976.09375,
+                "width": 719.15625,
+                "height": 155.4375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 932.546875,
+                "width": 224.515625,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 260.515625,
+                "y": 932.546875,
+                "width": 179.609375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 450.125,
+                "y": 913.109375,
+                "width": 291.875,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 15.489999771118164,
+                "y": 880.7849731445312,
+                "width": 748.2200317382812,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 946,
+                "width": 353,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 389,
+                "y": 946,
+                "width": 353,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 15.489999771118164,
+                "y": 880.7849731445312,
+                "width": 748.2200317382812,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 946,
+                "width": 353,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "split-view",
+          "width": 507,
+          "height": 768,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.6875,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 282.421875,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 472.15625,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 661.890625,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 851.625,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1041.359375,
+                "width": 463,
+                "height": 169.734375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 599.109375,
+                "width": 222.5,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 258.5,
+                "y": 599.109375,
+                "width": 222.5,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 657.109375,
+                "width": 455,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 21.362499237060547,
+                "y": 624.7849731445312,
+                "width": 475.4750061035156,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 690,
+                "width": 222.5,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 258.5,
+                "y": 690,
+                "width": 222.5,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 21.362499237060547,
+                "y": 624.7849731445312,
+                "width": 475.4750061035156,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 690,
+                "width": 222.5,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ],
+          "rotation": {
+            "status": "separate-resizable-viewport-check"
+          }
+        },
+        {
+          "name": "desktop",
+          "width": 1440,
+          "height": 900,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 150.45091247558594,
+                "y": 127.70500946044922,
+                "width": 380.43768310546875,
+                "height": 278.15667724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 536.205810546875,
+                "y": 146.81629943847656,
+                "width": 367.5726318359375,
+                "height": 268.75042724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 915.533935546875,
+                "y": 146.81629943847656,
+                "width": 367.5726318359375,
+                "height": 268.75042724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 156.87770080566406,
+                "y": 424.8162841796875,
+                "width": 367.5726318359375,
+                "height": 268.75042724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 536.205810546875,
+                "y": 424.8162841796875,
+                "width": 367.5726318359375,
+                "height": 268.75042724609375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 915.533935546875,
+                "y": 424.8162841796875,
+                "width": 367.5726318359375,
+                "height": 268.75042724609375,
+                "inViewport": true
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 460.796875,
+                "y": 633.59375,
+                "width": 269.296875,
+                "height": 83.515625,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 745.921875,
+                "y": 633.59375,
+                "width": 269.296875,
+                "height": 83.515625,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 1031.046875,
+                "y": 633.59375,
+                "width": 360,
+                "height": 83.515625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 600.505615234375,
+                "y": 734.775634765625,
+                "width": 265.85455322265625,
+                "height": 72.21929931640625,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 863.5,
+                "y": 736.328125,
+                "width": 254.40625,
+                "height": 69.109375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 1130.859375,
+                "y": 736.328125,
+                "width": 254.421875,
+                "height": 69.109375,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 597.4906005859375,
+                "y": 734.775634765625,
+                "width": 405.5579833984375,
+                "height": 72.21929931640625,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 997.1875,
+                "y": 736.328125,
+                "width": 388.09375,
+                "height": 69.109375,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    "webkit-resize": {
+      "status": "passed",
+      "engine": "webkit",
+      "viewportModel": "resizable-touch",
+      "assertions": 84,
+      "cases": [
+        {
+          "name": "phone",
+          "width": 390,
+          "height": 844,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 22,
+                "y": 92.6875,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 22,
+                "y": 275.546875,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 22,
+                "y": 458.40625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 22,
+                "y": 641.265625,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 22,
+                "y": 824.125,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 22,
+                "y": 1006.984375,
+                "width": 346,
+                "height": 162.859375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 26,
+                "y": 675.109375,
+                "width": 164,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 200,
+                "y": 675.109375,
+                "width": 164,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 26,
+                "y": 733.109375,
+                "width": 338,
+                "height": 86.890625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 23.9950008392334,
+                "y": 692.7849731445312,
+                "width": 353.2099914550781,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 758,
+                "width": 164,
+                "height": 62,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 200,
+                "y": 758,
+                "width": 164,
+                "height": 62,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 23.9950008392334,
+                "y": 700.7849731445312,
+                "width": 353.2099914550781,
+                "height": 56.4300537109375,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 26,
+                "y": 766,
+                "width": 164,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: turf",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: zones",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: tower",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: rainmaker",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: clams",
+              "ok": true
+            },
+            {
+              "label": "mode selection retained: boss",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: tidewater",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: kelpline",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: halyard",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: scorch",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: hagglefish",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: inkblot",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: mako",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: brinewater",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: airport",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: barnacle",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: bluefin",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: crableg",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: eeltail",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: flounder",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: hammerhead",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: humpback",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: manta",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: mincemeat",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: museum",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: robo",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: shipshape",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: sturgeon",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: umami",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: undertow",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: urchin",
+              "ok": true
+            },
+            {
+              "label": "stage remains reachable: wahoo",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "landscape",
+          "width": 844,
+          "height": 390,
+          "screens": {
+            "mode": [
+              {
+                "id": "mode-turf",
+                "cls": "iw-mode iw-mode--turf iw-in iw-in--pop is-picked is-focus",
+                "x": 26.25,
+                "y": 101.4375,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-zones",
+                "cls": "iw-mode iw-mode--zones iw-in iw-in--pop",
+                "x": 432,
+                "y": 101.4375,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": true
+              },
+              {
+                "id": "mode-tower",
+                "cls": "iw-mode iw-mode--tower iw-in iw-in--pop",
+                "x": 26.25,
+                "y": 363.53125,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-rainmaker",
+                "cls": "iw-mode iw-mode--rainmaker iw-in iw-in--pop",
+                "x": 432,
+                "y": 363.53125,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-clams",
+                "cls": "iw-mode iw-mode--clams iw-in iw-in--pop",
+                "x": 26.25,
+                "y": 625.625,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              },
+              {
+                "id": "mode-boss",
+                "cls": "iw-mode iw-mode--boss iw-in iw-in--pop",
+                "x": 432,
+                "y": 625.625,
+                "width": 385.75,
+                "height": 242.09375,
+                "inViewport": false
+              }
+            ],
+            "setup": [
+              {
+                "id": "weapon",
+                "cls": "iw-wchip iw-in",
+                "x": 24,
+                "y": 306.421875,
+                "width": 236.359375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "look",
+                "cls": "iw-wchip iw-lchip iw-in",
+                "x": 268.359375,
+                "y": 306.421875,
+                "width": 189.09375,
+                "height": 48,
+                "inViewport": true
+              },
+              {
+                "id": "start",
+                "cls": "iw-btn iw-btn--start iw-in iw-in--pop",
+                "x": 465.453125,
+                "y": 288.859375,
+                "width": 354.546875,
+                "height": 83.140625,
+                "inViewport": true
+              }
+            ],
+            "results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 26.125499725341797,
+                "y": 310.7850036621094,
+                "width": 268.90789794921875,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "change-gear-continue",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 293.328125,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 560.65625,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ],
+            "boss-results": [
+              {
+                "id": "rematch",
+                "cls": "iw-btn iw-btn--wide iw-btn--primary iw-in iw-in--pop is-focus",
+                "x": 26.125499725341797,
+                "y": 310.7850036621094,
+                "width": 268.90789794921875,
+                "height": 56.42999267578125,
+                "inViewport": true
+              },
+              {
+                "id": "home",
+                "cls": "iw-btn iw-btn--wide iw-in iw-in--pop",
+                "x": 293.328125,
+                "y": 312,
+                "width": 257.328125,
+                "height": 54,
+                "inViewport": true
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "mode cards fit screen",
+              "ok": true
+            },
+            {
+              "label": "mode cards fit short screens",
+              "ok": true
+            },
+            {
+              "label": "keyboard follows the visible mode rows",
+              "ok": true
+            },
+            {
+              "label": "boss mode opens its own setup",
+              "ok": true
+            },
+            {
+              "label": "equipment and start visible without scrolling",
+              "ok": true
+            },
+            {
+              "label": "last stage selectable",
+              "ok": true
+            },
+            {
+              "label": "start stays visible after scrolling stages",
+              "ok": true
+            },
+            {
+              "label": "stage and time survive equipment roundtrip",
+              "ok": true
+            },
+            {
+              "label": "double start activates the existing match API once",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: results",
+              "ok": true
+            },
+            {
+              "label": "results actions visible without scrolling: boss-results",
+              "ok": true
+            },
+            {
+              "label": "all eight players retained: boss-results",
+              "ok": true
+            },
+            {
+              "label": "score rows do not clip: boss-results",
+              "ok": true
+            },
+            {
+              "label": "results actions have unobstructed finger targets: boss-results",
+              "ok": true
+            },
+            {
+              "label": "change gear continuation starts once",
+              "ok": true
+            },
+            {
+              "label": "continuation uses the changed weapon",
+              "ok": true
+            },
+            {
+              "label": "online keep/change/leave actions stay visible",
+              "ok": true
+            },
+            {
+              "label": "online continue disables while waiting",
+              "ok": true
+            },
+            {
+              "label": "online continue submits only once",
+              "ok": true
+            },
+            {
+              "label": "leave confirmation fits the viewport",
+              "ok": true
+            },
+            {
+              "label": "cancel leave preserves the room",
+              "ok": true
+            },
+            {
+              "label": "start remains visible after rotation",
+              "ok": true
+            },
+            {
+              "label": "rotation preserves stage, time and match options",
+              "ok": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "baselineInitialActions": {
+    "small-phone": {
+      "setup": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "results": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "boss-results": {
+        "visibleActions": 0,
+        "actions": 2
+      }
+    },
+    "phone": {
+      "setup": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "results": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "boss-results": {
+        "visibleActions": 0,
+        "actions": 2
+      }
+    },
+    "short-landscape": {
+      "setup": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "results": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "boss-results": {
+        "visibleActions": 0,
+        "actions": 2
+      }
+    },
+    "landscape": {
+      "setup": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "results": {
+        "visibleActions": 0,
+        "actions": 3
+      },
+      "boss-results": {
+        "visibleActions": 0,
+        "actions": 2
+      }
+    },
+    "desktop": {
+      "setup": {
+        "visibleActions": 3,
+        "actions": 3
+      },
+      "results": {
+        "visibleActions": 3,
+        "actions": 3
+      },
+      "boss-results": {
+        "visibleActions": 2,
+        "actions": 2
+      }
+    }
+  },
+  "nodeTests": {
+    "relatedRegressions": {
+      "passed": 110,
+      "failed": 0,
+      "skipped": 0
+    },
+    "suiteRunnerContracts": {
+      "passed": 7
+    },
+    "circleciBrowserLaneContracts": {
+      "passed": 7
+    }
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "dd36006ecc6eead868041b45765f248eb9d82ea30c0188efdff32d6279d82dc4",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78161,
+    "initialJSBytes": 2021663,
+    "criticalHTMLBytes": 24044,
+    "precacheCount": 546,
+    "precacheBytes": 7640698,
+    "workerBytes": 89261,
+    "declaredBytes": 16056150,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "webkitResizeLimitation": "Mobile viewport resize retains old visualViewport and CSS media queries in the installed Playwright WebKit; reproduced without the app. Static mobile orientations plus separate resizable touch contexts are verified."
+}

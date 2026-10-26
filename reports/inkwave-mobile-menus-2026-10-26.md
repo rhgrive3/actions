@@ -13,6 +13,14 @@
 
 PCでは元のDOM配置を維持する。基準版と候補版の1440×900のボタン位置は、レンダリングの小数誤差を除いて一致した。
 
+## 変更前後（320×568、Chromium）
+
+| 画面 | 変更前 | 変更後 |
+| --- | --- | --- |
+| モード選択 | ![変更前のモード選択](inkwave-mobile-menus-2026-10-26/mode-before.png) | ![変更後のモード選択](inkwave-mobile-menus-2026-10-26/mode-after.png) |
+| ステージ選択 | ![変更前のステージ選択](inkwave-mobile-menus-2026-10-26/setup-before.png) | ![変更後のステージ選択](inkwave-mobile-menus-2026-10-26/setup-after.png) |
+| リザルト | ![変更前のリザルト](inkwave-mobile-menus-2026-10-26/results-before.png) | ![変更後のリザルト](inkwave-mobile-menus-2026-10-26/results-after.png) |
+
 ## 再現・検証
 
 `scripts/check-inkwave-mobile-menus.mjs` は最適化ビルドの実Menus・CSS・本番installerをロードする。実対戦APIのみオフラインの記録用fixtureとし、ゲームシミュレーションの成立とは区別する。統合CIの `responsive` 群にChromium/WebKitの両方を追加した。
@@ -25,6 +33,8 @@ PCでは元のDOM配置を維持する。基準版と候補版の1440×900のボ
 - Chromiumの実タッチイベントによる一覧のスワイプと誤選択の抑止、二重開始、オンライン続行の一度だけの送信、退出確認のキャンセル。
 - 画面回転後の開始操作と選択内容の保持。Chromiumはモバイルエミュレーション、WebKitはタッチ入力・モバイルUAを保った通常viewportのリサイズで確認する。PlaywrightのWebKitモバイルエミュレーションでは `setViewportSize()` 後も `visualViewport` とCSSのメディアクエリが旧寸法に残ることを、アプリを含まない最小ページでも再現したため、モバイルの縦横表示は独立したコンテキストで別途検証する。
 
-最終ビルドのハッシュ、エンジン別の結果と代表画面は同名ディレクトリの `validation.json` と画像に保存する。ローカルWebKitはシステムに不足するDebianライブラリを作業ディレクトリへ展開して使用した。実機iPhone/iPad、Safariのブラウザバー・ノッチ／ホームインジケーター、ソフトウェアキーボード、実ネットワーク対戦、Switchの配置／タイミングとの一致は未確認。
+最終ソース `f9fbeb6` の最適化ビルドで、Chromiumは8サイズ242項目、WebKitは8サイズ214項目、WebKitのタッチviewportリサイズは2ケース84項目がすべて成功した。関連回帰110件・CI契約14件はスキップ／失敗なし。quick互換チェックと起動予算も成功した。ハッシュ、エンジン別の結果と代表画面は[検証結果](inkwave-mobile-menus-2026-10-26/validation.json)と上の画像に保存した。
+
+ローカルWebKitはシステムに不足するDebianライブラリを作業ディレクトリへ展開して使用した。実機iPhone/iPad、Safariのブラウザバー・ノッチ／ホームインジケーター、ソフトウェアキーボード、実ネットワーク対戦、Switchの配置／タイミングとの一致は未確認。
 
 比較基準は既存の11.3.0参照。[任天堂の更新履歴](https://en-americas-support.nintendo.com/app/answers/detail/a_id/61257/~/splatoon-3-update-history)にある継続・装備変更の契約を保持するが、このタッチ配置自体はINKWAVEの独自設計である。
