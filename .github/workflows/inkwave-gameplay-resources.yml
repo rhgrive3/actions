@@ -92,7 +92,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify live Crab and Torpedo GPU buffers and rendered pixels sequentially
         run: |
-          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; process.stdout.write(chromium.executablePath());")"
+          CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; process.stdout.write(chromium.executablePath());")"
+          export CHROMIUM_PATH
           gpu_status=0
           INKWAVE_BUILT_SITE=.built-site/_site INKWAVE_CRAB_UPLOAD_BROWSER=1 INKWAVE_UPLOAD_EVIDENCE="$CI_STORAGE/evidence/crab-upload" node --test patches/splatoon3/tests/crab-splash-upload-browser.test.mjs || gpu_status=$?
           INKWAVE_BUILT_SITE=.built-site/_site INKWAVE_TORPEDO_UPLOAD_BROWSER=1 INKWAVE_UPLOAD_EVIDENCE="$CI_STORAGE/evidence/torpedo-upload" node --test patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs || gpu_status=$?
