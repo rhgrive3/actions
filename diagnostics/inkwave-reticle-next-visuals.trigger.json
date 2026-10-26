@@ -10,8 +10,8 @@
   ],
   "viewport": "desktop",
   "renderPolicy": "native60-render30-dualies60",
-  "attempt": 5,
-  "previousRun": 40261253086,
+  "attempt": 6,
+  "previousRun": 40262273265,
   "expectedRuntimeBlobs": {
     "patches/local-quality/pencil-loaded-visibility-proposal.mjs": "bdd7a0ab6c157f25b94af204c24e9fd79936ce63",
     "patches/local-quality/dualies-diagonal-prototype.mjs": "5f966749993d5925ddf38c3336f0ad2a0c6214a1",
