@@ -161,3 +161,26 @@ phase to its visible gauge. This branch has no projection, feedback-layout or
 CSS edits. Use `catalogChargeStage(weapon, charge)` for the same first/full
 boundaries without inventing a universal 50% split. Switch audiovisual fidelity,
 physical speaker output, WebKit and hardware iPad remain unmeasured.
+
+## Follow-up: visible Stringer stage semantics
+
+The integration owner completed the missing HUD connection with the dedicated
+`stringer-charge-hud-adapter.mjs` / `runtime/stringer-charge-hud.mjs` installer.
+It wraps the completed native `_updCrosshair` method after projection, scope and
+input feedback have run. No Shooter/Dualies projection hunk is rewritten.
+
+The native circle and track stay at radius 25. The same circle fills from 0 to 1
+on the first clock, then from 0 to 1 on the second clock; the existing track
+retains the completed first-lap color while the second lap fills in white.
+Release resets both semantics and weapon switching clears the styling. A first
+boundary flash reuses the existing HUD animation. No new concentric circle,
+marker, path or CSS is added. An initial uncommitted extra-ring proposal was
+rejected because its original-game layout evidence was not established.
+The two stage clocks are pinned original parameters; the exact visual feedback
+remains INKWAVE's interpretation, not claimed Nintendo pixel/layout parity.
+
+Three focused regressions cover all Stringer kits and boundaries, reset/switch,
+unchanged native projection results, idempotent installation, and the narrow
+source-composition hook. The emitted HUD component browser check separately
+records real DOM/circle/track output at 15 controlled phase inputs. Such a
+component check is not ordinary-input or original-game visual proof.

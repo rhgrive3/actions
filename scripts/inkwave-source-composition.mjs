@@ -35,6 +35,7 @@ import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-a
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';
+import { adaptStringerChargeHud } from '../patches/splatoon3/stringer-charge-hud-adapter.mjs';
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
 // grid. Apply at build time so the upstream game snapshot remains immutable.
@@ -96,6 +97,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueExtraWorld(rel, code);
   code = adaptQueueExtraWeaponsFx(rel, code);
   code = adaptQueueUi20261025(rel, code);
+  code = adaptStringerChargeHud(rel, code);
   return adaptQueueExtraDecor(rel, code);
 }
 
