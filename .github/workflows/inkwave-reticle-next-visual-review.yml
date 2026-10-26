@@ -103,13 +103,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs scripts/tests/inkwave-reticle-next-visual-review.test.mjs scripts/tests/reticle-next-charger-recipe.test.mjs scripts/tests/reticle-next-dualies-recipe.test.mjs scripts/tests/reticle-next-dualies-source-owners.test.mjs scripts/tests/reticle-native-input-admission.test.mjs scripts/tests/reticle-suite-plan.test.mjs scripts/tests/reticle-shapes-capture-settlement-unit.test.mjs patches/local-quality/tests/next-reticle-owners.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
+          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs scripts/tests/inkwave-reticle-next-visual-review.test.mjs scripts/tests/reticle-next-charger-recipe.test.mjs scripts/tests/reticle-next-dualies-recipe.test.mjs scripts/tests/reticle-next-dualies-source-owners.test.mjs scripts/tests/reticle-native-input-admission.test.mjs scripts/tests/reticle-suite-plan.test.mjs scripts/tests/reticle-shapes-capture-settlement-unit.test.mjs scripts/tests/reticle-shapes-presentation-admission-unit.test.mjs scripts/tests/reticle-shapes-presentation-fixture-source.test.mjs patches/local-quality/tests/next-reticle-owners.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
       - name: Verify shape CSS settlement in controlled real-browser contracts (not game acceptance)
         timeout-minutes: 3
         shell: bash
         run: |
           set -euo pipefail
-          node --test scripts/tests/reticle-shapes-capture-settlement.test.mjs 2>&1 | tee "$EVIDENCE/shapes-settlement-browser-contracts.log"
+          node --test scripts/tests/reticle-shapes-capture-settlement.test.mjs scripts/tests/reticle-shapes-presentation-admission-browser.test.mjs 2>&1 | tee "$EVIDENCE/shapes-settlement-browser-contracts.log"
       - name: Check out immutable main comparison
         uses: actions/checkout@v4
         with:

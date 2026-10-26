@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {acquireNativeCaptureInput} from './lib/reticle-next/native-input-admission.mjs';
-import {settleShapeCapture} from './lib/reticle-next/shapes-capture-settlement.mjs';
+import {admitShapeCapturePresentation} from './lib/reticle-next/shapes-presentation-admission.mjs';
 import {SHAPE_CASES,SHAPE_PHASES,readShapeSample,assertShapeSample,runShapesRecipe} from './lib/reticle-next/shapes-recipe.mjs';
 import {DUALIES_PHASES,readDualiesSample,assertDualiesSample,runDualiesRecipe} from './lib/reticle-next/dualies-recipe.mjs';
 import {CHARGER_CASES,BAMBOO_PHASES,PENCIL_PHASES,readChargerSnapshot,assertChargerSnapshot,runChargerRecipe,installChargerObservation,stopNativeShotObserver,SCOPE_CONTROL_ID} from './lib/reticle-next/charger-recipe.mjs';
@@ -346,7 +346,7 @@ export async function main(argv=process.argv.slice(2)) {
     assert.equal(sha256(bytes),build.artifacts[relative],'emitted identity: '+relative);
   }
   const receipt={schema:1,before,sourceSha,contentHash:build.contentHash,inputHash:build.inputHash,
-    probeSha256:sha256(script),recipeSha256:Object.fromEntries(NEXT_SUITES.includes(matrix.suite)?['shapes-recipe.mjs','dualies-recipe.mjs','charger-recipe.mjs','native-input-admission.mjs','shapes-capture-settlement.mjs'].map(file=>[file,sha256(fs.readFileSync(new URL('./lib/reticle-next/'+file,import.meta.url)))]):[]),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
+    probeSha256:sha256(script),recipeSha256:Object.fromEntries(NEXT_SUITES.includes(matrix.suite)?['shapes-recipe.mjs','dualies-recipe.mjs','charger-recipe.mjs','native-input-admission.mjs','shapes-capture-settlement.mjs','shapes-presentation-admission.mjs'].map(file=>[file,sha256(fs.readFileSync(new URL('./lib/reticle-next/'+file,import.meta.url)))]):[]),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
     coverage:{suite:matrix.suite,actualWeapons:matrix.cases.map(c=>c.id),expectedScreenshotStates:matrix.screenshotStateCount,
       splatlingMobile:matrix.suite!=='first-four'?'not covered in this affected desktop gate':'not part of the unchanged first-four matrix',
       switches:matrix.cases.filter(c=>c.switchAt).map(c=>({weaponId:c.id,phase:c.switchAt,fallback:'charger',metadataOnly:true}))},
@@ -428,11 +428,14 @@ export async function main(argv=process.argv.slice(2)) {
         const capture=async (phase,recipeMeta=null)=>{
           requireActive();
           console.log(before?'baseline':'candidate',view.name,scenario.id,phase,'capture');
-          // Game freeze does not freeze native CSS wall-clock transitions. Wait
-          // read-only RAF convergence BEFORE the initial recipe/DOM snapshot.
-          const shapeSettlement=['slosher','blaster'].includes(scenario.name)?await settleShapeCapture(page):null;
+          // Frozen native CSS may need browser presentation to start/finish.
+          // Warmups remain unaccepted; strict settlement precedes row snapshot.
+          const shapeAdmission=['slosher','blaster'].includes(scenario.name)?await admitShapeCapturePresentation(page,{
+            inspectSurface:inspectCaptureSurface,assertSurfaceInvariant,onUpdate:record=>{
+              receipt.shapePresentationAdmission={viewportName:view.name,weaponId:scenario.id,phase,...record};write();
+            }}):null;
           const row=await readSnapshot(page);
-          if(shapeSettlement)row.shapeSettlement=shapeSettlement;
+          if(shapeAdmission){row.shapeSettlement=shapeAdmission.settlement;row.shapePresentation=shapeAdmission.presentation;}
           if(scenario.next){row.next=await readNextSample(page,scenario);row.recipe=recipeMeta;}
           console.log(JSON.stringify({head:sourceSha,before,viewport:view.name,actualWeaponId:row.weaponId,phase,profile:row.profiles,viewportCss:row.viewport,dpr:row.dpr,settings:row.settings}));
           const basename=`${view.name}-${scenario.name}-${phase}`;
