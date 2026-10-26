@@ -94,6 +94,36 @@ test('unverified custom collision worlds recompute and immediately observe unver
   assert.ok(Math.abs(ps.muzzleBlockFeedback(a).point.y+2)<1e-8,'marker follows the unversioned floor immediately');
 });
 
+test('Physics bridges without a level cannot borrow the unrelated G.level revision',async()=>{
+  const rows=[];
+  for(const weapon of ['shooter','dualies']){
+    const s=await scene(-.8),{f,G,a,ps}=s;
+    if(weapon==='dualies'){
+      a.setWeapon(weapon);
+      for(let i=0;i<45;i++)a.character.update(1/60,{form:'kid',grounded:true,firing:false,charge:0,aimPitch:-.8,speed:0,localMove:{x:0,z:0},ink:1,hp:1,vy:0});
+      a.character.wAim=1;a.character.root.updateMatrixWorld(true);
+    }
+    const physical=G.physics,collisionLevel=physical.level;
+    G.level=new f.Level(collisionLevel.layout);const advertisedRevision=G.level.collisionRevision;
+    G.physics={los:(...args)=>physical.los(...args),raycast:(...args)=>physical.raycast(...args),segment:(...args)=>physical.segment(...args)};
+    assert.equal(G.physics.level,undefined);s.controller.computeAim();
+    const read=()=>weapon==='shooter'?[new f.THREE.Vector3().copy(f.computeShotGuide(a))]:ps.s3DualiesGuides(a,a.weapon).map(p=>p.clone());
+    const before=read(),count=s.sweeps();read();const repeatSweeps=s.sweeps()-count;
+    const floor=collisionLevel.blocks[0];floor.center.y-=2;floor.aabbMin.y-=2;floor.aabbMax.y-=2;collisionLevel.markCollisionChanged();
+    const changed=read();assert.equal(G.level.collisionRevision,advertisedRevision,'G.level does not own the bridge collision world');
+    const impact=weapon==='shooter'?ps.s3ShooterImpact(a,a.weapon).point.y:null;
+    const marker=weapon==='shooter'?ps.muzzleBlockFeedback(a).point.y:null;
+    ps[weapon==='shooter'?'_s3ShooterGuideCache':'_dualiesGuideCache'].ready=false;
+    const fresh=read();rows.push({weapon,before:before.map(p=>p.y),changed:changed.map(p=>p.y),fresh:fresh.map(p=>p.y),impact,marker,repeatSweeps});
+  }
+  console.log('Unsupported Physics bridge floor',JSON.stringify(rows));
+  for(const row of rows){
+    assert.ok(row.changed.every((y,i)=>Math.abs(y-row.fresh[i])<1e-8&&Math.abs(y+2)<1e-8),'bridge guide immediately follows the real -2 floor: '+JSON.stringify(row));
+    assert.ok(row.repeatSweeps>0,'unsupported Physics owners recompute even while unchanged');
+    if(row.weapon==='shooter')assert.ok(Math.abs(row.impact+2)<1e-8&&Math.abs(row.marker+2)<1e-8);
+  }
+});
+
 test('Shooter guide reuse does not cache target flags or retain retired owner/world references',async()=>{
   const s=await scene(),{f,G,a,cam,ps,controller}=s;
   cam.lookAt(0,1,5);cam.updateMatrixWorld(true);

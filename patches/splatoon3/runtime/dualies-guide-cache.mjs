@@ -14,7 +14,8 @@ export function shooterGuideCache(system,actor,weapon,game,probe) {
   const s=system._s3ShooterGuideCache||(system._s3ShooterGuideCache={values:[],index:0,dirty:true,ready:false,
     point:{x:0,y:0,z:0,frames:0}});
   const ch=actor.character,runner=actor.weaponRunner,physics=game.physics,level=physics?.level||game.level;
-  const revision=level?.collisionRevision;
+  // G.level cannot certify a bridge whose actual collision owner is hidden.
+  const revision=physics?.level?.collisionRevision;
   s.cacheable=Number.isSafeInteger(revision)&&revision>=0;
   s.index=0;s.dirty=!s.ready||!s.cacheable;
   value(s,system);value(s,actor);value(s,weapon);value(s,actor.weapon);value(s,actor.weaponId);value(s,ch);
@@ -48,7 +49,7 @@ export function shooterGuideCache(system,actor,weapon,game,probe) {
 export function dualiesGuideInputsChanged(system, actor, weapon, game, camera=game.camera) {
   const s=system._dualiesGuideCache||(system._dualiesGuideCache={values:[],index:0,dirty:true,ready:false,
     muzzle:actor.pos.clone(),other:actor.pos.clone(),aim:actor.pos.clone()});
-  const physics=game.physics,level=physics?.level||game.level,revision=level?.collisionRevision;
+  const physics=game.physics,level=physics?.level||game.level,revision=physics?.level?.collisionRevision;
   s.index=0;s.dirty=!s.ready||!Number.isSafeInteger(revision)||revision<0;
   value(s,actor);value(s,weapon);vector(s,actor.pos);vector(s,actor.aimDir);vector(s,actor.aimPoint);
   value(s,actor.yaw);value(s,actor.aimPitch);value(s,actor.form);value(s,actor.grounded);value(s,actor.weaponRunner?.s3Turret);
