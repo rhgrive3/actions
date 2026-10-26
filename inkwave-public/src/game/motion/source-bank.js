@@ -260,14 +260,15 @@ export class SourceBank {
     if (this.profiles.has(name)) return this.profiles.get(name);
     const clip = this.clips.get(name); if (!clip) return null;
     const pose = new SourcePose(this), n = Math.max(8, Math.ceil(clip.frames * 4));
-    const sides = ['L', 'R'], tracks = sides.map(() => []), heights = sides.map(() => []), features = sides.map(() => []);
+    const sides = ['L', 'R'], feetIndex=[this.index.foot_L,this.index.foot_R],toeIndex=[this.index.toe_L,this.index.toe_R];
+    const tracks=feetIndex.map(f=>new Float64Array(f===undefined?0:n*3)),heights=sides.map(()=>[]),features=sides.map(()=>[]);
     for (let i = 0; i < n; i++) {
       this.sample(clip, i / n * clip.frames, pose, true);
       for (let j = 0; j < 2; j++) {
-        const f = this.index['foot_' + sides[j]], t = this.index['toe_' + sides[j]];
+        const f=feetIndex[j],t=toeIndex[j];
         if (f === undefined) continue;
         const fy=pose.wp[f].y-this.rest.wp[f].y, ty=t===undefined?fy:pose.wp[t].y-this.rest.wp[t].y;
-        const toe=ty<fy;tracks[j].push(pose.wp[toe?t:f].clone());heights[j].push(Math.min(fy,ty));features[j].push(toe);
+        const toe=ty<fy,point=pose.wp[toe?t:f],track=tracks[j],o=i*3;track[o]=point.x;track[o+1]=point.y;track[o+2]=point.z;heights[j].push(Math.min(fy,ty));features[j].push(toe);
       }
     }
     const back = name.includes('Back'), left = name.includes('Left'), right = name.includes('Right');
@@ -287,9 +288,9 @@ export class SourceBank {
       const before=[...contact];for(let i=0;i<n;i++)if(!before[i]&&before[(i+n-1)%n]&&before[(i+1)%n])contact[i]=true;
       let strike=0, best=-Infinity; const speeds=[];
       for(let i=0;i<n;i++) {
-        const j=(i+1)%n, v=velocityScratch.copy(p[j]).sub(p[i]).dot(axis)*n;
+        const j=(i+1)%n,io=i*3,jo=j*3, v=velocityScratch.set(p[jo]-p[io],p[jo+1]-p[io+1],p[jo+2]-p[io+2]).dot(axis)*n;
         if(contact[i]&&contact[j]&&features[side][i]===features[side][j]&&v<0)speeds.push(-v);
-        if(contact[i]&&!contact[(i+n-1)%n] && p[i].dot(axis)>best){best=p[i].dot(axis);strike=i/n;}
+        if(contact[i]&&!contact[(i+n-1)%n]){const along=p[io]*axis.x+p[io+1]*axis.y+p[io+2]*axis.z;if(along>best){best=along;strike=i/n;}}
       }
       speeds.sort((a,b)=>a-b);
       return {min,max,range,threshold,contact,strike,stride:speeds.length?speeds[Math.floor(speeds.length/2)]:0,heights:ys};

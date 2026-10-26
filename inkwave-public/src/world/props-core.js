@@ -1,3 +1,10 @@
+// Keep UVs for mapped or customized materials. The unmapped built-in
+// solid buckets have no shader input that reads them.
+function iwPropNeedsUV(material){
+  return !material || !(material.isMeshBasicMaterial || material.isMeshStandardMaterial) ||
+    material.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile ||
+    Object.values(material).some(value => value?.isTexture);
+}
 import { runBuildSlices } from '../core/buildSlices.js';
 import { setPropInstanceEnvelope } from './render-bounds.js';
 import { G as propAtlasGame } from '../core/ctx.js';
@@ -1114,11 +1121,11 @@ function bannerGeo(w, h) {
 // ------------------------------------------------------------------------------------------------ merge
 const _v = new THREE.Vector3();
 function mergeParts(parts) { const steps = mergePartSteps(parts); let next; do { next = steps.next(); } while (!next.done); return next.value; }
-function* mergePartSteps(parts) {
+function* mergePartSteps(parts, withUV=true) {
   const normalMatrix = new THREE.Matrix3();
   let nv = 0, ni = 0;
   for (const p of parts) { const c = p.g.attributes.position.count; nv += c; ni += p.g.index ? p.g.index.count : c; yield; }
-  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), colr = new Float32Array(nv * 3), uv = new Float32Array(nv * 2);
+  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), colr = new Float32Array(nv * 3), uv = withUV ? new Float32Array(nv * 2) : null;
   const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
   let vo = 0, io = 0;
   for (const p of parts) {
@@ -1136,10 +1143,10 @@ function* mergePartSteps(parts) {
       nor[o] = _v.x; nor[o + 1] = _v.y; nor[o + 2] = _v.z;
       const k = C ? C.getX(i) : 1, k2 = C ? C.getY(i) : 1, k3 = C ? C.getZ(i) : 1;
       colr[o] = cr * k * ao; colr[o + 1] = cg * k2 * ao; colr[o + 2] = cb * k3 * ao;
-      const u = (vo + i) * 2;
+      if (uv) { const u = (vo + i) * 2;
       if (p.uv) { const r = p.uv; uv[u] = r[0] + (U ? U.getX(i) : 0) * (r[2] - r[0]); uv[u + 1] = r[1] + (U ? U.getY(i) : 0) * (r[3] - r[1]); }
       else if (p.uvs) { uv[u] = (U ? U.getX(i) : 0) * p.uvs[0]; uv[u + 1] = (U ? U.getY(i) : 0) * p.uvs[1]; }
-      else { uv[u] = WHITE_UV[0]; uv[u + 1] = WHITE_UV[1]; }
+      else { uv[u] = WHITE_UV[0]; uv[u + 1] = WHITE_UV[1]; } }
       if ((i & 1023) === 1023) yield;
     }
     if (g.index) {
@@ -1158,7 +1165,7 @@ function* mergePartSteps(parts) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
   g.setAttribute('color', new THREE.BufferAttribute(colr, 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  if (uv) g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(new THREE.BufferAttribute(idx, 1));
   let complete = false;
   try {
@@ -3301,7 +3308,8 @@ export class PropKit {
           size: [r4((b[3] - b[0]) * s), r4((b[4] - b[1]) * s), r4((b[5] - b[2]) * s)], rotY: (rotY * 180) / Math.PI };
       } else {
         let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
-        for (const [lx, lz] of [[b[0], b[2]], [b[3], b[2]], [b[3], b[5]], [b[0], b[5]]]) {
+        for (let corner=0;corner<4;corner++) {
+          const lx=b[corner===1||corner===2?3:0],lz=b[corner>=2?5:2];
           const x = (lx * c + lz * sn) * s, z = (-lx * sn + lz * c) * s;
           x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z);
         }
@@ -3335,7 +3343,7 @@ export class PropKit {
     for (const [bucket, parts] of this._buckets) {
       if (!parts.length) continue;
       const [key, flag] = bucket.split('~');   // 'gloss~ns' = gloss material, no shadow casting
-      const mesh = new THREE.Mesh(yield* mergePartSteps(parts), this.mat[key]);
+      const mesh = new THREE.Mesh(yield* mergePartSteps(parts,iwPropNeedsUV(this.mat[key])), this.mat[key]);
       mesh.name = 'props:' + bucket;
       mesh.castShadow = this.castShadow && CASTS[key] && flag !== 'ns';
       mesh.receiveShadow = key !== 'glow' && key !== 'blob';
