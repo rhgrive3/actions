@@ -53,11 +53,12 @@ test('unsettled actual source transition reproduces screenshot recipe bounds dri
     assert.equal(after.nativeTicks,before.nativeTicks);assert.deepEqual(after.position,before.position);assert.deepEqual(after.shots,before.shots);
   }finally{await page.close();}
 });
-for(const candidate of [false,true])test(`native RAF settlement preserves full screenshot recipe equality (${candidate?'candidate':'baseline'} source)`,async()=>{
+for(const candidate of [false,true])test(`wall-polled native CSS settlement preserves full screenshot recipe equality (${candidate?'candidate':'baseline'} source)`,async()=>{
   const page=await setup({candidate});try{
     await changeSpread(page);
     const result=await settleShapeCapture(page);
-    assert(result.frames>=4);assert.equal(result.stableFrames,3);assert(result.elapsedMs>0);
+    assert(result.wallPoll.samples>=3);assert(result.wallPoll.stableSamples>=3);assert(result.wallPoll.stableElapsedMs>=32);
+    assert(Number.isSafeInteger(result.raf.callbacks));assert(result.elapsedMs>0);
     assert.equal(result.ownerInvariant,true);assert.deepEqual(result.ownerAfter,result.ownerBefore);
     assert.equal(result.ownerAfter.clock[3],262);assert.equal(result.ownerAfter.shotCount,1);
     assert.equal(result.activeGeometry.length,0);
@@ -66,13 +67,13 @@ for(const candidate of [false,true])test(`native RAF settlement preserves full s
     assert.deepEqual(await page.evaluate(readShapeSample),before);
     const css=await page.locator(candidate?'.iw-reticle-blaster-diagonal-proposal':'.iw-ret__svg').evaluate(n=>({transition:getComputedStyle(n).transition,transform:getComputedStyle(n).transform,width:n.getBoundingClientRect().width}));
     assert.match(css.transition,/transform 0\.1s linear/);assert(Math.abs(css.width-113.6)<.001);
-    process.stdout.write(JSON.stringify({test:'settled-source',candidate,frames:result.frames,elapsedMs:result.elapsedMs,ownerInvariant:result.ownerInvariant,css})+'\n');
+    process.stdout.write(JSON.stringify({test:'settled-source',candidate,raf:result.raf,wallPoll:result.wallPoll,elapsedMs:result.elapsedMs,ownerInvariant:result.ownerInvariant,css})+'\n');
   }finally{await page.close();}
 });
 
-test('no-op native RAF is observed rather than replaced by an arbitrary sleep',async()=>{
+test('no-op geometry requires measured wall samples and records RAF separately',async()=>{
   const page=await setup();try{
-    const result=await settleShapeCapture(page);assert.equal(result.frames,4);assert.equal(result.stableFrames,3);
+    const result=await settleShapeCapture(page);assert(result.wallPoll.samples>=3);assert(result.wallPoll.stableElapsedMs>=32);assert(Number.isSafeInteger(result.raf.callbacks));
   }finally{await page.close();}
 });
 test('perpetual reticle geometry animation fails closed with bounded diagnostic; unrelated animation does not block',async()=>{
@@ -85,20 +86,20 @@ test('perpetual reticle geometry animation fails closed with bounded diagnostic;
     await page.evaluate(()=>{
       const css=document.createElement('style');css.textContent='@keyframes ret-moving { to {transform:scale(2)} } .iw-reticle-blaster-diagonal-proposal { animation:ret-moving 1s linear infinite }';document.head.append(css);
     });
-    await assert.rejects(settleShapeCapture(page,{deadlineMs:120,stableFrames:3}),error=>{
+    await assert.rejects(settleShapeCapture(page,{deadlineMs:120,stableSamples:3}),error=>{
       assert.match(error.message,/settlement deadline exceeded/);assert.match(error.message,/activeGeometry/);assert.match(error.message,/CSSAnimation/);assert.match(error.message,/ownerBefore/);return true;
     });
   }finally{await page.close();}
 });
-test('owner tick, pose and shot changes during native RAF fail before capture',async()=>{
+test('owner tick, pose and shot changes during wall polling fail before capture',async()=>{
   for(const field of ['tick','pose','shot']){
     const page=await setup();try{
       await assert.rejects(page.evaluate(field=>{
-       requestAnimationFrame(()=>{
+       setTimeout(()=>{
         if(field==='tick')window.__inkwave.s3Clock.ticks++;
         if(field==='pose')window.__G.local.pos.toArray=()=>[2,.04,2];
         if(field==='shot')window.__chargerRecipeObservation.events.push({actorWeaponId:'blaster'});
-       });
+       },5);
        return window.__shapeCaptureSettlement();
       },field),/Native owner changed/);
     }finally{await page.close();}
@@ -111,4 +112,26 @@ test('integration keeps complete before/after screenshot invariant and original 
   assert.equal((runner.match(/scale:'device',timeout:20000/g)||[]).length,2);
   const source=waitForShapeCaptureSettlement.toString();
   assert.doesNotMatch(source,/\._frame\(|debug\.step|\.finish\(|\.pause\(|\.currentTime\s*=|setProperty|animations:\s*['"]disabled/);
+});
+
+// Non-rendered child document is a real browser scheduling condition, not a
+// rewritten requestAnimationFrame. This is scheduler evidence only: its hidden
+// bounds are NOT claimed as visible game/HUD or production PNG validation.
+test('native hidden child document can settle with zero delivered RAF callbacks',async()=>{
+ const page=await setup();try{
+  const result=await page.evaluate(async ({css,source})=>{
+   const iframe=document.createElement('iframe');iframe.style.display='none';
+   const loaded=new Promise(resolve=>iframe.onload=resolve);
+   iframe.srcdoc='<style>'+css+'</style>'+document.querySelector('#ret').outerHTML;
+   document.body.append(iframe);await loaded;
+   const child=iframe.contentWindow;
+   child.__G=window.__G;child.__inkwave={...window.__inkwave,hud:{...window.__inkwave.hud,ret:child.document.querySelector('#ret')}};
+   child.__chargerRecipeObservation=window.__chargerRecipeObservation;child.__reticleCadence=window.__reticleCadence;
+   try{return await child.eval('('+source+')()');}finally{iframe.remove();}
+  },{css:nativeCss,source:waitForShapeCaptureSettlement.toString()});
+  assert.equal(result.raf.callbacks,0);assert.equal(result.raf.firstCallbackMs,null);
+  assert(result.wallPoll.samples>=3);assert(result.wallPoll.stableElapsedMs>=32);
+  assert.deepEqual(result.ownerBefore,result.ownerAfter);assert.equal(result.activeGeometry.length,0);
+  process.stdout.write(JSON.stringify({test:'native-hidden-child-zero-RAF',raf:result.raf,wallPoll:result.wallPoll,elapsedMs:result.elapsedMs})+'\n');
+ }finally{await page.close();}
 });

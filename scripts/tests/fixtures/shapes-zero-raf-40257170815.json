@@ -1,0 +1,652 @@
+{
+  "provenance": {
+    "run": 40257170815,
+    "artifact": 12623890452,
+    "artifactSha256": "c95bc0fa2a4ebe2fdd07dd66c97d2f47f0b9dce9192b848ec17aa3c1640ffcfa",
+    "scope": "actual failure diagnostics only; no successful capture claim"
+  },
+  "heads": [
+    {
+      "kind": "baseline",
+      "sourceSha": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+      "contentHash": "83772a6fa910e158b9f1b139d6c187a840b73ec24cd7be043a7bf556530ed898",
+      "receiptSha256": "30d269bf566fb34589022c1646a70c441ee86bfae8e632a3192d69425412bccb",
+      "diagnostic": {
+        "frames": 0,
+        "stableFrames": 0,
+        "elapsedMs": 1500.5,
+        "deadlineMs": 1500,
+        "ownerBefore": {
+          "frozen": true,
+          "clock": [
+            7.033133333333332,
+            null,
+            1.4666666666666663,
+            119,
+            0
+          ],
+          "weaponId": "slosher",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "grounded": true,
+          "cameraPosition": [
+            5.720001966272736,
+            2.538704883725358,
+            -4.467638861342398
+          ],
+          "cameraQuaternion": [
+            0,
+            0.9982005399352042,
+            0.05996400647944458,
+            0
+          ],
+          "fov": 54.999999999999986,
+          "aspect": 1.7777777777777777,
+          "yaw": 0,
+          "pitch": -0.12,
+          "input": {
+            "fire": true,
+            "enabled": true,
+            "locked": true,
+            "lastDevice": "kbm",
+            "keys": []
+          },
+          "intent": {
+            "fire": true,
+            "jump": false,
+            "squid": false,
+            "move": [
+              0,
+              0,
+              0
+            ]
+          },
+          "runner": {
+            "charge": 0,
+            "chargeT": 0,
+            "charging": false,
+            "cooldown": 0.26666666666666666,
+            "streaming": false,
+            "streamTime": null,
+            "streamElapsed": null,
+            "streamUsed": null,
+            "bowTilt": null
+          },
+          "renderFrames": 33,
+          "shotCount": 1
+        },
+        "ownerAfter": {
+          "frozen": true,
+          "clock": [
+            7.033133333333332,
+            null,
+            1.4666666666666663,
+            119,
+            0
+          ],
+          "weaponId": "slosher",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "grounded": true,
+          "cameraPosition": [
+            5.720001966272736,
+            2.538704883725358,
+            -4.467638861342398
+          ],
+          "cameraQuaternion": [
+            0,
+            0.9982005399352042,
+            0.05996400647944458,
+            0
+          ],
+          "fov": 54.999999999999986,
+          "aspect": 1.7777777777777777,
+          "yaw": 0,
+          "pitch": -0.12,
+          "input": {
+            "fire": true,
+            "enabled": true,
+            "locked": true,
+            "lastDevice": "kbm",
+            "keys": []
+          },
+          "intent": {
+            "fire": true,
+            "jump": false,
+            "squid": false,
+            "move": [
+              0,
+              0,
+              0
+            ]
+          },
+          "runner": {
+            "charge": 0,
+            "chargeT": 0,
+            "charging": false,
+            "cooldown": 0.26666666666666666,
+            "streaming": false,
+            "streamTime": null,
+            "streamElapsed": null,
+            "streamUsed": null,
+            "bowTilt": null
+          },
+          "renderFrames": 33,
+          "shotCount": 1
+        },
+        "last": {
+          "geometry": [
+            {
+              "index": 0,
+              "tag": "DIV",
+              "classes": "iw-ret iw-ret--slosher",
+              "bounds": {
+                "x": 640,
+                "y": 360,
+                "width": 0,
+                "height": 0,
+                "top": 360,
+                "right": 640,
+                "bottom": 360,
+                "left": 640
+              },
+              "transform": "matrix(1, 0, 0, 1, 0, 0)",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "1",
+              "display": "block"
+            },
+            {
+              "index": 1,
+              "tag": "I",
+              "classes": "iw-ret__dot",
+              "bounds": {
+                "x": 638.625,
+                "y": 358.625,
+                "width": 2.75,
+                "height": 2.75,
+                "top": 358.625,
+                "right": 641.375,
+                "bottom": 361.375,
+                "left": 638.625
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "0.55",
+              "display": "block"
+            },
+            {
+              "index": 2,
+              "tag": "svg",
+              "classes": "iw-ret__svg",
+              "bounds": {
+                "x": 600,
+                "y": 320,
+                "width": 80,
+                "height": 80,
+                "top": 320,
+                "right": 680,
+                "bottom": 400,
+                "left": 600
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            },
+            {
+              "index": 3,
+              "tag": "circle",
+              "classes": "iw-ret__ring thin",
+              "bounds": {
+                "x": 625,
+                "y": 345,
+                "width": 30,
+                "height": 30,
+                "top": 345,
+                "right": 655,
+                "bottom": 375,
+                "left": 625
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "inline"
+            },
+            {
+              "index": 4,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 638.5,
+                "y": 278.70001220703125,
+                "width": 3,
+                "height": 11,
+                "top": 278.70001220703125,
+                "right": 641.5,
+                "bottom": 289.70001220703125,
+                "left": 638.5
+              },
+              "transform": "matrix(1, 0, 0, 1, 0, -75.8)",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            },
+            {
+              "index": 5,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 710.2999877929688,
+                "y": 358.5,
+                "width": 11,
+                "height": 3,
+                "top": 358.5,
+                "right": 721.2999877929688,
+                "bottom": 361.5,
+                "left": 710.2999877929688
+              },
+              "transform": "matrix(0, 1, -1, 0, 75.8, 0)",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            },
+            {
+              "index": 6,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 638.5,
+                "y": 430.29998779296875,
+                "width": 3,
+                "height": 11,
+                "top": 430.29998779296875,
+                "right": 641.5,
+                "bottom": 441.29998779296875,
+                "left": 638.5
+              },
+              "transform": "matrix(-1, 0, 0, -1, 0, 75.8)",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            },
+            {
+              "index": 7,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 558.7000122070312,
+                "y": 358.5,
+                "width": 11,
+                "height": 3,
+                "top": 358.5,
+                "right": 569.7000122070312,
+                "bottom": 361.5,
+                "left": 558.7000122070312
+              },
+              "transform": "matrix(0, -1, 1, 0, -75.8, 0)",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            }
+          ],
+          "activeGeometry": []
+        }
+      }
+    },
+    {
+      "kind": "candidate",
+      "sourceSha": "9024dd69a3ee3883ab1bf5bd40ee24031d20d62a",
+      "contentHash": "9f48932c68c44f0b44581087eda18bb9002f59b6cbb6b36655369862ddd715f8",
+      "receiptSha256": "065cace2fc38f99f0fee28476e6faa0f62923279fae217a2efdf010e15978fbc",
+      "diagnostic": {
+        "frames": 0,
+        "stableFrames": 0,
+        "elapsedMs": 1500.399999999965,
+        "deadlineMs": 1500,
+        "ownerBefore": {
+          "frozen": true,
+          "clock": [
+            6.883266666666677,
+            null,
+            1.4499999999999997,
+            124,
+            0
+          ],
+          "weaponId": "slosher",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "grounded": true,
+          "cameraPosition": [
+            5.720002246710445,
+            2.538704836918996,
+            -4.467638861342398
+          ],
+          "cameraQuaternion": [
+            0,
+            0.9982005399352042,
+            0.05996400647944458,
+            0
+          ],
+          "fov": 54.999999999999986,
+          "aspect": 1.7777777777777777,
+          "yaw": 0,
+          "pitch": -0.12,
+          "input": {
+            "fire": true,
+            "enabled": true,
+            "locked": true,
+            "lastDevice": "kbm",
+            "keys": []
+          },
+          "intent": {
+            "fire": true,
+            "jump": false,
+            "squid": false,
+            "move": [
+              0,
+              0,
+              0
+            ]
+          },
+          "runner": {
+            "charge": 0,
+            "chargeT": 0,
+            "charging": false,
+            "cooldown": 0.26666666666666666,
+            "streaming": false,
+            "streamTime": null,
+            "streamElapsed": null,
+            "streamUsed": null,
+            "bowTilt": null
+          },
+          "renderFrames": 31,
+          "shotCount": 1
+        },
+        "ownerAfter": {
+          "frozen": true,
+          "clock": [
+            6.883266666666677,
+            null,
+            1.4499999999999997,
+            124,
+            0
+          ],
+          "weaponId": "slosher",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "grounded": true,
+          "cameraPosition": [
+            5.720002246710445,
+            2.538704836918996,
+            -4.467638861342398
+          ],
+          "cameraQuaternion": [
+            0,
+            0.9982005399352042,
+            0.05996400647944458,
+            0
+          ],
+          "fov": 54.999999999999986,
+          "aspect": 1.7777777777777777,
+          "yaw": 0,
+          "pitch": -0.12,
+          "input": {
+            "fire": true,
+            "enabled": true,
+            "locked": true,
+            "lastDevice": "kbm",
+            "keys": []
+          },
+          "intent": {
+            "fire": true,
+            "jump": false,
+            "squid": false,
+            "move": [
+              0,
+              0,
+              0
+            ]
+          },
+          "runner": {
+            "charge": 0,
+            "chargeT": 0,
+            "charging": false,
+            "cooldown": 0.26666666666666666,
+            "streaming": false,
+            "streamTime": null,
+            "streamElapsed": null,
+            "streamUsed": null,
+            "bowTilt": null
+          },
+          "renderFrames": 31,
+          "shotCount": 1
+        },
+        "last": {
+          "geometry": [
+            {
+              "index": 0,
+              "tag": "DIV",
+              "classes": "iw-ret iw-ret--slosher",
+              "bounds": {
+                "x": 640,
+                "y": 360,
+                "width": 0,
+                "height": 0,
+                "top": 360,
+                "right": 640,
+                "bottom": 360,
+                "left": 640
+              },
+              "transform": "matrix(1, 0, 0, 1, 0, 0)",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "1",
+              "display": "block"
+            },
+            {
+              "index": 1,
+              "tag": "I",
+              "classes": "iw-ret__dot",
+              "bounds": {
+                "x": 638.625,
+                "y": 358.625,
+                "width": 2.75,
+                "height": 2.75,
+                "top": 358.625,
+                "right": 641.375,
+                "bottom": 361.375,
+                "left": 638.625
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "0.55",
+              "display": "block"
+            },
+            {
+              "index": 2,
+              "tag": "svg",
+              "classes": "iw-ret__svg",
+              "bounds": {
+                "x": 600,
+                "y": 320,
+                "width": 80,
+                "height": 80,
+                "top": 320,
+                "right": 680,
+                "bottom": 400,
+                "left": 600
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            },
+            {
+              "index": 3,
+              "tag": "circle",
+              "classes": "iw-ret__ring thin",
+              "bounds": {
+                "x": 625,
+                "y": 345,
+                "width": 30,
+                "height": 30,
+                "top": 345,
+                "right": 655,
+                "bottom": 375,
+                "left": 625
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "inline"
+            },
+            {
+              "index": 4,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "none"
+            },
+            {
+              "index": 5,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "none"
+            },
+            {
+              "index": 6,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "none"
+            },
+            {
+              "index": 7,
+              "tag": "I",
+              "classes": "iw-ret__tick",
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "none"
+            },
+            {
+              "index": 8,
+              "tag": "svg",
+              "classes": "iw-reticle-slosher-diagonal-proposal",
+              "bounds": {
+                "x": 600,
+                "y": 320,
+                "width": 80,
+                "height": 80,
+                "top": 320,
+                "right": 680,
+                "bottom": 400,
+                "left": 600
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "block"
+            },
+            {
+              "index": 9,
+              "tag": "path",
+              "classes": null,
+              "bounds": {
+                "x": 615.7000122070312,
+                "y": 335.70001220703125,
+                "width": 48.5999755859375,
+                "height": 48.5999755859375,
+                "top": 335.70001220703125,
+                "right": 664.2999877929688,
+                "bottom": 384.29998779296875,
+                "left": 615.7000122070312
+              },
+              "transform": "none",
+              "translate": "none",
+              "rotate": "none",
+              "scale": "none",
+              "display": "inline"
+            }
+          ],
+          "activeGeometry": []
+        }
+      }
+    }
+  ]
+}
