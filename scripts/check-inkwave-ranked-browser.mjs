@@ -209,8 +209,8 @@ async function checkRankedRemoteContactGear(host, guest, save) {
       // A roller travels along its current body heading before the facing
       // spring turns toward a reverse stick. Face into the verified corridor
       // and use forward input; a 250ms reverse pulse can hit the edge mid-turn.
-      const corridor=[];for(let distance=0;distance<=2;distance+=.25){const at=query(x-dx*(3+distance),y,z-dz*(3+distance),travelYaw);if(!at?.support.floor)break;corridor.push(at.pos);}
-      if(corridor.length===9)return {attempts,block:block.id,yaw,travelYaw,edge:edge.pos,supported:supported.pos,observer:observer.pos,edgeSupport:edge.support,corridor};
+      const corridor=[];for(let distance=0;distance<=4;distance+=.25){const at=query(x-dx*(3+distance),y,z-dz*(3+distance),travelYaw);if(!at?.support.floor)break;corridor.push(at.pos);}
+      if(corridor.length===17)return {attempts,block:block.id,yaw,travelYaw,edge:edge.pos,supported:supported.pos,observer:observer.pos,edgeSupport:edge.support,corridor};
      }
     }
    }
@@ -222,14 +222,14 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   await setInput(host,true);
   await host.waitForFunction(()=>RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
   // First require the real remote roll buffer/handle at zero speed. Then a
-  // bounded 250ms native input pulse uses the verified two-metre corridor;
+  // A real 250ms pulse can cover >3m. Verify 4m of native floor before admission;
   // a cold recording can never drive movement for the whole async timeout.
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&!s.suspended&&s.near&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
   await setInput(host,true,['KeyW']);
   const supported=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;},identities[0].nid,timeout));
   await setInput(host,true);
   const movement=await host.evaluate(origin=>({position:RG.match.local.pos.toArray(),distance:Math.hypot(...RG.match.local.pos.toArray().map((v,i)=>v-origin[i]))}),lane.supported);
-  assert(movement.distance<=2,'native movement pulse stayed inside verified support corridor');
+  assert(movement.distance<=4,'native movement pulse stayed inside verified 4m support corridor');
   phase('supported-real-audio',{remote:supported,movement});
   await place(host,lane.edge,lane.yaw);
   await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&RG.match.local.weaponRunner.s3RollerSuspendedHold===true,null,timeout);

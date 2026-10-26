@@ -278,7 +278,7 @@ test('ranked native lane queries reject the real Tidewater cover overlap even wh
  physics.collideBody(resolved,radius,PLAYER.stepUp,PLAYER.height,contacts,true,false);
  assert(contacts.wall);assert.equal(contacts.wallBlock,2);assert(Math.abs(resolved.x-(-1.9501))<1e-12,'the real solver reproduces both browser failure positions');
  for(let distance=0;distance<=2;distance+=.25){const at=query(-1.9+distance,2.8,2,yaw);assert(at?.support.floor,'nearby unobstructed native support remains eligible');}
- assert.match(rankedCheckerSource,/if\(corridor.length===9\)/,'all nine original corridor samples remain required');
+ assert.match(rankedCheckerSource,/if\(corridor.length===17\)/,'all 17 quarter-metre support checks are required across 4m');
 });
 test('ranked recovery rejects suspended, stale-bit, ungrounded, distant and non-live loops before a pulse',async()=>{
  const h=recoveryHarness(),run=h.run();await new Promise(resolve=>setImmediate(resolve));
