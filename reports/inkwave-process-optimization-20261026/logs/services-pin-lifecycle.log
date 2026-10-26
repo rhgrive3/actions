@@ -1,0 +1,41 @@
+✔ #1153 fixture uses the production Bubbler → navigation → lifetime composition (2.443433ms)
+✔ current teammate, home, and live Bubbler pins route through the current navigation owner (1.09782ms)
+✔ retired UI pins stop before admission, and current navigation rejects stale or invalid targets (1.979142ms)
+(node:3778) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #920 negative control: native pins start Super Jump on pointerdown and cannot be cancelled (13.891275ms)
+✔ #920 teammate pin (touch): pointerdown alone does not jump; a completed tap jumps exactly once (15.136407ms)
+✔ #920 teammate pin (touch): pointercancel before pointerup leaves no Super Jump, repeats are idempotent (7.838867ms)
+✔ #920 teammate pin (touch): lostpointercapture before pointerup leaves no Super Jump, repeats are idempotent (4.120497ms)
+✔ #920 teammate pin (pen): pointerdown alone does not jump; a completed tap jumps exactly once (4.147909ms)
+✔ #920 teammate pin (pen): pointercancel before pointerup leaves no Super Jump, repeats are idempotent (3.942879ms)
+✔ #920 teammate pin (pen): lostpointercapture before pointerup leaves no Super Jump, repeats are idempotent (4.034588ms)
+✔ #920 base pin (touch): pointerdown alone does not jump; a completed tap jumps exactly once (4.230944ms)
+✔ #920 base pin (touch): pointercancel before pointerup leaves no Super Jump, repeats are idempotent (3.692951ms)
+✔ #920 base pin (touch): lostpointercapture before pointerup leaves no Super Jump, repeats are idempotent (17.402542ms)
+✔ #920 base pin (pen): pointerdown alone does not jump; a completed tap jumps exactly once (4.086526ms)
+✔ #920 base pin (pen): pointercancel before pointerup leaves no Super Jump, repeats are idempotent (3.733873ms)
+✔ #920 base pin (pen): lostpointercapture before pointerup leaves no Super Jump, repeats are idempotent (3.469755ms)
+✔ #920 mouse never creates a pending pin tap and the mouse / pad cursor path still calls the same jump owner (3.52645ms)
+✔ #920 the pin connections fail closed on upstream drift and double application (0.473225ms)
+✔ #920 native map close cancels an old pin contact before the next rendered frame (6.847239ms)
+✔ #920 native map close/reopen cancels an old pin contact before the next rendered frame (7.216317ms)
+✔ #920 changing match retires the old pointer intent even when the pin object is unchanged (5.611486ms)
+✔ #920 changing viewer retires the old pointer intent even when the pin object is unchanged (7.085158ms)
+✔ #920 changing controller retires the old pointer intent even when the pin object is unchanged (6.580281ms)
+✔ #920 touch contact cannot retarget after the Bubbler pin is reassigned (4.273409ms)
+✔ #920 pen contact cannot retarget after the Bubbler pin is reassigned (4.101599ms)
+✔ #920 Bubbler serial replacement cancels a pending contact despite the same ID (4.965936ms)
+✔ #920 Bubbler team replacement cancels a pending contact despite the same ID (3.556905ms)
+✔ #920 captured pointerup from a removed higher-index Bubbler never dereferences a missing pin (3.707103ms)
+✔ #920 refreshed snapshots of the same Bubbler remain tappable and cancellation remains pointer-local (3.566341ms)
+✔ #779 Diorama base pin position and completed touch use team 0's separate home point (6.320503ms)
+✔ #779 Diorama base pin position and completed touch use team 1's separate home point (6.584101ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 675.696201

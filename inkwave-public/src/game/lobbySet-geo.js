@@ -34,23 +34,23 @@ export class SetBuilder {
     if (kind === 'surface') {
       const c = COL.set(o.color ?? '#808080'), cs = new Float32Array(n * 3), ss = new Float32Array(n * 4), ds = new Float32Array(n * 3);
       const sf = o.surf || [SLOT.plain, 0.3, 1, 0];
-      for (let i = 0; i < n; i++) { cs.set([c.r, c.g, c.b], i * 3); ss.set(sf, i * 4); }
+      for (let i = 0; i < n; i++) { const j = i * 3; cs[j] = c.r; cs[j + 1] = c.g; cs[j + 2] = c.b; ss.set(sf, i * 4); }
       if (o.dec) for (let i = 0; i < n; i++) ds.set(typeof o.dec === 'function' ? o.dec(uv0 ? uv0.getX(i) : 0, uv0 ? uv0.getY(i) : 0, i) : o.dec, i * 3);
       g.setAttribute('color', new THREE.BufferAttribute(cs, 3));
       g.setAttribute('aSurf', new THREE.BufferAttribute(ss, 4));
       g.setAttribute('aDec', new THREE.BufferAttribute(ds, 3));
       if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2));
     } else if (kind === 'lit') {
-      const l = new Float32Array(n * 3); for (let i = 0; i < n; i++) l.set(o.lit || [1, 1, 1], i * 3);
+      const l = new Float32Array(n * 3), lit = o.lit || [1, 1, 1]; for (let i = 0; i < n; i++) l.set(lit, i * 3);
       g.setAttribute('aLit', new THREE.BufferAttribute(l, 3));
       if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2));
     } else if (kind === 'neon') {
-      const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set(o.neon || [0, 0, 0], i * 3);
+      const a = new Float32Array(n * 3), neon = o.neon || [0, 0, 0]; for (let i = 0; i < n; i++) a.set(neon, i * 3);
       g.setAttribute('aNeon', new THREE.BufferAttribute(a, 3));
       g.deleteAttribute('uv');
     } else if (kind === 'emit') {
       const c = COL.set(o.color ?? '#ffffff').multiplyScalar(o.k ?? 1), cs = new Float32Array(n * 3);
-      for (let i = 0; i < n; i++) cs.set([c.r, c.g, c.b], i * 3);
+      for (let i = 0; i < n; i++) { const j = i * 3; cs[j] = c.r; cs[j + 1] = c.g; cs[j + 2] = c.b; }
       g.setAttribute('color', new THREE.BufferAttribute(cs, 3));
       g.deleteAttribute('uv');
     }
@@ -102,9 +102,10 @@ export function boxUV(g, s = 1) {
   for (let i = 0; i < N; i++) {
     const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
     const x = p.getX(i) * s, y = p.getY(i) * s, z = p.getZ(i) * s;
-    if (ax >= ay && ax >= az) uv.set([n.getX(i) > 0 ? -z : z, y], i * 2);
-    else if (ay >= az) uv.set([x, n.getY(i) > 0 ? -z : z], i * 2);
-    else uv.set([n.getZ(i) > 0 ? x : -x, y], i * 2);
+    const j = i * 2;
+    if (ax >= ay && ax >= az) { uv[j] = n.getX(i) > 0 ? -z : z; uv[j + 1] = y; }
+    else if (ay >= az) { uv[j] = x; uv[j + 1] = n.getY(i) > 0 ? -z : z; }
+    else { uv[j] = n.getZ(i) > 0 ? x : -x; uv[j + 1] = y; }
   }
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
 }

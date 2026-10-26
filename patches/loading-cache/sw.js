@@ -176,9 +176,9 @@ async function installSnapshot() {
     // offline snapshot, and failure still deletes the candidate transaction.
     await cache.put(INDEX_URL, html);
     const pending = [...BUILD.precache];
-    let failed = false;
+    let pendingIndex = 0, failed = false;
     const copy = async () => {
-      try { while (pending.length && !failed) await populate(cache, pending.shift(), reusable, active); }
+      try { while (pendingIndex < pending.length && !failed) await populate(cache, pending[pendingIndex++], reusable, active); }
       catch (error) { failed = true; throw error; }
     };
     const results = await Promise.allSettled([copy(), copy()]);

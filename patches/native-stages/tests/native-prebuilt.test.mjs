@@ -225,6 +225,29 @@ if (!vm.SourceTextModule) {
     waiting[0](late);
     assert.equal(disposed, true);
   });
+  test('aborted transcodes retain a replaced loader until every actual callback finishes', async () => {
+    const waiting = [], controller = new AbortController();
+    const {calls, run} = await textures({manual: true, parse: (onLoad, onError) => waiting.push({onLoad, onError})});
+    const first = run(undefined, controller.signal);
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(waiting.length, 2);
+    controller.abort();
+    await assert.rejects(first, {name: 'AbortError'});
+    const second = run({capabilities: {getMaxAnisotropy: () => 16}});
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(waiting.length, 4);
+    assert.equal(calls.disposedLoaders, 0, 'abort settles callers while the old worker still owns two callbacks');
+    const late = compressed();let disposed = 0;late.dispose = () => { disposed++; };
+    waiting[0].onLoad(late);
+    await Promise.resolve();
+    assert.equal(disposed, 1, 'the aborted parse disposes its late texture');
+    assert.equal(calls.disposedLoaders, 0, 'one old callback is still outstanding');
+    waiting[1].onError(Error('late transcode failure'));
+    await Promise.resolve();
+    assert.equal(calls.disposedLoaders, 1, 'the retired worker is released after its final callback');
+    for (const w of waiting.slice(2)) w.onLoad(compressed());
+    assert.equal((await second).size, 2, 'replacement renderer parses remain independent');
+  });
   test('relieved touch budgets fall back to the uncompressed budget for PNG and RGBA32 output', async () => {
     const fallback = {quality: 'balanced', maxDimension: 512, perRole: {}};
     const limit = {maxDimension: 4096, perRole: {}, fallback};

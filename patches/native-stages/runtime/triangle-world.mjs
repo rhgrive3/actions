@@ -92,8 +92,10 @@ export class TriangleWorld {
  }
  /** Continuous sphere contact with unchanged source faces, edges and vertices.
   * Each feature yields a linear/quadratic earliest entry, including a linearly
-  * changing radius. The BVH and contact/material selection stay authoritative. */
- sweepSphere(from,to,radius,{ignoreGrates=false,endRadius=radius}={}){
+  * changing radius. The BVH and contact/material selection stay authoritative.
+  * Optional out owns point/normal vectors distinct from the inputs. Misses
+  * leave it untouched; omitted out still returns an independently owned hit. */
+ sweepSphere(from,to,radius,{ignoreGrates=false,endRadius=radius}={},out=null){
   if(!(radius>=0)||!(endRadius>=0)||!Number.isFinite(radius+endRadius)||!Number.isFinite(from.x+from.y+from.z+to.x+to.y+to.z)||this.nodes.length<8)return null;
   const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{box,delta,probe,normal}=scratch;
   delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
@@ -122,7 +124,10 @@ export class TriangleWorld {
    else normal.normalize();
    best=analyticTime;bestTriangle=id;bestTime=time;px=this._bestp.x;py=this._bestp.y;pz=this._bestp.z;nx=normal.x;ny=normal.y;nz=normal.z;
   });
-  return bestTriangle<0?null:{triangle:bestTriangle,time:bestTime,distance:bestTime*length,point:new THREE.Vector3(px,py,pz),normal:new THREE.Vector3(nx,ny,nz),flags:this.flags[bestTriangle],object:this.objectIds[bestTriangle]};
+  if(bestTriangle<0)return null;
+  if(!out)return {triangle:bestTriangle,time:bestTime,distance:bestTime*length,point:new THREE.Vector3(px,py,pz),normal:new THREE.Vector3(nx,ny,nz),flags:this.flags[bestTriangle],object:this.objectIds[bestTriangle]};
+  out.triangle=bestTriangle;out.time=bestTime;out.distance=bestTime*length;
+  out.point.set(px,py,pz);out.normal.set(nx,ny,nz);out.flags=this.flags[bestTriangle];out.object=this.objectIds[bestTriangle];return out;
  }
  // The previous source entry equation is retained solely to resolve
  // sub-nanosegment contact ordering, with its original brackets/iterations.
