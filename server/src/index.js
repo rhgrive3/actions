@@ -430,7 +430,10 @@ export class RoomDurableObject {
         if (targetId !== id) {
           if (!relaySend(member.ws, member.relayClock
             ? (stamped ??= `m|${id}|@${stampTime}|${payload}`)
-            : (forward ??= `m|${id}|${payload}`)) && member.ws.closed) {
+            : (forward ??= `m|${id}|${payload}`))) {
+            // Native sockets have no `closed` flag and their close event may
+            // arrive later. Failed delivery must release membership now.
+            try { member.ws.close(1013, 'Delivery failed'); } catch {}
             this._cleanupMember(targetId, member.ws);
           }
         }

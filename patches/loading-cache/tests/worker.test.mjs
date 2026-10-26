@@ -219,3 +219,82 @@ test('explicit boot recovery evicts only corrupt current modules and bypasses st
  assert.equal(await(await get(worker,asset(REV_A))).text(),'export const v=1;');
  assert.equal((await worker.status()).offlineReady,true);
 });
+
+// Bounded immutable response streams and healthy-response compatibility.
+test('oversized streaming immutable responses abort before consuming the remaining body', async t => {
+  const world = new World(), build = makeBuild(); world.serve(build);
+  const worker = world.worker(build); await worker.install(); await worker.activate();
+  const path = `_versions/${REV_A}/src/main.js`, url = world.url(path);
+  world.maps.get(prefix + REV_A).delete(url);
+  const attempts = [];
+  const original = world.fetch;
+  world.fetch = async (request, options) => {
+    if (world.url(request) !== url) return original(request, options);
+    const attempt = { pulls: 0, aborted: false }; attempts.push(attempt);
+    let controller;
+    const body = new ReadableStream({
+      start(value) { controller = value; },
+      pull(value) {
+        attempt.pulls++;
+        if (attempt.pulls < 100) value.enqueue(new Uint8Array(1024));
+        else value.close();
+      },
+    }, { highWaterMark: 0 });
+    options.signal.addEventListener('abort', () => {
+      attempt.aborted = true;
+      try { controller.error(new DOMException('Aborted', 'AbortError')); } catch {}
+    }, { once: true });
+    return new Response(body, { status: 200 });
+  };
+  const runtime = world.worker(build);
+  await assert.rejects(runtime.request(path), /Asset integrity mismatch/);
+  assert.equal(attempts.length, 2, 'retain the existing exact-URL reload retry');
+  for (const attempt of attempts) {
+    assert.ok(attempt.pulls < 10, `read only bounded tee lookahead, not all ${attempt.pulls} chunks`);
+    assert.equal(attempt.aborted, true, 'terminate the unused original response branch as well');
+  }
+  assert.equal(world.maps.get(prefix + REV_A).has(url), false);
+  t.diagnostic(JSON.stringify({ expectedBytes: build.config.assets['src/main.js'][0], attempts }));
+});
+
+test('valid byte-limited streams preserve their bytes, digest and offline reuse', async () => {
+  const world = new World(), build = makeBuild(REV_A, { 'src/main.js': 'export const text="イカ🦑";', 'empty.js': '' });
+  world.serve(build);
+  const original = world.fetch;
+  world.fetch = async (request, options) => {
+    const response = await original(request, options);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    let at = 0;
+    return new Response(new ReadableStream({
+      pull(controller) { if (at < bytes.length) controller.enqueue(bytes.slice(at, ++at)); else controller.close(); },
+    }), { status: response.status });
+  };
+  const worker = world.worker(build); await worker.install(); await worker.activate();
+  world.offline = true;
+  for (const [path, body] of Object.entries(build.bodies))
+    assert.equal(await (await worker.request(`_versions/${REV_A}/${path}`)).response.text(), body);
+  assert.equal((await worker.status()).offlineReady, true);
+});
+
+
+test('uncacheable server errors retain their readable body for online callers', async () => {
+  const world = new World(), build = makeBuild(); world.serve(build);
+  const original = world.fetch;
+  world.fetch = async (request, options) => {
+    if (world.url(request).endsWith('/src/main.js')) {
+      let controller;
+      const body = new ReadableStream({ start(value) {
+        controller = value;
+        value.enqueue(new TextEncoder().encode('temporary failure'));
+      } });
+      options.signal.addEventListener('abort', () => controller.error(new DOMException('Aborted', 'AbortError')), { once: true });
+      setTimeout(() => { try { controller.close(); } catch {} }, 5);
+      return new Response(body, { status: 503 });
+    }
+    return original(request, options);
+  };
+  const worker = world.worker(build);
+  const result = await worker.request(`_versions/${REV_A}/src/main.js`);
+  assert.equal(result.response.status, 503);
+  assert.equal(await result.response.text(), 'temporary failure');
+});

@@ -49,17 +49,71 @@ export const deleteUser = (db, id) => db.batch([
   db.prepare('DELETE FROM users WHERE id = ?1').bind(id),
 ]);
 
-// ------------------------------------------------------------------------------------- sessions
-export async function insertSession(db, s) {
-  await db.batch([
+/** A login may finish password hashing after another request changed it.
+ * Compare at the write, not with a second racy read before the write.
+ */
+export const upgradePasswordHash = async (db, id, previous, next) =>
+  (await db.prepare('UPDATE users SET password_hash = ?3 WHERE id = ?1 AND password_hash = ?2')
+    .bind(id, previous, next).run()).meta.changes === 1;
+
+export const setAuthorizedProfile = (db, row, { displayName, avatarIcon, avatarColor }, now) =>
+  db.prepare(`UPDATE users SET display_name = COALESCE(?2, display_name),
+    avatar_icon = COALESCE(?3, avatar_icon), avatar_color = COALESCE(?4, avatar_color), updated_at = ?5
+    WHERE id = ?1 AND password_hash = ?6 AND EXISTS
+      (SELECT 1 FROM sessions WHERE id = ?7 AND user_id = ?1 AND expires_at > ?5)
+    RETURNING *`)
+    .bind(row.id, displayName ?? null, avatarIcon ?? null, avatarColor ?? null, now, row.password_hash, row.session_id).first();
+
+/** All three writes succeed or roll back together. The unique salted new hash
+ * is a transaction generation: a competing old authorization cannot delete
+ * the winner's sessions or publish a token authenticated by an old password.
+ */
+export async function rotatePassword(db, row, nextHash, session) {
+  const s = session;
+  const result = await db.batch([
+    db.prepare(`UPDATE users SET password_hash = ?3, updated_at = ?4, password_changed_at = ?4
+      WHERE id = ?1 AND password_hash = ?2 AND EXISTS
+        (SELECT 1 FROM sessions WHERE id = ?5 AND user_id = ?1 AND expires_at > ?4)`)
+      .bind(row.id, row.password_hash, nextHash, s.now, row.session_id),
+    db.prepare(`DELETE FROM sessions WHERE user_id = ?1 AND EXISTS
+      (SELECT 1 FROM users WHERE id = ?1 AND password_hash = ?2)`)
+      .bind(row.id, nextHash),
     db.prepare(`INSERT INTO sessions (id, token_hash, user_id, created_at, last_seen_at, expires_at, persistent, user_agent, country)
-      VALUES (?1, ?2, ?3, ?4, ?4, ?5, ?6, ?7, ?8)`)
-      .bind(s.id, s.tokenHash, s.userId, s.now, s.expiresAt, s.persistent ? 1 : 0, s.userAgent, s.country),
-    // keep the newest MAX_SESSIONS_PER_USER sign-ins per account
-    db.prepare(`DELETE FROM sessions WHERE user_id = ?1 AND id NOT IN
-      (SELECT id FROM sessions WHERE user_id = ?1 ORDER BY created_at DESC, id DESC LIMIT ?2)`)
-      .bind(s.userId, MAX_SESSIONS_PER_USER),
+      SELECT ?1, ?2, ?3, ?4, ?4, ?5, ?6, ?7, ?8 FROM users WHERE id = ?3 AND password_hash = ?9`)
+      .bind(s.id, s.tokenHash, s.userId, s.now, s.expiresAt, s.persistent ? 1 : 0, s.userAgent, s.country, nextHash),
   ]);
+  return result[0].meta.changes === 1 && result[2].meta.changes === 1;
+}
+
+export async function deleteAuthorizedUser(db, row, now) {
+  const result = await db.batch([
+    db.prepare(`DELETE FROM users WHERE id = ?1 AND password_hash = ?2 AND EXISTS
+      (SELECT 1 FROM sessions WHERE id = ?3 AND user_id = ?1 AND expires_at > ?4)`)
+      .bind(row.id, row.password_hash, row.session_id, now),
+    // D1 enforces the cascading FK. Also keep adapters with FK enforcement off
+    // free of orphans, without deleting sessions when authorization lost.
+    db.prepare('DELETE FROM sessions WHERE user_id = ?1 AND NOT EXISTS (SELECT 1 FROM users WHERE id = ?1)').bind(row.id),
+  ]);
+  return result[0].meta.changes === 1;
+}
+
+// ------------------------------------------------------------------------------------- sessions
+export async function insertSession(db, s, expectedHash = null) {
+  const result = await db.batch([
+    db.prepare(`INSERT INTO sessions (id, token_hash, user_id, created_at, last_seen_at, expires_at, persistent, user_agent, country)
+      SELECT ?1, ?2, ?3, ?4, ?4, ?5, ?6, ?7, ?8 FROM users
+      WHERE id = ?3 AND (?9 IS NULL OR password_hash = ?9)`)
+      .bind(s.id, s.tokenHash, s.userId, s.now, s.expiresAt, s.persistent ? 1 : 0, s.userAgent, s.country, expectedHash),
+    // Keep the issued token even when several logins share a millisecond.
+    // UUID lexical order does not identify the newest session in a tie.
+    db.prepare(`DELETE FROM sessions WHERE user_id = ?1 AND EXISTS (SELECT 1 FROM sessions WHERE id = ?3 AND user_id = ?1) AND id NOT IN
+      (SELECT id FROM sessions WHERE user_id = ?1 ORDER BY (id = ?3) DESC, created_at DESC, id DESC LIMIT ?2)`)
+      .bind(s.userId, MAX_SESSIONS_PER_USER, s.id),
+    db.prepare(`UPDATE users SET last_login_at = ?2 WHERE id = ?1 AND EXISTS
+      (SELECT 1 FROM sessions WHERE id = ?3 AND user_id = ?1)`)
+      .bind(s.userId, s.now, s.id),
+  ]);
+  return result[0].meta.changes === 1;
 }
 
 export const sessionWithUser = (db, tokenHash, now) => db.prepare(`SELECT s.id AS session_id, s.expires_at, s.last_seen_at, s.persistent, s.created_at AS session_created_at, u.*
@@ -71,11 +125,15 @@ export const touchSession = (db, id, now, expiresAt) =>
 export const listSessions = async (db, userId, now) => (await db.prepare(`SELECT id, created_at, last_seen_at, expires_at, persistent, user_agent, country
     FROM sessions WHERE user_id = ?1 AND expires_at > ?2 ORDER BY last_seen_at DESC`).bind(userId, now).all()).results || [];
 
-export const deleteSession = (db, id, userId) =>
-  db.prepare('DELETE FROM sessions WHERE id = ?1 AND user_id = ?2').bind(id, userId).run();
+export const deleteSession = (db, id, userId, actorId = null, now = 0) =>
+  db.prepare(`DELETE FROM sessions WHERE id = ?1 AND user_id = ?2 AND (?3 IS NULL OR EXISTS
+    (SELECT 1 FROM sessions AS actor WHERE actor.id = ?3 AND actor.user_id = ?2 AND actor.expires_at > ?4))`)
+    .bind(id, userId, actorId, now).run();
 
-export const deleteOtherSessions = (db, userId, keepId) =>
-  db.prepare('DELETE FROM sessions WHERE user_id = ?1 AND id != ?2').bind(userId, keepId).run();
+export const deleteOtherSessions = (db, userId, keepId, actorId = null, now = 0) =>
+  db.prepare(`DELETE FROM sessions WHERE user_id = ?1 AND id != ?2 AND (?3 IS NULL OR EXISTS
+    (SELECT 1 FROM sessions AS actor WHERE actor.id = ?3 AND actor.user_id = ?1 AND actor.expires_at > ?4))`)
+    .bind(userId, keepId, actorId, now).run();
 
 export const deleteSessionByToken = (db, tokenHash) =>
   db.prepare('DELETE FROM sessions WHERE token_hash = ?1').bind(tokenHash).run();
