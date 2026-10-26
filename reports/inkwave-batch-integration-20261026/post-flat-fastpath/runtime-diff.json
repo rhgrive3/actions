@@ -1,0 +1,21 @@
+{
+  "changedLiveArtifacts": [
+    "index.html",
+    "patches/local-quality/ink-volume/assets/roller/manifest.json",
+    "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+    "patches/local-quality/platform-game.mjs",
+    "patches/splatoon3/runtime/roller.mjs",
+    "sw.js"
+  ],
+  "versionSnapshotKeysExcluded": true,
+  "changedProductionModules": [
+    "patches/local-quality/platform-game.mjs",
+    "patches/splatoon3/runtime/roller.mjs"
+  ],
+  "rollerManifestChangedKeys": [
+    "binary"
+  ],
+  "shooterManifestChangedKeys": [
+    "binary"
+  ]
+}

@@ -20,7 +20,12 @@
       "main-weapon-catalog imports combined; Charger helper retained beside extracted rolling-floor caller",
       "both behavior-report entries retained",
       "both build-only adapter registrations retained"
-    ]
+    ],
+    "fastPathFollowup": {
+      "verifiedSource": "53c4727765cc8a9a89f14098d35ecd14122bdba7",
+      "integrated": "af48bc405408c76d457122b085f7be793220e4d5",
+      "validation": "post-flat-fastpath/validation.json"
+    }
   },
   "validation": {
     "sourceFocused": {
@@ -73,17 +78,17 @@
     }
   },
   "pending": [
-    "verified minimal flat-ground fast-path correction and affected slope/cliff checks",
-    "final combined build identity and validation receipt after that correction",
     "Hissen/slosher unfinished work and original-comparison scope review",
-    "one draft PR; no merge until reviewed",
+    "Resolve rejected PR creation; no further retry or bypass",
     "required automatic CI on eventual final head"
   ],
   "remoteActions": {
     "prCreated": false,
     "merged": false,
     "manualCiStarted": false,
-    "integrationBranchPushed": false
+    "integrationBranchPushed": true,
+    "lastVerifiedRemoteHead": "b7258b559e359878523b45dbae053a5240e523b0",
+    "prCreation": "denied twice; stopped, no matching PR exists"
   },
   "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
   "reticleHandoff": {
@@ -152,5 +157,17 @@
     "budget": "passed",
     "status": "intermediate; new flat-ground tracing cost correction pending; not final head evidence",
     "evidenceDirectory": "pre-flat-fastpath"
+  },
+  "postFlatFastpathCandidate": {
+    "sourceHead": "c922a773b6e15be90332aca066fbdfb39c0aa09b",
+    "upstreamMainMerged": "ce34bf34359ca5e8ee82d1effc50e649783a1d3d",
+    "contentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+    "inputHash": "472bb723b7424abccdc8e6eb1a08978462c58d104db02d56163140f679176bbc",
+    "sourceAffectedPassed": 20,
+    "sourceBoundaryPassed": 5,
+    "emittedPassed": 8,
+    "browser": "passed, actual emitted Actor/Physics/GPU paint and controlled FX",
+    "evidenceDirectory": "post-flat-fastpath",
+    "status": "affected checks passed; partial batch, publication blocked; not final CI"
   }
 }

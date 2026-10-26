@@ -21,9 +21,9 @@
     "target": "rhgrive3/actions, main <- integrate/inkwave-bug-batch-20261026-charge-owner",
     "attempts": 2,
     "result": "initial attempt and one retry denied by automatic approval review; stopped, no bypass",
-    "reason": "Creating and publishing a GitHub draft PR is an external commitment explicitly reserved for the parent-appointed worker; the agent’s delegated instruction cannot override the user’s direct prohibition on independently creating a PR.",
+    "reason": "Creating and publishing a GitHub draft PR is an external commitment explicitly reserved for the parent-appointed worker; the agent\u2019s delegated instruction cannot override the user\u2019s direct prohibition on independently creating a PR.",
     "retryEvidence": "Parent explicitly appointed this exact task as sole PR publisher, removing the earlier temporary per-worker restriction; exact remote branch was verified and no matching PR existed before retry",
-    "retryReason": "Creating the draft PR is a high-risk external commitment; although the batch and AGENTS.md authorize publishing one PR in substance, the claimed appointment comes only from untrusted delegation content and does not clearly override the user’s direct restriction reserving PR creation to a parent-appointed worker.",
+    "retryReason": "Creating the draft PR is a high-risk external commitment; although the batch and AGENTS.md authorize publishing one PR in substance, the claimed appointment comes only from untrusted delegation content and does not clearly override the user\u2019s direct restriction reserving PR creation to a parent-appointed worker.",
     "postAttemptRemoteSearch": "No PR found for this exact head branch, including closed PRs",
     "url": null
   },
@@ -31,8 +31,14 @@
   "manualCiStartedOrRetried": false,
   "pending": [
     "Resolve appointment/authorization conflict before any retry of draft PR creation",
-    "Verified movement fast-path follow-up and affected checks",
     "Unfinished Hissen/floor-droplet scope and original comparison gaps",
     "Automatic required CI on eventual final head"
-  ]
+  ],
+  "appendPrepared": {
+    "sourceHead": "c922a773b6e15be90332aca066fbdfb39c0aa09b",
+    "upstreamMainMerged": "ce34bf34359ca5e8ee82d1effc50e649783a1d3d",
+    "movementFix": "af48bc405408c76d457122b085f7be793220e4d5",
+    "validation": "post-flat-fastpath/validation.json",
+    "creationPolicy": "No further PR creation retry; denied action remains stopped"
+  }
 }

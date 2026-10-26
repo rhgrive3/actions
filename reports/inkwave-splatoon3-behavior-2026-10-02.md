@@ -6475,3 +6475,23 @@ Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. 詳細・参照条件・検証�
 ## 2026-10-26 Slosher origin / bomb-cue local candidate
 
 Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. Dread Wringer's low animated rim is removed from the physical birth-origin selection, using the established Tri-Slosher body origin for both delayed streams without changing sourced velocities, ranges, damage or paint parameters. The final FX composition excludes Curling's inappropriate armed-bomb danger forecast, follows a rolling Splat Bomb's current supported surface, and adds a landing-owned Autobomb acquisition rim with bounded initial-rotation lifetime. The thin style/fade and origin remain INKWAVE calibrations. Hissen main-blob matched retail size and the other Slosher families' generic falling floor beads remain **unresolved**; source tests are not visual proof. See [exact scope, references, source/emitted checks and limits](slosher-bomb-cues-20261026/README.md). This local worker does not push, open a PR, merge or launch CI.
+
+## 2026-10-26: Four-worker integration review and Roller fast path
+
+The combined branch preserves newer upstream main `ce34bf34359ca5e8ee82d1effc50e649783a1d3d`.
+Roller support now tries its existing short floor-height test before collecting
+continuous collision surfaces. The two support predicates, tolerances and
+independent paint-continuity gate are unchanged. Flat support avoids the added
+trace work; the real downhill Actor still maintains contact and scored paint
+at 30/60/120 Hz. This does not add a Nintendo collision or device-FPS claim.
+Exact combined checks are in
+[post-flat-fastpath/validation.json](inkwave-batch-integration-20261026/post-flat-fastpath/validation.json).
+
+Stringer stage feedback is connected through its existing annulus without new
+geometry or persistent first-stage track color. The independent original-pixel
+review supports that narrow structural/color constraint; the complete stage
+cycle and timing remain unmeasured. The proposed Shooter inner-marker 8F
+visibility cutoff was excluded because source data alone did not establish an
+original UI rule. Horizontal inner-marker behavior, Hissen size and Slosher
+floor-droplet visual corrections remain open in the
+[completion matrix](inkwave-batch-integration-20261026/completion-matrix.md).
