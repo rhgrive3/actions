@@ -57,7 +57,10 @@ test('factor reuse is local to each finite update and each contiguous rate, incl
 });
 test('non-finite time/rates retain all original Float32 and renderer values', () => {
   for (const dt of [0, 1 / 60, NaN, Infinity, -Infinity]) {
-    const a = pool(baseline), b = pool(candidate);
+    // Isolate this byte-for-byte case from the finite workloads' compiler
+    // feedback. V8 12.4 can choose opposite NaN sign bits after tiering the
+    // two different update bodies; the inert tags give each dt fresh code.
+    const a = pool(baseline + '\n// non-finite baseline dt=' + dt), b = pool(candidate + '\n// non-finite candidate dt=' + dt);
     for (let i = 0; i < 64; i++) { const rate = [0, -0, NaN, Infinity, -Infinity, .8, .8, 2.2][i % 8]; spawn(a.p, i, rate); spawn(b.p, i, rate); }
     a.p.update(dt); b.p.update(dt); equal(a.p, b.p, 'dt=' + dt);
     if (!Number.isFinite(dt)) assert.equal(a.calls(), b.calls(), 'non-finite times do not reuse a factor');

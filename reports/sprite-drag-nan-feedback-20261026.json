@@ -1,0 +1,49 @@
+{
+  "baseline": "e0072a749df0ec8c2d368e383bdf337baa7b44ad",
+  "candidateInvestigated": "0fef49e66d01249f4531aa9b75673312ff222e18",
+  "node": "v22.23.3",
+  "originalRuns": 30,
+  "originalFailureRuns": [
+    15,
+    19,
+    20
+  ],
+  "trackedIsolatedRuns": 50,
+  "trackedIsolatedFailureRuns": [],
+  "nanBits": {
+    "baseline": "7fc00000",
+    "candidate": "ffc00000"
+  },
+  "files": [
+    {
+      "file": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+      "baselineSha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+      "currentSha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+      "unchangedFromBaseline": true
+    },
+    {
+      "file": "patches/splatoon3/tests/fixtures/sprite-update-before-drag-cache.txt",
+      "baselineSha256": "ef8789355618bf5ba7796c12d3ab72468a229dfb341a0d6468cfda10c46a25dc",
+      "currentSha256": "ef8789355618bf5ba7796c12d3ab72468a229dfb341a0d6468cfda10c46a25dc",
+      "unchangedFromBaseline": true
+    },
+    {
+      "file": "inkwave-public/vendor/three/build/three.module.js",
+      "baselineSha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+      "currentSha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+      "unchangedFromBaseline": true
+    },
+    {
+      "file": "inkwave-public/vendor/three/build/three.core.js",
+      "baselineSha256": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6",
+      "currentSha256": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6",
+      "unchangedFromBaseline": true
+    },
+    {
+      "file": "patches/splatoon3/tests/special-sprite-drag-cache.test.mjs",
+      "baselineSha256": "cbc7f947647246d229fbb0ac54221c994157512e9a58ca30c9cc4592768e48ee",
+      "currentSha256": "496ccd953f25479a17ddb9010db114acfa07b984b6f7906b29032f0dd0d84a19",
+      "unchangedFromBaseline": false
+    }
+  ]
+}
