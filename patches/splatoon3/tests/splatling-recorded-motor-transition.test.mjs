@@ -9,7 +9,8 @@ const OLD_SYNTH = new Set(['splatling_spin', 'splatling_ready', 'splatling_wind'
 async function scene() {
   const f = await fixture({
     fullRuntime: true, productionComposition: true, realProjectiles: true,
-    extraExports: `export { installWeaponAudioRuntime } from './patches/splatoon3/runtime/audio/runtime.mjs';`,
+    extraExports: `export { installWeaponAudioRuntime } from './patches/splatoon3/runtime/audio/runtime.mjs';
+      export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';`,
   });
   f.installMainWeaponCatalogRuntime(f.installedRuntime, f.profile);
   const calls=[];
@@ -93,7 +94,6 @@ test('remote Barrel and catalog Spinners switch independent source loop keys wit
 });
 
 test('source adapters and installed MP3 manifest never substitute the old oscillator',()=>{
-  const root=new URL('../../../',import.meta.url);
   const spinner=fs.readFileSync(new URL('../runtime/splatling.mjs',import.meta.url),'utf8');
   assert.ok(spinner.includes("G.audio?.loopWeapon?.(w.id,'charge'"));
   assert.ok(spinner.includes("G.audio?.loopWeapon?.(w.id,'spin'"));
