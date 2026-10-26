@@ -1,0 +1,45 @@
+{
+  "status": "blocked before browser context or any gameplay input",
+  "targetSourceHead": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+  "targetContentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+  "requestedScope": [
+    "Non-Splat Charger ordinary mobile charge/audio/fire",
+    "Bow first/second-stage feedback through visible shipping menus/loadout/fire"
+  ],
+  "launch": {
+    "executable": "/usr/bin/chromium",
+    "chromiumSandbox": true,
+    "explicitArgs": [
+      "--use-angle=swiftshader"
+    ],
+    "exitCode": 1,
+    "signal": "SIGABRT",
+    "helperStat": {
+      "owner": "nobody",
+      "mode": "4755",
+      "path": "/usr/lib/chromium/chrome-sandbox"
+    },
+    "failure": "The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /usr/lib/chromium/chrome-sandbox is owned by root and has mode 4755."
+  },
+  "acceptedTouchInputs": 0,
+  "gameplayFramesObserved": 0,
+  "audioPlaybackObserved": false,
+  "bowStagesObserved": false,
+  "gameplayVerdict": "not tested by this attempt; launcher failure is not a shipping-touch-control failure",
+  "securityChanges": false,
+  "sandboxDisabledOrHelperChanged": false,
+  "sourceGameplayChanges": false,
+  "manualFrameOrActorChargeTimePoseWrites": false,
+  "automaticCiLookup": {
+    "tool": "github_fetch_commit_workflow_runs",
+    "exactHead": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+    "returnedWorkflowRuns": 0,
+    "limit": "Connector returns PR-triggered first-page runs only; empty is not a complete required-CI success receipt."
+  },
+  "log": {
+    "path": "sandbox-launch.log.gz",
+    "rawSha256": "45a55c717f455c8573aa4b09f91c9aa1f0f96427e14ef1a5046578201ce8a440",
+    "gzipSha256": "cedabad78084a8bf2a2cd87a17591b0c461db4c24847bc5dffac128cdad46b65"
+  },
+  "nextRequirement": "A usable browser sandbox environment or explicit clarification of permitted test launch configuration; no sandbox bypass attempted."
+}
