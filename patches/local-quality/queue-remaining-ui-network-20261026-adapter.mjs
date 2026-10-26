@@ -68,9 +68,19 @@ export function adaptQueueRemainingUiNetwork20261026(rel, code) {
       'const s3kit = kitBombPacket(b); if (!s3kit) return; const kitBirthMeta = kitBombBirthMetadata(this,b); const birth =', 'one local birth metadata snapshot');
     patch('...(kitBombBirthMetadata(this,b) ? [kitBombBirthMetadata(this,b)] : [])',
       '...(kitBirthMeta?[kitBirthMeta]:[])', 'reuse birth metadata');
-    patch('    const present = HIT_AUTHORITY_FIELDS.filter((key) => d?.[key] !== undefined).length;',
+    // Immutable source may already contain the exact reviewed queue hunk
+    // when this composition is replayed against a rebased source. Accept only
+    // the byte-identical result once; reject absent, doubled or unknown forms.
+    const reconcileReviewed = (oldText, reviewedText, label) => {
+      const oldCount = code.split(oldText).length - 1;
+      const newCount = code.split(reviewedText).length - 1;
+      if (oldCount === 1 && newCount === 0) patch(oldText, reviewedText, label);
+      else if (oldCount !== 0 || newCount !== 1)
+        throw Error('Remaining UI/network queue conflict: ' + label + ' (old=' + oldCount + ', reviewed=' + newCount + ')');
+    };
+    reconcileReviewed('    const present = HIT_AUTHORITY_FIELDS.filter((key) => d?.[key] !== undefined).length;',
       '    const present = Number(d?.hp !== undefined) + Number(d?.hr !== undefined) + Number(d?.ht !== undefined) + Number(d?.la !== undefined);', 'fixed authority presence count');
-    patch('    const hasAuthority = HIT_AUTHORITY_FIELDS.some((key) => d[key] !== undefined);',
+    reconcileReviewed('    const hasAuthority = HIT_AUTHORITY_FIELDS.some((key) => d[key] !== undefined);',
       '    const hasAuthority = d.hp !== undefined;', 'validated all-or-none authority presence');
     patch('    for (const e of prepareKitPaintEvents(this, from, { ...d, e: kitPreparedEvents })) {',
       '    const kitReadyEvents = d.r === 2 ? prepareKitPaintEvents(this, from, { ...d, e: kitPreparedEvents }) : kitPreparedEvents;\n    for (const e of kitReadyEvents) {', 'non-r2 identity preparation');
