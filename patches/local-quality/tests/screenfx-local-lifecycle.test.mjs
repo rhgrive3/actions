@@ -25,7 +25,7 @@ async function fixture() {
     : spec.endsWith('ctx.js') ? ctx : config);
   await mod.evaluate();
   const fx = new mod.namespace.ScreenFX({renderer: {}, setExtraPass() {}}, G);
-  return {fx, emit};
+  return {fx, emit, G};
 }
 
 test('hidden-menu match retirement releases only its cached local Actor, without updating or resetting FX', async () => {
@@ -45,4 +45,24 @@ test('hidden-menu match retirement releases only its cached local Actor, without
   fx._local = other; emit('match:dispose', {match: retired});
   assert.equal(fx._local, other, 'late old-roster notification preserves the newer Actor');
   assert.equal(JSON.stringify(fx.s), state); assert.equal(fx.lens, lens); assert.equal(fx.lens.parts, parts);
+});
+
+test('pending damage releases its retired attacker without advancing the timer or resetting lens state', async () => {
+  const {fx, emit, G} = await fixture(), local = {isLocal: true}, attacker = {}, newer = {};
+  const match = {attract: false, state: 'playing', local, actors: [local, attacker]};
+  G.mode = 'match'; G.match = match;
+  emit('damage', {victim: local, attacker, amount: 10, source: 'shot'});
+  assert.equal(fx.s.dmgAtk, attacker); assert.equal(fx.s.dmgAcc, 10); assert.equal(fx.s.dmgT, .06);
+  const state = JSON.stringify({...fx.s, dmgAtk: null}), lens = fx.lens, parts = fx.lens.parts;
+  fx.update = fx.reset = () => { throw Error('hidden-world retirement must not update or reset FX'); };
+  emit('match:dispose', {match: {actors: [newer]}});
+  assert.equal(fx.s.dmgAtk, attacker, 'unrelated retirement preserves the pending current hit');
+  emit('match:dispose', {match}); assert.equal(fx.s.dmgAtk, null);
+  assert.equal(JSON.stringify(fx.s), state); assert.equal(fx.lens, lens); assert.equal(fx.lens.parts, parts);
+  const nextLocal = {isLocal: true};
+  G.match = {attract: false, state: 'playing', local: nextLocal, actors: [nextLocal, newer]};
+  emit('damage', {victim: nextLocal, attacker: newer, amount: 5, source: 'shot'});
+  assert.equal(fx.s.dmgAtk, newer);
+  emit('match:dispose', {match}); emit('match:dispose', {match});
+  assert.equal(fx.s.dmgAtk, newer, 'late old-roster events cannot erase the new attacker');
 });

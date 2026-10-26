@@ -652,6 +652,7 @@ export class ScreenFX {
     // Retire only this roster's pointer, leaving lens and effect state alone.
     on('match:dispose', ({ match }) => {
       if (this._local && match?.actors?.includes(this._local)) this._local = null;
+      if (this.s.dmgAtk && match?.actors?.includes(this.s.dmgAtk)) this.s.dmgAtk = null;
     });
     on('match:state', ({ state, match }) => {
       if (!match || match.attract) return;

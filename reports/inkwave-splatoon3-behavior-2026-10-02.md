@@ -6439,3 +6439,5 @@ production composition と実 Projectiles・Match を使う `crab-ball-lifecycle
 同じ基準mainとS3 11.3.0の既存挙動を維持する。通常RAFの球形退出を追加調査し、実ゲームのInkFlight飛沫プール2レコードに退役Actorが残ること、非表示メニューではScreenFXの通常updateが止まり `_local` が最後のActorを保持することを確認した。飛沫は着弾の塗り・通知・traceを完了した後とclear時にownerを外し、ベクトル・配列・プール順を維持する。ScreenFXは破棄対象rosterに属する `_local` だけを外し、レンズ・演出状態をリセットしない。未使用状態の所有参照の修正で、弾道・塗り・ダメージ・色・通信を変更しない。
 
 実production compositionの新規回帰は通常着弾・寿命切れ・ghost・clear済みプール・同じスロットの再利用と新所有者だけへの塗り加点、更新のないメニュー退出、重複/無関係/古いrosterの通知を確認する。基準mainの公開ソースを使う負例では新規5件が失敗する。WeakRefの数だけをリークの根拠にせず、補助inventory自身の強参照の副作用も別に特定した。修正版の通常RAF再測定はGPU・メモリ調査記録に保存する。物理iPad/Safariの性能や本家実機の新たな一致を主張する修正ではない。
+
+追補: 非表示のメニューへ被弾直後に退出し、ScreenFX.update/resetが動かない経路もproduction compositionのdamageイベントで再現した。破棄対象rosterに属する未処理の `s.dmgAtk` 参照だけを外す。damage集約量・60msタイマー・レンズ・演出状態は変えず、古いrosterの通知で新対戦の攻撃者を消さない。前コミットの対照は新規1件で保持を再現し、修正版で成功した。既存resetの攻撃者解放はすでにadapterで適用されており、その既存対策とは区別する。
