@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const workflow = fs.readFileSync(new URL('../../.github/workflows/cxx-openttd-projection-20260924.yml', import.meta.url), 'utf8');
-const start = workflow.indexOf('          const rawSymbols =');
+const start = workflow.indexOf('          const allSymbols =');
 const end = workflow.indexOf('          const sizeByAddress =', start);
 assert.ok(start > 0 && end > start);
 // Execute the actual workflow setup. SymbolIndex's address contract rejects the
@@ -24,11 +24,11 @@ test('historical external diagnostic has an explicit manual entrypoint', () => {
   assert.match(workflow, /if \(!typedHit\) process.exitCode = 3/);
 });
 test('real probe setup excludes addressless symbols while preserving zero, order and aligned metadata', () => {
-  const rows = [{name:'undefined', address:null}, {name:'missing'}, {name:'zero', address:0n}, {name:'method', address:42n}];
+  const rows = [{name:'undefined', address:null}, {name:'missing'}, {address:99n}, null, {name:'zero', address:0n}, {name:'method', address:42n}];
   const before = structuredClone(rows);
   assert.deepEqual(setup({symbols:rows}, AddressIndex).input, {
     addrs:[0n,42n], names:['zero','method'], kinds:[0,0], flags:[0,0],
   });
   assert.deepEqual(rows, before);
-  assert.deepEqual(setup({}, AddressIndex).input.addrs, []);
+  assert.throws(() => setup({}, AddressIndex), /no address-bearing symbols/);
 });
