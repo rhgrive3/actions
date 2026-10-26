@@ -72,21 +72,56 @@ function prebuiltPacks(stage,rows){
   return pack.slice(variant.offset,variant.offset+variant.bytes);
  },release(){pending.clear();}};
 }
-async function prebuiltCompressedTexture(variant,packs,renderer,signal){
+// BC-family base levels require block-aligned dimensions. Terminal 1/2-texel
+// mips are legal below such a base, but not after promotion to a new base.
+// A legal source can acquire an illegal base after a
+// mobile mip cap, e.g. 800x60 -> 400x30. Keep that exact mip via RGBA32 rather
+// than changing the cap, resampling the PNG, or dropping to a coarser level.
+const BLOCK4_FORMATS=new Set([THREE.RGBA_BPTC_Format,THREE.RGB_BPTC_SIGNED_Format,THREE.RGB_BPTC_UNSIGNED_Format,
+ THREE.RGB_S3TC_DXT1_Format,THREE.RGBA_S3TC_DXT1_Format,THREE.RGBA_S3TC_DXT3_Format,THREE.RGBA_S3TC_DXT5_Format,
+ THREE.RED_RGTC1_Format,THREE.SIGNED_RED_RGTC1_Format,THREE.RED_GREEN_RGTC2_Format,THREE.SIGNED_RED_GREEN_RGTC2_Format].filter(Number.isFinite));
+const exactMipRgba=new WeakSet();
+const blockDimension=n=>n%4===0;
+function mipIndex(mips,limit){let drop=0;if(Number.isFinite(limit))while(drop<mips.length-1&&Math.max(mips[drop].width,mips[drop].height)>limit)drop++;return drop;}
+export function needsExactMipRgba(texture,limit){
+ const mips=texture.mipmaps;if(!texture.isCompressedTexture||!BLOCK4_FORMATS.has(texture.format)||!mips?.length)return false;
+ const mip=mips[mipIndex(mips,limit)];return !blockDimension(mip.width)||!blockDimension(mip.height);
+}
+function parseKtxTexture(loader,bytes,signal,finished=()=>{}){
+ return new Promise((resolve,reject)=>{
+  let settled=false,completed=false;
+  const complete=()=>{if(!completed){completed=true;finished();}};
+  const settle=(fn,value)=>{if(settled)return false;settled=true;signal?.removeEventListener?.('abort',onAbort);fn(value);return true;};
+  const onAbort=()=>settle(reject,new DOMException('Aborted','AbortError'));
+  if(signal?.aborted){onAbort();complete();return;}
+  signal?.addEventListener?.('abort',onAbort,{once:true});
+  try{loader.parse(bytes,texture=>{try{if(signal?.aborted)onAbort();if(!settle(resolve,texture))texture?.dispose?.();}finally{complete();}},error=>{try{settle(reject,error);}finally{complete();}});}
+  catch(error){try{settle(reject,error);}finally{complete();}}
+ });
+}
+async function prebuiltCompressedTexture(variant,packs,renderer,signal,limit){
  const bytes=await packs.slice(variant,signal);
+ // KTX2Loader transfers its input buffer. Keep a retry copy only for a
+ // universal Basis texture whose advertised capped base could need RGBA32.
+ let width=variant.width,height=variant.height;
+ while(Number.isFinite(limit)&&Math.max(width,height)>limit&&(width>1||height>1)){width=Math.max(1,Math.floor(width/2));height=Math.max(1,Math.floor(height/2));}
+ const retry=(!blockDimension(width)||!blockDimension(height))&&bytes.byteLength>=48&&new DataView(bytes).getUint32(12,true)===0?bytes.slice(0):null;
  const entry=ktx2Loader(renderer);entry.pending++;
  try{
   const loader=await entry.loader;
-  // The transcode cannot be cancelled. An abort settles this call at once;
-  // a texture that still arrives afterwards is disposed, never published.
-  return await new Promise((resolve,reject)=>{
-   let settled=false;
-   const settle=(fn,value)=>{if(settled)return false;settled=true;signal?.removeEventListener?.('abort',onAbort);fn(value);return true;};
-   const onAbort=()=>settle(reject,new DOMException('Aborted','AbortError'));
-   if(signal?.aborted)return onAbort();
-   signal?.addEventListener?.('abort',onAbort,{once:true});
-   loader.parse(bytes,texture=>{if(signal?.aborted)onAbort();if(!settle(resolve,texture))texture?.dispose?.();},error=>settle(reject,error));
-  });
+  let texture=await parseKtxTexture(loader,bytes,signal);
+  if(!needsExactMipRgba(texture,limit))return texture;
+  const selected=texture.mipmaps[mipIndex(texture.mipmaps,limit)],expected=[selected.width,selected.height];texture.dispose();texture=null;
+  if(!retry)throw Error('Invalid compressed base mip requires universal KTX2 source');
+  // This short-lived loader is isolated from concurrent compressed jobs;
+  // only this exceptional texture uses the existing lossless RGBA32 target.
+  const rgbaLoader=new loader.constructor().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer);
+  rgbaLoader.setWorkerLimit?.(1);
+  for(const key of Object.keys(rgbaLoader.workerConfig))rgbaLoader.workerConfig[key]=false;
+  texture=await parseKtxTexture(rgbaLoader,retry,signal,()=>rgbaLoader.dispose());
+  const actual=texture.mipmaps?.[mipIndex(texture.mipmaps,limit)];
+  if(texture.format!==THREE.RGBAFormat||!actual||actual.width!==expected[0]||actual.height!==expected[1]){texture.dispose();throw Error('RGBA32 transcode changed selected mip');}
+  exactMipRgba.add(texture);return texture;
  }finally{entry.pending--;releaseKtx2(entry);}
 }
 /** Same bound as the PNG path's resize: start the chain at the first level within the cap. */
@@ -155,11 +190,11 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    // at build time; the GPU receives a compressed format.
    let texture;
    try{
-    texture=await prebuiltCompressedTexture(variant,packs,renderer,signal);checkAbort();
+    texture=await prebuiltCompressedTexture(variant,packs,renderer,signal,job.roleLimit);checkAbort();
     // Without a compressed target KTX2Loader still returns a CompressedTexture,
     // holding RGBA32 data in RGBAFormat; the relaxed touch budget only holds
     // for a GPU-compressed format.
-    if(fallback&&(!texture.isCompressedTexture||texture.format===THREE.RGBAFormat))throw Error('KTX2 transcoded uncompressed');
+    if(fallback&&(!texture.isCompressedTexture||texture.format===THREE.RGBAFormat)&&!exactMipRgba.has(texture))throw Error('KTX2 transcoded uncompressed');
     capMipLevels(texture,job.roleLimit);
     texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);texture=null;
     continue;

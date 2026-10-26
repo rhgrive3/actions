@@ -6441,3 +6441,10 @@ production composition と実 Projectiles・Match を使う `crab-ball-lifecycle
 実production compositionの新規回帰は通常着弾・寿命切れ・ghost・clear済みプール・同じスロットの再利用と新所有者だけへの塗り加点、更新のないメニュー退出、重複/無関係/古いrosterの通知を確認する。基準mainの公開ソースを使う負例では新規5件が失敗する。WeakRefの数だけをリークの根拠にせず、補助inventory自身の強参照の副作用も別に特定した。修正版の通常RAF再測定はGPU・メモリ調査記録に保存する。物理iPad/Safariの性能や本家実機の新たな一致を主張する修正ではない。
 
 追補: 非表示のメニューへ被弾直後に退出し、ScreenFX.update/resetが動かない経路もproduction compositionのdamageイベントで再現した。破棄対象rosterに属する未処理の `s.dmgAtk` 参照だけを外す。damage集約量・60msタイマー・レンズ・演出状態は変えず、古いrosterの通知で新対戦の攻撃者を消さない。前コミットの対照は新規1件で保持を再現し、修正版で成功した。既存resetの攻撃者解放はすでにadapterで適用されており、その既存対策とは区別する。
+
+
+## 2026-10-26 UTC: 原典ステージのCPU寿命と圧縮mip境界
+
+Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physicsが残り、実ヒープのcanvas context-lossリスナーから最初の読込スコープへの強参照を確認した。判定関数をmodule直下へ移し、現在のG.level.nativeを動的に確認する従来の動作と1canvas1listenerを維持する。古いステージの物理・塗り・navデータを監視コールバックで保持する必要はない。新規の合成済みpublication/GC回帰は全GCアサーションを保持し、旧inline判定だけへ戻す対照でlevel/data保持を再現した。
+
+原典HIGHの読み込み直後には、旧版・途中版ともBC7の400×30 base mipでGL1282を記録した。既存normal上限512が800×60のUASTCソースから同mipを選ぶが、BC系base寸法の4ブロック境界に合わなかった。該当するuniversal KTX2だけ同ソース・同mipのRGBA32へ変換し、寸法・既存cap・色空間・通常の圧縮経路を維持する。RGBAの局所容量増加を記録し、縮小mipやPNG再resizeによる画質低下へ置き換えない。実loadNativeTextures→KTX2Loader→GPUの対照で同400×30、48,000RGBAバイト一致、GL0を確認した。物理・CPU塗り・当たり判定・通信には変更を加えない。

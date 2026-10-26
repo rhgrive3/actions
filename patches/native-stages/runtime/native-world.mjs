@@ -13,6 +13,10 @@ import { nativeStageTextureCaps } from './native-texture-budget.mjs';
 import { nativeGpuTier,nativeRenderCaps,nativeTextureProfile,nativeCompressedTextureSupport,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
 import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
 
+// A canvas listener outlives this load. Keep its predicate outside the load's
+// shared lexical environment so it cannot retain old level/paint/physics data.
+function nativeStageActive(){return !!G.level?.native;}
+
 // Snapshot keeps the previous playable world alive until every fallible
 // publication step has completed. Never dispose active resources first.
 const SNAPSHOT_KEYS=['layoutId','mapDef','_builtQuality','levelMat','levelMesh','grateMat','grateMesh','decor','stageLightmap','props','minimap','swimWake','nativeWorld'];
@@ -148,7 +152,7 @@ export async function buildNativeWorld(game,map,current){
   game.stageLightmap=null;game.props=null;
   G.scene.add(display.group,inkMesh);
   applyNativeGpuBudget(game,G,gpuBudget);
-  watchNativeContextLoss(G.renderer.domElement,()=>!!G.level?.native);
+  watchNativeContextLoss(G.renderer.domElement,nativeStageActive);
   game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
   game.swimWake=wake;game.minimap=minimap;game.nativeWorld=nextWorld;
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
