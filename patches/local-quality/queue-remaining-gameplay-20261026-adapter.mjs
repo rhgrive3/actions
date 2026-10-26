@@ -14,10 +14,8 @@ const CHANGES = [
     '      const d = _v.length();\n      if (d > maxR + 4 || d < 0.5) continue;\n      if (a.pos.distanceTo(e.pos) > maxR) continue;',
     '      const outer = maxR + 4;\n      if (Number.isFinite(_v.x + _v.y + _v.z) && (Math.abs(_v.x) > outer || Math.abs(_v.y) > outer || Math.abs(_v.z) > outer)) continue;\n      const d = _v.length();\n      if (d > outer || d < 0.5) continue;\n      if (a.pos.distanceTo(e.pos) > maxR) continue;',
     'prune finite distant aim assist candidates without changing boundary distance'],
-  ['src/game/weapons.js',
-    '    this.beams.push({ mesh, t: 0, life: bu.uLife.value, th });',
-    '    const beamRecord=mesh.userData._iwBeamRecord||=( {mesh,t:0,life:0,th:0} );\n    beamRecord.t=0;beamRecord.life=bu.uLife.value;beamRecord.th=th;this.beams.push(beamRecord);',
-    'restore beam records owned by the existing mesh pool', 2],
+  // Never reuse beam lifetime records: FxHooks has a WeakSet per birth and
+  // network metadata belongs to one emission. The physical GPU mesh stays pooled.
   ['src/game/weapons.js',
     '    dir.addScaledVector(_v2, Math.cos(t) * Math.tan(r)).addScaledVector(_v3, Math.sin(t) * Math.tan(r) * 0.55).normalize();',
     '    const tanR = Math.tan(r);\n    dir.addScaledVector(_v2, Math.cos(t) * tanR).addScaledVector(_v3, Math.sin(t) * tanR * 0.55).normalize();',
