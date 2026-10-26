@@ -1,0 +1,130 @@
+{
+  "base": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+  "producerDependency": "fee0c005ffe129e8248c2122c41f5fad6612130d",
+  "consumerCommit": "2eeed372d8341393e0d1fd860e9f52e963bbf6be",
+  "build": {
+    "root": "/tmp/inkwave-shooter-guide-cache-20261026",
+    "contentHash": "9dd4b45db93d5061d8c7ea236122ccc59f33d0c11c5b4cb857a7cefad88cc6f1",
+    "inputHash": "1cc4c7d5bdf2aee9b1221b535733ff0e457406d4856ef67678d46dccd5cbd624",
+    "optimization": "esbuild-minify"
+  },
+  "sourceReadback": [
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "manifestKey": "patch/runtime/weapons-fidelity.mjs",
+      "sha256": "f9a6f15b94ddd037726fa68987d7b633b98d6b0cec29e2959cf567978f2ce2f3",
+      "match": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "manifestKey": "patch/runtime/dualies-guide-cache.mjs",
+      "sha256": "f6a1927bca8b5c41739778b3c330b498c19cc804083e67a7637558a57dd1270e",
+      "match": true
+    },
+    {
+      "path": "patches/native-stages/adapter.mjs",
+      "manifestKey": "native-stages/adapter.mjs",
+      "sha256": "02360540baca17f1a97ed50309f0e602c569a61dc33f42eeadedc5733397e4a7",
+      "match": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/world.mjs",
+      "manifestKey": "patch/runtime/ranked/world.mjs",
+      "sha256": "0004eee5ba2e2e61627b052de2bf6805bf934a3a35f62d4a070eb1d1b2405304",
+      "match": true
+    }
+  ],
+  "artifactReadback": [
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "sha256": "5624a91837035503d6415eb654e357214087561e7353c468bc49589c83fcaffc",
+      "match": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "sha256": "c787e576437ffcc12d4b5320afdf9671670ebae752d66943ce569d7d40549e26",
+      "match": true
+    },
+    {
+      "path": "src/world/level.js",
+      "sha256": "e7af4ab5365038f9943fe1db2328a6501b032b3d25d4e6340d01c5590797ec89",
+      "match": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/world.mjs",
+      "sha256": "15477192da1da6d07b41047df3b09c70f7cd6aa06233422b0803a83c301677a8",
+      "match": true
+    }
+  ],
+  "unchangedUpstreamInputCount": 203,
+  "tests": {
+    "initialSourceCache": {
+      "pass": 7,
+      "fail": 0
+    },
+    "expandedSource": {
+      "pass": 12,
+      "fail": 1,
+      "failure": "Old floor fixture changed unused geometryGeneration; corrected to coherent collider bounds + actual markCollisionChanged(), with stronger physical floor assertion."
+    },
+    "sourceCompatibilityAfterFixtureCorrection": {
+      "pass": 32,
+      "fail": 0
+    },
+    "finalPassingSourceUnique": 41,
+    "emitted": {
+      "pass": 13,
+      "fail": 0
+    },
+    "negative90bb": {
+      "exit": 1,
+      "horizontalRepeated120Sweeps": 960
+    },
+    "quick": "passed",
+    "startupAndArtifactDigestGates": "passed"
+  },
+  "emittedSweepTraces": [
+    {
+      "pitch": 0,
+      "hz": 30,
+      "initial": 8,
+      "repeated120": 0
+    },
+    {
+      "pitch": 0,
+      "hz": 60,
+      "initial": 8,
+      "repeated120": 0
+    },
+    {
+      "pitch": 0,
+      "hz": 120,
+      "initial": 8,
+      "repeated120": 0
+    },
+    {
+      "pitch": -0.8,
+      "hz": 30,
+      "initial": 1,
+      "repeated120": 0
+    },
+    {
+      "pitch": -0.8,
+      "hz": 60,
+      "initial": 1,
+      "repeated120": 0
+    },
+    {
+      "pitch": -0.8,
+      "hz": 120,
+      "initial": 1,
+      "repeated120": 0
+    }
+  ],
+  "scope": "Cache consumers only. Preserve native launch, flight, nominal guide, collisions, target flags and HUD projection semantics. Unsupported worlds recompute. External in-place collision writers must notify the verified producer or rebuild; triangleWorld identity is also keyed.",
+  "limits": [
+    "CPU native source/emitted fixtures use Character fallback because VM dynamic source-motion import is unsupported.",
+    "No new natural-input browser/GPU/retail comparison or FPS claim. Exact-pose traces do not promise cache hits while a real animated muzzle moves.",
+    "Original inner-marker admission and long-lane UI parity remain unresolved. No cutoff, concentricity, smoothing or physics rule is added."
+  ]
+}

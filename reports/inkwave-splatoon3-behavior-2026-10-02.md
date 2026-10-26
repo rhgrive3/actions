@@ -6506,3 +6506,8 @@ unversioned. Source tests exercise real mutation methods and physical contacts,
 not manually injected generation values. This is internal INKWAVE cache
 correctness and cost control, not a Nintendo frame/layout or visual-parity claim.
 See the [bounded producer contract and verification](collision-revision-producers-20261026/README.md).
+## 2026-10-26 Shooter/Dualies guide CPU reuse and actual collision revisions
+
+統合 `90bb98c2ffbbe0fdaf959001808d6dd43e085f90` のShooter床接触ガイドは、同一水平 `computeAim` 120回で960回のsphere sweepを繰り返していた。producer依存 `fee0c005ffe129e8248c2122c41f5fad6612130d` の実 `collisionRevision` に接続し、native muzzle安全確認と発射状態を毎回評価した上で、world/query/triangleWorld・カメラ・ブキ・owner・aimが同一ならworld guideを再利用する。未計装worldは毎回再計算し、query stampや未更新のgeneration値を世代とみなさない。Dualiesの既存cacheも同じproducerに接続する。clear時は参照を解放し記録のstorageを再利用する。
+
+source/emittedとも水平・下向き、30/60/120Hzの同一入力120回で追加sweepは0。実Tower移動／削除、native triangleWorld交換、通知された床／solid変更、各launch/query入力、targetフラグの更新、寿命を確認した。最終sourceはcache9件＋互換32件、emitted13件、通常最適化build・quick・startup/digest gate成功。[詳細と全ログ](shooter-guide-cache-20261026/README.md)には旧generation fixtureの中間失敗と実producerへ直した再検証も保存した。これはCPU上の数値一致と重複除去であり、実GPUのFPS改善や本家のinner-marker表示仕様の証明ではない。新しいhide／convergence／physics規則やメディアは追加していない。
