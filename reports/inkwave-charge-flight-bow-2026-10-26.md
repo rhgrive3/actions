@@ -117,3 +117,47 @@ test totals and actual limitations are recorded separately with the final
 validation receipt. Source tests and populated draw buffers are not visual
 proof. Binding the exposed Stringer phase to reticle geometry/CSS remains owned
 by the separate reticle worker; this branch deliberately does not edit it.
+
+
+## Final local receipt
+
+Implementation commit: `9a89494320a7f9cfed62c83e0830bfe52d72f76e`.
+Build content hash: `32ad27a7264b34c2497796261b32105a70bc2be664e13364691600553e946cc3`.
+Input hash: `3d975e375e930275d8867dc3f7a14fb14de7b4de6e800659950d2cb556b7bfe7`.
+All 1,483 recorded inputs matched that commit; all 2,186 emitted artifacts
+matched the build manifest. Quick compatibility and startup budget passed.
+
+- Source checks: 132 distinct cases passed after the documented focused
+  corrections. The two extra native Splat paint cases passed; their old
+  headless fixture also logged `ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING` from
+  unrelated dynamic imports. No full-suite run or CI launch is claimed.
+- Emitted runtime checks: 20 passed, zero failed/skipped, including catalogue
+  high-shot falling paint/draw positions, bow stages, original shot/keep
+  consequences, native stripe dimensions and remote Charger onset ownership.
+- Real emitted Web Audio: 8/8 base Chargers had nonzero master-graph waveform
+  (maximum RMS approximately 0.022–0.038), actual pitch-preserving Worker
+  variants for five distinct clocks, one source at playback rate 1. A deliberate
+  shared-asset 404 blocked START with the explicit charge-audio error.
+- Ordinary game input: trusted menu clicks reached Practice Range. Bamboo
+  samples recorded charge 0, 0.75, 1, with no injected fire or stepping. Only
+  three rendered samples were collected. The following E-liter full-charge
+  observation timed out after 15 seconds, three `pointerlockerror` events were
+  recorded, and the HUD at timeout displayed 60%. The failure screenshot was
+  taken after the finally-block released the real mouse button; it is not a
+  frame-exact charge or flight capture. There were no page errors or failed
+  requests, and the renderer reported no `KHR_parallel_shader_compile`.
+  Ordinary-input bow stages and short airborne head/drop frames remain
+  **unverified**. That run is not marked passed.
+
+[Validation receipt](inkwave-charge-flight-bow-20261026/validation.json),
+[real audio data](inkwave-charge-flight-bow-20261026/audio-browser.json),
+[source identity](inkwave-charge-flight-bow-20261026/source-identity.json),
+[ordinary-input limitation](inkwave-charge-flight-bow-20261026/ordinary-input-limitation.json).
+Screenshots remain local under `/workspace/scratch/charge-evidence/input-final/`;
+no new media is bundled in the change.
+
+Remaining integration: the reticle worker must connect the published Stringer
+phase to its visible gauge. This branch has no projection, feedback-layout or
+CSS edits. Use `catalogChargeStage(weapon, charge)` for the same first/full
+boundaries without inventing a universal 50% split. Switch audiovisual fidelity,
+physical speaker output, WebKit and hardware iPad remain unmeasured.

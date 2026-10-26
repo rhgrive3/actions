@@ -40,10 +40,15 @@ try{
     const row=await page.evaluate(async({id,time})=>{
       const {chargerRecordedStatus,prewarmChargerRise}=await import('/patches/splatoon3/runtime/audio/charger-charge-rise.mjs');
       const result=await audio.requireRecordedMainShot(id);
+      window.chargePreparedTimes||=new Set([1]);
+      const readyBefore=chargerRecordedStatus(audio.ctx).stretched;
       await prewarmChargerRise(audio,{weaponId:id,chargeTime:time});
-      // Let the actual module Worker finish. Original at 1x remains a valid
-      // audible fallback if this browser cannot run a Worker.
-      await new Promise(r=>setTimeout(r,150));
+      if(!window.chargePreparedTimes.has(time)){
+        const deadline=performance.now()+5000;
+        while(chargerRecordedStatus(audio.ctx).stretched<=readyBefore&&performance.now()<deadline)
+          await new Promise(r=>setTimeout(r,25));
+        if(chargerRecordedStatus(audio.ctx).stretched>readyBefore)window.chargePreparedTimes.add(time);
+      }
       const captures=[],create=audio.ctx.createBufferSource.bind(audio.ctx);
       audio.ctx.createBufferSource=()=>{const s=create(),start=s.start.bind(s);s.start=(...args)=>{captures.push({rate:s.playbackRate.value,loop:s.loop,frames:s.buffer?.length,duration:s.buffer?.duration,args});return start(...args);};return s;};
       const analyser=audio.ctx.createAnalyser();analyser.fftSize=2048;audio.master.connect(analyser);
@@ -62,6 +67,10 @@ try{
     assert.equal(row.context,'running',id);assert.equal(row.status.ready,true,id);assert.ok(row.playing,id);
     assert.ok(row.peak>1e-4&&row.rmsMax>1e-5,id+' non-silent output');
     assert.equal(row.captures.length,1,id+' one real source');assert.equal(row.captures[0].rate,1,id+' pitch unchanged');assert.equal(row.captures[0].loop,false);
+    if(time!==1){
+      assert.equal(row.captures[0].args[1],0,id+' real Worker variant selected');
+      assert.ok(Math.abs(row.captures[0].duration-1.215*time)<.002,id+' variant follows weapon clock');
+    }
   }
   const missing=await browser.newPage();
   await missing.route('**/assets/audio/charger-first-splatune2-reference.mp3',r=>r.fulfill({status:404,body:'fixture: missing charge asset'}));
