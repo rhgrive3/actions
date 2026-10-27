@@ -11,6 +11,40 @@ export function validateCatalogAudioWorker(root) {
   execFileSync(process.execPath,[path.join(root,'tools/audio/build-worker.mjs'),'--check'],{stdio:'pipe'});
 }
 
+// Keep the external catalogue's single real WSOLA probe (901, 800 -> 1000
+// samples), and prove its output against the production DSP before recording it.
+export async function catalogChargeWorker(prefix) {
+  const {stretchChargerPCM}=await import(prefix+'patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs');
+  if(typeof stretchChargerPCM!=='function')throw Error('Charger WSOLA canonical export missing');
+  const frames=800,ratio=1.25,sampleRate=8000,serial=901,key='catalog-charger';
+  const samples=new Float32Array(frames);
+  for(let i=0;i<frames;i++)samples[i]=Math.sin(i*.16);
+  const expected=stretchChargerPCM([samples.slice()],sampleRate,ratio);
+  const path=prefix+'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs';
+  const worker=new Worker(path,{type:'module'});
+  let proof;
+  try{
+    const reply=await new Promise((resolve,reject)=>{
+      const deadline=setTimeout(()=>reject(Error('Charger WSOLA worker protocol timed out')),15000);
+      const finish=(error,data)=>{clearTimeout(deadline);error?reject(error):resolve(data);};
+      worker.onerror=e=>finish(Error('Charger WSOLA module Worker error: '+e.message));
+      worker.onmessage=({data})=>finish(null,data);
+      worker.postMessage({serial,key,samples:[samples],sampleRate,ratio},[samples.buffer]);
+    });
+    const output=reply?.samples?.[0],reference=expected?.[0];
+    if(reply?.serial!==serial||reply?.key!==key||!Array.isArray(reply.samples)||reply.samples.length!==1||
+      !(output instanceof Float32Array)||output.length!==Math.round(frames*ratio)||!output.every(Number.isFinite)||
+      !(reference instanceof Float32Array)||reference.length!==output.length)
+      throw Error('Charger WSOLA worker output invariant failed');
+    const actual=new Uint8Array(output.buffer,output.byteOffset,output.byteLength);
+    const canonical=new Uint8Array(reference.buffer,reference.byteOffset,reference.byteLength);
+    if(!actual.every((value,i)=>value===canonical[i]))throw Error('Charger WSOLA canonical PCM bytes differ');
+    proof={path,protocol:'canonical-pcm-byte-exact',serial,key,sampleRate,ratio,sourceFrames:frames,
+      outputFrames:output.length,channels:1,bytes:actual.length,terminated:false};
+  }finally{worker.terminate();if(proof)proof.terminated=true;}
+  return proof;
+}
+
 // Serialized into the browser. Import production entries, never initialize an
 // audio device or synthesize voices in this motion fixture. The worker receives
 // an invalid-ID protocol probe only; real-only audio remains unchanged.
