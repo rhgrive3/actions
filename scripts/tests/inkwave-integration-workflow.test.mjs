@@ -1,5 +1,5 @@
 import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
-import {assertSourceRemainderCoverage} from '../run-inkwave-source-remainder.mjs';
+import {assertSourceSuiteCoverage} from '../ci/inkwave-source-coverage.mjs';
 import './inkwave-live-test-log.test.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -115,7 +115,7 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.match(responsive, /processResult\.status===0/);
   assert.match(responsive, /--cases'/);
   assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
-  assertSourceRemainderCoverage(workflow,'network');
+  assertSourceSuiteCoverage(workflow,'network');
   assert.ok(workflow.includes('patches/practice-range/tests/*.test.mjs'));
   assert.ok(workflow.includes('patches/loading-cache/tests/worker.test.mjs'));
   assert.ok(workflow.includes("REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}"));
@@ -263,7 +263,7 @@ test('emitted material handoff is mandatory and runs only after a complete site 
   const block = workflow.slice(at, build);
   assert.ok(block.includes('INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site'));
   assert.ok(block.includes('node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs'));
-  assertSourceRemainderCoverage(workflow,'quality');
+  assertSourceSuiteCoverage(workflow,'quality');
 });
 
 test('emitted menu focus is mandatory in the UI shard and source-bound in its receipt', () => {
@@ -313,7 +313,7 @@ test('emitted Bot respawn and retry regressions reuse the complete production si
   assert.ok(block.includes('run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs'));
   assert.ok(!/^\s+(?:if|continue-on-error):/m.test(block), 'mandatory step without failure suppression');
   assert.ok(!block.includes('||') && !block.includes('--test-name-pattern'));
-  assertSourceRemainderCoverage(validate,'quality');
+  assertSourceSuiteCoverage(workflow,'quality');
 });
 
 
@@ -441,4 +441,44 @@ test('workflow policy negatives reject cancellation loss and failure-only or unb
   ['test "$PATCH_RESULT" = success','test "$PATCH_RESULT" = failure',assertShardEvidencePolicy],
   ['name: inkwave-patch-evidence-shard-','if-no-files-found: ignore\n          name: inkwave-patch-evidence-shard-',assertShardEvidencePolicy]
  ]){assert(workflow.includes(from));const mutant=workflow.replace(from,to);assert.notEqual(mutant,workflow);assert.throws(()=>check(mutant));}
+});
+
+// Validate concrete provisioning and evidence requirements. Unrelated jobs can
+// evolve without reconstructing obsolete workflow bodies to satisfy old hashes.
+function assertCoreEvidenceAndProvisioning(text) {
+  const core = text.slice(text.indexOf('  validate_core:'), text.indexOf('  patch_tests:'));
+  const steps = core.split(/^      - /m);
+  const provision = steps.find(step => step.startsWith('name: Install pinned source regression and build tool\n'));
+  assert.ok(provision);
+  assert.doesNotMatch(provision, /^        (?:if|continue-on-error):|\|\|/m);
+  const install = provision.indexOf('npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1');
+  const chromium = provision.indexOf('npx --no-install playwright install --with-deps chromium');
+  assert.ok(install >= 0 && chromium > install);
+  assert.ok(core.indexOf(provision) < core.indexOf('name: Run requested focused source regressions'));
+  const uploads = steps.filter(step => step.startsWith('name: Retain exact emitted launch packet evidence\n'));
+  assert.equal(uploads.length, 1);
+  const upload = uploads[0];
+  for (const line of [
+    '        if: always()', '        uses: actions/upload-artifact@v4',
+    '          name: inkwave-launch-packets-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}',
+    '          path: _site-launch-packets.json', '          if-no-files-found: error',
+  ]) assert.ok(upload.includes(line), line);
+  assert.doesNotMatch(upload, /continue-on-error:|\brun:/);
+  const fidelity = core.indexOf('patches/network-replication/tests/tower-mine-paint-admission.test.mjs');
+  assert.ok(fidelity >= 0 && fidelity < core.indexOf(upload));
+  assert.doesNotMatch(core, /^\s+_site-launch-packets\.json\s*$/m);
+}
+test('core retains browser provisioning and source-bound launch packet evidence', () => assertCoreEvidenceAndProvisioning(workflow));
+test('provisioning and evidence guards reject disabled, reordered, missing and unbound requirements', () => {
+  for (const [before, after] of [
+    ['npx --no-install playwright install --with-deps chromium', 'true # browser omitted'],
+    ['name: Install pinned source regression and build tool\n', 'name: Install pinned source regression and build tool\n        if: false\n'],
+    ['name: Retain exact emitted launch packet evidence\n        if: always()', 'name: Retain exact emitted launch packet evidence\n        if: success()'],
+    ['path: _site-launch-packets.json', 'path: unrelated.json'],
+    ['name: inkwave-launch-packets-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}', 'name: inkwave-launch-packets-unbound'],
+  ]) {
+    const changed = workflow.replace(before, after);
+    assert.notEqual(changed, workflow);
+    assert.throws(() => assertCoreEvidenceAndProvisioning(changed));
+  }
 });

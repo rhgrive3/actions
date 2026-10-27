@@ -64,6 +64,22 @@ test('CircleCI refuses unknown conditions instead of silently skipping added req
   assert.throws(() => parseBrowserLane(mutated, 'range'), /Unrecognized native browser conditional/);
 });
 
+test('only the reviewed failure evidence command may run outside native acceptance on CircleCI', () => {
+  const command = 'node scripts/ci/package-inkwave-evidence.mjs --browser-failure';
+  assert(workflow.includes(command));
+  for (const mutated of [
+    workflow.replace(command, 'node scripts/another-command.mjs --browser-failure'),
+    workflow.replace('if: always() && (failure() || cancelled())\n        id: browser_failure_evidence',
+      'if: success()\n        id: browser_failure_evidence'),
+  ]) {
+    assert.notEqual(mutated, workflow);
+    assert.throws(() => parseBrowserLane(mutated, 'responsive'), /Unreviewed evidence-only step/);
+  }
+  const lane = parseBrowserLane(workflow, 'responsive');
+  assert(lane.commands.every(step => !step.command.includes(command)));
+  assert(lane.commands.some(step => step.command.includes('check-inkwave-responsive-isolated.mjs')));
+});
+
 test('CircleCI refuses an omitted acceptance receipt', () => {
   const mutated = workflow.replace('Bind passing browser evidence to the tested commit',
                                     'Remove native acceptance receipt');
