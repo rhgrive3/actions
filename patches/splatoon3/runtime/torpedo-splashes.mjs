@@ -58,6 +58,7 @@ export function spawnFizzySplashes(api,projectiles,source,position,stage){
 }
 function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
   const drops=projectiles._s3TorpedoSplashes ||= [],rng=random(source.seed^(kind==='find'?0xf1ad6571:kind==='fizzy'?0x3f125167^Math.imul(stage+1,0x85ebca6b):0x82a2b175)),offset=rng()*Math.PI*2;
+  let burstColor=null,burstTint,burstPool;
   for(let i=0;i<spec.count;i++){
     while(drops.length>=MAX_DROPS)remove(projectiles,drops[0]);
     const angle=offset+i*Math.PI*2/spec.count;
@@ -70,7 +71,14 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
       index:i,kind,stage,paintRadius:spec.paintRadius,pos,prev:pos.clone(),vel,seed:(source.seed^Math.imul(i+1+stage*spec.count,0x9e3779b1))>>>0,
       subId:kind==='fizzy'?'fizzy-splash':'torpedo-splash',type:'sub',damage:kind==='find'||kind==='fizzy'?0:source.spec.splashDamage,size:.1,age:0};
     const pool=visualPool(api,projectiles);
-    if(pool){drop.visual=pool;drop.visualColor=pool.color.clone().set(source.owner.color||api.G.teamColors?.[source.team]||0xffffff);pool.users++;pool.dirty=true;}
+    if(pool){
+      const tint=source.owner.color||api.G.teamColors?.[source.team]||0xffffff;
+      const share=typeof tint==='number'||typeof tint==='string';
+      if(!share || !burstColor || !Object.is(tint,burstTint) || pool!==burstPool){
+        burstColor=pool.color.clone().set(tint);burstTint=tint;burstPool=pool;
+      }
+      drop.visual=pool;drop.visualColor=burstColor;pool.users++;pool.dirty=true;
+    }
 
     drops.push(drop);registerLimitedDrop(projectiles,drop);
   }
@@ -81,17 +89,23 @@ export function stepTorpedoSplashes(api,projectiles,dt,burst){
   for(let i=list.length-1;i>=0;i--){
     const d=list[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=d.source.spec.gravity*dt;d.pos.addScaledVector(d.vel,dt);
     const world=api.G.physics?.segment?.(d.prev,d.pos,projectiles._s3TorpedoSplashHit ||= new api.Hit());
-    let contact=world?.hit?{point:world.point.clone(),normal:world.normal.clone(),distance:world.dist}:null;
+    // Physics owns reusable Hit vectors. Capture primitives before later
+    // collision/defense callbacks can reenter and overwrite that scratch.
+    let contact=!!world?.hit, px,py,pz,nx,ny,nz,distance;
+    if(contact){px=world.point.x;py=world.point.y;pz=world.point.z;nx=world.normal.x;ny=world.normal.y;nz=world.normal.z;distance=world.dist;}
     const stand=coolerSegmentContact(projectiles,d.prev,d.pos,d.size);
-    if(stand&&(!contact||stand.distance<contact.distance))contact={point:stand.point.clone(),normal:stand.normal.clone(),distance:stand.distance};
+    if(stand&&(!contact||stand.distance<distance)){
+      contact=true;px=stand.point.x;py=stand.point.y;pz=stand.point.z;
+      nx=stand.normal.x;ny=stand.normal.y;nz=stand.normal.z;distance=stand.distance;
+    }
     const defense=projectiles.kitDefenseCandidate?.(d);
-    if(defense&&defense.distance<=(contact?.distance??Infinity)){
+    if(defense&&defense.distance<=(contact?distance:Infinity)){
       // The shared defense lane owns absorption/object damage. A replica may
       // stop visually but cannot author another damage proposal.
       if(!d.ghost&&!d.owner.remote)defense.onHit?.();remove(projectiles,d);continue;
     }
     if(contact){
-      const at=contact.point.addScaledVector(contact.normal,.035);
+      const at=new api.THREE.Vector3(px,py,pz).addScaledVector(new api.THREE.Vector3(nx,ny,nz),.035);
       burst(d,at);remove(projectiles,d);continue;
     }
     // Resource cleanup below the playable world is not an airborne detonation.
