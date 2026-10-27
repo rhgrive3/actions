@@ -7,7 +7,12 @@ import { rebasePlatformGame } from '../../local-quality/platform-game.mjs';
 
 // Real composed controller -> Actor -> NetMatch -> Transport JSON -> host
 // command admission. Only socket, scene/physics and wall time are controlled.
-const f = await fixture({ ranked: true, network: true, session: true, production: true });
+// The native transport rounds owner timestamps to 1 ms. These synchronous
+// 20 Hz sends must advance the sender's monotonic clock by 50 ms, rather
+// than accidentally sharing performance.now() when the runner is fast.
+let wireClockMs = 10_000;
+const f = await fixture({ ranked: true, network: true, session: true, production: true,
+  clock: { now: () => wireClockMs } });
 installRankedDocument(f.context.document); f.context.structuredClone = structuredClone;
 f.installRanked(f);
 const stage = { id: 'ranked-platform-reset', clams: { spawns: [], goals: [[0, 0, 20], [0, 0, -20]] } };
@@ -37,7 +42,8 @@ function world(hz) {
   for (const m of [gm, hm]) m.ranked.rule.state.inventories['1'] = { team: 0, small: 2, power: false };
   const frame = () => { select(guest, gm); c.update(1 / hz); a.update(0); f.buildFrame(gm, { G: f.G }); };
   const send = () => {
-    select(guest, gm); time += .05; f.G.time = time; const start = raw.length; guest._sendTick();
+    select(guest, gm); time += .05; f.G.time = time; wireClockMs += 50;
+    const start = raw.length; guest._sendTick();
     const packets = raw.slice(start).filter(s => s.startsWith('b|')).map(s => JSON.parse(s.slice(2))).filter(p => p.k === 't');
     for (const p of packets) { select(host, hm); host.onMessage('guest', p); hm.ranked.update(1 / 60, f.buildFrame(hm, { G: f.G })); }
     return packets;
