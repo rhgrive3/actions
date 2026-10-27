@@ -1,0 +1,19 @@
+{
+  "attemptedAction": "launch installed Chromium to inspect ordinary public Game8 page",
+  "url": "https://game8.jp/splatoon3/497691",
+  "launchOptions": {
+    "executablePath": "/usr/bin/chromium",
+    "chromiumSandbox": true,
+    "args": [
+      "--disable-dev-shm-usage"
+    ]
+  },
+  "outcome": "failed before navigation; candidate app not browser-tested",
+  "exactFatal": "[pid=17768][err] [17768:17768:1027/051057.446449:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:172] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /usr/lib/chromium/chrome-sandbox is owned by root and has mode 4755.",
+  "secondaryError": "Crash Reports/settings.dat and Crash Reports/new writes failed: Read-only file system(30)",
+  "rawLaunchReceiptSha256": "72015f6f486f282497bd681eb106aa8c1f8f3779be91b777c9a743b111c156cb",
+  "securitySettingsChanged": false,
+  "retryWithoutSandbox": false,
+  "permissionReviewDenial": false,
+  "nextSupportedRoute": "A separate existing executor with a working normally sandboxed browser can build this exact candidate and inspect ordinary-input rendered pixels, as authorized by parent."
+}

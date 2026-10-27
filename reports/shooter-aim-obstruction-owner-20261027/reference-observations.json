@@ -1,0 +1,39 @@
+{
+  "publicPage": "https://game8.jp/splatoon3/497691",
+  "viewRoute": "ordinary page native embedded video viewer, inspected by parent and native-reference worker",
+  "caption": "BEFORE clip under Ver.9.2.0 comparison, 確定数維持射程約2.4; exact pre-update game build and gear unknown",
+  "observations": [
+    {
+      "scrubberApprox": "0:01",
+      "state": "active purple firing stream, displayed damage67.4",
+      "grayAimCircleApprox": [
+        599,
+        353
+      ]
+    },
+    {
+      "scrubberApprox": "0:03",
+      "state": "target destroyed; floorpaint and target remnant below aim cue; no distinct lower circle observed",
+      "grayAimCircleApprox": [
+        598,
+        352
+      ]
+    }
+  ],
+  "screenshotSize": [
+    1180,
+    757
+  ],
+  "videoLetterboxY": [
+    47,
+    710
+  ],
+  "notLiteralViewportCentre": true,
+  "pairedAfterObservation": "parent reports gray aim circle remains at the HUD aim point",
+  "provenanceLimits": "This executor did not inspect these JPEG pixels. Parent/native worker personally did; screenshots remain in their workspace. Perfectly co-located or ink-occluded feedback cannot be excluded. No numeric cutoff or complete retail UI algorithm established.",
+  "parentOnlyPaths": [
+    "/workspace/shared/reticle-reference/game8-before-firing.jpg",
+    "/workspace/shared/reticle-reference/game8-before-lastshot.jpg"
+  ],
+  "mediaBundled": false
+}

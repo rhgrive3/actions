@@ -1,0 +1,15 @@
+{
+  "README.md": "705c25e73625b3c5b85d38e5c128caacd602c0d80be539b12cd5200f8b7f140c",
+  "artifact-integrity.json": "85153efec420e74fec828aa271750912c29489469ca80df9b731e8b64b75494a",
+  "browser-environment-block.json": "6a75f6bf1f3caad5749fe175a8198f1ffdf63dceabddbf55440c7f4c6b9e267d",
+  "corridor-build.log": "b62d822226cdab153195399ac6b6dcd0f6fd34b694095a34d25fb0ee5ff66750",
+  "corridor-emitted.log": "8849d8fa9d9025e2a1c282963ff84ce9aed8964d09ec0761e8a213ce39d35cce",
+  "corridor-source.log": "dc4126a93f61cee1ee4a3a55a3157f0f2859721387bbc8989f9c37d59c913d7a",
+  "cutoff-negative.log": "8f8bb5259cb42aa5099617068b22a333283b73a39a7ed82aac8df886d8fecbd8",
+  "emitted-provenance-summary.json": "a9d085cd095b549f8d8076691ac0372bcdcd5715309b8ebee1d8c598ce6e3c78",
+  "exact-source-audit.json": "7e0495b07864a67be5c9dd74cb5b176ab1d7ad895e014eadc578ccfc5c85d80d",
+  "negative-provenance.jsonl": "6ec2ec12986e35fcb257dea24e885a32addda460dc5698f3af04374b2cf1bc95",
+  "old-owner-negative.log": "446ab604f19d9512a809b3877cfccc65d65bbd53c9c48277e70ad1d6737f5752",
+  "reference-observations.json": "aac86b2d7f8278044084bcf21563b899ddae36f9f9be0f39a25a92f4c395254e",
+  "validation.json": "2b2e4fd874e3c5c9343e00c73f0b92623d91d2c1d1b26e738a37a91d98c91c0e"
+}
