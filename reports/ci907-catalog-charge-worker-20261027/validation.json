@@ -1,0 +1,100 @@
+{
+  "status": "isolated harness candidate; independent review and whole catalog acceptance outstanding",
+  "base": "90706e3778586fa6c9d09a64ac354e547086e1c0",
+  "codeCommit": "4870f55f6da9d8252b434270643ecdd22612a6a4",
+  "branch": "fix/catalog-charge-worker-graph-20261027",
+  "failure": {
+    "run": 40451016135,
+    "job": 122020314288,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/40451016135/job/122020314288",
+    "at": "2026-10-27T05:23:34Z",
+    "message": "Catalog missing-module installed graph _versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs",
+    "networkAndPageErrors": [],
+    "modulesLoaded": 479
+  },
+  "cause": "Device-free motion fixture imports production audio but never enters Charger loadout/device preparation, so its new lazy module Worker is absent from the otherwise mandatory immutable installed graph. Isolated graph helper already explicitly exercises other lazy workers.",
+  "changedFiles": [
+    "scripts/lib/inkwave-catalog-audio.mjs",
+    "scripts/check-inkwave-motion-catalog.mjs",
+    "scripts/tests/inkwave-catalog-audio-graph.test.mjs",
+    "scripts/tests/inkwave-catalog-audio.test.mjs"
+  ],
+  "runtimeFilesChanged": false,
+  "workflowFilesChanged": false,
+  "moduleExemptionsAdded": false,
+  "verification": {
+    "newRegressionBefore": {
+      "pass": 0,
+      "fail": 1,
+      "reason": "lazy production charge Worker must actually be exercised"
+    },
+    "graphTestsAfter": {
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    "selectedSavedReceiptAfter": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "browser": "real Chromium154.0.8037.57 with chromiumSandbox:true; actual907 emitted Worker, no AudioContext/playback or gameplay. Original coordinator loads46 module receipts and no charge Worker; candidate loads47, all hashes verified, strict new saved proof passes. Canonical nontrivial .75 stretch yields600 Float32 frames/2400 bytes from800 frames at8000Hz. Worker serial/key, bytes, ownership and termination enforced.",
+    "negativeControls": [
+      "wrong serial",
+      "wrong key",
+      "corrupt PCM",
+      "Worker error",
+      "missing canonical export",
+      "missing module import",
+      "missing receipt",
+      "unterminated proof",
+      "missing protocol/dimension fields"
+    ],
+    "commands": [
+      "node --test scripts/tests/inkwave-catalog-audio-graph.test.mjs",
+      "node --test --test-name-pattern='saved graph requires each actual lazy module worker' scripts/tests/inkwave-catalog-audio.test.mjs",
+      "node browser-probe.mjs",
+      "node reports/brush-downhill-contact-20261027/audit-build.mjs <unchanged907site> <identity.json>"
+    ],
+    "build": "No rebuild needed: verification-only files are outside runtime build inputs; all1493 committed inputs/2199 emitted artifacts match unchanged907 output.",
+    "identity": {
+      "sourceSha": "4870f55f6da9d8252b434270643ecdd22612a6a4",
+      "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+      "inputHash": "69308c060120b9ebe716423cc8d41e81cd318132696c180fd926cb87c318bce0",
+      "sourceInputs": 1493,
+      "artifacts": 2199,
+      "mismatches": 0
+    }
+  },
+  "limits": [
+    "No full catalog replay or automatic CI rerun. This closes only demonstrated audio-graph omission.",
+    "Original log also contains empty geometry/RGB diagnostics for swim-turn-brake. Their native presentation classification is unresolved here; receipt validation stopped at the missing module first. No character, rig, hair, motion or pixel thresholds are edited.",
+    "The separate Explosher physical paint-delta capture gate is outside this patch. No comparison workflow/source/baseline edits.",
+    "New proof is Worker protocol/byte evidence, not audible output, game input, original-game or hardware evidence."
+  ],
+  "integrationHeadChanged": false,
+  "manualCi": false,
+  "prMetadataEdited": false,
+  "logs": {
+    "before.log": {
+      "file": "before.log.gz",
+      "rawSha256": "c26d237da15126ff06db3a96cc4a3711e996606af7de6ccddf08a93125714128"
+    },
+    "graph-after.log": {
+      "file": "graph-after.log.gz",
+      "rawSha256": "d4a8248ec614c98965873ca43fde95d6614af934abd11789df608c10ea540705"
+    },
+    "receipt-after.log": {
+      "file": "receipt-after.log.gz",
+      "rawSha256": "b03da0da0da78f67e0d27f67db0f12b3a710186576b4b95b7d02c18577a435eb"
+    },
+    "browser.log": {
+      "file": "browser.log.gz",
+      "rawSha256": "0f26cda17030739e943b1674a8f5a35dd409ac630cee573740e4c1216b8cb197"
+    },
+    "job122020314288.log": {
+      "file": "job122020314288.log.gz",
+      "rawSha256": "aa6dba2bb434657027eab2eb3c15beff9d08a9ba10ebbfe0c70016785a7a3ad8"
+    }
+  }
+}

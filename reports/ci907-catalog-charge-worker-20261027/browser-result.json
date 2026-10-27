@@ -1,0 +1,548 @@
+{
+  "status": "passed",
+  "kind": "actual browser Worker graph/protocol only; no gameplay/device/playback/motion catalog acceptance",
+  "runtimeHead": "90706e3778586fa6c9d09a64ac354e547086e1c0",
+  "candidate": "4870f55f6",
+  "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+  "chromiumSandbox": true,
+  "errors": [],
+  "outcomes": [
+    {
+      "label": "original907",
+      "graph": {
+        "source": "production-entry-imports-and-generated-worker",
+        "deviceInitialized": false,
+        "workerPath": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render-worker.js",
+        "workerProtocol": "invalid-id-rejected",
+        "workerTerminated": true,
+        "prewarmWorkers": [
+          {
+            "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-worker.mjs",
+            "protocol": "canonical-pcm-byte-exact",
+            "bytes": 96000,
+            "terminated": true
+          },
+          {
+            "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-worker.mjs",
+            "protocol": "canonical-pcm-byte-exact",
+            "bytes": 236800,
+            "terminated": true
+          }
+        ]
+      },
+      "loaded": [
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/audio/audio.js",
+          "sha256": "3368d1c2df3d0e29e56ba9d1ae19024f8d6b22168b0c6453537ca10f08d9b311",
+          "bytes": 51088
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/audio/music.js",
+          "sha256": "9a18019a3a79b7aec22527e040b600b518481648f1f9ebc8ccdbbe85a0b0c8da",
+          "bytes": 46127
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/runtime.mjs",
+          "sha256": "027f90702ab698f26b867c450adace1fa29567181dcbd7ededb49328542a196d",
+          "bytes": 8001
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/combat-hit-classifier.mjs",
+          "sha256": "935945d5016d648b1fd0592de8d6cdbb48462d4fea6651aa21168cf212dc5893",
+          "bytes": 394
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/blaster-hit.mjs",
+          "sha256": "9d391da0f27b289be9173bcb8dabb78e15a393e2f3c4f06f2c1bdbf12cd0aafd",
+          "bytes": 867
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-texture.mjs",
+          "sha256": "8599777978de647e89c8b48c6714758ead91764a3d92e8d9878dbbfd481a6f39",
+          "bytes": 2059
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+          "sha256": "211476178d7610dc5e0753e4f84acad383b73f0833379a38cae2a5af0a0b3959",
+          "bytes": 1718
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+          "sha256": "05a551b4a988ff4cb873a9f1df7d9eed65cc3bacdd9610ec669f84c46b85bd5f",
+          "bytes": 1424
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/output-safety.mjs",
+          "sha256": "508f747439b6d7dd345250518d2441586d7b8f219314c9c6497ef5f3aa6409c9",
+          "bytes": 321
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/engine.mjs",
+          "sha256": "1b3e03bf87b95cb182ad688972ffbd81031ec214cf197d626a2d24d584aba6a2",
+          "bytes": 8573
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/bank.mjs",
+          "sha256": "c446df40f02a74ed26e44939476c0868c7e86a5216f184e93b87114d7fe155d9",
+          "bytes": 7804
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/audio/streamedTrack.js",
+          "sha256": "c1f51a0d1eebf61f2d9ffd233e36c4f2d00ed650f897025d4c206a7e9bbcb4e0",
+          "bytes": 1803
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/platform-audio.mjs",
+          "sha256": "d908fc73582a979e9047c61d09d3dc7e12f013ffdd6da3871712b5879eab91da",
+          "bytes": 4523
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/runtime/audio-listener.mjs",
+          "sha256": "d673e68fdc1a246393bb90df5f48ba18066856b5392d0186e48619f285a97304",
+          "bytes": 2373
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/config.js",
+          "sha256": "32091a73522ed338b0c85795936fd40672e8542e49c8fe3b4fef841f2bf81d90",
+          "bytes": 11024
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/catalog-charge-stages.mjs",
+          "sha256": "2ab9f88dc9f2be47388f8c80ee397b905790fdaec7453353a0a934bfac2d409d",
+          "bytes": 416
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+          "sha256": "4a88739d5b144300e8ba529c22fc3bc0d8e44ea1f7481b7d534237107c63e2a3",
+          "bytes": 6801
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/kit-runtime.mjs",
+          "sha256": "189d94e0558724861d454aeae2fa89fa0eb9804e3e5b38807fe922ade5fcb9f0",
+          "bytes": 5043
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/extra-source-routes.mjs",
+          "sha256": "409ff4ad8fd95653585f8e62afb2697edc03edd4545b45c213b54c8cb896fb15",
+          "bytes": 922
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+          "sha256": "05c5c44ac0a413664b1857ede84655fbd5d90605921f342ee11f5b0be68f8a5f",
+          "bytes": 5747
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/music-score.mjs",
+          "sha256": "12b802eb6fccf6bbb413c5cf71f8e3c6b5b564c2105a0eae642492a6ced3d189",
+          "bytes": 2793
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-impulse.mjs",
+          "sha256": "cee837125d2a152ed08c42264e1eae8d1817601763bbed3dea8396a5c8301884",
+          "bytes": 1273
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/music-idle.mjs",
+          "sha256": "d433593c208c3f859450cb3636d85021193d2ac7a8481a24981c7419ebe6f697",
+          "bytes": 3395
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/load-deadline.mjs",
+          "sha256": "5ad2fb59f72cee95c3bc2394a1bcd17721dce0089d18e5916128a107cc3f2990",
+          "bytes": 1001
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/combat-recipes.mjs",
+          "sha256": "d101a87743ffd200a26b3216a000bac73d39028bc275f41e971f1bd19393bfb8",
+          "bytes": 474
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/source-cue-registry.mjs",
+          "sha256": "1f4c11ced6eee35487ebf6f172b98da89fb0f0e1fd7df44e7e221d49b1e5f9cc",
+          "bytes": 4760
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/borrowed-recorded-mains.mjs",
+          "sha256": "bf08afd38a83bb670c81b7facc934f1e2f2444d8dcd1a9d0058c9bb96ec23cdf",
+          "bytes": 610
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+          "sha256": "bd03522d2d23a360962c71c34cfad4bf094be8e5649507735174988be3f13a2c",
+          "bytes": 5598
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render.mjs",
+          "sha256": "a689212c7cdebfbd0356960c6cdf757fb1cc567c9a31b88540a70b96d1920b7f",
+          "bytes": 4715
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/authorized-samples.mjs",
+          "sha256": "9dbd3ec0e3449a5fef919f44fb68778bfc31f888fa09473de72ac931c5ad3103",
+          "bytes": 11057
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/kit-recipes.mjs",
+          "sha256": "331e87eeaba5c49f36e47810d60ddf8acfad81382e6680f1253bd89cb3002dbd",
+          "bytes": 2750
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/platform-lifecycle.mjs",
+          "sha256": "868b4ae629646774091e91b58a34764ef5d7abf6fd8061c0b0baab31c7fa274a",
+          "bytes": 6960
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/native-stages/runtime/registry.mjs",
+          "sha256": "ff6bc68f958bab4fa15b8f057c5f6b5f9d25e97228324156336b7192ca95fed1",
+          "bytes": 3751
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/game/inkFlight.js",
+          "sha256": "756d0a3eb3c88616768a1fccbe54c5615ba111c943e935dbbb71f5ccde1e2ebc",
+          "bytes": 6051
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+          "sha256": "2da7a227e20a58ad74caf407180ee5fc75e1c3bde421037fc8f77f59a3a22e67",
+          "bytes": 11302
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+          "sha256": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f",
+          "bytes": 62403
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs",
+          "sha256": "64a4f4b09f1b7eb9fdfa67dc55bfcd4b6e501db4c8c1016c7425b537e5a4542f",
+          "bytes": 4949
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "sha256": "4579429ae4b4a107d4ff66d21aa23e97996ff4afb3d63177163cc01f6c5451a9",
+          "bytes": 3381
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+          "sha256": "c368511a14b04416552ed9d6b207bd4091bf99acf9346f07a04919e56b4492a0",
+          "bytes": 9837
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/s3-articulation.mjs",
+          "sha256": "fb27380c07a646ab4f3dc332905c54d46123a4e1ce7f60d8ea1f62e2ad831345",
+          "bytes": 8925
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+          "sha256": "ff7f48bccdf4bb62323d99f854f9f1f116a17862cb5c7d4334b5544bb65b1435",
+          "bytes": 7537
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/native-stages/runtime/build-config.mjs",
+          "sha256": "7a30dcb4d3254477ca56eee20849c6fb1986f5796e175d4782c276c8d1865e76",
+          "bytes": 20293
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reference-profiles.mjs",
+          "sha256": "64a619273cc0db2963d0d8bf22cea8a7aa80e7fa799b17226f689f765677b449",
+          "bytes": 13858
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-worker.mjs",
+          "sha256": "43fe82e2620ee97bc9cef42ee1f1c83b2f9fcdd6c31d52aa57a56d2b4b166469",
+          "bytes": 258
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render-worker.js",
+          "sha256": "7ef15f290741ac212e828b98097b04d02f4a9093b0b5f040854de46c04e25016",
+          "bytes": 132858
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-worker.mjs",
+          "sha256": "8352ae0c64cf27ba5999385ec0c3ab9d48dc87dcd57b8164b0397f382702c8d5",
+          "bytes": 333
+        }
+      ],
+      "chargeWorkerLoaded": false,
+      "strictSavedProof": "rejected",
+      "message": "Catalog audio graph prewarm protocol proof"
+    },
+    {
+      "label": "candidate",
+      "graph": {
+        "source": "production-entry-imports-and-generated-worker",
+        "deviceInitialized": false,
+        "workerPath": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render-worker.js",
+        "workerProtocol": "invalid-id-rejected",
+        "workerTerminated": true,
+        "prewarmWorkers": [
+          {
+            "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-worker.mjs",
+            "protocol": "canonical-pcm-byte-exact",
+            "bytes": 96000,
+            "terminated": true
+          },
+          {
+            "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-worker.mjs",
+            "protocol": "canonical-pcm-byte-exact",
+            "bytes": 236800,
+            "terminated": true
+          },
+          {
+            "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs",
+            "protocol": "canonical-pcm-byte-exact",
+            "bytes": 2400,
+            "terminated": true,
+            "serial": 1,
+            "key": "catalog-charge-stretch",
+            "sampleRate": 8000,
+            "ratio": 0.75,
+            "sourceFrames": 800,
+            "outputFrames": 600,
+            "channels": 1
+          }
+        ]
+      },
+      "loaded": [
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/audio/audio.js",
+          "sha256": "3368d1c2df3d0e29e56ba9d1ae19024f8d6b22168b0c6453537ca10f08d9b311",
+          "bytes": 51088
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/audio/music.js",
+          "sha256": "9a18019a3a79b7aec22527e040b600b518481648f1f9ebc8ccdbbe85a0b0c8da",
+          "bytes": 46127
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/runtime.mjs",
+          "sha256": "027f90702ab698f26b867c450adace1fa29567181dcbd7ededb49328542a196d",
+          "bytes": 8001
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/combat-hit-classifier.mjs",
+          "sha256": "935945d5016d648b1fd0592de8d6cdbb48462d4fea6651aa21168cf212dc5893",
+          "bytes": 394
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/blaster-hit.mjs",
+          "sha256": "9d391da0f27b289be9173bcb8dabb78e15a393e2f3c4f06f2c1bdbf12cd0aafd",
+          "bytes": 867
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-texture.mjs",
+          "sha256": "8599777978de647e89c8b48c6714758ead91764a3d92e8d9878dbbfd481a6f39",
+          "bytes": 2059
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+          "sha256": "211476178d7610dc5e0753e4f84acad383b73f0833379a38cae2a5af0a0b3959",
+          "bytes": 1718
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+          "sha256": "05a551b4a988ff4cb873a9f1df7d9eed65cc3bacdd9610ec669f84c46b85bd5f",
+          "bytes": 1424
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/output-safety.mjs",
+          "sha256": "508f747439b6d7dd345250518d2441586d7b8f219314c9c6497ef5f3aa6409c9",
+          "bytes": 321
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/engine.mjs",
+          "sha256": "1b3e03bf87b95cb182ad688972ffbd81031ec214cf197d626a2d24d584aba6a2",
+          "bytes": 8573
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/bank.mjs",
+          "sha256": "c446df40f02a74ed26e44939476c0868c7e86a5216f184e93b87114d7fe155d9",
+          "bytes": 7804
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/audio/streamedTrack.js",
+          "sha256": "c1f51a0d1eebf61f2d9ffd233e36c4f2d00ed650f897025d4c206a7e9bbcb4e0",
+          "bytes": 1803
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/platform-audio.mjs",
+          "sha256": "d908fc73582a979e9047c61d09d3dc7e12f013ffdd6da3871712b5879eab91da",
+          "bytes": 4523
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/runtime/audio-listener.mjs",
+          "sha256": "d673e68fdc1a246393bb90df5f48ba18066856b5392d0186e48619f285a97304",
+          "bytes": 2373
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/config.js",
+          "sha256": "32091a73522ed338b0c85795936fd40672e8542e49c8fe3b4fef841f2bf81d90",
+          "bytes": 11024
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/catalog-charge-stages.mjs",
+          "sha256": "2ab9f88dc9f2be47388f8c80ee397b905790fdaec7453353a0a934bfac2d409d",
+          "bytes": 416
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+          "sha256": "4a88739d5b144300e8ba529c22fc3bc0d8e44ea1f7481b7d534237107c63e2a3",
+          "bytes": 6801
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/kit-runtime.mjs",
+          "sha256": "189d94e0558724861d454aeae2fa89fa0eb9804e3e5b38807fe922ade5fcb9f0",
+          "bytes": 5043
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/extra-source-routes.mjs",
+          "sha256": "409ff4ad8fd95653585f8e62afb2697edc03edd4545b45c213b54c8cb896fb15",
+          "bytes": 922
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+          "sha256": "05c5c44ac0a413664b1857ede84655fbd5d90605921f342ee11f5b0be68f8a5f",
+          "bytes": 5747
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/music-score.mjs",
+          "sha256": "12b802eb6fccf6bbb413c5cf71f8e3c6b5b564c2105a0eae642492a6ced3d189",
+          "bytes": 2793
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-impulse.mjs",
+          "sha256": "cee837125d2a152ed08c42264e1eae8d1817601763bbed3dea8396a5c8301884",
+          "bytes": 1273
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/music-idle.mjs",
+          "sha256": "d433593c208c3f859450cb3636d85021193d2ac7a8481a24981c7419ebe6f697",
+          "bytes": 3395
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/load-deadline.mjs",
+          "sha256": "5ad2fb59f72cee95c3bc2394a1bcd17721dce0089d18e5916128a107cc3f2990",
+          "bytes": 1001
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/combat-recipes.mjs",
+          "sha256": "d101a87743ffd200a26b3216a000bac73d39028bc275f41e971f1bd19393bfb8",
+          "bytes": 474
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/source-cue-registry.mjs",
+          "sha256": "1f4c11ced6eee35487ebf6f172b98da89fb0f0e1fd7df44e7e221d49b1e5f9cc",
+          "bytes": 4760
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/borrowed-recorded-mains.mjs",
+          "sha256": "bf08afd38a83bb670c81b7facc934f1e2f2444d8dcd1a9d0058c9bb96ec23cdf",
+          "bytes": 610
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+          "sha256": "bd03522d2d23a360962c71c34cfad4bf094be8e5649507735174988be3f13a2c",
+          "bytes": 5598
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render.mjs",
+          "sha256": "a689212c7cdebfbd0356960c6cdf757fb1cc567c9a31b88540a70b96d1920b7f",
+          "bytes": 4715
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/authorized-samples.mjs",
+          "sha256": "9dbd3ec0e3449a5fef919f44fb68778bfc31f888fa09473de72ac931c5ad3103",
+          "bytes": 11057
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/kit-recipes.mjs",
+          "sha256": "331e87eeaba5c49f36e47810d60ddf8acfad81382e6680f1253bd89cb3002dbd",
+          "bytes": 2750
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/platform-lifecycle.mjs",
+          "sha256": "868b4ae629646774091e91b58a34764ef5d7abf6fd8061c0b0baab31c7fa274a",
+          "bytes": 6960
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/native-stages/runtime/registry.mjs",
+          "sha256": "ff6bc68f958bab4fa15b8f057c5f6b5f9d25e97228324156336b7192ca95fed1",
+          "bytes": 3751
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/game/inkFlight.js",
+          "sha256": "756d0a3eb3c88616768a1fccbe54c5615ba111c943e935dbbb71f5ccde1e2ebc",
+          "bytes": 6051
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+          "sha256": "2da7a227e20a58ad74caf407180ee5fc75e1c3bde421037fc8f77f59a3a22e67",
+          "bytes": 11302
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+          "sha256": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f",
+          "bytes": 62403
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs",
+          "sha256": "64a4f4b09f1b7eb9fdfa67dc55bfcd4b6e501db4c8c1016c7425b537e5a4542f",
+          "bytes": 4949
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+          "sha256": "4579429ae4b4a107d4ff66d21aa23e97996ff4afb3d63177163cc01f6c5451a9",
+          "bytes": 3381
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+          "sha256": "c368511a14b04416552ed9d6b207bd4091bf99acf9346f07a04919e56b4492a0",
+          "bytes": 9837
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/s3-articulation.mjs",
+          "sha256": "fb27380c07a646ab4f3dc332905c54d46123a4e1ce7f60d8ea1f62e2ad831345",
+          "bytes": 8925
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+          "sha256": "ff7f48bccdf4bb62323d99f854f9f1f116a17862cb5c7d4334b5544bb65b1435",
+          "bytes": 7537
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/native-stages/runtime/build-config.mjs",
+          "sha256": "7a30dcb4d3254477ca56eee20849c6fb1986f5796e175d4782c276c8d1865e76",
+          "bytes": 20293
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reference-profiles.mjs",
+          "sha256": "64a619273cc0db2963d0d8bf22cea8a7aa80e7fa799b17226f689f765677b449",
+          "bytes": 13858
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-worker.mjs",
+          "sha256": "43fe82e2620ee97bc9cef42ee1f1c83b2f9fcdd6c31d52aa57a56d2b4b166469",
+          "bytes": 258
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render-worker.js",
+          "sha256": "7ef15f290741ac212e828b98097b04d02f4a9093b0b5f040854de46c04e25016",
+          "bytes": 132858
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-worker.mjs",
+          "sha256": "8352ae0c64cf27ba5999385ec0c3ab9d48dc87dcd57b8164b0397f382702c8d5",
+          "bytes": 333
+        },
+        {
+          "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs",
+          "sha256": "efca49add79e852b98cc8c8451142302c391bb302737e272c932fc38ef0a3e66",
+          "bytes": 345
+        }
+      ],
+      "chargeWorkerLoaded": true,
+      "strictSavedProof": "passed"
+    }
+  ],
+  "browser": "154.0.8037.57",
+  "closed": true
+}
