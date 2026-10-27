@@ -276,7 +276,7 @@ uniform int uWakeCount;`,
     );
   }
 
-  if (rel === 'src/fx/swimWake.js') {
+  if (rel === 'src/fx/swimWake.js' && code.includes('this._wakeUpload = null;')) {
     // GPU-08b: Pool wake trail point objects and publish active wake slot count to U.uWakeCount.
     code = applyIdempotent(
       code,
@@ -417,8 +417,8 @@ export class SwimWake {`,
       `        const reach = this.level.spawnBarrier + 4;
         if (Number.isFinite(reach) && reach >= 0 && !Number.isNaN(dx) && !Number.isNaN(dz) && (Math.abs(dx) > reach || Math.abs(dz) > reach)) continue;
         const d2 = dx * dx + dz * dz;
-        if (Number.isFinite(reach) && reach >= 0 && d2 >= reach * reach) continue;
-        const d = Math.sqrt(d2);`,
+        if (Number.isFinite(reach) && reach >= 0 && Number.isFinite(d2) && d2 >= reach * reach) continue;
+        const d = Number.isFinite(dx) && Number.isFinite(dz) ? Math.sqrt(d2) : Math.hypot(dx, dz);`,
       replaceOnce,
       'GPU-12b reject out-of-range spawn barrier actors via squared distance before sqrt'
     );
@@ -587,33 +587,9 @@ export class SwimWake {`,
   }
 
   if (rel === 'src/game/actor.js') {
-    // CPU-02: Cache Actor._surface sample across unchanged (G.paint, version, face, u, v).
-    code = applyIdempotent(
-      code,
-      `  _surface() {
-    const g = this.ground;
-    if (this.grounded && g.hit && g.face >= 0) {
-      const t = G.paint.sample(g.face, g.u, g.v);
-      this.groundTeam = t === 0 ? 0 : (t - 1 === this.team ? 1 : 2);
-    } else this.groundTeam = 0;
-  }`,
-      `  _surface() {
-    const g = this.ground;
-    if (this.grounded && g.hit && g.face >= 0) {
-      const P = G.paint, ver = P.version;
-      let t;
-      if (this._surfPaint === P && this._surfVer === ver && this._surfFace === g.face && this._surfU === g.u && this._surfV === g.v) {
-        t = this._surfSample;
-      } else {
-        t = P.sample(g.face, g.u, g.v);
-        this._surfPaint = P; this._surfVer = ver; this._surfFace = g.face; this._surfU = g.u; this._surfV = g.v; this._surfSample = t;
-      }
-      this.groundTeam = t === 0 ? 0 : (t - 1 === this.team ? 1 : 2);
-    } else this.groundTeam = 0;
-  }`,
-      replaceOnce,
-      'CPU-02 cache Actor._surface sample across unchanged paint version and UV'
-    );
+    // CPU-02 omitted: PaintSystem.version does not cover every direct grid mutation.
+    // A stale sample affects swimming, enemy ink damage, and Charger charge retention.
+
     // CPU-21: Pre-filter Actor._spawnBarrier with height, AABB, and squared distance before Math.sqrt.
     code = applyIdempotent(
       code,
@@ -803,6 +779,7 @@ export class SwimWake {`,
       const r = PLAYER.radius * 1.7;
       if (d2 < r * r && Math.abs(dy) < 1.2 && d2 > 1e-5) {`;
       const postNetAfter = `    // soft push between actors
+    if (this.actors.length < 2) return;
     const rPush = PLAYER.radius * 1.7, rPush2 = rPush * rPush;
     for (let i = 0; i < this.actors.length; i++) {
       const a = this.actors[i];
