@@ -700,7 +700,9 @@ export class RankedWorld {
   _findActor(id) {
     if (id === null || id === undefined) return null;
     const key = idKey(id);
-    return (this.match?.actors || []).find(actor => idKey(actor?.nid ?? `${actor?.team}:${actor?.slot}`) === key) || null;
+    const actors=this.match?.actors || [], length=actors.length;
+    for(let i=0;i<length;i++){const actor=actors[i];if(idKey(actor?.nid ?? `${actor?.team}:${actor?.slot}`)===key)return actor||null;}
+    return null;
   }
 
   _updateRainmaker(engine) {
@@ -718,11 +720,13 @@ export class RankedWorld {
     const health = Math.max(0, Math.min(max, finite(barrier.health) ? barrier.health : max));
     const pressure = 1 - health / max;
     const radius = 1.5 + 1.2 * pressure;
-    this.rainmakerShield.visible = shield;
-    this.rainmakerShield.scale.setScalar(radius / 1.45);
+    if(this.rainmakerShield.visible!==shield)this.rainmakerShield.visible = shield;
+    const scalar=radius/1.45, scale=this.rainmakerShield.scale;
+    if(!Object.is(scale.x,scalar)||!Object.is(scale.y,scalar)||!Object.is(scale.z,scalar))scale.setScalar(scalar);
     const shieldColor = validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c;
     if (this._shieldColor !== shieldColor) { this.rainmakerShield.material.color.setHex(shieldColor); this._shieldColor = shieldColor; }
-    this.rainmakerShield.material.opacity = 0.12 + 0.14 * pressure;
+    const opacity=0.12+0.14*pressure;
+    if(!Object.is(this.rainmakerShield.material.opacity,opacity))this.rainmakerShield.material.opacity=opacity;
     this.rainmakerCarrier.visible = !!carrier;
     if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
     else { this.rainmakerCarrier.position.copy(this.rainmaker.position); this.rainmakerCarrier.position.y += 2.2; }
