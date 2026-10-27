@@ -771,6 +771,23 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip__text { display: none; }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__name { font-size: 22px; }
 }
+/* Small portrait viewports cannot fit two quick actions, Battle settings and
+   a 160px start action in one row. Keep every live touch target >= 44px,
+   with the primary action below the setting and loadout controls. */
+@media (max-width: 420px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select { grid-template-rows: 44px minmax(0, 1fr) auto; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot {
+    grid-template-columns: 44px 44px minmax(44px, 1fr);
+    grid-template-rows: 48px 48px;
+    gap: 8px;
+  }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .s3-stage-options-btn {
+    grid-column: 3; grid-row: 1; width: 100%; min-width: 44px;
+  }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-btn--start {
+    grid-column: 1 / -1; grid-row: 2;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .s3-stage-settings, .s3-stage-settings .iw-modal__card { animation: none; }
 }
