@@ -64,6 +64,7 @@ export function updateCrabSplashVisuals(system, game, THREE) {
   }
   const queue = system._s3SplashDrops;
   let count = 0, minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  let colorStart = Infinity, colorEnd = 0;
   if (Array.isArray(queue)) {
     // Both scan work and GPU storage are bounded even for an oversized fixture.
     const limit = Math.min(queue.length, CAPACITY);
@@ -77,7 +78,13 @@ export function updateCrabSplashVisuals(system, game, THREE) {
       pool.matrix.setPosition(pos.x, pos.y, pos.z);
       pool.mesh.setMatrixAt(count, pool.matrix);
       setDropColor(pool.color, drop, game);
+      const colors = pool.mesh.instanceColor.array, offset = count * 3;
+      const oldR = colors[offset], oldG = colors[offset + 1], oldB = colors[offset + 2];
       pool.mesh.setColorAt(count, pool.color);
+      // Compare the stored Float32 values, not unrounded Color doubles.
+      if (oldR !== colors[offset] || oldG !== colors[offset + 1] || oldB !== colors[offset + 2]) {
+        colorStart = Math.min(colorStart, offset); colorEnd = offset + 3;
+      }
       minX = Math.min(minX, pos.x - radius); minY = Math.min(minY, pos.y - radius); minZ = Math.min(minZ, pos.z - radius);
       maxX = Math.max(maxX, pos.x + radius); maxY = Math.max(maxY, pos.y + radius); maxZ = Math.max(maxZ, pos.z + radius);
       count++;
@@ -96,11 +103,19 @@ export function updateCrabSplashVisuals(system, game, THREE) {
       pool.matrixRange.count = count * mesh.instanceMatrix.itemSize;
       mesh.instanceMatrix.updateRanges.length = 0;
       mesh.instanceMatrix.updateRanges.push(pool.matrixRange);
-      pool.colorRange.count = count * mesh.instanceColor.itemSize;
-      mesh.instanceColor.updateRanges.length = 0;
-      mesh.instanceColor.updateRanges.push(pool.colorRange);
       mesh.instanceMatrix.needsUpdate = true;
-      mesh.instanceColor.needsUpdate = true;
+      if (colorEnd > colorStart) {
+        // A culled frame has not consumed its ranges. Union those changes
+        // before reusing the single range record, including shrinking rosters.
+        for (const range of mesh.instanceColor.updateRanges) {
+          colorStart = Math.min(colorStart, range.start);
+          colorEnd = Math.max(colorEnd, range.start + range.count);
+        }
+        pool.colorRange.start = colorStart; pool.colorRange.count = colorEnd - colorStart;
+        mesh.instanceColor.updateRanges.length = 0;
+        mesh.instanceColor.updateRanges.push(pool.colorRange);
+        mesh.instanceColor.needsUpdate = true;
+      }
     }
   }
   return count;
