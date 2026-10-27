@@ -14,6 +14,7 @@ on:
       - 'scripts/lib/inkwave-runtime-evidence.mjs'
       - 'scripts/check-inkwave-patches.mjs'
       - 'scripts/check-inkwave-startup-budget.mjs'
+      - 'scripts/prepare-inkwave-ci-apt.py'
       - 'patches/local-quality/tests/motion-fk-hotpath.test.mjs'
       - 'inkwave-public/src/game/motion/body-balance.js'
       - 'patches/local-quality/tests/body-balance-work*'
@@ -71,7 +72,9 @@ jobs:
       - name: CPU component benchmark (timing is diagnostic, parity is required)
         run: node --experimental-vm-modules scripts/benchmark-inkwave-body-balance.mjs balance-benchmark.json
       - name: Install Chromium for emitted CPU trace smoke
-        run: npx playwright install --with-deps chromium
+        run: |
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps chromium
       - name: Actual browser CPU recorder, finite gameplay state and GC trace
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha }}

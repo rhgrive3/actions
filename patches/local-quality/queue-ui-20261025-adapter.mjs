@@ -6,6 +6,13 @@ function once(code, before, after, label) {
 }
 export function adaptQueueUi20261025(rel, code) {
   const patch = (before, after, label) => { code = once(code, before, after, label); };
+  if (rel === 'src/ui/diorama.js') {
+    patch("      pin.el.style.display = i < count ? '' : 'none';", "      const display = i < count ? '' : 'none';\n      if (pin.el.style.display !== display) pin.el.style.display = display;", 'bubbler pin visibility boundary');
+    patch("        pin.keyEl.style.display = number ? '' : 'none';\n        pin.keyEl.innerHTML = number ? keycap(number) : '';",
+      "        const display = number ? '' : 'none';\n        if (pin.keyEl.style.display !== display) pin.keyEl.style.display = display;\n        if (pin._keyNumber !== number) { pin._keyNumber = number; pin._keyMarkup = number ? keycap(number) : ''; }\n        if (pin.keyEl.innerHTML !== pin._keyMarkup) pin.keyEl.innerHTML = pin._keyMarkup;", 'static bubbler number markup with actual DOM validation');
+    patch('    this.pins = [...this.basePins, ...this.bubblerPins.slice(0, count), this.selfPin];',
+      '    const pins = this.pins;\n    let used = 0;\n    for (const pin of this.basePins) pins[used++] = pin;\n    for (let i = 0; i < count; i++) pins[used++] = this.bubblerPins[i];\n    pins[used++] = this.selfPin; pins.length = used;', 'reuse owned pin order without retaining retired targets');
+  }
   if (rel === 'src/ui/hud.js') {
     patch('let dy = yaw - T.prevYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); drive += clamp(dy / dt, -8, 8) * 0.55;',
       'let dy = yaw - T.prevYaw; if (dy !== 0) { dy = Math.atan2(Math.sin(dy), Math.cos(dy)); drive += clamp(dy / dt, -8, 8) * 0.55; }', 'zero camera turn');

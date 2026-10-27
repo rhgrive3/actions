@@ -1,0 +1,17 @@
+(node:4714) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ catalogue collision bypasses enclosing source bookkeeping boxes and hits the actual thin triangle (5.123756ms)
+✔ catalogue source time of impact preserves linearly changing field radii (1.288858ms)
+✔ catalogue source edge and NoPaint collision remain distinct from paint and grate eligibility (1.07179ms)
+✔ catalogue actual moving OBBs retain their original growing-radius solver and nearest-hit priority (0.831297ms)
+✔ changing source spheres agree with independent signed-plane and rounded-edge entry equations (79.178317ms)
+﹣ recorded Bluefin Luna first step clears the original source instead of terminating inside its fence box (0.301907ms) # SKIP
+✔ analytic entry agrees with an independent convex-distance oracle in arbitrary orientations (387.974857ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 1955.573858
