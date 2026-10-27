@@ -1,23 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {WIPER_CAPTURE_CASES as CASES,WIPER_CAPTURE_FRAMES as FRAMES,assertWiperCaptureReceipt} from '../lib/inkwave-wiper-acceptance-contract.mjs';
+import {WIPER_CAPTURE_CASES as CASES,WIPER_CAPTURE_FRAMES as FRAMES,assertWiperCaptureReceipt,wiperBuildReceiptBinding} from '../lib/inkwave-wiper-acceptance-contract.mjs';
 import {sandboxBrowserOptions,launchSandboxBrowser,closeWiperCaptureOwners} from '../lib/inkwave-sandbox-browser.mjs';
 import {verifyWiperCaptureFiles} from '../check-inkwave-wiper-native-receipt.mjs';
 import {hash} from '../lib/inkwave-runtime-evidence.mjs';
 import {parseBrowserLane} from '../ci/run-circleci-browser-lane.mjs';
+import {createWiperNativeShotSchedule,wrapWiperDrawCallback} from '../check-inkwave-wiper-native-acceptance.mjs';
 
-const sourceSha='a'.repeat(40),contentHash='b'.repeat(64),digest='c'.repeat(64);
+const sourceSha='a'.repeat(40),digest='c'.repeat(64);
+const revision='e'.repeat(64),modules=Object.fromEntries(['s3-projectile-shapes.mjs','s3-ink-sheets.mjs'].map(n=>[`_versions/${revision}/patches/splatoon3/runtime/${n}`,digest]));
+const manifestBytes=Buffer.from(JSON.stringify({contentHash:hash(JSON.stringify(modules)),inputHash:hash('{}'),files:{},artifacts:modules,build:{revision,esbuild:'0.28.2',optimization:'esbuild-minify'}}));
+const buildBinding=wiperBuildReceiptBinding(manifestBytes),{contentHash,inputHash,manifestSha256}=buildBinding;
 const helperHash=file=>hash(fs.readFileSync(new URL(file,import.meta.url)));
 function fixture(){
   const files=new Map(),receipt={schema:1,status:'passed',kind:'controlled-native-wiper-visual-acceptance',sourceSha,contentHash,
     sourceIdentity:{checkoutSha:sourceSha,checkoutIdentityStatus:'verified-git-head'},sandbox:true,errors:[],cleanup:{browserClosed:true,serverClosed:true},
-    manifestSha256:digest,harnessSha256:helperHash('../check-inkwave-wiper-native-acceptance.mjs'),contractSha256:helperHash('../lib/inkwave-wiper-acceptance-contract.mjs'),launcherSha256:helperHash('../lib/inkwave-sandbox-browser.mjs'),inputHash:digest,
-    modules:{'exact-module.mjs':digest},consumed:{'exact-module.mjs':digest},cases:[]};
+    manifestSha256,harnessSha256:helperHash('../check-inkwave-wiper-native-acceptance.mjs'),contractSha256:helperHash('../lib/inkwave-wiper-acceptance-contract.mjs'),launcherSha256:helperHash('../lib/inkwave-sandbox-browser.mjs'),inputHash,
+    modules:{...modules},consumed:{...modules},cases:[]};
   for(const c of CASES){
     const row={...c,entry:{gestures:[{trusted:true},{trusted:true}]},contextClosed:true,retired:true,
       resources:{disposed:true,wetAllocated:c.mesh==='wetSlashV'},initial:{pipeline:{ao:true,shadows:true}},firstBirth:{tick:100},frames:[]};
-    for(const frame of FRAMES){
+    for(const frame of FRAMES[c.action]){
       const images=['native-postprocessed','fixed-side-raw'].map(view=>{
         const file=`${c.key}-f${frame}-${view}.png`,bytes=Buffer.concat([Buffer.from('89504e470d0a1a0a','hex'),Buffer.alloc(1200,frame)]);
         files.set(file,bytes);return {view,file,bytes:bytes.length,sha256:hash(bytes),render:{calls:10,triangles:200},luminanceRange:100,
@@ -33,8 +37,8 @@ function fixture(){
 
 test('exact mandatory six cases include Normal+Lite first active charged frame, taps and Heavy controls',()=>{
   assert.deepEqual(CASES.map(c=>c.key),['normal-charged','normal-tap','lite-charged','lite-tap','heavy-charged','heavy-tap']);
-  assert.deepEqual(FRAMES,[1,3,8]);assert.equal(CASES.filter(c=>c.mesh==='wetSlashV').length,2);
-  const f=fixture();assert.deepEqual(verifyWiperCaptureFiles('/evidence',{sourceSha,contentHash},f.read),f.receipt);
+  assert.deepEqual(FRAMES,{charged:[1,3,8],tap:[1,2,3]});assert.equal(CASES.filter(c=>c.mesh==='wetSlashV').length,2);
+  const f=fixture();assert.deepEqual(verifyWiperCaptureFiles('/evidence',{sourceSha,manifestBytes},f.read),f.receipt);
 });
 
 test('receipt rejects omissions, wrong exact head/content, stale helper, wrong actor/action/mesh/phase, unsafe or incomplete evidence',()=>{
@@ -54,9 +58,11 @@ test('receipt rejects omissions, wrong exact head/content, stale helper, wrong a
     r=>r.cases[0].frames[0].images.pop(),r=>r.cases[0].frames[0].images[0].sha256='d'.repeat(64),
     r=>r.cases[0].frames[0].images[0].file='../escape.png',r=>r.cases[0].frames[0].images[0].luminanceRange=0,
     r=>r.cases[0].frames[0].images[0].drawReceipts=[],r=>r.cases[0].frames[0].images[0].render.calls=0,
-    r=>r.consumed['exact-module.mjs']='d'.repeat(64),r=>delete r.consumed['exact-module.mjs'],
+    r=>r.consumed[Object.keys(modules)[0]]='d'.repeat(64),r=>delete r.consumed[Object.keys(modules)[0]],
+    r=>{r.modules={};r.consumed={};},r=>{r.modules[Object.keys(modules)[0]]='d'.repeat(64);r.consumed[Object.keys(modules)[0]]='d'.repeat(64);},
+    r=>r.inputHash='d'.repeat(64),r=>r.manifestSha256='d'.repeat(64),
   ];
-  for(const mutate of mutants){const f=fixture();mutate(f.receipt);assert.throws(()=>verifyWiperCaptureFiles('/evidence',{sourceSha,contentHash},f.read),String(mutate));}
+  for(const mutate of mutants){const f=fixture();mutate(f.receipt);assert.throws(()=>verifyWiperCaptureFiles('/evidence',{sourceSha,manifestBytes},f.read),String(mutate));}
 });
 
 test('original screenshot files are mandatory, unique, non-substitutable and PNG-hash bound',()=>{
@@ -66,7 +72,7 @@ test('original screenshot files are mandatory, unique, non-substitutable and PNG
     if(mutation==='bytes')f.files.get(im.file)[100]^=1;
     if(mutation==='duplicate')f.receipt.cases[0].frames[1].images[0]={...im};
     if(mutation==='not-png'){f.files.get(im.file)[0]=0;im.sha256=hash(f.files.get(im.file));}
-    assert.throws(()=>verifyWiperCaptureFiles('/evidence',{sourceSha,contentHash},f.read),mutation);
+    assert.throws(()=>verifyWiperCaptureFiles('/evidence',{sourceSha,manifestBytes},f.read),mutation);
   }
 });
 
@@ -89,6 +95,51 @@ test('browser/server cleanup is awaited and independent even on failure',async()
   assert.equal(closed,4);
 });
 
+test('passive draw wrapper restores inherited/nondefault-own callbacks, including rendering errors, without clobbering another owner',()=>{
+  const original=function(){this.calls=(this.calls||0)+1;};
+  for(const own of [false,true]){
+    const mesh=Object.create({onBeforeRender:original});
+    if(own)Object.defineProperty(mesh,'onBeforeRender',{value:original,writable:true,enumerable:false,configurable:false});
+    const before=Object.getOwnPropertyDescriptor(mesh,'onBeforeRender');let observed=0;
+    const restore=wrapWiperDrawCallback(mesh,()=>observed++);
+    assert.throws(()=>{try{mesh.onBeforeRender();throw Error('renderer failed');}finally{restore();}},/renderer failed/);
+    assert.equal(mesh.calls,1);assert.equal(observed,1);assert.equal(mesh.onBeforeRender,original);
+    assert.deepEqual(Object.getOwnPropertyDescriptor(mesh,'onBeforeRender'),before);
+  }
+  const mesh=Object.create({onBeforeRender:original}),restore=wrapWiperDrawCallback(mesh,()=>{}),replacement=()=>{};
+  mesh.onBeforeRender=replacement;assert.throws(restore,/unrelated owner/);assert.equal(mesh.onBeforeRender,replacement);
+});
+
+test('actual shared capture scheduler executes production Actor charge/tap admission for all six cases and rejects expired Lite tap frame8', {timeout:180000}, async t=>{
+  const {sourceLoadedActorFixture}=await import('../../patches/splatoon3/tests/source-loaded-actor-fixture.mjs');
+  const f=await sourceLoadedActorFixture({random:()=>.5,sourceOnly:true}),rows=[];
+  try{for(const c of CASES){
+    const a=await f.make();a.setWeapon(c.id);a.character.onEvent=null;
+    const input={keys:new Set(),pressed:new Set(),padPressed:new Set(),mouse:{dx:0,dy:0,left:false,right:false},
+      down(k){return this.keys.has(k);},wasPressed(k){return this.pressed.has(k);},padButton:()=>false,padValue:()=>0};
+    const rig={yaw:0,pitch:.06,mode:'follow',target:a},controller=new f.PlayerController(a,rig,input);
+    // Existing source fixture owns an isolated floor/aim, not a GPU/game rAF.
+    controller.computeAim=()=>{};f.G.rig=rig;f.G.local=a;f.G.settings.aimAssist=0;
+    const step=()=>{f.G.time+=1/60;controller.update(1/60);a.update(1/60);f.G.projectiles.update(1/60);input.pressed.clear();};
+    for(let i=0;i<60;i++)step();assert.equal(f.G.projectiles.list.length,0);
+    const active=()=>f.G.projectiles.list.filter(p=>p.owner===a&&p.delay<=0&&!p.catalog?.birthPending);
+    const schedule=createWiperNativeShotSchedule(c,{setFire:on=>{input.mouse.left=on;},step,
+      readActive:()=>active().map(p=>({id:p.wid,sourceActor:p.catalog.r.sourceActor,descriptor:p.catalog.descriptor.key,age:p.age,seed:p.seed,pos:p.pos.toArray()})),
+      readHeld:()=>({chargeF:a.weaponRunner.catalogState.chargeF})});
+    const first=active()[0];assert.ok(first);assert.ok(schedule.firstBirth.tick>c.hold);assert.equal(schedule.firstBirth.age,first.age);
+    const samples=[];
+    for(const frame of FRAMES[c.action]){
+      schedule.advanceTo(frame);assert.equal(active().length,1);assert.equal(active()[0],first);
+      assert.equal(first.catalog.r.sourceActor,c.sourceActor);assert.equal(first.catalog.descriptor.key,c.descriptor);
+      assert.equal(schedule.tick-schedule.firstBirth.tick+1,frame);samples.push({frame,age:first.age,life:first.life});
+    }
+    if(c.key==='lite-tap')assert.throws(()=>schedule.advanceTo(8),/exact active shot phase missing/,'old global frame8 policy must fail naturally, without extending the real shot');
+    rows.push({case:c.key,firstBirth:schedule.firstBirth,held:schedule.held,samples});
+    f.reset();
+  }}finally{f.reset();}
+  assert.equal(rows.length,6);t.diagnostic(JSON.stringify({kind:'source-only actual Actor shared schedule, not native browser pixels',rows}));
+});
+
 test('additive catalog workflow retains inherited Hissen/phase52 route and binds Wiper result to same immutable build',()=>{
   const workflow=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
   const lane=parseBrowserLane(workflow,'catalog');
@@ -103,7 +154,7 @@ test('additive catalog workflow retains inherited Hissen/phase52 route and binds
   const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
   assert.match(driver,/verifyRuntimeBuild\(site,root,sourceSha\)/);assert.match(driver,/launchSandboxBrowser\(chromium\)/);
   assert.ok(!driver.includes('--no-sandbox'));assert.ok(!driver.includes('new Projectile'));
-  assert.match(driver,/live\[0\]\.catalog\.descriptor\.key!==testCase\.descriptor/);assert.match(driver,/p=>p\.owner===a&&p\.delay<=0&&!p\.catalog\?\.birthPending/);
-  assert.match(driver,/mesh\.onBeforeRender=original/);assert.match(driver,/finally\{await context.close\(\)/);
-  assertWiperCaptureReceipt(fixture().receipt,{sourceSha,contentHash});
+  assert.match(driver,/p\.descriptor!==testCase\.descriptor/);assert.match(driver,/p=>p\.owner===a&&p\.delay<=0&&!p\.catalog\?\.birthPending/);
+  assert.match(driver,/finally\{try\{restoreDraw\(\)/);assert.match(driver,/finally\{await context.close\(\)/);
+  assertWiperCaptureReceipt(fixture().receipt,{sourceSha,...buildBinding});
 });

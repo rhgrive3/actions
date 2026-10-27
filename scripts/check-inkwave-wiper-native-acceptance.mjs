@@ -10,7 +10,7 @@ import {captureSourceIdentity} from './lib/inkwave-capture-source-identity.mjs';
 import {verifyRuntimeBuild, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
 import {launchSandboxBrowser, closeWiperCaptureOwners} from './lib/inkwave-sandbox-browser.mjs';
-import {WIPER_CAPTURE_CASES, WIPER_CAPTURE_FRAMES, assertWiperCaptureReceipt} from './lib/inkwave-wiper-acceptance-contract.mjs';
+import {WIPER_CAPTURE_CASES, WIPER_CAPTURE_FRAMES, assertWiperCaptureReceipt, wiperBuildReceiptBinding} from './lib/inkwave-wiper-acceptance-contract.mjs';
 
 export function initializeWiperCapture({id}) {
   localStorage.setItem('inkwave.settings', JSON.stringify({quality:'high',shadows:true,bloom:true,lang:'ja',colorblind:true,fov:82,fovMode:'h',cameraShake:0}));
@@ -35,6 +35,45 @@ export function initializeWiperCapture({id}) {
       window.__wiperResetRandom(0x515e7021);
     }
   },true);
+}
+
+// Shared executable scheduler: the browser uses this exact function, and the
+// source regression supplies actual production Actor/controller/projectiles.
+export function createWiperNativeShotSchedule(testCase,{setFire,step,readActive,readHeld}) {
+  const schedule={tick:0,firstBirth:null,held:null};
+  const active=()=>{
+    const live=readActive();
+    if(live.length){
+      const p=live[0];
+      if(live.length!==1||p.id!==testCase.id||p.sourceActor!==testCase.sourceActor||p.descriptor!==testCase.descriptor)throw Error('Wrong native shot/action/source owner');
+    }
+    return live;
+  };
+  schedule.advance=()=>{
+    step();schedule.tick++;const live=active();
+    if(live.length&&!schedule.firstBirth)schedule.firstBirth={tick:schedule.tick,...live[0]};
+  };
+  schedule.advanceTo=frame=>{
+    while(schedule.tick-schedule.firstBirth.tick+1<frame)schedule.advance();
+    if(schedule.tick-schedule.firstBirth.tick+1!==frame||active().length!==1)throw Error('Required exact active shot phase missing');
+  };
+  setFire(true);for(let i=0;i<testCase.hold;i++)schedule.advance();
+  schedule.held=readHeld();setFire(false);
+  while(!schedule.firstBirth&&schedule.tick<140)schedule.advance();
+  if(!schedule.firstBirth)throw Error('No bounded first native active slash birth');
+  if(schedule.tick!==schedule.firstBirth.tick)throw Error('First active frame was passed before capture');
+  return schedule;
+}
+
+export function wrapWiperDrawCallback(mesh,observe) {
+  const own=Object.getOwnPropertyDescriptor(mesh,'onBeforeRender'),original=mesh.onBeforeRender;
+  if(typeof original!=='function'||own&&(!Object.hasOwn(own,'value')||!own.writable))throw Error('Unsupported native draw callback owner');
+  const wrapper=function(...args){original.apply(this,args);observe(args);};
+  Object.defineProperty(mesh,'onBeforeRender',own?{...own,value:wrapper}:{value:wrapper,writable:true,enumerable:false,configurable:true});
+  return ()=>{
+    if(mesh.onBeforeRender!==wrapper)throw Error('Native draw callback replaced by unrelated owner');
+    if(own)Object.defineProperty(mesh,'onBeforeRender',own);else delete mesh.onBeforeRender;
+  };
 }
 
 export async function installWiperProbe(testCase) {
@@ -64,8 +103,8 @@ export async function installWiperProbe(testCase) {
       lobes:(p.catalog?.lobes||[]).map(l=>({age:l.age??null,pos:l.pos?.toArray?.()??null,vel:l.vel?.toArray?.()??null,travel:l.travel??null,dead:!!l.dead}))})),
     paint:Array.from(G.paint.counts||[]),visibility:(()=>{const rows=[];G.scene.traverse(o=>rows.push([o.id,o.visible,o.layers.mask]));return rows;})()});
   const owned=()=>P.list.filter(p=>p.owner===a&&p.delay<=0&&!p.catalog?.birthPending);
-  const camera=new THREE.PerspectiveCamera(50,960/720,.05,250),focus=a.pos.clone().add(new THREE.Vector3(0,1.1,4));
-  camera.position.copy(focus).add(new THREE.Vector3(-10,2,5));camera.lookAt(focus);camera.updateMatrixWorld(true);
+  const camera=new THREE.PerspectiveCamera(50,960/720,.05,250),focus=a.pos.clone().add(new THREE.Vector3(0,1.1,6));
+  camera.position.copy(focus).add(new THREE.Vector3(-16,3,2));camera.lookAt(focus);camera.updateMatrixWorld(true);
   const readPixels=()=>{
     const bytes=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);
     gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
@@ -73,30 +112,17 @@ export async function installWiperProbe(testCase) {
     if(hi-lo<8)throw Error('Flat rendered image');
     return {luminanceRange:hi-lo,drawingBuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight]};
   };
-  let tick=0,firstBirth=null,held=null,refs=null;
-  const checkBirth=()=>{
-    const live=owned();
-    if(live.length){
-      if(live.length!==1||live[0].wid!==testCase.id||live[0].catalog.r.sourceActor!==testCase.sourceActor||live[0].catalog.descriptor.key!==testCase.descriptor)throw Error('Wrong native shot/action/source owner');
-      firstBirth??={tick,age:live[0].age,seed:live[0].seed,pos:live[0].pos.toArray()};
-    }
-  };
-  const advance=()=>{step();tick++;checkBirth();};
-  g.debug.fire(true);
-  for(let i=0;i<testCase.hold;i++)advance();
-  held={chargeF:a.weaponRunner.catalogState?.chargeF,charge:a.weaponRunner.charge,cooldown:a.weaponRunner.cooldown};
-  g.debug.fire(false);
-  while(!firstBirth&&tick<140)advance();
-  if(!firstBirth)throw Error('No bounded first native active slash birth');
-  // A tap must not be born during the short hold; otherwise frame1 was missed.
-  if(tick!==firstBirth.tick)throw Error('First active frame was passed before capture');
+  let refs=null;
+  const scheduler=window.__createWiperNativeShotSchedule(testCase,{setFire:on=>g.debug.fire(on),step,
+    readActive:()=>owned().map(p=>({id:p.wid,sourceActor:p.catalog?.r?.sourceActor,descriptor:p.catalog?.descriptor?.key,age:p.age,seed:p.seed,pos:p.pos.toArray()})),
+    readHeld:()=>({chargeF:a.weaponRunner.catalogState?.chargeF,charge:a.weaponRunner.charge,cooldown:a.weaponRunner.cooldown})});
+  const {firstBirth,held}=scheduler;
   window.__wiperProbe={state,firstBirth,held,initial:{actor:a.pos.toArray(),source:a.character.sourceMotion.status,quality:g.settings.quality,
       settings:JSON.parse(localStorage.getItem('inkwave.settings')),profile:JSON.parse(localStorage.getItem('inkwave.profile')),
       gear:JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1')),teams:G.teamColors.map(c=>c.getHexString()),camera:camState(G.camera),inspectionCamera:camState(camera),
       environment:{time:G.env?.time,theme:G.env?.theme,grade:G.env?.grade},pipeline:{ao:!!g.R.gtao,shadows:r.shadowMap.enabled,bloom:!!g.R.bloom?.enabled},bootSeed:'0x515e7021',shotSeed:'0x515e7080'},
     capture(frame,view){
-      while(tick-firstBirth.tick+1<frame)advance();
-      if(tick-firstBirth.tick+1!==frame||owned().length!==1)throw Error('Required exact active shot phase missing');
+      scheduler.advanceTo(frame);
       const R=P._s3Shapes,mesh=R?.[testCase.mesh];
       if(!mesh||mesh.count!==2)throw Error('Missing actual two-instance native slash');
       const currentRefs=[R,mesh,mesh.geometry,mesh.material,mesh.instanceMatrix.array,mesh.instanceColor.array];
@@ -112,8 +138,7 @@ export async function installWiperProbe(testCase) {
         v.fromBufferAttribute(vertices,j).applyMatrix4(m).project(camera);if(Math.abs(v.x)<1&&Math.abs(v.y)<1&&Math.abs(v.z)<1)visibleProjectedVertices++;
       }}
       const matrices=Array.from(mesh.instanceMatrix.array.slice(0,mesh.count*16));
-      const drawReceipts=[],original=mesh.onBeforeRender;
-      mesh.onBeforeRender=function(...args){original.apply(this,args);drawReceipts.push({override:!!args[1].overrideMaterial,inspection:args[2]===camera});};
+      const drawReceipts=[],restoreDraw=window.__wrapWiperDrawCallback(mesh,args=>drawReceipts.push({override:!!args[1].overrideMaterial,inspection:args[2]===camera}));
       const previousTarget=r.getRenderTarget(),previousAuto=r.autoClear,previousInfoAuto=r.info.autoReset;
       let pixels,render;
       try{
@@ -122,18 +147,18 @@ export async function installWiperProbe(testCase) {
         else if(view==='fixed-side-raw'){r.setRenderTarget(null);r.autoClear=true;r.render(G.scene,camera);}
         else throw Error('Unknown capture view');
         render={...r.info.render};pixels=readPixels();
-      }finally{mesh.onBeforeRender=original;r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}
+      }finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}
       if(!drawReceipts.some(d=>!d.override))throw Error('Actual source-bound mesh did not draw in this view');
       if(gl.getError())throw Error('Native render WebGL error');
       if(before!==JSON.stringify(state()))throw Error('Render changed gameplay/native camera/visibility/clock/RNG');
-      return {frame,tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,
+      return {frame,tick:scheduler.tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,
         attributeBytes:bytes,projectedVertices:vertices.count*mesh.count,visibleProjectedVertices,matrices,castShadow:mesh.castShadow},
         image:{view,render,...pixels,drawReceipts,camera:camState(view==='native-postprocessed'?G.camera:camera),
           pipeline:view==='native-postprocessed'?'unchanged native composer (including configured shadows/AO)':'raw native scene with independent fixed camera; no postprocess'}};
     },
     finish(){
       g.debug.fire(false);let tail=0;
-      while(tick<240){advance();const R=P._s3Shapes;if(!owned().length&&![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh].some(m=>m?.count>0)){tail++;if(tail>=21)break;}else tail=0;}
+      while(scheduler.tick<240){scheduler.advance();const R=P._s3Shapes;if(!owned().length&&![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh].some(m=>m?.count>0)){tail++;if(tail>=21)break;}else tail=0;}
       const R=P._s3Shapes,retired=!owned().length&&![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh].some(m=>m?.count>0);
       if(!retired||tail<21)throw Error('Native slash/sheet tail did not retire within 240 ticks');
       const wet=R.wetSlashV,events={geometry:0,material:0};
@@ -142,7 +167,7 @@ export async function installWiperProbe(testCase) {
       R.dispose();
       const disposed=wet?events.geometry===1&&events.material===1&&!wet.parent&&R.wetSlashV===null:!R.slashH.parent&&!R.slashV.parent;
       if(!disposed)throw Error('Native renderer cleanup failed');
-      return {retired,resources:{disposed,wetAllocated:!!wet,events},finalTick:tick,quietTailTicks:tail};
+      return {retired,resources:{disposed,wetAllocated:!!wet,events},finalTick:scheduler.tick,quietTailTicks:tail};
     }};
   return {firstBirth,held,initial:window.__wiperProbe.initial};
 }
@@ -163,11 +188,12 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
       'Draw/projection/non-flat-pixel receipts do not certify an unoccluded silhouette. Original full-frame PNG visual review required; no retail timing/fidelity claim.'],
     harnessSha256:hash(fs.readFileSync(new URL(import.meta.url))),contractSha256:hash(fs.readFileSync(new URL('./lib/inkwave-wiper-acceptance-contract.mjs',import.meta.url))),
     launcherSha256:hash(fs.readFileSync(new URL('./lib/inkwave-sandbox-browser.mjs',import.meta.url)))};
-  let browser,server,failure;const pending=[];
+  let browser,server,failure,expectedBuild;const pending=[];
   const save=()=>fs.writeFileSync(path.join(out,'wiper-native-result.json'),JSON.stringify(result,null,2)+'\n');
   try {
     assert.equal(result.sourceIdentity.checkoutSha,sourceSha,'Capture checkout must equal exact build source head');
     const manifest=verifyRuntimeBuild(site,root,sourceSha);
+    expectedBuild=wiperBuildReceiptBinding(fs.readFileSync(path.join(site,'inkwave-build.json')));
     assert.equal(manifest.inputHash,hash(JSON.stringify(manifest.files)),'Manifest input hash');
     assert.equal(manifest.build.esbuild,'0.28.2');assert.equal(manifest.build.optimization,'esbuild-minify');
     Object.assign(result,{contentHash:manifest.contentHash,inputHash:manifest.inputHash,manifestSha256:hash(fs.readFileSync(path.join(site,'inkwave-build.json')))});
@@ -196,8 +222,9 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
         }).catch(e=>result.errors.push('consumed artifact: '+e.message)));});
         await page.addInitScript(initializeWiperCapture,c);
         row.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:120000});
+        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';'});
         Object.assign(row,await page.evaluate(installWiperProbe,c));
-        for(const frame of WIPER_CAPTURE_FRAMES){
+        for(const frame of WIPER_CAPTURE_FRAMES[c.action]){
           let captured;
           for(const view of ['native-postprocessed','fixed-side-raw']){
             const data=await page.evaluate(({frame,view})=>window.__wiperProbe.capture(frame,view),{frame,view});
@@ -218,7 +245,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
   finally{
     result.cleanup=await closeWiperCaptureOwners({browser,server},result.errors);
     if(result.errors.length)result.status='failed';
-    if(result.status==='passed')try{assertWiperCaptureReceipt(result,{sourceSha,contentHash:result.contentHash});}catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}
+    if(result.status==='passed')try{assertWiperCaptureReceipt(result,{sourceSha,...expectedBuild});}catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}
     save();
   }
   if(failure||result.status!=='passed')throw failure||Error('Wiper capture failed: '+result.errors.join('; '));

@@ -10,7 +10,7 @@ separate phase52 contract remain unchanged.
 ## Run on a supported sandboxed browser host
 
 ```sh
-node --test scripts/tests/inkwave-wiper-native-acceptance.test.mjs
+node --experimental-vm-modules --test scripts/tests/inkwave-wiper-native-acceptance.test.mjs
 timeout 30m node scripts/check-inkwave-wiper-native-acceptance.mjs \
   .built-site/_site evidence/wiper-native --source-sha "$(git rev-parse HEAD)"
 node scripts/check-inkwave-wiper-native-receipt.mjs \
@@ -36,9 +36,13 @@ launch is failed/blocked evidence, never a pixel pass.
 
 * Normal/Stamper (`WeaponSaberNormal`), Lite/Wiper (`WeaponSaberLite`) and the
   unchanged Heavy control (`WeaponSaberHeavy`), each charged and tapped.
-* Inclusive frames **1, 3 and 8**: frame 1 is the first observed native active
-  shot birth itself, not birth plus one tick. Native projectile age and lobe
-  fields are recorded independently. Delayed/pending shots are excluded.
+* Charged inclusive frames **1, 3 and 8**; tap frames **1, 2 and 3**: frame 1
+  is the first observed native active shot birth itself, not birth plus one
+  tick. Native projectile age and lobe fields are recorded independently.
+  Delayed/pending shots are excluded. The real-Actor source regression executes
+  the exact browser admission scheduler for all six cases. It rejects the old
+  global frame-8 tap policy: Lite's native lifetime is only four 60Hz intervals,
+  and it has already retired at that requested phase. No lifetime is extended.
 * Actual one paid native projectile, actual source actor/descriptor, and actual
   native `wetSlashV` / `slashH` / legacy `slashV` two-instance meshes.
 * Each phase has one unchanged native-composer PNG with high-quality AO/shadows
@@ -68,7 +72,8 @@ copied into the repository or artifacts.
 
 ## Local verification at authoring time
 
-Only source/receipt/launcher/cleanup/workflow tests were run locally. The parent
+Only source/receipt/launcher/cleanup/workflow tests were run locally, including
+the actual production Actor/controller admission schedule for all six cases. The parent
 environment's native sandboxed Chromium launch is blocked, so there is **no
 local native-browser pixel pass**. The fresh automatic exact-head run after
 approved integration/publication must supply the actual 36 PNGs and original

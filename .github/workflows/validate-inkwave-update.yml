@@ -903,7 +903,7 @@ jobs:
       - name: Capture all current-head Wiper charged and tap native views
         if: matrix.suite == 'catalog'
         run: |
-          node --test scripts/tests/inkwave-wiper-native-acceptance.test.mjs
+          node --experimental-vm-modules --test scripts/tests/inkwave-wiper-native-acceptance.test.mjs
           timeout 30m node scripts/check-inkwave-wiper-native-acceptance.mjs .built-site/_site "$CI_STORAGE/evidence/wiper-native" --source-sha "$SOURCE_SHA"
           node scripts/check-inkwave-wiper-native-receipt.mjs .built-site/_site "$CI_STORAGE/evidence/wiper-native" "$SOURCE_SHA"
       - name: Verify PR1172 volley and vortex in Chromium and WebKit
