@@ -79,8 +79,8 @@ test('full production HUD composition retains Splatoon 3 tank and reuses exact m
 test('final HUD map-marker coordinates are byte-identical including dynamic heading', () => {
   const endOfQueue = `
     const raw = d._mapKey || (d._mapKey = {}), self = !!p.isSelf, yaw = self ? (+p.yaw || 0) : 0, alive = p.alive !== false;
-    const key = \`\${px.toFixed(1)}|\${py.toFixed(1)}|\${yaw.toFixed(2)}|\${p.alive === false ? 0 : 1}|\${p.isSelf ? 1 : 0}|\${p.team}\`;
-    d.style.transform = \`translate3d(\${px.toFixed(1)}px,\${py.toFixed(1)}px,0) rotate(\${p.isSelf ? (+p.yaw || 0).toFixed(3) : 0}rad)\`;
+      const key = \`\${px.toFixed(1)}|\${py.toFixed(1)}|\${yaw.toFixed(2)}|\${p.alive === false ? 0 : 1}|\${p.isSelf ? 1 : 0}|\${p.team}\`;
+      d.style.transform = \`translate3d(\${px.toFixed(1)}px,\${py.toFixed(1)}px,0) rotate(\${p.isSelf ? (+p.yaw || 0).toFixed(3) : 0}rad)\`;
   `;
   const compiled = adaptLosslessShooterHud('src/ui/hud.js', endOfQueue, once);
   assert.ok(compiled.includes('const px1 = px.toFixed(1), py1 = py.toFixed(1);'));
