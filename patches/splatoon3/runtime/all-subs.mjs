@@ -683,7 +683,9 @@ function appendAngleLine(api,projectiles,object,start,end){
     scene.add(object.lineMesh);
   }
   const positions=object.lineMesh.geometry.getAttribute('position'),i=(object.lineSegments.length-1)*2;
-  positions.setXYZ(i,start.x,start.y,start.z);positions.setXYZ(i+1,end.x,end.y,end.z);positions.needsUpdate=true;
+  positions.setXYZ(i,start.x,start.y,start.z);positions.setXYZ(i+1,end.x,end.y,end.z);
+  // Several fixed ticks may precede one draw; retain every unconsumed range.
+  positions.addUpdateRange(i*3,6);positions.needsUpdate=true;
   object.lineMesh.geometry.setDrawRange(0,object.lineSegments.length*2);
 }
 function finishAngleFlight(api,object){
@@ -1470,7 +1472,7 @@ function updateFlight(api, projectiles, object, dt) {
   const worldDistance=world?.hit?world.dist:Infinity;
   if(object.subId==='angleShooter'){
     const length=object.prev.distanceTo(object.pos),distance=Math.min(length,defenseDistance,actorDistance,worldDistance);
-    const end=length>0?object.prev.clone().lerp(object.pos,clamp(distance/length,0,1)):object.pos;
+    const end=length>0?(object._angleClippedEndScratch||=new api.THREE.Vector3()).copy(object.prev).lerp(object.pos,clamp(distance/length,0,1)):object.pos;
     appendAngleLine(api,projectiles,object,object.prev,end);
   }
   if(defense&&defenseDistance<=Math.min(worldDistance,actorDistance)){
