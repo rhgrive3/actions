@@ -1180,23 +1180,24 @@ const triCountOf = (g) => (g.index ? g.index.count : g.attributes.position.count
 
 // ------------------------------------------------------------------------------------------------ builder context
 const _e = new THREE.Euler(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
-function compose(x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) {
-  return new THREE.Matrix4().compose(_p.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz, 'YXZ')), _s.set(sx, sy, sz));
+function compose(x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1, out = new THREE.Matrix4()) {
+  return out.compose(_p.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz, 'YXZ')), _s.set(sx, sy, sz));
 }
 class Builder {
-  constructor(kit) { this.k = kit; this.stack = [new THREE.Matrix4()]; this.base = new THREE.Matrix4(); this.cols = []; this.aoBase = 0; this.rng = Math.random; this.tris = 0; }
+  constructor(kit) { this.k = kit; this.stack = [new THREE.Matrix4()]; this.base = new THREE.Matrix4(); this.local = new THREE.Matrix4(); this.cols = []; this.aoBase = 0; this.rng = Math.random; this.tris = 0; }
   begin(pos, rotY, scale, seed, ao) {
     this.base = compose(pos[0], pos[1], pos[2], 0, rotY, 0, scale, scale, scale);
     this.stack = [new THREE.Matrix4()]; this.cols = []; this.aoBase = ao ? pos[1] : null; this.rng = mulberry32(seed); this.scale = scale;
   }
   get top() { return this.stack[this.stack.length - 1]; }
-  push(x = 0, y = 0, z = 0, ry = 0, rx = 0, rz = 0, s = 1) { this.stack.push(this.top.clone().multiply(compose(x, y, z, rx, ry, rz, s, s, s))); }
+  push(x = 0, y = 0, z = 0, ry = 0, rx = 0, rz = 0, s = 1) { this.stack.push(this.top.clone().multiply(compose(x, y, z, rx, ry, rz, s, s, s, this.local))); }
   pop() { this.stack.pop(); }
   seg(n) { return Math.max(3, Math.round(n * this.k.qf)); }
   r(a = 0, b = 1) { return a + (b - a) * this.rng(); }
   _m(x, y, z, o) {
     const s = o.s ?? 1;
-    return this.base.clone().multiply(this.top).multiply(compose(x, y, z, o.rx || 0, o.ry || 0, o.rz || 0, o.sx ?? s, o.sy ?? s, o.sz ?? s));
+    // Each part owns the returned matrix; only the consumed local transform is scratch.
+    return this.base.clone().multiply(this.top).multiply(compose(x, y, z, o.rx || 0, o.ry || 0, o.rz || 0, o.sx ?? s, o.sy ?? s, o.sz ?? s, this.local));
   }
   add(mat, g, c, x, y, z, o = {}) {
     let cc = col(c);
