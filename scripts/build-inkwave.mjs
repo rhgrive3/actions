@@ -676,8 +676,8 @@ fs.writeFileSync(path.join(BUILD, 'index.html'), loadingHTML);
 fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 // Give the entire module/asset tree an immutable URL. A cached old module must
 // never import a newer profile or dependency after the next OSS update.
-const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => { const rel=path.relative(BUILD,file); return [rel,loadingPlan.assets[rel.split(path.sep).join('/')]?.[1] ?? sha256(fs.readFileSync(file))]; })));
 const versionFiles = walk(BUILD);
+const revision = sha256(JSON.stringify([...versionFiles].sort().map(file => { const rel=path.relative(BUILD,file); return [rel,loadingPlan.assets[rel.split(path.sep).join('/')]?.[1] ?? sha256(fs.readFileSync(file))]; })));
 for (const file of versionFiles) {
   const rel = path.relative(BUILD,file);
   if (rel === 'index.html' || rel === '.nojekyll') continue;

@@ -36,6 +36,10 @@ import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-a
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';
+import { adaptRemainingVisualQueue20261027 } from '../patches/local-quality/queue-remaining-visual-20261027-adapter.mjs';
+import { adaptQueueNetwork20261027 } from '../patches/network-replication/queue-network-20261027-adapter.mjs';
+import { adaptQueueAudioBuild20261027 } from '../patches/local-quality/queue-audio-build-20261027-adapter.mjs';
+import { adaptCombatWorldQueue20261027 } from '../patches/local-quality/queue-combat-world-20261027-adapter.mjs';
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
 // grid. Apply at build time so the upstream game snapshot remains immutable.
@@ -97,7 +101,11 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueExtraWorld(rel, code);
   code = adaptQueueExtraWeaponsFx(rel, code);
   code = adaptQueueUi20261025(rel, code);
-  return adaptLosslessShooterHud(rel, adaptQueueExtraDecor(rel, code), replaceOnce);
+  code = adaptLosslessShooterHud(rel, adaptQueueExtraDecor(rel, code), replaceOnce);
+  code = adaptRemainingVisualQueue20261027(rel, code);
+  code = adaptQueueAudioBuild20261027(rel, code);
+  code = adaptCombatWorldQueue20261027(rel, code);
+  return adaptQueueNetwork20261027(rel, code, replaceOnce);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream
