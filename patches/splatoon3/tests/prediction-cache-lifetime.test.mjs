@@ -120,16 +120,62 @@ test('clearing an unrelated Projectiles instance preserves the current controlle
   f.G.projectiles.clear(); released(f);
 });
 
-test('prediction methods remain connected to actual production HUD and player consumers', () => {
+function predictionConsumers() {
   const root = new URL('../../../', import.meta.url);
-  const player = compose('src/game/player.js', fs.readFileSync(new URL('inkwave-public/src/game/player.js', root), 'utf8'));
-  const hud = compose('src/ui/hud.js', fs.readFileSync(new URL('inkwave-public/src/ui/hud.js', root), 'utf8'));
-  const main = compose('src/main.js', fs.readFileSync(new URL('inkwave-public/src/main.js', root), 'utf8'));
+  return {
+    player: compose('src/game/player.js', fs.readFileSync(new URL('inkwave-public/src/game/player.js', root), 'utf8')),
+    hud: compose('src/ui/hud.js', fs.readFileSync(new URL('inkwave-public/src/ui/hud.js', root), 'utf8')),
+    main: compose('src/main.js', fs.readFileSync(new URL('inkwave-public/src/main.js', root), 'utf8')),
+  };
+}
+function assertPredictionConsumers({ player, hud, main }) {
   assert.match(player, /updateShotGuide\(this\)/);
-  assert.match(main, /muzzleBlockFeedback\?\.\(a\)/);
   assert.match(main, /G\.projectiles\.clear\(\)/);
   assert.match(hud, /s3WeaponGuide\?\.\(guideMe, guideMe\.weapon/);
   assert.match(hud, /s3DualiesGuides\?\.\(guideMe, guideMe\.weapon/);
+  // Execute the actual composed HUD producer rather than accepting either
+  // spelling of the old regex. The HUD must opt into obstruction-only; legacy
+  // diagnostic callers still use the unchanged full-flight default below.
+  const lines = main.split('\n').filter(line => line.includes('const muzzleContact ='));
+  assert.equal(lines.length, 1, 'one composed HUD muzzle-contact producer');
+  const query = new Function('G', 'a', 'w', lines[0] + '\nreturn muzzleContact;');
+  const actor = {}, result = {}, calls = [];
+  const G = { projectiles: { muzzleBlockFeedback(...args) { calls.push(args); return result; } } };
+  assert.equal(query(G, actor, { kind: 'shooter' }), result);
+  assert.deepEqual(calls, [[actor, true]], 'HUD explicitly selects obstruction-only for its current actor');
+  calls.length = 0;
+  assert.equal(query(G, actor, { kind: 'dualies' }), null);
+  assert.deepEqual(calls, [], 'other guides retain their existing consumer');
+}
+test('prediction methods remain connected to actual production HUD and player consumers', () => {
+  assertPredictionConsumers(predictionConsumers());
+});
+test('HUD wiring rejects the old default, false, missing or misowned obstruction query', () => {
+  const sources = predictionConsumers(), call = 'G.projectiles?.muzzleBlockFeedback?.(a, true)';
+  assert.equal(sources.main.split(call).length, 2, 'mutate exactly the composed production call');
+  const line = sources.main.split('\n').find(row => row.includes('const muzzleContact ='));
+  const mutations = [
+    sources.main.replace(call, 'G.projectiles?.muzzleBlockFeedback?.(a)'),
+    sources.main.replace(call, 'G.projectiles?.muzzleBlockFeedback?.(a, false)'),
+    sources.main.replace(call, 'G.projectiles?.muzzleBlockFeedback?.(null, true)'),
+    sources.main.replace(call, 'null'),
+    sources.main.replace(line + '\n', ''),
+    sources.main.replace(line, line.replace("w.kind === 'shooter'", 'true')),
+  ];
+  for (const main of mutations) {
+    assert.notEqual(main, sources.main);
+    assert.throws(() => assertPredictionConsumers({ ...sources, main }));
+  }
+});
+test('legacy default retains full-flight contact independently of the HUD obstruction view', async () => {
+  const f = await world(), a = f.make('shooter'), ps = f.G.projectiles;
+  a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 1.05, 20);
+  const legacy = ps.muzzleBlockFeedback(a);
+  assert.ok(legacy?.hit, 'legacy default still exposes the real later floor contact');
+  assert.equal(ps.muzzleBlockFeedback(a, false), legacy, 'explicit full-flight reuses the default result');
+  assert.equal(ps.muzzleBlockFeedback(a, true), null, 'open aim corridor has no HUD obstruction');
+  assert.equal(ps.muzzleBlockFeedback(a), legacy, 'HUD lookup does not replace legacy full-flight data');
+  ps.clear();
 });
 
 function arcState(ps) {
