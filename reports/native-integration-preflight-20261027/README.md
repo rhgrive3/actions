@@ -1,5 +1,9 @@
 # Native integration validation — 2026-10-27
 
+## Next reviewed QA/CI repair bundle
+
+The published8bcc candidate exposed stale source/test contracts before final native acceptance. `ci-qa-repairs-8bcc.json` records the repaired HUD consumer, build-relative unit loader, exact three-lane workflow and historical audio-runner guards, plus fail-closed receipt-schema correction. It also records reviewed passive Hissen and historical geometry telemetry. **Shipping inputs/content remain d88; the +14geometry gate, fresh full catalog/three-lane proof and final-head CI remain open.** This is not an all-green or retail-parity claim.
+
 ## Combined local candidate — supersedes earlier checkpoints
 
 Reviewed phase chain and evidence correction are now integrated. External PR1895 also advanced to **`0dd6ab6db5d509ca02f736afd6bc612c2cbdf215`**; this was verified by remote branch advertisement and merged locally, not overwritten. Validated combined code head: **`d5c7c6ebe24473f0874b6d223bf8eea5031dc6dc`**. Any publication must recheck/CAS the current external head; do not push against stale1ab.
