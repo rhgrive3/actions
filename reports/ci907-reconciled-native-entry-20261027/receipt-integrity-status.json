@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "date": "2026-10-27",
+  "auditBaseSourceHead": "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+  "historicalCatalogAugmentation": "superseded-unaccepted",
+  "exactFinalHeadAutomaticBrowserAcceptance": "pending",
+  "historicalCorruptionEstablished": false,
+  "historicalRawReplayAndFullReceiptListsAvailableInNativeHandoff": false,
+  "historicalRawPngsIndependentlyRevalidated": false,
+  "historicalFullAugmentationProgramAvailable": false,
+  "flaw": {
+    "file": "reports/ci907-reconciled-native-entry-20261027/browser-probe.mjs",
+    "line": 33,
+    "kind": "Map overwrite before validating original rows; corrupt-old/fresh-valid can conceal contrary receipt"
+  },
+  "canonicalFreshCollectorAffectedByHistoricalUnion": false,
+  "preservedHistoricalManifestFileHashes": {
+    "shooter-native-bounded-acceptance.json": "4e2ded6ce778ed2034c32e24ac1c5c810570a867e06ca4cb6c369539e5158d0b",
+    "pose-after.log": "2ef9f3ba002cd7529a186f989f05e780feb2b4abe90ad201853949bba066f6bd",
+    "ownership-integration-identity.json": "df1777c18fb2717f2dc3b20fa1bf2206773d51c5326dede3dbf65094b1e0054c",
+    "catalog-focused.log": "0f989d795b0e953f9d73170db58f584d24ea6146265065c83e71932d7d35f44c",
+    "external-head-identity.json": "e6c5c5412402f3cd451c6e7575ff31015fdc07892ef1a0902bea6dbc097e1ced",
+    "browser-probe.mjs": "2797c0f58cf1f562a788b47e754e2c042953ed04cdb8a30daa88a4c560253def",
+    "combined-saved-validation.json": "ce3f2a6f3786357f8328a07fa893bc275f20a7415e10d81da679ad07f878b198",
+    "ownership-emitted.log": "84d1cb81feba35cd09126621fbb5b21643163b9cbcb46f7cbfcc724482d631f7",
+    "external-world.log": "7ca0764fbe5d4956dd051adb98c84f8b64d4a477dc151bc40b1dce64b7dbe785",
+    "bounded-entry-receipt.json": "ffe87d6e96bb29d6552077ddebb93e4d9458632d9d2bd2aad33d6a9f13bd6942",
+    "external-pause.log": "5ad00f5ff9baf583fbc765eed53b1f7ebae29f3d648e0604cef1519813aa7232"
+  },
+  "unresolvedOriginalDigestLabels": {
+    "bounded-entry-receipt.json:replay.sha256": "9d5c9880217e0132d7f7976a60f8ef8771a2bb3de7d273c97abd4dc1fb2255c6",
+    "combined-saved-validation.json:originalSha256": "39d0ce104e7750f05b29eb83c1a6ee45de303c5affdc6d1067824c1d8f55a365",
+    "interpretation": "Unresolved without raw files; no inference of historical corruption."
+  },
+  "localChecks": [
+    {
+      "kind": "synthetic-receipt-safety-only",
+      "command": "node --test reports/ci907-reconciled-native-entry-20261027/safe-same-head-receipt-union.test.mjs",
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "kind": "source-vm-graph-contracts-only",
+      "command": "node --test scripts/tests/inkwave-catalog-audio-graph.test.mjs scripts/tests/inkwave-catalog-audio.test.mjs",
+      "tests": 42,
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "localNode": "v24.22.1",
+  "replacementWiredIntoProductionOrCi": false,
+  "browserAttemptedByAudit": false,
+  "remoteWritesByAudit": false,
+  "acceptanceRequirements": "receipt-integrity-audit.md#fresh-automatic-ci-is-the-acceptance-route",
+  "auditFilesSha256": {
+    "README.md": "6f40e5bd5ee5908a8cd197dc9ea5774ab63d5daac51f414bae46d1e29bf09ace",
+    "receipt-integrity-audit.md": "b2318622ad6f45115ade813265a90870e66b636e2036e96bb3e83d6367071583",
+    "safe-same-head-receipt-union.mjs": "80febbcee341dd01fd75822664553aa38b0a448ddcde3850b1b33fdbd579d9af",
+    "safe-same-head-receipt-union.test.mjs": "4a1a5a3c861be7f42289a4b07fce8aa4cf76565051ddd8ebba892eb1c403f838",
+    "receipt-integrity-local-tests.txt": "d41d720dc61e2e91d5a0424a1c16143d0e8c40c00dd737b8dd9d0c9902ef930e"
+  }
+}

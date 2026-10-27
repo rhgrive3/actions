@@ -1,5 +1,11 @@
 # Reconciled core/catalog verification and bounded Shooter acceptance
 
+## Correction — historical catalog augmentation is not accepted (2026-10-27)
+
+**The catalog receipt-union / 860-image augmentation claims below are historical, superseded and not accepted evidence.** `browser-probe.mjs:33` can overwrite a conflicting old HTTP receipt before validation; a fabricated corrupt-old / valid-fresh FX counterexample reproduces this. This does **not** establish that the historical data was corrupt. The raw replay, full bounded response list, augmentation program and 860 PNG files are not available in this native handoff, so this audit cannot independently revalidate that aggregation. The archived helper and `combined-saved-validation.json` remain byte-for-byte intact; their historical `passed` fields do not override this correction.
+
+See [the integrity audit and exact fresh-CI acceptance requirements](receipt-integrity-audit.md), [machine-readable status](receipt-integrity-status.json), and [the narrow receipt-only replacement](safe-same-head-receipt-union.mjs). Its **26 synthetic safety tests** and the unchanged **42 source/VM graph tests** pass locally; they are not a browser replay or image acceptance. New catalog acceptance requires fresh automatic CI on the final exact source head, not a repaired historical union. The original narrative below is retained as history, not deleted or silently rewritten.
+
 Base is external PR update `1ab0f4d3f952e80b23df862820549e68dba9e8c2`, parent `90706e3778586fa6c9d09a64ac354e547086e1c0`. The external pause `Physics.segment` stub and queue-world revision stub are unchanged. Their 15+1 selected checks pass. Only the independently accepted frozen pose-control correction is carried from `3643bdbc`: apply the same later walking display adapter to the frozen dense control. Frozen JSON and strict full pose/contact/skeleton/muzzle/camera assertions remain intact; 30/60/120 Hz passes. Neither change edits production or character/model/rig/motion files.
 
 ## Catalog root cause and bounded recovery
