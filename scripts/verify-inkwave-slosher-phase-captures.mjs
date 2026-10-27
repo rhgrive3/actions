@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {sha256} from './lib/inkwave-slosher-phase-control.mjs';
+import {sha256,verifyPhaseExecutionSources} from './lib/inkwave-slosher-phase-control.mjs';
 import {verifyPhaseTrace,verifyCausalDifference,verifyControlReceipt} from './lib/inkwave-slosher-phase-verification.mjs';
 const args=Object.fromEntries(process.argv.slice(2).reduce((a,v,i,all)=>{if(i%2===0)a.push([v.replace(/^--/,''),all[i+1]]);return a;},[]));
 const root=path.dirname(new URL(import.meta.url).pathname),read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
@@ -13,6 +13,7 @@ const [original,control,target]=['original','control','target'].map(k=>read(inpu
 const output=path.resolve(args.out);fs.mkdirSync(output,{recursive:true});
 const files=Object.fromEntries(['original','control','target'].map(k=>[k,{path:input(args[k]),sha256:sha256(fs.readFileSync(input(args[k])))}]));
 const receipt=read(args.receipt);verifyControlReceipt(receipt);
+verifyPhaseExecutionSources(receipt.executionSources,path.resolve(root,'..'));
 for(const doc of [original,control,target]){
   assert.equal(doc.provenance.harnessSha256,receipt.executionSources['scripts/check-inkwave-projectile-visuals.mjs'],'committed capture execution body');
   assert.equal(doc.provenance.slosherPhaseObserverSha256,receipt.executionSources['scripts/lib/inkwave-slosher-phase-observer.mjs'],'committed observer execution body');

@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import os from 'node:os';
+import path from 'node:path';
 import {fixture,emitMainShot} from '../../patches/splatoon3/tests/source-fixture.mjs';
 import {makePaintWorld} from '../../patches/splatoon3/tests/paint-authority-fixture.mjs';
-import {PHASE_INSERT,insertPhase,phaseRoute,verifyPhaseBuilds} from '../lib/inkwave-slosher-phase-control.mjs';
+import {PHASE_INSERT,insertPhase,phaseRoute,verifyPhaseBuilds,phaseExecutionSources,verifyPhaseExecutionSources} from '../lib/inkwave-slosher-phase-control.mjs';
 import {installSlosherPhaseObserver} from '../lib/inkwave-slosher-phase-observer.mjs';
 import {verifyPhaseTrace} from '../lib/inkwave-slosher-phase-verification.mjs';
 import {restoreBeforeSlosherPhaseWorkflow} from '../lib/inkwave-slosher-phase-workflow.mjs';
@@ -42,6 +44,22 @@ test('build binding rejects any second source change and equal control identitie
  assert.equal(verifyPhaseBuilds(receipt,original,control).inputs,2);
  assert.throws(()=>verifyPhaseBuilds(receipt,original,{...control,files:{...control.files,other:'changed'}}));
  assert.throws(()=>verifyPhaseBuilds(receipt,original,{...control,contentHash:'a'}));
+});
+test('execution closure binds every phase and transitive capture helper, rejecting legacy or changed bytes',()=>{
+ const dir=new URL('../../',import.meta.url).pathname,execution=phaseExecutionSources(dir);
+ for(const p of ['scripts/lib/inkwave-slosher-phase-verification.mjs','scripts/lib/inkwave-slosher-phase-control.mjs','scripts/lib/inkwave-projectile-capture-ui.mjs','scripts/compare-inkwave-projectile-captures.py'])assert.match(execution[p],/^[a-f0-9]{64}$/);
+ verifyPhaseExecutionSources(execution,dir);
+ const legacy=Object.fromEntries(Object.entries(execution).filter(([p])=>['scripts/check-inkwave-projectile-visuals.mjs','scripts/lib/inkwave-slosher-phase-observer.mjs','scripts/verify-inkwave-slosher-phase-captures.mjs'].includes(p)));
+ assert.throws(()=>verifyPhaseExecutionSources(legacy,dir),/helper closure/);
+ const changed={...execution,'scripts/lib/inkwave-slosher-phase-verification.mjs':'0'.repeat(64)};
+ assert.throws(()=>verifyPhaseExecutionSources(changed,dir),/helper closure/);
+ const copied=fs.mkdtempSync(path.join(os.tmpdir(),'iw-phase-execution-'));
+ try{
+  for(const p of Object.keys(execution)){const dest=path.join(copied,p);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(path.join(dir,p),dest);}
+  verifyPhaseExecutionSources(execution,copied);
+  fs.appendFileSync(path.join(copied,'scripts/lib/inkwave-slosher-phase-verification.mjs'),'\n// changed helper execution bytes\n');
+  assert.throws(()=>verifyPhaseExecutionSources(execution,copied),/helper closure/);
+ }finally{fs.rmSync(copied,{recursive:true,force:true});}
 });
 test('exact additive workflow is registered without changing the comparator or historical seal',()=>{
  const workflow=fs.readFileSync(new URL('.github/workflows/inkwave-projectile-visuals.yml',root),'utf8');
@@ -94,6 +112,22 @@ test('serialized observer verifies real production cells, credit and release pha
  const edited=structuredClone(trace);edited.credits.find(c=>c.area>0).cellArea+=1;assert.throws(()=>verifyPhaseTrace(edited));
  const sp=structuredClone(trace);sp.credits.find(c=>c.area>0).after.special+=1;assert.throws(()=>verifyPhaseTrace(sp));
  const dropped=structuredClone(trace);dropped.failures.push('unobserved paint cell');assert.throws(()=>verifyPhaseTrace(dropped));
+});
+test('raw cell ranges reject forged +1 turf/SP, duplicate cells, missing releases and bogus counts',async()=>{
+ const trace=await observe();verifyPhaseTrace(trace);
+ const extra=structuredClone(trace),first=extra.credits.findIndex(c=>c.area>0);
+ // This internally consistent credit ledger passed schema 1 without owning
+ // one additional cell. Keep the complete counterexample, not just a bad total.
+ for(let i=first;i<extra.credits.length;i++){const c=extra.credits[i];if(i===first){c.area++;c.cellArea++;}else{c.before.turf++;c.before.special++;}c.after.turf++;c.after.special++;}
+ for(const s of extra.snapshots)if(s.creditCount>first){s.turf++;s.special++;}
+ assert.deepEqual(extra.cells,trace.cells);assert.throws(()=>verifyPhaseTrace(extra),/independently summed/);
+ for(const mutate of [
+  t=>t.cells[1]={...t.cells[0]},t=>t.releases.pop(),t=>t.snapshots[1].counts=[999,999],
+  t=>t.cells[0].dead=true,t=>t.paintContext.deadCells.push(t.cells[0].index),
+  t=>t.credits.find(c=>c.area>0).guards.s3TidalSlamGaugeFinish=true,
+  t=>t.credits.find(c=>c.area>0).cellGroups[0].end--,
+ ]){const t=structuredClone(trace);mutate(t);assert.throws(()=>verifyPhaseTrace(t));}
+ const legacy=structuredClone(trace);legacy.schema=1;assert.throws(()=>verifyPhaseTrace(legacy),/legacy receipts.*fresh captures/);
 });
 test('coverage accounting uses projected floor area, not counts, on unequal cells and slopes',async()=>{
  const trace=await observe({unequalFloor:true});verifyPhaseTrace(trace);

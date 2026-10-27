@@ -20,6 +20,34 @@ export const PHASE_INSERT=`    }else if(descriptor.key==='slosh'&&descriptor.slo
 const ANCHOR='      p.catalog.nextSplash=splash?.targetLength??0;p.catalog.splashTravel=0;\n';
 export const sha256=b=>createHash('sha256').update(b).digest('hex');
 const git=(root,args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',maxBuffer:16*1024*1024});
+// Bind the entire local import closure, not just the three entry scripts. A
+// verifier helper or a capture helper is executable acceptance code too.
+export function phaseExecutionSources(root,{commit=null}={}){
+  const sources={},pending=['scripts/check-inkwave-projectile-visuals.mjs','scripts/prepare-inkwave-slosher-phase-control.mjs',
+    'scripts/verify-inkwave-slosher-phase-captures.mjs','scripts/compare-inkwave-projectile-captures.py','scripts/lib/inkwave-slosher-phase-workflow.mjs'];
+  while(pending.length){
+    const relative=pending.pop();if(Object.hasOwn(sources,relative))continue;
+    const file=path.join(root,relative),stat=fs.lstatSync(file);
+    assert.ok(stat.isFile()&&!stat.isSymbolicLink(),'regular acceptance execution source: '+relative);
+    const data=fs.readFileSync(file);sources[relative]=sha256(data);
+    if(commit)assert.equal(sources[relative],sha256(git(root,['show',commit+':'+relative])),'committed acceptance execution body: '+relative);
+    if(!/\.[cm]?js$/.test(relative))continue;
+    const text=data.toString('utf8'),imports=/\b(?:import\s*(?:[^'";]*?\sfrom\s*)?|export\s+[^'";]*?\sfrom\s*|import\s*\(\s*)['"](\.[^'"]+)['"]/g;
+    for(const match of text.matchAll(imports)){
+      const dependency=path.posix.normalize(path.posix.join(path.posix.dirname(relative),match[1]));
+      assert.ok(!dependency.startsWith('../')&&!path.posix.isAbsolute(dependency),'repository-local execution import');
+      pending.push(dependency);
+    }
+  }
+  // The workflow helper reads this fixed data file rather than importing it.
+  const fixture='scripts/fixtures/inkwave-slosher-phase-workflow-20261027.json',data=fs.readFileSync(path.join(root,fixture));
+  sources[fixture]=sha256(data);
+  if(commit)assert.equal(sources[fixture],sha256(git(root,['show',commit+':'+fixture])),'committed workflow fixture');
+  return Object.fromEntries(Object.entries(sources).sort(([a],[b])=>a.localeCompare(b)));
+}
+export function verifyPhaseExecutionSources(expected,root){
+  assert.deepEqual(phaseExecutionSources(root),expected,'complete committed acceptance helper closure; legacy three-file receipts require fresh preparation');
+}
 export function phaseRoute(event,repository,eventName){
   const p=event.pull_request;
   return eventName==='pull_request'&&repository==='rhgrive3/actions'&&event.number===1895&&p?.number===1895&&
@@ -47,6 +75,9 @@ export function preparePhaseControl({baseline,derived,candidate,event,repository
   assert.equal(git(baseline,['rev-parse','HEAD']).trim(),base,'actual CI baseline SHA');
   assert.equal(git(candidate,['rev-parse','HEAD']).trim(),head,'actual candidate SHA');
   assert.equal(git(baseline,['status','--porcelain','--untracked-files=normal']).trim(),'','pristine baseline');
+  // Generated ignored outputs and the separate checkout may be present, but
+  // no tracked candidate production or QA source may masquerade as this HEAD.
+  assert.equal(git(candidate,['status','--porcelain','--untracked-files=no']).trim(),'','pristine tracked candidate source');
   assert.ok(!fs.existsSync(derived)&&!derived.startsWith(baseline+path.sep)&&!baseline.startsWith(derived+path.sep),'new separate control directory');
   const rows=git(baseline,['ls-tree','-rz','--full-tree','HEAD']).split('\0').filter(Boolean).map(line=>{
     const m=/^(100644|100755) blob ([a-f0-9]{40})\t(.+)$/.exec(line);
@@ -56,21 +87,19 @@ export function preparePhaseControl({baseline,derived,candidate,event,repository
   for(const row of before)assert.equal(row.blob,row.gitBlob,'pristine tracked bytes: '+row.path);
   const source=fs.readFileSync(path.join(baseline,PHASE_PATH),'utf8'),fixed=insertPhase(source);
   const target=fs.readFileSync(path.join(candidate,PHASE_PATH),'utf8');
+  assert.equal(sha256(target),sha256(git(candidate,['show',head+':'+PHASE_PATH])),'committed target phase runtime');
   assert.equal(target.split(PHASE_INSERT).length,2,'exact accepted phase implementation in target');
   const correction=git(candidate,['show',INTEGRATED_PHASE_COMMIT+':'+PHASE_PATH]);
   const parent=git(candidate,['show',INTEGRATED_PHASE_COMMIT+'^:'+PHASE_PATH]);
   assert.equal(insertPhase(parent),correction,'eight-line patch identity versus accepted immutable commit');
-  const executionSources={};
-  for(const relative of ['scripts/check-inkwave-projectile-visuals.mjs','scripts/lib/inkwave-slosher-phase-observer.mjs','scripts/verify-inkwave-slosher-phase-captures.mjs']){
-    const data=fs.readFileSync(path.join(candidate,relative));assert.equal(sha256(data),sha256(git(candidate,['show',head+':'+relative])),'committed acceptance execution body: '+relative);executionSources[relative]=sha256(data);
-  }
+  const executionSources=phaseExecutionSources(candidate,{commit:head});
   fs.mkdirSync(derived,{recursive:true});
   for(const row of rows){const dest=path.join(derived,row.path);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(path.join(baseline,row.path),dest);fs.chmodSync(dest,row.mode==='100755'?0o755:0o644);}
   fs.writeFileSync(path.join(derived,PHASE_PATH),fixed);
   const after=inventory(derived,rows),changed=after.filter((row,i)=>row.sha256!==before[i].sha256).map(r=>r.path);
   assert.deepEqual(changed,[PHASE_PATH],'only the phase source differs');
   assert.deepEqual(inventory(baseline,rows),before,'original unchanged');
-  return {schema:1,kind:'source-backed-slosher-phase-control',publicMainEquivalent:false,baseSha:base,targetSha:head,
+  return {schema:2,accountingProtocol:'native-cell-credit-ranges-v2',kind:'source-backed-slosher-phase-control',publicMainEquivalent:false,baseSha:base,targetSha:head,
     correctionCommit:PHASE_COMMIT,integratedCorrectionCommit:INTEGRATED_PHASE_COMMIT,patchSha256:sha256(PHASE_INSERT),
     patchVerifiedAgainst:INTEGRATED_PHASE_COMMIT,
     targetPhaseSourceSha256:sha256(target),
