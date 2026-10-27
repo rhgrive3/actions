@@ -236,10 +236,11 @@ test('ranked positive-control placement faces the corridor and clears only its i
  const previousRG=globalThis.RG,previousDocument=globalThis.document;
  const runner={rolling:true,s3RollerSuspendedHold:false},actor={pos:new THREE.Vector3(),vel:new THREE.Vector3(3,4,5),yaw:0,aimYaw:0,yawVel:9,_faceTarget:.7,groundN:new THREE.Vector3(),ground:{},weaponRunner:runner};
  const rig={yaw:0,pitch:.3};let probes=0;
- globalThis.RG={match:{local:actor},rig,physics:{groundProbe(x,y,z,a,b,r,out){probes++;assert.deepEqual([x,y,z],[1,2,3]);assert(r>0);return Object.assign(out,{hit:true,y:2,normal:new THREE.Vector3(0,1,0)});}}};
+ globalThis.RG={match:{local:actor},rig,input:{mouse:{dx:13,dy:-7}},physics:{groundProbe(x,y,z,a,b,r,out){probes++;assert.deepEqual([x,y,z],[1,2,3]);assert(r>0);return Object.assign(out,{hit:true,y:2,normal:new THREE.Vector3(0,1,0)});}}};
  globalThis.document={baseURI:new URL('../../inkwave-public/',import.meta.url).href};
  try{
   await place({evaluate:(fn,arg)=>fn(arg)},[1,2,3],Math.PI/2);
+  assert.deepEqual(globalThis.RG.input.mouse,{dx:0,dy:0},'native setup clears stale pointer input without changing movement owners');
   assert.deepEqual(actor.pos.toArray(),[1,2,3]);assert.deepEqual(actor.vel.toArray(),[0,0,0]);assert.equal(actor.yaw,Math.PI/2);assert.equal(actor.aimYaw,Math.PI/2);assert.equal(rig.yaw,Math.PI/2);
   assert.equal(actor.yawVel,0);assert.equal(actor._faceTarget,null);assert.equal(actor.weaponRunner,runner);assert.equal(runner.rolling,true);assert.equal(runner.s3RollerSuspendedHold,false);assert.equal(probes,1);
  }finally{globalThis.RG=previousRG;globalThis.document=previousDocument;}
