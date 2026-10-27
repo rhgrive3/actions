@@ -60,3 +60,20 @@ test('installed audio projection retains every ordered runtime declaration and p
  assert(output.length<source.length/2,'drop audit-only repeated metadata and indentation');
  assert.throws(()=>compactInstalledAudioManifest(JSON.stringify({...before,clips:[{...before.clips[0],sha256:'invalid'}]})),/SHA/);
 });
+
+test('the normal production copy pass skips only the privately bundled Three core before composition', () => {
+  const script = fs.readFileSync(new URL('../build-inkwave.mjs', import.meta.url), 'utf8');
+  const start = script.indexOf('    const replacedThree = '), end = script.indexOf('\n    // Its asset inventory', start);
+  assert(start >= 0 && end > start);
+  const body = script.slice(start, end);
+  const run = new Function('unminified', 'process', 'moduleExists', 'path', 'files', `
+    const SRC = '/source', fs = { existsSync() { return moduleExists; }, readFileSync(file) { return file; } }, visited = [];
+    const composeSource = (rel, text) => { visited.push([rel, text]); return text; };
+    for (const rel of files) { const file = path.join(SRC, rel); ${body} }
+    return visited.map(row => row[0]);`);
+  const files = ['vendor/three/build/three.core.js', 'vendor/three/build/three.module.js', 'src/main.js'];
+  assert.deepEqual(run(false, { env: {} }, true, path, files), files.slice(1));
+  assert.deepEqual(run(true, { env: {} }, true, path, files), files);
+  assert.deepEqual(run(false, { env: { INKWAVE_NO_THREE_SHAKE: '1' } }, true, path, files), files);
+  assert.deepEqual(run(false, { env: {} }, false, path, files), files);
+});

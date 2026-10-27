@@ -1,0 +1,15 @@
+✔ every named suite preflights real inputs and npm selects the canonical suite (4.14871ms)
+✔ workflow suite changes route through each consumer on both push and PR (0.822473ms)
+✔ discovery is sorted, includes newly added tests, and rejects empty suites (2.257232ms)
+✔ unknown, duplicate, missing and malformed inputs fail before any child starts (1.859951ms)
+✔ execution retains exact flags, cwd and environment and stops on every failure form (0.46972ms)
+✔ a real failing Node test remains a failure through the suite runner (101.88668ms)
+✔ effective workflow expansion preserves exact flags and rejects altered invocations (0.530101ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 181.252924

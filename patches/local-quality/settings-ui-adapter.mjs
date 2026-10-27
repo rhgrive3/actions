@@ -1,3 +1,4 @@
+import { adaptIosPausedMenuGpuGuard } from './ios-paused-menu-gpu-guard.mjs';
 // Build-only settings fixes. Preserve the captured input and the native controls.
 export function adaptSettingsUi(rel, code, once) {
   if (rel === 'src/config.js') {
@@ -6,7 +7,7 @@ export function adaptSettingsUi(rel, code, once) {
   }
   if (rel === 'styles/ui.css') {
     if (code.includes('/* Settings tabs keep each label together. */')) throw new Error('settings UI: repeated CSS transform');
-    return code + '\n/* Settings tabs keep each label together. */\n.iw-settings .iw-tab { flex: 1 0 auto; }\n.iw-settings .iw-tab > span { white-space: nowrap; }\n';
+    return adaptIosPausedMenuGpuGuard(rel, code + '\n/* Settings tabs keep each label together. */\n.iw-settings .iw-tab { flex: 1 0 auto; }\n.iw-settings .iw-tab > span { white-space: nowrap; }\n', once);
   }
   if (rel !== 'src/ui/menus.js') return code;
   const patch = (before, after, label) => { code = once(code, before, after, 'settings UI: ' + label); };
@@ -150,5 +151,5 @@ export function adaptSettingsUi(rel, code, once) {
   edit(`          const s = this._settings();
           safeCall(() => P.cur.set(value, s));`, `          safeCall(() => P.cur.set(value, s));`, 'preview reuses snapshot');
   edit(`P.cur.set(this._settings()[P.key], this._settings())`, `P.cur.set(s[P.key], s)`, 'audio preview reuses snapshot');
-  return code.slice(0, start) + screen + code.slice(end);
+  return adaptIosPausedMenuGpuGuard(rel, code.slice(0, start) + screen + code.slice(end), once);
 }

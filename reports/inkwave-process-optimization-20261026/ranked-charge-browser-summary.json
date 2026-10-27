@@ -1,0 +1,90 @@
+{
+  "status": "passed",
+  "browser": {
+    "version": "154.0.8037.57",
+    "channel": "custom-executable"
+  },
+  "inputHash": "430d37fa73f0a9c2159ada20cdff86c5e3c3ecc6872373640861cc321ff52f24",
+  "contentHash": "d5a63689fb4a5537360e8e4828a475ff0d4b2d2ffe9ad28af6a6def106b01025",
+  "revision": "4e6a0735413a6d7d2bc37f58b7d68e9beb970d721fa1d187baf248e3cbb358b8",
+  "errors": [],
+  "scope": "one selected online Rainmaker case, real Chromium and200ms local relay delay; full default four-mode CI unchanged",
+  "results": [
+    {
+      "mode": "rainmaker",
+      "onlineWeapon": [
+        [
+          {
+            "actorId": "4",
+            "charge": 1,
+            "damage": 60,
+            "blastDamage": 180,
+            "visualOnly": false
+          }
+        ],
+        [
+          {
+            "actorId": "4",
+            "charge": 1,
+            "damage": 60,
+            "blastDamage": 180,
+            "visualOnly": true
+          }
+        ]
+      ],
+      "onlineWall": [
+        {
+          "hp": 100,
+          "ghost": false,
+          "drops": [
+            60,
+            360
+          ],
+          "packets": []
+        },
+        {
+          "hp": 622,
+          "ghost": true,
+          "drops": [],
+          "packets": [
+            {
+              "damage": 60,
+              "cause": "Gachihoko_Bullet",
+              "targetOwnerId": 0,
+              "targetSeq": 1
+            },
+            {
+              "damage": 180,
+              "cause": "Gachihoko_BombCore",
+              "targetOwnerId": 0,
+              "targetSeq": 1
+            }
+          ]
+        }
+      ],
+      "terminal": [
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        },
+        {
+          "winner": 0,
+          "knockout": true,
+          "counts": [
+            0,
+            100
+          ],
+          "state": "finish"
+        }
+      ]
+    }
+  ],
+  "receiptStatus": "passed",
+  "pairedBatches": 21,
+  "allAcceptedAtFrozenHostAgeZero": true
+}

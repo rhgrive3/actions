@@ -1,0 +1,41 @@
+{
+  "allRemainingResolved": false,
+  "commercialReleaseCertified": false,
+  "groups": [
+    {
+      "id": "NATIVE_BROWSER",
+      "status": "blocked",
+      "scope": "Native account UI journey, real browser Web Locks/cookies/BroadcastChannel, native Service Worker install/update/offline/eviction",
+      "evidence": "All 15 native cases failed before test body at local navigation: net::ERR_BLOCKED_BY_ADMINISTRATOR. No bypass used. HTTP and source/VM contracts do not replace this.",
+      "completionEvidenceNeeded": "Pass the included native runner in an authorized browser environment against the final code; production build still separate."
+    },
+    {
+      "id": "PHYSICAL_TARGETS",
+      "status": "not_verified",
+      "scope": "iPad mini 6 Safari, physical Joy-Con, real GPU and touch/gyro behavior",
+      "evidence": "No physical device access in this session. Chromium viewport resizing is not iPad/Safari verification.",
+      "completionEvidenceNeeded": "Run final build on target hardware; capture exceptions, frame-time percentiles, memory and input behavior."
+    },
+    {
+      "id": "REAL_MULTIPLAYER_ENDURANCE",
+      "status": "not_verified",
+      "scope": "Two physical devices playing matches and sustained gameplay/load transitions",
+      "evidence": "Two independent authentication cookie jars and relay unit tests were exercised, not a two-device game or long match.",
+      "completionEvidenceNeeded": "Actual two-device gameplay and bounded representative endurance run with disconnect/rejoin and memory observations."
+    },
+    {
+      "id": "FULL_RELEASE_BUILD",
+      "status": "not_verified_this_turn",
+      "scope": "Complete current project, production Vite/game build, full npm test, native-prebuilt LFS assets",
+      "evidence": "Only prior overlay and hash-verified necessary source dependencies were recovered. The full repository, build dependencies and prebuilt LFS payloads were not available in the container. Prior build results are historical and not certification of these additional changes.",
+      "completionEvidenceNeeded": "Apply checked patch to the pinned full source tree, restore dependencies/LFS and build/test the final package; rebase explicitly before use on a newer main."
+    },
+    {
+      "id": "LIVE_DEPLOYMENT_AUTH",
+      "status": "not_verified",
+      "scope": "Real Cloudflare D1 transaction behavior, deployed HTTPS/cross-origin cookie policies",
+      "evidence": "Actual SQL ran in Node SQLite behind the real Worker handler, using a D1-shaped test adapter; no live D1 or production account data was touched.",
+      "completionEvidenceNeeded": "Staging environment verification using the final frontend and Worker together. Optional expectedUserId preserves old-client compatibility and is not mandatory for old clients."
+    }
+  ]
+}

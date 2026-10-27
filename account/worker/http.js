@@ -63,8 +63,30 @@ export async function readJson(request) {
   if (!/^application\/json\b/i.test(type)) throw new ApiError(415, 'unsupported_media_type');
   const declared = Number(request.headers.get('Content-Length'));
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) throw new ApiError(413, 'payload_too_large');
-  const text = await request.text();
-  if (text.length > MAX_BODY_BYTES) throw new ApiError(413, 'payload_too_large');
+  // Content-Length is optional and untrusted. Bound the actual upload before
+  // decoding it; character counts undercount UTF-8 player names and buffering
+  // request.text() first lets chunked uploads allocate without a byte ceiling.
+  let text = '';
+  if (request.body) {
+    const reader = request.body.getReader();
+    const decoder = new TextDecoder();
+    let size = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > MAX_BODY_BYTES) {
+          // Cancellation may depend on the remote producer; don't wait for it
+          // before returning the rejection or let its failure mask the 413.
+          void reader.cancel().catch(() => {});
+          throw new ApiError(413, 'payload_too_large');
+        }
+        text += decoder.decode(value, { stream: true });
+      }
+      text += decoder.decode();
+    } finally { reader.releaseLock(); }
+  }
   let data;
   try { data = JSON.parse(text || '{}'); } catch { throw new ApiError(400, 'invalid_json'); }
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new ApiError(400, 'invalid_json');

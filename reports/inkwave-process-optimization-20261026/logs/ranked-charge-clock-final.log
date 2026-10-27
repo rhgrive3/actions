@@ -1,0 +1,18 @@
+(node:8362) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ receipt-paced native Rainmaker keeps a stalled peer from expiring the hold and releases one full shot
+  ✔ native receipt rejects stale sequences, wrong fire and unbranded replacements (1.231432ms)
+  ✔ changed owner, life, match, session and unfreezing fail before another host step (1.304132ms)
+  ✔ cleanup restores the captured mouse without touching a replacement input owner (0.233644ms)
+  ✔ an earlier partial shot fails admission and survives cleanup unchanged (1.032461ms)
+✔ receipt-paced native Rainmaker keeps a stalled peer from expiring the hold and releases one full shot (25730.297193ms)
+✔ partial probe installation waits for its peer and preserves primary failure through cleanup failure (2.015678ms)
+✔ browser charge pacing retains all exact shot, replication and native wall assertions and four-mode default (0.3311ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26091.369279

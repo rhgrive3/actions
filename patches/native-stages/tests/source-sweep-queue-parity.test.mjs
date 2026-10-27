@@ -25,12 +25,32 @@ test('point-triangle specialization retains exact frozen distance and both conta
  }
 });
 test('sphere final-hit allocation and invariant hoist preserve all frozen swept results',()=>{
- let hits=0;
+ let hits=0;const out={point:new THREE.Vector3(),normal:new THREE.Vector3()},point=out.point,normal=out.normal;
  for(let i=0;i<1500;i++){
   const from=new THREE.Vector3((rnd()-.5)*12,(rnd()-.5)*12,(rnd()-.5)*12),to=i%17?new THREE.Vector3((rnd()-.5)*12,(rnd()-.5)*12,(rnd()-.5)*12):from.clone(),r=rnd()*.4,options={ignoreGrates:i%3===0,endRadius:i%5?r:rnd()*.6};
-  const before=a.sweepSphere(from,to,r,options),after=b.sweepSphere(from,to,r,options);assert.deepEqual(flat(after),flat(before));if(after){hits++;const saved=flat(after);b.sweepSphere(new THREE.Vector3(10,10,10),new THREE.Vector3(12,11,12),.1);assert.deepEqual(flat(after),saved,'public hit owns independent vectors');}
+  const before=a.sweepSphere(from,to,r,options),after=b.sweepSphere(from,to,r,options);assert.deepEqual(flat(after),flat(before));
+  const savedOut=flat(out),reused=b.sweepSphere(from,to,r,options,out);assert.deepEqual(flat(reused),flat(before));
+  assert.equal(out.point,point);assert.equal(out.normal,normal);
+  if(reused)assert.equal(reused,out);else assert.deepEqual(flat(out),savedOut,'miss leaves supplied output untouched');
+  if(after){hits++;const saved=flat(after);b.sweepSphere(new THREE.Vector3(10,10,10),new THREE.Vector3(12,11,12),.1);assert.deepEqual(flat(after),saved,'public hit owns independent vectors');}
  }
  assert(hits>100);
+});
+test('optional sphere output removes hit vector allocation without changing owned-result or invalid-query semantics',()=>{
+ let allocations=0;
+ class Vector3 extends THREE.Vector3 {constructor(...args){super(...args);allocations++;}}
+ const api={...THREE,Vector3};
+ const Type=new Function('THREE','sphereTriangleEntry',fs.readFileSync(new URL('../runtime/triangle-world.mjs',import.meta.url),'utf8').replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn TriangleWorld;')(api,sphereTriangleEntry);
+ const triangles=new Float32Array([0,0,0,0,2,0,0,0,2]);
+ const world=new Type({triangles,normals:new Float32Array([1,0,0]),flags:new Uint32Array([3]),objectIds:new Uint32Array([7]),...buildSourceBVH(triangles)});
+ const from=new THREE.Vector3(-2,.5,.5),to=new THREE.Vector3(2,.5,.5),out={point:new THREE.Vector3(),normal:new THREE.Vector3()};
+ world.sweepSphere(from,to,.2,{},out);allocations=0;
+ for(let i=0;i<100;i++)assert.equal(world.sweepSphere(from,to,.2,{},out),out);
+ assert.equal(allocations,0,'warm caller-owned sweeps construct no result vectors');
+ const saved=flat(out),owned=world.sweepSphere(from,to,.2);assert.equal(allocations,2);
+ assert.notEqual(owned.point,out.point);assert.notEqual(owned.normal,out.normal);assert.deepEqual(flat(owned),saved);
+ for(const radius of [-1,NaN,Infinity]){assert.equal(world.sweepSphere(from,to,radius,{},out),null);assert.deepEqual(flat(out),saved);}
+ assert.deepEqual(Array.from(from.toArray()),[-2,.5,.5]);assert.deepEqual(Array.from(to.toArray()),[2,.5,.5]);
 });
 test('per-triangle broadphase removes only separated leaf candidates before exact sweep',()=>{
  const tris=[];for(let i=0;i<12;i++){const x=i*10;tris.push(x,0,0,x+1,0,0,x,0,1);}

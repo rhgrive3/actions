@@ -264,26 +264,33 @@ test('long task observer is optional; sustained frame spikes are captured with b
   tracer.dispose();
 });
 test('opt-in profileRange=1 dynamically attaches tracer to existing page recorder, no normal runtime import',async()=>{
-  const f=worldFixture(),handlers={};
+  const f=worldFixture();
   const nodes=[];
-  const doc={body:{appendChild(x){nodes.push(x);}},
-    createElement(name){return {nodeName:name,style:{},setAttribute(){},
-      addEventListener(event,fn){handlers[event]=fn;},remove(){},focus(){},select(){}}}};
+  const doc={body:{appendChild(x){nodes.push(x);}},documentElement:{lang:'en'},
+    createElement(name){return {nodeName:name,style:{},dataset:{},children:[],setAttribute(){},
+      appendChild(child){this.children.push(child);},
+      addEventListener(event,fn){(this.listeners ||= {})[event]=fn;},
+      remove(){this.removed=true;},focus(){},select(){}}}};
   f.env.document=doc;
   f.env.navigator={clipboard:{writeText:async text=>{f.copied=text;}}};
   const p=createFrameTimingProbe({env:f.env,game:f.game,now:f.now});
   const tracer=await p.ready;
-  assert.ok(tracer);
+  assert.ok(tracer, p.snapshot().traceError || 'frame tracer should initialize');
+  const trialControls=nodes.find(n=>n.id==='inkwave-debug-ab-controls');
+  assert.equal(trialControls?.children.filter(n=>n.nodeName==='button').length,2,
+    'new A/B buttons are attached to the on-device control bar');
+  assert.equal(p.beginTrial('idle'),true,'idle capture can be requested from the opt-in profiler');
   f.game._frame(.016);
   p.record(f.now(),18,{phase:'practice',frameRateHz:60});
   const snap=p.snapshot();
   assert.equal(snap.trace.capturedFrames,1);
   assert.ok(snap.trace.latest.stages.paint>=2);
   assert.equal(typeof p.report(),'string');
-  await handlers.click();
+  await nodes.find(n=>n.id==='inkwave-copy-frame-trace').listeners.click();
   assert.match(f.copied,/"schema": "inkwave-frame-trace-v1"/);
   assert.equal(nodes.filter(n=>n.nodeName==='button').length,1);
   p.dispose();
+  assert.equal(trialControls.removed,true,'A/B control bar is destroyed on disable');
   assert.strictEqual(f.env.__inkwaveRangePerf,undefined);
   const off=createFrameTimingProbe({env:{},now:f.now});
   assert.equal(await off.ready,null);
@@ -304,6 +311,9 @@ test('final shipped main and platform override both connect the opt-in profiler'
   const platform=fs.readFileSync(new URL('../platform-game.mjs',import.meta.url),'utf8');
   assert.ok(platform.includes('P._loop = function () { ensure(this).driver.start(); };'));
   assert.ok(platform.includes('game._rangeFrameProbe = createFrameTimingProbe({ env, game });'));
+  assert.ok(platform.includes('r.syncProfiler = () => {'));
+  assert.ok(platform.includes('game.settings?.debugMode === true'));
+  assert.ok(platform.includes('r.disposeProfiler?.()'));
   assert.ok(platform.includes('probe.record(frameStart, env.performance.now() - frameStart, {'));
   assert.ok(!platform.includes('import { createFrameTimingProbe }'),
     'normal startup must not eagerly import profiling');
