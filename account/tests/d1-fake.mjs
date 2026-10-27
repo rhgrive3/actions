@@ -6,13 +6,15 @@ import path from 'node:path';
 class Statement {
   constructor(db, sql, args = []) { this.db = db; this.sql = sql; this.args = args; }
   bind(...args) { return new Statement(this.db, this.sql, args); }
-  // D1 numbers ?1..?N; node:sqlite takes positional arrays for them as well
+  // D1 uses numbered parameters. Bind their exact names: positional binding
+  // for ?1..?N differs between supported node:sqlite versions.
   _stmt() { return this.db.prepare(this.sql); }
   _exec(kind) {
     const st = this._stmt();
-    if (kind === 'first') return st.get(...this.args) ?? null;
-    if (kind === 'all') return { results: st.all(...this.args), success: true };
-    const r = st.run(...this.args);
+    const bindings = Object.fromEntries(this.args.map((value, index) => ['?' + (index + 1), value]));
+    if (kind === 'first') return st.get(bindings) ?? null;
+    if (kind === 'all') return { results: st.all(bindings), success: true };
+    const r = st.run(bindings);
     return { success: true, meta: { changes: Number(r.changes) } };
   }
   async first() { return this._exec('first'); }

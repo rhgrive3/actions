@@ -81,8 +81,16 @@ export function compactModuleStrings(source) {
   });
   const emit = (declarations, edits) => {
     if (!declarations.length) return null;
-    let code = source;
-    for (const edit of edits.sort((a, b) => b.start - a.start)) code = code.slice(0, edit.start) + edit.text + code.slice(edit.end);
+    // AST literal spans never overlap. Copy each unchanged source segment once
+    // instead of copying the whole module again for every repeated literal.
+    const chunks = [];
+    let cursor = 0;
+    for (const edit of edits.sort((a, b) => a.start - b.start)) {
+      chunks.push(source.slice(cursor, edit.start), edit.text);
+      cursor = edit.end;
+    }
+    chunks.push(source.slice(cursor));
+    let code = chunks.join('');
     code = code.slice(0, insertion) + '\n' + declarations.join('') + code.slice(insertion);
     // Parse the complete result so malformed edits fail the build before it
     // can be published or enter the offline cache manifest.

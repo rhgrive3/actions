@@ -53,3 +53,41 @@ test('resetting range targets immediately removes old damage numbers and the pre
   assert.equal(r.hud.card.classList.contains('is-on'), false); assert.equal(r.session.last, null);
   assert.equal(r.session.log.length, 0);
 });
+
+test('target card writes only changed text and HP while restoring external DOM changes', () => {
+  const r = rig(); r.hud._float.length = 0;
+  let textWrites = 0, styleWrites = 0;
+  const text = () => {
+    let value = '';
+    return { get textContent() { return value; }, set textContent(next) { textWrites++; value = next; } };
+  };
+  for (const key of ['cName', 'cLast', 'cFrom', 'cCombo', 'cHits', 'cSplat']) r.hud[key] = text();
+  const hpNode = () => {
+    let transform = '';
+    return { style: { get transform() { return transform; }, set transform(value) {
+      styleWrites++; transform = value.replace(/scaleX\(([0-9.]+)\)/, (_, n) => `scaleX(${Number(n)})`);
+    } } };
+  };
+  r.hud.cHp = hpNode();
+  const combo = { total: 36, hits: 1, done: false, splatT: 0 };
+  Object.assign(r.target, { name: 'Target', hp: 64, rangeTarget: { kind: 'normal', combo } });
+  r.session.last = { target: r.target, amount: 36, dist: 7 };
+  r.hud.update(0);
+  assert.equal(r.hud.cLast.textContent, '36.0'); assert.match(r.hud.cFrom.textContent, / 7\.0 m$/);
+  const first = [textWrites, styleWrites];
+  for (let i = 0; i < 120; i++) r.hud.update(1 / 60);
+  assert.deepEqual([textWrites, styleWrites], first, 'stable two-second feedback does not replace text or HP styles');
+  r.target.hp = 100; combo.done = true; combo.hits = 3; combo.total = 108; combo.splatT = .25;
+  r.hud.update(0);
+  assert.equal(r.hud.cHp.style.transform, 'scaleX(1)'); assert.equal(r.hud.cCombo.textContent, '108.0');
+  assert.equal(r.hud.cHits.textContent, '3'); assert.match(r.hud.cSplat.textContent, /3 · 0.25 s/);
+  r.hud.cLast.textContent = 'external'; r.hud.cHp.style.transform = 'scaleX(0)';
+  r.hud.update(0);
+  assert.equal(r.hud.cLast.textContent, '36.0'); assert.equal(r.hud.cHp.style.transform, 'scaleX(1)');
+  r.hud.cHp = hpNode(); r.hud.update(0); assert.equal(r.hud.cHp.style.transform, 'scaleX(1)');
+  r.target.rangeTarget.combo = null; r.session.last.dist = null; r.hud.update(0);
+  assert.equal(r.hud.cCombo.textContent, '—'); assert.equal(r.hud.cHits.textContent, '—'); assert.equal(r.hud.cFrom.textContent, '');
+  r.hud.clearTargetFeedback();
+  const hidden = [textWrites, styleWrites]; r.hud.update(0);
+  assert.deepEqual([textWrites, styleWrites], hidden); assert.equal(r.hud.card.classList.contains('is-on'), false);
+});

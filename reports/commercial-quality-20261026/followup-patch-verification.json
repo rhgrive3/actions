@@ -1,0 +1,27 @@
+{
+  "scope": "Both routes checked against recovered source subset, not the complete upstream repository",
+  "validation": [
+    {
+      "route": "cumulative",
+      "patch": "changes-cumulative.patch",
+      "checkPassed": true,
+      "applyPassed": true,
+      "exactRecoveredSnapshotHashesMatch": true,
+      "verifiedFiles": 146,
+      "notAFullUpstreamTreeCheck": true
+    },
+    {
+      "route": "incremental",
+      "patch": "changes-after-previous.patch",
+      "checkPassed": true,
+      "applyPassed": true,
+      "exactRecoveredSnapshotHashesMatch": true,
+      "verifiedFiles": 146,
+      "notAFullUpstreamTreeCheck": true
+    }
+  ],
+  "upstreamBaselineManifestEntriesVerified": 93,
+  "codeIdenticalToFinalTestRun": true,
+  "symlinksInOverlay": false,
+  "fontFilesInOverlay": false
+}

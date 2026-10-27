@@ -209,6 +209,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
   const prevFocus = document.activeElement;
   const touch = matchMedia('(pointer: coarse)').matches || document.querySelector('.iw-ui.is-touch') != null;
   let closed = false, current = null, viewName = '', authTab = 'login';
+  let viewEpoch = 0, pendingForms = 0;
   const disposers = [];
 
   const titleId = `zva-title${++uid}`;
@@ -285,6 +286,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
 
   function show(name, { dir = 0, focus = true, notice = null } = {}) {
     if (closed) return;
+    ++viewEpoch;
     const prev = current;
     prev?.destroy?.();
     viewName = name;
@@ -308,7 +310,8 @@ export function mountPanel({ view: startView, onClose } = {}) {
   function focusFirst() {
     // on touch screens, don't pop the on-screen keyboard until the player taps a field
     const target = !touch && current?.initial ? current.initial() : null;
-    requestAnimationFrame(() => { if (!closed) (target || dialog).focus({ preventScroll: true }); });
+    const ownerEpoch = viewEpoch;
+    requestAnimationFrame(() => { if (!closed && ownerEpoch === viewEpoch) (target || dialog).focus({ preventScroll: true }); });
   }
 
   // ---------------------------------------------------------------- helpers shared by views
@@ -321,19 +324,25 @@ export function mountPanel({ view: startView, onClose } = {}) {
 
   /** Runs an API call for a form: busy state, field errors, banners, rate-limit countdown, expired sessions. */
   async function submit({ btn, busyLabel, fields = {}, banner: bn, run }) {
-    if (btn.disabled) return null;
+    if (closed || btn.disabled) return null;
+    const ownerEpoch = viewEpoch;
+    ++pendingForms;
     bn?.hide();
     btn.setBusy(true, busyLabel);
     dialog.setAttribute('aria-busy', 'true');
     let locked = false;
     try {
-      return await run();
+      const result = await run();
+      return !closed && ownerEpoch === viewEpoch ? result : null;
     } catch (e) {
+      if (closed || ownerEpoch !== viewEpoch) return null;
       const err = e instanceof AccountError ? e : new AccountError('unknown');
       game.sfx('ui_error');
       if (err.code === 'not_signed_in') {
-        account.signedOut();
-        show('login', { dir: -1, notice: { text: t('session.expired') } });
+        // The store commits authorization failures inside its mutation queue.
+        // An obsolete form must not sign out a newer identity.
+        if (!account.user) show('login', { dir: -1, notice: { text: t('session.expired') } });
+        else account.invalidateSession();
         return null;
       }
       const f = err.field && fields[err.field];
@@ -350,7 +359,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
     } finally {
       btn.setBusy(false);
       if (locked) btn.disabled = true;
-      dialog.removeAttribute('aria-busy');
+      if (--pendingForms === 0) dialog.removeAttribute('aria-busy');
     }
   }
 
@@ -364,7 +373,6 @@ export function mountPanel({ view: startView, onClose } = {}) {
 
   /** Finish signing in: short celebration, then back to the game. */
   function welcome(user, key) {
-    account.signedIn(user);
     game.sfx('ui_confirm');
     game.sfx('splat_big');
     const text = t(key, { name: user.displayName });
@@ -403,7 +411,8 @@ export function mountPanel({ view: startView, onClose } = {}) {
         id.setError(loginId ? null : 'login_id_required');
         pw.setError(pw.value ? null : 'password_required');
         if (!loginId) return id.focus(); if (!pw.value) return pw.focus();
-        const res = await submit({ btn: go, busyLabel: t('btn.login.busy'), banner: bn, run: () => api.login({ loginId, password: pw.value, remember: remember.checked }) });
+        const body = { loginId, password: pw.value, remember: remember.checked };
+        const res = await submit({ btn: go, busyLabel: t('btn.login.busy'), banner: bn, run: () => account.mutateSession(() => api.login(body), res => { if (res?.user) account.signedIn(res.user); }) });
         if (res?.user) welcome(res.user, 'login.done');
         else if (res === null && !closed) { pw.value = ''; if (!touch) pw.focus(); }
       });
@@ -467,7 +476,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
         if (bad.length) { game.sfx('ui_error'); bad[0].focus(); return; }
         const body = { loginId: id.value.trim(), displayName: cleanDisplayName(name.value), password: pw.value, remember: remember.checked };
         if (!captchaBox.hidden) body.turnstileToken = captchaToken;
-        const res = await submit({ btn: go, busyLabel: t('btn.register.busy'), banner: bn, fields: { loginId: id, displayName: name, password: pw }, run: () => api.register(body) });
+        const res = await submit({ btn: go, busyLabel: t('btn.register.busy'), banner: bn, fields: { loginId: id, displayName: name, password: pw }, run: () => account.mutateSession(() => api.register(body), res => { if (res?.user) account.signedIn(res.user); }) });
         if (res?.user) welcome(res.user, 'register.done');
         else if (widget != null) { try { window.turnstile?.reset(widget); } catch { /* widget gone */ } captchaToken = ''; }
       });
@@ -488,8 +497,17 @@ export function mountPanel({ view: startView, onClose } = {}) {
       const logoutRow = row('logout', t('acc.logout'), t('acc.logout.sub'), async () => {
         logoutRow.classList.add('is-busy');
         logoutRow.disabled = true;
-        try { await api.logout(); } catch { /* signed out locally either way */ }
-        account.signedOut();
+        try {
+          await account.mutateSession(() => api.logout(), () => account.signedOut());
+        } catch (error) {
+          logoutRow.classList.remove('is-busy'); logoutRow.disabled = false;
+          if (!closed) toast(errorText(error?.code || 'unknown'), 'error');
+          // The server may have committed before the connection failed.
+          // Reconcile instead of reporting an unconfirmed logout as success.
+          account.invalidateSession();
+          return;
+        }
+        if (closed) return;
         game.sfx('ui_back');
         close({ silent: true });
         try { game.menus()?.toast?.(t('logout.done'), { kind: 'leave' }); } catch { /* optional */ }
@@ -508,6 +526,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
     },
 
     rename() {
+      const expectedUserId = account.user.id;
       const bn = banner();
       const name = field({ name: 'nickname', label: t('f.displayName'), value: account.user.displayName, autocomplete: 'nickname', maxLength: 64, counter: DISPLAY_NAME_MAX, autocapitalize: 'words', enterkeyhint: 'done' });
       const v = validate(name, (x) => checkDisplayName(x));
@@ -517,13 +536,14 @@ export function mountPanel({ view: startView, onClose } = {}) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!v()) return name.focus();
-        const res = await submit({ btn: go, busyLabel: t('btn.saving'), banner: bn, fields: { displayName: name }, run: () => api.rename(cleanDisplayName(name.value)) });
-        if (res?.user) { account.signedIn(res.user); game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('rename.done')); focusFirst(); }
+        const res = await submit({ btn: go, busyLabel: t('btn.saving'), banner: bn, fields: { displayName: name }, run: () => account.mutateSession(() => api.rename(cleanDisplayName(name.value), expectedUserId), res => { if (res?.user) account.signedIn(res.user); }) });
+        if (res?.user) { game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('rename.done')); focusFirst(); }
       });
       return { el: form, banner: bn, bar: { title: t('acc.rename'), back: true }, initial: () => name.input, destroy: () => bn.dispose() };
     },
 
     icon() {
+      const expectedUserId = account.user.id;
       const u = account.user;
       const pick = { icon: u.avatarIcon || 'squid', color: u.avatarColor || inkFor(u.loginId) };
       const bn = banner();
@@ -552,13 +572,14 @@ export function mountPanel({ view: startView, onClose } = {}) {
       paint();
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const res = await submit({ btn: go, busyLabel: t('btn.saving'), banner: bn, run: () => api.profile({ avatarIcon: pick.icon, avatarColor: pick.color }) });
-        if (res?.user) { account.signedIn(res.user); game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('icon.done')); focusFirst(); }
+        const res = await submit({ btn: go, busyLabel: t('btn.saving'), banner: bn, run: () => account.mutateSession(() => api.profile({ avatarIcon: pick.icon, avatarColor: pick.color }, expectedUserId), res => { if (res?.user) account.signedIn(res.user); }) });
+        if (res?.user) { game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('icon.done')); focusFirst(); }
       });
       return { el: form, banner: bn, bar: { title: t('acc.icon'), back: true }, initial: () => shapes.find((b) => b.dataset.v === pick.icon), destroy: () => bn.dispose() };
     },
 
     password() {
+      const expectedUserId = account.user.id;
       const bn = banner();
       const cur = field({ name: 'current-password', label: t('f.currentPassword'), type: 'password', autocomplete: 'current-password', maxLength: PASSWORD_MAX, enterkeyhint: 'next' });
       const pw = field({ name: 'new-password', label: t('f.newPassword'), type: 'password', autocomplete: 'new-password', maxLength: PASSWORD_MAX, enterkeyhint: 'next' });
@@ -578,21 +599,23 @@ export function mountPanel({ view: startView, onClose } = {}) {
         cur.setError(cur.value ? null : 'password_required');
         const ok = [!!cur.value, vPw(), vPw2()];
         if (ok.includes(false)) { game.sfx('ui_error'); return [cur, pw, pw2][ok.indexOf(false)].focus(); }
+        const body = { currentPassword: cur.value, newPassword: pw.value };
         const res = await submit({ btn: go, busyLabel: t('btn.saving'), banner: bn, fields: { currentPassword: cur, newPassword: pw },
-          run: () => api.password({ currentPassword: cur.value, newPassword: pw.value }) });
-        if (res?.user) { account.signedIn(res.user); game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('password.done')); focusFirst(); }
+          run: () => account.mutateSession(() => api.password(body, expectedUserId), res => { if (res?.user) account.signedIn(res.user); }) });
+        if (res?.user) { game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('password.done')); focusFirst(); }
       });
       return { el: form, banner: bn, bar: { title: t('acc.password'), back: true }, initial: () => cur.input, destroy: () => bn.dispose(), fields: [cur, pw, pw2] };
     },
 
     devices() {
+      const expectedUserId = account.user.id;
       const bn = banner();
       const list = h('ul', { class: 'zva-devices', 'aria-busy': 'true' },
         [0, 1].map(() => h('li', { class: 'zva-device is-skeleton', 'aria-hidden': 'true' }, h('i'), h('span'))));
       const status = h('p', { class: 'zva-sr', role: 'status' }, t('devices.loading'));
       const all = button(t('devices.revokeAll'), { kind: 'ghost', iconName: 'logout', cls: 'zva-btn--wide' });
       const el = h('div', { class: 'zva-form' }, h('p', { class: 'zva-lead' }, t('devices.lead')), bn.el, status, list, all);
-      let alive = true;
+      let alive = true, loadController = null;
       const flag = (cc) => (/^[A-Z]{2}$/.test(cc || '') ? String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0))) : '');
       const render = (sessions) => {
         list.removeAttribute('aria-busy');
@@ -603,7 +626,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
           const mobile = /iPhone|Android|iPad/.test(s.device);
           const revoke = s.current ? null : button(t('devices.revoke'), { kind: 'ghost', cls: 'zva-btn--small' });
           if (revoke) revoke.addEventListener('click', async () => {
-            const res = await submit({ btn: revoke, banner: bn, run: () => api.revoke({ id: s.id }) });
+            const res = await submit({ btn: revoke, banner: bn, run: () => account.mutateSession(() => api.revoke({ id: s.id }, expectedUserId)) });
             if (res?.sessions) { game.sfx('ui_back'); render(res.sessions); toast(t('devices.done')); }
           });
           return h('li', { class: 'zva-device' + (s.current ? ' is-current' : '') },
@@ -617,24 +640,32 @@ export function mountPanel({ view: startView, onClose } = {}) {
         if (!others.length) list.append(h('li', { class: 'zva-device is-empty' }, icon('shield'), t('devices.none')));
       };
       const load = async () => {
-        try { const res = await api.sessions(); if (alive) render(res.sessions); }
+        loadController?.abort();
+        const controller = loadController = new AbortController();
+        const revision = account._sessionRevision;
+        const owns = () => alive && loadController === controller && revision === account._sessionRevision;
+        try { const res = await api.sessions({ signal: controller.signal, expectedUserId }); if (owns()) render(res.sessions); }
         catch (e) {
-          if (!alive) return;
+          if (!owns() || e?.code === 'cancelled') return;
           if (e?.code === 'not_signed_in') { account.signedOut(); show('login', { dir: -1, notice: { text: t('session.expired') } }); return; }
+          if (e?.code === 'account_changed') { account.invalidateSession(); return; }
+          list.removeAttribute('aria-busy');
+          status.textContent = '';
           list.replaceChildren();
           bn.show(errorText(e?.code || 'unknown'));
           list.append(h('li', { class: 'zva-device is-empty' }, button(t('btn.retry'), { kind: 'ghost', onClick: () => { bn.hide(); load(); } })));
         }
       };
       all.addEventListener('click', async () => {
-        const res = await submit({ btn: all, banner: bn, run: () => api.revoke({ scope: 'others' }) });
+        const res = await submit({ btn: all, banner: bn, run: () => account.mutateSession(() => api.revoke({ scope: 'others' }, expectedUserId)) });
         if (res?.sessions) { game.sfx('ui_back'); render(res.sessions); toast(t('devices.done')); }
       });
       load();
-      return { el, banner: bn, bar: { title: t('acc.devices'), back: true }, initial: () => null, destroy: () => { alive = false; bn.dispose(); } };
+      return { el, banner: bn, bar: { title: t('acc.devices'), back: true }, initial: () => null, refresh: load, destroy: () => { alive = false; loadController?.abort(); bn.dispose(); } };
     },
 
     delete() {
+      const expectedUserId = account.user.id;
       const bn = banner();
       const u = account.user;
       const confirm = field({ name: 'confirm-id', label: t('delete.confirm', { id: u.loginId }), autocomplete: 'off', placeholder: u.loginId, maxLength: 64, enterkeyhint: 'next' });
@@ -650,13 +681,24 @@ export function mountPanel({ view: startView, onClose } = {}) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!matches()) { confirm.setError('confirm_mismatch'); return confirm.focus(); }
-        const res = await submit({ btn: go, busyLabel: t('delete.busy'), banner: bn, fields: { confirm, currentPassword: pw }, run: () => api.remove({ confirm: confirm.value.trim(), password: pw.value }).then(() => ({ ok: true })) });
-        if (res?.ok) {
-          account.signedOut();
-          game.sfx('ui_back');
-          close({ silent: true });
-          try { game.menus()?.toast?.(t('delete.done'), { kind: 'leave' }); } catch { /* optional */ }
-        } else sync();
+        const body = { confirm: confirm.value.trim(), password: pw.value };
+        const ownerEpoch = viewEpoch;
+        let finishedHere = false;
+        await submit({ btn: go, busyLabel: t('delete.busy'), banner: bn, fields: { confirm, currentPassword: pw },
+          run: () => account.mutateSession(() => api.remove(body, expectedUserId).then(() => ({ ok: true })), () => {
+            // signedOut synchronously replaces a protected view with login.
+            // Capture ownership before that notification, and finish only this
+            // form, never a replacement view opened while the request ran.
+            const owned = !closed && ownerEpoch === viewEpoch;
+            account.signedOut();
+            if (owned) {
+              finishedHere = true;
+              game.sfx('ui_back');
+              close({ silent: true });
+              try { game.menus()?.toast?.(t('delete.done'), { kind: 'leave' }); } catch { /* optional */ }
+            }
+          }) });
+        if (!finishedHere && !closed && ownerEpoch === viewEpoch) sync();
       });
       return { el: form, banner: bn, bar: { title: t('acc.delete'), back: true }, initial: () => confirm.input, destroy: () => bn.dispose(), fields: [pw] };
     },
@@ -675,6 +717,8 @@ export function mountPanel({ view: startView, onClose } = {}) {
   function close({ silent = false } = {}) {
     if (closed) return;
     closed = true;
+    ++viewEpoch;
+    clearTimeout(toast._t);
     current?.destroy?.();
     for (const d of disposers) d();
     if (!silent) game.sfx('ui_back');
@@ -764,9 +808,14 @@ export function mountPanel({ view: startView, onClose } = {}) {
   root.addEventListener('pointerdown', offPad, true);
 
   // the dialog follows sign-in changes made elsewhere (another tab, an expired session)
+  let observedUserId = account.user?.id || null;
   disposers.push(account.subscribe(() => {
-    if (closed || !current) return;
-    if (!account.user && !['login', 'register'].includes(viewName)) show('login', { dir: -1 });
+    const id = account.user?.id || null, previousId = observedUserId;
+    observedUserId = id;
+    if (closed || !current || ['login', 'register'].includes(viewName)) return;
+    if (!id) show('login', { dir: -1 });
+    else if (id !== previousId) show('account', { dir: -1 });
+    else { renderHero(); current.refresh?.(); }
   }));
 
   // on-screen keyboards: keep the focused field visible

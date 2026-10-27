@@ -37,8 +37,23 @@ export function renderLockerStage(game, G, dt) {
   const showcase = game.showcase, renderer = G.renderer;
   showcase.update(dt);
   if (game._skipRender) return;
-  const s = backdrop(), size = renderer.getSize(new THREE.Vector2());
-  const autoClear = renderer.autoClear, alpha = renderer.getClearAlpha(), color = renderer.getClearColor(new THREE.Color());
+  const s = backdrop();
+  let frame = s.frame;
+  if (!frame || frame.busy) {
+    const fresh = { size: new THREE.Vector2(), color: new THREE.Color(), busy: false };
+    if (!frame) s.frame = fresh;
+    frame = fresh;
+  }
+  frame.busy = true;
+  try {
+    renderBackdrop(s, renderer, frame);
+    showcase.render();
+  } finally { frame.busy = false; }
+}
+
+function renderBackdrop(s, renderer, frame) {
+  const size = renderer.getSize(frame.size);
+  const autoClear = renderer.autoClear, alpha = renderer.getClearAlpha(), color = renderer.getClearColor(frame.color);
   const target = renderer.getRenderTarget(), face = renderer.getActiveCubeFace(), mip = renderer.getActiveMipmapLevel();
   let failed = false, failure;
   try {
@@ -61,5 +76,4 @@ export function renderLockerStage(game, G, dt) {
     try { renderer.setRenderTarget(target, face, mip); } catch { /* preserve the first failure */ }
     throw failure;
   }
-  showcase.render();
 }
