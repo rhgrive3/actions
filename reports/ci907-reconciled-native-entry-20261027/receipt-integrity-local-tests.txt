@@ -89,3 +89,44 @@ COMMAND: node --test scripts/tests/inkwave-catalog-audio-graph.test.mjs scripts/
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 3643.443499
+
+Unwired helper real-manifest compatibility correction
+Pre-correction commit: c4b6f111f3eb20f29e3cacb66491d0cf43111ba3
+COMMAND: node --test reports/ci907-reconciled-native-entry-20261027/safe-same-head-receipt-union.test.mjs
+✔ receipt-only union adds absent entry, retains exact duplicates and never mutates inputs (4.010038ms)
+✔ actual canonical identity writer keeps builder separate from manifest.files and union accepts that schema (4.285493ms)
+✔ historical exact union can conceal corrupt old FX row; safe union rejects before replacement (2.208225ms)
+✔ fail closed: corrupt old row followed by good same-array duplicate (0.444669ms)
+✔ fail closed: old HTTP failure followed by fresh 200 (0.752072ms)
+✔ fail closed: old zero byte count followed by fresh valid (0.35833ms)
+✔ fail closed: valid hash but conflicting old duplicate byte count (0.386743ms)
+✔ fail closed: conflicting fresh duplicate (0.479542ms)
+✔ fail closed: cross-capture conflicting byte count (0.477569ms)
+✔ fail closed: cross-capture conflicting extra metadata (0.490088ms)
+✔ fail closed: corrupt fresh row (0.469728ms)
+✔ fail closed: unknown old artifact (0.454784ms)
+✔ fail closed: old retained error cannot be cleared by fresh success (0.386452ms)
+✔ fail closed: fresh retained error (0.504349ms)
+✔ fail closed: different source head (0.342505ms)
+✔ fail closed: missing original source identity (0.538962ms)
+✔ fail closed: different build (0.587104ms)
+✔ fail closed: missing separate original builder digest (0.341834ms)
+✔ fail closed: corrupt separate fresh builder digest (0.333272ms)
+✔ fail closed: different content hash (1.862734ms)
+✔ fail closed: different input hash (0.327874ms)
+✔ fail closed: different artifact table (0.317689ms)
+✔ fail closed: different captured raw manifest hash (0.413994ms)
+✔ fail closed: modified raw manifest bytes (0.211489ms)
+✔ fail closed: missing externally pinned source head (0.171428ms)
+✔ fail closed: corrupt original committed source input (0.235354ms)
+✔ fail closed: missing fresh source input (0.313272ms)
+✔ fail closed: missing required union entry (0.582377ms)
+✔ archived helper and aggregation remain byte-identical, not repaired historical evidence (0.280793ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 142.834924

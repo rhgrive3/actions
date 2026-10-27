@@ -17,8 +17,7 @@ export function safeSameHeadReceiptUnion({ manifestBytes, expected, original, fr
   const manifest = JSON.parse(manifestBytes.toString());
   if (manifest.schema !== 1 || !manifest.artifacts || !Object.keys(manifest.artifacts).length ||
       hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash ||
-      !manifest.build || !/^[a-f0-9]{64}$/.test(manifest.build.script || '') ||
-      manifest.build.script !== manifest.files?.['build-script/build-inkwave.mjs']) fail('manifest/build identity');
+      !manifest.build || !/^[a-f0-9]{64}$/.test(manifest.build.script || '')) fail('manifest/build identity');
 
   // Validate every row in each original array before any Map can discard it.
   // A valid later observation must never repair/erase an invalid earlier one.
@@ -27,6 +26,10 @@ export function safeSameHeadReceiptUnion({ manifestBytes, expected, original, fr
         capture.contentHash !== manifest.contentHash || capture.inputHash !== manifest.inputHash ||
         !isDeepStrictEqual(capture.build, manifest.build) || !isDeepStrictEqual(capture.artifacts, manifest.artifacts))
       fail(label + ' manifest/build/source identity');
+    // The real builder records its own digest in build.script, separately
+    // from manifest.files. Canonical source-input receipts retain this as
+    // builderSHA256 after checking both working-tree and committed bytes.
+    if (capture.builderSHA256 !== manifest.build.script) fail(label + ' source builder identity');
     validateCatalogInputReceipts(manifest, capture.sourceInputs);
     if (!Array.isArray(capture.errors) || capture.errors.length) fail(label + ' retained capture errors');
     if (!Array.isArray(capture.loaded) || !capture.loaded.length) fail(label + ' loaded denominator');

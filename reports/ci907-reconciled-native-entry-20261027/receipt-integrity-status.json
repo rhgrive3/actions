@@ -36,8 +36,8 @@
     {
       "kind": "synthetic-receipt-safety-only",
       "command": "node --test reports/ci907-reconciled-native-entry-20261027/safe-same-head-receipt-union.test.mjs",
-      "tests": 26,
-      "passed": 26,
+      "tests": 29,
+      "passed": 29,
       "failed": 0,
       "skipped": 0
     },
@@ -56,10 +56,19 @@
   "remoteWritesByAudit": false,
   "acceptanceRequirements": "receipt-integrity-audit.md#fresh-automatic-ci-is-the-acceptance-route",
   "auditFilesSha256": {
-    "README.md": "6f40e5bd5ee5908a8cd197dc9ea5774ab63d5daac51f414bae46d1e29bf09ace",
-    "receipt-integrity-audit.md": "b2318622ad6f45115ade813265a90870e66b636e2036e96bb3e83d6367071583",
-    "safe-same-head-receipt-union.mjs": "80febbcee341dd01fd75822664553aa38b0a448ddcde3850b1b33fdbd579d9af",
-    "safe-same-head-receipt-union.test.mjs": "4a1a5a3c861be7f42289a4b07fce8aa4cf76565051ddd8ebba892eb1c403f838",
-    "receipt-integrity-local-tests.txt": "d41d720dc61e2e91d5a0424a1c16143d0e8c40c00dd737b8dd9d0c9902ef930e"
+    "README.md": "b955fc54f0d0872a77e54cecbd6f1cf223818f54a7bf6c3376f9404e5ff0b8cd",
+    "receipt-integrity-audit.md": "8d8fd37ec905afc5c86044fc6dfe3e79ac36c0be97288e031fecee19dc34b120",
+    "safe-same-head-receipt-union.mjs": "865d6ec5a720b5813b189d7f0d30883592e15341c59eac19f9e0072abf7320ed",
+    "safe-same-head-receipt-union.test.mjs": "6557a7f02f155a46a7fbb3375c04c32b7c71e12a3113a6926a51dcfa6a4eb493",
+    "receipt-integrity-local-tests.txt": "1f170c5ce7fc84ae819fb03149a18a4235888a41aa30aace6e2ffcd5ba667fa7"
+  },
+  "builderSchemaCorrection": {
+    "priorHelperBehavior": "fail-closed rejection of real manifest; unwired and never historical acceptance",
+    "manifestBuilderField": "build.script",
+    "captureBuilderField": "builderSHA256",
+    "builderIsSeparateFromManifestFiles": true,
+    "observedNativeSourceEntries": 1492,
+    "observedNativeInputsIncludingSeparateBuilder": 1493,
+    "regressionUsesActualCanonicalWriter": true
   }
 }

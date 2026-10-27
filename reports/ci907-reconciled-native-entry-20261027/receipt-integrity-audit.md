@@ -25,12 +25,14 @@ The following original bytes are intentionally unchanged:
 `safe-same-head-receipt-union.mjs` is a narrow, unwired **receipt-only** replacement for the archived union, not generic infrastructure or a capture/replay tool. It:
 
 - requires an externally pinned full source commit and exact raw manifest SHA-256;
-- checks manifest/build consistency and exact source head, manifest, content hash, input hash, artifact table, build metadata and committed source-input receipts in **both** captures;
+- checks manifest/build consistency and exact source head, manifest, content hash, input hash, artifact table, build metadata, separately captured builder SHA-256 and committed source-input receipts in **both** captures;
 - rejects retained capture errors, unknown artifacts, wrong digests, invalid byte counts and any supplied non-200 HTTP status before combining;
 - validates each original row before insertion, rejects conflicting duplicates within or across captures, keeps exact duplicates only, and does not mutate inputs;
 - calls the unchanged canonical required-module validator on the resulting array and returns only that array, never a passed replay/image certificate.
 
 These identity fields must come from a trusted capture, not be retrofitted onto incomplete old summaries. The helper cannot authenticate fabricated metadata or independently establish absent source/artifact/image bytes. Different source heads are deliberately rejected even if some emitted bytes coincide. The historical inputs have **not** been processed by this helper and must not be described as repaired or revalidated.
+
+Compatibility correction: the real builder stores its own SHA-256 at `manifest.build.script`, **not** in `manifest.files["build-script/build-inkwave.mjs"]`. The first unwired helper incorrectly required that invented file entry and would reject a real manifest; it did not accept unsafe evidence. The helper now validates the separately captured canonical `builderSHA256` against `manifest.build.script`, while `validateCatalogInputReceipts` retains the exact `manifest.files` denominator. A regression invokes the actual `writeBuildIdentity` writer on fabricated files, rather than assuming its schema. Missing/corrupt separate builder digests still fail. In the separately observed native integration build, the count is **1,492 manifest source entries + 1 separate builder = 1,493 inputs**, not a lost input. This schema correction does not update the frozen integration head or turn any historical replay into accepted evidence.
 
 ## Local verification
 
@@ -38,7 +40,7 @@ Exact commands and full output: [`receipt-integrity-local-tests.txt`](receipt-in
 
 ```sh
 node --test reports/ci907-reconciled-native-entry-20261027/safe-same-head-receipt-union.test.mjs
-# 26 tests passed, 0 failed, 0 skipped. Fabricated receipt metadata only.
+# 29 tests passed, 0 failed, 0 skipped. Fabricated receipt metadata only.
 node --test scripts/tests/inkwave-catalog-audio-graph.test.mjs scripts/tests/inkwave-catalog-audio.test.mjs
 # 42 tests passed, 0 failed, 0 skipped. Existing source/VM graph contracts.
 ```
