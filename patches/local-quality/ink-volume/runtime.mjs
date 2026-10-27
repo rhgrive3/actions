@@ -117,6 +117,7 @@ export class InkVolumes {
     } catch (error) { for (const r of asset.resources) r.dispose(); throw error; }
   }
   begin(camera = this.camera) {
+    this.hissenContourFrame=false;
     this.camera = camera; this.metrics.active = this.metrics.culled = this.metrics.overflow = this.metrics.fallback = this.metrics.fallbackDropped = this.metrics.triangles = this.metrics.batches = 0;
     if (camera) { camera.updateMatrixWorld(); this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.clip); }
     this.frame++;

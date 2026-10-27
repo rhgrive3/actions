@@ -157,7 +157,7 @@ test('Hissen canonical fallback retains frame envelopes and stays inside the vol
   const before=state();ps._draw();ps.syncVisuals(1);
   assert(e.metrics.active>0,'missing full pack still draws canonical contours');assert.equal(ps.blobs.count,0,'no generic fill');assert.equal(ps.projectileVisuals.stats.vertexCount,0,'no thick history body');assert.equal(state(),before);
   e.register('roller',full.pack);ps._draw();ps.syncVisuals(1);assert.equal(e.metrics.fallback,0,'normal loaded route retained');assert.equal(e.metrics.overflow,0);assert.equal(state(),before);
-  e.triangleBudget=30000;ps._draw();ps.syncVisuals(1);assert(e.metrics.fallback>0,'real rejection selects the contour LOD');assert(e.metrics.triangles<=30000);assert.equal(ps.blobs.count,0);assert.equal(ps.projectileVisuals.stats.vertexCount,0);assert.equal(state(),before);
+  e.triangleBudget=30000;ps._draw();ps.syncVisuals(1);assert(e.metrics.fallback>0,'real rejection selects the contour LOD');assert.equal(e.metrics.fallback,e.metrics.active,'crowded Hissen frame chooses one contour tier before greedy full fragments starve siblings');assert.equal(e.metrics.fallbackDropped,0,'five cheap contour bodies fit the test budget');assert(e.metrics.triangles<=30000);assert.equal(ps.blobs.count,0);assert.equal(ps.projectileVisuals.stats.vertexCount,0);assert.equal(state(),before);
   e.triangleBudget=0;ps._draw();ps.syncVisuals(1);assert.equal(e.metrics.active,0);assert.equal(e.metrics.triangles,0);assert(e.metrics.fallbackDropped>0,'hard bound is explicit');assert.equal(ps.blobs.count,0,'hard exhaustion cannot spill unaccounted generic main');assert.equal(state(),before);
   e.dispose();ps.disposeVisuals();f.restoreRandom();
 });
