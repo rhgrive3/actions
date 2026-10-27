@@ -1,6 +1,11 @@
 {
   "scope": "Deterministic CPU diagnostic using the same actual vertex metric and real Actor/Physics; starting pose is fixture setup, not native browser acceptance.",
   "metric": "Minimum actual displayed vertex Y minus exact fixture collision height at that vertex X/Z. Same metric for all versions; fixture setup is not normal gameplay acceptance.",
+  "versions": {
+    "baseline": "4ce9768e6177b19f11f17e28f086a4da36f35fcd",
+    "reviewed": "bbc4a19b9778306b4ebd3f92b630964e612670dc",
+    "working": "3d720d4b106cbb462b52ba5c4381da6459e9705e"
+  },
   "batch": 6,
   "runs": [
     {

@@ -1,0 +1,316 @@
+{
+  "base": "bbc4a19b9778306b4ebd3f92b630964e612670dc",
+  "code": "3d720d4b106cbb462b52ba5c4381da6459e9705e",
+  "kind": "Normal-input Chromium ordinary range Level; no actor/paint/pose/clock/input injection. Read-only vertex and per-vertex physics surface observers.",
+  "before": {
+    "sourceSha": "ea8213beba44e96cc674bbc1d1df6d3884d1346e",
+    "contentHash": "ca0d3c6c480a30af6bfa9cfea5eedd2dae8f2d26ac2d877cab92d87955bb2a5f",
+    "browser": "154.0.8037.57",
+    "checkpoints": {
+      "before": {
+        "time": 17.91643333333335,
+        "position": [
+          0.9904027378916139,
+          1,
+          -16.922429031925958
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "grounded": true,
+        "rolling": true,
+        "flightProjectiles": 0,
+        "turf": 0,
+        "occupiedPaintCells": 0,
+        "rampInk": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "headVertexNormalM": 0.008372311465884685,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      },
+      "mid": {
+        "time": 18.166433333333337,
+        "position": [
+          0.9904027378916139,
+          0.9586072579814895,
+          -14.834429031925957
+        ],
+        "normal": [
+          0,
+          0.9701425001453319,
+          0.24253562503633297
+        ],
+        "grounded": true,
+        "rolling": true,
+        "flightProjectiles": 0,
+        "turf": 2.9929225330572793,
+        "occupiedPaintCells": 48,
+        "rampInk": [
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "headVertexNormalM": 0.14573939540726874,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      },
+      "end": {
+        "time": 20.91643333333318,
+        "position": [
+          0.9904027378916139,
+          0,
+          -8.894429031925949
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "grounded": true,
+        "rolling": true,
+        "flightProjectiles": 0,
+        "turf": 9.662021119006205,
+        "occupiedPaintCells": 159,
+        "rampInk": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "headVertexNormalM": -0.06028465640281028,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      }
+    },
+    "captures": [
+      {
+        "name": "weapon-idle-carry",
+        "time": 14.583100000000057,
+        "position": [
+          0.9904027378916139,
+          1,
+          -16.922429031925958
+        ],
+        "headVertexNormalM": 1.3004145726795233,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      },
+      {
+        "name": "weapon-held-before-reset",
+        "time": 16.316433333333443,
+        "position": [
+          0.9904027378916139,
+          1,
+          -16.922429031925958
+        ],
+        "headVertexNormalM": 0.18318249868232162,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      },
+      {
+        "name": "weapon-held-downhill-mid",
+        "time": 19.16643333333328,
+        "position": [
+          0.9904027378916139,
+          0.7381072579814894,
+          -13.952429031925956
+        ],
+        "headVertexNormalM": 0.011402030262541718,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      },
+      {
+        "name": "weapon-held-downhill-end",
+        "time": 21.96643333333312,
+        "position": [
+          0.9904027378916139,
+          0,
+          -8.012429031925947
+        ],
+        "headVertexNormalM": -0.040479600247526615,
+        "headActualSurfaceVerticalM": null,
+        "surfaceProbeMisses": null
+      }
+    ],
+    "pageErrors": [],
+    "httpErrors": [],
+    "requestFailures": 1,
+    "browserClosed": true,
+    "serverClosed": true,
+    "closedPortConnectResult": 111
+  },
+  "after": {
+    "sourceSha": "3d720d4b106cbb462b52ba5c4381da6459e9705e",
+    "contentHash": "1b04d881b8591bace8cec11988d7ba784166d82710a64821002ce2260592f0c2",
+    "browser": "154.0.8037.57",
+    "checkpoints": {
+      "before": {
+        "time": 19.299333333333244,
+        "position": [
+          0.9904027378916139,
+          1,
+          -16.922429031925958
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "grounded": true,
+        "rolling": true,
+        "flightProjectiles": 0,
+        "turf": 0,
+        "occupiedPaintCells": 0,
+        "rampInk": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "headVertexNormalM": 0.015049294785124623,
+        "headActualSurfaceVerticalM": 0.015049294785124623,
+        "surfaceProbeMisses": 0
+      },
+      "mid": {
+        "time": 19.54933333333323,
+        "position": [
+          0.9904027378916139,
+          0.9586072579814895,
+          -14.834429031925957
+        ],
+        "normal": [
+          0,
+          0.9701425001453319,
+          0.24253562503633297
+        ],
+        "grounded": true,
+        "rolling": true,
+        "flightProjectiles": 0,
+        "turf": 2.9929225330572793,
+        "occupiedPaintCells": 48,
+        "rampInk": [
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "headVertexNormalM": 0.016400582792631374,
+        "headActualSurfaceVerticalM": 0.01690533379392689,
+        "surfaceProbeMisses": 0
+      },
+      "end": {
+        "time": 22.065999999999754,
+        "position": [
+          0.9904027378916139,
+          0,
+          -8.894429031925949
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "grounded": true,
+        "rolling": true,
+        "flightProjectiles": 0,
+        "turf": 9.662021119006207,
+        "occupiedPaintCells": 159,
+        "rampInk": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "headVertexNormalM": 0.01384078783452486,
+        "headActualSurfaceVerticalM": 0.01384078783452486,
+        "surfaceProbeMisses": 0
+      }
+    },
+    "captures": [
+      {
+        "name": "weapon-idle-carry",
+        "time": 16.032666666666763,
+        "position": [
+          0.9904027378916139,
+          1,
+          -16.922429031925958
+        ],
+        "headVertexNormalM": 1.2559643841447734,
+        "headActualSurfaceVerticalM": 1.2559643841447734,
+        "surfaceProbeMisses": 0
+      },
+      {
+        "name": "weapon-held-before-reset",
+        "time": 17.549333333333344,
+        "position": [
+          0.9904027378916139,
+          1,
+          -16.922429031925958
+        ],
+        "headVertexNormalM": 0.1834293834944638,
+        "headActualSurfaceVerticalM": 0.1834293834944638,
+        "surfaceProbeMisses": 0
+      },
+      {
+        "name": "weapon-held-downhill-mid",
+        "time": 20.315999999999853,
+        "position": [
+          0.9904027378916139,
+          0.7381072579814894,
+          -13.952429031925956
+        ],
+        "headVertexNormalM": 0.01458614241138198,
+        "headActualSurfaceVerticalM": 0.01503505145810824,
+        "surfaceProbeMisses": 0
+      },
+      {
+        "name": "weapon-held-downhill-end",
+        "time": 22.93266666666637,
+        "position": [
+          0.9904027378916139,
+          0,
+          -8.012429031925947
+        ],
+        "headVertexNormalM": 0.014969106321829795,
+        "headActualSurfaceVerticalM": 0.014969106321829795,
+        "surfaceProbeMisses": 0
+      }
+    ],
+    "pageErrors": [],
+    "httpErrors": [],
+    "requestFailures": 0,
+    "browserClosed": true,
+    "serverClosed": true,
+    "closedPortConnectResult": 111
+  },
+  "limits": [
+    "Rear camera partly occludes the head; rendered captures and geometry counters are distinct evidence.",
+    "Initial flick/return is preserved: first held-before-reset capture still belongs to transition, not the settled drag constraint.",
+    "No original-game timing/geometry agreement or native triangle browser acceptance.",
+    "Images and raw browser receipts remain local and are not part of this publication."
+  ],
+  "comparison": {
+    "sameEntryPosition": true,
+    "sameExitPosition": true,
+    "entryNormalBeforeM": 0.14573939540726874,
+    "entryNormalAfterM": 0.016400582792631374,
+    "entryVerticalBeforeDerivedM": 0.1502247302694566,
+    "entryVerticalBeforeDerivation": "All old head bounds lie inside the known range ramp x[-3,3],z[-15,-11] (zones.mjs/layout.mjs). On this common plane, vertical clearance = normal clearance / normal.y.",
+    "entryVerticalAfterMeasuredM": 0.01690533379392689,
+    "exitVerticalBeforeM": -0.06028465640281028,
+    "exitVerticalAfterM": 0.01384078783452486
+  }
+}
