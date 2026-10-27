@@ -142,12 +142,21 @@ function configuredBlasterSpec(source, scale) {
     values:SPEC_INPUTS.map(([group,key])=>source[group]?.[key])});
   return spec;
 }
+const recycledFlightVectors = new WeakMap();
 export function configureBlasterFlightPaint(projectile, source, scale) {
-  const spec = configuredBlasterSpec(source, scale);
+  const spec = configuredBlasterSpec(source, scale), pos = projectile.pos;
+  // _new explicitly nulls the flight field at the projectile's recycle boundary.
+  // Reconfiguring a live flight keeps its previous returned record independent.
+  let v = projectile.s3BlasterFlightPaint === null ? recycledFlightVectors.get(projectile) : null;
+  if (!v || v.type !== pos.constructor) {
+    v = { type: pos.constructor, last: pos.clone(), sample: pos.clone(), down: pos.clone(),
+      direction: pos.clone(), end: pos.clone(), point: pos.clone(), normal: pos.clone() };
+    recycledFlightVectors.set(projectile, v);
+  } else { v.last.copy(pos); v.sample.copy(pos); v.direction.copy(pos); v.end.copy(pos); v.point.copy(pos); v.normal.copy(pos); }
+  v.down.set(0, -1, 0);
   projectile.s3BlasterFlightPaint = { spec, distance: 0, index: 0,
-    last: projectile.pos.clone(), sample: projectile.pos.clone(), down: projectile.pos.clone().set(0, -1, 0),
-    direction: projectile.pos.clone(), end: projectile.pos.clone(),
-    hit: { point: projectile.pos.clone(), normal: projectile.pos.clone(), hit: false }, wallSplash: null };
+    last: v.last, sample: v.sample, down: v.down, direction: v.direction, end: v.end,
+    hit: { point: v.point, normal: v.normal, hit: false }, wallSplash: null };
   projectile.trailEvery = 0; // the scheduler owns Blaster flight paint; never the legacy random trail
   return projectile.s3BlasterFlightPaint;
 }
