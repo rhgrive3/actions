@@ -1,4 +1,3 @@
-const GYRO_AXES = Object.freeze(['alpha', 'beta', 'gamma']);
 import { getPlatformLifecycle } from './platform-lifecycle.mjs';
 import { GyroPermission, gyroStatusMessage } from './gyro-permission.mjs';
 // Sensor reliability overlay. All angles in the original processing pipeline
@@ -19,7 +18,9 @@ const state = g => g._qualityGyro || (g._qualityGyro = {
   // #615 raw zero-rate bias; retain the current Android and handoff owners.
   bias: [0, 0, 0], still: 0, biasSrc: null,
 });
-const finiteEvent = (e, keys) => keys.every(k => typeof e?.[k] === 'number' && Number.isFinite(e[k]));
+const finiteGyroAxes = e => typeof e?.alpha === 'number' && Number.isFinite(e.alpha)
+  && typeof e?.beta === 'number' && Number.isFinite(e.beta)
+  && typeof e?.gamma === 'number' && Number.isFinite(e.gamma);
 function fallback(g, reason) {
   const s = state(g);
   if (g._src !== 'ori') { s.fallbacks++; s.reason = reason; }
@@ -40,7 +41,10 @@ function commitRaw(s, x, y, z, dt, time) {
   const a=qw*X+qx*W+qy*Z-qz*Y,b=qw*Y-qx*Z+qy*W+qz*X,c=qw*Z+qx*Y-qy*X+qz*W,d=qw*W-qx*X-qy*Y-qz*Z;
   const n=Math.hypot(a,b,c,d);s.boundary.q=[a/n,b/n,c/n,d/n];
   s.boundary.time=time;
-  s.attitudes=s.attitudes.filter(p=>p.time>time);
+  const records = s.attitudes;
+  let keep = 0;
+  for (let i = 0; i < records.length; i++) { const point = records[i]; if (point.time > time) records[keep++] = point; }
+  records.length = keep;
 }
 function consumeAttitude(g, s, point, sample) {
   if (!s.boundary) { s.boundary={time:point.time,q:point.q.slice()};return; }
@@ -202,7 +206,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     return calibrate.call(this, x, y, z, time);
   };
   P._orientation = function (e) {
-    if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteEvent(e, GYRO_AXES)) return;
+    if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteGyroAxes(e)) return;
     screenChanged(this);
     const t = e.timeStamp || env.performance.now();
     if (!Number.isFinite(t)) return;
@@ -242,7 +246,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     } finally { s.event=previousEvent;s.eventDepth=depth; }
   };
   P._motion = function (e) {
-    if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteEvent(e.rotationRate, GYRO_AXES)) return;
+    if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteGyroAxes(e.rotationRate)) return;
     if (accessFor(this).motionPermission === 'denied') return;
     screenChanged(this);
     const t = e.timeStamp || env.performance.now();
