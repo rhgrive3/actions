@@ -100,3 +100,14 @@ test('coverage accounting uses projected floor area, not counts, on unequal cell
  assert.ok(trace.coverageFaces.some(f=>f.normalY===.8));
  assert.ok(trace.snapshots.some(s=>s.coverage[0]!==s.counts[0]/s.turfTotal),'old unweighted observer is a real negative control');
 });
+test('buried body writes are diagnosed without granting turf/SP; unexplained eligible writes still fail',async()=>{
+ const f=await fixture({productionComposition:true,fullRuntime:true,realProjectiles:true});f.context.document={hidden:false};
+ const {paint,V}=makePaintWorld(f,{occluded:true}),a=f.make('s3-slosher-washtub');f.G.local=a;f.context.window={__G:f.G};
+ vm.runInContext('('+installSlosherPhaseObserver.toString()+')()',f.context);const observer=f.context.window.__iwSlosherPhaseObserver;
+ a.addTurf(paint.splat(V(0,0,5),2,0,{seed:.5,claimOwner:a,instant:true}));
+ const trace=JSON.parse(JSON.stringify(observer.finish()));assert.deepEqual(trace.failures,[]);assert.ok(trace.nonScoringChanges.length>0);
+ assert.ok(trace.nonScoringChanges.every(c=>c.dead&&c.turf&&!c.pointEligible));assert.equal(a.stats.turf,0);assert.equal(a.special,0);
+ const clean=makePaintWorld(f);f.context.window={__G:f.G};vm.runInContext('('+installSlosherPhaseObserver.toString()+')()',f.context);
+ const before=clean.paint.grid.findIndex((_,i)=>!clean.paint.dead[i]);clean.paint.grid[before]=1;
+ const bad=f.context.window.__iwSlosherPhaseObserver.finish();assert.ok(bad.failures.some(s=>s.startsWith('unobserved paint cell')),'eligible ownership remains a hard failure');
+});
