@@ -6,6 +6,15 @@ import { gzipSync } from 'node:zlib';
 import { DEFAULT_INK_VOLUME_URLS, decodeVolumeBinary, unpackVolumes, loadVolumePack } from '../ink-volume/pack.mjs';
 import { decodeVTF } from '../ink-volume/vtf.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
+import { qualityIdentity } from '../adapter.mjs';
+
+test('Hissen contour manifest and binary are exact production build inputs',()=>{
+  const identity=qualityIdentity();
+  for(const name of ['manifest.json','volumes.bin.gz']){
+    const file='ink-volume/assets/hissen-fallback/'+name;
+    assert.equal(identity[file],crypto.createHash('sha256').update(fs.readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),file);
+  }
+});
 
 test('both shipped default packs retain every source VTF byte and all 34 decoded RGBA frames',async()=>{
   let frames=0;
