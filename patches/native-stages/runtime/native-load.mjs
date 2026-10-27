@@ -49,14 +49,18 @@ export async function loadNativeData(id,signal,options={}){
 // settle, because disposing the worker pool drops their callbacks.
 let ktx2=null;
 function ktx2Loader(renderer){
- if(ktx2?.renderer!==renderer){
+ if(ktx2?.renderer!==renderer||(ktx2.failed&&Date.now()>=ktx2.retryAt)){
   if(ktx2){ktx2.retired=true;releaseKtx2(ktx2);}
   ktx2={renderer,pending:0,retired:false,loader:import('../../../vendor/three/jsm/loaders/KTX2Loader.js').then(({KTX2Loader})=>
    new KTX2Loader().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer))};
  }
  return ktx2;
 }
-function releaseKtx2(entry){if(entry.retired&&!entry.pending)entry.loader.then(l=>l.dispose(),()=>{});}
+function releaseKtx2(entry){if(entry.retired&&!entry.pending&&!entry.disposed){entry.disposed=true;entry.loader.then(l=>l.dispose(),()=>{});}}
+export function releaseNativeTextureWorkers(renderer){
+ const entry=ktx2;if(!entry||entry.renderer!==renderer)return false;
+ ktx2=null;entry.retired=true;releaseKtx2(entry);return true;
+}
 // Textures ship as whole KTX2 slices of per-stage packs. One load fetches a
 // pack once (verified) and drops it after its last listed texture is taken.
 function prebuiltPacks(stage,rows){
@@ -65,7 +69,9 @@ function prebuiltPacks(stage,rows){
  const specs=new Map((stage.manifest.prebuiltTexturePacks||[]).map(p=>[p.file,p]));
  return {async slice(variant,signal){
   let bytes=pending.get(variant.pack);
-  if(!bytes){const spec=specs.get(variant.pack);if(!spec)throw Error('Unlisted prebuilt pack: '+variant.pack);bytes=import('./prebuilt-load.mjs').then(({fetchVerified})=>fetchVerified(spec.file,spec,signal));pending.set(variant.pack,bytes);bytes.catch(()=>pending.delete(variant.pack));}
+  if(!bytes){const spec=specs.get(variant.pack);if(!spec)throw Error('Unlisted prebuilt pack: '+variant.pack);bytes=import('./prebuilt-load.mjs').then(({fetchVerified})=>fetchVerified(spec.file,spec,signal));pending.set(variant.pack,bytes);
+   // Keep a rejection for this bounded load session; next stage gets a fresh map.
+  }
   const pack=await bytes;
   const left=(uses.get(variant.pack)||1)-1;uses.set(variant.pack,left);if(left<=0)pending.delete(variant.pack);
   if(variant.offset+variant.bytes>pack.byteLength)throw Error('Prebuilt texture outside its pack');
@@ -108,7 +114,12 @@ async function prebuiltCompressedTexture(variant,packs,renderer,signal,limit){
  const entry=ktx2Loader(renderer);entry.pending++;
  const finished=()=>{entry.pending--;releaseKtx2(entry);};
  let loader;
- try{loader=await entry.loader;}catch(error){finished();throw error;}
+ try{
+  if(entry.failed)throw entry.failed;
+  loader=await entry.loader;await loader.init?.();
+ }catch(error){
+  entry.failed=error;entry.retryAt=Date.now()+30000;entry.retired=true;finished();throw error;
+ }
  // Aborting settles the caller before KTX2's worker finishes. Its callback
  // still owns the loader until parseKtxTexture reports actual completion.
  let texture=await parseKtxTexture(loader,bytes,signal,finished);
@@ -138,6 +149,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  const fallback=textureLimit && typeof textureLimit==='object' ? textureLimit.fallback||null : null;
  const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
  textures._nativeBorrowed=new Set();
+ textures._releaseWorkers=releaseNativeTextureWorkers.bind(null,renderer);
  // A source export can contain hundreds of textures for inactive/unrendered objects.
  // nativeDisplay skips those objects; decoding their maps on a touch GPU cannot improve the image.
  // Keep old callers without an object registry compatible.
