@@ -50,6 +50,22 @@ function nativeRadius(p) {
   if(d2&&Number.isFinite(d2.InitRadius)){const index=p.catalog.descriptor.index||0,init=d2.InitRadius+index*(d2.AfterOffsetInitRadius||0),end=(Number.isFinite(d2.EndRadius)?d2.EndRadius:d2.InitRadius)+index*(d2.AfterOffsetEndRadius||0),t=d2.ChangeFrame>0?Math.min(1,p.age*60/d2.ChangeFrame):1;return init+(end-init)*t;}
   return p.vis||p.size;
 }
+// Choose one contour tier for a crowded Hissen frame before a cheap full
+// fragment can consume the remaining budget and starve its sibling lobes.
+export function prepareHissenVolumeLOD(engine,list) {
+  if(!engine?.assets?.has('hissen-fallback'))return;
+  const asset=engine.assets.get('projectile:slosher:slosher')||engine.assets.get('roller');
+  engine.hissenContourFrame=!asset;if(!asset)return;
+  let triangles=0,count=0;
+  for(const p of list){
+    if(!hissenVolumeFallback(p)||p._qualityDead||p.delay>0||!(projectileDrawRadius(p)>0))continue;
+    const pattern=asset.patterns[Math.abs((p.seed<.5?0:1))%asset.patterns.length];
+    const frame=Math.min(pattern.frames.length-1,Math.max(0,Math.floor(p.age*pattern.fps+1e-8)));
+    triangles+=pattern.frames[frame][0].triangles;count++;
+  }
+  engine.hissenContourFrame=triangles>engine.triangleBudget||count>engine.capacity;
+}
+
 export function submitInkVolume(engine,p) {
   if(!engine||!p._inkVolumeRecipe||p._qualityDead||p.delay>0)return false;
   const recipe=p._inkVolumeRecipe,pattern=p.seed<.5?0:1;
@@ -64,7 +80,8 @@ export function submitInkVolume(engine,p) {
     // artwork. Do not relabel the Roller sheet as those assets. Bucket,
     // Tri-Slosher, Dread Wringer and their alternate kits share Bucket's sheet.
     const fallback=hissenVolumeFallback(p)&&engine.assets.has('hissen-fallback');
-    const name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)&&engine.assets.has('roller')?'roller':fallback?'hissen-fallback':null);
+    let name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)&&engine.assets.has('roller')?'roller':fallback?'hissen-fallback':null);
+    if(fallback&&(engine.hissenContourFrame||engine.metrics?.fallback||engine.metrics?.fallbackDropped))name='hissen-fallback';
     if(!name)return false;
     const shared=sharedBucketDraw(p);
     const radius=shared?projectileDrawRadius(p):p.fidelitySloshDraw?fidelitySlosherDrawRadius(p):nativeRadius(p),width=radius*2*INK_LOOK.slosh[4];

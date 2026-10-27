@@ -33,7 +33,7 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
     patch("    await progress(0.85, t('Warming up…'));", "    // Complete the default pack load in the existing warmup phase, before\n    // shader compilation and the first shot.\n    await Promise.all([G.fx.inkVolumeReady, progress(0.85, t('Warming up…'))]);", 'default packs ready before gameplay');
   }
   if (rel === 'src/game/weapons.js') {
-    code = "import { captureInkVolume, submitInkVolume } from '../../patches/local-quality/ink-volume/recipes.mjs';\n" + code;
+    code = "import { captureInkVolume, submitInkVolume, prepareHissenVolumeLOD } from '../../patches/local-quality/ink-volume/recipes.mjs';\n" + code;
     patch('  _push(p) {', '  _push(p) {\n    captureInkVolume(p, WEAPONS[p.wid] || p.owner?.weapon);', 'snapshot local projectile presentation');
     // Network composition finalizes immutable mode/identity after velocity.
     // Observe the completed native birth instead of classifying midway through
@@ -47,7 +47,7 @@ Projectiles.prototype.ghostProjectile = function(a, e) {
   }
   return result;
 };\n`;
-    patch('  _draw() {\n    let n = 0;', '  _draw() {\n    const volumes = G.fx?.inkVolumes?.isInkVolumes === true ? G.fx.inkVolumes : null;\n    volumes?.begin(G.camera);\n    let n = 0;', 'begin existing projectile render pass');
+    patch('  _draw() {\n    let n = 0;', '  _draw() {\n    const volumes = G.fx?.inkVolumes?.isInkVolumes === true ? G.fx.inkVolumes : null;\n    volumes?.begin(G.camera);\n    prepareHissenVolumeLOD(volumes, this.list);\n    let n = 0;', 'begin existing projectile render pass');
     patch('      if (p.delay > 0) continue;\n      const sp = p.vel.length();', '      if (p.delay > 0) continue;\n      if (submitInkVolume(volumes, p)) continue;\n      const sp = p.vel.length();', 'replace only registered projectile recipes');
     // Charger flight reserves bounded pooled ink instances ahead of this pass;
     // preserve the same single shared volume flush for either build shape.
