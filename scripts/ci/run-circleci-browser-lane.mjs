@@ -62,6 +62,12 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
     i = j - 1;
     const command = parseCommand(attrs, title);
     if (command === null) continue; // GitHub-only actions: checkout/cache/upload artifacts.
+    if (title === 'Package bounded browser failure evidence') {
+      if (command !== 'node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$CI_STORAGE/failure-evidence" .built-site/_site/inkwave-build.json'
+          || !attrs.includes('        if: always() && (failure() || cancelled())'))
+        throw Error('Unreviewed evidence-only step: ' + title);
+      continue; // CircleCI packages failures in its always-run artifact step.
+    }
     if (EXTERNAL_STEPS.has(title)) continue; // CircleCI handles these in its own immutable setup.
     const whenLine = attrs.find(x => /^        if: /.test(x));
     const condition = whenLine ? whenLine.slice(12).trim() : null;

@@ -10,6 +10,7 @@ import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installRankedLiveAudioReader} from './lib/ranked-live-audio.mjs';
 import {releaseFullRankedRainmaker} from './lib/ranked-rainmaker-charge.mjs';
+import {proveRankedRollAudio} from './lib/ranked-roller-audio.mjs';
 const rankedModes = process.env.RANKED_MODE ? [process.env.RANKED_MODE] : ['zones','tower','rainmaker','clams'];
 assert(rankedModes.every(mode => ['zones','tower','rainmaker','clams'].includes(mode)), 'Unknown RANKED_MODE');
 const site=path.resolve(process.argv[2]||'_site-ranked'),out=path.resolve(process.argv[3]||'reports/ranked-browser');fs.mkdirSync(out,{recursive:true});
@@ -92,9 +93,9 @@ async function checkRankedRemoteContactGear(host, guest, save) {
    RG.input.mouse.left=fire;
    for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])if(RG.input.down(key)&&!keys.includes(key))window.dispatchEvent(new KeyboardEvent('keyup',{code:key}));
    for(const key of keys)if(!RG.input.down(key))window.dispatchEvent(new KeyboardEvent('keydown',{code:key}));
-   if(keys.includes('KeyW'))state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyW'),250);
+   if(keys.includes('KeyW')&&!RG.game.frozen)state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyW'),250);
   };
-  if(!keys.includes('KeyW')){apply();return;}
+  if(!keys.includes('KeyW')||RG.game.frozen){apply();return;}
   // Begin the same bounded wall-clock pulse immediately before the next real
   // native frame consumes it. A slow RAF must not erase the whole pulse before
   // any native input sample. Restore the exact original frame ownership first.
@@ -120,6 +121,7 @@ async function checkRankedRemoteContactGear(host, guest, save) {
  const place=(page,position,yaw)=>page.evaluate(async({position,yaw})=>{
   const {PLAYER}=await import(new URL('src/config.js',document.baseURI)),a=RG.match.local;
   a.pos.fromArray(position);a.vel.set(0,0,0);a.yaw=a.aimYaw=yaw;a.yawVel=0;a._faceTarget=null;RG.rig.yaw=yaw;RG.rig.pitch=0;
+  RG.input.mouse.dx=RG.input.mouse.dy=0;
   const ground=RG.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,.3,.3,PLAYER.footRadius,a.ground,false);
   if(!ground.hit)throw Error('Replication acceptance setup has no native foot support');
   a.pos.y=ground.y;a.grounded=true;a.groundN.copy(ground.normal);
@@ -224,12 +226,11 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   await Promise.all(pages.map(p=>p.evaluate(()=>{RG.input.mouse.left=RG.input.mouse.right=false;RG.input.keys.clear();RG.game.debug.unfreeze();})));
   await setInput(host,true);
   await host.waitForFunction(()=>RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
-  // First require the real remote roll buffer/handle at zero speed. Then a
-  // A real 250ms pulse can cover >3m. Verify 4m of native floor before admission;
-  // a cold recording can never drive movement for the whole async timeout.
+  // Verify the real remote loop at rest. A four-metre native floor corridor
+  // bounds a KeyW pulse; the relay cannot consume the pulse before admission.
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&!s.suspended&&s.near&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
-  await setInput(host,true,['KeyW']);
-  const supported=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;},identities[0].nid,timeout));
+  const supported=await proveRankedRollAudio(host,guest,identities[0].nid,setInput,
+    value=>phase('supported-audio-clock',{clock:structuredClone(value)}),'KeyW');
   await setInput(host,true);
   const movement=await host.evaluate(origin=>({position:RG.match.local.pos.toArray(),distance:Math.hypot(...RG.match.local.pos.toArray().map((v,i)=>v-origin[i]))}),lane.supported);
   assert(movement.distance<=4,'native movement pulse stayed inside verified 4m support corridor');
@@ -248,8 +249,8 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   await place(host,lane.supported,lane.travelYaw);await setInput(host,true);
   await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
-  await setInput(host,true,['KeyW']);
-  const recovered=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;},identities[0].nid,timeout));
+  const recovered=await proveRankedRollAudio(host,guest,identities[0].nid,setInput,
+    value=>phase('recovery-audio-clock',{clock:structuredClone(value)}),'KeyW');
   phase('recovered-real-audio',{remote:recovered});await setInput(host,false);
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s&&!s.held&&!s.suspended&&s.near&&s.audioState==='running'&&!(s.f&(1<<28))&&!s.rollLoop&&s.realRollLoops.every(h=>!h.playing);},identities[0].nid,timeout);
   phase('released',{remote:await read(guest,identities[0].nid)});

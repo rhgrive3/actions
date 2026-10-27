@@ -1,4 +1,4 @@
-import {assertSourceRemainderCoverage} from '../run-inkwave-source-remainder.mjs';
+import {assertSourceSuiteCoverage} from '../ci/inkwave-source-coverage.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -85,7 +85,7 @@ test('browser installs observation before room startup and never changes existin
 
 test('source and both network CI routes discover the new clock and diagnostic regressions', () => {
   const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
-  assertSourceRemainderCoverage(workflow,'network');
+  assertSourceSuiteCoverage(workflow,'network');
   for (const file of ['owner-clock-origin', 'owner-clock-platform', 'owner-clock-opening-adoption', 'issue-1767-startup-clock', 'issue-1767-session-clock'])
     assert.equal(workflow.split('patches/network-replication/tests/' + file + '.test.mjs').length - 1, 2, file + ' must run in matrix-network and focused-network routes');
   assert.equal(workflow.split('scripts/tests/inkwave-owner-clock-diagnostic.test.mjs').length - 1, 3, 'source, matrix-network and focused-network diagnostic routes');

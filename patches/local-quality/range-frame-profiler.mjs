@@ -96,9 +96,16 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     ? import('./range-hitch-tracer.mjs').then(async ({installHitchTracer}) => {
         if (disposed) return null;
         tracer = installHitchTracer(game,{env,now});
-        const {installDebugAB} = await import('./debug-ab-runtime.mjs');
-        if (disposed) { tracer?.dispose(); tracer=null; return null; }
-        ab = installDebugAB({probe,tracer,game,env,now});
+        // A/B controls are a second optional layer. If they cannot mount in a
+        // particular WebView, retain the already working frame tracer.
+        try {
+          const {installDebugAB} = await import('./debug-ab-runtime.mjs');
+          if (disposed) { tracer?.dispose(); tracer=null; return null; }
+          ab = installDebugAB({probe,tracer,game,env,now});
+        } catch (error) {
+          ab?.dispose(); ab=null;
+          traceError = String(error?.message || error);
+        }
         return tracer;
       }).catch(error => {
         ab?.dispose();tracer?.dispose();tracer=null;

@@ -188,7 +188,7 @@ async function keyboardProof() {
   const setInput=vm.runInContext('('+browser.slice(helperStart,helperEnd).trim().slice('const setInput='.length).replace(/;$/,'')+')',f.context);
   const page={evaluate:(fn,arg)=>fn(arg)};
   const tick=()=>{controller.update(1/60);f.tick(a);input.endFrame();};
-  return {f,input,a,window,KeyboardEvent,tick,setInput:(fire,keys=[])=>setInput(page,fire,keys)};
+  return {f,input,a,rig,window,KeyboardEvent,tick,setInput:(fire,keys=[])=>setInput(page,fire,keys)};
 }
 
 test('ranked keyboard producer delivers one native dodge edge; holds do not duplicate and release/repress does',async()=>{
@@ -218,4 +218,18 @@ test('ranked keyboard producer preserves a pending edge on keyup and delegates m
   h.input.endFrame();assert.equal(h.input.wasPressed('Space'),false);
   h.input.onKey=()=>true;await h.setInput(false,['Space']);
   assert.equal(h.input.down('Space'),false);assert.equal(h.input.wasPressed('Space'),false,'the helper does not bypass native menu ownership');
+});
+
+test('ranked placement discards the audio-unlock pointer delta before moving in the verified corridor',async()=>{
+  const reset=browser.split('\n').find(line=>line.includes('RG.input.mouse.dx=RG.input.mouse.dy=0;'));
+  assert(reset,'placement must clear pointer movement left by the real unlock gesture');
+  const movements=[];
+  for(const clear of [false,true]){
+    const h=await keyboardProof();h.rig.yaw=-Math.PI/2;h.rig.pitch=0;h.input.mouse.dx=700;
+    if(clear)vm.runInContext(reset,h.f.context);
+    await h.setInput(false,['KeyS']);h.tick();movements.push(h.a.intent.move.toArray());
+    await h.setInput(false);
+  }
+  assert(movements[0][0]<.5,'the old accumulated gesture rotates movement away from the corridor');
+  assert(movements[1][0]>.99);assert(Math.abs(movements[1][2])<1e-10);
 });
