@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
+import {markAttributeRange} from '../runtime/instance-color-upload.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptQueueExtraWeaponsFx} from '../../local-quality/queue-extra-weapons-fx-adapter.mjs';
@@ -60,7 +61,7 @@ test('camera direction elision preserves actual vendored parent/world/inverse ma
 
 test('Ribbon chronological dirty view preserves all geometry bytes through coalesce/wrap/expiry/clear',()=>{
  const source=runtime('special-vfx-kit'),ast=parse(source,{ecmaVersion:'latest',sourceType:'module'}),node=ast.body.find(n=>n.type==='ClassDeclaration'&&n.id.name==='RibbonPool');assert.ok(node);
- const build=s=>new Function('THREE','RIBBON_VERT','RIBBON_FRAG','vfxRandom',s+';return RibbonPool;')(THREE,'','',()=>.25),A=build(before.functions.RibbonPool),B=build(source.slice(node.start,node.end));
+ const build=s=>new Function('THREE','RIBBON_VERT','RIBBON_FRAG','vfxRandom','markAttributeRange',s+';return RibbonPool;')(THREE,'','',()=>.25,markAttributeRange),A=build(before.functions.RibbonPool),B=build(source.slice(node.start,node.end));
  for(const hz of [30,60,120]){const a=new A(THREE,3,8,false,{value:0}),b=new B(THREE,3,8,false,{value:0}),pairs=[];
   for(let frame=0;frame<hz*2;frame++){const t=frame/hz;
    if(frame%5===0){pairs.push([a.start({life:.3,spacing:.15}),b.start({life:.3,spacing:.15})]);}
