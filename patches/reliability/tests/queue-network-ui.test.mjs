@@ -26,7 +26,7 @@ test('remote idle audio avoids distance probes but always stops a previously pla
   actor.weapon.kind='charger';actor.weaponRunner.charging=true;voices.call(n,.016);assert.equal(probes,2);assert.equal(calls,6);
 });
 test('catalog Spinner source motors enter and retire through the optimized remote voice guard',()=>{
-  const G={audio:{}},voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesSplatChargerRise});
+  const G={audio:{}},voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesChargerRise});
   let probes=0,created=0,stopped=0;
   const a={remote:true,alive:true,weapon:{id:'s3-spinner-quick',kind:'catalog',behaviorKind:'splatling'},
     weaponRunner:{charging:true,streaming:false},net:{loops:{}},_nearCamera(){probes++;return true;}};
