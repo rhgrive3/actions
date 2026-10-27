@@ -1,12 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { updateStringerChargeHud, installStringerChargeHud } from '../runtime/stringer-charge-hud.mjs';
-import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
-import { ALTERNATE_WEAPON_KITS } from '../runtime/alternate-weapon-kits-data.mjs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { adaptStringerChargeHud } from '../stringer-charge-hud-adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
+import { fixture } from './source-fixture.mjs';
+const runtime = process.env.INKWAVE_BUILT_SITE
+  ? pathToFileURL(path.resolve(process.env.INKWAVE_BUILT_SITE, 'patches/splatoon3/runtime/') + path.sep)
+  : new URL('../runtime/', import.meta.url);
+const [{ updateStringerChargeHud, installStringerChargeHud }, { MAIN_WEAPON_CATALOG }, { ALTERNATE_WEAPON_KITS }] =
+  await Promise.all(['stringer-charge-hud.mjs', 'main-weapon-catalog-data.mjs', 'alternate-weapon-kits-data.mjs']
+    .map(name => import(new URL(name, runtime))));
 const rows=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='stringer');
 function hud(){
   const circle={style:{stroke:'native-arc'}},track={style:{stroke:'native-gray',opacity:'.45'}},classes=new Set(),flashes=[];
@@ -50,7 +56,36 @@ test('Stringer adapter appends only an installer after the complete HUD owner an
   const adapted=adaptStringerChargeHud('src/ui/hud.js',raw);
   assert.ok(adapted.includes(raw),'native geometry, scope and projection body are preserved verbatim by this adapter');
   const composed=adaptBuildSource('src/ui/hud.js',raw);
-  assert.ok(composed.includes('installStringerChargeHud(HUD, WEAPONS);'));
+  const count=needle=>composed.split(needle).length-1;
+  assert.equal(count('installStringerChargeHud(HUD, WEAPONS);'),1,'one Stringer installer after the complete HUD');
+  assert.equal(count("from '../../patches/splatoon3/runtime/stringer-charge-hud.mjs'"),1,'one Stringer runtime import');
+  assert.equal(count('const px1 = px.toFixed(1), py1 = py.toFixed(1);'),1,'terminal Shooter formatter applied once');
+  assert.equal(count('translate3d(${px1}px,${py1}px,0)'),1,'marker transform consumes those same packed strings');
+  assert.ok(composed.includes('_s3PaintTank('),'native S3 tank remains authoritative');
   assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/stringer-charge-hud-adapter.mjs'));
   assert.equal(adaptStringerChargeHud('src/main.js','untouched'),'untouched');
+});
+
+test('actual composed or emitted HUD packs marker coordinates and heading while Stringer stages remain installed',async()=>{
+  const f=await fixture({productionComposition:true,extraExports:"export { HUD } from './inkwave-public/src/ui/hud.js';"});
+  const element=()=>({style:{setProperty(){}},classList:{add(){},remove(){},toggle(){}}});
+  const h=Object.create(f.HUD.prototype),dot=element(),canvas={...element(),width:600,height:300};
+  Object.assign(h,{_L:{},_map:{},_mapT:0,_mapV:0,map:element(),mapDim:element(),el:element(),
+    mapLegend:element(),mapSlot:{appendChild(){}},mapDots:[dot],_updBeacons(){},_myTeam:()=>0,_snd(){}});
+  for(const p of [
+    {x:.35,y:.72,yaw:1.23456,isSelf:true,team:0,alive:true},
+    {x:.713,y:.215,yaw:-.4234,isSelf:false,team:1,alive:false},
+    {x:.127,y:.913,yaw:-2.091,isSelf:true,team:1,alive:true},
+  ]){
+    h._updMap({canvas,players:[p],expanded:false},1/60);
+    const width=parseFloat(h.map.style.width),height=parseFloat(h.map.style.height);
+    const x=(p.x*width).toFixed(1),y=(p.y*height).toFixed(1),yaw=p.isSelf?p.yaw:0;
+    assert.equal(h._L.md0,`${x}|${y}|${yaw.toFixed(2)}|${p.alive?1:0}|${p.isSelf?1:0}|${p.team}`);
+    assert.equal(dot.style.transform,`translate3d(${x}px,${y}px,0) rotate(${p.isSelf?p.yaw.toFixed(3):0}rad)`);
+    const key=h._L.md0,transform=dot.style.transform;
+    h._updMap({canvas,players:[p],expanded:false},1/60);
+    assert.equal(h._L.md0,key);assert.equal(dot.style.transform,transform);
+  }
+  assert.ok(Object.getOwnPropertySymbols(f.HUD.prototype).some(s=>s.description==='inkwave.stringer-charge-hud.v1'),
+    'shipping HUD class retains its Stringer stage wrapper');
 });
