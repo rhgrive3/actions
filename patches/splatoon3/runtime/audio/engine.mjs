@@ -52,7 +52,7 @@ export function installWeaponAudioEngine(Engine){
       this._prewarmLoader?.cancelOwner?.(this._prewarmOwner);this._prewarmOwner={};this._prewarmId=ownerKey;this._prewarmLoader=this._realS3Loader;
     }
     const prewarmOwner=this._prewarmOwner;
-    if(usesSplatChargerRise(id))this.prewarmChargerChargeRise?.(id);
+    if(usesChargerRise(id))this.prewarmChargerChargeRise?.(id);
     this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
     if(!id.includes(':')){
       const loader=this._realS3Loader;

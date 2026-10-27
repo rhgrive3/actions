@@ -39,6 +39,18 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
+test('weapon preparation prewarms the recorded rise only for Charger families',()=>{
+ const {ctx}=mkctx(),audio=new MixerStub(ctx),prewarms=[];
+ audio.weaponBank();
+ audio._realS3Loader.ensure=()=>Promise.resolve();
+ audio.prewarmChargerChargeRise=id=>prewarms.push(id);
+ audio.prepareWeapon('shooter');
+ audio.prepareWeapon('s3-charger-long-01');
+ audio.prepareWeapon('charger');
+ assert.deepEqual(prewarms,['s3-charger-long','charger']);
+ audio.disposeWeaponAudio();
+});
+
 test('original main shot and normal, strong, critical and splat recordings are resident before a Charger first shot',async()=>{
  const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
  const mock=manifest([
