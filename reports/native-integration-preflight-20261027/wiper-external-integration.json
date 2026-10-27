@@ -1,0 +1,172 @@
+{
+  "recordedAt": "2026-10-27T13:53:41.161866+00:00",
+  "status": "implementation-candidate-native-pixels-and-final-CI-pending",
+  "sourceHead": "1f59a84fd086520de46f6458abfbbf885da62f32",
+  "sourceTree": "0cdf87682efda729a32adbc6bf92b66c504cea50",
+  "externalHead": "0b1f5c025a3aada333c44d256b97b1d3cdb694a1",
+  "actualNewMain": "9f82433e3ed2c1f58221e39152c7ad2ecdb51a51",
+  "reviewedIncoming": [
+    "befcf4e26e093466d958acd65c6c13fe24dceeef",
+    "45e41becdbdfeb0b1324f19cbbd6c6a94d3a8963",
+    "0aaaa36ae82930ae112249bea03f31ff3e10bddc",
+    "aa0c990b27c3bf69dcc68df46cf2333905eb31bf"
+  ],
+  "localPicks": [
+    "84228ca",
+    "3cf418f",
+    "034f23f",
+    "f80a4fed62fc996b8c786e1d11f062421f90896b"
+  ],
+  "qaStaleGuardRepair": "551492b60b0437d6b7e81ad9229fc3571e51ef7d",
+  "mergeParents": [
+    "551492b60b0437d6b7e81ad9229fc3571e51ef7d",
+    "0b1f5c025a3aada333c44d256b97b1d3cdb694a1"
+  ],
+  "externalReconciliation": {
+    "head": "1f59a84fd086520de46f6458abfbbf885da62f32",
+    "parents": [
+      "551492b60b0437d6b7e81ad9229fc3571e51ef7d",
+      "0b1f5c025a3aada333c44d256b97b1d3cdb694a1"
+    ],
+    "externalHead": "0b1f5c025a3aada333c44d256b97b1d3cdb694a1",
+    "baseMain": "9f82433e3ed2c1f58221e39152c7ad2ecdb51a51",
+    "all39NonWorkflowExternalBlobsPreserved": true,
+    "allLocalNonWorkflowBlobsPreserved": true,
+    "externalPNGsPreserved": [
+      "reports/inkwave-mobile-menus-2026-10-26/mode-after.png",
+      "reports/inkwave-mobile-menus-2026-10-26/mode-before.png",
+      "reports/inkwave-mobile-menus-2026-10-26/ranked-results.png",
+      "reports/inkwave-mobile-menus-2026-10-26/results-after.png",
+      "reports/inkwave-mobile-menus-2026-10-26/results-before.png",
+      "reports/inkwave-mobile-menus-2026-10-26/setup-after.png",
+      "reports/inkwave-mobile-menus-2026-10-26/setup-before.png",
+      "reports/inkwave-mobile-menus-2026-10-26/setup-settings.png",
+      "reports/inkwave-mobile-menus-2026-10-26/small-landscape-setup.png"
+    ],
+    "hissenProfileBlobUnchanged": true,
+    "buildBefore4ec": "4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630",
+    "buildCombined": "2b5058d066b7b505e4abad81a4f7d9b2e561e6bffb40357da68b79ad76c78969",
+    "inputDeltasVs4ec": [
+      "build-script/inkwave-source-composition.mjs",
+      "build-script/lib/inkwave-build-only-modules.mjs",
+      "local-quality/adapter.mjs",
+      "local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+      "local-quality/ink-volume/runtime.mjs",
+      "local-quality/range-frame-profiler.mjs",
+      "native-stages/runtime/native-physics.mjs",
+      "native-stages/runtime/native-render.mjs",
+      "native-stages/runtime/native-world.mjs",
+      "patch/runtime/menu-layout.mjs",
+      "patch/runtime/s3-ink-sheets.mjs",
+      "patch/runtime/s3-projectile-shapes.mjs",
+      "patch/ui.css"
+    ]
+  },
+  "build": {
+    "sourceSha": "1f59a84fd086520de46f6458abfbbf885da62f32",
+    "contentHash": "2b5058d066b7b505e4abad81a4f7d9b2e561e6bffb40357da68b79ad76c78969",
+    "inputHash": "956657844892adbaf559ca1a6de0a1e5957b453447429b9ccfa410a39e9cdc58",
+    "sourceInputs": 1494,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "checks": {
+    "combinedSourceWithNewMainOptimizerAndAllPriorModuleEvalConsumers": {
+      "pass": 163,
+      "fail": 0,
+      "skip": 0
+    },
+    "emittedWiperAndPreservedHissen": {
+      "pass": 38,
+      "fail": 0,
+      "skip": 0
+    },
+    "canonicalVerifier": {
+      "pass": 601,
+      "fail": 0,
+      "skip": 0
+    },
+    "workflowContracts": {
+      "pass": 50,
+      "fail": 0,
+      "skip": 0
+    },
+    "runnerContracts": {
+      "pass": 23,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "staleGuards": {
+    "before": "pre-external f80: exact three-report Hissen guard and two legacy sheet-program key parity tests reject accepted Wiper additions",
+    "after": "peer-accepted551:21/21; exact orderedfour-report closure plus22negativecontrols; only asserted old2-to-wet-wave1 sheet index0key migration;11draw/keynegativecontrols; immutablefixturebytesunchanged",
+    "noRuntimeOrWorkflowRelaxation": true
+  },
+  "moduleEvalScan": {
+    "newRuntimeExternalImports": 0,
+    "existingReadersTested": 9,
+    "newQAHelperConsumers": "actual serialized source Actor scheduler plus fail-closed source/build/consumed modules/PNG receipt tests",
+    "missingHelperSubstitutionOrSkip": false
+  },
+  "peerReviews": [
+    "Wiper runtime45e final ACCEPT",
+    "Wiper QAaa0 final ACCEPT after three reproduced receipt gaps fixed",
+    "551 exacttwo staleguard test repair ACCEPT21/21",
+    "1f59 orderedparents,39externalblob+9PNG retention andtwo-wayworkflowbyteproof ACCEPT",
+    "external lateoptimizer andlighting compatibility26/26+3camera3pattern independent ACCEPT"
+  ],
+  "nativeEvidencePlan": {
+    "automaticCatalogExistingJob": true,
+    "hissen": "birth-relative5/7/9; before9b2b artifact12732101436 independentlyretained; newexactheadpixelsrequired",
+    "wiper": "six Normal/Lite/Heavy charged/tapcases;charged1/3/8,tap1/2/3;36originalPNG+source/build/consumedmodule/geometry/draw/cleanup receipt required",
+    "replay": "controlled native; not ordinary input or retail timing",
+    "noManualDispatch": true
+  },
+  "limitations": [
+    "Wiper geometry/material/launch shader is a visual reconstruction, not recovered Nintendo mesh or measured retail scale/timing",
+    "No local native-browser launch or new pixels; trueafterappearance/occlusion andmixedGPUdrawcost remainpending",
+    "Hissen main sizing/precise retail child morphology remainunverified",
+    "5a andpriorheadcancelled/partial evidence is not relabeled to thisnewcandidate",
+    "1494inputs/2bcontent includes preserved newmain optimizer/UI/volume changes; old1493/dbe59/4ec tests are not finalnewmainproof",
+    "native-prebuilt payloads remainLFS pointers; fallbackbuild is notprebuiltstage acceptance",
+    "Draft/unmerged, fullrequired exact-new-headCI stillpending"
+  ],
+  "evidence": {
+    "build.log": {
+      "bytes": 1210,
+      "sha256": "3050ea6b2f24322bca3cf81f10a8bd743cafdfef5bb7d1693f384299ce9e7371"
+    },
+    "startup-budget.log": {
+      "bytes": 520,
+      "sha256": "33e4f5adbe6ba76d7dc65b47c41dff3d349d11214d21635e064fd5b8e5e518a2"
+    },
+    "build-audit.json": {
+      "bytes": 294,
+      "sha256": "335289a675e6a103b3c10bed5497d7ff027524c9029dd08b451eeca049f68116"
+    },
+    "reconciliation-closure.json": {
+      "bytes": 1817,
+      "sha256": "87feda38991c4f5824f13cffc32ea2bb3f52a7cb9fef5c1c9e4e3803dbf1492b"
+    },
+    "combined-source.log": {
+      "bytes": 25221,
+      "sha256": "aa65b9993d4f46928416abe7235472274166e5e66d3c03a213e8da8d8adba74c"
+    },
+    "emitted.log": {
+      "bytes": 13833,
+      "sha256": "88077000845da3f7a47f26ead653d94babe71e7fb2aaa7d5220e973cb98f87ed"
+    },
+    "verifier.log": {
+      "bytes": 55194,
+      "sha256": "d2e49731bb4b70de88792001328c707a0a9bda9fed9d00262efdf21fcf7d7e89"
+    },
+    "runner-contracts.log": {
+      "bytes": 2709,
+      "sha256": "6518ea441a22cfbf47585d2e5f8f5536d466af5a2579e1defb4d90353398d351"
+    },
+    "workflow-guards.log": {
+      "bytes": 5160,
+      "sha256": "c67517aa969d19d8a9ea902a6a647a388b35186873ba88d986bfa1593f6d996b"
+    }
+  }
+}

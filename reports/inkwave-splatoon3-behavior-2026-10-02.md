@@ -6602,3 +6602,10 @@ Independent source/emitted controls plus ordinary shipping Range touch input sup
 ### 2026-10-27 Hissen floor-child visual-coherence candidate — after pixels pending
 
 ユーザーが指摘した床塗り子滴の球状表現に対し、自動catalog `9b2b8f70` の実F9画像で2個の小球を確認した。主弾17/17の原典radius/tail行列は維持し、Hissenの子滴だけ既存のanalytic Slosher rim／薄さ `[.3,4,.32]` を共有する候補とする。元のdraw radius `.3`→一様行列scale `.15`、水平heading、位置／速度／乱数／数／塗り／衝突は変えず、既存1,360三角形／子滴・同じinstanced draw／材質／shader／照明で描く。新規形状資産・モデル修正・子滴非表示化は行わない。source62件／新最適化emitted20件がskipなしで成功し、旧emittedは新profile回帰で失敗する。これは元映像の子滴を同定して抽出した形状ではなく、既存INKWAVE profileを使う非球状の整合候補。本家version／gear／状態／対応phase・投影が未確定のため本家一致は未認定。既存自動F5/F7/F9で同じpose／camera／seed／palette／照明の新実画素と子滴の可視性を確認するまで受入完了とはしない。[費用・不変条件・検証と残ゲート](hissen-child-profile-20261027/README.md)。
+
+
+### 2026-10-27 Wiper系チャージ波の見た目候補（実画面の再検証待ち）
+- 本家根拠: ユーザー比較画像は濡れた不均一な塊と、INKWAVE側の平行な尖った二枚・密な筋の違いを示す。ただし本家版・ブキ・ギア・画角・時間・寸法は確定せず、私有画像や原本素材は同梱しない。
+- 実装・再現: `s3-projectile-shapes.mjs` と `s3-ink-sheets.mjs` のNormal/Stamper・Lite/Wiperのチャージ縦波だけを既存の範囲・分割数で不均一な湿った輪郭と短い剥がれへ再構成。各キットでチャージ解除して観察し、tapとHeavy/Dentalの横向きチャージを対照にする。
+- プレイ影響: 弾の数・位置・速度・寿命・塗り・ダメージ・RNGは変更しない。対象波の初回描画時だけ追加mesh/geometry/material各1と13600bytes、混在時は描画passごとに最大1draw追加を許容した候補であり、GPU時間や実機FPSは未測定。
+- 確認状態: 新main9f82433を保つ統合候補でsource163・emitted38・verifier601等の限定検証が通る。自動CIのNormal/Lite/Heavy×charge/tap・元PNG36枚とHissen5/7/9の実描画、遮蔽、材質・影、見た目の改善は別途確認が必要で、本家一致・寸法・時間や完了は主張しない。詳細 `reports/wiper-wet-wave-20261027/README.md`、`reports/native-integration-preflight-20261027/wiper-external-integration.json`。
