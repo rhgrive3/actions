@@ -1167,7 +1167,6 @@ async function runVisuals(page) {
   ]) {
     const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed });
     const { setup, lifecycleReset } = setupResult;
-    if(scenario.name==='floor-washtub')await page.evaluate(installSlosherPhaseObserver);
     const birthResult = await page.evaluate(({ method, seed }) => {
       const G = window.__G, a = G.match.local;
       const betweenSetupAndFire = window.__iwScenarioRandomRecorder?.snapshot?.() ?? null;
@@ -1228,6 +1227,7 @@ async function runContactScenarios(page) {
   ]) {
     const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed, impact: scenario.impact });
     const { setup, lifecycleReset } = setupResult;
+    if(scenario.name==='floor-washtub')await page.evaluate(installSlosherPhaseObserver);
     if (scenario.impact === 'wall' && !setup.wall) throw new Error('Could not find a native Tidewater wall for the wall impact receipt');
     const birthResult = await page.evaluate(({ method, seed, expectedWall }) => {
       const G = window.__G, a = G.match.local;
