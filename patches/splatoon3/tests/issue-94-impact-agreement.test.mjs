@@ -209,6 +209,8 @@ for (const side of [1, -1]) {
     assert.equal(marker.block, block, 'marker contacts the graze cover block');
     assert.ok(marker.point.distanceTo(impact) < 0.05,
       `projectile impact must agree with the marker (got ${marker.point.distanceTo(impact)}m)`);
+    const cue = s.projectiles.muzzleBlockFeedback(s.actor, true);
+    assert.ok(cue && cue.point.distanceTo(impact) < 0.05, 'HUD admission retains the sourced-radius cover graze');
   });
 }
 
@@ -234,7 +236,7 @@ test('#94 far wall beyond the composed shot flight is not warned', async () => {
   assert.equal(marker, null, 'no weapon-side warning for a wall the projectile can never reach');
 });
 
-test('#94 open ground long range: impact agreement and near-center weapon reticle', async () => {
+test('#94 open ground retains impact agreement without projecting a second floor ring into the aiming HUD', async () => {
   const s = await scene();
   addBox(s, 0, -0.5, 60, 150, 0.5, 150);   // flat ground, top face at y = 0
   s.rebuild();
@@ -250,11 +252,7 @@ test('#94 open ground long range: impact agreement and near-center weapon reticl
     `projectile impact must agree with the weapon-side reticle (got ${marker.point.distanceTo(impact)}m)`);
   const block = composedMuzzleBlock(s, 1600, 900);
   console.log('#94 open-ground projected reticle px', block);
-  assert.ok(block && Number.isFinite(block.x) && Number.isFinite(block.y),
-    'composed main projects the impact reticle');
-  const r = Math.hypot(block.x, block.y);
-  assert.ok(r <= 90,
-    `open-ground long-range weapon reticle approximately overlaps center aim (|r|=${r.toFixed(1)}px <= 90px on 900px)`);
+  assert.equal(block, null, 'composed HUD omits the later gravity landing; the aim cue keeps its existing owner');
 });
 
 // DOM shim + module harness: the actual composed HUD code runs against it, so

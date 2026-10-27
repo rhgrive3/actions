@@ -1,10 +1,17 @@
-// Presentation-only Shooter sight cue. Reuse the exact first-hit simulation when
+import { profileFor } from '../../../src/game/inkFlight.js';
+import { sweptWorldHit } from './weapons-collision.mjs';
+
+// Presentation-only Shooter contact query. The HUD requests only intended-aim
+// obstructions; existing diagnostic consumers retain full-flight field contact.
+// Reuse the exact first-hit simulation when
 // its full source state is unchanged (#945); the cached Hit is a separate copy,
 // never the mutable shared scratch Hit owned by s3ShooterImpact.
 export function installMuzzleFeedback(api) {
   const { Projectiles, G, THREE, Hit } = api;
   const muzzle = new THREE.Vector3();
-  Projectiles.prototype.muzzleBlockFeedback = function (actor) {
+  const corridorDir = new THREE.Vector3(), corridorEnd = new THREE.Vector3();
+  const corridorHit = new Hit();
+  Projectiles.prototype.muzzleBlockFeedback = function (actor, obstructionOnly = false) {
     if (!actor || !actor.alive || actor.form !== 'kid' || actor.weapon?.kind !== 'shooter'
       || !actor.character || !actor.aimPoint || !actor.aimDir || !G.physics?.raycast
       || typeof this.s3ShooterImpact !== 'function' || typeof this._muzzle !== 'function') return null;
@@ -36,13 +43,32 @@ export function installMuzzleFeedback(api) {
       m.guideFrame === w.shotGuideFrame && m.inkProfile === w.inkFlightProfile && m.yaw === actor.yaw &&
       m.vx === actor.vel?.x && m.vy === actor.vel?.y && m.vz === actor.vel?.z &&
       m.straight === w.straightTime && m.range === w.range &&
-      m.radius === w.impactRadius) return m.hit;
+      m.radius === w.impactRadius) return obstructionOnly ? m.obstruction : m.hit;
 
-    // Preserve the existing full-flight marker admission. ShotGuideFrame is
-    // a sourced outer-guide age, not evidence of Nintendo's inner-marker
-    // visibility cutoff; that separate UI condition remains unverified.
+    // The aiming ring already belongs to ShotGuide. A later gravity-driven
+    // paint landing does not by itself obstruct the intended muzzle-to-aim
+    // corridor. Query that corridor's own first obstruction up to the forward
+    // extent the actual shot reaches; an unreachable far wall cannot warn.
+    // Its surface need not equal the curved shot's eventual contact surface.
+    // Sweep the sourced field radius so a real cover graze is not lost to a ray.
     const fresh = this.s3ShooterImpact(actor, w);
+    corridorHit.hit = false;
+    if (fresh) {
+      const radius = profileFor(w)?.collision.field ?? w.impactRadius;
+      this._aimFrom(actor, muzzle, corridorDir);
+      const reach = Math.max(0, corridorEnd.copy(fresh.point).sub(muzzle).dot(corridorDir));
+      corridorEnd.copy(muzzle).addScaledVector(corridorDir, reach);
+      sweptWorldHit(physics, muzzle, corridorEnd, radius, radius, corridorHit, true);
+    }
     const cache = m || { hitCopy: new Hit() };
+    cache.obstruction = null;
+    if (corridorHit.hit) {
+      const h = cache.obstructionCopy || (cache.obstructionCopy = new Hit());
+      h.hit = true; h.dist = corridorHit.dist; h.block = corridorHit.block;
+      h.face = corridorHit.face; h.u = corridorHit.u; h.v = corridorHit.v;
+      h.point.copy(corridorHit.point); h.normal.copy(corridorHit.normal);
+      cache.obstruction = h;
+    }
     cache.actor = actor; cache.character = actor.character; cache.weapon = w;
     cache.physics = physics; cache.level = level; cache.blocks = level?.blocks;
     cache.hash = level?.hash; cache.revision = revision; cache.gameLevel = G.level;
@@ -72,6 +98,6 @@ export function installMuzzleFeedback(api) {
       cache.hit = h;
     } else cache.hit = null;
     this._s3MuzzleFeedbackCache = cache;
-    return cache.hit;
+    return obstructionOnly ? cache.obstruction : cache.hit;
   };
 }

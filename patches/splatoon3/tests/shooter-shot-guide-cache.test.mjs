@@ -154,8 +154,9 @@ test('real append/rebuild, notified solid changes and Tower movement/removal inv
   const delta=origin.clone().sub(ps._muzzle(a,new f.THREE.Vector3()));
   a.pos.add(delta);a.character.root.position.add(delta);a.character.root.updateMatrixWorld(true);
   a.aimDir.set(0,0,1);a.aimPoint.copy(origin).add(new f.THREE.Vector3(0,0,70));
-  const tower=point(f.computeShotGuide(a)),revision=level.collisionRevision;
+  const tower=point(f.computeShotGuide(a)),revision=level.collisionRevision,initialProgress=world._towerProgress;
   const impactBefore=ps.s3ShooterImpact(a,a.weapon).point.clone(),markerBefore=ps.muzzleBlockFeedback(a).point.clone();
+  assert.ok(ps.muzzleBlockFeedback(a,true)?.point.distanceTo(markerBefore)<1e-8,'Tower in the intended corridor is a real HUD obstruction');
   const before=s.sweeps();
   world.beforeActors({rule:{state:{progress:world._towerProgress}}});
   assert.equal(level.collisionRevision,revision,'unchanged actual Tower transform does not advance its revision');
@@ -163,6 +164,7 @@ test('real append/rebuild, notified solid changes and Tower movement/removal inv
   world.beforeActors({rule:{state:{progress:.1}}});
   const moved=point(f.computeShotGuide(a));assert.notDeepEqual(moved,tower,'real in-place Tower motion is visible immediately');
   const impactMoved=ps.s3ShooterImpact(a,a.weapon).point.clone(),markerMoved=ps.muzzleBlockFeedback(a).point.clone();
+  assert.equal(ps.muzzleBlockFeedback(a,true),null,'moving Tower out of the corridor clears the HUD cue while full-flight floor contact remains available');
   ps._s3ShooterImpactCache.valid=false;
   const uncached=ps.s3ShooterImpact(a,a.weapon).point.clone();
   console.log('Tower first-field cache agreement',JSON.stringify({beforeRevision:revision,movedRevision:level.collisionRevision,
@@ -171,6 +173,10 @@ test('real append/rebuild, notified solid changes and Tower movement/removal inv
   assert.ok(impactMoved.distanceTo(uncached)<1e-8,'full-flight prediction observes the actual collision revision immediately');
   assert.ok(markerMoved.distanceTo(uncached)<1e-8,'outer marker cache cannot mask a changed first field contact');
   ps._s3ShooterGuideCache.ready=false;assert.deepEqual(point(f.computeShotGuide(a)),moved);
+  world.beforeActors({rule:{state:{progress:initialProgress}}});
+  assert.ok(ps.muzzleBlockFeedback(a,true)?.point.distanceTo(markerBefore)<1e-8,'returning Tower restores the HUD cue after cached absence');
+  world.beforeActors({rule:{state:{progress:.1}}});
+  assert.equal(ps.muzzleBlockFeedback(a,true),null,'moving Tower away again clears the restored cue');
   const beforeDispose=s.sweeps();world.dispose();const removed=point(f.computeShotGuide(a));
   assert.ok(s.sweeps()>beforeDispose,'real Tower removal invalidates even with unchanged block arrays');
   ps._s3ShooterGuideCache.ready=false;assert.deepEqual(point(f.computeShotGuide(a)),removed);

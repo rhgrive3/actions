@@ -1745,7 +1745,7 @@ export function animateWeapon(w, st) {`, 'Slosher liquid paired spring coefficie
 
     code = replaceOnce(code,
       '    const frame = {\n      time: m.time,',
-      `    const muzzleContact = w.kind === 'shooter' ? G.projectiles?.muzzleBlockFeedback?.(a) : null;
+      `    const muzzleContact = w.kind === 'shooter' ? G.projectiles?.muzzleBlockFeedback?.(a, true) : null;
     let muzzleBlock = null;
     if (muzzleContact) {
       const projectedContact = this._muzzleBlockScreen || (this._muzzleBlockScreen = new THREE.Vector3());

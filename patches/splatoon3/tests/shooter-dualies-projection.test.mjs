@@ -55,13 +55,46 @@ test('Shooter and each Dualies guide stop at the actual downward head contact be
   }
 });
 
-test('Shooter full-flight contact remains available without inventing an inner-marker age cutoff',async()=>{
+test('Shooter late floor paint contact remains available without becoming an aim obstruction cue',async()=>{
   const s=await scene('shooter',0),{a,ps}=s;
   const impact=ps.s3ShooterImpact(a,a.weapon),actual=firstHeadContact(s);
   assert.ok(impact);assert.ok(impact.point.distanceTo(actual.point)<1e-8);
   assert.ok(impact.guideFrame>a.weapon.shotGuideFrame,'floor is reached after the aiming envelope');
   const marker=ps.muzzleBlockFeedback(a);
-  assert.ok(marker?.point.distanceTo(impact.point)<1e-8,'preserve full-flight marker admission pending original UI evidence');
+  assert.ok(marker?.point.distanceTo(impact.point)<1e-8,'the existing full-flight contact API retains the real paint landing');
+  assert.equal(ps.muzzleBlockFeedback(a,true),null,'a gravity landing outside the intended muzzle-to-aim corridor is not a HUD obstruction cue');
+  console.log('Shooter open-lane owners',JSON.stringify({impactFrame:impact.guideFrame,guideFrame:a.weapon.shotGuideFrame,fullContact:impact.point.toArray(),hudCue:null}));
+});
+
+test('a real nine-frame wall contact and downward floor remain obstruction cues without an age cutoff',async()=>{
+  const s=await scene('shooter',0),{f,a,G,ps}=s;
+  G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-80,0,0],[80,0,0]],spawnBarrier:0,half:[],single:[
+    {kind:'box',min:[-100,-.5,-100],max:[100,0,100]},
+    {kind:'box',min:[-.8,0,11.95],max:[.8,1.25,12.05]},
+  ]});
+  G.physics=new f.Physics(G.level);s.controller.computeAim();
+  const impact=ps.s3ShooterImpact(a,a.weapon),point=impact.point.clone();
+  assert.equal(impact.guideFrame,9,'the historical eight-frame counterexample stays explicit');
+  assert.equal(impact.block,1,'the physical wall, not a later floor landing');
+  const marker=ps.muzzleBlockFeedback(a,true),actual=firstHeadContact(s);
+  assert.ok(marker&&marker.block===1&&Math.abs(marker.point.z-11.95)<1e-8,'HUD cue lies on the real wall intersecting the intended corridor');
+  assert.ok(marker.point.y>=0&&marker.point.y<=1.25,'the corridor cue is on the wall face, not a forced aiming-ring coordinate');
+  assert.ok(point.distanceTo(actual.point)<1e-8,'unchanged live projectile hits that exact wall contact');
+  console.log('Shooter nine-frame wall owner',JSON.stringify({impactFrame:impact.guideFrame,hudCue:marker.point.toArray(),actualContact:actual.point.toArray()}));
+  for(const pitch of [-.45,-.8,-1.05]){
+    const down=await scene('shooter',pitch),hit=down.ps.s3ShooterImpact(down.a,down.a.weapon);
+    const p=hit.point.clone(),cue=down.ps.muzzleBlockFeedback(down.a,true);
+    assert.ok(cue&&cue.block===0&&Math.abs(cue.point.y)<1e-8,'downward aiming floor is a genuine corridor obstruction');
+    assert.ok(p.distanceTo(firstHeadContact(down).point)<1e-8,'full-flight prediction still equals the unchanged live downward contact');
+  }
+});
+
+test('a distant aim-ray wall behind a real floor landing cannot become a false obstruction cue',async()=>{
+  const s=await scene('shooter',0),{a,G,ps}=s;
+  G.level._addBlock({kind:'box',min:[-5,0,50],max:[5,4,50.2]});G.level._buildHash();s.controller.computeAim();
+  assert.ok(a.aimPoint.z>=50,'the canonical camera aim ray finds the distant wall');
+  assert.equal(ps.s3ShooterImpact(a,a.weapon).block,0,'the real shot lands on the floor before reaching the wall');
+  assert.equal(ps.muzzleBlockFeedback(a,true),null,'a wall beyond actual forward reach is not an obstruction warning');
 });
 
 test('Dualies contact cache observes notified in-place floor geometry changes',async()=>{
