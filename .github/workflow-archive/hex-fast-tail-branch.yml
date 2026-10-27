@@ -1,0 +1,207 @@
+name: hex FAST tail branch benchmark
+
+on:
+  push:
+    paths:
+      - ".github/workflows/hex-fast-tail-branch.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: 79517f95c4ed2a5a3ca895a4ed5e1c5c1311c6ba
+
+jobs:
+  tail-screen:
+    name: tail-screen-${{ matrix.case_id }}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        case_id:
+          - 1/1_clang_O0_g
+          - 1/1_clang_O2_no_g
+          - 1/1_gcc_O1_g
+          - 1/1_gcc_Os_no_g
+          - 2/2_clang_O0_g
+          - 2/2_clang_O2_no_g
+          - 2/2_gcc_O1_g
+          - 2/2_gcc_Os_no_g
+          - 3/3_clang_O0_g
+          - 3/3_clang_O2_no_g
+          - 3/3_gcc_O1_g
+          - 3/3_gcc_Os_no_g
+          - 4/4_clang_O0_g
+          - 4/4_clang_O2_no_g
+          - 4/4_gcc_O1_g
+          - 4/4_gcc_Os_no_g
+          - 5-1/5-1_clang_O0_g
+          - 5-1/5-1_clang_O2_no_g
+          - 5-1/5-1_gcc_O1_g
+          - 5-1/5-1_gcc_Os_no_g
+          - 5-23/5-23_clang_O0_g
+          - 5-23/5-23_clang_O2_no_g
+          - 5-23/5-23_gcc_O1_g
+          - 5-23/5-23_gcc_Os_no_g
+          - 6/6_clang_O0_g
+          - 6/6_clang_O2_no_g
+          - 6/6_gcc_O1_g
+          - 6/6_gcc_Os_no_g
+          - 7/7_clang_O0_g
+          - 7/7_clang_O2_no_g
+          - 7/7_gcc_O1_g
+          - 7/7_gcc_Os_no_g
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Screen one case
+        working-directory: target
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 540s node reports/investigations/current-main-weakness-20260923/harness/measure-functions.mjs \
+            --output "$GITHUB_WORKSPACE/screen" --workers 1 --case-id "$CASE_ID" \
+            --structure none --function-timeout-ms 30000 --product-timeout-ms 480000 \
+            --label fast-tail-branch
+      - name: Extract slow functions
+        if: always()
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const files=fs.existsSync('screen/cases')?fs.readdirSync('screen/cases').filter(x=>x.endsWith('.json')):[];
+          const rows=[];
+          for(const f of files){const x=JSON.parse(fs.readFileSync(path.join('screen/cases',f)));for(const fn of x.functions??[])rows.push({caseId:x.caseId,address:fn.address,name:fn.name??null,elapsedMs:Number(fn.elapsedMs||0),sizeBytes:fn.sizeBytes??null,state:fn.state??null,binary:path.basename(x.binary||'')});}
+          rows.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          fs.writeFileSync('evidence/tail.json',JSON.stringify({caseId:process.env.CASE_ID,top:rows.slice(0,8)},null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tail-screen-${{ strategy.job-index }}
+          path: evidence/tail.json
+          retention-days: 3
+
+  tail-select:
+    name: select-current-tail
+    needs: tail-screen
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tail-screen-*
+          path: screens
+      - name: Select top 12
+        id: select
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import path from 'node:path';
+          const files=[];const walk=d=>{if(!fs.existsSync(d))return;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):(e.name==='tail.json'&&files.push(p));}};walk('screens');
+          const all=[];for(const f of files){try{all.push(...(JSON.parse(fs.readFileSync(f)).top??[]));}catch{}}
+          all.sort((a,b)=>b.elapsedMs-a.elapsedMs);
+          const seen=new Set(),top=[];for(const r of all){const k=`${r.caseId}:${r.address}`;if(seen.has(k)||!r.binary)continue;seen.add(k);top.push(r);if(top.length===12)break;}
+          const matrix={include:top.map(r=>({case_id:r.caseId,address:String(r.address),name:String(r.name??r.address),binary:r.binary,screen_ms:String(Math.round(r.elapsedMs))}))};
+          fs.writeFileSync('final/selection.json',JSON.stringify({screenFiles:files.length,candidates:all.length,top},null,2)+'\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`matrix=${JSON.stringify(matrix)}\n`);
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tail-selection
+          path: final/selection.json
+          retention-days: 7
+
+  tail-profile:
+    name: tail-profile-${{ matrix.name }}
+    needs: tail-select
+    if: always() && needs.tail-select.outputs.matrix != ''
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJSON(needs.tail-select.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ env.TARGET_SHA }}
+          path: target
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Focused profile
+        env:
+          CASE_ID: ${{ matrix.case_id }}
+          ADDRESS: ${{ matrix.address }}
+          FUNCTION_NAME: ${{ matrix.name }}
+          BINARY_NAME: ${{ matrix.binary }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          timeout 420s node scripts/hex-tail-profile.mjs \
+            --target-root target \
+            --binary "target/benchmarks/public/codefuse-arm64/inputs/$BINARY_NAME" \
+            --case-id "$CASE_ID" --address "$ADDRESS" --name "$FUNCTION_NAME" \
+            --profile fast --runs 1 --target-sha "$TARGET_SHA" \
+            --out evidence/result.json --cpu-out evidence/profile.cpuprofile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tail-profile-${{ strategy.job-index }}
+          path: evidence/
+          retention-days: 7
+
+  tail-aggregate:
+    name: aggregate-focused-tail
+    needs: tail-profile
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tail-profile-*
+          path: profiles
+      - name: Aggregate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          TARGET_SHA="$TARGET_SHA" node --input-type=module <<'NODE'
+          import fs from 'node:fs';import path from 'node:path';
+          const files=[];const walk=d=>{if(!fs.existsSync(d))return;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):(e.name==='result.json'&&files.push(p));}};walk('profiles');
+          const rows=[];for(const f of files){try{const r=JSON.parse(fs.readFileSync(f));const x=r.runs?.[0];rows.push({caseId:r.caseId,name:r.name,address:r.address,elapsedMs:x?.elapsedMs??null,outsideRatio:x?.probe?.outsideRatio??null,passManagerMs:x?.probe?.passManagerMs??null,capturePassStateMs:x?.probe?.capturePassState?.ms??null,captureRecords:x?.probe?.capturePassState?.records??null,cpuTop:(x?.cpuTop??[]).slice(0,10)});}catch{}}
+          rows.sort((a,b)=>(b.elapsedMs??0)-(a.elapsedMs??0));
+          fs.writeFileSync('final/tail.json',JSON.stringify({schema:'hex-fast-tail-branch/v1',targetSha:process.env.TARGET_SHA,profiles:rows.length,rows},null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tail-final
+          path: final/tail.json
+          retention-days: 7

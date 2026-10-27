@@ -1,0 +1,65 @@
+name: Hex IDA focused PR review
+
+on:
+  push:
+    paths:
+      - '.github/workflows/hex-ida-focused-review.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: pr9229
+            ref: fix/g-recompilability-production-20260919
+            command: node --test tests/direct-recompilability-emitter-phase1.test.mjs tests/public-benchmark/g-timeout-incomplete-regression.test.mjs tests/public-benchmark/resumable-measurement-g-regression.test.mjs tests/public-benchmark/resumable-measurement-concurrency.test.mjs
+          - lane: pr9231
+            ref: benchmark/codefuse-functionality-integration
+            command: node --test tests/codefuse-functionality/*.test.mjs
+          - lane: pr9232
+            ref: e/b1a-noreturn-refinement-20260919
+            command: node --test tests/phase7/function-discovery/noreturn-refinement.test.mjs tests/phase7/function-discovery/noreturn-refinement-transaction-atomicity.test.mjs tests/phase4/binary/function-discovery-plt-resolver-adversarial.test.mjs tests/phase4/binary/c1-elf-relocation-target-adversarial.test.mjs
+          - lane: merged-main
+            ref: main
+            command: node --test tests/public-benchmark/fresh-runner.test.mjs tests/public-benchmark/resumable-measurement.test.mjs tests/public-benchmark/resumable-measurement-concurrency.test.mjs
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: rhgrive3/hex-ida
+          ref: ${{ matrix.ref }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Run focused tests
+        id: focused
+        shell: bash
+        env:
+          TEST_COMMAND: ${{ matrix.command }}
+        run: |
+          set -o pipefail
+          rc=0
+          timeout 10m bash -lc "$TEST_COMMAND" > focused.log 2>&1 || rc=$?
+          {
+            echo "### ${{ matrix.lane }}"
+            echo '~~~'
+            tail -n 120 focused.log
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: focused-${{ matrix.lane }}
+          path: focused.log
+          retention-days: 2
