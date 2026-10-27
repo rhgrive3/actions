@@ -120,6 +120,24 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
       'inline squared-distance segmentCapsuleDist probes');
   }
   if (rel === 'src/world/level.js') {
+    // During shooter fire, short ray/segment queries repeatedly hit exactly
+    // one Level hash bucket. Keep the same stamp write/order/duplicate checks,
+    // but avoid setting up a two-level rectangle scan for that single bucket.
+    // This is inside queryBlocks itself, so profiler method counts stay intact.
+    change(
+      `    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+      const cell = this.hash[z * this.hw + x];`,
+      `    if (x0 === x1 && z0 === z1) {
+      const cell = this.hash[z0 * this.hw + x0];
+      for (let i = 0; i < cell.length; i++) {
+        const id = cell[i];
+        if (this.blockStamp[id] !== st) { this.blockStamp[id] = st; out.push(id); }
+      }
+      return out;
+    }
+    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+      const cell = this.hash[z * this.hw + x];`,
+      'one-cell query keeps exact order and stamp state');
     change(
       `    const ids = this.queryBlocks(p.x - 0.01, p.z - 0.01, p.x + 0.01, p.z + 0.01, this._qtmp || (this._qtmp = []));
     for (const id of ids) {`,
