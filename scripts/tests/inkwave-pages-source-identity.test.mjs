@@ -29,3 +29,8 @@ test('every published gameplay patch group can trigger Pages', () => {
     assert.ok(workflow.includes('      - "' + glob + '"'), 'missing Pages push trigger ' + glob);
   }
 });
+
+test('Pages caps focused test concurrency without bypassing the full source suite', () => {
+  assert.ok(workflow.includes('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs --test-concurrency=2'),
+    'Pages must run the exact local-quality regression suite at bounded parallelism');
+});
