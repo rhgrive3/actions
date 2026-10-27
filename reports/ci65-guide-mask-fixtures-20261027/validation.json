@@ -1,0 +1,159 @@
+{
+  "status": "isolated fixture/test candidate; original65 remote failures remain recorded until next coherent integration gets normal CI",
+  "baseAndRuntime": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b",
+  "codeCommit": "a45886edad7fec791fb5cf46e141cbe991c845c5",
+  "branch": "fix/ci65-guide-mask-fixtures-20261027",
+  "productionChanges": 0,
+  "runtimeBuildReused": true,
+  "failedRun": {
+    "id": 40442074376,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/40442074376",
+    "head": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b"
+  },
+  "jobs": [
+    {
+      "name": "patch_tests (5)",
+      "id": 121984873256,
+      "total": 1059,
+      "pass": 1054,
+      "fail": 2,
+      "skip": 3,
+      "failures": [
+        {
+          "file": "patches/splatoon3/tests/camera-aim-controls.test.mjs:134",
+          "message": "current tick input reaches world aim before actor/weapon simulation; rendered camera is not mutated",
+          "error": "TypeError: G.physics.segment is not a function"
+        },
+        {
+          "file": "patches/splatoon3/tests/charger-calibrated-mask.metadata.test.mjs:31",
+          "message": "mask stretch and terminal scaling stay bound to both native travel emission paths",
+          "error": "actual immediate and delayed native stretch formulas:1!==2"
+        }
+      ]
+    },
+    {
+      "name": "patch_tests (4)",
+      "id": 121984873001,
+      "total": 1316,
+      "pass": 1305,
+      "fail": 1,
+      "skip": 10,
+      "failures": [
+        {
+          "file": "patches/splatoon3/tests/issue-608-fidelity-aim.test.mjs:130",
+          "message": "#608 the existing weapon guides still predict each converged centerline",
+          "error": "TypeError: G.physics.segment is not a function"
+        }
+      ]
+    }
+  ],
+  "causes": [
+    {
+      "files": [
+        "camera-aim-controls.test.mjs",
+        "issue-608-fidelity-aim.test.mjs"
+      ],
+      "cause": "Independent partial raycast fixtures have no segment API; real native guide contact now reaches InkFlightRuntime.world segment fallback before original assertions. Shipping Physics already implements it.",
+      "fix": "Borrow each loaded production Physics.prototype.segment onto that local partial ray world; no new contact algorithm or blanket miss stub."
+    },
+    {
+      "files": [
+        "charger-calibrated-mask.metadata.test.mjs"
+      ],
+      "cause": "String-count assertion still expects delayed and immediate formulas in one file. Delayed formula is now in charger-paint-drop.mjs, reached through queueChargerPaintDrop with the same radius/depth/direction.",
+      "fix": "Assert one actual immediate formula plus one actual shared delayed formula and their call binding. Add production flight/landing numerical acceptance for both travel and terminal masks at8/60,.25,.5,.75,1charge, with no elevated prelanding credit."
+    }
+  ],
+  "localBefore": {
+    "pass": 24,
+    "fail": 3,
+    "skip": 0,
+    "total": 27
+  },
+  "localAfter": {
+    "pass": 29,
+    "fail": 0,
+    "skip": 0,
+    "total": 29
+  },
+  "emittedSelected": {
+    "pass": 4,
+    "fail": 0,
+    "skip": 0,
+    "selection": "current tick input reaches|camera fixture native segments|#608 the existing weapon guides|actual native immediate and delayed",
+    "scope": "Both fixture modes point to the immutable65 site; code-text metadata cases are not described as emitted runtime proof."
+  },
+  "assertionAudit": {
+    "camera-aim-controls.test.mjs": {
+      "originalBodies": 19,
+      "byteIdentical": 19,
+      "changedBodies": [],
+      "addedCases": 1
+    },
+    "issue-608-fidelity-aim.test.mjs": {
+      "originalBodies": 5,
+      "byteIdentical": 5,
+      "changedBodies": [],
+      "addedCases": 0
+    },
+    "charger-calibrated-mask.metadata.test.mjs": {
+      "originalBodies": 3,
+      "byteIdentical": 2,
+      "changedBodies": [
+        "mask stretch and terminal scaling stay bound to both native travel emission paths"
+      ],
+      "addedCases": 1
+    }
+  },
+  "identity": {
+    "sourceSha": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b",
+    "contentHash": "596e029ef336213de97d337c5f12752bfb4f3887de28907dde1a6ef5e36fdafd",
+    "inputHash": "8112dc6c08a03da565de515233ef85d41d7fda6f2f5b95ad8336ed7bffaa626d",
+    "sourceInputs": 1491,
+    "artifacts": 2196,
+    "mismatches": 0
+  },
+  "logs": {
+    "source-before.log": {
+      "file": "source-before.log.gz",
+      "sha256": "0bd8fc1306928a54680b162ba8f9cdf078c57d167ae0017b562ace925bc285c8"
+    },
+    "source-after.log": {
+      "file": "source-after.log.gz",
+      "sha256": "145f0bc5bbbf4850fe9a5e3645aa8d2584e7179dce87ea5b6eb8ce4180434911"
+    },
+    "emitted-selected.log": {
+      "file": "emitted-selected.log.gz",
+      "sha256": "74f1b94852ed8738c23cdc02860379743381207a6c6bc280491a7f41c7a722ab"
+    },
+    "job-121984873256-failures.log": {
+      "file": "job-121984873256-failures.log.gz",
+      "sha256": "7a416564df1c356dd83ec2a1bb27a01f16aee89f1c1f81224d3d30a759b1b866"
+    },
+    "job-121984873001-failures.log": {
+      "file": "job-121984873001-failures.log.gz",
+      "sha256": "7db907bf6e6fdca9f6f1cf4fa147012461980f4b90d75bd6636bd8bbb9d200c2"
+    }
+  },
+  "localFullDecodedLogs": {
+    "121984873256": {
+      "localDecodedCopy": "/workspace/scratch/ci65-guide-mask-failures/job-121984873256-full.log",
+      "sha256": "5c0a6fd840ab33ffb57974eb5974bec1560a5405cc1e16c9ed808bce22c47993",
+      "published": false
+    },
+    "121984873001": {
+      "localDecodedCopy": "/workspace/scratch/ci65-guide-mask-failures/job-121984873001-full.log",
+      "sha256": "de1d666c7d98bd504e4f78a0d6ea146b8a84eb37af12a0c2c5d874316adf6f41",
+      "published": false
+    }
+  },
+  "pendingAcceptedHarness": [
+    "e6fb91faf9c3e491c6589943d8d98c8b1311afa1",
+    "8121de0069d171593dc6d2bcec0085e5946cfffa"
+  ],
+  "limits": [
+    "No runtime, weapon data, Hissen/Brush owner source, character/rig or packaged media edits.",
+    "The new checks are CPU/composed/emitted fixture observations, not ordinary input, audio playback or original-game visual proof.",
+    "Integration remains65; no manual CI rerun, broad shard rerun, PR metadata edit or new PR."
+  ]
+}
