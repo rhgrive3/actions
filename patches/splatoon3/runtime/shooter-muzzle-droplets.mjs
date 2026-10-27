@@ -15,7 +15,7 @@ export function isOrdinaryShooter(p){return muzzleDropletFamily(p)==='shooter';}
 export class ShooterMuzzleDroplets{
  constructor(THREE){
   this.next=0;this.count=0;this.drawn=0;this.emitted=0;
-  this.pool=Array.from({length:SHOOTER_MUZZLE_COSMETICS.bursts},()=>({owner:null,wid:null,t:0,seed:0,pos:new THREE.Vector3(),dir:new THREE.Vector3(),right:new THREE.Vector3(),up:new THREE.Vector3()}));
+  this.pool=Array.from({length:SHOOTER_MUZZLE_COSMETICS.bursts},()=>({owner:null,wid:null,t:0,seed:0,phaseMask:0,phases:new Float64Array(3),phaseCos:new Float64Array(3),phaseSin:new Float64Array(3),pos:new THREE.Vector3(),dir:new THREE.Vector3(),right:new THREE.Vector3(),up:new THREE.Vector3()}));
   this.origin=new THREE.Vector3();
  }
  clear(){for(const b of this.pool)b.owner=null;this.next=this.count=this.drawn=this.emitted=0;}
@@ -26,7 +26,7 @@ export class ShooterMuzzleDroplets{
   if(camera&&camera.distanceToSquared(p.start)>900)return;
   const b=this.pool[this.next];this.next=(this.next+1)%this.pool.length;
   b.owner=p.owner;b.wid=p.owner.weapon?.id;b.family=family;
-  b.t=time-p.age;b.seed=p.seed||0;b.pos.copy(p.start);
+  b.t=time-p.age;b.seed=p.seed||0;b.phaseMask=0;b.pos.copy(p.start);
   // Dualies must retain the fired hand's actual physical nozzle. Calling the
   // single getMuzzle() socket here would pull BOTH hands onto the right pistol.
   // Catalogue raw sockets may have a same-tick presentation-only pose delta;
@@ -53,8 +53,12 @@ export class ShooterMuzzleDroplets{
    if(age>=SHOOTER_MUZZLE_COSMETICS.life||age<0||b.owner.alive===false||b.owner.weapon?.id!==b.wid||camera&&camera.distanceToSquared(b.pos)>900){b.owner=null;continue;}
    this.count++;
    for(let i=0;i<SHOOTER_MUZZLE_COSMETICS.drops&&n<cap;i++){
-    const phase=b.seed*6.2832+i*2.39996,lateral=.38+i*.09,speed=5.5+i*.9;
-    dir.copy(b.dir).multiplyScalar(speed).addScaledVector(b.right,Math.cos(phase)*lateral*5).addScaledVector(b.up,Math.sin(phase)*lateral*5);
+    if(!(b.phaseMask&(1<<i))){
+     const phase=b.seed*6.2832+i*2.39996;
+     b.phases[i]=phase;b.phaseCos[i]=Math.cos(phase);b.phaseSin[i]=Math.sin(phase);b.phaseMask|=1<<i;
+    }
+    const phase=b.phases[i],lateral=.38+i*.09,speed=5.5+i*.9;
+    dir.copy(b.dir).multiplyScalar(speed).addScaledVector(b.right,b.phaseCos[i]*lateral*5).addScaledVector(b.up,b.phaseSin[i]*lateral*5);
     pos.copy(b.pos).addScaledVector(b.dir,.12).addScaledVector(dir,age).addScaledVector(b.up,-3*age*age);
     dir.addScaledVector(b.up,-6*age).normalize();q.setFromUnitVectors(axis,dir);
     const r=SHOOTER_MUZZLE_COSMETICS.radius*(1-i*.12)*(1-age/SHOOTER_MUZZLE_COSMETICS.life*.55);

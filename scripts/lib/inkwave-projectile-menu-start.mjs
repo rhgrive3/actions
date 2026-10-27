@@ -7,9 +7,13 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   note('native-menu-ready');
   await click('.iw-main [data-id="play"]');
   await waitForPhase(()=>window.__inkwave?.menus?.current==='mode','native mode menu');
-  // The neighboring Range button can cover Turf's center under Chromium's
-  // native mode-selection layout. Keyboard activation is a trusted browser
-  // button gesture, not a direct game/menu handler call or a forced click.
+  // A pointer left on the prior screen's PLAY tile can land over an enlarged
+  // neighbouring mode card during the transition. Clear that genuine hover
+  // before choosing Turf with the ordinary hit-tested pointer gesture.
+  await page.mouse.move(1, 1);
+  note('mode-pointer-hover-cleared');
+  // Keep the prior-screen hover cleared, then activate the focused native
+  // Turf button through the normal keyboard gesture if it is overlapped.
   await page.locator('.iw-modesel [data-id="mode-turf"]').press('Enter',{timeout:Math.max(1,remainingMs())});
   note('keyboard-activate',{selector:'.iw-modesel [data-id="mode-turf"]',key:'Enter'});
   await waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu');

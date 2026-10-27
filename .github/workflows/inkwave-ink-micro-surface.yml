@@ -69,6 +69,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          retention-days: 14
           name: inkwave-ink-micro-surface
           path: .browser-evidence/ink-micro-surface
           include-hidden-files: true

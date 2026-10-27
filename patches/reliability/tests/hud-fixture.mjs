@@ -101,6 +101,13 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   ].join('\n');
   const Hud = vm.runInContext(`class Hud { ${hudMethods} }; Hud`,context);
   const hud = new Hud();
+  // The remaining-queue composition preserves paused as an own property with
+  // a constructor-installed accessor. Evaluate that actual initialization too;
+  // assigning a plain fixture field would bypass production resume ownership.
+  if (hudSource.includes('    this._queueFxPaused = false;')) {
+    const pauseSetup = section(hudSource, '    this._queueFxPaused = false;', '    this._fxTime =');
+    vm.runInContext('(function(){' + pauseSetup + '})', context).call(hud);
+  }
   Object.assign(hud, { el: new Node(), overLayer: new Node(), feedEl: new Node(), timeScale:1, paused:false, _fxTime:0, _lastFx:0, _rafId:0, _visible:false, _unsubs:[], boss:{dispose(){calls.push(['bossDispose']);}},
     hideSplatted() {}, playSound(name) { const v = { name, stopped:0, v:{ dispose() { v.stopped++; } } }; voices.push(v); calls.push(['hudSound',name,now]); hook?.(name); return v; },
   });

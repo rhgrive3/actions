@@ -260,12 +260,19 @@ export function createRankedEffects(api, match) {
       // Falling ink paints the first surface below the swept head; it does
       // not stamp through a ceiling or grant carrier special points.
       const steps = Math.max(1, Math.min(64, Math.ceil(s.previous.distanceTo(s.pos) / .3)));
-      for (let n = 1; n <= steps; n++) {
-        const p = s.previous.clone().lerp(s.pos, n / steps);
-        const ground = G.physics.segment(p, p.clone().add(new THREE.Vector3(0, -30, 0)), hit, true);
-        if (ground.hit) G.paint?.splat?.(ground.point.clone(), s.trailRadius, s.team,
-          { seed: match.ranked.revision % 65536, claimOwner: s.actor, claimMode: 'no-special' });
-      }
+      // Physics consumes its endpoints synchronously. Keep separate leases for
+      // nested shot updates; the paint point remains an independently owned copy.
+      const depth = s.trailRayDepth || 0, rays = s.trailRays || (s.trailRays = []);
+      const ray = rays[depth] || (rays[depth] = { start: new THREE.Vector3(), end: new THREE.Vector3() });
+      s.trailRayDepth = depth + 1;
+      try {
+        for (let n = 1; n <= steps; n++) {
+          const p = ray.start.copy(s.previous).lerp(s.pos, n / steps);
+          const ground = G.physics.segment(p, ray.end.set(p.x + 0, p.y - 30, p.z + 0), hit, true);
+          if (ground.hit) G.paint?.splat?.(ground.point.clone(), s.trailRadius, s.team,
+            { seed: match.ranked.revision % 65536, claimOwner: s.actor, claimMode: 'no-special' });
+        }
+      } finally { s.trailRayDepth = depth; }
     }
     if (!terminal) return false;
     if (!(s.damage > 0)) {

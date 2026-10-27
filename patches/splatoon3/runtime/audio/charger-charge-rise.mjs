@@ -1,11 +1,16 @@
-import { mainAudioSourceId } from './weapon-recipes.mjs';
+import { mainAudioSourceId, WEAPON_AUDIO } from './weapon-recipes.mjs';
+import { PitchPreservingChargeCache, chargerOnsetRatio } from './pitch-preserving-charge.mjs';
 import { audioLoadScope } from './load-deadline.mjs';
 
-// This excerpt is a Splat Charger phrase, not a family-wide charge clock.
-// Other chargers use their own registered onset and gameplay-owned ready edge.
+// Every Charger now uses the same Splat Charger reference rise. Different charge
+// clocks stretch its ascending phrase in a Worker WITHOUT changing pitch.
+// The game itself still owns when full-charge 'ready' fires.
 export function usesSplatChargerRise(id) {
-  const source = mainAudioSourceId(id);
-  return source === 'charger' || source === 's3-charger-normalscope';
+  const source=mainAudioSourceId(id);
+  return source==='charger'||source==='s3-charger-normalscope';
+}
+export function usesChargerRise(id) {
+  return WEAPON_AUDIO[mainAudioSourceId(id)]?.family==='charger';
 }
 
 /**
@@ -13,7 +18,9 @@ export function usesSplatChargerRise(id) {
  * the first complete rising tone, stopping at the first silence.
  *
  * The recording is deliberately NOT the prior synthesis. Use the archived
- * MP3 frames in the same-origin assets/audio directory at exactly 1x speed.
+ * MP3 frames in the same-origin assets/audio directory. The original stays
+ * unmodified at 1x for Splat Charger; derived phrases are pre-stretched by
+ * WSOLA off-thread and also play at 1x to preserve pitch.
  *
  * The source reference is Splatune 2, not proof of S3 11.3.0 sound identity.
  * The user supplied and explicitly selected this audio for their game.
@@ -35,19 +42,19 @@ const recordedChargerURL=sourceUrl=>{
 const slots=new WeakMap();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const RETRY_BACKOFF_MS=4000,MAX_ATTEMPTS=3,LOAD_TIMEOUT_MS=8000;
-const stateFor=ctx=>{let s=slots.get(ctx);if(!s){s={buffer:null,promise:null,error:null,retryable:false,retryAfter:0,attempts:0,generation:0,scope:null};slots.set(ctx,s);}return s;};
+const stateFor=ctx=>{let s=slots.get(ctx);if(!s){s={buffer:null,excerpt:null,stretchCache:null,promise:null,error:null,retryable:false,retryAfter:0,attempts:0,generation:0,scope:null};slots.set(ctx,s);}return s;};
 class ChargerLoadError extends Error {
   constructor(message,retryable=false){super(message);this.retryable=retryable;}
 }
 export function chargerRecordedStatus(ctx){
   const state=ctx?slots.get(ctx):null;
-  return {ready:!!state?.buffer,loading:!!state?.promise,error:state?.error||null};
+  return {ready:!!state?.buffer,loading:!!state?.promise,error:state?.error||null,stretched:state?.stretchCache?.stats()?.ready||0};
 }
 export function disposeChargerRise(ctx){
   const state=ctx?slots.get(ctx):null;
   if(!state)return;
-  // Retire ownership before abort listeners can synchronously start a new load.
-  state.generation++;slots.delete(ctx);state.scope?.cancel();
+  // Remove the old owner before callbacks triggered by abort can re-enter.
+  state.generation++;slots.delete(ctx);state.scope?.cancel();state.stretchCache?.dispose();state.excerpt=null;
 }
 // Only explicit prewarm/weapon selection may retry; ordinary requests never retry.
 export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=Date.now,timeoutMs=LOAD_TIMEOUT_MS}={}){
@@ -102,18 +109,61 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   }).finally(()=>{scope.finish();if(state.generation===generation){state.promise=null;state.scope=null;}});
   return state.promise;
 }
-export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger'}={}){
-  if(!usesSplatChargerRise(weaponId))return null;
+
+/** Extract ONLY the 1.215s rising Splat Charger phrase from the verified MP3. */
+function sourceExcerpt(ctx,state) {
+  if(state.excerpt)return state.excerpt;
+  const src=state.buffer,sr=src?.sampleRate;
+  if(!Number.isFinite(sr)||!Number.isFinite(src?.length)||
+    typeof src?.getChannelData!=='function'||typeof ctx.createBuffer!=='function')return null;
+  const start=Math.round(RECORDED_CHARGER_FIRST.startSeconds*sr);
+  const count=Math.round(RECORDED_CHARGER_FIRST.playSeconds*sr);
+  if(start<0||count<128||start+count>src.length)return null;
+  const excerpt=ctx.createBuffer(src.numberOfChannels,count,sr);
+  for(let i=0;i<src.numberOfChannels;i++)
+    excerpt.getChannelData(i).set(src.getChannelData(i).subarray(start,start+count));
+  state.excerpt=excerpt;
+  return excerpt;
+}
+
+/** Schedule bounded WSOLA once after decode; no work runs in a simulation tick. */
+export async function prewarmChargerRise(audio,{weaponId='charger',chargeTime=1,
+  retry=true,workerFactory}={}) {
+  if(!usesChargerRise(weaponId)||!audio?.ctx)return false;
+  const ctx=audio.ctx,buffer=await chargerRiseBuffer(ctx,{retry});
+  const state=slots.get(ctx);
+  if(!buffer||state?.buffer!==buffer||ctx.state==='closed')return false;
+  const ratio=chargerOnsetRatio(chargeTime);
+  if(ratio==null)return false;
+  if(Math.abs(ratio-1)<.005)return true; // original Splat phrase, no conversion
+  const excerpt=sourceExcerpt(ctx,state);
+  if(!excerpt)return false;
+  state.stretchCache||=new PitchPreservingChargeCache(ctx,{workerFactory,maxBytes:3*1024*1024});
+  return state.stretchCache.prepare('splat-charger-phrase',excerpt,chargeTime);
+}
+export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger',chargeTime=1}={}){
+  if(!usesChargerRise(weaponId))return null;
   const ctx=audio?.ctx,target=audio?.sfxIn;
-  const buffer=ctx?slots.get(ctx)?.buffer:null;
-  if(!buffer||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;
+  const state=ctx?slots.get(ctx):null;
+  const original=state?.buffer;
+  if(!original||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;
   const level=clamp(Number(volume)||0,0,1);
   if(level<=0)return null;
   const now=ctx.currentTime,source=ctx.createBufferSource(),gain=ctx.createGain();
   const validPos=pos&&[pos.x,pos.y,pos.z].every(Number.isFinite);
   const panner=validPos&&typeof audio._panner==='function'?audio._panner(pos,3):null;
-  const offset=RECORDED_CHARGER_FIRST.startSeconds;
-  const length=Math.min(RECORDED_CHARGER_FIRST.playSeconds,buffer.duration-offset);
+  let buffer=original,offset=RECORDED_CHARGER_FIRST.startSeconds;
+  let length=Math.min(RECORDED_CHARGER_FIRST.playSeconds,original.duration-offset);
+  // All chargers derive from the SAME selected Splat Charger rise. A ready
+  // version is instant at play time. If Worker preparation is still in flight,
+  // play the original phrase at pitch 1x and prepare for the next hold.
+  const ratio=chargerOnsetRatio(chargeTime);
+  if(ratio!==null&&Math.abs(ratio-1)>=.005){
+    const excerpt=state.excerpt;
+    const ready=excerpt&&state.stretchCache?.lookup('splat-charger-phrase',excerpt,chargeTime);
+    if(ready){buffer=ready;offset=0;length=ready.duration;}
+    else void prewarmChargerRise(audio,{weaponId,chargeTime}).catch(()=>{});
+  }
   if(!(length>.2))return null;
   source.buffer=buffer;source.loop=false;source.playbackRate.value=1;
   source.connect(gain);gain.connect(panner||target);if(panner)panner.connect(target);

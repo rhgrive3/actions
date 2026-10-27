@@ -1,0 +1,2618 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Root-owned 110 gameplay queue dispositions; delegated active queues are covered by the peer reports and deduplicated in the aggregate manifest.",
+  "counts": {
+    "implemented-local": 81,
+    "not-adopted": 29
+  },
+  "validation": {
+    "newRootTests": [
+      "patches/splatoon3/tests/queue-gameplay-local-20261026.test.mjs",
+      "patches/splatoon3/tests/queue-gameplay-parity-20261026.test.mjs"
+    ],
+    "newRootTestsPassed": 16,
+    "existingFocusedSuites": "See reports/queue-local-validation-20261026.json for final executed commands and outcomes.",
+    "independentReview": "reports/queue-local-gameplay-review-20261026.json",
+    "reviewRegressionTestsPassed": 4,
+    "reviewScenarios": 192
+  },
+  "limitations": [
+    "Local source/Node/headless evidence is not an iPad/Safari FPS result.",
+    "Not-adopted candidates retain the original runtime path; no approximate change to authoritative game state is accepted.",
+    "A historical PR1870 disposition is retained as context, never used alone to claim current-PR coverage."
+  ],
+  "items": [
+    {
+      "key": "ranked-rainmaker-3d-checkpoint-passed-boolean-index",
+      "title": "# [QUEUE][INKWAVE][Bug] ガチホコ通過済みチェックポイントの3Dリングが更新されない",
+      "library_file_id": "libfile_b30f2a15b9f88191902069896f44c21e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Bug] ranked-rainmaker-3d-checkpoint-passed-boolean-index.md",
+      "status": "implemented-local",
+      "reason": "Checkpoint presentation now reads the authoritative passed[team] boolean together with choice[team]; reset, alternate checkpoint and restored state retain their own marker state. The previous two-dimensional lookup never displayed a passed marker.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "all-specials-unit-exponent-air-resistance-pow",
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャル弾の60Hz減衰に指数1のMath.powが残る",
+      "library_file_id": "libfile_ea256d50026481918da2bc7d80a8229b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] all-specials-unit-exponent-air-resistance-pow.md",
+      "status": "implemented-local",
+      "reason": "The fixed one-frame integrator uses 1-airResistance for the exponent-one branch. Integration order and source coefficients are unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "sha256": "3446a87ac9271adb8800cc42d2178dfdec60cdb5749f6948b38492e1a0c7d2ef",
+          "pr1878Sha256": "c994589d98a372dd7d2d0523f9727e8978b326d7612b7f826b607719bb58aca6",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "beakon-getter-skip-nonbeakon-attachment-sync",
+      "title": "# [QUEUE][INKWAVE][Optimization] Beakon候補取得時の非Beakon設置物アタッチメント同期を省略",
+      "library_file_id": "libfile_bcf65add3c1c8191aecf9f7256c9367f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] beakon-getter-skip-nonbeakon-attachment-sync.md",
+      "status": "implemented-local",
+      "reason": "The beakon getter filters type before attachment synchronization. Eligible beakons retain the same ordering and live synchronization.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/all-subs.mjs",
+          "sha256": "15747af42aedeb11e220ca54b4ad4cf81c4be771f9ae71d7b55570201eddd89a",
+          "pr1878Sha256": "a1e9adfa6e0035db23df82232c64667a25bb84edf615d65147202425ca963675",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "big-bubbler-jump-target-empty-roster-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] グレートバリアのジャンプ先が0件でもマップ照会ごとにMapと配列を生成",
+      "library_file_id": "libfile_bd18b451ee548191a6dbb0d82b0fd9f2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] big-bubbler-jump-target-empty-roster-fastpath.md",
+      "status": "implemented-local",
+      "reason": "An empty bubbler roster returns before constructing actor lookup and derived jump targets; nonempty processing is unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-big-bubbler.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-big-bubbler.mjs",
+          "sha256": "e62ed8b9442d0c79d5d352c69310418f766681646e858cdfe476bc07c122d619",
+          "pr1878Sha256": "e08209d3e0601f5bc2ac5305d8729858c1ea09de301b906a4973eb1fdddd109d",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "blaster-knockback-reuse-validated-distance-on-local-impulse",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] Blaster local knockback: reuse its validated distance instead of taking a second square root",
+      "library_file_id": "libfile_5e80f836a54c819188181db019eea7e5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] blaster-knockback-reuse-validated-distance-on-local-impulse.md",
+      "status": "not-adopted",
+      "reason": "The eligibility and damage callbacks can mutate the public offset vector or distance method before impulse application. Reusing an earlier distance can therefore change knockback. The speculative change was reverted.",
+      "evidence": [
+        "patches/splatoon3/runtime/sub-special-fidelity.mjs"
+      ],
+      "prior1870": {
+        "slug": "blaster-knockback-reuse-validated-distance-on-local-impulse",
+        "status": "needs-evidence",
+        "reason": "Pending: exported applyBlasterKnockback accepts arbitrary arrays; validBlasterKnockback reads values for every/isFinite and hypot, then victim eligibility getters run before a second offset norm. Removing that later read can change accessor arrays or offset mutation during eligibility access. No proven private stable-offset path or retained public fallback was established; validation and remote rejection were not weakened.",
+        "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/sub-special-fidelity.mjs",
+          "sha256": "0b35005d5e5762549f7e008cccff9d90f9a3a947a1fad770ceadd50781dd45f6",
+          "pr1878Sha256": "0b35005d5e5762549f7e008cccff9d90f9a3a947a1fad770ceadd50781dd45f6",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "booyah-blast-ring-repeated-static-ground-probes",
+      "title": "# [QUEUE][INKWAVE][Optimization] ナイスダマ拡大リングが同一設置座標を約41回接地プローブする",
+      "library_file_id": "libfile_22ef932a8f508191a4628b4a7976d029",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] booyah-blast-ring-repeated-static-ground-probes.md",
+      "status": "not-adopted",
+      "reason": "Ground queries have no immutable scene/version contract; caching ring probes would conceal geometry or callable changes. Keeping fresh probes avoids a visible floating or embedded ring.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-vfx.mjs"
+      ],
+      "prior1870": {
+        "slug": "booyah-blast-ring-repeated-static-ground-probes",
+        "status": "not-adopted",
+        "reason": "Not adopted: the same collider callable and blast origin can return a shifted surface or no surface on the next tick. No authoritative collision revision/static-world contract exists. Keep all intentional rings and fresh snap queries.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2",
+          "pr1878Sha256": "b880935ccaf1cfa060e41e36579efcc7a443eb2fcee0fecfbc81e4fc6d8a2bb4",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "bots-goal-crowding-axis-prune-before-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] Botの行動目標選択で離れた味方への距離関数を事前除外",
+      "library_file_id": "libfile_e8a279ab412c81918596602dc39cb607",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] bots-goal-crowding-axis-prune-before-hypot.md",
+      "status": "implemented-local",
+      "reason": "Both bot goal crowding checks reject axes outside the strict interaction radius before the original hypot. Remaining candidates retain the original distance, score order and tie behavior.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": {
+        "slug": "bots-goal-crowding-axis-prune-before-hypot",
+        "status": "needs-evidence",
+        "reason": "Conditional queue reports near-heavy distribution regressions; live goal-distance distribution and same-device benefit missing.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "bots-perceive-lazy-swimmer-speed-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] Bot索敵で不要な泳速 `Math.hypot()` を遅延評価する",
+      "library_file_id": "libfile_4387aa0742bc8191b5c3f80c74ddcd09",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] bots-perceive-lazy-swimmer-speed-hypot.md",
+      "status": "implemented-local",
+      "reason": "Horizontal swimmer speed is evaluated only when swimming, distance >3 and distance <9 require it. Other perception branches do not consume it.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": {
+        "slug": "bots-perceive-lazy-swimmer-speed-hypot",
+        "status": "needs-evidence",
+        "reason": "Deferred adapter change; requires fresh source-composed bot traces including occlusion, spawn and inherited input edge cases.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "brella-canopy-axis-far-prune-before-distance",
+      "title": "# [QUEUE][INKWAVE][Optimization] Brella held and detached canopy: skip exact distance sqrt for provably distant actors",
+      "library_file_id": "libfile_b59bae33d20481918ca37fc7abb06c2d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] brella-canopy-axis-far-prune-before-distance.md",
+      "status": "not-adopted",
+      "reason": "Canopy collision uses a mutable public vector method and near-heavy candidates. A universal scalar fast path would change custom distance behavior; ownership guards and a net hot-path benefit are not established.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "brella-canopy-axis-far-prune-before-distance",
+        "status": "needs-evidence",
+        "reason": "Prototype/override/near-density overhead and actual canopy contact acceptance need scoped before/after measurement.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "brella-canopy-trail-hoist-per-step-stamp-callback",
+      "title": "# [INKWAVE][Optimization][P3] Detached Brella canopy paint: hoist per-physics-step stamp callback",
+      "library_file_id": "libfile_16ad16716cc08191ae37d4e2516da6b5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] brella-canopy-trail-hoist-per-step-stamp-callback.md",
+      "status": "implemented-local",
+      "reason": "Restored the reusable canopy stamp helper with explicit per-step values. It does not retain an escaping callback closure or move live values across callbacks.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "brella-canopy-trail-hoist-per-step-stamp-callback",
+        "status": "already-in-pr",
+        "reason": "Hoist the canopy stamp function and pass the canopy explicitly, retaining existing movement, sampling and paint call order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "brella-pellet-hoist-invariant-group-fields",
+      "title": "# [QUEUE][INKWAVE][Optimization] Brella: shotgun pellet生成中の不変GroupParamスカラーをグループごとに取得",
+      "library_file_id": "libfile_21e3c6313ba08191a707f5bd60076c1c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] brella-pellet-hoist-invariant-group-fields.md",
+      "status": "not-adopted",
+      "reason": "GroupParam is mutable and pellet publication/constraint hooks can change later pellet inputs. Hoisting fields for the entire group would change observable shot behavior; the speculative hoist was reverted.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "brella-pellet-share-azimuth-sincos-per-pellet",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] Brella pellet: share one azimuth sine/cosine between spawn offset and launch orientation",
+      "library_file_id": "libfile_19a905909440819187b6d09f2883845c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] brella-pellet-share-azimuth-sincos-per-pellet.md",
+      "status": "implemented-local",
+      "reason": "Each pellet shares its own azimuth sine/cosine pair between horizontal components. No pair is cached across pellets or mutable publication callbacks.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "brella-pellet-share-azimuth-sincos-per-pellet",
+        "status": "already-in-pr",
+        "reason": "Evaluate each pellet azimuth sine/cosine once and reuse those exact values for the existing vector expressions; no RNG reorder.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "brella-splash-cache-blocking-pellet-ready-index",
+      "title": "# [QUEUE][INKWAVE][Optimization] Brella中間飛沫の待機中ペレット判定を最小限の再検査にする",
+      "library_file_id": "libfile_8258eb4750d8819195bb8f3fab2a7aed",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] brella-splash-cache-blocking-pellet-ready-index.md",
+      "status": "implemented-local",
+      "reason": "Restored a ready-blocker index cache while retaining PR1878 n.samples.has(i) semantics and its required first sample. Newly ready and mutated readiness cases retain the original ordering.",
+      "evidence": [
+        "patches/splatoon3/runtime/added-family-paint.mjs"
+      ],
+      "prior1870": {
+        "slug": "brella-splash-cache-blocking-pellet-ready-index",
+        "status": "already-in-pr",
+        "reason": "A still-blocked cached member proves the volley is not ready; once it clears, changes identity, or ends, a full readiness scan runs again. Sparse membership and live mutations remain visible.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/added-family-paint.mjs",
+          "sha256": "6c66ca5377eef53ddaf4bee514b58f956d2e92d501fc4b41748dc5bcdd39bc63",
+          "pr1878Sha256": "c0029e8e91ad72a35fad0d0baac2f0d3c98eaca548abf168d025a3d366d45392",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "brella-splash-plan-elide-four-value-validation-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] Brella飛沫計画の4要素arrayとevery closureを射撃ごとに作らない",
+      "library_file_id": "libfile_6220c96be7a48191bdc9908f1afdbd00",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] brella-splash-plan-elide-four-value-validation-array.md",
+      "status": "implemented-local",
+      "reason": "Four finite scalar tests replace the temporary validation array without changing the accepted values or fallback.",
+      "evidence": [
+        "patches/splatoon3/runtime/added-family-paint.mjs"
+      ],
+      "prior1870": {
+        "slug": "brella-splash-plan-elide-four-value-validation-array",
+        "status": "already-in-pr",
+        "reason": "Read four validation values eagerly and apply the same finite tests using scalars instead of a new array.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/added-family-paint.mjs",
+          "sha256": "6c66ca5377eef53ddaf4bee514b58f956d2e92d501fc4b41748dc5bcdd39bc63",
+          "pr1878Sha256": "c0029e8e91ad72a35fad0d0baac2f0d3c98eaca548abf168d025a3d366d45392",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "bubbler-superjump-charge-avoid-merged-roster-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] グレートバリアへのジャンプチャージ中のローカル/remote配列連結を省く",
+      "library_file_id": "libfile_fcd58dcc06108191b656e5367a10bfa4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] bubbler-superjump-charge-avoid-merged-roster-array.md",
+      "status": "implemented-local",
+      "reason": "Local and remote bubbler rosters are visited in their original two-lane order without a concatenated temporary list.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-big-bubbler.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-big-bubbler.mjs",
+          "sha256": "e62ed8b9442d0c79d5d352c69310418f766681646e858cdfe476bc07c122d619",
+          "pr1878Sha256": "e08209d3e0601f5bc2ac5305d8729858c1ea09de301b906a4973eb1fdddd109d",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-charge-reuse-ink-cost-and-inline-advance",
+      "title": "# [QUEUE][INKWAVE][Optimization] Catalogue charge tick: reuse unchanged `inkAt` result and avoid a one-shot `advance` closure",
+      "library_file_id": "libfile_deb63bc0290c81918dae0dd81b435432",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-charge-reuse-ink-cost-and-inline-advance.md",
+      "status": "implemented-local",
+      "reason": "The funded charge cost is reused for the immediate release branch and the advance path is inlined. No source cost is held across a publication callback.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-charge-reuse-ink-cost-and-inline-advance",
+        "status": "already-in-pr",
+        "reason": "Inline the charge advance closure and reuse the funded cost only when the target remains Object.is-equal; a changed target follows the original calculation.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-collision-radius-specialize-field-player-keys",
+      "title": "# [QUEUE][INKWAVE][Optimization] Catalog collision-radius: specialize Field/Player property access",
+      "library_file_id": "libfile_0ac5cb0129d88191a952a44c4c845dc7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-collision-radius-specialize-field-player-keys.md",
+      "status": "implemented-local",
+      "reason": "Field/player collision keys are selected directly while preserving the original fallback dimensions and damage radius.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-collision-radius-specialize-field-player-keys",
+        "status": "already-in-pr",
+        "reason": "Use static Field/Player property names on ordinary source paths and retain the dynamic fallback for other kinds.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-depleted-pellet-scale-template-once-per-unit",
+      "title": "# [QUEUE][INKWAVE][Optimization] Catalog low-ink Roller/Brush: scale depletion shape once per source unit",
+      "library_file_id": "libfile_5e6ff3c6862881918bea7230a8f06ff3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-depleted-pellet-scale-template-once-per-unit.md",
+      "status": "implemented-local",
+      "reason": "Depleted-pellet scale templates are reused with live inputs revalidated for each pellet, preserving callback mutations instead of freezing mutable values for a whole volley.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-depleted-pellet-scale-template-once-per-unit",
+        "status": "already-in-pr",
+        "reason": "Volleys cache scaled templates but compare fresh copied source values on every pellet. Parameter changes invalidate the template; every descriptor still owns independent c/b/paint objects and the original CollisionParam alias/key order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-dualies-slide-reuse-adapter-and-stamp-runtime",
+      "title": "# [INKWAVE][Optimization][P3] Catalog Dualies slide paint: avoid per-tick adapter/finite-triplet and repeated stamp-radius calculation",
+      "library_file_id": "libfile_315a5de07c048191a7ac551d3b723a42",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-dualies-slide-reuse-adapter-and-stamp-runtime.md",
+      "status": "implemented-local",
+      "reason": "Restored owner-scoped dualies slide adapter/stamp runtime reuse while resetting all per-event fields.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-dualies-slide-reuse-adapter-and-stamp-runtime",
+        "status": "already-in-pr",
+        "reason": "Per-runner Dualies adapter and depth-leased stamp runtime reuse synchronous state; lazy stamp radius invalidates when width changes and retains paint/seed order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-explosive-stringer-lodging-share-heading",
+      "title": "# [QUEUE][INKWAVE][Optimization] 爆発ストリンガー矢の着弾で水平向き算出を1回に統一する",
+      "library_file_id": "libfile_7753f7ae48e48191b44470c4bd119fe4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-explosive-stringer-lodging-share-heading.md",
+      "status": "implemented-local",
+      "reason": "Lodging Stringer arrows reuse the already computed heading in the same invocation; collision point, normal and explosive scheduling remain independent.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-flight-reuse-clipped-endpoint-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] カタログ傘・ローラーの飛翔クリップ終点 Vector3 を毎ステップ生成しない",
+      "library_file_id": "libfile_a74d1e0e21988191a8d5342faf280854",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-flight-reuse-clipped-endpoint-scratch.md",
+      "status": "implemented-local",
+      "reason": "The existing flight-owned clipEnd vector is reused by Brella and Roller clipping. Other concurrently active flight records retain separate scratch.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-flight-reuse-clipped-endpoint-scratch",
+        "status": "already-in-pr",
+        "reason": "Brella and Roller flight state owns a clipped endpoint vector reused only after synchronous consumers finish.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-impact-paint-write-footprint-scalars-without-record",
+      "title": "# [QUEUE][INKWAVE][Optimization] Avoid temporary width/depth object at catalog projectile impact",
+      "library_file_id": "libfile_e0384261766081919f48b1e27d35eb6a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-impact-paint-write-footprint-scalars-without-record.md",
+      "status": "implemented-local",
+      "reason": "Private impact footprint scalar fields are written directly. Public/custom cases retain their original ownership and fallback behavior.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-impact-paint-write-footprint-scalars-without-record",
+        "status": "already-in-pr",
+        "reason": "A projectile-owned width/depth record serves immediate scalar consumers and is refreshed on every impact calculation.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-multilobe-hit-hoist-player-hurtbox-per-actor",
+      "title": "# [QUEUE][INKWAVE][Optimization] Splatana 多段 lobe の敵当たり判定: 同一 actor の hurtbox 半径・高さ取得を一度に集約",
+      "library_file_id": "libfile_55ca71f709d08191b8b7d2008da23975",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-multilobe-hit-hoist-player-hurtbox-per-actor.md",
+      "status": "implemented-local",
+      "reason": "A target hurtbox is read once for that target during multilobe checks, after live target admission; no hurtbox persists across targets or outer queries.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-nearest-paint-elide-guard-arrays-and-duplicate-yaw-trig",
+      "title": "# [QUEUE][INKWAVE][Optimization] Added Roller/Brush nearest paint: temporary finite arrays and duplicate yaw trig",
+      "library_file_id": "libfile_08ce3e34cc8481918aa6cfc1cfbe5b8c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-nearest-paint-elide-guard-arrays-and-duplicate-yaw-trig.md",
+      "status": "implemented-local",
+      "reason": "Scalar finite validation and within-call yaw pairs replace temporary arrays and repeated trig in nearest-paint queries. Getter-changing yaw values retain the original path.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-nearest-paint-elide-guard-arrays-and-duplicate-yaw-trig",
+        "status": "already-in-pr",
+        "reason": "Replace nearest-paint finite-check arrays with eager scalar reads and share equal yaw sine/cosine results while retaining changed-accessor fallbacks.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-paint-precompute-fallback-up-normal",
+      "title": "# [QUEUE][INKWAVE][Optimization] カタログ塗りの既定上向き法線を1回だけ生成する",
+      "library_file_id": "libfile_76b58789bd68819197c72bdade053869",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-paint-precompute-fallback-up-normal.md",
+      "status": "implemented-local",
+      "reason": "The canonical fallback up normal is precomputed and reused only as the unmodified fallback; real contact normals still pass through.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-player-velocity-elide-launch-triplet-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] Added main-projectile player-velocity guard: eliminate three-element temporary array",
+      "library_file_id": "libfile_9e7bbe66a9ec81919620b93f85c77823",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-player-velocity-elide-launch-triplet-array.md",
+      "status": "implemented-local",
+      "reason": "Launch velocity uses scalar finite checks instead of a transient three-element validation array, retaining launch values and malformed-input fallback.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-player-velocity-elide-launch-triplet-array",
+        "status": "already-in-pr",
+        "reason": "Capture launch velocity X/Y/Z eagerly and use scalar finite guards without an intermediate array.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-roller-brush-nearest-hoist-yaw-trig-and-validation-arrays",
+      "title": "# [QUEUE][INKWAVE][Optimization] catalog-roller-brush-nearest-hoist-yaw-trig-and-validation-arrays",
+      "library_file_id": "libfile_a35166e981c881919a97014cf5b942ad",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-roller-brush-nearest-hoist-yaw-trig-and-validation-arrays.md",
+      "status": "implemented-local",
+      "reason": "Roller/Brush nearest queries reuse a validated heading pair within the same query and keep the custom/getter fallback.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-roller-brush-nearest-hoist-yaw-trig-and-validation-arrays",
+        "status": "already-in-pr",
+        "reason": "The same nearest-paint scalar/trigonometric implementation covers both overlapping proposals; preserve eager validation and original yaw accessor reads.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-rolling-paint-reuse-query-id-and-triangle-scratch",
+      "title": "# [INKWAVE][Optimization][P3] Added Roller/Brush floor-contact scan: reuse block-id and triangle-point scratch arrays",
+      "library_file_id": "libfile_484ce6454f1481918f68357d53fd4a4b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-rolling-paint-reuse-query-id-and-triangle-scratch.md",
+      "status": "implemented-local",
+      "reason": "Rolling paint uses depth-leased query IDs and triangle scratch. Nested queries get separate leases and retained references are released on exit.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-rolling-paint-reuse-query-id-and-triangle-scratch",
+        "status": "already-in-pr",
+        "reason": "Depth-lease query ID and three-point triangle arrays; retain all live geometry queries and clear references after synchronous polygon use.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-slosher-sweep-hoist-weaponparam-rates-per-volley",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] Added Slosher yaw sweep: hoist invariant source rate and maximum angle from each glob",
+      "library_file_id": "libfile_48edc59afe688191ae33ed0171bf1855",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-slosher-sweep-hoist-weaponparam-rates-per-volley.md",
+      "status": "implemented-local",
+      "reason": "Safe narrowed alternative: weaponParam is evaluated once per pellet for its two sweep fields. It is deliberately re-read after publication callbacks instead of frozen for the entire volley.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-slosher-sweep-hoist-weaponparam-rates-per-volley",
+        "status": "already-in-pr",
+        "reason": "Safe alternative: one weaponParam lookup per pellet replaces the two identical lookups; rates remain live across projectile publication callbacks rather than freezing a mutable source for the full volley.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-stringer-arrow-reuse-volley-aim-birth-vectors",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] Stringer volley: reuse two local aim/birth work vectors across arrows",
+      "library_file_id": "libfile_69bfd13aeeec81919e15f6f28c66eceb",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-stringer-arrow-reuse-volley-aim-birth-vectors.md",
+      "status": "implemented-local",
+      "reason": "Stringer arrow aim/birth vectors are reused within a volley where owned scratch does not escape. Projectile-owned values remain copied into each arrow.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": {
+        "slug": "catalog-stringer-arrow-reuse-volley-aim-birth-vectors",
+        "status": "already-in-pr",
+        "reason": "Two invocation-local vectors serve all arrows; constrainMuzzle exposes only the stable anchor and its own direction, while spawn copies aim/birth before publication. Recursive volleys retain independent scratch.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "catalog-unit-hoist-static-source-scalars-per-glob",
+      "title": "# [QUEUE][INKWAVE][Optimization] Unit内の複数弾でソース固定数値のfinite検査を繰り返さない",
+      "library_file_id": "libfile_376e65aebb3881918da1c5effce660cd",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-unit-hoist-static-source-scalars-per-glob.md",
+      "status": "not-adopted",
+      "reason": "Unit scalar data can be edited by synchronous constraint/spawn hooks between globs. Repeated live reads preserve those edits; the broad hoist was reverted.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d",
+          "pr1878Sha256": "bab422bfb0091d08b80036dead9fe5e390f205bc03afd3c6083ee09d32f28e4e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "charger-flight-pool-actor-hit-candidate-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] Charger finite-flight actor candidates: reuse per-job {actor,d} records across steps",
+      "library_file_id": "libfile_ceaee901c848819181dac8ceb50d0817",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] charger-flight-pool-actor-hit-candidate-records.md",
+      "status": "implemented-local",
+      "reason": "Restored depth-leased actor hit candidate rows with ordered sorting, independent nested shots and reference release.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-charger-flight.mjs"
+      ],
+      "prior1870": {
+        "slug": "charger-flight-pool-actor-hit-candidate-records",
+        "status": "already-in-pr",
+        "reason": "Flight-owned depth leases retain candidate rows, stable hit sorting, source damage timing and ally/full-charge semantics; finally clears all candidate actor references.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+          "sha256": "6378da23c8585df1423720b0001f3bd7aff2ee523c199a9b86a3f526bad4bfd6",
+          "pr1878Sha256": "a1554219873033c9f793a915978500e9ddb26fa0ae749cfec91b5f2e3efb5cbf",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "charger-flight-recycle-retired-job-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] Pool completed native-fidelity Charger flight jobs and their owned scratch data",
+      "library_file_id": "libfile_3a553a5e74d48191b71edbd49ac3a915",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] charger-flight-recycle-retired-job-scratch.md",
+      "status": "not-adopted",
+      "reason": "Retired flight jobs still participate in owner/peer/beam and cancellation lifecycles. Whole-job recycling lacks a complete ownership reset and could alias an earlier job; only proven inner scratch is pooled.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-charger-flight.mjs"
+      ],
+      "prior1870": {
+        "slug": "charger-flight-recycle-retired-job-scratch",
+        "status": "needs-evidence",
+        "reason": "Job pools risk retained owner/beam/peer/defense references; full lifecycle/cancellation exception proof remains absent.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+          "sha256": "6378da23c8585df1423720b0001f3bd7aff2ee523c199a9b86a3f526bad4bfd6",
+          "pr1878Sha256": "a1554219873033c9f793a915978500e9ddb26fa0ae749cfec91b5f2e3efb5cbf",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "charger-flight-reuse-per-flight-defense-probe",
+      "title": "# [QUEUE][INKWAVE][Optimization] チャージャー飛翔stepの防御候補probeを弾寿命内で再利用",
+      "library_file_id": "libfile_8aef2d1b36f0819194710fd9b6f5ac92",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] charger-flight-reuse-per-flight-defense-probe.md",
+      "status": "implemented-local",
+      "reason": "Each active Charger flight reuses its own defense probe; different flights and nested queries remain independent.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-charger-flight.mjs"
+      ],
+      "prior1870": {
+        "slug": "charger-flight-reuse-per-flight-defense-probe",
+        "status": "already-in-pr",
+        "reason": "Each flight reuses its own defense probe; all owner/team/movement/damage/ghost/full fields refresh before the synchronous query and resolution.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+          "sha256": "6378da23c8585df1423720b0001f3bd7aff2ee523c199a9b86a3f526bad4bfd6",
+          "pr1878Sha256": "a1554219873033c9f793a915978500e9ddb26fa0ae749cfec91b5f2e3efb5cbf",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "crab-shooter-direct-descriptor-double-build-and-special-band-reclone",
+      "title": "# [QUEUE][INKWAVE][Optimization] カニタンク連射弾の二重descriptor構築とスペシャル弾のdamage band再複製を削減",
+      "library_file_id": "libfile_82be29daac6c819195227b4315b39383",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] crab-shooter-direct-descriptor-double-build-and-special-band-reclone.md",
+      "status": "implemented-local",
+      "reason": "Crab direct-only shots avoid building the unused splash fallback descriptor; newly constructed canonical band records are not cloned a second time.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "sha256": "3446a87ac9271adb8800cc42d2178dfdec60cdb5749f6948b38492e1a0c7d2ef",
+          "pr1878Sha256": "c994589d98a372dd7d2d0523f9727e8978b326d7612b7f826b607719bb58aca6",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "crab-splash-newborn-catchup-avoid-detached-queue-and-lost-recycle",
+      "title": "# [QUEUE][INKWAVE][Optimization] Crab Tank newborn splash catch-up: detached queue / lost record recycling",
+      "library_file_id": "libfile_7796c68c0ccc8191afc6a0250487c798",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] crab-splash-newborn-catchup-avoid-detached-queue-and-lost-recycle.md",
+      "status": "implemented-local",
+      "reason": "Newborn Crab splash catch-up advances only the new suffix on the real owning queue. Retired drops return to the real pool, old prefix ages are untouched, and clear during a paint callback cannot resurrect drops.",
+      "evidence": [
+        "patches/splatoon3/runtime/crab-tank-projectile.mjs",
+        "patches/splatoon3/runtime/blaster-flight-paint.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/crab-tank-projectile.mjs",
+          "sha256": "70aab4712c3945133143562517b910616f2549e78c3b355cad31bf9c5effa74f",
+          "pr1878Sha256": "5296f386e037962026145203e680488038c73c76d481f625f40ee074ebcc6c92",
+          "changedSinceBase": true
+        },
+        {
+          "path": "patches/splatoon3/runtime/blaster-flight-paint.mjs",
+          "sha256": "4aaa14c923a5d71fc2a988826ffa98b3fe80e275db814997232ac470022891e2",
+          "pr1878Sha256": "005364450a2f38f94d6a985c83d8c1c01eed0bdc0832fabd9d365138b2d73790",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "dualies-impact-source-elide-finite-check-arrays",
+      "title": "# [INKWAVE][Optimization][P3] Dualies floor-impact source paint: eliminate two finite-check temporary arrays",
+      "library_file_id": "libfile_f1e2560fdeec8191b2c402e1c0edf7e8",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] dualies-impact-source-elide-finite-check-arrays.md",
+      "status": "implemented-local",
+      "reason": "Dualies impact validation uses the same scalar finite predicates without an intermediate array.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "prior1870": {
+        "slug": "dualies-impact-source-elide-finite-check-arrays",
+        "status": "already-in-pr",
+        "reason": "Use eager scalar finite checks for Dualies source impact channels without changing source evaluation or fallback order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+          "sha256": "ce8191824d706c27d2bdfdad0ce5d746c58f6f006602b55578bc6486a9089531",
+          "pr1878Sha256": "00849424afe3a6e83976c61059f44467ade9576a0190e5346a70f49b89902b55",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "fidelity-projectile-hoist-segment-aabb-extrema-across-actors",
+      "title": "# [QUEUE][INKWAVE][Optimization] Fidelityメイン弾の全敵判定で弾道区間XZ極値の重複計算を共有",
+      "library_file_id": "libfile_7a98f90e4fa881918d3d7ee330a3bdd3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fidelity-projectile-hoist-segment-aabb-extrema-across-actors.md",
+      "status": "implemented-local",
+      "reason": "Segment AABB extrema are lazily prepared once for the current projectile query after admission. Per-actor hurtbox data remains live.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+          "sha256": "ce8191824d706c27d2bdfdad0ce5d746c58f6f006602b55578bc6486a9089531",
+          "pr1878Sha256": "00849424afe3a6e83976c61059f44467ade9576a0190e5346a70f49b89902b55",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "fidelity-roller-spawn-share-yaw-basis-with-offset",
+      "title": "# [QUEUE][INKWAVE][Optimization] Roller flick: share same yaw sine/cosine across spawn base and non-stacked glob offset",
+      "library_file_id": "libfile_6f31c29a81708191a526b1c7b38a7827",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fidelity-roller-spawn-share-yaw-basis-with-offset.md",
+      "status": "implemented-local",
+      "reason": "Roller spawn and offsets share the initial yaw sine/cosine when their captured yaw still matches. Getter and RNG callback mutations take the original recomputation path; helper defaults remain compatible.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "prior1870": {
+        "slug": "fidelity-roller-spawn-share-yaw-basis-with-offset",
+        "status": "needs-evidence",
+        "reason": "Exported helper must preserve arbitrary callers/getter semantics and source-guided birth; no validated runtime patch in this batch.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+          "sha256": "ce8191824d706c27d2bdfdad0ce5d746c58f6f006602b55578bc6486a9089531",
+          "pr1878Sha256": "00849424afe3a6e83976c61059f44467ade9576a0190e5346a70f49b89902b55",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "fidelity-slosher-impact-paint-remove-six-value-finite-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] Slosher impact paint: remove six-element finite-guard array per eligible landing",
+      "library_file_id": "libfile_c1cd90ce3d208191abc6a816a20d9fae",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fidelity-slosher-impact-paint-remove-six-value-finite-array.md",
+      "status": "implemented-local",
+      "reason": "Six-value impact validation uses the identical short-circuit finite checks without allocating a temporary list.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "prior1870": {
+        "slug": "fidelity-slosher-impact-paint-remove-six-value-finite-array",
+        "status": "already-in-pr",
+        "reason": "Retain all six eager field reads and finite guards with scalars; source footprint and impact paint values remain unchanged.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+          "sha256": "ce8191824d706c27d2bdfdad0ce5d746c58f6f006602b55578bc6486a9089531",
+          "pr1878Sha256": "00849424afe3a6e83976c61059f44467ade9576a0190e5346a70f49b89902b55",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "fixed-arity-actor-and-projectile-forwarders-elide-rest",
+      "title": "# [QUEUE][INKWAVE][Optimization][P3] 固定引数ホットラッパーの不要な rest 引数構築候補",
+      "library_file_id": "libfile_43c3621ef404819193313a6204df0ecd",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fixed-arity-actor-and-projectile-forwarders-elide-rest.md",
+      "status": "implemented-local",
+      "reason": "Actor/projectile wrappers use their common fixed arity and preserve padded undefined arguments; uncommon arities use arguments forwarding. Nested flags, exceptions and extensions are covered by parity tests.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapon-gates.mjs",
+        "patches/splatoon3/runtime/splatling.mjs"
+      ],
+      "prior1870": {
+        "slug": "fixed-arity-actor-and-projectile-forwarders-elide-rest",
+        "status": "needs-evidence",
+        "reason": "All three specified wrappers still use rest forwarding: weapon-gates Actor.update(dt,...args), Projectiles._new(...args), and splatling Actor._horizontal(dt,squid,onEnemy,...rest). No fixed-count call/arguments fallback is present. Unrelated fixed-arity wrappers do not implement this row.",
+        "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapon-gates.mjs",
+          "sha256": "e40959671ba7d8f3a2d205e2b7a0986c1d13a89894cc51fbe7e91e690c713a85",
+          "pr1878Sha256": "8864edc9cc2fa6763d8a74475c0018c8ff737db0b4dc035fdb3f8f95cdd6a873",
+          "changedSinceBase": true
+        },
+        {
+          "path": "patches/splatoon3/runtime/splatling.mjs",
+          "sha256": "99c341f02a5278e2775e9f8df86814464a52e88d993dc221d02609979742440c",
+          "pr1878Sha256": "baa1296180a788c441854812172a1425f688c6c7315c5e91976cf2717a450508",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "full-charge-charger-pool-hit-candidate-rows-by-nested-shot",
+      "title": "# [QUEUE][INKWAVE][Optimization] Full-charge Charger wrapper: reuse sortable hit-candidate records safely by shot depth",
+      "library_file_id": "libfile_aaee4a63a1f8819190942ae37924bc68",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] full-charge-charger-pool-hit-candidate-rows-by-nested-shot.md",
+      "status": "not-adopted",
+      "reason": "This legacy full-charge wrapper crosses physics, original fire, hit and audio callbacks. Candidate-row lifetime is not the same as the separately tested Charger-flight lease; keeping fresh rows avoids cross-shot mutation.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons.mjs"
+      ],
+      "prior1870": {
+        "slug": "full-charge-charger-pool-hit-candidate-rows-by-nested-shot",
+        "status": "needs-evidence",
+        "reason": "Lease must cover physics/original fire/hit/audio exception and nested-shot lifetimes; current evidence does not validate all callbacks.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons.mjs",
+          "sha256": "18ed22eb82a68dd737d306c41b9b421ec9e6622935da1f777389075d072f829c",
+          "pr1878Sha256": "18ed22eb82a68dd737d306c41b9b421ec9e6622935da1f777389075d072f829c",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "fx-burst-hoist-cone-cosine-and-orthonormal-basis",
+      "title": "# [QUEUE][INKWAVE][Optimization] fx-burst-hoist-cone-cosine-and-orthonormal-basis",
+      "library_file_id": "libfile_6942f747eac88191924f03ca8c13877f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fx-burst-hoist-cone-cosine-and-orthonormal-basis.md",
+      "status": "implemented-local",
+      "reason": "Basis scalars are computed lazily after the same two RNG draws as the original coneDir and reused while the live normal components match. A reentrant FX callback or RNG-induced normal change recomputes the basis. Captured tangent scalars remain independent of shared scratch reuse; all births and RNG ordering match.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ],
+      "review": "reports/queue-local-gameplay-review-20261026.json"
+    },
+    {
+      "key": "fxhooks-interval-particle-cadence-preserve-60hz",
+      "title": "# [QUEUE][INKWAVE][Optimization] FXHooks 60Hz 基準の周期VFXを時間正規化して高Hz時の余剰発生を抑制",
+      "library_file_id": "libfile_3fda14016aa48191a5031deff298fc85",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fxhooks-interval-particle-cadence-preserve-60hz.md",
+      "status": "not-adopted",
+      "reason": "The three proposed cadence changes increase low-FPS particle births and alter elapsed timer remainder/RNG order. Current PR retains different jump-trail cadence work; that is not proof for these three timers. Without the requested low-FPS visual/load acceptance, this independent change remains off.",
+      "evidence": [
+        "inkwave-public/src/fx/fxHooks.js"
+      ],
+      "prior1870": {
+        "slug": "fxhooks-interval-particle-cadence-preserve-60hz",
+        "status": "already-in-pr",
+        "reason": "Use the observed 5/60, 22/60 and 7/60 source periods with residual carry; all 3,600-frame 60Hz emission indices match and 30/120Hz equal-time counts agree.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/fx/fxHooks.js",
+          "sha256": "ecd815b1a4607055b388996c2f1a32c0a6818476779c80282881b6ead22e17e4",
+          "pr1878Sha256": "ecd815b1a4607055b388996c2f1a32c0a6818476779c80282881b6ead22e17e4",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "fxhooks-lazy-far-actor-horizontal-speed-except-form-events",
+      "title": "# [QUEUE][INKWAVE][Optimization] FX Hooks: 遠距離Actorの未使用水平速度 `Math.hypot` をイベント時だけ評価",
+      "library_file_id": "libfile_aa9f87776d6881919735a7c427220714",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fxhooks-lazy-far-actor-horizontal-speed-except-form-events.md",
+      "status": "not-adopted",
+      "reason": "Concrete counterexample: hs is consumed by the stepAcc reset branch outside the near-camera block. Substituting a skipped/null speed for far actors changes stride state and their next visible footsteps.",
+      "evidence": [
+        "inkwave-public/src/fx/fxHooks.js"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/fx/fxHooks.js",
+          "sha256": "ecd815b1a4607055b388996c2f1a32c0a6818476779c80282881b6ead22e17e4",
+          "pr1878Sha256": "ecd815b1a4607055b388996c2f1a32c0a6818476779c80282881b6ead22e17e4",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "ink-vac-absorb-los-reuse-segment-length",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ink Vac吸引LOS交差点の同一区間長sqrt二重計算を1回にする",
+      "library_file_id": "libfile_e145b3e2a0a48191be9d1be5e1b3942f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-absorb-los-reuse-segment-length.md",
+      "status": "implemented-local",
+      "reason": "LOS uses the already computed absorption segment length within the same probe, retaining blocker order and distance thresholds.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-ink-vac.mjs"
+      ],
+      "prior1870": {
+        "slug": "ink-vac-absorb-los-reuse-segment-length",
+        "status": "already-in-pr",
+        "reason": "Calculate segment distance once per LOS fraction query, retaining the original intersection threshold and division order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+          "sha256": "813a887bd894baa679d3f9cff3b3b2db6269cfdda56499a51ceab18658ebf129",
+          "pr1878Sha256": "2ab3c47d67c162f6e054f0dd6dae84c540d4662c316e20e9b43950210a245b48",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ink-vac-absorption-avoid-six-value-array-find",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ink Vac吸引時の優先ダメージ抽出で6要素配列とfindコールバックを削減",
+      "library_file_id": "libfile_6353d5ca6c908191bfcd55dfa4cb4b94",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-absorption-avoid-six-value-array-find.md",
+      "status": "implemented-local",
+      "reason": "The first finite damage candidate is selected by scalar checks with the original priority, without constructing and finding through a six-value array.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-ink-vac.mjs"
+      ],
+      "prior1870": {
+        "slug": "ink-vac-absorption-avoid-six-value-array-find",
+        "status": "already-in-pr",
+        "reason": "Read all six candidate damage values eagerly, then select the first positive finite value with ordered scalar branches.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+          "sha256": "813a887bd894baa679d3f9cff3b3b2db6269cfdda56499a51ceab18658ebf129",
+          "pr1878Sha256": "2ab3c47d67c162f6e054f0dd6dae84c540d4662c316e20e9b43950210a245b48",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ink-vac-active-vortex-owners-instead-of-whole-actor-roster",
+      "title": "# [QUEUE][INKWAVE][Optimization] インクバキューム吸引判定の全Actor探索を稼働中Vacだけに限定",
+      "library_file_id": "libfile_239809b8e38c8191b56b7e7e29d4d99a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-active-vortex-owners-instead-of-whole-actor-roster.md",
+      "status": "not-adopted",
+      "reason": "An active-owner roster would need synchronous updates for every lifetime and same-roster mutation. Current traversal order includes LOS callbacks; skipping entries without that contract can change absorption ordering.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-ink-vac.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+          "sha256": "813a887bd894baa679d3f9cff3b3b2db6269cfdda56499a51ceab18658ebf129",
+          "pr1878Sha256": "2ab3c47d67c162f6e054f0dd6dae84c540d4662c316e20e9b43950210a245b48",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ink-vac-firstentry-scalar-quadratic-roots",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ink Vac firstEntryの解析的な二次方程式判定から関数・配列・ソートを除去",
+      "library_file_id": "libfile_60ffd592fb608191abbd66ebaba77a02",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-firstentry-scalar-quadratic-roots.md",
+      "status": "implemented-local",
+      "reason": "Scalar quadratic roots replace the temporary root list while preserving root selection and boundary handling.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-ink-vac.mjs"
+      ],
+      "prior1870": {
+        "slug": "ink-vac-firstentry-scalar-quadratic-roots",
+        "status": "already-in-pr",
+        "reason": "Keep scalar roots with the same subtraction-based swap predicate as the old numeric sort, including NaN ordering, then preserve first-entry selection.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+          "sha256": "813a887bd894baa679d3f9cff3b3b2db6269cfdda56499a51ceab18658ebf129",
+          "pr1878Sha256": "2ab3c47d67c162f6e054f0dd6dae84c540d4662c316e20e9b43950210a245b48",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ink-vac-per-step-bubbler-list-concat-allocation",
+      "title": "# [QUEUE][INKWAVE][Optimization] Ink Vac吸引の毎更新でBig Bubbler一覧を連結コピーする処理を省略",
+      "library_file_id": "libfile_8532860a2a1c8191893d44573065f676",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-per-step-bubbler-list-concat-allocation.md",
+      "status": "implemented-local",
+      "reason": "Depth-leased local/remote bubbler snapshots remove the per-step concatenation, preserve callback birth/removal ordering and clear references after use.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-ink-vac.mjs"
+      ],
+      "prior1870": {
+        "slug": "ink-vac-per-step-bubbler-list-concat-allocation",
+        "status": "already-in-pr",
+        "reason": "Lease one combined Bubbler snapshot with stable local-then-remote ordering and nested-query isolation; release in finally.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+          "sha256": "813a887bd894baa679d3f9cff3b3b2db6269cfdda56499a51ceab18658ebf129",
+          "pr1878Sha256": "2ab3c47d67c162f6e054f0dd6dae84c540d4662c316e20e9b43950210a245b48",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "inkflight-aim-shortcircuit-heading-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] InkFlight射撃照準の射程外・至近距離判定後に水平照準長を計算する",
+      "library_file_id": "libfile_1bc4027696a081918772f653e93e7262",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkflight-aim-shortcircuit-heading-hypot.md",
+      "status": "implemented-local",
+      "reason": "Out-of-range aim convergence returns before the unused planar heading hypot. In-range and nonfinite behavior retain the original calculation.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "inkflight-ghost-skip-rebuilt-outbound-meta-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] 受信したInkFlightゴースト弾で送信用メタデータ配列の再生成を省略",
+      "library_file_id": "libfile_b86a1a727ec08191a8fb52c230d9e672",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkflight-ghost-skip-rebuilt-outbound-meta-array.md",
+      "status": "not-adopted",
+      "reason": "Outbound metadata is also exposed through diagnostics/restoration state. Suppressing its refresh for ghosts changes observable metadata even when no packet is emitted.",
+      "evidence": [
+        "inkwave-public/src/game/inkFlight.js"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/game/inkFlight.js",
+          "sha256": "d24a0c8756473be1ed15f54cc8dfdc6b75f3489d777937b69abf952dfdd86ccf",
+          "pr1878Sha256": "d24a0c8756473be1ed15f54cc8dfdc6b75f3489d777937b69abf952dfdd86ccf",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "killer-wail-speaker-pose-indexed-pair-lookup",
+      "title": "# [QUEUE][INKWAVE][Optimization] メガホンレーザー6基の姿勢更新で indexOf と同じペアの find を繰り返さない",
+      "library_file_id": "libfile_2155f96c4fb4819181b0ab974c463b2f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] killer-wail-speaker-pose-indexed-pair-lookup.md",
+      "status": "implemented-local",
+      "reason": "Canonical paired Wail speaker poses use their known pair index; noncanonical ordering falls back to the original find operation.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-presentation.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698",
+          "pr1878Sha256": "46627f494c4c701edd27eefff5f25a92a491c4c530b97943d1c92b2a093ad185",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "legacy-charger-beam-reuse-lifecycle-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] legacy-charger-beam-reuse-lifecycle-records",
+      "library_file_id": "libfile_6321d8bdb8ec81918e77222af38ce53a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-charger-beam-reuse-lifecycle-records.md",
+      "status": "implemented-local",
+      "reason": "Beam lifecycle records are retained by their existing pooled meshes and all per-life fields are overwritten on reuse.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": {
+        "slug": "legacy-charger-beam-reuse-lifecycle-records",
+        "status": "already-in-pr",
+        "reason": "Each pooled beam mesh retains its lifecycle record; every admission resets t, life and thickness before insertion, keeping active-beam order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "legacy-slosher-hoist-constant-lob-trigonometry",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyスロッシャー弾道の固定0.32rad三角関数を共通化",
+      "library_file_id": "libfile_268a6ff3f0e88191bb16c64cba276c52",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-slosher-hoist-constant-lob-trigonometry.md",
+      "status": "implemented-local",
+      "reason": "The constant 0.32-radian Slosher lob cosine and tangent are initialized once and reused in the original multiplication order.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": {
+        "slug": "legacy-slosher-hoist-constant-lob-trigonometry",
+        "status": "needs-evidence",
+        "reason": "No additional source transform added after final build freeze; this remains pending, not declared fixed.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "main-attract-coverage-elide-per-frame-two-element-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] Attract menu: avoid allocating the two-value coverage array every frame",
+      "library_file_id": "libfile_b227ea9039188191b41934c707f92597",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] main-attract-coverage-elide-per-frame-two-element-array.md",
+      "status": "not-adopted",
+      "reason": "Coverage is already throttled with explicit timeout/ownership behavior. Removing its fresh result array would introduce cross-owner mutable reuse for a cold path without a demonstrated benefit.",
+      "evidence": [
+        "inkwave-public/src/main.js"
+      ],
+      "prior1870": {
+        "slug": "main-attract-coverage-elide-per-frame-two-element-array",
+        "status": "not-adopted",
+        "reason": "Not adopted: final PR already limits coverage inspection to 2Hz and skips it after timeout. Bypassing virtual coverage() via counts would add cross-owner coupling for two scalars at 2Hz without demonstrated benefit.",
+        "evidenceReport": "reports/queue-extra-ui-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417",
+          "pr1878Sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "main-projectile-draw-skip-unused-charger-quaternion",
+      "title": "# [QUEUE][INKWAVE][Optimization] メイン弾描画でチャージャー落下滴が0件のとき固定姿勢Quaternionの算出を省く",
+      "library_file_id": "libfile_ab8889f8bc2881919d8a5c0547a087fc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] main-projectile-draw-skip-unused-charger-quaternion.md",
+      "status": "implemented-local",
+      "reason": "Charger drop orientation is initialized only when at least one drop and a free draw slot exist. Visible beads still receive the same quaternion.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "main-projectile-head-growth-saturated-sine",
+      "title": "# [QUEUE][INKWAVE][Optimization] メイン弾ヘッドの成長率が飽和した後の sin を定数化",
+      "library_file_id": "libfile_03f33d69bdec8191bdfe11646673c9f7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] main-projectile-head-growth-saturated-sine.md",
+      "status": "implemented-local",
+      "reason": "Saturated growth uses its exactly rounded factor 1 and avoids sin(pi); the live Slosher path still owns its distinct radius calculation.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "main-projectile-satellite-near-muzzle-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] 弾頭の発射直後にサテライト飛沫を描かない区間の距離平方判定",
+      "library_file_id": "libfile_a8bf4ee2e02c8191a05470814288f50b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] main-projectile-satellite-near-muzzle-fastpath.md",
+      "status": "implemented-local",
+      "reason": "Near-muzzle satellite groups that cannot emit any visible bead return before basis/fade work. The distance and original visible per-bead criteria are retained.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "match-softpush-hoist-invariant-radius-and-outer-actor",
+      "title": "# [QUEUE][INKWAVE][Optimization] Match固定ステップのActorペア衝突で定数半径と外側Actorを使い回す",
+      "library_file_id": "libfile_0f6219804ea8819199f3d7cc636ef18e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] match-softpush-hoist-invariant-radius-and-outer-actor.md",
+      "status": "not-adopted",
+      "reason": "Independent review reproduced a synchronous bodyFits callback replacing the outer Actor, after which the hoisted reference continued pushing the removed Actor. PLAYER.radius is also mutable. All three hoist anchors were reverted; original per-pair live reads remain. Replacing two multiplies with extra cache branches did not justify a narrowed alternative.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ],
+      "review": "reports/queue-local-gameplay-review-20261026.json"
+    },
+    {
+      "key": "paint-ownership-depth-scoped-claim-context-reuse",
+      "title": "# [QUEUE][INKWAVE][Optimization] Paint ownership: reuse depth-scoped per-splat claim contexts",
+      "library_file_id": "libfile_45db49b02cf08191a209934fa33f6c43",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] paint-ownership-depth-scoped-claim-context-reuse.md",
+      "status": "not-adopted",
+      "reason": "Claim context is externally observable through _paintOwnerContext and retained callbacks. Reusing it would mutate previously observed snapshots; a depth pool alone does not fix escaping references.",
+      "evidence": [
+        "patches/splatoon3/runtime/paint-ownership.mjs"
+      ],
+      "prior1870": {
+        "slug": "paint-ownership-depth-scoped-claim-context-reuse",
+        "status": "needs-evidence",
+        "reason": "Current splat wrapper still creates fresh owner/mode/order/accepted context and restores outer context in finally. Pooling needs nested accepted mutation/clear/exception and ownership-retention tests.",
+        "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/paint-ownership.mjs",
+          "sha256": "06e33b0d21df8c20891f78118c36f17a4df3cc633846a8efe0d961663e389b2d",
+          "pr1878Sha256": "54d3bdaf71361b53875a963c54fdc528b5446121990cb7358cce277ef87d02b4",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "paint-splat-buffer-initial-capacity-on-demand",
+      "title": "# [QUEUE][INKWAVE][Optimization] 塗り描画の全6000Quad分固定バッファ初期確保を需要連動にする",
+      "library_file_id": "libfile_15577223396c81919b7a1473e0c35798",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] paint-splat-buffer-initial-capacity-on-demand.md",
+      "status": "not-adopted",
+      "reason": "Growing GPU capacity on demand changes allocation, rebind and context-restoration paths and can introduce visible stalls. The existing bounded allocation is retained until those paths have real GPU acceptance.",
+      "evidence": [
+        "inkwave-public/src/world/paint.js"
+      ],
+      "prior1870": {
+        "slug": "paint-splat-buffer-initial-capacity-on-demand",
+        "status": "needs-evidence",
+        "reason": "Composed _initGPU still allocates all MAX_QUADS attributes. Growing buffers needs peak-demand, rebinding, GPU/context-loss and stutter acceptance; no capacity change in this batch.",
+        "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/world/paint.js",
+          "sha256": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
+          "pr1878Sha256": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "player-aimassist-axis-prune-before-distance",
+      "title": "# [QUEUE][INKWAVE][Optimization] エイムアシスト候補の遠距離除外を平方根距離計算より先に行う",
+      "library_file_id": "libfile_71d0b6424c048191b9405f9cc00a9a06",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] player-aimassist-axis-prune-before-distance.md",
+      "status": "implemented-local",
+      "reason": "Safe narrowed implementation: only the private camera vector uses finite axis rejection before its original length calculation. The public actor-distance expression remains byte-for-byte original, preserving custom distance/getter/receiver behavior without a helper or per-call argument array. The orphan scanner gate remains unchanged.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs"
+      ],
+      "prior1870": {
+        "slug": "player-aimassist-axis-prune-before-distance",
+        "status": "needs-evidence",
+        "reason": "Fully composed _assistTarget still computes _v.length then a.pos.distanceTo before selection. No axis gates here; hypothetical finite/type/NaN guards require target-selection and prior-target transition acceptance.",
+        "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+          "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297",
+          "pr1878Sha256": null,
+          "changedSinceBase": true
+        }
+      ],
+      "review": "reports/queue-local-gameplay-review-20261026.json"
+    },
+    {
+      "key": "projectile-visual-sparse-roller-link-group-bitmap",
+      "title": "# [INKWAVE][Optimization] 700スロットのローラー弾リンク描画グループを、描画フレームごとの固定全走査から sparse bitmap に変更",
+      "library_file_id": "libfile_10502b4c57d88191aca9212d15f6601f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] projectile-visual-sparse-roller-link-group-bitmap.md",
+      "status": "implemented-local",
+      "reason": "Restored sparse Roller-link occupancy metadata without reverting PR1878 Bucket draw behavior. Empty link groups are skipped; occupied groups retain original ordering.",
+      "evidence": [
+        "patches/splatoon3/runtime/projectile-visuals.mjs"
+      ],
+      "prior1870": {
+        "slug": "projectile-visual-sparse-roller-link-group-bitmap",
+        "status": "already-in-pr",
+        "reason": "Replace per-frame dense group clears/scans with occupied-word bits while retaining linear probe placement, ascending slot traversal and link-cap priority.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/projectile-visuals.mjs",
+          "sha256": "eca35369d4aa94e7233cc9431903929aeb44f71bced290019783448578ea6df5",
+          "pr1878Sha256": "75ca533c74f1dba15a40355c81bd6c9c5ffd3fe3880062b55c64b0f834ee839e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-buildframe-skip-empty-barrier-hit-splice",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-buildframe-skip-empty-barrier-hit-splice",
+      "library_file_id": "libfile_4a781e1c57e081918ebb7140121c1065",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-buildframe-skip-empty-barrier-hit-splice.md",
+      "status": "implemented-local",
+      "reason": "Empty barrier-hit queues avoid splice allocation. The owned internal ranked-frame brand keeps public frame behavior distinct.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/install.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-buildframe-skip-empty-barrier-hit-splice",
+        "status": "already-in-pr",
+        "reason": "Use a private frozen empty array only for an empty hit queue; nonempty hits are still detached and owned.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/install.mjs",
+          "sha256": "b3c4264976f1c466d29676e51c2b461ce455a4e9dd8f05ee1e284929cc006270",
+          "pr1878Sha256": "940dfece7f7d0ca2bfd0997c155ed5fe316d96837772ffd59301b89a776cddb1",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clam-goal-swept-aabb-before-closest-point",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリのゴール外飛翔で不要な最近接点計算を省く",
+      "library_file_id": "libfile_5ce5aca031d88191b1882293d03f9b9e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clam-goal-swept-aabb-before-closest-point.md",
+      "status": "implemented-local",
+      "reason": "A swept goal AABB rejects provably distant contacts before the exact closest-point computation.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clam-goal-swept-aabb-before-closest-point",
+        "status": "already-in-pr",
+        "reason": "Reject only finitely bounded segments whose conservative XZ swept box cannot reach the goal, before the unchanged closest-point test. Boundary and unusual inputs fall back.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clam-projectile-drop-temporary-scaled-vector",
+      "title": "# [QUEUE][INKWAVE][Optimization] 飛翔ガチアサリの物理更新で未使用中間3要素配列を削減",
+      "library_file_id": "libfile_f0be4ad00c48819185bc0a9e0e09551c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clam-projectile-drop-temporary-scaled-vector.md",
+      "status": "implemented-local",
+      "reason": "Projectile-drop velocity is integrated with the same scalar additions instead of a temporary scaled vector.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clam-projectile-drop-temporary-scaled-vector",
+        "status": "already-in-pr",
+        "reason": "Write the original axis-wise multiply/add expressions directly, preserving coordinate reads and arithmetic order.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clam-world-iterate-inventory-own-keys-without-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリの3D所持マーカー更新で `Object.keys` 配列生成を省略",
+      "library_file_id": "libfile_745723d465e08191914ab0f80ec14acd",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clam-world-iterate-inventory-own-keys-without-array.md",
+      "status": "not-adopted",
+      "reason": "Object.keys snapshots keys before mesh creation callbacks; for-in does not preserve the same deleted/inherited-key behavior during mutation. The snapshot remains intentional.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-expiry-burst-single-filter-canonical-events",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-clams-expiry-burst-single-filter-canonical-events",
+      "library_file_id": "libfile_61fed4a445908191afc1253d1450e22a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-expiry-burst-single-filter-canonical-events.md",
+      "status": "not-adopted",
+      "reason": "Expiry callbacks currently observe incremental canonical state after each removal. One bulk filter would change callback-visible state and event semantics.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-expiry-burst-single-filter-canonical-events",
+        "status": "needs-evidence",
+        "reason": "Per-expiry events can synchronously inspect incremental remaining clams; batching changes observer states. Queue small-burst benchmarks regress.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-reuse-authoritative-actor-position-triplets",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリのActor位置3要素配列を権威側の既存スロットで再利用",
+      "library_file_id": "libfile_c58fe262da1c8191a036d0aff5e0550c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-reuse-authoritative-actor-position-triplets.md",
+      "status": "not-adopted",
+      "reason": "Authoritative actor position triplets can be retained by frame consumers. Pooling them mutates older frames; private nonescaping proof is absent.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/install.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-reuse-authoritative-actor-position-triplets",
+        "status": "needs-evidence",
+        "reason": "state.actorPositions exposes mutable arrays; retained prior observers would change with in-place reuse. Keep detached value boundary.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/install.mjs",
+          "sha256": "b3c4264976f1c466d29676e51c2b461ce455a4e9dd8f05ee1e284929cc006270",
+          "pr1878Sha256": "940dfece7f7d0ca2bfd0997c155ed5fe316d96837772ffd59301b89a776cddb1",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-spawn-broadphase-skip-distant-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリ再スポーン候補の遠距離 `Math.hypot` を事前除外",
+      "library_file_id": "libfile_faded4f6bd688191b79dc78548c38f0a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-spawn-broadphase-skip-distant-hypot.md",
+      "status": "implemented-local",
+      "reason": "Clam spawn distance checks first reject axes outside the exact allowed radius; near and boundary candidates retain hypot.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-spawn-broadphase-skip-distant-hypot",
+        "status": "already-in-pr",
+        "reason": "Reject spawn occupants outside either exact horizontal axis bound before calling the original hypot test.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-spawn-interval-skip-provably-over-threshold-count",
+      "title": "# [QUEUE][INKWAVE][Optimization] アサリの通常スポーン間隔判定で、フィールド19個以上なら毎tickの総数集計を省略",
+      "library_file_id": "libfile_709f16ffaeec8191a0c8f3bb81663dbe",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-spawn-interval-skip-provably-over-threshold-count.md",
+      "status": "implemented-local",
+      "reason": "Spawn interval count scans stop once the threshold is already exceeded; the precise count is not consumed in that branch.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-spawn-interval-skip-provably-over-threshold-count",
+        "status": "already-in-pr",
+        "reason": "When field clams already exceed the nonnegative total threshold, omit the inventory sum; boundary counts retain the original interval selection.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-swept-contact-scalar-closest-point",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリ飛翔中の線分最近点計算をスカラー化し、接触候補ごとの3配列を削減",
+      "library_file_id": "libfile_66c3140417f481918ff4fc5ec634dae1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-swept-contact-scalar-closest-point.md",
+      "status": "implemented-local",
+      "reason": "Closest-point swept contact is computed with scalar temporaries, retaining segment clamping and all original arithmetic while avoiding three temporary arrays.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-totalclams-avoid-object-values-allocation",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリの毎tick総アサリ数集計で `Object.values()` 配列を生成しない",
+      "library_file_id": "libfile_8954a615d75081918c029010aa25cb9a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-totalclams-avoid-object-values-allocation.md",
+      "status": "implemented-local",
+      "reason": "Clam totals walk own inventory records directly with the original numeric rules, avoiding Object.values materialization.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-totalclams-avoid-object-values-allocation",
+        "status": "already-in-pr",
+        "reason": "Iterate own enumerable inventory entries directly in the same key order without constructing Object.values.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-vec-validation-eliminate-temporary-slice",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリ共通 `vec` の検証用 `slice(0,3)` 一時配列を減らす",
+      "library_file_id": "libfile_8cbd617dc4a881919909a3d7da82bd47",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-vec-validation-eliminate-temporary-slice.md",
+      "status": "implemented-local",
+      "reason": "The first three coordinates are validated directly without slice/every allocation and with the same accepted input shape.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-vec-validation-eliminate-temporary-slice",
+        "status": "already-in-pr",
+        "reason": "Use eager scalar validation for ordinary coordinate arrays; sparse slots, inherited elements, custom slice/species behavior and unusual inputs retain the prior semantics.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-clams-world-lazy-field-snapshot-only-on-drill",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリの3D描画でドリルがないときのフィールド配列コピーを省略する",
+      "library_file_id": "libfile_db86f414cfd0819186a58ea973844cee",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clams-world-lazy-field-snapshot-only-on-drill.md",
+      "status": "not-adopted",
+      "reason": "The field-list snapshot precedes callbacks that can mutate the live list. Deferring it to only the drill path would change ordinary traversal visibility.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-clams-world-lazy-field-snapshot-only-on-drill",
+        "status": "needs-evidence",
+        "reason": "Mesh/Object3D add callbacks can synchronously mutate source array; shallow snapshot preserves current iteration boundary. Local small-N regression also reported.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-grounded-clam-pickup-exact-axis-broadphase",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-grounded-clam-pickup-exact-axis-broadphase",
+      "library_file_id": "libfile_7b24801bfbc08191b0ea86b0e8e17b63",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-grounded-clam-pickup-exact-axis-broadphase.md",
+      "status": "implemented-local",
+      "reason": "Grounded pickup uses exact axis broadphase before its existing radius calculation; team, capacity and ordered pickup semantics remain unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-grounded-clam-pickup-exact-axis-broadphase",
+        "status": "already-in-pr",
+        "reason": "Use conservative axis rejection only at the actual pickup callsite; the general distance helper retains its exact numeric return contract.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044",
+          "pr1878Sha256": "5ee0b5e4ec9d732d326866fbcd175d898be8b5daf40fd5486aca41f080a132ff",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-host-rkevent-skip-single-nonwire-filter",
+      "title": "# [QUEUE][INKWAVE][Optimization] Hostのガチルール単発内部イベントで空の送信用 `filter` 配列を生成しない",
+      "library_file_id": "libfile_f16d835dd0b88191a30c2d68b0da0f00",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-host-rkevent-skip-single-nonwire-filter.md",
+      "status": "implemented-local",
+      "reason": "A single internal nonwire host event avoids filter allocation; public/wire lists and multi-event ordering keep their original path.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/install.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/install.mjs",
+          "sha256": "b3c4264976f1c466d29676e51c2b461ce455a4e9dd8f05ee1e284929cc006270",
+          "pr1878Sha256": "940dfece7f7d0ca2bfd0997c155ed5fe316d96837772ffd59301b89a776cddb1",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-rainmaker-barrier-kind-direct-table-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチホコバリアの攻撃種別が正規キーの場合だけ文字列正規化を省略",
+      "library_file_id": "libfile_7a69ecb034c0819185dfa4a36e5587e9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-barrier-kind-direct-table-fastpath.md",
+      "status": "implemented-local",
+      "reason": "Canonical barrier weapon kinds use the direct table; unknown kinds retain the existing normalization/fallback.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/rainmaker.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+          "sha256": "b74e4d64d71d8987faad08e9d4a0aeba954dc328f1d1557340a426b72ac49f58",
+          "pr1878Sha256": "15b577c0d83eba93a820f85c765b68a0ab35eb5c0e810b16fc0b365b4ee3a090",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-rainmaker-barrier-proof-prune-in-place",
+      "title": "# [QUEUE][INKWAVE][Optimization] ホコバリア証拠の期限掃除で毎回作る `filter()` 配列をなくす",
+      "library_file_id": "libfile_e7c4690c9a50819195fa372c56956eaf",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-barrier-proof-prune-in-place.md",
+      "status": "implemented-local",
+      "reason": "Expired barrier proofs are stably pruned in place without changing receipt ownership or validation gates.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/barrier-admission.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-rainmaker-barrier-proof-prune-in-place",
+        "status": "already-in-pr",
+        "reason": "Compact owner-private expired proof and pending lists in place, preserving order and bounded admission counts.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/barrier-admission.mjs",
+          "sha256": "b71b8907ac5311e2ea3ba0c422a056761adf6c65c26fb9141d4ccb54262f8430",
+          "pr1878Sha256": "30cc756981dbcd7f49d6dcddcdd0cff4e4854ecfc55c1f0037beaf5c4a570b86",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-rainmaker-cache-unchanged-core-emissive-state",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチホコ3Dモデル：未変更の発光色・強度を毎フレーム再設定しない",
+      "library_file_id": "libfile_dd152c2e39b081918c12bfdb0234fab5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-cache-unchanged-core-emissive-state.md",
+      "status": "implemented-local",
+      "reason": "Unchanged emissive state avoids duplicate material writes; material replacement and externally changed RGB values invalidate the cache and are restored correctly.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/rainmaker-model.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/rainmaker-model.mjs",
+          "sha256": "dcf0da89e7d2a4d6499b08d344aed2091d66cb72dc71e3ffa293c6d8e39c6b20",
+          "pr1878Sha256": "b59c5a4590fb96355f1e820788249e85d68901a81e2b377b0467eff0c99dfa43",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-rainmaker-interaction-radius-exact-axis-reject",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチホコ拾得・チェックポイント・ゴール接触の遠距離 `hypot` を厳密な軸判定で省略",
+      "library_file_id": "libfile_7446c3b807188191b984a43850d5061b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-interaction-radius-exact-axis-reject.md",
+      "status": "implemented-local",
+      "reason": "Pickup/checkpoint/goal interactions use finite exact-axis far rejection before the original distance calculation, preserving threshold decisions and malformed-value fallback.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/rainmaker.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-rainmaker-interaction-radius-exact-axis-reject",
+        "status": "needs-evidence",
+        "reason": "Conditional broadphase needs trusted stable triples; verifying custom/foreign inputs and near-heavy performance remains necessary.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+          "sha256": "b74e4d64d71d8987faad08e9d4a0aeba954dc328f1d1557340a426b72ac49f58",
+          "pr1878Sha256": "15b577c0d83eba93a820f85c765b68a0ab35eb5c0e810b16fc0b365b4ee3a090",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-rainmaker-shot-normalize-private-aim-in-place",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチホコ発射ベクトル正規化で短命 `.map` 配列を省略",
+      "library_file_id": "libfile_5f2bf468502c81919d11a4045b437228",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-shot-normalize-private-aim-in-place.md",
+      "status": "implemented-local",
+      "reason": "The private freshly owned shot aim is normalized in place; shared/public input aim vectors are not mutated.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/rainmaker.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+          "sha256": "b74e4d64d71d8987faad08e9d4a0aeba954dc328f1d1557340a426b72ac49f58",
+          "pr1878Sha256": "15b577c0d83eba93a820f85c765b68a0ab35eb5c0e810b16fc0b365b4ee3a090",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-rainmaker-trail-reuse-per-shot-vertical-ray-vectors",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチホコ弾の塗り軌跡：垂直レイ用Vector3のサンプル単位生成を省略",
+      "library_file_id": "libfile_d64533e9c2c48191894606a423e02109",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-rainmaker-trail-reuse-per-shot-vertical-ray-vectors.md",
+      "status": "implemented-local",
+      "reason": "Vertical paint probes use per-depth shot scratch with finally release. Escaping paint points still receive independent copies.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/combat.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+          "sha256": "161333ea4969323806dff8e4011c07674f216ad6f29b6c6fca8b8289201fafc8",
+          "pr1878Sha256": "22f710aedf1483507bb06ab9cb8c9c20f6c369f24be65b047b997890197b85ec",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-tower-approach-prune-before-line-of-sight-raycasts",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチヤグラBOTの勝ち目がない経路候補ではLOS物理レイを呼ばない",
+      "library_file_id": "libfile_eeaa25f19a0c81919d41f3efba051e9a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-tower-approach-prune-before-line-of-sight-raycasts.md",
+      "status": "implemented-local",
+      "reason": "A lower-bound score rejection precedes LOS/jump-start work only when that candidate cannot beat the current best score. Survivors preserve original tie and route decisions.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/bots.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/bots.mjs",
+          "sha256": "aebd12bce5e16c6a956f35f17f827c19ab2c3ad74fe289dbd1ac015697b2a3a1",
+          "pr1878Sha256": "74fbd5d9ef3ad52c98ee52d5fabe5458ae949f1e16c3bdedb706e9792969b738",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-tower-reuse-scoped-rider-offset-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチヤグラの毎更新・乗員オフセット配列とレコードを再利用",
+      "library_file_id": "libfile_a8adceca4a2c819184811d2bb1675f04",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-tower-reuse-scoped-rider-offset-records.md",
+      "status": "implemented-local",
+      "reason": "Native Tower synchronization leases rider rows per recursion depth and clears actor references in finally. The public collector continues returning independent snapshots; overridden collectors keep their original path.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-tower-reuse-scoped-rider-offset-records",
+        "status": "needs-evidence",
+        "reason": "Scope crosses collect and sync callbacks; queue measured only 1.9% mock improvement. Retained record identity/reentry contract requires additional proof.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-tower-route-position-binary-segment-lookup",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-tower-route-position-binary-segment-lookup",
+      "library_file_id": "libfile_244a0774da7481919f7454dfabc13370",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-tower-route-position-binary-segment-lookup.md",
+      "status": "not-adopted",
+      "reason": "Route metrics.lengths is public and mutable, so a previously monotone route does not prove the current array is sorted. Binary lookup was reverted rather than silently changing edited-route behavior.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/tower.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-tower-route-position-binary-segment-lookup",
+        "status": "needs-evidence",
+        "reason": "metrics.lengths remains externally mutable; immutable origin/monotonicity proof would need a contract change or per-call O(N) validation.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/tower.mjs",
+          "sha256": "777a5001f47aa199dd81dc4916da973359dd3e68df7c31adf4707a77cfef01d6",
+          "pr1878Sha256": "777a5001f47aa199dd81dc4916da973359dd3e68df7c31adf4707a77cfef01d6",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "ranked-zone-coverage-skip-unrelated-off-zone-turf-versions",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-zone-coverage-skip-unrelated-off-zone-turf-versions",
+      "library_file_id": "libfile_233e3df4c3f881918d3c7ee41d25daa2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-zone-coverage-skip-unrelated-off-zone-turf-versions.md",
+      "status": "not-adopted",
+      "reason": "The proposed off-zone shortcut has no complete invalidation coverage across all CPU/network paint mutations. A missed update would change scoring, so current coverage evaluation remains.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-zone-coverage-skip-unrelated-off-zone-turf-versions",
+        "status": "needs-evidence",
+        "reason": "Needs complete tracking of all CPU grid writes and network restores; missing any invalidation changes authoritative 50/70% decisions.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-zone-index-precompute-static-zone-bounds",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチエリア：ゾーン判定境界をインデックス構築前に計算し、塗りセル反復での再計算を除去",
+      "library_file_id": "libfile_bc9dbf4397e88191ade7acb25e37c3ed",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-zone-index-precompute-static-zone-bounds.md",
+      "status": "implemented-local",
+      "reason": "Static native zone bounds are prepared once for index construction; custom/mutable paths retain their live calculation.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-zone-reuse-static-coverage-area-sums",
+      "title": "# [QUEUE][INKWAVE][Optimization] ranked-zone-reuse-static-coverage-area-sums",
+      "library_file_id": "libfile_af825611dde88191ae1449f090e8b9c8",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-zone-reuse-static-coverage-area-sums.md",
+      "status": "implemented-local",
+      "reason": "Coverage area sums are cached only for the canonical immutable published cell collection. Custom iterable/mutable data uses the original reduction.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": {
+        "slug": "ranked-zone-reuse-static-coverage-area-sums",
+        "status": "already-in-pr",
+        "reason": "Brand and freeze only engine-built static zone cell records, compute ordered total areas once, and fall back for external or replaced indices.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ranked-zones-fuse-all-zone-controller-check-into-transition-loop",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチエリア: 毎tickの全エリア支配判定を状態遷移ループへ統合",
+      "library_file_id": "libfile_c5baab441e78819184f5ea75b1591196",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-zones-fuse-all-zone-controller-check-into-transition-loop.md",
+      "status": "not-adopted",
+      "reason": "Zone-transition callbacks can mutate a previously visited zone. The existing post-transition all-zone scan observes the final state; fusing it into the loop can score from stale earlier values.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7",
+          "pr1878Sha256": "ae03da18639df8a2a85f48291cfa208f406b228c878e855390106134e3df4812",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ribbon-pool-pack-live-segments-before-gpu-upload",
+      "title": "# [QUEUE][INKWAVE][Optimization] RibbonPool: 端点パディングによる不要なリボン頂点転送とインデックス描画を削減",
+      "library_file_id": "libfile_b9728f7ae6e08191a0c359346d40c685",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ribbon-pool-pack-live-segments-before-gpu-upload.md",
+      "status": "not-adopted",
+      "reason": "Packing live Ribbon topology changes GPU buffers/index offsets and upload ranges. Scalar parity alone does not establish identical rendering; the existing topology is retained.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-vfx-kit.mjs"
+      ],
+      "prior1870": {
+        "slug": "ribbon-pool-pack-live-segments-before-gpu-upload",
+        "status": "needs-evidence",
+        "reason": "Dynamic indices/topology/upload ranges need actual GPU raster equivalence and transfer benchmark; current dirty-view change leaves topology unchanged.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "sha256": "62b9c4ce14ad40160230bfad2b16dec3c3a1c6c44a5fda05eae4d08a27db2961",
+          "pr1878Sha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "ribbon-pool-spacing-compare-squared-distance-with-threshold-fallback",
+      "title": "# [QUEUE][INKWAVE][Optimization] ribbon-pool-spacing-compare-squared-distance-with-threshold-fallback",
+      "library_file_id": "libfile_34072f2a09988191b4dd46f37b26f27e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ribbon-pool-spacing-compare-squared-distance-with-threshold-fallback.md",
+      "status": "implemented-local",
+      "reason": "Ribbon spacing uses squared rejection away from the boundary and falls back to original hypot near rounding boundaries, overflow, underflow and nonfinite values. Real ring buffers and every GPU attribute match at 30/60/120Hz.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-vfx-kit.mjs"
+      ],
+      "prior1870": {
+        "slug": "ribbon-pool-spacing-compare-squared-distance-with-threshold-fallback",
+        "status": "needs-evidence",
+        "reason": "push retains original Math.hypot<spacing. Dirty chronological-view work is separate. Squared fastpath needs boundary, subnormal and signed/nonfinite behavior and branch-cost proof.",
+        "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "sha256": "62b9c4ce14ad40160230bfad2b16dec3c3a1c6c44a5fda05eae4d08a27db2961",
+          "pr1878Sha256": "fcb5e742c94c684f6f9599b4877bbea536d360d4fc8e6a38e2b6d18d7854c6da",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "roller-contact-gate-skip-hypot-on-clear-zero-or-motion",
+      "title": "# [INKWAVE][Optimization][P3] Roller/Brush contact gate: avoid two square roots for clearly moving or zero vectors",
+      "library_file_id": "libfile_c3c4f50351748191a779eaf34c489c4a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] roller-contact-gate-skip-hypot-on-clear-zero-or-motion.md",
+      "status": "implemented-local",
+      "reason": "Clear-zero and guaranteed-motion gates avoid irrelevant hypot while retaining the original boundary computation and timer semantics.",
+      "evidence": [
+        "patches/splatoon3/runtime/roller-contact-paint.mjs"
+      ],
+      "prior1870": {
+        "slug": "roller-contact-gate-skip-hypot-on-clear-zero-or-motion",
+        "status": "needs-evidence",
+        "reason": "Contact/holding region also changes in gameplay PR #1872; no overlapping speculative contact fastpath added.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/roller-contact-paint.mjs",
+          "sha256": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3",
+          "pr1878Sha256": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "roller-link-fallback-axis-prune-before-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] ローラー横振り弾のfallbackリンク判定で明白な遠距離ペアの平方根計算を省略",
+      "library_file_id": "libfile_77b47f924810819183b62665800ef1fc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] roller-link-fallback-axis-prune-before-hypot.md",
+      "status": "implemented-local",
+      "reason": "Roller fallback links reject finite axis-separated candidates before hypot and reuse the already computed coordinate deltas.",
+      "evidence": [
+        "patches/splatoon3/runtime/projectile-visuals.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/projectile-visuals.mjs",
+          "sha256": "eca35369d4aa94e7233cc9431903929aeb44f71bced290019783448578ea6df5",
+          "pr1878Sha256": "75ca533c74f1dba15a40355c81bd6c9c5ffd3fe3880062b55c64b0f834ee839e",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "roller-release-footpaint-reuse-depth-scoped-center-and-yaw-trig",
+      "title": "# [QUEUE][INKWAVE][Optimization] roller-release-footpaint-reuse-depth-scoped-center-and-yaw-trig",
+      "library_file_id": "libfile_0261b39f07c881919c314dab0a06d1e7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] roller-release-footpaint-reuse-depth-scoped-center-and-yaw-trig.md",
+      "status": "not-adopted",
+      "reason": "Footpaint centers escape to paint hooks, which may retain them. Reusing a depth-scoped center changes earlier observations; existing hit-probe pooling does not establish center ownership.",
+      "evidence": [
+        "patches/splatoon3/runtime/roller-vertical-paint.mjs"
+      ],
+      "prior1870": {
+        "slug": "roller-release-footpaint-reuse-depth-scoped-center-and-yaw-trig",
+        "status": "needs-evidence",
+        "reason": "Center scratch requires retained-reference/reentrant paint validation; current fresh-center ownership is preserved.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/roller-vertical-paint.mjs",
+          "sha256": "fe76af234a2a62b7fa1eb75ecfddadfe03e65cb6495a008f95ad905fb2420b0c",
+          "pr1878Sha256": "bbb106053e8f792ccae705aa3490e951ea13e5763fa70917e72ebb602906ec60",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "saber-neutral-stick-avoid-horizontal-aim-hypot",
+      "title": "# [INKWAVE][Optimization][P4] Splatana neutral-stick history: omit provably unnecessary aim-direction hypot",
+      "library_file_id": "libfile_80397740aa4c8191aed03eb1aa0d2b2c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] saber-neutral-stick-avoid-horizontal-aim-hypot.md",
+      "status": "not-adopted",
+      "reason": "Skipping neutral-stick heading work changes getter evaluation and signed-zero paths unless guarded. The additional guard cost has no demonstrated gain for this small branch; original calculation retained.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapon-gates.mjs"
+      ],
+      "prior1870": {
+        "slug": "saber-neutral-stick-avoid-horizontal-aim-hypot",
+        "status": "needs-evidence",
+        "reason": "Signed-zero-preserving neutral fastpath needs real actor/input tracing and benchmark; leave original history expression.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapon-gates.mjs",
+          "sha256": "e40959671ba7d8f3a2d205e2b7a0986c1d13a89894cc51fbe7e91e690c713a85",
+          "pr1878Sha256": "8864edc9cc2fa6763d8a74475c0018c8ff737db0b4dc035fdb3f8f95cdd6a873",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "shared-aoe-hit-distance-pass-once",
+      "title": "# [QUEUE][INKWAVE][Optimization] サブ/スペシャル設置物への範囲攻撃で同じ距離の平方根を二度計算",
+      "library_file_id": "libfile_2c8934854b548191afa5f0efd0aabf54",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shared-aoe-hit-distance-pass-once.md",
+      "status": "implemented-local",
+      "reason": "AOE shares distance only when the native method is unchanged and both endpoint coordinates still match after LOS. Mutating LOS callbacks, method overrides and shape contacts recompute with the original behavior.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs",
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "prior1870": {
+        "slug": "shared-aoe-hit-distance-pass-once",
+        "status": "needs-evidence",
+        "reason": "Both shared AoE paths still recompute distance after LOS. The second read observes synchronous LOS coordinate mutations; a safe no-mutation fallback contract is absent.",
+        "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/all-subs.mjs",
+          "sha256": "15747af42aedeb11e220ca54b4ad4cf81c4be771f9ae71d7b55570201eddd89a",
+          "pr1878Sha256": "a1e9adfa6e0035db23df82232c64667a25bb84edf615d65147202425ca963675",
+          "changedSinceBase": true
+        },
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "sha256": "3446a87ac9271adb8800cc42d2178dfdec60cdb5749f6948b38492e1a0c7d2ef",
+          "pr1878Sha256": "c994589d98a372dd7d2d0523f9727e8978b326d7612b7f826b607719bb58aca6",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "shooter-muzzle-cache-burst-phase-trig-across-render-frames",
+      "title": "# [QUEUE][INKWAVE][Optimization] Shooter muzzle cosmetic: reuse burst phase/sine/cosine across render frames",
+      "library_file_id": "libfile_803bdd546cf08191bb0b47ea845ec26a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shooter-muzzle-cache-burst-phase-trig-across-render-frames.md",
+      "status": "implemented-local",
+      "reason": "Each owned burst lazily caches its deterministic phase/trig values, including draw-cap growth and pooled overwrite invalidation. Every matrix and attribute matches the PR1878 baseline at 30/60/120Hz.",
+      "evidence": [
+        "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs"
+      ],
+      "prior1870": {
+        "slug": "shooter-muzzle-cache-burst-phase-trig-across-render-frames",
+        "status": "needs-evidence",
+        "reason": "Pending: final append still calculates phase/sin/cos per visible droplet. Correct caching requires invalidation on each of 32 pool overwrites and per-index lazy warming that preserves cap ordering and does not spend extra trig on fully culled bursts. Current isolated audit model does not verify actual append matrix/shape/look output across pool overwrite and capacity-zero lifetimes.",
+        "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "sha256": "9499e08eed0a868971166d4703d109dba97e161c09c985c239774da8c64070a6",
+          "pr1878Sha256": "8468484d619ffda2ef4090d158fa864f28d5006c6c2c049110ad297d44577512",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "shot-bias-reuse-reentrant-launch-context-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] Main-weapon shot-bias context creates a short-lived record per launch",
+      "library_file_id": "libfile_fe2ff2d7b3848191a1f22c6eef87c730",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shot-bias-reuse-reentrant-launch-context-records.md",
+      "status": "not-adopted",
+      "reason": "Launch-context records are supplied to external observers and can escape their call. A reentrant pool prevents nested overlap but still mutates retained contexts, so fresh records remain.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapon-accuracy.mjs"
+      ],
+      "prior1870": {
+        "slug": "shot-bias-reuse-reentrant-launch-context-records",
+        "status": "needs-evidence",
+        "reason": "Pending: withShotBias intentionally creates a fresh record visible through weaponRunner.s3ShotBias during synchronous launch hooks. A depth pool would change reference identity and later mutate any record retained by a hook; complete composed-consumer escape/reentrancy proof is missing. Existing finally reference restoration remains intact.",
+        "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapon-accuracy.mjs",
+          "sha256": "62172263bd904043414861a7391de8612d4a6e32e9986d38038779fdb3580f4a",
+          "pr1878Sha256": "62172263bd904043414861a7391de8612d4a6e32e9986d38038779fdb3580f4a",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "slosher-delayed-birth-reuse-initial-yaw-pitch-trig",
+      "title": "# [QUEUE][INKWAVE][Optimization] Slosher: reuse original launch-angle sin/cos at deferred true birth if angle bit patterns remain unchanged",
+      "library_file_id": "libfile_418fcaac365081919bd8b2a4270c7ad5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] slosher-delayed-birth-reuse-initial-yaw-pitch-trig.md",
+      "status": "implemented-local",
+      "reason": "Delayed Slosher births validate each live angle exactly where its original trig evaluation occurred. This preserves parameter getters that mutate yaw between velocity arguments, angle getters and exceptions. Each pooled birth resets the captured values.",
+      "evidence": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "prior1870": {
+        "slug": "slosher-delayed-birth-reuse-initial-yaw-pitch-trig",
+        "status": "needs-evidence",
+        "reason": "Adding angle/trig cache fields to pooled rounds needs shape/memory and delayed-birth mutation evidence.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+          "sha256": "ce8191824d706c27d2bdfdad0ce5d746c58f6f006602b55578bc6486a9089531",
+          "pr1878Sha256": "00849424afe3a6e83976c61059f44467ade9576a0190e5346a70f49b89902b55",
+          "changedSinceBase": true
+        }
+      ],
+      "review": "reports/queue-local-gameplay-review-20261026.json"
+    },
+    {
+      "key": "slosher-intermediate-cache-static-source-plan-across-projectiles",
+      "title": "# [QUEUE][INKWAVE][Optimization] スロッシャー中間飛沫で弾ごとに再解析する不変source planを共有",
+      "library_file_id": "libfile_445603921ae08191a6ba0d3325ea9342",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] slosher-intermediate-cache-static-source-plan-across-projectiles.md",
+      "status": "implemented-local",
+      "reason": "Static source plans are cached by source identity while retaining PR1878 spacing and drawRadius outputs; projectile timing and live sample state remain separate.",
+      "evidence": [
+        "patches/splatoon3/runtime/slosher-intermediate-paint.mjs"
+      ],
+      "prior1870": {
+        "slug": "slosher-intermediate-cache-static-source-plan-across-projectiles",
+        "status": "already-in-pr",
+        "reason": "Cache immutable static width/depth/spawn/drop plans by unit and source index with scalar invalidation. Source selection and all seeded per-projectile spacing still run for each glob.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+          "sha256": "66f37e406353e0b34e9eab116b921bdec75ee90ceac9e208377faf42baab50c6",
+          "pr1878Sha256": "16ab6a537ae3309eb9fad2d8ac29fe205b95c42f8886873b5fdfd35dc271a857",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "splatana-horizontal-splash-fallback-spec-weakmap-miss",
+      "title": "# [QUEUE][INKWAVE][Optimization] Splatana horizontal splash fallback misses the source-identity cache on every admitted shot",
+      "library_file_id": "libfile_0b4f223888c48191a2f395bab6b1298d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] splatana-horizontal-splash-fallback-spec-weakmap-miss.md",
+      "status": "implemented-local",
+      "reason": "Canonical fallback Splatana splash specs are cached instead of recreated before each WeakMap lookup. Mutable custom source specs remain identity-specific.",
+      "evidence": [
+        "patches/splatoon3/runtime/added-family-paint.mjs"
+      ],
+      "prior1870": {
+        "slug": "splatana-horizontal-splash-fallback-spec-weakmap-miss",
+        "status": "already-in-pr",
+        "reason": "Use a separate fallback-spec cache keyed by original source identity and checked scalar/nested inputs; explicit fallback gravity preserves the old spread override.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/added-family-paint.mjs",
+          "sha256": "6c66ca5377eef53ddaf4bee514b58f956d2e92d501fc4b41748dc5bcdd39bc63",
+          "pr1878Sha256": "c0029e8e91ad72a35fad0d0baac2f0d3c98eaca548abf168d025a3d366d45392",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "splatling-cosmetic-tail-squared-saturation-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] Splatling cosmetic tail: avoid saturated per-render square-root travel calculations",
+      "library_file_id": "libfile_edbeecaf55f8819182b82840ada26086",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] splatling-cosmetic-tail-squared-saturation-fastpath.md",
+      "status": "not-adopted",
+      "reason": "The unguarded saturated-tail shortcut can bypass a custom distance method and introduces a new required distanceToSquared method. A fully proven native-vector ownership/guard path is absent; the speculative shortcut was reverted and the public fallback behavior preserved.",
+      "evidence": [
+        "patches/splatoon3/runtime/splatling-cosmetics.mjs"
+      ],
+      "prior1870": {
+        "slug": "splatling-cosmetic-tail-squared-saturation-fastpath",
+        "status": "needs-evidence",
+        "reason": "Extra vector identity/prototype/numeric guards can outweigh saved sqrt; unmeasured.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7",
+          "pr1878Sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "storm-rain-defer-scale-until-spatial-eligibility",
+      "title": "# [QUEUE][INKWAVE][Optimization] インクストーム圏外/死亡者でも計算される雨の半径スケールを遅延評価",
+      "library_file_id": "libfile_fd9d6f74ac30819199738c4294e8fd13",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] storm-rain-defer-scale-until-spatial-eligibility.md",
+      "status": "implemented-local",
+      "reason": "Default rain scaling is evaluated only after a spatially eligible actor/object is found; explicitly supplied scales and eligible calls retain their values.",
+      "evidence": [
+        "patches/splatoon3/runtime/storm-effects.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/storm-effects.mjs",
+          "sha256": "13971dad1c5ae664af2e38bc4ea29ebf65a33383d208cc3f7ab4bf4a2a5bd17c",
+          "pr1878Sha256": "6306a8de2bb62e808d3aa07a9c24083be2b4e193dde9d5ee9ab482e789177c9f",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "storm-recovery-stop-after-both-team-statuses-known",
+      "title": "# [QUEUE][INKWAVE][Optimization] 友敵両方のストーム接触が確定した後も残りの雲でLOSを続行",
+      "library_file_id": "libfile_4b4867b83ff081918a539423c8248283",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] storm-recovery-stop-after-both-team-statuses-known.md",
+      "status": "implemented-local",
+      "reason": "Storm status scanning stops after both team statuses are known, without skipping any needed recovery classification.",
+      "evidence": [
+        "patches/splatoon3/runtime/storm-effects.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/storm-effects.mjs",
+          "sha256": "13971dad1c5ae664af2e38bc4ea29ebf65a33383d208cc3f7ab4bf4a2a5bd17c",
+          "pr1878Sha256": "6306a8de2bb62e808d3aa07a9c24083be2b4e193dde9d5ee9ab482e789177c9f",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "super-chump-preview-per-render-ground-probe-burst",
+      "title": "# [INKWAVE][Optimization][P2] スーパーシグナル（Super Chump）着弾プレビューの毎描画フレーム地形レイキャスト集中を除去",
+      "library_file_id": "libfile_99487d7c8d1c819199720fe0bc34e6b2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] super-chump-preview-per-render-ground-probe-burst.md",
+      "status": "not-adopted",
+      "reason": "Super Chump preview already reuses its vectors. Ground results must remain fresh for moving geometry and query callbacks, so caching the remaining probes lacks an invalidation contract.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "prior1870": {
+        "slug": "super-chump-preview-per-render-ground-probe-burst",
+        "status": "not-adopted",
+        "reason": "Not adopted for query throttling: the existing owned preview vectors are already reused, but the same aim/physics objects can observe changed ground height on the next call. Keep all 14 fresh preview probes and independent launch vectors.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "sha256": "3446a87ac9271adb8800cc42d2178dfdec60cdb5749f6948b38492e1a0c7d2ef",
+          "pr1878Sha256": "c994589d98a372dd7d2d0523f9727e8978b326d7612b7f826b607719bb58aca6",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "swim-wake-radius-select-farthest-squared-then-single-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] SwimWakeの泳ぎ跡半径算出を二乗距離の最大選択＋Math.hypot 1回に変更",
+      "library_file_id": "libfile_4bbf7b3ab61881919139dafbc3006b14",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] swim-wake-radius-select-farthest-squared-then-single-hypot.md",
+      "status": "not-adopted",
+      "reason": "Squared-distance ordering can differ from hypot near rounded ties and overflow. A conservative fallback plus GPU-bound acceptance is not established; current radius and culling behavior are retained.",
+      "evidence": [
+        "inkwave-public/src/fx/swimWake.js"
+      ],
+      "prior1870": {
+        "slug": "swim-wake-radius-select-farthest-squared-then-single-hypot",
+        "status": "needs-evidence",
+        "reason": "Actual composed SwimWake.update still scans every eligible history point with Math.hypot. Existing !s.swimming guard removes the duplicated live head only; it does not select the farthest squared vector or provide the proposed nonfinite/boundary fallback.",
+        "evidenceReport": "reports/queue-extra-residual-motion-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/fx/swimWake.js",
+          "sha256": "5e0c23bfc1607384c92ebb8e10e6da8b9b322085f8df94ea08e9daf685ccd62c",
+          "pr1878Sha256": "5e0c23bfc1607384c92ebb8e10e6da8b9b322085f8df94ea08e9daf685ccd62c",
+          "changedSinceBase": false
+        }
+      ]
+    },
+    {
+      "key": "tacticooler-drink-vertical-broadphase-before-horizontal-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] tacticooler-drink-vertical-broadphase-before-horizontal-hypot",
+      "library_file_id": "libfile_5588573198d08191b69b05d1dbaa1c1a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tacticooler-drink-vertical-broadphase-before-horizontal-hypot.md",
+      "status": "implemented-local",
+      "reason": "Exact vertical separation rejects clearly out-of-range drink candidates before horizontal hypot, preserving capsule edges, tolerance and nonfinite behavior.",
+      "evidence": [
+        "patches/splatoon3/runtime/support-cooler.mjs"
+      ],
+      "prior1870": null,
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/support-cooler.mjs",
+          "sha256": "9472f78124d67347fdc5e7f46abad791d5f67379223008bdf37cdd41775a94c4",
+          "pr1878Sha256": "c3dafcb212bc865ede1a9f23a6d7864e416ed48fb492ac338e0dab4eb19d1afe",
+          "changedSinceBase": true
+        }
+      ]
+    },
+    {
+      "key": "tri-slosher-splash-visual-heading-hypot-fastpath",
+      "title": "# [INKWAVE][Optimization][P4] Tri-Slosher sourced splash visual: fast-path clearly nonzero horizontal heading",
+      "library_file_id": "libfile_99c8f60673088191b580feb6bf94ce59",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tri-slosher-splash-visual-heading-hypot-fastpath.md",
+      "status": "implemented-local",
+      "reason": "Tri-Slosher heading skips the unused hypot only in the proven axis case; the usual heading calculation remains for all other trajectories.",
+      "evidence": [
+        "patches/splatoon3/runtime/projectile-presentation.mjs"
+      ],
+      "prior1870": {
+        "slug": "tri-slosher-splash-visual-heading-hypot-fastpath",
+        "status": "needs-evidence",
+        "reason": "Extra finite/type/axis branches can be slower than hypot. No browser workload benefit established; leave original guard.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/splatoon3/runtime/projectile-presentation.mjs",
+          "sha256": "331c7923f3cf8a16c25d3fea2a43f287ddc50863b0bb4bb700c1a2822a491608",
+          "pr1878Sha256": "3a7fccac519cd7e15ebfbb31cdd1fcd4fc8b0712e9dcb71e02f3cf1bd8eaa1a2",
+          "changedSinceBase": true
+        }
+      ]
+    }
+  ]
+}

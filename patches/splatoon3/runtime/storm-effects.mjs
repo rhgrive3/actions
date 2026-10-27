@@ -85,11 +85,12 @@ export function stormRainScale(c) {
 // Shared spatial test for rain contact and allied recovery: horizontal area at
 // the cloud's current scale, no contact above the cloud, and no contact below
 // the finite rain trace. Line-of-sight is checked by the caller.
-export function stormRainContains(c, a, baseRadius, scale = stormRainScale(c)) {
+export function stormRainContains(c, a, baseRadius, scale) {
   const p = c.group?.position, point = a?.pos;
   if (!p || !point || !a.alive || !Number.isFinite(c.t) || !Number.isFinite(c.dur) ||
       !Number.isFinite(baseRadius) || baseRadius < 0 || point.y > p.y ||
       point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH) return false;
+  if (scale === undefined) scale = stormRainScale(c);
   const radius = baseRadius * scale;
   const dx = point.x - p.x, dz = point.z - p.z;
   return dx * dx + dz * dz <= radius * radius;
@@ -97,10 +98,12 @@ export function stormRainContains(c, a, baseRadius, scale = stormRainScale(c)) {
 // Deployed-device point contact for the continuous cloud damage tick. Match
 // the actor cylinder's horizontal growth/fade radius and finite vertical trace;
 // unlike stormRainContains this accepts world objects without an `alive` flag.
-export function stormRainObjectContains(c, object, baseRadius, scale = stormRainScale(c)) {
+export function stormRainObjectContains(c, object, baseRadius, scale) {
   const p = c.group?.position, point = object?.pos;
-  if (!p || !point || !(Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z)&&Number.isFinite(point.x)&&Number.isFinite(point.y)&&Number.isFinite(point.z)&&Number.isFinite(baseRadius)&&Number.isFinite(scale)) ||
+  if (!p || !point || !(Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z)&&Number.isFinite(point.x)&&Number.isFinite(point.y)&&Number.isFinite(point.z)&&Number.isFinite(baseRadius)) ||
       baseRadius < 0 || point.y > p.y || point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH) return false;
+  if (scale === undefined) scale = stormRainScale(c);
+  if (!Number.isFinite(scale)) return false;
   const radius = baseRadius * scale;
   const dx = point.x - p.x, dz = point.z - p.z;
   return dx * dx + dz * dz <= radius * radius;
@@ -123,6 +126,7 @@ export function stormRecoveryState(a, { G, SPECIALS }) {
   let ally = false, enemy = false;
   for (const c of G.projectiles?.clouds || []) if (cloudCoversActor(c, a, G, SPECIALS)) {
     if (c.team === a.team) ally = true; else enemy = true;
+    if (ally && enemy) break;
   }
   return { ally, enemy };
 }

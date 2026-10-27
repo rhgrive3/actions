@@ -222,10 +222,12 @@ export function validBossSnapshotRow(row, timestamp) {
   if (row[10] !== -1 && !validSnapshotTimestamp(row[10])) return false;
   for (const i of [13, 14]) if (!integer(row[i], 0, Number.MAX_SAFE_INTEGER)) return false;
   if (!integer(row[15], -1, Number.MAX_SAFE_INTEGER) || !Array.isArray(row[16]) || row[16].length > NETWORK_BOSS_CRABLET_LIMIT) return false;
-  const crabIds = new Set();
-  for (const crab of row[16]) {
-    if (!Array.isArray(crab) || crab.length !== 6 || !integer(crab[0], 0, Number.MAX_SAFE_INTEGER) || crabIds.has(crab[0])) return false;
-    crabIds.add(crab[0]);
+  const crabs = row[16];
+  for (let at = 0; at < crabs.length; at++) {
+    const crab = crabs[at];
+    if (!Array.isArray(crab) || crab.length !== 6 || !integer(crab[0], 0, Number.MAX_SAFE_INTEGER)) return false;
+    // At most 16 IDs; earlier rows have already passed the same integer guard.
+    for (let prior = 0; prior < at; prior++) if (crabs[prior][0] === crab[0]) return false;
     for (const i of SNAPSHOT_FIELDS_0) if (!bounded(crab[i], -1e6, 1e6)) return false;
     if (!bounded(crab[4], -1e5, 1e5) || !finite(crab[5])) return false;
   }

@@ -1,0 +1,277 @@
+{
+  "schema": "inkwave.queue-local-validation.v1",
+  "status": "passed",
+  "repository": "rhgrive3/actions",
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "localBranch": "local/queue-remaining-20261026",
+  "implementationCommit": "2a185b042745ab52ec6da5c9be2bfc1582c40613",
+  "scope": {
+    "queueAndFixRecords": 690,
+    "libraryDirectChildren": 693,
+    "counts": {
+      "already-in-current-pr": 342,
+      "excluded-user": 2,
+      "implemented-local": 247,
+      "implemented-partially": 2,
+      "needs-evidence": 2,
+      "not-adopted": 95
+    },
+    "completeManifest": "reports/queue-local-complete-scope-20261026.json",
+    "countsScope": "690 direct-folder records; the additional51 Archive records have a separate classification",
+    "archiveRecordsAudited": 51,
+    "totalRecordsReviewed": 741,
+    "archiveReport": "reports/queue-local-archive-audit-20261026.json",
+    "archiveUnclassified": 0,
+    "archiveUnresolved": 0
+  },
+  "runtime": {
+    "node": "24.22.1",
+    "npm": "11.9",
+    "browser": "Chromium 153.0.8010.0 with SwiftShader",
+    "physicalIPadSafariMeasured": false
+  },
+  "build": {
+    "status": "passed",
+    "command": "node scripts/build-inkwave.mjs inkwave-public /workspace/scratch/2f4c74953bc6/inkwave-verified-final-20261026",
+    "outputDirectory": "/workspace/scratch/2f4c74953bc6/inkwave-verified-final-20261026",
+    "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+    "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+    "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef",
+    "manifest": "reports/queue-local-evidence-20261026/final-root/inkwave-build.json",
+    "manifestSha256": "40545236568ec518136d099188755d333b05a7826888289a4d130b6a4845abd0",
+    "log": "reports/queue-local-evidence-20261026/final-root/build-final-clean.log",
+    "audioOrphan": "omitted by the unchanged fail-closed graph decision",
+    "startupBudget": {
+      "status": "passed",
+      "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 78161,
+      "initialJSBytes": 1998104,
+      "criticalHTMLBytes": 24059,
+      "precacheCount": 547,
+      "precacheBytes": 7664408,
+      "workerBytes": 89277,
+      "declaredBytes": 16074805,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "npmTest": {
+    "status": "passed",
+    "exitCode": 0,
+    "command": "npm test",
+    "log": "reports/queue-local-evidence-20261026/final-root/npm-test-final-complete.log",
+    "logSha256": "29b99d76725115ed7f1342f9e3d0b42b573a074766e04675cbfe22f4d961f28f",
+    "stages": [
+      {
+        "name": "check:patches",
+        "status": "passed"
+      },
+      {
+        "name": "audit:migration",
+        "status": "passed",
+        "directOwners": 18
+      },
+      {
+        "name": "test:direct-source",
+        "passed": 20
+      },
+      {
+        "name": "test:quality",
+        "passed": 21,
+        "additionalStandaloneChecks": 3
+      },
+      {
+        "name": "test:relay",
+        "passed": 29
+      },
+      {
+        "name": "test:account",
+        "passed": 24
+      },
+      {
+        "name": "test:backup",
+        "passed": 13
+      },
+      {
+        "name": "test:queue-recovery",
+        "passed": 40
+      },
+      {
+        "name": "test:memory",
+        "passed": 77
+      }
+    ],
+    "lastSourceChangeAfterTest": "Four blank-line trailing spaces were removed from one build-only adapter; executable AST, all 117 composed modules, and final build content/input/revision identities remained identical. Two browser-harness/test files were subsequently updated without changing production inputs; the changed diagnostics passed 28/28 focused tests and the full final online acceptance passed all four rules.",
+    "postFormatEvidence": "evidence/final-audit/whitespace-composition-recheck.json"
+  },
+  "focusedEvidence": [
+    {
+      "scope": "Root gameplay / ownership / callback semantics plus orphan scanner",
+      "passed": 46,
+      "log": "reports/queue-local-evidence-20261026/final-root/root-gameplay-final.tap"
+    },
+    {
+      "scope": "Final Crab custom-sine fallback",
+      "passed": 4,
+      "existingSubModelsPassed": 8,
+      "report": "reports/queue-local-gameplay-already-20261026.json"
+    },
+    {
+      "scope": "Historical character / outfit / shape-preserving restoration",
+      "passed": 8,
+      "actualActorPoses": 288,
+      "report": "reports/queue-local-historical-character-20261026.json"
+    },
+    {
+      "scope": "Historical source motion / live lookup / exact dt responses",
+      "passed": 7,
+      "actualActorPoses": 243,
+      "report": "reports/queue-local-historical-motion-20261026.json"
+    },
+    {
+      "scope": "Audio actual PCM/worker/startup regressions",
+      "report": "reports/queue-local-audio-20261026.json"
+    },
+    {
+      "scope": "Paint, source replay, RNG and sub/special regressions",
+      "reports": [
+        "reports/queue-local-paint-20261026.json",
+        "reports/queue-local-subs-20261026.json",
+        "reports/queue-local-flight-specials-20261026.json",
+        "reports/queue-local-special-presentation-20261026.json"
+      ]
+    },
+    {
+      "scope": "UI/network/build plus real-clearance, native-frame input sequencing and synchronous Dodge-observation diagnostics",
+      "passedSetupDiagnostics": 28,
+      "reports": [
+        "reports/queue-local-ui-network-20261026.json",
+        "reports/queue-local-ui-supplemental-20261026.json"
+      ]
+    }
+  ],
+  "nativeRegeneration": {
+    "status": "passed",
+    "productionStages": 23,
+    "verifiedArrayBytes": 913151369,
+    "exactPreparedSpheres": 3474,
+    "regressionCasesPassed": 89,
+    "optionalLegacyPythonReferenceCasesSkipped": 23,
+    "productionStagesSkipped": 0,
+    "report": "reports/queue-local-native-regeneration-20261026.json"
+  },
+  "browser": {
+    "status": "passed",
+    "report": "reports/queue-local-browser-validation-20261026.json",
+    "expectedContentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+    "offlineReport": "reports/queue-local-ranked-final-offline-20261026/result.json",
+    "onlineReport": "reports/queue-local-ranked-final-online-20261026/result.json",
+    "offlineRulesPassed": 4,
+    "onlineRulesPassed": 4,
+    "pageErrors": [],
+    "nativeContactGearPhasesPassed": 10,
+    "offlineReportSha256": "4e3dd21af2d3f903a3bf87b12fbd7beaf47c6c31de9f9a45e26216ecc96a6ab8",
+    "onlineReportSha256": "ea0aa9408347123b43e026095de848580eb32da641780954dcd879456ab3c75d",
+    "nativeDodgeStart": {
+      "token": 1,
+      "nativeTime": 14.283333333333623,
+      "renderFrame": 222
+    },
+    "productionInputChangedByHarnessRepair": false,
+    "harnessOnlyFiles": [
+      "scripts/check-inkwave-ranked-browser.mjs",
+      "scripts/tests/ranked-boot-diagnostics.test.mjs"
+    ],
+    "visualReview": [
+      {
+        "path": "reports/queue-local-ranked-final-offline-20261026/rainmaker-offline.jpg",
+        "sha256": "b060343a9ee41255ae2d204bcbf5f96141beed4a6408353b2cbf0c465d650f72",
+        "observation": "Root inspected the image: Japanese HUD, stage, visible player meshes and minimap render without a blank canvas or a context-loss indication. This is a limited visual review, not device FPS or retail-game equivalence."
+      },
+      {
+        "path": "reports/queue-local-ranked-final-online-20261026/clams-online-1.jpg",
+        "sha256": "a77917f21a8ad6d300a2c4fc1b049d2dc784fc564470951d195532172df98bb2",
+        "observation": "Root inspected the image: Japanese HUD, stage, visible player meshes and minimap render without a blank canvas or a context-loss indication. This is a limited visual review, not device FPS or retail-game equivalence."
+      }
+    ]
+  },
+  "audit": {
+    "status": "passed",
+    "references": 1783,
+    "needles": 680,
+    "currentNeedles": 565,
+    "missing": 0,
+    "staleCurrentSha": 0,
+    "report": "reports/queue-local-final-audit-20261026.json",
+    "baselineClassificationSupplement": "reports/queue-local-historical-pr1878-origin-20261026.json",
+    "postHarnessSourceAudit": {
+      "status": "passed",
+      "currentFiles": 2,
+      "currentNeedles": 20,
+      "hashBearingReferences": 13,
+      "missing": 0,
+      "mismatched": 0,
+      "receipt": "evidence/final-audit/ranked-harness-final-reference-audit.json",
+      "report": "reports/queue-local-final-audit-20261026.json"
+    }
+  },
+  "historicalFailures": [
+    {
+      "kind": "Reused build staging collision",
+      "outcome": "Existing Scorch asset collision refusal was preserved. A fresh independent output built successfully; no collision guard was loosened.",
+      "log": "reports/queue-local-evidence-20261026/final-root/build-final-complete.log"
+    },
+    {
+      "kind": "Old headless WebGL environment",
+      "outcome": "Local browser runtime libraries/font were configured. Initial failing runs are retained and are not counted as valid rendering."
+    },
+    {
+      "kind": "Roller positive audio setup",
+      "outcome": "The same harness failed on PR1878 baseline and candidate because the capsule initially intersected the central cover. Real bodyFits/corridor checks now reject that setup. Same deadlines, movement limit, 250ms input and real-audio predicates are retained.",
+      "evidence": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-clearance-comparison.json"
+    },
+    {
+      "kind": "One final browser run intentionally interrupted",
+      "outcome": "Root requested a source-identity check after whitespace cleanup. The output was later proven identical. The interrupted run is not counted as pass or a product regression."
+    },
+    {
+      "kind": "Final-build live Dodge start polling timeout",
+      "outcome": "The failed full run did not instrument native admission, so its sole cause is not asserted. A focused subsequent run recorded one native tryDodge returning true, ink100→93 and fresh token1, with a brief live window; the actual FixedClock also demonstrates a transient can start and finish before a render poll. A strict synchronous actor/runner/live/fresh-token witness now records the start; the independent native turret and real remote gear gates remain mandatory. The final full run passed.",
+      "evidence": "reports/queue-local-browser-validation-20261026.json"
+    },
+    {
+      "kind": "Observational diagnostic movement pulse had no native frame",
+      "outcome": "The diagnostic recorded a250ms input interval that elapsed before the next native frame, so it provided no Dodge evidence. The harness now begins the same physical-input path at the next native frame, restores its original function ownership, and retains the250ms timer, two-metre corridor and real positive-volume/playing/registered audio gates. No gameplay clock or speed was changed.",
+      "evidence": "reports/queue-local-browser-validation-20261026.json"
+    }
+  ],
+  "limits": [
+    "No remote push, PR creation, merge, CI execution, deployment or Library queue mutation was performed.",
+    "No physical iPad/Safari FPS, production relay load or retail-console gameplay equivalence claim.",
+    "Native optional legacy Python-format references were unavailable in 23 tests; all 23 actual production stage payload comparisons passed without skips.",
+    "The historical Pages 503 root cause and Fizzy flight paint specification remain evidence-dependent."
+  ],
+  "archiveAudit": {
+    "status": "passed",
+    "report": "reports/queue-local-archive-audit-20261026.json",
+    "records": 51,
+    "newImplementationAdopted": 0,
+    "rootDecision": "Reassessed the optional direct ImageBitmap resize proposal under the current tolerance permission, withdrew the historical single-byte veto, and did not adopt it because actual-texture/alpha/normal/browser error bounds and RAM/CPU benefit remain unestablished."
+  },
+  "completedUTC": "2026-10-25T20:59:18.796046+00:00",
+  "evidenceIndex": {
+    "status": "passed",
+    "path": "reports/queue-local-evidence-index-20261026.json",
+    "sha256": "eb76c23f3f969cb92985bdc501eb5efa08a87974ec5d0cf792690dd07596f0d8",
+    "files": 242,
+    "bytes": 30504619,
+    "missing": 0,
+    "currentHashOrSizeMismatches": 0,
+    "historicalFailureLogsRetained": 23,
+    "rawTracesIndexed": 0
+  }
+}

@@ -286,7 +286,7 @@ test('objective visuals stay mode-specific and Rainmaker markers reflect rule st
   rainmaker.update({ rule: { state: {
     pos: stage.rainmaker.center.slice(), carrier: null, dropped: false,
     barrier: { active: true, health: 0, max: 1000, team: 1 },
-    checkpoint: { passed: [[true, false], [false, false]], goalOpen: [false, true] },
+    checkpoint: { passed: [true, false], choice: [0, null], goalOpen: [false, true] },
   } } }, 1 / 60);
   assert.equal(rainmaker.towerBlock, undefined);
   assert.equal(rainmaker.zoneGroup.children.length, 0);

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-10-25T20:15:19.980942+00:00",
+  "reviewer": "repo_pr_base",
+  "scope": "Independent read-only semantic review of root historical character seven restorations. No production source or tests were modified by this review.",
+  "status": "no-material-issue-found",
+  "reviewType": "Static code/ownership/consumer analysis with regression test source inspection; test execution and final integration results are owned by root.",
+  "findings": [],
+  "counts": {
+    "items": 7,
+    "materialIssues": 0
+  },
+  "files": [
+    {
+      "path": "patches/local-quality/queue-historical-character-20261026-adapter.mjs",
+      "sha256": "0bccb986c91ac881b10bf4a4e9b4a77c7f8fcfab7204b9e34f97b0b5b82d8bc5"
+    },
+    {
+      "path": "inkwave-public/src/game/character-outfit.js",
+      "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+    },
+    {
+      "path": "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+      "sha256": "c81572a4fd58501084c1facbd96e782836c4116d2454c4e111e0e8e0c470f716"
+    },
+    {
+      "path": "patches/local-quality/tests/fixtures/queue-historical-character-before-20261026.json",
+      "sha256": "8a9fb6e48fb8078e73e6a8a0a7156ac97792378390409dba063113abaceddf77"
+    }
+  ],
+  "items": [
+    {
+      "key": "tentacle-surface-share-arclength-mapping-between-point-and-tangent",
+      "result": "no-material-issue-found",
+      "reason": "The constructor owns its CatmullRomCurve3; point/tangent requests share the identical i/N arclength mapping without a mutation callback between them. getPoint(t) and getTangent(t).normalize() retain the original operations after mapping.",
+      "testsInspected": "Real Three.js geometry across straight/curved/degenerate curves, 24 surface cases, tube and suction geometry exact bytes, mapping call counts."
+    },
+    {
+      "key": "character-face-share-mirrored-ear-crosssection-loops",
+      "result": "no-material-issue-found",
+      "reason": "earFrame width(u) is independent of sx. Each row has the same uc, w, resolution and antihelix inputs for both ears. Only read-only scalar [X,Y] rows are shared within one build; each ear retains separate frames, vertices, weights and winding. buildFaceSkin owns acc and invokes no external callback between ears.",
+      "testsInspected": "Exact face geometry attributes/index, AO, weights and other accumulators across all 12 quality/LOD combinations."
+    },
+    {
+      "key": "character-face-eyeball-cap-precompute-ring-and-azimuth-kernels",
+      "result": "no-material-issue-found",
+      "reason": "Ring kernels are rebuilt per eye so Builder.add cornea mutations affect the next eye. Only own numeric cornea uses ring reuse; accessors and nonnumeric values retain per-vertex reads/coercions. The derivative scratch never escapes. Azimuth operands and arithmetic are unchanged.",
+      "testsInspected": "Both eye geometry and shader sphere data exact; Builder mutation between eyes and changing cornea accessor read order exact."
+    },
+    {
+      "key": "character-stance-hoist-six-identical-damping-exponentials",
+      "result": "no-material-issue-found",
+      "reason": "The private original damp(a,b,l,dt) is a+(b-a)*(1-exp(-l*dt)); private lerp has exactly a+(b-a)*t. lk and dt are unchanged scalar locals across the six-element loop. The hoist preserves this arithmetic and computes the shared alpha once.",
+      "testsInspected": "Actual source-loaded Character poses, skeleton, hair, springs, stance and RNG at 30/60/120 Hz, zero dt and hitch dt."
+    },
+    {
+      "key": "outfit-cache-limb-centrelines-across-skin-socks-and-lod",
+      "result": "no-material-issue-found",
+      "reason": "The only production limbPath callers create fresh numeric Vector3 clones of REST. The bounded four-entry cache compares every coordinate using Object.is and holds only sampled P/S/len. A fresh path/at closure retains each call live lateral hint, and at copies sampled points into caller-owned output; neither table nor vectors escape.",
+      "testsInspected": "Different live hints, returned-path isolation, mutated output isolation, coordinate invalidation over nine changes, bounded four-entry cache, one 601-point sampling on repeated coordinates, and actual actor mesh equality."
+    },
+    {
+      "key": "outfit-tee-strap-polyline-conservative-block-culling",
+      "result": "no-material-issue-found",
+      "reason": "Only private strapPaths-owned unmutated polylines are registered in the WeakMap. Each block AABB includes both endpoints of all covered line segments. Rejecting boxes farther than .03+1e-9 on any axis is conservative for the sole consumer which ignores distances >.03. Unregistered polylines always use the complete original segment walk. No poly sample is exposed through a production export or Builder callback.",
+      "testsInspected": "3600 near-boundary distance checks preserve cutoff and exact accepted distances; 600 real teeFold results exact; mutable unowned polylines keep full distances."
+    },
+    {
+      "key": "outfit-plate-mask-cache-constant-tank-tilt-trig",
+      "result": "no-material-issue-found",
+      "reason": "Numeric tilt cache uses Object.is, preserving signed-zero and nonfinite keys; the current tank center is always read. Nonnumeric tilt uses the original cos/sin evaluations on each call, retaining valueOf order.",
+      "testsInspected": "Exact scalar, signed-zero, nonfinite, undefined/null and changing valueOf outputs; warm numeric calls omit exactly 1000 sin and cos calls."
+    }
+  ],
+  "limitations": [
+    "This review makes no device/GPU benchmark claim. Test outcomes must be taken from the actual root validation log, not inferred from test source inspection.",
+    "The code is judged against production module contracts and actual callbacks/exports; arbitrary replacement of builtin Math or Three.js prototypes is not a supported production mutation contract."
+  ]
+}

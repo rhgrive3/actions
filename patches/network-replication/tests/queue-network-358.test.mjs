@@ -23,8 +23,8 @@ test('composed indexed quota retains exact boundaries and custom-container fallb
  assert.equal(quota({list:{length:0},ghostProjectile(){}},actor),false);assert.equal(quota({list:[]},actor),false);
 });
 test('single-slice pose proposal loses mutation performed by an owner lookup callback',async()=>{
- const candidate=source=>source.replace("    if(!Array.isArray(r)||r.length<4 || !v3(r.slice(1,4)))continue;\n    if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));", "    if(!Array.isArray(r)||r.length<4)continue;const xyz=r.slice(1,4);\n    if(!v3(xyz))continue;\n    if(ownerActor(nm,from,r[0]))poses.set(r[0],xyz);");
+ const candidate=source=>source.replace("      if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));", "      const xyz=r.slice(1,4);\n      if(ownerActor(nm,from,r[0]))poses.set(r[0],xyz);");
  const original=await actualModule('patches/network-replication/combat-provenance.mjs',{extra:'export {record};'}),changed=await actualModule('patches/network-replication/combat-provenance.mjs',{transform:candidate,extra:'export {record};'});
  const run=api=>{const row=[1,0,0,0],actor={owner:'peer',remote:true,alive:true};const nm={byNid:{get(){row[1]=10;return actor;}}};api.record(nm,'peer',{ts:100,a:[row],e:[]},100);return Array.from(nm._combatPoseScratch.get(1));};
- assert.deepEqual(run(original.api),[10,0,0]);assert.deepEqual(run(changed.api),[0,0,0]);
+ assert.deepEqual(run(original.api),[10,0,0],'accepted pose reads the source after synchronous owner callback');assert.deepEqual(run(changed.api),[0,0,0],'premature slice misses the owner mutation');
 });

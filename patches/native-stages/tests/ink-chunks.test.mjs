@@ -64,9 +64,18 @@ test('render chunks preserve crossing triangles and bound only their indexed ver
  assert(chunks[0].boundingSphere.radius<25);assert(chunks[1].boundingSphere.radius<3);
  for(const c of chunks)for(const i of c.index.array)assert(c.boundingBox.containsPoint(new THREE.Vector3().fromBufferAttribute(g.getAttribute('position'),i)));
  assert.throws(()=>f.partitionNativeInk(g,0),/Invalid/);
- const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial()),old=mesh.chunks;let disposed=0;
- old.forEach(x=>x.addEventListener('dispose',()=>disposed++));const next=g.clone().setIndex(null);next.setDrawRange(0,Infinity);g.dispose();mesh.geometry=next;
- assert.equal(disposed,2);assert.equal(mesh.geometry,next);assert.equal(mesh.chunks.length,2);
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial()),old=mesh.chunks;
+ // Runtime culling tiles own bounds only; exported drawable partitions above
+ // still own their BufferGeometry and preserve the public API.
+ for(let i=0;i<old.length;i++){
+  assert.equal(old[i].isBufferGeometry,undefined);assert.equal(old[i].attributes,undefined);
+  assert(old[i].boundingBox.equals(chunks[i].boundingBox));
+  assert(old[i].boundingSphere.equals(chunks[i].boundingSphere));
+  assert.equal(old[i].userData.nativeTile,chunks[i].userData.nativeTile);
+ }
+ let disposed=0;chunks.forEach(x=>x.addEventListener('dispose',()=>disposed++));chunks.forEach(x=>x.dispose());assert.equal(disposed,2);
+ const next=g.clone().setIndex(null);next.setDrawRange(0,Infinity);g.dispose();mesh.geometry=next;
+ assert.notEqual(mesh.chunks,old);assert.equal(mesh.geometry,next);assert.equal(mesh.chunks.length,2);
  const camera=new THREE.PerspectiveCamera(60,1,.1,80);camera.position.set(0,10,20);camera.lookAt(0,0,0);camera.updateMatrixWorld();mesh.updateMatrixWorld();mesh.selectVisible(camera);
  assert.equal(next.drawRange.count,3,'far tile culled, crossing triangle retained');assert.deepEqual(Array.from(next.index.array.subarray(0,3)),[0,1,2]);
  const version=next.index.version;mesh.selectVisible(camera);assert.equal(next.index.version,version,'unchanged visibility must not re-upload indices');
@@ -319,4 +328,29 @@ test('#1671 face chunk lists mark exactly the chunks of a full scan, including m
    if(control._paintedCount===chunks.length){subject._painted.fill(0);control._painted.fill(0);subject._paintedCount=control._paintedCount=0;}
   }
  }
+});
+
+
+test('native runtime runs are exact-sized typed arrays in original triangle order',async()=>{
+ const f=await nativeFixture(),{THREE}=f;
+ for(const order of [[],[0],[0,0,0],[0,1,0,1,2,2,0],Array.from({length:2000},(_,i)=>Math.floor(i/7)%31)]){
+  const g=new THREE.BufferGeometry(),vertices=[];
+  for(const tile of order){const x=tile*32;vertices.push(x,0,0,x+1,0,0,x,0,1);}
+  g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());
+  const expected=[];for(let i=0;i<order.length;i++){if(!i||order[i]!==order[i-1])expected.push([mesh._triangleTile[i],i*3,(i+1)*3]);else expected.at(-1)[2]=(i+1)*3;}
+  assert.equal(mesh._runTiles.length,expected.length);assert.equal(mesh._runStarts.length,expected.length);assert.equal(mesh._runEnds.length,expected.length);
+  for(let i=0;i<expected.length;i++)assert.deepEqual([mesh._runTiles[i],mesh._runStarts[i],mesh._runEnds[i]],expected[i]);
+  assert.equal(mesh._fragmentedRuns,expected.length>order.length/4);mesh.dispose();mesh.material.dispose();
+ }
+});
+
+test('known-empty native binding skips only the explicitly fresh grid scan',async()=>{
+ const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,1,0,0,0,0,1],3));
+ const mesh=new f.NativeInkMesh(g,new THREE.MeshBasicMaterial());let scans=0;
+ const paint={grid:{some(){scans++;return true;}},paintFaces:[],_pushQuad(){},clear(){}};
+ mesh.bindPaint(paint,{knownEmpty:true});assert.equal(scans,0);assert.equal(mesh._paintedCount,0);
+ mesh.bindPaint(paint);assert.equal(scans,1);assert.equal(mesh._paintedCount,mesh.chunks.length);
+ mesh.dispose();mesh.material.dispose();
 });

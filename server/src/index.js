@@ -192,8 +192,8 @@ export class RoomDurableObject {
   _sendMemberControl(member, data) {
     if (this.members.get(member.id) !== member) return false;
     if (relaySend(member.ws, data)) return true;
-    // A failed reply is evidence that this member cannot receive room state.
-    // Release ownership now: native close callbacks may arrive much later.
+    // Failed control delivery retires a member immediately, including sockets
+    // whose close callback is deferred until the next room event.
     try { member.ws.close(1013, 'Control delivery failed'); } catch {}
     this._cleanupMember(member.id, member.ws);
     return false;
@@ -377,7 +377,9 @@ export class RoomDurableObject {
     if (typeof rawData === 'string') s = rawData;
     else if (rawData instanceof ArrayBuffer) s = decoder.decode(rawData);
     else if (ArrayBuffer.isView(rawData)) s = decoder.decode(rawData);
-    if (!s || !this.members.has(id) || this.members.get(id).ws !== ws) return;
+    if (!s) return;
+    const member = this.members.get(id);
+    if (!member || member.ws !== ws) return;
 
     // Enforce byte quotas before JSON.parse or forwarding to up to seven peers.
     const size = s.length > MAX_FRAME_BYTES ? s.length : utf8ByteLength(s);
@@ -386,7 +388,7 @@ export class RoomDurableObject {
       this._cleanupMember(id, ws);
       return;
     }
-    const m = this.members.get(id), now = Date.now();
+    const m = member, now = Date.now();
     const elapsed = Math.max(0, Math.min(4, (now - m.budgetAt) / 1000));
     m.budgetAt = now;
     m.framesLeft = Math.min(FRAME_BURST, m.framesLeft + elapsed * FRAME_RATE);
@@ -441,8 +443,8 @@ export class RoomDurableObject {
           if (!relaySend(member.ws, member.relayClock
             ? (stamped ??= `m|${id}|@${stampTime}|${payload}`)
             : (forward ??= `m|${id}|${payload}`))) {
-            // Native sockets have no `closed` flag and their close event may
-            // arrive later. Failed delivery must release membership now.
+            // Native socket failure cannot rely on a nonstandard 'closed'
+            // property; remove the failed relay member immediately.
             try { member.ws.close(1013, 'Delivery failed'); } catch {}
             this._cleanupMember(targetId, member.ws);
           }

@@ -1,0 +1,162 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "reviewer": "library_queue (independent of the original gameplay implementation)",
+  "scope": "Remaining source adapter, Tower rider leases, roller visual broadphase and delayed Slosher angle reuse.",
+  "result": "Three callback/custom-input regressions fixed; soft-push invariant hoist removed and rejected after a native collision-callback counterexample. No additional regression found in the reviewed rider lease or finite roller broadphase.",
+  "reviewedFiles": [
+    {
+      "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+      "sha256": "b3110cbb5a5c45cb3a23409a3a6e8083622d46fd79a7c8ff76f2142bc5760297"
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/world.mjs",
+      "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7"
+    },
+    {
+      "path": "patches/splatoon3/runtime/projectile-visuals.mjs",
+      "sha256": "eca35369d4aa94e7233cc9431903929aeb44f71bced290019783448578ea6df5"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "sha256": "ce8191824d706c27d2bdfdad0ce5d746c58f6f006602b55578bc6486a9089531"
+    }
+  ],
+  "findings": [
+    {
+      "id": "delayed-slosher-live-angle",
+      "status": "fixed",
+      "index": 179,
+      "key": "slosher-delayed-birth-reuse-initial-yaw-pitch-trig",
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "counterexample": "The AddSpawnSpeedYRateByXZ getter changed the delayed projectile yaw from 0 to PI/2 between the second and third velocity arguments. The original final cosine read saw the new yaw; the once-at-start cache check did not.",
+      "before": {
+        "velocity": [
+          0,
+          0,
+          3.67394039744206e-15
+        ]
+      },
+      "rejectedLocal": {
+        "velocity": [
+          0,
+          0,
+          60
+        ]
+      },
+      "resolution": "The ready flag is reused, but every sine/cosine site reads and validates its live angle at the original expression position using Object.is against the cached angle. Parameter, angle and muzzle mutation and throwing getters retain original read/call/exception order.",
+      "validation": "64 extracted-production-function comparisons, including cache enabled/disabled, signed zero, NaN/Infinity, changing yaw/pitch, muzzle/parameter mutation, thrown getters and thrown packet callback."
+    },
+    {
+      "id": "fx-burst-normal-invalidation",
+      "status": "fixed",
+      "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+      "counterexample": "A spawn callback changed shared normal scratch _v3 to (1,0,0). Subsequent particles used the new normal with stale tangent basis scalars.",
+      "before": {
+        "secondParticleVelocity": [
+          1.9359338617746231,
+          -2.0035253388804652,
+          2.7576160536409544
+        ]
+      },
+      "rejectedLocal": {
+        "secondParticleVelocity": [
+          -0.0675914771058423,
+          0,
+          -2.7576160536409544
+        ]
+      },
+      "resolution": "Basis is created lazily after the original two RNG draws. It is recomputed when any normal component changes by Object.is; stable normals reuse copied tangent scalars. Recursive burst calls, tangent scratch clobbering and RNG-induced normal changes retain birth order, attributes and draw counts.",
+      "validation": "120 seeded actual-burst comparisons across tangent mutation, normal mutation, recursive burst, RNG normal mutation, throwing spawn callback and throwing RNG."
+    },
+    {
+      "id": "aim-assist-custom-distance",
+      "status": "fixed",
+      "index": 115,
+      "key": "player-aimassist-axis-prune-before-distance",
+      "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+      "counterexample": "An Actor custom distanceTo admitted a target near the camera whose geometric distance from the actor exceeded the ordinary radius. The new component rejection skipped that target before consulting the custom metric.",
+      "before": {
+        "target": "custom-metric-target"
+      },
+      "rejectedLocal": {
+        "target": null
+      },
+      "resolution": "Keep only the axis bound on the private native camera vector _v before its length calculation. Actor distance is the unchanged original if (a.pos.distanceTo(e.pos) > maxR) continue expression, preserving its exact getter lookup, receiver, call and exception semantics. No actor-component bound, argument array or generic call helper is introduced.",
+      "validation": "Four real assist-function comparisons for near/far custom metrics and throwing lookup/call preserve exact property order, receiver, LOS trace and result; the existing 30/60/120 Hz target-transition and boundary-distance parity test also passes.",
+      "buildConstraint": "The prior Function.prototype.call.call fallback legitimately triggered the existing orphan scanner Function-identifier gate and retained an otherwise unnecessary charge-hit-cue module. The scanner gate was not changed; the optimization was narrowed to the private camera vector."
+    },
+    {
+      "id": "soft-push-live-roster-and-radius",
+      "status": "optimization-reverted",
+      "disposition": "not-adopted",
+      "index": 105,
+      "key": "match-softpush-hoist-invariant-radius-and-outer-actor",
+      "path": "patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs",
+      "counterexample": "The native softPushActor invoked physics.bodyFits, which synchronously replaced actors[0]. The original next pair reread the roster slot, while the hoisted actor kept pushing the removed actor. Hoisting PLAYER.radius across the same callbacks similarly loses live radius changes.",
+      "before": {
+        "pushedActors": [
+          "A",
+          "B",
+          "B",
+          "D"
+        ],
+        "actorAX": -0.29000000000000004,
+        "actorDX": -0.045000000000000026
+      },
+      "rejectedLocal": {
+        "pushedActors": [
+          "A",
+          "B",
+          "A",
+          "D",
+          "B",
+          "D"
+        ],
+        "actorAX": -0.385,
+        "actorDX": 0.0024999999999999745
+      },
+      "resolution": "Removed all three soft-push source transform anchors and restored original per-pair Actor and radius reads. Retaining live reads would leave only two multiplications to cache at the cost of extra comparisons/branches, so this proposal is not adopted.",
+      "validation": "Four comparisons of the actual native softPushActor and extracted base/current pair loop under roster replacement, radius mutation, both mutations, and a throwing collision callback."
+    }
+  ],
+  "areasWithoutAdditionalFindings": [
+    {
+      "path": "patches/splatoon3/runtime/ranked/world.mjs",
+      "area": "_collectRiderOffsets/_syncTower lease",
+      "reason": "Depth increments before the synchronous collector/consumer, each depth owns separate arrays and rows, public collector calls stay fresh, instance-overridden collectors avoid pooling, and finally clears retained actor references and restores depth. Existing executed public-snapshot and exception test passed."
+    },
+    {
+      "path": "patches/splatoon3/runtime/projectile-visuals.mjs",
+      "area": "roller finite component bound and occupied slot traversal",
+      "reason": "The bound rejects only finite separations with a component strictly above radius*3 and keeps the exact hypot boundary test otherwise. Reversing delta signs preserves hypot; no actor collision/paint state is touched. Occupancy-bit traversal retains ascending slot order and only initialized slot heads are read."
+    }
+  ],
+  "validation": {
+    "newTestFile": "patches/splatoon3/tests/queue-gameplay-review-20261026.test.mjs",
+    "newTestsPassed": 4,
+    "scenarioComparisons": 192,
+    "baseFixture": "patches/splatoon3/tests/fixtures/queue-gameplay-review-before-20261026.json",
+    "existingParitySuite": "patches/splatoon3/tests/queue-gameplay-parity-20261026.test.mjs",
+    "existingParitySubtestsPassed": 9,
+    "diffCheck": "passed",
+    "finalScope": "Aim Assist camera-vector-only bound after final-build orphan-scanner review; both review 4/4 and existing parity 9/9 rerun successfully."
+  },
+  "audioReadOnlyFollowup": {
+    "status": "shared-with-ui-owner",
+    "evidence": [
+      "scripts/check-inkwave-ranked-browser.mjs",
+      "patches/reliability/queue-network-ui-adapter.mjs",
+      "reports/queue-local-ranked-online-20261026/remote-contact-gear.json",
+      "patches/splatoon3/runtime/movement-physics.mjs",
+      "patches/splatoon3/movement-physics-adapter.mjs",
+      "inkwave-public/src/game/actor.js"
+    ],
+    "finding": "The remote audio idle guard cannot skip an actor with wr.rolling or an existing roll handle. The composed remote volume expression is unchanged. The timeout receipt has an admitted playing+registered real loop but zero owner velocity, so zero gain follows that expression. The owner ends at x=-1.9501 from supported x=-1.9, opposite the verified +X corridor; the UI owner is collecting the bounded pulse/position/input/wire timeline. No audio-source change or gate relaxation was made by this review.",
+    "sourceExplanation": "The existing rolling movement path sets velocity along current actor.yaw and uses input magnitude, while the desired move heading is approached by Actor._face after movement through a rate/acceleration-limited spring. The harness resets body yaw to -PI/2 (-X), then KeyS requests +X for 250 ms: the initial -X travel is expected during that reversal. place() also leaves yawVel and _faceTarget from the previous motion. The first successful pulse moved toward -X as well (x=-2.2401 from -1.9), consistent with that mechanism. Browser diagnostics are still required to attribute the missed positive audio window definitively; no production/audio/gate changes were made here."
+  },
+  "limitations": [
+    "These are source/function and Three.js regressions, not a new hardware performance or real multiplayer certification. The browser audio gate remains owned by the UI agent."
+  ]
+}

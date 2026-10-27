@@ -375,10 +375,10 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
 const audioOrphan = path.join(BUILD, REVIEWED_AUDIO_ORPHAN);
 if (fs.existsSync(audioOrphan)) {
   const modules = new Map(walk(BUILD).filter(file => /\.m?js$/.test(file)).map(file =>
-    [path.relative(BUILD, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8')]));
+    [path.relative(BUILD, file).split(path.sep).join('/'), () => fs.readFileSync(file, 'utf8')]));
   // These modules are copied by prepareLoading after this graph pass.
   for (const file of [...walk(path.join(LOADING_ROOT, 'runtime')), path.join(LOADING_ROOT, 'sw.js')].filter(file => /\.m?js$/.test(file)))
-    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
+    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), () => fs.readFileSync(file, 'utf8'));
   let inline = 0;
   for (const htmlFile of walk(BUILD).filter(file => file.endsWith('.html'))) {
     const html = fs.readFileSync(htmlFile, 'utf8');
@@ -438,12 +438,14 @@ visit('patches/splatoon3/bootstrap.mjs');
 // tiny live helpers in the immutable offline module graph, not extra HTML hints.
 visit('patches/splatoon3/runtime/audio/combat-hit-classifier.mjs');
 visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
+visit('patches/splatoon3/runtime/audio/music-preload-owner.mjs');
 // Worker modules have no main-thread static importer, but must retain their
 // own immutable offline dependencies. The source payload stays outside it.
 visit('patches/native-stages/runtime/native-world.mjs');
 visit('patches/native-stages/runtime/source-worker.mjs');
 visit('patches/splatoon3/runtime/audio/reverb-worker.mjs');
 visit('patches/splatoon3/runtime/audio/grain-worker.mjs');
+visit('patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
@@ -460,6 +462,10 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/audio/grain-texture.mjs',
   'patches/splatoon3/runtime/audio/grain-prewarm.mjs',
   'patches/splatoon3/runtime/audio/grain-worker.mjs',
+  'patches/splatoon3/runtime/audio/music-preload-owner.mjs',
+  // User-selected Splat Charger onset WSOLA: precache both modules without an eager preload.
+  'patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs',
+  'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs',
   // Reverb preparation remains an ordinary module/Worker fetch, with immutable offline coverage.
   'patches/splatoon3/runtime/audio/reverb-impulse.mjs',
   'patches/splatoon3/runtime/audio/reverb-prewarm.mjs',

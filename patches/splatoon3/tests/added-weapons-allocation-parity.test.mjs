@@ -6,6 +6,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {createTacticooler,disposeSpecialModel} from '../runtime/special-motion.mjs';
 import {kitSweepSphereBlocks} from '../runtime/trizooka-collision.mjs';
 import {catalogSplashRadius} from '../runtime/catalog-splash-paint.mjs';
+import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 import {cloudCoversActor} from '../runtime/storm-effects.mjs';
 import {spawnTorpedoSplashes,stepTorpedoSplashes,clearTorpedoSplashes} from '../runtime/torpedo-splashes.mjs';
 const oracle=JSON.parse(fs.readFileSync(new URL('./fixtures/added-weapons-original-kernels.json',import.meta.url)));
@@ -178,13 +179,15 @@ test('Tacticooler flat sweeps match original motion, Tower updates and reentrant
 
 test('catalog splash direction is created only for an admitted release, preserving exhaustion, threshold, head-stop and payload order',()=>{
  const source=runtime('main-weapon-catalog.mjs');
+ const canShareSourceFootprint=compile(cut(source,'function canShareSourceFootprint','const clamp'),
+  ['canShareSourceFootprint'],{SOURCE_FOOTPRINT_RECORDS:new WeakSet(MAIN_WEAPON_CATALOG.records)}).canShareSourceFootprint;
  // The release kernel consumes these real per-step bindings from its caller.
  // Keep the production horizontal-distance calculation, not len aliases/stubs.
  const distance=cut(source,'      const splashBefore=','      this.projectileVisuals?.recordPhysicsPoint');
  assert.match(distance,/const splashBefore=/);assert.match(distance,/const splashLength=/);
  const current=distance+cut(source,'      if(!p.ghost&&d.splashCount>0','      if(!p.ghost&&s.rollerFlight');
  const run=(kernel,config)=>{
-  const rows=[],g={EPS:1e-9,DT:1/60,HZ:60,clamp:(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v)),G:{},catalogSplashRadius,mainInkFootprint:()=>({width:.3}),
+  const rows=[],g={EPS:1e-9,DT:1/60,HZ:60,clamp:(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v)),G:{},catalogSplashRadius,canShareSourceFootprint,mainInkFootprint:()=>({width:.3}),
    spawnSplashDrop(_g,o){rows.push(['drop',o.from.toArray(),o.direction.toArray(),o.radius,o.salt,o.catchUpSeconds]);return {};},
    floorPaint(_a,from,radius,depth,direction){rows.push(['floor',from.toArray(),radius,depth,direction.toArray()]);}};
   const fn=compile('function advance(p,s,d,travelBefore,len,stop){'+kernel+'}',['advance'],g).advance;

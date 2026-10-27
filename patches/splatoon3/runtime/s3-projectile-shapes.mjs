@@ -477,7 +477,7 @@ export function drawS3Shapes(system, THREE, G) {
     if (kind === 'machine' && p.vis > 0) {
       // the round itself: a spinning twisted membrane, never drawn behind the muzzle
       const travel = p.start ? p.start.distanceTo(p.pos) : MACHINE_DRILL.length;
-      R.sheets.drill(p.pos, f.clone(), color, p.seed || 0, (Number.isFinite(G?.time) ? G.time : 0), Math.min(MACHINE_DRILL.length, travel));
+      R.sheets.drill(p.pos, f, color, p.seed || 0, (Number.isFinite(G?.time) ? G.time : 0), Math.min(MACHINE_DRILL.length, travel));
     }
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;
@@ -549,8 +549,16 @@ export function drawS3Shapes(system, THREE, G) {
           const a = hash(seed, 1) * 6.2832, y = 2 * hash(seed, 2) - 1, ring = Math.sqrt(Math.max(0, 1 - y * y));
           rows.push({ seed, x: ring * Math.cos(a), y, z: ring * Math.sin(a), rate: 1.8 + hash(seed, 5), phase: hash(seed, 6), d: rad * (0.9 + 0.8 * hash(seed, 3)), fall: 0.35 + 0.3 * hash(seed, 7), size: hash(seed, 8) });
         }
-        coefficients = { seed: normalizedSeed, rows }; R.sparkleCoefficients.set(p, coefficients);
+        coefficients = { seed: normalizedSeed, rows, harmonicFrames: 0 }; R.sparkleCoefficients.set(p, coefficients);
       }
+      // Short-lived/capacity-clipped rounds keep the original expression. For
+      // ordinary seed/age ranges, share its age phase after two visible frames.
+      // A conservative rounding guard below retains the exact Float32 output.
+      const agePhase = p.age * 30;
+      const harmonic = Number.isFinite(normalizedSeed) && Math.abs(normalizedSeed) <= 1 &&
+        Number.isFinite(agePhase) && agePhase >= 0 && agePhase <= 1800 && MAX_SPARK - nk >= 4 &&
+        ++coefficients.harmonicFrames > 2;
+      const ageSin = harmonic ? Math.sin(agePhase) : 0, ageCos = harmonic ? Math.cos(agePhase) : 0;
       for (let i = 0; i < n && nk < MAX_SPARK; i++) {
         const c = coefficients.rows[i], seed = c.seed;
         // Presentation calibration, not recovered effect data: a tight uneven
@@ -564,8 +572,16 @@ export function drawS3Shapes(system, THREE, G) {
         v.y -= shed * shed * c.fall;
         v.add(p.pos);
         sparkPos.array[nk * 3] = v.x; sparkPos.array[nk * 3 + 1] = v.y; sparkPos.array[nk * 3 + 2] = v.z;
-        const tw = 0.5 + 0.5 * Math.sin(p.age * 30 + seed * 10);
-        sparkSize.array[nk] = (0.04 + 0.07 * tw * c.size) * (1 - 0.6 * shed);
+        if (harmonic && c.phaseSin === undefined) { c.phaseSin = Math.sin(seed * 10); c.phaseCos = Math.cos(seed * 10); }
+        let tw = 0.5 + 0.5 * (harmonic ? ageSin * c.phaseCos + ageCos * c.phaseSin : Math.sin(agePhase + seed * 10));
+        let size = (0.04 + 0.07 * tw * c.size) * (1 - 0.6 * shed);
+        // Leave ample margin for the bounded angles' different rounding.
+        // Near a Float32 midpoint, use the original sin.
+        if (harmonic && Math.fround(size - 1e-11) !== Math.fround(size + 1e-11)) {
+          tw = 0.5 + 0.5 * Math.sin(agePhase + seed * 10);
+          size = (0.04 + 0.07 * tw * c.size) * (1 - 0.6 * shed);
+        }
+        sparkSize.array[nk] = size;
         nk++;
       }
     }

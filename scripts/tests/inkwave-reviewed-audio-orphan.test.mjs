@@ -42,6 +42,16 @@ test('parse errors preserve the module instead of making incomplete graph claims
   assert.equal(decide('import(').omit, false);
 });
 
+test('lazy module readers retain the complete graph decision and fail closed on unreadable input',()=>{
+  for(const code of ['export const x=1;','import("../patches/splatoon3/runtime/audio/charge-hit-cue.mjs")','import(']){
+    const modules=new Map([...fixture(),['src/probe.js',code]]),lazy=new Map([...modules].map(([file,text])=>[file,()=>text]));
+    assert.deepEqual(reviewedAudioOrphanDecision(source,lazy,owners),reviewedAudioOrphanDecision(source,modules,owners));
+  }
+  const lazy=new Map([...fixture(),['src/probe.js',()=>{throw Error('read failed');}]]);
+  assert.equal(reviewedAudioOrphanDecision(source,lazy,owners).omit,false);
+  lazy.set('src/probe.js',()=>null);assert.equal(reviewedAudioOrphanDecision(source,lazy,owners).omit,false);
+});
+
 test('build guard precedes graph/assets/revision and retains source identity inputs', () => {
   const build = fs.readFileSync(new URL('../build-inkwave.mjs', import.meta.url), 'utf8');
   assert.ok(build.indexOf('const decision = reviewedAudioOrphanDecision(') < build.indexOf('const loadingPlan = prepareLoading('));

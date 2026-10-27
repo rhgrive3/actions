@@ -66,7 +66,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
   // Before Actor's form/resource admission, once per gameplay tick. Direct
   // runner tests/late-descent updates use the fallback below, never twice.
   const actorUpdate = Actor.prototype.update;
-  Actor.prototype.update = function (dt, ...args) {
+  Actor.prototype.update = function (dt) {
     const r = this.weaponRunner, nested = r.s3GateInActor;
     if (!nested) {
       advance(r, dt);
@@ -79,7 +79,7 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
       }
     }
     r.s3GateInActor = true;
-    try { return actorUpdate.call(this, dt, ...args); }
+    try { return arguments.length<=1?actorUpdate.call(this,dt):actorUpdate.apply(this,arguments); }
     finally { r.s3GateInActor = nested; }
   };
   const reset = wr.reset, busy = wr.busy, update = wr.update;
@@ -145,8 +145,8 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
     return result;
   };
   const fresh = Projectiles.prototype._new, push = Projectiles.prototype._push;
-  Projectiles.prototype._new = function (...args) {
-    const p = fresh.apply(this, args); p.s3PlayerRadius = null; return p;
+  Projectiles.prototype._new = function () {
+    const p = arguments.length===0?fresh.call(this):fresh.apply(this,arguments); p.s3PlayerRadius = null; return p;
   };
   Projectiles.prototype._push = function (p) {
     const a = p.owner, w = a?.weapon;

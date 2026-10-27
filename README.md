@@ -33,7 +33,7 @@
 
 ## INKWAVE の最初の確認
 
-Node.js 22 以上を使用し、リポジトリのルートで実行します。ルートの `package.json` がビルド・検証コマンドとビルド用ツールのバージョンを管理します。以下は CI と同じバージョンを使う手順です。
+Node.js 22.12 以上を使用し（CI は Node.js 22）、リポジトリのルートで実行します。ルートの `package.json` がビルド・検証コマンドとビルド用ツールのバージョンを管理します。以下は CI と同じバージョンを使う手順です。
 
 ```sh
 npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2

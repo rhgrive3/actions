@@ -10,31 +10,41 @@ export function installAudioPlatform(AudioEngine, env = globalThis) {
   const lifecycle = getPlatformLifecycle(env);
   function ensure(a) {
     if (a._platformAudio) return a._platformAudio;
-    const r = a._platformAudio = { pending: null, wanted: lifecycle.active, needsGesture: false, off: null, unlock: null, disposed: false };
+    const r = a._platformAudio = { pending: null, wanted: lifecycle.active, needsGesture: false, off: null, unlock: null, disposed: false, context: null, stateListener: null };
     const reconcile = (trustedGesture = false) => {
       const ctx = a.ctx;
       if (r.disposed || a._platformAudio !== r) return;
       if (!ctx || a.offline || ctx.state === 'closed') return;
-      r.wanted = lifecycle.active;
-      if (r.pending) {
-        // On iPad WebKit a resume() started before user activation can remain pending.
-        // The native trusted touch/click handler must retry even when navigator.userActivation
-        // is unavailable or does not report isActive for that event.
-        if (r.wanted && ctx.state !== 'running' && (trustedGesture || env.navigator?.userActivation?.isActive === true)) {
-          try { Promise.resolve(ctx.resume?.()).catch(() => { r.needsGesture = true; }); } catch {}
-        }
-        return;
+      if(r.context!==ctx){
+        r.context?.removeEventListener?.('statechange',r.stateListener);
+        r.context=ctx;r.stateListener=()=>reconcile();
+        ctx.addEventListener?.('statechange',r.stateListener);
       }
+      r.wanted = lifecycle.active;
       const operation = r.wanted ? 'resume' : 'suspend';
-      if (ctx.state === (r.wanted ? 'running' : 'suspended') || !ctx[operation]) return;
+      const pending=r.pending;
+      const same=pending?.context===ctx&&pending.operation===operation;
+      const gesture=trustedGesture||env.navigator?.userActivation?.isActive===true;
+      if(same&&!(operation==='resume'&&ctx.state!=='running'&&gesture))return;
+      // A stale, unresolved resume must never block background suspension.
+      // Conversely a new foreground gesture may supersede an old suspend.
+      if((!pending||same)&&ctx.state===(r.wanted?'running':'suspended'))return;
+      if(typeof ctx[operation]!=='function')return;
+      const token={context:ctx,operation};r.pending=token;
       let promise;
-      try { promise = ctx[operation](); } catch { r.needsGesture = r.wanted; return; }
-      r.pending = Promise.resolve(promise);
-      r.pending.then(() => {
-        if (r.disposed || a._platformAudio !== r) return;
-        r.pending = null; r.needsGesture = lifecycle.active && ctx.state !== 'running';
-        if (a.ctx === ctx && lifecycle.active !== (operation === 'resume')) reconcile();
-      }, () => { r.pending = null; r.needsGesture = lifecycle.active; });
+      try{promise=ctx[operation]();}
+      catch{if(r.pending===token)r.pending=null;r.needsGesture=r.wanted;return;}
+      Promise.resolve(promise).then(()=>{
+        if(r.disposed||a._platformAudio!==r)return;
+        if(r.pending===token)r.pending=null;
+        r.needsGesture=lifecycle.active&&a.ctx?.state!=='running';
+        if(a.ctx===ctx&&lifecycle.active!==(operation==='resume'))reconcile();
+      },()=>{
+        if(r.disposed||a._platformAudio!==r)return;
+        if(r.pending===token)r.pending=null;
+        r.needsGesture=lifecycle.active;
+        if(a.ctx===ctx&&lifecycle.active!==(operation==='resume'))reconcile();
+      });
     };
     r.reconcile = reconcile;
     r.off = lifecycle.subscribe({ suspend: reconcile, resume: reconcile });
@@ -47,6 +57,7 @@ export function installAudioPlatform(AudioEngine, env = globalThis) {
   P.disposePlatform = function () {
     const r = this._platformAudio; if (!r) return;
     r.disposed = true; r.off?.();
+    r.context?.removeEventListener?.('statechange',r.stateListener);r.context=null;r.pending=null;
     for (const type of ['pointerdown', 'keydown', 'touchend', 'click', 'mousedown']) env.removeEventListener?.(type, r.unlock, true);
     this._platformAudio = null;
   };

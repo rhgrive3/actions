@@ -15,16 +15,18 @@ export function addedFamilySplash(source, family, ordinal) {
   const first=catalogSplashFirst({ ...spawn, SpawnNearestLength:nearest, SpawnBetweenLength:spacing },ordinal);
   // Preserve the established positive-gravity path. A horizontal Saber has
   // explicit zero projectile gravity; it must not disable its detached drops.
-  const spec=catalogSplashDropSpec(source)||catalogSplashDropSpec({ ...source,
-    MoveParam:{ ...source.MoveParam, FreeGravity:ADDED_PAINT_MODEL.gravity } });
+  const spec=catalogSplashDropSpec(source)||catalogSplashDropSpec(source,null,'normal',ADDED_PAINT_MODEL.gravity);
   return { spec, first, spacing, count:Math.max(0,Math.floor(finite(spawn.SplashNumMax,
     family==='stringer'?ADDED_PAINT_MODEL.stringerCount:0))) };
 }
 
 export function brellaSplashPlan(source) {
   const p=source?.SplashParam;
-  if (!p || ![p.SplashPaintWidthFullActive,p.SplashPaintWidthOneActive,
-    p.SplashPaintDepthScaleFullActive,p.SplashPaintDepthScaleOneActive].every(v=>Number.isFinite(v)&&v>0)) return null;
+  if (!p) return null;
+  const fullWidth=p.SplashPaintWidthFullActive,oneWidth=p.SplashPaintWidthOneActive,
+    fullDepth=p.SplashPaintDepthScaleFullActive,oneDepth=p.SplashPaintDepthScaleOneActive;
+  if (!Number.isFinite(fullWidth)||!(fullWidth>0)||!Number.isFinite(oneWidth)||!(oneWidth>0)||
+      !Number.isFinite(fullDepth)||!(fullDepth>0)||!Number.isFinite(oneDepth)||!(oneDepth>0)) return null;
   // CreateSplashLength is the interval between shared volley drops. Starting
   // at one whole interval skipped the birth/feet member and left a dry gap.
   // Start at birth and retain the same total budget; exact retail phase still
@@ -53,7 +55,13 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
     const i=volley.next,at=plan.first+i*plan.spacing;
     // At the zero-distance nearest member, an untouched node also has
     // distance=0. Require its actual sample before computing the centroid.
-    if(!volley.nodes.every(n=>n.ended||n.samples.has(i)))break;
+    const blocked=volley.blockedNode;
+    if(blocked&&volley.nodes[volley.blockedIndex]===blocked&&!blocked.ended&&!blocked.samples.has(i))break;
+    let ready=true;volley.blockedNode=null;
+    for(let j=0;j<volley.nodes.length;j++)if(j in volley.nodes){const n=volley.nodes[j];
+      if(!(n.ended||n.samples.has(i))){volley.blockedNode=n;volley.blockedIndex=j;ready=false;break;}
+    }
+    if(!ready)break;
     let centre=null,count=0,birthFrame=-Infinity;
     for(const n of volley.nodes){
       const sample=n.samples.get(i);

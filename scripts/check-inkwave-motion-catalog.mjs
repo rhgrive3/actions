@@ -463,6 +463,29 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // motion fixture never enters the ranked bootstrap path. Load and verify its
   // immutable emitted graph without changing the Turf fixture's behaviour.
   const audioGraph=await globalThis.catalogAudioGraph(prefix);
+  // WSOLA is a demand-launched module Worker, not an eagerly imported runtime
+  // module. Verify its actual worker protocol here rather than exempting it
+  // from the immutable installed-graph byte receipts.
+  const chargerWorker = new Worker(prefix + 'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs', { type: 'module' });
+  try {
+    await new Promise((resolve, reject) => {
+      const frames = 800, ratio = 1.25, samples = new Float32Array(frames);
+      for (let i = 0; i < frames; i++) samples[i] = Math.sin(i * .16);
+      const deadline = setTimeout(() => reject(Error('Charger WSOLA worker protocol timed out')), 15000);
+      const finish = error => { clearTimeout(deadline); error ? reject(error) : resolve(); };
+      chargerWorker.onerror = e => finish(Error('Charger WSOLA module Worker error: ' + e.message));
+      chargerWorker.onmessage = ({ data }) => {
+        const output = data?.samples?.[0];
+        if (data.serial !== 901 || data.key !== 'catalog-charger' || !Array.isArray(data.samples) ||
+            data.samples.length !== 1 || !(output instanceof Float32Array) ||
+            output.length !== Math.round(frames * ratio) || !output.every(Number.isFinite)) {
+          finish(Error('Charger WSOLA worker output invariant failed')); return;
+        }
+        finish(null);
+      };
+      chargerWorker.postMessage({ serial: 901, key: 'catalog-charger', samples: [samples], sampleRate: 8000, ratio }, [samples.buffer]);
+    });
+  } finally { chargerWorker.terminate(); }
   const { installRanked } = await import(prefix + 'patches/splatoon3/runtime/ranked/install.mjs');
   if (typeof installRanked !== 'function') throw Error('Ranked runtime installer missing');
   // Exercise the real Match dependency entry, including its deadline helper.

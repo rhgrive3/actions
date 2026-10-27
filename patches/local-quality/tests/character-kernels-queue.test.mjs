@@ -9,6 +9,7 @@ const bytes=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength);
 function geometry(g){return Object.fromEntries([...Object.entries(g.attributes).map(([n,a])=>[n,bytes(a.array)]),['index',bytes(g.index.array)]]);}
 function leaf(code,names,G){return new Function('THREE','G',code.replace(/^import .*;$/gm,'').replaceAll('export ','')+'\nreturn {'+names+'};')(THREE,G);}
 const oldSmooth='    for (let pass = 0; pass < 2; pass++) { const c = rho.slice(); for (let i = 0; i < N; i++) rho[i] = (c[Math.max(0, i - 2)] + c[Math.max(0, i - 1)] + c[i] + c[Math.min(N - 1, i + 1)] + c[Math.min(N - 1, i + 2)]) / 5; }';
+const beforeWorld=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-remaining-world-before.json',import.meta.url),'utf8'));
 const newSmooth='    const temp = new Float64Array(N);\n    for (let pass = 0; pass < 2; pass++) { const c = pass === 0 ? rho : temp, dst = pass === 0 ? temp : rho; for (let i = 0; i < N; i++) dst[i] = (c[Math.max(0, i - 2)] + c[Math.max(0, i - 1)] + c[i] + c[Math.min(N - 1, i + 1)] + c[Math.min(N - 1, i + 2)]) / 5; }';
 test('actual TentacleSurface and tubes retain exact ring parameters and mesh buffers with two smoothing buffers',()=>{
  const code=read('src/game/character-hair.js'),G={settings:{quality:'high'}};
@@ -56,9 +57,12 @@ test('full production face generation retains byte-identical AO and attributes a
 test('sweep retains undeformed cs/sn and exact geometry with section, cap, flat, twist and transported frames',()=>{
  const source=read('src/game/character-geo.js');
  let next=source.slice(source.indexOf('export function sweep('),source.indexOf('\n/** Grid over',source.indexOf('export function sweep('))).replace('export ','');
- let old=replaceOnce(next,'const th = (k / radial) * Math.PI * 2, c0 = Math.cos(th), s0 = Math.sin(th); let c = c0, s = s0;','const th = (k / radial) * Math.PI * 2; let c = Math.cos(th), s = Math.sin(th);','baseline sweep trig');
+ const authentic=beforeWorld.modules['src/game/character-geo.js'].source;
+ let old=authentic.slice(authentic.indexOf('export function sweep('),authentic.indexOf('\n/** Grid over',authentic.indexOf('export function sweep('))).replace('export ','');
+ old=replaceOnce(old,'const th = (k / radial) * Math.PI * 2, c0 = Math.cos(th), s0 = Math.sin(th); let c = c0, s = s0;','const th = (k / radial) * Math.PI * 2; let c = Math.cos(th), s = Math.sin(th);','baseline sweep trig');
  old=replaceOnce(old,'cs.push(c0); sn.push(s0);','cs.push(Math.cos(th)); sn.push(Math.sin(th));','baseline sweep attributes');
- const make=code=>new Function('THREE','V3','clamp',code+'\nreturn sweep;')(THREE,THREE.Vector3,(x,a,b)=>x<a?a:x>b?b:x),kernels=[make(old),make(next)];
+ const prelude=source.slice(0,source.indexOf('// INKWAVE')).replace(/^import .*;$/gm,'');
+ const make=code=>new Function('THREE','V3','clamp',code+'\nreturn sweep;')(THREE,THREE.Vector3,(x,a,b)=>x<a?a:x>b?b:x),kernels=[make(old),make(prelude+next)];
  for(const radial of [3,6,11,24])for(const section of [false,true])for(const capStart of [false,true])for(const transport of [false,true]){
   const opts={seg:12,radial,capStart,capEnd:!capStart,transport,outward:(p,out)=>out.set(p.x,1,p.z),radius:t=>.08*(1-t*.7),flat:t=>.6+t*.2,twist:t=>t*.7,section:section?(c,s,t)=>[c*(1+t*.2),s*.75]:undefined};
   const outputs=kernels.map(k=>k([[0,0,0],[.05,.2,.03],[.1,.5,-.02],[-.03,.8,.07]],opts));

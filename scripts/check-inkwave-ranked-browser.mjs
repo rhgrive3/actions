@@ -86,10 +86,41 @@ async function checkRankedRemoteContactGear(host, guest, save) {
  // Native keyboard events own both held keys and physical press edges. A
  // keys-only Space hold cannot admit a jump/dodge through Player -> Actor.
  // Dispatch only transitions so repeated helper calls never replay an edge.
- const setInput=(page,fire,keys=[])=>page.evaluate(({fire,keys})=>{const state=__rankedReplication;clearTimeout(state.motionTimer);RG.input.mouse.left=fire;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])if(RG.input.down(key)&&!keys.includes(key))window.dispatchEvent(new KeyboardEvent('keyup',{code:key}));for(const key of keys)if(!RG.input.down(key))window.dispatchEvent(new KeyboardEvent('keydown',{code:key}));if(keys.includes('KeyS'))state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyS'),250);},{fire,keys});
+ const setInput=(page,fire,keys=[])=>page.evaluate(({fire,keys})=>{
+  const state=__rankedReplication;state.cancelMotionStart?.(new Error('Ranked input start superseded'));clearTimeout(state.motionTimer);
+  const apply=()=>{
+   if(keys.includes('Space'))state.armDodge();
+   RG.input.mouse.left=fire;
+   for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])if(RG.input.down(key)&&!keys.includes(key))window.dispatchEvent(new KeyboardEvent('keyup',{code:key}));
+   for(const key of keys)if(!RG.input.down(key))window.dispatchEvent(new KeyboardEvent('keydown',{code:key}));
+   if(keys.includes('KeyW')&&!RG.game.frozen)state.motionTimer=setTimeout(()=>RG.input.keys.delete('KeyW'),250);
+  };
+  if(!keys.includes('KeyW')||RG.game.frozen){apply();return;}
+  // Begin the same bounded wall-clock pulse immediately before the next real
+  // native frame consumes it. A slow RAF must not erase the whole pulse before
+  // any native input sample. Restore the exact original frame ownership first.
+  const game=RG.game,descriptor=Object.getOwnPropertyDescriptor(game,'_frame'),frame=game._frame;
+  return new Promise((resolve,reject)=>{
+   let active=true;
+   const restore=()=>{
+    if(!active)return;active=false;clearTimeout(deadline);
+    if(game._frame===start){if(descriptor)Object.defineProperty(game,'_frame',descriptor);else delete game._frame;}
+    if(state.cancelMotionStart===cancel)state.cancelMotionStart=null;
+   };
+   const cancel=error=>{restore();reject(error);};
+   const start=function(...args){
+    restore();
+    try{apply();const result=Reflect.apply(frame,this,args);resolve();return result;}
+    catch(error){reject(error);throw error;}
+   };
+   const deadline=setTimeout(()=>cancel(new Error('Ranked input did not reach a native frame within 30000ms')),30000);
+   state.cancelMotionStart=cancel;
+   try{game._frame=start;}catch(error){cancel(error);}
+  });
+ },{fire,keys});
  const place=(page,position,yaw)=>page.evaluate(async({position,yaw})=>{
   const {PLAYER}=await import(new URL('src/config.js',document.baseURI)),a=RG.match.local;
-  a.pos.fromArray(position);a.vel.set(0,0,0);a.yaw=a.aimYaw=yaw;RG.rig.yaw=yaw;RG.rig.pitch=0;
+  a.pos.fromArray(position);a.vel.set(0,0,0);a.yaw=a.aimYaw=yaw;a.yawVel=0;a._faceTarget=null;RG.rig.yaw=yaw;RG.rig.pitch=0;
   RG.input.mouse.dx=RG.input.mouse.dy=0;
   const ground=RG.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,.3,.3,PLAYER.footRadius,a.ground,false);
   if(!ground.hit)throw Error('Replication acceptance setup has no native foot support');
@@ -101,12 +132,26 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   previousFrozen=await Promise.all(pages.map(p=>p.evaluate(()=>{const value=RG.game.frozen;RG.game.debug.unfreeze();return value;})));
   await Promise.all(pages.map(p=>p.waitForFunction(()=>RG.match.local.alive&&!RG.match.local.s3?.squidSpawn&&!RG.match.local.superJumpState&&!RG.match.local.specialActive,null,timeout)));
   identities=await Promise.all(pages.map((p,index)=>p.evaluate(async frozen=>{
-   const G=RG,a=G.match.local,{objectShredderEquipped}=await import(new URL('patches/splatoon3/runtime/object-gear.mjs',document.baseURI));
+   const G=RG,a=G.match.local,{objectShredderEquipped}=await import(new URL('patches/splatoon3/runtime/object-gear.mjs',document.baseURI)),{on}=await import(new URL('src/core/ctx.js',document.baseURI));
    if(globalThis.__rankedReplication)throw Error('Replication acceptance already installed');
-   const state={frozen,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,aimYaw:a.aimYaw,aimPitch:a.aimPitch,rigYaw:G.rig.yaw,rigPitch:G.rig.pitch,profileWeapon:G.game.profile.weapon,invuln:a.invuln,
+   const state={frozen,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,yawVel:a.yawVel,faceTarget:a._faceTarget,aimYaw:a.aimYaw,aimPitch:a.aimPitch,rigYaw:G.rig.yaw,rigPitch:G.rig.pitch,profileWeapon:G.game.profile.weapon,invuln:a.invuln,
     loadout:structuredClone(a.s3.loadout),bots:G.actors.filter(a=>a.bot&&!a.isLocal).map(a=>[a.bot,a.bot.update]),
     socket:G.net.tr.ws,send:G.net.tr.ws.send,loop:G.audio.loop,wire:[],audio:[],objectShredderEquipped};
    globalThis.__rankedReplication=state;
+   const dodgeRunner=a.weaponRunner;
+   const armDodgeWitness=()=>{
+    const token=dodgeRunner._rollToken??0;
+    if(a.weaponRunner!==dodgeRunner||!Number.isSafeInteger(token)||token<0)throw Error('Ranked Dodge observer lost its native runner');
+    state.dodgeReceipt=null;state.dodgeArm={token};
+   };
+   const observeDodgeWitness=event=>{
+    const arm=state.dodgeArm,dodge=dodgeRunner.dodge;
+    if(!arm||event?.actor!==a||a.weaponRunner!==dodgeRunner||!dodge||!Number.isSafeInteger(dodge.token)||dodge.token<=arm.token||dodgeRunner._rollToken!==dodge.token)return;
+    state.dodgeReceipt={token:dodge.token,nativeTime:G.time,renderFrame:G.game._frameN};state.dodgeArm=null;
+   };
+   // Native acceptance emits synchronously while the fresh live Dodge exists.
+   // Fixed ticks can finish it before a render-frame polling callback runs.
+   state.armDodge=armDodgeWitness;state.offDodge=on('weapon:dodge',observeDodgeWitness);
    // Observe the exact serialized text handed to the real WebSocket. Delegate
    // first, preserve return/throw behavior, and retain at most 64 tick receipts.
    state.socket.send=function(text,...args){const result=state.send.call(this,text,...args);
@@ -147,7 +192,13 @@ async function checkRankedRemoteContactGear(host, guest, save) {
    const query=(x,y,z,yaw)=>{const point=new V(x,y,z),probe={normal:new V()};
     if(G.level.spawnPads.some(p=>Math.hypot(x-p.x,z-p.z)<G.level.spawnBarrier+PLAYER.radius))return null;
     G.physics.groundProbe(x,y,z,.3,.3,PLAYER.footRadius,probe,false);if(!probe.hit||G.level.blocks[probe.block]?.roof||G.level.blocks[probe.block]?.rail||Math.abs(probe.y-y)>.1)return null;
-    point.y=probe.y;const support=rollerDrumSupport({pos:point,yaw,grounded:true},G,scratch);return {pos:point.toArray(),support};};
+    point.y=probe.y;
+    // Ground and drum support do not imply that the actor fits beside a cover
+    // wall. Use the same lifted humanoid capsule as Actor._resolve, including
+    // every sampled point along the bounded positive-control corridor.
+    const radius=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale;
+    if(!G.physics.bodyFits(point,radius,PLAYER.stepUp,PLAYER.height,false))return null;
+    const support=rollerDrumSupport({pos:point,yaw,grounded:true},G,scratch);return {pos:point.toArray(),support};};
    let attempts=0;
    // Existing native solid tops only. No new floor, collision stub, model or
    // guessed water coordinate. Failure to find a real edge fails the scenario.
@@ -157,27 +208,32 @@ async function checkRankedRemoteContactGear(host, guest, save) {
      const dir=block.axes[axis],dx=dir.x*sign,dz=dir.z*sign,len=axis===0?block.half.x:block.half.z;
      if(len<3)continue;const y=block.center.y+block.half.y,yaw=Math.atan2(dx,dz);
      const x=block.center.x+dx*(len-inset),z=block.center.z+dz*(len-inset);
-     const edge=query(x,y,z,yaw),supported=query(x-dx*3,y,z-dz*3,yaw),observer=query(x-dx*5-dz*3,y,z-dz*5+dx*3,yaw+Math.PI);
+     const travelYaw=yaw+Math.PI;
+     const edge=query(x,y,z,yaw),supported=query(x-dx*3,y,z-dz*3,travelYaw),observer=query(x-dx*5-dz*3,y,z-dz*5+dx*3,travelYaw);
      if(edge&&!edge.support.supported&&supported?.support.floor&&observer?.support.floor){
-      const corridor=[];for(let distance=0;distance<=2;distance+=.25){const at=query(x-dx*(3+distance),y,z-dz*(3+distance),yaw);if(!at?.support.floor)break;corridor.push(at.pos);}
-      if(corridor.length===9)return {attempts,block:block.id,yaw,edge:edge.pos,supported:supported.pos,observer:observer.pos,edgeSupport:edge.support,corridor};
+      // A roller travels along its current body heading before the facing
+      // spring turns toward a reverse stick. Face into the verified corridor
+      // and use forward input; a 250ms reverse pulse can hit the edge mid-turn.
+      const corridor=[];for(let distance=0;distance<=4;distance+=.25){const at=query(x-dx*(3+distance),y,z-dz*(3+distance),travelYaw);if(!at?.support.floor)break;corridor.push(at.pos);}
+      if(corridor.length===17)return {attempts,block:block.id,yaw,travelYaw,edge:edge.pos,supported:supported.pos,observer:observer.pos,edgeSupport:edge.support,corridor};
      }
     }
    }
    throw Error('Native ranked stage has no eligible feet-supported/drum-unsupported lane');
   });
   phase('native-ledge',{lane,identities});
-  await place(host,lane.supported,lane.yaw);await place(guest,lane.observer,lane.yaw+Math.PI);
+  await place(host,lane.supported,lane.travelYaw);await place(guest,lane.observer,lane.yaw+Math.PI);
   await Promise.all(pages.map(p=>p.evaluate(()=>{RG.input.mouse.left=RG.input.mouse.right=false;RG.input.keys.clear();RG.game.debug.unfreeze();})));
   await setInput(host,true);
   await host.waitForFunction(()=>RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
-  // Admit the real loop at rest, then observe bounded native movement across
-  // ordinary accepted snapshots. Relay delay cannot consume the input pulse.
+  // Verify the real remote loop at rest. A four-metre native floor corridor
+  // bounds a KeyW pulse; the relay cannot consume the pulse before admission.
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&!s.suspended&&s.near&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
-  const supported=await proveRankedRollAudio(host,guest,identities[0].nid,setInput,value=>phase('supported-audio-clock',{clock:structuredClone(value)}));
+  const supported=await proveRankedRollAudio(host,guest,identities[0].nid,setInput,
+    value=>phase('supported-audio-clock',{clock:structuredClone(value)}),'KeyW');
   await setInput(host,true);
   const movement=await host.evaluate(origin=>({position:RG.match.local.pos.toArray(),distance:Math.hypot(...RG.match.local.pos.toArray().map((v,i)=>v-origin[i]))}),lane.supported);
-  assert(movement.distance<=2,'native movement pulse stayed inside verified support corridor');
+  assert(movement.distance<=4,'native movement pulse stayed inside verified 4m support corridor');
   phase('supported-real-audio',{remote:supported,movement});
   await place(host,lane.edge,lane.yaw);
   await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&RG.match.local.weaponRunner.s3RollerSuspendedHold===true,null,timeout);
@@ -190,10 +246,11 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   // Recovery must re-admit native contact and a real remote live loop at rest
   // before the bounded movement pulse. Relay/interpolation delay must not
   // consume that pulse while the remote is still observing suspension.
-  await place(host,lane.supported,lane.yaw);await setInput(host,true);
+  await place(host,lane.supported,lane.travelYaw);await setInput(host,true);
   await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
-  const recovered=await proveRankedRollAudio(host,guest,identities[0].nid,setInput,value=>phase('recovery-audio-clock',{clock:structuredClone(value)}));
+  const recovered=await proveRankedRollAudio(host,guest,identities[0].nid,setInput,
+    value=>phase('recovery-audio-clock',{clock:structuredClone(value)}),'KeyW');
   phase('recovered-real-audio',{remote:recovered});await setInput(host,false);
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s&&!s.held&&!s.suspended&&s.near&&s.audioState==='running'&&!(s.f&(1<<28))&&!s.rollLoop&&s.realRollLoops.every(h=>!h.playing);},identities[0].nid,timeout);
   phase('released',{remote:await read(guest,identities[0].nid)});
@@ -211,7 +268,7 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   // Native input starts and completes the genuine dodge. Do not set s3Turret,
   // dodge timers, flags, receiver loadout, or any accepted receipt directly.
   await setInput(guest,true,['KeyD','Space']);
-  await guest.waitForFunction(()=>!!RG.match.local.weaponRunner.dodge,null,timeout);
+  receipt.nativeDodgeStart=await snapshot(guest.waitForFunction(()=>__rankedReplication.dodgeReceipt||false,null,timeout));save(receipt);
   await setInput(guest,true);
   await guest.waitForFunction(()=>RG.match.local.weaponRunner.s3Turret===true&&!RG.match.local.weaponRunner.dodge,null,timeout);
   await gearState(false,true);await equip(true);await gearState(true,true);
@@ -237,9 +294,9 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   const cleanupErrors=[];receipt.restoration=[];
   for(const [index,p]of pages.entries())try{receipt.restoration.push(await p.evaluate(frozen=>{
    const s=globalThis.__rankedReplication;if(!s){if(frozen)RG.game.debug.freeze();return;}const G=RG,a=G.match.local;
-   clearTimeout(s.motionTimer);G.input.mouse.left=G.input.mouse.right=false;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])G.input.keys.delete(key);
+   s.cancelMotionStart?.(new Error('Ranked input cleanup'));s.offDodge?.();clearTimeout(s.motionTimer);G.input.mouse.left=G.input.mouse.right=false;for(const key of ['KeyW','KeyS','KeyA','KeyD','Space'])G.input.keys.delete(key);
    s.socket.send=s.send;G.audio.loop=s.loop;for(const r of s.audio)r.handle.stop(.05);
-   a.weaponRunner.reset();a.s3.loadout=s.loadout;a.s3RefreshGear();a.pos.fromArray(s.position);a.vel.fromArray(s.velocity);a.yaw=s.yaw;a.aimYaw=s.aimYaw;a.aimPitch=s.aimPitch;G.rig.yaw=s.rigYaw;G.rig.pitch=s.rigPitch;a.invuln=s.invuln;
+   a.weaponRunner.reset();a.s3.loadout=s.loadout;a.s3RefreshGear();a.pos.fromArray(s.position);a.vel.fromArray(s.velocity);a.yaw=s.yaw;a.yawVel=s.yawVel;a._faceTarget=s.faceTarget;a.aimYaw=s.aimYaw;a.aimPitch=s.aimPitch;G.rig.yaw=s.rigYaw;G.rig.pitch=s.rigPitch;a.invuln=s.invuln;
    for(const [bot,update]of s.bots)bot.update=update;
    if(s.frozen)G.game.debug.freeze();else G.game.debug.unfreeze();
    const restored={profileWeapon:G.game.profile.weapon,profileUnchanged:G.game.profile.weapon===s.profileWeapon,rigYaw:G.rig.yaw,rigPitch:G.rig.pitch,frozen:G.game.frozen,gear:structuredClone(a.s3.loadout)};

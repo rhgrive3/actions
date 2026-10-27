@@ -24,8 +24,11 @@ function* pruneNativeNavSteps(graph){
     const n=graph.nodes[id];if(Math.abs(n.y-support.point.y)<=.7&&Math.hypot(n.x-pad.x,n.z-pad.z)<=step*1.6)candidates.push(n);
    }
   }else for(const n of graph.nodes)if(Math.abs(n.y-support.point.y)<=.7&&Math.hypot(n.x-pad.x,n.z-pad.z)<=step*1.6)candidates.push(n);
-  candidates.sort((a,b)=>a.id-b.id);
-  candidates.sort((n,m)=>((n.x-pad.x)**2+(n.z-pad.z)**2+(n.y-support.point.y)**2*6)-((m.x-pad.x)**2+(m.z-pad.z)**2+(m.y-support.point.y)**2*6));
+  const distance=n=>(n.x-pad.x)**2+(n.z-pad.z)**2+(n.y-support.point.y)**2*6;
+  // Valid source coordinates have a total (distance,id) order. Preserve the
+  // historical two stable sorts for malformed/overflowing distance values.
+  if(candidates.every(n=>Number.isFinite(distance(n))))candidates.sort((n,m)=>distance(n)-distance(m)||n.id-m.id);
+  else{candidates.sort((a,b)=>a.id-b.id);candidates.sort((n,m)=>distance(n)-distance(m));}
   let seed=-1;
   for(const n of candidates){
    const count=Math.max(1,Math.ceil(Math.hypot(n.x-pad.x,n.z-pad.z)/.2));let clear=true;
@@ -69,7 +72,7 @@ export function* buildNativeNavSteps(graph){
    const y=h.point.y;from=y-.2;
    if(!graph.physics.bodyFits(origin.set(x,y+.01,z),PLAYER.radius+.04,.32,PLAYER.height,false,.01))continue;
    const node={id:graph.nodes.length,x,y,z,ix,iz,nb:[],zone:-1,nativePaintable:!!(h.flags&2)&&L.data.triangleFace[h.triangle]>=0};
-   for(let t=0;t<2;t++){const p=L.spawnPads[t];if(Math.hypot(x-p.x,z-p.z)<L.spawnBarrier+.6&&y>p.y-1)node.zone=t;}
+   for(let t=0;t<2;t++){const p=L.spawnPads[t],radius=L.spawnBarrier+.6,dx=x-p.x,dz=z-p.z;if(y>p.y-1&&Math.abs(dx)<radius&&Math.abs(dz)<radius&&Math.hypot(dx,dz)<radius)node.zone=t;}
    if(list===EMPTY_CELL)graph.cells[iz*graph.nx+ix]=list=[];
    graph.nodes.push(node);list.push(node.id);
   }

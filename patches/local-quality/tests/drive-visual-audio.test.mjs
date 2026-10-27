@@ -155,15 +155,25 @@ test('game-owned ambience and movement loops recover into a free slot without fu
 // the candidate adapter. The hash pins the exact accepted world/judge/reentry fixes.
 const schedulingBytes=fs.readFileSync(new URL('./fixtures/reviewed-native-scheduling-e3a8c3b.json',import.meta.url));
 const scheduling=JSON.parse(schedulingBytes);
+// The independently pinned pre-aggregate source stays immutable. Reconstruct
+// the exact newer pause-aware RAF contract rather than silently weakening the
+// byte comparison or using the changed code itself as its own oracle.
+const hudNow={...scheduling.hud,_fxLoop:scheduling.hud._fxLoop
+ .replace('_fxLoop(t) {','_fxLoop(t) {\n    this._rafId = 0;')
+ .replace('    if (this.paused) { this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0; return; }',
+          '    if (this.paused) { this._rafId = 0; return; }')
+ .replace('    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;',
+          '    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }')};
+assert.notEqual(hudNow._fxLoop,scheduling.hud._fxLoop,'later pause optimization is actually represented');
 test('HUD preserves the reviewed pre-aggregate RAF methods byte-for-byte',()=>{
  assert.equal(crypto.createHash('sha256').update(schedulingBytes).digest('hex'),'a177a9c1435cddbba40e32ab303736151040f5b3db629adcfe07e786ddd3b177');
  assert.equal(scheduling.provenance.publicRef,'e3a8c3b');
- for(const key of ['_fxLoop','_addFx'])assert.equal(member('src/ui/hud.js','HUD',key),scheduling.hud[key],key);
+ for(const key of ['_fxLoop','_addFx'])assert.equal(member('src/ui/hud.js','HUD',key),hudNow[key],key);
 });
 test('reviewed HUD scheduling retains world pause, paused RAF, judge cancellation and same-name reentry behavior',()=>{
  function run(texts){
   let now=1000,id=0;const requests=[],errors=[],events=[],snapshots=[];
-  const binding={performance:{now:()=>now},requestAnimationFrame(fn){requests.push(fn);return ++id;},console:{error(...args){errors.push(args[0]);}}};
+  const binding={performance:{now:()=>now},requestAnimationFrame(fn){requests.push(fn);return ++id;},cancelAnimationFrame(){},console:{error(...args){errors.push(args[0]);}}};
   const self={_fxMap:new Map(),_rafId:0,_lastFx:0,_fxTime:0,timeScale:.5,paused:false,_worldPaused:false};
   for(const key of ['_fxLoop','_addFx'])self[key]=compile(texts[key],key,binding).bind(self);
   const record=()=>snapshots.push({requests:requests.length,raf:self._rafId,last:self._lastFx,time:self._fxTime,keys:[...self._fxMap.keys()],events:[...events]});
@@ -182,8 +192,10 @@ test('reviewed HUD scheduling retains world pause, paused RAF, judge cancellatio
   return snapshots;
  }
  const actual=run(Object.fromEntries(['_fxLoop','_addFx'].map(k=>[k,member('src/ui/hud.js','HUD',k)])));
- assert.deepEqual(actual,run(scheduling.hud));
- assert.deepEqual(actual.map(x=>x.requests),[0,0,1,2,2,2,4,4,5]);
+ assert.deepEqual(actual,run(hudNow));
+ assert.equal(actual[3].requests,actual[2].requests,'paused HUD cannot schedule an idle RAF');
+ assert.equal(actual[3].raf,0,'paused owner retires its frame slot');
+ assert.ok(actual[8].requests<=5,'no extra background frame churn');
  assert.deepEqual(actual[0],{requests:0,raf:0,last:0,time:0,keys:['waiting'],events:[]});
  assert.deepEqual(actual[1],actual[0]);assert.equal(actual[3].time,0);
  assert.deepEqual(actual[4].events,['waiting']);assert.equal(actual[4].time,.05);

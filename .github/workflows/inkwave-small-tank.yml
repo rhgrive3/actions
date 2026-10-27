@@ -77,10 +77,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: small-tank-browser-evidence-${{ matrix.browser }}-dpr1
           path: .ci-scratch/small-tank-evidence/dpr1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: small-tank-browser-evidence-${{ matrix.browser }}-dpr2
           path: .ci-scratch/small-tank-evidence/dpr2

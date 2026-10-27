@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { beginMaterialHandoff as beginNativeMaterialHandoff } from '../../local-quality/material-handoff.mjs';
+import {claimPreloadedMusic,cancelPreloadedMusic} from '../../splatoon3/runtime/audio/music-preload-owner.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
@@ -81,6 +82,9 @@ function boot(source, held = []) {
     env: { setTheme: () => record('theme'), getSkyColors: () => ({}), rebuildForArena: () => record('arena') },
   };
   const sandbox = {
+    // The source-consumer harness extracts Game methods, not their ESM imports.
+    // Supply the real preload ownership functions required by composed main.js.
+    claimPreloadedMusic,cancelPreloadedMusic,
     nativeStageEnabled,NATIVE_IDS,nativeStageRuleStatus,UNAVAILABLE_NATIVE_STAGES,
     releaseNativeWorld(game) { assert.equal(game.nativeWorld,undefined,'source worlds are exercised by the native stage fixture'); },
     isRankedMode, safeWeaponId, validStartRoster, normalizeQueueProfile, settleProgression, WEAPONS,

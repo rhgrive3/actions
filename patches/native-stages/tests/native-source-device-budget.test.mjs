@@ -37,7 +37,7 @@ if (!vm.SourceTextModule) {
       }),
       './source-cache.mjs':moduleFrom(context,{
         async sourceBytes(){return new Uint8Array([118,32,48,10]);},
-        async sourceTree(){return {tree:[{type:'blob',path:'Vss_Test.mtl',size:4,sha:'abc'}]};},
+        async sourceTree(){return {tree:[{type:'blob',path:'Vss_Test.mtl',size:4,sha:'a'.repeat(40)}]};},
         async readDerived(){derivedReads++;return null;},
         async writeDerived(){derivedWrites++;}
       })
@@ -78,7 +78,7 @@ if (!vm.SourceTextModule) {
     const context=vm.createContext({console,Worker:MockWorker,URL,DOMException,queueMicrotask});
     const build=moduleFrom(context,{nativeStageBuild:{runtimeSha256:'checksum',mode:'browser-direct'}});
     const browser=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/source-data.mjs',import.meta.url),'utf8'),{context,initializeImportMeta(meta){meta.url='file:///inkwave/patches/native-stages/runtime/source-data.mjs';}});
-    await browser.link(spec=>{assert.equal(spec,'./build-config.mjs');return build;});
+    await browser.link(spec=>{if(spec==='./source-catalog.mjs')return moduleFrom(context,{SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'stage',tree:'tree'}]});assert.equal(spec,'./build-config.mjs');return build;});
     await browser.evaluate();
     assert.equal((await browser.namespace.loadBrowserSource('stage',undefined,{constrained:true})).ok,true);
     assert.equal(posted.constrainedClient,true);
