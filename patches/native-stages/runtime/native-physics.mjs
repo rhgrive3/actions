@@ -45,7 +45,8 @@ export class NativePhysics extends Physics {
    // controller result. Preserve canonical source triangle order in both the
    // worker conversion and the prepared conversion.
    const candidates=this._contactCandidates||(this._contactCandidates=[]);candidates.length=0;
-   w.queryBox(min,max,id=>candidates.push(id));candidates.sort((a,b)=>a-b);
+   const pushCandidate=this._pushCandidate||(this._pushCandidate=id=>this._contactCandidates.push(id));
+   w.queryBox(min,max,pushCandidate);if(candidates.length>1)candidates.sort((a,b)=>a-b);
    for(const id of candidates){
     if(skipGrates&&(w.flags[id]&4))continue;
     // Earlier contacts move s0/s1: compute this candidate's bounds now.
