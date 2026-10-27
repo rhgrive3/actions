@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {installExplosherGeometryLifetime, instrumentExplosherGeometryDriver} from '../lib/inkwave-explosher-geometry-lifetime.mjs';
 
-function fixture() {
+function fixture({attach=true}={}) {
   const calls = [], result = {}, originalError = Error('native error');
   class GL {
     constructor() { this.canvas = {id:'game-canvas'}; }
@@ -24,7 +27,7 @@ function fixture() {
   }
   const descriptors=[GL,Geometry].flatMap(C=>Object.getOwnPropertyNames(C.prototype).map(name=>({owner:C.prototype,name,descriptor:Object.getOwnPropertyDescriptor(C.prototype,name)})));
   const env={WebGLRenderingContext:GL,WebGL2RenderingContext:GL,document:{getElementById:()=>null},__G:{scene:{children:[]},renderer:{info:{memory:{geometries:281,textures:46}}}},__inkwave:{showcase:{scene:{children:[]}}}};
-  const observer=installExplosherGeometryLifetime(env);observer.attachThree({BufferGeometry:Geometry});
+  const observer=installExplosherGeometryLifetime(env);if(attach)observer.attachGeometry(new Geometry());
   return {calls,result,originalError,GL,Geometry,env,observer,descriptors};
 }
 test('delegates native this, all arguments, exact return and original errors exactly once; no extra GL calls',()=>{
@@ -65,6 +68,28 @@ test('observer failures cannot replace successful native calls and malformed/unm
     const r=f.observer.report();assert.equal(r.counts.observerErrors,1);assert.deepEqual(r.buffers[0].geometryIds,[]);
   }finally{f.observer.restore();}
 });
+test('discovers the actual existing geometry module, never a second root-vendor constructor; late coverage stays explicit',async()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'explosher-geometry-module-'));
+  const f=fixture({attach:false});
+  try {
+    fs.writeFileSync(path.join(dir,'package.json'),'{"type":"module"}');
+    for(const file of ['three.module.js','three.core.js'])fs.copyFileSync(new URL('../../inkwave-public/vendor/three/build/'+file,import.meta.url),path.join(dir,file));
+    const rootModule=await import('../../inkwave-public/vendor/three/build/three.module.js');
+    const actualModule=await import(pathToFileURL(path.join(dir,'three.module.js')).href);
+    assert.notEqual(rootModule.BufferGeometry,actualModule.BufferGeometry,'versioned and root closures can have distinct constructors');
+    const unrelated=Object.getOwnPropertyDescriptor(rootModule.BufferGeometry.prototype,'setAttribute');
+    const actualDescriptor=Object.getOwnPropertyDescriptor(actualModule.BufferGeometry.prototype,'setAttribute');
+    const existing=new actualModule.BufferGeometry();existing.setAttribute('position',new actualModule.BufferAttribute(new Float32Array(3),3));
+    f.env.__G.scene.children=[{geometry:existing,children:[]}];
+    assert.equal(f.observer.report().coverage.geometryMethodOwners,0);
+    f.observer.boundary('range-entry');
+    const later=new actualModule.BufferGeometry();later.setAttribute('position',new actualModule.BufferAttribute(new Float32Array(3),3));
+    const r=f.observer.report();assert(r.geometries.some(g=>g.id===existing.id));assert(r.geometries.some(g=>g.id===later.id));
+    assert.equal(r.coverage.preConstructionCoverage,false);assert.equal(r.coverage.geometryAttachment,'late-existing-object-only');
+    assert.deepEqual(Object.getOwnPropertyDescriptor(rootModule.BufferGeometry.prototype,'setAttribute'),unrelated,'unrelated closure stays untouched');
+    f.observer.restore();assert.deepEqual(Object.getOwnPropertyDescriptor(actualModule.BufferGeometry.prototype,'setAttribute'),actualDescriptor);
+  }finally{f.observer.restore();fs.rmSync(dir,{recursive:true,force:true});}
+});
 test('implicit VAO element bindings become unknown, not falsely attributed; WebGL1 extension bindings are not claimed',()=>{
   const f=fixture();try {
     const gl=new f.GL(),data=new Uint16Array(3),a={},b={};
@@ -89,7 +114,7 @@ test('full descriptor restoration, listener cleanup and late attachment/calls ca
   const r=f.observer.restore();assert.equal(r.cleanup.conflicts,0);assert.equal(r.cleanup.restoredMethods,r.cleanup.patchedMethods);assert.equal(g.listeners.size,0);
   for(const p of f.descriptors)assert.deepEqual(Object.getOwnPropertyDescriptor(p.owner,p.name),p.descriptor);
   const before=f.observer.report().counts;g.setAttribute('normal',{array:new Float32Array(3)});g.dispose();
-  f.observer.attachThree({BufferGeometry:f.Geometry});f.observer.boundary('shot-input');
+  f.observer.attachGeometry(new f.Geometry());f.observer.boundary('shot-input');
   assert.deepEqual(f.observer.report().counts,before);assert.deepEqual(f.observer.restore(),f.observer.report());
   assert.equal(Object.hasOwn(f.env,'__inkwaveExplosherGeometryLifetime'),false);
 });
@@ -100,7 +125,8 @@ test('bounded observations remain explicit about truncation and attachment cover
     const gl=new f.GL();gl.bindBuffer(34962,{});for(let i=0;i<200;i++)gl.bufferData(34962,16,35044);
     const r=f.observer.report();assert.equal(r.geometries.length,r.limits.geometries);assert(r.dropped.geometries>0);
     assert.equal(r.events.length,r.limits.events);assert(r.dropped.events>0);assert.equal(r.snapshots.length,0);
-    assert.equal(r.coverage.webglPrototypes,1,'shared prototypes are never wrapped twice');assert.equal(r.coverage.threeAttachBeforeCanvas,true);
+    assert.equal(r.coverage.webglPrototypes,1,'shared prototypes are never wrapped twice');assert.equal(r.coverage.geometryMethodOwners,1);
+    assert.equal(r.coverage.geometryAttachment,'late-existing-object-only');assert.equal(r.coverage.preConstructionCoverage,false);
     assert(Buffer.byteLength(JSON.stringify(r))<600000,'bounded artifact even after saturation');
   }finally{f.observer.restore();}
 });
@@ -120,6 +146,7 @@ test('source binds the helper bytes and runs focused contracts without changing 
   assert(output.indexOf('observer.restore()')<output.indexOf('await browser?.close()'));
   assert.match(output,/finally \{ delete window\.__inkwaveExplosherGeometryLifetime; \}/);
   assert.doesNotMatch(output,/await import\(|await observer/,'no new native startup readiness barrier');
+  assert.doesNotMatch(output,/import\(/,'no second vendor module or versioned constructor-identity assumption');
   assert.throws(()=>instrumentExplosherGeometryDriver(driver.replace('let browser;','')),/anchor/);
   assert.throws(()=>instrumentExplosherGeometryDriver(driver+'\nlet browser;'),/anchor/);
 });

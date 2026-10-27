@@ -8,7 +8,7 @@ export function installExplosherGeometryLifetime(env = globalThis) {
   const patches = [], events = [], snapshots = [];
   const counts = { registrations: 0, bufferData: 0, bufferSubData: 0, deleteBuffer: 0, vertexArrayBind: 0, unmappedBufferCalls: 0, geometryDispose: 0, observerErrors: 0 };
   const dropped = { geometries: 0, buffers: 0, events: 0, stacks: 0, snapshots: 0, nodes: 0, links: 0 };
-  const coverage = { webglPrototypes: 0, threeAttached: false, threeAttachBeforeCanvas: null, moduleImportFailed: false,
+  const coverage = { webglPrototypes: 0, geometryMethodOwners: 0, geometryAttachment: 'late-existing-object-only', preConstructionCoverage: false,
     weakReferences: typeof WeakRef === 'function', wrapperConflicts: 0, extensionVAOBindingsObserved: false };
   let stopped = false, sequence = 0, contextId = 0, bufferId = 0, cleanup = null;
   const attempt = fn => { try { return fn(); } catch { counts.observerErrors++; } };
@@ -42,6 +42,7 @@ export function installExplosherGeometryLifetime(env = globalThis) {
   };
   const register = (geometry, source) => {
     if (stopped || !geometry || !Number.isSafeInteger(geometry.id) || geometry.id < 0) return null;
+    attachGeometry(geometry);
     let row = geometryObjects.get(geometry);
     if (!row) {
       if (geometries.size >= limits.geometries) { dropped.geometries++; return null; }
@@ -101,6 +102,16 @@ export function installExplosherGeometryLifetime(env = globalThis) {
     Object.defineProperty(owner, name, { ...descriptor, value: wrapped });
     patches.push({ owner, name, descriptor, wrapped });
   };
+  const attachGeometry = geometry => {
+    if (stopped || !geometry || typeof geometry !== 'object') return;
+    const proto = Object.getPrototypeOf(geometry);
+    if (!proto) return;
+    // Discover the actual application's existing object. Never import a second
+    // Three module, assume constructor identity, or add a native startup wait.
+    patch(proto, 'setAttribute', object => register(object, 'attribute-assignment'));
+    patch(proto, 'setIndex', object => register(object, 'index-assignment'));
+    coverage.geometryMethodOwners = patches.filter(p => p.name === 'setAttribute').length;
+  };
   for (const Constructor of [env.WebGLRenderingContext, env.WebGL2RenderingContext]) {
     if (!Constructor?.prototype) continue;
     attempt(() => {
@@ -142,18 +153,7 @@ export function installExplosherGeometryLifetime(env = globalThis) {
   }
   const labels = new Set(['range-entry', 'before-character-reset', 'after-character-reset', 'shot-input', 'native-birth', 'after-draw-probe', 'capture-finally']);
   const api = {
-    attachThree(THREE) {
-      if (stopped || coverage.threeAttached) return;
-      attempt(() => {
-        const proto = THREE?.BufferGeometry?.prototype;
-        if (!proto) return;
-        coverage.threeAttachBeforeCanvas = !env.document?.getElementById?.('game-canvas');
-        patch(proto, 'setAttribute', geometry => register(geometry, 'attribute-assignment'));
-        patch(proto, 'setIndex', geometry => register(geometry, 'index-assignment'));
-        coverage.threeAttached = patches.some(p => p.owner === proto && p.name === 'setAttribute');
-      });
-    },
-    moduleFailed() { coverage.moduleImportFailed = true; },
+    attachGeometry(geometry) { attempt(() => attachGeometry(geometry)); },
     boundary(label) {
       if (stopped || !labels.has(label)) return;
       attempt(() => {
@@ -212,10 +212,9 @@ export function instrumentExplosherGeometryDriver(driver) {
   once('let browser;', 'let browser; let geometryPage;');
   once('const page = await browser.newPage(', 'const page = geometryPage = await browser.newPage(');
   once('  await enterRangeFromMenu(page,base);', `  await page.addInitScript(() => {
-    const observer = window.__inkwaveExplosherGeometryLifetime = (${installExplosherGeometryLifetime.toString()})();
-    // No startup barrier: explicitly report attachment coverage rather than
-    // changing native loader/warm scheduling to make the diagnostic complete.
-    import('/vendor/three/build/three.module.js').then(three => observer.attachThree(three), () => observer.moduleFailed());
+    window.__inkwaveExplosherGeometryLifetime = (${installExplosherGeometryLifetime.toString()})();
+    // No module import or startup barrier. Geometry method observation starts
+    // late from actual existing scene objects and reports that partial coverage.
   });
   await enterRangeFromMenu(page,base);
   await page.evaluate(() => window.__inkwaveExplosherGeometryLifetime?.boundary('range-entry'));`);
