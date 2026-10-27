@@ -1,3 +1,11 @@
+import { webcrypto as _wc } from 'node:crypto';
+if (!globalThis.crypto) {
+  globalThis.crypto = {
+    getRandomValues: _wc.getRandomValues.bind(_wc),
+    randomUUID: _wc.randomUUID.bind(_wc),
+    subtle: _wc.subtle,
+  };
+}
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import relay, { RoomDurableObject } from '../src/index.js';

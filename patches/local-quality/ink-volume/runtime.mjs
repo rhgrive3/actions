@@ -129,7 +129,14 @@ export class InkVolumes {
   }
   _lighting(pattern){
     if(pattern.lightingFrame===this.frame)return;pattern.lightingFrame=this.frame;
-    if(this.camera){pattern.uniforms.uSunDirV.value.copy(this.light.sunDir).transformDirection(this.camera.matrixWorldInverse);pattern.uniforms.uUpV.value.set(0,1,0).transformDirection(this.camera.matrixWorldInverse);}
+    if(this.camera){
+      if(this._lightingFrame!==this.frame){
+        this._lightingFrame=this.frame;
+        (this._sunDirV||(this._sunDirV=new THREE.Vector3())).copy(this.light.sunDir).transformDirection(this.camera.matrixWorldInverse);
+        (this._upV||(this._upV=new THREE.Vector3())).set(0,1,0).transformDirection(this.camera.matrixWorldInverse);
+      }
+      pattern.uniforms.uSunDirV.value.copy(this._sunDirV);pattern.uniforms.uUpV.value.copy(this._upV);
+    }
   }
 
   submit(name, source, size, patternIndex = 0) {
