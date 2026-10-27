@@ -6579,3 +6579,12 @@ Source/emitted regressions cover nonconstant counted RNG, effective opaque+fring
 受入済みHissen fallback4commitとBrush接触／表示所有4commitを同一の本番合成へ取り込み、core CI失敗を起こした検証fixtureのpin処理も修正した。既存3本のemittedテスト引数を正確な場所・順序で必須化してから変更前のdigestを比較し、workflowや必須assertionを緩めていない。Hissen追加2資産のsource identity漏れも実際に検出し、manifest／binaryの入力SHAを登録した。合成後source／設定52件、対応emitted13件がskipなしで成功し、1493入力／2199生成物のdigest不一致0。生成版の実WebGL componentは594pixelを描き、GL error0、70資源を各1回解放したが、通常ゲーム操作や本家比較の証拠ではない。
 
 Brush切替144点は1.35745〜1.64592cm、body tier固定heroで測定した。自動body far・最終順序修正後の通常入力・実機性能・本家精密比較は未実施。Hissenは初回需要までcontour通信0、需要後binary1,335,253byte＋manifest11,813byte、所有renderer領域約3.5〜3.7MBがFX破棄まで残る。初回cold load中の既存fallback、全メモリpeak、端末frame timeは未解消。**Hissen主弾サイズの受入変更は0で、本家サイズ／床子滴形状は未完**。保存媒体は既存bundled coverage由来の生成contourとテキスト計測のみで、私的／Nintendo参照画像は追加しない。[合成結果・費用・制約](inkwave-batch-integration-20261026/reviewed-core-hissen-brush-20261027/README.md)。最終headの自動CIとmainへのmerge可否は別ゲートであり、過去のcancel／未実行を成功扱いしない。
+
+
+## 2026-10-27 Shooter aiming cue versus eventual paint contact — browser acceptance pending
+
+親と参照担当がGame8のVer9.2.0比較欄BEFORE／AFTER埋込クリップを通常ブラウザで実見した。BEFOREの約0:01は紫の射撃と67.4ダメージ表示があり、灰色の小円がHUD照準点に残る。約0:03の標的破壊後も同じ点付近に残り、下の床塗り・標的残骸へ別円が移った様子は見えない。画像中心とHUD照準点は異なり、idleの青／シアン反応図形も灰色照準とは別。正確な旧版・ギア・入力・数値カットオフは不明で、当担当executor自身の画像実見ではない。
+
+`90706e3` の追加9px接触円はShotGuideとは別に全飛翔の最初の地形接触を読むため、水平の長レーンで後の重力落下・床塗り位置を照準の補助円として出す。候補では全飛翔API／物理／塗りを維持し、HUDだけ既存の銃口→狙い方向の障害物queryを読む。原典のfield衝突半径を使い、実飛翔の最初の接触までの前方到達範囲でqueryを束縛する。面ID一致、8F等の時刻、固定画面座標の条件は追加しない。この幾何所有者の選び方は局所再構成で、本家UIアルゴリズムの抽出・精密一致ではない。
+
+source26件／最適化emitted14件が成功し、同じ9Fでも床落下の追加cueは消え、実壁・両側graze・下向き床・Towerの出入りと既存cache不変条件を維持する。HUD障害物点と曲がる実弾の着弾点は別に検証する。詳細は[所有者分離候補](shooter-aim-obstruction-owner-20261027/README.md)。通常sandbox有効ChromiumがSUID helper不整合で起動前に終了したため、この候補の通常入力・実画素・本家位置比較はまだ未受入。設定変更やsandbox無効化での再試行は行っていない。Nintendo画像は公開差分へ含めない。

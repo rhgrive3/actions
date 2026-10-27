@@ -1,0 +1,130 @@
+{
+  "status": "source-emitted-candidate-awaiting-browser-and-independent-review",
+  "code": "9a4516bc6f5fa6d3fb03831b884a795934a363ae",
+  "base": "90706e3778586fa6c9d09a64ac354e547086e1c0",
+  "source": {
+    "pass": 26,
+    "fail": 0,
+    "skip": 0
+  },
+  "emitted": {
+    "pass": 14,
+    "fail": 0,
+    "skip": 0
+  },
+  "negativeControls": {
+    "priorContactOwner": {
+      "fail": 2,
+      "exitCode": 1
+    },
+    "injectedEightFrameCutoff": {
+      "fail": 1,
+      "exitCode": 1
+    }
+  },
+  "exactBuild": {
+    "sourceSha": "9a4516bc6f5fa6d3fb03831b884a795934a363ae",
+    "contentHash": "39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b",
+    "inputHash": "511a1bee578eadba62c93897ff16e2bddc86e01a77f87b6f239640fce6558be4",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "emittedProvenance": {
+    "compiledVmModules": 796,
+    "emittedRuntimeModules": 794,
+    "outsideSiteIdentifiers": [
+      "/workspace/actions-shooter-contact-owner/fixture.mjs",
+      "/workspace/actions-shooter-contact-owner/fixture.mjs"
+    ]
+  },
+  "reference": {
+    "publicPage": "https://game8.jp/splatoon3/497691",
+    "viewRoute": "ordinary page native embedded video viewer, inspected by parent and native-reference worker",
+    "caption": "BEFORE clip under Ver.9.2.0 comparison, 確定数維持射程約2.4; exact pre-update game build and gear unknown",
+    "observations": [
+      {
+        "scrubberApprox": "0:01",
+        "state": "active purple firing stream, displayed damage67.4",
+        "grayAimCircleApprox": [
+          599,
+          353
+        ]
+      },
+      {
+        "scrubberApprox": "0:03",
+        "state": "target destroyed; floorpaint and target remnant below aim cue; no distinct lower circle observed",
+        "grayAimCircleApprox": [
+          598,
+          352
+        ]
+      }
+    ],
+    "screenshotSize": [
+      1180,
+      757
+    ],
+    "videoLetterboxY": [
+      47,
+      710
+    ],
+    "notLiteralViewportCentre": true,
+    "pairedAfterObservation": "parent reports gray aim circle remains at the HUD aim point",
+    "provenanceLimits": "This executor did not inspect these JPEG pixels. Parent/native worker personally did; screenshots remain in their workspace. Perfectly co-located or ink-occluded feedback cannot be excluded. No numeric cutoff or complete retail UI algorithm established.",
+    "parentOnlyPaths": [
+      "/workspace/shared/reticle-reference/game8-before-firing.jpg",
+      "/workspace/shared/reticle-reference/game8-before-lastshot.jpg"
+    ],
+    "mediaBundled": false
+  },
+  "browser": {
+    "attemptedAction": "launch installed Chromium to inspect ordinary public Game8 page",
+    "url": "https://game8.jp/splatoon3/497691",
+    "launchOptions": {
+      "executablePath": "/usr/bin/chromium",
+      "chromiumSandbox": true,
+      "args": [
+        "--disable-dev-shm-usage"
+      ]
+    },
+    "outcome": "failed before navigation; candidate app not browser-tested",
+    "exactFatal": "[pid=17768][err] [17768:17768:1027/051057.446449:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:172] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /usr/lib/chromium/chrome-sandbox is owned by root and has mode 4755.",
+    "secondaryError": "Crash Reports/settings.dat and Crash Reports/new writes failed: Read-only file system(30)",
+    "rawLaunchReceiptSha256": "72015f6f486f282497bd681eb106aa8c1f8f3779be91b777c9a743b111c156cb",
+    "securitySettingsChanged": false,
+    "retryWithoutSandbox": false,
+    "permissionReviewDenial": false,
+    "nextSupportedRoute": "A separate existing executor with a working normally sandboxed browser can build this exact candidate and inspect ordinary-input rendered pixels, as authorized by parent."
+  },
+  "controlledGeometry": {
+    "openFloorImpactFrame": 9,
+    "nominalGuideFrame": 8,
+    "wallImpactFrame": 9,
+    "wallHudCorridorPoint": [
+      -0.12834442209320118,
+      0.7784286182555608,
+      11.95
+    ],
+    "wallUnchangedActualImpact": [
+      -0.12834442209320135,
+      0.27896196720460875,
+      11.95
+    ]
+  },
+  "stillUnverified": [
+    "Actual candidate browser pixels and ordinary input",
+    "Exact original gray aim-anchor position/projection",
+    "Retail obstruction-marker coordinates, admission boundaries and full UI algorithm",
+    "Physical-device timing"
+  ],
+  "productionChanges": [
+    "patches/splatoon3/adapter.mjs",
+    "patches/splatoon3/runtime/muzzle-feedback.mjs"
+  ],
+  "publishedLogNormalization": {
+    "file": "old-owner-negative.log",
+    "action": "trailing whitespace removed only from the published text copy",
+    "rawSha256": "c351f3117aa66f5f1c82fdd9b3b9ebf74bfff973baef1bfaa3751166b7412665",
+    "rawPreservedLocally": true
+  }
+}

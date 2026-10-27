@@ -1,0 +1,322 @@
+INKWAVE built fixture /tmp/inkwave-shooter-corridor-owner-90706 contentHash=39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+Shooter open-lane owners {"impactFrame":9,"guideFrame":8,"fullContact":[-0.12864218878379136,-5.551115123125783e-17,11.864370404084486],"hudCue":null}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:59:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+Shooter nine-frame wall owner {"impactFrame":9,"hudCue":[-0.12834442209320118,0.7784286182555608,11.95],"actualContact":[-0.12834442209320135,0.27896196720460875,11.95]}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:70:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:85:16)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:85:16)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:85:16)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:93:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:101:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:111:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:18565) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Shooter and each Dualies guide stop at the actual downward head contact before the nominal frame (15499.565159ms)
+✔ Shooter late floor paint contact remains available without becoming an aim obstruction cue (46.261578ms)
+✔ a real nine-frame wall contact and downward floor remain obstruction cues without an age cutoff (139.009402ms)
+✔ a distant aim-ray wall behind a real floor landing cannot become a false obstruction cue (34.679112ms)
+✔ Dualies contact cache observes notified in-place floor geometry changes (56.808408ms)
+✔ moving Shooter prediction uses the actual spawn-velocity addition and invalidates same-pose cache (30.590802ms)
+INKWAVE built fixture /tmp/inkwave-shooter-corridor-owner-90706 contentHash=39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:37:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:37:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:37:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:37:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+Shooter guide sweep counts [{"pitch":0,"hz":30,"initial":8,"repeated120":0},{"pitch":0,"hz":60,"initial":8,"repeated120":0},{"pitch":0,"hz":120,"initial":8,"repeated120":0},{"pitch":-0.8,"hz":30,"initial":1,"repeated120":0},{"pitch":-0.8,"hz":60,"initial":1,"repeated120":0},{"pitch":-0.8,"hz":120,"initial":1,"repeated120":0}]
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:37:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:37:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:51:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:71:15)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:78:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+Unsupported Physics bridge floor [{"weapon":"shooter","before":[0],"changed":[-2],"fresh":[-2],"impact":-2,"marker":-2,"repeatSweeps":1},{"weapon":"dualies","before":[0,0],"changed":[-2,-2],"fresh":[-2,-2],"impact":null,"marker":null,"repeatSweeps":2}]
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:100:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:100:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:128:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+Tower first-field cache agreement {"beforeRevision":8,"movedRevision":9,"impactBefore":[-3.860633466185939e-17,2.945,-0.28000000000000064],"markerBefore":[-3.860633466185939e-17,2.945,-0.28000000000000064],"impactMoved":[-2.240276612645245e-17,5.551115123125783e-17,9.499870059670593],"markerMoved":[-2.240276612645245e-17,5.551115123125783e-17,9.499870059670593],"uncached":[-2.240276612645245e-17,5.551115123125783e-17,9.499870059670593]}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:143:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:194:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new ai (/tmp/inkwave-shooter-corridor-owner-90706/src/game/character.js:12:15186)
+    at new nt (/tmp/inkwave-shooter-corridor-owner-90706/src/game/actor.js:2:1041)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:19:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs:211:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:18566) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Shooter repeated horizontal/downward computeAim reuses its verified-world guide at 30/60/120Hz (9725.591153ms)
+✔ Shooter cache observes launch, owner, weapon/mode, camera and collision-query identities immediately (47.057486ms)
+✔ unverified custom collision worlds recompute and immediately observe unversioned obstacle edits (65.600874ms)
+✔ Physics bridges without a level cannot borrow the unrelated G.level revision (443.856944ms)
+✔ Shooter guide reuse does not cache target flags or retain retired owner/world references (62.843797ms)
+✔ real append/rebuild, notified solid changes and Tower movement/removal invalidate a stationary guide (70.00916ms)
+✔ actual native triangleWorld replacement invalidates without relying on block-table or revision changes (71.726479ms)
+✔ full-flight and marker caches invalidate on actual owner and query-function replacement (83.072775ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16331.329777

@@ -1,0 +1,106 @@
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions-shooter-contact-owner/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions-shooter-contact-owner/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:59:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions-shooter-contact-owner/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions-shooter-contact-owner/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:93:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:18500) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ Shooter late floor paint contact remains available without becoming an aim obstruction cue (16079.082354ms)
+✖ a distant aim-ray wall behind a real floor landing cannot become a false obstruction cue (60.522048ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16780.245496
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/shooter-dualies-projection.test.mjs:58:1
+✖ Shooter late floor paint contact remains available without becoming an aim obstruction cue (16079.082354ms)
+  AssertionError [ERR_ASSERTION]: a gravity landing outside the intended muzzle-to-aim corridor is not a HUD obstruction cue
+  + actual - expected
+
+  + Hit {
+  +   block: 0,
+  +   dist: 0.1549911572557007,
+  +   face: 2,
+  +   hit: true,
+  +   normal: Vector3 {
+  +     x: 0,
+  +     y: 1,
+  +     z: 0
+  +   },
+  +   point: Vector3 {
+  +     x: -0.12864218878379136,
+  +     y: -5.551115123125783e-17,
+  +     z: 11.864370404084486
+  +   },
+  +   u: 100.12864218878379,
+  +   v: 111.86437040408448
+  + }
+  - null
+
+      at TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:65:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { hit: true, dist: 0.1549911572557007, point: { x: -0.12864218878379136, y: -5.551115123125783e-17, z: 11.864370404084486 }, normal: { x: 0, y: 1, z: 0 }, block: 0, face: 2, u: 100.12864218878379, v: 111.86437040408448 },
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/shooter-dualies-projection.test.mjs:92:1
+✖ a distant aim-ray wall behind a real floor landing cannot become a false obstruction cue (60.522048ms)
+  AssertionError [ERR_ASSERTION]: a wall beyond actual forward reach is not an obstruction warning
+  + actual - expected
+
+  + Hit {
+  +   block: 0,
+  +   dist: 0.026790913284442237,
+  +   face: 2,
+  +   hit: true,
+  +   normal: Vector3 {
+  +     x: 0,
+  +     y: 1,
+  +     z: 0
+  +   },
+  +   point: Vector3 {
+  +     x: -0.1411239824267989,
+  +     y: -2.7755575615628914e-17,
+  +     z: 12.001197145914235
+  +   },
+  +   u: 100.1411239824268,
+  +   v: 112.00119714591423
+  + }
+  - null
+
+      at TestContext.<anonymous> (file:///workspace/actions-shooter-contact-owner/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:97:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { hit: true, dist: 0.026790913284442237, point: { x: -0.1411239824267989, y: -2.7755575615628914e-17, z: 12.001197145914235 }, normal: { x: 0, y: 1, z: 0 }, block: 0, face: 2, u: 100.1411239824268, v: 112.00119714591423 },
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
