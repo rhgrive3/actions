@@ -83,7 +83,10 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       assert(await page.locator('.iw-ss__name').evaluate((el) => el.scrollWidth <= el.clientWidth + 1), 'every stage caption must fit its ink ticket');
       onOperation('setup-stage-name', 'after');
       onOperation('setup-stage-caption', 'before');
-      assert(await page.locator('.iw-ss__caption').evaluate((el) => el.getBoundingClientRect().bottom <= el.parentElement.querySelector('.iw-ss__time').getBoundingClientRect().top + 1), 'time controls must not cover the stage name and description');
+      assert(await page.locator('.iw-ss__caption').evaluate((el) => {
+        const a=el.getBoundingClientRect(), b=el.parentElement.querySelector('.iw-ss__time').getBoundingClientRect();
+        return a.bottom<=b.top+1||b.bottom<=a.top+1||a.right<=b.left+1||b.right<=a.left+1;
+      }), 'time controls must not cover the stage name and description');
       onOperation('setup-stage-caption', 'after');
       onStageComplete('setup-stage:' + id);
       onOperation('setup-stage-count', 'before');

@@ -1,4 +1,5 @@
 import { adaptVisualAudioQueue } from './visual-audio-queue-adapter.mjs';
+import { adaptCombatGpuCpuPerfect } from './combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptInkMicroSurface } from './ink-micro-surface-adapter.mjs';
 import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
@@ -107,6 +108,7 @@ const IDENTITY_FILES = [
   'material-handoff-adapter.mjs', 'material-handoff.mjs',
   'lobby-slot-transform-adapter.mjs',
   'visual-audio-queue-adapter.mjs',
+  'combat-gpu-cpu-perfect-adapter.mjs',
   'input-lens-queue-adapter.mjs',
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
