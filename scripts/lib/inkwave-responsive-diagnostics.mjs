@@ -26,7 +26,7 @@ export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents 
   return {
     record, fail, snapshot,
     animations(text) {
-      if (pendingOperation !== 'continuation-settle-action') return;
+      if (!['continuation-settle-action', 'setup-stage-settle'].includes(pendingOperation)) return;
       const value = parseResponsiveAnimations(text);
       if (!value) return;
       animationSnapshots = [...animationSnapshots.filter(row => row.phase !== value.phase), value].slice(-2);
@@ -35,7 +35,7 @@ export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents 
     operation(id, boundary) {
       id = responsiveOperationId(id);
       if (!id || !['before', 'after'].includes(boundary)) return;
-      if (boundary === 'before') pendingOperation = id;
+      if (boundary === 'before') { pendingOperation = id; animationSnapshots = []; }
       else if (pendingOperation === id) pendingOperation = null;
       record('operation-' + boundary, id);
     },

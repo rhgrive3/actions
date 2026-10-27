@@ -3,7 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 
-export const RECOVERY_ARTIFACT_LIMIT=128*1024*1024;
+export const EVIDENCE_ARTIFACT_LIMIT=128*1024*1024;
 const order=(a,b)=>a<b?-1:a>b?1:0;
 async function digest(file){const hash=crypto.createHash('sha256');for await(const chunk of fs.createReadStream(file))hash.update(chunk);return hash.digest('hex');}
 function inventory(root){
@@ -12,8 +12,13 @@ function inventory(root){
   if(stat.isDirectory())walk(file);else entries.push({path:rel,file,bytes:stat.isFile()?stat.size:0,mtime:stat.mtimeMs,regular:stat.isFile()});
  }}walk(root);return entries;
 }
-function priority(row){return /(?:^|\/)tests\.log$/.test(row.path)?0:/inkwave-build\.json$|source.*identity.*\.json$/.test(row.path)?1:/error|fail|result\.json$/.test(row.path)&&row.path.endsWith('.json')?2:/\.png$/i.test(row.path)?3:row.path.endsWith('.json')?4:5;}
-export async function packageRecoveryEvidence(input,{output=path.resolve(input+'-bounded'),limit=RECOVERY_ARTIFACT_LIMIT,sourceSha=null,buildIdentity=null}={}){
+function priority(row){
+ if(/\.log$|(?:stderr|stdout)\.txt$/.test(row.path))return 0;
+ if(/inkwave-build\.json$|source.*identity.*\.json$/.test(row.path))return 1;
+ if(row.path.endsWith('.json'))return 2;
+ return /\.png$/i.test(row.path)?3:5;
+}
+export async function packageEvidence(input,{output=path.resolve(input+'-bounded'),limit=EVIDENCE_ARTIFACT_LIMIT,sourceSha=null,buildIdentity=null,preferredPaths=[]}={}){
  input=path.resolve(input);output=path.resolve(output);
  if(!Number.isSafeInteger(limit)||limit<1024)throw Error('Artifact limit must be at least 1024 bytes');
  if(input===output||output.startsWith(input+path.sep)||input.startsWith(output+path.sep))throw Error('Bounded package must be separate from original evidence');
@@ -29,7 +34,8 @@ export async function packageRecoveryEvidence(input,{output=path.resolve(input+'
  while(encode().length>limit/2&&manifest.files.length){manifest.files.pop();manifest.omittedInventoryEntries++;}
  const reserve=Math.min(limit,Math.max(1024,Math.ceil(encode().length*1.5)));let remaining=limit-reserve;
  fs.rmSync(output,{recursive:true,force:true});fs.mkdirSync(output,{recursive:true});
- const selected=rows.slice(0,manifest.files.length).sort((a,b)=>priority(a)-priority(b)||(priority(a)===3?b.mtime-a.mtime:0)||order(a.path,b.path));
+ const rank=row=>priority(row)===3&&preferredPaths.some(prefix=>row.path.startsWith(prefix+'/'))?2.5:priority(row);
+ const selected=rows.slice(0,manifest.files.length).sort((a,b)=>rank(a)-rank(b)||(rank(a)>=2.5?b.mtime-a.mtime:0)||order(a.path,b.path));
  for(const row of selected){
   if(!row.regular)continue;const info=manifest.files.find(item=>item.path===row.path),target=path.join(output,'files',row.path);
   const tail=row.bytes>remaining&&/\.log$/.test(row.path),length=tail?Math.min(remaining,1024*1024):row.bytes;
@@ -52,8 +58,23 @@ export async function packageRecoveryEvidence(input,{output=path.resolve(input+'
  const submittedBytes=inventory(output).reduce((n,row)=>n+row.bytes,0);if(submittedBytes>limit)throw Error('Bounded evidence package exceeded its limit');
  return {eligible:true,path:output,failed:true,overBudget,originalBytes,submittedBytes,manifest};
 }
+export async function packageBrowserFailureEvidence(input,options={}){
+ const preferredPaths=[];
+ try{
+  const report=JSON.parse(fs.readFileSync(path.join(input,'responsive/responsive-result.json'),'utf8'));
+  const engines=new Set(['chromium','webkit']);
+  const viewports=new Set(['phone-portrait','phone-landscape','small-phone','tablet-portrait','tablet-landscape','tablet-split','desktop']);
+  for(const row of report.shards||[])if(row.ok===false&&engines.has(row.engine)&&viewports.has(row.name))
+   preferredPaths.push('responsive/cases/'+row.engine+'-'+row.name);
+ }catch{} // Missing/malformed reports are still retained as evidence, never acceptance.
+ return packageEvidence(input,{...options,preferredPaths});
+}
+
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
- const result=await packageRecoveryEvidence(process.argv[2]||'.qa-evidence/recovery',{output:process.argv[3]||'.qa-evidence/recovery-bounded',limit:Number(process.env.RECOVERY_ARTIFACT_LIMIT_BYTES||RECOVERY_ARTIFACT_LIMIT),sourceSha:process.env.SOURCE_SHA||null,buildIdentity:'_site-recovery/inkwave-build.json'});
+ const args=process.argv.slice(2),browser=args[0]==='--browser-failure';if(browser)args.shift();
+ if(args.length<2||args.length>3)throw Error('Usage: package-inkwave-evidence.mjs [--browser-failure] <evidence> <bounded-output> [build-manifest]');
+ const options={output:args[1],limit:Number(process.env.INKWAVE_ARTIFACT_LIMIT_BYTES||EVIDENCE_ARTIFACT_LIMIT),sourceSha:process.env.SOURCE_SHA||null,buildIdentity:args[2]||null};
+ const result=await (browser?packageBrowserFailureEvidence:packageEvidence)(args[0],options);
  // Eligibility is independent of the budget gate's failed status.
  if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,`eligible=${result.eligible}\npath=${result.path}\n`);
  console.log(JSON.stringify({...result,manifest:undefined}));if(result.failed)process.exitCode=1;
