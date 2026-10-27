@@ -7,11 +7,46 @@ const placements = fixed.dressingFor('halyard');
 const parts = kit => [...kit._buckets.values()].reduce((n, a) => n + a.length, 0);
 const anim = kit => [kit._spin.length, kit._blink.length, kit._flags.length, kit._banners.length];
 const hash = array => crypto.createHash('sha256').update(Buffer.from(array.buffer, array.byteOffset, array.byteLength)).digest('hex');
+const allMeshes = kit => [...kit._meshes, ...kit._inst];
+function materialState(material) {
+  const state = {};
+  for (const [key, value] of Object.entries(material)) {
+    if (['id', 'uuid', 'version'].includes(key)) continue;
+    if (value === null || ['number', 'string', 'boolean'].includes(typeof value)) state[key] = value;
+    else if (value?.isColor || value?.isVector2 || value?.isVector3 || value?.isVector4) state[key] = value.toArray();
+    else if (value?.isTexture) state[key] = Object.fromEntries(['type','format','colorSpace','channel','wrapS','wrapT','magFilter','minFilter','flipY','premultiplyAlpha','generateMipmaps','anisotropy'].map(k => [k, value[k]]));
+  }
+  state.program = material.customProgramCacheKey();
+  state.shader = material.onBeforeCompile.toString();
+  return state;
+}
 const meshState = kit => [...kit._meshes, ...kit._inst].map(m => ({
-  name: m.name, count: m.count ?? 1, material: m.material.type,
-  attributes: Object.fromEntries(Object.entries(m.geometry.attributes).map(([k, a]) => [k, hash(a.array)])),
-  index: m.geometry.index && hash(m.geometry.index.array),
+  name: m.name, count: m.count ?? 1, material: materialState(m.material),
+  attributes: Object.fromEntries(Object.entries(m.geometry.attributes).map(([k, a]) => [k, { hash: hash(a.array), type: a.array.constructor.name, itemSize: a.itemSize, normalized: a.normalized, count: a.count }])),
+  index: m.geometry.index && { hash: hash(m.geometry.index.array), type: m.geometry.index.array.constructor.name, count: m.geometry.index.count },
 }));
+function sameRenderedMeshes(actual, expected) {
+  const next = meshState(actual), prior = meshState(expected), a = allMeshes(actual), b = allMeshes(expected);
+  assert.equal(a.length, b.length);
+  let omitted = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (!a[i].geometry.attributes.uv && b[i].geometry.attributes.uv) {
+      // The optimization omits only an unused shader input. Prove both sides
+      // use reviewed built-in solid shaders; mapped/custom shaders stay exact.
+      for (const mesh of [a[i], b[i]]) {
+        assert.ok(['MeshBasicMaterial','MeshStandardMaterial','MeshPhysicalMaterial'].includes(mesh.material.type));
+        assert.equal(mesh.material.onBeforeCompile, fixed.THREE.Material.prototype.onBeforeCompile);
+        assert.ok(!Object.values(mesh.material).some(value => value?.isTexture));
+        assert.equal(mesh.customDepthMaterial, undefined);
+        assert.equal(mesh.customDistanceMaterial, undefined);
+      }
+      delete prior[i].attributes.uv;
+      omitted++;
+    }
+  }
+  assert.ok(omitted > 0, 'exercise the reviewed unused UV omission');
+  assert.deepEqual(next, prior, 'all other attributes, indices, counts and material settings remain exact');
+}
 function make(N, list = placements) {
   const kit = new N.PropKit(new N.THREE.Scene(), { quality: 'high', castShadow: true });
   const cols = list.flatMap(p => kit.add(p.type, p).colliders);return { kit, cols };
@@ -22,7 +57,7 @@ test('actual Halyard final geometry, colliders and live animation match raw, sta
   const disposed = new Set();for (const g of new Set(refs)) g.addEventListener('dispose', () => disposed.add(g));
   a.kit.build();b.kit.build();
   assert.ok(parts(a.kit) > 12000);assert.equal(parts(b.kit), 0);
-  assert.deepEqual(meshState(b.kit), meshState(a.kit));assert.deepEqual(b.cols, a.cols);
+  sameRenderedMeshes(b.kit, a.kit);assert.deepEqual(b.cols, a.cols);
   assert.deepEqual(b.kit.stats(), a.kit.stats());assert.deepEqual(anim(b.kit), anim(a.kit));
   assert.equal(disposed.size, 0);b.kit.update(1 / 60, 1);a.kit.update(1 / 60, 1);
   assert.deepEqual(b.kit._inst.map(m => hash(m.instanceMatrix.array)), a.kit._inst.map(m => hash(m.instanceMatrix.array)));
@@ -58,7 +93,7 @@ test('pending PR183 Practice dressing remains isolated and banner instances surv
   const practiceFixed = await loadNative(true, true), practiceRaw = await loadNative(false, true);
   const a = make(practiceRaw, PLACEMENTS), b = make(practiceFixed, PLACEMENTS);
   a.kit.build();b.kit.build();assert.equal(parts(b.kit), 0);
-  assert.deepEqual(meshState(b.kit), meshState(a.kit));assert.deepEqual(b.cols, a.cols);assert.deepEqual(b.kit.stats(), a.kit.stats());
+  sameRenderedMeshes(b.kit, a.kit);assert.deepEqual(b.cols, a.cols);assert.deepEqual(b.kit.stats(), a.kit.stats());
   b.kit.build();assert.deepEqual(b.kit.stats(), a.kit.stats());a.kit.dispose();b.kit.dispose();
   const banner = make(fixed, [{ type: 'banner', pos: [0, 0, 0], team: 1 }]).kit;banner.build();
   const state = meshState(banner), stats = banner.stats();assert.equal(banner._banners.length, 1);

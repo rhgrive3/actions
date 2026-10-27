@@ -8,44 +8,75 @@ import {registerLimitedDrop,retireLimitedDrop} from '../../network-replication/t
 // for harmless ordinary owner paint; it never receives a causal core grant.
 import { coolerSegmentContact } from './support-cooler-collision.mjs';
 const MAX_DROPS=768;
+const IDLE_POOL_MS=2000;
 function random(seed){let n=seed>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
-function remove(projectiles,drop){
+function disposePool(projectiles,pool){
+  if(projectiles._s3TorpedoVisuals?.get(pool.scene)!==pool)return;
+  if(pool.idleTimer!=null)clearTimeout(pool.idleTimer);pool.idleTimer=null;
+  pool.canvas?.removeEventListener?.('webglcontextlost',pool.onContextLost);
+  pool.mesh.removeFromParent();pool.mesh.dispose();pool.mesh.geometry.dispose();pool.mesh.material.dispose();
+  projectiles._s3TorpedoVisuals.delete(pool.scene);
+}
+function remove(projectiles,drop,hint=-1){
   retireLimitedDrop(drop);
-  const list=projectiles._s3TorpedoSplashes||[],i=list.indexOf(drop);
+  const list=projectiles._s3TorpedoSplashes||[],i=hint>=0&&list[hint]===drop?hint:list.indexOf(drop);
   if(i>=0)list.splice(i,1);
   const pool=drop.visual;
-  if(pool){drop.visual=null;if(--pool.users===0){pool.mesh.removeFromParent();pool.mesh.dispose();pool.mesh.geometry.dispose();pool.mesh.material.dispose();projectiles._s3TorpedoVisuals.delete(pool.scene);}else pool.dirty=true;}
+  if(pool){drop.visual=null;pool.dirty=true;if(--pool.users===0){
+    pool.mesh.count=0;pool.mesh.visible=false;
+    pool.idleTimer=setTimeout(()=>{pool.idleTimer=null;if(pool.users===0)disposePool(projectiles,pool);},IDLE_POOL_MS);
+    pool.idleTimer.unref?.();
+  }}
 
 }
 // Opaque droplets share one draw per spawn scene. Simulation records and
 // receiver contact identities remain fresh and are never pooled.
 function visualPool(api,projectiles){
   const scene=api.G.scene;if(!scene?.add)return null;
-  const pools=projectiles._s3TorpedoVisuals ||= new Map();let pool=pools.get(scene);
+  const pools=projectiles._s3TorpedoVisuals ||= new Map();
+  for(const existing of pools.values())if(existing.scene!==scene&&existing.users===0)disposePool(projectiles,existing);
+  let pool=pools.get(scene);
   if(!pool){const T=api.THREE,mesh=new T.InstancedMesh(new T.SphereGeometry(.1,6,4),new T.MeshBasicMaterial({color:0xffffff}),MAX_DROPS);
     mesh.name='s3-torpedo-fizzy-detached-splashes';mesh.count=0;mesh.frustumCulled=false;
     mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
-    pool={scene,mesh,matrix:new T.Matrix4(),color:new T.Color(),users:0,dirty:true,
-      matrixRange:{start:0,count:0},colorRange:{start:0,count:0}};pools.set(scene,pool);scene.add(mesh);}
+    pool={scene,mesh,matrix:new T.Matrix4(),color:new T.Color(),users:0,dirty:true,idleTimer:null,canvas:api.G.renderer?.domElement,matrixRange:{start:0,count:0},colorRange:{start:0,count:0}};
+    pool.onContextLost=()=>{if(pool.users===0)disposePool(projectiles,pool);};
+    pool.canvas?.addEventListener?.('webglcontextlost',pool.onContextLost);
+    pools.set(scene,pool);scene.add(mesh);}
+  if(pool.idleTimer!=null){clearTimeout(pool.idleTimer);pool.idleTimer=null;}
   return pool;
 }
 function syncVisuals(projectiles){
   const pools=projectiles._s3TorpedoVisuals;if(!pools)return;
   for(const pool of pools.values()){
+    if(!pool.users){pool.mesh.count=0;pool.mesh.visible=false;continue;}
     let count=0;
     for(const d of projectiles._s3TorpedoSplashes||[])if(d.visual===pool){pool.matrix.makeTranslation(d.pos.x,d.pos.y,d.pos.z);pool.mesh.setMatrixAt(count,pool.matrix);if(pool.dirty)pool.mesh.setColorAt(count,d.visualColor);count++;}
     pool.mesh.count=count;pool.mesh.visible=count>0;
     if(count){
-      // Keep full queue-capacity storage; submit only the rewritten live slots.
+      // Preserve the unchanged capacity, upload only rewritten live matrices.
       const matrix=pool.mesh.instanceMatrix;
       pool.matrixRange.count=count*matrix.itemSize;
-      matrix.updateRanges.length=0;matrix.updateRanges.push(pool.matrixRange);matrix.needsUpdate=true;
-      if(pool.dirty){const color=pool.mesh.instanceColor;
+      matrix.updateRanges.length=0;matrix.updateRanges.push(pool.matrixRange);
+      matrix.needsUpdate=true;
+      if(pool.dirty){
+        const color=pool.mesh.instanceColor;
         pool.colorRange.count=count*color.itemSize;
-        color.updateRanges.length=0;color.updateRanges.push(pool.colorRange);color.needsUpdate=true;}
+        color.updateRanges.length=0;color.updateRanges.push(pool.colorRange);
+        color.needsUpdate=true;
+      }
     }
     pool.dirty=false;
   }
+}
+function requestVisualSync(projectiles){
+  if(projectiles._s3TorpedoVisualDepth){projectiles._s3TorpedoVisualPending=true;return;}
+  syncVisuals(projectiles);
+}
+export function beginTorpedoVisualBatch(projectiles){projectiles._s3TorpedoVisualDepth=(projectiles._s3TorpedoVisualDepth||0)+1;}
+export function endTorpedoVisualBatch(projectiles){
+  projectiles._s3TorpedoVisualDepth=Math.max(0,(projectiles._s3TorpedoVisualDepth||0)-1);
+  if(!projectiles._s3TorpedoVisualDepth&&projectiles._s3TorpedoVisualPending){projectiles._s3TorpedoVisualPending=false;syncVisuals(projectiles);}
 }
 export function spawnTorpedoSplashes(api,projectiles,source,position,kind='chase'){
   const spec=kind==='find'?source.spec.findSplashAround:source.spec.splashAround;
@@ -82,7 +113,7 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
 
     drops.push(drop);registerLimitedDrop(projectiles,drop);
   }
-  syncVisuals(projectiles);
+  requestVisualSync(projectiles);
 }
 export function stepTorpedoSplashes(api,projectiles,dt,burst){
   const list=projectiles._s3TorpedoSplashes||[];
@@ -102,19 +133,21 @@ export function stepTorpedoSplashes(api,projectiles,dt,burst){
     if(defense&&defense.distance<=(contact?distance:Infinity)){
       // The shared defense lane owns absorption/object damage. A replica may
       // stop visually but cannot author another damage proposal.
-      if(!d.ghost&&!d.owner.remote)defense.onHit?.();remove(projectiles,d);continue;
+      if(!d.ghost&&!d.owner.remote)defense.onHit?.();remove(projectiles,d,i);continue;
     }
     if(contact){
       const at=new api.THREE.Vector3(px,py,pz).addScaledVector(new api.THREE.Vector3(nx,ny,nz),.035);
-      burst(d,at);remove(projectiles,d);continue;
+      burst(d,at);remove(projectiles,d,i);continue;
     }
     // Resource cleanup below the playable world is not an airborne detonation.
-    if(!Number.isFinite(d.pos.x+d.pos.y+d.pos.z)||d.pos.y< -100){remove(projectiles,d);continue;}
+    if(!Number.isFinite(d.pos.x+d.pos.y+d.pos.z)||d.pos.y< -100){remove(projectiles,d,i);continue;}
 
   }
-  syncVisuals(projectiles);
+  requestVisualSync(projectiles);
 }
 export function clearTorpedoSplashes(projectiles){
   for(const drop of [...projectiles._s3TorpedoSplashes||[]])remove(projectiles,drop);
   projectiles._s3TorpedoSplashes=[];
+  for(const pool of projectiles._s3TorpedoVisuals?.values()||[])disposePool(projectiles,pool);
+  projectiles._s3TorpedoVisualPending=false;
 }

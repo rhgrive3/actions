@@ -17,7 +17,7 @@ const TOUCH_EVERY = 15 * MINUTE;          // sliding expiry without a D1 write o
 const LIMITS = {
   loginId: { windowMs: 15 * MINUTE, limit: 8, lockMs: 15 * MINUTE },
   loginIp: { windowMs: 15 * MINUTE, limit: 40, lockMs: 15 * MINUTE },
-  register: { windowMs: DAY, limit: 5, lockMs: 6 * HOUR },
+  register: { windowMs: DAY, limit: 5 },
   reauth: { windowMs: 15 * MINUTE, limit: 8, lockMs: 15 * MINUTE },
 };
 const TURNSTILE_VERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -42,6 +42,16 @@ async function assertNotLocked(env, keys, now) {
     if (row && row.locked_until > now) until = Math.max(until, row.locked_until);
   }
   if (until) throw new ApiError(429, 'rate_limited', { retryAfter: Math.ceil((until - now) / 1000) });
+}
+
+async function assertRegistrationAllowed(env, key, now) {
+  const row = await db.throttleState(env.DB, key);
+  if (!row) return;
+  const { windowMs, limit } = LIMITS.register;
+  // Also enforce the window on counters created by the older six-hour lock.
+  const until = Math.max(row.locked_until,
+    row.failures >= limit && row.window_start > now - windowMs ? row.window_start + windowMs : 0);
+  if (until > now) throw new ApiError(429, 'rate_limited', { retryAfter: Math.ceil((until - now) / 1000) });
 }
 
 async function verifyTurnstile(cfg, token, request) {
@@ -136,13 +146,17 @@ async function register({ env, request, url, now, cfg }) {
   if ((code = checkDisplayName(displayName))) throw fieldError('displayName', code);
   if ((code = checkPassword(password, loginId))) throw fieldError('password', code);
   const regKey = await ipKey('register', request);
-  await assertNotLocked(env, [regKey], now);
+  await assertRegistrationAllowed(env, regKey, now);
   await verifyTurnstile(cfg, str(body.turnstileToken, 4096), request);
   const norm = normalizeLoginId(loginId);
   if (await db.userByLogin(env.DB, norm)) throw fieldError('loginId', 'login_id_taken');
   const user = { id: crypto.randomUUID(), loginId, loginIdNorm: norm, displayName, passwordHash: await hashPassword(password, cfg.iterations), now };
-  if (!(await db.insertUser(env.DB, user))) throw fieldError('loginId', 'login_id_taken');
-  await db.throttleHit(env.DB, regKey, now, LIMITS.register);
+  // Hashing/Turnstile can overlap other requests. Recheck the quota at the
+  // insert, and commit the user and successful-registration count together.
+  if (!(await db.insertRegisteredUser(env.DB, user, regKey, LIMITS.register))) {
+    await assertRegistrationAllowed(env, regKey, now);
+    throw fieldError('loginId', 'login_id_taken');
+  }
   const row = await db.userById(env.DB, user.id);
   const cookie = await startSession(env, request, url, row, body.remember !== false, now);
   return json(201, { user: db.publicUser(row) }, { 'Set-Cookie': cookie });

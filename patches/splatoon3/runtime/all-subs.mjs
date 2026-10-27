@@ -22,7 +22,7 @@ import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry, SPLASH_WALL_FOLDED_SCALE, SPLASH_WALL_UNFOLD_SECONDS } from './sub-models.mjs';
-import { spawnTorpedoSplashes, spawnFizzySplashes, stepTorpedoSplashes, clearTorpedoSplashes } from './torpedo-splashes.mjs';
+import { spawnTorpedoSplashes, spawnFizzySplashes, stepTorpedoSplashes, clearTorpedoSplashes, beginTorpedoVisualBatch, endTorpedoVisualBatch } from './torpedo-splashes.mjs';
 import { coolerSegmentContact } from './support-cooler-collision.mjs';
 import {captureSubAttachment,syncSubAttachment,towerAttachmentFields,replayTowerAttachment} from './sub-surface-attachment.mjs';
 import {mineTowerPaintReference} from '../../network-replication/tower-paint-support.mjs';
@@ -259,7 +259,25 @@ function rng(seed) {
   let a = seed >>> 0;
   return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
-function entityList(projectiles) { return projectiles._s3SubObjects ||= []; }
+function entityList(projectiles) {
+  if(!projectiles._s3SubObjects){
+    projectiles._s3SubObjects=[];mineOwners.set(projectiles,{list:projectiles._s3SubObjects,counts:new WeakMap()});
+  }
+  return projectiles._s3SubObjects;
+}
+// Presence is indexed at birth, so even a caller restoring a mine's phase
+// directly cannot create a false zero. Nonzero owners keep the original scan.
+const mineOwners=new WeakMap();
+function noteMineBirth(projectiles,object){
+  if(object.subId!=='inkMine')return;
+  const state=mineOwners.get(projectiles);if(state?.list!==projectiles._s3SubObjects)return;
+  state.counts.set(object.owner,(state.counts.get(object.owner)||0)+1);
+}
+function ownerMayHaveMine(projectiles,owner){
+  // An externally supplied list has no indexed provenance: scan it normally.
+  const state=mineOwners.get(projectiles);
+  return !state || state.list!==projectiles._s3SubObjects || (state.counts.get(owner)||0)>0;
+}
 function syncObjectAttachment(api,object){
   if(syncSubAttachment(api.G,object,object.s3SurfaceAttachment))object.mesh?.position.copy(object.pos);
 }
@@ -279,6 +297,7 @@ function canPlaceInkMine(projectiles,owner,level=null){
   // native runner pays ink, as well as at the direct projectile entry point.
   if(!owner?.grounded||!finite3(owner.pos))return false;
   if(level?.blocks?.[owner.ground?.block]?.grate)return false;
+  if(!ownerMayHaveMine(projectiles,owner))return true;
   return !entityList(projectiles).some(o=>!o.dead&&o.owner===owner&&o.subId==='inkMine'&&o.phase==='deployed'&&
     o.pos.distanceToSquared(owner.pos)<=o.spec.sensorRadius**2);
 }
@@ -417,7 +436,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
     charge: clamp(Number.isFinite(record.charge) ? record.charge : 0,0,1),
     ghost: record.ghost === true, yaw: Number.isFinite(record.yaw) ? record.yaw : owner.aimYaw || owner.yaw || 0,
     fuse: 0, pops: 0, popLimit: 0, bounceCount: 0, pulse: .15,
-    seenMarks: new WeakMap(), seenToxic: new WeakMap(),
+    seenMarks: id==='angleShooter'?new WeakMap():null, seenToxic: id==='toxicMist'?new WeakMap():null,
     dead: false, hp: id === 'splashWall'
       ? gearCurve(ap, ...spec.wallHpTiers)
       : spec.hp || 0,
@@ -444,6 +463,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
   const list = entityList(projectiles);
   while (list.length >= MAX_OBJECTS) removeObject(api, projectiles, list[0], true);
   list.push(object);
+  noteMineBirth(projectiles,object);
   if(object.ghost&&['inkMine','angleShooter'].includes(id)){
     const births=markBirthState(api,projectiles,owner,true);
     if(object.sourceLife>births.life||object.sourceLife===births.life&&seq>births.seq){
@@ -464,7 +484,7 @@ function nextSeq(owner) {
   if (!owner.s3AllSubSeq) owner.s3AllSubSeq = 1;
   return owner.s3AllSubSeq;
 }
-function launchVelocity(api, projectiles, actor, spec, charge = 0) {
+function launchVelocity(api, projectiles, actor, spec, charge = 0, scratch = null) {
   const tiers = spec.throwSpeedTiers;
   const power = actor.s3?.modifiers?.subPower ?? 1;
   let speed = spec.throwSpeed;
@@ -473,16 +493,15 @@ function launchVelocity(api, projectiles, actor, spec, charge = 0) {
     const ratio = gearCurve(ap, tiers.low, tiers.mid, tiers.high) / tiers.low;
     speed = spec.throwSpeed * ratio;
   } else speed *= power;
-  const template = { ...SUB_SPECIAL_FIDELITY.bomb,
-    spawnSpeedY: spec.spawnSpeedY ?? SUB_SPECIAL_FIDELITY.bomb.spawnSpeedY,
-    spawnSpeedYWorldMin: spec.spawnSpeedYWorldMin ?? SUB_SPECIAL_FIDELITY.bomb.spawnSpeedYWorldMin,
-    inheritX: spec.inheritX ?? SUB_SPECIAL_FIDELITY.bomb.inheritX,
-    inheritZ: spec.inheritZ ?? spec.inheritX ?? SUB_SPECIAL_FIDELITY.bomb.inheritX,
-    inheritYPlus: spec.inheritYPlus ?? SUB_SPECIAL_FIDELITY.bomb.inheritYPlus,
-    inheritYMax: spec.inheritYMax ?? SUB_SPECIAL_FIDELITY.bomb.inheritYMax,
-  };
+  const template = scratch?.template || { ...SUB_SPECIAL_FIDELITY.bomb };
+  template.spawnSpeedY=spec.spawnSpeedY ?? SUB_SPECIAL_FIDELITY.bomb.spawnSpeedY;
+  template.spawnSpeedYWorldMin=spec.spawnSpeedYWorldMin ?? SUB_SPECIAL_FIDELITY.bomb.spawnSpeedYWorldMin;
+  template.inheritX=spec.inheritX ?? SUB_SPECIAL_FIDELITY.bomb.inheritX;
+  template.inheritZ=spec.inheritZ ?? spec.inheritX ?? SUB_SPECIAL_FIDELITY.bomb.inheritX;
+  template.inheritYPlus=spec.inheritYPlus ?? SUB_SPECIAL_FIDELITY.bomb.inheritYPlus;
+  template.inheritYMax=spec.inheritYMax ?? SUB_SPECIAL_FIDELITY.bomb.inheritYMax;
   const input=Number.isFinite(spec.fixedThrowPitch)?{aimYaw:actor.aimYaw,aimPitch:spec.fixedThrowPitch,vel:actor.vel}:actor;
-  return fidelityThrowVelocity(input,'bomb',new api.THREE.Vector3(),speed,template);
+  return fidelityThrowVelocity(input,'bomb',scratch?.vel || new api.THREE.Vector3(),speed,template);
 }
 
 function replaceVisual(api, object) {
@@ -494,6 +513,10 @@ function removeObject(api, projectiles, object, silent = false) {
   if (!object || object.dead) return false;
   retireReceiverTorpedoObservation(object);
   object.dead = true;
+  if(object.subId==='inkMine'){
+    const state=mineOwners.get(projectiles),owners=state?.list===projectiles._s3SubObjects?state.counts:null,count=owners?.get(object.owner);
+    if(count>1)owners.set(object.owner,count-1);else owners?.delete(object.owner);
+  }
   const list = entityList(projectiles), at = list.indexOf(object);
   if (at >= 0) list.splice(at,1);
   if (!silent && !object.ghost) emitEvent(api,object,'expire');
@@ -522,7 +545,7 @@ function removeObject(api, projectiles, object, silent = false) {
 function ownerObjects(projectiles, object) {
   return entityList(projectiles).filter(x => !x.dead && x !== object && x.owner === object.owner && x.subId === object.subId && x.phase === 'deployed');
 }
-function deploy(api, projectiles, object, pos, normal = null, blockId = null) {
+function deploy(api, projectiles, object, pos, normal = null, blockId = null, visualMode = 'replace') {
   if (object.dead || object.phase === 'deployed'||object.phase==='wallPending') return;
   if (finite3(pos)) object.pos.copy(pos);
   object.vel.set(0,0,0); object.phase = 'deployed';
@@ -566,7 +589,9 @@ function deploy(api, projectiles, object, pos, normal = null, blockId = null) {
     api.G.s3Beakons.push(object);
     api.emit?.('sub:beakon',{ actor:object.owner, beacon:object, team:object.team, pos:object.pos.clone(), seq:object.seq });
   }
-  replaceVisual(api,object);
+  if(visualMode==='reuse'&&object.mesh&&object.s3Model?.id===object.subId&&['inkMine','beakon'].includes(object.subId)){
+    object.s3Model.root.position.y=0;object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw||0;
+  }else if(visualMode!=='defer')replaceVisual(api,object);
   if (!object.ghost) {
     const extra={yaw:object.yaw,activeIn:Math.max(0,object.activeAt-(api.G.time||0))};
     if(Number.isFinite(spec.lifetime))extra.lifeSeconds=spec.lifetime;
@@ -647,6 +672,7 @@ function markAngleTarget(api,object,target){
 function appendAngleLine(api,projectiles,object,start,end){
   if(!object.lineSegments||object.lineSegments.length>=object.spec.flightFrames||start.distanceToSquared(end)<1e-10)return;
   object.lineSegments.push([start.clone(),end.clone()]);
+  object._angleBounds=null;
   const scene=sceneFor(api,projectiles),THREE=api.THREE;
   if(!scene?.add||!THREE.LineSegments)return;
   if(!object.lineMesh){
@@ -670,17 +696,27 @@ function finishAngleFlight(api,object){
 function updateAngleLine(api,projectiles,object,dt){
   object.age+=dt;
   if(!object.ghost){
-    const hostiles=hostileActors(api,object.owner),base=new api.THREE.Vector3(),result={t:0,dist:Infinity};
-    let boundsReady=false,minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+    const hostiles=hostileActors(api,object.owner);
+    let bounds=null,scratch=null,lease=null;
     const reach=api.PLAYER.radius+object.spec.collisionRadius+1e-9;
     try{
       for(const target of hostiles){
         if(object.seenMarks.get(target)===ownerLife(target))continue;
-        if(!boundsReady){
-          for(const [start,end] of object.lineSegments||[]){minX=Math.min(minX,start.x,end.x);maxX=Math.max(maxX,start.x,end.x);minZ=Math.min(minZ,start.z,end.z);maxZ=Math.max(maxZ,start.z,end.z);}
-          boundsReady=true;
+        if(!bounds){
+          bounds=object._angleBounds;
+          if(!bounds){
+            let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+            for(const [start,end] of object.lineSegments||[]){minX=Math.min(minX,start.x,end.x);maxX=Math.max(maxX,start.x,end.x);minZ=Math.min(minZ,start.z,end.z);maxZ=Math.max(maxZ,start.z,end.z);}
+            bounds=object._angleBounds={minX,maxX,minZ,maxZ};
+          }
         }
-        if(target.pos.x<minX-reach||target.pos.x>maxX+reach||target.pos.z<minZ-reach||target.pos.z>maxZ+reach)continue;
+        if(target.pos.x<bounds.minX-reach||target.pos.x>bounds.maxX+reach||target.pos.z<bounds.minZ-reach||target.pos.z>bounds.maxZ+reach)continue;
+        if(!scratch){
+          lease=object._angleQueries ||= {depth:0,frames:[]};const depth=lease.depth++;
+          scratch=lease.frames[depth] ||= {base:new api.THREE.Vector3(),result:{t:0,dist:Infinity}};
+          scratch.result.t=0;scratch.result.dist=Infinity;
+        }
+        const {base,result}=scratch;
         base.copy(target.pos);base.y+=target.smoothY||0;
         const height=target.form==='squid'?api.PLAYER.squidHeight:api.PLAYER.height;
         for(const [start,end] of object.lineSegments||[]){
@@ -688,7 +724,7 @@ function updateAngleLine(api,projectiles,object,dt){
           if(result.dist<=api.PLAYER.radius+object.spec.collisionRadius){markAngleTarget(api,object,target);break;}
         }
       }
-    }finally{releaseHostileActors(api);}
+    }finally{if(lease)lease.depth--;releaseHostileActors(api);}
   }
   if(object.age+1e-10>=object.lineEndsAtAge)removeObject(api,projectiles,object);
 }
@@ -760,8 +796,14 @@ function damageSubObjectsInRadius(api,projectiles,source,center,radius,damageAt,
     }
     const point=subObjectBlastPoint(api,target,center),distance=point.distanceTo(center);
     if(options.shapeContact?!options.shapeContact(target,point):distance>radius)continue;
+    const distanceMethod=api.THREE.Vector3.prototype.distanceTo;
+    const reusable=!options.shapeContact&&point.distanceTo===distanceMethod;
+    let px,py,pz,cx,cy,cz;
+    if(reusable){px=point.x;py=point.y;pz=point.z;cx=center.x;cy=center.y;cz=center.z;}
     if(!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
-    damageCustomObject(api,source,target,point,damageAt(point.distanceTo(center),target,point),cause);
+    const same=reusable&&point.distanceTo===distanceMethod&&Object.is(px,point.x)&&Object.is(py,point.y)&&Object.is(pz,point.z)&&
+      Object.is(cx,center.x)&&Object.is(cy,center.y)&&Object.is(cz,center.z);
+    damageCustomObject(api,source,target,point,damageAt(same?distance:point.distanceTo(center),target,point),cause);
   }
   projectiles.nativeSprinklerAoE?.(source,center,radius,damageAt,cause,options);
   if(includeSpecials)projectiles.s3DamageSpecialObjects?.(source,center,radius,damageAt,cause);
@@ -1039,38 +1081,41 @@ function customObjectCandidate(api, projectiles, p, start, end) {
   if(!active?.length)return null;
   const length=start.distanceTo(end);
   if (!(length > 1e-8) || !finite3(start)||!finite3(end)) return null;
-  let best=null;
+  let bestObject=null,bestT=0,bestDistance=0,bx=0,by=0,bz=0,bnx=0,bny=0,bnz=0,bestSphere=false;
   for (const object of active) {
     syncObjectAttachment(api,object);
-    // A homing Torpedo can be shot down after it has locked onto an opponent.
-    // It is in the custom list rather than Projectiles.list; exclude the moving
-    // object itself when its own sweep asks the shared defense hook for a result.
     if (object===p || object.dead || object.team===p.team) continue;
     const torpedoTarget=targetableTorpedo(object);
     const targetableDeployable=object.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(object.subId);
     if(!torpedoTarget&&!targetableDeployable)continue;
-    let hit=null;
+    let t,x,y,z,nx,ny,nz,sphere=false;
     if (object.subId==='splashWall') {
       const nX=Math.sin(object.yaw||0), nZ=Math.cos(object.yaw||0), den=(end.x-start.x)*nX+(end.z-start.z)*nZ;
       if(Math.abs(den)<1e-9)continue;
-      const t=((object.pos.x-start.x)*nX+(object.pos.z-start.z)*nZ)/den;
+      t=((object.pos.x-start.x)*nX+(object.pos.z-start.z)*nZ)/den;
       if(t<0||t>1)continue;
-      const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t,z=start.z+(end.z-start.z)*t;
-      const rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),side=Math.abs((x-object.pos.x)*rX+(z-object.pos.z)*rZ);
+      x=start.x+(end.x-start.x)*t;y=start.y+(end.y-start.y)*t;z=start.z+(end.z-start.z)*t;
+      const rX=nZ,rZ=-nX,side=Math.abs((x-object.pos.x)*rX+(z-object.pos.z)*rZ);
       if(side>ALL_SUB_SPECS.splashWall.wallWidth/2+(p.size||0)||y<object.pos.y-(p.size||0)||y>object.pos.y+ALL_SUB_SPECS.splashWall.wallHeight+(p.size||0))continue;
-      hit={t,distance:t*length,point:new api.THREE.Vector3(x,y,z),normal:new api.THREE.Vector3(nX,0,nZ)};
+      nx=nX;ny=0;nz=nZ;
     } else {
       const vx=end.x-start.x, vy=end.y-start.y, vz=end.z-start.z, denom=vx*vx+vy*vy+vz*vz, center=object.pos;
-      const t=denom>1e-9?clamp(((center.x-start.x)*vx+(center.y-start.y)*vy+(center.z-start.z)*vz)/denom,0,1):0;
-      const px=start.x+vx*t, py=start.y+vy*t, pz=start.z+vz*t, radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:.42;
-      const dx=px-center.x, dy=py-center.y, dz=pz-center.z, lim=radius+(p.size||0);
-      if(dx*dx+dy*dy+dz*dz>lim*lim)continue;
-      const point=new api.THREE.Vector3(px,py,pz);
-      hit={t,distance:t*length,point,normal:new api.THREE.Vector3(dx,dy,dz).normalize()};
+      t=denom>1e-9?clamp(((center.x-start.x)*vx+(center.y-start.y)*vy+(center.z-start.z)*vz)/denom,0,1):0;
+      x=start.x+vx*t;y=start.y+vy*t;z=start.z+vz*t;
+      const radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:.42;
+      nx=x-center.x;ny=y-center.y;nz=z-center.z;const lim=radius+(p.size||0);
+      if(nx*nx+ny*ny+nz*nz>lim*lim)continue;
+      sphere=true;
     }
-    if(!hit||best&&hit.distance>=best.distance)continue;
-    const candidate={ ...hit, object, visualOnly:!!p.ghost, settled:false };
-    candidate.onHit=()=>{
+    const distance=t*length;if(bestObject&&distance>=bestDistance)continue;
+    bestObject=object;bestT=t;bestDistance=distance;bx=x;by=y;bz=z;bnx=nx;bny=ny;bnz=nz;bestSphere=sphere;
+  }
+  if(!bestObject)return null;
+  const object=bestObject,normal=new api.THREE.Vector3(bnx,bny,bnz);
+  if(bestSphere)normal.normalize();
+  const hit={t:bestT,distance:bestDistance,point:new api.THREE.Vector3(bx,by,bz),normal};
+  const candidate={...hit,object,visualOnly:!!p.ghost,settled:false};
+  candidate.onHit=()=>{
       if(candidate.settled)return 0;candidate.settled=true;
       // The deployed object's owner is the authority for its HP. A ghost round
       // may spend HP on that owner's client; the local shooter's client sends a
@@ -1098,9 +1143,7 @@ function customObjectCandidate(api, projectiles, p, start, end) {
       emitObjectHit(api,object,p,hit.point,p.damage);
       return 0;
     };
-    best=candidate;
-  }
-  return best;
+  return candidate;
 }
 function emitObjectHit(api, object, projectile, point, damage, cause=null) {
   const shooter=projectile?.owner&&typeof projectile.owner==='object'?projectile.owner:projectile;
@@ -1564,7 +1607,7 @@ function updateDeployed(api,projectiles,object,dt){
     object.hp=Math.max(0,object.hp-object.wallHpInitial/spec.hpDecayFrames*60*dt);
     if(object.hp<=0){removeObject(api,projectiles,object);return;}
     if((G.time||0)>=object.activeAt){
-      const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),now=G.time||0;
+      const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=nZ,rZ=-nX,now=G.time||0;
       { const __iwHostiles = hostileActors(api,object.owner);
         try {
           for (const target of __iwHostiles) {
@@ -1631,28 +1674,32 @@ function updateDeployed(api,projectiles,object,dt){
 }
 
 function tickObjects(api,projectiles,dt){
-  // Advance detached children before parent contacts can emit a new set. A
-  // just-born drop cannot move/explode a frame before its own birth.
-  stepTorpedoSplashes(api,projectiles,dt,(drop,pos)=>burstTorpedoSplash(api,drop,pos));
-  // Activation/hits can synchronously retire another entry. Snapshot births
-  // once so removing an earlier sibling cannot advance this object twice.
-  const active=entityList(projectiles);
-  if(!active.length){updateStatuses(api,dt);return;}
-  const list=active.slice();
-  for(let i=list.length-1;i>=0;i--){
-    const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
-    syncObjectAttachment(api,o);
-    if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
-    if(o.phase==='wallPending'){
-      o.age+=dt;
-      if(o.age+1e-10>=o.wallReadyAge)activateSplashWall(api,projectiles,o);
-    }
-    else if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);
-    else if(o.phase==='line')updateAngleLine(api,projectiles,o,dt);
-    else updateFlight(api,projectiles,o,dt);
-    if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
-  }
-  updateStatuses(api,dt);
+  beginTorpedoVisualBatch(projectiles);
+  try{
+    // Children still step before parents; new children wait for the next tick.
+    stepTorpedoSplashes(api,projectiles,dt,(drop,pos)=>burstTorpedoSplash(api,drop,pos));
+    const active=entityList(projectiles);
+    if(!active.length){updateStatuses(api,dt);return;}
+    const leases=projectiles._s3SubSnapshots ||= {depth:0,frames:[]},depth=leases.depth++;
+    const list=leases.frames[depth] ||= [];list.length=active.length;
+    for(let i=0;i<active.length;i++)list[i]=active[i];
+    try{
+      for(let i=list.length-1;i>=0;i--){
+        const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
+        syncObjectAttachment(api,o);
+        if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
+        if(o.phase==='wallPending'){
+          o.age+=dt;
+          if(o.age+1e-10>=o.wallReadyAge)activateSplashWall(api,projectiles,o);
+        }
+        else if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);
+        else if(o.phase==='line')updateAngleLine(api,projectiles,o,dt);
+        else updateFlight(api,projectiles,o,dt);
+        if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
+      }
+      updateStatuses(api,dt);
+    }finally{list.length=0;leases.depth--;}
+  }finally{endTorpedoVisualBatch(projectiles);}
 }
 
 function replaySpawn(api,event,owner,report){
@@ -1672,7 +1719,7 @@ function replaySpawn(api,event,owner,report){
 function replayDeploy(api,event,owner){
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object||!finite3({x:event.x,y:event.y,z:event.z}))return false;
-  deploy(api,api.G.projectiles,object,new api.THREE.Vector3(event.x,event.y,event.z));
+  deploy(api,api.G.projectiles,object,new api.THREE.Vector3(event.x,event.y,event.z),null,null,'defer');
   if(Number.isFinite(event.yaw))object.yaw=event.yaw;
   if(['splashWall','inkMine','beakon'].includes(object.subId))object.s3SurfaceAttachment=replayTowerAttachment(api.G,object,event);
   syncObjectAttachment(api,object);
@@ -1862,7 +1909,7 @@ export function installAllSubs(api,profile={}){
     const placedAtFeet=id==='inkMine'||id==='beakon';
     const placement=placedAtFeet?{x:actor.pos.x,y:actor.pos.y,z:actor.pos.z,vx:0,vy:0,vz:0}:{};
     const object=createObject(api,this,actor,id,{hold,charge:Math.min(1,hold/(ALL_SUB_SPECS[id].maxChargeTime||1)),...placement});
-    if(object&&placedAtFeet)deploy(api,this,object,object.pos,actor.ground?.normal);
+    if(object&&placedAtFeet)deploy(api,this,object,object.pos,actor.ground?.normal,null,'reuse');
     if(runner){runner.s3SubHold=0;if(id==='fizzy')runner.s3FizzyCharge=null;}
     return object;
   };
@@ -1873,10 +1920,15 @@ export function installAllSubs(api,profile={}){
   const nativeArc=Projectiles.prototype.updateArc;
   Projectiles.prototype.updateArc=function(actor,show){
     if(!show||!actor?.alive||actor.weapon?.sub!=='burst')return nativeArc.call(this,actor,show);
-    const spec=ALL_SUB_SPECS.burst,vel=launchVelocity(api,this,actor,spec);
-    const p=subLaunchPosition(actor,actor.pos.clone().add(new api.THREE.Vector3(0,1.35,0)));
-    const start=p.clone(),initial=vel.clone(),prev=p.clone(),hit=new api.Hit();
-    const position=this.arcGeo.attributes.position,per=2,flight={vel,spec},contact={owner:actor,team:actor.team};let count=1,landed=false;
+    const state=this._s3BurstArcScratch ||= {depth:0,frames:[]},depth=state.depth++;
+    const scratch=state.frames[depth] ||= {vel:new api.THREE.Vector3(),p:new api.THREE.Vector3(),start:new api.THREE.Vector3(),initial:new api.THREE.Vector3(),prev:new api.THREE.Vector3(),offset:new api.THREE.Vector3(0,1.35,0),up:new api.THREE.Vector3(0,1,0),gray:new api.THREE.Color(.6,.6,.6),hit:new api.Hit(),template:{...SUB_SPECIAL_FIDELITY.bomb},flight:{},contact:{}};
+    try{
+    const spec=ALL_SUB_SPECS.burst,vel=launchVelocity(api,this,actor,spec,0,scratch);
+    const p=subLaunchPosition(actor,scratch.p.copy(actor.pos).add(scratch.offset));
+    const start=scratch.start.copy(p),initial=scratch.initial.copy(vel),prev=scratch.prev.copy(p),hit=scratch.hit;
+    hit.hit=false;hit.dist=0;hit.point.set(0,0,0);hit.normal.set(0,0,0);hit.block=hit.face=-1;hit.u=hit.v=0;
+    const flight=scratch.flight,contact=scratch.contact;flight.vel=vel;flight.spec=spec;contact.owner=actor;contact.team=actor.team;
+    const position=this.arcGeo.attributes.position,per=2;let count=1,landed=false;
     position.setXYZ(0,p.x,p.y,p.z);
     for(let i=0;i<(this.arcN-1)*per;i++){
       prev.copy(p);vel.y-=spec.gravity*STEP;
@@ -1885,7 +1937,7 @@ export function installAllSubs(api,profile={}){
       if(target&&(!world.hit||target.t*prev.distanceTo(p)<world.dist)){
         p.lerpVectors(prev,p,target.t);landed=true;
       }else if(world.hit){p.copy(world.point).addScaledVector(world.normal,.03);landed=true;}
-      if(landed){position.setXYZ(count++,p.x,p.y,p.z);this.arcRing.position.copy(p);this.arcRing.quaternion.setFromUnitVectors(new api.THREE.Vector3(0,1,0),world.hit?world.normal:new api.THREE.Vector3(0,1,0));break;}
+      if(landed){position.setXYZ(count++,p.x,p.y,p.z);this.arcRing.position.copy(p);this.arcRing.quaternion.setFromUnitVectors(scratch.up,world.hit?world.normal:scratch.up);break;}
       if((i+1)%per===0)position.setXYZ(count++,p.x,p.y,p.z);
       if(count>=this.arcN)break;
     }
@@ -1897,10 +1949,11 @@ export function installAllSubs(api,profile={}){
       totalDistance+=Math.sqrt(dx*dx+dy*dy+dz*dz);distance[i]=totalDistance;
     }
     lineDistance.clearUpdateRanges();lineDistance.addUpdateRange(0,count);lineDistance.needsUpdate=true;
-    const color=actor.ink>=spec.inkCost?actor.color:new api.THREE.Color(.6,.6,.6);
+    const color=actor.ink>=spec.inkCost?actor.color:scratch.gray;
     this.arcLine.material.color.copy(color).multiplyScalar(1.4);this.arcRing.material.color.copy(color).multiplyScalar(1.4);
     this.arcLine.visible=true;this.arcRing.visible=landed;
-    this._arcCache={physics:G.physics,px:start.x,py:start.y,pz:start.z,vx:initial.x,vy:initial.y,vz:initial.z,landed};
+    const cache=this._s3BurstArcCache ||= {};cache.physics=G.physics;cache.px=start.x;cache.py=start.y;cache.pz=start.z;cache.vx=initial.x;cache.vy=initial.y;cache.vz=initial.z;cache.landed=landed;this._arcCache=cache;
+    }finally{scratch.contact.owner=null;state.depth--;}
   };
 
   // Native WeaponRunner owns ink payment and release timing. Suppress a second
@@ -1911,7 +1964,7 @@ export function installAllSubs(api,profile={}){
   if(nativeRunnerReset)WeaponRunner.prototype.reset=function(...args){this.s3FizzyCharge=null;return nativeRunnerReset.apply(this,args);};
   WeaponRunner.prototype.update=function(dt,input,...args){
     const actor=this.a;
-    if(actor?.weapon?.sub==='inkMine'&&G.projectiles)for(const placed of entityList(G.projectiles))if(!placed.dead&&placed.owner===actor&&placed.subId==='inkMine'&&placed.phase==='deployed')syncObjectAttachment(api,placed);
+    if(actor?.weapon?.sub==='inkMine'&&G.projectiles&&ownerMayHaveMine(G.projectiles,actor))for(const placed of entityList(G.projectiles))if(!placed.dead&&placed.owner===actor&&placed.subId==='inkMine'&&placed.phase==='deployed')syncObjectAttachment(api,placed);
     if(!actor?.remote&&(
       actor?.weapon?.sub==='torpedo'&&hasActiveTorpedo(G.projectiles,actor)||
       actor?.weapon?.sub==='inkMine'&&!canPlaceInkMine(G.projectiles,actor,G.level)||
@@ -1982,6 +2035,9 @@ export function installAllSubs(api,profile={}){
     clearTorpedoSplashes(this);
     for(const object of [...this._s3SubObjects||[]])removeObject(api,this,object,true);
     this._s3SubObjects=[];this._s3SubAccumulator=0;
+    mineOwners.set(this,{list:this._s3SubObjects,counts:new WeakMap()});delete this._s3SubSnapshots;
+    if(this._arcCache===this._s3BurstArcCache)this._arcCache=null;
+    delete this._s3BurstArcCache;delete this._s3BurstArcScratch;
     markBirths.delete(this);
     api.G.s3Beakons=[];
     for(const actor of api.G.actors||[])if(actor?.s3){delete actor.s3.toxicMistSlowUntil;delete actor.s3.toxicMistScale;delete actor.s3.toxicMistJumpScale;}
@@ -2016,7 +2072,10 @@ export function installAllSubs(api,profile={}){
   };
 
   api.replaySub=event=>replaySub(api,event);
-  api.getSubBeakons=(team=null)=>entityList(G.projectiles).filter(o=>{syncObjectAttachment(api,o);return !o.dead&&o.subId==='beakon'&&o.phase==='deployed'&&o.usesLeft>0&&(team===null||o.team===team);});
+  api.getSubBeakons=(team=null)=>entityList(G.projectiles).filter(o=>{
+    if(!o||o.dead||o.subId!=='beakon'||o.phase!=='deployed'||!(o.usesLeft>0)||(team!==null&&o.team!==team))return false;
+    syncObjectAttachment(api,o);return true;
+  });
   api.useSubBeakon=(actor,beacon,stage='land')=>useSubBeakon(api,actor,beacon,stage);
   Object.defineProperty(Projectiles.prototype,INSTALL,{value:true,configurable:false});
   return api;

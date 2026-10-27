@@ -162,6 +162,7 @@ jobs:
         run: node --input-type=module -e "import fs from 'node:fs'; const b=JSON.parse(fs.readFileSync('_site/inkwave-build.json')); fs.appendFileSync(process.env.GITHUB_OUTPUT,'content_hash='+b.contentHash+'\n');"
       - uses: actions/upload-artifact@v4
         with:
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
           if-no-files-found: error
           compression-level: 0

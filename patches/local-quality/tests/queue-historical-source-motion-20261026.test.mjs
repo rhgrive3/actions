@@ -1,0 +1,142 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptHistoricalSourceMotion20261026,restoreHistoricalSourceMotion20261026} from '../queue-historical-source-motion-20261026-adapter.mjs';
+import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
+const REL='src/game/motion/source-controller.js';
+const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-historical-source-motion-before-20261026.json',import.meta.url)));
+const before=fixture.modules[REL].source,after=adaptHistoricalSourceMotion20261026(REL,before);
+const sha=s=>createHash('sha256').update(s).digest('hex');
+const method=s=>{const a=s.indexOf(' actionClip('),b=s.indexOf('\n sampleManual',a);return new Function('return ({'+s.slice(a,b)+'});')().actionClip;};
+const methods=[method(before),method(after)];
+const helper=after.slice(after.indexOf('// Historical queue: one exact dt slot'));
+const names=['iwMotionResponse24Exp','iwMotionResponse12Exp','iwMotionResponse10Expm1','iwMotionResponse12Expm1','iwMotionResponse7Exp','iwMotionResponse8Expm1'];
+const rates=[24,12,10,12,7,8],modes=['exp','exp','expm1','expm1','exp','expm1'];
+const kernels=math=>new Function('Math',helper+'\nreturn ['+names.join(',')+'];')(math);
+const original=(math,index,dt)=>modes[index]==='exp'?1-math.exp(-rates[index]*dt):-math.expm1(-rates[index]*dt);
+
+test('only the two reviewed historical transforms change the frozen current composition',()=>{
+ assert.equal(sha(before),fixture.modules[REL].sha256);
+ assert.equal(restoreHistoricalSourceMotion20261026(REL,after),before);
+ assert.equal(adaptHistoricalSourceMotion20261026('unrelated','same'),'same');
+ assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,after),/composition conflict/);
+ assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,''),/composition conflict/);
+ const current=adaptBuildSource(REL,fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8'));
+ assert.equal(restoreHistoricalSourceMotion20261026(REL,current),before,'every prior composed source-controller improvement is retained');
+ assert.ok(after.includes('if(name===undefined){name=this.choose([`${prefix}_${family}`,`${prefix}_Nrml`,...Array.from(this.bank.clips.keys()).filter(k=>k.startsWith(prefix))]);dances.set(danceKey,name);}'),'dance eager lookup remains unchanged');
+ assert.equal(/\bFunction\b/.test(after),false,'no dynamic-code identifier changes the existing orphan scanner gate');
+});
+
+test('action candidate removal preserves 17920 native-map priorities and live map mutations',()=>{
+ const clips=['Attack_BBll','Attack_Rllr','Shoot_Nrml','Shoot_Rllr','ThrowBomb_Rllr','ThrowBomb_Nrml','Damage','ToHumanRespawn'];let cases=0;
+ for(let mask=0;mask<256;mask++)for(const family of ['Nrml','BBll','Rllr','Chrg','Glng','Sprd',undefined])for(const event of ['shoot','slosh','flick','charge_release','throw','hit','spawn','unknown',null,undefined]){
+  const receiver={bank:{clips:new Map(clips.filter((_,i)=>mask&(1<<i)).map(n=>[n,{}]))}};
+  assert.equal(methods[1].call(receiver,family,event),methods[0].call(receiver,family,event));cases++;
+ }
+ assert.equal(cases,17920);
+ const receivers=methods.map(()=>({bank:{clips:new Map()}}));
+ for(const key of ['ThrowBomb_Nrml','ThrowBomb_Rllr','Damage','Attack_BBll']){
+  receivers.forEach(r=>r.bank.clips.set(key,{}));assert.equal(methods[1].call(receivers[1],'Rllr','throw'),methods[0].call(receivers[0],'Rllr','throw'));
+  receivers.forEach(r=>r.bank.clips.delete(key));assert.equal(methods[1].call(receivers[1],'Rllr','throw'),methods[0].call(receivers[0],'Rllr','throw'));
+ }
+});
+
+test('action getters, replacement banks, string coercion and thrown lookups retain their original order',()=>{
+ function run(fn,mode){
+  const trace=[];let reads=0;
+  const lastClip={has(name){trace.push(['last-call',name,this===lastClip]);return true;}};
+  const receiver={get bank(){trace.push('bank');reads++;if(mode==='throw-bank')throw Error('bank failure');return reads===1?first:{get clips(){trace.push('last-clips');return lastClip;}};}};
+  const firstClip={get has(){trace.push('first-has');if(mode==='throw-has')throw Error('has failure');return function(name){trace.push(['first-call',name,this===firstClip]);if(mode==='throw-call')throw Error('call failure');return false;};}};
+  const first={get clips(){trace.push('first-clips');return firstClip;}};
+  const family={toString(){trace.push('family-string');if(mode==='throw-family')throw Error('family failure');return 'Rllr';}};
+  let result,error;try{result=fn.call(receiver,family,mode==='unknown'?'unknown':'throw');}catch(e){error=[e.name,e.message];}
+  return {result,error,trace};
+ }
+ for(const mode of ['replace-bank','throw-bank','throw-has','throw-call','throw-family','unknown'])assert.deepEqual(run(methods[1],mode),run(methods[0],mode),mode);
+});
+
+test('response slots preserve signed zero, abnormal dt and exact arithmetic and share all same-dt actors',()=>{
+ const counts={exp:0,expm1:0},math=Object.create(Math);
+ for(const mode of ['exp','expm1'])math[mode]=function(x){assert.equal(this,undefined);counts[mode]++;return Math[mode](x);};
+ // Cached native captures are called without a receiver; actual Math functions ignore it.
+ const funcs=kernels(math);
+ for(const dt of [undefined,null,0,-0,1/30,1/60,1/120,.1,.12,-.01,Number.MIN_VALUE,NaN,Infinity,-Infinity])for(let i=0;i<funcs.length;i++){
+  // Non-number fallback deliberately retains Math as the callback receiver.
+  if(typeof dt!=='number')continue;
+  assert.ok(Object.is(funcs[i](dt),original(Math,i,dt)),`${names[i]} / ${String(dt)}`);
+ }
+ funcs.forEach(f=>f(1/60));counts.exp=counts.expm1=0;
+ for(let frame=0;frame<120;frame++)for(let actor=0;actor<8;actor++)funcs.forEach(f=>f(1/60));
+ assert.deepEqual(counts,{exp:0,expm1:0});funcs.forEach(f=>f(1/30));assert.deepEqual(counts,{exp:3,expm1:3});
+});
+
+test('changed Math callbacks and coercing dt use uncached calls with the original Math receiver',()=>{
+ for(const i of [0,1,2,3,4,5]){
+  const math=Object.create(Math),funcs=kernels(math),mode=modes[i];let gets=0,calls=0;
+  Object.defineProperty(math,mode,{configurable:true,get(){gets++;return function(x){assert.equal(this,math);calls++;return Math[mode](x)+calls*.001;};}});
+  const expected=[];let ec=0;for(const dt of [1/60,1/60,0,-0,NaN,undefined,null])expected.push(mode==='exp'?1-(Math[mode](-rates[i]*dt)+ ++ec*.001):-(Math[mode](-rates[i]*dt)+ ++ec*.001));
+  const actual=[1/60,1/60,0,-0,NaN,undefined,null].map(dt=>funcs[i](dt));assert.deepEqual(actual,expected);assert.equal(gets,7);assert.equal(calls,7);
+  let coercions=0;const dt={valueOf(){return ++coercions/60;}};funcs[i](dt);funcs[i](dt);assert.equal(coercions,2);assert.equal(calls,9);
+  Object.defineProperty(math,mode,{value:Math[mode],configurable:true});assert.ok(Object.is(funcs[i](1/60),original(Math,i,1/60)));
+ }
+});
+
+test('historical lazy dance shortcut has observable mutable-roster counterexamples and remains unadopted',()=>{
+ const line=before.split('\n').find(l=>l.includes('if(name===undefined){')&&l.includes('dances.set'));
+ const lazy="if(name===undefined){const direct=`${prefix}_${family}`,normal=`${prefix}_Nrml`;name=this.bank.clips.has(direct)?direct:this.bank.clips.has(normal)?normal:this.choose([direct,normal,...Array.from(this.bank.clips.keys()).filter(k=>k.startsWith(prefix))]);dances.set(danceKey,name);}";
+ const compile=s=>new Function('prefix','family','let name;const dances=new Map(),danceKey=prefix+":"+family;'+s+';return name;');
+ const old=compile(line),naive=compile(lazy);
+ const receiver=custom=>{
+  const clips=new Map([['Win_Rllr',{}],['Win_Other',{}]]);
+  if(custom){const keys=clips.keys;clips.keys=function(){this.delete('Win_Rllr');return keys.call(this);};}
+  return {bank:{clips},choose(names){for(const n of names)if(this.bank.clips.has(n))return n;throw Error('No source clip in '+names.join(', '));}};
+ };
+ assert.equal(old.call(receiver(true),'Win','Rllr'),'Win_Other');assert.equal(naive.call(receiver(true),'Win','Rllr'),'Win_Rllr');
+ const chooseSource=before.split('\n').find(line=>line.startsWith(' choose(candidates)'));
+ const NativeController=new Function('return class SourceMotionController {'+chooseSource+'};')();
+ const native=()=>{const c=new NativeController();c.bank={clips:new Map([['Win_Rllr',{}],['Win_Other',{}]])};return c;};
+ const a=native(),b=native();a.bank.clips.set(1,{});b.bank.clips.set(1,{});
+ for(const r of [a,b]){
+  assert.equal(Object.getOwnPropertyDescriptor(r,'bank').value,r.bank);
+  assert.equal(Object.getOwnPropertyDescriptor(r.bank,'clips').value,r.bank.clips);
+  assert.equal(Object.getPrototypeOf(r.bank.clips),Map.prototype);
+  assert.equal(r.bank.clips.keys,Map.prototype.keys);assert.equal(r.bank.clips.has,Map.prototype.has);
+  assert.equal(r.choose,NativeController.prototype.choose);
+ }
+ assert.throws(()=>old.call(a,'Win','Rllr'),TypeError);assert.equal(naive.call(b,'Win','Rllr'),'Win_Rllr');
+ const c=receiver(false),d=receiver(false);c.choose=d.choose=function(){return 'Win_Other';};
+ assert.equal(old.call(c,'Win','Rllr'),'Win_Other');assert.equal(naive.call(d,'Win','Rllr'),'Win_Rllr');
+ assert.equal(after.split('\n').find(l=>l.includes('if(name===undefined){')&&l.includes('dances.set')),line);
+});
+
+function pose(ch){
+ ch.root.updateMatrixWorld(true);ch.skeleton.update();const m=ch.sourceMotion;
+ return structuredClone({bones:ch.boneList.map(b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray(),...b.matrixWorld.elements]),
+  skeleton:[...ch.skeleton.boneMatrices],spring:[...ch.sp],hair:[...m.rootHair.state],phase:ch.phase,stance:[...ch.stance],muzzle:ch.getMuzzle(new ch.root.position.constructor()).toArray(),
+  response:[m.shootBlend,m.pivotWeight,m.runBlend,m.strafeBalance,...m.direction],state:m.state,clips:m.currentClips,action:m.action,
+  contacts:m.retarget.contacts.map(f=>[f.locked,f.anchor.toArray(),f.support.toArray(),f.airLift])});
+}
+test('actual source-loaded poses remain exact at 30/60/120 Hz with actions, dt normalization and shared actor gains',async()=>{
+ const calls=[0,0];const apis=await Promise.all([before,after].map((code,i)=>sourceLoadedActorFixture({sourceOnly:true,moduleTransform:(rel,source)=>rel===REL?code:source,random:()=>{calls[i]++;return .4;}})));
+ let checks=0;
+ try{
+  for(const hz of [30,60,120]){
+   const actors=await Promise.all(apis.map(api=>api.make())),chars=actors.map(a=>a.character);chars.forEach(ch=>{ch.onEvent=null;ch.setLod('hero');});
+   for(const weapon of ['shooter','slosher','charger','splatling'])for(let frame=0;frame<18;frame++){
+    const dt=frame===3?0:frame===9?.12:1/hz;
+    chars.forEach((ch,i)=>{if(frame===0)ch.setWeapon(weapon);apis[i].G.time+=dt;ch.root.position.x+=dt*(frame%3);ch.root.position.z+=dt*3;ch.root.rotation.y+=dt*.4;
+     if(frame===4)ch.trigger('shoot');if(frame===6)ch.trigger('jump');if(frame===12)ch.trigger('land');if(frame===14)ch.trigger('throw');
+     ch.update(dt,{form:'kid',grounded:frame<6||frame>=12,speed:3,localMove:{x:.2,z:1},ink:1,hp:1,firing:frame%4===0,aimPitch:.15,aimDist:10,vy:frame<9?2:-2});});
+    assert.deepEqual(pose(chars[1]),pose(chars[0]),`${hz}/${weapon}/${frame}`);checks++;
+   }
+   for(const dt of [undefined,NaN,Infinity,-Infinity,-.01,-0,0,Number.MIN_VALUE,.25]){
+    chars.forEach(ch=>ch.sourceMotion.advance(dt,{form:'kid',grounded:true,speed:0,localMove:{x:0,z:0},ink:1,hp:1}));
+    assert.deepEqual(pose(chars[1]),pose(chars[0]),`normalized dt ${String(dt)}`);checks++;
+   }
+   apis.forEach(api=>api.reset());
+  }
+  assert.equal(calls[1],calls[0]);console.log(JSON.stringify({scope:'actual source-loaded Character; no browser FPS claim',poseComparisons:checks,randomCalls:calls}));
+ }finally{apis.forEach(api=>api.reset());}
+});

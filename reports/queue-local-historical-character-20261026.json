@@ -1,0 +1,177 @@
+{
+  "schema": "inkwave.queue-local-historical-character.v1",
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Seven additional completed-PR1870 Library records absent from PR1878; additive to the active552 report. No character shape/detail redesign.",
+  "counts": {
+    "implemented-local": 7
+  },
+  "validation": {
+    "status": "passed",
+    "newTestFile": "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+    "kernelCasesPassed": 7,
+    "actualActorTest": "passed",
+    "surfaceVariants": 24,
+    "faceLodQualityVariants": 12,
+    "faceVertices": 77242,
+    "strapBoundaryComparisons": 3600,
+    "actualTeeFoldComparisons": 600,
+    "baselineFixture": {
+      "path": "patches/local-quality/tests/fixtures/queue-historical-character-before-20261026.json",
+      "sha256": "8a9fb6e48fb8078e73e6a8a0a7156ac97792378390409dba063113abaceddf77"
+    },
+    "independentReview": "reports/queue-local-historical-character-review-20261026.json",
+    "newTestsPassed": 8,
+    "actualActorPoseComparisons": 288,
+    "actualActorHz": [
+      30,
+      60,
+      120
+    ],
+    "actualActorRandomCalls": [
+      0,
+      0
+    ],
+    "log": "reports/queue-local-evidence-20261026/final-root/historical-character-final.tap",
+    "logSha256": "53a85d837a5431b48eae66208cdef2edc1828339f2d4b88bf8750496902839cc",
+    "timingNote": "The test process was paused while the browser used the GPU/CPU, then resumed. Durations are not benchmark measurements. All 8 tests ran and passed."
+  },
+  "limitations": [
+    "Node/actual-source geometry and pose comparisons are not physical-device FPS or retail-console equivalence."
+  ],
+  "items": [
+    {
+      "key": "character-face-eyeball-cap-precompute-ring-and-azimuth-kernels",
+      "library_file_id": "libfile_62f1c554593c8191ae3f81f328bf5b35",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] character-face-eyeball-cap-precompute-ring-and-azimuth-kernels.md",
+      "status": "implemented-local",
+      "reason": "Prepare exact ring and azimuth operands; ring tables are per eye so Builder.add may mutate exported cornea between eyes. Accessor cornea retains original per-vertex reads. Derivative vector is private to the eye.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "59c1bd0efa4200bd4ff8ef131524e8bea5553e5c1f6f594b45ec3a7b584b0c12",
+      "currentComposed": {
+        "path": "src/game/character-face.js",
+        "sha256": "0fb8a41ebc71962ccb5808e990efab22e3ae57b28f7afb1351f3775b21086555"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-historical-character-20261026-adapter.mjs",
+          "sha256": "0bccb986c91ac881b10bf4a4e9b4a77c7f8fcfab7204b9e34f97b0b5b82d8bc5"
+        }
+      ]
+    },
+    {
+      "key": "character-face-share-mirrored-ear-crosssection-loops",
+      "library_file_id": "libfile_2b77ef0a7fe48191a274a6b64a987225",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] character-face-share-mirrored-ear-crosssection-loops.md",
+      "status": "implemented-local",
+      "reason": "The left/right width and row sampling are identical and the section arrays are read-only; reuse only within one face build without retaining them across quality or LOD changes.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "59c1bd0efa4200bd4ff8ef131524e8bea5553e5c1f6f594b45ec3a7b584b0c12",
+      "currentComposed": {
+        "path": "src/game/character-face.js",
+        "sha256": "0fb8a41ebc71962ccb5808e990efab22e3ae57b28f7afb1351f3775b21086555"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-historical-character-20261026-adapter.mjs",
+          "sha256": "0bccb986c91ac881b10bf4a4e9b4a77c7f8fcfab7204b9e34f97b0b5b82d8bc5"
+        }
+      ]
+    },
+    {
+      "key": "character-stance-hoist-six-identical-damping-exponentials",
+      "library_file_id": "libfile_f5ccb62234608191ae8224dfbd5529e9",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] character-stance-hoist-six-identical-damping-exponentials.md",
+      "status": "implemented-local",
+      "reason": "Use the exact private damp alpha once for all six stance components, preserving lerp operation order and the live source pose path.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "bb78fdea91f52e1eae7c12c628fb5878131e68d846825157587183cb90175842",
+      "currentComposed": {
+        "path": "src/game/character.js",
+        "sha256": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-historical-character-20261026-adapter.mjs",
+          "sha256": "0bccb986c91ac881b10bf4a4e9b4a77c7f8fcfab7204b9e34f97b0b5b82d8bc5"
+        }
+      ]
+    },
+    {
+      "key": "outfit-cache-limb-centrelines-across-skin-socks-and-lod",
+      "library_file_id": "libfile_45c233da4bec819190adf790771297a1",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] outfit-cache-limb-centrelines-across-skin-socks-and-lod.md",
+      "status": "implemented-local",
+      "reason": "Cache at most four exact-coordinate P/S/length sample tables. Every call retains a fresh path and at closure and its own live lateral hint; caller outputs never alias cached vectors. Changed coordinates miss the table.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "e63ce564ca2ba43efb4cc310451c1e5a81fa724ef7f55baf18a3707e006cd16c",
+      "currentComposed": {
+        "path": "src/game/character-outfit.js",
+        "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/game/character-outfit.js",
+          "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+        }
+      ]
+    },
+    {
+      "key": "outfit-plate-mask-cache-constant-tank-tilt-trig",
+      "library_file_id": "libfile_200460ee1fa48191814e909f693cf6c0",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] outfit-plate-mask-cache-constant-tank-tilt-trig.md",
+      "status": "implemented-local",
+      "reason": "One bounded Object.is exact numeric tilt slot preserves signed zero and nonfinite values. Nonnumeric input evaluates the original cos/sin calls each time, preserving coercion order.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "e63ce564ca2ba43efb4cc310451c1e5a81fa724ef7f55baf18a3707e006cd16c",
+      "currentComposed": {
+        "path": "src/game/character-outfit.js",
+        "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/game/character-outfit.js",
+          "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+        }
+      ]
+    },
+    {
+      "key": "outfit-tee-strap-polyline-conservative-block-culling",
+      "library_file_id": "libfile_dc6361759aac8191bcb71411c384e2db",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] outfit-tee-strap-polyline-conservative-block-culling.md",
+      "status": "implemented-local",
+      "reason": "Register bounds only for private immutable strapPaths polylines. Cull conservative twelve-segment blocks only outside the sole consumer's .03 cutoff plus 1e-9 margin. Unregistered mutable polylines retain the full original scan.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "e63ce564ca2ba43efb4cc310451c1e5a81fa724ef7f55baf18a3707e006cd16c",
+      "currentComposed": {
+        "path": "src/game/character-outfit.js",
+        "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+      },
+      "fileChecks": [
+        {
+          "path": "inkwave-public/src/game/character-outfit.js",
+          "sha256": "4c21abc30bfe38b8575bf46db348404c0266e714eb7089a7ab18b3e4a892fde4"
+        }
+      ]
+    },
+    {
+      "key": "tentacle-surface-share-arclength-mapping-between-point-and-tangent",
+      "library_file_id": "libfile_6ac1bb72d1a08191adef0d37ed0758ca",
+      "library_path": "/INKWAVE Issue Queue/[PR #1870][INKWAVE][Optimization] tentacle-surface-share-arclength-mapping-between-point-and-tangent.md",
+      "status": "implemented-local",
+      "reason": "Resolve one native CatmullRom u-to-t mapping for each paired point/tangent sample; retain both actual native evaluations and tangent normalization.",
+      "previousStatus": "missing-from-current-source",
+      "baselineComposedSha256": "cf44efd45b90da95b1697da5e773c7c38338f493f542d7ebc7429a5a6641bef4",
+      "currentComposed": {
+        "path": "src/game/character-hair.js",
+        "sha256": "63046a30431472c26564e9ba7f6d605271e397d2016d6f4d326f76efc65a7e4d"
+      },
+      "fileChecks": [
+        {
+          "path": "patches/local-quality/queue-historical-character-20261026-adapter.mjs",
+          "sha256": "0bccb986c91ac881b10bf4a4e9b4a77c7f8fcfab7204b9e34f97b0b5b82d8bc5"
+        }
+      ]
+    }
+  ]
+}

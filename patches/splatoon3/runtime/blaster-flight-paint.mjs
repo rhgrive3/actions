@@ -52,6 +52,13 @@ export const SPLASH_DROP_AIR_RESIST = 0.02;
 const MAX_LANDING_RECORDS = 64;
 const finitePositive = n => Number.isFinite(n) && n > 0;
 const finiteNonNegative = n => Number.isFinite(n) && n >= 0;
+// Only our plain, synchronous distance states may share segment scratch.
+// Externally supplied states and wall callbacks retain the original path.
+const ownedDistanceStates = new WeakSet();
+export function ownDistanceFlightState(state) {
+  ownedDistanceStates.add(state);
+  return state;
+}
 
 export function blasterFlightPaintSpec(source, scale = 1) {
   const spawn = source?.SplashSpawnParam, paintSource = source?.SplashPaintParam;
@@ -154,9 +161,9 @@ export function configureBlasterFlightPaint(projectile, source, scale) {
     recycledFlightVectors.set(projectile, v);
   } else { v.last.copy(pos); v.sample.copy(pos); v.direction.copy(pos); v.end.copy(pos); v.point.copy(pos); v.normal.copy(pos); }
   v.down.set(0, -1, 0);
-  projectile.s3BlasterFlightPaint = { spec, distance: 0, index: 0,
+  projectile.s3BlasterFlightPaint = ownDistanceFlightState({ spec, distance: 0, index: 0,
     last: v.last, sample: v.sample, down: v.down, direction: v.direction, end: v.end,
-    hit: { point: v.point, normal: v.normal, hit: false }, wallSplash: null };
+    hit: { point: v.point, normal: v.normal, hit: false }, wallSplash: null });
   projectile.trailEvery = 0; // the scheduler owns Blaster flight paint; never the legacy random trail
   return projectile.s3BlasterFlightPaint;
 }
@@ -186,23 +193,22 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   const V = from.constructor;
   const dirX = direction ? direction.x : 0, dirZ = direction ? direction.z : 0, len = Math.hypot(dirX, dirZ);
   const fx = len > EPS ? dirX / len : 0, fz = len > EPS ? dirZ / len : 0;
-  const random = spec.randomVelocity, unit = k => seededSplashUnit(seed, (salt * 8 + k) >>> 0);
+  const random = spec.randomVelocity;
   // Sourced per-axis random spawn velocity (zero for every 11.3.0 Blaster but
   // Precision): X/Y symmetric, Z in [ZMin, ZMax] along the shot direction.
-  const vx = random ? (unit(1) * 2 - 1) * random.x : 0, vy = random ? (unit(2) * 2 - 1) * random.y : 0;
-  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;
+  const vx = random ? (seededSplashUnit(seed, (salt * 8 + 1) >>> 0) * 2 - 1) * random.x : 0, vy = random ? (seededSplashUnit(seed, (salt * 8 + 2) >>> 0) * 2 - 1) * random.y : 0;
+  const vz = random ? random.zMin + seededSplashUnit(seed, (salt * 8 + 3) >>> 0) * (random.zMax - random.zMin) : 0;
   const pool=game.projectiles._s3SplashDropPool||=([]);
   let drop=pool.pop();
   if(!drop||drop.pos.constructor!==V)drop={pos:new V(),vel:new V(),next:new V(),hit:hitRecord(from)};
   const collision=drop.hit;
   collision.hit=false;collision.dist=0;collision.block=collision.face=-1;collision.u=collision.v=0;
   collision.point.set(0,0,0);collision.normal.set(0,0,0);
-  Object.assign(drop,{
-    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,
-    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,
-    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,
-    landing:null,landingDepth:undefined,drawRadius:undefined,sourceActor:undefined,_s3SplashDropPooled:false,
-  });
+  drop.owner=owner;drop.team=team;drop.seed=seededSplashUnit(seed,(salt*8)>>>0);drop.radius=radius;
+  drop.spec=spec;drop.depth=depth;drop.kind=kind;drop.footprint=footprint;
+  drop.dirX=fx;drop.dirZ=fz;drop.spawnY=from.y;drop.releaseX=from.x;drop.releaseZ=from.z;drop.frames=0;
+  drop.carry=Number.isFinite(catchUpSeconds)&&catchUpSeconds>0?catchUpSeconds*STEP_FRAMES_PER_SECOND:0;
+  drop.landing=null;drop.landingDepth=undefined;drop.drawRadius=undefined;drop.sourceActor=undefined;drop._s3SplashDropPooled=false;
   drop.pos.set(from.x,from.y,from.z);
   drop.vel.set(fx*vz-fz*vx,vy-Math.max(0,initialDownSpeed),fz*vz+fx*vx);
   drop.next.set(0,0,0);
@@ -280,16 +286,17 @@ export function clearSplashDrops(system) {
 
 // Fixed-step integrator shared by every queued splash. Rendering cadence only
 // changes how many whole reference frames are consumed per call.
-export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
+export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIndex = 0) {
   const queue = system?._s3SplashDrops;
   // A zero-time flush consumes only explicitly accrued birth-step debt. The
   // catalogue uses it after its fixed steps; existing drops accrue no time.
   if (!queue?.length || !Number.isFinite(dt) || dt < 0) return 0;
   const physics = game?.physics;
-  let landed = 0, write = 0;
+  const start = Math.max(0, Math.min(queue.length, Number.isFinite(startIndex) ? Math.trunc(startIndex) : 0));
+  let landed = 0, write = start;
   let landings=null;
   let retired=null;const epoch=system._s3SplashDropEpoch||0;
-  for (let i = 0; i < queue.length; i++) {
+  for (let i = start; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
     let stepTime = (1 - d.carry) / STEP_FRAMES_PER_SECOND;
@@ -330,16 +337,24 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
 export function paintDistanceFlight(game, projectile, state, end = projectile?.pos) {
   if (!state || (projectile.s3SpecialWeapon && !(projectile.s3AllSpecial === 'crabTank' && state === projectile.s3CrabFlightPaint)) || projectile.ghost ||
       projectile.owner?.remote || !game?.paint || !game?.physics ||
-      !end || ![end.x, end.y, end.z].every(Number.isFinite)) return 0;
+      !end) return 0;
+  const endX=end.x,endY=end.y,endZ=end.z;
+  if (!Number.isFinite(endX)||!Number.isFinite(endY)||!Number.isFinite(endZ)) return 0;
   const distance = state.last.distanceTo(end), limit = state.distance + distance, spec = state.spec;
   if (!(distance > EPS)) return 0;
-  let released = 0;
+  let released = 0, directionReady = false;
+  let shareDirection = ownedDistanceStates.has(state) &&
+    Object.getOwnPropertyDescriptor(state, 'wallSplash')?.value === null &&
+    !!Object.getOwnPropertyDescriptor(game, 'projectiles')?.value;
   while (state.index < spec.count) {
     const at = spec.first + state.index * spec.spacing;
     if (at > limit + EPS) break;
     const index = state.index++;
     state.sample.copy(state.last).lerp(end, Math.max(0, Math.min(1, (at - state.distance) / distance)));
-    state.direction.set(end.x - state.last.x, 0, end.z - state.last.z);
+    if (!shareDirection || !directionReady) {
+      state.direction.set(end.x - state.last.x, 0, end.z - state.last.z);
+      directionReady = true;
+    }
     const radius = index === 0 ? spec.nearestWidth : spec.width, kind = index === 0 && spec.nearestIsFeet ? 'trail' : 'drop';
     released++;
     // SplashWallHitParam: a splash released with a paintable wall inside its
@@ -348,7 +363,12 @@ export function paintDistanceFlight(game, projectile, state, end = projectile?.p
     const drop = spawnSplashDrop(game, { owner: projectile.owner, team: projectile.team, seed: projectile.seed,
       salt: index, from: state.sample, direction: state.direction, radius, spec, depth: true, kind,
       footprint: mainInkFootprint(projectile.s3Weapon || projectile.catalog?.r) });
-    if (!drop) paintImmediate(game, projectile, state, index, radius);
+    if (!drop) {
+      // Immediate diagnostics can call user physics/paint hooks. Do not carry
+      // a segment invariant across that observable callback boundary.
+      shareDirection = false;
+      paintImmediate(game, projectile, state, index, radius);
+    }
   }
   state.distance = limit; state.last.copy(end);
   return released;

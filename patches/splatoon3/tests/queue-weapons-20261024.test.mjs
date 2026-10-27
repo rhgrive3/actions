@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {SnapshotPool} from '../runtime/snapshot-pool.mjs';
-import {buildPointBlocks,pointBlockMinimum} from './fixtures/point-block-minimum.mjs';
+import {buildPointBlocks,pointBlockMinimum} from '../runtime/point-block-minimum.mjs';
 import {catalogDepletedDescriptor} from '../runtime/catalog-depletion.mjs';
 import {validSpecialWorldPayload,admitsRemoteWorldBirth,REMOTE_WORLD_OBJECTS_PER_ACTOR} from '../runtime/special-world-payload.mjs';
 import {cataloguePayload} from '../runtime/catalogue-payload.mjs';
@@ -161,11 +161,12 @@ test('remote screen rejects before ledger/mesh/VFX admission, permits a correcte
  f.G.projectiles.clear();assert.equal(objects().length,0);
 });
 
-test('Crab leg idle reuse keeps the original two sine expressions and every model matrix bit-identical at 30/60/120Hz',t=>{
+test('Custom Crab sine functions keep the original two expressions and every model matrix bit-identical at 30/60/120Hz',t=>{
  const code=declarations(read('../runtime/sub-models.mjs'),['poseSubModel']).poseSubModel,legs=[['legL0','legR0'],['legL1','legR1'],['legL2','legR2']];
  let originalCalls=0,optimizedCalls=0;
  const oldMath=Object.create(Math),newMath=Object.create(Math);oldMath.sin=x=>{originalCalls++;return Math.sin(x);};newMath.sin=x=>{optimizedCalls++;return Math.sin(x);};
- const old=compile(before.poseSubModel,'poseSubModel',{CRAB_LEGS:legs,Math:oldMath}),next=compile(code,'poseSubModel',{CRAB_LEGS:legs,Math:newMath});
+ const nativeBindings=new Function(read('../runtime/sub-models.mjs').match(/const CRAB_NATIVE_SIN =[^;]+;/)[0]+read('../runtime/sub-models.mjs').match(/const CRAB_CALL_SIN =[^;]+;/)[0]+'return {CRAB_NATIVE_SIN,CRAB_CALL_SIN};')();
+ const old=compile(before.poseSubModel,'poseSubModel',{CRAB_LEGS:legs,Math:oldMath}),next=compile(code,'poseSubModel',{CRAB_LEGS:legs,Math:newMath,...nativeBindings});
  for(const hz of [30,60,120]){
   const a=buildSubModel(T,'spCrabTank',new T.MeshStandardMaterial()),b=buildSubModel(T,'spCrabTank',new T.MeshStandardMaterial());
   for(let frame=0;frame<hz*3;frame++){
@@ -180,5 +181,5 @@ test('Crab leg idle reuse keeps the original two sine expressions and every mode
   delete a.groups.legL0;delete b.groups.legL0;old(a,{dt:.1,speed:3});next(b,{dt:.1,speed:3});assert.ok(Object.is(b.groups.legR0.rotation.y,a.groups.legR0.rotation.y));
   for(const m of a.materials.values())m.dispose();for(const m of b.materials.values())m.dispose();
  }
- assert.ok(optimizedCalls<originalCalls*.5);t.diagnostic(JSON.stringify({originalCalls,optimizedCalls,kind:'exact idle-phase reuse; moving poses retain both sine evaluations'}));
+ assert.ok(optimizedCalls<originalCalls*.5);t.diagnostic(JSON.stringify({originalCalls,optimizedCalls,kind:'custom sine fallback: exact idle-phase reuse; moving poses retain both sine evaluations'}));
 });

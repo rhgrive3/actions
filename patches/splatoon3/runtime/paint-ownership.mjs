@@ -457,7 +457,8 @@ function cellCacheSlot(paint, g, n, n2, tn, face, piece) {
   // can no longer change ray/bead/satellite shapes; drip ticks re-use them.
   if (!paint.level?.native || tn < 1.45 || !face.wall || !g.dripDur || piece.type === 3) return null;
   const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);
-  const pieces = byEntry[n / 7] || (byEntry[n / 7] = []);
+  const entry = n / (g.entryStride === 8 ? 8 : 7);
+  const pieces = byEntry[entry] || (byEntry[entry] = []);
   return pieces[n2] || (pieces[n2] = { key: null, cells: null });
 }
 function cellCacheKey(key, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
@@ -512,7 +513,8 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
   if (order > 0 && tn >= 1.45 && settledGeometry && g._ancillaryAllDone === order && g.age >= g._ancillaryDoneAge) return 0;
   const floorSettled = order > 0 && tn >= 1.45 && E.length === g._ancillaryFloorEntries && g.R === g._ancillaryFloorRadius && g._ancillaryFloorDone === order && g.age >= g._ancillaryFloorDoneAge;
   let claimed = 0, changed = false;
-  for (let n = 0; n < E.length; n += 7) {
+  const entryStride = g.entryStride === 8 ? 8 : 7;
+  for (let n = 0; n < E.length; n += entryStride) {
     const face = E[n], lu = E[n + 1], lv = E[n + 2], dn = E[n + 3], sdu = E[n + 4], sdv = E[n + 5], sa = E[n + 6];
     if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;
     if (floorSettled && (!face.wall || !g.dripDur)) continue;

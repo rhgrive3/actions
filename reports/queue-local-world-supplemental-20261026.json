@@ -1,0 +1,294 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Parent-assigned 11 supplemental world/UI/motion queue checks; no duplicate implementation added.",
+  "counts": {
+    "already-in-pr": 11
+  },
+  "items": [
+    {
+      "key": "animate-weapon-defer-unused-shot-pulse-by-kind",
+      "status": "already-in-pr",
+      "reason": "The actual final near-weapon path computes the common pulse only for its two consumers; other family-specific pulses and far return are unchanged.",
+      "evidence": [
+        "src/game/character-weapons.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character-weapons.js",
+          "origin": "fully-composed-public-source",
+          "line": 735,
+          "needle": "const shotK = kind === 'shooter' || kind === 'splatling' ? pulseE(ts, 0.006, 30) : 0;",
+          "sha256": "f89e12dca42062dcd0c71ce312c48199da72ab7e74d4e19e4e4a1d4d5d5779ce"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 武器種別に使われない発射パルス計算を省略",
+      "library_file_id": "libfile_e4eaf17a0c30819190e8dfcd85b2e3f5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] animate-weapon-defer-unused-shot-pulse-by-kind.md"
+    },
+    {
+      "key": "diorama-ally-pin-replace-per-frame-filter-with-first-three-walk",
+      "status": "already-in-pr",
+      "reason": "Actual final ally walk retains original order, stops after three and uses the existing bounded scratch lifecycle.",
+      "evidence": [
+        "src/ui/diorama.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/ui/diorama.js",
+          "origin": "fully-composed-public-source",
+          "line": 181,
+          "needle": "if (allies.length === 3) break;",
+          "sha256": "f1e82b730e5e66cb2655023301fc71877391f340c270a467119418686f2d0755"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] マップ表示中の味方ピン抽出を1パス化し、毎フレームの filter 配列を除去",
+      "library_file_id": "libfile_6ca548c1f9b88191a2133315ce21ad66",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] diorama-ally-pin-replace-per-frame-filter-with-first-three-walk.md"
+    },
+    {
+      "key": "diorama-pin-status-flags-skip-unchanged-dom-calls",
+      "status": "already-in-pr",
+      "reason": "The state text and three class toggles are inside the existing key guard, which includes label, state, dead, ok, hover and weapon; repeated identical state does no DOM mutation.",
+      "evidence": [
+        "src/ui/diorama.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/ui/diorama.js",
+          "origin": "fully-composed-public-source",
+          "line": 221,
+          "needle": "if (key !== p.key) {",
+          "sha256": "f1e82b730e5e66cb2655023301fc71877391f340c270a467119418686f2d0755"
+        },
+        {
+          "path": "src/ui/diorama.js",
+          "origin": "fully-composed-public-source",
+          "line": 236,
+          "needle": "p.el.classList.toggle('is-dead', dead);",
+          "sha256": "f1e82b730e5e66cb2655023301fc71877391f340c270a467119418686f2d0755"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] ジオラマ・マップのピン状態文字列と3状態クラスへの同値DOM操作を省略",
+      "library_file_id": "libfile_94b7a172380c8191add2ce9d9bd342dd",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] diorama-pin-status-flags-skip-unchanged-dom-calls.md"
+    },
+    {
+      "key": "environment-orbit-share-sincos-for-sailboats-and-gulls",
+      "status": "already-in-pr",
+      "reason": "Both actual orbit branches already share ca/sa for positions and headings, preserving trig inputs and arithmetic.",
+      "evidence": [
+        "src/world/environment.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/environment.js",
+          "origin": "fully-composed-public-source",
+          "line": 2960,
+          "needle": "const a = s.a + s.w * t;\n      const ca = Math.cos(a), sa = Math.sin(a);",
+          "sha256": "f184f010d5a425e3a705fb092eca0d386efebb7be2a9152cc2eac290b1896878"
+        },
+        {
+          "path": "src/world/environment.js",
+          "origin": "fully-composed-public-source",
+          "line": 2982,
+          "needle": "const a = g.a0 + g.w * t;\n      const ca = Math.cos(a), sa = Math.sin(a);",
+          "sha256": "f184f010d5a425e3a705fb092eca0d386efebb7be2a9152cc2eac290b1896878"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 海上ヨット・カモメの公転位置と向きで同じ sin/cos を再計算しない",
+      "library_file_id": "libfile_0ae76ec956c48191a70f7f9e2ecd1970",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] environment-orbit-share-sincos-for-sailboats-and-gulls.md"
+    },
+    {
+      "key": "legacy-boot-mural-use-selected-layout-to-avoid-initial-atlas-resize",
+      "status": "already-in-pr",
+      "reason": "Boot already passes the selected resolved layout, avoiding the first Halyard atlas resize.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 200,
+          "needle": "createMuralTexture(map.layout || map.id)",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 初回Halyard起動の壁画アトラスを選択済みステージ寸法で直接生成",
+      "library_file_id": "libfile_2193ff07dee88191967e4caea6351ad4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-boot-mural-use-selected-layout-to-avoid-initial-atlas-resize.md"
+    },
+    {
+      "key": "legacy-lightmap-cache-validated-metadata-on-stage-reentry",
+      "status": "already-in-pr",
+      "reason": "The Game-owned cache holds four frozen validated metadata records, invalidates/refetches stale layout hashes, and still acquires a fresh world-owned GPU lightmap.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 404,
+          "needle": "const metadata = this._iwLightmapMetadata",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        },
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 416,
+          "needle": "while (metadata.size > 4)",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        },
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 411,
+          "needle": "if (!cached || level.layoutHash === meta.hash) break;",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 既訪問レガシーステージのlightmapメタデータ再取得を省く",
+      "library_file_id": "libfile_9556a1d3abc88191ad8ba37d9e04b6a4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-lightmap-cache-validated-metadata-on-stage-reentry.md"
+    },
+    {
+      "key": "legacy-stage-swap-skip-discarded-paint-target-clear",
+      "status": "already-in-pr",
+      "reason": "Both stage-start paths clear paint only when the existing world is reused or native transactional loading requires it. Legacy replacement disposes the discarded target without clearing it first.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 889,
+          "needle": "if ((map.layout || map.id) === this.layoutId || (nativeStageEnabled && NATIVE_IDS.includes(map.layout || map.id))) G.paint.clear();",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 旧ステージ切替時に破棄直前の塗りRenderTargetを余分にクリアしない",
+      "library_file_id": "libfile_4a93061d08d08191b24b4d406b9ed901",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-stage-swap-skip-discarded-paint-target-clear.md"
+    },
+    {
+      "key": "showcase-fx-elide-redundant-tail-rescan",
+      "status": "already-in-pr",
+      "reason": "Actual InkFX/Sparkles/InkTrail forward scans already publish the computed highest live index; no redundant tail scan remains.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 532,
+          "needle": "this.splats.count = sTop + 1;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        },
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 533,
+          "needle": "this.rings.count = rTop + 1;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        },
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 500,
+          "needle": "this.mesh.count = top + 1;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] ロビー／ショーケースFXのインスタンス末尾を二重走査しない",
+      "library_file_id": "libfile_e64a8a8ea5508191a7751bab71f64e4d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-fx-elide-redundant-tail-rescan.md"
+    },
+    {
+      "key": "showcase-inkfx-sparkles-skip-idle-pool-updates",
+      "status": "already-in-pr",
+      "reason": "Actual pools wake on birth and return to an explicit idle state after expiry; the empty path skips full scans.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 449,
+          "needle": "if (this._iwFxIdle) return;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        },
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 705,
+          "needle": "this._iwFxIdle = this.mesh.count === 0;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] Empty showcase InkFX / Sparkles: omit complete idle-pool scans",
+      "library_file_id": "libfile_85e43e412a4081918af8bc04c3b6b263",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-inkfx-sparkles-skip-idle-pool-updates.md"
+    },
+    {
+      "key": "showcase-results-hoist-immutable-bomb-plan",
+      "status": "already-in-pr",
+      "reason": "The shared result plan and rows are frozen once; victory updates only consume that immutable table.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 3,
+          "needle": "const RESULT_BOMB_PLAN = Object.freeze(",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        },
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 1586,
+          "needle": "const plan = RESULT_BOMB_PLAN;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] showcase-results-hoist-immutable-bomb-plan",
+      "library_file_id": "libfile_7fbd57da42b08191aef95803affe5df2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-results-hoist-immutable-bomb-plan.md"
+    },
+    {
+      "key": "source-align-weapon-early-exit-converged-grip-projection",
+      "status": "already-in-pr",
+      "reason": "The projection loop already exits only after an entire iteration performs neither projection. Maximum iterations, final fitL/grip scratch and the source-weapon admission gates remain.",
+      "evidence": [
+        "src/game/motion/source-controller.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/source-controller.js",
+          "origin": "fully-composed-public-source",
+          "line": 483,
+          "needle": "let changed=false;",
+          "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+        },
+        {
+          "path": "src/game/motion/source-controller.js",
+          "origin": "fully-composed-public-source",
+          "line": 487,
+          "needle": "if(!changed)break;",
+          "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+        }
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotion両手グリップ投影の収束済み16回ループを早期終了",
+      "library_file_id": "libfile_c8f830c60f088191b3a0a2e5068f740a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-align-weapon-early-exit-converged-grip-projection.md"
+    }
+  ]
+}

@@ -6,9 +6,11 @@ const clamp01 = value => Math.max(0, Math.min(1, value));
 const INSTALLED = Symbol.for('inkwave.s3.splatling.v1');
 const sampledSpeedViews = new WeakMap();
 const LOG_HALF=Math.log(.5);
-function updateSpinLoop(runner,pitch,pos){
-  const update=runner._s3SpinLoopUpdate ||= {pitch:0,pos:undefined};
-  update.pitch=pitch;update.pos=pos;runner.spinLoop.set(update);
+function updateSpinLoop(runner,pos){
+  // Recorded Motor/MotorFire sounds stay at their original 1x pitch.
+  // Only position follows the actor; old synthesized pitch modulation is gone.
+  const update=runner._s3SpinLoopUpdate ||= {pos:undefined};
+  update.pos=pos;runner.spinLoop?.set?.(update);
 }
 let lastSpeedMedian=NaN,lastSpeedExponent=0;
 
@@ -22,7 +24,7 @@ function cancelSplatlingStream(runner, refund, inkMax) {
   runner.s3Spin = null;
   runner.charging = runner.streaming = false;
   runner.charge = runner.chargeT = runner.burstT = runner.burstFrac = 0;
-  runner.spinLoop?.stop(.12); runner.spinLoop = null;
+  runner.spinLoop?.stop?.(.12); runner.spinLoop = null;
 }
 
 export function exportSplatlingReservation(runner) {
@@ -155,12 +157,12 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   // VelGnd_Bias_Charge (0.9, 減速カーブ) has no published definition and stays unmapped.
   if (Actor?.prototype._horizontal) {
     const horizontal = Actor.prototype._horizontal;
-    Actor.prototype._horizontal = function (dt, squid, onEnemy, ...rest) {
+    Actor.prototype._horizontal = function (dt, squid, onEnemy) {
       const runner = this.weaponRunner;
       const family=this.weapon?.catalogRecord?.family;
       const candidate=family==='splatling'||(!family&&this.weapon?.kind==='splatling')||runner?.charging;
       const beforeX=candidate?this.vel.x:0,beforeZ=candidate?this.vel.z:0;
-      const value = horizontal.call(this, dt, squid, onEnemy, ...rest);
+      const value = arguments.length<=3?horizontal.call(this,dt,squid,onEnemy):horizontal.apply(this,arguments);
       if (runner?.s3SplatlingChargeDecel) runner.s3SplatlingChargeDecel = undefined;
       if(!candidate)return value;
       const chargeDownRate = splatlingChargeDownRate(profile, this.weapon);
@@ -206,6 +208,8 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       cancel(this); return;
     }
     const pos = a.isLocal ? undefined : a.pos;
+    // Remote replication owns its own motor voices through NetMatch._voices.
+    const ownAudio = !a.remote && (a.isLocal || a._nearCamera());
     if (this.streaming) {
       const state = this.s3Spin;
       if (!state) { cancel(this, false); return; }
@@ -224,12 +228,13 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
         a.character.trigger('shoot');
       }
       this.cooldown = state.emitted * w.fireInterval - state.elapsed;
-      if(this.spinLoop)updateSpinLoop(this,1.5 + .06 * Math.sin(G.time * 31),pos);
+      if(this.spinLoop)updateSpinLoop(this,pos);
       if (this.burstT <= EPS) {
         this.streaming = false; this.charge = this.burstFrac = 0;
         this.s3Spin = null; this.cooldown = Math.max(this.cooldown, w.postStreamDelay ?? .22);
-        this.spinLoop?.stop(.12); this.spinLoop = null;
-        if (a.isLocal || a._nearCamera()) G.audio?.play('splatling_wind', { pos, volume: a.isLocal ? .6 : .42 });
+        this.spinLoop?.stop?.(.12); this.spinLoop = null;
+        // No verified post-stream source clip is installed. Do not reintroduce
+        // the old procedural "splatling_wind" over recorded MotorFire's fade.
       }
       return;
     }
@@ -238,7 +243,13 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       if (!this.charging) {
         this.charging = true; this.charge = this.chargeT = 0; this.chargeDinged = false;
         this.s3Spin = { paid: 0, unspent: 0, elapsed: 0, emitted: 0, shots: 0 };
-        if (a.isLocal || a._nearCamera()) this.spinLoop = G.audio?.loop('splatling_spin', { pos, volume: a.isLocal ? .6 : .4, pitch: .6 });
+        // Old splatling_spin used generated oscillators and produced a low
+        // pulsing layer ("won-won") over the actual recorded gunshot.
+        // Use the selected weapon's native Motor MP3, never G.audio.loop.
+        this.spinLoop?.stop?.(.04);
+        this.spinLoop = ownAudio
+          ? G.audio?.loopWeapon?.(w.id,'charge',{actor:a,pos,volume:a.isLocal?.6:.4,pitch:1})||null
+          : null;
       }
       const oldCharge = this.charge;
       // Reserve logically while charging, then debit once on release. This
@@ -254,10 +265,15 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       if (1 - this.charge < EPS) this.charge = 1;
       this.chargeT = this.charge * w.chargeTime;
       a.fireFacing = .45;
-      if(this.spinLoop)updateSpinLoop(this,.6 + .85 * this.charge,pos);
+      if(this.spinLoop)updateSpinLoop(this,pos);
       if (this.charge === 1 && !this.chargeDinged) {
         this.chargeDinged = true;
-        if (a.isLocal) { G.audio?.play('splatling_ready', { volume: .7 }); if (!a.isBot) G.input?.rumble?.(.05, .28, 60); }
+        if (a.isLocal) {
+          // Use a recorded ready cue only if installed. Do not synthesize a
+          // chime: the 2022 Standard Spinner archive has no mapped ready MP3.
+          G.audio?.playWeapon?.(w.id,'ready',{actor:a,volume:.7});
+          if (!a.isBot) G.input?.rumble?.(.05, .28, 60);
+        }
       }
     } else if (this.charging) {
       this.charging = false;
@@ -273,6 +289,12 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       state.shots = reservation.shots;
       state.elapsed = state.emitted = 0;
       this.cooldown = this.bloom = 0;
+      // Charge Motor must stop when trigger releases. MotorFire starts exactly
+      // once for an admitted stream; both are source-recorded loops at 1x.
+      this.spinLoop?.stop?.(.04);
+      this.spinLoop = this.streaming && ownAudio
+        ? G.audio?.loopWeapon?.(w.id,'spin',{actor:a,pos,volume:a.isLocal?.6:.4,pitch:1})||null
+        : null;
       if (!this.streaming) cancel(this);
     }
   };

@@ -12,10 +12,13 @@ import { NativeInkMesh } from './native-ink-chunks.mjs';
 import { nativeStageTextureCaps } from './native-texture-budget.mjs';
 import { nativeGpuTier,nativeRenderCaps,nativeTextureProfile,nativeCompressedTextureSupport,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
 import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
-
-// A canvas listener outlives this load. Keep its predicate outside the load's
-// shared lexical environment so it cannot retain old level/paint/physics data.
-function nativeStageActive(){return !!G.level?.native;}
+// The WebGL context-loss listener persists across stage changes. It must never
+// close over a single build's World/Level/Physics or its Promise scope.
+let ACTIVE_NATIVE_PENDING = null;
+function nativeStageActive(){
+ const pending=ACTIVE_NATIVE_PENDING;
+ return !!G.level?.native||!!(pending&&!pending.controller.signal.aborted&&pending.current());
+}
 
 // Snapshot keeps the previous playable world alive until every fallible
 // publication step has completed. Never dispose active resources first.
@@ -70,6 +73,12 @@ export async function buildNativeWorld(game,map,current){
  let snapshot=null,published=false,committed=false;
  const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
+ // Watch the detached candidate before its first GPU allocation. The token
+ // belongs to this operation; an old cancellation cannot clear a newer load.
+ const pendingBuild={controller,current};
+ game._nativePendingBuild=pendingBuild;
+ ACTIVE_NATIVE_PENDING=pendingBuild;
+ watchNativeContextLoss(G.renderer.domElement,nativeStageActive);
  try{
   // Pass the authoritative main-thread touch profile: iPadOS can advertise a Macintosh UA in WorkerNavigator.
   // Constrained stages must not clone large derived arrays through IndexedDB during activation.
@@ -115,7 +124,7 @@ export async function buildNativeWorld(game,map,current){
   let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
-  inkMesh=new NativeInkMesh(inkGeometry,inkMat,16,{willBindPaint:true}).bindPaint(paint);
+  inkMesh=new NativeInkMesh(inkGeometry,inkMat,16,{willBindPaint:true}).bindPaint(paint,{knownEmpty:true});
   // Link the stage's display/ink programs now (parallel compile where
   // available) instead of synchronously on the first battle frames. Any
   // render target selects the composer's key: linear output, no tone map.
@@ -158,7 +167,6 @@ export async function buildNativeWorld(game,map,current){
   game.stageLightmap=null;game.props=null;
   G.scene.add(display.group,inkMesh);
   applyNativeGpuBudget(game,G,gpuBudget);
-  watchNativeContextLoss(G.renderer.domElement,nativeStageActive);
   game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
   game.swimWake=wake;game.minimap=minimap;game.nativeWorld=nextWorld;
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
@@ -210,7 +218,11 @@ export async function buildNativeWorld(game,map,current){
    safely(()=>showNativeWorldRecovery(game),'recovery dialog');
   }
   if(error.name!=='AbortError'&&current())throw error;
- }finally{safely(()=>status.close(),'loading status');}
+ }finally{
+  if(game._nativePendingBuild===pendingBuild)game._nativePendingBuild=null;
+  if(ACTIVE_NATIVE_PENDING===pendingBuild)ACTIVE_NATIVE_PENDING=null;
+  safely(()=>status.close(),'loading status');
+ }
 }
 
 export function releaseNativeWorld(game){

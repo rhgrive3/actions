@@ -124,6 +124,10 @@ const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const copyPos = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(finite)
   ? value.slice(0, 3) : [0, 0, 0];
 const distance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+const outsideRadiusAxis = (a, b, radius) => {
+  const x=a[0]-b[0],y=a[1]-b[1],z=a[2]-b[2];
+  return Number.isFinite(x+y+z)&&(Math.abs(x)>radius||Math.abs(y)>radius||Math.abs(z)>radius);
+};
 function nearUnclaimedCenter(pos,center){
   const dx=pos[0]-center[0],dy=pos[1]-center[1],dz=pos[2]-center[2];
   if(Math.abs(dx)>=1e-8||Math.abs(dy)>=1e-8||Math.abs(dz)>=1e-8)return false;
@@ -188,7 +192,12 @@ function normalizedKind(kind) {
 
 function barrierMultiplier(hit) {
   if (finite(hit?.multiplier) && hit.multiplier >= 0) return hit.multiplier;
-  const kind = normalizedKind(hit?.kind);
+  const inputKind = hit?.kind;
+  if (typeof inputKind === 'string') {
+    if (Object.hasOwn(RAINMAKER_BARRIER_MULTIPLIERS, inputKind)) return RAINMAKER_BARRIER_MULTIPLIERS[inputKind];
+    if (Object.hasOwn(BARRIER_KIND_ALIASES, inputKind)) return BARRIER_KIND_ALIASES[inputKind];
+  }
+  const kind = normalizedKind(inputKind);
   if (Object.hasOwn(RAINMAKER_BARRIER_MULTIPLIERS, kind)) return RAINMAKER_BARRIER_MULTIPLIERS[kind];
   const alias = kind.toLowerCase();
   return Object.hasOwn(BARRIER_KIND_ALIASES, alias) ? BARRIER_KIND_ALIASES[alias] : 1;
@@ -425,7 +434,9 @@ export class RainmakerRule {
       const direct = Array.isArray(pos) && pos.length === 3 && Object.getPrototypeOf(pos) === Array.prototype
         && Object.hasOwn(pos, 0) && Object.hasOwn(pos, 1) && Object.hasOwn(pos, 2)
         && finite(pos[0]) && finite(pos[1]) && finite(pos[2]);
-      const d = distance(direct ? pos : positionOf(candidate), this.state.pos);
+      const position=direct ? pos : positionOf(candidate);
+      if(outsideRadiusAxis(position,this.state.pos,PICKUP_RADIUS))continue;
+      const d = distance(position, this.state.pos);
       if (!(d <= PICKUP_RADIUS)) continue;
       if (!actor || d < bestDistance || d === bestDistance && String(candidate.id).localeCompare(String(actor.id)) < 0) {
         actor = candidate; bestDistance = d;
@@ -561,7 +572,9 @@ export class RainmakerRule {
       let aim = Array.isArray(inputAim) && inputAim.length >= 3 && inputAim.slice(0, 3).every(finite)
         ? inputAim.slice(0, 3) : [0, 0, actor.team === 0 ? 1 : -1];
       const length = Math.hypot(...aim);
-      aim = length > 0 ? aim.map(value => value / length) : [0, 0, actor.team === 0 ? 1 : -1];
+      if (length > 0) {
+        aim[0] /= length; aim[1] /= length; aim[2] /= length;
+      } else aim = [0, 0, actor.team === 0 ? 1 : -1];
       const sourceOrigin = actor.rainmakerShotOrigin;
       const validOrigin = validRainmakerShotOrigin(sourceOrigin, { actorId: actor.id, team: actor.team, pos: positionOf(actor) })
         && rainmakerShotOwnerMatches(sourceOrigin, actor);
@@ -593,7 +606,7 @@ export class RainmakerRule {
     const choices = this.checkpoints[team];
     if (!choices.length) return;
     const pos = positionOf(actor);
-    const index = choices.findIndex(point => distance(pos, point) <= CHECKPOINT_RADIUS);
+    const index = choices.findIndex(point => !outsideRadiusAxis(pos,point,CHECKPOINT_RADIUS)&&distance(pos, point) <= CHECKPOINT_RADIUS);
     if (index < 0) return;
 
     const checkpointPos = choices[index].slice();
@@ -653,7 +666,7 @@ export class RainmakerRule {
 
   _touchesGoal(team, pos) {
     const goal = this.goals[team];
-    return !!goal && distance(pos, goal) <= GOAL_RADIUS;
+    return !!goal && !outsideRadiusAxis(pos,goal,GOAL_RADIUS)&&distance(pos, goal) <= GOAL_RADIUS;
   }
 
   _nextObjective(team, from) {

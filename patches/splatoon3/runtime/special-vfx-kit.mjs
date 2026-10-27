@@ -412,7 +412,17 @@ class RibbonPool {
   push(r, x, y, z, now) {
     if (!r || r.ended) return;
     const M=this.M,last=r.count?r.samples[(r.head+r.count-1)%M]:null;
-    if (last && Math.hypot(x - last[0], y - last[1], z - last[2]) < r.o.spacing) { last[0] = x; last[1] = y; last[2] = z; last[3] = now; return; }
+    let close=false;
+    if(last){
+      const dx=x-last[0],dy=y-last[1],dz=z-last[2],spacing=r.o.spacing;
+      const squared=dx*dx+dy*dy+dz*dz,limit=spacing*spacing;
+      // Keep the exact original predicate near rounding boundaries and for
+      // underflow, overflow, non-finite inputs or non-positive thresholds.
+      const margin=16*Number.EPSILON*Math.max(squared,limit);
+      close=spacing>0&&squared>0&&limit>0&&Number.isFinite(squared)&&Number.isFinite(limit)&&Math.abs(squared-limit)>margin
+        ?squared<limit:Math.hypot(dx,dy,dz)<spacing;
+    }
+    if(close){last[0]=x;last[1]=y;last[2]=z;last[3]=now;return;}
     let at;
     if(r.count===M){at=r.head;r.head=(r.head+1)%M;}
     else{at=(r.head+r.count)%M;r.count++;}

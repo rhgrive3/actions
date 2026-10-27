@@ -46,10 +46,12 @@ export function drinkEligible(actor, stand, now, player = null) {
   // actual capsule dimensions; dimensionless callers remain point queries.
   if (![dx,dy,dz].every(Number.isFinite)) return false;
   const radius=Math.max(0,Number(player?.radius)||0),height=Math.max(radius*2,Number(player?.height)||0);
-  const radialGap=Math.max(0,Math.hypot(dx,dz)-TACTICOOLER.radiusWorld);
   const lo=dy+radius,hi=dy+height-radius,base=-TACTICOOLER_SOURCE.serveAreaHeightDown,top=TACTICOOLER_SOURCE.serveAreaHeightUp;
   const verticalGap=Math.max(0,base-hi,lo-top);
-  return radialGap*radialGap+verticalGap*verticalGap<=radius*radius+1e-12;
+  const verticalGapSq=verticalGap*verticalGap,limit=radius*radius+1e-12;
+  if(verticalGapSq>limit)return false;
+  const radialGap=Math.max(0,Math.hypot(dx,dz)-TACTICOOLER.radiusWorld);
+  return radialGap*radialGap+verticalGapSq<=limit;
 }
 export function giveDrink(actor, now, seconds = TACTICOOLER.drinkSeconds) {
   if (!actor?.alive || actor.remote || !Number.isFinite(now) ||

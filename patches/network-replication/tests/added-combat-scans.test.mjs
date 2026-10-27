@@ -71,7 +71,7 @@ test('actual combat admission prunes once with identical boundary maps, includin
 });
 
 test('retention reuse proposal changes a retained outer proof array across a later no-op and append',async()=>{
- const original=await load(),reuse=await load(s=>s.replace('store.slice(-MAX_PROOFS)','store.length>MAX_PROOFS?store.slice(-MAX_PROOFS):store'));
+ const original=await load(),reuse=await load(s=>s.replace('if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;', 'if(store.length)s.proofs.set(from,store.length>MAX_PROOFS?store.slice(-MAX_PROOFS):store);return acceptedProof;'));
  const run=module=>{
   const nm=net();module.api.record(nm,'peer',packet([shot(0)]),100);
   const retained=nm._combatProvenance.proofs.get('peer');
@@ -84,7 +84,7 @@ test('retention reuse proposal changes a retained outer proof array across a lat
 });
 
 test('retention reuse changes real admission under a synchronous geometry reentry',async()=>{
- const original=await load(),reuse=await load(s=>s.replace('store.slice(-MAX_PROOFS)','store.length>MAX_PROOFS?store.slice(-MAX_PROOFS):store'));
+ const original=await load(),reuse=await load(s=>s.replace('if(store.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return acceptedProof;', 'if(store.length)s.proofs.set(from,store.length>MAX_PROOFS?store.slice(-MAX_PROOFS):store);return acceptedProof;'));
  const run=module=>{
   const nm=net();module.api.record(nm,'peer',packet([shot(0)]),100);let nested=false;
   class V{set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}}

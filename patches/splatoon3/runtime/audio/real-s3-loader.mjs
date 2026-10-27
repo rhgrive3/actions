@@ -64,6 +64,78 @@ export class RealS3SampleLoader {
   // null means the index is still unavailable. Only an explicit false means
   // an event is absent: never synthesize over a declared but not-yet-decoded MP3.
   declares(id,event){return this.status==='ready'&&this.declaredEvents?this.declaredEvents.has(`${id}:${event}`):null;}
+  // Several required cues share one bounded import transaction. Independent
+  // AuthorizedSamplePack.load calls cannot overlap: each owns a generation.
+  ensureMany(requests,{priority=false}={}){
+    if(!this._current())return Promise.resolve({loaded:0,cancelled:true,results:[]});
+    if(this.status==='unavailable'){
+      if(Date.now()<this.manifestRetryAt)return Promise.resolve({loaded:0,unavailable:true,results:[]});
+      this.status='uninitialized';this.manifestPromise=null;this.notMapped.clear();
+    }
+    const entries=[],waits=[],seen=new Set();
+    for(const request of requests){
+      const id=request?.id,event=request?.event??'fire';if(!id)continue;
+      const key=id+':'+(event||'*');if(seen.has(key))continue;seen.add(key);
+      if(this.inFlight.has(key)){
+        const queued=this.pendingJobs.find(row=>row.key===key||row.keys?.includes(key));
+        if(queued)queued.required=true;
+        if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key||row.keys?.includes(key));if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
+        waits.push(this.inFlight.get(key));continue;
+      }
+      if(this.notMapped.has(key)){waits.push(Promise.resolve({loaded:0,missing:true}));continue;}
+      const selected=this._select(id,event);
+      if(this.status==='ready'&&this.clipsById){
+        if(!selected.length){this.notMapped.add(key);waits.push(Promise.resolve({loaded:0,missing:true}));continue;}
+        if(selected.every(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)))){
+          this.loaded.add(id);waits.push(Promise.resolve({loaded:0,cached:true}));continue;
+        }
+      }
+      if(Date.now()<(this.retryAfter.get(key)||0)){waits.push(Promise.resolve({loaded:0,throttled:true}));continue;}
+      entries.push({id,event,key});
+    }
+    if(entries.length){
+      const work=async()=>{
+        const results=new Map();
+        const finish=common=>{for(const e of entries)results.set(e.key,common);return results;};
+        if(!this._current())return finish({loaded:0,cancelled:true});
+        const data=await this.getManifest();
+        if(!this._current())return finish({loaded:0,cancelled:true});
+        if(!data)return finish({loaded:0,unavailable:true});
+        const unique=new Map(),plans=[];
+        for(const e of entries){
+          const selected=this._select(e.id,e.event);
+          if(!selected.length){this.notMapped.add(e.key);results.set(e.key,{loaded:0,missing:true});continue;}
+          const missing=selected.filter(c=>!this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)));
+          if(!missing.length){this.loaded.add(e.id);results.set(e.key,{loaded:0,cached:true});continue;}
+          if(Date.now()<(this.retryAfter.get(e.key)||0)){results.set(e.key,{loaded:0,throttled:true});continue;}
+          plans.push({...e,missing});
+          for(const clip of missing)unique.set(this.bank.authorized.key(clip.id,clip.event,clip.variant),clip);
+        }
+        if(!unique.size)return results;
+        const imported=await this.bank.authorized.load({...data,clips:[...unique.values()]},{baseURL:'./',replace:false,concurrency:2});
+        for(const plan of plans){
+          const errors=(imported.errors||[]).filter(e=>e.id===plan.id&&(!plan.event||e.event===plan.event));
+          if(errors.length){
+            for(const error of errors)this._error(plan.id+': '+error.error);
+            const permanent=errors.every(e=>/^HTTP (?:404|410)(?:\b|$)/.test(String(e.error)));
+            this.retryAfter.set(plan.key,Date.now()+(permanent?60000:4000));
+          }
+          const cancelled=!this._current()||imported.cancelled;
+          const loaded=cancelled?0:plan.missing.filter(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant))).length;
+          if(loaded)this.loaded.add(plan.id);
+          results.set(plan.key,{loaded,rejected:errors.length,errors,cancelled,bytes:this.bank.authorized.bytes});
+        }
+        return results;
+      };
+      const job=this._schedule(work,entries[0].key,priority,entries.map(e=>e.key));
+      for(const entry of entries){
+        const tracked=job.then(results=>results.get(entry.key)).finally(()=>{if(this.inFlight.get(entry.key)===tracked)this.inFlight.delete(entry.key);});
+        this.inFlight.set(entry.key,tracked);waits.push(tracked);
+      }
+    }
+    const combined=Promise.all(waits).then(results=>({loaded:results.reduce((n,r)=>n+(r?.loaded||0),0),errors:results.flatMap(r=>r?.errors||[]),results}));
+    this.queue=combined.catch(()=>{});return combined;
+  }
   // Event-aware demand paging. A previous v10 `loaded` bit stayed true even
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.
@@ -79,9 +151,9 @@ export class RealS3SampleLoader {
     const key=id+':'+(event||'*');
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
     if(this.inFlight.has(key)){
-      const queued=this.pendingJobs.find(row=>row.key===key);
+      const queued=this.pendingJobs.find(row=>row.key===key||row.keys?.includes(key));
       if(queued){if(owner!==null)queued.owners.add(owner);else queued.required=true;}
-      if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key);if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
+      if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key||row.keys?.includes(key));if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
       return this.inFlight.get(key);
     }
     const resident=this._select(id,event);
@@ -115,7 +187,7 @@ export class RealS3SampleLoader {
       if(result?.loaded>0)this.loaded.add(id);
       return result;
     };
-    const job=this._schedule(work,key,priority,owner);
+    const job=this._schedule(work,key,priority,null,owner);
     // Cleanup belongs to the same promise returned to callers. Otherwise
     // an immediate second START can observe the previous failed, already-
     // fulfilled job and never actually retry the 2022 MP3.
@@ -137,9 +209,9 @@ export class RealS3SampleLoader {
     const key=id+':'+(event||'*');
     return this.status==='unavailable'&&Date.now()<this.manifestRetryAt||Date.now()<(this.retryAfter.get(key)||0);
   }
-  _schedule(work,key,priority,owner){
+  _schedule(work,key,priority,keys=null,owner=null){
     const job=new Promise((resolve,reject)=>{
-      const row={work,key,resolve,reject,required:owner===null,owners:new Set(owner===null?[]:[owner])};
+      const row={work,key,resolve,reject,keys,required:owner===null,owners:new Set(owner===null?[]:[owner])};
       if(priority)this.pendingJobs.unshift(row);else this.pendingJobs.push(row);
     });
     if(!this.draining){this.draining=true;Promise.resolve().then(()=>this._drain());}

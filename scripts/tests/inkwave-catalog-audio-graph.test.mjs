@@ -24,6 +24,7 @@ async function probe({ missing, reject, initialized = false, badProtocol = false
     ...helpers.map(([file, name]) => ['patches/splatoon3/runtime/audio/' + file, {[name]() {}}]),
     ['patches/splatoon3/runtime/audio/grain-texture.mjs',{renderTexturePCM:()=>new Float32Array([1,2,3])}],
     ['patches/splatoon3/runtime/audio/reverb-impulse.mjs',{renderReverbPair:()=>[[new Float32Array([4,5]),new Float32Array([6,7])]]}],
+    ['patches/splatoon3/runtime/audio/music-preload-owner.mjs',{claimPreloadedMusic(){},cancelPreloadedMusic(){}}],
   ]);
   if (missing) namespaces.set('patches/splatoon3/runtime/audio/' + missing, {});
   class Worker {
@@ -55,7 +56,7 @@ test('isolated audio graph loads both main-owned helpers without initializing au
   const {loaded, workers, result} = await probe();
   const receipt = await result;
   for (const [file] of helpers) assert.equal(loaded.filter(url => url === prefix + 'patches/splatoon3/runtime/audio/' + file).length, 1);
-  assert.equal(loaded.length, 7);
+  assert.equal(loaded.length, 8);
   assert.equal(receipt.deviceInitialized, false);
   assert.equal(receipt.workerProtocol, 'invalid-id-rejected');
   assert.equal(receipt.workerTerminated, true);

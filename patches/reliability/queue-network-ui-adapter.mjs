@@ -103,7 +103,7 @@ const patches = {
     ],
     [
       "      const wr = a.weaponRunner, near = a.alive && a._nearCamera();\n      const k = a.weapon.kind;",
-      "      const wr = a.weaponRunner, k = a.weapon.kind, loops = a.net.loops;\n      if (!(wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger')) && !((wr.charging || wr.streaming) && k === 'splatling') && !wr.rolling && !loops.charge && !loops.spin && !loops.roll && !a.net._chargerRise && !a.net._chargerOnsetActive) continue;\n      const near = a.alive && a._nearCamera();",
+      "      const wr = a.weaponRunner, k = a.weapon.kind, loops = a.net.loops;\n      if (!(wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger')) && !((wr.charging || wr.streaming) && (k === 'splatling' || a.weapon.behaviorKind === 'splatling' || a.weapon.catalogRecord?.family === 'splatling' || a.weapon.id?.startsWith('s3-spinner-'))) && !wr.rolling && !loops.charge && !loops.spinnerCharge && !loops.spin && !loops.roll && !a.net._chargerRise && !a.net._chargerOnsetActive) continue;\n      const near = a.alive && a._nearCamera();",
       1
     ],
     [
@@ -339,7 +339,7 @@ const patches = {
   "src/fx/screenfx.js": [
     [
       "    r.setRenderTarget(this.rt);\n    r.setClearColor(0x000000, 0);\n    r.clear(true, false, false);\n    if (n) r.render(this.scene, this.cam);\n    r.setRenderTarget(prevRT);\n    r.setClearColor(_cc, ca);\n    this.dirty = false;",
-      "    const clearColor = _cc.clone();\n    try {\n      r.setRenderTarget(this.rt);\n      r.setClearColor(0x000000, 0);\n      r.clear(true, false, false);\n      if (n) r.render(this.scene, this.cam);\n      this.dirty = false;\n    } finally {\n      try { r.setRenderTarget(prevRT); } finally { r.setClearColor(clearColor, ca); }\n    }",
+      "    // Each lens owns its snapshot: reuse it without aliasing the shared colour scratch.\n    const clearColor = this._clearColor || (this._clearColor = _cc.clone());\n    clearColor.copy(_cc);\n    const face = r.getActiveCubeFace?.() ?? 0, mip = r.getActiveMipmapLevel?.() ?? 0;\n    let drawFailed = false;\n    try {\n      r.setRenderTarget(this.rt);\n      r.setClearColor(0x000000, 0);\n      r.clear(true, false, false);\n      if (n) r.render(this.scene, this.cam);\n    } catch (error) { drawFailed = true; throw error; }\n    finally {\n      // Preserve the caller's subresource and the primary draw failure.\n      let restoreFailed = false;\n      try { r.setRenderTarget(prevRT, face, mip); }\n      catch (error) { restoreFailed = true; if (!drawFailed) throw error; }\n      finally {\n        try { r.setClearColor(clearColor, ca); }\n        catch (error) { if (!drawFailed && !restoreFailed) throw error; }\n      }\n    }\n    this.dirty = false;",
       1
     ],
     [

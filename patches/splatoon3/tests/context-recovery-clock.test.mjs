@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { sourceLoadedActorFixture } from './source-loaded-actor-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import {claimPreloadedMusic,cancelPreloadedMusic} from '../runtime/audio/music-preload-owner.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 // Method extraction below is a source-consumer boundary, not a minified-build
@@ -24,12 +25,12 @@ const { G } = f;
 // The production clock receives the exact G used by the real VM Match. No
 // fake clock, Match.update, resume, pad routing, or paint-admission gate.
 installClock({ G });
-const Game = new Function('G', `return class Game {
+const Game = new Function('G','claimPreloadedMusic','cancelPreloadedMusic', `return class Game {
   ${section('  resume() {', '  async quitToMenu() {')}
   ${section('  _padMenus(', '  _updateHud(dt) {')}
   ${section('  _startAttract() {', '  _attractShot() {')}
   ${section('  _beginMatchFlow() {', '  async _startMenuMatch(')}
-}`)(G);
+}`)(G,claimPreloadedMusic,cancelPreloadedMusic);
 installGame(Game);
 after(() => f.reset());
 

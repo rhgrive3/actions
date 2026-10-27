@@ -55,17 +55,47 @@ function addStyle() {
   if (style.getRootNode() === doc) rankedStyleByDocument.set(doc, style);
 }
 
+const zonesTextCache = new WeakMap();
+function zoneTextEntry(engine, coverage, captured, names, lang) {
+  // Only the frozen production samples are eligible. Mutable/custom arrays
+  // keep the original formatter, including sparse/accessor semantics.
+  if (!Array.isArray(coverage) || !Object.isFrozen(coverage)) return null;
+  const name0=names?.[0],name1=names?.[1];
+  if (name0 != null && typeof name0 !== 'string' || name1 != null && typeof name1 !== 'string') return null;
+  let cache=zonesTextCache.get(engine);
+  if (!cache) { cache={rows:[],text:null}; zonesTextCache.set(engine,cache); }
+  let same=cache.text!==null && cache.lang===lang && cache.name0===name0 && cache.name1===name1 && cache.rows.length===coverage.length;
+  for(let i=0;i<coverage.length;i++) {
+    const pair=coverage[i];
+    if(!Array.isArray(pair)||pair.length!==2||!Object.isFrozen(pair)){cache.text=null;return null;}
+    const d0=Object.getOwnPropertyDescriptor(pair,'0'),d1=Object.getOwnPropertyDescriptor(pair,'1');
+    if(!d0||!d1||!('value' in d0)||!('value' in d1)){cache.text=null;return null;}
+    const a=Math.round(clamp01(d0.value)*100),b=Math.round(clamp01(d1.value)*100),owner=captured[i]?.team;
+    const row=cache.rows[i]||(cache.rows[i]={});
+    if(row.a!==a||row.b!==b||row.owner!==owner)same=false;
+    row.a=a;row.b=b;row.owner=owner;
+  }
+  cache.rows.length=coverage.length;cache.lang=lang;cache.name0=name0;cache.name1=name1;cache.same=same;
+  if(!same)cache.text=null;
+  return cache;
+}
 export function objectiveText(engine, G, api = {}) {
   const t = (text, vars) => rankedText(api.LANG, text, vars);
   const state = engine.rule?.state || {}, frame = engine.frame || {};
   if (engine.mode === 'zones') {
     const coverage = frame.zoneCoverage || [];
     const captured = state.zones || [];
-    if (coverage.length) return coverage.map((pair, i) => {
+    if (coverage.length) {
+      const cache=zoneTextEntry(engine,coverage,captured,G.palette?.names||G.match?.palette?.names,api.LANG);
+      if(cache?.same)return cache.text;
+      const text=coverage.map((pair, i) => {
       const a = Math.round(clamp01(pair?.[0]) * 100), b = Math.round(clamp01(pair?.[1]) * 100);
       const owner = captured[i]?.team;
       return `${t('ZONE {n}', { n: i + 1 })} ${a}/${b}${owner === 0 || owner === 1 ? ` · ${t(teamName(owner, G.palette?.names || G.match?.palette?.names))}` : ''}`;
-    }).join('   ');
+      }).join('   ');
+      if(cache)cache.text=text;
+      return text;
+    }
     return state.controllingTeam === 0 || state.controllingTeam === 1
       ? t('{team} CONTROLS ALL ZONES', { team: t(teamName(state.controllingTeam, G.palette?.names || G.match?.palette?.names)) }) : t('CAPTURE ALL ZONES');
   }
@@ -128,11 +158,15 @@ function writeRankedLabel(node, language, source, number) {
 }
 
 function updateHud(hud, G, api) {
-  const t = (text, vars) => rankedText(api.LANG, text, vars);
   const engine = rankedOf(G);
   if (!hud?.el || typeof document === 'undefined') return;
-  addStyle();
   let el = hud._rankedHud;
+  if (!engine) {
+    if (el && !el.hidden) el.hidden = true;
+    return;
+  }
+  const t = (text, vars) => rankedText(api.LANG, text, vars);
+  addStyle();
   if (!el) {
     el = document.createElement('div');
     el.className = 'iw-ranked-hud';
@@ -140,8 +174,7 @@ function updateHud(hud, G, api) {
     hud.el.appendChild(el);
     hud._rankedHud = el;
   }
-  if (el.hidden !== !engine) el.hidden = !engine;
-  if (!engine) return;
+  if (el.hidden) el.hidden = false;
   const refs = hud._rankedHudRefs?.root === el ? hud._rankedHudRefs : (hud._rankedHudRefs = {
     root: el, rule: el.querySelector('.iw-ranked-hud__rule'), teams: el.querySelectorAll('[data-team]'),
     counts: el.querySelectorAll('[data-count]'), penalties: el.querySelectorAll('[data-penalty]'),

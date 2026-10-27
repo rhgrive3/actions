@@ -2,7 +2,9 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {loadNative} from './prop-retention-fixture.mjs';
 const native=await loadNative(true),raw=await loadNative(false);
 const hash=a=>crypto.createHash('sha256').update(Buffer.from(a.buffer,a.byteOffset,a.byteLength)).digest('hex');
-const state=kit=>[...kit._meshes,...kit._inst].map(m=>({name:m.name,count:m.count,attrs:Object.fromEntries(Object.entries(m.geometry.attributes).map(([k,a])=>[k,hash(a.array)])),index:m.geometry.index&&hash(m.geometry.index.array)}));
+// An omitted all-zero UV stream has the same default shader coordinates as
+// the retained all-zero attribute. Keep every nonzero UV and all other bytes.
+const state=kit=>[...kit._meshes,...kit._inst].map(m=>({name:m.name,count:m.count,attrs:Object.fromEntries(Object.entries(m.geometry.attributes).filter(([k,a])=>k!=='uv'||a.array.some(v=>v!==0)).map(([k,a])=>[k,hash(a.array)])),index:m.geometry.index&&hash(m.geometry.index.array)}));
 function make(N){const k=new N.PropKit(new N.THREE.Scene(),{quality:'high'}),cols=N.dressingFor('halyard').flatMap(p=>k.add(p.type,p).colliders);return{k,cols,refs:[...k._buckets.values()].flat().map(p=>p.g)};}
 test('Halyard final buffers and collisions survive last-owner eviction and exact re-entry',t=>{
  const a=make(raw);a.k.build();const expected=state(a.k);a.k.dispose();

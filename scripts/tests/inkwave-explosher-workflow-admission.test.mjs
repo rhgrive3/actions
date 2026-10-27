@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {requireExplosherWorkflowEvent,OWNED_BRANCH,BASE_BRANCH,COMMON_HEAD} from '../lib/inkwave-explosher-workflow-admission.mjs';
+import {requireComparableExplosherGeometryGrowth} from '../lib/inkwave-explosher-stage-admission.mjs';
 const fixture=()=>({eventName:'pull_request',repository:'rhgrive3/actions',checkoutHead:'a'.repeat(40),event:{action:'synchronize',pull_request:{head:{ref:OWNED_BRANCH,sha:'a'.repeat(40),repo:{full_name:'rhgrive3/actions'}},base:{ref:BASE_BRANCH,sha:COMMON_HEAD,repo:{full_name:'rhgrive3/actions'}}}}});
 for(const action of['opened','synchronize','reopened'])test('admits owned same-repo '+action+' only to initial pair',()=>{const f=fixture();f.event.action=action;assert.equal(requireExplosherWorkflowEvent(f).scope,'initial-preflight-pair-only');});
 for(const[name,mutate]of[
@@ -25,4 +26,30 @@ test('general PR regressions retain latest build while specialized native QA use
  assert(y.indexOf('Install required PNG decoder')<y.indexOf('Native production-composition regressions'));
  assert.match(y,/same-build native preflight/);assert.match(y,/Historical common-build QA; no latest-gameplay parity claim/);
  assert.doesNotMatch(y,/check-inkwave-explosher-flight-glitter\.mjs \.built-site\/explosher-current/);
+});
+
+const geometryFixture=(boot=254,growth=27)=>({
+ sceneCensus:{actors:[{key:'local-character'}],categories:[{owner:'background',objects:100}]},
+ sceneSources:[{status:'ready',variant:'source'}],
+ memory:{geometries:boot+growth,textures:46},
+ rngDiagnostic:{enabled:true,boundaries:[
+  {label:'shot-input-start',nativeState:{resources:{geometries:boot}}},
+  {label:'native-birth',nativeState:{resources:{geometries:boot}}},
+  {label:'before-draw-probe',nativeState:{resources:{geometries:boot+growth}}},
+  {label:'after-draw-probe',nativeState:{resources:{geometries:boot+growth}}}
+ ]}
+});
+test('geometry gate accepts different cold allocations only with identical active scene and shot growth',()=>{
+ const before=geometryFixture(),after=geometryFixture(268,27);
+ assert.deepEqual(requireComparableExplosherGeometryGrowth(before,after),{before:{born:254,growth:27},after:{born:268,growth:27}});
+});
+test('geometry gate rejects new projectile GPU allocations, unstable probes, absent source identity and forged boundaries',()=>{
+ const before=geometryFixture();
+ const bigger=geometryFixture(268,28);assert.throws(()=>requireComparableExplosherGeometryGrowth(before,bigger),/extra post-birth geometry/);
+ const drift=geometryFixture(268,27);drift.rngDiagnostic.boundaries[3].nativeState.resources.geometries++;
+ assert.throws(()=>requireComparableExplosherGeometryGrowth(before,drift),/Unexpected geometry growth/);
+ const census=geometryFixture(268,27);census.sceneCensus.categories[0].objects++;
+ assert.throws(()=>requireComparableExplosherGeometryGrowth(before,census),/Active scene census/);
+ const dup=geometryFixture(268,27);dup.rngDiagnostic.boundaries.push(dup.rngDiagnostic.boundaries[1]);
+ assert.throws(()=>requireComparableExplosherGeometryGrowth(before,dup),/Missing\/duplicated/);
 });

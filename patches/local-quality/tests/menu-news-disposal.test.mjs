@@ -22,7 +22,7 @@ function fixture(source) {
   const env = { clearTimeout: id => timers.delete(id), cancelAnimationFrame: id => frames.delete(id),
     performance: { now: () => 100 }, clamp: (n, lo, hi) => Math.min(hi, Math.max(lo, n)),
     safeCall: fn => fn(), clearContinuation() {}, window: { removeEventListener() {} }, document: { fonts: { removeEventListener() {} } } };
-  const News = methods(adaptBuildSource('src/ui/news.js', newsRaw), 'WhatsNew', ['constructor', 'dispose'], env);
+  const News = methods(adaptBuildSource('src/ui/news.js', newsRaw), 'WhatsNew', ['constructor', '_cancelHeroWait', 'dispose'], env);
   const Menu = methods(source, 'Menus', ['update', 'dispose'], env);
   const menu = new Menu();
   // Keep constructor-owned tween state and the real menu owner: dispose now
@@ -30,7 +30,7 @@ function fixture(source) {
   const news = new News(menu); Object.assign(news, { _t: 10, _raf: 20, _pre: [{}], el: { remove: () => removed.push('news') } });
   news._tweens.push({});
   Object.assign(menu, { _news: news, _modal: news.el, _raf: 30, _fitQ: 40, _swapToken: 0,
-    _cur: {}, _tick() {}, wipe: { cancel() {} }, el: { remove: () => removed.push('menu') } });
+    _cur: {}, _tick() {}, _cancelHeroWait() {}, wipe: { cancel() {} }, el: { remove: () => removed.push('menu') } });
   return { menu, news, timers, frames, removed };
 }
 

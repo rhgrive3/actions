@@ -15,7 +15,7 @@ export function validateCatalogAudioWorker(root) {
 // audio device or synthesize voices in this motion fixture. The worker receives
 // an invalid-ID protocol probe only; real-only audio remains unchanged.
 export async function catalogAudioGraph(prefix) {
-  const [{audio},{music},runtime,combat,blaster]=await Promise.all([
+  const [{audio},{music},runtime,combat,blaster,preloadOwner]=await Promise.all([
     import(prefix+'src/audio/audio.js'),import(prefix+'src/audio/music.js'),
     import(prefix+'patches/splatoon3/runtime/audio/runtime.mjs'),
     // These live helpers are owned by composed src/main.js, not audio.js.
@@ -23,9 +23,12 @@ export async function catalogAudioGraph(prefix) {
     // helpers here rather than exempting their immutable loaded-byte receipts.
     import(prefix+'patches/splatoon3/runtime/audio/combat-hit-classifier.mjs'),
     import(prefix+'patches/splatoon3/runtime/audio/blaster-hit.mjs'),
+    // Composed main owns this preload lifetime helper; isolated catalog does not boot main.
+    import(prefix+'patches/splatoon3/runtime/audio/music-preload-owner.mjs'),
   ]);
   if(!audio||!music||typeof audio.playWeapon!=='function'||typeof audio.loopWeapon!=='function'||typeof music.play!=='function'||typeof runtime.installWeaponAudioRuntime!=='function')throw Error('Catalog production audio entry graph missing');
   if(typeof combat.sourceChargerHitCue!=='function'||typeof blaster.blasterHitCueKind!=='function')throw Error('Catalog production main audio helper graph missing');
+  if(typeof preloadOwner.claimPreloadedMusic!=='function'||typeof preloadOwner.cancelPreloadedMusic!=='function')throw Error('Catalog production preload ownership helper missing');
   if(audio.ctx!==null)throw Error('Catalog audio graph unexpectedly initialized device');
   const workerPath=prefix+'patches/splatoon3/runtime/audio/render-worker.js';
   const worker=new Worker(workerPath,{name:'catalog-audio-graph'});

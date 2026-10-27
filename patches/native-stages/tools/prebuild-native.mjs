@@ -26,7 +26,7 @@ import {prebuiltConverterIdentity} from '../../../scripts/lib/inkwave-native-pre
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The worker's own compaction, taken from its source (as source-worker-compaction.test.mjs does).
 const WORKER_SOURCE = fs.readFileSync(path.join(HERE, '../runtime/source-worker.mjs'), 'utf8');
-const compactInactiveDisplay = new Function(WORKER_SOURCE.slice(WORKER_SOURCE.indexOf('function compactInactiveDisplay'), WORKER_SOURCE.indexOf('self.onmessage')) + '\nreturn compactInactiveDisplay;')();
+const {compactInactiveDisplay, prepareDisplayTransport} = new Function(WORKER_SOURCE.slice(WORKER_SOURCE.indexOf('function compactInactiveDisplay'), WORKER_SOURCE.indexOf('self.onmessage')) + '\nreturn {compactInactiveDisplay, prepareDisplayTransport};')();
 const REPO = path.resolve(HERE, '../../..');
 const OUT = path.resolve(process.env.INKWAVE_PREBUILT_OUT || path.join(REPO, 'native-prebuilt'));
 const WORK = path.resolve(process.env.INKWAVE_PREBUILT_WORK || path.join(os.tmpdir(), 'inkwave-prebuild'));
@@ -187,7 +187,7 @@ async function prebuild(stage, catalogStage) {
   console.log(`[${stage.id}] convert`);
   // Same options as source-worker.mjs on an unconstrained client.
   let data = convertSource(catalogStage, new Uint8Array(obj.buffer, obj.byteOffset, obj.byteLength), mtl, files, () => {}, null, {compactBVHCenters: false, compactInactiveDisplay: true});
-  data = compactInactiveDisplay(data);
+  data = prepareDisplayTransport(compactInactiveDisplay(data));
   const manifest = data.manifest;
   // Paint-chart faces are ~0.5 KB of JSON each (33 MB on Brinewater). Store
   // them column-wise; the runtime rebuilds the identical objects.

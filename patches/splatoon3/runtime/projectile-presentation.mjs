@@ -165,7 +165,7 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // the bead straight down on its first tick. Tri-Slosher's shared Bucket
     // art follows the existing captured paint heading; positions still fall
     // exactly with the authoritative queue. No second flight is simulated.
-    if(tri&&Math.hypot(d.dirX||0,d.dirZ||0)>1e-6)
+    if(tri&&(Math.abs(d.dirX||0)>1e-6||Math.abs(d.dirZ||0)>1e-6||Math.hypot(d.dirX||0,d.dirZ||0)>1e-6))
       direction.set(d.dirX,0,d.dirZ).normalize();
     else { direction.copy(d.vel); if(speed>1e-6)direction.multiplyScalar(1/speed); else direction.copy(axis); }
     rotation.setFromUnitVectors(axis,direction);

@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {Texture as TestTexture} from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {FACE_KEYS, FACE_F64, FACE_I32, PREBUILT_SCHEMA, unpackFaces, unpackFacesAsync} from '../runtime/prebuilt-format.mjs';
 import {admitPrebuiltStages, prebuiltConverterIdentity} from '../../../scripts/lib/inkwave-native-prebuilt.mjs';
 import {copyPrebuiltNativeAssets} from '../../../scripts/lib/inkwave-native-stages.mjs';
@@ -145,20 +146,20 @@ if (!vm.SourceTextModule) {
     await assert.rejects(load(await loader(short.files), short.entry, 's'), /faces incomplete/);
   });
 
-  async function harness({ktx2Fails = false, abort = false, parse = null, packFails=false, initFails=0, clock={value:0}} = {}) {
-    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: [], resized: [], disposedLoaders: 0,initialized:0}, signal = {aborted: false};
-    class Texture { constructor(image) { this.image = image; } dispose() { this.disposed = true; } }
-    const context = vm.createContext({Date:{now:()=>clock.value},Map, Blob, Uint8Array, DOMException, URL, location: {href: 'https://game.test/_versions/r/index.html'},
+  async function harness({ktx2Fails = false, abort = false, parse = null, packFails = false, initFails = 0, clock = {value:0}} = {}) {
+    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: [], resized: [], disposedLoaders: 0, initialized: 0}, controller = new AbortController(), signal = controller.signal;
+    class Texture extends TestTexture { dispose() { this.disposed = true; super.dispose(); } }
+    const context = vm.createContext({Date: {now: () => clock.value}, Map, Blob, Uint8Array, DOMException, AbortController, URL, location: {href: 'https://game.test/_versions/r/index.html'},
       console: {warn: m => calls.warned.push(m)},
       createImageBitmap: async (_, options) => { if (options?.resizeWidth) calls.resized.push(options.resizeWidth); else calls.bitmaps++; return {width: options?.resizeWidth || 2048, height: options?.resizeHeight || 2048, close() {}}; },
       OffscreenCanvas: class { getContext() { return {drawImage() {}, getImageData: (x, y, w, h) => ({data: new Uint8ClampedArray(w * h * 4).fill(128)})}; } }});
     const make = values => { const m = new vm.SyntheticModule(Object.keys(values), function () { for (const [k, v] of Object.entries(values)) this.setExport(k, v); }, {context}); return m; };
     const ready = async m => { await m.link(() => { throw Error('unexpected'); }); await m.evaluate(); return m; };
     class KTX2Loader { init(){return this._init||(this._init=++calls.initialized<=initFails?Promise.reject(Error('init unavailable')):Promise.resolve());} setTranscoderPath() { return this; } detectSupport() { return this; } dispose() { calls.disposedLoaders++; }
-      parse(bytes, onLoad, onError) { calls.parsed++; calls.slices.push(Array.from(new Uint8Array(bytes))); if (abort) signal.aborted = true;
+      parse(bytes, onLoad, onError) { calls.parsed++; calls.slices.push(Array.from(new Uint8Array(bytes))); if (abort) controller.abort();
         if (parse) return parse(onLoad, onError);
         if (ktx2Fails) return onError(Error('transcoder unavailable'));
-        onLoad({isCompressedTexture: true, image: {width: 2048, height: 2048}, mipmaps: [2048, 1024, 512, 256].map(n => ({width: n, height: n, data: new Uint8Array(1)})), dispose() {}}); } }
+        onLoad(Object.assign(new Texture({width: 2048, height: 2048}), {isCompressedTexture: true, format: 33776, mipmaps: [2048, 1024, 512, 256].map(n => ({width: n, height: n, data: new Uint8Array(1)}))})); } }
     const dynamic = {
       '../../../vendor/three/jsm/loaders/KTX2Loader.js': {KTX2Loader},
       './prebuilt-load.mjs': {fetchVerified: async file => { calls.packs.push(file); if(packFails)throw Error('pack unavailable'); return Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7]).buffer; }},
@@ -191,7 +192,7 @@ if (!vm.SourceTextModule) {
     assert.equal(calls.bitmaps, 0);
     const t = result.get('a.png');
     assert.equal(JSON.stringify([t.image, t.mipmaps.map(m => m.width)]), JSON.stringify([{width: 1024, height: 1024}, [1024, 512, 256]]));
-    assert.deepEqual([t.colorSpace, t.wrapS, t.wrapT, t.anisotropy, t.needsUpdate], ['srgb', 1000, 1000, 4, true]);
+    assert.deepEqual([t.colorSpace, t.wrapS, t.wrapT, t.anisotropy, t.version], ['srgb', 1000, 1000, 4, 1]);
     // Both textures are slices of one pack fetched once.
     assert.deepEqual(calls.packs, ['packs/p.bin']);
     assert.deepEqual(calls.slices.map(x => x.join()).sort(), ['2,3,4', '5,6']);
@@ -219,7 +220,7 @@ if (!vm.SourceTextModule) {
     assert.equal(aborted.error?.name, 'AbortError');
     assert.equal(aborted.calls.bitmaps, 0);
   });
-  const compressed = (n = 1024) => ({isCompressedTexture: true, image: {width: n, height: n}, mipmaps: [{width: n, height: n, data: new Uint8Array(1)}], dispose() {}});
+  const compressed = (n = 1024) => Object.assign(new TestTexture({width: n, height: n}), {isCompressedTexture: true, format: 33776, mipmaps: [{width: n, height: n, data: new Uint8Array(1)}]});
   test('a renderer replacement waits for pending KTX2 parses before disposing the old loader', async () => {
     const waiting = [];
     const {calls, run} = await textures({manual: true, parse: (onLoad, onError) => waiting.push({onLoad, onError})});

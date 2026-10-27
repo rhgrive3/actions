@@ -166,7 +166,7 @@ async function keyboardProof() {
   Object.assign(f.context,{window,document,KeyboardEvent,AbortController,
     navigator:{userAgent:'ranked keyboard regression',maxTouchPoints:0,getGamepads:()=>[]},
     screen:{width:1280,height:800,orientation:{angle:0}},localStorage:{getItem:()=>null},RG:f.G,
-    __rankedReplication:{motionTimer:null}});
+    __rankedReplication:{motionTimer:null,armDodge(){ /* Actual browser observer is installed separately. */ }}});
   const synthetic=(identifier,values)=>new vm.SyntheticModule(Object.keys(values),function(){for(const [key,value]of Object.entries(values))this.setExport(key,value);},{context:f.context,identifier});
   function load(url) {
     if(url.href.startsWith(new URL('patches/',upstream).href))url=new URL(url.href.slice(upstream.href.length),root);

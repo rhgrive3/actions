@@ -9,7 +9,7 @@ const INSTALLED = Symbol.for('inkwave.s3.slosher-intermediate-paint.v1');
 
 const clamp01 = value => value < 0 ? 0 : value > 1 ? 1 : value;
 
-export function slosherIntermediateSpec(projectile, scale = 1) {
+export function slosherIntermediateSpec(projectile, scale = 1, staticPlans = null) {
   const unit = projectile?.fidelitySloshUnit;
   const group = unit?.SplashAndSplashWallHitSpawnPrm;
   const index = projectile?.fidelitySloshIndex;
@@ -36,14 +36,26 @@ export function slosherIntermediateSpec(projectile, scale = 1) {
   // Use it inside the source-declared 0.7..0.9 rate interval; no extra RNG is
   // introduced, so network/fixture replays stay deterministic.
   const rate = min + (max - min) * clamp01(Number.isFinite(projectile.seed) ? projectile.seed : .5);
+  let plan;
+  if(staticPlans){
+    let indices=staticPlans.get(unit);if(!indices){indices=new Map();staticPlans.set(unit,indices);}
+    const old=indices.get(index);
+    if(old&&Object.is(old.scale,scale)&&Object.is(old.width,width)&&Object.is(old.depth,depth)&&Object.is(old.spawnNum,spawnNum))plan=old.plan;
+    else {
+      plan=Object.freeze({widthHalf:width*scale,depthScale:depth,spawnNum:Math.max(0,Math.floor(spawnNum)),
+        drop:Object.freeze({gravity:SPLASH_GRAVITY_PER_FRAME2*3600*scale,drag:SPLASH_DROP_AIR_RESIST,
+          depthScaleMax:depth,depthScaleMin:depth,dropHeightMax:0,dropHeightMin:0,surfaceOnly:true,randomVelocity:null})});
+      indices.set(index,{scale,width,depth,spawnNum,plan});
+    }
+  }
   return Object.freeze({
     targetLength: rate * between * scale,
     spacing: between * scale,
     drawRadius: Number.isFinite(draw.DrawRadius) ? draw.DrawRadius * scale : 0,
-    widthHalf: width * scale,
+    widthHalf: plan?plan.widthHalf:width * scale,
     depthScale: depth,
-    spawnNum: Math.max(0, Math.floor(spawnNum)),
-    drop: Object.freeze({ gravity: SPLASH_GRAVITY_PER_FRAME2 * 3600 * scale, drag: SPLASH_DROP_AIR_RESIST,
+    spawnNum: plan?plan.spawnNum:Math.max(0, Math.floor(spawnNum)),
+    drop: plan?plan.drop:Object.freeze({ gravity: SPLASH_GRAVITY_PER_FRAME2 * 3600 * scale, drag: SPLASH_DROP_AIR_RESIST,
       depthScaleMax: depth, depthScaleMin: depth, dropHeightMax: 0, dropHeightMin: 0, surfaceOnly: true, randomVelocity: null }),
   });
 }
@@ -59,13 +71,13 @@ export function installSlosherIntermediatePaint(api, profile) {
   // Runtime source parameters are fixed for a spawned glob. The same projectile
   // can run dozens of fixed ticks; avoid Combination.find, Array construction
   // and Object.freeze on every tick, while respecting pooled projectile reuse.
-  const specs = new WeakMap();
+  const specs = new WeakMap(), staticPlans = new WeakMap();
   const specFor = p => {
     const prev = specs.get(p);
     if (prev && prev.unit === p.fidelitySloshUnit &&
         prev.index === p.fidelitySloshIndex && Object.is(prev.seed, p.seed))
       return prev.spec;
-    const spec = slosherIntermediateSpec(p, scale);
+    const spec = slosherIntermediateSpec(p, scale, staticPlans);
     specs.set(p, { unit: p.fidelitySloshUnit, index: p.fidelitySloshIndex,
       seed: p.seed, spec });
     return spec;

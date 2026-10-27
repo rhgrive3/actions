@@ -15,7 +15,12 @@ jobs:
         with:
           ref: 0430673b09a5009628fc87baa414b3560090fc1d
           path: work/wiper-source
-          fetch-depth: 0
+          fetch-depth: 1
+      - name: Fetch the immutable baseline objects used by the two-module overlay
+        run: |
+          git -C work/wiper-source fetch --no-tags --depth=1 origin 7581ca9be8cf87d253918b8abb3b8ebe728c2093
+          git -C work/wiper-source cat-file -e '7581ca9be8cf87d253918b8abb3b8ebe728c2093^{tree}'
+          git -C work/wiper-source cat-file -e '0430673b09a5009628fc87baa414b3560090fc1d^{tree}'
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -66,7 +71,7 @@ jobs:
         with:
           ref: 0430673b09a5009628fc87baa414b3560090fc1d
           path: work/wiper-source
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -90,6 +95,16 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0430673b09a5009628fc87baa414b3560090fc1d
+          path: work/wiper-source
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: wiper-one-build
+          path: work
       - uses: actions/setup-node@v4
         with:
           node-version: 22

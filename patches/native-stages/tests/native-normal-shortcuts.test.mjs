@@ -11,8 +11,8 @@ async function run(source,pixels,{encoding='unorm-rg',direct=false,size=256}={})
  let hypotCalls=0,readBytes=0;
  const countedMath=Object.create(Math);
  countedMath.hypot=(...args)=>{hypotCalls++;return Math.hypot(...args)};
- class Texture { constructor(image){this.image=image} dispose(){} }
- const context=vm.createContext({Blob,DOMException,console,Math:countedMath,
+ class Texture extends EventTarget { constructor(image){super();this.image=image} dispose(){this.dispatchEvent(new Event('dispose'));} }
+ const context=vm.createContext({AbortController,Blob,DOMException,console,Math:countedMath,
   createImageBitmap:async()=>({width:size,height:size,sourcePixels:pixels,close(){}}),
   OffscreenCanvas:class { constructor(width,height){this.width=width;this.height=height} getContext(){return {drawImage(){},getImageData(x,y,w,h){
    assert.equal(x,0);assert.equal(w,size);

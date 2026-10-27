@@ -41,11 +41,11 @@ export class NavGraph {
     this.x0 = B.minX + st / 2; this.z0 = B.minZ + st / 2;
     this.nx = Math.floor((B.maxX - B.minX) / st); this.nz = Math.floor((B.maxZ - B.minZ) / st);
     this.cells = new Array(this.nx * this.nz);
-    const ids = [];
+    const ids = [], heights = [];
     for (let iz = 0; iz < this.nz; iz++) {
       for (let ix = 0; ix < this.nx; ix++) {
         const x = this.x0 + ix * st, z = this.z0 + iz * st;
-        const heights = [];
+        heights.length = 0;
         L.queryBlocks(x - 0.01, z - 0.01, x + 0.01, z + 0.01, ids);
         for (const id of ids) {
           const b = L.blocks[id];

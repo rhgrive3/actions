@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Three additional root-assigned paint queues",
+  "counts": {
+    "implemented-local": 3
+  },
+  "validation": {
+    "newTestsPassed": 6,
+    "cpuStamps": 3200,
+    "growthPacingHz": [
+      30,
+      60,
+      120
+    ],
+    "paintKinds": 20,
+    "layoutCases": 187,
+    "layoutAttempts": 5167,
+    "layoutRetries": 4980,
+    "authoredLegacyStages": [
+      "tidewater",
+      "kelpline",
+      "halyard",
+      "cargo",
+      "range"
+    ],
+    "contracts": [
+      "Per-stamp claimed area, ownership/counter/grid/version and dirty row parity",
+      "Growth and ancillary ownership with both native and legacy flags",
+      "Exact submitted GPU attribute bytes/order and recorded authoritative splat packets",
+      "Pooled record release/reuse, old seven-slot records and hidden presentation snapshots",
+      "NaN/Infinity/signed-zero projection and changed-radius fallback",
+      "Stable shelf packing and failed-trial atomicity"
+    ],
+    "nativeSettledAndCellCacheSlots": "Dedicated two-second native wall drip verifies exact replay and integer/bounded per-face cache slots for eight-slot entries.",
+    "relatedSuitesPassed": [
+      "patches/splatoon3/tests/issue-803-paint-splat-pool.test.mjs",
+      "patches/splatoon3/tests/issue-1165-roller-band-grid.test.mjs",
+      "patches/splatoon3/tests/paint-hidden-simulation.test.mjs",
+      "patches/native-stages/tests/ancillary-cell-replay.test.mjs"
+    ]
+  },
+  "limitations": [
+    "Node actual-module parity and allocation/call suppression are verified; physical-device FPS, GPU pixels and retail behavioral comparisons are not measured.",
+    "The eighth slot adds one transient Number per accepted face; arrays remain under the existing bounded pooling and release lifecycle."
+  ],
+  "items": [
+    {
+      "key": "legacy-paint-cpu-splat-guarded-hypot-fastpaths",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy CPU paint grid: short-circuit two provably unnecessary hypot paths",
+      "library_file_id": "libfile_842380638dd481918de06e4ded5d58c7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-paint-cpu-splat-guarded-hypot-fastpaths.md",
+      "status": "implemented-local",
+      "reason": "Only the exact roller rectangle interior substitutes +0 for hypot(max(qa,0),max(qb,0)); the existing stronger ordinary squared outer/inner gates are kept. Real CPU stamp outputs, dirty rows, ownership order, counters and grid are identical across legacy/native cases.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-paint-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-paint-20261026-adapter.mjs",
+          "needle": "qa <= 0 && qb <= 0 ? 0",
+          "line": 15,
+          "sha256": "d03c37c86f6d2ec10e3e46230478bfdf7e7592b441670bc2c85fd7542f10a235"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-paint-20261026.test.mjs"
+      ]
+    },
+    {
+      "key": "legacy-paint-growth-cache-projection-radius-per-face",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy ink growth: cache per-face projection radius rather than sqrt each redraw",
+      "library_file_id": "libfile_2536f2343cf88191ae63d7eed4164316",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-paint-growth-cache-projection-radius-per-face.md",
+      "status": "implemented-local",
+      "reason": "Cache the unclamped per-face projection in the eighth slot with an explicit stride and radius identity. Admission retains its clamp/NaN/signed-zero behavior; seven-slot external records and radius changes fall back. Pool release, ancillary ownership, hidden snapshots and both native/robo instrumentation consumers use the correct stride.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-paint-20261026-adapter.mjs",
+        "patches/splatoon3/runtime/paint-ownership.mjs",
+        "scripts/check-inkwave-robo-performance.mjs",
+        "scripts/check-inkwave-native-stages.mjs",
+        "patches/native-stages/adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-paint-20261026-adapter.mjs",
+          "needle": "g.entryStride = 8; g.entryRadius = radius",
+          "line": 25,
+          "sha256": "d03c37c86f6d2ec10e3e46230478bfdf7e7592b441670bc2c85fd7542f10a235"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-paint-20261026.test.mjs"
+      ]
+    },
+    {
+      "key": "legacy-paint-shelf-pack-retry-reuse-rect-staging",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy塗りアトラスの棚詰め失敗リトライ時の矩形レコード再利用",
+      "library_file_id": "libfile_3210abb2246481918ec4b17da956f724",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-paint-shelf-pack-retry-reuse-rect-staging.md",
+      "status": "implemented-local",
+      "reason": "One layout-local record set and working array are reused across retries. Each trial restores original face order, recomputes exact sizes and uses the unchanged stable comparator/shelf packing. Failed trials never publish atlas writes. The existing native layout path and standalone _tryPack default remain unchanged.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-paint-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-paint-20261026-adapter.mjs",
+          "needle": "const staging = { records: faces.map",
+          "line": 41,
+          "sha256": "d03c37c86f6d2ec10e3e46230478bfdf7e7592b441670bc2c85fd7542f10a235"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-paint-20261026.test.mjs"
+      ]
+    }
+  ]
+}

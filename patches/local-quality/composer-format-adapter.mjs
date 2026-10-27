@@ -94,9 +94,11 @@ export function selectComposerTargetFormat(THREE, renderer, {
     return fallback('framebuffer-probe-unavailable');
   }
 
-  let previous;
+  let previous, previousFace, previousMip;
   try {
     previous = renderer.getRenderTarget();
+    previousFace = renderer.getActiveCubeFace?.() ?? 0;
+    previousMip = renderer.getActiveMipmapLevel?.() ?? 0;
   } catch {
     return fallback('framebuffer-probe-unavailable');
   }
@@ -117,7 +119,7 @@ export function selectComposerTargetFormat(THREE, renderer, {
     framebufferComplete = false;
   } finally {
     try {
-      renderer.setRenderTarget(previous);
+      renderer.setRenderTarget(previous, previousFace, previousMip);
     } catch {
       // The context may already be lost; disposing the probe still releases its
       // Three.js-side references and the next restored renderer can retry.

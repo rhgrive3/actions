@@ -1,0 +1,219 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "counts": {
+    "implemented-local": 12,
+    "implemented-partially": 1
+  },
+  "scope": "Additional flight/special queues delegated after audio/sub work. World-domain keys are cross-owned with the world report and must not be counted twice.",
+  "validation": {
+    "newRegressionTests": 13,
+    "newTestFiles": [
+      "patches/splatoon3/tests/queue-inkflight-local-20261026.test.mjs",
+      "patches/splatoon3/tests/queue-specials-local-20261026.test.mjs"
+    ],
+    "baselineFixtures": [
+      "patches/splatoon3/tests/fixtures/queue-inkflight-before-20261026.json",
+      "patches/splatoon3/tests/fixtures/queue-specials-before-20261026.json"
+    ],
+    "addedWeaponsParity": "11/11 subtests pass; actual canShareSourceFootprint binding supplied to the isolated kernel fixture without changing expected values.",
+    "inkFlightRelatedSuiteFilesPassed": 8,
+    "specialRelatedSuiteFilesPassed": 8,
+    "allSpecialsFullSuite": {
+      "subtestsPassed": 84,
+      "nodeHeapMiB": 6144,
+      "note": "Default 2 GiB heap exhausted during the first attempt; unchanged suite passed with 6 GiB heap."
+    },
+    "allSpecialsLog": "reports/queue-local-evidence-20261026/queue-audit/all-specials-flight-subagent.tap",
+    "nodeFlags": "--experimental-vm-modules --experimental-global-webcrypto"
+  },
+  "crossOwnedChange": {
+    "key": "shared-aoe-hit-distance-pass-once",
+    "evidence": [
+      "patches/splatoon3/runtime/all-specials.mjs",
+      "patches/splatoon3/runtime/all-subs.mjs"
+    ],
+    "reason": "Both callers save all six point/center coordinates around LOS. Reuse requires Object.is-identical coordinates and the same native distanceTo method; mutation, custom distance methods and shapeContact paths recompute as before.",
+    "tests": "queue-specials-local-20261026.test.mjs compares native unchanged, mutated point, mutated center, replaced method, custom method, shape callback and rejected LOS against actual base function bodies."
+  },
+  "limitations": [
+    "Inkjet retains the center clone and escaping predicate; only the redundant inside closure is removed.",
+    "The shared segment queue deliberately leaves mutable/custom classification and callback paths unchanged.",
+    "Tests execute actual Three.js and composed methods, but no device FPS/CPU/GC gain, 20-minute browser replay, pixel-diff or retail 11.3.0 equivalence is claimed."
+  ],
+  "items": [
+    {
+      "key": "inkflight-emit-along-reuse-planar-head-heading",
+      "status": "implemented-local",
+      "reason": "Each admitted emitAlong segment lazily shares the original scalar planar heading. Tracing and overridden spawnDrop methods use the original per-birth path; direct calls retain their fallback. No heading is cached across segments or pooled lives.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-inkflight-20261026-adapter.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] InkFlight: 同一飛翔区間で出生する複数飛沫の水平速度方向を共有",
+      "library_file_id": "libfile_eb1e629f3780819186a2678a06f6c443",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkflight-emit-along-reuse-planar-head-heading.md",
+      "prior_status": null,
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "inkflight-drops-reuse-fixed-tick-orientation-in-render",
+      "status": "implemented-local",
+      "reason": "Pooled records reuse speed and four Quaternion scalars only at the same frame with Object.is-identical velocity components. Every birth and clear invalidates. Position, age, color, shape buffers, capacity checks and matrix writes remain live. The shared scratch normal is still updated; no Quaternion object is added per drop.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-inkflight-20261026-adapter.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] InkFlight の飛沫描画: 同一物理ティック内の速度長・向きQuaternionの再計算を避ける",
+      "library_file_id": "libfile_b377632fbd0c8191be26f2380e1cb525",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkflight-drops-reuse-fixed-tick-orientation-in-render.md",
+      "prior_status": null,
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "source-flight-splash-share-segment-heading-and-footprint",
+      "status": "implemented-local",
+      "reason": "Adopts the provable subsets: owned callback-free distance states share direction after the first real release; wall/custom/fallback paths keep original evaluation. Catalog falling-drop loops lazily share footprint only for known plain source records and preserve null. Custom descriptors, getters/Proxy and immediate floor paint retain per-release classification. A-side mutable weapon classification remains per release; no unsafe descriptor assumption is introduced.",
+      "evidence": [
+        "patches/splatoon3/runtime/blaster-flight-paint.mjs",
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "patches/splatoon3/runtime/roller-vertical-paint.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 飛翔インクの複数着弾予約でセグメント方向・武器フットプリント分類を共有",
+      "library_file_id": "libfile_5ff2b60978cc8191baf85274c53d0a68",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-flight-splash-share-segment-heading-and-footprint.md",
+      "prior_status": null,
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "splash-drop-birth-inline-record-and-seed-helper",
+      "status": "implemented-local",
+      "reason": "Restores the missing #1870 scalar birth assignments and inline seededSplashUnit calls while retaining current pooled-record reset fields, random evaluation order, numeric operations and retirement ownership.",
+      "evidence": [
+        "patches/splatoon3/runtime/blaster-flight-paint.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 飛翔飛沫のプール再初期化から毎滴の設定オブジェクトと単発seedヘルパーを除去",
+      "library_file_id": "libfile_eb821a435aec8191a871ce37862c4a1f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] splash-drop-birth-inline-record-and-seed-helper.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "shared-splash-flight-avoid-finite-triplet-array",
+      "status": "implemented-local",
+      "reason": "Restores all three endpoint reads before short-circuit finite tests, preserving getter evaluation order while eliminating the temporary triplet array.",
+      "evidence": [
+        "patches/splatoon3/runtime/blaster-flight-paint.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 共有飛翔飛沫の毎ステップ座標検証から3要素の一時配列式をなくす",
+      "library_file_id": "libfile_0db1208443fc8191923920c67155b248",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shared-splash-flight-avoid-finite-triplet-array.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+      "status": "implemented-local",
+      "reason": "Restores a projectile-catalog-state interpolation Vector3 for synchronous release consumers; exact copy/lerp arithmetic, threshold order and per-drop owned values are preserved.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+      "library_file_id": "libfile_aaec13f3d35081918b44af12f7b50f4e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-distance-splash-reuse-pooled-projectile-interpolation-vector.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "world-character"
+    },
+    {
+      "key": "inkjet-exhaust-fixed-step-temporary-closures-and-center",
+      "status": "implemented-partially",
+      "reason": "Adopts the safe staged reduction: removes the separate inside closure and evaluates the same actor-live x/z and captured minY/maxY through one helper. The independently cloned center and escaping damageAt closure remain, because arbitrary damage hooks may retain them. This is not reported as eliminating all per-tick allocation.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] インクジェット排気判定の固定60Hzごとの一時関数2個とVector3確保",
+      "library_file_id": "libfile_abb48f5f2a00819189b19b511fbf0472",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkjet-exhaust-fixed-step-temporary-closures-and-center.md",
+      "prior_status": "needs-evidence",
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "splattercolor-screen-reuse-drop-projection-vectors",
+      "status": "implemented-local",
+      "reason": "Native raycasts use a depth-leased per-screen pair of projection vectors; source/current coordinate arithmetic and paint cadence are identical. Custom raycasters keep fresh vectors, including retained-input behavior. Nested calls and exceptions release lease depth in finally.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] スミナガシートの周期塗り投影で毎滴2本のVector3複製を避ける",
+      "library_file_id": "libfile_901db3bd360481919b6a8c9fe80699c9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] splattercolor-screen-reuse-drop-projection-vectors.md",
+      "prior_status": "needs-evidence",
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "crab-tank-roll-paint-elide-per-tick-vector-and-stamp-options",
+      "status": "implemented-local",
+      "reason": "Movement-start vectors are depth-leased across moveActor/paint. Known native paint and network sinks reuse depth-owned stamp options, resetting/deleting face and clearing owner on exit. Custom sinks keep fresh options. Seed hashes are call-locally reused only while the primitive seed stays Object.is-equal; changed seeds and coercible object seeds retain their original timing.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] カニタンク転がり塗りの毎tick Vector3複製と命中ごとのopts生成を削減",
+      "library_file_id": "libfile_ddcd430f40d08191b7e48cceb3be504d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] crab-tank-roll-paint-elide-per-tick-vector-and-stamp-options.md",
+      "prior_status": "needs-evidence",
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "special-world-flight-kind-check-hoist-three-value-array",
+      "status": "implemented-local",
+      "reason": "Restores ordered scalar marker/wave/screen comparisons in the per-object flight update, removing its temporary three-element array.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャル設置物の固定60Hz飛翔判定で3種類の一時配列を作り直さない",
+      "library_file_id": "libfile_e5e296c7eb9c8191b57d6ddb17f3f2ed",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-world-flight-kind-check-hoist-three-value-array.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "world-character"
+    },
+    {
+      "key": "special-world-hidden-native-proxy-mesh-factory",
+      "status": "implemented-local",
+      "reason": "Restores both sides of the missing proxy contract: the installed model presenter provides hidden transform Groups with emissiveIntensity/opacity scalars, and worldMesh asks for the proxy before allocating geometry/material. Unsupported/uninstalled paths still create the original native mesh.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs",
+        "patches/splatoon3/runtime/special-presentation.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャル設置物の非表示ネイティブ代替メッシュを二重生成しない",
+      "library_file_id": "libfile_85aa3e5d71708191b76826cf696ce54c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-world-hidden-native-proxy-mesh-factory.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "world-character"
+    },
+    {
+      "key": "killer-wail-paired-beam-share-delayed-trace-sample",
+      "status": "implemented-local",
+      "reason": "Restores the shared delayed sample per paired beam tick, copied into scalars before hit/event callbacks use shared runtime vectors. Origins, beam calls, seeds and event ordering remain separate.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] メガホンレーザーの同一ペア内・遅延追跡補間を1回に集約",
+      "library_file_id": "libfile_9c0a068f82708191a5b3324af910d256",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] killer-wail-paired-beam-share-delayed-trace-sample.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "gameplay"
+    },
+    {
+      "key": "tenta-missiles-selecttargets-per-candidate-gearcurve-and-slice-map",
+      "status": "implemented-local",
+      "reason": "Restores call-local missile/AP resolution, lazy one-time gear curve and in-place sorted output truncation/mapping. Numeric slice semantics and BigInt/Symbol coercion errors are preserved with unary numeric conversion.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] マルチミサイルのターゲット選別で同一ロック半径を候補ごとに再計算し、結果配列を二重生成",
+      "library_file_id": "libfile_5bf3a1833f3c8191b3af992ab9ac8f42",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tenta-missiles-selecttargets-per-candidate-gearcurve-and-slice-map.md",
+      "prior_status": "already-in-pr",
+      "assigned_domain": "gameplay"
+    }
+  ]
+}

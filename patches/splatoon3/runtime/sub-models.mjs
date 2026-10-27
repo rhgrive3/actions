@@ -25,6 +25,8 @@
 
 const TAU = Math.PI * 2;
 const SHARED_FLAG = 's3Shared';
+const CRAB_NATIVE_SIN = Math.sin;
+const CRAB_CALL_SIN = (fn, receiver, angle) => Reflect.apply(fn, receiver, [angle]);
 
 export const SUB_MODEL_IDS = Object.freeze([
   'burst', 'autobomb', 'fizzy', 'torpedo', 'inkMine', 'toxicMist',
@@ -851,13 +853,31 @@ export function poseSubModel(model, s = {}) {
         const angle=st.stride+i*2.1;
         if(!g[l]&&!g[r])continue;
         const row=legSines[i]||=( {} );
-        // sin(angle + PI) is not bit-identical to -sin(angle). Retain both
-        // original expressions, reusing them only while the pose phase is idle.
+        // Keep the idle cache. During ordinary motion the paired right leg can
+        // share the freshly sampled native sine; large/custom phases retain the
+        // original expression. The bound keeps the presentation-only roundoff
+        // below the measured world-matrix tolerance without wrapping the phase.
         if(!Object.is(row.angle,angle)||row.sin!==Math.sin){
           row.angle=angle;row.sin=Math.sin;row.leftReady=row.rightReady=false;
         }
-        if(g[l]){if(!row.leftReady){row.left=Math.sin(angle);row.leftReady=true;}g[l].rotation.y=row.left*0.22*k;}
-        if(g[r]){if(!row.rightReady){row.right=Math.sin(angle+Math.PI);row.rightReady=true;}g[r].rotation.y=row.right*0.22*k;}
+        let leftSine, leftSin;
+        if(g[l]){
+          if(!row.leftReady){
+            leftSin=Math.sin;
+            row.left=leftSine=leftSin===CRAB_NATIVE_SIN?leftSin(angle):CRAB_CALL_SIN(leftSin,Math,angle);
+            row.leftReady=true;
+          }
+          g[l].rotation.y=row.left*0.22*k;
+        }
+        if(g[r]){
+          if(!row.rightReady){
+            const sin=Math.sin;
+            row.right=leftSin===CRAB_NATIVE_SIN&&sin===leftSin&&Number.isFinite(angle)&&angle>=-65536&&angle<=65536&&k>=0&&k<=1
+              ?-leftSine:sin===CRAB_NATIVE_SIN?sin(angle+Math.PI):CRAB_CALL_SIN(sin,Math,angle+Math.PI);
+            row.rightReady=true;
+          }
+          g[r].rotation.y=row.right*0.22*k;
+        }
       }
       break;
     }

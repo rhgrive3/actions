@@ -336,7 +336,7 @@ export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
       !Number.isFinite(scale) || !(scale > 0) || !paint) return null;
   const near = paint.DistanceNear ?? 1.1, middle = paint.DistanceMiddle, far = paint.DistanceFar ?? 20;
   const wn = paint.WidthHalfNear, wm = paint.WidthHalfMiddle, wf = paint.WidthHalfFar;
-  if (![near,middle,far,wn,wm,wf].every(Number.isFinite) ||
+  if ((!Number.isFinite(near)||!Number.isFinite(middle)||!Number.isFinite(far)||!Number.isFinite(wn)||!Number.isFinite(wm)||!Number.isFinite(wf)) ||
       near < 0 || middle < near || far <= middle || Math.min(wn,wm,wf) <= 0) return null;
   const distance = p.start.distanceTo(hit.point) / scale;
   if (!Number.isFinite(distance)) return null;
@@ -348,9 +348,12 @@ export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
   if ((phase ?? 0) === 0) {
     const angle = rollerImpactAngleDegrees(p.vel,hit.normal);
     const lo = paint.DegreeUseDepthScaleMax ?? 10, hi = paint.DegreeUseDepthScaleMin ?? 35;
-    if (angle !== null && [lo,hi,paint.DepthScaleMax,paint.DepthScaleMin].every(Number.isFinite) &&
-        hi > lo && paint.DepthScaleMax > 0 && paint.DepthScaleMin > 0)
-      depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
+    if (angle !== null) {
+      const maxDepth=paint.DepthScaleMax,minDepth=paint.DepthScaleMin;
+      if (Number.isFinite(lo)&&Number.isFinite(hi)&&Number.isFinite(maxDepth)&&Number.isFinite(minDepth)&&
+          hi > lo && paint.DepthScaleMax > 0 && paint.DepthScaleMin > 0)
+        depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
+    }
   }
   return { radius: width*scale, depthScale };
 }
@@ -1001,7 +1004,7 @@ export function fidelitySlosherImpactPaint(p, point) {
   if (!src || !start || !point || !(scale>0)) return null;
   const n=src.DistanceXZNear,f=src.DistanceXZFar,w0=src.WidthHalfNear,w1=src.WidthHalfFar;
   const d0=src.DepthScaleNear,d1=src.DepthScaleFar;
-  if (![n,f,w0,w1,d0,d1].every(Number.isFinite) || !(f>n) || !(w0>0&&w1>0)) return null;
+  if ((!Number.isFinite(n)||!Number.isFinite(f)||!Number.isFinite(w0)||!Number.isFinite(w1)||!Number.isFinite(d0)||!Number.isFinite(d1)) || !(f>n) || !(w0>0&&w1>0)) return null;
   const distance=Math.hypot(point.x-start.x,point.z-start.z)/scale;
   const t=clamp01((distance-n)/(f-n)), shrink=slosherDropScale(p,point.y);
   const radius=(w0+(w1-w0)*t)*scale*shrink;
@@ -1308,8 +1311,10 @@ export function rollerSpeedSwerveDegrees(unit,offset,count,sampledSourceSpeed) {
 // forward 0.6 is the native emitter's existing calibration. Neither value is a
 // retail measurement; both use the provisional 1 source unit = 1 m scale.
 export const ROLLER_SPAWN_BASE = Object.freeze({ height: 1.35, forward: 0.6 });
-export function rollerSpawnBase(actor, out) {
-  const fx=Math.sin(actor.yaw), fz=Math.cos(actor.yaw);
+const cachedYawCos=(yaw,at,value)=>Object.is(yaw,at)?value:Math.cos(yaw);
+const cachedYawSin=(yaw,at,value)=>Object.is(yaw,at)?value:Math.sin(yaw);
+export function rollerSpawnBase(actor, out, sinYaw=undefined, cosYaw=undefined) {
+  const fx=arguments.length>2?sinYaw:Math.sin(actor.yaw), fz=arguments.length>2?cosYaw:Math.cos(actor.yaw);
   return out.set(actor.pos.x+fx*ROLLER_SPAWN_BASE.forward, actor.pos.y+ROLLER_SPAWN_BASE.height, actor.pos.z+fz*ROLLER_SPAWN_BASE.forward);
 }
 // Adds one glob's sourced offset from the base to `out`. Horizontal globs fan
@@ -1319,15 +1324,15 @@ export function rollerSpawnBase(actor, out) {
 // A fanned unit inside a vertical swing (Flingza's PaintOnly +-18 deg side
 // units: nonzero SpawnWideDegree, 6 globs, SpawnPositionHeight 1) is placed like a
 // horizontal fan; stacking it per index would start its last glob 5 m up.
-export function addRollerSpawnOffset(out, actor, unit, offset, count, vertical) {
+export function addRollerSpawnOffset(out, actor, unit, offset, count, vertical, sinYaw=undefined,cosYaw=undefined,sinAt=undefined,cosAt=undefined) {
   const stacked=vertical&&!(Number.isFinite(unit.SpawnWideDegree)&&unit.SpawnWideDegree!==0);
   if(!stacked){
     // The exact per-glob placement / random-cube PDF is not published; keep
     // the deterministic fan and seeded independent jitter.
     const fan=count>1?offset/(count-1)*2-1:0;
     const side=fan*(unit.SpawnPositionWidth||0)*0.5,j=unit.SpawnPositionRandomCube||0;
-    out.x+=Math.cos(actor.yaw)*side+(Math.random()*2-1)*j;
-    out.z-=Math.sin(actor.yaw)*side-(Math.random()*2-1)*j;
+    out.x+=(arguments.length>6?cachedYawCos(actor.yaw,cosAt,cosYaw):Math.cos(actor.yaw))*side+(Math.random()*2-1)*j;
+    out.z-=(arguments.length>6?cachedYawSin(actor.yaw,sinAt,sinYaw):Math.sin(actor.yaw))*side-(Math.random()*2-1)*j;
     out.y+=(Math.random()*2-1)*j;
   }
   // #278: separate group height offset and indexed per-glob position height.
@@ -1380,7 +1385,8 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   // 0.8 m is listed as 0.16 range lines (5 m/line) in splatoon3mix; Carbon
   // 0.6/0.12, Dynamo 0.8/0.16 and Big Swig 1.9/0.38 agree.
   const count=vertical?1:(depleted?(unit.DepletionBulletNum??unit.BulletNum):unit.BulletNum)??1;
-  addRollerSpawnOffset(rollerSpawnBase(actor,p.pos),actor,unit,offset,count,vertical);
+  const sinAt=actor.yaw,sinYaw=Math.sin(sinAt),cosAt=actor.yaw,cosYaw=Math.cos(cosAt);
+  addRollerSpawnOffset(rollerSpawnBase(actor,p.pos,sinYaw,cosYaw),actor,unit,offset,count,vertical,sinYaw,cosYaw,sinAt,cosAt);
   p.prev.copy(p.pos);p.start.copy(p.pos);p.fidelityMaxY=p.pos.y;p.fidelityImpactHeight=null;
   const cp=Math.cos(pitch);
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
@@ -1458,6 +1464,7 @@ export function fidelityProjectileTargets(system,p) {
   const r0=slosherCollisionRadius(p,p.fidelityPrevAge??p.age,false,p.prev?.y);
   const r1=fidelityPlayerCollisionRadius(p);
   let nearest=null,best=Infinity,krReady=false,kr=null;
+  let boundsReady=false,minX,maxX,minZ,maxZ,maxRadius;
   for(const actor of G.actors){
     if(!actor.alive||actor===p.owner)continue;
     const friendly=actor.team===p.team;
@@ -1473,9 +1480,14 @@ export function fidelityProjectileTargets(system,p) {
     const x0=rec?rec.x0:actor.pos.x,y0=rec?rec.y0:actor.pos.y,z0=rec?rec.z0:actor.pos.z;
     // Preserve current authoritative per-actor hurtbox dimensions.
     const bodyRadius=hurtboxRadius(actor,PLAYER),height=hurtboxHeight(actor,PLAYER);
-    const radius=bodyRadius+Math.max(r0,r1);
-    const segMinX=Math.min(p.prev.x,p.pos.x)-radius,segMaxX=Math.max(p.prev.x,p.pos.x)+radius;
-    const segMinZ=Math.min(p.prev.z,p.pos.z)-radius,segMaxZ=Math.max(p.prev.z,p.pos.z)+radius;
+    if(!boundsReady){
+      minX=Math.min(p.prev.x,p.pos.x);maxX=Math.max(p.prev.x,p.pos.x);
+      minZ=Math.min(p.prev.z,p.pos.z);maxZ=Math.max(p.prev.z,p.pos.z);
+      maxRadius=Math.max(r0,r1);boundsReady=true;
+    }
+    const radius=bodyRadius+maxRadius;
+    const segMinX=minX-radius,segMaxX=maxX+radius;
+    const segMinZ=minZ-radius,segMaxZ=maxZ+radius;
     if(Math.min(x0,actor.pos.x)>segMaxX||Math.max(x0,actor.pos.x)<segMinX||
        Math.min(z0,actor.pos.z)>segMaxZ||Math.max(z0,actor.pos.z)<segMinZ)continue;
     if(!krReady){kr=kitTrizookaActorRadius(system,p);krReady=true;}
@@ -1850,7 +1862,7 @@ export function installWeaponsFidelity(context,profile) {
     p._s3SloshBirthPending=false;p._s3SloshBirthOwner=null;p._s3SloshBirthEpoch=undefined;
     p._s3SloshBirthWeaponId=null;p._s3SloshBirthRemote=undefined;p._s3SloshBirthNid=undefined;
     p._s3SloshBirthPeer=undefined;p._s3SloshBirthWasInMatch=false;p._s3SloshBirthDelay=0;
-    p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;
+    p._s3SloshYaw=0;p._s3SloshPitch=0;p._s3SloshBirthGhost=false;p._s3SloshTrigReady=false;
     p.fidelityMaxY=null;p.fidelityImpactHeight=null;p.s3GrazePaint=null;p.s3GrazeCount=0;
     p.fidelityMove=null;p.fidelityPhase=0;p.fidelityYaw=0;p.fidelityMode=null;p.fidelityPlayerCollision=null;p.fidelityFieldCollision=null;p.fidelityFriendThrough=null;p.fidelityRollerUnit=null;p.fidelityRollerUnitIndex=null;p.s3DepletionPaintScale=1;p.s3DepletionRound=false;p.fidelitySloshUnit=null;p.fidelitySloshIndex=null;p.fidelitySloshDownward=null;p.fidelitySloshFallAnchorY=null;p.fidelitySloshPacketIndex=null;p.fidelitySloshDraw=null;p.fidelityPrevAge=0;p.fidelityImpactActor=null;p.fidelityImpactT=null;p.fidelityWallDrop=null;p.fidelitySectorYaw=null;p.s3ShooterForwardApplied=false;p.s3BlasterForwardApplied=false;p.s3SlosherMotionApplied=false;p.s3BlasterSplashIndex=0;p.s3BurstCollisionHit=null;return p;
   };
@@ -1951,8 +1963,9 @@ export function installWeaponsFidelity(context,profile) {
       // 未確認 against Nintendo or a Switch capture.
       if(volleyIndex>0)active.sweepFrame+=u.AfterOffsetDelayFrame||0;
       const yaw=Math.atan2(aim.x,aim.z)+active.turnDelta*active.sweepFrame+radians(u.BaseRotateYDegree||0)+slosherYawOffset(u,index);
-      const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=Math.cos(pitch)*speed;
-      p.vel.set(Math.sin(yaw)*horizontal,Math.sin(pitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),Math.cos(yaw)*horizontal);
+      const pitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z)),horizontal=(p._s3SloshCosPitch=Math.cos(pitch))*speed;
+      p.vel.set((p._s3SloshSinYaw=Math.sin(yaw))*horizontal,(p._s3SloshSinPitch=Math.sin(pitch))*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),(p._s3SloshCosYaw=Math.cos(yaw))*horizontal);
+      p._s3SloshTrigYaw=yaw;p._s3SloshTrigPitch=pitch;p._s3SloshTrigReady=true;
       p._s3SloshBirthPending=true;p._s3SloshBirthOwner=p.owner;p._s3SloshBirthEpoch=p.owner?._s3SlosherBirthEpoch;
       p._s3SloshBirthWeaponId=p.wid;p._s3SloshBirthRemote=p.owner?.remote;p._s3SloshBirthNid=p.owner?.nid;
       p._s3SloshBirthPeer=p.owner?.owner;p._s3SloshBirthWasInMatch=Array.isArray(context.G?.actors)&&context.G.actors.includes(p.owner);
@@ -1987,10 +2000,13 @@ export function installWeaponsFidelity(context,profile) {
       if(!u){p._s3SloshBirthPending=false;return true;}
       this._muzzle(owner,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
       const speed=((owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
-      const horizontal=Math.cos(p._s3SloshPitch)*speed;
-      p.vel.set(Math.sin(p._s3SloshYaw)*horizontal,
-        Math.sin(p._s3SloshPitch)*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
-        Math.cos(p._s3SloshYaw)*horizontal);
+      const reuse=p._s3SloshTrigReady;
+      // Check each angle where its original trig read occurred: parameter or
+      // angle getters may change the yaw between the velocity arguments.
+      const horizontal=(reuse?cachedYawCos(p._s3SloshPitch,p._s3SloshTrigPitch,p._s3SloshCosPitch):Math.cos(p._s3SloshPitch))*speed;
+      p.vel.set((reuse?cachedYawSin(p._s3SloshYaw,p._s3SloshTrigYaw,p._s3SloshSinYaw):Math.sin(p._s3SloshYaw))*horizontal,
+        (reuse?cachedYawSin(p._s3SloshPitch,p._s3SloshTrigPitch,p._s3SloshSinPitch):Math.sin(p._s3SloshPitch))*speed+horizontal*(u.AddSpawnSpeedYRateByXZ||0),
+        (reuse?cachedYawCos(p._s3SloshYaw,p._s3SloshTrigYaw,p._s3SloshCosYaw):Math.cos(p._s3SloshYaw))*horizontal);
       // #1152: the source birth delay has elapsed. The only wire record is
       // authored here, after resampling this frame's muzzle and launch speed.
       p.delay=0;

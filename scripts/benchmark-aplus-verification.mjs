@@ -62,9 +62,21 @@ function benchmarkComposedProductionBuildParity() {
   lodAfterSrc = replaceOnce(lodAfterSrc,
     '  out.setIndex(finalCount > 65535 ? new THREE.Uint32BufferAttribute(finalIndices, 1) : new THREE.Uint16BufferAttribute(finalIndices, 1));\n',
     '', 'historical Lod final index allocation');
-  const historicalLodBytes = Buffer.from(lodAfterSrc);
+  // Preserve the exact #1861 source that the A+ historical review actually
+  // accepted; later optimized live source must not be used as its oracle.
+  const historicalLodBytes = fs.readFileSync(new URL('./fixtures/inkwave-cpu-lod-1861.js.txt',import.meta.url));
   assert.equal(createHash('sha1').update('blob '+historicalLodBytes.length+'\0').update(historicalLodBytes).digest('hex'),
     'ac2bbba478608abc5ce626a0372958528a096c00','immutable reviewed pre-queue Lod source');
+  // The independently approved queue revision is a different source epoch.
+  // Fail closed on any unreviewed current runtime drift, without losing the
+  // preserved historical comparison above.
+  const currentLodBytes=Buffer.from(lodAfterSrc);
+  assert.equal(createHash('sha1').update('blob '+currentLodBytes.length+'\0').update(currentLodBytes).digest('hex'),
+    '4df1943b2d598d012eaa7fa09fe96af4900821bd',
+    'exact reviewed closure or its fixed #1815 cache integration (queue Lod source)');
+  // Compare the A+ migration against its historical post-migration source,
+  // not a later queue-optimized live source. The latter was authenticated above.
+  lodAfterSrc=historicalLodBytes.toString('utf8');
   const outfitAfterSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-outfit.js', import.meta.url), 'utf8');
   // The migration proved an identity, not a permanent ban on later runtime
   // work. Freeze that historical BodyBalance pair at main26a4, and admit only

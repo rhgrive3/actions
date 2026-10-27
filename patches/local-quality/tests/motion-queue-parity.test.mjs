@@ -7,9 +7,12 @@ import {replaceOnce} from '../adapter.mjs';
 
 const oldFoot=fs.readFileSync(new URL('./fixtures/run-foot-path-before-queue.mjs.txt',import.meta.url),'utf8');
 const oldBuilder=fs.readFileSync(new URL('./fixtures/character-builder-before-queue.mjs.txt',import.meta.url),'utf8').trimEnd();
+// Later queue work packs profile tracks. Keep this older vector-scratch
+// counterfactual anchored to its authentic pre-packing production source.
+const beforeWorld=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-remaining-world-before.json',import.meta.url),'utf8'));
 const yaw="if(form!=='swim'&&!(form==='climb'&&wallNormal)&&!(form==='squid'&&!c.sourceMotion?.manual))";
 function baseline(rel,raw){
- let code=adaptBuildSource(rel,raw);
+ let code=rel==='src/game/motion/source-bank.js'?beforeWorld.modules[rel].source:adaptBuildSource(rel,raw);
  const undo=(a,b)=>{code=replaceOnce(code,a,b,'motion queue baseline '+rel);};
  if(rel==='src/game/motion/run-foot-path.js')return oldFoot;
  if(rel==='src/game/motion/source-controller.js'){

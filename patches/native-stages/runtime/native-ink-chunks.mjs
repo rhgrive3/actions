@@ -10,7 +10,7 @@ function writeIdentityRange(target, out, start, end) {
  * source attributes and no clipped, simplified or regenerated positions. A
  * triangle crossing a tile boundary stays whole; its actual bounds control
  * culling. The tile size has no relation to retail collision or paint cells. */
-export function partitionNativeInk(geometry,tileSize=16,triangleTile=null){
+export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,boundsOnly=false){
  if(!Number.isFinite(tileSize)||tileSize<=0)throw new RangeError('Invalid native ink tile size');
  const p=geometry.getAttribute('position'),groups=new Map(),point=new THREE.Vector3();
  if(geometry.index||p.count%3)throw new Error('Native ink partition requires complete non-indexed triangles');
@@ -25,9 +25,13 @@ export function partitionNativeInk(geometry,tileSize=16,triangleTile=null){
   for(let j=i;j<i+3;j++){if(!direct)g.indices.push(j);g.bounds.expandByPoint(point.set(p.getX(j),p.getY(j),p.getZ(j)));}
  }
  return [...groups.values()].map(({key,indices,bounds})=>{
-  const g=new THREE.BufferGeometry();
-  for(const [name,a] of Object.entries(geometry.attributes))g.setAttribute(name,a);
-  if(indices)g.setIndex(new THREE.BufferAttribute(new Uint32Array(indices),1));
+  // Runtime tiles are culling metadata, never drawables. Public partitions
+  // retain BufferGeometry ownership and their existing shared attributes.
+  const g=boundsOnly&&direct?{userData:{}}:new THREE.BufferGeometry();
+  if(!boundsOnly||!direct){
+   for(const [name,a] of Object.entries(geometry.attributes))g.setAttribute(name,a);
+   if(indices)g.setIndex(new THREE.BufferAttribute(new Uint32Array(indices),1));
+  }
   // computeBoundingSphere() would include the entire shared attribute array.
   g.boundingBox=bounds;g.boundingSphere=bounds.getBoundingSphere(new THREE.Sphere());
   // Include the corners despite floating point cancellation at the sphere edge.
@@ -100,17 +104,24 @@ export class NativeInkMesh extends THREE.Mesh {
     if (!this._ready) { this._geometry = next; return; }
     const triCount = next.getAttribute('position').count / 3;
     const triangleTile = new Uint32Array(triCount);
-    const chunks = partitionNativeInk(next, this.tileSize,triangleTile);
+    const chunks = partitionNativeInk(next, this.tileSize,triangleTile,true);
     this._detachPaint();
     this._disposeChunks();
     this._geometry = next;
     this.chunks = chunks;
     this._visible = new Uint8Array(chunks.length).fill(255);
-    this._triangleTile = triangleTile;
+    // Tile IDs have a smaller domain than vertex offsets. Keep the public
+    // partition output Uint32, then narrow only after the actual tile count.
+    const TileArray=chunks.length<=65536?Uint16Array:Uint32Array;
+    this._triangleTile = TileArray===Uint16Array?new Uint16Array(triangleTile):triangleTile;
 
-    this._runTiles=this._runStarts=this._runEnds=null;
-    this._fragmentedRuns=false;
-    if(!this._deferRunTables)this._ensureRunTables();
+    // The source is non-indexed. Precompute ascending contiguous runs in
+    // *source triangle order*, never in tile order: transparent overlay
+    // blending depends on the original draw order.
+    // No source-order run storage while painted chunks are known empty.
+    this._runTiles = this._runStarts = this._runEnds = null;
+    this._fragmentedRuns = false;
+    if (!this._deferRunTables) this._ensureRunTables();
     // No retained full-size identity index: avoid doubling this GPU buffer.
     this._drawIndex = new THREE.BufferAttribute(new Uint32Array(triCount * 3), 1)
       .setUsage(THREE.DynamicDrawUsage);
@@ -129,7 +140,7 @@ export class NativeInkMesh extends THREE.Mesh {
   }
 
   /** Bind only this native world's paint instance, never global prototypes. */
-  bindPaint(paint) {
+  bindPaint(paint, { knownEmpty = false } = {}) {
     this._detachPaint();
     if (!paint || typeof paint._pushQuad !== 'function' || typeof paint.clear !== 'function')
       throw new TypeError('Native ink paint binding requires a paint system');
@@ -138,7 +149,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._paintedCount = 0;
     this._bindFaces(paint);
     // Binding an already painted atlas must not hide previously stored ink.
-    if (paint.grid?.some?.(value => value !== 0)) {
+    if (!knownEmpty && paint.grid?.some?.(value => value !== 0)) {
       this._painted.fill(1);
       this._paintedCount = this._painted.length;
       this._facePainted?.fill(1);this._paintedFaceWords?.fill(0xffffffff);
@@ -294,16 +305,12 @@ export class NativeInkMesh extends THREE.Mesh {
     else {
       painted[id] = 1;
       this._paintedFaceWords[id>>>5]|=1<<(id&31);
-      // Reaching a chart in an already culled tile cannot change the current
-      // index stream. Keep its paint bit for the next camera/transform change,
-      // but avoid rebuilding and uploading every visible chart this frame.
-      // Newly reached tiles still invalidate through _markPaintBounds below.
-      // Tile-only selection does not consume chart bits at all; toggling the
-      // diagnostic faceCulling switch already invalidates that selection.
+      // A newly painted chart outside the already selected visible tiles
+      // does not change today's draw index; keep the bit for a future view.
       if (!this._faceCulling) return;
       if (!this._faceDirty) {
         let visible = false;
-        for (let tri = this._faceStart[id], end = this._faceStart[id + 1]; tri < end; tri++) {
+        for (let tri = this._faceStart[id], end = this._faceStart[id+1]; tri < end; tri++) {
           if (this._visible[this._triangleTile[tri]]) { visible = true; break; }
         }
         if (!visible) return;
@@ -458,7 +465,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._fullDraw = false;
     return visibleCount;
   }
-  _disposeChunks() { for (const g of this.chunks || []) g.dispose(); this.chunks = []; }
+  _disposeChunks() { for (const g of this.chunks || []) g.dispose?.(); this.chunks = []; }
   dispose() {
     this._detachPaint();
     this.removeFromParent();

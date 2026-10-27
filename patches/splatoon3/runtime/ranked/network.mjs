@@ -8,6 +8,7 @@ import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
 import { recordTowerHostSnapshot, clearTowerPaintSupport, flushTowerHostSnapshots } from '../../../network-replication/tower-paint-support.mjs';
 
 const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
+const HOST_SNAPSHOT_KINDS = Object.freeze(['st', 'res', 'end']);
 
 export const actorId = a => String(a.nid ?? `${a.team}:${a.slot}`);
 const finiteVector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
@@ -68,7 +69,7 @@ export function installRankedNetwork(api) {
   Object.defineProperty(P, '_rankedAPI', { get: () => api, configurable: true });
   const send = P._sendNow;
   P._sendNow = function (d) {
-    if (current(this) && this.isHost && ['st', 'res', 'end'].includes(d.k)) {
+    if (current(this) && this.isHost && HOST_SNAPSHOT_KINDS.includes(d.k)) {
       d = { ...d, rk: envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] }) };
       if (d.k === 'res') Object.assign(d, { rankedResult: this.match.ranked.result() });
     }
@@ -115,7 +116,7 @@ export function installRankedNetwork(api) {
     let stagedInput = null;
     if (d.rk && from === this.s.hostId && !this.isHost && (d.k==='st'||d.k==='res'||d.k==='end'||d.k==='rkstate')) {
       const accepted = acceptState(this, d.rk);
-      if (!accepted && ['st', 'res', 'end'].includes(d.k)) return;
+      if (!accepted && HOST_SNAPSHOT_KINDS.includes(d.k)) return;
     }
     if (d.k === 't' && d.rki && this.isHost && m.state === 'playing' && m.ranked.winner == null) {
       const cmd = d.rki, a = m.actors.find(a => actorId(a) === cmd.id);

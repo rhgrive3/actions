@@ -31,6 +31,7 @@ function floorCellCenter(face, i, j, out) {
 }
 
 // Debug inspection retains `center` without one persistent Vector3 per cell.
+const zoneAreaTotals = new WeakMap();
 class RankedZoneCell {
   constructor(face, cell, area, i, j) { this.face = face; this.cell = cell; this.area = area; this.i = i; this.j = j; }
   get center() { return floorCellCenter(this.face, this.i, this.j, this.face.origin.clone()); }
@@ -580,8 +581,8 @@ export class RankedWorld {
     }
   }
 
-  _collectRiderOffsets(refreshLatches = false) {
-    const offsets = [];
+  _collectRiderOffsets(refreshLatches = false, lease = null) {
+    const offsets = lease ? lease.offsets : [];
     if (!this.towerBlock) return offsets;
     const block = this.towerBlock;
     for (const actor of this.match?.actors || []) {
@@ -600,15 +601,23 @@ export class RankedWorld {
       const latchedAir = !actor.grounded && actor._rankedOnTower && this._inTowerVolume(actor, true);
       if (!directContact && !latchedAir) continue;
       const rel = this._a.copy(actor.pos).sub(block.center);
-      offsets.push({ actor, x: rel.dot(block.axes[0]), y: rel.dot(block.axes[1]), z: rel.dot(block.axes[2]) });
+      const row=lease?(lease.records[offsets.length]||=( {actor:null,x:0,y:0,z:0} )):{};
+      row.actor=actor;row.x=rel.dot(block.axes[0]);row.y=rel.dot(block.axes[1]);row.z=rel.dot(block.axes[2]);offsets.push(row);
     }
     return offsets;
   }
 
   _syncTower(engine, carry = true) {
     if (this.mode !== 'tower' || !this.towerBlock) return;
+    // Public offset snapshots stay fresh. Only this synchronous consumer
+    // borrows depth-isolated rows, and releases actor references on errors.
+    const depth=this._riderLeaseDepth||0;
+    const owned=carry&&this._collectRiderOffsets===RankedWorld.prototype._collectRiderOffsets;
+    const lease=owned?((this._riderLeases||=([]))[depth]||=( {offsets:[],records:[]} )):null;
+    if(lease){this._riderLeaseDepth=depth+1;lease.offsets.length=0;}
+    try {
     // Capture the pre-move rider latches and offsets in one actor traversal.
-    const riders = carry ? this._collectRiderOffsets(true) : (this._refreshRideLatches(), []);
+    const riders = carry ? this._collectRiderOffsets(true,lease) : (this._refreshRideLatches(), []);
     const target = this._towerPosition(engine);
     setVec(this._position, target);
     const progress = engine?.rule?.state?.progress ?? this._towerProgress;
@@ -656,6 +665,9 @@ export class RankedWorld {
     this._refreshRideLatches();
     this._towerProgress = finite(engine?.rule?.state?.progress) ? engine.rule.state.progress : this._towerProgress;
     this._lastPosition.copy(this._position);
+    } finally {
+      if(lease){for(const row of lease.records)row.actor=null;lease.offsets.length=0;this._riderLeaseDepth=depth;}
+    }
   }
 
   beforeActors(engine) {
@@ -730,7 +742,8 @@ export class RankedWorld {
     if (!same) this.rainmaker.userData.checkpointsPassed = Array.isArray(checkpoints) ? checkpoints.slice() : [];
     const opened = rainmaker?.checkpoint?.goalOpen || [];
     for (const marker of this.rainmakerMarkers?.checkpoints || []) {
-      const passed = !!checkpoints?.[marker.team]?.[marker.index];
+      const passed = checkpoints?.[marker.team] === true
+        && rainmaker?.checkpoint?.choice?.[marker.team] === marker.index;
       if (marker._passed !== passed) { marker.ring.material.opacity = passed ? 0.28 : 0.9; marker._passed = passed; }
       marker.group.userData.passed = passed;
     }
@@ -875,6 +888,7 @@ export class RankedWorld {
     this._zoneCells = zones.map(() => []);
     if (!Array.isArray(faces) || !this.paint?.grid) return;
     const p = new this.THREE.Vector3();
+    let zoneBounds;
     for (const face of faces) {
       // PaintSystem includes walls and overhangs in its atlas. Turf ratios use
       // only exposed, upward paint cells, excluding cells hidden by geometry.
@@ -883,16 +897,27 @@ export class RankedWorld {
         const cell = face.grid + j * face.nu + i;
         if (this.paint.dead?.[cell]) continue;
         floorCellCenter(face, i, j, p);
+        zoneBounds ||= zones.map(zone => {
+          const [cx, cy, cz] = zone.center, [width, depth] = zone.size;
+          return { minX: cx - width / 2 - EPSILON, maxX: cx + width / 2 + EPSILON,
+            minZ: cz - depth / 2 - EPSILON, maxZ: cz + depth / 2 + EPSILON, cy,
+            height: finite(zone.heightTolerance) ? Math.max(0, zone.heightTolerance) + EPSILON : Infinity };
+        });
         for (let index = 0; index < zones.length; index++) {
-          const zone = zones[index], [cx, cy, cz] = zone.center, [width, depth] = zone.size;
+          const bounds = zoneBounds[index];
           // Source-calibrated zones mark a floor band. Do not count a box top
           // or another storey merely because it overlaps that floor in X/Z.
-          if (finite(zone.heightTolerance) && Math.abs(p.y - cy) > Math.max(0, zone.heightTolerance) + EPSILON) continue;
-          if (p.x < cx - width / 2 - EPSILON || p.x > cx + width / 2 + EPSILON
-            || p.z < cz - depth / 2 - EPSILON || p.z > cz + depth / 2 + EPSILON) continue;
-          this._zoneCells[index].push(new RankedZoneCell(face, cell, face.cu * face.cv, i, j));
+          if (Math.abs(p.y - bounds.cy) > bounds.height) continue;
+          if (p.x < bounds.minX || p.x > bounds.maxX || p.z < bounds.minZ || p.z > bounds.maxZ) continue;
+          this._zoneCells[index].push(Object.freeze(new RankedZoneCell(face, cell, face.cu * face.cv, i, j)));
         }
       }
+    }
+    // These published lists/areas cannot change in place. A custom or replaced
+    // index has no private total and takes the original ordered sum below.
+    for (const cells of this._zoneCells) {
+      let total = 0; for (const entry of cells) total += entry.area;
+      Object.freeze(cells); zoneAreaTotals.set(cells, total);
     }
   }
 
@@ -904,15 +929,16 @@ export class RankedWorld {
     if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version && cached.turfVersion === turfVersion
       && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
     const value = zones.map((_, index) => {
-      let area0=0, area1=0, area2=0;
-      for (const entry of this._zoneCells[index] || []) {
-        area0 += entry.area;
+      const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
+      const area = [total === undefined ? 0 : total, 0, 0];
+      for (const entry of cells || []) {
+        if (total === undefined) area[0] += entry.area;
         const team = this.paint.grid[entry.cell];
-        if (team === 1) area1 += entry.area;
-        else if (team === 2) area2 += entry.area;
+        if (team === 1) area[1] += entry.area;
+        else if (team === 2) area[2] += entry.area;
       }
-      if (area0 <= 0) return [0, 0];
-      return [area1 / area0, area2 / area0];
+      if (area[0] <= 0) return [0, 0];
+      return [area[1] / area[0], area[2] / area[0]];
     });
     if (grid && finite(version)) {
       // Production clear, stamped paint and owner replay all advance version.

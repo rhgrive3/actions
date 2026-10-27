@@ -261,7 +261,7 @@ const game = new Game();`);
  }
  if(rel==='patches/splatoon3/runtime/paint-ownership.mjs'){
   code="import { nativePieceHasInterior, nativeAncillaryCanClaim, nativeAncillaryMaskFind, nativeAncillaryMaskStore, nativeAncillaryMaskReplace, nativeSettledAncillarySlot, nativeSettledAncillaryMatches, nativeStoreSettledAncillary } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
-  once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  let nativeView = null;\n  for (let n = 0; n < E.length; n += 7)');
+  once('  let claimed = 0, changed = false;\n  const entryStride = g.entryStride === 8 ? 8 : 7;\n  for (let n = 0; n < E.length; n += entryStride)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  let nativeView = null;\n  const entryStride = g.entryStride === 8 ? 8 : 7;\n  for (let n = 0; n < E.length; n += entryStride)');
   once('    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;', '    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0 || (nativeMasks && face.nativeEmpty)) continue;');
   if(code.includes('function visitAncillaryCell('))
     once(' const previousOrder=paint._paintOwnershipOrder[index]||0;',' if(paint.level?.native&&paint.dead[index]){visit[index]=stamp;return 1;}\n const previousOrder=paint._paintOwnershipOrder[index]||0;');
@@ -287,7 +287,7 @@ const game = new Game();`);
   // A settled entry keeps its non-drip pieces across ticks and re-runs
   // prepareAncillary with drip counts only; pieces keep the original order.
   once('    const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);', `    let mask = nativeMasks ? nativeAncillaryMaskFind(nativeMasks, face.wall, face.atlas.ppm, dn, sdu, sdv, sa) : undefined;
-    const settled = nativeMasks && mask === undefined && tn >= 1.45 ? nativeSettledAncillarySlot(g, n / 7) : null;
+    const settled = nativeMasks && mask === undefined && tn >= 1.45 ? nativeSettledAncillarySlot(g, n / entryStride) : null;
     if (settled && nativeSettledAncillaryMatches(settled, g, contract, face.wall, face.atlas.ppm, dn, sdu, sdv, sa)) {
       const drips = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, settled.dripContract);
       const pieces = settled.pieces.slice();

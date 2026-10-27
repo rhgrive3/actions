@@ -101,12 +101,14 @@ function register(nm,from,e,s){
   const id=v.subId,spec=ALL_SUB_SPECS[id];
   if(![6,8].includes(e.length)||!isCatalogueSub(id)||a.weapon?.sub!==id||!safe(e[4])||life(a)!==e[4]
     ||v.v!==1||!safe(v.eventSeq)||v.eventSeq===0||v.life!==e[4]||v.sourceLife!==e[4]||!safe(v.seq)||v.seq===0||!safe(v.seed)||v.seed>0xffffffff
-    ||![v.x,v.y,v.z,v.vx,v.vy,v.vz,v.charge,v.hold].every(Number.isFinite)
-    ||![v.x,v.y,v.z,v.vx,v.vy,v.vz].every(n=>Number.isFinite(Math.fround(n)))
+    ||!Number.isFinite(v.x)||!Number.isFinite(v.y)||!Number.isFinite(v.z)
+    ||!Number.isFinite(v.vx)||!Number.isFinite(v.vy)||!Number.isFinite(v.vz)||!Number.isFinite(v.charge)||!Number.isFinite(v.hold)
+    ||!Number.isFinite(Math.fround(v.x))||!Number.isFinite(Math.fround(v.y))||!Number.isFinite(Math.fround(v.z))
+    ||!Number.isFinite(Math.fround(v.vx))||!Number.isFinite(Math.fround(v.vy))||!Number.isFinite(Math.fround(v.vz))
     ||v.charge<0||v.charge>1||v.hold<0)return;
   const count=id==='fizzy'?(v.hold>=(spec.chargeFrames[0]+spec.chargeFrames[1])/60?3:v.hold>=spec.chargeFrames[0]/60?2:1):1;
   let towerSupport=null;
-  if(['support','supportRevision','supportX','supportY','supportZ'].some(k=>v[k]!==undefined)){
+  if(v.support!==undefined||v.supportRevision!==undefined||v.supportX!==undefined||v.supportY!==undefined||v.supportZ!==undefined){
    if(id!=='inkMine'||v.vx!==0||v.vy!==0||v.vz!==0)return;
    const previous=s.towerScopes.get(e);
    if(previous&&!towerPaintScopeCurrent(nm,previous))return;

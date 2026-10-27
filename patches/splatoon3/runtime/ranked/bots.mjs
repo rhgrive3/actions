@@ -112,14 +112,6 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
     // A static floor node just outside the moving deck is the last safe A* goal.
     // Its height must leave the deck reachable by the actor's real jump arc.
     if (toDeck < halfSize - 0.2 || toDeck > halfSize + 1.5 || node.y < lowY || height < -0.25) continue;
-    const sideX = (node.x - target.x) / Math.max(toDeck, 1e-6);
-    const sideZ = (node.z - target.z) / Math.max(toDeck, 1e-6);
-    const jumpStart = [target.x + sideX * (halfSize + 0.45), target.y, target.z + sideZ * (halfSize + 0.45)];
-    if (typeof frame?.blocked === 'function') {
-      try {
-        if (frame.blocked([node.x, node.y + 0.45, node.z], [jumpStart[0], jumpStart[1] + 0.45, jumpStart[2]]) === true) continue;
-      } catch { continue; }
-    }
     const approachError = Math.hypot(node.x - approachX, node.z - approachZ);
     // Zero is an admissible route-cost bound only for a nonnegative graph.
     // Verify that contract lazily within this synchronous selection, including
@@ -128,6 +120,14 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
     if (best && lowerScore >= best.score) {
       if (nonNegativeRouteCosts === undefined) nonNegativeRouteCosts = nav.nodes.every(n => n.nb.every(edge => Number.isFinite(edge.cost) && edge.cost >= 0));
       if (nonNegativeRouteCosts) continue;
+    }
+    const sideX = (node.x - target.x) / Math.max(toDeck, 1e-6);
+    const sideZ = (node.z - target.z) / Math.max(toDeck, 1e-6);
+    const jumpStart = [target.x + sideX * (halfSize + 0.45), target.y, target.z + sideZ * (halfSize + 0.45)];
+    if (typeof frame?.blocked === 'function') {
+      try {
+        if (frame.blocked([node.x, node.y + 0.45, node.z], [jumpStart[0], jumpStart[1] + 0.45, jumpStart[2]]) === true) continue;
+      } catch { continue; }
     }
     const path = nav.path(start, id, actor.team);
     if (!path) continue;

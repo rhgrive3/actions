@@ -1,0 +1,3441 @@
+{
+  "base_pr": 1878,
+  "base_head": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "main": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "assigned_count": 134,
+  "counts": {
+    "already-in-pr": 87,
+    "implemented": 30,
+    "not-adopted": 16,
+    "implemented-partially": 1
+  },
+  "items": [
+    {
+      "key": "audio-reference-collector-sparse-checkout-omit-unread-game-tree",
+      "status": "already-in-pr",
+      "reason": "Non-cone sparse checkout materializes only the standard-library collector and its workflow. Actual local Git sparse-checkout controls verify these two files and no game/modeler inputs. Collector URL/provenance/output/retention behavior is unchanged.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-audio-reference-fetch.yml",
+          "sha256": "1227ab633cdd38ad870fbd1d1fa60d0e843770b42add03b04c0bbf2e72fceece"
+        },
+        {
+          "path": "tools/audio/collect-public-reference-recordings.py",
+          "sha256": "73f3e8f49225ae3c166f2dbb747bd195f4c42b742b8df79f48ce40e68b532898"
+        },
+        {
+          "path": ".github/workflows/fetch-inkwave.yml",
+          "sha256": "5e336dcee648fd8180d1c6aa17d5010f762e0843d7556dede3402854f15f49c4"
+        }
+      ],
+      "library_file_id": "libfile_cf727acc79f481918a8564ae94dc6d5e",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] audio-reference-collector-sparse-checkout-omit-unread-game-tree.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "audio-source-audit-workflow-only-trigger-and-no-manual-entry",
+      "status": "already-in-pr",
+      "reason": "Focused audio runtime/adapter/source/tools/script/report changes now trigger the audit; workflow_dispatch uses the immutable event SHA. PR supersession is isolated from independent manual runs. Existing tracked-input ZIP content policy and five-day retention remain.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-audio-source-audit.yml",
+          "sha256": "43f96d488e770a09494607d4e8fd45721c7a8725e7998a4abac2b92b38b6a150"
+        },
+        {
+          "path": "patches/splatoon3/runtime/audio/s3-real/Wp_Roller_EmptyRoll_00.mp3",
+          "sha256": "ae7bc198aec3745c1b869dafe0008e3a4550428381e0edb69fddf47211a09b2f"
+        },
+        {
+          "path": "tools/audio/verify-s3-real-files.py",
+          "sha256": "83cfce3d4b4a76c2c7f87550551c0955331fa3ecd7c0e96339468cb4e45269bf"
+        }
+      ],
+      "library_file_id": "libfile_25183e82053c8191a5a56ae55d5b6771",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] audio-source-audit-workflow-only-trigger-and-no-manual-entry.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "boss-hud-callout-elide-unchanged-position-and-arrow-transforms",
+      "status": "already-in-pr",
+      "reason": "Existing final CSS-string guards cover the callout position, edge and arrow.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/settings-hud-queue-adapter.mjs",
+          "sha256": "58a071deb3ad9134cc3cca08ee9987b8d399a9343971ef9b59fa9e169429dec6"
+        }
+      ],
+      "library_file_id": "libfile_ab6cd0a09fa48191b944a8885d4b606a",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] boss-hud-callout-elide-unchanged-position-and-arrow-transforms.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "boss-hud-damage-number-projection-output-scratch",
+      "status": "already-in-pr",
+      "reason": "Boss damage-number projection reuses a HUD-owned output object instead of allocating one per number per frame. The result is consumed synchronously and never retained by the number.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud-boss.js",
+          "sha256": "3e3a878ad95a327526f330a831bfd7600f88dbb81cae1793d01bd1759943a889"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud-boss.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "e59717b0e02881febf19f15159c12e27413daf4c822a88b8192007012a16e81b"
+        }
+      ],
+      "library_file_id": "libfile_8556389d76888191a49d7bc6fca72364",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] boss-hud-damage-number-projection-output-scratch.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "boss-hud-damage-numbers-elide-unchanged-opacity-writes",
+      "status": "already-in-pr",
+      "reason": "Existing input/lens guards both hidden and visible damage-number opacity.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud-boss.js",
+          "sha256": "3e3a878ad95a327526f330a831bfd7600f88dbb81cae1793d01bd1759943a889"
+        },
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud-boss.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "e59717b0e02881febf19f15159c12e27413daf4c822a88b8192007012a16e81b"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_8dd68c199d188191b03a41e90cd569f9",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] boss-hud-damage-numbers-elide-unchanged-opacity-writes.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "build-orphan-audit-stream-emitted-js-instead-of-retaining-all",
+      "status": "implemented",
+      "reason": "Inventory emitted JS with lazy readers and parse/hash one module at a time. Inline scripts remain owned strings; reader errors and nonstring results retain the orphan fail-closed. Older completion claim was absent in PR 1878.",
+      "evidence": [
+        {
+          "path": "scripts/build-inkwave.mjs",
+          "sha256": "e24d99deccbab56620205b349f40e264877853e8d5035df7b83e9393fbe72c76"
+        },
+        {
+          "path": "scripts/lib/inkwave-reviewed-audio-orphan.mjs",
+          "sha256": "09328b34af4509d0b3f9fbf459e5f6b60a091c610fa6ef9569851f67423873c0"
+        },
+        {
+          "path": "scripts/tests/inkwave-reviewed-audio-orphan.test.mjs",
+          "sha256": "f45828ea1ea254132383843cd98e24180ecb88c7c7a7b1a11cdec37bd64bacf1"
+        }
+      ],
+      "library_file_id": "libfile_35d7cd126b408191baec5f8004c5e25b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] build-orphan-audit-stream-emitted-js-instead-of-retaining-all.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "camera-rig-share-follow-yaw-sincos",
+      "status": "already-in-pr",
+      "reason": "The baseline camera adapter already shares yaw sine/cosine when CameraRig.forward is the native implementation and preserves the custom-forward override branch.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/cameraRig.js",
+          "sha256": "46a8beabfaab8bdaf00ea1e11df4ee907d71279b419f5533500ce45aa98c24d1"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        }
+      ],
+      "library_file_id": "libfile_90c37b45bfe88191962104e8ea5914a4",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] camera-rig-share-follow-yaw-sincos.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "character-asset-qa-exclude-190mib-unused-modeler-sources",
+      "status": "implemented",
+      "reason": "Add conservative non-cone sparse checkout excluding only modeler/blender and modeler/docs. Keep runtime, tooling/editor source, immutable refs, baseline checkouts and all original test/build coverage. The separately recorded projectile atomic-intro duplicate removal retains its first mandatory gate. Actual Git fixture and YAML semantic comparison passed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-character-asset-qa.yml",
+          "sha256": "81643a4c73d8fc75ae8a792584da90ac9117135d1ad633ae6d684860319bdc75"
+        }
+      ],
+      "library_file_id": "libfile_3db2991f4e948191a4c38fd5c07da69f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-asset-qa-exclude-190mib-unused-modeler-sources.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "ci-quality-gate-account-only-game-suite-waste",
+      "status": "already-in-pr",
+      "reason": "Exclusively valid account/** changes omit the separate game suite because the dedicated account workflow owns API/bundle/Worker validation. Empty, malformed, unavailable and mixed changes require game QA, including mixed account/documentation edits.",
+      "evidence": [
+        {
+          "path": "scripts/inkwave-quality-scope.mjs",
+          "sha256": "92ad26465af3822afad7e3dcc4902868d9f999dd355013cf8ef98f83eedd77fd"
+        },
+        {
+          "path": ".github/workflows/ci-quality-gate.yml",
+          "sha256": "62b05ff7a657b36a0f4df10b323c1ff8fdc960aac93a28e1b8aafb3eccd573c2"
+        },
+        {
+          "path": ".github/workflows/zevant-account.yml",
+          "sha256": "0bb9183e641da2ddb6081e8889370646f8b5278afc5b143cc087152e74f9ee4b"
+        }
+      ],
+      "library_file_id": "libfile_01c9435d63b0819195174e2515252fe8",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ci-quality-gate-account-only-game-suite-waste.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "combined-qa-merged-branch-unconditional-pr-skip-events",
+      "status": "not-adopted",
+      "reason": "The existing QA job is guarded to one named historical head branch and therefore performs no checkout/build on other PRs. Removing/replacing its pull_request gate changes which candidate can request the preserved immutable source-pair proof. Keep the diagnostic gate under the instruction not to remove existing tests; scheduler-only skip events do not justify that coverage change.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-combined-qa.yml",
+          "sha256": "6f660bc52fbf94dfdb709ba8b38f591a4c6e4489ad7f9f87f3cf6816db0890fc"
+        }
+      ],
+      "library_file_id": "libfile_eae52d8e81f081919d7673a5d6d42474",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] combined-qa-merged-branch-unconditional-pr-skip-events.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "composed-cpu-regression-direct-dependency-pr-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "Added the evidenced motion-profile/bank/path, fixture, build/composition/runtime-evidence and executed source-test inputs. Existing source and emitted comparisons, component benchmark and browser trace commands are unchanged.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-composed-cpu.yml",
+          "sha256": "d1fab89fd4427c4726b29d7f0a2eb049fd0afe964783601161db4f305ce3f09a"
+        },
+        {
+          "path": "inkwave-public/src/game/motion/locomotion-profile.js",
+          "sha256": "e260bf9c9848d7bd6e8c7644751f117edd70a59fbc8d953a6852200fc635acdf"
+        },
+        {
+          "path": "inkwave-public/src/game/motion/source-bank.js",
+          "sha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960"
+        },
+        {
+          "path": "inkwave-public/src/game/motion/run-foot-path.js",
+          "sha256": "b8a0e372bfa91184d8a7c40e84654da16bff6e90520cdf7410f75af8f4634a7a"
+        },
+        {
+          "path": "patches/splatoon3/tests/source-loaded-actor-fixture.mjs",
+          "sha256": "b26bdff15c5df689b1d557941631ce09daa62eb90d68a2a53f272691ca805869"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "scripts/build-inkwave.mjs",
+          "sha256": "e24d99deccbab56620205b349f40e264877853e8d5035df7b83e9393fbe72c76"
+        },
+        {
+          "path": "scripts/lib/inkwave-runtime-evidence.mjs",
+          "sha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        }
+      ],
+      "library_file_id": "libfile_bfeec6d94a2881918c3804e816f1e68a",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] composed-cpu-regression-direct-dependency-pr-trigger-gaps.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "diorama-cursor-axis-prune-distant-snap-hypot",
+      "status": "implemented",
+      "reason": "Reject pins outside the current radius on either axis before the unchanged Math.hypot; preserve strict ties, NaN and input ownership.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_e63a91c83fc081919369199316fe3474",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] diorama-cursor-axis-prune-distant-snap-hypot.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "five-large-pr-qa-artifacts-default-90day-retention",
+      "status": "implemented",
+      "reason": "Set 14-day retention for the five specified PR evidence artifacts and retain 90 days for push/manual events. Preserve immutable site producer/consumer names, content, test fanout and the unrelated one-day pilot artifact.",
+      "evidence": [
+        {
+          "path": ".github/workflows/validate-inkwave-update.yml",
+          "sha256": "af9448d657ebd6d65eb8ca362d472af0aec23167b834e2d36669ce8d3168b429"
+        },
+        {
+          "path": ".github/workflows/validate-inkwave-ranked.yml",
+          "sha256": "90625f6fc9aa38f5cd76fe72f66b65a9a32ef3880273cb13813b3f4cf84f467d"
+        },
+        {
+          "path": ".github/workflows/inkwave-ink-micro-surface.yml",
+          "sha256": "2c4849ec379c478e8e61aa3feabf8ae310d786c634ecd19811bcf0361d799aa9"
+        },
+        {
+          "path": ".github/workflows/inkwave-ink-volumes.yml",
+          "sha256": "a2e5c629d5b3b75d4c1eb859ef7ca75930ad80dcc9115903bf4d87c1656629fa"
+        },
+        {
+          "path": ".github/workflows/inkwave-crab-gyro.yml",
+          "sha256": "345ea0da9421c6b5778407ef2843118d3803a596ca3fcfc70d317d3b28a3e019"
+        }
+      ],
+      "library_file_id": "libfile_f4b72fa689fc8191b3083734fa4a4615",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] five-large-pr-qa-artifacts-default-90day-retention.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "gamepad-menu-stick-repeat-elapsed-dt-instead-of-fixed-frame",
+      "status": "already-in-pr",
+      "reason": "The actual composed main already passes bounded elapsed dt into _padMenus and uses it for stick repeat. The editor ownership/neutral handoff remains independent.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_f94f14eb34a88191850b98e3258e559e",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gamepad-menu-stick-repeat-elapsed-dt-instead-of-fixed-frame.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "gyro-raw-rate-skip-redundant-orientation-omega",
+      "status": "not-adopted",
+      "reason": "Reject the raw-rate orientation-omega shortcut. The production gyro installer overrides _calibrate to record orientation rate/time on every sample, checks raw/attitude disagreement and 75 ms staleness, and performs Android fallback. The proposed early return would bypass that trust/fallback evidence even when the native base method alone looks redundant.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/gyro.js",
+          "sha256": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/gyro.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168"
+        }
+      ],
+      "library_file_id": "libfile_f83a22b26f7c81918bac0b6be61d1e9b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gyro-raw-rate-skip-redundant-orientation-omega.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "gyro-reuse-lifecycle-screen-angle-in-sample",
+      "status": "already-in-pr",
+      "reason": "Gyro _sample reuses the screen angle already refreshed by the lifecycle wrapper for this event; an unwrapped gyro still uses screenAngle fallback. Raw-rate trust and sensor integration are untouched.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/gyro.mjs",
+          "sha256": "56b741b115cc9e9074b1eb1b057fe14a9b7dc65aa9f598b8479c33ae4a092384"
+        },
+        {
+          "path": "inkwave-public/src/core/gyro.js",
+          "sha256": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "patches/local-quality/screen-angle.mjs",
+          "sha256": "0f5bd9a98c475bfaa03cb05bb13d3027a97a0062aacd6fabd54957d9ed91399f"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/gyro.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168"
+        }
+      ],
+      "library_file_id": "libfile_53dc6a6d4ab08191b056ea36a7eb28f4",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gyro-reuse-lifecycle-screen-angle-in-sample.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "gyro-world-orientation-skip-unit-gravity-rehypot",
+      "status": "not-adopted",
+      "reason": "Not adopted: removing hypot/division changes floating-point normalized gravity and gyro projection; mathematical unit length alone does not establish numerical or sensor fallback equivalence. In addition, the downstream pitch-axis branch at hl > 1e-6 can amplify a normalization boundary change; uniform imperceptible error is not proven for near-degenerate tilt.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/gyro.js",
+          "sha256": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "patches/local-quality/gyro.mjs",
+          "sha256": "56b741b115cc9e9074b1eb1b057fe14a9b7dc65aa9f598b8479c33ae4a092384"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/gyro.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168"
+        }
+      ],
+      "library_file_id": "libfile_d2078f92b6b88191bfb430a1bd5ba039",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gyro-world-orientation-skip-unit-gravity-rehypot.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "headgear-qa-six-identical-builds-and-seven-full-checkouts",
+      "status": "implemented-partially",
+      "reason": "All current headgear/combined checkouts now exclude the unused modeler Blender/docs inputs. Six builds remain: this change does not substitute an unverified shared artifact for each current source/build-bound browser proof. Build-once consolidation needs a separate artifact/source integrity and partial-rerun contract; existing test gates stay intact.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-headgear-visual-qa.yml",
+          "sha256": "cbd9a949c81cd1f44b1b9d59350d80362ac6b230b91834d85a626315053ba56f"
+        },
+        {
+          "path": "tools/headgear-production-qa/verify-shards.mjs",
+          "sha256": "ee564e69ad0bdf45155eb601e51a684964d73218f4fc0fe3d5f028da2d8758f2"
+        }
+      ],
+      "library_file_id": "libfile_3f1acebc4c488191b749c9cc1b3d6359",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] headgear-qa-six-identical-builds-and-seven-full-checkouts.md",
+      "previous_disposition": "needs-evidence",
+      "local_only": true
+    },
+    {
+      "key": "hud-ally-down-ping-elide-unchanged-opacity-writes",
+      "status": "already-in-pr",
+      "reason": "Existing input/lens changes guard opacity and actual serialized transform.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_5446c95008b08191be1998d2aa32b37d",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-ally-down-ping-elide-unchanged-opacity-writes.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-ally-down-projection-reuse-output-scratch",
+      "status": "already-in-pr",
+      "reason": "Existing composed HUD _project accepts owner output scratch for ally-down markers.",
+      "evidence": [
+        {
+          "path": "patches/reliability/queue-network-ui-adapter.mjs",
+          "sha256": "f297bf72a51f0da62f44e75810479b1faea892e5c2621b3c1dc8250a7de222df"
+        }
+      ],
+      "library_file_id": "libfile_d50910750b8c8191ae99a7a6fe2cb39f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-ally-down-projection-reuse-output-scratch.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "hud-ally-marker-stable-key-elide-tofixed",
+      "status": "already-in-pr",
+      "reason": "Marker raw scalars are compared before toFixed/string construction. The original rounded key still determines DOM thresholds, and missing markers or replacement HUD state invalidate the raw cache.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "patches/local-quality/hud-snapshots-adapter.mjs",
+          "sha256": "5c9f4fd5a71beaf5353b6a4e1c7846e4e67a5c4666e1ab364c9247414129184e"
+        },
+        {
+          "path": "patches/local-quality/added-ui-motion-adapter.mjs",
+          "sha256": "debed1bb9648e28de3e327983d210275f964e6c8d08903d88557b951e52cd440"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_f78fbf5d3c748191a95a5a5913ab5638",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-ally-marker-stable-key-elide-tofixed.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-beacon-spread-break-on-settled-pass",
+      "status": "already-in-pr",
+      "reason": "The composed beacon-spread relaxation loop already records whether a pass moved any pair and exits on the first settled pass.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_9877b97fb0348191a7ee432063088645",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-beacon-spread-break-on-settled-pass.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-beacon-targets-bounded-ally-walk-no-filter-array",
+      "status": "already-in-pr",
+      "reason": "HUD beacon allies stop at the first three teammates. Base and live Big Bubbler jump targets are collected independently and stay available.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/diorama.js",
+          "sha256": "a9c8328035bd2da20c2c9300067c593ea2b004f5b413ba2a1f1eeb5ca6c2c4ff"
+        },
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/diorama.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "a79fc94d36f6320848426cee8bc1fead5a6f8e315fe344d32310877203941ae0"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_5c20bae5442c81919be6dad521ca5c7b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-beacon-targets-bounded-ally-walk-no-filter-array.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-clock-cache-formatted-time-by-visible-second",
+      "status": "already-in-pr",
+      "reason": "Existing added UI adapter caches visible timer seconds before formatting.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_24b676bf0c8c81918157c87eee51389d",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-clock-cache-formatted-time-by-visible-second.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-crosshair-cache-unchanged-camera-fov-tangent",
+      "status": "already-in-pr",
+      "reason": "Composed PR source already has _hudProjectionCache keyed by FOV and cone with Object.is before tangent.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_31758f3e059c8191b9bd8721a35fad9e",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-crosshair-cache-unchanged-camera-fov-tangent.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "hud-expanded-map-cursor-elide-identical-dom-writes",
+      "status": "already-in-pr",
+      "reason": "Composed PR source already uses writeQueueTransform and class boundary checks for map cursor.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/input-lens-queue-adapter.mjs",
+          "sha256": "9e2fc576f34c12bde4386f93261d21662f78a417b13fc47524816a1329711c51"
+        }
+      ],
+      "library_file_id": "libfile_6db611b3bbd48191a535506976f84782",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-expanded-map-cursor-elide-identical-dom-writes.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "hud-fxloop-paused-elide-self-raf-until-resume",
+      "status": "implemented",
+      "reason": "Park HUD effect RAF when paused, keep effect state, resume once with a fresh timestamp, respect world pause and pause/resume from inside the active callback. PR 1878 still scheduled paused RAF despite older disposition claiming completion.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        },
+        {
+          "path": "patches/local-quality/tests/pause-gpu.test.mjs",
+          "sha256": "dfccbe08f93d6af7e99dbe94c8b0d3e86068cdb247cc956425010c93b4176212"
+        },
+        {
+          "path": "patches/reliability/tests/hud-fixture.mjs",
+          "sha256": "c039b3dacca99c48019d0613c01baddb741cd6367a482b7664b9548dd6309d73"
+        }
+      ],
+      "library_file_id": "libfile_51d45c45a18c8191a520f23972219ea5",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-fxloop-paused-elide-self-raf-until-resume.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-map-inline-aspect-fit-without-per-frame-arrays",
+      "status": "already-in-pr",
+      "reason": "Final map sizing already uses scalar w0/h0/w1/h1.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_c4a29c0f333c819195cc93a06bea8751",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-map-inline-aspect-fit-without-per-frame-arrays.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-squad-status-elide-per-frame-composite-key-strings",
+      "status": "already-in-pr",
+      "reason": "Existing final squad loop compares alive/ready/self/weapon primitives and only builds key on change.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "inkwave-public/src/game/match.js",
+          "sha256": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0"
+        },
+        {
+          "path": "patches/reliability/hud-adapter.mjs",
+          "sha256": "3962efbd7c505014f8577d7dac25366250978c2c7ac31b957c58624069e7b5ff"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_c53f6d902c708191b7dc69b4958d33cb",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-squad-status-elide-per-frame-composite-key-strings.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-tank-cache-responsive-canvas-metrics",
+      "status": "already-in-pr",
+      "reason": "Final _s3TankBox already caches client dimensions with ResizeObserver and live fallback without observer.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_fff88a723ec08191bdf1a9193abc9dbe",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-tank-cache-responsive-canvas-metrics.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "hud-turf-ticker-skip-unchanged-locale-formatting",
+      "status": "already-in-pr",
+      "reason": "Final turf ticker already caches whole displayed value before formatting.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/hud.js",
+          "sha256": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a"
+        },
+        {
+          "path": "inkwave-public/src/ui/ui-util.js",
+          "sha256": "6ac6de3552fac5fcb861bf6dc8aa032752ef4fa3be151fda2e07d44d756b9d27"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_145d4f47cce88191b9b8ec92efd39c68",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hud-turf-ticker-skip-unchanged-locale-formatting.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "ink-micro-surface-qa-runtime-source-path-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "The gate now covers inkShading, levelMaterial, texlib, build/composition/runtime-evidence and all direct inputs of the three existing source suites. Existing browser/video source-frame verification and encoding commands remain.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-ink-micro-surface.yml",
+          "sha256": "2c4849ec379c478e8e61aa3feabf8ae310d786c634ecd19811bcf0361d799aa9"
+        },
+        {
+          "path": "inkwave-public/src/world/inkShading.js",
+          "sha256": "5e62b12fbd819571af835058a46ae5b0cae785324e6d57d171e368c53b5fce0c"
+        },
+        {
+          "path": "patches/local-quality/tests/ink-micro-surface.test.mjs",
+          "sha256": "6cb41b42a6e18318c739b75bbbce6c0239e751c4a641b1fae7826231da124d52"
+        },
+        {
+          "path": "inkwave-public/src/world/levelMaterial.js",
+          "sha256": "30a9767d017f6bd785f2a50e12e294bf3a74acd5b9d44931ef69c73baf649f98"
+        },
+        {
+          "path": "scripts/check-inkwave-ink-micro-surface.mjs",
+          "sha256": "10e1e8bd9f57b58a09a168a6e0c48f84b6579e3e1d6f19a6c2851cf7e36f628b"
+        },
+        {
+          "path": "inkwave-public/src/world/texlib.js",
+          "sha256": "14d39c645a02f10be999412b6238632250ec93508a9329487db4505ca4e5c0dd"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "scripts/build-inkwave.mjs",
+          "sha256": "e24d99deccbab56620205b349f40e264877853e8d5035df7b83e9393fbe72c76"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        }
+      ],
+      "library_file_id": "libfile_3c50e66cdc4c8191a1541da44e8b226a",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-micro-surface-qa-runtime-source-path-trigger-gaps.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "input-gamepad-trigger-elide-synthetic-button-objects",
+      "status": "already-in-pr",
+      "reason": "The two gamepad trigger branches keep a scalar pressed value instead of allocating replacement button objects. Held/edge thresholds and takeover/menu-block ownership are unchanged.",
+      "evidence": [
+        {
+          "path": "patches/reliability/input-adapter.mjs",
+          "sha256": "246404e644fa065535517cd1012fb5c3c7baeb63095d1d57c1d4202806558cbd"
+        },
+        {
+          "path": "inkwave-public/src/core/input.js",
+          "sha256": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4"
+        },
+        {
+          "path": "patches/reliability/adapter.mjs",
+          "sha256": "2264b393f72862ca78a1a0df2267a69b9f0d90b604c2d5dba09ee95e450d0559"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/input.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "d11971de71dde1b3287e2b5768b3176d16e93616f537eee4e0e541df9e3937ea"
+        }
+      ],
+      "library_file_id": "libfile_4dd3c557ad688191ad34253f3608429b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] input-gamepad-trigger-elide-synthetic-button-objects.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "input-padstick-and-player-move-skip-deadzone-hypot",
+      "status": "already-in-pr",
+      "reason": "padStick uses the L1 upper bound to reject provably dead-zone vectors before radial hypot; every remaining vector follows the original radial formula. Player movement skips hypot only for the exact zero vector.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/input.js",
+          "sha256": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4"
+        },
+        {
+          "path": "inkwave-public/src/game/player.js",
+          "sha256": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/input.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "d11971de71dde1b3287e2b5768b3176d16e93616f537eee4e0e541df9e3937ea"
+        }
+      ],
+      "library_file_id": "libfile_8e6bae9ec2e881919c706176b3bda917",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] input-padstick-and-player-move-skip-deadzone-hypot.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "kit-paint-meta-inline-validation-without-slice",
+      "status": "not-adopted",
+      "reason": "A source-loaded semantics-preserving eager-snapshot candidate passed 100k dense/sparse/accessor checks but was slower in eight paired 300k-call VM rounds: median 404.65ms to529.02ms. Candidate removed; original validator retained.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        },
+        {
+          "path": "patches/network-replication/slosher-paint-admission.mjs",
+          "sha256": "048d761b225e81732a15a77630f860050e23ed1809a8ded31d9149e1baa944c0"
+        }
+      ],
+      "library_file_id": "libfile_de246ba652e08191a6bf7dfb0954ce06",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] kit-paint-meta-inline-validation-without-slice.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "lobby-empty-slot-anchor-elide-identical-css-transform-writes",
+      "status": "already-in-pr",
+      "reason": "Existing scoped lobby adapter tracks authored/serialized empty-slot transform and external writes.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_7f081f80f01081919b34ac9cf37d38d6",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-empty-slot-anchor-elide-identical-css-transform-writes.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "lobby-host-role-rebinding-stacks-row-event-listeners",
+      "status": "already-in-pr",
+      "reason": "Each menu element owns only one event listener set; dispatch reads the latest binding. Repeated host-role changes cannot stack callbacks, and click:false, modal and noclick conditions remain effective.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/net/session.js",
+          "sha256": "6373fe2e91700008dc0ca255a7d910fe8e9b166d7f2e0da9e50d7d0de8a92caf"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_10ee12cf1f848191a724af1fc59d0d0e",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-host-role-rebinding-stacks-row-event-listeners.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "lobby-nameplate-overlap-reuse-frame-scratch",
+      "status": "already-in-pr",
+      "reason": "Composed PR already owns and reuses nameplate vis/placed rows, including reentrancy-safe cleanup.",
+      "evidence": [
+        {
+          "path": "patches/reliability/queue-network-ui-adapter.mjs",
+          "sha256": "f297bf72a51f0da62f44e75810479b1faea892e5c2621b3c1dc8250a7de222df"
+        }
+      ],
+      "library_file_id": "libfile_fd40552e39848191b4a6f113f4a6f25f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-nameplate-overlap-reuse-frame-scratch.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "lobby-occupied-slot-skip-hidden-3d-projection",
+      "status": "already-in-pr",
+      "reason": "Composed PR lobbySlotAnchor returns visibility zero before vector/project work for occupied or launch slots.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/showcase.js",
+          "sha256": "7e3906207147559aba9ec102fc5a2f88c70c12742eec3b34cb30c1ff29b91df5"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/game/showcase.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "94766a5ca4e109d7e9af8db17d81c94cd52954405a29456addd7ab7064cf3206"
+        }
+      ],
+      "library_file_id": "libfile_efd3dccd42288191a5c55317323cefb9",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-occupied-slot-skip-hidden-3d-projection.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "lobby-palette-avoid-framewise-css-accent-array-join",
+      "status": "already-in-pr",
+      "reason": "The current lobby palette key already concatenates scalar palette values; the queued colors().join() allocation no longer occurs.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_88c59647c8ec8191ae030534b1a6ac09",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-palette-avoid-framewise-css-accent-array-join.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "lobby-renderbar-avoid-repeated-identical-colorvars",
+      "status": "already-in-pr",
+      "reason": "Lobby renderBar stores the last team-A, team-B and self color separately and only calls colorVars for an actual change. Team/self/boss selection rules are unchanged.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/ui/ui-util.js",
+          "sha256": "6ac6de3552fac5fcb861bf6dc8aa032752ef4fa3be151fda2e07d44d756b9d27"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_79026d9ef81c81918c951cc5d2253fce",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-renderbar-avoid-repeated-identical-colorvars.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "lobby-set-builder-release-consumed-geometry-buckets",
+      "status": "already-in-pr",
+      "reason": "SetBuilder build({consume:true}) releases only merged scratch input geometries and clears consumed buckets. Singletons remain owned by the returned mesh, and default repeat-build behavior is unchanged. The lobby and curb one-shot builders opt in.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/lobbySet-geo.js",
+          "sha256": "c16a8cca227ef16b10e83cec1b50bc3aaa7e765dcbe878ab2713469c0864d117"
+        },
+        {
+          "path": "inkwave-public/src/game/lobbySet.js",
+          "sha256": "78da94c50d7ba3f2e41d08a7a6a8e4c510bbc1b27d0a551ade74419f6860f208"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        }
+      ],
+      "library_file_id": "libfile_5996e7685070819186f8ac327780bbcf",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-set-builder-release-consumed-geometry-buckets.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "lobby-stage-ticket-elide-unchanged-innerhtml-reconstruction",
+      "status": "already-in-pr",
+      "reason": "The stage ticket updates innerHTML only when the complete rendered string changes; stage numbering and denominator formatting are unchanged.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/net/session.js",
+          "sha256": "6373fe2e91700008dc0ca255a7d910fe8e9b166d7f2e0da9e50d7d0de8a92caf"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_148f1a21a6d08191b852f210b88fc9a8",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-stage-ticket-elide-unchanged-innerhtml-reconstruction.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "lobby-unchanged-guest-ping-skip-full-roster-fanout",
+      "status": "already-in-pr",
+      "reason": "Existing final composition already suppresses unchanged ping fanout and sender repeats.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/session.js",
+          "sha256": "6373fe2e91700008dc0ca255a7d910fe8e9b166d7f2e0da9e50d7d0de8a92caf"
+        },
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+        },
+        {
+          "path": "patches/reliability/net-adapter.mjs",
+          "sha256": "d017d642b30c3c489706abffacabe06cc9206d5147590431f49a0ebf62b533f5"
+        },
+        {
+          "path": "patches/reliability/lobby-guards.mjs",
+          "sha256": "aa4db5a79443d57a1ef04b44cb488e31219fc8587083df156cb640db35f5f1b1"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/transport.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "ca2a026003a2130b859c8b46e8f2709fd0d2f743f27411ef0dd87091d05fa1a3"
+        }
+      ],
+      "library_file_id": "libfile_a026900296bc81918e846b4777119925",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-unchanged-guest-ping-skip-full-roster-fanout.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menu-focus-cursor-elide-identical-transform-size-writes",
+      "status": "already-in-pr",
+      "reason": "The composed menu cursor already caches rounded transform and size values before issuing style writes; identical frames do not write the same transform/width/height again.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/ui/ui-util.js",
+          "sha256": "6ac6de3552fac5fcb861bf6dc8aa032752ef4fa3be151fda2e07d44d756b9d27"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_b6d4e503ad2c81918cf67a7f1151dd6f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menu-focus-cursor-elide-identical-transform-size-writes.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menus-delay-and-release-eager-stage-poster-decodes",
+      "status": "already-in-pr",
+      "reason": "Existing quality adapter removes global stage preload/decode and uses lazy asynchronous offscreen tickets.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/config.js",
+          "sha256": "ae57e67f0dd6e44e988dbfeef20c8583a61f1a3fdb69d3f1aa5032afd16f8868"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_77e6f99e3a5c8191b1048b9cea5501a2",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menus-delay-and-release-eager-stage-poster-decodes.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menus-loading-progress-elide-identical-fill-transform",
+      "status": "already-in-pr",
+      "reason": "Final loading screen already tracks authored and serialized CSS transform.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_9c17cff2e3608191994a58571732ec62",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menus-loading-progress-elide-identical-fill-transform.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menus-loading-skip-settled-interpolation-exponential",
+      "status": "already-in-pr",
+      "reason": "Existing input/lens adapter skips settled finite loading interpolation.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "patches/reliability/menu-raf-adapter.mjs",
+          "sha256": "bd2152d9f6ebc287fbc21cb3cd74c961a3430b7075d07203a3eaf94ecc5269e4"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_081586f7ea8c81918987955627f829af",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menus-loading-skip-settled-interpolation-exponential.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menus-loadout-skip-converged-stat-exp",
+      "status": "already-in-pr",
+      "reason": "Final loadout loop already skips settled stats and shares one response factor across moving rows.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_2da300afad78819198b37dfdc91e92e1",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menus-loadout-skip-converged-stat-exp.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menus-self-raf-duplicates-main-engine-update",
+      "status": "already-in-pr",
+      "reason": "The menu RAF is already cancelled when the engine owns update; standalone menus retain their RAF, and the queued native callback exits once engine ownership is acquired.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_2a51ff81e6b881918637255339fa8d65",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menus-self-raf-duplicates-main-engine-update.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "menus-spatial-navigation-avoid-repeat-layout-geometry-scans",
+      "status": "already-in-pr",
+      "reason": "One spatial navigation query retains DOM rectangles in a local Map so wrapping reuses the first scan. The next query takes fresh geometry, avoiding persistent-cache invalidation bugs.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_5982576123008191a3f362b39a6804ad",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] menus-spatial-navigation-avoid-repeat-layout-geometry-scans.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "minimap-storm-dash-reuse-canvas-pattern-arrays",
+      "status": "already-in-pr",
+      "reason": "The baseline minimap already shares STORM_LINE_DASH and SOLID_LINE_DASH arrays instead of constructing new arrays per storm/draw.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/minimap.js",
+          "sha256": "18a7b3711083fc5e2a0f8d3782f2ff95fcd62df4b2e6cf8f867e18c72854c493"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_a0d2856fa0408191ab4190b3f021851f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] minimap-storm-dash-reuse-canvas-pattern-arrays.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "mobile-applysettings-avoid-unrelated-full-touch-relayout",
+      "status": "already-in-pr",
+      "reason": "applySettings caches root/scale/stick mode as layout inputs and only changes opacity when its value changes. Sensitivity, volume or other unrelated settings no longer run a full touch relayout.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "inkwave-public/src/core/mobile.js",
+          "sha256": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/mobile.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "cde88ddb4d9f021c0b7bfb80ecce8f88e361c3a8737c15876c2bbb599bae16f8"
+        }
+      ],
+      "library_file_id": "libfile_d262ae81ecac8191a179a9f49bb6425a",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] mobile-applysettings-avoid-unrelated-full-touch-relayout.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "mobile-editor-targeted-reflow-instead-of-all-controls",
+      "status": "already-in-pr",
+      "reason": "The editor now lays out only the edited control. Width/height, layout unit or safe-area changes invalidate to the full layout; stick home and editor coordinate display stay synchronized.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/mobile.js",
+          "sha256": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/mobile.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "cde88ddb4d9f021c0b7bfb80ecce8f88e361c3a8737c15876c2bbb599bae16f8"
+        }
+      ],
+      "library_file_id": "libfile_8b02e0f58e3c81918188e2b0478c1288",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] mobile-editor-targeted-reflow-instead-of-all-controls.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "mobile-hidden-hud-defer-dom-sync-until-touch-active",
+      "status": "already-in-pr",
+      "reason": "Hidden touch HUD updates keep only the latest scalar state in a reused object. Ready haptics still follow the state transition while hidden; current state flushes before the touch overlay becomes active.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/device.js",
+          "sha256": "b04747e1f331dd5222d54c3f65d708c3bd70fdb81fbe5573041079396ad11464"
+        },
+        {
+          "path": "inkwave-public/src/core/mobile.js",
+          "sha256": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "inkwave-public/src/core/input.js",
+          "sha256": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/mobile.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "cde88ddb4d9f021c0b7bfb80ecce8f88e361c3a8737c15876c2bbb599bae16f8"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/input.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "d11971de71dde1b3287e2b5768b3176d16e93616f537eee4e0e541df9e3937ea"
+        }
+      ],
+      "library_file_id": "libfile_11de357755788191be344ce41a57c653",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] mobile-hidden-hud-defer-dom-sync-until-touch-active.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "mobile-inactive-detach-document-nonpassive-touch-gesture-listeners",
+      "status": "already-in-pr",
+      "reason": "The original document-level touch/gesture listeners have already been replaced by root/canvas-owned listeners with AbortSignal cleanup. The cited global touch-scroll blocker is absent from composed production source. Document dblclick handling is a separate event and does not reinstate the premise.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/mobile.js",
+          "sha256": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a"
+        },
+        {
+          "path": "patches/local-quality/mobile-platform.mjs",
+          "sha256": "77b685f70e9cc5a3c07a7adf4e49d13c9a8c8095082201e5567ce3b4e59cba5b"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/mobile.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "cde88ddb4d9f021c0b7bfb80ecce8f88e361c3a8737c15876c2bbb599bae16f8"
+        }
+      ],
+      "library_file_id": "libfile_ae069464f3108191822e272a757e05b1",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] mobile-inactive-detach-document-nonpassive-touch-gesture-listeners.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "mobile-pointerdown-cache-touch-hitbox-visibility",
+      "status": "already-in-pr",
+      "reason": "Hit testing checks cached geometric bounds before reading offsetParent. Far controls never force visibility/layout reads, while a geometrically eligible newly hidden control is still rejected immediately; no stale visibility cache is introduced.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/mobile.js",
+          "sha256": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/mobile.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "cde88ddb4d9f021c0b7bfb80ecce8f88e361c3a8737c15876c2bbb599bae16f8"
+        }
+      ],
+      "library_file_id": "libfile_0020adb5a1b08191bafd407a9a50b68f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] mobile-pointerdown-cache-touch-hitbox-visibility.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "mobile-swipe-cache-unchanged-sensitivity-pow",
+      "status": "already-in-pr",
+      "reason": "Final MobileInput stores _touchSensMul at initialization/settings updates; move reads multiplier without pow.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/core/mobile.js",
+          "sha256": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a"
+        },
+        {
+          "path": "inkwave-public/src/core/gyro.js",
+          "sha256": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/mobile.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "cde88ddb4d9f021c0b7bfb80ecce8f88e361c3a8737c15876c2bbb599bae16f8"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/gyro.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168"
+        }
+      ],
+      "library_file_id": "libfile_8e38b9e5c2f48191b7989432e4a7992c",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] mobile-swipe-cache-unchanged-sensitivity-pow.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "netmatch-owner-jitter-rolling-quantile-incremental",
+      "status": "already-in-pr",
+      "reason": "Existing final composition already wires rolling-quantile.mjs into per-peer gap/late windows.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "patches/network-replication/rolling-quantile.mjs",
+          "sha256": "f4aca3a21493a8a35fd611652911ac5360e40c9f060b71d16c269d5f28bf3c62"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_1fe00e9e1ec481919c2d4fdcb68d433e",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] netmatch-owner-jitter-rolling-quantile-incremental.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "netmatch-remote-actor-correction-spring-axis-loop",
+      "status": "already-in-pr",
+      "reason": "The fixed composed correction path already uses scalar axis expressions; the raw upstream loop is not the deployed implementation.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_b44479530c088191940c9fb88caf496d",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] netmatch-remote-actor-correction-spring-axis-loop.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-adoption-snapshot-near-tail-bracket-fastpath",
+      "status": "implemented",
+      "reason": "Use the last four brackets only when the accepted monotonic buffer and strict time bound prove no earlier match; preserve full forward scan otherwise.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_264be0c015d481918bf58a52a3dbd527",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-adoption-snapshot-near-tail-bracket-fastpath.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-boss-crablet-interpolation-reuse-owned-row-buffers",
+      "status": "already-in-pr",
+      "reason": "Existing queue-network-ui-adapter owns distinct crabRows and keeps borrowed unmatched rows.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "patches/network-replication/snapshot-guard.mjs",
+          "sha256": "dd01098d91f24cd6e4d4487f2910b995e68a8435169f1949c2fe53bfe22c3eac"
+        },
+        {
+          "path": "inkwave-public/src/boss/boss.js",
+          "sha256": "082e3d47329dba6858a8b20db6e66cf335aeb0ec130ed303c607d29165aad1a3"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_e89804e03d648191a3add006fb6c319b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-boss-crablet-interpolation-reuse-owned-row-buffers.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-boss-snapshot-bounded-id-uniqueness-without-set",
+      "status": "implemented",
+      "reason": "Use bounded prior-ID comparisons for at most 16 validated integer crablets; preserve duplicate signed-zero, malformed row and all field guards.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/snapshot-guard.mjs",
+          "sha256": "dd01098d91f24cd6e4d4487f2910b995e68a8435169f1949c2fe53bfe22c3eac"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_1886fb1f1520819184cda914ca5614db",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-boss-snapshot-bounded-id-uniqueness-without-set.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-catalogue-birth-inline-numeric-and-tower-guards",
+      "status": "implemented",
+      "reason": "Remove the 8-value, 6-value and 5-key temporary arrays after cataloguePayload has returned a validated plain object. Preserve all numeric/fround, tower, ownership, sequence, birth and proof guards.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_a885984692188191a17541bad2bc3fc1",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-catalogue-birth-inline-numeric-and-tower-guards.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-combat-pose-row-dense-validation-single-copy",
+      "status": "implemented",
+      "reason": "Validate dense pose coordinates as scalars and copy once only for the authenticated owner. Sparse rows keep the original slice/every fallback.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/combat-provenance.mjs",
+          "sha256": "c2f7ae2fbec165cec286abd33faefca61bca8376ea9f2bd61399abde3a63c355"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_82daa6b901d48191804f0f6909a2f9d4",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-combat-pose-row-dense-validation-single-copy.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-combat-proof-tail-avoid-redundant-bounded-slice",
+      "status": "not-adopted",
+      "reason": "Existing actual-module counterexample shows retained-array reuse changes real combat admission on synchronous geometry reentry: false becomes true.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/combat-provenance.mjs",
+          "sha256": "c2f7ae2fbec165cec286abd33faefca61bca8376ea9f2bd61399abde3a63c355"
+        }
+      ],
+      "library_file_id": "libfile_7a64f860ce3881919df23f3d0dd923ad",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-combat-proof-tail-avoid-redundant-bounded-slice.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "network-combat-provenance-burst-proof-index",
+      "status": "already-in-pr",
+      "reason": "Lazily index burst proof keys and per-kind recent counts for envelopes of at least 32 events; small envelopes retain the original walk. Duplicate, paired birth and rate-limit ordering is unchanged.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/combat-provenance.mjs",
+          "sha256": "c2f7ae2fbec165cec286abd33faefca61bca8376ea9f2bd61399abde3a63c355"
+        }
+      ],
+      "library_file_id": "libfile_e11a14c6285881919ab4e4a306cee9e0",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-combat-provenance-burst-proof-index.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-combat-provenance-paint-only-skip-pose-staging",
+      "status": "implemented",
+      "reason": "Skip unused pose staging only when every event in the original first-256 processing prefix is a paint event; keep proof expiry, bounded owned proof tails and mixed-event processing.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/combat-provenance.mjs",
+          "sha256": "c2f7ae2fbec165cec286abd33faefca61bca8376ea9f2bd61399abde3a63c355"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_8990e5cd1b908191898aa6c3f72f2616",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-combat-provenance-paint-only-skip-pose-staging.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-combat-raynear-avoid-per-proof-vector-array",
+      "status": "already-in-pr",
+      "reason": "Compute the existing ray delta and dot-product arithmetic with scalars in the original order.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/combat-provenance.mjs",
+          "sha256": "c2f7ae2fbec165cec286abd33faefca61bca8376ea9f2bd61399abde3a63c355"
+        }
+      ],
+      "library_file_id": "libfile_a290b184611081919cdd4532049463fd",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-combat-raynear-avoid-per-proof-vector-array.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-death-paint-proof-delay-fingerprint-serialization",
+      "status": "already-in-pr",
+      "reason": "Serialize the death fingerprint only in the authorized equal-life/equal-generation duplicate comparison where it is consumed.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/paint-authority.mjs",
+          "sha256": "b48359120385ab02d4ff4aaf37c617403b37abae636fba97de39b942dd487727"
+        },
+        {
+          "path": "patches/network-replication/paint-authority-adapter.mjs",
+          "sha256": "4972ad8cc59f3a183b10e7659629cb0d5555cb5c92617efe23764455b65250a1"
+        }
+      ],
+      "library_file_id": "libfile_455b8f5beedc8191889d62c8c369c641",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-death-paint-proof-delay-fingerprint-serialization.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-hit-authority-ack-fixed-field-presence-without-filter",
+      "status": "implemented",
+      "reason": "Count the four fixed authority fields without filter allocation and reuse the all-or-none validation before ACK presence check; all value/authority guards remain.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_0044b0f207bc8191bb8892620f2357a9",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-hit-authority-ack-fixed-field-presence-without-filter.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-kit-birth-count-fastpath-below-cap",
+      "status": "already-in-pr",
+      "reason": "The per-owner count cannot reach 128 when total births are below 128, so only that count scan is omitted. At capacity the original eviction and replay rules run.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        }
+      ],
+      "library_file_id": "libfile_8310c71d234881919a90f9fadc06a906",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-kit-birth-count-fastpath-below-cap.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-kit-bomb-birth-cache-local-admission-metadata",
+      "status": "implemented",
+      "reason": "Capture local metadata once per accepted bomb birth and pass that same metadata into the unchanged wire event and local receipt.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_0abe20a8d17c8191a827a01b2a7bd9a6",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-kit-bomb-birth-cache-local-admission-metadata.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-kit-event-admission-skip-non-r2-idle-preparation",
+      "status": "implemented",
+      "reason": "Skip only the proven identity helper on non-R2 envelopes. R2, including empty batches, always enters existing pending/expiry/admission processing. The prepared event array remains separately owned.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_84f901e12c40819198fc046b07fd3933",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-kit-event-admission-skip-non-r2-idle-preparation.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-kit-paint-monotonic-batch-skip-dedup-sort",
+      "status": "already-in-pr",
+      "reason": "A strictly monotonic unique batch without older pending rows uses its validated order directly. Other batches retain deduplication and sorting, with all admission checks intact.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        },
+        {
+          "path": "patches/network-replication/kit-paint-adapter.mjs",
+          "sha256": "8677beb048f2830aab5ef4e2bc5b52fa68abb7b91b2b58ce2e0dcacf0b61f51c"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        }
+      ],
+      "library_file_id": "libfile_30e2257af31c8191a8315867a76c5e20",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-kit-paint-monotonic-batch-skip-dedup-sort.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-kit-paint-proof-key-length-prefix-fastpath",
+      "status": "already-in-pr",
+      "reason": "Use an injective UTF-16 length-prefixed key for string owners and safe integer sequences; unusual inputs retain the existing JSON encoding.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        }
+      ],
+      "library_file_id": "libfile_46aa01e140f88191a88caa1d261480fc",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-kit-paint-proof-key-length-prefix-fastpath.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-kit-paint-prune-reuse-when-authority-unchanged",
+      "status": "already-in-pr",
+      "reason": "Revalidate the complete small authority snapshot, including actor identity/owner and every member key, before reusing a large birth-ledger prune. Birth or pending insertions invalidate the snapshot; custom Map operations retain the scan.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        },
+        {
+          "path": "patches/network-replication/kit-paint-adapter.mjs",
+          "sha256": "8677beb048f2830aab5ef4e2bc5b52fa68abb7b91b2b58ce2e0dcacf0b61f51c"
+        }
+      ],
+      "library_file_id": "libfile_4b6b76520f788191b38b29c4f405807b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-kit-paint-prune-reuse-when-authority-unchanged.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-native-sprinkler-admission-six-finities-no-slice",
+      "status": "implemented",
+      "reason": "Check positions 4..9 without slicing; retain Array.every hole/inherited-index handling, every finite condition and all birth/pose/owner metadata checks.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/sub-birth-commit.mjs",
+          "sha256": "b8ac7960ef03dd7e1bf7ec6eb9e87093df54133468f2816322a8850b1750ba0f"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_705fe7fbfdc08191ab0f70067e4f33d4",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-native-sprinkler-admission-six-finities-no-slice.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-owner-tick-fuse-bounded-event-slice-filter",
+      "status": "already-in-pr",
+      "reason": "Composed PR already fuses the first-256-prefix event filtering and preserves truncation before eligibility.",
+      "evidence": [
+        {
+          "path": "patches/reliability/queue-network-ui-adapter.mjs",
+          "sha256": "f297bf72a51f0da62f44e75810479b1faea892e5c2621b3c1dc8250a7de222df"
+        }
+      ],
+      "library_file_id": "libfile_360286513c408191b3d9201c11e2b6ca",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-owner-tick-fuse-bounded-event-slice-filter.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "network-paint-authority-inline-zero-stretch-admission",
+      "status": "not-adopted",
+      "reason": "A semantics-preserving sparse/eager-getter/custom-slice candidate was slower in eight paired 300k-call VM rounds: median35.41ms to172.21ms. Candidate removed; original predicates retained.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/paint-authority.mjs",
+          "sha256": "b48359120385ab02d4ff4aaf37c617403b37abae636fba97de39b942dd487727"
+        },
+        {
+          "path": "patches/network-replication/paint-authority-adapter.mjs",
+          "sha256": "4972ad8cc59f3a183b10e7659629cb0d5555cb5c92617efe23764455b65250a1"
+        },
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_ac9e0c14fc248191bac4cf1a2a713634",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-paint-authority-inline-zero-stretch-admission.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "network-paint-order-reuse-same-call-validation",
+      "status": "not-adopted",
+      "reason": "The actual paint callback can synchronously remove membership. The executed production NetMatch case proves the post-apply read must reject causal clock advancement after that change; retaining the second validation preserves authority.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        }
+      ],
+      "library_file_id": "libfile_c6b673825930819196e5ce64216d37ed",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-paint-order-reuse-same-call-validation.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "network-paint-stretch-guard-elide-triple-array",
+      "status": "already-in-pr",
+      "reason": "Read the three optional stretch values eagerly and run the original finite checks without a temporary tuple.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        }
+      ],
+      "library_file_id": "libfile_7360156739fc8191b3ba20a94b6967ca",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-paint-stretch-guard-elide-triple-array.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-projectile-cosmetic-guard-remove-per-validation-tuple-arrays",
+      "status": "already-in-pr",
+      "reason": "The fixed snapshot guard already uses module-scoped frozen validation ranges.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/snapshot-guard.mjs",
+          "sha256": "dd01098d91f24cd6e4d4487f2910b995e68a8435169f1949c2fe53bfe22c3eac"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        }
+      ],
+      "library_file_id": "libfile_fe4b70479e1081918a17965339737ee0",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-projectile-cosmetic-guard-remove-per-validation-tuple-arrays.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-rewind-hermite-unchanged-snapshot-skip",
+      "status": "already-in-pr",
+      "reason": "The Actor path is already optimized; the remaining Boss path reuses its rewind result only for the same buffer identity, endpoints, length and host owner.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_731079f9dd948191b77b7ba22728b8b9",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-rewind-hermite-unchanged-snapshot-skip.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-slosher-proof-validator-remove-slice-and-origin-tuples",
+      "status": "already-in-pr",
+      "reason": "Validate the three metadata coordinates and origin reach with eager scalar reads, without changing numeric or capability limits.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/slosher-paint-admission.mjs",
+          "sha256": "048d761b225e81732a15a77630f860050e23ed1809a8ded31d9149e1baa944c0"
+        },
+        {
+          "path": "patches/network-replication/kit-paint-admission.mjs",
+          "sha256": "5db48a1c6b76ba61de264f3d8c10698bca5c9c178ba291690de35326bfa5cd32"
+        }
+      ],
+      "library_file_id": "libfile_96adb3d782408191922dfdfafc147a4d",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-slosher-proof-validator-remove-slice-and-origin-tuples.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-tick-six-sidecar-objectkeys-presence-arrays",
+      "status": "already-in-pr",
+      "reason": "The fixed composed sender lazily allocates each sidecar and checks its presence directly; six Object.keys arrays are already absent.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_a201f985352081919d3f46d775641f15",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-tick-six-sidecar-objectkeys-presence-arrays.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-wipeout-confirmation-replay-exhausts-relay-rate-limit",
+      "status": "already-in-pr",
+      "reason": "Budget confirmation replay room-wide to one accepted replay per 0.5 seconds, preserve refused sends, and rotate a persistent iterator fairly. Immediate newly-created confirmations remain unchanged.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+          "sha256": "aa1920559922e5d78e49b0187076427cc7b221567edab4d3114aa33447af5dd2"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_956b474a97b4819193d42d73ecab7fdc",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-wipeout-confirmation-replay-exhausts-relay-rate-limit.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "network-wipeout-cumulative-ledger-20hz-clone-rescan",
+      "status": "already-in-pr",
+      "reason": "Share frozen append-only outgoing history rows, retain validated owned prefixes, and skip confirmation recalculation only until the next exact transition.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+          "sha256": "aa1920559922e5d78e49b0187076427cc7b221567edab4d3114aa33447af5dd2"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        },
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_f8dfc253d4c88191882e9838ef740343",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-wipeout-cumulative-ledger-20hz-clone-rescan.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "news-hero-load-event-instead-of-150ms-image-poll",
+      "status": "implemented",
+      "reason": "Replace incomplete-image polling with load/error listeners and one remaining four-second deadline. Preserve initial 700 ms delay and modal/wipe retries; release callbacks on display, abort and dispose.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_3ba4a8ca0db88191bd3c553388b73eea",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] news-hero-load-event-instead-of-150ms-image-poll.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "news-release-preloaded-hero-images-while-menu-stays-alive",
+      "status": "implemented",
+      "reason": "Release preload references and wait callbacks immediately after the real DOM image is created, and when opening is aborted; retain the DOM image and existing page rendering.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs",
+          "sha256": "dbdb88bf3773d7d6b48881fd168d5db607aca693a89c501f02b6423e8e7e547e"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_e617b307b37c819186fb361950eba09b",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] news-release-preloaded-hero-images-while-menu-stays-alive.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "news-try-close-cancel-detached-splat-tweens",
+      "status": "already-in-pr",
+      "reason": "close(try) already cancels RAF and clears tweens before immediate detach.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/news.js",
+          "sha256": "2ea52def7da53c13438c1f264830c00284db1fbf835dd7a0eca9a95774e38400"
+        },
+        {
+          "path": "patches/local-quality/adapter.mjs",
+          "sha256": "5f0e20317df74f921649b6cd546aa939f98d8d1e41e8051142b10422ee820276"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/news.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "6a0f996a855f78eafd64a787b2d0a9f1f7c866642d1acff93e90f05d519a27ef"
+        }
+      ],
+      "library_file_id": "libfile_fe6ffe5ccae88191827732e544e90ecf",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] news-try-close-cancel-detached-splat-tweens.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "object-presentation-qa-checkout-omit-190mib-modeler-inputs",
+      "status": "implemented",
+      "reason": "Add conservative non-cone sparse checkout excluding only modeler/blender and modeler/docs. Keep runtime, tooling/editor source, immutable refs, baseline checkouts and all original test/build coverage. The separately recorded projectile atomic-intro duplicate removal retains its first mandatory gate. Actual Git fixture and YAML semantic comparison passed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-object-presentation-qa.yml",
+          "sha256": "d4f28451c70290069115d8fff6229abfaab7cd27729436301459a25550c39ad9"
+        }
+      ],
+      "library_file_id": "libfile_1ccecafd62a88191a11817c0a14ed9f6",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] object-presentation-qa-checkout-omit-190mib-modeler-inputs.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "owner-clock-skip-proven-peer-rechallenge-scan",
+      "status": "implemented",
+      "reason": "Track unproven peers in the private state with a scalar count. Skip the full peer walk only once all peers have an origin. Creation, accepted proof, retirement and close update the count; transient retry order stays unchanged.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/owner-clock.mjs",
+          "sha256": "a8d3266dd8353ee3eca0e254c0a3192d78fe7f257e6d7fc8007ebbec32064b0f"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_1d1e3819a00481919fca0b22be6ff6a6",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] owner-clock-skip-proven-peer-rechallenge-scan.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "pad-menu-elide-per-frame-nav-wrapper",
+      "status": "already-in-pr",
+      "reason": "The gamepad navigation closure now invokes menus.nav directly; the independent editor ownership latch remains intact.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_f7f643d98db88191a86fdce130582b51",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] pad-menu-elide-per-frame-nav-wrapper.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "pages-test-only-patch-changes-redeploy-identical-site",
+      "status": "not-adopted",
+      "reason": "The Pages job includes source/budget/ranked post-deploy acceptance, and test-only paths can change those gates. A path exclusion alone would skip existing verification; no separate equivalent validation job and exact artifact equality contract is established. Preserve event coverage.",
+      "evidence": [
+        {
+          "path": ".github/workflows/pages-inkwave.yml",
+          "sha256": "6880e8515b4ffba3f968ab2186e5910fb8db4d3c646d90b0f18a7e4d87618189"
+        }
+      ],
+      "library_file_id": "libfile_718f9b381a308191bd02d525d6dd4c40",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] pages-test-only-patch-changes-redeploy-identical-site.md",
+      "previous_disposition": "needs-evidence",
+      "local_only": true
+    },
+    {
+      "key": "paint-codec-skip-single-paint-dictionary-attempt",
+      "status": "not-adopted",
+      "reason": "Actual nested row toJSON counterexample: current can prefer compressed output even with one paint; unconditional raw return changes wire. A proven producer-specific plain-serialization boundary would be needed.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/paint-packet-codec.mjs",
+          "sha256": "e2773a5b46c325935157155e664414c90d67dc6ef72ef4ce0f9ed0bc39aa0251"
+        },
+        {
+          "path": "patches/network-replication/outbound-prefix.mjs",
+          "sha256": "dd12a89e9b54e0f1a24bb1d71d65ccf4b2b62fd452bc40ba390ec217ef78ab78"
+        },
+        {
+          "path": "patches/network-replication/adapter.mjs",
+          "sha256": "8789d2e5b6e0e34ffd4c143dc03cd5812e85de271c6c3d0bd82ec34362698bdc"
+        }
+      ],
+      "library_file_id": "libfile_adb438cb85c88191952e7c34f1198c8d",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] paint-codec-skip-single-paint-dictionary-attempt.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "paint-hotpath-parity-direct-input-pr-path-gaps",
+      "status": "already-in-pr",
+      "reason": "Added exact production paint, Three, source composition and companion quality-suite direct inputs; source-driven import/read coverage checks protect future additions. Both original suites remain.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-paint-hotpath.yml",
+          "sha256": "11e156ebcf3ffde3aade4ef47efa43599f5072361c4ec9ef0eb7969060cfa4be"
+        },
+        {
+          "path": "scripts/lib/inkwave-build-only-modules.mjs",
+          "sha256": "6ebba654fe9edd860d44f90bc155b9d990053baa3a8e99424b93f21f9ab1cb1a"
+        },
+        {
+          "path": "patches/local-quality/tests/paint-hotpath.test.mjs",
+          "sha256": "9d3e172623449ee598fc0635fb3ed2469347063343a70a418fe59d5ce4ecd857"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "inkwave-public/src/world/paint.js",
+          "sha256": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342"
+        },
+        {
+          "path": "inkwave-public/vendor/three/build/three.module.js",
+          "sha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+        },
+        {
+          "path": "inkwave-public/src/core/gyro.js",
+          "sha256": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+        },
+        {
+          "path": "inkwave-public/src/ui/menu-art.js",
+          "sha256": "c689b7fdbd714a6aa5eed4ce8d5943d31f840d2380dd4d2bac3161112126c7b8"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/core/gyro.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "2857f733b480fe52ecf3d0e5eb5ebdf592b9ac416b4e99f3411343d3dfb66168"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menu-art.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "d9f83d560bc45bfaf668c7162d7800fabb887ce22b7cd7ac2b65ba8578a509cb"
+        }
+      ],
+      "library_file_id": "libfile_043ba729a0448191b586a7f9693d53f2",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] paint-hotpath-parity-direct-input-pr-path-gaps.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "projectile-visuals-three-head-checkouts-omit-190mib-modeler-assets",
+      "status": "implemented",
+      "reason": "Add conservative non-cone sparse checkout excluding only modeler/blender and modeler/docs. Keep runtime, tooling/editor source, immutable refs, baseline checkouts and all original test/build coverage. The separately recorded projectile atomic-intro duplicate removal retains its first mandatory gate. Actual Git fixture and YAML semantic comparison passed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-projectile-visuals.yml",
+          "sha256": "bef1d573713edc027a9d29b07f531d1b35fbc832992cca7af41b00fe27170b02"
+        }
+      ],
+      "library_file_id": "libfile_a89a1bda800c81919cd292c2242edffe",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] projectile-visuals-three-head-checkouts-omit-190mib-modeler-assets.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "ranked-and-frame-parity-qa-checkout-omit-203mb-modeler",
+      "status": "already-in-pr",
+      "reason": "Both jobs use conservative non-cone sparse rules that retain every tracked tree except tools/inkwave-modeler. Actual Git fixture checks demonstrate that game/assets/patches/scripts and other tools/reports remain materialized. Build, browser and source/emitted commands are unchanged.",
+      "evidence": [
+        {
+          "path": ".github/workflows/validate-inkwave-ranked.yml",
+          "sha256": "90625f6fc9aa38f5cd76fe72f66b65a9a32ef3880273cb13813b3f4cf84f467d"
+        },
+        {
+          "path": ".github/workflows/inkwave-runtime-frame-parity.yml",
+          "sha256": "82b1661683e1c793e798d6b68d6ed22d4cebaa91c9839ad4a567f4e9c5798b66"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "scripts/build-inkwave.mjs",
+          "sha256": "e24d99deccbab56620205b349f40e264877853e8d5035df7b83e9393fbe72c76"
+        },
+        {
+          "path": "patches/local-quality/tests/runtime-frame-scratch.test.mjs",
+          "sha256": "b120ebf3bc748903c989ec27ef94dbba617dba058938bd6c6a06a8ca00213a10"
+        }
+      ],
+      "library_file_id": "libfile_967dd804708881918ec152484b4761da",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-and-frame-parity-qa-checkout-omit-203mb-modeler.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "ranked-bot-clam-arc-exact-input-memo",
+      "status": "already-in-pr",
+      "reason": "Memoize the exact finite horizontal distance, height and launch speed per actor for the 211-angle search, with no quantization; refresh live output fields on each call.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/bots.mjs",
+          "sha256": "aebd12bce5e16c6a956f35f17f827c19ab2c3ad74fe289dbd1ac015697b2a3a1"
+        }
+      ],
+      "library_file_id": "libfile_489ac05daef0819197822b0b0b3058d9",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-bot-clam-arc-exact-input-memo.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "ranked-engine-lowfps-trusted-frame-skip-cold-input-clone",
+      "status": "already-in-pr",
+      "reason": "Share inputs only on internally branded frames whose exact input object is retained and every own throw value is false. External or throwing inputs still clone and disarm.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/engine.mjs",
+          "sha256": "7c75558ba331295b205c5ce4c6ff6d4150c999c1b2f4b6bae7e727f36ff3bcac"
+        },
+        {
+          "path": "patches/splatoon3/runtime/ranked/install.mjs",
+          "sha256": "b3c4264976f1c466d29676e51c2b461ce455a4e9dd8f05ee1e284929cc006270"
+        },
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044"
+        }
+      ],
+      "library_file_id": "libfile_1529c86ab290819191a7039dbefaa61c",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-engine-lowfps-trusted-frame-skip-cold-input-clone.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "ranked-hud-skip-unranked-style-validation-and-lazy-root",
+      "status": "implemented",
+      "reason": "Return before style lookup/root creation in unranked modes; hide any existing root, and retain style repair and immediate show on ranked re-entry.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/ui.mjs",
+          "sha256": "d9e80bb4840a3b528b8af5d8f909ee42c2c93cec91ee0de1b1c1a8cb2c2fcafe"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_dd857e97e0e0819194327a80773ed4d6",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-hud-skip-unranked-style-validation-and-lazy-root.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "ranked-network-guest-skip-unused-pose-staging",
+      "status": "already-in-pr",
+      "reason": "Allocate and fill staged pose state only on the host path which consumes it; guest packet admission remains unchanged.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/network.mjs",
+          "sha256": "2c8855e55ce1a0802791af7c195e7bef72f60af83d385b427c1290cd4a68d42e"
+        }
+      ],
+      "library_file_id": "libfile_5d010026ab308191bebafd7b8f3023ef",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-network-guest-skip-unused-pose-staging.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "ranked-network-hoist-host-snapshot-kind-list",
+      "status": "implemented",
+      "reason": "Both host-snapshot membership checks share a frozen module-scope list with unchanged includes semantics.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/network.mjs",
+          "sha256": "2c8855e55ce1a0802791af7c195e7bef72f60af83d385b427c1290cd4a68d42e"
+        }
+      ],
+      "library_file_id": "libfile_f20a5fd4050c81919759e7ad77631885",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-network-hoist-host-snapshot-kind-list.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "ranked-network-rki-certified-roster-index-lookup",
+      "status": "not-adopted",
+      "reason": "actorId stringifies numeric NIDs and can fall back to team:slot; the ordered actors array may contain duplicates and mutate in place without a roster generation. A bare byNid lookup changes first-match/numeric-string/mutation behavior. No unique-string certification exists on the current production roster.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/network.mjs",
+          "sha256": "2c8855e55ce1a0802791af7c195e7bef72f60af83d385b427c1290cd4a68d42e"
+        }
+      ],
+      "library_file_id": "libfile_1b8599bee24c819191fb168e0222e9cd",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-network-rki-certified-roster-index-lookup.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "ranked-network-sendtick-reuse-scoped-broadcast-hook",
+      "status": "already-in-pr",
+      "reason": "Reuse an instance callback under a scoped lease, preserve the original transport receiver, and use an independent nested fallback with finally restoration.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/network.mjs",
+          "sha256": "2c8855e55ce1a0802791af7c195e7bef72f60af83d385b427c1290cd4a68d42e"
+        },
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/transport.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "ca2a026003a2130b859c8b46e8f2709fd0d2f743f27411ef0dd87091d05fa1a3"
+        }
+      ],
+      "library_file_id": "libfile_d01ebdfe56548191bc94112eb8408bec",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-network-sendtick-reuse-scoped-broadcast-hook.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "ranked-zones-hud-reuse-unchanged-objective-text",
+      "status": "implemented",
+      "reason": "Cache only frozen production coverage samples by engine, displayed rounded values, owner, language and team names. Mutable/custom pairs use the original formatter; unsuccessful/partial validation invalidates cached text. Older completion claim was absent in PR 1878.",
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/ui.mjs",
+          "sha256": "d9e80bb4840a3b528b8af5d8f909ee42c2c93cec91ee0de1b1c1a8cb2c2fcafe"
+        },
+        {
+          "path": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+          "sha256": "db2c4277dda9136bb04a0d511b563fee0616575b24422e2ed8ab9434e7db2c92"
+        }
+      ],
+      "library_file_id": "libfile_502feecfef7c81919033c45fd2635e27",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-zones-hud-reuse-unchanged-objective-text.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "relay-current-compat-start-ack-mismatch-blocks-all-host-starts",
+      "status": "already-in-pr",
+      "reason": "Target head already includes strict current compat START admission and host handshake fixes.",
+      "evidence": [
+        {
+          "path": "patches/reliability/net-adapter.mjs",
+          "sha256": "d017d642b30c3c489706abffacabe06cc9206d5147590431f49a0ebf62b533f5"
+        },
+        {
+          "path": "patches/reliability/adapter.mjs",
+          "sha256": "2264b393f72862ca78a1a0df2267a69b9f0d90b604c2d5dba09ee95e450d0559"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+        },
+        {
+          "path": "patches/reliability/queue-network-adapter.mjs",
+          "sha256": "fcbc929dbce6cdf309e830deb51cde651bb90aedec5747c4cc9b61a6dc266e86"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/transport.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "ca2a026003a2130b859c8b46e8f2709fd0d2f743f27411ef0dd87091d05fa1a3"
+        }
+      ],
+      "library_file_id": "libfile_8f7968d136c48191857cdad07059fd30",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] relay-current-compat-start-ack-mismatch-blocks-all-host-starts.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "relay-directed-absent-target-avoid-second-json-parse",
+      "status": "already-in-pr",
+      "reason": "validRelayPayload already returns the parsed object and the absent-target path reuses it for hit_nack after quotas.",
+      "evidence": [
+        {
+          "path": "server/src/index.js",
+          "sha256": "33ab485b4b9ef5053b3b716ac3a7ad6f3c608a583c842c3814ead4a621b20cf6"
+        }
+      ],
+      "library_file_id": "libfile_f776fba8d43c81918f32e7980b064c9c",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] relay-directed-absent-target-avoid-second-json-parse.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "relay-inbound-member-guard-single-postdecode-lookup",
+      "status": "implemented",
+      "reason": "Keep the predecode socket check and one fresh member/socket check after decoding, then reuse that member for quotas. Preserve size caps, heartbeat and authentication.",
+      "evidence": [
+        {
+          "path": "server/src/index.js",
+          "sha256": "33ab485b4b9ef5053b3b716ac3a7ad6f3c608a583c842c3814ead4a621b20cf6"
+        },
+        {
+          "path": "server/tests/queue-network.test.mjs",
+          "sha256": "2785321753139822476f44309e4a90983fa1b8c69debd06b2f7d26ae92106d6a"
+        },
+        {
+          "path": "server/tests/relay-security.test.mjs",
+          "sha256": "27fa3441fc1a51ee88176cc1070a459850fc3d651172018398b56c8b482883cc"
+        }
+      ],
+      "library_file_id": "libfile_88994a870f508191b9cc7afce07c46ff",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] relay-inbound-member-guard-single-postdecode-lookup.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "relay-leave-notification-drop-stale-host-authority",
+      "status": "already-in-pr",
+      "reason": "Close and remove failed LEAVE recipients through an iterative cleanup queue. Synchronous close reentry cannot resume a stale outer host broadcast after the final election.",
+      "evidence": [
+        {
+          "path": "server/src/index.js",
+          "sha256": "33ab485b4b9ef5053b3b716ac3a7ad6f3c608a583c842c3814ead4a621b20cf6"
+        },
+        {
+          "path": "server/tests/queue-network.test.mjs",
+          "sha256": "2785321753139822476f44309e4a90983fa1b8c69debd06b2f7d26ae92106d6a"
+        }
+      ],
+      "library_file_id": "libfile_f01a76a3c28c8191a8f99498c08967df",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] relay-leave-notification-drop-stale-host-authority.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "relay-utf8-byte-count-ascii-fastpath",
+      "status": "not-adopted",
+      "reason": "Queue reports 7%-53% Unicode slowdowns and requires actual Workers traffic/CPU evidence. No deployment/actual-traffic evidence available; retain current byte counter.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/utf8-length.mjs",
+          "sha256": "b5d8bd0a7278417008aacfaa1cdcf799881149adde34a24e0f53c30d1dfc3a9e"
+        },
+        {
+          "path": "patches/network-replication/outbound-prefix.mjs",
+          "sha256": "dd12a89e9b54e0f1a24bb1d71d65ccf4b2b62fd452bc40ba390ec217ef78ab78"
+        }
+      ],
+      "library_file_id": "libfile_121f42125e348191906b08aecfe9608e",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] relay-utf8-byte-count-ascii-fastpath.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "results-online-lobby-countdown-cache-identical-ring-css",
+      "status": "already-in-pr",
+      "reason": "Composed menus compares four-decimal ringFraction against current --f before setProperty; exact duplicate write is already suppressed.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_4b191ec6cb5c81919b27b93c08fcba5c",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] results-online-lobby-countdown-cache-identical-ring-css.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "runtime-frame-parity-qa-direct-input-pr-path-gaps",
+      "status": "already-in-pr",
+      "reason": "The PR gate covers literal production reads and imported adapters from all three executed suites, source composition, HUD and motion inputs. The source-driven contract rejects missing direct input coverage and unrelated documentation still does not match.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-runtime-frame-parity.yml",
+          "sha256": "82b1661683e1c793e798d6b68d6ed22d4cebaa91c9839ad4a567f4e9c5798b66"
+        },
+        {
+          "path": "scripts/lib/inkwave-build-only-modules.mjs",
+          "sha256": "6ebba654fe9edd860d44f90bc155b9d990053baa3a8e99424b93f21f9ab1cb1a"
+        },
+        {
+          "path": "patches/local-quality/tests/runtime-frame-scratch.test.mjs",
+          "sha256": "b120ebf3bc748903c989ec27ef94dbba617dba058938bd6c6a06a8ca00213a10"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "inkwave-public/src/world/environment.js",
+          "sha256": "d9c737c922ede897318c973039929df746a85b784cb1b84da48209aa6fee4ce1"
+        },
+        {
+          "path": "inkwave-public/src/world/paint.js",
+          "sha256": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342"
+        },
+        {
+          "path": "inkwave-public/src/game/motion/source-bank.js",
+          "sha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/hud.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7523a8e0b5dc2665e15612d094ee81d87eb13971e93fc61ef1f182febef30fbf"
+        }
+      ],
+      "library_file_id": "libfile_a331dac679348191976dfff30596f30a",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] runtime-frame-parity-qa-direct-input-pr-path-gaps.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "settings-look-preview-skip-settled-exponential",
+      "status": "already-in-pr",
+      "reason": "Existing preview guard skips exp only for settled finite dt; nonfinite fallback retained.",
+      "evidence": [
+        {
+          "path": "patches/local-quality/input-lens-queue-adapter.mjs",
+          "sha256": "9e2fc576f34c12bde4386f93261d21662f78a417b13fc47524816a1329711c51"
+        }
+      ],
+      "library_file_id": "libfile_a98320e9f5d48191b282f6cc96ec0063",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] settings-look-preview-skip-settled-exponential.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "settings-scroll-edge-event-driven-geometry",
+      "status": "already-in-pr",
+      "reason": "Composed PR already has layoutDirty/ResizeObserver/listener ownership with one overflow/top sample and live no-observer fallback.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/ui/menus.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "library_file_id": "libfile_c650d347e918819183d72148de878259",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] settings-scroll-edge-event-driven-geometry.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "showcase-results-hoist-static-seven-bomb-cue-plan",
+      "status": "already-in-pr",
+      "reason": "Composed PR already uses RESULT_BOMB_PLAN for all seven original cue rows without per-frame allocation.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/game/showcase.js",
+          "sha256": "7e3906207147559aba9ec102fc5a2f88c70c12742eec3b34cb30c1ff29b91df5"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/game/showcase.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "94766a5ca4e109d7e9af8db17d81c94cd52954405a29456addd7ab7064cf3206"
+        }
+      ],
+      "library_file_id": "libfile_3298d6b80e448191bb78ee6df375f4f4",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-results-hoist-static-seven-bomb-cue-plan.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "site-publishing-audit-unversioned-revisioned-static-twins",
+      "status": "not-adopted",
+      "reason": "Read-only completed-tree audit verifies all declared artifacts and inventories final root/revisioned path, SHA256 and byte length. The isolated final production build has 1,071 identical pairs totaling 48,990,113 root logical bytes. No additional root URL deletion is proven safe. Mandatory startup/packaging gates read root modules/lightmaps; the Service Worker explicitly preserves separate mutable-root HTTP behavior; account dev routes explicitly serve both root and revisioned static paths. Removing roots from the tested artifact would break or weaken existing checks. A publish-only pruned copy would require its own old-document, direct-URL, offline/update and Workers routing evidence, absent here. The proposed blanket deletion is therefore not adopted. Existing proven volume deduplication remains; actual additional files/bytes removed are zero.",
+      "evidence": [
+        {
+          "path": "scripts/build-inkwave.mjs",
+          "sha256": "e24d99deccbab56620205b349f40e264877853e8d5035df7b83e9393fbe72c76"
+        },
+        {
+          "path": "scripts/lib/inkwave-volume-packaging.mjs",
+          "sha256": "be7b26d65751d56b930e82d923606d1fda8b245a039bcfecdc23a41eb6e62beb"
+        },
+        {
+          "path": ".github/workflows/pages-inkwave.yml",
+          "sha256": "6880e8515b4ffba3f968ab2186e5910fb8db4d3c646d90b0f18a7e4d87618189"
+        },
+        {
+          "path": "scripts/check-inkwave-startup-budget.mjs",
+          "sha256": "62e4e89d1b726890a29ae54b2199da2752315397a6a428b7f93b6295f48d4e86"
+        },
+        {
+          "path": "inkwave-public/src/main.js",
+          "sha256": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417"
+        },
+        {
+          "path": "scripts/tests/inkwave-build-packaging.test.mjs",
+          "sha256": "90b2df8df4bb8ce5723115e520da5ecdd11abae4b47330d7fe245337a1d797f7"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/main.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "fdbd42bbb06a672317fbc9156ad555e4e0b08935d12bff467add201bd1843165"
+        }
+      ],
+      "library_file_id": "libfile_c13ca519a7648191813773e26b8f68f8",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] site-publishing-audit-unversioned-revisioned-static-twins.md",
+      "previous_disposition": "not-adopted",
+      "local_only": true
+    },
+    {
+      "key": "small-tank-specials-pr-evidence-90day-retention",
+      "status": "implemented",
+      "reason": "Set 14-day PR retention for both small-tank DPR artifacts and specials evidence; manual diagnostics retain 90 days, with existing always-upload and failing fan-in behavior.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-small-tank.yml",
+          "sha256": "c352dc9b05c77306139d95d1257ee65b88349fe86f95960e7ff88be0491f5259"
+        },
+        {
+          "path": ".github/workflows/inkwave-specials-1130.yml",
+          "sha256": "129082fe23063b2cb243e3c0062b8baed4c2899b855bd33c361d234ea9362580"
+        }
+      ],
+      "library_file_id": "libfile_01af0da557dc81918bd7f8c0bfd418d4",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] small-tank-specials-pr-evidence-90day-retention.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "squid-heading-swim-entry-qa-four-full-tree-rehash-and-framewise-receipt-rewrites",
+      "status": "not-adopted",
+      "reason": "Repeated hashes prove no source mutation between baseline/candidate browser runs and frame receipts retain interrupted evidence. Removing either without a substitute negative-tested integrity/interrupt proof weakens the existing gate.",
+      "evidence": [
+        {
+          "path": "tools/squid-heading-qa/run.mjs",
+          "sha256": "b4c1ce80745572071187175a4b4cd9041e1fe00eaa7effd504ce355bc59a15ae"
+        },
+        {
+          "path": "tools/swim-entry-qa/run.mjs",
+          "sha256": "824f4ffe8caa867a048622b256b2ead976ce1ebfa7c8993ac0155ac5173a69bc"
+        }
+      ],
+      "library_file_id": "libfile_62afd943084c8191af5b030ce1bf1bee",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] squid-heading-swim-entry-qa-four-full-tree-rehash-and-framewise-receipt-rewrites.md",
+      "previous_disposition": "needs-evidence",
+      "local_only": true
+    },
+    {
+      "key": "squid-heading-swim-entry-qa-seven-authored-input-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "Both focused PR gates now cover the current eight hashed authored sources plus shared lighting/parser and directly executed build/composition/budget inputs. A contract extracts the authored list from the current harness and checks its coverage. Existing exact-head A/B builds, source/emitted tests and evidence retention stay intact.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-squid-heading-qa.yml",
+          "sha256": "fd97b9fe27918934c5e5791851d97f436e2056f6455284f6ad4043bc3ebb6cbc"
+        },
+        {
+          "path": "patches/local-quality/squid-motion-binding-adapter.mjs",
+          "sha256": "0e3fb01fd0772ffab4a279c3fa1a01de0cc924faa2552fbe3f0fb9e39488728d"
+        },
+        {
+          "path": ".github/workflows/inkwave-swim-entry-qa.yml",
+          "sha256": "e3dc27ab158f871e6c2b5bfcce57ef0b4c9c95eef8ad525640d92391d70ba749"
+        },
+        {
+          "path": "patches/splatoon3/runtime/swim-motion.mjs",
+          "sha256": "1a82a040a09f9a99ed74ce5baffa23bb2f64a22cd902aee8ec8c64c8aeec3b26"
+        },
+        {
+          "path": "tools/squid-heading-qa/run.mjs",
+          "sha256": "b4c1ce80745572071187175a4b4cd9041e1fe00eaa7effd504ce355bc59a15ae"
+        },
+        {
+          "path": "tools/swim-entry-qa/run.mjs",
+          "sha256": "824f4ffe8caa867a048622b256b2ead976ce1ebfa7c8993ac0155ac5173a69bc"
+        },
+        {
+          "path": "patches/local-quality/squid-form-ease-adapter.mjs",
+          "sha256": "4c77b2fef73742ad38bce8ed71d6afac62532e6c554d4343ef21272950e0be18"
+        },
+        {
+          "path": "patches/local-quality/s3-squid-look-adapter.mjs",
+          "sha256": "5d3c0e5bed07daa30d9d0e5dce34cea60a93e2788af4c2c73666bed1000bd769"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        }
+      ],
+      "library_file_id": "libfile_8db3604deca08191bd9153ba4dde3b19",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] squid-heading-swim-entry-qa-seven-authored-input-trigger-gaps.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "squid-native-visual-qa-obsolete-pr-run-not-cancelled",
+      "status": "implemented",
+      "reason": "Only newer runs of the same PR cancel older running checks. Main/push/manual diagnostics have unique run-ID groups and retain independent evidence.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-squid-visual-qa.yml",
+          "sha256": "c7f9c9bd5b6829131bd52528b55d9de63edfa0777df703809fb8ad6c541ff6ff"
+        }
+      ],
+      "library_file_id": "libfile_34f55b6bc2fc819185405b69d21cbb0a",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] squid-native-visual-qa-obsolete-pr-run-not-cancelled.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "swim-film-qa-shared-fixture-pr-trigger-gaps",
+      "status": "already-in-pr",
+      "reason": "Added source-loaded Actor fixture, source fixture, fixture cache and composition inputs to the PR gate. The same three film tests retain their source/fallback, 30/60/120 Hz, offscreen and shape controls.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-swim-film.yml",
+          "sha256": "58c400753406f68a34791bb6cd4869bfe0d9bceec4276e9c6b49d84f5e2c7907"
+        },
+        {
+          "path": "inkwave-public/src/fx/fx.js",
+          "sha256": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90"
+        },
+        {
+          "path": "patches/splatoon3/tests/source-loaded-actor-fixture.mjs",
+          "sha256": "b26bdff15c5df689b1d557941631ce09daa62eb90d68a2a53f272691ca805869"
+        },
+        {
+          "path": "patches/splatoon3/tests/source-fixture.mjs",
+          "sha256": "a1955f6288dabac02c180ec623efeaebc3e2ad389e6acef54bf13c1a6970bd0e"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "sha256": "d9c6c10bc90b09d95cde28adb3adacea78a8da91f009e8562b1d4f8ac5b7a5ab"
+        },
+        {
+          "path": "patches/splatoon3/tests/fixture-cache.mjs",
+          "sha256": "ed2c627bbd62162ea27ad1e94fbf90ae5945e09cd20d6108190a70eb3e789131"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        }
+      ],
+      "library_file_id": "libfile_e96ac8f2eca081919094a642a659bad3",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] swim-film-qa-shared-fixture-pr-trigger-gaps.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "tenta-hud-layoutsample-whole-document-animation-scan",
+      "status": "not-adopted",
+      "reason": "Ancestor and programmatic WAAPI animations can change measured HUD layout even when the HUD has no local CSS animation event. A HUD-only animation scan would miss these inputs and can stale placement; keep the complete live scan.",
+      "evidence": [
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tenta-hud-layoutsample-whole-document-animation-scan.md",
+          "kind": "queue source/risk evidence"
+        }
+      ],
+      "library_file_id": "libfile_6d75ec2e7d5c8191aa98f381b24215ce",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tenta-hud-layoutsample-whole-document-animation-scan.md",
+      "previous_disposition": "needs-evidence",
+      "local_only": true
+    },
+    {
+      "key": "terminal-recovery-qa-over-budget-suppresses-all-evidence",
+      "status": "already-in-pr",
+      "reason": "The 128 MiB gate returns the original full path under budget. On overflow it prepares a deterministic bounded package with original hashes/size/omission manifest, prioritized logs/identity/JSON/PNG and marked log tails where necessary. Upload eligibility is emitted before the helper preserves its nonzero failure status; original evidence is never deleted. Empty/nonregular evidence still yields a failed diagnostic manifest.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-terminal-recovery-qa.yml",
+          "sha256": "20c13634e75eaca6a733b02503a42ca7329e3aa90dcae34bd62b245cac370c78"
+        }
+      ],
+      "library_file_id": "libfile_b67428fd25908191af8208ecdd610b99",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] terminal-recovery-qa-over-budget-suppresses-all-evidence.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "three-focused-regression-checkouts-omit-unused-modeler-sources",
+      "status": "implemented",
+      "reason": "Add conservative non-cone sparse checkout excluding only modeler/blender and modeler/docs. Keep runtime, tooling/editor source, immutable refs, baseline checkouts and all original test/build coverage. The separately recorded projectile atomic-intro duplicate removal retains its first mandatory gate. Actual Git fixture and YAML semantic comparison passed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-reopened-six.yml",
+          "sha256": "0304c9737a7118e8ff51262bd1271455cc0332b45500bf4c726ad4f615e09976"
+        },
+        {
+          "path": ".github/workflows/inkwave-roller-support-source-pin.yml",
+          "sha256": "b3c91e8e32d037415e625994a9583f018a8398e0981223289812093e088aafe0"
+        },
+        {
+          "path": ".github/workflows/inkwave-swim-film.yml",
+          "sha256": "58c400753406f68a34791bb6cd4869bfe0d9bceec4276e9c6b49d84f5e2c7907"
+        }
+      ],
+      "library_file_id": "libfile_256219c2ffc88191b90efded6c581bcf",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] three-focused-regression-checkouts-omit-unused-modeler-sources.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "three-targeted-regression-qa-omit-modeler-inputs",
+      "status": "implemented",
+      "reason": "Add conservative non-cone sparse checkout excluding only modeler/blender and modeler/docs. Keep runtime, tooling/editor source, immutable refs, baseline checkouts and all original test/build coverage. The separately recorded projectile atomic-intro duplicate removal retains its first mandatory gate. Actual Git fixture and YAML semantic comparison passed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-defense-selection.yml",
+          "sha256": "1843ed01e8013784735f640948a974d9e07349b73598005c26f474c201efcde1"
+        },
+        {
+          "path": ".github/workflows/inkwave-health-recovery-rain.yml",
+          "sha256": "d074c23bc140707aec64e14365e5674adffdee8c7b0dd89eba743be6c064821b"
+        },
+        {
+          "path": ".github/workflows/inkwave-ink-volumes.yml",
+          "sha256": "a2e5c629d5b3b75d4c1eb859ef7ca75930ad80dcc9115903bf4d87c1656629fa"
+        }
+      ],
+      "library_file_id": "libfile_4d7e0c96c63881918081690f8c1d2ecb",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] three-targeted-regression-qa-omit-modeler-inputs.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "touch-frame-pacing-test-only-ci-skip-esbuild-install",
+      "status": "not-adopted",
+      "reason": "Older disposition was stale. Current PR explicitly runs cargo-offline-precache and source composition tests, and the existing sparse-checkout contract requires the pinned esbuild install. Keep this dependency and all four original suites; removing it is not proven safe by the current input closure.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-touch-frame-pacing.yml",
+          "sha256": "e41626a4705e5f49546ba3103f4e9566b500e71fbf3f214b9f5bf6622b1a65a5"
+        },
+        {
+          "path": "scripts/tests/inkwave-ci-sparse-checkout.test.mjs",
+          "sha256": "58b2af2e0f88e8f02ef815667b80ecb57b00dd5812d985bbd0b24a4fbadb86e0"
+        },
+        {
+          "path": "patches/loading-cache/tests/cargo-offline-precache.test.mjs",
+          "sha256": "23880c06b9f5ff31a86a17209910087ba588275a0e7cf61b9808f05e374b779e"
+        }
+      ],
+      "library_file_id": "libfile_0d96338240048191bb25299b8d758f91",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] touch-frame-pacing-test-only-ci-skip-esbuild-install.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "transport-backpressure-preflight-before-json-serialization",
+      "status": "already-in-pr",
+      "reason": "Existing final composition already preflights socket readiness/backlog before JSON. No second implementation added.",
+      "evidence": [
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+        },
+        {
+          "path": "patches/reliability/net-adapter.mjs",
+          "sha256": "d017d642b30c3c489706abffacabe06cc9206d5147590431f49a0ebf62b533f5"
+        },
+        {
+          "path": "patches/network-replication/outbound-prefix.mjs",
+          "sha256": "dd12a89e9b54e0f1a24bb1d71d65ccf4b2b62fd452bc40ba390ec217ef78ab78"
+        },
+        {
+          "path": "inkwave-public/src/net/netmatch.js",
+          "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "kind": "production adapters are authoritative; raw upstream is not the final runtime"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/transport.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "ca2a026003a2130b859c8b46e8f2709fd0d2f743f27411ef0dd87091d05fa1a3"
+        },
+        {
+          "path": "/workspace/scratch/2f4c74953bc6/source-audit/composed-pr1878/src/net/netmatch.js",
+          "kind": "frozen PR 1878 composed source",
+          "sha256": "1b022a72ca462a7142049d95f86b6d53ecb212d98c46fad0c43c5fb43f011d08"
+        }
+      ],
+      "library_file_id": "libfile_d242de2fa3808191a25670d627510095",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] transport-backpressure-preflight-before-json-serialization.md",
+      "previous_disposition": "already-in-pr",
+      "local_only": true
+    },
+    {
+      "key": "transport-outbound-utf8-encodeinto-reusable-size-scratch",
+      "status": "already-in-pr",
+      "reason": "Superseded: production transport already counts UTF-8 bytes without allocating an encoded array or reusable scratch; adding encodeInto scratch would add work/state.",
+      "evidence": [
+        {
+          "path": "patches/network-replication/utf8-length.mjs",
+          "sha256": "b5d8bd0a7278417008aacfaa1cdcf799881149adde34a24e0f53c30d1dfc3a9e"
+        }
+      ],
+      "library_file_id": "libfile_e67c3050d708819199b938b12ba7b8c8",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] transport-outbound-utf8-encodeinto-reusable-size-scratch.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "versioned-s3-real-mp3-duplicate-root-artifact",
+      "status": "not-adopted",
+      "reason": "The build still ships root modules/manifests as well as immutable versions. The supported sameModuleFetch resolves MP3 URLs relative to the loader import.meta.url, so direct root-module use requires root MP3s. Removing root audio while retaining those modules would produce 404/silence. No root-URL redirect or old-document/offline compatibility proof exists; preserve exact audio availability.",
+      "evidence": [
+        {
+          "path": "scripts/build-inkwave.mjs",
+          "sha256": "e24d99deccbab56620205b349f40e264877853e8d5035df7b83e9393fbe72c76"
+        },
+        {
+          "path": "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+          "sha256": "b03ea9b31bb72f7c4e382951880a382d43c894ba846595d993f2ad1c3ef70d18"
+        },
+        {
+          "path": "patches/loading-cache/sw.js",
+          "sha256": "918c29ddea9100febaf788b7f1d085cc90f0f9748b0a739f0a6cf944b21bd3e0"
+        }
+      ],
+      "library_file_id": "libfile_901ff99d4af881918cc5277fea388cdb",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] versioned-s3-real-mp3-duplicate-root-artifact.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "vite8-node-engine-version-contract-mismatch",
+      "status": "implemented",
+      "reason": "Align root engines and README with the locally installed Vite 8.3.3 requirement: ^20.19.0 || >=22.12.0. CI retains Node 22.",
+      "evidence": [
+        {
+          "path": "package.json",
+          "sha256": "f9759d79e2c1b7e1c2811c2391b1831045226bf297ba088fab814b8628ba4140"
+        },
+        {
+          "path": "README.md",
+          "sha256": "6821bdd491dc41ac082dfa73d90736aba3c91f936c47b0f86686b21af3f054f9"
+        }
+      ],
+      "library_file_id": "libfile_96ed6f57d93c8191b5f878089f5e19be",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] vite8-node-engine-version-contract-mismatch.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "wiper-plane-compare-missing-source-and-build-artifact",
+      "status": "implemented",
+      "reason": "Comparison now restores the same wiper-one-build artifact and checks out the exact 0430673b candidate source before the original paired verifier. No source/hash/pixel/physics gate removed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-wiper-plane-pilot.yml",
+          "sha256": "f83ad7347c5456d76bbf65ed999b7f54ec98986cb4c77bec7fce979180eec053"
+        },
+        {
+          "path": "scripts/check-inkwave-wiper-plane-paired.mjs",
+          "sha256": "6f587d46fd98ff0f64925ebe8173be4f45024d40a5f492be5edf24fc7bbbfa51"
+        }
+      ],
+      "library_file_id": "libfile_7edd0425dda88191abc8b98753452c8f",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] wiper-plane-compare-missing-source-and-build-artifact.md",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "wiper-plane-shallow-pinned-commit-checkout",
+      "status": "implemented",
+      "reason": "Pinned candidate checkouts use depth one. Only build-once additionally fetches the exact 7581ca9 baseline and verifies both trees before the unchanged diff/show overlay proof.",
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-wiper-plane-pilot.yml",
+          "sha256": "f83ad7347c5456d76bbf65ed999b7f54ec98986cb4c77bec7fce979180eec053"
+        },
+        {
+          "path": "scripts/prepare-inkwave-wiper-plane-baseline.mjs",
+          "sha256": "bac3df79f05e33c03af8990635e3cd86d09cf7835125a11cf08aef0bea06b0ec"
+        }
+      ],
+      "library_file_id": "libfile_1d6d692819008191b3c6398e52f8dc10",
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] wiper-plane-shallow-pinned-commit-checkout.md",
+      "previous_disposition": null,
+      "local_only": true
+    }
+  ],
+  "tests": {
+    "new_actual_source_suite": "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs",
+    "new_suite_cases": 11,
+    "network_regression_suites": 9,
+    "ci_semantics": "reports/queue-local-evidence-20261026/source-audit/ui-network-ci-verification.json",
+    "ci_contract_suites": 6,
+    "logs": [
+      "reports/queue-local-evidence-20261026/source-audit/ui-network-new-tests-direct.log",
+      "reports/queue-local-evidence-20261026/source-audit/ui-network-regressions.log",
+      "reports/queue-local-evidence-20261026/source-audit/ui-network-extra-direct.log",
+      "reports/queue-local-evidence-20261026/source-audit/ui-ci-subprocess-tests.log",
+      "reports/queue-local-evidence-20261026/source-audit/ui-network-ci-tests.log"
+    ],
+    "scope": "Local Node/source/differential/configuration tests. No PR, CI job, deployment, schedule, physical-device FPS, native screenshot or real multiplayer traffic claim.",
+    "pause_contract_regression": {
+      "result": "PASS",
+      "tests": 15,
+      "suites": [
+        "patches/local-quality/tests/pause-gpu.test.mjs",
+        "patches/local-quality/tests/queue-remaining-ui-network-20261026.test.mjs"
+      ],
+      "log": "reports/queue-local-evidence-20261026/source-audit/hud-pause-contract-tests.log",
+      "reason": "The old pause-gpu assertion required an idle RAF after world pause release while independent HUD.paused remained true. It now proves RAF 0/time unchanged/late work retained until the last pause owner releases, then exactly one RAF and one late-work invocation. The shared fixture evaluates the actual constructor-installed paused accessor; no test or assertion gate was removed."
+    }
+  },
+  "verification": [
+    {
+      "kind": "final local production-build browser acceptance",
+      "result": "PASS",
+      "identity": {
+        "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+        "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+        "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+      },
+      "offlineRules": 4,
+      "onlineRules": 4,
+      "remoteContactGearPhases": 10,
+      "stage": "tidewater",
+      "scope": "Actual Chromium 153 / SwiftShader WebGL, two local contexts, local relay and live WebAudio lifecycle; no physical-device FPS or acoustic-listening claim",
+      "logs": [
+        "reports/queue-local-browser-validation-20261026.json",
+        "reports/queue-local-ranked-final-offline-20261026/result.json",
+        "reports/queue-local-ranked-final-online-20261026/result.json",
+        "reports/queue-local-ranked-final-online-20261026/remote-contact-gear.json"
+      ],
+      "note": "All required gameplay states, limits and negative checks were retained. Initial forward direction and capsule clearance were corrected after independent baseline reproduction and actual Physics regressions. Native-frame pulse timing and strict synchronous Dodge onset observation were verified by 28 CPU regressions and separate browser diagnostics; subsequent live turret and real relay gear gates remain independent. Large raw traces remain outside the git work tree.",
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-browser-validation-20261026.json",
+          "sha256": "2ec9108ef996804fa4a7c595aaa1441ca9d695773a515ec7ec3cef964ef19c54"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-offline-20261026/result.json",
+          "sha256": "4e3dd21af2d3f903a3bf87b12fbd7beaf47c6c31de9f9a45e26216ecc96a6ab8"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-online-20261026/result.json",
+          "sha256": "ea0aa9408347123b43e026095de848580eb32da641780954dcd879456ab3c75d"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-online-20261026/remote-contact-gear.json",
+          "sha256": "7ca6013ace2fa557f7e07ff5e9b4cf8e87cf580924e3acd1d69ec15265727261"
+        }
+      ]
+    }
+  ]
+}

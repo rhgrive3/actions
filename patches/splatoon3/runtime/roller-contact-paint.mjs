@@ -2,6 +2,11 @@
 // No renderer/readback is involved: only the held cylinder's world transform.
 import { ROLLER_CONTACT_WIDTH_SCALE } from './roller-paint-calibration.mjs';
 let context = null;
+function negligiblePlanarMotion(x, z) {
+  if (x === 0 && z === 0) return true;
+  if (Math.abs(x) > 1e-9 || Math.abs(z) > 1e-9) return false;
+  return Math.hypot(x, z) <= 1e-9;
+}
 // Sparse tables omit this documented class default. It is a length, separate
 // from WidthHalfMax; provenance/uncertainty: reference/roller-overhead-2026-10-20.json.
 export function rollerContactDepth(paint, scale = 1) {
@@ -47,8 +52,8 @@ export function queueRollerContactPaint(runner, dt, radius, depth = 1.5) {
     !a.grounded ||
     !runner.rolling ||
     a.ink <= 0.5 ||
-    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||
-    Math.hypot(a.vel.x, a.vel.z) <= 1e-9
+    negligiblePlanarMotion(a.intent?.move?.x || 0, a.intent?.move?.z || 0) ||
+    negligiblePlanarMotion(a.vel.x, a.vel.z)
   )
     return true;
   let stroke = runner.s3ContactPaint;
