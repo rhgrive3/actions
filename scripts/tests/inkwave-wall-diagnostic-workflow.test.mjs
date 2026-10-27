@@ -244,6 +244,27 @@ function canonicalCoreSparseInputs(body) {
   return body.replace(reviewedCoreSparseInputs, '            /.github/\n            /inkwave-public/\n');
 }
 
+// Accepted 338755403 adds only these emitted regressions to this existing
+// command. Require every addition exactly once in that step before recovering
+// both unchanged historical hashes; omission is not an accepted old workflow.
+const approvedEmittedGuidePhaseTests = [
+  'patches/native-stages/tests/collision-revision-producers.test.mjs',
+  'patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs',
+  'patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs',
+];
+const approvedEmittedGuidePhaseLines = approvedEmittedGuidePhaseTests.map(file => '          ' + file + '\n').join('');
+function canonicalCoreEmittedGuidePhaseTests(body) {
+  const marker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
+  const next = '      - name: Verify built weapons fidelity measurements and packet parity\n';
+  const anchor = '          patches/splatoon3/tests/player-collision-source-1130.test.mjs\n';
+  assert.equal(body.split(marker).length, 2, 'exact emitted source-backed step required');
+  const start = body.indexOf(marker), end = body.indexOf(next, start);
+  assert.ok(end > start, 'emitted coverage remains before fidelity measurements');
+  assert.ok(body.slice(start, end).endsWith(anchor + approvedEmittedGuidePhaseLines), 'exact reviewed emitted arguments and placement required');
+  for (const file of approvedEmittedGuidePhaseTests) assert.equal(body.split(file).length, 2, file + ' must run exactly once');
+  return body.replace(anchor + approvedEmittedGuidePhaseLines + next, anchor + next);
+}
+
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     let body = canonicalCircleAdditions(job(text,name),name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
@@ -253,6 +274,7 @@ function verifyAcceptedJobs(text) {
       body = canonicalCoreBrowserInstall(body);
       body = canonicalQueueCoreBody(body);
       body = canonicalCoreEvidence(body);
+      body = canonicalCoreEmittedGuidePhaseTests(body);
       const additiveBody = body;
       body = canonicalCoreMotionTests(body);
       assert.equal(createHash('sha256').update(additiveBody).digest('hex'), approvedCoreHash, 'reviewed additive core body');
@@ -261,6 +283,29 @@ function verifyAcceptedJobs(text) {
   }
 }
 test('accepted Turf and network job bodies retain their original pins after exact artifact repair and additive QA coverage',()=>verifyAcceptedJobs(workflow));
+test('reviewed emitted guide and phase coverage rejects omission, duplication, relocation and weaker commands',()=>{
+  const marker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
+  const command = marker + '        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: >-\n          node --experimental-vm-modules --test\n';
+  const next = '      - name: Verify built weapons fidelity measurements and packet parity\n';
+  const edits = [
+    ...approvedEmittedGuidePhaseTests.map(file => ['          ' + file + '\n', '']),
+    [approvedEmittedGuidePhaseLines, ''],
+    [approvedEmittedGuidePhaseLines, approvedEmittedGuidePhaseLines + approvedEmittedGuidePhaseLines],
+    [approvedEmittedGuidePhaseLines, [...approvedEmittedGuidePhaseTests].reverse().map(file => '          ' + file + '\n').join('')],
+    [approvedEmittedGuidePhaseLines, '          patches/splatoon3/tests/unreviewed.test.mjs\n'],
+    [approvedEmittedGuidePhaseLines, approvedEmittedGuidePhaseLines + '          patches/splatoon3/tests/unreviewed.test.mjs\n'],
+    ['          patches/splatoon3/tests/player-collision-source-1130.test.mjs\n', ''],
+    [command, command.replace('        run: >-', '        if: false\n        run: >-')],
+    [command, command.replace('        run: >-', '        continue-on-error: true\n        run: >-')],
+    [command, command.replace('node --experimental-vm-modules --test', 'echo')],
+    [command, command.replace('github.workspace }}/_site', 'github.workspace }}/unverified')],
+    [approvedEmittedGuidePhaseLines + next, next + approvedEmittedGuidePhaseLines],
+  ];
+  for (const [before,after] of edits) {
+    const changed=workflow.replace(before,after);
+    assert.notEqual(changed,workflow,before);assert.throws(()=>verifyAcceptedJobs(changed),before);
+  }
+});
 test('the previously pinned broken artifact command is rejected despite its original digest',()=> {
   const broken=workflow.replace(repairedCoreEvidenceTail,legacyCoreEvidenceTail);
   assert.notEqual(broken,workflow);
