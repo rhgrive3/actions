@@ -479,6 +479,15 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   const audioGraph=await globalThis.catalogAudioGraph(prefix);
   // One real module Worker, retaining the external probe's original protocol.
   audioGraph.prewarmWorkers.push(await globalThis.catalogChargeWorker(prefix));
+  // Production bomb FX is activated through the main FX hook graph, outside
+  // this isolated motion-only fixture. Verify the real event selectors and
+  // include the immutable emitted module in the independent graph audit.
+  const { bombCuePresentation, drawAutobombScan } = await import(prefix + 'patches/splatoon3/runtime/bomb-cues.mjs');
+  const safeBombCue = bombCuePresentation({ ghost:false, s3Resolved:null, s3FuseTotal:0 },
+    {bomb:{radius:2,fuse:6}}, {});
+  if(safeBombCue.id!=='bomb' || safeBombCue.radius!==2 || safeBombCue.fuse!==6 ||
+    !safeBombCue.warning || !safeBombCue.follows || typeof drawAutobombScan!=='function')
+    throw Error('Native Splat Bomb presentation selector mismatch');
   const { installRanked } = await import(prefix + 'patches/splatoon3/runtime/ranked/install.mjs');
   if (typeof installRanked !== 'function') throw Error('Ranked runtime installer missing');
   // Exercise the real Match dependency entry, including its deadline helper.
