@@ -16,6 +16,8 @@
 // replaces the Roller flick that the shared `roller` visual family would play.
 import { THREE, Pieces, M, V, box, sphere, zlathe, ylathe, zcyl, ycyl, ring, pipe, sweep, lathe, topSlab, slab,
   smoothOutline, part, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
+import { G } from '../../../../src/core/ctx.js';
+import { Hit } from '../../../../src/game/physics.js';
 
 const TAU = Math.PI * 2;
 // Head width from the paint half width on the 11.3.0 tables, scaled 1.2/2.8 m per unit so the
@@ -202,20 +204,52 @@ export function FAMILY_POSE(ch, dt, s, C) {
     else if (cs.swingCount < m.count) m.count = cs.swingCount;
   }
   m.age += dt; m.since += dt;
-  // The previous solved weapon pose trims drag pitch against the standing
-  // surface at the tip. On slopes its floor height differs from the feet.
+  // The solved weapon pose trims drag pitch against the standing surface.
   const w0 = ch.weapon, own = ch._owner?.();
   if ((ch.wRoll || 0) > 0.3 && ch.grounded && w0?.off && own?.pos) {
     const sc = w0.def.modelScale || 1;
     // Several gameplay ticks can run between draws. Read the last solved
     // weapon pose, rather than feeding the last drawn pose into every tick.
     w0.off.updateWorldMatrix(true, false);
-    _tip.set(w0.def.muzzle.x, -cfg.thick * sc, cfg.tip * sc).applyMatrix4(w0.off.matrixWorld);
-    const n = own.groundN;
-    const floorY = own.pos.y - (n?.y > 0.7
-      ? (n.x * (_tip.x - own.pos.x) + n.z * (_tip.z - own.pos.z)) / n.y : 0);
+    let n = own.groundN, floor = own.pos;
+    const contact = ch.wRoll > 0.99 && m.w < 0.001 && n?.y > 0.7
+      && headContactPoint(w0, own.pos, n, _tip);
+    if (contact && G.physics?.raycast) {
+      // At a ramp edge the surface under the head can differ from the feet.
+      // One local, reused probe avoids extending the old plane through it.
+      _probe.set(_tip.x, Math.max(own.pos.y, _tip.y) + 0.15, _tip.z);
+      const h = G.physics.raycast(_probe, _down, cfg.tip * sc + 0.3, _floorHit);
+      if (h.hit && h.normal.y > 0.7) {
+        n = h.normal; floor = h.point;
+        headContactPoint(w0, floor, n, _tip);
+      }
+    }
+    if (!contact) _tip.set(w0.def.muzzle.x, -cfg.thick * sc, cfg.tip * sc).applyMatrix4(w0.off.matrixWorld);
+    const floorY = floor.y - (n?.y > 0.7
+      ? (n.x * (_tip.x - floor.x) + n.z * (_tip.z - floor.z)) / n.y : 0);
     const err = _tip.y - (floorY + 0.015);
-    if (Math.abs(err) < 1) m.corr = clamp(m.corr + err / cfg.tip * Math.min(1, dt * 12), -0.7, 0.5);
+    if (Math.abs(err) < 1) {
+      if (contact) {
+        // Fully lowered ANCR has no roll: its pitch axis is weapon-space X.
+        // Solve n.(off * Rx(delta) * contact - floor) = 0.015 * n.y.
+        // Project into weapon space: this also preserves parent squash/scale.
+        // A cfg.tip proxy omits the animated head bend and cannot solve this.
+        const e = w0.off.matrixWorld.elements;
+        _local.copy(_tip).applyMatrix4(_inverse.copy(w0.off.matrixWorld).invert());
+        const nx = n.x * e[0] + n.y * e[1] + n.z * e[2];
+        const ny = n.x * e[4] + n.y * e[5] + n.z * e[6];
+        const nz = n.x * e[8] + n.y * e[9] + n.z * e[10];
+        const offset = n.x * (e[12] - floor.x) + n.y * (e[13] - floor.y) + n.z * (e[14] - floor.z);
+        const b = ny * _local.y + nz * _local.z, c = nz * _local.y - ny * _local.z;
+        const target = 0.015 * n.y - offset - nx * _local.x, radius = Math.hypot(b, c);
+        if (c < -1e-6 && Math.abs(target) <= radius) {
+          const phase = Math.atan2(c, b), angle = Math.acos(target / radius);
+          const near = Math.atan2(Math.sin(phase + angle), Math.cos(phase + angle));
+          const far = Math.atan2(Math.sin(phase - angle), Math.cos(phase - angle));
+          m.corr = clamp(m.corr + (Math.abs(near) < Math.abs(far) ? near : far), -0.7, 0.5);
+        }
+      } else m.corr = clamp(m.corr + err / cfg.tip * Math.min(1, dt * 12), -0.7, 0.5);
+    }
   } else m.corr = damp(m.corr, 0, 1.5, dt);
   if (!(ch.kidForm && !ch.dance && (ch.wSub || 0) <= 0.01)) { m.w = 0; return; }
   const P = ch.P, roll = clamp(ch.wRoll || 0);
@@ -280,7 +314,32 @@ function animateHead(w, st) {
   if (head) head.rotation.x = w.brushBend;
   if (inkHead) inkHead.rotation.x = w.brushBend;
 }
-const _tip = new THREE.Vector3();
+const _tip = new THREE.Vector3(), _local = new THREE.Vector3(), _inverse = new THREE.Matrix4();
+const _probe = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _floorHit = new Hit();
+const HEAD_PARTS = ['head', 'headInk'];
+// Two existing rigid part meshes, already transformed by animateHead. Project
+// the plane into each mesh once, rather than allocating/transformed vertices.
+function headContactPoint(w, pos, n, out) {
+  let min = Infinity;
+  for (const name of HEAD_PARTS) {
+    const part = w.parts[name];
+    part?.updateWorldMatrix(false, true);
+    const mesh = part?.userData.mesh, vertices = mesh?.geometry?.attributes.position;
+    if (!vertices) continue;
+    const e = mesh.matrixWorld.elements;
+    const nx = n.x * e[0] + n.y * e[1] + n.z * e[2];
+    const ny = n.x * e[4] + n.y * e[5] + n.z * e[6];
+    const nz = n.x * e[8] + n.y * e[9] + n.z * e[10];
+    const offset = n.x * (e[12] - pos.x) + n.y * (e[13] - pos.y) + n.z * (e[14] - pos.z);
+    let index = -1;
+    for (let i = 0; i < vertices.count; i++) {
+      const d = nx * vertices.getX(i) + ny * vertices.getY(i) + nz * vertices.getZ(i) + offset;
+      if (d < min) { min = d; index = i; }
+    }
+    if (index >= 0) out.fromBufferAttribute(vertices, index).applyMatrix4(mesh.matrixWorld);
+  }
+  return min < Infinity;
+}
 
 export const MODELS = {
   's3-brush-mini': { sourceModel: 'Wmn_Brush_Mini', build: inkbrush, animate: animateHead },
