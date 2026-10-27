@@ -68,7 +68,7 @@ test('unsupported tools use only bounded normal-trust Ubuntu fallback then must 
   const f=fallbackFixture(),r=ensureVideoTools({...f,readOs:()=> 'ID=ubuntu\n'});
   assert.equal(r.status,'passed');assert.equal(r.mode,'official-ubuntu-apt-fallback');assert.equal(f.probes(),2);assert.equal(r.capabilities,f.caps);
   assert.equal(f.calls.length,3);
-  for(const c of f.calls){assert.equal(c.command,'timeout');assert(c.args.includes('--kill-after=10s'));assert(c.args.includes('--signal=TERM'));assert(c.args.includes('sudo'));assert(c.options.timeout<=195000);}
+  for(const c of f.calls){assert.equal(c.command,'sudo');assert.deepEqual(c.args.slice(0,2),['-n','timeout'],'privileged timeout directly owns the installer process group');assert(c.args.includes('--kill-after=10s'));assert(c.args.includes('--signal=TERM'));assert(c.options.timeout<=195000);}
   assert(f.calls[0].args.some(a=>a.endsWith('scripts/prepare-inkwave-ci-apt.py')));
   for(const c of f.calls.slice(1)){assert(c.args.includes('Acquire::Retries=1'));assert(c.args.includes('Acquire::http::Timeout=20'));assert(c.args.includes('Acquire::https::Timeout=20'));assert(c.args.includes('DPkg::Lock::Timeout=30'));}
   assert(f.calls[2].args.includes('ffmpeg'));assert(f.calls[2].args.includes('fonts-dejavu-core'));

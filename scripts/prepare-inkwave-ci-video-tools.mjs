@@ -71,15 +71,16 @@ export function ensureVideoTools({probe=probeVideoTools,run=spawnSync,probeOnly=
     report.mode='official-ubuntu-apt-fallback';
     const common=['-o','Acquire::Retries=1','-o','Acquire::http::Timeout=20','-o','Acquire::https::Timeout=20','-o','DPkg::Lock::Timeout=30'];
     const commands=[
-      {seconds:20,args:['sudo','-n','python3',fileURLToPath(new URL('./prepare-inkwave-ci-apt.py',import.meta.url))]},
-      {seconds:120,args:['sudo','-n','apt-get',...common,'update']},
-      {seconds:180,args:['sudo','-n','env','DEBIAN_FRONTEND=noninteractive','apt-get',...common,'install','-y','--no-install-recommends','ffmpeg','fonts-dejavu-core']},
+      {seconds:20,args:['python3',fileURLToPath(new URL('./prepare-inkwave-ci-apt.py',import.meta.url))]},
+      {seconds:120,args:['apt-get',...common,'update']},
+      {seconds:180,args:['env','DEBIAN_FRONTEND=noninteractive','apt-get',...common,'install','-y','--no-install-recommends','ffmpeg','fonts-dejavu-core']},
     ];
     for(const c of commands){
       report.fallback.push({seconds:c.seconds,args:c.args});
-      // GNU timeout terminates the process group, including sudo/apt children;
-      // a secondary host bound remains longer than its ten-second kill grace.
-      checked(run,'timeout',['--signal=TERM','--kill-after=10s',c.seconds+'s',...c.args],{stdio:'inherit',timeout:(c.seconds+15)*1000});
+      // The privileged timeout owns the apt process group, rather than relying
+      // on an unprivileged timer forwarding signals through sudo's monitor.
+      // The secondary host bound exceeds its ten-second termination grace.
+      checked(run,'sudo',['-n','timeout','--signal=TERM','--kill-after=10s',c.seconds+'s',...c.args],{stdio:'inherit',timeout:(c.seconds+15)*1000});
     }
     report.capabilities=probe(); // Installation alone can never satisfy this gate.
     report.status='passed';return report;
