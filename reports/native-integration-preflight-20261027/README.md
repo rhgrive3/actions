@@ -1,5 +1,13 @@
 # Native integration validation — 2026-10-27
 
+## Hissen floor-child candidate — latest implementation checkpoint
+
+Peer-reviewed `257a6223efe7b206826de1c2a409e6b6fa0de472` was integrated cleanly as `04bd3d307746f7679eb862466ed3a31954d93369` atop published0f9c, preserving both checker-fixture repairs and canonical catalog guards. **This changes shipping runtime:** only `projectile-presentation.mjs` changes among1493 build inputs, selecting existing Slosher `[.3,4,.32]` instead of round-droplet `[.12,4,.9]` for Hissen floor children. Main lobes, source radius/matrix scale, paint, trajectories, count/RNG and resource ownership stay unchanged. Content is now **4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630**, not d88.
+
+Normal optimized build/startup and exact **1493-input/2199-artifact/0-mismatch** audit pass. Integrated checks: source62/62, emitted20/20, canonical verifier601/601, preserved fixture/observer37/37 and three additional direct-import consumers26/26, all without skips. Oldd88 fails the intended new profile assertion. `hissen-child-profile-integration.json` preserves commands' log hashes and exact source/build identity.
+
+**Candidate after-pixel acceptance remains pending.** The independently retained9b2b F5/F7/F9 artifact is before evidence only. Normal automatic exact-new-head CI must capture and independently verify visible child fragments with matched camera/seeds/physical/paint/main state; shader metadata is not a visible-pixel substitute. This existing analytic profile is a local reconstruction, not established retail child morphology or Hissen main-size agreement. Keep Draft/unmerged; no all-green or native-prebuilt payload acceptance claim.
+
 ## Stage-composition CI fixture repair — latest checkpoint
 
 The reviewed QA bundle was published as `9b2b8f70cc35f630c87bcd80e728654cc7102dd8`. Its shard6 and #945 cache test pass in actual CI. Shard0 instead exposed four missing-helper errors in a second checker-body unit fixture; `1de515ab9c72f35f400e968e23ee0fba6cdb7c81` passes the real imported geometry generator into that fixture without changing the original capture-count/frame0/rig gates or any shipping code. Independent review accepts the one-file repair. Full affected local shard0 passes **1556/1560,0fail,4 explicit optional skips**; all Explosher contracts **222/222** and the canonical verifier **601/601** pass without skips. The exact build remains **1493 inputs,2199 artifacts,0mismatches**, content d88.
