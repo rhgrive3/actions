@@ -417,8 +417,8 @@ export class SwimWake {`,
       `        const reach = this.level.spawnBarrier + 4;
         if (Number.isFinite(reach) && reach >= 0 && !Number.isNaN(dx) && !Number.isNaN(dz) && (Math.abs(dx) > reach || Math.abs(dz) > reach)) continue;
         const d2 = dx * dx + dz * dz;
-        if (Number.isFinite(reach) && reach >= 0 && Number.isFinite(d2) && d2 >= reach * reach) continue;
-        const d = Number.isFinite(dx) && Number.isFinite(dz) ? Math.sqrt(d2) : Math.hypot(dx, dz);`,
+        if (Number.isFinite(reach) && reach >= 0 && Number.isFinite(d2) && Number.isFinite(reach * reach) && d2 >= reach * reach) continue;
+        const d = Math.hypot(dx, dz);`,
       replaceOnce,
       'GPU-12b reject out-of-range spawn barrier actors via squared distance before sqrt'
     );
