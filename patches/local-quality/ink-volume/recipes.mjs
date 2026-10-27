@@ -91,10 +91,14 @@ export function submitInkVolume(engine,p) {
     part.name=name;part.pattern=pattern;part.size=1;part.rotation.copy(s.rotation);
     part.stretch.set(width,width+tail,width*INK_LOOK.slosh[2]);part.position.addScaledVector(s.dir,-tail*.5);
     // Retry only the derived contour LOD, through the SAME capacity/triangle reservation.
+    const activeBefore=engine.metrics?.active||0;
     let ok=engine.submitComposite(p,s.single);
     if(!ok&&fallback&&name!=='hissen-fallback'){part.name='hissen-fallback';ok=engine.submitComposite(p,s.single);}
     if(fallback&&part.name==='hissen-fallback'){
-      if(engine.metrics)engine.metrics[ok?'fallback':'fallbackDropped']++;
+      if(engine.metrics){
+        if(!ok)engine.metrics.fallbackDropped++;
+        else if(engine.metrics.active>activeBefore)engine.metrics.fallback++;
+      }
       // At hard exhaustion the existing bounded owner omits this main body.
       // Do not spill an unaccounted generic blob beyond the renderer budget.
       return true;
