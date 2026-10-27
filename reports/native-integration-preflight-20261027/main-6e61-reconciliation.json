@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "status": "reviewed-implementation-candidate-not-native-or-final-CI-acceptance",
+  "sourceMerge": "4df9c21ba2d3d08e42a5b32f8be0262325df38c8",
+  "sourceTree": "dfb46e11af9cda0c1547379c19c1957e9fba7300",
+  "localParents": [
+    "086938bc8f50e09a32f9e7031420b1c0781cff7d",
+    "6e61cfcc6dc1874b0aa851ffdc78da9d430392d1"
+  ],
+  "publicationParentMapping": {
+    "086938bc8f50e09a32f9e7031420b1c0781cff7d": "5c0f0eb97d00b5f6233a7586d6394346f7f13a5c"
+  },
+  "actualNewMain": "6e61cfcc6dc1874b0aa851ffdc78da9d430392d1",
+  "priorMain": "9f82433e3ed2c1f58221e39152c7ad2ecdb51a51",
+  "freshBuild": {
+    "sourceSha": "4df9c21ba2d3d08e42a5b32f8be0262325df38c8",
+    "contentHash": "8f0c915f4730fab2aa43d867dbbcb4f6cabb1fe069e35140885da35df1a5c0f9",
+    "inputHash": "2af23981f982d9e097fd89e322089add7aebf01be6951603d7bb1686febf6ec0",
+    "sourceInputs": 1513,
+    "artifacts": 2223,
+    "mismatches": 0,
+    "committedBytesAndWorkingBytesVerified": true
+  },
+  "logs": [
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/audio-emitted.log",
+      "bytes": 8655,
+      "sha256": "c22efe99f83e821ce1d130d30c920c96b11b6d3fb0216d7a92da081b11b8064c"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/audio-source.log",
+      "bytes": 13139,
+      "sha256": "476c7b2b5bff1b403951577a8bcac1b0dc4ed080aa784a9c892637f880be480d"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/build.log",
+      "bytes": 1210,
+      "sha256": "3c39ec4b2ca287335f4e766a0a938a35a18e4005fee64078182e1626dfe67595"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/catalog-graph-preflight.log",
+      "bytes": 3149,
+      "sha256": "05f0950f0da3ed8a0b3475218529b343ec2a26fd57a0801851e904c8c5951e70"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/checker-build-list.log",
+      "bytes": 842,
+      "sha256": "023759272cc611e2bd79d002c2d31ef1f1519dfc6992e86e3e0f40422cccbf34"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/combined-source.log",
+      "bytes": 5958,
+      "sha256": "29d8ae524f8c009b841a68cdc995f43d3a8b3f46eea8cf74f16d6e1fd86a389c"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/emitted-consumer-visuals.log",
+      "bytes": 7734,
+      "sha256": "265db06dab6c1916f8d41dd80d331dca108271c595f91a67946a25c92860c9de"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/final-build.log",
+      "bytes": 1210,
+      "sha256": "3c39ec4b2ca287335f4e766a0a938a35a18e4005fee64078182e1626dfe67595"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/final-runner-contracts.log",
+      "bytes": 2813,
+      "sha256": "91744784a289f408016d141eb74f29a6e4dd877e5b64b2fbce87609b99fb496d"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/final-startup-budget.log",
+      "bytes": 520,
+      "sha256": "51937b0ec63fd3633c1daa67812b5e320bc6fb932f529310b322aa3dc13ac735"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/final-verifier.log",
+      "bytes": 57349,
+      "sha256": "2daa8f721b5408c7cc77e10dca444e48c4663de3cb639f6baf49eaa803466878"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/final-workflow-native-guards.log",
+      "bytes": 9664,
+      "sha256": "630759a968cabfb7a27aadf2b2d1bc04d9a28ceaa3c00399024f7f31369672a7"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/fixture-consumers-source.log",
+      "bytes": 3744,
+      "sha256": "618960ce5f9a8c039a673116458b0eea042ef638a7a172a6c6d130b0f22797ed"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/phase-catalog-source.log",
+      "bytes": 4241,
+      "sha256": "4bba6976e4d79737a1cc3e13fa9370fd57d55156cc7367543903b9a184c794a1"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/phase-emitted.log",
+      "bytes": 15449,
+      "sha256": "5006cea8eaa20fb0b43bd8fe97511d0c9fb64138a468cb7d60df93553776da63"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/phase-roller-source.log",
+      "bytes": 11603,
+      "sha256": "c7c59cb71e581c38f9eb862fb3a4ac6a36addda389bad647acb2a3ba28e05b6b"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/quick.log",
+      "bytes": 63,
+      "sha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/runner-contracts.log",
+      "bytes": 2809,
+      "sha256": "8f1ac8bc4b536da56bbb77e85ea03e91e3a5c571f9cfa2ccb931efb1ce01ee8c"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/startup-budget.log",
+      "bytes": 520,
+      "sha256": "51937b0ec63fd3633c1daa67812b5e320bc6fb932f529310b322aa3dc13ac735"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/verifier.log",
+      "bytes": 55146,
+      "sha256": "6ce56cf7a6c3631f3eda31d0ad859cfb482c461198cfb369aa27bed10a4f34b5"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/wiper-peer-emitted.log",
+      "bytes": 14663,
+      "sha256": "e68f7d261710046593423ccc55bd8a45bb666e55e1ebfb6214c08cee7153b792"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/wiper-peer-source.log",
+      "bytes": 6758,
+      "sha256": "94cab729617f51e49a8caec3e0849ea1974aaefc4afc188026064ed6073f1580"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/workflow-capture-guards-before-vm-flag.log",
+      "bytes": 14848,
+      "sha256": "337f1438c9408534ab4cac6ff220adfccc06f71517e876e095892c1154e6795b"
+    },
+    {
+      "path": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/workflow-capture-guards.log",
+      "bytes": 16750,
+      "sha256": "a53766b863cfe396d271a0d7236e757e17d809106c6b22b66ce7dbea22df8196"
+    }
+  ],
+  "limits": [
+    "Exact final remote-head automatic CI, original/control/target native52, Hissen5/7/9 and Wiper36 PNGs plus independent pixels remain pending.",
+    "8f differs from old2b/4ec/d88; no historical receipt or image is relabeled.",
+    "Original14-geometry cold-start discrepancy cause remains unproven; additive absolute gate must pass on fresh artifacts.",
+    "1513input build uses native-prebuilt fallback;405 LFS pointers are not payload acceptance.",
+    "No new dependencies/repository lock edits, credentials/security changes, private media/assets, manual CI, PR metadata or main merge.",
+    "Retail dimensions/timing, Hissen main size/floor morphology, hardware/audibility remain unverified."
+  ],
+  "testedCodeHead": "0f8651221bd02bc8f210fe0266e1d2e6f45403d6",
+  "finalBuild": {
+    "sourceSha": "0f8651221bd02bc8f210fe0266e1d2e6f45403d6",
+    "contentHash": "8f0c915f4730fab2aa43d867dbbcb4f6cabb1fe069e35140885da35df1a5c0f9",
+    "inputHash": "2af23981f982d9e097fd89e322089add7aebf01be6951603d7bb1686febf6ec0",
+    "sourceInputs": 1513,
+    "artifacts": 2223,
+    "mismatches": 0,
+    "committedBytesAndWorkingBytesVerified": true
+  },
+  "additiveAbsoluteGuard": {
+    "originalChain": [
+      "9de7b88edefd1f2045ea0ab5b1fea727ffc1024b",
+      "f84103003156edc5bb3bf43ebd64cc52be48495b",
+      "b27e1742622229be94b3b54c5c4c06fc889c3c46"
+    ],
+    "localChain": [
+      "682f12f6",
+      "4af66254",
+      "0f8651221bd02bc8f210fe0266e1d2e6f45403d6"
+    ],
+    "upstreamAdmissionBlobUnchanged": "1d8dc9da6893df1dda839f84dd8e1bc064c9de57",
+    "mandatoryConjunction": "Validate and exactly bind existing upstream admission, then require absolute after.memory.geometries <= before.memory.geometries for every aligned frame; raw numeric tick/string view, no offset/epsilon/skip/override",
+    "supplementalReplay": "Old281->295 rejects; da8 295->295 accepts. Old-artifact CPU replay, not fresh8f native proof."
+  },
+  "checks": {
+    "canonicalVerifier": {
+      "pass": 627,
+      "fail": 0,
+      "skip": 0
+    },
+    "affectedWorkflowNativeContracts": {
+      "pass": 122,
+      "fail": 0,
+      "skip": 0
+    },
+    "runnerContracts": {
+      "pass": 24,
+      "fail": 0,
+      "skip": 0
+    },
+    "combinedSourceRuntime": {
+      "pass": 46,
+      "fail": 0,
+      "skip": 0
+    },
+    "priorFixtureConsumers": {
+      "pass": 32,
+      "fail": 0,
+      "skip": 0
+    },
+    "emittedConsumerVisualFixture": {
+      "pass": 23,
+      "fail": 0,
+      "skip": 0
+    },
+    "audioSourceOwner": {
+      "pass": 93,
+      "fail": 0,
+      "skip": 0
+    },
+    "audioEmittedFixtureSuite": {
+      "pass": 28,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Actual production fixtures use audited emitted8f. Pure helper/recipe checks in this suite still import source; not28 independent emitted audio paths or audibility."
+    },
+    "rendererPeerSource": {
+      "pass": 51,
+      "fail": 0,
+      "skip": 0
+    },
+    "rendererPeerEmittedFixture": {
+      "pass": 45,
+      "fail": 0,
+      "skip": 0
+    },
+    "phaseOwnerSource": {
+      "pass": 47,
+      "fail": 0,
+      "skip": 0
+    },
+    "phaseOwnerEmittedCPUFixture": {
+      "pass": 30,
+      "fail": 0,
+      "skip": 0,
+      "native52": false
+    },
+    "shellSyntax": {
+      "yamlFiles": 3,
+      "runBlocksBashSyntaxChecked": 183,
+      "commandsExecuted": false
+    }
+  },
+  "peerReviews": {
+    "checkerBuildOnlyUnion": "ACCEPT immutable34315fe2/b9d8b2ff",
+    "audioEightFileThreeWay": "ACCEPT4df;38selected+11cancellation checks, critical main helper blobs exact",
+    "renderer": "ACCEPT4df bounded source/emitted, not native pixels",
+    "absoluteGeometryGuard": "ACCEPT cumulativeb27 including raw typed identity correction"
+  },
+  "sourceClosure": {
+    "executionFiles": 29,
+    "changedSince5a": [
+      "patches/splatoon3/runtime/projectile-visuals.mjs",
+      "scripts/lib/inkwave-projectile-menu-start.mjs"
+    ],
+    "receipt": ".ci-scratch/native-integration-20261027/main-6e61-reconcile/actual-29-closure.json",
+    "oldClosureNotReused": true
+  },
+  "preservedEvidence": {
+    "da8InkMicro": "Cancelled during apt after frames-only success; offline8 full clips pass with local7.1.5, NOT hosted CI completion",
+    "da8NativePair": "Actual short preflight success295/295;39 original files and ZIP bb387541ebe5612688d12385db7189e6609b71cf78938dd3fe8f8fd598ca8d8b preserved; long pair skipped",
+    "fiveCPublication": "Published exacte000 tree; automatic PR runs absent while newmain6e created actual conflicts. No manual dispatch or metadata retry.",
+    "historicalCatalog": "9b2b PNGs retain original identity; augmented860 proof remains unaccepted"
+  },
+  "commands": {
+    "build": "ESBUILD_MODULE=/workspace/shared/inkwave-native/deps/node_modules/esbuild/lib/main.js node scripts/build-inkwave.mjs inkwave-public /workspace/shared/inkwave-native/evidence/native-integration-20261027/site-main-6e61-final",
+    "verifier": "INKWAVE_BUILT_SITE=<audited8fsite> node scripts/ci/run-inkwave-test-suite.mjs verifier",
+    "runner": "node scripts/ci/run-inkwave-test-suite.mjs runner-contracts"
+  },
+  "recoveries": [
+    {
+      "problem": "First capture guard invocation omitted --experimental-vm-modules:167pass/1SourceTextModule constructor failure",
+      "resolution": "Original log retained; correctly flagged command passed168/168,0skip. No source edit or skip."
+    }
+  ]
+}

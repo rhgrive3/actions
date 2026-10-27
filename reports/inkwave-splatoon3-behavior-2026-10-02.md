@@ -6609,3 +6609,7 @@ Independent source/emitted controls plus ordinary shipping Range touch input sup
 - 実装・再現: `s3-projectile-shapes.mjs` と `s3-ink-sheets.mjs` のNormal/Stamper・Lite/Wiperのチャージ縦波だけを既存の範囲・分割数で不均一な湿った輪郭と短い剥がれへ再構成。各キットでチャージ解除して観察し、tapとHeavy/Dentalの横向きチャージを対照にする。
 - プレイ影響: 弾の数・位置・速度・寿命・塗り・ダメージ・RNGは変更しない。対象波の初回描画時だけ追加mesh/geometry/material各1と13600bytes、混在時は描画passごとに最大1draw追加を許容した候補であり、GPU時間や実機FPSは未測定。
 - 確認状態: 新main9f82433を保つ統合候補でsource163・emitted38・verifier601等の限定検証が通る。自動CIのNormal/Lite/Heavy×charge/tap・元PNG36枚とHissen5/7/9の実描画、遮蔽、材質・影、見た目の改善は別途確認が必要で、本家一致・寸法・時間や完了は主張しない。詳細 `reports/wiper-wet-wave-20261027/README.md`、`reports/native-integration-preflight-20261027/wiper-external-integration.json`。
+
+
+### 2026-10-27 main6e61との挙動統合（実画面・本家一致は未確認）
+Chargerの録音rise／実際のkeep復帰・Stringer段階音と、新mainの取消可能な読込・音源解放を両立し、Rollerの下り坂連続接地を残した共有traceに再入可能なscratch lease／finally解放を移した。Wiper対象縦波・Hissen子滴profileは維持し、物理弾数・塗り・RNGを見た目のため変更しない。本家版・ギア・位相・寸法の未確認項目は解消しない。30/60/120Hzのsource／新最適化8f emitted CPU検証、verifier627件等は実機比較・可聴性・実画面の代用ではない。自動の新headでnative52三lane、Hissen5/7/9、Wiper36PNGと元画像との独立レビューが必要。上流のgeometry成長率判定は保持するが、従来の絶対after<=before条件も別の必須artifact gateとしてANDで課す。旧295/295や取消runのoffline動画は新8fのCI完了証拠ではない。詳細: reports/native-integration-preflight-20261027/main-6e61-reconciliation.json。

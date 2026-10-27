@@ -1,5 +1,15 @@
 # Native integration validation — 2026-10-27
 
+## Newmain6e61 semantic reconciliation and original resource guard — latest checkpoint
+
+Main advanced externally from9f to **6e61cfcc6dc1874b0aa851ffdc78da9d430392d1** after the reviewed provisioning candidate was published as5c. Actual merge conflicts prevented automatic PR startup; no manual run or metadata retry was used. Protected merge4df preserves the reviewed candidate and incoming #1900/#1898/#1882 histories, explicitly combining cancellation-scoped Charger loading with retained-charge/Stringer audio, and moving incoming reentrant Roller scratch leases into the existing shared downhill trace. Wiper wet geometry, Hissen profile and upstream Machine/paint optimizations remain integrated.
+
+Fresh optimized build/startup and committed-byte audit pass: **1513inputs,2223artifacts,0mismatches**, content **8f0c915f4730fab2aa43d867dbbcb4f6cabb1fe069e35140885da35df1a5c0f9**, input **2af23981f982d9e097fd89e322089add7aebf01be6951603d7bb1686febf6ec0**. Final canonical verifier627/627, native/workflow contracts122/122 and runner24/24 pass without skips; bounded source/emitted audio, renderer and phase suites are recorded separately in main-6e61-reconciliation.json, not summed into a fictitious full test total.
+
+Incoming main's geometry-growth admission is preserved byte-for-byte, **not represented as the old absolute gate**. A reviewed mandatory additive verifier first revalidates/binds that admission, then enforces original absolute after.memory.geometries <= before.memory.geometries on every aligned frame with strict raw tick/view identity. No offsets/tolerances, conditional skip or failure bypass. Old281→295 rejects and oldda8 295/295 accepts in supplemental artifact replay; neither is fresh8f native proof.
+
+**Still a candidate, keep Draft/unmerged.** Exact-new-head automatic CI, native52 three lanes, Hissen5/7/9 and Wiper36 raw PNGs/actual-pixel review remain required. The29-file execution closure changed in two incoming files, so old closure/evidence is not reused. The cancelledda8 ink-micro run remains cancelled despite successful offline encoding of its8 retained clips; da8's native pair is only short preflight, not long-pair completion. No private media, new dependencies/credentials/security changes, retail/hardware/audibility or native-prebuilt payload claim.
+
 ## Wiper candidate plus preserved external main merge — latest checkpoint
 
 Reviewed Wiper runtime45e and additive exact-head sandboxed36-PNG QAaa0 are integrated, with peer-accepted551 repairs for two stale test contracts. During validation, the PR advanced externally to `0b1f5c025a3aada333c44d256b97b1d3cdb694a1`, whose parents are published5a and newmain `9f82433e3ed2c1f58221e39152c7ad2ecdb51a51`. Merge `1f59a84fd086520de46f6458abfbbf885da62f32` preserves both histories, all39 nonworkflow external blobs including9 existing PNGs, Hissen's profile, all phase helpers and both additive workflow lanes. No external image is uploaded or overwritten by this work.
