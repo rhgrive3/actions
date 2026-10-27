@@ -9,12 +9,19 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const adaptProduction = (await import(pathToFileURL(path.join(ROOT,'scripts/inkwave-source-composition.mjs')).href)).adaptBuildSource;
 const RealmBlob = function(parts = [], options) { return new Blob(parts.map(p => ArrayBuffer.isView(p) ? Buffer.from(p.buffer, p.byteOffset, p.byteLength) : p), options); };
+const RealmCrypto = {
+  getRandomValues: a => crypto.getRandomValues(a),
+  randomUUID: () => crypto.randomUUID(),
+  subtle: {
+    digest: (alg, data) => crypto.subtle.digest(alg, ArrayBuffer.isView(data) ? Buffer.from(data.buffer, data.byteOffset, data.byteLength) : data instanceof ArrayBuffer ? data : Buffer.from(new Uint8Array(data))),
+  },
+};
 
 export async function sourceLoadedActorFixture({ transform = adaptProduction, emittedTransform = null, random = null, sourceOnly = false, extraExports = '', moduleTransform = null } = {}) {
   const EMITTED = !!process.env.INKWAVE_BUILT_SITE && !sourceOnly;
   const SITE = EMITTED ? path.resolve(process.env.INKWAVE_BUILT_SITE) : path.join(ROOT,'inkwave-public');
   const context = vm.createContext({ console, performance, URL, URLSearchParams, TextEncoder, TextDecoder, Blob: RealmBlob,
-    DecompressionStream, crypto, structuredClone, setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
+    DecompressionStream, crypto: RealmCrypto, structuredClone, setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   if (random) { context.__fixtureRandom = random; vm.runInContext('Math.random = globalThis.__fixtureRandom', context); delete context.__fixtureRandom; }
   const RealmArrayBuffer = vm.runInContext('ArrayBuffer', context);
   class RealmResponse extends Response { async arrayBuffer() { const bytes = new Uint8Array(await super.arrayBuffer()), out = new RealmArrayBuffer(bytes.length); new Uint8Array(out).set(bytes); return out; } }

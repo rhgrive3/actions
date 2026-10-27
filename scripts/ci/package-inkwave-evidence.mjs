@@ -50,7 +50,7 @@ export async function packageEvidence(input,{output=path.resolve(input+'-bounded
  let body=encode();
  // The reserve includes copy metadata. Retain the manifest even if a future
  // metadata field grows, by dropping the lowest-priority submitted copies.
- for(const row of selected.toReversed()){
+ for(const row of selected.slice().reverse()){
   if(body.length+limit-reserve-remaining<=limit)break;const info=manifest.files.find(item=>item.path===row.path);if(!info.submittedPath)continue;
   fs.unlinkSync(path.join(output,info.submittedPath));remaining+=info.submittedBytes;for(const key of ['submittedPath','submittedBytes','submittedSha256','originalByteOffset'])delete info[key];info.disposition='omitted';info.reason='manifest-budget';body=encode();
  }

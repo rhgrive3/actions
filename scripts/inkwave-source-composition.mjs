@@ -26,6 +26,7 @@ import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
 import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
+import { adaptCombatGpuCpuPerfect } from '../patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptLosslessShooterHud } from '../patches/local-quality/shooter-hud-hotpath-adapter.mjs';
 import { adaptStaticMenuArt } from '../patches/local-quality/static-menu-adapter.mjs';
 import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
@@ -105,7 +106,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptRemainingVisualQueue20261027(rel, code);
   code = adaptQueueAudioBuild20261027(rel, code);
   code = adaptCombatWorldQueue20261027(rel, code);
-  return adaptQueueNetwork20261027(rel, code, replaceOnce);
+  code = adaptQueueNetwork20261027(rel, code, replaceOnce);
+  return adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

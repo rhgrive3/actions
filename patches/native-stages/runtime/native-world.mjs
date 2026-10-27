@@ -102,10 +102,15 @@ export async function buildNativeWorld(game,map,current){
   // Compile the offscreen paint/drying shaders during loading, in their actual
   // render-target colour space. Do not hold renderer state across the await.
   const warmStart=performance.now(),r=G.renderer,previousTarget=r.getRenderTarget(),dryVisible=paint.dryMesh.visible;
+  const gl=r.getContext?.(),canSkipWarm=!!(gl&&!gl.isContextLost?.()&&r._iwPaintWarmGl===gl);
   let warmed;
-  try { r.setRenderTarget(paint.rt);paint.dryMesh.visible=true;warmed=r.compileAsync(paint.scene,paint.cam); }
-  finally { r.setRenderTarget(previousTarget);paint.dryMesh.visible=dryVisible; }
+  if(canSkipWarm){warmed=Promise.resolve();}
+  else{
+   try { r.setRenderTarget(paint.rt);paint.dryMesh.visible=true;warmed=r.compileAsync(paint.scene,paint.cam); }
+   finally { r.setRenderTarget(previousTarget);paint.dryMesh.visible=dryVisible; }
+  }
   await warmed;
+  if(gl&&!gl.isContextLost?.())r._iwPaintWarmGl=gl;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
@@ -164,8 +169,7 @@ export async function buildNativeWorld(game,map,current){
   // Once published, the display alone holds views of the source vertex/index
   // arrays and releases them as they upload. A failed attempt keeps its input.
   data.vertices=null;data.indices=null;
-  // The committed NativeLevel owns converted vectors and shared immutable
-  // triangle views; source records are no longer used by activation/quality.
+  // Only activated NativeLevel data remains authoritative after publication.
   data.manifest.faces=null;data.faceTriangles=null;
   disposeOldWorld(game,snapshot);
  }catch(error){

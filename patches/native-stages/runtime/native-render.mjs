@@ -78,11 +78,14 @@ export function nativeDisplay(data,textures,quality){
    // PNG channel inference can finish on a later quality load. Keep the
    // compiled program's channels with the committed texture profile.
    const channels={opacity:src.channels?.opacity||'g',rough:src.channels?.roughness||'g'};
-   mat.onBeforeCompile=shader=>{
-    if(mat.alphaMap&&channels.opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
-    if(mat.roughnessMap&&channels.rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
-   };
-   mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;mat.name=o.material;cache.set(o.material,{mat,channels});materials.push(mat);
+   if(channels.opacity==='r'||channels.rough==='r'){
+    mat.onBeforeCompile=shader=>{
+     if(mat.alphaMap&&channels.opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
+     if(mat.roughnessMap&&channels.rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
+    };
+    mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;
+   }
+   mat.name=o.material;cache.set(o.material,{mat,channels});materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null);

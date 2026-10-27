@@ -311,6 +311,8 @@ test('final shipped main and platform override both connect the opt-in profiler'
   const platform=fs.readFileSync(new URL('../platform-game.mjs',import.meta.url),'utf8');
   assert.ok(platform.includes('P._loop = function () { ensure(this).driver.start(); };'));
   assert.ok(platform.includes('game._rangeFrameProbe = createFrameTimingProbe({ env, game });'));
+  assert.ok(platform.includes("import('./range-frame-profiler.mjs')"),
+    'actual platform owner must lazy-load the opt-in profiler');
   assert.ok(platform.includes('r.syncProfiler = () => {'));
   assert.ok(platform.includes('game.settings?.debugMode === true'));
   assert.ok(platform.includes('r.disposeProfiler?.()'));
