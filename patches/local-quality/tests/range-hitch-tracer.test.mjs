@@ -278,7 +278,13 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.ok(tracer, p.snapshot().traceError || 'frame tracer should initialize');
   const trialControls=nodes.find(n=>n.id==='inkwave-debug-ab-controls');
   assert.equal(trialControls?.children.filter(n=>n.nodeName==='button').length,2,
-    'new A/B buttons are attached to the on-device control bar');
+    'existing A/B buttons remain on the on-device control bar');
+  const densitySelector=trialControls.children.find(n=>n.id==='inkwave-debug-density');
+  assert.ok(densitySelector,'user can choose normal, 60% or 100% render density');
+  assert.deepEqual(densitySelector.children.map(n=>n.value),['auto','low','high']);
+  densitySelector.value='low';
+  densitySelector.listeners.change();
+  assert.equal(f.game.R.dynScale,.6,'diagnostic selector locks the actual render density');
   assert.equal(p.beginTrial('idle'),true,'idle capture can be requested from the opt-in profiler');
   f.game._frame(.016);
   p.record(f.now(),18,{phase:'practice',frameRateHz:60});
@@ -290,6 +296,7 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.match(f.copied,/"schema": "inkwave-frame-trace-v1"/);
   assert.equal(nodes.filter(n=>n.nodeName==='button').length,1);
   p.dispose();
+  assert.equal(f.game.R.dynScale,1,'closing Debug profiler restores the original render density');
   assert.equal(trialControls.removed,true,'A/B control bar is destroyed on disable');
   assert.strictEqual(f.env.__inkwaveRangePerf,undefined);
   const off=createFrameTimingProbe({env:{},now:f.now});
