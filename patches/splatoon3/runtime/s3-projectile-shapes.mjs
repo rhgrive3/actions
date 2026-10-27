@@ -1,3 +1,4 @@
+import { setTrackedInstanceColor, uploadTrackedInstanceColors } from './instance-color-upload.mjs';
 // Splatoon 3 in-flight projectile silhouettes for Shooters, Brellas,
 // Stringers, Splatanas, Sloshing Machine, Explosher and Bloblobber.
 //
@@ -353,7 +354,7 @@ function upload(mesh, n) {
   mesh.count = n; mesh.visible = n > 0;
   if (!n) return;
   mesh.instanceMatrix.clearUpdateRanges(); mesh.instanceMatrix.addUpdateRange(0, n * 16); mesh.instanceMatrix.needsUpdate = true;
-  mesh.instanceColor.clearUpdateRanges(); mesh.instanceColor.addUpdateRange(0, n * 3); mesh.instanceColor.needsUpdate = true;
+  uploadTrackedInstanceColors(mesh);
 }
 
 // Unit travel direction, remembered while a stuck arrow has zero velocity.
@@ -464,7 +465,17 @@ function fireInk(R, p, kind, f, G, system) {
 }
 
 export function drawS3Shapes(system, THREE, G) {
-  const R = system._s3Shapes || (system._s3Shapes = createRenderer(THREE, system.scene));
+  let R = system._s3Shapes;
+  if (!R && !system.list.some(p => p.s3Shape && !(p.delay > 0) && p.owner?.color))
+    return { body: 0, slashH: 0, slashV: 0, shell: 0, core: 0, sparkles: 0, sheets: 0, drills: 0 };
+  if (!R) R = system._s3Shapes = createRenderer(THREE, system.scene);
+  if (!system.list.length && !R.sheets.bursts.length && !R.sheets.drills.length) {
+    for (const mesh of [R.body, R.slashH, R.slashV, R.shell, R.core]) { mesh.count = 0; mesh.visible = false; }
+    R.sparks.visible = false; R.sparks.userData.count = 0; R.sparks.geometry.setDrawRange(0, 0);
+    R.sheets.mesh.count = R.sheets.drillMesh.count = 0;
+    R.sheets.mesh.visible = R.sheets.drillMesh.visible = false;
+    return { body: 0, slashH: 0, slashV: 0, shell: 0, core: 0, sparkles: 0, sheets: 0, drills: 0 };
+  }
   const { body, bodyData, slashH, slashV, shell, core, sparkPos, sparkSize, m, q, q2, s, v, f, x, y, basis, Z, UP } = R;
   const bd = bodyData.array, cam = G?.camera?.position;
   let nb = 0, nh = 0, nv = 0, ns = 0, nc = 0, nk = 0;
@@ -487,7 +498,7 @@ export function drawS3Shapes(system, THREE, G) {
       // roll the cross-section with the seed so torn tails differ per round
       q2.setFromAxisAngle(Z, (p.seed || 0) * 6.2832); q.multiply(q2);
       m.compose(p.pos, q, s.setScalar(b.R));
-      body.setMatrixAt(nb, m); body.setColorAt(nb, color);
+      body.setMatrixAt(nb, m); setTrackedInstanceColor(body, nb, color);
       const o = nb * 4; bd[o] = b.L; bd[o + 1] = b.kind; bd[o + 2] = b.rag; bd[o + 3] = p.seed || 0;
       nb++;
     } else if (kind === 'slash-h' || kind === 'slash-v') {
@@ -502,26 +513,26 @@ export function drawS3Shapes(system, THREE, G) {
       const born = 0.55 + 0.45 * smooth(0, 3, frames), late = smooth(lifeFrames * 0.7, lifeFrames, frames);
       s.set(born * (1 - 0.15 * late), born * (1 - 0.6 * late), born * (1 - 0.35 * late));
       m.compose(p.pos, q, s);
-      mesh.setMatrixAt(n, m); mesh.setColorAt(n, color);
+      mesh.setMatrixAt(n, m); setTrackedInstanceColor(mesh, n, color);
       if (kind === 'slash-h') nh++; else nv++;
       // a thinner second layer peels off behind the leading slab
       if ((kind === 'slash-h' ? nh : nv) < MAX_SLASH) {
         v.copy(p.pos).addScaledVector(f, -0.28 - 0.1 * born);
         q2.setFromAxisAngle(Z, ((p.seed || 0) - 0.5) * 0.35); q.multiply(q2);
         m.compose(v, q, s.multiplyScalar(0.82));
-        mesh.setMatrixAt(kind === 'slash-h' ? nh : nv, m); mesh.setColorAt(kind === 'slash-h' ? nh : nv, color);
+        mesh.setMatrixAt(kind === 'slash-h' ? nh : nv, m); setTrackedInstanceColor(mesh, kind === 'slash-h' ? nh : nv, color);
         if (kind === 'slash-h') nh++; else nv++;
       }
     } else if (kind === 'bubble') {
       const r = drawRadius(p);
       if (ns < MAX_SHELL && r > 0) {
         m.compose(p.pos, q.identity(), s.setScalar(r));
-        shell.setMatrixAt(ns, m); shell.setColorAt(ns, color); ns++;
+        shell.setMatrixAt(ns, m); setTrackedInstanceColor(shell, ns, color); ns++;
       }
       // round ink ball floating inside the clear film
       if (nc < MAX_CORE && r > 0) {
         m.compose(p.pos, q.identity(), s.setScalar(r * S3_SHAPE.bubble.core));
-        core.setMatrixAt(nc, m); core.setColorAt(nc, color); nc++;
+        core.setMatrixAt(nc, m); setTrackedInstanceColor(core, nc, color); nc++;
       }
       // tiny empty bubbles drifting behind a young shot (calibration: 0.6 s)
       const fade = 1 - smooth(0.25, 0.6, p.age);
@@ -534,7 +545,7 @@ export function drawS3Shapes(system, THREE, G) {
         v.copy(p.pos).addScaledVector(f, -back);
         v.x += (hash(seed, 1) - 0.5) * r; v.y += (hash(seed, 2) - 0.3) * r * 0.8 + p.age * 0.3; v.z += (hash(seed, 3) - 0.5) * r;
         m.compose(v, q.identity(), s.setScalar(r * (0.1 + 0.1 * hash(seed, 4)) * fade));
-        shell.setMatrixAt(ns, m); shell.setColorAt(ns, color); ns++;
+        shell.setMatrixAt(ns, m); setTrackedInstanceColor(shell, ns, color); ns++;
       }
       }
     } else if (kind === 'explosher') {
