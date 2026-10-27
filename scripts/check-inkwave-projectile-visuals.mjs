@@ -23,6 +23,7 @@ import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
 import { nativeTurfIntroWithUiFunction } from './lib/inkwave-projectile-intro-ui.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 import { installProjectileCaptureUiGate, withProjectileCaptureUi } from './lib/inkwave-projectile-capture-ui.mjs';
+import { installSlosherPhaseObserver } from './lib/inkwave-slosher-phase-observer.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceIdentity = captureSourceIdentity({ cwd: ROOT });
@@ -97,11 +98,14 @@ const browser = persistentContext.browser();
 const report = {
   schema: 1,
   visualProtocol: 2,
+  sourceIdentity,
+  phaseRuntimeInputSha256:manifest.files['patch/runtime/main-weapon-catalog.mjs'],
   mode,
   site,
   build: { revision: manifest.build?.revision, contentHash: manifest.contentHash, inputHash: manifest.inputHash },
   provenance: {
     harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),
+    slosherPhaseObserverSha256:hash(fs.readFileSync(new URL('./lib/inkwave-slosher-phase-observer.mjs',import.meta.url))),
     captureUiGateSha256: hash(fs.readFileSync(new URL('./lib/inkwave-projectile-capture-ui.mjs', import.meta.url))),
     capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',
     stage: 'Tidewater, normal difficulty, turf, fixed 180 s match; local player; deterministic Math.random stream reset for each projectile scenario.',
@@ -689,6 +693,7 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     }, runtime, sha256: hash(fs.readFileSync(target)),
   };
   report.screenshots.push(receipt);
+  if(scenario==='floor-washtub')await page.evaluate(label=>window.__iwSlosherPhaseObserver?.snapshot(label),phase);
   return receipt;
 }
 
@@ -1162,6 +1167,7 @@ async function runVisuals(page) {
   ]) {
     const setupResult = await page.evaluate(visualSetup, { name: scenario.name, seed: scenario.seed });
     const { setup, lifecycleReset } = setupResult;
+    if(scenario.name==='floor-washtub')await page.evaluate(installSlosherPhaseObserver);
     const birthResult = await page.evaluate(({ method, seed }) => {
       const G = window.__G, a = G.match.local;
       const betweenSetupAndFire = window.__iwScenarioRandomRecorder?.snapshot?.() ?? null;
@@ -1308,8 +1314,9 @@ async function runContactScenarios(page) {
     let impactFrame = null, impactState = null, impactEvidence = null, captureFrame = 0;
     const flightHistory = [];
     for (let frame = 1; frame <= scenario.maxFrames; frame++) {
-      const row = await page.evaluate(() => {
+      const row = await page.evaluate(frame => {
         const G = window.__G, g = window.__inkwave, dt = 1 / 60;
+        window.__iwSlosherPhaseObserver?.frame(frame);
         G.time += dt; g.time += dt;
         const before = G.projectiles.list.map(p => ({ seed: p.seed, pos: p.pos.toArray() }));
         const surfaceHitStart = window.__iwProjectileSurfaceHits.length;
@@ -1326,7 +1333,7 @@ async function runContactScenarios(page) {
           surfaceHits: window.__iwProjectileSurfaceHits.slice(surfaceHitStart),
           catalogSteps: window.__iwProjectileCatalogSteps.slice(catalogStepStart),
           paintCoverage: G.paint.coverage?.() ?? null, fx: G.fx.stats?.() ?? null };
-      });
+      },frame);
       if (scenario.name === 'floor-washtub' && [5, 15].includes(frame)) {
         if (!row.afterCount) throw Error('Explosher retired before required early/midflight view');
         await renderAndCapture(page, scenario.name, 'F' + frame, 'side', scenario.seed);
@@ -1345,7 +1352,8 @@ async function runContactScenarios(page) {
         : row.surfaceHits.find(hit => hit.route === 'Projectiles._impact' && hit.retired === true && hit.nativeStageContact === true &&
           hit.stageFace && hit.normal && hit.normal[1] > 0.68 && hit.impactPaintContact?.valid === true &&
           hit.impactPaintContact.cpuFace === hit.face);
-      if (expectedContact) { impactFrame = frame; impactState = row; impactEvidence = expectedContact; }
+      if (expectedContact) { impactFrame = frame; impactState = row; impactEvidence = expectedContact;
+        if(scenario.name==='floor-washtub')await page.evaluate(()=>window.__iwSlosherPhaseObserver.snapshot('impact')); }
       if (impactFrame != null && frame >= impactFrame + 8) break;
       // One controller-fired native projectile is used for the wall receipt.
       // If it retires before an admitted face hit, later frames cannot recover it.
@@ -1354,6 +1362,7 @@ async function runContactScenarios(page) {
     if (impactFrame == null) throw new Error(scenario.name + ': no native stage-surface collision with an in-range face/normal and matching production transition; diagnostics ' +
       JSON.stringify({ wall: setup.wall, births: born, flightHistory }));
     const capture = await renderAndCapture(page, scenario.name, `${scenario.impact}-contact-F${impactFrame}-capture-F${captureFrame}`, scenario.impact === 'wall' ? 'side' : 'shoulder', scenario.seed);
+    if(scenario.name==='floor-washtub')report.slosherPhase=await page.evaluate(()=>window.__iwSlosherPhaseObserver.finish());
     report.visualScenarios.push({ name: scenario.name, seed: scenario.seed, setup, lifecycleReset, births: born, rng: birthResult.rng,
       controllerProbe: birthResult.controllerProbe, impactFrame, captureFrame,
       elapsedSinceImpactFrames: captureFrame - impactFrame, impactState, impactEvidence, capture,
