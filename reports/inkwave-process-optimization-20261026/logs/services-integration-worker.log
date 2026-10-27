@@ -1,0 +1,13 @@
+✔ oversized streaming immutable responses abort before consuming the remaining body (56.339035ms)
+ℹ {"expectedBytes":17,"attempts":[{"pulls":2,"aborted":true},{"pulls":2,"aborted":true}]}
+✔ valid byte-limited streams preserve their bytes, digest and offline reuse (19.248923ms)
+✔ uncacheable server errors retain their readable body for online callers (6.51762ms)
+✔ precache workers claim each snapshot path once in order with at most two concurrent fetches (18.293181ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 175.25666

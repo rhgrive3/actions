@@ -1,0 +1,15 @@
+✔ rapid account dialog opens mount exactly one dialog and return its owner (3.420526ms)
+✔ closing while the dialog chunk loads prevents a late invisible-owner modal (0.905617ms)
+✔ canceled dialog load cannot clear busy state or ownership of a newer open (0.939068ms)
+✔ diorama retains live bubbler targets and hover while static key DOM stays stable (47.580622ms)
+(node:3243) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ target card writes only changed text and HP while restoring external DOM changes (217.79562ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 964.090619

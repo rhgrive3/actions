@@ -14,6 +14,7 @@ const _p = new THREE.Vector3();
 const PAD_TEXT = { resetPaint: 'RESETTING PAINT', resetDummies: 'RESETTING TARGETS', inkCourse: 'INKING THE SWIM COURSE', resupply: 'RESUPPLY' };
 const fmt = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d) : '—');
 const zoneLabel = (id) => (id && ZONES[id] ? `${ZONES[id].letter ? ZONES[id].letter + ' · ' : ''}${isJa ? ZONES[id].ja : ZONES[id].name}` : '—');
+const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
 
 export class RangeHud {
   constructor(session) {
@@ -128,14 +129,20 @@ export class RangeHud {
     if (show) {
       const a = last.target, t = a.rangeTarget, c = t.combo;
       if (L0.cname !== a.name) { L0.cname = a.name; this.cName.textContent = a.name; this.card.classList.toggle('is-endure', t.kind === 'endurance'); }
-      this.cLast.textContent = fmt(last.amount, 1);
-      this.cFrom.textContent = last.dist != null ? `${L('FROM')} ${fmt(last.dist, 1)} m` : '';
-      this.cCombo.textContent = c ? fmt(c.total, 1) : '—';
-      this.cHits.textContent = c ? String(c.hits) : '—';
-      this.cSplat.textContent = t.kind === 'endurance' ? `${L('ENDURANCE')} · ${L('never pops')}`
-        : c && c.done ? `${L('SPLAT IN')} ${c.hits} · ${fmt(c.splatT, 2)} s` : '';
+      setText(this.cLast, fmt(last.amount, 1));
+      setText(this.cFrom, last.dist != null ? `${L('FROM')} ${fmt(last.dist, 1)} m` : '');
+      setText(this.cCombo, c ? fmt(c.total, 1) : '—');
+      setText(this.cHits, c ? String(c.hits) : '—');
+      setText(this.cSplat, t.kind === 'endurance' ? `${L('ENDURANCE')} · ${L('never pops')}`
+        : c && c.done ? `${L('SPLAT IN')} ${c.hits} · ${fmt(c.splatT, 2)} s` : '');
       const hp = t.kind === 'endurance' ? 1 : Math.max(0, Math.min(1, a.hp / PLAYER.hp));
-      this.cHp.style.transform = `scaleX(${hp.toFixed(3)})`;
+      const transform = `scaleX(${hp.toFixed(3)})`;
+      // CSSOM normalizes numeric spelling. Keep its written form as well as
+      // the requested transform so external changes still get repaired.
+      if (L0.cardHpTransform !== transform || this.cHp.style.transform !== L0.cardHpActual) {
+        this.cHp.style.transform = transform;
+        L0.cardHpTransform = transform; L0.cardHpActual = this.cHp.style.transform;
+      }
     }
     // floating numbers over the targets
     const cam = G.camera, W = innerWidth, H = innerHeight;

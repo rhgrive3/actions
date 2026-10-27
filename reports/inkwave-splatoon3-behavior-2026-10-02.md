@@ -6448,3 +6448,11 @@ production composition と実 Projectiles・Match を使う `crab-ball-lifecycle
 Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physicsが残り、実ヒープのcanvas context-lossリスナーから最初の読込スコープへの強参照を確認した。判定関数をmodule直下へ移し、現在のG.level.nativeを動的に確認する従来の動作と1canvas1listenerを維持する。古いステージの物理・塗り・navデータを監視コールバックで保持する必要はない。新規の合成済みpublication/GC回帰は全GCアサーションを保持し、旧inline判定だけへ戻す対照でlevel/data保持を再現した。
 
 原典HIGHの読み込み直後には、旧版・途中版ともBC7の400×30 base mipでGL1282を記録した。既存normal上限512が800×60のUASTCソースから同mipを選ぶが、BC系base寸法の4ブロック境界に合わなかった。該当するuniversal KTX2だけ同ソース・同mipのRGBA32へ変換し、寸法・既存cap・色空間・通常の圧縮経路を維持する。RGBAの局所容量増加を記録し、縮小mipやPNG再resizeによる画質低下へ置き換えない。実loadNativeTextures→KTX2Loader→GPUの対照で同400×30、48,000RGBAバイト一致、GL0を確認した。物理・CPU塗り・当たり判定・通信には変更を加えない。
+
+## 2026-10-26: 処理別最適化と独立3レビュー
+
+調査基準main `48511150`、統合基準main `d88aa68`、本家参照Splatoon 3 Ver.11.3.0を維持する。[処理別記録](inkwave-process-optimization-20261026/README.md)に、ボス探索・行動・時計、原典球スイープ、描画生成・scratch、UI、Dualies通信、読込・ビルドの変更と、変更しなかった処理の理由を保存した。ボスモード・練習場・原典／カタログDualiesを対象とし、ブキ・ギア・速度・射程・ダメージ・入力／発射時刻・乱数・塗り・カメラの既存パラメータは変更しない。歩行、泳ぎ、敵インク、変身、ジャンプ、壁登り、回復、被弾、復活の新たな本家一致を認定する作業ではない。
+
+公開ソース単独ではなく本番合成コードで、探索順／経路／時計端点／乱数選択、sourceとmovingの接触選択・UV・miss・出力所有、波／ジオメトリのバイト列、マップのターゲット・hover・入力寿命、HUDの動的値を比較した。原典balanced→highの材質channelは直接highのshader／cache keyへ一致させ、abort後のKTX2処理は実完了まで旧loaderを保持する。物理近似・フレーム間引き・画質低下による最適化は行わない。
+
+これらはINKWAVEの実装同値性と資源寿命のCPU／合成検証であり、Nintendoの非公開値を確定する根拠ではない。[任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)と既存の11.3.0参照・未確認事項を引き継ぐ。本家実機、同一ブキ・ギア・状態の動的映像、iPad／Safariの実機性能は未計測。統合ブラウザ／CIの結果も、本家実機比較とは別に扱う。

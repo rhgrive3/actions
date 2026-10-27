@@ -14,6 +14,25 @@ test('Balanced to High to Balanced reuses exact colour/cutout handles and transf
  const f=await fixture(),initial=await f.load('balanced'),display=f.display(f.data,initial,'balanced'),a=initial.get('a.png'),o=initial.get('o.png');let disposed=0;for(const t of [a,o])t.addEventListener('dispose',()=>disposed++);const high=await f.load('high',display.currentTextures());assert.equal(high.get('a.png'),a);assert.equal(high.get('o.png'),o);assert.equal(high._nativeBorrowed.size,2);assert.deepEqual(f.requests,['a.png','o.png','n.png','r.png']);display.updateTextures(high,'high');assert.equal(initial.size,0);assert.equal(disposed,0);assert.equal(a.image.closed,0);assert.equal(high._nativeBorrowed.size,0);const normal=high.get('n.png'),roughness=high.get('r.png');
  const balanced=await f.load('balanced',display.currentTextures());assert.equal(balanced.get('a.png'),a);assert.equal(balanced.get('o.png'),o);display.updateTextures(balanced,'balanced');assert.equal(normal.image.closed,1);assert.equal(roughness.image.closed,1);assert.equal(disposed,0);display.dispose();display.dispose();assert.equal(a.image.closed,1);assert.equal(o.image.closed,1);assert.equal(disposed,2);assert.equal(f.requests.length,4);
 });
+test('Balanced to High commits inferred channels to the same shader and cache key as direct High',async()=>{
+ const upgraded=await fixture(),initial=await upgraded.load('balanced'),display=upgraded.display(upgraded.data,initial,'balanced');
+ const mat=display.group.children[0].material,version=mat.version;
+ assert.equal(upgraded.data.manifest.materials.m.channels.roughness,undefined);
+ const high=await upgraded.load('high',display.currentTextures());
+ assert.equal(upgraded.data.manifest.materials.m.channels.roughness,'r');
+ display.updateTextures(high,'high');
+ const direct=await fixture(),directDisplay=direct.display(direct.data,await direct.load('high'),'high'),directMat=directDisplay.group.children[0].material;
+ const shader=material=>{const result={fragmentShader:'#include <alphamap_fragment>\n#include <roughnessmap_fragment>'};material.onBeforeCompile(result);return result.fragmentShader;};
+ assert.equal(mat,display.group.children[0].material,'quality upgrade keeps the material handle');
+ assert.ok(mat.version>version,'the committed channel change recompiles the material');
+ assert.equal(mat.customProgramCacheKey(),directMat.customProgramCacheKey());
+ assert.equal(shader(mat),shader(directMat));
+ assert.match(shader(mat),/max\(texelRoughness\.r, 0\.55\)/);
+ const balanced=await upgraded.load('balanced',display.currentTextures());display.updateTextures(balanced,'balanced');
+ assert.equal(mat.customProgramCacheKey(),'native-channels-r-g');
+ assert.doesNotMatch(shader(mat),/max\(texelRoughness\.r, 0\.55\)/);
+ display.dispose();directDisplay.dispose();
+});
 test('different cap, source identity, inferred metadata, role or texture properties force authenticated reload',async()=>{
  for(const change of ['cap','data','inference','role','state','integrity']){const f=await fixture(),initial=await f.load('balanced'),original=initial.get('a.png');let cap=8,quality='balanced';if(change==='cap')cap=4;if(change==='inference')f.data.manifest.materials.m.hasAlpha=true;if(change==='role'){f.data.manifest.materials.m.maps.normal='a.png';quality='high';}if(change==='state')original.wrapS=THREE.ClampToEdgeWrapping;if(change==='integrity')f.data.integrity['a.png'].gitSha1='changed';
  const next=await f.load(quality,initial,cap,new AbortController().signal,change==='data'?{...f.data}:f.data);assert.notEqual(next.get('a.png'),original,change);assert.equal(original.image.closed,0,change+' does not close the live profile before commit');for(const t of new Set(next.values()))if(!next._nativeBorrowed.has(t)){t.image.close();t.dispose();}for(const t of new Set(initial.values())){t.image.close();t.dispose();}

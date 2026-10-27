@@ -154,3 +154,32 @@ test('stick guards compare authored and serialized styles and repair external ed
  draw.call(owner,true,12,0,1);assert.equal(owner.stickEl.classList.contains('is-run'),true);draw.call(owner,false);assert.equal(owner.stickEl.classList.contains('is-on'),false);assert.equal(owner.stickEl.classList.contains('is-run'),false);
  owner.knob=node();owner.dirEl=node();run();assert.equal(owner.knob.writes.transform,1);assert.deepEqual(owner.dirEl.writes,{transform:1,opacity:1});
 });
+
+test('outgoing Dualies snapshots retain startup, recovery and direction fields with one direction lookup', async () => {
+  const helpers = await import('../../splatoon3/runtime/catalog-dualies-motion.mjs');
+  const code = source('src/net/netmatch.js'), begin = code.indexOf('    msg.rl = Object.fromEntries('), end = code.indexOf('\n    if (this.s.ownerClockVersion', begin);
+  assert(begin >= 0 && end > begin);
+  let actions = 0, directions = 0;
+  const pack = vm.runInNewContext('(function() { const msg = {}; ' + code.slice(begin, end) + '\nreturn msg.rl; })', {
+    dualiesNetworkAction: x => { actions++; return helpers.dualiesNetworkAction(x); },
+    dualiesNetworkDirection: x => { directions++; return helpers.dualiesNetworkDirection(x); },
+    r2: v => Math.round(v * 100) / 100, r3: v => Math.round(v * 1000) / 1000,
+  });
+  const actor = (nid, catalog, action, direction) => ({ nid, weapon: catalog ? { catalogRecord: { family: 'dualies' } } : {},
+    weaponRunner: catalog ? { catalogState: { roll: { ...action, direction } } } : { dodge: action, _dodgeDir: direction }, netLife: 2, netTp: 3 });
+  const startup = actor(1, false, { token: 7, startup: .04, startupDur: .1, t: 0, dur: .2 }, { x: .123, z: -.789 });
+  const roll = actor(2, true, { token: 8, startup: 0, startupDur: .1, t: .12, dur: .3 }, { x: -1, z: 0 });
+  roll.net = { _remoteDodge: { token: 8, life: 2, tp: 3, start: 99, startupDur: .1, lockDur: .2 } };
+  const invalid = actor(3, false, { token: 0, startup: 0, t: 0 }, { x: NaN, z: 1 });
+  const remote = { ...startup, nid: 4, remote: true }, idle = { nid: 5, weaponRunner: {} };
+  const owner = { byNid: new Map([startup, roll, invalid, remote, idle].map(x => [x.nid, x])) };
+  assert.deepEqual(JSON.parse(JSON.stringify(pack.call(owner))), {
+    1: { token: 7, phase: 'startup', time: .06, dur: .2, dir: [.12, -.79] },
+    2: { token: 8, phase: 'roll', time: .12, dur: .3, start: 99, life: 2, tp: 3, startupDur: .1, lockDur: .2, dir: [-1, 0] },
+    3: { token: 1, phase: 'roll', time: 0, dur: .2 },
+  });
+  assert.equal(actions, 7); assert.equal(directions, 3);
+  startup.weaponRunner.dodge = null; roll.netLife++;
+  const next = JSON.parse(JSON.stringify(pack.call(owner)));
+  assert.equal(next[1], undefined); assert.equal(next[2].life, undefined); assert.equal(next[2].time, .12);
+});

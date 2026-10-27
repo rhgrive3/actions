@@ -37,9 +37,58 @@ const quality='patches/local-quality/tests/quality.test.mjs';
 for(const [workflow,entries,extra]of[
  ['inkwave-runtime-frame-parity.yml',[quality,'patches/local-quality/tests/runtime-frame-scratch.test.mjs','patches/local-quality/tests/hud-hotpath.test.mjs'],[]],
  ['inkwave-paint-hotpath.yml',[quality,'patches/local-quality/tests/paint-hotpath.test.mjs'],[]],
- ['inkwave-composed-cpu.yml',['patches/local-quality/tests/body-balance-work.test.mjs','patches/local-quality/tests/body-balance-work-fixture.mjs','scripts/benchmark-inkwave-body-balance.mjs'],['inkwave-public/src/game/motion/locomotion-profile.js','inkwave-public/src/game/motion/source-bank.js','inkwave-public/src/game/motion/run-foot-path.js','scripts/build-inkwave.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/check-inkwave-patches.mjs','scripts/check-inkwave-startup-budget.mjs','patches/local-quality/tests/motion-fk-hotpath.test.mjs']],
+ ['inkwave-composed-cpu.yml',['patches/local-quality/tests/body-balance-work.test.mjs','patches/local-quality/tests/body-balance-work-fixture.mjs','scripts/benchmark-inkwave-body-balance.mjs'],['inkwave-public/src/game/motion/locomotion-profile.js','inkwave-public/src/game/motion/source-bank.js','inkwave-public/src/game/motion/run-foot-path.js','scripts/build-inkwave.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/check-inkwave-patches.mjs','scripts/check-inkwave-startup-budget.mjs','scripts/prepare-inkwave-ci-apt.py','patches/local-quality/tests/motion-fk-hotpath.test.mjs']],
  ['inkwave-ink-micro-surface.yml',['patches/local-quality/tests/ink-micro-surface.test.mjs','patches/local-quality/tests/grate-normal.test.mjs','patches/local-quality/tests/paint-hotpath.test.mjs'],['inkwave-public/src/world/inkShading.js','inkwave-public/src/world/levelMaterial.js','inkwave-public/src/world/texlib.js','scripts/build-inkwave.mjs','scripts/lib/inkwave-runtime-evidence.mjs']],
 ])test(workflow+' covers direct executed-test inputs',()=>covered(workflow,new Set([...entries.flatMap(entry=>[...directInputs(entry)]),...extra])));
+
+const composedCpuBrowserInstall = `      - name: Install Chromium for emitted CPU trace smoke
+        run: |
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps chromium
+`;
+const composedCpuRecorder = `      - name: Actual browser CPU recorder, finite gameplay state and GC trace
+        env:
+          SOURCE_SHA: \${{ github.event.pull_request.head.sha }}
+        run: node scripts/benchmark-inkwave-composed-cpu.mjs --site _site --source-sha "$SOURCE_SHA" --frames 30 --stages range --quality low --evidence-dir .cpu-ci
+`;
+function composedCpuBrowserContract(source){
+ const triggers=source.slice(0,source.indexOf('\npermissions:'));
+ assert(triggers.includes("      - 'scripts/prepare-inkwave-ci-apt.py'\n"),'APT helper updates trigger the workflow');
+ assert.match(source,/^    timeout-minutes: 20$/m,'existing job timeout remains bounded');
+ assert(source.includes(composedCpuBrowserInstall),'prepare the signed HTTPS archive before the unchanged Playwright install');
+ assert(source.includes(composedCpuRecorder),'retain the source-bound actual browser CPU recorder command');
+ assert(source.indexOf(composedCpuBrowserInstall)<source.indexOf(composedCpuRecorder),'browser installation precedes the CPU trace');
+ const required=source.slice(source.indexOf('  source-and-emitted:'),source.indexOf('      - uses: actions/upload-artifact@v4'));
+ assert.doesNotMatch(required,/^\s+(?:if|continue-on-error):/m,'required source, emitted and browser checks remain unconditional');
+ for(const command of [
+  'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
+  'node scripts/check-inkwave-patches.mjs --quick',
+  'node --experimental-vm-modules --test patches/local-quality/tests/body-balance-work.test.mjs scripts/tests/inkwave-cpu-trace.test.mjs scripts/tests/inkwave-cpu-history.test.mjs scripts/tests/inkwave-cpu-gameplay-digest.test.mjs scripts/tests/inkwave-cpu-counters.test.mjs scripts/tests/inkwave-composed-cpu-comparison.test.mjs',
+  'node --experimental-vm-modules --test patches/local-quality/tests/motion-fk-hotpath.test.mjs',
+  'node scripts/build-inkwave.mjs inkwave-public _site',
+  'node scripts/check-inkwave-startup-budget.mjs _site',
+  'INKWAVE_BUILT_SITE: _site',
+  'run: node --experimental-vm-modules --test patches/local-quality/tests/body-balance-work.test.mjs',
+  'node --experimental-vm-modules scripts/benchmark-inkwave-body-balance.mjs balance-benchmark.json',
+ ])assert(required.includes(command),'retain existing gate: '+command);
+}
+test('composed CPU browser setup prepares APT before the unchanged install and actual trace gates',()=>{
+ composedCpuBrowserContract(read('.github/workflows/inkwave-composed-cpu.yml'));
+});
+test('composed CPU browser contract rejects lost setup, reordered commands and weakened gates',()=>{
+ const source=read('.github/workflows/inkwave-composed-cpu.yml');
+ for(const [before,after]of [
+  ["      - 'scripts/prepare-inkwave-ci-apt.py'\n",''],
+  ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n',''],
+  ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps chromium','          npx playwright install --with-deps chromium\n          sudo python3 scripts/prepare-inkwave-ci-apt.py'],
+  ['timeout-minutes: 20','timeout-minutes: 30'],
+  ['--with-deps chromium','chromium'],
+  [composedCpuBrowserInstall+composedCpuRecorder,composedCpuRecorder+composedCpuBrowserInstall],
+  ['--source-sha "$SOURCE_SHA" --frames 30','--source-sha "$SOURCE_SHA" --frames 1'],
+  ['        run: node scripts/benchmark-inkwave-composed-cpu.mjs','        if: false\n        run: node scripts/benchmark-inkwave-composed-cpu.mjs'],
+  ['          node scripts/check-inkwave-startup-budget.mjs _site\n',''],
+ ]){assert(source.includes(before),before);assert.throws(()=>composedCpuBrowserContract(source.replace(before,after)));}
+});
 
 for(const [workflow,tool]of[['inkwave-squid-heading-qa.yml','squid-heading-qa'],['inkwave-swim-entry-qa.yml','swim-entry-qa']])test(workflow+' covers the current authored hashes and shared harness inputs',()=>{
  const entry='tools/'+tool+'/run.mjs',source=read(entry),list=source.match(/for\(const name of (\[[^\n]+?\])\)basis\.authoredHashes/);

@@ -189,12 +189,16 @@ export class BossNav {
     const a = this.nearestPlan(x0, z0), b = this.nearestPlan(x1, z1);
     if (a < 0 || b < 0) return null;
     const N = this.nx * this.nz, nx = this.nx;
-    if (!this._g) { this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
+    if (!this._g) { this._h = new Float64Array(N); this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
+    const heuristic = this._h;
     const g = this._g, from = this._from, seen = this._seen, closed = this._closed, st = ++this._stamp;
     const [bx, bz] = this.xz(b);
     const h = (i) => { const [x, z] = this.xz(i); return Math.hypot(x - bx, z - bz); };
-    const heap = new MinHeap();
-    g[a] = 0; from[a] = -1; seen[a] = st; heap.push(a, h(a));
+    // The goal and grid are fixed during this synchronous search. Keep each
+    // node's Number-precision heuristic only until the next search stamp.
+    const heap = this._heap || (this._heap = new MinHeap()); heap.clear();
+    const cardinalFlat = Math.hypot(1, 0) * this.step, diagonalFlat = Math.hypot(1, 1) * this.step;
+    g[a] = 0; from[a] = -1; seen[a] = st; heap.push(a, heuristic[a] = h(a));
     let it = 0;
     while (heap.size && it++ < 40000) {
       const cur = heap.pop();
@@ -208,8 +212,12 @@ export class BossNav {
         if (jx < 0 || jz < 0 || jx >= nx || jz >= this.nz) continue;
         const j = jz * nx + jx;
         if (!this.plan[j]) continue;
-        const ng = g[cur] + Math.hypot(dx, dz) * this.step * (1 + Math.max(0, 5 - this.Dw[j]) * 0.1 + Math.max(0, 3 - this.Dv[j]) * 0.15);
-        if (seen[j] !== st || ng < g[j]) { seen[j] = st; g[j] = ng; from[j] = cur; heap.push(j, ng + h(j)); }
+        const flat = dx && dz ? diagonalFlat : cardinalFlat;
+        const ng = g[cur] + flat * (1 + Math.max(0, 5 - this.Dw[j]) * 0.1 + Math.max(0, 3 - this.Dv[j]) * 0.15);
+        if (seen[j] !== st || ng < g[j]) {
+          if (seen[j] !== st) heuristic[j] = h(j);
+          seen[j] = st; g[j] = ng; from[j] = cur; heap.push(j, ng + heuristic[j]);
+        }
       }
     }
     if (seen[b] !== st) return null;
@@ -233,18 +241,19 @@ export class BossNav {
 }
 
 class MinHeap {
-  constructor() { this.ids = []; this.pr = []; }
-  get size() { return this.ids.length; }
+  constructor() { this.ids = []; this.pr = []; this.n = 0; }
+  clear() { this.n = 0; }
+  get size() { return this.n; }
   push(id, p) {
     const ids = this.ids, pr = this.pr;
-    let i = ids.length; ids.push(id); pr.push(p);
+    let i = this.n++; ids[i] = id; pr[i] = p;
     while (i > 0) { const j = (i - 1) >> 1; if (pr[j] <= p) break; ids[i] = ids[j]; pr[i] = pr[j]; i = j; }
     ids[i] = id; pr[i] = p;
   }
   pop() {
-    const ids = this.ids, pr = this.pr, top = ids[0], lid = ids.pop(), lp = pr.pop();
-    if (ids.length) {
-      let i = 0; const n = ids.length;
+    const ids = this.ids, pr = this.pr, top = ids[0], n = --this.n, lid = ids[n], lp = pr[n];
+    if (n) {
+      let i = 0;
       for (;;) {
         const l = i * 2 + 1, r = l + 1; let m = i, mp = lp;
         if (l < n && pr[l] < mp) { m = l; mp = pr[l]; }

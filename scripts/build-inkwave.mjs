@@ -139,6 +139,13 @@ for (const file of walk(SRC)) {
   // exact strings its Worker blob is built from (lazy: prebuilt stages only).
   if (rel.startsWith(path.join('vendor', 'three', 'jsm', 'libs', 'basis') + path.sep) || rel === path.join('vendor', 'three', 'jsm', 'loaders', 'KTX2Loader.js')) { fs.copyFileSync(file, dst); continue; }
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
+    // Production's Three bundle reads and composes the split inputs itself.
+    // The wrapper still supplies dependency specs below; its private core has
+    // no standalone output or graph entry and needs no preliminary adapter pass.
+    const replacedThree = !unminified && process.env.INKWAVE_NO_THREE_SHAKE !== '1' &&
+      /^(?:vendor\/three\/build\/three\.(?:core|module)\.js)$/.test(rel.split(path.sep).join('/')) &&
+      fs.existsSync(path.join(SRC, 'vendor/three/build/three.module.js'));
+    if (replacedThree && rel.split(path.sep).join('/') === 'vendor/three/build/three.core.js') continue;
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
     // Its asset inventory is not complete until the late overlays finish.
     if (rel.split(path.sep).join('/') === 'src/world/lightmap-assets.js') {
@@ -151,9 +158,6 @@ for (const file of walk(SRC)) {
     // directly. This also prevents a stale raw core from entering graph scans
     // or a synchronized staging tree after its later removal. Diagnostics
     // and no-shake builds still take the original standalone transform path.
-    const replacedThree = !unminified && process.env.INKWAVE_NO_THREE_SHAKE !== '1' &&
-      /^(?:vendor\/three\/build\/three\.(?:core|module)\.js)$/.test(rel.split(path.sep).join('/')) &&
-      fs.existsSync(path.join(SRC, 'vendor/three/build/three.module.js'));
     if (replacedThree) continue;
     const esm = ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/')));
     await stageTransform(code, {
