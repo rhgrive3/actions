@@ -900,6 +900,12 @@ jobs:
         run: |
           node --test scripts/tests/inkwave-hissen-capture-observer.test.mjs
           node scripts/check-inkwave-trislosher-native-matched.mjs .built-site/_site "$CI_STORAGE/evidence/hissen-main" --measure-main
+      - name: Capture all current-head Wiper charged and tap native views
+        if: matrix.suite == 'catalog'
+        run: |
+          node --test scripts/tests/inkwave-wiper-native-acceptance.test.mjs
+          timeout 30m node scripts/check-inkwave-wiper-native-acceptance.mjs .built-site/_site "$CI_STORAGE/evidence/wiper-native" --source-sha "$SOURCE_SHA"
+          node scripts/check-inkwave-wiper-native-receipt.mjs .built-site/_site "$CI_STORAGE/evidence/wiper-native" "$SOURCE_SHA"
       - name: Verify PR1172 volley and vortex in Chromium and WebKit
         if: matrix.suite == 'ui'
         run: |
@@ -950,7 +956,7 @@ jobs:
           suite=os.environ['BROWSER_SUITE']
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
-            'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json','hissen-main/native-browser.json'],
+            'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json','hissen-main/native-browser.json','wiper-native/wiper-native-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json','startup-clock/startup-clock-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],
@@ -973,6 +979,7 @@ jobs:
             if 'contentHash' in report and name!='runtime-before/runtime-result.json': assert report['contentHash']==build['contentHash'], name
           if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='catalog': assert reports['hissen-main/native-browser.json']['sourceIdentity']['checkoutSha']==os.environ['SOURCE_SHA']
+          if suite=='catalog': assert reports['wiper-native/wiper-native-result.json']['sourceSha']==reports['wiper-native/wiper-native-result.json']['sourceIdentity']['checkoutSha']==os.environ['SOURCE_SHA']
           if suite=='network':
             for name in checks: assert reports[name]['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='active':
