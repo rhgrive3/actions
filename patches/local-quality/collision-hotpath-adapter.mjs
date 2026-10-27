@@ -146,7 +146,7 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
     if (x0 === x1 && z0 === z1) {
       // No hash cell can contain the same block twice. Preserve the native
       // generation stamp and *all* its blockStamp writes before early exit.
-      const ids = this.hash[z0 * this.hw + x0], st = ++this._stamp;
+      const ids = this.hash[z0 * this.hw + x0], st = this._nextQueryStamp();
       for (let i = 0; i < ids.length; i++) this.blockStamp[ids[i]] = st;
       for (let i = 0; i < ids.length; i++) {
         const id = ids[i];

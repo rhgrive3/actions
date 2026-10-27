@@ -49,7 +49,10 @@
           "patches/local-quality/tests/motion-fk-hotpath.test.mjs",
           "patches/local-quality/tests/squid-rapid-idle-regression.test.mjs",
           "patches/local-quality/tests/prop-atlas.test.mjs",
-          "patches/local-quality/tests/prop-retention.test.mjs"
+          "patches/local-quality/tests/prop-retention.test.mjs",
+          "patches/splatoon3/tests/charger-load-disposal.test.mjs",
+          "patches/loading-cache/tests/worker-navigation-deadline.test.mjs",
+          "patches/loading-cache/tests/worker-navigation-stream-review.test.mjs"
         ]
       },
       {

@@ -88,7 +88,7 @@ async function verify(response, expected) {
   }
   return response;
 }
-async function timedFetch(request, timeout, inspect) {
+async function timedFetch(request, timeout, inspect, discardOnFailure = false) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   let response;
@@ -103,7 +103,7 @@ async function timedFetch(request, timeout, inspect) {
     // A rejected integrity read also abandons the unconsumed original branch.
     // Stop it immediately instead of leaving its network download alive.
     // Error-status responses can still be forwarded to the page unchanged.
-    if (response?.ok) {
+    if (response && (response.ok || discardOnFailure)) {
       // Drop the unused branch before aborting the transport. Verification
       // cloned the response; leaving its sibling unread can keep a tee alive
       // or surface an unhandled stream rejection on aborted native fetches.
@@ -247,12 +247,42 @@ async function repairCachedModules() {
     }
   } catch { /* Storage denial must not prevent fetching a fresh document. */ }
 }
+async function inspectNavigationBody(response) {
+  const reader = response.clone().body?.getReader();
+  if (!reader) return;
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_HTML_BYTES) {
+        void reader.cancel().catch(() => {});
+        throw new Error('Navigation HTML budget');
+      }
+    }
+  } finally { reader.releaseLock(); }
+}
 async function navigation(request) {
   try {
     const recovering = new URL(request.url).searchParams.has('__iw_recover');
     if (recovering) await repairCachedModules();
-    const response = await timedFetch(new Request(request, { cache: recovering ? 'reload' : 'no-cache' }), NAVIGATION_TIMEOUT_MS);
-    if (response.status >= 500) return await offlineIndex() || response;
+    // Headers alone do not make a usable document. Keep the existing deadline
+    // alive until bounded HTML arrives, so a stalled body can use offline HTML.
+    let fallback = null;
+    const response = await timedFetch(new Request(request, { cache: recovering ? 'reload' : 'no-cache' }), NAVIGATION_TIMEOUT_MS, async candidate => {
+      if (candidate.status >= 500) {
+        fallback = await offlineIndex();
+        if (fallback) {
+          // The verified snapshot is usable as soon as error headers arrive.
+          // Discard the unused error body without waiting for its stream.
+          if (candidate.body && !candidate.body.locked) void candidate.body.cancel().catch(() => {});
+          return;
+        }
+      }
+      await inspectNavigationBody(candidate);
+    }, true);
+    if (fallback) return fallback;
     // A snapshot's HTML was verified and committed by install. No per-navigation re-copy;
     // new network HTML is never stored in an older, incomplete dependency snapshot.
     return response;

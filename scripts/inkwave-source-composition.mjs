@@ -35,6 +35,7 @@ import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
 import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
 import { adaptCombatGpuCpuPerfect } from '../patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs';
+import { adaptPaintRenderRegions } from '../patches/local-quality/paint-render-regions-adapter.mjs';
 import { adaptStaticMenuArt } from '../patches/local-quality/static-menu-adapter.mjs';
 import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 import { adaptRange } from '../patches/practice-range/adapter.mjs';
@@ -113,7 +114,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptRemainingPaint20261026(rel, code);
   code = adaptHistoricalSourceMotion20261026(rel, code);
   code = adaptHistoricalCharacter20261026(rel, code);
-  return adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
+  code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
+  return adaptPaintRenderRegions(rel, code, replaceOnce);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

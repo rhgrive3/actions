@@ -12,7 +12,10 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   // before choosing Turf with the ordinary hit-tested pointer gesture.
   await page.mouse.move(1, 1);
   note('mode-pointer-hover-cleared');
-  await click('.iw-modesel [data-id="mode-turf"]');
+  // Keep the prior-screen hover cleared, then activate the focused native
+  // Turf button through the normal keyboard gesture if it is overlapped.
+  await page.locator('.iw-modesel [data-id="mode-turf"]').press('Enter',{timeout:Math.max(1,remainingMs())});
+  note('keyboard-activate',{selector:'.iw-modesel [data-id="mode-turf"]',key:'Enter'});
   await waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu');
   await click('.iw-setup [data-id="map-tidewater"]');
   const config=await page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};});
