@@ -1446,12 +1446,20 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const scratch=s.collisionScratch;
         const base=motion?scratch.motionBase.set(motion.x0,motion.y0,motion.z0):a.pos;
         let entry=null;
+        // Every surviving lobe tests the same actor over the same tick.
+        // Resolve its dimensions and relative displacement once, preserving
+        // the original subtraction/multiplication order and current-pose fallback.
+        let prepared=false,bodyRadius,bodyHeight,motionX,motionY,motionZ;
         for(const q of shapes){
           if(q.stop<0)continue;
+          if(!prepared){
+            bodyRadius=hurtboxRadius(a,PLAYER);bodyHeight=hurtboxHeight(a,PLAYER);
+            if(motion){motionX=(a.pos.x-motion.x0)*motionFraction;motionY=(a.pos.y-motion.y0)*motionFraction;motionZ=(a.pos.z-motion.z0)*motionFraction;}
+            prepared=true;
+          }
           const pr0=q.playerRadius0,radius=q.playerRadius1;
-          const end=motion?scratch.motionEnd.set(q.to.x-(a.pos.x-motion.x0)*motionFraction,
-            q.to.y-(a.pos.y-motion.y0)*motionFraction,q.to.z-(a.pos.z-motion.z0)*motionFraction):q.to;
-          const contact=capsuleEntry(q.from,end,base,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
+          const end=motion?scratch.motionEnd.set(q.to.x-motionX,q.to.y-motionY,q.to.z-motionZ):q.to;
+          const contact=capsuleEntry(q.from,end,base,bodyRadius,bodyHeight,pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
           if(contact!=null&&!spiralContactClear(p,q,a,contact,motion,motionFraction))continue;

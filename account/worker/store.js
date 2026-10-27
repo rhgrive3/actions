@@ -31,6 +31,32 @@ export async function insertUser(db, u) {
   }
 }
 
+/** Atomically admit one successful registration in a fixed window. D1 batch
+ * rolls both statements back on error. The second statement uses the preceding
+ * INSERT's changes(), so duplicate IDs and rejected quota checks spend nothing.
+ */
+export async function insertRegisteredUser(db, u, key, { windowMs, limit }) {
+  const result = await db.batch([
+    db.prepare(`INSERT INTO users (id, login_id, login_id_norm, display_name, password_hash, created_at, updated_at, password_changed_at, last_login_at)
+      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?6, ?6, ?6
+      WHERE NOT EXISTS (SELECT 1 FROM auth_throttle WHERE key = ?7 AND
+        (locked_until > ?6 OR (window_start > ?6 - ?8 AND failures >= ?9)))
+      ON CONFLICT(login_id_norm) DO NOTHING`)
+      .bind(u.id, u.loginId, u.loginIdNorm, u.displayName, u.passwordHash, u.now, key, windowMs, limit),
+    db.prepare(`INSERT INTO auth_throttle (key, failures, window_start, locked_until)
+      SELECT ?1, 1, ?2, CASE WHEN ?4 <= 1 THEN ?2 + ?3 ELSE 0 END
+      WHERE changes() = 1
+      ON CONFLICT(key) DO UPDATE SET
+        failures = CASE WHEN window_start <= ?2 - ?3 THEN 1 ELSE failures + 1 END,
+        locked_until = CASE
+          WHEN window_start <= ?2 - ?3 THEN CASE WHEN ?4 <= 1 THEN ?2 + ?3 ELSE 0 END
+          WHEN failures + 1 >= ?4 THEN window_start + ?3 ELSE 0 END,
+        window_start = CASE WHEN window_start <= ?2 - ?3 THEN ?2 ELSE window_start END`)
+      .bind(key, u.now, windowMs, limit),
+  ]);
+  return result[0].meta.changes === 1;
+}
+
 /** Updates the given profile fields; `undefined` keeps the stored value. */
 export const setProfile = (db, id, { displayName, avatarIcon, avatarColor }, now) => db.prepare(`UPDATE users SET
     display_name = COALESCE(?2, display_name), avatar_icon = COALESCE(?3, avatar_icon), avatar_color = COALESCE(?4, avatar_color), updated_at = ?5
