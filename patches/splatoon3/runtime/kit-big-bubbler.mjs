@@ -327,6 +327,7 @@ function liveBubblerTarget(dome, team) {
  */
 export function bigBubblerJumpTargets(team) {
   if (!Number.isInteger(team)) return [];
+  if (!domes.length && !remoteDomes.length) return [];
   const unique = new Map();
   for (const dome of [...domes, ...remoteDomes]) {
     if (!liveBubblerTarget(dome, team)) continue;
@@ -341,8 +342,11 @@ export function bigBubblerJumpTargets(team) {
 function resolveBubblerJumpDome(target, team) {
   if (!target || target.kind !== 'bubbler' || typeof target.id !== 'string' ||
       !Number.isSafeInteger(target.serial) || target.team !== team) return null;
-  for (const dome of [...domes, ...remoteDomes]) {
-    if (dome.id === target.id && dome.serial === target.serial && liveBubblerTarget(dome, team)) return dome;
+  for (let lane = 0; lane < 2; lane++) {
+    const roster = lane === 0 ? domes : remoteDomes;
+    for (const dome of roster) {
+      if (dome.id === target.id && dome.serial === target.serial && liveBubblerTarget(dome, team)) return dome;
+    }
   }
   return null;
 }

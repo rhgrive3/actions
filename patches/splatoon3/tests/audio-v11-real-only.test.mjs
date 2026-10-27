@@ -246,12 +246,14 @@ test('recorded Charger onset is a single unmodified source, while Spinner keeps 
  a.disposeWeaponAudio();
 });
 
-test('network Charger voices use exactly one original onset instead of an indefinite loop',()=>{
+test('network Charger voices use the shared Splat rise instead of an indefinite loop',()=>{
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/net/netmatch.js',source);
  assert.ok(adapted.includes('a.net._chargerOnsetActive = chargerStarting;'));
- assert.ok(adapted.includes("G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:a.weapon.id,chargeTime:a.weapon.chargeTime}"));
- assert.ok(!adapted.includes("G.audio?.playWeapon?.(a.weapon.id,'charge'"),'do not layer short HoldNoise over the shared phrase');
+ assert.ok(adapted.includes('usesChargerRise(wid)?G.audio?.playChargerChargeRise'),'all recorded Charger identities use the Splat phrase');
+ assert.ok(adapted.includes('const wid=a.weapon.id,chargeTime=a.weapon.chargeTime'),'remote rise follows weapon identity and clock');
+ assert.ok(adapted.includes('G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:wid,chargeTime}'),'remote rise stays positional');
+ assert.ok(!adapted.includes("G.audio?.playWeapon?.(a.weapon.id,'charge'"),'no individual HoldNoise on fresh hold');
  assert.ok(!adapted.includes("this._voiceLoop(a, near, 'charge', wr.charging"),
    'remote Charger hold must never be passed to the looping sound adapter');
  assert.ok(adapted.includes("this._voiceLoop(a, near, 'spin'"),

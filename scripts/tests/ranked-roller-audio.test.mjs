@@ -5,7 +5,7 @@ import {proveRankedRollAudio} from '../lib/ranked-roller-audio.mjs';
 
 // Clock/transport fixtures exercise the exact serialized callbacks. Real
 // gameplay, relay and WebAudio are covered separately by the browser checker.
-function fixture({positiveAfter=6,delta={},drop=false,replaceSession=false,initialFrozen=false,tickFrames=3}={}) {
+function fixture({positiveAfter=6,delta={},drop=false,replaceSession=false,initialFrozen=false,tickFrames=3,movementKey='KeyS'}={}) {
   let frames=0,guestFrames=0,keys=[],released=0;
   const actors=[false,true].map(remote=>({nid:7,remote,alive:true,owner:'owner',netLife:1,_adoptionSequence:0,
     pos:{toArray:()=>[frames/60,0,0]},net:{_adoptionSeq:0}}));
@@ -14,7 +14,7 @@ function fixture({positiveAfter=6,delta={},drop=false,replaceSession=false,initi
     G.game.debug={freeze:()=>G.game.frozen=true,unfreeze:()=>G.game.frozen=false};
     G.game._frame=()=>{
       assert.equal(G.game.frozen,true,'async waiting cannot run an unbounded native clock');
-      if(index===0){assert(keys.includes('KeyS'));frames++;G.time+=1/60;
+      if(index===0){assert(keys.includes(movementKey));frames++;G.time+=1/60;
         if(frames%tickFrames===0){a._adoptionSequence++;if(!drop)actors[1].net._adoptionSeq=a._adoptionSequence;}
       }else guestFrames++;
     };
@@ -34,7 +34,7 @@ function fixture({positiveAfter=6,delta={},drop=false,replaceSession=false,initi
     }}));
   const setInput=async(_page,fire,next=[])=>{assert.equal(fire,true);keys=next;if(!keys.length)released++;};
   const receipts=[];
-  return {contexts,run:()=>proveRankedRollAudio(...pages,7,setInput,r=>receipts.push(structuredClone(r))),receipts,
+  return {contexts,run:()=>proveRankedRollAudio(...pages,7,setInput,r=>receipts.push(structuredClone(r)),movementKey),receipts,
     state:()=>({frames,guestFrames,keys,released})};
 }
 test('slow relay waits consume no owner frames; a fresh live positive voice is required and clocks restore',async()=>{
@@ -42,6 +42,14 @@ test('slow relay waits consume no owner frames; a fresh live positive voice is r
   assert.equal(f.state().frames,6);assert.equal(f.state().released,3);assert.deepEqual(f.state().keys,[]);
   assert.equal(f.receipts.at(-1).status,'passed');
   for(const c of f.contexts){assert.equal(c.RG.game.frozen,false);assert.equal(c.__rankedRollClock,undefined);}
+});
+test('forward support corridor admits KeyW only through its bounded fifteen-frame owner clock',async()=>{
+  const f=fixture({movementKey:'KeyW',tickFrames:5,positiveAfter:5}),remote=await f.run();
+  assert(remote.realRollLoops[0].volume>0);
+  assert.equal(f.state().frames,5);
+  assert.deepEqual(f.state().keys,[]);
+  assert.equal(f.receipts.at(-1).status,'passed');
+  for(const c of f.contexts)assert.equal(c.__rankedRollClock,undefined);
 });
 test('missing positive audio fails within fifteen owner frames and restores already frozen clocks',async()=>{
   const f=fixture({positiveAfter:Infinity,initialFrozen:true});

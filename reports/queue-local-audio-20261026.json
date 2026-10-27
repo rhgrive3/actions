@@ -1,0 +1,722 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Assigned 48 audio queues; compared actual source and final build composition, not historical status alone.",
+  "counts": {
+    "implemented-local": 15,
+    "already-in-pr": 25,
+    "not-adopted": 7,
+    "excluded-user": 1
+  },
+  "validation": {
+    "newRegressionTests": 15,
+    "newTestFiles": [
+      "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs",
+      "patches/splatoon3/tests/queue-audio-startup-20261026.test.mjs"
+    ],
+    "relatedSuiteFilesPassed": 22,
+    "vmFlags": "--experimental-vm-modules",
+    "dsp": "All 5 grain kinds at 8/44.1/48/96 kHz, 87 guided renders, 126 full renders and fallback fixtures retain exact SHA256 PCM hashes.",
+    "worker": "node tools/audio/build-worker.mjs --check passed after regeneration."
+  },
+  "limitations": [
+    "WebAudio graph endpoints are test fakes. Actual iPad Safari timing, sound output and energy consumption were not measured.",
+    "No claim of new retail Splatoon 3 waveform equivalence or device performance percentage; fixed local numeric render outputs are verified against repository baselines."
+  ],
+  "items": [
+    {
+      "key": "avoid-rejected-one-shot-poisoning-emitter-min-gap",
+      "status": "implemented-local",
+      "reason": "The composed one-shot method commits emitter time only after priority admission and a successful voice build; rejected/failed requests can retry immediately while successful requests retain their minGap. Per-emitter cleanup remains owned by the existing reliability adapter.",
+      "evidence": [
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 未発声SEのタイムスタンプが次の発声を抑制する問題を解消",
+      "library_file_id": "libfile_6e3f5955559881918adc269ea50ded96",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] avoid-rejected-one-shot-poisoning-emitter-min-gap.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "avoid-unchanged-audio-bus-gain-automation-on-volume-slider",
+      "status": "already-in-pr",
+      "reason": "Actual AudioParam identity and target are cached in a WeakMap; unchanged bus targets are not re-automated.",
+      "evidence": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 音量スライダー操作で未変更のWebAudioバスへ繰り返すAudioParam自動化を省略",
+      "library_file_id": "libfile_82363c607d7081919608465353e3e528",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] avoid-unchanged-audio-bus-gain-automation-on-volume-slider.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "avoid-unused-fourth-recorded-brush-swing-decode",
+      "status": "implemented-local",
+      "reason": "Automatic one-shot variants cycle across all four resident brush recordings. Existing three-way authored/recorded selection and explicit variants are preserved.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/bank.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] ブラシの第4実録振り音を自動選択できず先読み・デコードが無駄になる",
+      "library_file_id": "libfile_eaa25dcc9de481919784a2340beaac0c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] avoid-unused-fourth-recorded-brush-swing-decode.md",
+      "prior_status": null
+    },
+    {
+      "key": "batch-cold-start-recorded-combat-cue-imports",
+      "status": "implemented-local",
+      "reason": "ensureMany combines missing event clips into one serialized AuthorizedSamplePack import with concurrency 2, preserves per-event inFlight ownership, partial errors and retry backoff, and lets urgent per-event requests promote their batch. Required combat/charge readiness still gates START.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-startup-20261026.test.mjs",
+        "patches/splatoon3/tests/audio-v11-real-only.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] Batch cold-start recorded combat cue imports",
+      "library_file_id": "libfile_2684baa69754819182fdce4c3ec1ad00",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] batch-cold-start-recorded-combat-cue-imports.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "bind-default-fetch-for-recorded-charger-rise-safari",
+      "status": "already-in-pr",
+      "reason": "The actual default fetcher is bound to globalThis; injected fetchers are unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Safariで録音チャージャー立ち上がり音を取得できない非bind fetchを修正",
+      "library_file_id": "libfile_a37c90a3c9648191a912dc3e816907b6",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] bind-default-fetch-for-recorded-charger-rise-safari.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "boss-socket-audio-follow-reuse-vector3-scratch",
+      "status": "already-in-pr",
+      "reason": "Final composed boss audio uses a per-loop follow record and a constructor-aware socket Vector3 scratch.",
+      "evidence": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Boss継続SEのソケット追従で一時Vector3を再利用",
+      "library_file_id": "libfile_73609946608481919e7d6b1a845c8bdb",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] boss-socket-audio-follow-reuse-vector3-scratch.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "bypass-static-frequency-exponential-in-s3-articulation",
+      "status": "implemented-local",
+      "reason": "Hoists cue drift and skips exp only when drift is exactly 1; baseline Float32 PCM hashes remain identical.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/s3-articulation.mjs",
+        "patches/splatoon3/runtime/audio/render-worker.js"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] S3 articulation: skip invariant exponential frequency calculation",
+      "library_file_id": "libfile_c156a358c784819181022cec1e065bde",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] bypass-static-frequency-exponential-in-s3-articulation.md",
+      "prior_status": null
+    },
+    {
+      "key": "cache-source-guided-inverse-fft-twiddles",
+      "status": "already-in-pr",
+      "reason": "1024-point transforms cache exact Float64 sin/cos tables independently per direction.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] source-guided逆FFTのtwiddle係数を再利用する",
+      "library_file_id": "libfile_fed2cac933e48191ba42f30bbd3c2b75",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] cache-source-guided-inverse-fft-twiddles.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "cancel-orphaned-primed-battle-mp3-on-aborted-start",
+      "status": "implemented-local",
+      "reason": "Offline and online START claim the specific pending media object by flow identity. Their finally guards cancel failed/abandoned startup; return-to-attract releases an abandoned admitted wait. Stale claims cannot cancel a newer claim or an already selected stream. Legitimate START-to-GO priming remains alive.",
+      "evidence": [
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/music-preload-owner.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-startup-20261026.test.mjs",
+        "patches/splatoon3/tests/audio-v11-real-only.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] Explicitly release primed Jet Arrow MP3 when a START attempt is abandoned",
+      "library_file_id": "libfile_944b657e98208191a38cde854502d225",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] cancel-orphaned-primed-battle-mp3-on-aborted-start.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "constant-time-procedural-music-catchup-after-starved-ticks",
+      "status": "already-in-pr",
+      "reason": "Contrary to the historical #1870 disposition, #1878 already composes arithmetic past-step skipping with exact boundary correction. The current queue-network-ui test verifies final bar/step/note times and RNG consumption.",
+      "evidence": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 手続き型BGMの遅延復帰時に、過去の拍を1拍ずつ空走しない",
+      "library_file_id": "libfile_6769232bedb08191a34aa77c10fc0615",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] constant-time-procedural-music-catchup-after-starved-ticks.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "defer-idle-music-worker-allocation-until-procedural-player",
+      "status": "already-in-pr",
+      "reason": "_startTimer exits until a non-streamed, live player exists; HTMLMediaElement-only playback does not allocate the procedural worker.",
+      "evidence": [
+        "patches/local-quality/music-idle.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 録音BGM専用経路で不要な音楽Workerの先行生成を延期",
+      "library_file_id": "libfile_3a5e67b7a0b081919737d14e088fa828",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] defer-idle-music-worker-allocation-until-procedural-player.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "defer-procedural-music-delay-reverb-graph-on-recorded-only-start",
+      "status": "already-in-pr",
+      "reason": "Final composition moves the procedural effect graph into _ensureProceduralFx, called only before creating Player.",
+      "evidence": [
+        "patches/local-quality/input-lens-queue-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 録音BGMのみの初期化では未使用の手続き型BGMエフェクトグラフを遅延生成",
+      "library_file_id": "libfile_bbe96353aa948191862dbb03a94141a5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] defer-procedural-music-delay-reverb-graph-on-recorded-only-start.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "defer-speculative-reverb-prewarm-until-audio-intent-and-match-sample-rate",
+      "status": "not-adopted",
+      "reason": "Retain eager IR preparation. Starting the one-shot worker only at AudioContext creation guarantees no prepared pair for that same synchronous init; the fallback then renders on the first gesture. The proposal requires measured non-regression of first audible latency, but no Safari/device A/B trace establishes that. take(ctx) already rejects wrong-rate PCM and disposes worker/timer ownership. This is a rejected scheduling change, not a claim that speculative waste is fixed.",
+      "evidence": [
+        "patches/splatoon3/audio-adapter.mjs",
+        "inkwave-public/src/audio/audio.js",
+        "patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/reverb-worker.mjs",
+        "patches/splatoon3/runtime/audio/reverb-impulse.mjs",
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/main.js"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Defer speculative reverb prewarm until audio intent, and avoid sample-rate-mismatch work",
+      "library_file_id": "libfile_5e848a1509e08191b33504e80e9841d7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] defer-speculative-reverb-prewarm-until-audio-intent-and-match-sample-rate.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "defer-unneeded-procedural-grain-texture-prewarm",
+      "status": "not-adopted",
+      "reason": "Retain all five grain warm kinds. The realOnly weapon bank does not make native environmental/movement voices unreachable: composed audio still uses squelch, bubbles, bubbles_bright, rain and sizzle, including swim/climb/enemy-ink loops invoked by main. A menu/practice intent boundary with guaranteed lead time is not currently present; delaying to the first loop moves synchronous texture work into first sound. No safe unused-kind proof or required device onset trace exists.",
+      "evidence": [
+        "inkwave-public/src/audio/audio.js",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/grain-texture.mjs",
+        "patches/splatoon3/runtime/audio/grain-worker.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Defer unused procedural grain texture prewarm at initial AudioContext activation",
+      "library_file_id": "libfile_c688f4eed1a88191a7be62843c3c3c45",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] defer-unneeded-procedural-grain-texture-prewarm.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "gate-muted-recorded-battle-mp3-preload-and-decoding",
+      "status": "not-adopted",
+      "reason": "Retain recorded BGM prime/play at START even when mixer gain is zero. It establishes the trusted-gesture media unlock and continuously advances the existing track timeline. Deferring it would require a measured Safari-compatible later gesture and accurate seek/recovery policy; simply pausing is explicitly disallowed by the proposal. No iPad mute-to-unmute acceptance trace exists, so this conditional resource saving is not adopted.",
+      "evidence": [
+        "inkwave-public/",
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/audio/music.js",
+        "inkwave-public/src/audio/streamedTrack.js",
+        "inkwave-public/src/audio/music.js",
+        "inkwave-public/src/audio/streamedTrack.js",
+        "inkwave-public/assets/audio/"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Music=0でもJet Arrow録音MP3を先読み・ループ再生する",
+      "library_file_id": "libfile_2c4978aef1308191a022e68fcc4ce34c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gate-muted-recorded-battle-mp3-preload-and-decoding.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "gate-recorded-charger-rise-mp3-prefetch-by-weapon-roster",
+      "status": "not-adopted",
+      "reason": "Retain eager Charger-rise preload. The existing conditional hooks only warm local selected Chargers; nearby remote charge onset uses the same recording, and prepareWeapon explicitly declines nonurgent remote work. Removing the init warm before an announced-roster owner exists creates a cold late-remote/instant-swap onset gap. The ticket explicitly blocks increased first-onset misses; no such safe readiness gate was demonstrated.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+        "inkwave-public/assets/audio/charger-first-splatune2-reference.mp3",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/audio-adapter.mjs",
+        "inkwave-public/src/audio/audio.js"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Gate recorded Charger-rise MP3 preload by charger-bearing loadout or match roster",
+      "library_file_id": "libfile_83f32584908881919b5cdaf7d2a540de",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gate-recorded-charger-rise-mp3-prefetch-by-weapon-roster.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "gate-roller-loop-hypot-on-active-roll",
+      "status": "implemented-local",
+      "reason": "Velocity hypot is evaluated only for grounded rolling with suspended-hold false. Inactive/suspended states preserve stop/fade ownership without reading velocity.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 非ローラー塗り時の不要な音声ピッチ用 `Math.hypot` を省略",
+      "library_file_id": "libfile_9c95c0ebeff48191a910afb3d7a3d9d8",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gate-roller-loop-hypot-on-active-roll.md",
+      "prior_status": null
+    },
+    {
+      "key": "grain-texture-elide-per-sample-modulo-with-wrap-cursor",
+      "status": "not-adopted",
+      "reason": "The queue explicitly conditions adoption on measured WebKit improvement and documents a slower 96 kHz candidate. The canonical grain texture still uses modulo; no device evidence supports replacing it. This is not presented as completed optimization.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] グレイン音声PCM生成の各サンプル剰余演算を循環書込カーソルに置換する",
+      "library_file_id": "libfile_f30dc5baecec8191974fdfabe9375422",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] grain-texture-elide-per-sample-modulo-with-wrap-cursor.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "hoist-foley-noise-attack-denominator-from-sample-loop",
+      "status": "implemented-local",
+      "reason": "Historical #1870 marked this already-in-pr, but #1878 raw and composed Foley still computed Math.max(1/sr,attack) per sample. Hoisted the unchanged denominator once per noise call and regenerated the bundled worker; baseline PCM bytes match.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+        "patches/splatoon3/runtime/audio/render-worker.js"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] Hoist Foley noise attack denominator from per-sample loop",
+      "library_file_id": "libfile_77f8b22288248191878766b9f86ac82f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hoist-foley-noise-attack-denominator-from-sample-loop.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "hoist-guided-envelope-measured-span",
+      "status": "already-in-pr",
+      "reason": "Measured envelope span is computed once in renderGuidedSample and passed to dbEnvelope.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 参考特徴量ガイド音声の包絡線測定長探索をPCMループから移動",
+      "library_file_id": "libfile_e002ca634cdc81919cb90b431ac81dd1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hoist-guided-envelope-measured-span.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "hoist-render-fallback-tanh-normalizer",
+      "status": "already-in-pr",
+      "reason": "Math.tanh(drive) is already hoisted; the original division is retained.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/render.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] PCMフォールバック描画の固定tanh分母をレンダリング単位で再利用",
+      "library_file_id": "libfile_8ad52e938e208191a0437821fbb925dc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hoist-render-fallback-tanh-normalizer.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "invalidate-weapon-occlusion-cache-on-endpoint-change",
+      "status": "implemented-local",
+      "reason": "Cache invalidates immediately when either copied source or listener endpoint changes, in addition to the original 100 ms/clock-rollback invalidation.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 武器SEの遮蔽キャッシュを音源・リスナー位置の変化に応じて失効させる",
+      "library_file_id": "libfile_25d4271dc0108191998da7d5213375e1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] invalidate-weapon-occlusion-cache-on-endpoint-change.md",
+      "prior_status": null
+    },
+    {
+      "key": "listener-motion-refresh-stationary-3d-sfx-distance-dsp",
+      "status": "implemented-local",
+      "reason": "Live spatial voices register with their engine. Listener position changes refresh distance LPF and reverb even when the source loop position was deduplicated; disposal immediately releases registry ownership.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/spatial-dsp.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] リスナー移動時だけ固定3D継続SEの距離DSPを再評価する",
+      "library_file_id": "libfile_75f877522f788191801d4238f3341ead",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] listener-motion-refresh-stationary-3d-sfx-distance-dsp.md",
+      "prior_status": null
+    },
+    {
+      "key": "main-gate-idle-swim-audio-math",
+      "status": "implemented-local",
+      "reason": "The composed main loop calculates swim speed/volume/pitch only when swimming or an existing fading swim handle needs its update.",
+      "evidence": [
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 非遊泳・停止済みループ時の泳ぎ音計算を丸ごと省略",
+      "library_file_id": "libfile_af14f86834648191b0a077208453ce94",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] main-gate-idle-swim-audio-math.md",
+      "prior_status": null
+    },
+    {
+      "key": "memoize-immutable-s3-articulation-cue-plans",
+      "status": "already-in-pr",
+      "reason": "Own known actors and bounded events use deeply frozen cue-plan cache entries; unknown actors retain the original builder path.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/s3-articulation.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Memoize immutable S3 articulation cue plans between PCM variants",
+      "library_file_id": "libfile_365247fceeec819192056793c0200b5a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] memoize-immutable-s3-articulation-cue-plans.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "moving-3d-se-reverb-retains-spawn-distance-boost",
+      "status": "implemented-local",
+      "reason": "Base reverb is stored per voice; each source/listener movement recomputes the boost from current distance, including creating a previously absent send when needed.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/spatial-dsp.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 移動する3D継続SEのリバーブが発声開始時の距離補正に固定される",
+      "library_file_id": "libfile_4b36c33500908191a2238129113395c3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] moving-3d-se-reverb-retains-spawn-distance-boost.md",
+      "prior_status": null
+    },
+    {
+      "key": "network-remote-audio-idle-near-camera-elision",
+      "status": "already-in-pr",
+      "reason": "Final netmatch composition skips distance probes only when no continuous sound/onset or previously playing handle needs work.",
+      "evidence": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Remote actor音声: 無音の全ループで近接カメラ判定を省略",
+      "library_file_id": "libfile_b888da56838c8191a7ea4b446066f934",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] network-remote-audio-idle-near-camera-elision.md",
+      "prior_status": null
+    },
+    {
+      "key": "optimize-audio-emitter-key-weakmap-and-positional-validation",
+      "status": "already-in-pr",
+      "reason": "Current bank uses one WeakMap.get on actor identity and direct finite xyz validation; AudioEngine validPos also checks scalar components without arrays.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/bank.mjs",
+        "inkwave-public/src/audio/audio.js"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] SEエミッタ識別の重複WeakMap参照と位置検証配列を除去",
+      "library_file_id": "libfile_eebacdd613888191aa8459c8571acc75",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] optimize-audio-emitter-key-weakmap-and-positional-validation.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "precompute-grain-attack-envelope-float64-with-bitexact-pcm",
+      "status": "already-in-pr",
+      "reason": "Float64 attack factors are already generated once per texture and reused with original Float32 accumulation order.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 重複するグレイン包絡 Math.exp を Float64 で一回だけ計算する",
+      "library_file_id": "libfile_576ae169b5608191b13cca0d6b9b8a71",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] precompute-grain-attack-envelope-float64-with-bitexact-pcm.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "precompute-guided-spectral-bin-routing-and-band-power",
+      "status": "already-in-pr",
+      "reason": "Per-render bin routing and per-window band power are cached outside the bin loop.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Precompute guided-sound spectral bin routing and frame band power",
+      "library_file_id": "libfile_f63a05f2ecec81919fb4acbbe9b7c6c7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] precompute-guided-spectral-bin-routing-and-band-power.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "preserve-recorded-sample-lru-touches-across-async-load-commit",
+      "status": "already-in-pr",
+      "reason": "Current source bank mirrors live playback touches into transactional staging and preserves shared-buffer accounting.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 非同期MP3追加中に再生で更新したLRU順が上書きされ、使用直後の録音SEが誤退避される",
+      "library_file_id": "libfile_eb7ecfad6d388191a2e1cdb5519e9079",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] preserve-recorded-sample-lru-touches-across-async-load-commit.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "rearm-evicted-game-owned-ambient-and-movement-loops",
+      "status": "already-in-pr",
+      "reason": "Current composition rearms stopped ambience/movement only when audible and free loop capacity exists, preserving deferred mute recovery.",
+      "evidence": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 24ループ上限で追い出された環境音・移動音のハンドルが復帰せず無音になる",
+      "library_file_id": "libfile_12e6cbab30688191b01eac2dd6a7fa72",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] rearm-evicted-game-owned-ambient-and-movement-loops.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "rearm-jet-arrow-bgm-on-connectivity-or-gesture-recovery",
+      "status": "already-in-pr",
+      "reason": "Current composition rearms transient media failure on online/focus/visibility or trusted gesture; unsupported media is excluded and lifecycle removes listeners.",
+      "evidence": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Jet Arrow BGMのリトライ上限到達後にネットワーク/ユーザージェスチャー復帰を一度だけ再武装する",
+      "library_file_id": "libfile_946d2e778a9881918f5b44897efc99f5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] rearm-jet-arrow-bgm-on-connectivity-or-gesture-recovery.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "remove-redundant-noise-buffer-float32-scratch",
+      "status": "already-in-pr",
+      "reason": "Final white-noise output aliases its channel and second DC pass writes in place; no final Float32 scratch/copy remains.",
+      "evidence": [
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] WebAudio共有ノイズ生成で不要な2秒PCM作業配列を削減（bit-exact）",
+      "library_file_id": "libfile_e9d68914f08c81919241b59ef695fef4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] remove-redundant-noise-buffer-float32-scratch.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "retire-paused-streamed-bgm-without-procedural-clock",
+      "status": "already-in-pr",
+      "reason": "Clock-aware timeout/statechange retirement releases paused streams even when no procedural scheduler exists.",
+      "evidence": [
+        "patches/local-quality/music-idle.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Retire paused streamed BGM without depending on a later procedural tick",
+      "library_file_id": "libfile_e8e4d56d8c6c8191b4ea8cd4aa8f4823",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] retire-paused-streamed-bgm-without-procedural-clock.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "reuse-brella-audio-canopy-transition-snapshot",
+      "status": "already-in-pr",
+      "reason": "Existing runtime mutates its canopy snapshot after transition comparison; no steady-frame object replacement.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Brella音声遷移のcanopyスナップショットを毎tick再生成しない",
+      "library_file_id": "libfile_9cd441a2b47c8191ad9bcf209765b64b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] reuse-brella-audio-canopy-transition-snapshot.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "reuse-verified-niceball-source-decode-across-fire-and-spin",
+      "status": "not-adopted",
+      "reason": "No production emitter for source:Sp_NiceBall_HoldFull_00/fire was found: the name occurs only in the source registry, while Booyah spin is the established route. The ticket explicitly says to close/deprioritize if the second route is not used. Both manifest rows lack raw SHA-256, Git blob identity is not that hash, and fire versus spin has different loop-repair semantics. Adding retained unlooped PCM for an unproven dual-route benefit is not adopted.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/s3-real/Sp_NiceBall_HoldFull_00.mp3"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Verify and reuse the NiceBall MP3 decode across distinct source/fire and Booyah/spin loads",
+      "library_file_id": "libfile_17579a4cd8a88191863d39eae72f67da",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] reuse-verified-niceball-source-decode-across-fire-and-spin.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "reuse-weapon-occlusion-weakmap-cache-record",
+      "status": "implemented-local",
+      "reason": "Each remote actor owns one mutable obstruction cache record; time and copied endpoint scalars are refreshed in place.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 武器SE遮蔽キャッシュの更新時にWeakMapレコードを再利用する",
+      "library_file_id": "libfile_e394ead948808191b18766e618d79b77",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] reuse-weapon-occlusion-weakmap-cache-record.md",
+      "prior_status": null
+    },
+    {
+      "key": "revoke-music-worker-blob-url-on-constructor-failure",
+      "status": "already-in-pr",
+      "reason": "idle-adapter scopes worker URL ownership and revokes on constructor/postMessage failure as well as normal worker startup.",
+      "evidence": [
+        "patches/local-quality/idle-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Release temporary music Worker blob URL when Worker construction fails",
+      "library_file_id": "libfile_e3374bf2d1ac8191afb31b6811ee1438",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] revoke-music-worker-blob-url-on-constructor-failure.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "settings-audio-muted-preview-skip-18-bar-per-frame-trigonometry",
+      "status": "already-in-pr",
+      "reason": "Muted settled preview writes the floor once and returns before 18-bar trigonometry; band spectra are cached.",
+      "evidence": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 音量0の設定プレビューで18本の無変化バー描画・三角関数を停止する",
+      "library_file_id": "libfile_62a8b43cbee88191b22afbfbd94776e5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] settings-audio-muted-preview-skip-18-bar-per-frame-trigonometry.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "skip-fallback-nonloop-grain-write-modulo",
+      "status": "implemented-local",
+      "reason": "Non-loop rendering already breaks at the buffer end and now writes its direct index. Loops retain modulo and PCM hashes stay identical.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/render.mjs",
+        "patches/splatoon3/runtime/audio/render-worker.js"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] Skip modulo for non-loop fallback PCM grain writes",
+      "library_file_id": "libfile_7d583a899b508191b7b677093a5012c7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] skip-fallback-nonloop-grain-write-modulo.md",
+      "prior_status": null
+    },
+    {
+      "key": "skip-grain-frequency-ramp-pow-after-saturation",
+      "status": "already-in-pr",
+      "reason": "Each grain caches its ratio and bypasses Math.pow only at exponent exactly 1.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Grain周波数ランプ飽和後の不要な Math.pow を省く",
+      "library_file_id": "libfile_9164c41191e08191991ea53fa15941f6",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] skip-grain-frequency-ramp-pow-after-saturation.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "skip-procedural-battle-song-compilation-for-recorded-stream",
+      "status": "already-in-pr",
+      "reason": "Final recorded track branch uses lightweight SONGS metadata instead of getSong and preserves recorded-only failure policy.",
+      "evidence": [
+        "patches/local-quality/input-lens-queue-adapter.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] Streamed battle MP3起動時の未使用シーケンサ譜面コンパイルを省略",
+      "library_file_id": "libfile_162f061148e08191969910c627e1a030",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] skip-procedural-battle-song-compilation-for-recorded-stream.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "skip-redundant-static-loop-panner-position-automation",
+      "status": "implemented-local",
+      "reason": "Copied xyz and Panner identity gate modern/legacy position automation; listener movement separately refreshes application DSP.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/spatial-dsp.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 静止中の継続3D効果音で重複するPannerNode座標オートメーションを省略",
+      "library_file_id": "libfile_c0da15dcfe6c819199ce00bb6feb298c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] skip-redundant-static-loop-panner-position-automation.md",
+      "prior_status": null
+    },
+    {
+      "key": "slim-recorded-mp3-runtime-manifest-preserve-provenance-sidecar",
+      "status": "already-in-pr",
+      "reason": "Current build already emits compact playback-only manifest with source-manifest SHA256 while retaining full source provenance. Duplicate proposed implementation was removed.",
+      "evidence": [
+        "scripts/lib/inkwave-audio-manifest.mjs",
+        "scripts/build-inkwave.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 録音MP3配信用manifestから非再生用来歴メタデータを分離して初回転送・JSON解析を削減",
+      "library_file_id": "libfile_06971044bbd88191976fc0af05210fe2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] slim-recorded-mp3-runtime-manifest-preserve-provenance-sidecar.md",
+      "prior_status": null
+    },
+    {
+      "key": "stage-long-crab-tank-idle-mp3-predecode",
+      "status": "not-adopted",
+      "reason": "Retain current Crab idle preload. Local main-shot work is already admitted ahead of kit events and supports priority promotion. Delaying the two long spin variants to gauge readiness reduces the readiness window for instant/full-gauge and late remote activation; the ticket explicitly rejects any increased missing first activation. No device/bandwidth readiness measurement supports a safe delay, and merely retaining the existing queue order is not a new optimization.",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-installed.json",
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/kit-runtime.mjs"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] カニタンク未発動でも30秒超の録音Idle MP3を先読み・デコードする処理の段階化",
+      "library_file_id": "libfile_3c2bd9f603408191b6570142c4efcc39",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] stage-long-crab-tank-idle-mp3-predecode.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "suspend-hidden-audio-even-with-stale-safari-resume-promise",
+      "status": "implemented-local",
+      "reason": "Context/operation tokens allow hidden suspend to supersede unresolved resume. Stale fulfillment cannot clear a newer token and reconciles actual lifecycle; statechange and disposal listeners have explicit ownership.",
+      "evidence": [
+        "patches/local-quality/platform-audio.mjs"
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-audio-local-20261026.test.mjs"
+      ],
+      "title": "# [QUEUE][INKWAVE][Optimization] 非解決Safari resume Promiseが残っていても非表示時に音声Contextを停止する",
+      "library_file_id": "libfile_1ede59c58d388191ba3608aa707a9204",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] suspend-hidden-audio-even-with-stale-safari-resume-promise.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "verify-rights-and-separate-public-distribution-of-recorded-audio",
+      "status": "excluded-user",
+      "reason": "Excluded by existing explicit user instruction; no work performed.",
+      "evidence": [
+        "prior session instruction retained by parent"
+      ],
+      "tests": [],
+      "title": "# [QUEUE][INKWAVE][Optimization] 公開リポジトリの録音MP3配布と利用権限を照合し、配信経路を分離する",
+      "library_file_id": "libfile_382b6e07a760819195d8f257b7e55c96",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] verify-rights-and-separate-public-distribution-of-recorded-audio.md",
+      "prior_status": "excluded-user"
+    }
+  ]
+}

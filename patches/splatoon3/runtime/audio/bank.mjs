@@ -83,7 +83,11 @@ export class WeaponSoundBank {
     const chargerOnset=AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
     const bank=this,loop=LOOP_EVENTS.has(event)&&!chargerOnset;
     const build=(v,p,o={})=>{
-      const serial=o.variant??(loop?0:bank.roundRobin.get(name)??0);bank.roundRobin.set(name,(serial+1)%3);
+      const serial=o.variant??(loop?0:bank.roundRobin.get(name)??0);
+      // Keep the established three-way sequence for authored/short banks,
+      // but include every resident recording when an event has four or more.
+      const variants=Math.max(3,bank.authorized.byEvent.get(`${id}:${event}`)?.length||0);
+      bank.roundRobin.set(name,(serial+1)%variants);
       const authorized=bank.authorized.pick(id,event,serial);
       if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
       const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();

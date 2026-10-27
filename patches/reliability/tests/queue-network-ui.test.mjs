@@ -22,15 +22,38 @@ test('remote idle audio avoids distance probes but always stops a previously pla
   let probes=0,calls=0,stops=0;const actor={remote:true,alive:true,weapon:{kind:'shooter'},weaponRunner:{},net:{loops:{}},_nearCamera(){probes++;return false;}};
   const n={byNid:new Map([[1,actor]]),_voiceLoop(a,near,key,on){calls++;if(a.net.loops[key]&&!on){a.net.loops[key].stop();a.net.loops[key]=null;}return null;}};
   voices.call(n,.016);assert.equal(probes,0);assert.equal(calls,0);
-  actor.net.loops.charge={stop(){stops++;}};voices.call(n,.016);assert.equal(probes,1);assert.equal(calls,2);assert.equal(stops,1);assert.equal(actor.net.loops.charge,null);
-  actor.weapon.kind='charger';actor.weaponRunner.charging=true;voices.call(n,.016);assert.equal(probes,2);assert.equal(calls,4);
+  actor.net.loops.charge={stop(){stops++;}};voices.call(n,.016);assert.equal(probes,1);assert.equal(calls,3);assert.equal(stops,1);assert.equal(actor.net.loops.charge,null);
+  actor.weapon.kind='charger';actor.weaponRunner.charging=true;voices.call(n,.016);assert.equal(probes,2);assert.equal(calls,6);
+});
+test('catalog Spinner source motors enter and retire through the optimized remote voice guard',()=>{
+  const G={audio:{}},voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesSplatChargerRise});
+  let probes=0,created=0,stopped=0;
+  const a={remote:true,alive:true,weapon:{id:'s3-spinner-quick',kind:'catalog',behaviorKind:'splatling'},
+    weaponRunner:{charging:true,streaming:false},net:{loops:{}},_nearCamera(){probes++;return true;}};
+  const n={byNid:new Map([[1,a]]),_voiceLoop(actor,near,key,on){
+    const loops=actor.net.loops;
+    if (!on || !near) {if(loops[key]){loops[key].stop();loops[key]=null;}return null;}
+    if(!loops[key]){created++;loops[key]={playing:true,set(){},stop(){stopped++;this.playing=false;}};}
+    return loops[key];
+  }};
+  voices.call(n,1/60);
+  assert.equal(probes,1,'catalog Spinner charge must not be discarded as idle');
+  assert.equal(created,1);assert.ok(a.net.loops.spinnerCharge?.playing,'recorded charge Motor starts');
+  a.weaponRunner.charging=false;a.weaponRunner.streaming=true;
+  voices.call(n,1/60);
+  assert.equal(stopped,1,'charge Motor stops on stream transition');
+  assert.ok(a.net.loops.spin?.playing,'recorded MotorFire starts');
+  a.weaponRunner.streaming=false;
+  voices.call(n,1/60);
+  assert.equal(stopped,2,'a retired MotorFire handle must not be skipped');
+  const idle=probes;voices.call(n,1/60);assert.equal(probes,idle,'fully idle Spinner skips range probes');
 });
 test('remote Charger release retires its recorded phrase and rearms the next onset without idle probes',()=>{
   let probes=0,starts=0,stops=0,calls=0;
   const G={audio:{playChargerChargeRise(){starts++;return {stop(){stops++;}};}}};
   const voices=method('src/net/netmatch.js','_voices','_voiceLoop',{G,usesChargerRise});
   const a={remote:true,alive:true,weapon:{id:'charger',kind:'charger'},weaponRunner:{charging:true},net:{loops:{}},_nearCamera(){probes++;return true;}};
-  const n={byNid:new Map([[1,a]]),_voiceLoop(_a,_near,key){assert.ok(key==='spin'||key==='roll','Charger cannot create a repeating click');calls++;return null;}};
+  const n={byNid:new Map([[1,a]]),_voiceLoop(_a,_near,key){assert.ok(key==='spinnerCharge'||key==='spin'||key==='roll','Charger cannot create a repeating click');calls++;return null;}};
   voices.call(n,.016);assert.equal(starts,1);assert.equal(probes,1);assert.equal(a.net._chargerOnsetActive,true);
   voices.call(n,.016);assert.equal(starts,1,'a held charge has one recorded phrase');
   a.weaponRunner.charging=false;voices.call(n,.016);

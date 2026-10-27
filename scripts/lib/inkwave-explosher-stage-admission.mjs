@@ -5,6 +5,41 @@ import assert from 'node:assert/strict';
 import {compareExplosherCaptures}from'./inkwave-explosher-scene-census.mjs';
 import {requireControlledStartupPair}from'./inkwave-explosher-volume-barrier.mjs';
 export const COMMON_HEAD='364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c';
+
+/** WebGLInfo counts cache-resident geometries, including cold-start allocations not
+ * represented by active scene objects. Compare only geometry growth after the
+ * instrumented, deterministic native-birth boundary, while requiring stable
+ * intra-lane counters and exactly matching active scene census/other resources.
+ * An extra allocation during the candidate shot still fails closed.
+ */
+export function requireComparableExplosherGeometryGrowth(before,after,stage='preflight') {
+ const inspect=(m,lane)=>{
+  assert(m?.rngDiagnostic?.enabled===true,'Missing active resource diagnostics ('+lane+')');
+  const events=m.rngDiagnostic.boundaries;
+  assert(Array.isArray(events),'Missing resource event history ('+lane+')');
+  const get=label=>{
+   const matches=events.filter(e=>e.label===label);
+   assert.equal(matches.length,1,'Missing/duplicated native resource boundary '+label+' ('+lane+')');
+   const g=matches[0]?.nativeState?.resources?.geometries;
+   assert(Number.isSafeInteger(g)&&g>=0,'Invalid native geometry counter at '+label+' ('+lane+')');
+   return g;
+  };
+  const born=get('native-birth'), entered=get('shot-input-start');
+  const first=get('before-draw-probe'), last=get('after-draw-probe');
+  assert.equal(entered,born,'Geometry count changed between shot input and native birth ('+lane+')');
+  assert.equal(first,last,'Unexpected geometry growth across controlled render probes ('+lane+')');
+  assert(first>=born,'Native geometry count dropped before comparison ('+lane+')');
+  assert(Number.isSafeInteger(m.memory?.geometries)&&m.memory.geometries>=born,'Invalid captured geometry count ('+lane+')');
+  if(stage==='preflight') assert.equal(m.memory.geometries,last,'Preflight capture resource counter diverged from render probe ('+lane+')');
+  return {born,growth:m.memory.geometries-born};
+ };
+ assert.deepEqual(before.sceneCensus,after.sceneCensus,'Active scene census differs');
+ assert.deepEqual(before.sceneSources,after.sceneSources,'Native scene sources differ');
+ const b=inspect(before,'before'),a=inspect(after,'after');
+ assert(a.growth<=b.growth,'Candidate allocated extra post-birth geometry: '+a.growth+' > '+b.growth);
+ return {before:b,after:a};
+}
+
 export function requireExplosherStagePair(stage,before,after,br,ar){
  requireInverseShapePair(br,ar);
  assert(['preflight','stills'].includes(stage));
@@ -31,8 +66,9 @@ export function requireExplosherStagePair(stage,before,after,br,ar){
  const mismatches=[],check=(name,fn)=>{try{fn();}catch(e){mismatches.push({domain:name,error:e.message.slice(0,512)});}};
  for(let i=0;i<before.length;i++){
   const a=before[i].measurement,b=after[i].measurement,prefix=before[i].tick+':'+before[i].view;
-  for(const k of ['rng','effects','style','sceneClocks','startup','aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])check(prefix+':'+k,()=>{assert(Object.hasOwn(a,k)&&Object.hasOwn(b,k));assert.deepEqual(a[k],b[k]);});
-  for(const [domain,keys]of[['render',['calls','triangles','points','lines']],['memory',['geometries','textures']]])for(const key of keys)check(prefix+':'+domain+'.'+key,()=>{assert(Number.isFinite(a[domain][key])&&Number.isFinite(b[domain][key])&&a[domain][key]>=0&&b[domain][key]>=0);assert(b[domain][key]<=a[domain][key]);});
+  for(const k of ['rng','effects','style','sceneClocks','startup','sceneCensus','sceneSources','aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])check(prefix+':'+k,()=>{assert(Object.hasOwn(a,k)&&Object.hasOwn(b,k));assert.deepEqual(a[k],b[k]);});
+  for(const [domain,keys]of[['render',['calls','triangles','points','lines']],['memory',['textures']]])for(const key of keys)check(prefix+':'+domain+'.'+key,()=>{assert(Number.isFinite(a[domain][key])&&Number.isFinite(b[domain][key])&&a[domain][key]>=0&&b[domain][key]>=0);assert(b[domain][key]<=a[domain][key]);});
+  check(prefix+':memory.geometries',()=>requireComparableExplosherGeometryGrowth(a,b,stage));
   check(prefix+':controlledBoundary',()=>requireControlledStartupPair(a.controlledStartup,b.controlledStartup));
   if(before[i].tick===0){
    for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])check(prefix+':preShot.'+k,()=>{assert(Object.hasOwn(a.preShot,k)&&Object.hasOwn(b.preShot,k));assert.deepEqual(a.preShot[k],b.preShot[k]);});

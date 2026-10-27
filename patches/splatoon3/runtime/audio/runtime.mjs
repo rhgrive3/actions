@@ -42,7 +42,13 @@ export function installWeaponAudioRuntime(api){
     const listener=G.camera?.position||G.local?.pos;
     if(!a?.isLocal&&a&&finite3(pos)&&finite3(listener)&&typeof G.physics?.los==='function'){
       let cached=obstruction.get(a);const now=G.time||0;
-      if(!cached||now<cached.at||now-cached.at>=.1){let clear=true;try{clear=G.physics.los(listener,pos);}catch{}cached={at:now,value:clear?0:.78};obstruction.set(a,cached);}
+      if(!cached||now<cached.at||now-cached.at>=.1||cached.lx!==listener.x||cached.ly!==listener.y||cached.lz!==listener.z||cached.px!==pos.x||cached.py!==pos.y||cached.pz!==pos.z){
+        const lx=listener.x,ly=listener.y,lz=listener.z,px=pos.x,py=pos.y,pz=pos.z;
+        let clear=true;try{clear=G.physics.los(listener,pos);}catch{}
+        if(!cached){cached={};obstruction.set(a,cached);}
+        cached.at=now;cached.value=clear?0:.78;
+        cached.lx=lx;cached.ly=ly;cached.lz=lz;cached.px=px;cached.py=py;cached.pz=pz;
+      }
       return cached.value;
     }
     return 0;
@@ -162,13 +168,13 @@ export function installWeaponAudioRuntime(api){
         play(a,'charge',a.pos,a.isLocal?.55:.35);
       }
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
-        // Reuse the selected Splat phrase for every Charger. The offline
-        // cache adapts duration without transposing; gameplay owns readiness.
+        // All Charger types play the same user-selected Splat Charger rise.
+        // Pitch-preserving WSOLA supplies per-weapon duration asynchronously.
+        // Do not layer a separate weapon-specific HoldNoise at charge start.
         s.chargeRise=usesChargerRise(id)?G.audio?.playChargerChargeRise?.({
           volume:a.isLocal?.55:.28,pos:a.isLocal?undefined:a.pos,weaponId:id,chargeTime:a.weapon?.chargeTime,
         })||null:null;
         if(s.chargeRise)active.add(this);
-
       }
       if(!nowCharging){
         s.chargeRise?.stop?.(.04);s.chargeRise=null;
@@ -189,7 +195,8 @@ export function installWeaponAudioRuntime(api){
     const charging=!!this.charging,q=clamp(Number(this.charge)||0,0,1);
     if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
-    keepLoop(this,'roll',!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
+    const rollingSE=!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold;
+    keepLoop(this,'roll',rollingSE,rollingSE ? .8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25 : .8);
     const bowPhase=catalogChargeStage(a.weapon,q);
     if(bowPhase){
       const previous=s.chargeStage||0;

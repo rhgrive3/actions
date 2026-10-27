@@ -9,9 +9,16 @@ async function fixture({limit=512,format=THREE.RGBA_BPTC_Format,delayedRgba=fals
  const bytes=new ArrayBuffer(80);new DataView(bytes).setUint32(12,0,true);new Uint8Array(bytes)[79]=177;
  const calls={parsed:[],loaders:[],png:0,compressedDisposed:0};let pending;
  const dimensions=Array.from({length:Math.floor(Math.log2(Math.max(width,height)))+1},(_,i)=>[Math.max(1,Math.floor(width/2**i)),Math.max(1,Math.floor(height/2**i))]);
- const makeTexture=rgba=>({isCompressedTexture:true,format:rgba?THREE.RGBAFormat:format,image:{width,height},
-  mipmaps:dimensions.map(([width,height])=>({width,height,data:new Uint8Array(rgba?width*height*4:Math.ceil(width/4)*Math.ceil(height/4)*16).fill(rgba?129:43)})),
-  dispose(){this.disposed=true;if(!rgba)calls.compressedDisposed++;}});
+ const makeTexture=rgba=>{
+  // The integrated native loader listens for real THREE Texture dispose events.
+  // This lightweight transcode mock must honor that same ownership contract.
+  const listeners=new Map();
+  return {isCompressedTexture:true,format:rgba?THREE.RGBAFormat:format,image:{width,height},
+   mipmaps:dimensions.map(([width,height])=>({width,height,data:new Uint8Array(rgba?width*height*4:Math.ceil(width/4)*Math.ceil(height/4)*16).fill(rgba?129:43)})),
+   addEventListener(type,listener){listeners.set(type,listener);},
+   removeEventListener(type,listener){if(listeners.get(type)===listener)listeners.delete(type);},
+   dispose(){this.disposed=true;listeners.get('dispose')?.({type:'dispose'});if(!rgba)calls.compressedDisposed++;}};
+ };
  class KTX2Loader{
   constructor(){this.workerConfig={bptcSupported:true,etc2Supported:true};calls.loaders.push(this);this.disposals=0;}
   setTranscoderPath(){return this;}detectSupport(){return this;}setWorkerLimit(n){this.workerLimit=n;return this;}
@@ -21,7 +28,7 @@ async function fixture({limit=512,format=THREE.RGBA_BPTC_Format,delayedRgba=fals
    if(rgba&&delayedRgba)pending={onLoad,onError,texture};else onLoad(texture);
   }
  }
- const context=vm.createContext({console,URL,DOMException,Blob,location:{href:'https://game.test/index.html'},
+ const context=vm.createContext({console,URL,DOMException,AbortController,Blob,location:{href:'https://game.test/index.html'},
   createImageBitmap(){calls.png++;throw Error('Exact-mip path must not decode/resize PNG');}});
  const synthetic=values=>new vm.SyntheticModule(Object.keys(values),function(){for(const [k,v]of Object.entries(values))this.setExport(k,v);},{context});
  const ready=async values=>{const m=synthetic(values);await m.link(()=>{});await m.evaluate();return m;};

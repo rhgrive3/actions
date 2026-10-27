@@ -1,0 +1,1087 @@
+{
+  "base_pr": 1878,
+  "base_head": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "prior_implementation_reviewed": "PR1870 / 1d0dc3b2",
+  "main": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "generated_utc": "2026-10-25T19:31:59.371704+00:00",
+  "assigned_owner": "root (supplement delegated to sources_drive)",
+  "assigned_count": 27,
+  "counts": {
+    "implemented": 22,
+    "not-adopted": 5
+  },
+  "items": [
+    {
+      "key": "booyah-blast-fx-render-rate-particle-trials-and-rune-rotation",
+      "status": "implemented",
+      "reason": "Converted charge and post-burst probability trials to the existing bounded 60 Hz cosmetic clock, reset fractional carry at burst and distance/phase exits, and retained exactly-once burst. The queue's accumulating-rune premise is false for PR1878: Director.disc overwrites v[7] from spin origin before follow each render, so the existing +0.02 is already a constant offset for spin=0. An actual retained-disc callback regression proves that behavior; preserved the original 60 Hz rune visual instead of introducing new rotation.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs"
+      ],
+      "symbols": [
+        "ROUNDS.booyahBlast.frame",
+        "Director.disc"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs",
+          "sha256": "33c6f472ad5fcec4c20ac33d8d15296c6dcd0a7e1d7e6bea51c0dc49c5fa5c92"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] booyah-blast-fx-render-rate-particle-trials-and-rune-rotation.md",
+      "queue_sha256": "5a5df4c36ad93210120d99a1f9f55a284e4cf28fd774cebcd61d4fafa9ac6907",
+      "library_file_id": "libfile_ecba0f41bc588191af2bf04980c39a00",
+      "previous_disposition": {
+        "slug": "booyah-blast-fx-render-rate-particle-trials-and-rune-rotation",
+        "status": "needs-evidence",
+        "reason": "Render-rate correction changes particles and rune phase; retain for dedicated visual acceptance.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "ink-vac-projectile-droplets-fixed-60hz-emission-cadence",
+      "status": "implemented",
+      "reason": "Runs the flying Ink Vac drop trials on nonWailVfxTicks while leaving ribbon sampling on the render path. Seeded birth instructions and RNG order match the original at 60 Hz, and fixed-phase trial/birth streams match across 30/60/120 Hz.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs"
+      ],
+      "symbols": [
+        "ROUNDS.roundInkVac.frame"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs",
+          "sha256": "33c6f472ad5fcec4c20ac33d8d15296c6dcd0a7e1d7e6bea51c0dc49c5fa5c92"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-projectile-droplets-fixed-60hz-emission-cadence.md",
+      "queue_sha256": "10ff1dae8d3f88f9f8a64f9f9095e02b5099280580c374970c4a94c6c4dd4d72",
+      "library_file_id": "libfile_6d7746ba02008191a331c847e50b9e62",
+      "previous_disposition": {
+        "slug": "ink-vac-projectile-droplets-fixed-60hz-emission-cadence",
+        "status": "needs-evidence",
+        "reason": "Cadence correction changes visible 30/120Hz emissions; needs dedicated visual acceptance.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "ultra-stamp-aimthrow-star-particle-render-fps-dependence",
+      "status": "implemented",
+      "reason": "Runs only aimThrow star trials on the established 60 Hz cosmetic clock; leaving aimThrow clears its fractional carry. Particle recipe and seeded 60 Hz RNG order are unchanged.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs"
+      ],
+      "symbols": [
+        "DIRECTORS.ultraStamp.frame"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs",
+          "sha256": "33c6f472ad5fcec4c20ac33d8d15296c6dcd0a7e1d7e6bea51c0dc49c5fa5c92"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ultra-stamp-aimthrow-star-particle-render-fps-dependence.md",
+      "queue_sha256": "ff2b7c6faa52aa3ae7dc06052b3ce2a18187c4e47620f4e7caee9bde06fd014f",
+      "library_file_id": "libfile_cf1c5d9da5dc819190ac5b142461c1c9",
+      "previous_disposition": {
+        "slug": "ultra-stamp-aimthrow-star-particle-render-fps-dependence",
+        "status": "needs-evidence",
+        "reason": "Cadence correction changes visible 30/120Hz emissions; needs dedicated visual acceptance.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "zipcaster-flight-trail-particle-birth-render-fps-dependence",
+      "status": "implemented",
+      "reason": "Uses a phase-specific bounded 60 Hz emission clock for hook probability and the two zip droplets, resetting carry when phase changes. Render-followed beam/ribbon positions, retained carrier cleanup and the existing 0.16-second body-puff clock are preserved.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs"
+      ],
+      "symbols": [
+        "DIRECTORS.zipcaster.frame",
+        "zipEmissionPhase"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs",
+          "sha256": "33c6f472ad5fcec4c20ac33d8d15296c6dcd0a7e1d7e6bea51c0dc49c5fa5c92"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] zipcaster-flight-trail-particle-birth-render-fps-dependence.md",
+      "queue_sha256": "eaa341578927a214e55ee778c9e64e29d1fd2838984e689ff3286e61b97a27fc",
+      "library_file_id": "libfile_f4f12317179081918d2e4ef65f66ab76",
+      "previous_disposition": {
+        "slug": "zipcaster-flight-trail-particle-birth-render-fps-dependence",
+        "status": "needs-evidence",
+        "reason": "Cadence correction changes hook/zip phase sampling and births; needs dedicated visual acceptance.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "super-chump-decoy-prepop-glow-fps-dependent",
+      "status": "implemented",
+      "reason": "Adds an independent final-second blink clock, samples each logical 60 Hz tick's remaining lifetime and retains the accelerating original integer blink threshold. Flight emissions keep their separate clock. Exact 60 Hz recipes, 30/60/120 Hz timing boundaries, invalid dt and bounded hitches are covered.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs"
+      ],
+      "symbols": [
+        "ROUNDS.decoy.frame",
+        "blinkClock"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs",
+          "sha256": "33c6f472ad5fcec4c20ac33d8d15296c6dcd0a7e1d7e6bea51c0dc49c5fa5c92"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] super-chump-decoy-prepop-glow-fps-dependent.md",
+      "queue_sha256": "bbdf2998ae357999816ed5ee930761c1a4dce8536ddab9f9ed4d2443fe7bdf9e",
+      "library_file_id": "libfile_d273a504abcc8191b62877693ae505c7",
+      "previous_disposition": {
+        "slug": "super-chump-decoy-prepop-glow-fps-dependent",
+        "status": "needs-evidence",
+        "reason": "Correcting rendered cadence deliberately changes 30/120Hz visible birth density/phase; needs dedicated visual acceptance.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "special-presentation-avoid-main-projectile-roster-scan",
+      "status": "not-adopted",
+      "reason": "The public projectile array permits direct mutation and lifecycle swap/pop, ghost/pending Trizooka admission and metadata changes. There is no authoritative generation covering every visible eligibility or order mutation. A separate maintained roster could omit/reorder objects or retain ended effects; preserving order also matters to shared cosmetic RNG. No safe comprehensive producer contract was established locally, so syncWorld's authoritative scan is retained.",
+      "tests": [],
+      "symbols": [
+        "syncWorld",
+        "Projectiles.update",
+        "flushTrizookaBirths"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698"
+        },
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "sha256": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881"
+        },
+        {
+          "path": "patches/splatoon3/runtime/trizooka-collision.mjs",
+          "sha256": "c8b212db404920b02f61d20166f001eed2e8f73363e92effb7c2bf2c549adc75"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-presentation-avoid-main-projectile-roster-scan.md",
+      "queue_sha256": "e91d991569ec19eebb52e291896aff6567ab4d023796d5b43bb7a48fcc113285",
+      "library_file_id": "libfile_76000499817481919d49296646bde55f",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "special-vfx-avoid-full-projectile-roster-scan-on-every-render",
+      "status": "not-adopted",
+      "reason": "frameRounds/frameRoundCandidates already share a roster within one render but still scan the source projectile array once each render; this does not satisfy the queue proposal and is not counted as already-in-PR. Cross-render caching has no complete invalidation for public-array mutation, round fields or callbacks, and could change admission/order/RNG. Kept the original per-render authority scan.",
+      "tests": [],
+      "symbols": [
+        "Director.update",
+        "frameRoundCandidates",
+        "Projectiles.update"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        },
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "sha256": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-vfx-avoid-full-projectile-roster-scan-on-every-render.md",
+      "queue_sha256": "e81c928422d12ce238bb9ebb5e3568a5fcc028af10020d79e59af87f7f0024b7",
+      "library_file_id": "libfile_3a00589264348191b63ec4c5a848ce55",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "wail-speaker-batch-reuse-refreshed-scene-world-matrix",
+      "status": "implemented",
+      "reason": "Reuses the already-refreshed parent transform for speaker holders sharing the batch root's parent. Different-parent and detached-root cases keep full ancestor refresh. Real Three hierarchy comparison retains every Float32 instance matrix; a common six-speaker scene ancestor refresh falls from seven calls to one.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "updateWailSpeakerBatch"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/wail-speaker-batch.mjs",
+          "sha256": "9304718179cc79d4043912383f7124534c666bc49576a425c9b6705fe8a0341a"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] wail-speaker-batch-reuse-refreshed-scene-world-matrix.md",
+      "queue_sha256": "c80aba43c33b81c30740a5d5ec65a64ae7763c944c299b4335fcfca6f0ffc41d",
+      "library_file_id": "libfile_acf03132ba1481918ff98124b7034121",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "zipcaster-inkcoat-selective-world-matrix-refresh",
+      "status": "implemented",
+      "reason": "Validates that the coat remains under kid and each original pair still descends from kid, then refreshes kid ancestors and paired mesh branches only. Reparented coat/mesh paths fall back to the original whole-child refresh. Actual SkinnedMesh/Skeleton tests retain transforms, visibility, binding matrices and subsequent normal-render results; unrelated 60-node subtrees receive zero eager visits.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "inkCoat"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] zipcaster-inkcoat-selective-world-matrix-refresh.md",
+      "queue_sha256": "d84e3668af16c0b62ed4bb32fac15c8d09bacf76ca9c7612470568ca7aad5299",
+      "library_file_id": "libfile_03d91789bb3c8191821dc57bf5b1831b",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "s3-muzzle-sheets-deduplicate-owner-pose-per-render",
+      "status": "not-adopted",
+      "reason": "The public _muzzle path calls character pose and physics queries with no purity contract. An executable regression using the actual composed Projectiles._muzzle, actual constrainMuzzle and current sheet loop demonstrates that a synchronous LOS callback can change the next sheet's pose: original positions [1,1.5], proposed owner-cached positions [1,1]. Retained per-sheet evaluation to avoid suppressing observable query/order effects.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "updateS3ProjectileShapes sheet burst loop",
+        "Projectiles._muzzle",
+        "constrainMuzzle"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+          "sha256": "759a9bca4bef0428c9b5e6ff5ee84cf40f411bac93e4a3b08054c671fd57e8ee"
+        },
+        {
+          "path": "patches/splatoon3/runtime/camera-aim-controls.mjs",
+          "sha256": "9a20d3e3e71da4457585f8db1f2738c33c0df8d49ac6b73b2cd8cc8e08f3301f"
+        },
+        {
+          "path": "inkwave-public/src/game/weapons.js",
+          "sha256": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] s3-muzzle-sheets-deduplicate-owner-pose-per-render.md",
+      "queue_sha256": "3f46c28f922e4cac01b2ebc5c7c67da43e1d224147bbc43de4d98ca615d0ee35",
+      "library_file_id": "libfile_05a11d6a6f948191aa38d00a55dcf459",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "s3-shape-defer-unused-projectile-heading-on-cull",
+      "status": "not-adopted",
+      "reason": "direction() persists s3ShapeDir during a moving but invisible frame. Deferring it until visibility changes the heading when that projectile stops before reappearing. The actual direction function regression produces [0,1,0] with original updates versus [1,0,0] when the hidden update is skipped. Preserving history requires the same normalized direction work, eliminating the proposed low-risk saving.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "direction",
+        "p.s3ShapeDir"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+          "sha256": "759a9bca4bef0428c9b5e6ff5ee84cf40f411bac93e4a3b08054c671fd57e8ee"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] s3-shape-defer-unused-projectile-heading-on-cull.md",
+      "queue_sha256": "3ad8d819f5ce5047b2f9dc2a1e2bb04609bf3856c74f5294a1762b7e7a5a0adb",
+      "library_file_id": "libfile_2e080c0297408191a5a25105863e4282",
+      "previous_disposition": null,
+      "local_only": true
+    },
+    {
+      "key": "explosher-sparkle-age-phase-share-harmonic-trig",
+      "status": "implemented",
+      "reason": "Reuses per-seed phase sine/cosine and one age sine/cosine after two eligible warm-up frames. Finite normalized seeds, bounded age and capacity checks retain original fallbacks for pathological/short-lived cases. A conservative Float32 rounding-boundary check reruns the original sine when needed. More than 100 seeds across 30/60/120 Hz, capacity/culling, seed reuse and nonfinite/large-angle cases retain every finite Float32 output and signed zero. A warmed 300-frame operation-count regression reduces phase trig calls from 8400 to 654 with zero finite Float32 differences; no wall-clock/FPS claim is made.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "Explosher sparkle branch",
+        "harmonicFrames",
+        "phaseSin",
+        "phaseCos"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+          "sha256": "759a9bca4bef0428c9b5e6ff5ee84cf40f411bac93e4a3b08054c671fd57e8ee"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] explosher-sparkle-age-phase-share-harmonic-trig.md",
+      "queue_sha256": "274818c701f69762a68b6834c038b50c353f00d472624184738fb2c1a1a1e0c4",
+      "library_file_id": "libfile_bfcd185c16308191a124f5507a9c9683",
+      "previous_disposition": {
+        "slug": "explosher-sparkle-age-phase-share-harmonic-trig",
+        "status": "not-adopted",
+        "reason": "Angle addition is not IEEE-754 identical: age=.017,seed=.062 direct0.9044121893788258 versus expanded0.904412189378826. No approximate trig under exact instance/pixel contract.",
+        "evidenceReport": "reports/queue-extra-residual-weapons-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "sloshing-machine-drill-reuse-render-slot-record-and-direction",
+      "status": "implemented",
+      "reason": "Restored the safe PR1870 implementation omitted in PR1878: at most 16 reusable drill records, each owning its direction vector. The producer no longer clones the direction before the callee copies it. draw/clear release actor-linked position/color references and dispose drops slots. Full prior-source/new-source comparisons preserve matrices and attributes over 180 frames.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "createInkSheets.drill",
+        "drillSlots",
+        "clear",
+        "dispose"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+          "sha256": "8aca906afbab14aaadc73815455d9273a654226cabb22800cdeb15e5062320c2"
+        },
+        {
+          "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+          "sha256": "759a9bca4bef0428c9b5e6ff5ee84cf40f411bac93e4a3b08054c671fd57e8ee"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] sloshing-machine-drill-reuse-render-slot-record-and-direction.md",
+      "queue_sha256": "3b17082ea5a00c7aa996cc6e07dd7af167815a2d7cb2ed45974f4c5cd2eeec84",
+      "library_file_id": "libfile_bb5675806d7c81919a23f54b52646319",
+      "previous_disposition": {
+        "slug": "sloshing-machine-drill-reuse-render-slot-record-and-direction",
+        "status": "already-in-pr",
+        "reason": "Own drill records/direction vectors per admitted render slot, copy input direction after capacity admission, and clear retained point/color references on draw/clear/dispose.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "s3-ink-sheets-hoist-static-sweep-basis-per-burst",
+      "status": "implemented",
+      "reason": "Restored the missing PR1870 static sweep basis/quaternion setup once per burst, retaining per-layer basis construction for the dynamic vertical arrow case. Real old/new sheet rendering compares all Float32 matrices, colors and attributes for all five sheet styles and culling transitions.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs"
+      ],
+      "symbols": [
+        "createInkSheets.draw"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+          "sha256": "8aca906afbab14aaadc73815455d9273a654226cabb22800cdeb15e5062320c2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+          "sha256": "deb0d01a0d93e1a1b8231556ea483cce8dac3274946f4ccc886fa77b27ef70fd"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] s3-ink-sheets-hoist-static-sweep-basis-per-burst.md",
+      "queue_sha256": "003dfcfd924fef4bb85c48b9f7faf544a000d6c42193609bcdd3295c3cfd21fe",
+      "library_file_id": "libfile_f425d7b8fc4c8191b2a72ddfc04cf7eb",
+      "previous_disposition": {
+        "slug": "s3-ink-sheets-hoist-static-sweep-basis-per-burst",
+        "status": "already-in-pr",
+        "reason": "Compute invariant sweep basis/quaternion once per burst draw; cone handling and dynamically rolling arrow layers retain their original per-layer path.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "tenta-missiles-vfx-hud-preview-row-reuse",
+      "status": "implemented",
+      "reason": "Reuses a per-director inside array and a bounded pool of projected HUD rows without changing target selection, projection order or headless reticle lifecycle. A busy guard isolates reentrant calls; finally clears actor references and scratch state on normal and exceptional exits. Actual HUD/headless tests cover five targets, reordered targets, nested draw and throwing consumers.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "DIRECTORS.tentaMissiles.frame",
+        "tentaRows"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tenta-missiles-vfx-hud-preview-row-reuse.md",
+      "queue_sha256": "4da7993f34b04ab62c83d64d4c37e6b3b947e874fcb05a490c97983f4c3573c6",
+      "library_file_id": "libfile_274a5c1da53881919580ce96b221ad84",
+      "previous_disposition": {
+        "slug": "tenta-missiles-vfx-hud-preview-row-reuse",
+        "status": "needs-evidence",
+        "reason": "Pending: final DIRECTORS.tentaMissiles.frame still allocates inside and [Actor,x,y] rows. Pooling would retain Actor references on track state; all HUD/fallback consumers plus endTrack/clear, phase changes and nested projections need proven synchronous nonescaping ownership and stale-row release before introducing that persistent alias.",
+        "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "wave-breaker-markinglines-frame-viewer-cache",
+      "status": "not-adopted",
+      "reason": "A frame/array-identity viewer cache misses same-array role or alive-state changes caused by synchronous beam callbacks. The actual markingLines implementation regression changes the first actor's isLocal flag while drawing the first device and correctly selects a different viewer for the second. Validating the cached viewer alone also misses an earlier newly eligible actor; preserving behavior needs the original prefix scan or an authoritative actor-generation contract.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "markingLines"
+      ],
+      "restored_from_pr1870": false,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] wave-breaker-markinglines-frame-viewer-cache.md",
+      "queue_sha256": "16f147adc4b61af6d2e648f61658d8202609ddfc78cf46ee640929ff8d735bb3",
+      "library_file_id": "libfile_e1efb7ef8f34819197a12b25360c3ddf",
+      "previous_disposition": {
+        "slug": "wave-breaker-markinglines-frame-viewer-cache",
+        "status": "needs-evidence",
+        "reason": "Cannot safely cache mutable actor role/order/liveness within callback-rich render traversal without a real invalidation contract.",
+        "evidenceReport": "reports/queue-extra-weapons-fx-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "booyah-round-identity-retire-orphan-core",
+      "status": "implemented",
+      "reason": "Restored PR1870's missing finishRound handling: mark a retained shape core dead, end both ribbon pools and then perform impact. Prevents orphan core retention on projectile identity retirement while preserving impact ordering and later PR1878 fixes.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "Director.finishRound"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] booyah-round-identity-retire-orphan-core.md",
+      "queue_sha256": "8870db8de532044a5a649cc757d97976ae759fa06b601e0af20e6bc7aa204c71",
+      "library_file_id": "libfile_53ee056e38c48191a168129ee3d7df1c",
+      "previous_disposition": {
+        "slug": "booyah-round-identity-retire-orphan-core",
+        "status": "already-in-pr",
+        "reason": "Retire owned shape handles as well as ribbons when a pooled round identity changes, preventing an orphaned Booyah core from surviving its owner.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "special-vfx-streaks-hoist-constant-ink-petal-color",
+      "status": "implemented",
+      "reason": "Restored per-invocation ink petal color reuse with scalar RGB invalidation. Mutable colors are reread each petal and custom inkCol implementations retain the original call behavior. Seeded raw pool writes and RNG order remain exact for normalized, HDR, nonfinite and mutable inputs.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "Director.streaks"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-vfx-streaks-hoist-constant-ink-petal-color.md",
+      "queue_sha256": "fcf9ce38557ef12469a51c5fe722335e9cd973cb89517d7f292c538ba763afd8",
+      "library_file_id": "libfile_8bb7b2c21cc08191ab18171082a62cbc",
+      "previous_disposition": {
+        "slug": "special-vfx-streaks-hoist-constant-ink-petal-color",
+        "status": "already-in-pr",
+        "reason": "Lazily reuse the default petal color within a streak recipe, guarded by color scalars and normalizer identity; custom normalization keeps its original calls.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "special-vfx-drop-double-inkcol",
+      "status": "implemented",
+      "reason": "Restored elimination of the redundant second built-in inkCol normalization only when the first result has bounded finite normalization behavior. Custom normalizers, overflow and nonfinite paths retain the original repeated call. Raw emitted values and seeded ordering are compared against the actual prior method.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "Director.drop",
+        "Director.inkCol"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-vfx-drop-double-inkcol.md",
+      "queue_sha256": "0ecc0c97f8f322b2902ffd9e487b891848f1ebccdc0a89124e690a651a0ee635",
+      "library_file_id": "libfile_f3d8f7d6d07c81919480b758a69bb68a",
+      "previous_disposition": {
+        "slug": "special-vfx-drop-double-inkcol",
+        "status": "already-in-pr",
+        "reason": "Skip the second color normalization only for the default method with already normalized finite color; custom normalizers and exceptional ranges keep the original second call.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "killer-wail-live-lasers-share-render-step-exponential-alpha",
+      "status": "implemented",
+      "reason": "Restored a lazy shared exponential interpolation alpha for live Wail lasers within a render update. Skipped frames do not evaluate it and all beam/pool coordinates and cosmetic RNG retain original values. Six live lasers require one exponential instead of six.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "Director.update live laser loop"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] killer-wail-live-lasers-share-render-step-exponential-alpha.md",
+      "queue_sha256": "d8947258299d42f2112020166fe2b7b940e61fe5d4b3bd8639467e9bd1887770",
+      "library_file_id": "libfile_76ba178e3d4081918799a780fd10df71",
+      "previous_disposition": {
+        "slug": "killer-wail-live-lasers-share-render-step-exponential-alpha",
+        "status": "already-in-pr",
+        "reason": "Compute the identical exponential smoothing alpha lazily once in the live-laser update; individual beam endpoints and update order remain unchanged.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "special-vfx-bubbler-dual-roster-temporary-array",
+      "status": "implemented",
+      "reason": "Restored scalar iteration over the two eagerly read local/remote Bubbler rosters, avoiding the temporary paired collection. Tests preserve local-then-remote order, eager source-getter timing, live-array mutation effects and retirement.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "Director.update Bubbler handling"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-vfx-bubbler-dual-roster-temporary-array.md",
+      "queue_sha256": "98302b9377324dffa2766870a1f28e5a63b0e3b956cf9d326b85d6ab41b9e6ba",
+      "library_file_id": "libfile_fde78af611d88191b3aefea5a440eb9e",
+      "previous_disposition": {
+        "slug": "special-vfx-bubbler-dual-roster-temporary-array",
+        "status": "already-in-pr",
+        "reason": "Capture both Bubbler rosters eagerly and visit them with a two-iteration numeric loop, preserving roster order without an outer array.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "reefslider-dash-vfx-elide-per-frame-paired-tuples",
+      "status": "implemented",
+      "reason": "Restored scalar left/right wake selection and a two-index loop instead of allocating paired wake tuples per dash frame. Actual 30/60/120 Hz seeded recipe comparisons retain every emitted argument, ribbon point and RNG step.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "DIRECTORS.reefslider.frame"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] reefslider-dash-vfx-elide-per-frame-paired-tuples.md",
+      "queue_sha256": "b4e7a927516a97b7ad9929ae0580abb7091b96aec80e3c2345325676086ca988",
+      "library_file_id": "libfile_48cb026a2f888191b8dcda0ffbd84ef5",
+      "previous_disposition": {
+        "slug": "reefslider-dash-vfx-elide-per-frame-paired-tuples",
+        "status": "already-in-pr",
+        "reason": "Capture the two wake handles and run a numeric two-side loop, keeping left/right offsets and emission order without paired tuple arrays.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "ink-vac-vfx-hoist-suction-particle-orthonormal-basis",
+      "status": "implemented",
+      "reason": "Restored lazy construction of the orthonormal suction basis on the first emitted particle, shared for subsequent particles in that render. No-particle paths skip basis work and actual seeded full recipe arguments remain exact at 30/60/120 Hz.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "DIRECTORS.inkVac.frame"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-vac-vfx-hoist-suction-particle-orthonormal-basis.md",
+      "queue_sha256": "3febd42e8e4773e9172865169d22510def1bb33d8245df19f05d2ccd22d1be3a",
+      "library_file_id": "libfile_2136023b602881919cb4cea83f7cb432",
+      "previous_disposition": {
+        "slug": "ink-vac-vfx-hoist-suction-particle-orthonormal-basis",
+        "status": "already-in-pr",
+        "reason": "Build the identical suction frame basis lazily once per emitted-particle update, preserving per-particle scalars and RNG sequence.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "kraken-vfx-filament-share-per-step-sine-and-hoist-radius",
+      "status": "implemented",
+      "reason": "Restored per-strand horizontal/vertical radius hoists and one sine shared for both axes at each filament step. Every actual ribbon coordinate and timestamp remains bit-identical, with step sine calls halved.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "DIRECTORS.kraken.enter"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] kraken-vfx-filament-share-per-step-sine-and-hoist-radius.md",
+      "queue_sha256": "fcac3704ee3b2a3b7d8b86c953593b8f5107f364b181996d2086d3307e78089c",
+      "library_file_id": "libfile_743f15e6c06c8191891d94c1a5d90953",
+      "previous_disposition": {
+        "slug": "kraken-vfx-filament-share-per-step-sine-and-hoist-radius",
+        "status": "already-in-pr",
+        "reason": "Keep strand radii outside the substep loop and share the identical sine within each substep without changing particle state or random calls.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "killer-wail-speaker-anchor-intermediate-roster-arrays",
+      "status": "implemented",
+      "reason": "Restored reusable holder storage while retaining filter-before-map property-read order, sparse-array semantics, reentrancy isolation and finally-based reference release. Actual matrix values and getter traces match the frozen PR1878 implementation.",
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "symbols": [
+        "speakerAnchors"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+          "sha256": "87cd665bf5f222b5e94ea65ff790cc6e6d7a51dd0f386852d586a846cb8c87f8"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] killer-wail-speaker-anchor-intermediate-roster-arrays.md",
+      "queue_sha256": "0a83fd8bf8dfb35230658a247c94dce672e4161d3f1ca5217e618dd539cefd40",
+      "library_file_id": "libfile_b80e972703d881918352c22a111f57bf",
+      "previous_disposition": {
+        "slug": "killer-wail-speaker-anchor-intermediate-roster-arrays",
+        "status": "already-in-pr",
+        "reason": "Reuse an actor-owned holder buffer for synchronous anchor mapping while preserving filter-then-map order; nested calls get independent fallback storage and references clear in finally.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "kraken-presentation-contact-lift-full-vertex-scan",
+      "status": "implemented",
+      "reason": "Restored the missing exact point-block lower-bound helper from PR1870 and its use for large immutable point arrays in Kraken contact lift. Short arrays keep the original loop, and point-array replacement invalidates the block cache. Existing queue-weapons tests now import the actual restored runtime helper rather than the fixture and retain all original assertions.",
+      "tests": [
+        "patches/splatoon3/tests/queue-weapons-20261024.test.mjs"
+      ],
+      "symbols": [
+        "animateDevice",
+        "buildPointBlocks",
+        "pointBlockMinimum"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698"
+        },
+        {
+          "path": "patches/splatoon3/runtime/point-block-minimum.mjs",
+          "sha256": "67972918ecf59eb49a0563a9b5feb49f44eec32dec08ee6f1f4a23bd35b99519"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-weapons-20261024.test.mjs",
+          "sha256": "e22450be2e66913c11aaf811db89c37f7979344bd970f4277bdf51865e45e20b"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] kraken-presentation-contact-lift-full-vertex-scan.md",
+      "queue_sha256": "049e576b32ee2522cd64271b446d9e402fc8fc51097a766924303c609827e565",
+      "library_file_id": "libfile_290cda747bf88191b3a727734a97bdfc",
+      "previous_disposition": {
+        "slug": "kraken-presentation-contact-lift-full-vertex-scan",
+        "status": "already-in-pr",
+        "reason": "Conservative bounds over 32 immutable model sample points skip blocks only when their finite lower bound cannot improve the original ordered minimum; non-finite bounds retain the exact point scan.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "killer-wail-idle-speaker-roster-walk",
+      "status": "implemented",
+      "reason": "Restored the omitted private speaker-mark admission index, with additional correctness guards beyond PR1870. Only observeSpeaker creates marks, so an empty candidate index skips the idle roster scan; active paths retain roster draw order. All accepted marks are indexed, including local actors that may become remote. Candidates expire by the existing 5/60 + 0.1-second lifetime rather than roster membership, preserving temporary removal/rejoin without a new event. activate and Projectiles.clear release the index. A clock rewind falls back to the original scan until the prior high-water time, preserving old WeakMap marks that become recent again. Tests compare real model transforms, material colors and lifetime at 30/60/120 Hz, 0/1/4/8 idle rosters, accepted callbacks, roster replacement/rejoin, future marks, activate/clear and expired-mark clock rewind. References to an absent actor are kept only until its original mark expiry or clear, rather than retained indefinitely during advancing time.",
+      "tests": [
+        "patches/splatoon3/tests/queue-wail-idle-speakers-20261026.test.mjs",
+        "patches/splatoon3/tests/special-presentation-native-controls.test.mjs"
+      ],
+      "symbols": [
+        "observeSpeaker",
+        "syncTailSpeakers",
+        "speakerCandidates",
+        "speakerClockCeiling",
+        "Projectiles.clear"
+      ],
+      "restored_from_pr1870": true,
+      "evidence": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/splatoon3/tests/queue-wail-idle-speakers-20261026.test.mjs",
+          "sha256": "9abc21023d3c50d848bdad4dc594d9bdb5344ec49258213c3d352cd7775d07bc"
+        },
+        {
+          "path": "patches/splatoon3/tests/special-presentation-native-controls.test.mjs",
+          "sha256": "0ca557276841272ad02f23ae6e1dfeba222f478b36df20a09d47269099d160e4"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] killer-wail-idle-speaker-roster-walk.md",
+      "queue_sha256": "2fd319e8d4113daab057575a7bbfa77b9bc60262816e4c99dc644a9a2b8e911c",
+      "library_file_id": "libfile_1c09f628ba9881919fc7b2b36dcc1982",
+      "previous_disposition": {
+        "slug": "killer-wail-idle-speaker-roster-walk",
+        "status": "already-in-pr",
+        "reason": "Track only actors with accepted remote Wail marks and skip the full actor walk when that set is empty; active drawing keeps roster order and clears stale entries.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    }
+  ],
+  "verification": [
+    {
+      "file": "patches/splatoon3/tests/queue-special-cadence-20261026.test.mjs",
+      "result": "PASS",
+      "assertions": "9 source + minified cases, including retained-disc callback",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/special-5-cadence-minified-tests.log"
+      ],
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-5-cadence-minified-tests.log",
+          "sha256": "5e7b8a0b136c314af8013662d02e6e44389f40da2e14f1b93102ddcefa34d0ce"
+        }
+      ]
+    },
+    {
+      "file": "patches/splatoon3/tests/queue-special-presentation-20261026.test.mjs",
+      "result": "PASS",
+      "assertions": "6 cases; actual Three transforms, exact Float32 arrays, heading/muzzle negative controls",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/special-presentation-new-tests.log"
+      ],
+      "measured_operation_count": {
+        "warm_frames": 300,
+        "original_phase_trig": 8400,
+        "optimized_phase_trig": 654,
+        "finite_float32_differences": 0
+      },
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-presentation-new-tests.log",
+          "sha256": "6d5086ee5158c0fb76b1cd8174fb2898d9113be70a6259da0a9be6dc6883ed50"
+        }
+      ]
+    },
+    {
+      "file": "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs",
+      "result": "PASS",
+      "assertions": "10 source cases and 10 minified cases, actual director recipes and callback/lifecycle negative controls",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/special-restored-new-tests.log",
+        "reports/queue-local-evidence-20261026/source-audit/special-restored-minified-tests.log"
+      ],
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-restored-new-tests.log",
+          "sha256": "e6ec88a39c421a9b55b7a816af5eb5f5db96a0f2e8cd336d589e6c69c3afc809"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-restored-minified-tests.log",
+          "sha256": "8af7f0a8f57509cd792b272a2cc0d08dcc08b181ce04cbdb2cc5c6a78545d577"
+        }
+      ]
+    },
+    {
+      "file": "patches/splatoon3/tests/queue-wail-idle-speakers-20261026.test.mjs",
+      "result": "PASS",
+      "assertions": "5 cases: real models 30/60/120 Hz, complete private index/reset, roster replacement/rejoin, clock rewind, synchronous accepted-event callback",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/wail-idle-speakers-tests.log"
+      ],
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/wail-idle-speakers-tests.log",
+          "sha256": "4810ff2171a95f499c5fda719cd5141abd3ef1f966f1d0049b44fc8320a81c25"
+        }
+      ]
+    },
+    {
+      "kind": "related existing gates",
+      "result": "PASS",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/special-5-related-tests.log",
+        "reports/queue-local-evidence-20261026/source-audit/special-presentation-related-tests.log",
+        "reports/queue-local-evidence-20261026/source-audit/special-restored-related-tests.log"
+      ],
+      "note": "Preserved existing assertions; queue-weapons point-block import now targets actual restored runtime rather than a fixture.",
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-5-related-tests.log",
+          "sha256": "84901a15d825fa2d22fa4e18feba3dbf8c1ef44988f4d90dca9f37a4b87074ed"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-presentation-related-tests.log",
+          "sha256": "72ddae8f0a495724d7e3bac81d769ee0098f3b5889e0e2612553dace20254240"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/special-restored-related-tests.log",
+          "sha256": "33546dd4abf11ab18421f1c3ccf6d8b28bdb6d698f997ce4ebaa03b3e5c46663"
+        }
+      ]
+    },
+    {
+      "file": "patches/splatoon3/tests/special-presentation-native-controls.test.mjs",
+      "result": "PASS",
+      "tests": 12,
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/wail-idle-native-controls-tests.json"
+      ],
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/wail-idle-native-controls-tests.json",
+          "sha256": "aff4c0a9a7cbef5cd2b7092f0d04ff1eafb14c9aade93a3ba9d7c2b89c305368"
+        }
+      ]
+    }
+  ],
+  "constraints": {
+    "local_only": true,
+    "remote_mutations": false,
+    "ci_runs_or_deployments": false,
+    "existing_test_gates_weakened": false,
+    "fps_or_wall_clock_performance_claim": false
+  }
+}

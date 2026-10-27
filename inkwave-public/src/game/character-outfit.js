@@ -72,12 +72,23 @@ export const bodyRes = (level) => RES[clamp(level | 0, 0, 4)];
 // ------------------------------------------------------------------------------------------------
 // Limb frames: arc-length parametrised centreline with a stable (lateral, forward) section frame
 // ------------------------------------------------------------------------------------------------
+// Four private centreline tables cover the ordinary left/right arms and legs.
+// Cache sampled values, never the caller's path object or its live lateral hint.
+const historicalLimbTables = [];
 function limbPath(pts, latHint) {
-  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
-  const N = 600; const P = [], S = [0];
-  for (let i = 0; i <= N; i++) P.push(curve.getPoint(i / N));
-  for (let i = 1; i <= N; i++) S.push(S[i - 1] + P[i].distanceTo(P[i - 1]));
-  const len = S[N];
+  const values = []; for (const p of pts) values.push(p.x, p.y, p.z);
+  let table = historicalLimbTables.find(entry => entry.values.length === values.length && entry.values.every((v, i) => Object.is(v, values[i])));
+  const N = 600;
+  if (!table) {
+    const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+    const P = [], S = [0];
+    for (let i = 0; i <= N; i++) P.push(curve.getPoint(i / N));
+    for (let i = 1; i <= N; i++) S.push(S[i - 1] + P[i].distanceTo(P[i - 1]));
+    table = { values, P, S, len: S[N] };
+    if (historicalLimbTables.length === 4) historicalLimbTables.shift();
+    historicalLimbTables.push(table);
+  }
+  const { P, S, len } = table;
   const Z = new V3(0, 0, 1);
   /** frame at arc length s: { C, d (along), l (lateral), f (forward) } */
   const at = (s, out = {}) => {
@@ -354,6 +365,21 @@ const neckDip = (y, frontK) => NECK_DIP * frontK * sstep(TEE_TOP - 0.034, TEE_TO
 const STRAP_AY = [[1.05, 0.988], [0.66, 0.975], [0.5, 0.935], [0.52, 0.87], [0.58, 0.8], [0.9, 0.75], [1.55, 0.744], [2.1, 0.748]];
 const STRAP = { w: 0.0112, t: 0.0021, groove: 0.0016 };
 let _strapCache = null;
+// Only strapPaths owns these polylines; no caller can mutate their samples.
+const historicalStrapBlocks = new WeakMap();
+function rememberStrapBlocks(poly) {
+  const blocks = [];
+  for (let first = 0; first < poly.length - 1; first += 12) {
+    const end = Math.min(first + 12, poly.length - 1), min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+    for (let i = first; i <= end; i++) {
+      const v = poly[i];
+      min[0] = Math.min(min[0], v.x); min[1] = Math.min(min[1], v.y); min[2] = Math.min(min[2], v.z);
+      max[0] = Math.max(max[0], v.x); max[1] = Math.max(max[1], v.y); max[2] = Math.max(max[2], v.z);
+    }
+    blocks.push({ first, end, min, max });
+  }
+  historicalStrapBlocks.set(poly, blocks);
+}
 function strapPaths() {
   if (_strapCache) return _strapCache;
   const out = [];
@@ -371,6 +397,7 @@ function strapPaths() {
     const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
     out.push({ sx: 0, curve, poly: curve.getSpacedPoints(40), chest: true });
   }
+  for (const { poly } of out) rememberStrapBlocks(poly);
   return (_strapCache = out);
 }
 /** Re-sample a curve and snap the samples that lie near the tee onto its surface (chords never cut inside). */
@@ -395,20 +422,38 @@ function projectedCurve(curve, n) {
 }
 function distToPoly(p, poly) {
   let best = 1e9;
-  for (let i = 0; i < poly.length - 1; i++) {
-    const a = poly[i], b = poly[i + 1];
-    const bx = b.x - a.x, by = b.y - a.y, bz = b.z - a.z, px = p.x - a.x, py = p.y - a.y, pz = p.z - a.z;
-    const t = clamp((px * bx + py * by + pz * bz) / Math.max(1e-12, bx * bx + by * by + bz * bz), 0, 1);
-    const dx = px - bx * t, dy = py - by * t, dz = pz - bz * t, d = dx * dx + dy * dy + dz * dz;
-    if (d < best) best = d;
+  const blocks = historicalStrapBlocks.get(poly);
+  // The sole production consumer ignores d > .03. The margin is conservative.
+  const ranges = blocks || [{ first: 0, end: poly.length - 1 }];
+  for (const block of ranges) {
+    if (blocks) {
+      const { min, max } = block, margin = 0.03 + 1e-9;
+      if (p.x < min[0] - margin || p.x > max[0] + margin || p.y < min[1] - margin || p.y > max[1] + margin || p.z < min[2] - margin || p.z > max[2] + margin) continue;
+    }
+    for (let i = block.first; i < block.end; i++) {
+      const a = poly[i], b = poly[i + 1];
+      const bx = b.x - a.x, by = b.y - a.y, bz = b.z - a.z, px = p.x - a.x, py = p.y - a.y, pz = p.z - a.z;
+      const t = clamp((px * bx + py * by + pz * bz) / Math.max(1e-12, bx * bx + by * by + bz * bz), 0, 1);
+      const dx = px - bx * t, dy = py - by * t, dz = pz - bz * t, d = dx * dx + dy * dy + dz * dz;
+      if (d < best) best = d;
+    }
   }
   return Math.sqrt(best);
 }
 // the tank back plate footprint on the tee (tank-local rect ±0.074 × ±0.1, tilted like the tank)
+let historicalPlateTilt, historicalPlateCos, historicalPlateSin, historicalPlateReady = false;
 function plateMask(p) {
   const c = K.TANK.center, t = K.TANK.tilt;
   const dy = p.y - c.y, dz = p.z - c.z;
-  const ly = dy * Math.cos(t) + dz * Math.sin(t);
+  let cos, sin;
+  if (typeof t !== 'number') { cos = Math.cos(t); sin = Math.sin(t); }
+  else {
+    if (!historicalPlateReady || !Object.is(historicalPlateTilt, t)) {
+      historicalPlateTilt = t; historicalPlateCos = Math.cos(t); historicalPlateSin = Math.sin(t); historicalPlateReady = true;
+    }
+    cos = historicalPlateCos; sin = historicalPlateSin;
+  }
+  const ly = dy * cos + dz * sin;
   const u = Math.abs(p.x) / 0.078, v = Math.abs(ly) / 0.104;
   const e = Math.pow(Math.pow(u, 4) + Math.pow(v, 4), 0.25);
   return (1 - sstep(0.86, 1.02, e)) * sstep(-0.04, -0.07, p.z);

@@ -46,7 +46,7 @@ export function createWailSpeakerBatch(THREE,scene,devices) {
 export function updateWailSpeakerBatch(batch) {
   const {root,parts,inverse,matrix}=batch;root.updateWorldMatrix(true,false);inverse.copy(root.matrixWorld).invert();
   // All source hierarchies are logical and remain independently observable.
-  for(const record of parts[0]?.records||[])record.root.updateWorldMatrix(true,true);
+  for(const record of parts[0]?.records||[])record.root.updateWorldMatrix(record.root.parent!==root.parent,true);
   for(const part of parts){
     const mesh=part.mesh,reference=mesh.material;let n=0;
     for(const record of part.records){

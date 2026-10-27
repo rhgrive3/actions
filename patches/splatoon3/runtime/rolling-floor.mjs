@@ -7,6 +7,11 @@ export function traceRollingFloor(owner, at, level, physics, contact, paintableO
   if(!owner.ground?.hit || !level || !Number.isFinite(from.x+from.y+from.z+at.x+at.z))return;
   // Partial/test levels without collision queries cannot prove floor contact.
   if(typeof (level.triangleWorld?level.queryDynamicBlocks:level.queryBlocks)!=='function')return;
+  // Preserve incoming main's reentrant allocation lease in the shared path:
+  // both downhill support and paint own only their invocation's buffers.
+  const scratchDepth=contact.rollScratchDepth||0,scratch=contact.rollScratch||=([]);
+  const lease=scratch[scratchDepth]||=( {ids:[],triangle:[null,null,null]} );contact.rollScratchDepth=scratchDepth+1;
+  try {
   const surfaces=[], dx=at.x-from.x,dz=at.z-from.z;
   function polygon(points,normal,faceId){
     const face=level.faces[faceId];
@@ -40,9 +45,10 @@ export function traceRollingFloor(owner, at, level, physics, contact, paintableO
     if(world.flags[id]&4)return;
     const normal=contact.point.fromArray(world.normals,id*3);
     const tri=world.triangle(id);
-    polygon([tri.a,tri.b,tri.c],normal,level.data.triangleFace[id]);
+    lease.triangle[0]=tri.a;lease.triangle[1]=tri.b;lease.triangle[2]=tri.c;
+    polygon(lease.triangle,normal,level.data.triangleFace[id]);
   });
-  const ids=[];
+  const ids=lease.ids;ids.length=0;
   if(world)level.queryDynamicBlocks(min.x,min.z,max.x,max.z,ids);
   else level.queryBlocks(min.x,min.z,max.x,max.z,ids);
   for(const id of ids){
@@ -100,4 +106,5 @@ export function traceRollingFloor(owner, at, level, physics, contact, paintableO
   contact.hit=h;
   if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
     return h;
+  }finally{lease.ids.length=0;lease.triangle.fill(null);contact.rollScratchDepth=scratchDepth;}
 }

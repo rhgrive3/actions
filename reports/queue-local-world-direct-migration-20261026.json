@@ -1,0 +1,56 @@
+{
+  "base": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "purpose": "Move already-validated world changes into the five authored DIRECT owners; keep the migration gate and converter fingerprints unchanged.",
+  "paths": [
+    {
+      "path": "src/game/nav.js",
+      "sourceBeforeSha256": "4b38ce452c58b1ec60660cb90660603a4a156e2ce58a9d76f013135fa3ebe151",
+      "sourceAfterSha256": "c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc",
+      "composedBeforeMigrationSha256": "c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc",
+      "composedAfterMigrationSha256": "c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc",
+      "exactComposedParity": true
+    },
+    {
+      "path": "src/game/character-lod.js",
+      "sourceBeforeSha256": "c088c0767bfc174718a248f043c62629d7c2cbedd486352bb08a0d3b41805973",
+      "sourceAfterSha256": "67cc66caee6f8dc64f2e2151c1942bc28c8d597d7d2d35953fdd0526e219a43e",
+      "composedBeforeMigrationSha256": "e1275e69d0f5266efbc17d565108c991ba162af58f0c05f706dce03c2ba9e611",
+      "composedAfterMigrationSha256": "e1275e69d0f5266efbc17d565108c991ba162af58f0c05f706dce03c2ba9e611",
+      "exactComposedParity": true
+    },
+    {
+      "path": "src/game/motion/source-bank.js",
+      "sourceBeforeSha256": "6764fa1c7f582b0627ac0a110cc07030b4513e3d5ebcd8cd12405e0c537c665b",
+      "sourceAfterSha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960",
+      "composedBeforeMigrationSha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960",
+      "composedAfterMigrationSha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960",
+      "exactComposedParity": true
+    },
+    {
+      "path": "src/world/props-core.js",
+      "sourceBeforeSha256": "ab91801b38412a82fe47656108b226183ab7e7cf6d3a121618d91df684e77012",
+      "sourceAfterSha256": "24b392a6f66a497f72acbfdb21ea2a404f94b9dbf5ad44c39016215b05b4b758",
+      "composedBeforeMigrationSha256": "24b392a6f66a497f72acbfdb21ea2a404f94b9dbf5ad44c39016215b05b4b758",
+      "composedAfterMigrationSha256": "24b392a6f66a497f72acbfdb21ea2a404f94b9dbf5ad44c39016215b05b4b758",
+      "exactComposedParity": true
+    },
+    {
+      "path": "src/world/props-marina-vessels.js",
+      "sourceBeforeSha256": "0f538cce6ef89836e97393d9268bbab8e5038016885f5ad2ee5163d403619518",
+      "sourceAfterSha256": "dfe376ffc16b99ccb94364081f7f95059af025bf228895c5b092e2db21407577",
+      "composedBeforeMigrationSha256": "dfe376ffc16b99ccb94364081f7f95059af025bf228895c5b092e2db21407577",
+      "composedAfterMigrationSha256": "dfe376ffc16b99ccb94364081f7f95059af025bf228895c5b092e2db21407577",
+      "exactComposedParity": true
+    }
+  ],
+  "followup": {
+    "path": "src/world/props-core.js",
+    "reason": "Strengthen the UV omission admission to the reviewed MeshBasic/MeshStandard built-in families; ShaderMaterial/RawShaderMaterial and other unknown shader families retain UVs. Existing candidate-stage geometry remains equal.",
+    "sourceSha256": "e439c0168239ae05398108eb893b2b4ca5647a699366ff605d5f9024b43c627c",
+    "tests": [
+      "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs",
+      "patches/local-quality/tests/prop-retention.test.mjs",
+      "patches/local-quality/tests/prop-atlas.test.mjs"
+    ]
+  }
+}

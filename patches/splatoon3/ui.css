@@ -789,7 +789,17 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
     grid-column: 1 / -1; grid-row: 2;
   }
 }
+/* An IW entrance scales each card independently. Under reduced-motion, a
+   budget-starved mobile renderer can keep a later (Range) card above the
+   selected Turf card and intercept its native pointer action for minutes.
+   Respect the user's preference and keep the actual grid hit boxes stable. */
 @media (prefers-reduced-motion: reduce) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode.iw-in {
+    animation: none !important;
+    transition: none;
+    translate: none;
+    scale: 1;
+  }
   .s3-stage-settings, .s3-stage-settings .iw-modal__card { animation: none; }
 }
 @media (max-height: 300px) {

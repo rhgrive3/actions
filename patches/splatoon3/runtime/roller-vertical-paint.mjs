@@ -1,4 +1,4 @@
-import {paintDistanceFlight} from './blaster-flight-paint.mjs';
+import {paintDistanceFlight,ownDistanceFlightState} from './blaster-flight-paint.mjs';
 // Vertical swing intermediate splashes share the Blaster/Shooter falling-splash
 // pipeline (PR1188): they are released along the central unit's flight, fall
 // under that unit's sourced FreeGravity and paint where they land. The pinned
@@ -27,8 +27,8 @@ export function rollerVerticalPaintSpec(group,scale=1,depletionPaintScale=1) {
 }
 export function configureRollerVerticalPaint(p,group,scale,depletionPaintScale=1) {
   const spec=rollerVerticalPaintSpec(group,scale,depletionPaintScale);
-  p.s3RollerFlightPaint={spec,distance:0,index:0,last:p.pos.clone(),sample:p.pos.clone(),end:p.pos.clone(),
-    down:p.pos.clone().set(0,-1,0),direction:p.pos.clone(),hit:{hit:false,point:p.pos.clone(),normal:p.pos.clone()},wallSplash:null};
+  p.s3RollerFlightPaint=ownDistanceFlightState({spec,distance:0,index:0,last:p.pos.clone(),sample:p.pos.clone(),end:p.pos.clone(),
+    down:p.pos.clone().set(0,-1,0),direction:p.pos.clone(),hit:{hit:false,point:p.pos.clone(),normal:p.pos.clone()},wallSplash:null});
   p.trailEvery=0;
 }
 export function paintRollerVerticalFlight(game,p,end=p?.pos) {

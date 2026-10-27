@@ -1,0 +1,67 @@
+{
+  "baseRepository": "rhgrive3/actions",
+  "selectedBasePR": 1878,
+  "selectedBaseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "driveBackup": {
+    "source": "https://drive.google.com/file/d/1x9xMNBPLe4XEaVLWBR56KKCjMXGcIMu1/view",
+    "observedUtc": "2026-10-25",
+    "repository": "rhgrive3/actions",
+    "baseline": "7ea9410d9aaca46ddb864b96ca4af4ea475f82d6",
+    "lastSha": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+    "updatedUtc": "2026-10-24T12:50:01.977Z",
+    "chainLength": 129,
+    "lastManifest": {
+      "from": "f411123f31dd322b6d01973231ac1f794d19de3b",
+      "to": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+      "manifest": "INKWAVE-auto-f411123f-to-7f863ea2-manifest.json",
+      "manifestId": "1w_spxwvvZPpvaD2ZWgkdyE14YByEkC97",
+      "partCount": 296,
+      "changedFiles": 1578
+    }
+  },
+  "decision": "Use the directly retrieved aggregate PR head as explicitly allowed. At initial selection, Drive lastSha agreed with then-current GitHub main; reconstructing its 129-delta chain would not represent PR1878. The later main merge has the same tree as the selected head.",
+  "librarySnapshot": {
+    "folder": "/INKWAVE Issue Queue/",
+    "directChildren": 693,
+    "activeQueues": 552,
+    "previousPR1870": 107,
+    "fixed": 31,
+    "readmeRecovery": 2,
+    "archiveFolder": 1,
+    "method": "Enumerated direct children, downloaded every active QUEUE, reconciled actual current PR code independently of the historical PR1870 labels.",
+    "completeScopeReport": "reports/queue-local-complete-scope-20261026.json",
+    "allQueueAndFixRecordsAudited": 690,
+    "historicalOriginAudit": "reports/queue-local-historical-pr1878-origin-20261026.json",
+    "supplementalArchiveAudit": {
+      "recursive": true,
+      "files": 51,
+      "allReadAndDispositioned": true,
+      "unclassified": 0,
+      "unresolved": 0,
+      "report": "reports/queue-local-archive-audit-20261026.json",
+      "direct690CountsChanged": false,
+      "libraryMutations": false
+    }
+  },
+  "constraints": [
+    "Local branch only; no push, PR creation, merge or remote CI activation.",
+    "No Library queue status mutation.",
+    "Do not resume requested hair/body/outfit shape creation.",
+    "Do not introduce unlicensed recorded-audio content."
+  ],
+  "mainHeadAtStart": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "mainHeadAtRecheck": "f6d9fb06f86a5affb963d1ee5ae199e907f30961",
+  "baselineTree": "7df23a99a243a0df16dab38389a8f515d92a3a8b",
+  "mainRecheck": {
+    "prState": "merged",
+    "mergedAt": "2026-10-25T19:10:04Z",
+    "mainCommit": "f6d9fb06f86a5affb963d1ee5ae199e907f30961",
+    "tree": "7df23a99a243a0df16dab38389a8f515d92a3a8b",
+    "sameTreeAsReviewedPR": true,
+    "remoteWriteByThisTask": false,
+    "sources": [
+      "https://github.com/rhgrive3/actions/pull/1878",
+      "https://api.github.com/repos/rhgrive3/actions/branches/main"
+    ]
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "scope": "Additional 15 sub queues plus Fizzy unreachable paint; historical statuses rechecked against current source.",
+  "counts": {
+    "implemented-local": 12,
+    "not-adopted": 3,
+    "needs-evidence": 1
+  },
+  "validation": {
+    "newRegressionTests": 7,
+    "newTestFile": "patches/splatoon3/tests/queue-subs-local-20261026.test.mjs",
+    "baselineFixture": "patches/splatoon3/tests/fixtures/queue-subs-before-20261026.json",
+    "relatedSuiteFilesPassed": 6,
+    "relatedSuiteFiles": [
+      "sub-attachment-queue.test.mjs",
+      "sub-moving-surface.test.mjs",
+      "sub-community-behavior.test.mjs",
+      "torpedo-detached-splashes.test.mjs",
+      "catalogue-sub-hit-network.test.mjs",
+      "catalogue-sub-paint-authority.test.mjs"
+    ],
+    "nodeFlags": "--experimental-vm-modules --experimental-global-webcrypto",
+    "parity": "750 defense cases; 20 Angle ticks; 40 Burst renders; reverse/reentrant/throwing snapshots; actual placement/replay paths; visual batching/idle expiry/scene clear; mine ownership lifetimes."
+  },
+  "crossOwnedChange": {
+    "key": "shared-aoe-hit-distance-pass-once",
+    "evidence": "patches/splatoon3/runtime/all-subs.mjs",
+    "reason": "Reuses hit distance only with the same native distanceTo method and Object.is-identical point/center xyz values across LOS; custom shapeContact, method changes or mutated coordinates retain original recomputation. Main special side and disposition are owned by the parent."
+  },
+  "limitations": [
+    "No measured browser CPU, GC or power improvement is claimed.",
+    "Fizzy flight paint remains unresolved with the concrete source/replay evidence gap recorded; no new paint or game balance is invented."
+  ],
+  "items": [
+    {
+      "key": "all-subs-fixed-step-object-snapshot-array-reuse",
+      "title": "# [INKWAVE/ZEVANT][Optimization][P3] Reuse custom-sub fixed-step object-list snapshots without changing birth/removal ordering",
+      "status": "implemented-local",
+      "reason": "Depth-leased scratch arrays retain the reverse fixed-step visit order, callback births next tick, and nested traversal isolation. finally clears retained entity references after both normal completion and exceptions.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_90b0d2b96f348191bb6036ec568c42a1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] all-subs-fixed-step-object-snapshot-array-reuse.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "angle-shooter-tail-cache-static-bounds-and-capsule-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] ラインマーカー残留中の毎60Hz AABB再走査と一時オブジェクト生成を削減",
+      "status": "implemented-local",
+      "reason": "Caches bounds until a new immutable tail segment is appended. Depth-leased per-tail capsule query scratch preserves target order, seen-mark timing and reentrant calls; unused queries allocate nothing.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_eb75a415df74819196780740ede57176",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] angle-shooter-tail-cache-static-bounds-and-capsule-scratch.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "burst-bomb-aim-preview-per-render-vector-and-hit-allocation",
+      "title": "# [QUEUE][INKWAVE][Optimization] クイックボム(Burst Bomb)の軌道プレビューで毎描画 Vector3・Hit・一時レコードを割当",
+      "status": "implemented-local",
+      "reason": "Depth-leased Burst preview frames reuse vectors, Hit, flight/contact records and temporary template. Every original Hit field is reset at the call boundary, no launch outputs alias scratch, and finally clears the owner reference.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_864d48858584819193061ff479a854fc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] burst-bomb-aim-preview-per-render-vector-and-hit-allocation.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "ink-mine-beakon-instant-placement-avoid-double-model-build",
+      "title": "# [QUEUE][INKWAVE][Optimization] インクマイン・ジャンプビーコンの即時設置で3Dモデルを同一呼出し内に二重生成",
+      "status": "implemented-local",
+      "reason": "Immediate local Mine/Beakon deployment reuses its birth model and synchronizes the final root height, position and yaw. Other lifecycle paths retain their rebuild behavior.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_52b2e5781814819189abf2ead299788a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-mine-beakon-instant-placement-avoid-double-model-build.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "ink-mine-cache-enemy-ink-region-scan-on-paint-version",
+      "title": "# [QUEUE][INKWAVE][Optimization] インクマインの敵インク領域再走査を変更時だけ実行",
+      "status": "not-adopted",
+      "reason": "The global paint version cannot establish equivalence: moving Tower surface paint may change independently. The current live scan is retained to preserve triggering on dynamic surfaces.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_23d46477f9e48191bc51c7c8ea799b5a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-mine-cache-enemy-ink-region-scan-on-paint-version.md",
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "ink-mine-empty-owner-attachment-scan-on-weapon-update",
+      "title": "# [QUEUE][INKWAVE][Optimization] トラップ未設置のインクマイン装備者が全サブ設置物を毎武器更新で走査",
+      "status": "implemented-local",
+      "reason": "An index tied to the known entity-array identity tracks live mines per owner across birth and idempotent retirement. A proven zero skips the owner scan; positive counts and unknown array replacements retain the original ordered scan.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_f8717d7f2b4c8191873384d6b938a18a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ink-mine-empty-owner-attachment-scan-on-weapon-update.md",
+      "prior_status": null
+    },
+    {
+      "key": "remote-sub-replaydeploy-duplicate-visual-rebuild",
+      "title": "# [QUEUE][INKWAVE][Optimization] リモートサブ設置リプレイで3Dモデルを同一イベント内に二重再生成",
+      "status": "implemented-local",
+      "reason": "Remote replay defers the intermediate deploy rebuild and performs exactly one final rebuild after authoritative attachment, position, yaw, lifetime and uses are applied.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_6dd7d57a34508191b7df10bc56fb5b32",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] remote-sub-replaydeploy-duplicate-visual-rebuild.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "splash-wall-elide-duplicate-yaw-trigonometry",
+      "title": "# [QUEUE][INKWAVE][Optimization] Splash Wallの毎固定更新・弾衝突で重複する同一yaw三角関数を削減",
+      "status": "implemented-local",
+      "reason": "The same normal sine/cosine components supply the perpendicular right vector; arithmetic and query order are unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_fad68b3d71cc8191b8a58a930ea192f9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] splash-wall-elide-duplicate-yaw-trigonometry.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "sprinkler-droplet-reuse-rng-and-paint-point",
+      "title": "# [QUEUE][INKWAVE][Optimization] Sprinkler droplet: eliminate per-pulse RNG closure and Vector3 allocation",
+      "status": "not-adopted",
+      "reason": "The proposed custom all-subs sprinkler update is unreachable in the live runtime: actual throws are owned by native kit-sprinkler and replaySpawn excludes sprinkler. Optimizing that dormant branch has no live runtime benefit.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_f48b9996eb748191b8289eef70f810df",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] sprinkler-droplet-reuse-rng-and-paint-point.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "sprinkler-live-drop-retirement-stable-compaction",
+      "title": "# [QUEUE][INKWAVE][Optimization] Sprinkler: replace repeated interior droplet splice with stable batched compaction",
+      "status": "not-adopted",
+      "reason": "The native list is bounded at 96 and is observable from paint.splat, applyHit and receiver callbacks during iteration. Tombstones or deferred stable deletion change that synchronous live-list view; no measured benefit justifies adding compatibility machinery. Original immediate retirement remains.",
+      "evidence": [
+        "patches/splatoon3/runtime/kit-sprinkler.mjs"
+      ],
+      "library_file_id": "libfile_6c01b75302988191914145b8a67100d7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] sprinkler-live-drop-retirement-stable-compaction.md",
+      "prior_status": null
+    },
+    {
+      "key": "sub-defense-defer-hit-object-materialization-until-nearest",
+      "title": "# [QUEUE][INKWAVE][Optimization] sub-defense-defer-hit-object-materialization-until-nearest",
+      "status": "implemented-local",
+      "reason": "Preserves sync/filter/intersection/tie-break order while retaining the winning numeric geometry. Only the final nearest result allocates its point, normal, candidate and callback. Damage and one-shot hit ownership remain unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_1e6c6f6c31308191ae08fb85758f4624",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] sub-defense-defer-hit-object-materialization-until-nearest.md",
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "sub-object-role-specific-weakmap-allocation",
+      "title": "# [QUEUE][INKWAVE][Optimization] サブオブジェクト生成時の用途外 WeakMap 2個を作らない",
+      "status": "implemented-local",
+      "reason": "Allocates seenMarks only for Angle Shooter and seenToxic only for Toxic Mist; other roles hold null and never read the absent role state.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_7a393c1801248191a75fd4fc4cb89973",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] sub-object-role-specific-weakmap-allocation.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "torpedo-fizzy-defer-duplicate-visual-sync-within-tick",
+      "title": "# [QUEUE][INKWAVE][Optimization] トーピード・タンサン飛沫の同一tick内重複インスタンス再構築をまとめる",
+      "status": "implemented-local",
+      "reason": "A depth-counted visual batch surrounds custom-sub ticks. Spawn/retirement work still happens immediately; matrices/colors/count are synchronized once at the outermost exit, including exceptions. Calls outside a batch still synchronize immediately.",
+      "evidence": [
+        "patches/splatoon3/runtime/torpedo-splashes.mjs"
+      ],
+      "library_file_id": "libfile_86e931cd047881918467c7fded916184",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] torpedo-fizzy-defer-duplicate-visual-sync-within-tick.md",
+      "prior_status": null
+    },
+    {
+      "key": "torpedo-fizzy-idle-instanced-pool-reuse",
+      "title": "# [QUEUE][INKWAVE][Optimization] トーピード・タンサンの飛沫InstancedMeshを短い無発生期間だけ再利用する",
+      "status": "implemented-local",
+      "reason": "Zero-user visual pools become invisible with count zero and remain reusable for two seconds. New births cancel retirement; expiry, clear, inactive scene replacement and context loss release geometry/material/listener/timer ownership. Physics records are not pooled.",
+      "evidence": [
+        "patches/splatoon3/runtime/torpedo-splashes.mjs"
+      ],
+      "library_file_id": "libfile_7cf01d537a98819187a39487d3fb4b64",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] torpedo-fizzy-idle-instanced-pool-reuse.md",
+      "prior_status": null
+    },
+    {
+      "key": "torpedo-fizzy-retire-known-reverse-index-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] トーピード・タンサン独立飛沫の逆順破棄時に `indexOf` 全走査を省く",
+      "status": "implemented-local",
+      "reason": "Backward-step retirement supplies the known index and uses it only when list[index] is still the same drop. Other or invalidated lifetimes retain indexOf; limited-drop retirement happens at its original point.",
+      "evidence": [
+        "patches/splatoon3/runtime/torpedo-splashes.mjs"
+      ],
+      "library_file_id": "libfile_fbfe0fd9378481918c673ef42c336c4b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] torpedo-fizzy-retire-known-reverse-index-fastpath.md",
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "fizzy-bomb-flight-splash-paint-unreachable",
+      "title": "# [QUEUE][INKWAVE][Optimization] Fizzy Bomb flight-splash paint routine has no caller",
+      "status": "needs-evidence",
+      "reason": "The proposed helper has no production callsite and is not a flight simulation: it resolves an immediate downward ray/fallback paint without sourced initial velocity, gravity, landing footprint or an accepted online replay phase. Enabling it would change visible turf and authority. Keep dormant until the intended sourced motion and replay behavior can be established.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "library_file_id": "libfile_98af96b34f348191aa12ee5c7b294195",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] fizzy-bomb-flight-splash-paint-unreachable.md",
+      "prior_status": "needs-evidence"
+    }
+  ]
+}

@@ -1,0 +1,627 @@
+{
+  "base_pr": 1878,
+  "base_head": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "prior_implementation_reviewed": "PR1870 / 1d0dc3b2",
+  "main": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "generated_utc": "2026-10-25T19:55:39.057245+00:00",
+  "assigned_owner": "root (supplement delegated to sources_drive)",
+  "assigned_count": 12,
+  "counts": {
+    "already-in-pr": 10,
+    "needs-evidence": 1,
+    "implemented": 1
+  },
+  "items": [
+    {
+      "key": "gamepad-pollpad-elide-per-frame-button-foreach-closure",
+      "status": "already-in-pr",
+      "reason": "Actual composed pollPad uses an indexed button loop with sparse-button guards. Remaining forEach is only the one-time controller takeover path.",
+      "tests": [
+        "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs"
+      ],
+      "symbols": [
+        "pollPad"
+      ],
+      "evidence": [
+        {
+          "path": "patches/reliability/queue-network-adapter.mjs",
+          "sha256": "fcbc929dbce6cdf309e830deb51cde651bb90aedec5747c4cc9b61a6dc266e86"
+        },
+        {
+          "path": "inkwave-public/src/core/input.js",
+          "sha256": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4"
+        }
+      ],
+      "additional_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/supplement-input.js",
+          "sha256": "d11971de71dde1b3287e2b5768b3176d16e93616f537eee4e0e541df9e3937ea"
+        }
+      ],
+      "test_source_evidence": [
+        {
+          "path": "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs",
+          "sha256": "f75ee5f9b527257eb779e4a07778af533da31a38a8615e315c81942f33178f5d"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] gamepad-pollpad-elide-per-frame-button-foreach-closure.md",
+      "queue_sha256": "36b615353cb9d04d7216288023747aeb5134b0959c1171db21c512f7148828c3",
+      "library_file_id": "libfile_e5cfeab70e288191b9ed9cdbd1cb1470",
+      "previous_disposition": {
+        "slug": "gamepad-pollpad-elide-per-frame-button-foreach-closure",
+        "status": "already-in-pr",
+        "reason": "Final pollPad already uses indexed buttons loop including sparse-list behavior; remaining forEach is one-time controller takeover.",
+        "evidenceReport": "reports/queue-extra-ui-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "owner-clock-forged-future-origin-bypasses-tick-rate",
+      "status": "already-in-pr",
+      "reason": "Immutable relay receipt and relayAnchor constrain the advance; future self-reported origin cannot substitute for received relay time. Pending receipt provenance is retained and invalid ticks fail closed. Actual owner-clock security regressions pass.",
+      "tests": [
+        "patches/network-replication/tests/drive-owner-clock.test.mjs"
+      ],
+      "symbols": [
+        "validOwnerClockTick",
+        "relayAnchor"
+      ],
+      "evidence": [
+        {
+          "path": "patches/network-replication/owner-clock.mjs",
+          "sha256": "a8d3266dd8353ee3eca0e254c0a3192d78fe7f257e6d7fc8007ebbec32064b0f"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/network-replication/tests/drive-owner-clock.test.mjs",
+          "sha256": "392ee5dd3a143052393c82706554011ec540b07be1a09f02aef71c6980654609"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] owner-clock-forged-future-origin-bypasses-tick-rate.md",
+      "queue_sha256": "6e0b53df75c9ae58e2d7c95987e3b68503de2848a846b43a298ca9d8ab3760a2",
+      "library_file_id": "libfile_47ef5760bf7481918a711ec9441c19b9",
+      "previous_disposition": {
+        "slug": "owner-clock-forged-future-origin-bypasses-tick-rate",
+        "status": "already-in-pr",
+        "reason": "Retain an independent immutable authenticated relay receipt anchor, including each queued pre-ACK packet. Forged nonce clock origins cannot buy additional progress on the negotiated current relay; missing receipts fail closed. Legacy custom transports without authenticated receipts retain their compatibility behavior.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "owner-clock-full-pending-buffer-skip-serialization",
+      "status": "already-in-pr",
+      "reason": "The full pending-buffer capacity guard runs before JSON serialization; existing 64-entry / 256 KiB limits are preserved.",
+      "tests": [
+        "patches/network-replication/tests/drive-owner-clock.test.mjs"
+      ],
+      "symbols": [
+        "pending capacity guard",
+        "JSON.stringify"
+      ],
+      "evidence": [
+        {
+          "path": "patches/network-replication/owner-clock.mjs",
+          "sha256": "a8d3266dd8353ee3eca0e254c0a3192d78fe7f257e6d7fc8007ebbec32064b0f"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/network-replication/tests/drive-owner-clock.test.mjs",
+          "sha256": "392ee5dd3a143052393c82706554011ec540b07be1a09f02aef71c6980654609"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] owner-clock-full-pending-buffer-skip-serialization.md",
+      "queue_sha256": "e2a5b8b9f1503d6ab5fe864f0bff70188c281b501533715054be93b3ae168653",
+      "library_file_id": "libfile_ef755b0079188191a6d072e7d543b8d4",
+      "previous_disposition": {
+        "slug": "owner-clock-full-pending-buffer-skip-serialization",
+        "status": "already-in-pr",
+        "reason": "Reject capacity-full pending queues before JSON serialization while retaining timestamp validation, dropped counters and challenge retry behavior.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "owner-clock-pending-short-wire-utf8-allocation",
+      "status": "already-in-pr",
+      "reason": "The short-wire path uses scalar utf8ByteLength for strings up to 1024 units; larger values retain TextEncoder behavior and byte limits.",
+      "tests": [
+        "patches/network-replication/tests/drive-owner-clock.test.mjs"
+      ],
+      "symbols": [
+        "utf8ByteLength"
+      ],
+      "evidence": [
+        {
+          "path": "patches/network-replication/owner-clock.mjs",
+          "sha256": "a8d3266dd8353ee3eca0e254c0a3192d78fe7f257e6d7fc8007ebbec32064b0f"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "patches/network-replication/tests/drive-owner-clock.test.mjs",
+          "sha256": "392ee5dd3a143052393c82706554011ec540b07be1a09f02aef71c6980654609"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] owner-clock-pending-short-wire-utf8-allocation.md",
+      "queue_sha256": "fb2da4dba1aacd1aef8c0ebb0f9a80deca65684d3837719b50586ce447a8b605",
+      "library_file_id": "libfile_8f9b5e64c6bc81919397671a6fb47b27",
+      "previous_disposition": {
+        "slug": "owner-clock-pending-short-wire-utf8-allocation",
+        "status": "already-in-pr",
+        "reason": "Use the existing exact UTF-8 length helper for short serialized packets; longer packets retain TextEncoder. Byte and packet limits remain unchanged.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "pages-post-deploy-ranked-503-versioned-module",
+      "status": "needs-evidence",
+      "reason": "Current ranked boot diagnostics already fail fast on module 404/503 and record immutable artifact/manifest identity, allowed edge headers and timing, with strict source/artifact checks and no reload/retry masking. Local code cannot establish the historical Pages 503 cause. The historical incident is not claimed fixed; existing diagnostics remain and no remote deployment or network incident investigation was run.",
+      "tests": [
+        "scripts/tests/ranked-boot-diagnostics.test.mjs"
+      ],
+      "symbols": [
+        "503 handling",
+        "immutable build manifest proof"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/lib/ranked-boot-diagnostics.mjs",
+          "sha256": "352bfb50b05dfdaccdcd2aa77b2bdb19230cf2f5bac1c8bcc0ef6097f0e6f29b"
+        },
+        {
+          "path": "scripts/check-inkwave-ranked-public-boot.mjs",
+          "sha256": "60e7816a653d9b9f9c60df1d75430148c5f3aace8d624f6b6a8f42bce0183a9f"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+          "sha256": "aff3b8438052650254b30d9920659207269e44e28a2610bd2ce27e47f04577e5"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] pages-post-deploy-ranked-503-versioned-module.md",
+      "queue_sha256": "3d118f9a460334d5a5bd78dcc551c0f840f1edf873c2249e2639be347563b0f2",
+      "library_file_id": "libfile_25ed74db882c819199687b6799c7026f",
+      "previous_disposition": {
+        "slug": "pages-post-deploy-ranked-503-versioned-module",
+        "status": "already-in-pr",
+        "reason": "needs-evidence: Existing diagnostic provenance is retained. The exact historical URL now returns 404; the current immutable flow module returns 200 and matches its public manifest SHA256. These current observations cannot establish the cause of the historical 503. No retry hides a release-health failure.",
+        "evidenceReport": "reports/queue-extra-ranked-dispositions-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "pause-screen-skip-frozen-offline-snapshot-and-dom-refresh",
+      "status": "already-in-pr",
+      "reason": "Actual composed menus skip the paused offline snapshot/DOM refresh while retaining live online updates through snap.live && (!G.match?.paused || G.netm).",
+      "tests": [
+        "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs"
+      ],
+      "symbols": [
+        "paused snapshot interval"
+      ],
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menus.js",
+          "sha256": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e"
+        },
+        {
+          "path": "patches/local-quality/idle-adapter.mjs",
+          "sha256": "f8cfc33851c7fbe076918fd142a9a16c22d3bb5d9a21597899cdad7f9d70cf1b"
+        }
+      ],
+      "additional_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/supplement-menus.js",
+          "sha256": "7ebbd691acc9e063c1cc0b07bcdfa670282f8c9ad9870624e99f66d690f76257"
+        }
+      ],
+      "test_source_evidence": [
+        {
+          "path": "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs",
+          "sha256": "f75ee5f9b527257eb779e4a07778af533da31a38a8615e315c81942f33178f5d"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] pause-screen-skip-frozen-offline-snapshot-and-dom-refresh.md",
+      "queue_sha256": "8ea668bf4d70a31c438d9f2d6772b1177d81df7b8d85ebd634a06facf46db6a7",
+      "library_file_id": "libfile_0ea318bb77448191a0599520726f02b5",
+      "previous_disposition": {
+        "slug": "pause-screen-skip-frozen-offline-snapshot-and-dom-refresh",
+        "status": "already-in-pr",
+        "reason": "Final composed pause tick already gates refresh with snap.live && (!G.match?.paused || G.netm), preserving online updates while suppressing frozen offline snapshot/DOM rebuilds.",
+        "evidenceReport": "reports/queue-extra-residual-ui-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "settings-aimassist-preview-elide-svg-trail-dom-getattribute",
+      "status": "already-in-pr",
+      "reason": "The actual composed aim-assist preview carries trailD as local state rather than rereading the SVG d attribute. Frame comparisons at 30/60/120 Hz retain all SVG states.",
+      "tests": [
+        "patches/local-quality/tests/settings-hud-queue.test.mjs"
+      ],
+      "symbols": [
+        "trailD"
+      ],
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menu-art.js",
+          "sha256": "c689b7fdbd714a6aa5eed4ce8d5943d31f840d2380dd4d2bac3161112126c7b8"
+        },
+        {
+          "path": "patches/local-quality/settings-hud-queue-adapter.mjs",
+          "sha256": "58a071deb3ad9134cc3cca08ee9987b8d399a9343971ef9b59fa9e169429dec6"
+        }
+      ],
+      "additional_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/supplement-menu-art.js",
+          "sha256": "d9f83d560bc45bfaf668c7162d7800fabb887ce22b7cd7ac2b65ba8578a509cb"
+        }
+      ],
+      "test_source_evidence": [
+        {
+          "path": "patches/local-quality/tests/settings-hud-queue.test.mjs",
+          "sha256": "eb3ba21d730908bf1c99f2753b621e648313656d2672d932a6eb86e836a2a198"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] settings-aimassist-preview-elide-svg-trail-dom-getattribute.md",
+      "queue_sha256": "aa2a087ad63cfe7b9d3aabc2489a6bda98e25a596d6e0990e99c2687b72597e8",
+      "library_file_id": "libfile_84936097c0908191ab178e54eff46b14",
+      "previous_disposition": {
+        "slug": "settings-aimassist-preview-elide-svg-trail-dom-getattribute",
+        "status": "already-in-pr",
+        "reason": "Existing scoped settings adapter keeps exact previous trail string locally.",
+        "evidenceReport": "reports/queue-extra-ui-20261025.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine",
+      "status": "already-in-pr",
+      "reason": "The composed preview updates the static thumb only on mode change or external attribute drift, and shares one pulse sine across reticle/fire updates. Existing actual-preview regressions preserve frame output.",
+      "tests": [
+        "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs"
+      ],
+      "symbols": [
+        "fireAim preview",
+        "pulse"
+      ],
+      "evidence": [
+        {
+          "path": "inkwave-public/src/ui/menu-art.js",
+          "sha256": "c689b7fdbd714a6aa5eed4ce8d5943d31f840d2380dd4d2bac3161112126c7b8"
+        },
+        {
+          "path": "patches/local-quality/drive-visual-audio-adapter.mjs",
+          "sha256": "15d4acca13b652876b7af1280794ce79960087cef13cc907ef798184707b51bd"
+        }
+      ],
+      "additional_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/supplement-menu-art.js",
+          "sha256": "d9f83d560bc45bfaf668c7162d7800fabb887ce22b7cd7ac2b65ba8578a509cb"
+        }
+      ],
+      "test_source_evidence": [
+        {
+          "path": "patches/local-quality/tests/residual-ui-hoists-20261025.test.mjs",
+          "sha256": "f75ee5f9b527257eb779e4a07778af533da31a38a8615e315c81942f33178f5d"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine.md",
+      "queue_sha256": "04f592d7d83d07e7a426367769f5f5a745008624d712d0c98ab45964ed003387",
+      "library_file_id": "libfile_2ee4f26a355c8191952ecc146d8cd149",
+      "previous_disposition": {
+        "slug": "settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine",
+        "status": "already-in-pr",
+        "reason": "The disabled preview thumb no longer receives an unchanged transform each frame; fire and reticle reuse one pulse sine while preserving their animation.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "projectile-visual-capture-atomic-intro-unit-duplicate-run",
+      "status": "implemented",
+      "reason": "PR1878 had restored two invocations of the same atomic-intro unit suite in one capture job under the same environment. Removed only the duplicate file argument from the later Native visual, source-value and gameplay regressions command. The first mandatory atomic-intro gate, its environment/conditions and all other test coverage remain. Semantic YAML comparison proves 2 to 1 invocations and no other command changes.",
+      "tests": [
+        "scripts/tests/inkwave-projectile-atomic-intro.test.mjs",
+        "scripts/tests/inkwave-optimization-workflows.test.mjs"
+      ],
+      "symbols": [
+        "capture job"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-projectile-visuals.yml",
+          "sha256": "bef1d573713edc027a9d29b07f531d1b35fbc832992cca7af41b00fe27170b02"
+        }
+      ],
+      "additional_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ui-root-ci-duplicate-verification.json",
+          "sha256": "f1ef973e8413644f7ae77a5402c871055b2addda17df459ae80a12cb379e4d8e"
+        }
+      ],
+      "test_source_evidence": [
+        {
+          "path": "scripts/tests/inkwave-projectile-atomic-intro.test.mjs",
+          "sha256": "af9a1fa8530812a21b486a09a4b6ab149ee50bd3972d6713cf361d0c8a448f0b"
+        },
+        {
+          "path": "scripts/tests/inkwave-optimization-workflows.test.mjs",
+          "sha256": "9e1d0a51d87c6f01d74a63712da650b0daf56355806ba8e931d41cf774a1ebf7"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] projectile-visual-capture-atomic-intro-unit-duplicate-run.md",
+      "queue_sha256": "3fe569ffc31ca45aea82ef57ad68ecbc31ea0888a73039f378e5ea239c2e1c26",
+      "library_file_id": "libfile_bfa17cf428e081919159515f0e3c35f3",
+      "previous_disposition": {
+        "slug": "projectile-visual-capture-atomic-intro-unit-duplicate-run",
+        "status": "already-in-pr",
+        "reason": "Remove only the second identical atomic-intro unit invocation from the native visual test step; the earlier gate remains.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "roller-source-pin-test-only-drop-unused-npm-install",
+      "status": "already-in-pr",
+      "reason": "The roller source-pin workflow already runs its Node 22 standard-library test without the unused esbuild npm install. Its existing test command is retained.",
+      "tests": [
+        "scripts/tests/inkwave-optimization-workflows.test.mjs"
+      ],
+      "symbols": [
+        "source pin job"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-roller-support-source-pin.yml",
+          "sha256": "b3c91e8e32d037415e625994a9583f018a8398e0981223289812093e088aafe0"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "scripts/tests/inkwave-optimization-workflows.test.mjs",
+          "sha256": "9e1d0a51d87c6f01d74a63712da650b0daf56355806ba8e931d41cf774a1ebf7"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] roller-source-pin-test-only-drop-unused-npm-install.md",
+      "queue_sha256": "c36350f22618ac960b8df8c6b733e57a382a68528272e1a90b6b02dafe32c071",
+      "library_file_id": "libfile_891285ba13a88191990f97b9085c3dc6",
+      "previous_disposition": {
+        "slug": "roller-source-pin-test-only-drop-unused-npm-install",
+        "status": "already-in-pr",
+        "reason": "Removed unused esbuild installation while retaining the exact same roller support source-pin VM suite and Node 22. The unchanged suite passed in the dependency-free local run.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "specials-1130-batch-22-browser-runs-and-build-manifest-verification",
+      "status": "already-in-pr",
+      "reason": "The current specials workflow invokes --batch; the batch driver reuses one browser with a new context for each of 22 cases and retains mandatory immutable build artifact/manifest proof. Batch contract tests pass.",
+      "tests": [
+        "scripts/tests/inkwave-splashdown-batch.test.mjs"
+      ],
+      "symbols": [
+        "batch driver",
+        "build manifest proof"
+      ],
+      "evidence": [
+        {
+          "path": ".github/workflows/inkwave-specials-1130.yml",
+          "sha256": "129082fe23063b2cb243e3c0062b8baed4c2899b855bd33c361d234ea9362580"
+        },
+        {
+          "path": "scripts/check-inkwave-splashdown-browser.mjs",
+          "sha256": "5606520fc43cb389a28ab5fb02ba5878bd85ce6929dc2565fc8c662de07de024"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "scripts/tests/inkwave-splashdown-batch.test.mjs",
+          "sha256": "9e5b134b4ac608c25d4ceec4901f7732da0db4b98ad0fa780402ab4eb29cc079"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] specials-1130-batch-22-browser-runs-and-build-manifest-verification.md",
+      "queue_sha256": "f09ac44aea6ca83af8aa8a9d412f344ce1e93a6739e8e600e99ca8e86f5897d4",
+      "library_file_id": "libfile_5c0604f635388191b7792de2b618ec0f",
+      "previous_disposition": {
+        "slug": "specials-1130-batch-22-browser-runs-and-build-manifest-verification",
+        "status": "already-in-pr",
+        "reason": "Added --batch with the complete original 1 Splashdown + 18 Inkjet + 3 native-terminal case matrix in the original order and evidence paths. The full artifact hash and source proof scans run once and Chromium launches once; each case uses a new BrowserContext that closes before the next case. Existing standalone CLI behavior and native evaluation/capture/assertion bodies are preserved. Every verified file is checked at case boundaries using device/inode/size/nanosecond mtime/ctime, and served bytes are hashed against the manifest. Proof/input/artifact mutation, individual failures, launch and cleanup failures cannot pass the batch. Related workflow hashes were changed only for the authorized batch orchestration; root may recompute its authenticated baseline after merging newer PR1867 workflow changes.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    },
+    {
+      "key": "upstream-mirror-enforce-same-origin-and-crawl-budgets",
+      "status": "already-in-pr",
+      "reason": "The mirror already enforces same-origin redirects, streaming byte/resource budgets, a global deadline, path-collision/traversal rejection and failure evidence; mandatory workflow checks remain. Ten local HTTP-fixture regressions pass, including 302/307/308 rejection before foreign contact, interrupted bodies and slow streams.",
+      "tests": [
+        "scripts/tests/test_inkwave_source_mirror.py"
+      ],
+      "symbols": [
+        "origin redirect policy",
+        "stream budgets"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/lib/inkwave_source_mirror.py",
+          "sha256": "037c6052dd0d7697fde74af9a983940f3b27eaf0c28e85878a68b560112f1fe2"
+        },
+        {
+          "path": "scripts/fetch-inkwave-source.py",
+          "sha256": "880e4aa5a2a63136fd29a217bff98f0c4e1278081052e7708d97eb8c27a05eff"
+        },
+        {
+          "path": ".github/workflows/fetch-inkwave.yml",
+          "sha256": "5e336dcee648fd8180d1c6aa17d5010f762e0843d7556dede3402854f15f49c4"
+        }
+      ],
+      "additional_evidence": [],
+      "test_source_evidence": [
+        {
+          "path": "scripts/tests/test_inkwave_source_mirror.py",
+          "sha256": "c874b426ecf218f41edd323e04fcbf1b622e13264f66e770ecc49ef128390664"
+        }
+      ],
+      "queue_file": "/workspace/scratch/2f4c74953bc6/queue-audit/downloads/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] upstream-mirror-enforce-same-origin-and-crawl-budgets.md",
+      "queue_sha256": "45b03d42b9500c401e9125edb437020473f58fb850b631797518426c2ae1bb0c",
+      "library_file_id": "libfile_b445d8c2963881918592691f984e38a4",
+      "previous_disposition": {
+        "slug": "upstream-mirror-enforce-same-origin-and-crawl-budgets",
+        "status": "already-in-pr",
+        "reason": "Extracted the mirror into a standard-library Python module. Exact-origin validation applies before redirected requests and again to final URLs. Redirect bodies are closed without the standard unbounded drain. Streaming fetches enforce configurable per-resource/total/count/deadline/redirect limits, reject path escapes/collisions and never publish partial resources. Failure manifests survive and review/package/upload steps run after failed fetches, retaining the failed job status.",
+        "evidenceReport": "reports/drive-queue-dispositions-20261024.json"
+      },
+      "local_only": true
+    }
+  ],
+  "verification": [
+    {
+      "file": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+      "result": "PASS",
+      "tests": 28,
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-tests.log",
+        "reports/queue-local-evidence-20261026/source-audit/ranked-browser-positive-control-fix.json",
+        "reports/queue-local-evidence-20261026/source-audit/ranked-browser-clearance-comparison.json",
+        "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-proof.json"
+      ],
+      "note": "The 28 tests include actual PR1878 roller motion, actual Tidewater capsule clearance, exact native-frame ownership and 250ms timing, strict Dodge witness negative controls, and actual FixedClock observation scheduling. Focused browser evidence separately proves actual native Dodge admission. All gameplay requirements, 30-second deadlines, positive audio predicates, two-metre movement limit and independent live turret/relay gear gates remain required.",
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-tests.log",
+          "sha256": "bd79d87913957c68bc7e2f234231f74b484ceb0113698528bb3dde63e707b133"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-positive-control-fix.json",
+          "sha256": "7f8cd51c2dd4eb99b785322ea58803dc9d250df0ddf1764ff7bf6c22e1a9f739"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-clearance-comparison.json",
+          "sha256": "b44cf1d9a23c0ca43d50a6fba504be2f2fa69f9dbe4b507889f83c3f506b25c9"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ranked-browser-native-observation-proof.json",
+          "sha256": "11f4fa1129c25891f8588c611647f1047feb034fb3c0e29057917a540a8936fe"
+        }
+      ],
+      "browserPositiveControl": {
+        "result": "PASS_FINAL",
+        "modes": [
+          "zones",
+          "tower",
+          "rainmaker",
+          "clams"
+        ],
+        "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+        "receipt": "reports/queue-local-ranked-final-online-20261026/remote-contact-gear.json"
+      }
+    },
+    {
+      "kind": "seven supplemental suites",
+      "result": "PASS_AFTER_DEPENDENCY_RERUN",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/ui-root-supplement-tests.log",
+        "reports/queue-local-evidence-20261026/source-audit/ui-root-cssom-tests.log"
+      ],
+      "note": "Initial combined run: 115/116 passed, one missing local Playwright dependency. After local ignored symlinks and Chromium path setup, the complete settings-hud suite passed 15/15 including the actual Chromium CSSOM check. No assertion or gate was changed.",
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ui-root-supplement-tests.log",
+          "sha256": "7eacbbc1ddd240de7e2777115a7b191a4c78f8c595b1e5e29bbbf9ca22c7e7cd"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ui-root-cssom-tests.log",
+          "sha256": "434928e7fa5d0d2744192625a40d46ed2902c9bc2c00188852e0419a351ff89f"
+        }
+      ]
+    },
+    {
+      "file": "scripts/tests/test_inkwave_source_mirror.py",
+      "result": "PASS",
+      "tests": 10,
+      "run": "python local HTTP fixture, exit 0, 0.609 seconds",
+      "note": "Verified on an unredirected require_escalated exec run. The earlier redirected log is partial and is not claimed as complete evidence.",
+      "log_evidence": []
+    },
+    {
+      "kind": "semantic workflow comparison",
+      "result": "PASS",
+      "logs": [
+        "reports/queue-local-evidence-20261026/source-audit/ui-root-ci-duplicate-verification.json",
+        "reports/queue-local-evidence-20261026/source-audit/ui-network-ci-verification.json"
+      ],
+      "note": "The single same-environment duplicate atomic-intro file argument was removed. The first mandatory gate and all other test coverage are unchanged.",
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ui-root-ci-duplicate-verification.json",
+          "sha256": "f1ef973e8413644f7ae77a5402c871055b2addda17df459ae80a12cb379e4d8e"
+        },
+        {
+          "path": "reports/queue-local-evidence-20261026/source-audit/ui-network-ci-verification.json",
+          "sha256": "330428c297e7a7e8a1e0675824138c2ede4f96ad9e5697ac0c2276c7628c2410"
+        }
+      ]
+    },
+    {
+      "kind": "final local production-build browser acceptance",
+      "result": "PASS",
+      "identity": {
+        "contentHash": "f0dd5d4fe821ffb70fb4f93fe87153e5e86691f04ccac2422bc1c8453eee3dee",
+        "inputHash": "fa9f96ad24b2ed2a24f7c273ade3d73328f993d633e49f67699b984cccccbc05",
+        "revision": "463d4aee56e26ca406c040e386e51609462275d489c47fc677e2db2bdb59a1ef"
+      },
+      "offlineRules": 4,
+      "onlineRules": 4,
+      "remoteContactGearPhases": 10,
+      "stage": "tidewater",
+      "scope": "Actual Chromium 153 / SwiftShader WebGL, two local contexts, local relay and live WebAudio lifecycle; no physical-device FPS or acoustic-listening claim",
+      "logs": [
+        "reports/queue-local-browser-validation-20261026.json",
+        "reports/queue-local-ranked-final-offline-20261026/result.json",
+        "reports/queue-local-ranked-final-online-20261026/result.json",
+        "reports/queue-local-ranked-final-online-20261026/remote-contact-gear.json"
+      ],
+      "note": "All required gameplay states, limits and negative checks were retained. Initial forward direction and capsule clearance were corrected after independent baseline reproduction and actual Physics regressions. Native-frame pulse timing and strict synchronous Dodge onset observation were verified by 28 CPU regressions and separate browser diagnostics; subsequent live turret and real relay gear gates remain independent. Large raw traces remain outside the git work tree.",
+      "log_evidence": [
+        {
+          "path": "reports/queue-local-browser-validation-20261026.json",
+          "sha256": "2ec9108ef996804fa4a7c595aaa1441ca9d695773a515ec7ec3cef964ef19c54"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-offline-20261026/result.json",
+          "sha256": "4e3dd21af2d3f903a3bf87b12fbd7beaf47c6c31de9f9a45e26216ecc96a6ab8"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-online-20261026/result.json",
+          "sha256": "ea0aa9408347123b43e026095de848580eb32da641780954dcd879456ab3c75d"
+        },
+        {
+          "path": "reports/queue-local-ranked-final-online-20261026/remote-contact-gear.json",
+          "sha256": "7ca6013ace2fa557f7e07ff5e9b4cf8e87cf580924e3acd1d69ec15265727261"
+        }
+      ]
+    }
+  ],
+  "constraints": {
+    "local_only": true,
+    "remote_mutations": false,
+    "ci_runs_or_deployments": false,
+    "existing_test_gates_weakened": false,
+    "fps_or_wall_clock_performance_claim": false
+  }
+}

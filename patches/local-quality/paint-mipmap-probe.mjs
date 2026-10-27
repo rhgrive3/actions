@@ -12,10 +12,13 @@ export async function runPaintMipmapBrowserProbe(page) {
     const gl = renderer.getContext();
 
     let mipCalls = 0;
+    const mipCallsByTexture = new Map();
     let maxGlError = 0;
     const origGenerateMipmap = gl.generateMipmap.bind(gl);
     gl.generateMipmap = function(...args) {
       mipCalls++;
+      const texture = gl.getParameter(gl.TEXTURE_BINDING_2D);
+      mipCallsByTexture.set(texture, (mipCallsByTexture.get(texture) || 0) + 1);
       const res = origGenerateMipmap(...args);
       const err = gl.getError();
       if (err !== 0) maxGlError = err;
@@ -40,7 +43,11 @@ export async function runPaintMipmapBrowserProbe(page) {
 
     // 1. Initial creation and clear
     const paint = new PaintSystem(renderer, level, { atlasSize: 512 });
-    const initialMipCalls = mipCalls;
+    // Native regional-mip admission calibrates a separate scratch texture once.
+    // Count this production atlas rather than unrelated compatibility textures.
+    const atlasMipCalls = () => mipCallsByTexture.get(renderer.properties.get(paint.rt.texture).__webglTexture) || 0;
+    const initialMipCalls = atlasMipCalls();
+    const initialCompatibilityMipCalls = mipCalls - initialMipCalls;
     const initialGlError = gl.getError();
 
     // 2. Draw splat and verify actual RT pixel upload
@@ -55,16 +62,16 @@ export async function runPaintMipmapBrowserProbe(page) {
     }
 
     // 3. 60 frames (1.0s) drying cadence measurement
-    const preDryingCalls = mipCalls;
+    const preDryingCalls = atlasMipCalls();
     for (let f = 0; f < 60; f++) {
       paint.flush(1 / 60);
     }
-    const dryingCalls = mipCalls - preDryingCalls;
+    const dryingCalls = atlasMipCalls() - preDryingCalls;
 
     // 4. Test explicit public _regenerateMipmaps into empty scene
-    const preRegenCalls = mipCalls;
+    const preRegenCalls = atlasMipCalls();
     paint._regenerateMipmaps();
-    const regenCalls = mipCalls - preRegenCalls;
+    const regenCalls = atlasMipCalls() - preRegenCalls;
     const postRegenGlError = gl.getError();
 
     // Combined production quality-resample/mipmap path, without a full boot.
@@ -85,6 +92,7 @@ export async function runPaintMipmapBrowserProbe(page) {
       glVersion: gl.getParameter(gl.VERSION),
       glRenderer: gl.getParameter(gl.RENDERER),
       initialMipCalls,
+      initialCompatibilityMipCalls,
       initialGlError,
       paintedPixels,
       preDryingCalls,
@@ -105,7 +113,9 @@ export async function runPaintMipmapBrowserProbe(page) {
   assert.equal(report.initialGlError, 0, 'GL error must be 0 after init');
   assert.equal(report.maxGlError, 0, 'gl.getError must remain 0 throughout all generateMipmap calls');
   assert.equal(report.postRegenGlError, 0, 'GL error must remain 0 after _regenerateMipmaps');
-  assert.equal(report.initialMipCalls, 1, 'Initial clear must synchronize mipmap chain exactly once');
+  assert.equal(report.initialMipCalls, 1, 'Initial clear must synchronize its production atlas exactly once');
+  assert.ok(report.initialCompatibilityMipCalls >= 0 && report.initialCompatibilityMipCalls <= 11,
+    'Native mip compatibility may exercise only its bounded one-time scratch calibration');
   assert.ok(report.paintedPixels > 1000, `Actual GPU paint pass must draw pixels into RT (got ${report.paintedPixels})`);
   assert.ok(report.dryingCalls <= 6 && report.dryingCalls >= 3, `Drying mip calls (${report.dryingCalls}) must be bounded ~4 Hz over 60 frames`);
   assert.equal(report.regenCalls, 1, '_regenerateMipmaps via empty scene pass must trigger exactly 1 native gl.generateMipmap');

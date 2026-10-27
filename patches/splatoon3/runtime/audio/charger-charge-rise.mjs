@@ -1,5 +1,6 @@
 import { mainAudioSourceId, WEAPON_AUDIO } from './weapon-recipes.mjs';
 import { PitchPreservingChargeCache, chargerOnsetRatio } from './pitch-preserving-charge.mjs';
+import { audioLoadScope } from './load-deadline.mjs';
 
 // Every Charger now uses the same Splat Charger reference rise. Different charge
 // clocks stretch its ascending phrase in a Worker WITHOUT changing pitch.
@@ -41,7 +42,7 @@ const recordedChargerURL=sourceUrl=>{
 const slots=new WeakMap();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const RETRY_BACKOFF_MS=4000,MAX_ATTEMPTS=3,LOAD_TIMEOUT_MS=8000;
-const stateFor=ctx=>{let s=slots.get(ctx);if(!s){s={buffer:null,excerpt:null,stretchCache:null,promise:null,error:null,retryable:false,retryAfter:0,attempts:0,generation:0,controller:null};slots.set(ctx,s);}return s;};
+const stateFor=ctx=>{let s=slots.get(ctx);if(!s){s={buffer:null,excerpt:null,stretchCache:null,promise:null,error:null,retryable:false,retryAfter:0,attempts:0,generation:0,scope:null};slots.set(ctx,s);}return s;};
 class ChargerLoadError extends Error {
   constructor(message,retryable=false){super(message);this.retryable=retryable;}
 }
@@ -52,7 +53,8 @@ export function chargerRecordedStatus(ctx){
 export function disposeChargerRise(ctx){
   const state=ctx?slots.get(ctx):null;
   if(!state)return;
-  state.generation++;state.controller?.abort();state.stretchCache?.dispose();state.excerpt=null;slots.delete(ctx);
+  // Remove the old owner before callbacks triggered by abort can re-enter.
+  state.generation++;slots.delete(ctx);state.scope?.cancel();state.stretchCache?.dispose();state.excerpt=null;
 }
 // Only explicit prewarm/weapon selection may retry; ordinary requests never retry.
 export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=Date.now,timeoutMs=LOAD_TIMEOUT_MS}={}){
@@ -66,14 +68,14 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   if(state.error&&(!retry||!state.retryable||state.attempts>=MAX_ATTEMPTS||now()<state.retryAfter))return null;
   const generation=++state.generation;
   state.attempts++;
-  const controller=typeof AbortController==='function'?new AbortController():null;
-  state.controller=controller;
-  let timer;
-  const operation=(async()=>{
+  const scope=audioLoadScope(timeoutMs,'recorded Charger load timed out');
+  state.scope=scope;
+  const operation=scope.run(async()=>{
     let response;
-    try{response=await fetchAudio(assetURL,{credentials:'same-origin',cache:'force-cache',...(controller?{signal:controller.signal}:{})});}
+    try{response=await fetchAudio(assetURL,{credentials:'same-origin',cache:'force-cache',...(scope.signal?{signal:scope.signal}:{})});}
     catch(error){throw new ChargerLoadError('recorded Charger network failure: '+String(error?.message||error),true);}
-    if(state.generation!==generation||slots.get(ctx)!==state||controller?.signal.aborted||ctx.state==='closed')return null;
+    scope.check();
+    if(state.generation!==generation||slots.get(ctx)!==state||ctx.state==='closed')return null;
     if(!response?.ok){
       const status=response?.status;
       throw new ChargerLoadError('recorded Charger asset unavailable ('+(status??'network')+')',status===408||status===429||(status>=500&&status<=599));
@@ -81,7 +83,8 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
     let bytes;
     try{bytes=await response.arrayBuffer();}
     catch(error){throw new ChargerLoadError('recorded Charger response failure: '+String(error?.message||error),true);}
-    if(state.generation!==generation||slots.get(ctx)!==state||controller?.signal.aborted||ctx.state==='closed')return null;
+    scope.check();
+    if(state.generation!==generation||slots.get(ctx)!==state||ctx.state==='closed')return null;
     if(!(bytes instanceof ArrayBuffer)||bytes.byteLength<10000||bytes.byteLength>512*1024)
       throw new ChargerLoadError('invalid recorded Charger audio payload');
     const buffer=await ctx.decodeAudioData(bytes);
@@ -92,20 +95,18 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
        buffer.numberOfChannels<1||buffer.numberOfChannels>2)
       throw new ChargerLoadError('recorded Charger audio duration/format mismatch');
     return buffer;
-  })();
-  state.promise=Promise.race([operation,new Promise((_,reject)=>{
-    timer=setTimeout(()=>{reject(new ChargerLoadError('recorded Charger load timed out',true));controller?.abort();},timeoutMs);
-  })]).then(buffer=>{
+  });
+  state.promise=operation.then(buffer=>{
     if(state.generation!==generation||slots.get(ctx)!==state||ctx.state==='closed')return null;
     state.buffer=buffer;state.error=null;state.retryable=false;state.retryAfter=0;state.attempts=0;
     return buffer;
   }).catch(error=>{
     if(state.generation===generation&&slots.get(ctx)===state){
-      state.error=String(error?.message||error);state.retryable=error instanceof ChargerLoadError&&error.retryable;
+      state.error=String(error?.message||error);state.retryable=(error instanceof ChargerLoadError&&error.retryable)||state.error==='recorded Charger load timed out';
       state.retryAfter=now()+RETRY_BACKOFF_MS;
     }
     return null;
-  }).finally(()=>{clearTimeout(timer);if(state.generation===generation){state.promise=null;state.controller=null;}});
+  }).finally(()=>{scope.finish();if(state.generation===generation){state.promise=null;state.scope=null;}});
   return state.promise;
 }
 

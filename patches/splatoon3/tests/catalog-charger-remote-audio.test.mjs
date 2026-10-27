@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { WEAPON_AUDIO, mainAudioSourceId } from '../runtime/audio/weapon-recipes.mjs';
+import { WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.mjs';
 import { VARIANT_BASE_WEAPON } from '../runtime/alternate-weapon-kits-data.mjs';
 import { usesChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
 
@@ -75,7 +75,7 @@ test('all native and catalogue Charger kits emit one remote onset per decoded ch
   const f = await scene();
   assert.equal(chargerIds.length, 18);
   for (const id of chargerIds) for (const hz of [30, 60, 120]) {
-    const p = f.pair(id), source = mainAudioSourceId(id), phrase = usesChargerRise(id);
+    const p = f.pair(id); assert.equal(usesChargerRise(id),true);
     p.publish(false); p.voices(hz);
     assert.equal(p.onsets(), 0, id + ' idle is silent');
     for (let cycle = 1; cycle <= 3; cycle++) {
@@ -85,15 +85,11 @@ test('all native and catalogue Charger kits emit one remote onset per decoded ch
       assert.equal(p.onsets(), cycle, id + ' full hold does not restart onset');
       assert.equal(f.calls.filter(c => c.event === 'ready').length, 0, 'full-ready remains owner-only');
       assert.equal(f.loops.filter(c => c.event === 'charge').length, 0, 'onset is never a loop');
-      if (phrase) {
-        assert.equal(f.rises.at(-1).options.weaponId, id);
-        assert.equal(f.rises.at(-1).options.pos, p.remote.pos);
-      } else {
-        const onset = f.calls.filter(c => c.event === 'charge').at(-1);
-        assert.equal(mainAudioSourceId(onset.id), source);
-        assert.equal(onset.options.actor, p.remote);
-        assert.equal(onset.options.pos, p.remote.pos);
-      }
+      const onset=f.rises.at(-1);
+      assert.equal(onset.options.weaponId,id);
+      assert.equal(onset.options.chargeTime,p.remote.weapon.chargeTime);
+      assert.equal(onset.options.pos,p.remote.pos);
+      assert.equal(f.calls.filter(c=>c.event==='charge').length,0,'remote uses no individual HoldNoise');
       p.publish(false); p.voices(hz);
       assert.ok(f.rises.every(h => !h.playing), id + ' release stops phrase');
       assert.equal(p.remote.net._chargerOnsetActive, false, id + ' release re-arms edge');
@@ -162,7 +158,7 @@ test('remote non-Chargers never enter the Charger onset path and native continuo
     assert.equal(p.onsets(), 0, r.id + ' charging flag alone cannot identify a Charger');
     assert.equal(f.calls.filter(c => c.event === 'ready').length, 0);
     if (p.remote.weapon.kind === 'splatling')
-      assert.equal(f.loops.filter(c => c.event === 'spin').length, 1, 'native Spinner loop preserved');
+      assert.equal(f.loops.filter(c => c.event === 'charge').length, 1, 'native Spinner uses recorded Motor while charging');
     p.publish(false); p.voices(60, 2);
     p.remote.weaponRunner.rolling = true; p.remote.grounded = true;
     p.voices(60, 2);

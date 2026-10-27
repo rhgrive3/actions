@@ -87,9 +87,11 @@ test('Charger onset occurs once on initial hold and again only after real stored
  const f=await setup(),id='s3-charger-long',a=f.make(id);
  a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
  const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
- assert.equal(onsets().length,0,'fresh E-liter does not layer a HoldNoise onset');
- assert.ok(f.prewarms.includes(id),'E-liter prewarms the shared Splat phrase');
- assert.equal(f.rises.length,1,'E-liter shares the selected Splat rise exactly once');
+ assert.equal(onsets().length,0,'E-liter no longer plays its Heavy HoldNoise during charge');
+ assert.ok(f.prewarms.includes(id),'E-liter prewarms the shared Splat Charger phrase');
+ assert.equal(f.rises.length,1,'E-liter shares the recorded Splat Charger rise');
+ assert.equal(f.rises[0].options.weaponId,id);
+ assert.equal(f.rises[0].options.chargeTime,a.weapon.chargeTime);
  assert.equal(f.calls.filter(c=>c.id===id&&c.event==='ready').length,1);
  assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
  // The actual S3 charger owner stores this structure while diving after

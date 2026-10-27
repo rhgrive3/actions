@@ -2,7 +2,7 @@ import { captureRainmakerShotOrigin, rainmakerActorLife, rainmakerActorOwner } f
 import { Match } from '../../../../src/game/match.js';
 import { BotBrain } from '../../../../src/game/bots.js';
 import { NetSession } from '../../../../src/net/session.js';
-import { RankedEngine, isRankedMode } from './engine.mjs';
+import { RankedEngine, isRankedMode, OWNED_RANKED_FRAME } from './engine.mjs';
 import { createRankedStage, RankedWorld } from './world.mjs';
 import { installRankedUi } from './ui.mjs';
 import { installRankedBots } from './bots.mjs';
@@ -53,7 +53,8 @@ export function installRanked(context) {
       if (this.ranked.events.length) {
         const events = this.ranked.events.splice(0);
         this.playRankedEvents(events);
-        const wire = nm?.isHost && events.length ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
+        const singleInternal = nm?.isHost && events.length === 1 && (events[0].kind === 'special-gain' || events[0].kind === 'zone-capture');
+        const wire = nm?.isHost && events.length && !singleInternal ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
         if (wire?.length) nm._sendNow({ k: 'rkevent', match: nm.cfg.id, seq: nm.rankedEventNext = (nm.rankedEventNext || 0) + 1, events: wire });
       }
       if (this.ranked.winner !== null) {
@@ -180,6 +181,7 @@ export function buildFrame(match, api) {
     const frame = { actors: [], inputs: {}, zoneCoverage: [], barrierHits: [],
       floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
       blocked: (a, b) => match.rankedWorld.blocked(a, b) };
+    Object.defineProperty(frame, OWNED_RANKED_FRAME, { value: frame.inputs });
     scratch = match._rankedFrameScratch = { frame, rows: new WeakMap(), inputIds: [] };
   }
   const frame = scratch.frame, inputs = frame.inputs, actors = frame.actors, nm = api.G.netm;
@@ -222,7 +224,8 @@ export function buildFrame(match, api) {
   const world = match.rankedWorld;
   frame.zoneCoverage = match.mode === 'zones' ? world.zoneCoverage()
     : (world._emptyZoneCoverage ??= Object.freeze((world.stage?.zones || []).map(() => Object.freeze([0, 0]))));
-  frame.barrierHits = match.rankedBarrierHits.splice(0);
+  frame.barrierHits = match.rankedBarrierHits.length ? match.rankedBarrierHits.splice(0)
+    : (scratch.emptyBarrierHits || (scratch.emptyBarrierHits = Object.freeze([])));
   frame.fallDeathY = api.PLAYER?.fallDeathY;
   return frame;
 }

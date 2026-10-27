@@ -4,17 +4,17 @@ if(!vm.SourceTextModule){test('native world cancellation VM subprocess',()=>{con
 const source=fs.readFileSync(new URL('../runtime/native-world.mjs',import.meta.url),'utf8');
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 async function fixture(){
- const counts={},bump=k=>counts[k]=(counts[k]||0)+1,warms=[],frames=[],stageWarms=[];let stageWarm=()=>Promise.resolve();let valid=true;
+ const counts={},bump=k=>counts[k]=(counts[k]||0)+1,warms=[],frames=[],stageWarms=[],events=new Map();let stageWarm=()=>Promise.resolve();let valid=true;
  const obj=kind=>({dispose(){bump(kind+'Dispose');}});
- const renderer={capabilities:{maxTextureSize:4096},target:'previous',getRenderTarget(){return this.target},setRenderTarget(x){this.target=x},compileAsync(_scene,_camera,target){if(target){stageWarms.push(_scene);return stageWarm();}const d=deferred();warms.push(d);return d.promise;}};
- const G={renderer,scene:{add(){bump('publish')},remove(){}},paint:obj('oldPaint'),teamColors:[]};
+ const renderer={domElement:{addEventListener(name,fn){events.set(name,fn);}},capabilities:{maxTextureSize:4096},target:'previous',getRenderTarget(){return this.target},setRenderTarget(x){this.target=x},compileAsync(_scene,_camera,target){if(target){stageWarms.push(_scene);return stageWarm();}const d=deferred();warms.push(d);return d.promise;}};
+ const G={renderer,level:{native:false},scene:{add(){bump('publish')},remove(){}},paint:obj('oldPaint'),teamColors:[]};
  const game={settings:{quality:'high'},nativeWorld:obj('oldWorld'),_shadowRoots(){bump('shadows')}};
  const data={manifest:{geometry:{vertices:3,triangles:1}}};
- const modules={three:{LinearFilter:1},ctx:{G},paint:{PaintSystem:class{constructor(){bump('paint');Object.assign(this,obj('paint'),{texture:{},dryMesh:{visible:false},rt:{},scene:{},cam:{},grid:new Uint8Array(1),size:1,ppm:1});}}},nav:{NavGraph:class{constructor(){bump('nav')}static async createNative(){return new this()}}},minimap:{Minimap:class{constructor(level){assert.ok(level.nativeNav);bump('minimap')}activate(){bump('minimapActive')}}},swimWake:{SwimWake:class{reset(){bump('wake')}}},'native-load':{loadNativeData:async()=>data,loadNativeTextures:async()=>new Map()},'native-texture-budget':{nativeStageTextureCaps:()=>({maxDimension:1024,perRole:{}})},'native-gpu-budget':{...nativeGpuBudget},'native-level':{NativeLevel:class{constructor(){this.faces=[];this.bounds={minX:0,minZ:0,maxX:1,maxZ:1}}}},'native-physics':{NativePhysics:class{}},'native-render':{nativeDisplay(){bump('display');return{...obj('display'),group:{}}},nativeInkGeometry(){bump('ink');return obj('geometry')},nativeInkMaterial(){bump('material');return obj('material')}},'native-ink-chunks':{NativeInkMesh:class{constructor(geo){bump('mesh');this.dispose=()=>{bump('meshDispose');geo.dispose()}}bindPaint(){return this}}},'source-menu':{showNativeWorldRecovery(){bump('recoveryDialog')},sourceLoadingStatus(){return{update(){},close(){bump('statusClose')}}}}};
+ const modules={three:{LinearFilter:1},ctx:{G},paint:{PaintSystem:class{constructor(){bump('paint');Object.assign(this,obj('paint'),{texture:{},dryMesh:{visible:false},rt:{},scene:{},cam:{},grid:new Uint8Array(1),size:1,ppm:1});}}},nav:{NavGraph:class{constructor(){bump('nav')}static async createNative(){return new this()}}},minimap:{Minimap:class{constructor(level){assert.ok(level.nativeNav);bump('minimap')}activate(){bump('minimapActive')}}},swimWake:{SwimWake:class{reset(){bump('wake')}}},'native-load':{loadNativeData:async()=>data,loadNativeTextures:async()=>new Map()},'native-texture-budget':{nativeStageTextureCaps:()=>({maxDimension:1024,perRole:{}})},'native-gpu-budget':{...nativeGpuBudget},'native-level':{NativeLevel:class{constructor(){this.native=true;this.faces=[];this.bounds={minX:0,minZ:0,maxX:1,maxZ:1}}}},'native-physics':{NativePhysics:class{}},'native-render':{nativeDisplay(){bump('display');return{...obj('display'),group:{}}},nativeInkGeometry(){bump('ink');return obj('geometry')},nativeInkMaterial(){bump('material');return obj('material')}},'native-ink-chunks':{NativeInkMesh:class{constructor(geo){bump('mesh');this.dispose=()=>{bump('meshDispose');geo.dispose()}}bindPaint(){return this}}},'source-menu':{showNativeWorldRecovery(){bump('recoveryDialog')},sourceLoadingStatus(){return{update(){},close(){bump('statusClose')}}}}};
  const context=vm.createContext({AbortController,DOMException,performance,requestAnimationFrame:fn=>frames.push(fn)}),m=new vm.SourceTextModule(source,{context});
  await m.link(spec=>{const key=spec==='three'?'three':spec.split('/').pop().replace(/\.(mjs|js)$/,'');const values=modules[key];assert.ok(values,spec);return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v)},{context});});await m.evaluate();
  const start=()=>m.namespace.buildNativeWorld(game,{id:'tiny',name:'tiny'},()=>valid),tick=()=>new Promise(r=>setImmediate(r));
- return{counts,G,game,warms,frames,stageWarms,setStageWarm:fn=>{stageWarm=fn},start,tick,stale:()=>{valid=false},cancel:()=>game._nativeAbort.abort(),release:()=>m.namespace.releaseNativeWorld(game)};
+ return{counts,G,game,warms,frames,stageWarms,lose:()=>events.get('webglcontextlost')?.(),setStageWarm:fn=>{stageWarm=fn},start,tick,stale:()=>{valid=false},cancel:()=>game._nativeAbort.abort(),release:()=>m.namespace.releaseNativeWorld(game)};
 }
 for(const phase of ['warm','frame'])for(const mode of ['stale','abort'])test(phase+' '+mode+' stops detached work and cleans once',async()=>{
  const f=await fixture(),p=f.start();await f.tick();assert.equal(f.warms.length,1);assert.equal(f.G.renderer.target,'previous');
@@ -41,6 +41,18 @@ test('native stage compile rejection releases detached geometry without publicat
  const p=f.start(),rejection=assert.rejects(p,e=>e===error);await f.tick();f.warms[0].resolve();await rejection;
  assert.equal(f.counts.nav||0,0);assert.equal(f.counts.publish||0,0);assert.equal(f.counts.meshDispose,1);
  assert.equal(f.counts.geometryDispose,1);assert.equal(f.counts.materialDispose,1);assert.equal(f.G.renderer.target,'previous');
+});
+test('context loss is recorded during a live detached build but not after cancellation or stale generation',async()=>{
+ const previous=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+ try{for(const phase of ['pending','aborted','stale','published']){
+  const values=new Map(),store={getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v)};Object.defineProperty(globalThis,'localStorage',{configurable:true,value:store});
+  const f=await fixture(),p=f.start();await f.tick();assert.ok(f.game._nativePendingBuild);
+  if(phase==='aborted')f.cancel();else if(phase==='stale')f.stale();
+  if(phase==='published'){f.warms[0].resolve();await f.tick();f.frames.shift()();await p;assert.equal(f.game._nativePendingBuild,null);}
+  f.lose();assert.equal(nativeGpuBudget.nativeGpuTier(store),phase==='pending'||phase==='published'?1:0,phase);
+  if(phase!=='published'){f.cancel();f.warms[0].resolve();await p;assert.equal(f.game._nativePendingBuild,null);}
+  f.release();
+ }}finally{if(previous)Object.defineProperty(globalThis,'localStorage',previous);else delete globalThis.localStorage;}
 });
 
 }

@@ -1,0 +1,231 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-25T20:18:11.420441+00:00",
+  "scope": "Three source-controller queues from the distinct [PR #1870] Library group, found by the additional historical audit; not part of the active 552 slug set.",
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "counts": {
+    "total": 3,
+    "implemented-local": 2,
+    "not-adopted": 1
+  },
+  "sourceFrozen": true,
+  "integration": {
+    "adapter": "patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs",
+    "entrypoint": "adaptHistoricalSourceMotion20261026",
+    "composition": "scripts/inkwave-source-composition.mjs",
+    "buildOnlyRegistry": "scripts/lib/inkwave-build-only-modules.mjs",
+    "ownership": "Only composed source-controller changes. The five directly owned world modules and other current guards remain unchanged.",
+    "runtimeHelperImportsAdded": 0
+  },
+  "items": [
+    {
+      "key": "source-controller-actionclip-avoid-per-action-frame-array-find",
+      "status": "implemented-local",
+      "historicalStatus": "implemented",
+      "reason": "Replaced the per-action candidate array/find callback with ordered branches, preserving a fresh this.bank.clips.has lookup at every original candidate position. Unknown events still do not touch the bank. Throw fallback sees mutations or bank replacement caused by the first lookup. Family template coercion and getter/call exceptions preserve the original order.",
+      "priorPRGap": "Both PR #1878 and the current pre-change composition retain names.find and per-call candidate arrays. Historical #1870 had the allocation removal but also hoisted clips; the restored version deliberately preserves live reads.",
+      "evidence": {
+        "historicalHead": "1d0dc3b242113bba28752003917f3d6f4998803f",
+        "historicalAdapter": "reports/queue-local-evidence-20261026/historical-pr1870/queue-extra-motion-adapter.mjs",
+        "historicalAdapterSha256": "6d409203a0642d30d5057d817b14d5000792dffc05526f4b4a25f5620682dbef",
+        "currentPR": 1878,
+        "currentPRHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+        "currentPRComposedSource": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-pr1878-controller.js",
+        "currentPRComposedSha256": "63d0adb1b5b115b32313bffa53cd2ddf1b02b3cb20ec5872f3217c216268a2da",
+        "currentBeforeFixture": "patches/local-quality/tests/fixtures/queue-historical-source-motion-before-20261026.json",
+        "currentBeforeComposedSha256": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+        "target": "src/game/motion/source-controller.js",
+        "currentPRNeedle": "return names.find(n=>this.bank.clips.has(n))||null;",
+        "localAdapter": "patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs",
+        "localNeedle": "return this.bank.clips.has('ThrowBomb_Nrml')?'ThrowBomb_Nrml':null;",
+        "currentAfterComposedSource": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-current-after-controller.js",
+        "currentAfterComposedSha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+      },
+      "verification": {
+        "nativeMapComparisons": 17920,
+        "liveMapMutationCases": 8,
+        "getterAndExceptionCases": 6,
+        "actualSourcePoseComparisons": 243
+      }
+    },
+    {
+      "key": "source-motion-share-frame-dt-response-gains-across-actors",
+      "status": "implemented-local",
+      "historicalStatus": "implemented",
+      "reason": "Six private scalar caches share the exact normalized dt response across actors. Each slot retains the original exp or expm1 arithmetic and signed-zero identity, with no quantization or mutable pose sharing. advance already maps nonfinite dt to zero and clamps finite dt to [0,0.1]; HOST_MOTION is frozen. Live Math method identity is read for each use; replaced callbacks and non-number direct helper input use uncached Reflect.apply with the original Math receiver.",
+      "priorPRGap": "PR #1878 and the pre-change local composition evaluate all six fixed response exponentials independently for each actor. Historical #1870 shared these responses without the current callback fallback.",
+      "evidence": {
+        "historicalHead": "1d0dc3b242113bba28752003917f3d6f4998803f",
+        "historicalAdapter": "reports/queue-local-evidence-20261026/historical-pr1870/queue-extra-motion-adapter.mjs",
+        "historicalAdapterSha256": "6d409203a0642d30d5057d817b14d5000792dffc05526f4b4a25f5620682dbef",
+        "currentPR": 1878,
+        "currentPRHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+        "currentPRComposedSource": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-pr1878-controller.js",
+        "currentPRComposedSha256": "63d0adb1b5b115b32313bffa53cd2ddf1b02b3cb20ec5872f3217c216268a2da",
+        "currentBeforeFixture": "patches/local-quality/tests/fixtures/queue-historical-source-motion-before-20261026.json",
+        "currentBeforeComposedSha256": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+        "target": "src/game/motion/source-controller.js",
+        "currentPRNeedle": "1-Math.exp(-(releasedBackpedal?24:12)*dt)",
+        "localAdapter": "patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs",
+        "localNeedle": "const IW_MOTION_NATIVE_EXP=Math.exp,IW_MOTION_NATIVE_EXPM1=Math.expm1;",
+        "currentAfterComposedSource": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-current-after-controller.js",
+        "currentAfterComposedSha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+      },
+      "verification": {
+        "rates": [
+          24,
+          12,
+          10,
+          12,
+          7,
+          8
+        ],
+        "sameDtActorCalls": 5760,
+        "nativeExpCallsAfterWarmup": 0,
+        "changedDtCalls": {
+          "exp": 3,
+          "expm1": 3
+        },
+        "actualSourcePoseComparisons": 243,
+        "frameRates": [
+          30,
+          60,
+          120
+        ],
+        "abnormalInputs": [
+          "undefined",
+          "NaN",
+          "Infinity",
+          "-Infinity",
+          "negative",
+          "-0",
+          "0",
+          "Number.MIN_VALUE",
+          "above clamp"
+        ]
+      },
+      "limitations": [
+        "CPU call elision is established; no browser GPU/FPS percentage is claimed."
+      ]
+    },
+    {
+      "key": "source-controller-lazy-dance-clip-fallback-scan",
+      "status": "not-adopted",
+      "historicalStatus": "implemented",
+      "reason": "The existing implementation already caches dance selection per bank and family, so the candidate is only the first lookup scan. Native data-property bank/clips, native Map keys/has, and exact prototype choose guards do not prove that every live key is a string. With a preferred clip present and a non-string key, the original eager filter throws TypeError while the shortcut returns a clip. Map entries remain mutable under Object.freeze; a same-size delete/set invalidates any size-only certificate. Proving the current key domain requires scanning it or adding a mutation-tracked owner, eliminating the proposed first-scan saving or broadening the contract. The eager code is retained.",
+      "priorPRGap": "Historical #1870 applied an unconditional preferred-name shortcut. PR #1878 and the current local source retain eager fallback enumeration. This historical change is intentionally not restored.",
+      "evidence": {
+        "historicalHead": "1d0dc3b242113bba28752003917f3d6f4998803f",
+        "historicalAdapter": "reports/queue-local-evidence-20261026/historical-pr1870/queue-extra-motion-adapter.mjs",
+        "historicalAdapterSha256": "6d409203a0642d30d5057d817b14d5000792dffc05526f4b4a25f5620682dbef",
+        "currentPR": 1878,
+        "currentPRHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+        "currentPRComposedSource": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-pr1878-controller.js",
+        "currentPRComposedSha256": "63d0adb1b5b115b32313bffa53cd2ddf1b02b3cb20ec5872f3217c216268a2da",
+        "currentBeforeFixture": "patches/local-quality/tests/fixtures/queue-historical-source-motion-before-20261026.json",
+        "currentBeforeComposedSha256": "3b6d6be5d40cdc2e9815e3315c875bc35531811252711967a22d41ea53c62572",
+        "target": "src/game/motion/source-controller.js",
+        "currentPRNeedle": "...Array.from(this.bank.clips.keys()).filter(k=>k.startsWith(prefix))",
+        "localSourceUnchangedForThisQueue": true,
+        "tests": "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+        "currentAfterComposedSource": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-current-after-controller.js",
+        "currentAfterComposedSha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+      },
+      "counterexamples": [
+        {
+          "case": "native Map with Win_Rllr and numeric key 1",
+          "nativeOwnershipGuardsSatisfied": [
+            "own data property bank",
+            "own data property clips",
+            "Map.prototype identity",
+            "native keys",
+            "native has",
+            "unchanged prototype choose"
+          ],
+          "baseline": "TypeError in k.startsWith(prefix)",
+          "historicalShortcut": "Win_Rllr returned, suppressing the exception"
+        },
+        {
+          "case": "custom keys deletes Win_Rllr before yielding Win_Other",
+          "baseline": "Win_Other",
+          "historicalShortcut": "Win_Rllr"
+        },
+        {
+          "case": "custom choose selects Win_Other",
+          "baseline": "Win_Other",
+          "historicalShortcut": "Win_Rllr"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "firstFullRun": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "log": "reports/queue-local-evidence-20261026/queue-audit/historical-source-motion-tests.tap",
+      "sha256": "6f82174408f3d42878ba737b2607a21f1e060ec5eb75fb003569def4d6562747",
+      "actualSourcePoseComparisons": 243,
+      "randomCalls": [
+        0,
+        0
+      ]
+    },
+    "finalExpandedNativeGuardRun": {
+      "status": "passed",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "log": "reports/queue-local-evidence-20261026/queue-audit/historical-source-motion-light-final.tap",
+      "sha256": "35c2af01455aec1c1da9414c6acbcb12f80a387d3b66cc66ee9977572d67ec7b",
+      "actualSourcePoseComparisons": 243,
+      "randomCalls": [
+        0,
+        0
+      ],
+      "note": "Final test source includes native data-property bank/clips, canonical Map keys/has, and prototype choose identity checks in the non-string-key counterexample. Direct-node name filtering did not exclude the actor test, so this is a complete seven-test replay. The replay was paused during browser acceptance and resumed after Chromium exited; its wall time is not a performance measurement."
+    },
+    "syntax": "node --check passed for adapter and test.",
+    "diffCheck": "git diff --check passed for owned changes.",
+    "commands": [
+      "node --max-old-space-size=6144 --experimental-vm-modules --experimental-global-webcrypto --test-reporter=tap patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs"
+    ]
+  },
+  "files": [
+    {
+      "path": "patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs",
+      "sha256": "c804957cd3ad84d324c4e9d57a757b85cd9361c41678b749181410bab621a340",
+      "bytes": 6178
+    },
+    {
+      "path": "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+      "sha256": "d0c8237359e46a5efd84e80f55116d2dc2739f70f59ec4700a2562b2afb6bb79",
+      "bytes": 11886
+    },
+    {
+      "path": "patches/local-quality/tests/fixtures/queue-historical-source-motion-before-20261026.json",
+      "sha256": "92b24e5c1ff331c66623e73988d176561c8b47875fc6bdeffc85c799870c598a",
+      "bytes": 48126
+    },
+    {
+      "path": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-pr1878-controller.js",
+      "sha256": "63d0adb1b5b115b32313bffa53cd2ddf1b02b3cb20ec5872f3217c216268a2da",
+      "bytes": 45943
+    },
+    {
+      "path": "reports/queue-local-evidence-20261026/historical-pr1870/queue-extra-motion-adapter.mjs",
+      "sha256": "6d409203a0642d30d5057d817b14d5000792dffc05526f4b4a25f5620682dbef",
+      "bytes": 8006
+    },
+    {
+      "path": "reports/queue-local-evidence-20261026/historical-pr1870/queue-extra-motion-dispositions-20261025.json",
+      "sha256": "35d47cec983df6fc9b7aaf43a6980d255d763844493b83c91382a7d0a99b42e7",
+      "bytes": 15427
+    },
+    {
+      "path": "reports/queue-local-evidence-20261026/queue-audit/historical-motion-current-after-controller.js",
+      "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85",
+      "bytes": 50806
+    }
+  ]
+}

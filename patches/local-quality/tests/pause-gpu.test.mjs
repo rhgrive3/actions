@@ -24,7 +24,8 @@ test('offline HUD effects park without losing work; resume resets the wall clock
   assert.equal(h.rafs.size, 0);
   assert.equal(h.hud.el.classList.contains('is-world-paused'), true);
   assert.equal(h.hud.overLayer.classList.contains('is-world-paused'), true);
-  h.hud._addFx('late', dt => { elapsed += dt; return false; });
+  let lateRuns = 0;
+  h.hud._addFx('late', dt => { lateRuns++; elapsed += dt; return false; });
   await h.advance(60000);
   assert.equal(elapsed, before);
   assert.equal(h.rafs.size, 0);
@@ -34,9 +35,15 @@ test('offline HUD effects park without losing work; resume resets the wall clock
   h.hud.setWorldPaused(false);
   assert.equal(moving.playState,'running');
   assert.equal(h.hud.paused, true);
-  assert.equal(h.rafs.size, 1);
+  assert.equal(h.rafs.size, 0, 'world resume does not wake effects still owned by the independent debug pause');
+  await h.advance(5000);
+  assert.equal(elapsed, before);
+  assert.equal(lateRuns, 0, 'parked work remains pending through either pause owner');
+  assert.equal(h.rafs.size, 0, 'debug pause no longer schedules an idle RAF loop');
   h.hud.paused = false;
+  assert.equal(h.rafs.size, 1, 'releasing the final pause owner resumes exactly one effect loop');
   await h.advance(50);
+  assert.equal(lateRuns, 1, 'late work resumes exactly once');
   assert.ok(elapsed > before && elapsed - before < .11, 'no accumulated pause time enters the resumed effect');
   h.hud.setWorldPaused(true);
   h.hud.setVisible(false);

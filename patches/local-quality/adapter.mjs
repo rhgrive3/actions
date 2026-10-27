@@ -165,10 +165,16 @@ const IDENTITY_FILES = [
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'collision-hotpath-adapter.mjs', 'shooter-hud-hotpath-adapter.mjs',
+  'paint-render-regions-adapter.mjs', 'paint-profile-batch.mjs', 'paint-profile-bounds.mjs', 'paint-profile-shader.mjs', 'paint-profile-compatibility.mjs', 'paint-dry-regions.mjs', 'paint-dry-region-grid.mjs', 'paint-regional-mips.mjs', 'paint-native-mip-guard.mjs',
   'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'debug-ab-runtime.mjs', 'range-frame-pacing-adapter.mjs',
   // Terminal composition dependencies are build inputs even when this layer's
   // adaptQualitySource does not directly invoke them. Preserve existing order.
+  // Full terminal composer owns these additional build-only queue transformers.
+  'queue-remaining-gameplay-20261026-adapter.mjs', 'queue-remaining-inkflight-20261026-adapter.mjs',
+  'queue-remaining-ui-network-20261026-adapter.mjs', 'queue-remaining-world-20261026-adapter.mjs',
+  'queue-remaining-paint-20261026-adapter.mjs', 'queue-reviewed-world-carryover-20261026-adapter.mjs', 'queue-historical-character-20261026-adapter.mjs',
+  'queue-historical-source-motion-20261026-adapter.mjs',
   'added-ui-motion-adapter.mjs', 'drive-core-queue-adapter.mjs',
   'drive-visual-audio-adapter.mjs', 'fx-empty-pools-adapter.mjs',
   'ink-ripple-presentation-adapter.mjs', 'perf-readout-adapter.mjs',

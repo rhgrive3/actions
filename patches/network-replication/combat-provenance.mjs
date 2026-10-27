@@ -126,16 +126,30 @@ function record(nm,from,packet,t,acceptedSub=null) {
   if(!Array.isArray(packet?.e) || packet.e.length>512 || !finite(packet.ts) || packet.ts<0 || packet.ts>1e9)return;
   const s=state(nm);prune(s,t);
   const poses=nm._combatPoseScratch||(nm._combatPoseScratch=new Map());poses.clear();
+  // Paint cannot produce combat proof. Keep expiry and the bounded owned tail,
+  // but do not copy actor poses for this common paint-only envelope.
+  const eventLimit=Math.min(packet.e.length,256);
+  let paintOnly=eventLimit>0;
+  for(let i=0;paintOnly&&i<eventLimit;i++)if(!Array.isArray(packet.e[i])||packet.e[i][1]!=='s')paintOnly=false;
+  if(paintOnly){const store=s.proofs.get(from);if(store?.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return null;}
   if(Array.isArray(packet.a))for(const r of packet.a) {
-    if(!Array.isArray(r)||r.length<4 || !v3(r.slice(1,4)))continue;
-    if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
+    if(!Array.isArray(r)||r.length<4)continue;
+    if(Object.hasOwn(r,1)&&Object.hasOwn(r,2)&&Object.hasOwn(r,3)){
+      const x=r[1],y=r[2],z=r[3];
+      if(!finite(x)||Math.abs(x)>2000||!finite(y)||Math.abs(y)>2000||!finite(z)||Math.abs(z)>2000)continue;
+      if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
+    }else{
+      // Sparse/custom rows retain slice/every semantics (holes are skipped).
+      if(!v3(r.slice(1,4)))continue;
+      if(ownerActor(nm,from,r[0]))poses.set(r[0],r.slice(1,4));
+    }
   }
   const store=s.proofs.get(from)||[];let acceptedProof=null;
   const packetStart=store.length;
   // A burst shares one exact index; ordinary small envelopes retain the
   // allocation-free walk. Only accepted proofs extend either index.
   let proofKeys=null,recentByActor=null;
-  for(let i=0;i<Math.min(packet.e.length,256);i++) {
+  for(let i=0;i<eventLimit;i++) {
     const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub);
     if(!candidate)continue;
     if(!proofKeys&&packet.e.length>=32){

@@ -1,4 +1,11 @@
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
+import { adaptRemainingGameplay20261026 } from '../patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs';
+import { adaptRemainingInkFlight20261026 } from '../patches/local-quality/queue-remaining-inkflight-20261026-adapter.mjs';
+import { adaptQueueRemainingUiNetwork20261026 } from '../patches/local-quality/queue-remaining-ui-network-20261026-adapter.mjs';
+import { adaptRemainingWorld20261026 } from '../patches/local-quality/queue-remaining-world-20261026-adapter.mjs';
+import { adaptRemainingPaint20261026 } from '../patches/local-quality/queue-remaining-paint-20261026-adapter.mjs';
+import { adaptHistoricalCharacter20261026 } from '../patches/local-quality/queue-historical-character-20261026-adapter.mjs';
+import { adaptHistoricalSourceMotion20261026 } from '../patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs';
 import { adaptWeaponQueue20261024 } from '../patches/splatoon3/weapon-queue-20261024-adapter.mjs';
 import { adaptDriveVisualAudio } from '../patches/local-quality/drive-visual-audio-adapter.mjs';
 import { adaptQueueWorld20261024 } from '../patches/local-quality/queue-world-20261024-adapter.mjs';
@@ -22,12 +29,13 @@ import { adaptWeaponOpponentPalette } from '../patches/splatoon3/weapon-opponent
 import { adaptUiLocalization } from '../patches/splatoon3/ui-localization-adapter.mjs';
 import { adaptNativeStages } from '../patches/native-stages/adapter.mjs';
 import { adaptWeaponAudio } from '../patches/splatoon3/audio-adapter.mjs';
+import { adaptLosslessShooterHud } from '../patches/local-quality/shooter-hud-hotpath-adapter.mjs';
 import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
 import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
 import { adaptCombatGpuCpuPerfect } from '../patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs';
-import { adaptLosslessShooterHud } from '../patches/local-quality/shooter-hud-hotpath-adapter.mjs';
+import { adaptPaintRenderRegions } from '../patches/local-quality/paint-render-regions-adapter.mjs';
 import { adaptStaticMenuArt } from '../patches/local-quality/static-menu-adapter.mjs';
 import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 import { adaptRange } from '../patches/practice-range/adapter.mjs';
@@ -101,7 +109,15 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueUi20261025(rel, code);
   code = adaptStringerChargeHud(rel, code);
   code = adaptLosslessShooterHud(rel, adaptQueueExtraDecor(rel, code), replaceOnce);
-  return adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
+  code = adaptRemainingGameplay20261026(rel, code);
+  code = adaptRemainingInkFlight20261026(rel, code);
+  code = adaptQueueRemainingUiNetwork20261026(rel, code);
+  code = adaptRemainingWorld20261026(rel, code);
+  code = adaptRemainingPaint20261026(rel, code);
+  code = adaptHistoricalSourceMotion20261026(rel, code);
+  code = adaptHistoricalCharacter20261026(rel, code);
+  code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
+  return adaptPaintRenderRegions(rel, code, replaceOnce);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

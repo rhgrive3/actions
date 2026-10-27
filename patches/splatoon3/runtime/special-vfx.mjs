@@ -102,18 +102,26 @@ class Director {
     n = Math.max(1, Math.round(n * this.kit.q));
     const up = o.up ?? 0.4, life = o.life ?? 0.45, size = o.size ?? 0.06, drag = o.drag ?? 3.2;
     const glowOptions={drag,grav:o.grav??4,stretch:o.stretch??.09},petalOptions={drag:drag*.5,grav:(o.grav??14)*.6,rot:0,spin:0,fadeIn:.01},dropOptions={drag:drag*.35,grav:o.grav??14,stretch:.05};
+    let petalColor,petalR,petalG,petalB;
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = clamp(up + rnd(o.spread ?? 1, -(o.spread ?? 1)) * 0.6, -1, 1), h = Math.sqrt(1 - y * y), s = speed * rnd(1.2, 0.55);
       if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, glowOptions);
       else if (i % 3 === 2) {   // glossy shards with white cores among the drops (S3 splatter)
-        const c = this.inkCol(col), sz = size * rnd(3.6, 2);
+        const r=col[0],g=col[1],b=col[2];
+        if(this.inkCol!==Director.prototype.inkCol||!petalColor||!Object.is(r,petalR)||!Object.is(g,petalG)||!Object.is(b,petalB)){
+          petalColor=this.inkCol(col);petalR=r;petalG=g;petalB=b;
+        }
+        const c = petalColor, sz = size * rnd(3.6, 2);
         this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.4, 0.9), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL, (petalOptions.rot=rnd(TAU),petalOptions.spin=rnd(12,-12),petalOptions));
       } else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 0.8), col, dropOptions);
     }
   }
   // one liquid ink drop (a lit teardrop impostor in the puff pool); col is the plain team colour
   drop(p, vx, vy, vz, life, size, col, o = {}) {
-    const c = this.inkCol(this.inkCol(col));
+    const normalized = this.inkCol(col);
+    // The native normalizer is idempotent for bounded output, including HDR input.
+    // Preserve custom methods and non-finite/overflow behavior on the slow path.
+    const c = this.inkCol === Director.prototype.inkCol && Math.max(normalized[0],normalized[1],normalized[2]) <= 1 ? normalized : this.inkCol(normalized);
     this.kit.puffs.spawnRaw(p.x,p.y,p.z,vx,vy,vz,life,size,size*(o.shrink??.45),c[0],c[1],c[2],1,PUFF.CHUNK,
       o.drag??.9,o.grav??14,undefined,undefined,undefined,o.stretch??.035,.01,undefined);
   }
@@ -315,10 +323,11 @@ class Director {
     this.kit.clear();this._speakerCache=new WeakMap();
   }
   updateWailLasers(dt) {
+      let alpha;
       for (const [key, L] of this.lasers) {
         if (this.time - L.seen > SPECIAL_VFX_CALIBRATION.killerWail.beamHold) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(key); continue; }
         const c = this.rgb(L.actor,undefined,L.colorScratch ||= [0,0,0]), from = L.from, to = L.to;
-        L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
+        L.drawTo.lerp(to, alpha ??= 1 - Math.exp(-dt * 30));
         this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
         for (let tick = 0, ticks = nonWailVfxTicks(L, dt); tick < ticks; tick++) {
         if (vfxRandom() < 0.6) { // impact crackle
@@ -407,7 +416,10 @@ class Director {
     if (r?.wid === 'inkjet') { this.finishRound(r, false); this.rounds.delete(p); }
   }
   finishRound(r, impact) {
-    for (const rib of Object.values(r.d)) if (rib?.pts) { this.kit.ribbons.end(rib); this.kit.glowRibbons.end(rib); }
+    for (const rib of Object.values(r.d)) {
+      if (rib?.pts) { this.kit.ribbons.end(rib); this.kit.glowRibbons.end(rib); }
+      else if (rib?.v && 'dead' in rib) rib.dead = true;
+    }
     if (impact) this.call(r.spec.impact, r);
   }
   // ------------------------------------------------------------------ deployed world objects
@@ -429,7 +441,8 @@ class Director {
   // ------------------------------------------------------------------ kit specials with their own world records
   updateKits(dt) {
     const seen = this._kitSeen ||= new Set(); seen.clear();
-    for (const list of [bigBubblerDomes?.() || [], bigBubblerRemoteDomes?.() || []]) for (const d of list) {
+    const localDomes = bigBubblerDomes?.() || [], remoteDomes = bigBubblerRemoteDomes?.() || [];
+    for (let group = 0; group < 2; group++) for (const d of group ? remoteDomes : localDomes) {
       if (!d || d.dead) continue; seen.add(d);
       let r = this.domes.get(d);
       if (!r) { r = { d: {}, color: d.color?.isColor ? [d.color.r, d.color.g, d.color.b] : this.rgb(d.owner, d.team), age: 0 }; this.domes.set(d, r); this.call(KIT_FX.bubbler.start, r, d); }
@@ -619,8 +632,8 @@ const ROUND_FX = {
     start(r, p) { r.d.R = Number.isFinite(p.radius) && p.radius > 1 ? p.radius : 6;   // the charge-scaled 6..11 blast radius (kit-ink-vac descriptor)
       r.d.glow = this.ribbon(true, { width: 0.4, widthTail: 0.08, color: this.hdr(r.color, 1.2, 0.6), alpha: 0.5, style: RIBBON.GLOW, life: 0.15, spacing: 0.15 });
       r.d.ink = this.ribbon(false, { width: 1.0, widthTail: 0.2, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.28, spacing: 0.15 }); },
-    frame(r, p) { this.pushRibbon(r.d.glow, p.pos, true); this.pushRibbon(r.d.ink, p.pos, false);
-      if (vfxRandom() < 0.7) this.drop(p.pos, rnd(3, -3), rnd(3, -3), rnd(3, -3), 0.5, 0.12, r.color, { grav: 10 }); },
+    frame(r, p, dt) { this.pushRibbon(r.d.glow, p.pos, true); this.pushRibbon(r.d.ink, p.pos, false);
+      for (let i = 0, n = nonWailVfxTicks(r.d, dt); i < n; i++) if (vfxRandom() < 0.7) this.drop(p.pos, rnd(3, -3), rnd(3, -3), rnd(3, -3), 0.5, 0.12, r.color, { grav: 10 }); },
     impact(r) {   // S3 (53.4s, read as the burst): a big see-through dome of the team colour over the whole blast radius
       const R = r.d.R || 6, c = r.color;
       this.inkBlast(r.last, c, Math.min(R, 7), { streaks: 30, chunks: 18 });
@@ -705,7 +718,15 @@ const OBJECT_FX = {
       else if (!r.landed) { r.landed = true; this.kit.ribbons.end(r.d.trail); this.disc(false, 0.6, DISC.SPLAT, this.v[0].copy(o.pos).setY(o.pos.y + 0.03), this.up, 0.3, 1.4, r.color, 0.9); this.nativeBurst(o.pos, this.up, this.c.setRGB(...r.color), { count: 8, speed: 4, size: 0.08, paint: false }); }
       // the last second before the pop: a quickening flash
       const left = (o.dur || 5.3) - o.age;
-      if (left < 1) { r.blink = (r.blink || 0) + 1; if (r.blink % Math.max(2, Math.round(left * 12)) === 0) this.spark(SPARK.GLOW, this.v[0].copy(o.pos).setY(o.pos.y + 0.8), 0, 0, 0, 0.12, 0.9, 1.2, this.hdr(r.color, 1.6, 1.2), 0.8); }
+      const blinkClock = r.d.blinkClock || (r.d.blinkClock = {});
+      for (let i = 0, n = nonWailVfxTicks(blinkClock, dt, left < 1); i < n; i++) {
+        // At 30 Hz each bounded trial uses its own remaining-time sample.
+        // The flight sparkle above owns a different fractional carry.
+        const tickLeft = left + (n - 1 - i + blinkClock.nonWailCarry) / 60;
+        if (tickLeft >= 1) continue;
+        r.blink = (r.blink || 0) + 1;
+        if (r.blink % Math.max(2, Math.round(tickLeft * 12)) === 0) this.spark(SPARK.GLOW, this.v[0].copy(o.pos).setY(o.pos.y + 0.8), 0, 0, 0, 0.12, 0.9, 1.2, this.hdr(r.color, 1.6, 1.2), 0.8);
+      }
     },
     end(r, o) {
       if (o.age < (o.dur || 5.3) - 0.05) return;   // removed early (destroyed) → native burst already shown
@@ -775,15 +796,16 @@ const OBJECT_FX = {
       r.d.warn = this.disc(true, 0, DISC.RUNE, this.v[0].copy(p).setY(p.y + 0.05), this.up, 1, 1, this.hdr(c, 1.3, 0.6), 0.8, { fade: false,
         follow: (rec) => { const f = (o.frameCount || 0); rec.v[3] = (o.maxRadius || 12.6) * smooth(f / 20); rec.v[7] += 0.02; rec.v[11] = f >= 40 ? 0 : 0.8; } });
     },
-    frame(r, o) {
+    frame(r, o, dt) {
       const f = o.frameCount || 0, p = o.pos, c = r.color, R = o.maxRadius || 12.6;
       if (f < 40) {
-        if (vfxRandom() < 0.8) { // energy drawn into the ball
+        for (let i = 0, n = nonWailVfxTicks(r.d, dt); i < n; i++) if (vfxRandom() < 0.8) { // energy drawn into the ball
           const th = rnd(TAU), el = rnd(1.2, -0.3), d = rnd(4, 2.5);
           this.v[0].set(p.x + Math.cos(th) * Math.cos(el) * d, p.y + 1 + Math.sin(el) * d, p.z + Math.sin(th) * Math.cos(el) * d);
           this.spark(SPARK.STREAK, this.v[0], (p.x - this.v[0].x) * 3.2, (p.y + 1 - this.v[0].y) * 3.2, (p.z - this.v[0].z) * 3.2, 0.3, 0.06, 0.02, this.hdr(c, 2.2, 1.4), 1, { drag: 0, stretch: 0.07 });
         }
       } else if (!r.blasted) {
+        nonWailVfxTicks(r.d, dt, false);
         r.blasted = true;
         const k0 = p.clone();
         this.flash(this.v[0].copy(k0).setY(k0.y + 1.2), c, 4, 0.35);
@@ -796,7 +818,7 @@ const OBJECT_FX = {
         this.streaks(this.v[0].copy(k0).setY(k0.y + 1), 46, 26, c, { up: 0.4, life: 0.9, size: 0.09, drag: 1.5 });
         this.chunks(this.v[0].copy(k0).setY(k0.y + 0.5), 30, 20, c, { size: 0.3 });
         this.petals(this.v[0].copy(k0).setY(k0.y + 1), 40, 18, c, { size: 0.34 });
-      } else if (this.near(p, 80) && vfxRandom() < 0.9) {
+      } else for (let i = 0, n = nonWailVfxTicks(r.d, dt, this.near(p, 80)); i < n; i++) if (vfxRandom() < 0.9) {
         const k = clamp01((f - 40) / 40), th = rnd(TAU), rr = R * smooth(k * 1.4);
         this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.5, 0.2), p.z + Math.sin(th) * rr);
         this.drop(this.v[0], Math.cos(th) * 5, rnd(6, 2), Math.sin(th) * 5, 0.7, 0.16, c);
@@ -1001,14 +1023,20 @@ const DIRECTORS = {
       // tentaMissilesLockPreview, so the brackets are exactly the opponents the salvo would lock. Local caster only;
       // hidden once the salvo launches.
       const pv = a.isLocal && a.alive && t.phase !== 'launching' ? tentaMissilesLockPreview(this.api, a) : null;
-      const show = !!pv, cam = this.G.camera, limit = pv?.limit || 0, inside = [];
+      const held = t.d.tentaRows ||= { inside: [], rows: [], busy: false };
+      const scratch = held.busy ? { inside: [], rows: [], busy: false } : held;
+      const show = !!pv, cam = this.G.camera, limit = pv?.limit || 0, inside = scratch.inside, rows = scratch.rows;
+      scratch.busy = true; inside.length = 0;
+      try {
       if (pv && cam?.isPerspectiveCamera) for (let i=0;i<pv.targets.length;i++) {
         const e=pv.targets[i],screen=pv.screen?.[i];
-        if (screen && screen[0] !== null && screen[1] !== null) inside.push([e, screen[0], screen[1]]);
+        const row = rows[inside.length] || (rows[inside.length] = [null, 0, 0]); row[0] = e;
+        if (screen && screen[0] !== null && screen[1] !== null) { row[1] = screen[0]; row[2] = screen[1]; }
         else {
           const q=this.v[0].copy(e.pos);q.y+=.7;q.project(cam);
-          inside.push([e,q.x,q.y]);
+          row[1] = q.x; row[2] = q.y;
         }
+        inside.push(row);
       }
       if (this.tentaHud(t, show, limit, inside)) return;
       // no HUD layer (headless/tests): fall back to world-space reticles over the same opponents
@@ -1019,6 +1047,12 @@ const DIRECTORS = {
           follow: (rec) => { rec.v[0] = e.pos.x; rec.v[1] = e.pos.y + 0.9; rec.v[2] = e.pos.z; const n = this.v[1].copy(this.camPos).sub(e.pos).normalize(); rec.v[4] = n.x; rec.v[5] = n.y; rec.v[6] = n.z; rec.v[3] = Math.max(0.85, 2.2 - rec.t * 4.8); } }));
       }
       for (const [e, r] of locks) if (!live.has(e)) { r.dead = true; locks.delete(e); }
+      } finally {
+        // Both consumers are synchronous. Drop actor references even when a
+        // HUD callback throws, and isolate nested draws from the outer rows.
+        for (const row of rows) row[0] = null;
+        inside.length = 0; scratch.busy = false;
+      }
     },
     event(a, e, pos, target) {
       const c = this.rgb(a);
@@ -1045,7 +1079,7 @@ const DIRECTORS = {
       const squid = a.form === 'squid' || a.intent?.squid;
       const ticks = inkjetVfxTicks(t.d, dt, !squid), admission = inkjetVfxAdmission(this, a);
       const c = t.color, f = this.forward(a, this.v[5]), side = this.v[6].set(f.z, 0, -f.x);
-      const ground = groundBelow(this, a);
+      const ground = squid ? 0 : groundBelow(this, a);
       // The chest/body can trail the aim while turning. Read the drawn pack's
       // nozzle mouths (inkjetPack), rather than placing detached jets from aimYaw.
       const ch = a.character;
@@ -1146,9 +1180,9 @@ const DIRECTORS = {
     start(a, t) { this.activation(a, t.color, 1.15);   // S3: golden starburst rays round the kid as the stamp appears
       for (let i = 0; i < Math.round(14 * this.kit.q); i++) { const th = i / 14 * TAU, el = rnd(0.9, 0.1);
         this.spark(SPARK.RAY, this.v[0].copy(a.pos).setY(a.pos.y + 0.6), Math.cos(th) * Math.cos(el), Math.sin(el), Math.sin(th) * Math.cos(el), 0.42, 0.14, 0.03, this.hdr(t.color, 2.4, 1.8), 1, { drag: 0, stretch: 3.2, grav: 0 }); } },
-    frame(a, t) {
+    frame(a, t, dt) {
       const st = a._s3AllSpecialState;
-      if (st?.phase === 'aimThrow' && vfxRandom() < 0.3) this.spark(SPARK.STAR, this.v[0].copy(a.pos).setY(a.pos.y + 2.2), rnd(1, -1), rnd(1, 0), rnd(1, -1), 0.3, 0.25, 0.03, this.hdr(t.color, 1.8, 1.4), 1);
+      for (let i = 0, n = nonWailVfxTicks(t.d, dt, st?.phase === 'aimThrow'); i < n; i++) if (vfxRandom() < 0.3) this.spark(SPARK.STAR, this.v[0].copy(a.pos).setY(a.pos.y + 2.2), rnd(1, -1), rnd(1, 0), rnd(1, -1), 0.3, 0.25, 0.03, this.hdr(t.color, 1.8, 1.4), 1);
     },
     event(a, e, pos, target) {
       const c = this.rgb(a);
@@ -1186,6 +1220,9 @@ const DIRECTORS = {
       const st = a._s3AllSpecialState, c = t.color;
       const hand = this.bone(a, 'handR', this.v[0]) || this.chest(a, this.v[0], 1.2);
       const phase = st?.phase ?? null, target = st?.zipTarget;
+      const emissionPhase = target && (phase === 'hookFlight' || phase === 'zip') ? phase : null;
+      if (t.d.zipEmissionPhase !== emissionPhase) { t.d.zipEmissionPhase = emissionPhase; t.d.nonWailCarry = 0; }
+      const emissionTicks = nonWailVfxTicks(t.d, dt, emissionPhase !== null);
       if ((phase === 'hookFlight' || phase === 'zip') && target) {
         let head = target;
         if (phase === 'hookFlight') { const k = clamp01((st.hookFlightT || 0) / Math.max(1e-3, st.hookFlightDuration || 0.1)); head = this.v[1].copy(hand).lerp(target, easeOut(k)); }
@@ -1193,12 +1230,12 @@ const DIRECTORS = {
         if (!t.d.line) { t.d.line = this.beam(false, 0, BEAM.JET, hand, head, 0.06, 0.09, c, 1, { speed: 20 }); (t.d.recs ||= []).push(t.d.line); }
         const thick = phase === 'zip' ? 0.1 : 0.06;
         this.setBeam(t.d.line, hand, head, thick * 0.8, thick, 1);
-        if (phase === 'hookFlight' && vfxRandom() < 0.6) this.drop(head, rnd(1, -1), rnd(1, -1.5), rnd(1, -1), 0.35, 0.09, c, { grav: 10 });
+        if (phase === 'hookFlight') for (let i = 0; i < emissionTicks; i++) if (vfxRandom() < 0.6) this.drop(head, rnd(1, -1), rnd(1, -1.5), rnd(1, -1), 0.35, 0.09, c, { grav: 10 });
         if (phase === 'zip') {      // the pull: streaks peeling off the body and an ink trail behind
           if (!t.d.trail) t.d.trail = this.ribbon(false, { width: 0.8, widthTail: 0.15, color: c, alpha: 1, style: RIBBON.INK, life: 0.25, spacing: 0.15 });
           this.pushRibbon(t.d.trail, this.chest(a, this.v[2], 0.8), false);
           const v = a.vel || this.v[3].set(0, 0, 0);
-          for (let i = 0; i < 2; i++) this.drop(this.v[2].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.4, 0.2), a.pos.z + rnd(0.5, -0.5)), -v.x * 0.3, -v.y * 0.3, -v.z * 0.3, 0.35, 0.08, c, { drag: 3, grav: 8, stretch: 0.06 });
+          for (let i = 0; i < emissionTicks * 2; i++) this.drop(this.v[2].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.4, 0.2), a.pos.z + rnd(0.5, -0.5)), -v.x * 0.3, -v.y * 0.3, -v.z * 0.3, 0.35, 0.08, c, { drag: 3, grav: 8, stretch: 0.06 });
         }
       } else {
         if (t.d.line) t.d.line.v[11] = 0;
@@ -1303,7 +1340,10 @@ const DIRECTORS = {
       t.d.emitCarry = Math.max(0, t.d.emitCarry - ticks / 60);
       if (phase === 'dash' || phase === 'brake') {
         const g = groundBelow(this, a);
-        for (const [rib, s] of [[t.d.wakeL, -1], [t.d.wakeR, 1]]) this.pushRibbon(rib, this.v[0].set(a.pos.x + side.x * s * 0.55, g + 0.05, a.pos.z + side.z * s * 0.55), false);
+        const wakeL = t.d.wakeL, wakeR = t.d.wakeR;
+        for (let i = 0; i < 2; i++) { const rib = i ? wakeR : wakeL, s = i ? 1 : -1;
+          this.pushRibbon(rib, this.v[0].set(a.pos.x + side.x * s * 0.55, g + 0.05, a.pos.z + side.z * s * 0.55), false);
+        }
         this.pushRibbon(t.d.speed, this.v[0].set(a.pos.x, a.pos.y + 0.7, a.pos.z), false);
         // bow spray: a V of ink chunks thrown off the nose
         t.acc = (t.acc || 0) + dt;
@@ -1486,9 +1526,11 @@ const DIRECTORS = {
         // dust and droplets dragged into the nozzle along a widening cone (S3: green swirling suction rings)
         t.acc = (t.acc || 0) + dt * (30 + 40 * (st?.charge || 0));
         const far = st?.farR || 3, len = clamp(st?.length || 6, 2, 9);
+        let basisReady = false;
+        const up = this.v[2], right = this.v[3];
         while (t.acc >= 1) { t.acc -= 1;
           const d = rnd(len, 1.2), w = (0.4 + (far - 0.4) * d / len) * Math.sqrt(vfxRandom()), th = rnd(TAU);
-          const up = this.v[2].set(0, 1, 0), right = this.v[3].crossVectors(f, up).normalize(); up.crossVectors(right, f).normalize();
+          if (!basisReady) { up.set(0, 1, 0); right.crossVectors(f, up).normalize(); up.crossVectors(right, f).normalize(); basisReady = true; }
           this.v[4].copy(mouth).addScaledVector(f, d).addScaledVector(right, Math.cos(th) * w).addScaledVector(up, Math.sin(th) * w);
           const k = 2.6 / 0.35;
           this.drop(this.v[4], (mouth.x - this.v[4].x) * k / d * 1.4, (mouth.y - this.v[4].y) * k / d * 1.4, (mouth.z - this.v[4].z) * k / d * 1.4, 0.32, 0.06, c, { drag: 0, grav: 0, stretch: 0.04, shrink: 0.3 });
@@ -1601,9 +1643,10 @@ function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
   for (const q of fil) {
     const pool = q.white ? self.kit.glowRibbons : self.kit.ribbons, th0 = q.ang ?? q.ph, dth = speed * q.sp * dt;
     q.ang = th0 + dth;
+    const rh = R * q.rr, rv = R * q.rr * 0.72;
     for (let k = 1; k <= n; k++) {
-      const u = k / n, th = th0 + dth * u, rh = R * q.rr, rv = R * q.rr * 0.72;
-      const cs = Math.cos(th) * rh, sn = Math.sin(th) * rv, along = q.off + q.tip * Math.sin(th);   // a ring across the travel axis
+      const u = k / n, th = th0 + dth * u, sine = Math.sin(th);
+      const cs = Math.cos(th) * rh, sn = sine * rv, along = q.off + q.tip * sine;   // a ring across the travel axis
       pool.push(q.r, lc[0] + (cx - lc[0]) * u + sx * cs + fx * along, lc[1] + (cyy - lc[1]) * u + sn, lc[2] + (cz - lc[2]) * u + sz * cs + fz * along,
         now - dt * (1 - u));
     }
@@ -1616,10 +1659,16 @@ const SPEAKER_RING = WAIL_SPEAKER_POSITIONS;
 function speakerAnchors(self, a) {
   const cache=self._speakerCache ||= new WeakMap();let record=cache.get(a);
   if(record&&self._speakerCacheActive&&record.epoch===self._speakerEpoch)return record.out;
-  if(!record){record={out:SPEAKER_RING.map(()=>new self.THREE.Vector3()),epoch:-1};cache.set(a,record);}
+  if(!record){record={out:SPEAKER_RING.map(()=>new self.THREE.Vector3()),holders:[],epoch:-1};cache.set(a,record);}
   const out=record.out;record.epoch=self._speakerCacheActive?self._speakerEpoch:-1;
   const ch = a.character, list = ch?.s3SpecialDevices?.() || null;
-  const holders = list ? list.filter(d => d.spec?.speakers).map(d => d.holder) : [];
+  const nested=!!record.busy,holders=nested?[]:record.holders;record.busy=true;holders.length=0;
+  try {
+  if(list){
+    // Retain filter-then-map read order; holder access starts after every spec.
+    for(let i=0;i<list.length;i++)if(i in list){const d=list[i];if(d.spec?.speakers)holders.push(d);}
+    for(let i=0;i<holders.length;i++)holders[i]=holders[i].holder;
+  }
   if (holders.length === SPEAKER_RING.length) {
     for (let i = 0; i < holders.length; i++) { holders[i].updateWorldMatrix(true, false); out[i].set(0, 0, 0.035).applyMatrix4(holders[i].matrixWorld); }
     return out;
@@ -1627,6 +1676,7 @@ function speakerAnchors(self, a) {
   const y = a.aimYaw ?? a.yaw ?? 0, cs = Math.cos(y), sn = Math.sin(y);
   for (let i = 0; i < SPEAKER_RING.length; i++) { const [x, h, z] = SPEAKER_RING[i]; out[i].set(a.pos.x + x * cs + z * sn, a.pos.y + h, a.pos.z - x * sn + z * cs); }
   return out;
+  } finally {holders.length=0;record.busy=nested;}
 }
 function groundBelow(self, a) { return groundBelowPoint(self, a.pos, a.pos.y); }
 function groundBelowPoint(self, p, fallback) {

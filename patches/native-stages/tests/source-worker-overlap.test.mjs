@@ -6,7 +6,7 @@ async function harness(){
  const context=vm.createContext({TextDecoder,AbortController,performance:{now:()=>1},self:{navigator:{},postMessage:m=>messages.push(m)}});
  const imports={
  './source-catalog.mjs':{SOURCE_RECIPE:'r',SOURCE_STAGES:[{id:'x',internal:'stage',sourceSha256:'pin',tree:'tree'}],sourceURL:(_s,p)=>p,sourceObjectBytes:()=>42},
- './source-cache.mjs':{readDerived:async()=>null,writeDerived:async()=>{},sourceTree:(_id,pin,signal)=>{events.push('tree');signals.push(signal);return tree.promise;},sourceBytes:(_id,url,pin,signal)=>{events.push(url);signals.push(signal);if(url.endsWith('.mtl'))assert.deepEqual(JSON.parse(JSON.stringify(pin)),{bytes:3,gitSha1:'mtl-pin'});return url.endsWith('.obj')?obj.promise:mtl.promise;}},
+ './source-cache.mjs':{readDerived:async()=>null,writeDerived:async()=>{},sourceTree:(_id,pin,signal)=>{events.push('tree');signals.push(signal);return tree.promise;},sourceBytes:(_id,url,pin,signal)=>{events.push(url);signals.push(signal);if(url.endsWith('.mtl'))assert.deepEqual(JSON.parse(JSON.stringify(pin)),{bytes:3,gitSha1:'1111111111111111111111111111111111111111'});return url.endsWith('.obj')?obj.promise:mtl.promise;}},
  './source-convert.mjs':{convertSource:(_stage,o,m,files)=>{converted++;assert.deepEqual(Array.from(o),[1,2]);assert.equal(m,'ABC');return Object.fromEntries(fields.map(k=>[k,new Uint8Array(1)]));}},
  };
  const module=new vm.SourceTextModule(source,{context});await module.link(spec=>{const values=imports[spec];return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v)},{context});});await module.evaluate();
@@ -14,7 +14,7 @@ async function harness(){
  return{obj,tree,mtl,events,messages,signals,run,converted:()=>converted};
 }
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-const treeValue={tree:[{type:'blob',path:'stage.mtl',size:3,sha:'mtl-pin'}]};
+const treeValue={tree:[{type:'blob',path:'stage.mtl',size:3,sha:'1111111111111111111111111111111111111111'}]};
 test('authenticated MTL starts after tree while OBJ is pending; conversion awaits both payloads',async()=>{
  const h=await harness(),running=h.run();await flush();assert.deepEqual(h.events,['stage.obj','tree']);h.tree.resolve(treeValue);await flush();assert.deepEqual(h.events,['stage.obj','tree','stage.mtl']);assert.equal(h.converted(),0);h.mtl.resolve(new Uint8Array([65,66,67]).buffer);await flush();assert.equal(h.converted(),0);h.obj.resolve(new Uint8Array([1,2]).buffer);await running;assert.equal(h.converted(),1);assert(h.messages.at(-1).result);assert.equal(new Set(h.signals).size,1);
 });

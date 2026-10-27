@@ -18,14 +18,17 @@ async function scene(){
   return {...f,calls,rises};
 }
 
-test('every Charger uses the shared recorded rise and its own gameplay-owned ready edge',async()=>{
+test('each Charger uses the same Splat recording with its own charge clock; ready edge stays gameplay-owned',async()=>{
   const f=await scene();
   for(const r of Object.values(WEAPON_AUDIO).filter(r=>r.family==='charger')){
     f.G.projectiles.clear();f.G.actors.length=0;f.calls.length=0;f.rises.length=0;
     const a=f.make(r.id);a.form='kid';a.isLocal=true;a.ink=100;a.intent.fire=true;
     f.tick(a,150);
-    assert.equal(f.rises.length,usesChargerRise(r.id)?1:0,r.id+' must use correct phrase');
-    assert.equal(f.calls.filter(c=>c.id===r.id&&c.event==='charge').length,usesChargerRise(r.id)?0:1,r.id+' one onset');
+    assert.equal(usesChargerRise(r.id),true);
+    assert.equal(f.rises.length,1,r.id+' uses shared recorded Splat phrase');
+    assert.equal(f.rises[0].o.weaponId,r.id);
+    assert.equal(f.rises[0].o.chargeTime,a.weapon.chargeTime);
+    assert.equal(f.calls.filter(c=>c.id===r.id&&c.event==='charge').length,0,r.id+' no extra HoldNoise onset');
     // Native Splat Charger's ready sound remains native. Catalogue ready is
     // the first actual full-charge edge, independently of MP3 duration.
     if(a.weapon.catalogRecord){

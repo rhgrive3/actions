@@ -4,11 +4,11 @@ const source=fs.readFileSync(new URL('../runtime/source-worker.mjs',import.meta.
 const fields=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 async function run(nav,{offline=false,hit=true}={}){
  const calls={read:0,write:0,convert:0,fetch:0,source:[],messages:[]},data=Object.fromEntries(fields.map(k=>[k,new Uint8Array(4)]));
- const ctx=vm.createContext({TextDecoder,performance:{now:()=>1},self:{navigator:nav,postMessage:(m,t)=>calls.messages.push({m,t})},fetch:async()=>{calls.fetch++;if(offline)throw Error('offline tree');return{ok:true,json:async()=>({sha:'tree',truncated:false,tree:[{type:'blob',path:'stage.mtl',size:3,sha:'mtl'}]})};}});
+ const ctx=vm.createContext({TextDecoder,performance:{now:()=>1},self:{navigator:nav,postMessage:(m,t)=>calls.messages.push({m,t})},fetch:async()=>{calls.fetch++;if(offline)throw Error('offline tree');return{ok:true,json:async()=>({sha:'tree',truncated:false,tree:[{type:'blob',path:'stage.mtl',size:3,sha:'1'.repeat(40)}]})};}});
  const imports={
  './source-catalog.mjs':{sourceObjectBytes:()=>undefined,SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'stage',sourceSha256:'hash',internal:'stage',tree:'tree'}],sourceURL:(_,p)=>p},
  './source-convert.mjs':{convertSource:()=>{calls.convert++;return data;}},
- './source-cache.mjs':{sourceTree:async()=>{calls.fetch++;if(offline)throw Error('offline tree');return{sha:'tree',truncated:false,tree:[{type:'blob',path:'stage.mtl',size:3,sha:'mtl'}]};},readDerived:async()=>{calls.read++;return hit?data:null;},writeDerived:async()=>{calls.write++;},sourceBytes:async(id,url,pin,signal,progress)=>{calls.source.push({url,progress:typeof progress});return new Uint8Array([65,66,67]).buffer;}}
+ './source-cache.mjs':{sourceTree:async()=>{calls.fetch++;if(offline)throw Error('offline tree');return{sha:'tree',truncated:false,tree:[{type:'blob',path:'stage.mtl',size:3,sha:'1'.repeat(40)}]};},readDerived:async()=>{calls.read++;return hit?data:null;},writeDerived:async()=>{calls.write++;},sourceBytes:async(id,url,pin,signal,progress)=>{calls.source.push({url,progress:typeof progress});return new Uint8Array([65,66,67]).buffer;}}
  };
  const m=new vm.SourceTextModule(source,{context:ctx});await m.link(spec=>{const values=imports[spec];assert(values,spec);return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context:ctx});});await m.evaluate();await ctx.self.onmessage({data:{id:'stage',runtimeSha256:'runtime'}});return{calls,data};
 }

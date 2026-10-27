@@ -228,13 +228,19 @@ export function installChargerFlight(api,completion) {
     job.pos.copy(job.prev).addScaledVector(job.dir,length);
     const world=sweptWorldHit(G.physics,job.prev,job.pos,collision.InitRadiusForField,collision.EndRadiusForField,job.hit,true);
     let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit?world.normal.clone():null,target=null;
-    const defense=system.kitDefenseCandidate?.({owner:job.owner,team:job.team,prev:job.prev,pos:job.pos,vel:job.dir,damage:job.damage,type:'beam',size:0,ghost:job.ghost,full:!!job.full});
+    // One source flight owns these scalar fields and the same movement vectors.
+    // Candidate callbacks are settled synchronously below before the next step.
+    const probe=job.defenseProbe||=( {type:'beam',size:0} );
+    probe.owner=job.owner;probe.team=job.team;probe.prev=job.prev;probe.pos=job.pos;probe.vel=job.dir;
+    probe.damage=job.damage;probe.ghost=job.ghost;probe.full=!!job.full;
+    const defense=system.kitDefenseCandidate?.(probe);
     if(defense&&(!world.hit||defense.distance<world.dist-EPS)){distance=defense.distance;ended=true;target='defense';normal=job.dir.clone().negate();}
     const boss=G.boss?.segHit(job.prev,job.pos,collision.InitRadiusForPlayer);
     if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
-    const actors=job.hitCandidates||=([]);actors.length=0;
-    let clippedFraction;
-    for(const actor of G.actors){
+    const depth=job.hitCandidateDepth||0,leases=job.hitCandidateLeases||=([]);
+    const lease=leases[depth]||=( {actors:[],rows:[]} ),actors=lease.actors;actors.length=0;job.hitCandidateDepth=depth+1;
+    let amount,clippedFraction;
+    try { for(const actor of G.actors){
       // Partial rounds meet allied bodies; full rounds retain teammate piercing.
       if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
       // A live fixed-step beam and the target must share one contact time.
@@ -251,11 +257,13 @@ export function installChargerFlight(api,completion) {
       }else job.base.copy(actor.pos);
       const t=capsuleEntry(job.prev,end,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
-      if(chargerActorBeforeStop(t,length,distance))actors.push({actor,d:t*length});
+      if(chargerActorBeforeStop(t,length,distance)){
+        const row=lease.rows[actors.length]||=( {actor:null,d:0} );row.actor=actor;row.d=t*length;actors.push(row);
+      }
     }
     if(actors.length>1)actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
-    const amount=job.damage;
-    try{for(const a of actors){
+    amount=job.damage;
+    for(const a of actors){
       job.seen.add(a.actor);if(!job.ghost&&a.actor.team!==job.team){
         const previous=job.owner._sourceChargerAudioHit;
         job.owner._sourceChargerAudioHit={chargerDirect:true,charge:job.charge};
@@ -264,7 +272,7 @@ export function installChargerFlight(api,completion) {
       }
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
     }
-    }finally{actors.length=0;}
+    }finally{for(const row of actors)row.actor=null;actors.length=0;job.hitCandidateDepth=depth;}
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
     if(target==='defense')defense.onHit();
     job.pos.copy(job.prev).addScaledVector(job.dir,distance);job.travel+=distance;

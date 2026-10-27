@@ -1,0 +1,3375 @@
+{
+  "schema": 1,
+  "basePR": 1878,
+  "baseHead": "dd90aa241aabd5f0b972cc3471386ba3d4da86dc",
+  "historicalReviewedHead": "1d0dc3b242113bba28752003917f3d6f4998803f",
+  "scope": "All 144 assigned world/character/camera/lobby/native queues, rechecked against actual #1878 production composition; old disposition labels alone are not treated as implementation.",
+  "counts": {
+    "implemented-local": 62,
+    "not-adopted": 32,
+    "already-in-pr": 49,
+    "excluded-user": 1
+  },
+  "validation": {
+    "newSourceRegressionTests": 17,
+    "actualMotionTests": 2,
+    "actualSourceLoadedComparisons": 216,
+    "newNativeRegressionTests": 5,
+    "relatedNativeSuiteFilesPassed": 5,
+    "newTestFiles": [
+      "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs",
+      "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs",
+      "patches/native-stages/tests/queue-remaining-native-runtime-20261026.test.mjs"
+    ],
+    "relatedNativeTests": [
+      "ink-chunks",
+      "native-block-band",
+      "native-nav-time-slice",
+      "native-texture-profile-reuse",
+      "native-world-cancellation"
+    ],
+    "geometry": "12 face quality/LOD variants and 5 legacy stages byte-identical; boats, lamps, sea, foam, collider transforms, typed marina and nav ordering verified.",
+    "commands": [
+      "node --experimental-vm-modules --experimental-global-webcrypto --test-reporter=tap patches/local-quality/tests/queue-remaining-world-20261026.test.mjs",
+      "node --experimental-vm-modules --experimental-global-webcrypto --test-reporter=tap patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs",
+      "node --experimental-vm-modules --experimental-global-webcrypto --test-reporter=tap patches/native-stages/tests/queue-remaining-native-runtime-20261026.test.mjs"
+    ],
+    "nativeRegeneration": "reports/queue-local-native-regeneration-20261026.json",
+    "nativeConverterRegressions": {
+      "syntheticConverterTests": 7,
+      "privateInventoryTests": 3,
+      "parserComparisons": 196,
+      "fullSyntheticConversionComparisons": 128,
+      "testedSuiteFiles": 15,
+      "passedCases": 89,
+      "optionalLegacyPythonReferenceCasesSkipped": 23,
+      "productionStageParityWithoutSkips": 23
+    },
+    "directSourceMigration": "reports/queue-local-world-direct-migration-20261026.json",
+    "directSourceMigrationGate": "All 18 direct owners verified; five moved modules preserve exact composed bytes.",
+    "relatedMotionRegression": "696 actual pose comparisons across 36 profiles; 2 tests passed after independent baseline refresh."
+  },
+  "limitations": [
+    "No iPad/Safari GPU, energy or FPS performance percentage is claimed. Node exact-output and lifecycle regressions prove the checked local contracts.",
+    "Converter/worker inputs were changed only alongside full legitimate 23-stage regeneration. The source pins, fingerprint rules, LFS proof and payload admission gates are unchanged."
+  ],
+  "items": [
+    {
+      "key": "character-warmall-error-leaves-hidden-lod-visible",
+      "title": "# [QUEUE][INKWAVE][Bug] Character.warmAll 例外時に不可視LOD/武器/フォームを表示したまま残し再試行不能になる",
+      "library_file_id": "libfile_daa1ab148a44819180b1be525d05c079",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Bug] character-warmall-error-leaves-hidden-lod-visible.md",
+      "status": "implemented-local",
+      "reason": "The existing outer visibility/renderer finally is retained; a rejected warm promise is cleared only while still owned so synchronous, asynchronous and tier-build failures can retry.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 49,
+          "needle": "this._warmed === done",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "body-balance-skip-zero-reach-bone-parent-walks",
+      "title": "# [QUEUE][INKWAVE][Optimization] BodyBalanceのゼロ到達補正で不要な親骨回転走査を省略",
+      "library_file_id": "libfile_5a7a538b915c8191b5f6f7d47af09ad5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] body-balance-skip-zero-reach-bone-parent-walks.md",
+      "status": "not-adopted",
+      "reason": "Current reach correction still transforms a zero displacement through parent quaternions and adds it to each bone. Skipping this changes signed-zero and nonfinite propagation and private scratch/cache initialization; no finite-rig and state-equivalent shortcut was established. Rig and motion behavior are preserved.",
+      "evidence": [
+        "src/game/motion/body-balance.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/body-balance.js",
+          "origin": "fully-composed-public-source",
+          "line": 73,
+          "needle": "this.v.set(0,this.reachCorrection*share,0)",
+          "sha256": "066db2818a36c8aee613b0030e7ce61bcc8b25d0bf1d68a83923081b5a9ddc47"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "camera-rig-skip-nonswim-horizontal-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] CameraRigの非遊泳フレームで未使用の水平速度計算を省略",
+      "library_file_id": "libfile_ade26cbdfd848191b7924db38644e8cc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] camera-rig-skip-nonswim-horizontal-hypot.md",
+      "status": "implemented-local",
+      "reason": "Horizontal speed is computed only in swim/climb branches that consume it; camera position, spring state and FOV remain exact at 30/60/120 Hz.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 53,
+          "needle": "swim ? Math.hypot(a.vel.x, a.vel.z) : 0",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+      "title": "# [QUEUE][INKWAVE][Optimization] catalog-distance-splash-reuse-pooled-projectile-interpolation-vector",
+      "library_file_id": "libfile_aaec13f3d35081918b44af12f7b50f4e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] catalog-distance-splash-reuse-pooled-projectile-interpolation-vector.md",
+      "status": "implemented-local",
+      "reason": "Restore a pooled projectile-owned splash interpolation Vector3 with no cross-record aliasing. Real compiled InkFlight/catalogue regression preserves births, RNG order and buffers.",
+      "evidence": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+          "origin": "repository-file",
+          "line": 1495,
+          "needle": "s.splashReleasePoint",
+          "sha256": "e83f43e6bf0b7229fc24811b3210b887cfe655f9e2dbab476fa994df20e6469d"
+        }
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-inkflight-local-20261026.test.mjs",
+        "patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-face-ao-27-neighbor-hash-offset-table",
+      "title": "# [QUEUE][INKWAVE][Optimization] 顔メッシュAOの27近傍セル・ハッシュ計算を固定オフセットで共有する",
+      "library_file_id": "libfile_962f465aff448191861b5e8557510b63",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-face-ao-27-neighbor-hash-offset-table.md",
+      "status": "implemented-local",
+      "reason": "The final composed AO key packs signed 10-bit coordinates. A precomputed ordered 27-neighbor offset table is used only when all neighbors fit; boundary coordinates retain the exact key function. Actual 12 face variants/77,242 vertices remain byte-identical.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 131,
+          "needle": "IW_AO_NEIGHBORS",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "character-face-cache-unchanged-vergence-atan2",
+      "title": "# [QUEUE][INKWAVE][Optimization] 顔アニメの不変な注視距離に対する輻輳角 atan2 を再計算しない",
+      "library_file_id": "libfile_6d8d883aa7608191a0da448810329aa4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-face-cache-unchanged-vergence-atan2.md",
+      "status": "implemented-local",
+      "reason": "Restore the omitted #1870 exact Object.is memo of clamped vergence distance; the cached result is still assigned on every call.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 33,
+          "needle": "F._driveVergeDistance",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-foot-ankle-roll-share-pitch-sincos",
+      "title": "# [QUEUE][INKWAVE][Optimization] 左右足の着地IK: 足首ピッチのsin/cos二重呼出を共有",
+      "library_file_id": "libfile_57f6b8e574048191884a55be155223d4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-foot-ankle-roll-share-pitch-sincos.md",
+      "status": "implemented-local",
+      "reason": "Restore the omitted #1870 same-expression ankle pitch sine/cosine sharing, preserving each following operation order.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 20,
+          "needle": "const cosPitch=Math.cos(pitch), sinPitch=Math.sin(pitch);",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-geo-sweep-cache-radial-angle-basis",
+      "title": "# [QUEUE][INKWAVE][Optimization] `character-geo.sweep` のリング角度三角関数を同一メッシュ内で再利用",
+      "library_file_id": "libfile_8c742fa5d0dc8191a434459480bb029b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-geo-sweep-cache-radial-angle-basis.md",
+      "status": "implemented-local",
+      "reason": "Bounded 32-entry angle tables retain Float64 values for integer radial counts 1..128; unusual counts use the original formula. No tessellation or shape is changed.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 121,
+          "needle": "IW_SWEEP_BASIS",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "character-lod-fast-attribute-compare-in-corner-split",
+      "title": "# [QUEUE][INKWAVE][Optimization] Far LODマテリアル境界比較の安全な連続属性配列fast path",
+      "library_file_id": "libfile_2c9de658f03081918f5e5e18bb85cebe",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-lod-fast-attribute-compare-in-corner-split.md",
+      "status": "implemented-local",
+      "reason": "Dense, unnormalized, noninterleaved aMat/color comparisons read their raw components; normalized or interleaved attributes keep the original accessors.",
+      "evidence": [
+        "inkwave-public/src/game/character-lod.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/game/character-lod.js",
+          "origin": "repository-file",
+          "line": 267,
+          "needle": "const sm=!sourceMat.normalized",
+          "sha256": "67cc66caee6f8dc64f2e2151c1942bc28c8d597d7d2d35953fdd0526e219a43e"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "character-lod-reuse-far-normal-scratch-buffer",
+      "title": "# [QUEUE][INKWAVE][Optimization] Far LOD法線クラスタ集計の一時Float32Arrayを再利用",
+      "library_file_id": "libfile_6d3f862a27588191970e6461e92a242f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-lod-reuse-far-normal-scratch-buffer.md",
+      "status": "implemented-local",
+      "reason": "Reuse at most 262,144 Float32 normal accumulator scalars for callback-free dense attributes, clearing the active prefix every invocation; unusual attributes use independent arrays.",
+      "evidence": [
+        "inkwave-public/src/game/character-lod.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/game/character-lod.js",
+          "origin": "repository-file",
+          "line": 1,
+          "needle": "let IW_NORMAL_SCRATCH",
+          "sha256": "67cc66caee6f8dc64f2e2151c1942bc28c8d597d7d2d35953fdd0526e219a43e"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "character-material-skip-zero-weight-pulses",
+      "title": "# [QUEUE][INKWAVE][Optimization] キャラクター材質のゼロ振幅発光・低インク波形の不要なsin評価を回避",
+      "library_file_id": "libfile_1d5dfee0a4148191a9c6a1786c3f383b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-material-skip-zero-weight-pulses.md",
+      "status": "already-in-pr",
+      "reason": "Actual composed material pulses already guard zero weight only when the multiplied angle is finite, retaining nonfinite and signed-zero semantics.",
+      "evidence": [
+        "src/game/character.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character.js",
+          "origin": "fully-composed-public-source",
+          "line": 3892,
+          "needle": "this.wGlow === 0 && Number.isFinite(t * TAU * 1.6)",
+          "sha256": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-native-pose-reuse-identical-waveform-sines",
+      "title": "# [QUEUE][INKWAVE][Optimization] キャラの走行時ブキ揺れ・イカ登壁／ドライホップで同一波形の sin 再評価を削減",
+      "library_file_id": "libfile_deb759a7196c81918a8eaeaf32d23942",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-native-pose-reuse-identical-waveform-sines.md",
+      "status": "implemented-local",
+      "reason": "Restore identical carry, climb and hop sine reuse from #1870. Actual source-loaded pose comparisons preserve every checked bone, skeleton, muzzle, contact and geometry byte.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 23,
+          "needle": "carryPulse=Math.sin(TAU * 2 * this.phase)",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-procedural-hair-precompute-fixed-spring-gains",
+      "title": "# [QUEUE][INKWAVE][Optimization] プロシージャル髪ばねの不変K/D・ゲインをリグ初期化時に事前計算",
+      "library_file_id": "libfile_d9cd430980a081918b0e5f2060706441",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-procedural-hair-precompute-fixed-spring-gains.md",
+      "status": "already-in-pr",
+      "reason": "The composed Character already caches hair spring coefficients with K/length/gravity invalidation; no static assumption about mutable controls is added.",
+      "evidence": [
+        "src/game/character.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character.js",
+          "origin": "fully-composed-public-source",
+          "line": 3660,
+          "needle": "IW_HAIR_COEFFS.get(m)",
+          "sha256": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-quality-change-reuse-lod-mesh-nodes",
+      "title": "# [QUEUE][INKWAVE][Optimization] 画質変更時の Character LOD SkinnedMesh 全破棄・再生成を必要箇所だけの差替えにする",
+      "library_file_id": "libfile_25badeb423708191a3d3d6320398660c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-quality-change-reuse-lod-mesh-nodes.md",
+      "status": "implemented-local",
+      "reason": "Restore bounded three-tier same-part mesh reuse, resetting geometry/material/binding, transforms, callbacks, user data, bounds and morph state. Dispose drops retained sets; repeated quality transitions preserve exact geometry and node identity.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 9,
+          "needle": "_driveTierReuse",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-rim-precompute-static-fallback-direction",
+      "title": "# [QUEUE][INKWAVE][Optimization] キャラの非ワールド表示で固定リム光方向の正規化を毎更新しない",
+      "library_file_id": "libfile_6de9a8d4d87881919837a0f6994f0a06",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-rim-precompute-static-fallback-direction.md",
+      "status": "implemented-local",
+      "reason": "Restore the exact normalized constant rim fallback vector and copy it to the owned output on use.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 17,
+          "needle": "DRIVE_RIM_FALLBACK",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-share-root-yaw-trig-across-native-pose-paths",
+      "title": "# [QUEUE][INKWAVE][Optimization] Character のルート yaw 三角関数を同一更新内の姿勢・接地・視線処理で共有",
+      "library_file_id": "libfile_7b15c9ff21548191a3997b203ecc67f5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-share-root-yaw-trig-across-native-pose-paths.md",
+      "status": "implemented-local",
+      "reason": "Restore per-character root-yaw sine/cosine publication and exact Object.is invalidation for four consumers.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 41,
+          "needle": "driveRootYawCos",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-track-root-cache-unchanged-dt-smoothing-exp",
+      "title": "# [QUEUE][INKWAVE][Optimization] Character._trackRoot() の固定dt指数係数をキャッシュして重複 `Math.exp` を削減",
+      "library_file_id": "libfile_ec9b16f229288191ba2dbb81962da7be",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-track-root-cache-unchanged-dt-smoothing-exp.md",
+      "status": "implemented-local",
+      "reason": "Restore the two exact exponential coefficients for unchanged dt within the original positive-time root update.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 35,
+          "needle": "this._driveRootAlphaV",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "character-zero-weight-cosmetic-trig-guards",
+      "title": "# [QUEUE][INKWAVE][Optimization] Characterの重みゼロ装飾モーションで不要なsin/cosを省略",
+      "library_file_id": "libfile_da50b3d544688191a7f094b17b693236",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] character-zero-weight-cosmetic-trig-guards.md",
+      "status": "not-adopted",
+      "reason": "Current hem/tank/finger expressions have different multiplication order and public mutable state. A blanket zero-weight trig guard would alter nonfinite/signed-zero values; existing material-specific proven guards remain.",
+      "evidence": [
+        "src/game/character.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character.js",
+          "origin": "fully-composed-public-source",
+          "line": 3488,
+          "needle": "const bob = tankW * this.gaitW * this.runW * Math.cos",
+          "sha256": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "defer-unneeded-roller-ink-volume-pack-at-boot",
+      "title": "# [QUEUE][INKWAVE][Optimization] ローラー系3Dインクの17.6 MBを未使用セッションで起動時に読まない",
+      "library_file_id": "libfile_2450f4b32a58819183fd8c2b0dc37cda",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] defer-unneeded-roller-ink-volume-pack-at-boot.md",
+      "status": "not-adopted",
+      "reason": "The pack is shared by roller/brush and several slosher recipes, while attract rosters, later ghost births and instant weapon swaps introduce consumers synchronously. Removing the warm barrier without migrating every readiness boundary risks first-shot fallback and midmatch decompression.",
+      "evidence": [
+        "patches/local-quality/ink-volume-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/ink-volume-adapter.mjs",
+          "origin": "repository-file",
+          "line": 32,
+          "needle": "G.fx.inkVolumeReady",
+          "sha256": "4f0c263e084538f81d9f4082495c6c9c829352359e476708d812d9ad2b07a964"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "defer-unselected-stage-descriptor-and-mural-modules",
+      "title": "# [QUEUE][INKWAVE][Optimization] 未選択ステージのDescriptorと壁画モジュールを起動時の同期importから分離する",
+      "library_file_id": "libfile_7f0dfe2f406c8191a475fd602db66b2b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] defer-unselected-stage-descriptor-and-mural-modules.md",
+      "status": "not-adopted",
+      "reason": "Stage data, murals and prop packs already have lazy preparation. Remaining MAP_LAYOUTS and cached thumbnail APIs are synchronous consumers, so deleting descriptor imports requires a separate async API migration.",
+      "evidence": [
+        "src/world/maps.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/maps.js",
+          "origin": "fully-composed-public-source",
+          "line": 285,
+          "needle": "MAP_LAYOUTS",
+          "sha256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "environment-cloud-bake-yield-between-ten-gpu-strips-at-loading",
+      "title": "# [QUEUE][INKWAVE][Optimization] 初回・テーマ切替時の2048×640雲GPUベイクを実フレーム分割する",
+      "library_file_id": "libfile_e02e0011fb4c8191a50ee14a9cb31118",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] environment-cloud-bake-yield-between-ten-gpu-strips-at-loading.md",
+      "status": "not-adopted",
+      "reason": "The current cloud bake is synchronous construction that mutates renderer state. Yielding GPU strips needs an atomic offscreen transaction and cancellation/renderer-state ownership across frames; no such transaction or GPU stall evidence is present.",
+      "evidence": [
+        "src/world/environment.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/environment.js",
+          "origin": "fully-composed-public-source",
+          "line": 1723,
+          "needle": "renderer.setRenderTarget",
+          "sha256": "f184f010d5a425e3a705fb092eca0d386efebb7be2a9152cc2eac290b1896878"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "hair-suction-cup-reuse-normal-point-and-vector-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] 髪・イカ吸盤メッシュ生成時の法線計算の一時Vector3と重複表面点評価を削減",
+      "library_file_id": "libfile_c14efda45d2081919e1ff9f36e8e8d6a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] hair-suction-cup-reuse-normal-point-and-vector-scratch.md",
+      "status": "already-in-pr",
+      "reason": "Actual composed suction-cup generation has a per-builder normalScratch array, and normal(t,th,out,scratch) consumes it. No duplicate scratch or geometry change is needed.",
+      "evidence": [
+        "src/game/character-hair.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character-hair.js",
+          "origin": "fully-composed-public-source",
+          "line": 269,
+          "needle": "S.normal(t + dt, row.th + da, qn, normalScratch)",
+          "sha256": "63046a30431472c26564e9ba7f6d605271e397d2016d6f4d326f76efc65a7e4d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "halyard-theme-only-reuse-unchanged-marina-foam-contours",
+      "title": "# [QUEUE][INKWAVE][Optimization] Halyard昼夕のみの切替時は不変の水際ジオメトリ再走査を省く",
+      "library_file_id": "libfile_a4c38e8ef4408191bf7442302541b247",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] halyard-theme-only-reuse-unchanged-marina-foam-contours.md",
+      "status": "not-adopted",
+      "reason": "Marina foam contours read scene mesh and instance transforms, which can change without changing the level object. There is no authoritative geometry revision covering those mutable inputs; theme-only caching would accept stale contours.",
+      "evidence": [
+        "src/world/environment.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/environment.js",
+          "origin": "fully-composed-public-source",
+          "line": 1826,
+          "needle": "_applyMarina()",
+          "sha256": "f184f010d5a425e3a705fb092eca0d386efebb7be2a9152cc2eac290b1896878"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "inkjet-squid-vfx-skip-unused-ground-raycast",
+      "title": "# [QUEUE][INKWAVE][Optimization] Inkjetイカ形態中の未使用地面Raycastを描画更新から除外",
+      "library_file_id": "libfile_542582b019988191b05ad906ac7c86b2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] inkjet-squid-vfx-skip-unused-ground-raycast.md",
+      "status": "implemented-local",
+      "reason": "Restore the squid guard before the unused ground probe. Actual Reefslider/Ink Vac/Inkjet recipes preserve seeded 30/60/120 Hz particle/beam arguments and RNG in both source and minified regressions; half-squid input halves probe calls.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-vfx.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx.mjs",
+          "origin": "repository-file",
+          "line": 1082,
+          "needle": "const ground = squid ? 0 : groundBelow(this, a);",
+          "sha256": "6ef44749ff9edb057207c25b570affef1c3cc997b1aa9a90a7f3c4496fbac4e2"
+        }
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-special-restored-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-decor-lamps-elide-per-piece-buffergeometry-template-clones",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy街灯の統合メッシュ生成でテンプレート全属性コピーを減らす",
+      "library_file_id": "libfile_9e81b08f519c81919f302ee5a735e216",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-decor-lamps-elide-per-piece-buffergeometry-template-clones.md",
+      "status": "implemented-local",
+      "reason": "Lamp template geometry remains immutable and streams directly into final indexed position/normal/color buffers with identical Three.js normal transform and Float32 writes. Empty and both-side lamp layouts retain exact attributes, indices and bounds.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 19,
+          "needle": "function iwMergeLampParts",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-decor-palm-trunk-reuse-per-ring-bezier-points",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy Decor: パーム幹の各リング内で重複するベジェ曲線サンプルを再利用",
+      "library_file_id": "libfile_29cbb3a79ee481918187f1883392c001",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-decor-palm-trunk-reuse-per-ring-bezier-points.md",
+      "status": "already-in-pr",
+      "reason": "The existing composed decor rewrite precomputes each Bezier trunk ring center once; the historical real-geometry test already validates the actual palms.",
+      "evidence": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+        "patches/local-quality/tests/queue-extra-decor.test.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+          "origin": "repository-file",
+          "line": 508,
+          "needle": "if (seg !== ringSeg)",
+          "sha256": "0f920e54e5fb9fe11e90ebb143eb5a225947df78788f0551fcf28d8b6a7c7dbd"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-environment-prebake-deterministic-distant-city-geometry",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy遠景都市の決定的ジオメトリを事前生成し、初回同期構築と中間メモリを削減",
+      "library_file_id": "libfile_b900edf3f5f48191ae39b8ab010367e4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-environment-prebake-deterministic-distant-city-geometry.md",
+      "status": "not-adopted",
+      "reason": "The distant city is deterministic, but shipping a second baked representation adds transfer/storage and requires a versioned geometry/ownership and fallback contract. No target-device cold-start versus transfer/parse evidence establishes a net win; the exact current generator remains.",
+      "evidence": [
+        "src/world/environment.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/environment.js",
+          "origin": "fully-composed-public-source",
+          "line": 2348,
+          "needle": "_buildCity(city, rnd)",
+          "sha256": "f184f010d5a425e3a705fb092eca0d386efebb7be2a9152cc2eac290b1896878"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-environment-reuse-moored-boat-meshes-between-stage-rebuilds",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyステージ切替時に不変の係留船3種を毎回作り直さず再配置する",
+      "library_file_id": "libfile_1fe2f7cb95bc81918ffb8ff4c8b35ea0",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-environment-reuse-moored-boat-meshes-between-stage-rebuilds.md",
+      "status": "implemented-local",
+      "reason": "Only currently live matching boat kinds transfer mesh/geometry to the next dock generation. Fresh materials and exact transforms/seeded phase are assigned; unmatched/disabled boats are disposed, with no permanent boat cache.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 89,
+          "needle": "this._reusableMoored=reusable",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-far-reflection-cubecamera-six-faces-yield-during-loading",
+      "title": "# [QUEUE][INKWAVE][Optimization] Halyard等の遠景反射CubeCameraの6面同期ベイクを負荷分散する",
+      "library_file_id": "libfile_e5f5b94213388191b84aae1138551044",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-far-reflection-cubecamera-six-faces-yield-during-loading.md",
+      "status": "not-adopted",
+      "reason": "A CubeCamera update is a six-face renderer operation whose results publish together. Splitting it across RAF requires saved renderer-state and cancellation ownership plus atomic publication; a partial reflected world is outside this behavior-preserving task.",
+      "evidence": [
+        "src/world/environment.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/environment.js",
+          "origin": "fully-composed-public-source",
+          "line": 1744,
+          "needle": "_bakeFarReflection()",
+          "sha256": "f184f010d5a425e3a705fb092eca0d386efebb7be2a9152cc2eac290b1896878"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "legacy-halyard-mural-avoid-redrawing-deterministic-wear-on-reentry",
+      "title": "# [QUEUE][INKWAVE][Optimization] Halyard再入場時の船体デカール大量描画を事前生成・低メモリ再利用",
+      "library_file_id": "libfile_68333ae640d4819183d9c4b37d4a3478",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-halyard-mural-avoid-redrawing-deterministic-wear-on-reentry.md",
+      "status": "not-adopted",
+      "reason": "Current Halyard wear includes browser Canvas gradients, antialiasing and fonts. A prebake needs browser pixel equivalence, cropped image ownership and bounded decode/fallback behavior; retaining a whole second atlas would add about 16 MiB. Those conditions are not established.",
+      "evidence": [
+        "src/world/murals.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/murals.js",
+          "origin": "fully-composed-public-source",
+          "line": 213,
+          "needle": "function wear",
+          "sha256": "8952047a7ab5d3d79993ba3f190b674b2a6cbc4ea2363d7caf5a37924986019f"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-level-bevel-edgecache-replace-map-string-keys-with-twelve-slots",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyメッシュ生成時の12辺bevel判定を固定スロットで再利用",
+      "library_file_id": "libfile_5ba3263ddcf081918ec1a31bb9a5192e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-level-bevel-edgecache-replace-map-string-keys-with-twelve-slots.md",
+      "status": "implemented-local",
+      "reason": "Replace per-block string-key Map lookups by 12 ordered axis-pair/sign slots, retaining unknown/false/true states. All five actual legacy stage geometry outputs remain byte-identical.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 60,
+          "needle": "const edgeCache = new Uint8Array(12)",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-level-geometry-avoid-js-number-array-double-peak",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyステージメッシュ構築時の巨大JS数値配列とTypedArray二重ピークを削減",
+      "library_file_id": "libfile_b397f8f4c3688191a97c6ac923630c5a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-level-geometry-avoid-js-number-array-double-peak.md",
+      "status": "already-in-pr",
+      "reason": "The existing geometry-build-storage adapter already writes typed staging with final owned buffers; the final level source calls createLevelGeometryStorage.",
+      "evidence": [
+        "src/world/level.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/level.js",
+          "origin": "fully-composed-public-source",
+          "line": 366,
+          "needle": "const B = createLevelGeometryStorage();",
+          "sha256": "e0770cacdbcabe6e224b0f9211688cfa1c0da847aedc7364be26af0a4872b18e"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-level-spatial-hash-share-empty-cell-arrays",
+      "title": "# [QUEUE][INKWAVE][Optimization] legacy-level-spatial-hash-share-empty-cell-arrays",
+      "library_file_id": "libfile_27f44a73cc64819193d9f09b9e08c3c1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-level-spatial-hash-share-empty-cell-arrays.md",
+      "status": "not-adopted",
+      "reason": "Legacy hash cell arrays are publicly reachable and mutable. Sharing a single empty array changes cross-cell mutation behavior, unlike the private immutable native EMPTY_CELL contract.",
+      "evidence": [
+        "src/world/level.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/level.js",
+          "origin": "fully-composed-public-source",
+          "line": 120,
+          "needle": "this.hash",
+          "sha256": "e0770cacdbcabe6e224b0f9211688cfa1c0da847aedc7364be26af0a4872b18e"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "legacy-marina-avoid-double-far-reflection-bake-on-stage-theme-transition",
+      "title": "# [QUEUE][INKWAVE][Optimization] ステージ＋時刻切替時のマリーナ遠景CubeCamera二重ベイクを統合",
+      "library_file_id": "libfile_6d5813c218dc81918968c11afb6576ec",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-marina-avoid-double-far-reflection-bake-on-stage-theme-transition.md",
+      "status": "already-in-pr",
+      "reason": "The current main passes the final theme into rebuildForArena, combining the stage/theme rebuild; fallback shadow setup remains in the existing world build adapter.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 378,
+          "needle": "G.env.rebuildForArena(level.bounds, this._footprint(level), theme)",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-marina-foam-field-prune-covered-pixels-before-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] Halyard等の泡距離テクスチャ生成で確定済みセルへの重複Math.hypotを抑える",
+      "library_file_id": "libfile_41bc23da6e3c8191967ee50e75ed282c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-marina-foam-field-prune-covered-pixels-before-hypot.md",
+      "status": "implemented-local",
+      "reason": "A foam texel already quantized to zero is at the minimum representable Uint8 value. Subsequent min-composition cannot change it, so skip distance hypot for that texel while preserving exact field bytes.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 68,
+          "needle": "if (data[j * W + i] === 0) continue",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-marina-prop-builder-elide-js-number-array-double-peak",
+      "title": "# [QUEUE][INKWAVE][Optimization] Halyardの船舶・桟橋プロップ生成でJS数値配列→TypedArrayの二重ピークを減らす",
+      "library_file_id": "libfile_4434d36bb0e08191ad223055f3d6deb9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-marina-prop-builder-elide-js-number-array-double-peak.md",
+      "status": "implemented-local",
+      "reason": "MB/GB use growable typed staging with Float64 positions/normals until winding/degeneracy decisions, then exact-size final Float32 and index buffers. Cases through the 65,535 index boundary retain bytes.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 10,
+          "needle": "class IWMarinaStaging",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-match-character-warmup-bound-concurrent-actors",
+      "title": "# [QUEUE][INKWAVE][Optimization] 試合開始前の全Actorシェーダー・LODウォームアップ同時起動を制御する",
+      "library_file_id": "libfile_ae0a7eb358148191aa077eadcff0afcf",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-match-character-warmup-bound-concurrent-actors.md",
+      "status": "not-adopted",
+      "reason": "All actor warmups currently start before an eight-second startup race. A concurrency cap can leave jobs undispatched when that race completes and change first-visible shader readiness; cancellation and device throughput evidence are missing.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 1029,
+          "needle": "const jobs = m.actors.map",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "legacy-nav-build-reuse-per-cell-heights-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyナビ構築の各セルごと短命heights配列を再利用",
+      "library_file_id": "libfile_67f2db78b9dc8191baaccad14c7d28e3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-nav-build-reuse-per-cell-heights-scratch.md",
+      "status": "implemented-local",
+      "reason": "The height list is local to each build generator and cleared per sampled cell. Independent interleaved builders preserve node, edge, cell and prune order.",
+      "evidence": [
+        "inkwave-public/src/game/nav.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/game/nav.js",
+          "origin": "repository-file",
+          "line": 48,
+          "needle": "heights.length = 0",
+          "sha256": "c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-nav-slice-synchronous-stage-construction",
+      "title": "# [QUEUE][INKWAVE][Optimization] 旧方式ステージの同期NavGraph全構築をフレーム単位へ分割",
+      "library_file_id": "libfile_7ffd3f51404c819183577afb1e2125ef",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-nav-slice-synchronous-stage-construction.md",
+      "status": "already-in-pr",
+      "reason": "The final main awaits NavGraph.createLegacy; both sync and async entry points consume the same _buildSteps ordered generator.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 335,
+          "needle": "await NavGraph.createLegacy",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-prop-instance-envelope-reuse-box3-transform-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyインスタンス領域計算でBox3のレコード単位cloneを再利用",
+      "library_file_id": "libfile_986ff2ae4d288191ae9095272b89a337",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-prop-instance-envelope-reuse-box3-transform-scratch.md",
+      "status": "implemented-local",
+      "reason": "One local Box3 is copied from unchanged local bounds for each instance transform instead of cloning per record. Rotated/sheared/mirrored and cloth cases retain exact envelope results.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 57,
+          "needle": "const transformed = new THREE.Box3()",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-propkit-collider-transform-elide-five-corner-arrays",
+      "title": "# [QUEUE][INKWAVE][Optimization] LegacyプロップのCollider座標変換で4隅の一時配列を省く",
+      "library_file_id": "libfile_ad073fb921d08191a5bbd7315e566641",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-propkit-collider-transform-elide-five-corner-arrays.md",
+      "status": "implemented-local",
+      "reason": "Enumerate the same four XZ corners in the same order with scalar indices; output AABB/OBB and roof/rail/perch flags retain exact values, including mirrored scale.",
+      "evidence": [
+        "inkwave-public/src/world/props-core.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/world/props-core.js",
+          "origin": "repository-file",
+          "line": 3311,
+          "needle": "for (let corner=0;corner<4;corner++)",
+          "sha256": "e439c0168239ae05398108eb893b2b4ca5647a699366ff605d5f9024b43c627c"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-propkit-failure-cleanup-and-collider-rollback",
+      "title": "# [QUEUE][INKWAVE][Optimization] legacy-propkit-failure-cleanup-and-collider-rollback",
+      "library_file_id": "libfile_1b949da39bc481919764be1622ac9b7a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-propkit-failure-cleanup-and-collider-rollback.md",
+      "status": "already-in-pr",
+      "reason": "Current composed world loading catches PropKit failures, disposes the partial kit and clears collider staging before publishing a level; cancellation paths retain cleanup.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 328,
+          "needle": "props = null; colliders.length = 0;",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-propkit-omit-unread-uv-buffer-for-solid-material-buckets",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy PropKitの無テクスチャ材質バケットで未使用UVバッファ生成を省く",
+      "library_file_id": "libfile_6cd3fe0d230c819187d931230070a1ac",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-propkit-omit-unread-uv-buffer-for-solid-material-buckets.md",
+      "status": "implemented-local",
+      "reason": "Only unmapped default built-in materials omit unread UV allocation. Any texture-valued property or customized onBeforeCompile retains UVs, and the public merge helper retains its previous default.",
+      "evidence": [
+        "inkwave-public/src/world/props-core.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/world/props-core.js",
+          "origin": "repository-file",
+          "line": 3,
+          "needle": "function iwPropNeedsUV",
+          "sha256": "e439c0168239ae05398108eb893b2b4ca5647a699366ff605d5f9024b43c627c"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-propkit-slice-synchronous-placement-and-merge",
+      "title": "# [QUEUE][INKWAVE][Optimization] legacy-propkit-slice-synchronous-placement-and-merge",
+      "library_file_id": "libfile_d29af8eceb8c81919ad370019a5c65e2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-propkit-slice-synchronous-placement-and-merge.md",
+      "status": "already-in-pr",
+      "reason": "Main awaits addAll/buildAsync, whose generator retains placement order and builder-owned buffers; synchronous compatibility entry points remain.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 327,
+          "needle": "await props.buildAsync",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-propkit-transfer-static-atlas-across-stage-switches",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacyステージ変更で共通PropKitアトラスを毎回描き直さず引き継ぐ",
+      "library_file_id": "libfile_2fdfdb9324c8819187d76ca283362f4e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-propkit-transfer-static-atlas-across-stage-switches.md",
+      "status": "not-adopted",
+      "reason": "The atlas belongs to the PropKit generation and its material/resource lifetime. Transfer would require one owner across asynchronous cancelled builds and context restoration; no current transfer/revision contract proves that a disposed generation cannot release the new one.",
+      "evidence": [
+        "src/world/props-core.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/props-core.js",
+          "origin": "fully-composed-public-source",
+          "line": 3337,
+          "needle": "syncPropAtlas(this)",
+          "sha256": "e439c0168239ae05398108eb893b2b4ca5647a699366ff605d5f9024b43c627c"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "legacy-sea-polar-mesh-build-direct-typed-buffers",
+      "title": "# [QUEUE][INKWAVE][Optimization] legacy-sea-polar-mesh-build-direct-typed-buffers",
+      "library_file_id": "libfile_99301daac16c81918838c846c3b81e39",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-sea-polar-mesh-build-direct-typed-buffers.md",
+      "status": "implemented-local",
+      "reason": "Sea polar topology writes exact-sized typed position and index arrays directly in the original ring/triangle order; actual geometry, bounds and foam shader parameters remain exact.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 70,
+          "needle": "new Float32Array((1+(rings.length-1)*S)*3)",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-sea-wave-fixed-256-seed11-prebake",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy海面の固定波テクスチャを事前生成し、初回CPU計算と同期フォールバックの停止を抑制",
+      "library_file_id": "libfile_37b1e9a1d1f88191a4525c77337585fd",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-sea-wave-fixed-256-seed11-prebake.md",
+      "status": "not-adopted",
+      "reason": "The fixed wave texture could be prebaked, but cross-engine Math trig rounding and a new 256 KiB fetch/validation/fallback path require browser RGBA and startup-transfer acceptance. No WebKit byte comparison is available; current worker/synchronous fallback remains.",
+      "evidence": [
+        "inkwave-public/src/world/wave-data.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/world/wave-data.js",
+          "origin": "repository-file",
+          "line": 7,
+          "needle": "makeWaveData",
+          "sha256": "02cb5af5efb3c3691f7872bcb06c7fe5ca91657d175c8e689dbfb22b62d66091"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "legacy-stage-omit-unused-empty-grate-geometry-material",
+      "title": "# [QUEUE][INKWAVE][Optimization] 格子床が無いLegacyステージの空grateジオメトリ・マテリアル構築を省略する",
+      "library_file_id": "libfile_447bac311bf0819193398f92fb2bc449",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-stage-omit-unused-empty-grate-geometry-material.md",
+      "status": "already-in-pr",
+      "reason": "The final main creates grate material/geometry/mesh only if an actual grate face exists, otherwise keeping nullable references supported by downstream guards.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 368,
+          "needle": "if (level.faces.some(f => level.blocks[f.block]?.grate))",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "legacy-texlib-remove-unconditional-gpu-sync-readback-from-cold-start",
+      "title": "# [QUEUE][INKWAVE][Optimization] 初回Texlib生成の無条件GPU同期readbackを診断モードへ分離",
+      "library_file_id": "libfile_9c9fde35dd848191b03f570d8e4c1084",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-texlib-remove-unconditional-gpu-sync-readback-from-cold-start.md",
+      "status": "already-in-pr",
+      "reason": "Historical needs-evidence is superseded by current code: GPU readback runs only under the explicit texlib-sync-timing query option; normal startup measures CPU submission and keeps command order.",
+      "evidence": [
+        "src/world/texlib.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/texlib.js",
+          "origin": "fully-composed-public-source",
+          "line": 1406,
+          "needle": "new URLSearchParams(location.search).has('texlib-sync-timing')",
+          "sha256": "44118a407226a03df7e658f96d77de4bdc5163df8324e7fa3a88f6444ff3525c"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "legacy-texlib-restore-renderer-state-and-release-on-failed-generation",
+      "title": "# [QUEUE][INKWAVE][Optimization] Legacy texlib の生成失敗時にGPUリソースとレンダラー状態を復旧",
+      "library_file_id": "libfile_826b305958c08191b5220d62a04905ee",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] legacy-texlib-restore-renderer-state-and-release-on-failed-generation.md",
+      "status": "already-in-pr",
+      "reason": "The existing texlib finally restores target, autoClear and XR state and releases programs/geometry, disposing output when generation did not complete.",
+      "evidence": [
+        "src/world/texlib.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/world/texlib.js",
+          "origin": "fully-composed-public-source",
+          "line": 1437,
+          "needle": "if (!complete) out?.dispose();",
+          "sha256": "44118a407226a03df7e658f96d77de4bdc5163df8324e7fa3a88f6444ff3525c"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "lobby-atlas-release-static-canvas-backing-after-upload",
+      "title": "# [QUEUE][INKWAVE][Optimization] ロビー静的アトラスのGPU転送後にCanvas backingを保持し続ける",
+      "library_file_id": "libfile_955d6a63d14c819190c0ac131b87db67",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-atlas-release-static-canvas-backing-after-upload.md",
+      "status": "not-adopted",
+      "reason": "Canvas-backed lobby atlases remain their context-restoration source and are also redrawn when fonts complete. Clearing backing after the first upload would leave subsequent reupload/rebuild without valid pixels.",
+      "evidence": [
+        "inkwave-public/src/game/lobbySet-tex.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/game/lobbySet-tex.js",
+          "origin": "repository-file",
+          "line": 70,
+          "needle": "redraws when the set fonts arrive",
+          "sha256": "375afa73bc756ab879fec64c2b1d579f191e376d29e127080b9b77bfe2e21da4"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "lobby-contact-skip-redundant-empty-shadow-buffer-updates",
+      "title": "# [QUEUE][INKWAVE][Optimization] Lobby contact: skip unchanged empty-shadow instance buffers",
+      "library_file_id": "libfile_5df899e956488191a7eeaa093853f8c6",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-contact-skip-redundant-empty-shadow-buffer-updates.md",
+      "status": "already-in-pr",
+      "reason": "Actual composed lobby contact update only marks matrix/color attributes dirty when ci is nonzero; empty draws keep count zero without uploads.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 2230,
+          "needle": "L.contact.count = ci;\n    if (ci)",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "lobby-drip-skip-empty-instance-matrix-dirty",
+      "title": "# [QUEUE][INKWAVE][Optimization] LobbySet: 雨だれ0本のフレームでは instanceMatrix を毎回 dirty にしない",
+      "library_file_id": "libfile_bb8a8afc54f08191a0cc167cd5a95586",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-drip-skip-empty-instance-matrix-dirty.md",
+      "status": "already-in-pr",
+      "reason": "The final lobby drip update already guards matrix dirty marking by k > 0, retaining count and simulation.",
+      "evidence": [
+        "src/game/lobbySet.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/lobbySet.js",
+          "origin": "fully-composed-public-source",
+          "line": 764,
+          "needle": "if (k > 0) this.dripMesh.instanceMatrix.needsUpdate = true;",
+          "sha256": "15edbfc74202ac87ebdcfab5bde812416bba3678a2af2b0806891577df970f36"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "lobby-glow-elide-static-instance-color-uploads",
+      "title": "# [QUEUE][INKWAVE][Optimization] lobby-glow-elide-static-instance-color-uploads",
+      "library_file_id": "libfile_2fcbcaf5f7b8819190d5da585d07e7d7",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] lobby-glow-elide-static-instance-color-uploads.md",
+      "status": "already-in-pr",
+      "reason": "The final glow instance update marks colors dirty only on colorDirty, preserving initialization and changed-color uploads.",
+      "evidence": [
+        "src/game/lobbySet.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/lobbySet.js",
+          "origin": "fully-composed-public-source",
+          "line": 562,
+          "needle": "if (colorDirty) this.glows.instanceColor.needsUpdate = true;",
+          "sha256": "15edbfc74202ac87ebdcfab5bde812416bba3678a2af2b0806891577df970f36"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "locomotion-profile-hoist-hair-child-index-and-rest-inverse",
+      "title": "# [QUEUE][INKWAVE][Optimization] LocomotionProfile の髪親子インデックス探索と静的逆クォータニオンを事前計算",
+      "library_file_id": "libfile_6a2cde87f6108191adc16f7d4a68a937",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] locomotion-profile-hoist-hair-child-index-and-rest-inverse.md",
+      "status": "already-in-pr",
+      "reason": "Actual locomotion-profile already memoizes _hairMeta child indices and rest-space fallback direction per bank; no extra lookup/copy layer is needed.",
+      "evidence": [
+        "src/game/motion/locomotion-profile.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/locomotion-profile.js",
+          "origin": "fully-composed-public-source",
+          "line": 21,
+          "needle": "bank._hairMeta",
+          "sha256": "75b03f6c9776732a59741781b458835ee81bfb558b04166ab3a50c6a0d20b85c"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "native-band-hash-deduplicate-cached-height-scalars",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブ多層ステージのバンド検索高さ値をセル横断で共有し、重複キャッシュRAMを減らす",
+      "library_file_id": "libfile_79a01d47ce248191b697b1d7e47bcb22",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-band-hash-deduplicate-cached-height-scalars.md",
+      "status": "implemented-local",
+      "reason": "Restore #1870 one Float64 pair per static block instead of duplicated hash-cell heights. Hash replacement invalidates staging; dynamic blocks retain their original caller-side height checks.",
+      "evidence": [
+        "patches/native-stages/runtime/native-level.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-level.mjs",
+          "origin": "repository-file",
+          "line": 109,
+          "needle": "_buildBandValues(mode)",
+          "sha256": "57c9fe17a5707fb6d32485b29611c50bf03070a3da52df03579b2aaf49e9a3af"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-block-band.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-browser-direct-pack-scalar-opacity-roughness-into-r8-gpu-textures",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeのbrowser-direct経路で単一チャンネルOpacity/RoughnessテクスチャのGPU常駐量を減らす",
+      "library_file_id": "libfile_10bda799835c8191834200f77c7ebb21",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-browser-direct-pack-scalar-opacity-roughness-into-r8-gpu-textures.md",
+      "status": "not-adopted",
+      "reason": "Raw R8 changes sampled component semantics (notably green-channel alpha maps), shader inputs and upload format. A swizzle/program/cache/restore contract and browser pixel comparison are required; scalar inference caching was adopted without changing texture formats.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 266,
+          "needle": "new THREE.Texture",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "native-bvh-memoize-nodecount-prepass",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native BVHノード数の重複再帰カウントを省く",
+      "library_file_id": "libfile_8ac299350d588191ab6153f428750d68",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-bvh-memoize-nodecount-prepass.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. Memoize recursive BVH node counts by subproblem size; node and partition arrays remain exact at leaf/split boundaries.",
+      "evidence": [
+        "patches/native-stages/runtime/source-convert.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-convert.mjs",
+          "origin": "repository-file",
+          "line": 8,
+          "needle": "function sourceBVHNodeCount",
+          "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-collider-object-spatial-index-for-physics-and-inside-tests",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeステージのオブジェクト当たり判定を全件走査せず空間候補に限定する",
+      "library_file_id": "libfile_9a08400081388191929a0fbf65f95bd3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-collider-object-spatial-index-for-physics-and-inside-tests.md",
+      "status": "not-adopted",
+      "reason": "A new collision broad phase changes candidate ordering and boundary admission in physics/inside queries. The task keeps collision behavior and current exact query contracts; no ordering-preserving equivalence evidence was established.",
+      "evidence": [
+        "patches/native-stages/runtime/native-level.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-level.mjs",
+          "origin": "repository-file",
+          "line": 97,
+          "needle": "queryBlocks(",
+          "sha256": "57c9fe17a5707fb6d32485b29611c50bf03070a3da52df03579b2aaf49e9a3af"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "native-constrained-reentry-avoid-repeat-obj-conversion-with-bounded-derived-artifact",
+      "title": "# [QUEUE][INKWAVE][Optimization] iPadのネイティブステージ再入場時にOBJ全変換を繰り返さない安全な派生素材経路",
+      "library_file_id": "libfile_cb90d35734c881919167a70f9c3c88b0",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-constrained-reentry-avoid-repeat-obj-conversion-with-bounded-derived-artifact.md",
+      "status": "already-in-pr",
+      "reason": "PR #1868 prepared artifacts are already integrated into #1878: source-data first loads an admitted prebuilt stage, preserving source conversion fallback on failure.",
+      "evidence": [
+        "patches/native-stages/runtime/source-data.mjs",
+        "scripts/lib/inkwave-native-prebuilt.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-data.mjs",
+          "origin": "repository-file",
+          "line": 9,
+          "needle": "loadPrebuiltSource(id,signal)",
+          "sha256": "d7330122f2be9349cb18936d799f63c15f014a501acf213e88378cd1408b684d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "in-other-pr"
+    },
+    {
+      "key": "native-derived-idb-v2-upgrade-avoid-stage-payload-cursor-clones",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native派生IndexedDB移行時の全ステージレコード複製を避ける",
+      "library_file_id": "libfile_59732c537e10819186039cd5e1d7f81b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-derived-idb-v2-upgrade-avoid-stage-payload-cursor-clones.md",
+      "status": "not-adopted",
+      "reason": "The v2 upgrade needs each old payload time field to build eviction metadata, while the old store has no time index. A key-only cursor cannot recover that value; changing migration needs malformed-key/time and atomic WebKit upgrade handling without silently deleting existing cache.",
+      "evidence": [
+        "patches/native-stages/runtime/source-cache.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-cache.mjs",
+          "origin": "repository-file",
+          "line": 130,
+          "needle": "times.put({key:c.primaryKey,time:c.value.time})",
+          "sha256": "cd92a66d355f9719d4d64e57468260d6ec125eeeed1afa988955fb5766ae2a39"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "native-display-precompute-exact-bounding-spheres-in-worker",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブ描画オブジェクトの正確な包囲球走査をWorker側の検証工程へ移す",
+      "library_file_id": "libfile_22ae5eae9af48191bb7b5ae5b246c6d4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-display-precompute-exact-bounding-spheres-in-worker.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. The renderer accepts an exact worker/prebuilt sphere only with the matching finite center and nonnegative radius; malformed or absent metadata retains the original scan.",
+      "evidence": [
+        "patches/native-stages/runtime/native-render.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-render.mjs",
+          "origin": "repository-file",
+          "line": 87,
+          "needle": "o.boundingSphere:null",
+          "sha256": "25335a6177dfe3eaf10eeeaaf95d04e40f7c38349b72b2fa376ce6a8edf3a9eb"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-display-precompute-object-sphere-in-source-worker",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native表示オブジェクトのバウンディング球を変換Workerで事前計算する",
+      "library_file_id": "libfile_ddfcd29d05cc819194781c1eccdfefc2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-display-precompute-object-sphere-in-source-worker.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. This duplicate Library record is satisfied by prepareDisplayTransport. Every actual prepared sphere is compared to the original Three.js renderer function.",
+      "evidence": [
+        "patches/native-stages/runtime/source-worker.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-worker.mjs",
+          "origin": "repository-file",
+          "line": 24,
+          "needle": "function prepareDisplayTransport",
+          "sha256": "38ebe9bdd3967d86acfd62fb06b74e824a7d3af974bb7a52efa9446f828737cb"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-display-spatial-batch-static-opaque-objects",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブ静的・不透明オブジェクトの空間局所バッチ化による描画オブジェクト数削減",
+      "library_file_id": "libfile_e40e20e08e6081918f1e26f4f294ff18",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-display-spatial-batch-static-opaque-objects.md",
+      "status": "not-adopted",
+      "reason": "Static opaque objects still carry per-object shadow/culling/material ownership and draw order. Spatial batching requires exact bounds, shadow and alpha/program grouping proofs; merging geometry without them is outside the safe CPU/allocation scope.",
+      "evidence": [
+        "patches/native-stages/runtime/native-render.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-render.mjs",
+          "origin": "repository-file",
+          "line": 71,
+          "needle": "for(const o of m.objects)",
+          "sha256": "25335a6177dfe3eaf10eeeaaf95d04e40f7c38349b72b2fa376ce6a8edf3a9eb"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "native-ink-bindpaint-skip-proven-fresh-grid-scan",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeステージ初回bindPaintの既知ゼログリッド全走査を省略",
+      "library_file_id": "libfile_0cdd39e5ce0081918ca5b64418c209eb",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-ink-bindpaint-skip-proven-fresh-grid-scan.md",
+      "status": "implemented-local",
+      "reason": "The freshly initialized detached native paint world explicitly passes knownEmpty:true. All other bindPaint callers retain the existing grid scan and already-painted preservation.",
+      "evidence": [
+        "patches/native-stages/runtime/native-world.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-world.mjs",
+          "origin": "repository-file",
+          "line": 116,
+          "needle": "bindPaint(paint,{knownEmpty:true})",
+          "sha256": "aed969ee40cb023edd114ce4b5673c0a4dcf210ad558c6f70fbfebc68b77c592"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/ink-chunks.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "native-ink-overlay-release-immutable-cpu-attributes-after-upload",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native塗りオーバーレイの静的頂点属性をGPU転送後に解放する",
+      "library_file_id": "libfile_07d582a0bb448191b279be1920b24f5b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-ink-overlay-release-immutable-cpu-attributes-after-upload.md",
+      "status": "not-adopted",
+      "reason": "CPU positions and paint attributes still support culling/bounds, geometry replacement and WebGL restoration. No reconstructible ownership contract allows releasing all immutable data immediately after first upload.",
+      "evidence": [
+        "patches/native-stages/runtime/native-render.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-render.mjs",
+          "origin": "repository-file",
+          "line": 58,
+          "needle": "getAttribute('position')",
+          "sha256": "25335a6177dfe3eaf10eeeaaf95d04e40f7c38349b72b2fa376ce6a8edf3a9eb"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-ink-partition-bounds-only-runtime-tiles",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeインクの不可視タイルをBufferGeometryでなく境界記述子として保持",
+      "library_file_id": "libfile_ecc07f3375fc8191b853df59e38903e5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-ink-partition-bounds-only-runtime-tiles.md",
+      "status": "implemented-local",
+      "reason": "Runtime culling tiles are plain bounds/userData records and no longer allocate redundant BufferGeometry attributes or indices. The public partition API still returns the previous owned BufferGeometry output.",
+      "evidence": [
+        "patches/native-stages/runtime/native-ink-chunks.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+          "origin": "repository-file",
+          "line": 30,
+          "needle": "boundsOnly&&direct?{userData:{}}",
+          "sha256": "8f91d8e0cef31298a03363dcd4da2563ab506426f37002a0c3a6e13e6a67115e"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/ink-chunks.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "native-ink-runs-fill-typedarrays-directly",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeインク描画の連続run表を一時JS配列を介さず構築",
+      "library_file_id": "libfile_bf98d22393ec81918a2403725e4f4578",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-ink-runs-fill-typedarrays-directly.md",
+      "status": "implemented-local",
+      "reason": "Count source-order run boundaries first and fill exact-size typed arrays directly; no temporary tiles/starts/ends number arrays, and transparent draw order stays unchanged.",
+      "evidence": [
+        "patches/native-stages/runtime/native-ink-chunks.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+          "origin": "repository-file",
+          "line": 99,
+          "needle": "let runCount = triCount ? 1 : 0;",
+          "sha256": "8f91d8e0cef31298a03363dcd4da2563ab506426f37002a0c3a6e13e6a67115e"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/ink-chunks.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "native-ink-tile-membership-use-guarded-uint16",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeインクの三角形所属タイルID配列を必要なビット幅で保持する",
+      "library_file_id": "libfile_3881dfb983008191819253bcfd747dc9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-ink-tile-membership-use-guarded-uint16.md",
+      "status": "implemented-local",
+      "reason": "Restore guarded Uint16 triangle-tile/run-tile IDs only when the final tile count is at most 65,536. Vertex/run offsets stay Uint32, with exact boundary tests at 65,536 and 65,537.",
+      "evidence": [
+        "patches/native-stages/runtime/native-ink-chunks.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+          "origin": "repository-file",
+          "line": 93,
+          "needle": "chunks.length<=65536?Uint16Array:Uint32Array",
+          "sha256": "8f91d8e0cef31298a03363dcd4da2563ab506426f37002a0c3a6e13e6a67115e"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-remaining-native-runtime-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-local-prepared-assets-copy-unlisted-and-unhashed",
+      "title": "# [QUEUE][INKWAVE][Optimization] ローカル準備済み原典ステージが整合性一覧外のファイルまでコピーされ、出力ハッシュ検証から漏れる",
+      "library_file_id": "libfile_13e0b90222188191a8272cfc46537d5f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-local-prepared-assets-copy-unlisted-and-unhashed.md",
+      "status": "already-in-pr",
+      "reason": "Prepared asset packaging already rejects symlinks, traversal, unlisted files and hash/length mismatches; it copies only reverified bytes and cleans partial output on error.",
+      "evidence": [
+        "scripts/lib/inkwave-native-stages.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "scripts/lib/inkwave-native-stages.mjs",
+          "origin": "repository-file",
+          "line": 41,
+          "needle": "function checkedPreparedFiles",
+          "sha256": "a3eb5f3de87581c83088e81e75ba235bd3df4ed5676e79b23506afbeee723131"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-minimap-reuse-support-raster-buffers-across-rebuilds",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeミニマップ再生成時の支持面ラスター配列を再利用する",
+      "library_file_id": "libfile_5625770612648191afd42f885d3d9fb5",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-minimap-reuse-support-raster-buffers-across-rebuilds.md",
+      "status": "already-in-pr",
+      "reason": "Current native minimap reuses correctly sized support arrays and clears their active contents; canonical flip reuse has exact reference/value invalidation.",
+      "evidence": [
+        "patches/native-stages/runtime/native-minimap.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-minimap.mjs",
+          "origin": "repository-file",
+          "line": 89,
+          "needle": "if(map.hgt?.length!==N)map.hgt=new Float32Array(N);map.hgt.fill(-99);",
+          "sha256": "668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-minimap-reuse-validated-reachable-nav-layers-on-rebuild",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeミニマップ再構築時の到達可能ナビ層BFSを検証付きで再利用",
+      "library_file_id": "libfile_499759c7e6d481919d7bfbfb02b9f432",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-minimap-reuse-validated-reachable-nav-layers-on-rebuild.md",
+      "status": "not-adopted",
+      "reason": "Reachable nav layers and minimap support samples have different precision, offset projection and mutable inputs. Reusing nav layers without the current full validation would change unsupported/painted pixels.",
+      "evidence": [
+        "patches/native-stages/runtime/native-minimap.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-minimap.mjs",
+          "origin": "repository-file",
+          "line": 83,
+          "needle": "reachableLayers(L)",
+          "sha256": "668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "native-minimap-slice-first-support-raster-before-visibility",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブミニマップ初回BVHラスタ生成を分割して長い同期停止を避ける",
+      "library_file_id": "libfile_0040ce969b9c8191ac91fa2170a76f44",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-minimap-slice-first-support-raster-before-visibility.md",
+      "status": "already-in-pr",
+      "reason": "Native first support raster already consumes a generator with time-budgeted async yields and current/abort checks before publication; abortable RAF/timer cleanup is retained.",
+      "evidence": [
+        "patches/native-stages/runtime/native-minimap.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-minimap.mjs",
+          "origin": "repository-file",
+          "line": 127,
+          "needle": "await yieldNativeMinimap(signal)",
+          "sha256": "668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-nav-lazy-allocate-optional-transition-candidate-lists",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブナビのオプション遷移候補配列を必要ノードだけ確保する",
+      "library_file_id": "libfile_99e59dceb8388191969eb0372ef8c667",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-nav-lazy-allocate-optional-transition-candidate-lists.md",
+      "status": "already-in-pr",
+      "reason": "Optional jump/drop/surge candidate top-level arrays exist only under the corresponding stage flag; per-node lists are allocated only when a candidate is added.",
+      "evidence": [
+        "patches/native-stages/runtime/native-nav.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-nav.mjs",
+          "origin": "repository-file",
+          "line": 97,
+          "needle": "(jumpAttachments[n.id]??=[]).push(id)",
+          "sha256": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-nav-reuse-spawn-seeds-on-second-reachability-prune",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeナビ再到達性検証時のスポーン支持面・候補ルート再検証を省く",
+      "library_file_id": "libfile_936f02eacd1881919271e35fbe1fd00e",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-nav-reuse-spawn-seeds-on-second-reachability-prune.md",
+      "status": "not-adopted",
+      "reason": "Pruning rechecks source support/bodyFits against live physics and mutable spawn pads across yielded work. Reusing the previous seed needs a generation/occupancy proof, not only unchanged graph identity.",
+      "evidence": [
+        "patches/native-stages/runtime/native-nav.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-nav.mjs",
+          "origin": "repository-file",
+          "line": 54,
+          "needle": "graph.nativeSpawnNodeIds=seeds;",
+          "sha256": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-nav-spawn-candidate-merge-distance-and-id-sorts",
+      "title": "# [QUEUE][INKWAVE][Optimization] native-nav-spawn-candidate-merge-distance-and-id-sorts",
+      "library_file_id": "libfile_b30151d5c15c81918232a12f89a0109a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-nav-spawn-candidate-merge-distance-and-id-sorts.md",
+      "status": "implemented-local",
+      "reason": "A single distance-then-id comparator replaces two stable sorts only when every computed distance is finite. Malformed/overflow distances retain the original two-sort fallback.",
+      "evidence": [
+        "patches/native-stages/runtime/native-nav.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-nav.mjs",
+          "origin": "repository-file",
+          "line": 30,
+          "needle": "candidates.every",
+          "sha256": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-nav-time-slice.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "native-nav-zone-check-prune-distant-spawn-hypot",
+      "title": "# [QUEUE][INKWAVE][Optimization] native-nav-zone-check-prune-distant-spawn-hypot",
+      "library_file_id": "libfile_6761811e86f48191875d0fd342181bd1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-nav-zone-check-prune-distant-spawn-hypot.md",
+      "status": "implemented-local",
+      "reason": "Reject height and out-of-radius X/Z axis candidates before the original hypot check; final admission and node ordering remain unchanged.",
+      "evidence": [
+        "patches/native-stages/runtime/native-nav.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-nav.mjs",
+          "origin": "repository-file",
+          "line": 75,
+          "needle": "Math.abs(dx)<radius&&Math.abs(dz)<radius&&Math.hypot",
+          "sha256": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-nav-time-slice.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "native-normal-map-conditional-length-check",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native法線PNG復元の全画素Math.hypotを条件付きにする",
+      "library_file_id": "libfile_ed0fff28786081918119eca886438bc3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-normal-map-conditional-length-check.md",
+      "status": "already-in-pr",
+      "reason": "Actual normal reconstruction already checks a conservative squared-length bound before Math.hypot. Boundary lengths retain the old exact hypot/clamp path, and inference/reconstruction rules stay unchanged.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 263,
+          "needle": "if(x*x+y*y>.9)",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-obj-first-pass-ascii-byte-scan-avoid-utf8-line-decode",
+      "title": "# [QUEUE][INKWAVE][Optimization] 原典OBJの容量算定1パス目はASCIIバイト走査を優先しUTF-8行デコードを削減",
+      "library_file_id": "libfile_5967642aa2d88191b4723823a9537338",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-obj-first-pass-ascii-byte-scan-avoid-utf8-line-decode.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. The byte first pass counts ASCII numeric/face lines without decoding them. Object/material names and non-ASCII face separators retain the exact UTF-8 path; string input stays on the original line iterator. BOM, CRLF, Unicode whitespace, malformed text and rejection parity are tested.",
+      "evidence": [
+        "patches/native-stages/runtime/source-convert.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-convert.mjs",
+          "origin": "repository-file",
+          "line": 47,
+          "needle": "function sourceOBJCountLines",
+          "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-obj-write-direct-to-presized-vertex-index-buffers",
+      "title": "# [QUEUE][INKWAVE][Optimization] OBJ パーサの各オブジェクト中間 BufferBuilder をなくし確保済み最終 TypedArray へ直接書く",
+      "library_file_id": "libfile_5bc84fafb9a48191b192e2bb0324e528",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-obj-write-direct-to-presized-vertex-index-buffers.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. First-pass capacities and object plans allow final interleaved vertex/index writes without growing per-object buffers. Float32 rounding, UV/normal offsets, object ordinals, malformed-index rejection and compact/noncompact output stay exact.",
+      "evidence": [
+        "patches/native-stages/runtime/source-convert.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-convert.mjs",
+          "origin": "repository-file",
+          "line": 107,
+          "needle": "const vertices=new Float32Array(displayVertices*8)",
+          "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-paintchart-hoist-triangle-sat-extrema-from-pixel-loop",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブ原典OBJの塗りマスク生成で三角形SAT定数のセル単位再計算を避ける",
+      "library_file_id": "libfile_500415cb392881919270dfc32441a615",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-paintchart-hoist-triangle-sat-extrema-from-pixel-loop.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. Hoist identical triangle extrema and edge projection margins outside the pixel loop. Full production masks and the independent Python thin/partial-polygon oracle agree.",
+      "evidence": [
+        "patches/native-stages/runtime/source-convert.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-convert.mjs",
+          "origin": "repository-file",
+          "line": 287,
+          "needle": "edges[k+4]=1e-9*(Math.abs(nx)+Math.abs(ny))",
+          "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs",
+        "patches/native-stages/tests/source-paint-coverage.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-pinned-inventory-avoid-repeat-worker-tree-revalidation",
+      "title": "# [QUEUE][INKWAVE][Optimization] 同一原典ステージの再入場で固定インベントリ全件のGit木再検証を繰り返さない",
+      "library_file_id": "libfile_c6e6b7379d548191a7bea6ec4f110d5d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-pinned-inventory-avoid-repeat-worker-tree-revalidation.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. Cache only private metadata from successful pinned workers, bounded to 24 entries and keyed by recipe/runtime/stage/tree. Abort/error/late replies never publish; warm loads still verify every OBJ/MTL payload hash and every blob path/size/SHA shape.",
+      "evidence": [
+        "patches/native-stages/runtime/source-worker.mjs",
+        "reports/queue-local-native-regeneration-20261026.json",
+        "patches/native-stages/runtime/source-data.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-worker.mjs",
+          "origin": "repository-file",
+          "line": 66,
+          "needle": "verifiedInventory?.id===id",
+          "sha256": "38ebe9bdd3967d86acfd62fb06b74e824a7d3af974bb7a52efa9446f828737cb"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-inventory-20261026.test.mjs",
+        "patches/native-stages/tests/native-source-data-lifecycle.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-png-cache-verified-channel-inference-on-stage-reentry",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブ原典PNGの検証済みチャンネル推定結果をステージ再入場で再利用する",
+      "library_file_id": "libfile_67424a3802108191aab60eca1e8949d4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-png-cache-verified-channel-inference-on-stage-reentry.md",
+      "status": "implemented-local",
+      "reason": "Restore a bounded 256-entry scalar inference cache keyed by authenticated content identity/byte count, role, cap and actual decoded dimensions. Every load still fetches/verifies its bytes; pixel-bearing intermediates are not retained.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 12,
+          "needle": "CHANNEL_INFERENCE",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-remaining-native-runtime-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-png-decode-direct-to-capped-bitmap-on-low-memory",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native PNGを低メモリ端末の目標解像度へ一段階でデコード・縮小する",
+      "library_file_id": "libfile_23d93a2202d08191898110da46d5d33d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-png-decode-direct-to-capped-bitmap-on-low-memory.md",
+      "status": "not-adopted",
+      "reason": "Direct Blob-to-resized-ImageBitmap can differ from the existing two-step resize in color conversion, premultiplication and filtering. Browser pixel equivalence is not available, so decoded texture semantics are preserved.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 217,
+          "needle": "createImageBitmap",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-png-release-temporary-inference-canvas",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブPNG推定処理の一時OffscreenCanvasを用済み直後に解放",
+      "library_file_id": "libfile_ba5ab5e8ca608191b5835444b882c6ef",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-png-release-temporary-inference-canvas.md",
+      "status": "implemented-local",
+      "reason": "Restore outer-finally zeroing and reference release of every temporary inference canvas on success, abort and readback/decode failures.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 275,
+          "needle": "canvas.width=canvas.height=0",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-remaining-native-runtime-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-prepared-stage-bound-concurrent-binary-fetches",
+      "title": "# [QUEUE][INKWAVE][Optimization] 事前変換ネイティブステージの10本同時bin読込を有界化し失敗時に兄弟リクエストを中止",
+      "library_file_id": "libfile_6c6cea221c7481918226997ef65b9a91",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-prepared-stage-bound-concurrent-binary-fetches.md",
+      "status": "implemented-local",
+      "reason": "Restore the prepared binary 3-desktop/2-constrained worker bound with linked child cancellation, first-error admission stop and allSettled drain. Manifest authentication and final array layouts remain unchanged.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 68,
+          "needle": "await Promise.allSettled",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-remaining-native-runtime-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-prepublish-webgl-loss-record-next-load-safety-tier",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeステージ公開前のWebGL context lossを次回GPU安全予算へ反映",
+      "library_file_id": "libfile_0354000225688191b525e02074b48652",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-prepublish-webgl-loss-record-next-load-safety-tier.md",
+      "status": "implemented-local",
+      "reason": "Install context-loss monitoring before the first native GPU allocation and admit only the current live pending generation or published native level. Aborted/stale generations do not record a new safety tier.",
+      "evidence": [
+        "patches/native-stages/runtime/native-world.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-world.mjs",
+          "origin": "repository-file",
+          "line": 71,
+          "needle": "game._nativePendingBuild={controller,current}",
+          "sha256": "aed969ee40cb023edd114ce4b5673c0a4dcf210ad558c6f70fbfebc68b77c592"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-world-cancellation.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "native-quality-skip-unchanged-material-program-invalidation",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native画質変更時にShader構成が不変なマテリアルまで一斉にneedsUpdateしない",
+      "library_file_id": "libfile_90b0aafd49d08191ae2777fa60881988",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-quality-skip-unchanged-material-program-invalidation.md",
+      "status": "implemented-local",
+      "reason": "Adopt the conservative subset: skip program invalidation only when all five material map handles are identical; every changed handle still invalidates and prior dirty state is never cleared.",
+      "evidence": [
+        "patches/native-stages/runtime/native-render.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-render.mjs",
+          "origin": "repository-file",
+          "line": 118,
+          "needle": "const changed=mat.map!==map",
+          "sha256": "25335a6177dfe3eaf10eeeaaf95d04e40f7c38349b72b2fa376ce6a8edf3a9eb"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-texture-profile-reuse.test.mjs"
+      ],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-source-cache-slot-avoid-five-second-reinitialization-during-texture-stream",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native source cache slotを長時間PNG読込中に5秒ごとに再初期化しない",
+      "library_file_id": "libfile_da046512dde0819197d3080caf8b2a76",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-cache-slot-avoid-five-second-reinitialization-during-texture-stream.md",
+      "status": "not-adopted",
+      "reason": "The five-second cache slot bounds cross-tab retention observations. Extending it needs a loader-owned session with completion/abort/stage-switch invalidation; a permanent shared slot would trust stale ownership/quota state.",
+      "evidence": [
+        "patches/native-stages/runtime/source-cache.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-cache.mjs",
+          "origin": "repository-file",
+          "line": 34,
+          "needle": "now-activeSlot.time<5000",
+          "sha256": "cd92a66d355f9719d4d64e57468260d6ec125eeeed1afa988955fb5766ae2a39"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-source-cross-stage-content-hash-png-cache-reuse",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native原典ステージ間で一致するPNGの重複キャッシュ・取得を抑える",
+      "library_file_id": "libfile_90494afd825881919011f9123a9519e3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-cross-stage-content-hash-png-cache-reuse.md",
+      "status": "not-adopted",
+      "reason": "Cross-stage PNG byte reuse needs content-index ownership integrated with the existing stage quota/seal ledger and deletion/recovery rules. The adopted scalar inference cache retains no bytes and does not weaken per-file verification.",
+      "evidence": [
+        "patches/native-stages/runtime/source-retention.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-retention.mjs",
+          "origin": "repository-file",
+          "line": 44,
+          "needle": "managedSourceSlot",
+          "sha256": "86e7022861c1e1fcb798fc983e0d98a7343be5fbbce433f2a74fbde1ba3a5d0a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-source-git-sha1-verification-avoid-full-payload-copy",
+      "title": "# [QUEUE][INKWAVE][Optimization] 原典PNG/MTLのGit SHA-1検証でファイル全体の追加コピーを削減",
+      "library_file_id": "libfile_db3e53ccfe4081918b92c882f49463ba",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-git-sha1-verification-avoid-full-payload-copy.md",
+      "status": "not-adopted",
+      "reason": "WebCrypto SHA-1 needs the contiguous Git blob header plus payload. Removing the copy requires a separate incremental implementation or authenticated alternative hash; prior benchmark rejects synchronous JS hashing as the default. Native verification remains intact.",
+      "evidence": [
+        "patches/native-stages/runtime/source-cache.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-cache.mjs",
+          "origin": "repository-file",
+          "line": 58,
+          "needle": "crypto.subtle.digest('SHA-1',blob)",
+          "sha256": "cd92a66d355f9719d4d64e57468260d6ec125eeeed1afa988955fb5766ae2a39"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "native-source-inventory-pack-git-tree-hash-without-per-child-chunks",
+      "title": "# [QUEUE][INKWAVE][Optimization] 原典ステージ固定インベントリのGit木SHA-1検証で子ノード別バッファを作らない",
+      "library_file_id": "libfile_297b903d57d88191836ff84c63760361",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-inventory-pack-git-tree-hash-without-per-child-chunks.md",
+      "status": "already-in-pr",
+      "reason": "Current inventory Git trees allocate one exact final buffer and directly encode mode/name/object IDs while retaining Git sort order and all descendant-tree authentication.",
+      "evidence": [
+        "patches/native-stages/runtime/source-inventory.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-inventory.mjs",
+          "origin": "repository-file",
+          "line": 12,
+          "needle": "bytes=new Uint8Array(header.length+size)",
+          "sha256": "77cd83db0e18c2f4e5ba883fce9212906fbb10d85c45e2b1667fd08ebee550cd"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-source-obj-token-whitespace-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] OBJパーサーの空白文字判定を高速化し、大型原典ステージの初回変換CPUを削減",
+      "library_file_id": "libfile_c3bd15effdf0819183d4a2c5c0a67ce9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-obj-token-whitespace-fastpath.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. ASCII whitespace uses scalar code checks while every non-ASCII character retains the Unicode regexp fallback; Unicode separators and rejection semantics are compared against the frozen #1878 parser.",
+      "evidence": [
+        "patches/native-stages/runtime/source-convert.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-convert.mjs",
+          "origin": "repository-file",
+          "line": 7,
+          "needle": "const objSpace=",
+          "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-source-paint-charts-transfer-packed-triangle-ids",
+      "title": "# [QUEUE][INKWAVE][Optimization] native-source-paint-charts-transfer-packed-triangle-ids",
+      "library_file_id": "libfile_bbca88997ee481918600f9a04474ebe6",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-paint-charts-transfer-packed-triangle-ids.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. Pack ordered chart triangle IDs into a shared Uint32 buffer and transfer that buffer once. Faces remain independent views; real structuredClone transfer and derived-cache digest tests retain grouping and alias ownership.",
+      "evidence": [
+        "patches/native-stages/runtime/source-worker.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-worker.mjs",
+          "origin": "repository-file",
+          "line": 35,
+          "needle": "const packed=new Uint32Array(count)",
+          "sha256": "38ebe9bdd3967d86acfd62fb06b74e824a7d3af974bb7a52efa9446f828737cb"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs",
+        "patches/native-stages/tests/source-cache-write.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-source-paintchart-avoid-per-triangle-string-keys",
+      "title": "# [QUEUE][INKWAVE][Optimization] paintChartsの8成分文字列キー生成を減らし、大型OBJの面グルーピング負荷を削減",
+      "library_file_id": "libfile_3d8c5716009881919c86914d2b00f7b2",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-paintchart-avoid-per-triangle-string-keys.md",
+      "status": "implemented-local",
+      "reason": "All 23 stages were regenerated from 5,633 individually pinned source files with the ordinary generator. Every array descriptor/chunk hash and all non-sphere metadata match the admitted #1878 assets; the unmodified fingerprint/payload admission gate accepts all 23. Numeric hashes select collision buckets only; every component is compared and the original stable sorted group order remains. Actual face columns, mask bytes, triangleFace IDs and array hashes remain identical.",
+      "evidence": [
+        "patches/native-stages/runtime/source-convert.mjs",
+        "reports/queue-local-native-regeneration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-convert.mjs",
+          "origin": "repository-file",
+          "line": 245,
+          "needle": "const hash=(Math.imul(k0,73856093)",
+          "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/queue-native-converter-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-source-retention-incremental-verified-write-groups-without-full-key-rescan",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native原典PNGの書込みバッチごとのCacheStorage全キー再走査を避ける",
+      "library_file_id": "libfile_4ce0787efae081919ba6623e17d59150",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-retention-incremental-verified-write-groups-without-full-key-rescan.md",
+      "status": "not-adopted",
+      "reason": "Each write group reacquires a Web Lock and another tab can mutate/delete bodies between owners. Reusing in-memory accounting without a persisted generation would bypass the current full-key/seal recovery contract.",
+      "evidence": [
+        "patches/native-stages/runtime/source-retention.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-retention.mjs",
+          "origin": "repository-file",
+          "line": 74,
+          "needle": "No accounting state is reused across lock ownership.",
+          "sha256": "86e7022861c1e1fcb798fc983e0d98a7343be5fbbce433f2a74fbde1ba3a5d0a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-source-retention-reseal-ledger-after-corrupt-cache-delete",
+      "title": "# [QUEUE][INKWAVE][Optimization] 破損した原典素材のキャッシュ削除後に保持台帳を確定し直す",
+      "library_file_id": "libfile_e62690fa634481919d19918569faab4c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-retention-reseal-ledger-after-corrupt-cache-delete.md",
+      "status": "already-in-pr",
+      "reason": "Corrupt-body deletion already runs under the retention lock, updates known-file metadata and reseals the latest ledger while keeping uncertainty/high-water history.",
+      "evidence": [
+        "patches/native-stages/runtime/source-retention.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-retention.mjs",
+          "origin": "repository-file",
+          "line": 90,
+          "needle": "delete row.files[String(url)]",
+          "sha256": "86e7022861c1e1fcb798fc983e0d98a7343be5fbbce433f2a74fbde1ba3a5d0a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-source-stream-over64mib-avoid-chunks-join-peak",
+      "title": "# [QUEUE][INKWAVE][Optimization] native-source-stream-over64mib-avoid-chunks-join-peak",
+      "library_file_id": "libfile_8d868f43d130819195eab4fd63446655",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-source-stream-over64mib-avoid-chunks-join-peak.md",
+      "status": "already-in-pr",
+      "reason": "Authenticated exact-length stream allocation already covers pinned payloads through 256 MiB, including the large OBJ; overrun/truncation rejects and unknown-length fallback is retained.",
+      "evidence": [
+        "patches/native-stages/runtime/source-cache.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/source-cache.mjs",
+          "origin": "repository-file",
+          "line": 71,
+          "needle": "expected.bytes<=256*1024*1024",
+          "sha256": "cd92a66d355f9719d4d64e57468260d6ec125eeeed1afa988955fb5766ae2a39"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-stage-overlap-navigation-with-texture-network-waits",
+      "title": "# [QUEUE][INKWAVE][Optimization] ネイティブステージのテクスチャ待機中に独立ナビ準備を進める",
+      "library_file_id": "libfile_8eb06af4af2881918f041fc19bad928b",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-stage-overlap-navigation-with-texture-network-waits.md",
+      "status": "already-in-pr",
+      "reason": "Current native-world starts detached navigation before texture loading only in the allowed profile, observes its rejection and shares cancellation/cleanup. Constrained and unsupported profiles remain serial.",
+      "evidence": [
+        "patches/native-stages/runtime/native-world.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-world.mjs",
+          "origin": "repository-file",
+          "line": 98,
+          "needle": "pendingNavigation=NavGraph.createNative",
+          "sha256": "aed969ee40cb023edd114ce4b5673c0a4dcf210ad558c6f70fbfebc68b77c592"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "native-stage-prewarm-actual-gpu-texture-and-buffer-uploads",
+      "title": "# [QUEUE][INKWAVE][Optimization] Nativeステージのシェーダー事前コンパイルと実GPU素材転送の時点を分離・平準化する",
+      "library_file_id": "libfile_76351278c0c08191a080d067660f8123",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-stage-prewarm-actual-gpu-texture-and-buffer-uploads.md",
+      "status": "not-adopted",
+      "reason": "Compile warmup does not prove actual texture/buffer upload. Forcing all uploads earlier can raise simultaneous decoded/GPU peaks; no device transfer and peak-memory evidence supports moving that allocation boundary.",
+      "evidence": [
+        "patches/native-stages/runtime/native-world.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-world.mjs",
+          "origin": "repository-file",
+          "line": 109,
+          "needle": "compileAsync",
+          "sha256": "aed969ee40cb023edd114ce4b5673c0a4dcf210ad558c6f70fbfebc68b77c592"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-static-source-mask-release-after-dead-grid-init",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native塗り初期化後の元チャートmask重複保持を減らす",
+      "library_file_id": "libfile_37aa4b7d41e88191b089510f8fa57060",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-static-source-mask-release-after-dead-grid-init.md",
+      "status": "not-adopted",
+      "reason": "The source mask still participates in native minimap support and paint initialization/cache identity. No reconstruction/revision owner permits releasing it immediately after dead-grid creation.",
+      "evidence": [
+        "patches/native-stages/runtime/native-minimap.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-minimap.mjs",
+          "origin": "repository-file",
+          "line": 40,
+          "needle": "mask",
+          "sha256": "668015fd409d2bf388b54d30b269cf44792c28f45fa81e3b7a28d25cbcebf3bb"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-texture-borrow-closed-bitmap-dimension-guard",
+      "title": "# [QUEUE][INKWAVE][Optimization] NativeのGPU転送済みBitmapの寸法0化で既存テクスチャ再利用判定が必ず落ちる",
+      "library_file_id": "libfile_18557aaf57d481919fa9e275519d659a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-texture-borrow-closed-bitmap-dimension-guard.md",
+      "status": "implemented-local",
+      "reason": "A closed bitmap may be reused only when it was closed by this loader after upload, on the same renderer and unchanged texture version, with a live matching WebGL texture property and no lost context. Disposed, restored/missing, mutated or foreign resources reload safely.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 26,
+          "needle": "closedAfterUpload",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-texture-profile-reuse.test.mjs"
+      ],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "native-texture-failure-cancel-inflight-sibling-workers",
+      "title": "# [QUEUE][INKWAVE][Optimization] Native画像の致命的な取得・デコード失敗時に並行ジョブを早期中断",
+      "library_file_id": "libfile_18f1ac01ce988191b79d3ebf0c94855a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] native-texture-failure-cancel-inflight-sibling-workers.md",
+      "status": "implemented-local",
+      "reason": "A fatal texture error aborts linked sibling requests and stops admission while preserving the original error and parent controller. allSettled cleanup releases packs/listeners and leaves borrowed live textures owned by the caller.",
+      "evidence": [
+        "patches/native-stages/runtime/native-load.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/native-stages/runtime/native-load.mjs",
+          "origin": "repository-file",
+          "line": 65,
+          "needle": "controller.abort(error)",
+          "sha256": "6a3384e43b366e8477ba6da2118a7f61bd1eb76c863186d1e82a529d632941a5"
+        }
+      ],
+      "tests": [
+        "patches/native-stages/tests/native-texture-profile-reuse.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "physics-segment-capsule-compare-squared-distances",
+      "title": "# [QUEUE][INKWAVE][Optimization] physics-segment-capsule-compare-squared-distances",
+      "library_file_id": "libfile_6d393f52d1088191a17a13f65fbbf9d4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] physics-segment-capsule-compare-squared-distances.md",
+      "status": "already-in-pr",
+      "reason": "Existing collision-hotpath code compares squared distances but retains sqrt fallback for floating boundary ties; exact capsule hit choice is preserved.",
+      "evidence": [
+        "patches/local-quality/collision-hotpath-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/collision-hotpath-adapter.mjs",
+          "origin": "repository-file",
+          "line": 105,
+          "needle": "Math.sqrt",
+          "sha256": "232fa5758ac855238b9da225eae487131d9036e47ddc5ed6935b0c0bf4abe09d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "ranked-clam-bot-blocked-nearest-distance-sort",
+      "title": "# [QUEUE][INKWAVE][Optimization] ガチアサリBOTの遮蔽時候補ソートで距離を何度も再計算する",
+      "library_file_id": "libfile_3aea525ae2f481919f19d6ab0054f603",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clam-bot-blocked-nearest-distance-sort.md",
+      "status": "not-adopted",
+      "reason": "The old status label was misleading: its own reason rejected the sort. Actual prior botGoal diagnostics showed regressions for 8/16 candidates and only marginal gains at larger counts; stable order and reachability calls remain unchanged.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/clams.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+          "origin": "repository-file",
+          "line": 948,
+          "needle": "botGoal",
+          "sha256": "e8037ab302897f694f91015d8027e47d54ad0b3d2057b4d8ff24398a1864e044"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "ranked-clam-world-reuse-frame-marker-presence-set",
+      "title": "# [QUEUE][INKWAVE][Optimization] フィールドアサリ描画の毎更新 `Set` 確保を再利用で抑制",
+      "library_file_id": "libfile_0116720a7dcc8191977723686f102d4f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] ranked-clam-world-reuse-frame-marker-presence-set.md",
+      "status": "already-in-pr",
+      "reason": "Current ranked world uses a private reusable marker-presence Set with reentrancy fallback and finally clear; live map behavior and draw order are retained.",
+      "evidence": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/ranked/world.mjs",
+          "origin": "repository-file",
+          "line": 798,
+          "needle": "const nested = scratch.busy, present = nested ? new Set() : scratch.value;",
+          "sha256": "e4de32af767f555d8f88fdd7349eea7c4026a6a4b9cc7c7c0dc5df6a4bc2bfc7"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "retarget-prebind-world-quaternions-upper-partition",
+      "title": "# [QUEUE][INKWAVE][Optimization] HumanRetargetの固定骨メタ情報とworldQ参照を事前束縛",
+      "library_file_id": "libfile_6ccc125ff73481918f23151581c0fd30",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] retarget-prebind-world-quaternions-upper-partition.md",
+      "status": "already-in-pr",
+      "reason": "Actual retarget entries already own worldQ, parentWorldQ and isUpper, avoiding repeated hierarchy/partition lookups without changing pose order.",
+      "evidence": [
+        "src/game/motion/retarget.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/retarget.js",
+          "origin": "fully-composed-public-source",
+          "line": 91,
+          "needle": "restOffset,worldQ,parentWorldQ",
+          "sha256": "27dcf517db62868bd37b57ef48cdaaeb2df74f0aeab6ea9fb05c74ba35359e41"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "root-hair-inertia-quiescent-zero-turn-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] RootHairInertiaの無旋回・完全静止状態では毛束ばね更新を省略",
+      "library_file_id": "libfile_59c998a79a8c8191bf8b8f2859c4970a",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] root-hair-inertia-quiescent-zero-turn-fastpath.md",
+      "status": "not-adopted",
+      "reason": "Even zero-turn root hair updates populate coefficient caches and observable scratch and run finite transforms. An early return requires complete signed-zero/nonfinite and lifecycle equality; current spring/pose behavior is retained.",
+      "evidence": [
+        "src/game/motion/root-hair.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/root-hair.js",
+          "origin": "fully-composed-public-source",
+          "line": 26,
+          "needle": "this.axis.set(0,rootTurnRate,0).applyQuaternion(this.q)",
+          "sha256": "ec0e030a1ec22b2ce7eb67248cc477fe4dccc0c5db5f027c2121b65ca38d3a2a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "root-hair-inertia-share-per-chain-spring-coefficients",
+      "title": "# [QUEUE][INKWAVE][Optimization] RootHairInertia の同一鎖内 XYZ ばね係数を1回だけ計算",
+      "library_file_id": "libfile_c20eb7abbfd881918df6bf095451661d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] root-hair-inertia-share-per-chain-spring-coefficients.md",
+      "status": "already-in-pr",
+      "reason": "Each root-hair chain already owns _iwSpring with exact dt/K/D coefficient invalidation.",
+      "evidence": [
+        "src/game/motion/root-hair.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/root-hair.js",
+          "origin": "fully-composed-public-source",
+          "line": 28,
+          "needle": "const p=e._iwSpring",
+          "sha256": "ec0e030a1ec22b2ce7eb67248cc477fe4dccc0c5db5f027c2121b65ca38d3a2a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "root-hair-reuse-head-transform-for-root-strands",
+      "title": "# [QUEUE][INKWAVE][Optimization] RootHairの根元毛束で既取得の頭座標変換を再利用",
+      "library_file_id": "libfile_9deae78e598c81919f891b6ffd20213d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] root-hair-reuse-head-transform-for-root-strands.md",
+      "status": "already-in-pr",
+      "reason": "Root strands parented to the head already copy the head quaternion computed for this update; other hierarchy paths retain their original walk.",
+      "evidence": [
+        "src/game/motion/root-hair.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/root-hair.js",
+          "origin": "fully-composed-public-source",
+          "line": 47,
+          "needle": "if(e.bone.parent===c.bones.head)this.parent.copy(this.head)",
+          "sha256": "ec0e030a1ec22b2ce7eb67248cc477fe4dccc0c5db5f027c2121b65ca38d3a2a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "shadowcache-reuse-numeric-sun-configuration-signature",
+      "title": "# [QUEUE][INKWAVE][Optimization] ShadowCache: 毎シャドウパスの10項目複合文字列キーを数値比較へ置換",
+      "library_file_id": "libfile_783b4a27df0881919e58c3b39e006098",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shadowcache-reuse-numeric-sun-configuration-signature.md",
+      "status": "already-in-pr",
+      "reason": "The actual final shadowcache retains a numeric _sunState and rebuilds the old string signature only when a sun/camera/map-size input changes. The queue is already effective even though its historical marker name differs.",
+      "evidence": [
+        "src/core/shadowcache.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/core/shadowcache.js",
+          "origin": "fully-composed-public-source",
+          "line": 119,
+          "needle": "const prior = this._sunState",
+          "sha256": "0bd8939f9c4349fb8ce7cc2132cd37668249ac8420c12722f1ec94629863285a"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "shapepool-unchanged-instance-attribute-upload",
+      "title": "# [QUEUE][INKWAVE][Optimization] ShapePoolの静止インスタンス属性を毎描画GPU転送対象から除外",
+      "library_file_id": "libfile_a3d1ea7cb8488191ac2b9804960b131f",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] shapepool-unchanged-instance-attribute-upload.md",
+      "status": "already-in-pr",
+      "reason": "ShapePool already compares each Float32 component with Object.is and active count; unchanged buffers retain upload version/ranges while changed/signed-zero/NaN cases follow the existing path.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-vfx-kit.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-vfx-kit.mjs",
+          "origin": "repository-file",
+          "line": 849,
+          "needle": "let dirty = this._drawCount !== n;",
+          "sha256": "62b9c4ce14ad40160230bfad2b16dec3c3a1c6c44a5fda05eae4d08a27db2961"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "showcase-lobby-camera-cache-fit-key-on-rect-refresh",
+      "title": "# [QUEUE][INKWAVE][Optimization] Lobby/Hubカメラのレイアウトキー生成をDOM再計測時だけにする",
+      "library_file_id": "libfile_3fe57842f0f48191aec0798d869b6b75",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-lobby-camera-cache-fit-key-on-rect-refresh.md",
+      "status": "implemented-local",
+      "reason": "Quantized fit boundaries are cached only when the existing DOM rectangles refresh. Frame comparison reads them with initial-clock fallback; camera output remains exact through resize, layout changes and clock resets.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 149,
+          "needle": "R._fitL=Math.round(R.l)",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "showcase-lobby-camera-elapsed-time-smoothing",
+      "title": "# [QUEUE][INKWAVE][Optimization] Showcase lobby camera uses fixed 60-Hz easing even on 30/120-Hz frames",
+      "library_file_id": "libfile_c95694ca5e948191a323f67464567ec4",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-lobby-camera-elapsed-time-smoothing.md",
+      "status": "already-in-pr",
+      "reason": "Current showcase stores bounded elapsed _fdt, and both lobby/free camera easing functions consume it. No fixed-per-render damping remains in these paths.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 2700,
+          "needle": "Math.exp(-7 * (this._fdt ?? 1 / 60))",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "showcase-lobby-inktrail-idle-scan-fastpath",
+      "title": "# [QUEUE][INKWAVE][Optimization] ロビーのInkTrailが完全非活性でも520枠を毎フレーム全走査する",
+      "library_file_id": "libfile_12ce54215684819180334abdb324ed7d",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-lobby-inktrail-idle-scan-fastpath.md",
+      "status": "already-in-pr",
+      "reason": "Current InkTrail has an explicit empty flag, wakes on add and returns in constant time while idle, then marks idle after the last live slot expires.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 727,
+          "needle": "add(x, y, z, yaw, w, len, color, life) { this._iwFxIdle = false;",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "showcase-lobby-jumpout-rate-independent-ink-droplets",
+      "title": "# [QUEUE][INKWAVE][Optimization] ロビー出撃ジャンプのインク飛沫が描画FPSに比例して過剰生成される",
+      "library_file_id": "libfile_44485c3ae72c8191b2125009ee7a6291",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-lobby-jumpout-rate-independent-ink-droplets.md",
+      "status": "implemented-local",
+      "reason": "Restore the omitted 60 Hz cosmetic trial clock. At 60 Hz all random calls/emissions retain exact order and values; 30/120 Hz use the same per-second trial count and hitches are capped at two.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 147,
+          "needle": "nonWailVfxTicks(A,dt)",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "showcase-lobby-member-walk-avoid-per-frame-map-snapshot",
+      "title": "# [QUEUE][INKWAVE][Optimization] ロビーの毎フレーム Map 値配列スナップショットを削減",
+      "library_file_id": "libfile_12cc039f7dc48191935dedb9ca3c0414",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] showcase-lobby-member-walk-avoid-per-frame-map-snapshot.md",
+      "status": "already-in-pr",
+      "reason": "Actual lobby walk already reuses a snapshot array with busy guard/finally cleanup, preserving Map mutation semantics instead of switching to live iteration.",
+      "evidence": [
+        "src/game/showcase.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/showcase.js",
+          "origin": "fully-composed-public-source",
+          "line": 2217,
+          "needle": "const memberScratch = this._lobMemberScratch",
+          "sha256": "3ec1b48ef7e9f373cf24720936904c2679f38463ae304e90135ec9d30c314d70"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-bank-elide-unchanged-clip-base-pose-copy",
+      "title": "# [QUEUE][INKWAVE][Optimization] 同じSourceクリップ連続再生時の基底ポーズ再転記を省く",
+      "library_file_id": "libfile_aa38192931ac81919f656797ff021c55",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-bank-elide-unchanged-clip-base-pose-copy.md",
+      "status": "not-adopted",
+      "reason": "SourcePose.raw and bank base/rest data are publicly mutable without revisions. Same-clip sample must correct/observe those writes; omitting the copy changes next-sample results.",
+      "evidence": [
+        "src/game/motion/source-bank.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/source-bank.js",
+          "origin": "fully-composed-public-source",
+          "line": 218,
+          "needle": "raw.set(layout.baseView)",
+          "sha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960"
+        }
+      ],
+      "tests": [],
+      "prior_status": "not-adopted"
+    },
+    {
+      "key": "source-bank-profile-hoist-foot-toe-bone-index-lookups",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceBank.profile() の足・つま先骨 index 参照をサンプルループ外へ移動",
+      "library_file_id": "libfile_846338a15cc081918900a710fdfeca51",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-bank-profile-hoist-foot-toe-bone-index-lookups.md",
+      "status": "implemented-local",
+      "reason": "Bind foot/toe indices once per profile construction, preserving missing-foot/toe fallbacks and contact/stride arithmetic.",
+      "evidence": [
+        "inkwave-public/src/game/motion/source-bank.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/game/motion/source-bank.js",
+          "origin": "repository-file",
+          "line": 263,
+          "needle": "feetIndex=[this.index.foot_L,this.index.foot_R]",
+          "sha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "source-bank-profile-pack-ephemeral-foot-landmark-tracks",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceBank.profile の一時足軌跡を連続Float64バッファにしてサンプルごとのVector3生成を削減",
+      "library_file_id": "libfile_34abe87f89bc8191a19822ed8905a557",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-bank-profile-pack-ephemeral-foot-landmark-tracks.md",
+      "status": "implemented-local",
+      "reason": "Ephemeral foot landmark vectors become Float64 packed tracks, retaining exact subtraction/dot and frame ordering. Missing bones, directions and fractional frame counts retain profile output.",
+      "evidence": [
+        "inkwave-public/src/game/motion/source-bank.js",
+        "reports/queue-local-world-direct-migration-20261026.json"
+      ],
+      "codeChecks": [
+        {
+          "path": "inkwave-public/src/game/motion/source-bank.js",
+          "origin": "repository-file",
+          "line": 264,
+          "needle": "new Float64Array(f===undefined?0:n*3)",
+          "sha256": "288193f67b58ca93f8803474fe8acc6dab491842b0840aff7db1aa323bf57960"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "source-controller-cache-jump-clip-resolution",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotionの毎更新ジャンプ候補検索と着地クリップ参照をバンク単位で再利用",
+      "library_file_id": "libfile_48feb3b8f2fc8191984b15ad28b344c3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-controller-cache-jump-clip-resolution.md",
+      "status": "implemented-local",
+      "reason": "Restore per-bank family jump start/body/end clip references, including the historical Glng spelling fallback, while retaining exact reset boundaries.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 55,
+          "needle": "jumpClips.start",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-controller-memoize-direction-clip-resolution",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotionController の4方向クリップ解決をバンク別にメモ化",
+      "library_file_id": "libfile_98e179f657408191acfae97ea105b1f3",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-controller-memoize-direction-clip-resolution.md",
+      "status": "already-in-pr",
+      "reason": "directionClips already has a per-bank memo keyed by lookup inputs and clearBankCaches resets both bank and map references.",
+      "evidence": [
+        "src/game/motion/source-controller.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/source-controller.js",
+          "origin": "fully-composed-public-source",
+          "line": 111,
+          "needle": "this._dirClipsCache=cache=new Map()",
+          "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "source-controller-overlay-samples-skip-unread-fk",
+      "title": "# [QUEUE][INKWAVE][Optimization] 武器上半身・アクション用 overlay サンプルの未使用 FK を省略",
+      "library_file_id": "libfile_de22300e2cd88191a2a4b9bf09a42d95",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-controller-overlay-samples-skip-unread-fk.md",
+      "status": "already-in-pr",
+      "reason": "The final controller already samples upper/local-only overlays with FK disabled; full pose consumers retain FK.",
+      "evidence": [
+        "src/game/motion/source-controller.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/source-controller.js",
+          "origin": "fully-composed-public-source",
+          "line": 221,
+          "needle": "false,false)",
+          "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-controller-prebind-locomotion-foot-toe-indices",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotionController の歩行サンプル内で足・つま先骨インデックスを繰り返し名前検索しない",
+      "library_file_id": "libfile_f3e93c641cb48191bd6c0863b2555147",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-controller-prebind-locomotion-foot-toe-indices.md",
+      "status": "implemented-local",
+      "reason": "Bind locomotion foot/toe pairs before the per-clip loop and reuse exact indices, retaining original missing-bone behavior.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 139,
+          "needle": "const footL=this.bank.index.foot_L",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "source-controller-reuse-locomotion-blend-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotionController の歩行・走行ブレンド用一時レコードを使い回す",
+      "library_file_id": "libfile_8e8bb8578fb8819184b9e5bfb182a7dc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-controller-reuse-locomotion-blend-records.md",
+      "status": "already-in-pr",
+      "reason": "Current controller owns _locoList and _locoPool, resets active length and overwrites each consumed record field every use.",
+      "evidence": [
+        "src/game/motion/source-controller.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/source-controller.js",
+          "origin": "fully-composed-public-source",
+          "line": 240,
+          "needle": "const locoPool=this._locoPool",
+          "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-hair-targets-elide-per-entry-mean-vector-copy",
+      "title": "# [QUEUE][INKWAVE][Optimization] Source HairTargetsで髪の平均軸Vector3コピーを省略",
+      "library_file_id": "libfile_dc2c597cdc688191b57c7652a3ce24d9",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-hair-targets-elide-per-entry-mean-vector-copy.md",
+      "status": "implemented-local",
+      "reason": "setFromUnitVectors reads the immutable profile mean directly; no per-entry copy is needed and private output/other scratch ownership remains unchanged.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 143,
+          "needle": "setFromUnitVectors(profile.hairMean[e.i]",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "source-hair-targets-fastpath-bounded-swing-angle",
+      "title": "# [QUEUE][INKWAVE][Optimization] ソース髪スイング制限内で不要な `acos` を省く",
+      "library_file_id": "libfile_62c9a58f3c2481918fd8fb3b4c329760",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-hair-targets-fastpath-bounded-swing-angle.md",
+      "status": "implemented-local",
+      "reason": "Restore the conservative cosine bound fast path only strictly inside the fixed swing limit; boundary and nonfinite values retain the original acos calculation.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 62,
+          "needle": "Math.cos(HOST_HAIR.maxDelta/2)+1e-12",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-locomotion-profile-sparse-center-and-hairmean-accumulators",
+      "title": "# [QUEUE][INKWAVE][Optimization] 歩容プロフィールの全骨center・hairMean生成を実使用骨へ限定",
+      "library_file_id": "libfile_0189f838fdd481918bc95fe4279f00b1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-locomotion-profile-sparse-center-and-hairmean-accumulators.md",
+      "status": "implemented-local",
+      "reason": "Restore sparse center/hair mean accumulators only for consumed indices in original order. Full source-loaded motion and actual profile results remain exact.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 66,
+          "needle": "const centerIndices=",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-motion-lazy-currentclips-debug-snapshots",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotion の未参照クリップ診断スナップショットを遅延生成する",
+      "library_file_id": "libfile_f4b7980a1a4c8191aefe020fdf4cc333",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-motion-lazy-currentclips-debug-snapshots.md",
+      "status": "not-adopted",
+      "reason": "currentClips/debug.clips are public snapshots whose reference stability and mutations are observable. A lazy mutable-slot rewrite changes that API without a revision/epoch contract.",
+      "evidence": [
+        "src/game/motion/source-controller.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/source-controller.js",
+          "origin": "fully-composed-public-source",
+          "line": 60,
+          "needle": "currentClips",
+          "sha256": "3f1f6403d5582220a92e22a6c8082ce8b421ffa9d4dfe92d9014af0a1c23ac85"
+        }
+      ],
+      "tests": [],
+      "prior_status": "needs-evidence"
+    },
+    {
+      "key": "source-motion-reuse-per-update-call-options-records",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotionController の姿勢・バランス・イカ変形呼び出し用 options レコードを再利用",
+      "library_file_id": "libfile_14d65cee5c688191be781882a0b4b0cd",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-motion-reuse-per-update-call-options-records.md",
+      "status": "implemented-local",
+      "reason": "Restore four controller-private option records with every consumed field overwritten before synchronous consumers; exact motion/geometry tests cover retained state and rate changes.",
+      "evidence": [
+        "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-reviewed-world-carryover-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 46,
+          "needle": "_driveBalanceArgs",
+          "sha256": "38ed20d33f136c19c517fe59a565932e0b9caa88080a288049ef53b3f3c49fcb"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-motion-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-retarget-cache-head-transform-across-hair-accessories",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotion髪アクセサリで頭の階層変換を同一更新内に共有",
+      "library_file_id": "libfile_1b4e58ae2f2c8191bfb47bda3a61f411",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-retarget-cache-head-transform-across-hair-accessories.md",
+      "status": "already-in-pr",
+      "reason": "Actual applyAccessories already computes headWorldQ once per update and reuses it for head-parented accessories.",
+      "evidence": [
+        "src/game/motion/retarget.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/retarget.js",
+          "origin": "fully-composed-public-source",
+          "line": 226,
+          "needle": "let headWorldReady=false,lastHead=-1;",
+          "sha256": "27dcf517db62868bd37b57ef48cdaaeb2df74f0aeab6ea9fb05c74ba35359e41"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-retarget-hair-skip-overwritten-quaternions-and-prebind-rest",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceRetarget の髪ターゲット有効時に上書きされる四元数演算を削減・残余の静的rest補正を事前計算",
+      "library_file_id": "libfile_dee48654f1508191814041810d30d7fc",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-retarget-hair-skip-overwritten-quaternions-and-prebind-rest.md",
+      "status": "already-in-pr",
+      "reason": "Accessory bind already precomputes restSourceQ/restHeadRelQ; the hair branch runs before the generic source delta, avoiding overwritten quaternion work.",
+      "evidence": [
+        "src/game/motion/retarget.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/retarget.js",
+          "origin": "fully-composed-public-source",
+          "line": 101,
+          "needle": "restHeadRelQ:options.head!==undefined",
+          "sha256": "27dcf517db62868bd37b57ef48cdaaeb2df74f0aeab6ea9fb05c74ba35359e41"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-retarget-share-hair-response-expm1-per-update",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceRetarget 髪アクセサリの共通応答指数を1更新1回にする",
+      "library_file_id": "libfile_e38d5345f37881919a94218520fe8263",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-retarget-share-hair-response-expm1-per-update.md",
+      "status": "already-in-pr",
+      "reason": "Actual accessory update already computes hasHairTargets, amplitude scale and hairAlpha once before the accessory loop.",
+      "evidence": [
+        "src/game/motion/retarget.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/retarget.js",
+          "origin": "fully-composed-public-source",
+          "line": 229,
+          "needle": "const hairAlpha=hasHairTargets?",
+          "sha256": "27dcf517db62868bd37b57ef48cdaaeb2df74f0aeab6ea9fb05c74ba35359e41"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-retarget-skip-overwritten-native-leg-ik-after-activation",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceMotion 安定稼働時、上書きされる左右Native脚IKの先行解決を省略",
+      "library_file_id": "libfile_76753cb0dcdc8191bafbcfed275bb213",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-retarget-skip-overwritten-native-leg-ik-after-activation.md",
+      "status": "already-in-pr",
+      "reason": "Composed Character already admits source-owned legs only after the existing active/pose/activation threshold and skips overwritten native IK under that guard.",
+      "evidence": [
+        "src/game/character.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character.js",
+          "origin": "fully-composed-public-source",
+          "line": 3118,
+          "needle": "const _sourceLegsOwnPose =",
+          "sha256": "08a6af93b26f1279ff3eac4c7cca7cd879f027a820dac2832ac44faeaae4a27d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-squid-rig-reuse-yaw-swim-climb-temporary-math",
+      "title": "# [QUEUE][INKWAVE][Optimization] SourceSquidRig.apply のイカ旋回・遊泳・壁登り計算で一時Vector3/Eulerを使い回す",
+      "library_file_id": "libfile_ef950a72e7a48191b88181321ce36df0",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-squid-rig-reuse-yaw-swim-climb-temporary-math.md",
+      "status": "already-in-pr",
+      "reason": "SourceSquidRig already owns reusable up/Euler/wall vectors and selects the final rotation without a redundant initial overwrite.",
+      "evidence": [
+        "src/game/motion/squid-rig.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/squid-rig.js",
+          "origin": "fully-composed-public-source",
+          "line": 36,
+          "needle": "this.wallNormal=new THREE.Vector3()",
+          "sha256": "317382437956a3bf4f1266687df693a255dbf6fcb84bc30421073d4e806526ce"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "source-squid-skip-invisible-remote-eye-cpu-deformation",
+      "title": "# [QUEUE][INKWAVE][Optimization] 非表示の遠隔イカ目メッシュのCPU変形・GPU更新を省略",
+      "library_file_id": "libfile_66603a334a388191b2ab9efe2276fc61",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] source-squid-skip-invisible-remote-eye-cpu-deformation.md",
+      "status": "already-in-pr",
+      "reason": "The current squid apply method skips eye deformation only for submerged remote swim/climb forms; visible/local eye paths remain unchanged.",
+      "evidence": [
+        "src/game/motion/squid-rig.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/motion/squid-rig.js",
+          "origin": "fully-composed-public-source",
+          "line": 126,
+          "needle": "if(!((form==='swim'||form==='climb')&&!c.isLocal))this.deformEyes();",
+          "sha256": "317382437956a3bf4f1266687df693a255dbf6fcb84bc30421073d4e806526ce"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "special-device-pose-options-reuse-per-character-update",
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャル装備の姿勢更新で毎回生成するdt・speed引数オブジェクトを再利用",
+      "library_file_id": "libfile_dc852b3b3fe4819197ea5b5d1a35e669",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-device-pose-options-reuse-per-character-update.md",
+      "status": "already-in-pr",
+      "reason": "Current special presentation owns one poseOptions object per character update and computes speed at most once when a device consumes it.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-presentation.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "origin": "repository-file",
+          "line": 604,
+          "needle": "const poseOptions = { dt, speed: 0 };",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "special-world-flight-kind-check-hoist-three-value-array",
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャル設置物の固定60Hz飛翔判定で3種類の一時配列を作り直さない",
+      "library_file_id": "libfile_e5e296c7eb9c8191b57d6ddb17f3f2ed",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-world-flight-kind-check-hoist-three-value-array.md",
+      "status": "implemented-local",
+      "reason": "Restore ordered scalar flight-kind comparisons in updateWorld instead of a fresh three-element array. Fixed-step parity and exact fallback classification are verified.",
+      "evidence": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/all-specials.mjs",
+          "origin": "repository-file",
+          "line": 1677,
+          "needle": "o.kind==='marker'||o.kind==='wave'||o.kind==='screen'",
+          "sha256": "3446a87ac9271adb8800cc42d2178dfdec60cdb5749f6948b38492e1a0c7d2ef"
+        }
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-specials-local-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "special-world-hidden-native-proxy-mesh-factory",
+      "title": "# [QUEUE][INKWAVE][Optimization] スペシャル設置物の非表示ネイティブ代替メッシュを二重生成しない",
+      "library_file_id": "libfile_85aa3e5d71708191b76826cf696ce54c",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] special-world-hidden-native-proxy-mesh-factory.md",
+      "status": "implemented-local",
+      "reason": "Restore the installed native hidden proxy factory and its registration. Unsupported kinds/presentation absence retain the full mesh path; actual registered transforms, material scalar fields and disposal/fallback behavior pass regression.",
+      "evidence": [
+        "patches/splatoon3/runtime/special-presentation.mjs",
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/splatoon3/runtime/special-presentation.mjs",
+          "origin": "repository-file",
+          "line": 272,
+          "needle": "api.specialWorldProxy",
+          "sha256": "de30d31b590e7418531184202621b1aeca1006f7f53663a62f63c2cb4b673698"
+        }
+      ],
+      "tests": [
+        "patches/splatoon3/tests/queue-specials-local-20261026.test.mjs"
+      ],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "squid-profile-hoist-radius-lookup-key-value-tables",
+      "title": "# [QUEUE][INKWAVE][Optimization] squid-profile-hoist-radius-lookup-key-value-tables",
+      "library_file_id": "libfile_4e47a1a44adc8191a7d74905bb447628",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] squid-profile-hoist-radius-lookup-key-value-tables.md",
+      "status": "already-in-pr",
+      "reason": "The actual composed squid profile already has module-level SQ_Y and SQ_R arrays consumed by sqR; no geometry or interpolation change is needed.",
+      "evidence": [
+        "src/game/character-geo.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character-geo.js",
+          "origin": "fully-composed-public-source",
+          "line": 1607,
+          "needle": "const SQ_Y = SQ_PROF.map((p) => p[1]), SQ_R = SQ_PROF.map((p) => p[0]);",
+          "sha256": "3dc63eae6802d877633589da7b45038dd24650121d7b773d2744788af7bc3225"
+        }
+      ],
+      "tests": [],
+      "prior_status": null
+    },
+    {
+      "key": "squid-quality-cache-key-preserve-distinct-detail",
+      "title": "# [QUEUE][INKWAVE][Optimization] イカ形態の画質別ジオメトリを bodyLevel 共有キャッシュから独立させる",
+      "library_file_id": "libfile_7ea49b8bc1448191b7312a2915d58f80",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] squid-quality-cache-key-preserve-distinct-detail.md",
+      "status": "excluded-user",
+      "reason": "#1870 separated squid geometry cache keys by detail, but that changes which low/medium geometry is displayed. Parent task explicitly excludes shape/detail remaking; the current geometry output is held fixed rather than silently adopting that visual change.",
+      "evidence": [
+        "src/game/character-geo.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character-geo.js",
+          "origin": "fully-composed-public-source",
+          "line": 1625,
+          "needle": "const _squid = new Map();",
+          "sha256": "3dc63eae6802d877633589da7b45038dd24650121d7b773d2744788af7bc3225"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "squid-surface-normal-reuse-three-vector-scratch",
+      "title": "# [QUEUE][INKWAVE][Optimization] squid-surface-normal-reuse-three-vector-scratch",
+      "library_file_id": "libfile_f66f9b5823f881919727207899b0e325",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] squid-surface-normal-reuse-three-vector-scratch.md",
+      "status": "implemented-local",
+      "reason": "Three module-private vectors replace per-call allocations in the synchronous private squid normal helper, preserving all point/surface arithmetic and generated geometry.",
+      "evidence": [
+        "patches/local-quality/queue-remaining-world-20261026-adapter.mjs"
+      ],
+      "codeChecks": [
+        {
+          "path": "patches/local-quality/queue-remaining-world-20261026-adapter.mjs",
+          "origin": "repository-file",
+          "line": 120,
+          "needle": "const SQ_SURFACE_SCRATCH=",
+          "sha256": "d3667e61e10749351df5b6262e5c80d03e5d0526c8f0bf5533a04a9b623fc06d"
+        }
+      ],
+      "tests": [
+        "patches/local-quality/tests/queue-remaining-world-20261026.test.mjs"
+      ],
+      "prior_status": null
+    },
+    {
+      "key": "tentacle-tube-share-angle-and-twist-trigonometry-per-ring",
+      "title": "# [QUEUE][INKWAVE][Optimization] 毛束・イカ腕チューブ生成時の角度とねじれ三角関数をリングで共有",
+      "library_file_id": "libfile_753fce58a5f88191b30183039b2769c1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] tentacle-tube-share-angle-and-twist-trigonometry-per-ring.md",
+      "status": "already-in-pr",
+      "reason": "Actual composed tentacleTube already shares per-radial cos/sin and per-ring twist basis while preserving the custom-section callback fallback.",
+      "evidence": [
+        "src/game/character-hair.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/game/character-hair.js",
+          "origin": "fully-composed-public-source",
+          "line": 172,
+          "needle": "const cosByK = [], sinByK = [], basis =",
+          "sha256": "63046a30431472c26564e9ba7f6d605271e397d2016d6f4d326f76efc65a7e4d"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    },
+    {
+      "key": "wire-selected-prop-packs-into-production-boot",
+      "title": "# [QUEUE][INKWAVE][Optimization] 選択プロップパックの遅延ローダーを本番起動経路に接続する",
+      "library_file_id": "libfile_59a636429ca08191b65edcb6adc48ec1",
+      "library_path": "/INKWAVE Issue Queue/[QUEUE][INKWAVE][Optimization] wire-selected-prop-packs-into-production-boot.md",
+      "status": "already-in-pr",
+      "reason": "Current production main loads prop-packs and awaits selected preparePropPacks with the world-current guard before constructing the stage.",
+      "evidence": [
+        "src/main.js"
+      ],
+      "codeChecks": [
+        {
+          "path": "src/main.js",
+          "origin": "fully-composed-public-source",
+          "line": 300,
+          "needle": "await this.preparePropPacks(map.layout || map.id, worldCurrent)",
+          "sha256": "5c5530979dee215d58e45c802d8271be38f857fce67e1fe981ee3c4bc5ce986a"
+        }
+      ],
+      "tests": [],
+      "prior_status": "already-in-pr"
+    }
+  ]
+}
