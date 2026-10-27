@@ -342,6 +342,13 @@ export class V {
   dispose() {
     if (this.dead) return;
     this.dead = true;
+    // Disposal also handles partially built voices. A disconnected looping
+    // source remains started unless explicitly stopped; retire it before
+    // dropping the source records, and prevent late ended callbacks reentry.
+    for (const s of this.srcs) {
+      s.onended = null;
+      try { s.stop(); } catch (e) { /* already ended or never started */ }
+    }
     for (const n of this.nodes) { try { n.disconnect(); } catch (e) { /* ignore */ } }
     this.nodes.length = 0; this.srcs.length = 0;
     if (this.ondispose) this.ondispose();
