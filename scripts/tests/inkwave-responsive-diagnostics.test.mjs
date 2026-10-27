@@ -815,3 +815,16 @@ test('setup labels reject dynamic selectors, stage IDs and forged operation labe
     assert.equal(d.snapshot().pendingOperation, null); assert.deepEqual(d.snapshot().events, []);
   }
 });
+
+test('stage-switch animation diagnostics belong only to the current original cohort',()=>{
+ const d=createResponsiveDiagnostics();
+ const emit=phase=>d.animations(RESPONSIVE_ANIMATION_PREFIX+JSON.stringify({phase,finiteCount:1,pendingCount:1,omittedCount:0,rows:[{index:0,kind:'css-animation',name:'iw-ticket-pick',playState:'finished',pending:false}]}));
+ d.operation('setup-stage-settle','before');emit('before-await');emit('watchdog');
+ assert.equal(d.snapshot().animationSnapshots.length,2);
+ d.fail(Error('stage page crashed'));assert.equal(d.snapshot().firstError.message,'stage page crashed');
+ d.operation('setup-stage-settle','before');
+ assert.equal(d.snapshot().animationSnapshots,undefined,'a new stage cannot inherit the previous cohort');
+ emit('before-await');assert.equal(d.snapshot().animationSnapshots.length,1);
+ d.operation('setup-stage-name','before');emit('watchdog');
+ assert.equal(d.snapshot().animationSnapshots,undefined,'unobserved operations never accept another cohort snapshot');
+});
