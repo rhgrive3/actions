@@ -10,6 +10,9 @@ on:
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
       - 'scripts/lib/inkwave-explosher-geometry-lifetime.mjs'
       - 'scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs'
+      - 'scripts/prepare-inkwave-ci-video-tools.mjs'
+      - 'scripts/prepare-inkwave-ci-apt.py'
+      - 'scripts/tests/inkwave-ci-video-tools.test.mjs'
       - 'scripts/check-inkwave-current-explosher-native.mjs'
       - 'scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs'
       - 'scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs'
@@ -57,14 +60,11 @@ jobs:
         with:
           node-version: 22
       - name: Strict runtime/UI preflight protocol contracts
-        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs
+        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs scripts/tests/inkwave-ci-video-tools.test.mjs
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
       - name: Install required PNG decoder
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y ffmpeg
-          ffmpeg -hide_banner -version
+        run: node scripts/prepare-inkwave-ci-video-tools.mjs --receipt .ci-scratch/explosher/video-tool-provision.json
       - name: Native production-composition regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-explosher-workflow-admission.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
       - name: Build exact candidate and admitted immutable common source
