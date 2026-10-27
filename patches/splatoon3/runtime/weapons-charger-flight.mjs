@@ -72,7 +72,8 @@ export function chargerActorBeforeStop(entryFraction, stepLength, stopDistance) 
 export const CHARGER_SOURCE_MODEL_MUZZLE = Object.freeze({ X: 0, Y: .1781852, Z: 1.717447 });
 export function storedChargerModelMuzzle(source, modelMuzzle, out) {
   if (!source || !modelMuzzle || !out ||
-      ![source.X, source.Y, source.Z, modelMuzzle.x, modelMuzzle.y, modelMuzzle.z].every(Number.isFinite) ||
+      !Number.isFinite(source.X) || !Number.isFinite(source.Y) || !Number.isFinite(source.Z) ||
+      !Number.isFinite(modelMuzzle.x) || !Number.isFinite(modelMuzzle.y) || !Number.isFinite(modelMuzzle.z) ||
       source.Z <= 0 || modelMuzzle.z <= 0) return false;
   const reference = CHARGER_SOURCE_MODEL_MUZZLE;
   const scale = modelMuzzle.z / reference.Z;
@@ -157,16 +158,21 @@ export function installChargerFlight(api,completion) {
     return Number.isFinite(out.x) && Number.isFinite(out.y) && Number.isFinite(out.z) &&
       out.distanceToSquared(keepBody) <= 2.5 && G.physics.los(keepBody, out);
   }
+  const localShotScratch = []; let localShotDepth = 0;
   P.fireCharger=function(actor,w,charge){
-    const muzzleMethod=this._muzzle,muzzleOut=new THREE.Vector3(),muzzle=muzzleMethod.call(this,actor,muzzleOut);
+    const depth = localShotDepth++, reuse = actor.isLocal && this._muzzle === nativeMuzzle && this._aimFrom === nativeAimFrom;
+    const scratch = reuse ? (localShotScratch[depth] || (localShotScratch[depth] = { muzzle: new THREE.Vector3(), aim: new THREE.Vector3(), kept: new THREE.Vector3() })) : null;
+    try {
+    const muzzleMethod=this._muzzle,muzzleOut=scratch ? scratch.muzzle.set(0,0,0) : new THREE.Vector3(),muzzle=muzzleMethod.call(this,actor,muzzleOut);
     const origin=muzzleMethod===nativeMuzzle&&muzzle===muzzleOut?muzzleOut:muzzle.clone();
     if (actor.weaponRunner?.s3KeepMuzzleFiring) {
-      const kept = new THREE.Vector3();
+      const kept = scratch ? scratch.kept.set(0,0,0) : new THREE.Vector3();
       if (resolveKeepOrigin(actor, kept)) origin.copy(kept);
     }
-    const aimMethod=this._aimFrom,aimOut=new THREE.Vector3(),aim=aimMethod.call(this,actor,origin,aimOut);
+    const aimMethod=this._aimFrom,aimOut=scratch ? scratch.aim.set(0,0,0) : new THREE.Vector3(),aim=aimMethod.call(this,actor,origin,aimOut);
     const dir=aimMethod===nativeAimFrom&&aim===aimOut?aimOut:aim.clone();
     begin(this,actor,w,charge,origin,dir);
+    } finally { localShotDepth = depth; }
   };
   P.ghostFire=function(actor,event){
     const w=WEAPONS[event.weapon]||actor.weapon;
@@ -357,9 +363,13 @@ export function chargerWallDropParameters(raw,charge,splash=false,seed=.5){
   firstSpeed:move.FallPeriodFirstTargetSpeed,secondSpeed:move.FallPeriodSecondTargetSpeed,
   gravity:Number(gravity[1]+'.'+gravity[2]),shock:radius('PaintRadiusShock'),fall:radius('PaintRadiusFall'),
   ground:Number.isFinite(paint.PaintRadiusGround)?paint.PaintRadiusGround:null};
- if(!Object.entries(result).every(([k,v])=>k==='ground'&&v===null||Number.isFinite(v)&&v>=0))throw Error('Invalid Charger wall-drop source');
+ if(!nonnegativeFinite(result.first)||!nonnegativeFinite(result.second)||!nonnegativeFinite(result.last)||
+    !nonnegativeFinite(result.firstSpeed)||!nonnegativeFinite(result.secondSpeed)||!nonnegativeFinite(result.gravity)||
+    !nonnegativeFinite(result.shock)||!nonnegativeFinite(result.fall)||
+    !(result.ground===null||nonnegativeFinite(result.ground)))throw Error('Invalid Charger wall-drop source');
  return result;
 }
+function nonnegativeFinite(value){return Number.isFinite(value)&&value>=0;}
 export function beginChargerWallDrop(system,job,hit,raw,api,splash=false){
  if(job.ghost||!hit?.hit||Math.abs(hit.normal.y)>=.55||hit.block?.grate)return false;
  const seed=Number.isFinite(job.seed)?job.seed:.5,plan=chargerWallDropParameters(raw,job.charge,splash,seed);
