@@ -218,6 +218,8 @@
         "args": [
           "--test",
           "scripts/tests/inkwave-test-suites.test.mjs",
+          "scripts/tests/inkwave-evidence-packaging.test.mjs",
+          "scripts/tests/inkwave-quality-account-scope.test.mjs",
           "scripts/tests/cxx-openttd-projection.test.mjs"
         ]
       }

@@ -979,13 +979,17 @@ jobs:
           pending=root/'ci-result.json.pending'; pending.write_text(json.dumps(receipt,indent=2)+'\n'); pending.replace(root/'ci-result.json')
           print(json.dumps(receipt))
           PY
-      - uses: actions/upload-artifact@v4
+      - name: Package bounded browser failure evidence
         if: always() && (failure() || cancelled())
+        id: browser_failure_evidence
+        run: node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$CI_STORAGE/failure-evidence" .built-site/_site/inkwave-build.json
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.browser_failure_evidence.outputs.eligible == 'true'
         with:
           name: inkwave-browser-failure-${{ matrix.suite }}-${{ env.SOURCE_SHA }}
           include-hidden-files: true
           if-no-files-found: warn
-          path: ${{ env.CI_STORAGE }}/evidence/
+          path: ${{ steps.browser_failure_evidence.outputs.path }}
           retention-days: 14
       - uses: actions/upload-artifact@v4
         if: success()

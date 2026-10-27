@@ -159,7 +159,14 @@ jobs:
             if [ -f "$root/evidence/ci-result.json" ]; then
               cp "$root/evidence/ci-result.json" ".ci-artifacts/browser-<< parameters.suite >>-native-result.json"
             elif [ -d "$root/evidence" ]; then
-              tar -czf ".ci-artifacts/browser-<< parameters.suite >>-failure-evidence.tar.gz" -C "$root" evidence
+              INKWAVE_EVIDENCE_ROOT="$root" node --input-type=module <<'JS'
+            import {packageBrowserFailureEvidence} from './scripts/ci/package-inkwave-evidence.mjs';
+            import {execFileSync} from 'node:child_process';
+            const root=process.env.INKWAVE_EVIDENCE_ROOT;
+            const result=await packageBrowserFailureEvidence(root+'/evidence',{output:root+'/failure-evidence',sourceSha:process.env.CIRCLE_SHA1,buildIdentity:'.built-site/_site/inkwave-build.json'});
+            execFileSync('tar',['-czf','.ci-artifacts/browser-<< parameters.suite >>-failure-evidence.tar.gz','-C',result.path,'.']);
+            if(result.failed)process.exitCode=1;
+            JS
             fi
       - store_artifacts:
           path: .ci-artifacts
