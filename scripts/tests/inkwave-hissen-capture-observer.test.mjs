@@ -114,6 +114,22 @@ test('actual serialized driver fails at120 ticks when native active birth never 
 test('default actual driver still captures absolute18 and releases at12 without a birth-relative dependency',()=>{
   const f=birthDriver(Infinity);assert.equal(f.run(18,false).tick,18);assert.deepEqual(f.fire,[{tick:12,value:false}]);assert.equal(f.window.__iwHissenFirstBirth,null);
 });
+test('actual child trace passively copies native shader/profile/slot data only in measurement mode',()=>{
+  const source=fs.readFileSync(new URL('../check-inkwave-trislosher-native-matched.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('      const matrices='),end=source.indexOf('      return {',start);assert(start>=0&&end>start);
+  const shape=new Float32Array([1.05,.03,6.9,0]),look=new Float32Array([.3,4,.32,.7]);
+  const d={pos:new THREE.Vector3(1,2,3),drawRadius:.3,sourceActor:'WeaponSlosherDiffusion',seed:.23,frames:0};
+  const matrix=new THREE.Matrix4().compose(d.pos,new THREE.Quaternion(),new THREE.Vector3(.15,.15,.15));
+  const G={projectiles:{_s3SplashDrops:[d],blobShape:{array:shape},blobInkLook:{array:look},blobs:{count:1,
+    geometry:{index:{count:4080}},getMatrixAt(_slot,out){out.copy(matrix);}}}};
+  const run=vm.runInNewContext('measureMain=>{'+source.slice(start,end)+';return matrices;}',{G,THREE});
+  const before=JSON.stringify(d),row=plain(run(true))[0];
+  assert.equal(row.slot,0);assert.equal(row.seed,.23);assert.equal(row.sourceActor,'WeaponSlosherDiffusion');assert.equal(row.triangles,1360);
+  assert.deepEqual(row.inkLook,Array.from(look));assert.deepEqual(row.shape,Array.from(shape));assert.deepEqual(row.instanceMatrix,matrix.toArray());
+  assert.match(row.profileKind,/not alpha\/depth-tested/);assert.equal(JSON.stringify(d),before);
+  assert.deepEqual(Object.keys(plain(run(false))[0]).sort(),['direction','frames','radius','scale'],'default historical row unchanged');
+  row.inkLook[0]=99;row.shape[0]=99;assert.equal(look[0],Math.fround(.3));assert.equal(shape[0],Math.fround(1.05));
+});
 test('driver preserves default18 and adds a bounded birth-relative passive route without visibility manipulation',()=>{
   const source=fs.readFileSync(new URL('../check-inkwave-trislosher-native-matched.mjs',import.meta.url),'utf8');
   assert.match(source,/process\.argv\.includes\('--measure-main'\)/);assert.match(source,/measureMain\?\[5,7,9\]:\[18\]/);

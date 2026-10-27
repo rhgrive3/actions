@@ -1,0 +1,28 @@
+{
+  "status": "candidate-local-checks-passed-browser-pending",
+  "baseHead": "9b2b8f70cc35f630c87bcd80e728654cc7102dd8",
+  "sourcePassed": 62,
+  "emittedPassed": 20,
+  "skipped": 0,
+  "negativeControl": "old d88 emitted fails all-three-kit profile regression as expected",
+  "candidateRuntimeSourceSha256": "aa950e9ee2ef6015fb7936b0825851f7c743ad1d9f39d0872650f44a8c83c343",
+  "beforeProfile": [
+    0.12,
+    4,
+    0.9
+  ],
+  "candidateProfile": [
+    0.3,
+    4,
+    0.32
+  ],
+  "trianglesPerChild": 1360,
+  "newDraws": 0,
+  "newAssets": 0,
+  "newMaterials": 0,
+  "newShaderVariants": 0,
+  "browserCandidate": "not-run; existing automatic catalog route pending review/integration",
+  "retailMatch": "not-established",
+  "default18Capture": "unchanged",
+  "separate52ViewContract": "unchanged"
+}

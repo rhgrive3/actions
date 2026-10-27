@@ -91,7 +91,12 @@ try{
       for(const d of G.projectiles._s3SplashDrops||[]){
         for(let i=0;i<G.projectiles.blobs.count;i++){
           G.projectiles.blobs.getMatrixAt(i,m);m.decompose(p,q,s);
-          if(p.distanceTo(d.pos)<1e-5){matrices.push({radius:d.drawRadius,scale:s.toArray(),direction:new THREE.Vector3(0,0,1).applyQuaternion(q).toArray(),frames:d.frames});break;}
+          if(p.distanceTo(d.pos)<1e-5){matrices.push({radius:d.drawRadius,scale:s.toArray(),direction:new THREE.Vector3(0,0,1).applyQuaternion(q).toArray(),frames:d.frames,
+            ...(measureMain?{slot:i,sourceActor:d.sourceActor,seed:d.seed,instanceMatrix:m.toArray(),
+              shape:Array.from(G.projectiles.blobShape.array.slice(i*4,i*4+4)),
+              inkLook:Array.from(G.projectiles.blobInkLook.array.slice(i*4,i*4+4)),
+              triangles:G.projectiles.blobs.geometry.index.count/3,
+              profileKind:'native shader attributes, not alpha/depth-tested pixel silhouette'}:{})});break;}
         }
       }
       return {
