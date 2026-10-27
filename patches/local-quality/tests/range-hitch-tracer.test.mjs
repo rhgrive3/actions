@@ -278,7 +278,13 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.ok(tracer, p.snapshot().traceError || 'frame tracer should initialize');
   const trialControls=nodes.find(n=>n.id==='inkwave-debug-ab-controls');
   assert.equal(trialControls?.children.filter(n=>n.nodeName==='button').length,2,
-    'new A/B buttons are attached to the on-device control bar');
+    'existing A/B buttons remain on the on-device control bar');
+  const densitySelector=trialControls.children.find(n=>n.id==='inkwave-debug-density');
+  assert.ok(densitySelector,'user can choose normal, 60% or 100% render density');
+  assert.deepEqual(densitySelector.children.map(n=>n.value),['auto','low','high']);
+  densitySelector.value='low';
+  densitySelector.listeners.change();
+  assert.equal(f.game.R.dynScale,.6,'diagnostic selector locks the actual render density');
   assert.equal(p.beginTrial('idle'),true,'idle capture can be requested from the opt-in profiler');
   f.game._frame(.016);
   p.record(f.now(),18,{phase:'practice',frameRateHz:60});
@@ -290,6 +296,7 @@ test('opt-in profileRange=1 dynamically attaches tracer to existing page recorde
   assert.match(f.copied,/"schema": "inkwave-frame-trace-v1"/);
   assert.equal(nodes.filter(n=>n.nodeName==='button').length,1);
   p.dispose();
+  assert.equal(f.game.R.dynScale,1,'closing Debug profiler restores the original render density');
   assert.equal(trialControls.removed,true,'A/B control bar is destroyed on disable');
   assert.strictEqual(f.env.__inkwaveRangePerf,undefined);
   const off=createFrameTimingProbe({env:{},now:f.now});
@@ -412,4 +419,54 @@ test('native profiler drops retired world and actor hooks after a stage switch w
  assert.strictEqual(actor.bot.update,originalBrain,'retired bot hook must be removed');
  assert.equal(tracer.snapshot().latest.sourceBVH,null);
  tracer.dispose();
+});
+
+
+test('deferred GPU results backfill a stopped capture even after its frames leave the HUD ring',()=>{
+ const f=worldFixture();
+ f.gl.setReady(false);
+ const tracer=installHitchTracer(f.game,{env:f.env,now:f.now,maxFrames:30,gpuEvery:1});
+ try {
+  tracer.startCapture();
+  for(let i=0;i<60;i++){
+   f.game._frame(1/60);
+   tracer.record(f.now(),4,{frameRateHz:60,phase:'practice',scale:1});
+  }
+  const before=JSON.parse(tracer.captureReport());
+  assert.equal(before.recordedFrames,60);
+  assert.equal(before.frames[0].gpuCommandsMs,null);
+  assert.equal(before.frames[0].gpuPaintCommandsMs,null);
+  assert.equal(tracer.snapshot().gpuMaxMs,null,
+    'no GPU samples is unknown, never the numeric 0ms');
+  const originalCPU=before.frames[0].stages.render;
+  tracer.stopCapture();
+  f.gl.setReady(true);
+  const after=JSON.parse(tracer.captureReport());
+  assert.equal(after.status,'stopped');
+  assert.equal(after.frames[0].gpuCommandsMs,9);
+  assert.equal(after.frames[0].gpuPaintCommandsMs,9);
+  assert.equal(after.frames[0].stages.render,originalCPU,
+    'CPU measurements remain frozen at record time');
+  assert.equal(tracer.snapshot().gpuMaxMs,null,
+    'old settled capture frames must not masquerade as samples in the current HUD ring');
+ } finally { tracer.dispose(); }
+});
+
+test('GPU capture byte limit holds after deferred timer values replace nulls',()=>{
+ const f=worldFixture();
+ f.gl.setReady(false);
+ const tracer=installHitchTracer(f.game,{env:f.env,now:f.now,gpuEvery:1});
+ try {
+  tracer.startCapture({byteLimit:8192});
+  for(let i=0;i<120;i++){
+   f.game._frame(1/60);
+   tracer.record(f.now(),4,{frameRateHz:60,phase:'practice',scale:1});
+  }
+  f.gl.setReady(true);
+  const report=tracer.captureReport();
+  const capture=JSON.parse(report);
+  assert.equal(capture.reason,'byte-limit');
+  assert.ok(capture.recordedFrames>0);
+  assert.ok(new TextEncoder().encode(report).byteLength<=8192);
+ } finally { tracer.dispose(); }
 });

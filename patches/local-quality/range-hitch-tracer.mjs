@@ -116,9 +116,9 @@ export function installHitchTracer(game, {
       frameLimit: capture.frameLimit, byteLimit: capture.byteLimit,
       recordedFrames: capture.rows.length, observedFrames: capture.observedFrames,
       sampling: 'every recorded Game._frame; capped rAF callbacks excluded; no resampling',
-      timing: 'record-time snapshots; pending GPU and late long-task results are not backfilled',
+      timing: 'CPU snapshots at record time; only asynchronous GPU timer results can settle later, never forced or fabricated',
       byteScope: 'UTF-8 bytes of this compact capture object; excludes outer rolling report',
-      frames: capture.rows.map(row => JSON.parse(row)),
+      frames: capture.rows,
     }) : null;
   };
   const originalFrame = game._frame;
@@ -336,6 +336,10 @@ export function installHitchTracer(game, {
     for (const [timer, field] of [[gpuTimer,'gpuMs'],[paintGpuTimer,'gpuPaintMs']]) {
       for (const result of timer?.poll?.() || []) {
         const rec = current.find(f=>f.id===result.id) || hitches.find(f=>f.id===result.id);
+        // A bounded capture retains its own serialized CPU snapshot, including
+        // frames already evicted from the HUD ring. GPU timestamps arrive later.
+        const captured = capture?.rowById?.get(result.id);
+        if (captured) captured[field==='gpuMs'?'gpuCommandsMs':'gpuPaintCommandsMs']=round(result.ms);
         if (rec) {
           rec[field] = round(result.ms);
           rec.cause = classify(rec);
@@ -378,14 +382,16 @@ export function installHitchTracer(game, {
       if (elapsed >= capture.durationMs) finishCapture('duration-limit');
       else {
         capture.observedFrames++;
-        const row = JSON.stringify({ elapsedMs: capture.elapsedMs,
-          stageId: getWorld().level?.manifest?.id ?? getWorld().level?.layout?.id ?? null,
-          ...serialize(rec) });
-        const size = utf8Bytes(row) + (capture.rows.length ? 1 : 0);
-        // Reserve 4 KiB for the bounded fixed metadata, keys and delimiters.
+        const row = {elapsedMs:capture.elapsedMs,
+          stageId:getWorld().level?.manifest?.id ?? getWorld().level?.layout?.id ?? null,
+          ...serialize(rec)};
+        // Reserve at least 4 KiB for metadata and 48 UTF-8 bytes per frame
+        // for two pending GPU numbers replacing null; never exceed byteLimit.
+        const size = utf8Bytes(JSON.stringify(row)) + (capture.rows.length ? 1 : 0) + 48;
         if (capture.rowBytes + size > capture.byteLimit - 4096) finishCapture('byte-limit');
         else {
           capture.rows.push(row);
+          capture.rowById.set(rec.id,row);
           capture.rowBytes += size;
           if (capture.rows.length >= capture.frameLimit) finishCapture('frame-limit');
         }
@@ -425,11 +431,14 @@ export function installHitchTracer(game, {
         throw new RangeError('capture byte limit must be 8192..4194304');
       capture = { startedAt: now(), durationMs, frameLimit, byteLimit,
         elapsedMs: 0, status: 'recording', reason: null, observedFrames: 0,
-        rows: [], rowBytes: 0 };
+        rows: [], rowById:new Map(), rowBytes: 0 };
     },
     stopCapture() { finishCapture('manual'); },
-    captureReport() { return captureJSON(); },
+    captureReport() { attachGpu(); return captureJSON(); },
     snapshot() {
+      // Completed, nonblocking GPU queries are available to reporting even if
+      // no new RAF arrived after the final capture frame.
+      attachGpu();
       const sample=current.slice(-240);
       const percent=(key,p)=>{
         const v=sample.map(x=>x[key]).filter(Number.isFinite).sort((a,b)=>a-b);
@@ -441,8 +450,9 @@ export function installHitchTracer(game, {
         gpuSamples:sample.filter(f=>f.gpuMs!==null).length,
         gpuPaintSamples:sample.filter(f=>f.gpuPaintMs!==null).length,
         latestGPUPaintMs:[...sample].reverse().find(f=>f.gpuPaintMs!==null)?.gpuPaintMs??null,
-        gpuP95Ms:percent('gpuMs',.95), gpuMaxMs:sample.length
-          ? Math.max(0,...sample.map(r=>r.gpuMs??0)) : null,
+        gpuP95Ms:percent('gpuMs',.95),
+        gpuMaxMs:sample.some(r=>Number.isFinite(r.gpuMs))
+          ? Math.max(...sample.filter(r=>Number.isFinite(r.gpuMs)).map(r=>r.gpuMs)) : null,
         latestGPUCommandsMs: [...sample].reverse().find(f=>f.gpuMs!==null)?.gpuMs??null,
         longTaskObserver:longTaskSupported?'available':'unsupported',
         longTaskCount:longTasks,
@@ -463,6 +473,8 @@ export function installHitchTracer(game, {
     reset() {
       current.length=0; hitches.length=0; recentTasks.length=0; pendingEvents.length=0;
       capture = null;
+      gpuTimer?.dispose?.();paintGpuTimer?.dispose?.();
+      gpuTimer=null;paintGpuTimer=null;
       previousStamp=0;longTasks=0;last=null;
     },
     record:frameReport,
