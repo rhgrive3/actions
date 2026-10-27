@@ -2,7 +2,7 @@
 // their results; never writes input, actor, paint, projectile or RNG state.
 export function installSlosherPhaseObserver(){
   const G=window.__G,a=G.local,P=G.projectiles,paint=G.paint,undo=[];
-  const result={schema:1,sourceActor:'WeaponSlosherWashtub',birth:null,steps:[],releases:[],credits:[],cells:[],snapshots:[],failures:[],coverageFaces:[],coverageArea:0};
+  const result={schema:1,sourceActor:'WeaponSlosherWashtub',birth:null,steps:[],releases:[],credits:[],cells:[],snapshots:[],failures:[],coverageFaces:[],coverageArea:0,nonScoringChanges:[]};
   const check=(ok,why)=>{if(!ok)result.failures.push(why);};
   const grid=paint.grid.slice(),areas=new Float64Array(grid.length),eligible=new Uint8Array(grid.length),orders=new Int32Array(grid.length);
   let order=0;
@@ -56,7 +56,14 @@ export function installSlosherPhaseObserver(){
     return retired;
   });
   const observer={frame(value){frame=value;},snapshot(label){
-    for(let i=0;i<grid.length;i++)if(grid[i]!==paint.grid[i]){check(false,'unobserved paint cell '+i);break;}
+    for(let i=0;i<grid.length;i++)if(grid[i]!==paint.grid[i]){
+      if(eligible[i]){check(false,'unobserved paint cell '+i);break;}
+      // Body notifications deliberately omit buried/non-turf cells. They do
+      // not grant ownership credit; retain their mutation as a diagnostic.
+      const face=paint.paintFaces.find(f=>i>=f.grid&&i<f.grid+f.nu*f.nv);
+      const row={frame,index:i,from:grid[i],to:paint.grid[i],dead:!!paint.dead[i],turf:!!face?.turf,pointEligible:!!eligible[i]};
+      check(row.dead||!row.turf,'unclassified non-scoring mutation');result.nonScoringChanges.push(row);grid[i]=paint.grid[i];
+    }
     const n=counts();check(n[0]===paint.counts[0]&&n[1]===paint.counts[1],'owned cell counts');
     const ownedAreas=[0,0];
     for(const f of paint.paintFaces)if(f.turf){const weight=f.cu*f.cv*Math.max(0,f.n.y);

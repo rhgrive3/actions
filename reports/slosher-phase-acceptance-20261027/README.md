@@ -67,3 +67,25 @@ is required before retrying; the guard stays enabled. The native52 result and
 exact source/build bindings will be appended separately after execution.
 
 No screenshots, reference media or private artifacts are included here.
+
+## First complete native target and observer correction
+
+Committed harness da3376f1f05455b06defdacba4ced18c3cf05d6a completed all52
+target captures and both live workloads: desktop13 native frames/33 fire
+admissions, mobile12/30. Its unmodified-comparator self-completeness check
+passed; that checks one run's completeness, not a three-way comparison.
+The observed F15 special14.51470588235292, contact special93.45220588235293
+and impact coverage0.016374826771933054 reproduce the parent's CI values.
+Raw images remain local. `native-target-da337-summary.json` retains the
+source/build hashes, actual values and the original observer failures.
+
+The observer incorrectly treated a buried body's private grid write as an
+unobserved scoring mutation. Actual production Level(Tidewater) plus
+PaintSystem._initGrid establishes cell8642 at(0.375,0.06,-36.375) is inside
+geometry and dead=1, below the spawn deck. Native body notifications omit
+non-scoring cells by design. The observer now records such writes separately,
+requiring a real buried/non-turf classification; it still rejects every
+unobserved eligible cell. Regression uses real CPU PaintSystem body writes
+with an occluded floor, plus an unexplained eligible-write negative control.
+No credit/coverage failure is discarded and no runtime/comparator is changed.
+The corrected observer's native comparison remains pending at this checkpoint.

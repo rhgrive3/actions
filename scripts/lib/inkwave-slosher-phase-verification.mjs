@@ -5,6 +5,7 @@ export function verifyPhaseTrace(trace,{oldFallback=false}={}){
   assert.equal(trace?.schema,1,'native phase observer required');
   assert.equal(trace.sourceActor,'WeaponSlosherWashtub');
   assert.deepEqual(trace.failures,[],'native owned-cell / turf / special accounting');
+  for(const c of trace.nonScoringChanges||[]){assert.equal(c.pointEligible,false);assert.ok(c.dead||!c.turf,'non-scoring mutations cannot hide eligible turf');}
   const b=trace.birth;
   assert.ok(b&&Number.isFinite(b.seed)&&b.seed>=0&&b.seed<=1,'actual admitted projectile seed');
   for(const [k,v] of Object.entries({unit:0,index:0,spacing:3.1,count:7,width:1.344,depth:2,drawRadius:.1}))assert.equal(b[k],v,'source '+k);
