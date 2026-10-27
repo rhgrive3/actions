@@ -64,7 +64,8 @@ export function installWeaponAudioEngine(Engine){
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
-      loader?.ensureMany(['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'].map(id=>({id,event:'fire'})))?.catch(()=>{});
+      for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
+        loader?.ensure(cue,'fire')?.catch(()=>{});
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
@@ -140,10 +141,12 @@ export function installWeaponAudioEngine(Engine){
     // first playable hit for every weapon. Lightweight audio is decoded once
     // into the shared bounded bank. Tests/operator packs that do not declare
     // these independent cues may still use their own isolated sound fixtures.
-    const combatRecordings=['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'].filter(cue=>loader.declares(cue,'fire')===true);
-    const combatImport=combatRecordings.length?await audioLoadDeadline(loader.ensureMany(combatRecordings.map(id=>({id,event:'fire'})),{priority:true}),12000):null;
-    for(const cue of combatRecordings){
-      const row=combatImport;
+    // Keep a distinct source decode receipt per cue. Bundled loading can
+    // leave individual combat events unresident after a partial decode error;
+    // never admit a hit unless that exact recorded event is authorized.
+    for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
+      if(loader.declares(cue,'fire')!==true)continue;
+      const row=await audioLoadDeadline(loader.ensure(cue,'fire',{priority:true}),12000);
       if(!bank.authorized.byEvent.has(cue+':fire')){
         const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
