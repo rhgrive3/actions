@@ -91,6 +91,16 @@ node scripts/check-inkwave-browser.mjs \
 
 証跡とプロファイルは作業ごとに別の永続ディレクトリを用意します。`/tmp`、`/var/tmp`、`/dev/shm` は拒否されます。再実行時も保存先を分けると比較できます。タッチ・練習場・原典ステージなどは各領域の専用チェッカーも必要です。Chromium の成功を WebKit、実 iPad、Switch での確認に読み替えないでください。
 
+ステージ選択・モード選択・リザルトは、プレイ可能な横持ちを前提に検証します。横持ちスマホ7条件（568×320〜932×430、ブラウザバーで高さ280px、左右44px・下21pxのセーフエリア模擬）とタブレット・PCを含む9条件です。6モードの同時表示、大きなステージプレビューと一覧、バトル設定ダイアログの開閉・保存・戻る操作、両チーム8人の成績と再戦ボタンの同時表示、全ステージの選択、装備変更からの再戦、二重開始、オンライン続行・退出キャンセルを確認します。Chromiumでは実タッチイベントによる一覧スクロールも検証します。`--cases small-phone,phone` で対象を絞れます。`--stage-only` はステージ選択から開始までの確認に絞り、メイン画面と設定ダイアログの画像を保存します。APIはオフラインfixtureで、実対戦・実機の確認とは区別します。
+
+```sh
+node scripts/check-inkwave-mobile-menus.mjs --source _site --engine chromium --evidence-dir .browser-evidence/mobile/chromium --profile-dir .browser-profile-mobile/chromium
+node scripts/check-inkwave-mobile-menus.mjs --source _site --engine webkit --evidence-dir .browser-evidence/mobile/webkit --profile-dir .browser-profile-mobile/webkit
+node scripts/check-inkwave-mobile-menus.mjs --source _site --engine webkit --resizable-viewport --cases phone,landscape --evidence-dir .browser-evidence/mobile/webkit-resize --profile-dir .browser-profile-mobile/webkit-resize
+```
+
+システムの Chromium を使う場合は `CHROMIUM_PATH` を指定できます。PlaywrightのWebKitモバイルエミュレーションは途中のリサイズでCSSメディアクエリのviewportを更新しないため、横持ちの独立したモバイル表示と、`--resizable-viewport`（タッチ入力・モバイルUAを保った通常viewport）で横持ちのまま高さが変わる場合を分けて検証します。3コマンドとも統合CIの `responsive` 群に登録しています。縦持ちでのプレイは既存の横持ち案内が担当し、このチェックの対象にしません。
+
 ## Cloudflare Workers 向けの本番ビルド（アカウント機能つき）
 
 `npm run build:prod`（`vite build`）は、ログイン UI を Vite でバンドルしてから同じ `scripts/build-inkwave.mjs` を実行し、`dist/` に Workers 用の配信物を作ります。Vite 8 のため Node.js 22.12 以上が必要です。
