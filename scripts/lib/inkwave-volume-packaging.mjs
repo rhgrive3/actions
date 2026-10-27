@@ -20,11 +20,11 @@ function identical(a,b) {
 export function dedupeVersionedVolumeAssets(build,revision) {
   if(!/^[a-f0-9]{64}$/.test(revision))throw Error('Invalid packaging revision');
   const entries=[];
-  for(const slot of ['roller','shooter']) {
+  for(const slot of ['roller','shooter','hissen-fallback']) {
     const dir=`patches/local-quality/ink-volume/assets/${slot}`;
     const manifest=path.join(build,dir,'manifest.json');
     const data=JSON.parse(fs.readFileSync(manifest,'utf8'));
-    if(data.binary!=='volumes.bin.gz'||data.compression!=='gzip'||data.cacheSlot!==slot)throw Error('Unreviewed volume packaging contract: '+slot);
+    if(data.binary!=='volumes.bin.gz'||data.compression!=='gzip'||(slot==='hissen-fallback'?data.geometryOnly!==true:data.cacheSlot!==slot))throw Error('Unreviewed volume packaging contract: '+slot);
     const root=path.join(build,dir,data.binary),versioned=path.join(build,'_versions',revision,dir,data.binary);
     if(!identical(root,versioned))throw Error('Versioned volume bytes differ: '+slot);
     entries.push({manifest,root,versioned,data,bytes:fs.statSync(root).size});

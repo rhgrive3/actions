@@ -23,11 +23,11 @@ test('both shipped default packs retain every source VTF byte and all 34 decoded
   }
   assert.equal(frames,34);
 });
-test('ordinary FX construction loads bundled names and the geometry-only Hissen fallback without configuration, then releases readiness',async()=>{
+test('ordinary FX construction excludes Hissen contour transport from startup, then releases readiness',async()=>{
   const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"}),calls=[];
   f.FX.prototype.loadInkVolume=async(name,url)=>{calls.push([name,url]);return {};};
   const fx=new f.FX(new f.THREE.Scene(),{quality:.25});assert.equal(await fx.inkVolumeReady,true);
-  assert.deepEqual(calls.map(x=>x[0]),['roller','shooter','hissen-fallback']);for(const [name,url] of calls)assert(url.endsWith('/ink-volume/assets/'+name+'/manifest.json'));
+  assert.deepEqual(calls.map(x=>x[0]),['roller','shooter']);for(const [name,url] of calls)assert(url.endsWith('/ink-volume/assets/'+name+'/manifest.json'));
   fx.dispose();assert.equal(fx.inkVolumeReady,null);
 });
 test('gzip reader rejects corrupt streams, unsupported codecs and an expanded-size overflow',async()=>{
@@ -63,11 +63,9 @@ test('default binary cache reuses verified bytes offline, repairs corruption and
 });
 
 
-test('Hissen fallback readiness survives a full-pack failure and waits for its independent contour load',async()=>{
- const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"});
- let finish;const pending=new Promise(resolve=>{finish=resolve;});
- f.FX.prototype.loadInkVolume=async(name)=>{if(name==='roller')throw Error('diagnostic full-pack failure');if(name==='hissen-fallback')await pending;return {};};
- const fx=new f.FX(new f.THREE.Scene(),{quality:.25});let settled=false;fx.inkVolumeReady.then(()=>{settled=true;});
- await Promise.resolve();await Promise.resolve();assert.equal(settled,false,'failed full pack cannot release warmup before fallback is ready');finish();
- assert.equal(await fx.inkVolumeReady,null);assert.match(fx.inkVolumeError,/diagnostic full-pack failure/);fx.dispose();
+test('Hissen contour demand is idempotent nonblocking and owned by FX disposal',async t=>{
+ const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"}),calls=[];let finish;
+ const pending=new Promise(resolve=>{finish=resolve;});f.FX.prototype.loadInkVolume=async(name)=>{calls.push(name);if(name==='hissen-fallback')await pending;return {};};
+ const fx=new f.FX(new f.THREE.Scene(),{quality:.25});t.after(()=>{finish();if(!fx._inkVolumeDisposed)fx.dispose();});assert.deepEqual(calls,['roller','shooter'],'no eager contour request');fx.update(1/60);assert.equal(await fx.inkVolumeReady,true);
+ const localBefore=f.G.local;f.G.local={weapon:{sourceMainActor:'WeaponSlosherDiffusion'}};f.G.match.attract=true;fx.update(1/60);assert.deepEqual(calls,['roller','shooter'],'attract Hissen never starts transport');f.G.match.attract=false;fx.update(1/60);f.G.local=localBefore;const first=fx._hissenFallbackReady,again=fx.requestHissenFallback();assert.equal(first,again);assert.deepEqual(calls,['roller','shooter','hissen-fallback']);assert.equal(await fx.inkVolumeReady,true,'demand load cannot block the already admitted game');finish();assert.equal(await first,true);fx.dispose();assert.equal(fx._hissenFallbackReady,null);assert.equal(fx.requestHissenFallback(),null);
 });

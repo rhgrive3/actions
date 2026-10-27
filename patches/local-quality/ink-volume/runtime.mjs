@@ -79,9 +79,10 @@ export class InkVolumes {
         for (let f = 0; f < p.frames.length; f++) {
           const levels = [];
           if (!Array.isArray(p.frames[f].levels) || p.frames[f].levels.length !== (pack.geometryOnly ? 1 : 2)) throw Error('Invalid ink LOD count');
-          if(pack.geometryOnly && (p.width!==1 || p.height!==1 || p.frames[f].levels[0].indices.length>30000))throw Error('Invalid bounded contour LOD');
+          if(pack.geometryOnly && (p.width!==1 || p.height!==1))throw Error('Invalid bounded contour LOD');
           for (const data of p.frames[f].levels) {
             validateMesh(data);
+            if(pack.geometryOnly && (data.indices.length>30000 || (data.opaqueIndices||data.indices).length+(data.fringeIndices||data.indices).length>30000))throw Error('Contour effective draw exceeds bounded triangle count');
             const g = new THREE.BufferGeometry(); asset.resources.push(g);
             const uv = data.uvs.slice(); for (let i = 0; i < uv.length; i += 2) { uv[i] = (uv[i] + f % cols) / cols; uv[i + 1] = (uv[i + 1] + Math.floor(f / cols)) / rows; }
             const opaque=data.opaqueIndices||data.indices,partial=data.fringeIndices||data.indices,drawIndices=new data.indices.constructor(opaque.length+partial.length);drawIndices.set(opaque);drawIndices.set(partial,opaque.length);
@@ -117,7 +118,7 @@ export class InkVolumes {
     } catch (error) { for (const r of asset.resources) r.dispose(); throw error; }
   }
   begin(camera = this.camera) {
-    this.hissenContourFrame=false;
+    this.hissenContourFrame=false;this.measureOnly=false;this.frameDemandTriangles=0;this.frameDemandInstances=0;
     this.camera = camera; this.metrics.active = this.metrics.culled = this.metrics.overflow = this.metrics.fallback = this.metrics.fallbackDropped = this.metrics.triangles = this.metrics.batches = 0;
     if (camera) { camera.updateMatrixWorld(); this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.clip); }
     this.frame++;
@@ -166,6 +167,7 @@ export class InkVolumes {
       plan.batch=levels[distance>this.lodDistance**2?1:0]||levels[0];
       plan.matrix.compose(pos,q,this.scale);active++;triangles+=plan.batch.triangles;
     }
+    if(this.measureOnly){this.frameDemandTriangles+=triangles;this.frameDemandInstances+=active;return true;}
     if(this.metrics.active+active>this.capacity||this.metrics.triangles+triangles>this.triangleBudget){this.metrics.overflow++;return false;}
     for(let i=0;i<parts.length;i++) {
       const plan=this.plans[i];if(plan.culled)continue;const b=plan.batch;

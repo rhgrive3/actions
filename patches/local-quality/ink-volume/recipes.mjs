@@ -52,18 +52,21 @@ function nativeRadius(p) {
 }
 // Choose one contour tier for a crowded Hissen frame before a cheap full
 // fragment can consume the remaining budget and starve its sibling lobes.
-export function prepareHissenVolumeLOD(engine,list) {
+export function prepareHissenVolumeLOD(engine,list,visuals) {
   if(!engine?.assets?.has('hissen-fallback'))return;
-  const asset=engine.assets.get('projectile:slosher:slosher')||engine.assets.get('roller');
-  engine.hissenContourFrame=!asset;if(!asset)return;
-  let triangles=0,count=0;
-  for(const p of list){
-    if(!hissenVolumeFallback(p)||p._qualityDead||p.delay>0||!(projectileDrawRadius(p)>0))continue;
-    const pattern=asset.patterns[Math.abs((p.seed<.5?0:1))%asset.patterns.length];
-    const frame=Math.min(pattern.frames.length-1,Math.max(0,Math.floor(p.age*pattern.fps+1e-8)));
-    triangles+=pattern.frames[frame][0].triangles;count++;
-  }
-  engine.hissenContourFrame=triangles>engine.triangleBudget||count>engine.capacity;
+  let interested=false;
+  for(const p of list)if(hissenVolumeFallback(p)&&!p._qualityDead&&!(p.delay>0)&&projectileDrawRadius(p)>0){interested=true;break;}
+  if(!interested)return;
+  // Reuse the exact recipe/frustum/LOD planner for ALL competing volume parts.
+  // Measurement never reserves instances, changes metrics, or starts a pass.
+  engine.measureOnly=true;engine.frameDemandTriangles=0;engine.frameDemandInstances=0;
+  try {
+    for(const p of list){
+      if(p._s3SloshBirthPending||visuals?.nativeShapeOwns(p)||visuals?.handles(p))continue;
+      submitInkVolume(engine,p);
+    }
+  } finally {engine.measureOnly=false;}
+  engine.hissenContourFrame=engine.frameDemandTriangles+engine.metrics.triangles>engine.triangleBudget||engine.frameDemandInstances+engine.metrics.active>engine.capacity;
 }
 
 export function submitInkVolume(engine,p) {
@@ -81,7 +84,7 @@ export function submitInkVolume(engine,p) {
     // Tri-Slosher, Dread Wringer and their alternate kits share Bucket's sheet.
     const fallback=hissenVolumeFallback(p)&&engine.assets.has('hissen-fallback');
     let name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)&&engine.assets.has('roller')?'roller':fallback?'hissen-fallback':null);
-    if(fallback&&(engine.hissenContourFrame||engine.metrics?.fallback||engine.metrics?.fallbackDropped))name='hissen-fallback';
+    if(fallback&&!engine.measureOnly&&(engine.hissenContourFrame||engine.metrics?.fallback||engine.metrics?.fallbackDropped))name='hissen-fallback';
     if(!name)return false;
     const shared=sharedBucketDraw(p);
     const radius=shared?projectileDrawRadius(p):p.fidelitySloshDraw?fidelitySlosherDrawRadius(p):nativeRadius(p),width=radius*2*INK_LOOK.slosh[4];
@@ -93,9 +96,9 @@ export function submitInkVolume(engine,p) {
     // Retry only the derived contour LOD, through the SAME capacity/triangle reservation.
     const activeBefore=engine.metrics?.active||0;
     let ok=engine.submitComposite(p,s.single);
-    if(!ok&&fallback&&name!=='hissen-fallback'){part.name='hissen-fallback';ok=engine.submitComposite(p,s.single);}
+    if(!engine.measureOnly&&!ok&&fallback&&name!=='hissen-fallback'){part.name='hissen-fallback';ok=engine.submitComposite(p,s.single);}
     if(fallback&&part.name==='hissen-fallback'){
-      if(engine.metrics){
+      if(!engine.measureOnly&&engine.metrics){
         if(!ok)engine.metrics.fallbackDropped++;
         else if(engine.metrics.active>activeBefore)engine.metrics.fallback++;
       }
