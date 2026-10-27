@@ -211,17 +211,23 @@ export function FAMILY_POSE(ch, dt, s, C) {
     // Several gameplay ticks can run between draws. Read the last solved
     // weapon pose, rather than feeding the last drawn pose into every tick.
     w0.off.updateWorldMatrix(true, false);
+    // Native visibility changes later in _animWeapon. Read its current decision
+    // now, including the selected far geometry, instead of last frame's w.near.
+    const near = ch._weaponPresentationNear(w0);
     let n = own.groundN, floor = own.pos;
     const contact = ch.wRoll > 0.99 && m.w < 0.001 && n?.y > 0.7
-      && headContactPoint(w0, own.pos, n, _tip);
+      && headContactPoint(w0, near, own.pos, n, _tip);
     if (contact && G.physics?.raycast) {
       // At a ramp edge the surface under the head can differ from the feet.
       // One local, reused probe avoids extending the old plane through it.
       _probe.set(_tip.x, Math.max(own.pos.y, _tip.y) + 0.15, _tip.z);
       const h = G.physics.raycast(_probe, _down, cfg.tip * sc + 0.3, _floorHit);
       if (h.hit && h.normal.y > 0.7) {
+        // Parallel planes differ by a constant for every vertex. The support
+        // point is unchanged, even if the queried floor has moved vertically.
+        const sameNormal = n.x === h.normal.x && n.y === h.normal.y && n.z === h.normal.z;
         n = h.normal; floor = h.point;
-        headContactPoint(w0, floor, n, _tip);
+        if (!sameNormal) headContactPoint(w0, near, floor, n, _tip);
       }
     }
     if (!contact) _tip.set(w0.def.muzzle.x, -cfg.thick * sc, cfg.tip * sc).applyMatrix4(w0.off.matrixWorld);
@@ -317,14 +323,16 @@ function animateHead(w, st) {
 const _tip = new THREE.Vector3(), _local = new THREE.Vector3(), _inverse = new THREE.Matrix4();
 const _probe = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _floorHit = new Hit();
 const HEAD_PARTS = ['head', 'headInk'];
-// Two existing rigid part meshes, already transformed by animateHead. Project
-// the plane into each mesh once, rather than allocating/transformed vertices.
-function headContactPoint(w, pos, n, out) {
+const FAR_MESHES = ['bodyFar', 'inkFar'];
+// Near parts include head flex; the displayed far mesh is merged at rest.
+// Project the plane into the active meshes without transforming every vertex.
+function headContactPoint(w, near, pos, n, out) {
   let min = Infinity;
-  for (const name of HEAD_PARTS) {
-    const part = w.parts[name];
+  const far = !near;
+  for (const name of far ? FAR_MESHES : HEAD_PARTS) {
+    const part = far ? w[name] : w.parts[name];
     part?.updateWorldMatrix(false, true);
-    const mesh = part?.userData.mesh, vertices = mesh?.geometry?.attributes.position;
+    const mesh = far ? part : part?.userData.mesh, vertices = mesh?.geometry?.attributes.position;
     if (!vertices) continue;
     const e = mesh.matrixWorld.elements;
     const nx = n.x * e[0] + n.y * e[1] + n.z * e[2];
