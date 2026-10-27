@@ -146,6 +146,7 @@ test('source binds the helper bytes and runs focused contracts without changing 
   const helper=fs.readFileSync(new URL('../lib/inkwave-explosher-geometry-lifetime.mjs',import.meta.url),'utf8');
   assert.doesNotMatch(helper,/\.getError\(|\.getParameter\(|\.finish\(|\.flush\(|\.render\(|\.warmAll\(|\.setVisible\(/);
   const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');
+  for(const file of ['scripts/lib/inkwave-explosher-geometry-lifetime.mjs','scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs'])assert(workflow.includes("      - '"+file+"'\n"),'helper-only changes retain automatic native diagnostic coverage');
   assert.match(workflow,/node --test scripts\/tests\/inkwave-explosher-runtime-ui-preflight.test.mjs scripts\/tests\/inkwave-explosher-geometry-lifetime.test.mjs/);
   assert.match(workflow,/readExplosherStagePair\('preflight'/);assert.equal((workflow.match(/if: false/g)||[]).length,3);assert.doesNotMatch(workflow,/continue-on-error/);
   const driver="let browser;\nconst page = await browser.newPage({});\n  await enterRangeFromMenu(page,base);\n      window.resetExplosherRandom('character-reset');\n      await resetCaptureCharacter(a);\n      window.resetExplosherRandom('shot-input');\n      window.markExplosherRandomBoundary('native-birth');\n          window.markExplosherRandomBoundary('after-draw-probe');\n  await browser?.close();";

@@ -8,6 +8,8 @@ on:
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/lib/inkwave-explosher-geometry-lifetime.mjs'
+      - 'scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs'
       - 'scripts/check-inkwave-current-explosher-native.mjs'
       - 'scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs'
       - 'scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs'
