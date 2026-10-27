@@ -1,3 +1,16 @@
+// Only primitive transport IDs are cached; unusual values retain native string coercion.
+const inhaleActorIdentities = new WeakMap();
+function inhaleActorIdentity(actor) {
+  const nid = actor.nid;
+  if (nid === undefined) return actor;
+  const owner = actor.owner;
+  if (typeof owner !== 'string' || !Number.isSafeInteger(nid)) return `${owner}:${nid}`;
+  let cached = inhaleActorIdentities.get(actor);
+  if (!cached || cached.owner !== owner || cached.nid !== nid) {
+    cached = { owner, nid, key: `${owner}:${nid}` }; inhaleActorIdentities.set(actor, cached);
+  }
+  return cached.key;
+}
 // Splat Charger special "Ink Vac" (Splatoon 3 SpBlower) for the public composed
 // INKWAVE runtime. Owned by the freebuff-8 kit task. Native id: 'inkVac'.
 //
@@ -707,7 +720,7 @@ function inkVacUpdate(a, dt) {
     paintInhaleFeet(state,eligible);
     const seen = state._inhaleActorSeen ||= new Set();seen.clear(); let count = 0;
     for (const victim of api.G.actors || []) {
-      const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
+      const identity = inhaleActorIdentity(victim);
       if (seen.has(identity)) continue; seen.add(identity);
       if (inkVacActorContact(a, victim)) count++;
     }
