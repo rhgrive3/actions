@@ -13,6 +13,8 @@ function scenario(f,{hz=60,seconds=1,online=false,attract=false,boss=false}={}){
  const {G,THREE}=f;G.actors=[];G.time=0;G.settings={quality:'low',aimAssist:0,sensitivity:1,padSensitivity:1};G.netm=online?{}:null;
  const count={snapshots:0,aim:0,rays:0,controller:0,updates:0,projectiles:0,paint:0,endFrame:0,poll:0,menus:0,net:0,gyro:0,bossRay:0},actors=Array.from({length:8},()=>f.make('shooter')),a=actors[0];
  actors.forEach((actor,i)=>{actor.nid=String(i);actor.team=i%2;actor.s3Motion=new Proxy({},{set(target,key,value){count.snapshots++;target[key]=value;return true}})});
+ // A test-only empty Physics scene has no Level or segment collider; preserve the real no-hit contract.
+ G.physics.segment=(_from,_to,out)=>{out.hit=false;return out;};
  G.physics.cameraProbe=(_o,_d,want,_r,out)=>Object.assign(out,{hard:want,soft:want,floor:false});
  const raycast=G.physics.raycast;G.physics.raycast=(...args)=>{if(args[2]===70)count.rays++;return raycast(...args)};
  const cam=new THREE.PerspectiveCamera(55,16/9,.15,1000),rig=G.rig=new f.CameraRig(cam);G.camera=cam;rig.follow(a,true);rig._prevMode='follow';rig.pitch=0;rig.update(1/60);
