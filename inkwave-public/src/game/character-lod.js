@@ -224,10 +224,11 @@ export function clusterDecimate(src, cell, precomputed = null) {
     const c = vc[i], i3 = i * 3;
     sx[c] += pArr ? pArr[i3] : P.getX(i); sy[c] += pArr ? pArr[i3 + 1] : P.getY(i); sz[c] += pArr ? pArr[i3 + 2] : P.getZ(i); cn[c]++;
   }
+  for (let c = 0; c < nc; c++) { const k = 1 / cn[c]; sx[c] *= k; sy[c] *= k; sz[c] *= k; }
   const rep = new Int32Array(nc).fill(-1), rd = new Float64Array(nc).fill(Infinity);
   for (let i = 0; i < n; i++) {
-    const c = vc[i], k = 1 / cn[c], i3 = i * 3;
-    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c] * k, dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c] * k, dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c] * k, d = dx * dx + dy * dy + dz * dz;
+    const c = vc[i], i3 = i * 3;
+    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c], dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c], dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c], d = dx * dx + dy * dy + dz * dz;
     if (d < rd[c]) { rd[c] = d; rep[c] = i; }
   }
   const out = new THREE.BufferGeometry();

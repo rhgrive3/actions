@@ -6,6 +6,7 @@ on:
       - "account/**"
       - "vite.config.mjs"
       - "package.json"
+      - "package-lock.json"
       - "inkwave-public/**"
       - "patches/**"
       - "scripts/build-inkwave.mjs"
@@ -22,6 +23,7 @@ on:
       - "account/**"
       - "vite.config.mjs"
       - "package.json"
+      - "package-lock.json"
       - "inkwave-public/**"
       - "patches/**"
       - "scripts/build-inkwave.mjs"
@@ -50,6 +52,10 @@ jobs:
             /*
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -66,7 +72,7 @@ jobs:
         run: node scripts/ci/run-inkwave-test-suite.mjs account
       - name: Install build tools
         if: steps.scope.outputs.test_only != 'true'
-        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 vite@8.3.3
+        run: npm ci --no-audit --no-fund
       - name: Production build (vite build → dist/)
         if: steps.scope.outputs.test_only != 'true'
         run: npx vite build
@@ -85,5 +91,5 @@ jobs:
         if: steps.scope.outputs.test_only != 'true'
         working-directory: account
         run: |
-          npm install --no-audit --no-fund --no-package-lock
+          npm ci --no-audit --no-fund
           npx wrangler deploy --dry-run --outdir ../.wrangler-dry-run
