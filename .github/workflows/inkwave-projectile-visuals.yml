@@ -128,6 +128,11 @@ on:
       - 'scripts/tests/inkwave-projectile-character-reset.test.mjs'
       - 'scripts/tests/inkwave-projectile-pool-reset.test.mjs'
       - 'scripts/compare-inkwave-projectile-captures.py'
+      - 'scripts/prepare-inkwave-slosher-phase-control.mjs'
+      - 'scripts/verify-inkwave-slosher-phase-captures.mjs'
+      - 'scripts/lib/inkwave-slosher-phase-*.mjs'
+      - 'scripts/fixtures/inkwave-slosher-phase-workflow-20261027.json'
+      - 'scripts/tests/inkwave-slosher-phase-*.test.mjs'
       - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
       - 'scripts/tests/inkwave-projectile-captures.test.py'
       - 'scripts/inkwave-source-composition.mjs'
@@ -199,6 +204,7 @@ jobs:
       fail-fast: false
       matrix:
         side: [before, after]
+        include: ${{ github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.number == 1895 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integrate/inkwave-bug-batch-20261026-charge-owner' && fromJSON('[{"side":"phase-control"}]') || fromJSON('[]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -225,14 +231,14 @@ jobs:
             [[ "$DISPATCH_MODE" =~ ^[a-z0-9][a-z0-9-]+$ ]]
           fi
       - name: Check out immutable base for the explicitly aligned reference
-        if: ${{ matrix.side == 'before' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
+        if: ${{ matrix.side == 'before' || matrix.side == 'phase-control' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
           path: .ci-baseline
           persist-credentials: false
       - name: Verify immutable baseline checkout before any alignment
-        if: ${{ matrix.side == 'before' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
+        if: ${{ matrix.side == 'before' || matrix.side == 'phase-control' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
         shell: bash
         env:
           EXPECTED_BASE_SHA: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
@@ -414,6 +420,20 @@ jobs:
       - name: Build selected reference with explicit alignment provenance
         if: ${{ matrix.side == 'before' }}
         run: node "$INKWAVE_REFERENCE_ROOT/scripts/build-inkwave.mjs" "$INKWAVE_REFERENCE_ROOT/inkwave-public" .built-site/baseline
+      - name: Build separately labeled source-backed Slosher phase control
+        if: ${{ matrix.side == 'phase-control' }}
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=2 --filter=blob:none origin 72277deadd4e2f36df9bb1fecc56badcd15cfdd0
+          node scripts/prepare-inkwave-slosher-phase-control.mjs --baseline .ci-baseline --derived .ci-phase-reference --candidate . --event "$GITHUB_EVENT_PATH" --receipt .ci-scratch/projectile-visuals/phase-control/source-control.json
+          node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/phase-original
+          node .ci-phase-reference/scripts/build-inkwave.mjs .ci-phase-reference/inkwave-public .built-site/phase-control
+          node scripts/prepare-inkwave-slosher-phase-control.mjs --verify yes --receipt .ci-scratch/projectile-visuals/phase-control/source-control.json --original-build .built-site/phase-original/inkwave-build.json --control-build .built-site/phase-control/inkwave-build.json
+          INKWAVE_BUILT_SITE=.built-site/phase-original INKWAVE_PHASE_EXPECT_OLD=1 node --experimental-vm-modules --test --test-name-pattern='serialized observer' scripts/tests/inkwave-slosher-phase-control.test.mjs
+          INKWAVE_BUILT_SITE=.built-site/phase-control node --experimental-vm-modules --test --test-name-pattern='serialized observer' scripts/tests/inkwave-slosher-phase-control.test.mjs
+      - name: Verify phase source and actual owned-cell credit controls
+        if: ${{ matrix.side == 'after' && github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.number == 1895 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integrate/inkwave-bug-batch-20261026-charge-owner' }}
+        run: node --experimental-vm-modules --test scripts/tests/inkwave-slosher-phase-control.test.mjs scripts/tests/inkwave-slosher-phase-captures.test.mjs
       - name: Build complete candidate production composition
         if: ${{ matrix.side == 'after' }}
         run: node scripts/build-inkwave.mjs inkwave-public .built-site/projectiles
@@ -446,6 +466,9 @@ jobs:
       - name: Capture candidate native game including desktop and mobile workloads
         if: ${{ matrix.side == 'after' }}
         run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/projectiles --evidence-dir .ci-scratch/projectile-visuals/after --mode candidate
+      - name: Capture all 52 phase-control views and full native workloads
+        if: ${{ matrix.side == 'phase-control' }}
+        run: node scripts/check-inkwave-projectile-visuals.mjs --site .built-site/phase-control --evidence-dir .ci-scratch/projectile-visuals/phase-control --mode baseline
       - name: Preserve independent capture and original image evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -492,11 +515,21 @@ jobs:
           name: projectile-capture-after-${{ github.event.pull_request.head.sha || github.sha }}
           path: .ci-scratch/projectile-visuals/after
       - name: Verify exact paired native physical states, firing workloads and image hashes
+        if: ${{ !(github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.number == 1895 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integrate/inkwave-bug-batch-20261026-charge-owner') }}
         shell: bash
         run: |
           # Both capture lanes now assert the same 55-degree projection.
           # Require exact camera/physical/image evidence without historical FOV normalization.
           python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
+      - name: Retrieve independent phase-only control without replacing original captures
+        if: ${{ github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.number == 1895 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integrate/inkwave-bug-batch-20261026-charge-owner' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: projectile-capture-phase-control-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .ci-scratch/projectile-visuals/phase-control
+      - name: Preserve original failure and require full strict control-to-target equality
+        if: ${{ github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.number == 1895 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integrate/inkwave-bug-batch-20261026-charge-owner' }}
+        run: node scripts/verify-inkwave-slosher-phase-captures.mjs --original .ci-scratch/projectile-visuals/before --control .ci-scratch/projectile-visuals/phase-control --target .ci-scratch/projectile-visuals/after --receipt .ci-scratch/projectile-visuals/phase-control/source-control.json --out .ci-scratch/projectile-visuals/phase-contract
       - name: Exercise camera, RNG, contact, retirement and paint comparison gates
         if: ${{ !cancelled() }}
         run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
@@ -508,6 +541,7 @@ jobs:
           path: |
             .ci-scratch/projectile-visuals/paired-verification.json
             .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
+            .ci-scratch/projectile-visuals/phase-contract/
           if-no-files-found: warn
           retention-days: 14
 
