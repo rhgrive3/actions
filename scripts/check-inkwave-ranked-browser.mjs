@@ -9,6 +9,9 @@ import {WebSocketServer} from 'ws';
 import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installRankedLiveAudioReader} from './lib/ranked-live-audio.mjs';
+import {releaseFullRankedRainmaker} from './lib/ranked-rainmaker-charge.mjs';
+const rankedModes = process.env.RANKED_MODE ? [process.env.RANKED_MODE] : ['zones','tower','rainmaker','clams'];
+assert(rankedModes.every(mode => ['zones','tower','rainmaker','clams'].includes(mode)), 'Unknown RANKED_MODE');
 const site=path.resolve(process.argv[2]||'_site-ranked'),out=path.resolve(process.argv[3]||'reports/ranked-browser');fs.mkdirSync(out,{recursive:true});
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const publicUrl=process.env.RANKED_PUBLIC_URL;
@@ -310,7 +313,7 @@ try{
  browser=await chromium.launch(launchOptions);
  browserInfo={version:browser.version(),channel:launchOptions.channel||'custom-executable'};console.log(`Chromium ${browserInfo.version} (${browserInfo.channel})`);
  const p=await boot();await p.evaluate(()=>{RG.game.debug.freeze();RG.game._skipRender=true;});
- for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : ['zones','tower','rainmaker','clams']){
+ for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : rankedModes){
   console.log('offline',mode);
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
   // Native intro presentation follows Match.stateT; the frozen game must
@@ -446,7 +449,7 @@ try{
  }
  const guest=process.env.RANKED_OFFLINE_ONLY?null:await boot();
  // Real native session and production relay across isolated browser contexts.
- for(const mode of process.env.RANKED_OFFLINE_ONLY?[]:['zones','tower','rainmaker','clams']){
+ for(const mode of process.env.RANKED_OFFLINE_ONLY?[]:rankedModes){
   console.log('online',mode);
   // Run both native simulations/relay clients continuously, but submit GPU work
   // only for the captured evidence. Two SwiftShader render loops otherwise
@@ -469,7 +472,7 @@ try{
   await guest.waitForFunction(()=>RG.match.ranked.counts[0]===65,null,{timeout:30000});
   const online=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({mode:RG.match.mode,counts:[...RG.match.ranked.counts],follower:RG.match.follower,actors:RG.match.actors.length,time:RG.match.time}))));assert.deepEqual(online[0].counts,online[1].counts);assert.equal(online[0].mode,mode);assert.equal(online[1].mode,mode);
   const remoteContactGear=mode==='zones'?await checkRankedRemoteContactGear(p,guest,value=>fs.writeFileSync(path.join(out,'remote-contact-gear.json'),JSON.stringify({contentHash:build.contentHash,inputHash:build.inputHash,revision:build.build.revision,...value},null,2))):null;
-  let onlineWeapon = null, onlineWall = null;
+  let onlineWeapon = null, onlineWall = null, onlineCharge = null;
   if(mode==='rainmaker'){
    await Promise.all([p,guest].map(pg=>pg.waitForFunction(()=>!document.querySelector('.iw-lineup')&&!document.querySelector('.iw-bn--go'),null,{timeout:15000})));
    const guestId=await guest.evaluate(()=>String(RG.match.local.nid??`${RG.match.local.team}:${RG.match.local.slot}`));
@@ -514,9 +517,7 @@ try{
      rankedWallPackets.push({...e[4]});return rankedWallRec.call(this,e,...args);};
    },{placement:wallPlacement,identity:wallIdentity});
    try{
-    await guest.evaluate(()=>{RG.input.mouse.left=true;});
-    await p.waitForFunction(()=>RG.match.ranked.rule.state.charge.value===1,null,{timeout:30000});
-    await guest.evaluate(()=>{RG.input.mouse.left=false;});
+    onlineCharge = await releaseFullRankedRainmaker(p, guest, guestId, receipt => fs.writeFileSync(path.join(out,'rainmaker-charge-receipts.json'), JSON.stringify(receipt,null,2)));
     await p.waitForFunction(()=>rankedWeaponEvents.length===1,null,{timeout:30000});
     await guest.waitForFunction(()=>rankedWeaponEvents.length===1,null,{timeout:30000});
     onlineWeapon=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>rankedWeaponEvents.map(e=>({actorId:e.actorId,charge:e.charge,damage:e.damage,blastDamage:e.blastDamage,visualOnly:e.visualOnly})))));
@@ -535,7 +536,7 @@ try{
    await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
    await capture(pg,{path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
   }
-  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;if(onlineWall)record.onlineWall=onlineWall;if(remoteContactGear)record.remoteContactGear=remoteContactGear;
+  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;if(onlineWall)record.onlineWall=onlineWall;if(onlineCharge)record.onlineCharge=onlineCharge;if(remoteContactGear)record.remoteContactGear=remoteContactGear;
   await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
   await guest.waitForFunction(()=>RG.match.ranked.winner===0&&RG.match.ranked.knockout&&RG.match.state==='finish',null,{timeout:30000});
   record.terminal=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({winner:RG.match.ranked.winner,knockout:RG.match.ranked.knockout,counts:[...RG.match.ranked.counts],state:RG.match.state}))));
