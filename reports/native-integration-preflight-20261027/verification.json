@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "scope": "Baseline d3ee native preflight before the separately recorded local main merge. No product files changed by dependency setup.",
+  "capturedAt": "2026-10-27T07:12:55.656842+00:00",
+  "candidateSha": "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+  "candidateTree": "11098fc9d8607f05abad7f27bd4b695df4301079",
+  "externalIntegrationSha": "1ab0f4d3f952e80b23df862820549e68dba9e8c2",
+  "mainSha": "dd93aac2c408f746adb0c9aa572ea2f06f3bed43",
+  "mergeBase": "da5058b723a02374639056cca7ed840006ee5361",
+  "branchOnlyCommits": 56,
+  "mainOnlyCommits": 12,
+  "dependencies": {
+    "node": "24.22.1",
+    "npm": "11.9.0",
+    "registry": "https://registry.npmjs.org/",
+    "installCommand": "npm install --prefix /workspace/shared/inkwave-native/deps --cache /workspace/shared/inkwave-native/npm-cache --registry=https://registry.npmjs.org/ --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1 vite@8.3.3 ws@8",
+    "resolved": {
+      "esbuild": "0.28.2",
+      "playwright": "1.62.1",
+      "vite": "8.3.3",
+      "ws": "8.22.0"
+    },
+    "packages": 20,
+    "nonOfficialRegistryPackages": [],
+    "repositoryPackageOrLockfilesChanged": [],
+    "generatedHiddenLockfile": "/workspace/shared/inkwave-native/deps/node_modules/.package-lock.json",
+    "generatedHiddenLockfileSha256": "e102a88528b61ff5babe1159f9e35c94eb16476b32842de8523fa78cb1a505ce",
+    "initialAttempt": "Failed because default /home/agent/.npm could not be created; explicit writable shared cache retry succeeded. No credentials or security settings changed."
+  },
+  "buildAudit": {
+    "sourceSha": "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+    "contentHash": "39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b",
+    "inputHash": "511a1bee578eadba62c93897ff16e2bddc86e01a77f87b6f239640fce6558be4",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78296,
+    "initialJSBytes": 1937922,
+    "criticalHTMLBytes": 24030,
+    "precacheCount": 553,
+    "precacheBytes": 7657294,
+    "workerBytes": 91095,
+    "declaredBytes": 16088441,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "checks": [
+    {
+      "name": "quick patch/reference compatibility",
+      "command": "node scripts/check-inkwave-patches.mjs --quick",
+      "status": "passed",
+      "log": "quick-check.log"
+    },
+    {
+      "name": "focused source (catalog42, Shooter26, frozen pose1)",
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 scripts/tests/inkwave-catalog-audio.test.mjs scripts/tests/inkwave-catalog-audio-graph.test.mjs patches/splatoon3/tests/shooter-dualies-projection.test.mjs patches/splatoon3/tests/issue-94-impact-agreement.test.mjs patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs patches/splatoon3/tests/issue-94-muzzle-feedback.test.mjs patches/local-quality/tests/added-ui-motion-source.test.mjs",
+      "status": "passed",
+      "tests": 69,
+      "skipped": 0,
+      "log": "focused-source.log"
+    },
+    {
+      "name": "optimized production build",
+      "command": "ESBUILD_MODULE=/workspace/shared/inkwave-native/deps/node_modules/esbuild/lib/main.js node scripts/build-inkwave.mjs inkwave-public _site",
+      "status": "passed",
+      "log": "build.log"
+    },
+    {
+      "name": "startup deterministic budget",
+      "command": "node scripts/check-inkwave-startup-budget.mjs _site",
+      "status": "passed",
+      "log": "startup-budget.log"
+    },
+    {
+      "name": "exact git-tree input/artifact audit",
+      "command": "node reports/brush-downhill-contact-20261027/audit-build.mjs _site .ci-scratch/native-integration-20261027/exact-build-audit.json",
+      "status": "passed",
+      "log": "exact-build-audit.log"
+    },
+    {
+      "name": "focused optimized emitted Shooter",
+      "command": "INKWAVE_BUILT_SITE=$PWD/_site node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/shooter-dualies-projection.test.mjs patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+      "status": "passed",
+      "tests": 14,
+      "skipped": 0,
+      "log": "focused-emitted.log"
+    },
+    {
+      "name": "suite runner contracts",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs runner-contracts",
+      "status": "passed",
+      "tests": 7,
+      "skipped": 0,
+      "log": "runner-contracts.log"
+    },
+    {
+      "name": "direct-source contracts",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs direct-source",
+      "status": "passed",
+      "tests": 20,
+      "skipped": 0,
+      "log": "direct-source.log"
+    },
+    {
+      "name": "preserved external1ab full files",
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/local-quality/tests/offline-pause-simulation-work.test.mjs patches/local-quality/tests/queue-extra-world.test.mjs",
+      "status": "passed",
+      "tests": 22,
+      "skipped": 0,
+      "log": "external-1ab-preservation.log"
+    },
+    {
+      "name": "canonical verifier suite",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs verifier",
+      "status": "passed",
+      "log": "verifier.log",
+      "tests": 596,
+      "pass": 595,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0
+    },
+    {
+      "name": "canonical bounded acceptance suite",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs acceptance",
+      "status": "passed",
+      "log": "acceptance.log",
+      "tests": 190,
+      "pass": 190,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  ],
+  "external1abPreservation": {
+    "unchangedPaths": [
+      "patches/local-quality/tests/offline-pause-simulation-work.test.mjs",
+      "patches/local-quality/tests/queue-extra-world.test.mjs"
+    ],
+    "verification": "git diff 1ab0f4d HEAD -- [paths] is empty; full files pass22 tests, not only earlier selected15+1"
+  },
+  "mainPreview": {
+    "command": "git merge-tree --write-tree --name-only HEAD origin/main",
+    "kind": "local object-only preview; no merge, commit, branch or worktree change",
+    "conflicts": [
+      "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+    ],
+    "automergedOverlap": [
+      ".github/workflows/validate-inkwave-update.yml"
+    ],
+    "warning": "main removes historical pinned job contract; branch extends it with exact once/order/placement and negative controls for three emitted regressions. Transfer consciously rather than taking ours/theirs.",
+    "subsequentAction": "Parent later authorized local main merge; see main-reconciliation.json. Preview findings and baseline SHA remain preserved."
+  },
+  "limits": [
+    "405 native-prebuilt Git LFS pointers remain; normal build uses browser conversion fallback. No prebuilt native-stage acceptance.",
+    "No expensive full catalog replay. Historical augmented860-image claim subsequently rejected by independent review; original helper can overwrite old receipts before validation. No raw historical PNGs are available here and the old combined passed status is not accepted as final catalog proof.",
+    "Node VM Shooter tests log optional source-motion dynamic-import callback warnings. They pass their selected logic assertions, not ordinary-input browser/native motion acceptance.",
+    "Browser verification belongs to role4, ranked failure to role2 and phase contract to role3. No overlap edits.",
+    "No retail Hissen size/floor-morphology or full final-head CI completion claim.",
+    "No main merge, PR metadata update, remote write, manual CI, deployment or original-media upload."
+  ],
+  "localLogRoot": "/workspace/shared/inkwave-native/role-1/.ci-scratch/native-integration-20261027",
+  "logSha256": {
+    "focused-source.log": "9c31b6eb5b12bbfb70e3e72a6c4616ba1b2f6433bc68c9bf7a64c5cbd7b66d6d",
+    "verifier.log": "79354c56d033ccfd037017336deea0fbe503f45e2457621c654cedd111f8d346",
+    "runner-contracts.log": "5ba4cdb873d632a9f9eecdc3bf5d835a01326db62452be7fb79c98617fc024a6",
+    "before-wall-workflow.log": "9bd25a3b049ad573e36cb9a96668bfce5c8ce1dbe8ea3b347fd8262235ef54a5",
+    "exact-build-audit.log": "b059044bb7d918a565ffaa4c8a5c95802436ff93241b5bcda2d3568450d61585",
+    "build.log": "b62d822226cdab153195399ac6b6dcd0f6fd34b694095a34d25fb0ee5ff66750",
+    "exact-build-audit.json": "6dbd3b6061b01b1eec19ef1b87ff52fa3b2478d7b200a583781983a729428170",
+    "acceptance.log": "3a932dbf329ee3ce162446b3032bfdfe5b352585ba5f6fb2c6fa082836245b8b",
+    "focused-emitted.log": "f2e8a4187a7f756455c8b3691fc654c8278857aa592534fece5b4c84d785ec2f",
+    "quick-check.log": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+    "startup-budget.log": "e50ff9d83363906e2b4ffa39e6cba2509e0b484c84433d7157505c007e158700",
+    "external-1ab-preservation.log": "516d61378cb88920c1a629dec54b388889e5f22d11e0070f493a104790cecee1",
+    "direct-source.log": "0f5c77533ffeb998244bef157eec3455da417787126c0cde09a16e4df4e26ea0"
+  }
+}
