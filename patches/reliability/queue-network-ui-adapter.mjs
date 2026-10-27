@@ -98,7 +98,7 @@ const patches = {
     ],
     [
       "      const wr = a.weaponRunner, near = a.alive && a._nearCamera();\n      const k = a.weapon.kind;",
-      "      const wr = a.weaponRunner, k = a.weapon.kind, loops = a.net.loops;\n      if (!(wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger')) && !((wr.charging || wr.streaming) && k === 'splatling') && !wr.rolling && !loops.charge && !loops.spin && !loops.roll && !a.net._chargerRise && !a.net._chargerOnsetActive) continue;\n      const near = a.alive && a._nearCamera();",
+      "      const wr = a.weaponRunner, k = a.weapon.kind, loops = a.net.loops;\n      if (!(wr.charging && (k === 'charger' || k === 'catalog' && a.weapon.behaviorKind === 'charger')) && !((wr.charging || wr.streaming) && (k === 'splatling' || a.weapon.behaviorKind === 'splatling' || a.weapon.catalogRecord?.family === 'splatling' || a.weapon.id?.startsWith('s3-spinner-'))) && !wr.rolling && !loops.charge && !loops.spinnerCharge && !loops.spin && !loops.roll && !a.net._chargerRise && !a.net._chargerOnsetActive) continue;\n      const near = a.alive && a._nearCamera();",
       1
     ],
     [
