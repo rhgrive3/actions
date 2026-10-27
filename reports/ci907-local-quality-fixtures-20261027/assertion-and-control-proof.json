@@ -1,0 +1,31 @@
+{
+  "base": "90706e3778586fa6c9d09a64ac354e547086e1c0",
+  "originalTestBodies": [
+    {
+      "file": "patches/local-quality/tests/offline-pause-simulation-work.test.mjs",
+      "index": 0,
+      "sha256": "2fcda8bcbebe3321b558b5ae8e50f80adafbf165b441b3ff68e3ad23cfc409d8",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/local-quality/tests/offline-pause-simulation-work.test.mjs",
+      "index": 1,
+      "sha256": "db91893c436b55f4e494e6633cacc799462f42af7d7a752b0e9a49b62a39a55c",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/local-quality/tests/added-ui-motion-source.test.mjs",
+      "index": 0,
+      "sha256": "8d711b5ada1fd2cfa2d52d3b3e91ffbed0298904b3d0297e5a2e77bce3fa4e5c",
+      "byteIdentical": true
+    }
+  ],
+  "originalAabbAssertionsByteIdentical": true,
+  "frozenFixtureSha256": "9c94d17fc0ede0c359a736512e38847e0d1db5817926087886ccef6fa712376b",
+  "frozenFixtureUnchanged": true,
+  "walkReplay": {
+    "frozenSourceSha256": "cf16400ab5ff1fb8964c9ac4142a7953ff72d9d36682b440f2fa16cc0a33ed6b",
+    "comparisonSourceSha256": "4da94c0ca40c3f820abb915d253954c19f3c783db401819482c1041214e420bb",
+    "undoOnlyCommonWalkAdapterEqualsFrozen": true
+  }
+}

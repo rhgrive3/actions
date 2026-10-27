@@ -1,0 +1,119 @@
+{
+  "status": "test-only candidate awaiting independent review",
+  "base": "90706e3778586fa6c9d09a64ac354e547086e1c0",
+  "codeCommit": "3643bdbca4e735c8c721f6161846b4bd19418a22",
+  "branch": "fix/ci907-local-quality-fixtures-20261027",
+  "failure": {
+    "run": 40451016135,
+    "job": 122020314174,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/40451016135/job/122020314174",
+    "step": 41,
+    "name": "Verify local quality regressions",
+    "pass": 1817,
+    "fail": 17,
+    "skip": 8,
+    "workflowPinStep7": "success"
+  },
+  "groups": [
+    {
+      "file": "patches/local-quality/tests/offline-pause-simulation-work.test.mjs",
+      "originalFailures": 15,
+      "error": "G.physics.segment is not a function",
+      "cause": "Empty-world fixture has no native segment contract, now used by production guide calculation.",
+      "fix": "Add counted no-hit segment method to both controls, initial/resume native-query positive evidence and zero paused-query assertion. Original15 test bodies byte-identical."
+    },
+    {
+      "file": "patches/local-quality/tests/queue-extra-world.test.mjs",
+      "originalFailures": 1,
+      "error": "this.markCollisionChanged is not a function",
+      "cause": "Literal fake Level receivers do not have the new real collision-revision producer method.",
+      "fix": "Use receivers inheriting actual Level.prototype with revision0. Keep every original Object.is six-AABB-value assertion and getter-read assertion; additionally require actual revision increment1."
+    },
+    {
+      "file": "patches/local-quality/tests/added-ui-motion-source.test.mjs",
+      "originalFailures": 1,
+      "error": "Strict complete source pose differs atHz30 frame15.",
+      "cause": "Frozen pre-sparse SourceController bypasses the later common walking-display filter while current source receives it; this is unequal comparison context, not isolated sparse-storage comparison.",
+      "fix": "Apply the exact current walk presentation adapter to the frozen control in memory. Frozen JSON stays byte-identical; reversing only its import/speed block restores exact frozen source. Full strict pose/contact/skeleton/muzzle/camera body is byte-identical and passes30/60/120Hz."
+    }
+  ],
+  "checks": {
+    "pauseFinal": {
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    "axisAlignedSelected": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "realSourceMotion": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "originalAssertions": "AST body hashes for the dynamic15 pause tests and full source-pose/camera test match907; all six-value AABB Object.is assertions retain exact source.",
+    "identity": {
+      "sourceSha": "3643bdbca4e735c8c721f6161846b4bd19418a22",
+      "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+      "inputHash": "69308c060120b9ebe716423cc8d41e81cd318132696c180fd926cb87c318bce0",
+      "sourceInputs": 1493,
+      "artifacts": 2199,
+      "mismatches": 0
+    }
+  },
+  "commands": [
+    "node --experimental-vm-modules --test patches/local-quality/tests/offline-pause-simulation-work.test.mjs",
+    "node --experimental-vm-modules --test --test-name-pattern='real axis-aligned Level blocks' patches/local-quality/tests/queue-extra-world.test.mjs",
+    "node --experimental-vm-modules --test patches/local-quality/tests/added-ui-motion-source.test.mjs"
+  ],
+  "initialNewProbeCorrection": "First added probe incorrectly demanded old paused guide sweeps>0; actual cached guide can be reused. Preserved15pass/1new-failure log. Corrected probe checks both actual initial native paths, resumed native query>0, new paused queries0 and unchanged strict resume state. No original assertion removed.",
+  "runtimeChanged": false,
+  "frozenFixtureChanged": false,
+  "thresholdChanged": false,
+  "workflowChanged": false,
+  "characterRigHairModelsChanged": false,
+  "manualCi": false,
+  "integrationHeadChanged": false,
+  "limits": [
+    "Focused source tests only; no emitted test pass is claimed. All1493 runtime source inputs and2199 emitted artifacts remain identical to907; no rebuild needed.",
+    "The complete1842-test local-quality suite and final CI have not been rerun.",
+    "Separate catalog graph omission and capture physical-delta contract are not modified."
+  ],
+  "logs": {
+    "pause-before.log": {
+      "file": "pause-before.log.gz",
+      "rawSha256": "72fc7426c049c4f995fba8cfb3939ae03c7cd969fce120d40030cd0526a116b1"
+    },
+    "world-before.log": {
+      "file": "world-before.log.gz",
+      "rawSha256": "d50e0e7036ceb5372687e93334df0fe3b7a374b7f913b7eca0f84cb596383d34"
+    },
+    "pause-after.log": {
+      "file": "pause-after.log.gz",
+      "rawSha256": "3ca8b5c212e7736981ef2983b2ff86d35bfb7da29b6b2ca86c83df59ac46a179"
+    },
+    "pause-probe-corrected.log": {
+      "file": "pause-probe-corrected.log.gz",
+      "rawSha256": "8be543c68dee33c4551c9660c528d360c7fa28e6193dc82ac144edf8243ef63a"
+    },
+    "pause-final.log": {
+      "file": "pause-final.log.gz",
+      "rawSha256": "a96dcabba4d5654c67708e2b0d151bdb4b902e94285ec28b8f6691d92e0757ef"
+    },
+    "world-after.log": {
+      "file": "world-after.log.gz",
+      "rawSha256": "c4eafc12aca6dd9c88c51fb33f499e0e6349de1679e34e0a860d912d6a1f7ee2"
+    },
+    "motion-after.log": {
+      "file": "motion-after.log.gz",
+      "rawSha256": "bbca90b0b5b3cf055ccd3fb3775fb083b8d43e9f7d490199ec83e8fa9e95a087"
+    },
+    "core-failure-excerpts.log": {
+      "file": "core-failure-excerpts.log.gz",
+      "rawSha256": "1ac827587a2398630b4fae324c46dd2fb16e52c4f0344b4db854a42c684c7db4",
+      "scope": "timestamped excerpts; full unmodified log remains at the cited immutable job"
+    }
+  }
+}
