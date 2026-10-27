@@ -285,6 +285,12 @@ jobs:
         with:
           ref: 83f27e5d59db944458a85122a95d1154e3543393
           path: work/roller-grip-baseline
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
       - name: Record exact source and capture identities
         if: steps.changes.outputs.run == 'true'
         shell: bash
