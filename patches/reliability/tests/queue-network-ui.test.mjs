@@ -142,7 +142,7 @@ test('outgoing Dualies snapshots retain startup, recovery and direction fields w
   assert.ok(begin >= 0 && end > begin, 'single-pass tick body is emitted');
   let actions = 0, directions = 0;
   const pack = vm.runInNewContext('(function() { const publishActors = false; const G = { time: 0 }; const now = () => 0; ' +
-    code.slice(begin, end) + '\nreturn msg.rl; })', {
+    code.slice(begin, end) + '\nreturn rl; })', {
     dualiesNetworkAction: x => { actions++; return helpers.dualiesNetworkAction(x); },
     dualiesNetworkDirection: x => { directions++; return helpers.dualiesNetworkDirection(x); },
     r2: v => Math.round(v * 100) / 100, r3: v => Math.round(v * 1000) / 1000,
