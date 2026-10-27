@@ -75,6 +75,9 @@ jobs:
           DIAGNOSTIC_ACCEPTED_ROOT: ${{ github.workspace }}
           DIAGNOSTIC_LANE: network-opening-diagnostic
         run: node --test .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Prepare bounded diagnostic storage
         run: |
           mkdir -p .ci-scratch .built-site
@@ -182,6 +185,9 @@ jobs:
           DIAGNOSTIC_ACCEPTED_ROOT: ${{ github.workspace }}
           DIAGNOSTIC_LANE: wall-render-diagnostic
         run: node --test .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Prepare bounded diagnostic storage
         run: |
           mkdir -p .ci-scratch .built-site
@@ -302,6 +308,9 @@ jobs:
           test "$(git -C work/source rev-parse HEAD^{tree})" = 97b9938391f156dc332f6a56ac6fe3d21d9f9dc7
           git -C work/source cat-file -e 7581ca9be8cf87d253918b8abb3b8ebe728c2093^{commit}
           printf 'runtime_source_sha=%s\nruntime_source_tree=%s\nreference_sha=%s\n' c0938a3f84768474df91713f7b372f9d7f8fe96a 97b9938391f156dc332f6a56ac6fe3d21d9f9dc7 7581ca9be8cf87d253918b8abb3b8ebe728c2093 >> .diagnostic-route/evidence/identity.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Verify immutable source and reference Git objects
         run: |
           test "$(git -C work/source rev-parse HEAD)" = c0938a3f84768474df91713f7b372f9d7f8fe96a

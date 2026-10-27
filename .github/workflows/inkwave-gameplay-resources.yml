@@ -81,12 +81,6 @@ jobs:
         with:
           ref: ${{ env.SOURCE_SHA }}
           persist-credentials: false
-          filter: blob:none
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
       - name: Assert exact source checkout and prepare workspace storage
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]

@@ -53,7 +53,7 @@ jobs:
       - name: Install exact official build and browser tools
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
       - name: Install CI browser
-        run: npx playwright install --with-deps --only-shell chromium
+        run: npx playwright install --with-deps chromium
       - name: Build and check normal production candidate
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site

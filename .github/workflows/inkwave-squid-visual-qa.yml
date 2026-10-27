@@ -22,11 +22,6 @@ jobs:
         with:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -38,7 +33,7 @@ jobs:
       - name: Install exact existing native QA tools
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-          npx playwright install --with-deps --only-shell chromium
+          npx playwright install --with-deps chromium
       - name: Verify source presentation regression
         run: node --experimental-vm-modules --test patches/local-quality/tests/squid-source-presentation.test.mjs patches/local-quality/tests/squid-surface-material.test.mjs patches/local-quality/tests/squid-connected-eye-binding.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/squid-compact-support-binding.test.mjs patches/local-quality/tests/squid-ghost-depth.test.mjs patches/local-quality/tests/squid-form-ease.test.mjs patches/local-quality/tests/squid-rapid-idle-regression.test.mjs patches/local-quality/tests/squid-build-identity.test.mjs
       - name: Verify reconciled main performance and pause behavior

@@ -34,19 +34,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          filter: blob:none
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Verify direct QA input trigger coverage
         run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
-      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npx playwright install --with-deps chromium
       - name: Source regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/ink-micro-surface.test.mjs patches/local-quality/tests/grate-normal.test.mjs patches/local-quality/tests/paint-hotpath.test.mjs
       - name: Build final-head production composition

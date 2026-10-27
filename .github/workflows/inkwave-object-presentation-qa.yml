@@ -100,7 +100,7 @@ jobs:
       - name: Install existing official QA toolchain
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8.22.0
-          npx playwright install --with-deps --only-shell chromium
+          npx playwright install --with-deps chromium
       - name: Verify comparison, artifact and production-source contracts
         run: node --experimental-vm-modules --test tools/object-presentation-qa/artifact-budget.test.mjs tools/object-presentation-qa/frame-contract.test.mjs tools/object-presentation-qa/identity.test.mjs tools/object-presentation-qa/harness-contract.test.mjs tools/object-presentation-qa/runtime-overlay.test.mjs
       - name: Verify Rainmaker presentation and hands

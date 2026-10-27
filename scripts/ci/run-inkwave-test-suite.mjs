@@ -42,11 +42,24 @@ export function planTestSuite(name, {root = ROOT, suites = TEST_SUITES} = {}) {
       || step.args.some(arg => typeof arg !== 'string' || !arg || /[\r\n\0]/.test(arg)))
       throw Error(`Invalid test command: ${name}`);
     const args = step.args.flatMap(arg => expandFile(arg, root));
-    for (const arg of args.filter(arg => arg.endsWith('.test.mjs'))) {
+    const entries = args.filter(arg => !arg.startsWith('-') && /\.(?:mjs|js)$/.test(arg));
+    if (step.program === 'node' && !entries.length)
+      throw Error(`Node suite requires explicit test files or a script: ${name}`);
+    for (const arg of entries) {
       if (path.isAbsolute(arg) || arg.split('/').includes('..') || !fs.statSync(path.join(root, arg)).isFile())
         throw Error(`Missing or invalid test file: ${arg}`);
       if (seen.has(arg)) throw Error(`Duplicate test file in ${name}: ${arg}`);
       seen.add(arg);
+    }
+    if (step.program === 'python3' && args.includes('discover')) {
+      const directory = args[args.indexOf('-s') + 1];
+      const pattern = args[args.indexOf('-p') + 1];
+      if (!args.includes('-s') || !args.includes('-p') || !directory || !pattern
+          || path.isAbsolute(directory) || directory.split('/').includes('..'))
+        throw Error(`Python discovery requires an explicit directory and pattern: ${name}`);
+      const matcher = new RegExp('^' + pattern.split('*').map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
+      if (!fs.readdirSync(path.join(root, directory), {withFileTypes: true}).some(entry => entry.isFile() && matcher.test(entry.name)))
+        throw Error(`Empty Python test discovery: ${name}`);
     }
     return {program: step.program, args};
   });
@@ -55,7 +68,11 @@ export function planTestSuite(name, {root = ROOT, suites = TEST_SUITES} = {}) {
 export function runTestSuite(name, {root = ROOT, suites = TEST_SUITES, spawn = spawnSync, log = console.log} = {}) {
   const commands = planTestSuite(name, {root, suites});
   for (const command of commands) {
-    log(`[${name}] ${command.program} ${command.args.join(' ')}`);
+    const files = command.args.filter(arg => arg.endsWith('.test.mjs'));
+    const summary = files.length > 10
+      ? command.args.filter(arg => !files.includes(arg)).join(' ') + ` (${files.length} test files; --dry-run ${name} lists inputs)`
+      : command.args.join(' ');
+    log(`[${name}] ${command.program} ${summary}`);
     const result = spawn(command.program === 'node' ? process.execPath : command.program, command.args,
       {cwd: root, env: process.env, stdio: 'inherit'});
     if (result.error || result.signal || result.status !== 0) {

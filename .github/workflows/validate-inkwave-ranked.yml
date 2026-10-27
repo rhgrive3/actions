@@ -12,7 +12,9 @@ on:
       - 'scripts/lib/ranked-boot-diagnostics.mjs'
       - 'scripts/lib/ranked-live-audio.mjs'
       - 'scripts/lib/ranked-rainmaker-charge.mjs'
+      - 'scripts/lib/ranked-roller-audio.mjs'
       - 'scripts/tests/ranked-boot-diagnostics.test.mjs'
+      - 'scripts/tests/ranked-roller-audio.test.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
       - '.github/workflows/pages-inkwave.yml'
       - 'scripts/tests/inkwave-ranked-pages-sequencing.test.mjs'
@@ -26,7 +28,9 @@ on:
       - 'scripts/lib/ranked-boot-diagnostics.mjs'
       - 'scripts/lib/ranked-live-audio.mjs'
       - 'scripts/lib/ranked-rainmaker-charge.mjs'
+      - 'scripts/lib/ranked-roller-audio.mjs'
       - 'scripts/tests/ranked-boot-diagnostics.test.mjs'
+      - 'scripts/tests/ranked-roller-audio.test.mjs'
       - 'scripts/inkwave-source-composition.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
       - '.github/workflows/pages-inkwave.yml'
@@ -62,11 +66,11 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
-      - run: npx playwright install --with-deps --no-shell chromium
+      - run: npx playwright install --with-deps chromium
       - name: Pages sequencing regression
         run: node --test scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
       - name: Ranked boot failure diagnostics regression
-        run: node --test scripts/tests/ranked-boot-diagnostics.test.mjs
+        run: node --test scripts/tests/ranked-boot-diagnostics.test.mjs scripts/tests/ranked-roller-audio.test.mjs
       - name: Ranked rule and native integration regressions
         env:
           INKWAVE_RANKED_REFERENCE: ${{ github.workspace }}/patches/splatoon3/runtime/ranked
