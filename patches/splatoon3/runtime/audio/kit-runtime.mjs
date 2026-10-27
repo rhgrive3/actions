@@ -1,5 +1,6 @@
 import { KIT_AUDIO, SUB_AUDIO_IDS, SPECIAL_AUDIO_IDS } from './kit-recipes.mjs';
 import { sourceSpecialActionRoute } from './extra-source-routes.mjs';
+const SPIN_SPECIALS=new Set(['inkjet','crabTank','krakenRoyale','storm','killerWail']);
 const pos3=p=>Array.isArray(p)?{x:p[0],y:p[1],z:p[2]}:p;
 const eventOfAction=Object.freeze({activate:'open',end:'release',return:'release',shot:'fire',cannon:'fire',launch:'fire',throw:'fire',
  impact:'explosion',block:'shield_hit',swing:'impact',jumpSwing:'impact',zip:'dodge',hookImpact:'impact',jump:'impact',
@@ -93,18 +94,18 @@ export function installKitAudio(api,{listen,options}){
  Actor.prototype._updateSpecial=function(dt,...args){const result=update.call(this,dt,...args),id=this.specialActive?.id;
    // HoldFull is valid only after the sourced Booyah charge reaches ready; never loop it during startup.
    const loopEvent=id==='booyahBomb'?(this.specialActive?.phase==='ready'?'spin':null)
-     :id==='inkVac'?'charge':['inkjet','crabTank','krakenRoyale','storm','killerWail'].includes(id)?'spin':null;
+     :id==='inkVac'?'charge':SPIN_SPECIALS.has(id)?'spin':null;
    let row=active.get(this);
    // A deferred real loop may fail while the special remains active. Retire
    // the failed handle so the next update can retry after loader backoff.
    if(row&&(row.id!==id||!this.alive||!loopEvent||!row.handle?.playing)){
      row.handle?.stop(.1);active.delete(this);row=null;
    }
-   if(loopEvent&&this.alive&&KIT_AUDIO['special:'+id]&&(row||G.audio?._realS3Loader?.declares('special:'+id,loopEvent)!==false)){
-     if(!row){row={id,local:!!this.isLocal,handle:G.audio?.loopWeapon?.('special:'+id,loopEvent,{...options(this,this.pos,.25),pitch:.85})};if(row.handle)active.set(this,row);}
+   if(loopEvent&&this.alive&&KIT_AUDIO['special:'+id]&&(row||G.audio?._realS3Loader?.declares('special:'+id,loopEvent)!==false&&!G.audio?._realS3Loader?.retryPending?.('special:'+id,loopEvent))){
+     if(!row){row={id,local:!!this.isLocal,update:{pos:undefined,volume:.25},handle:G.audio?.loopWeapon?.('special:'+id,loopEvent,{...options(this,this.pos,.25),pitch:.85})};if(row.handle)active.set(this,row);}
      // Remote positions remain live. An ownership transition still updates
      // the handle once; stable local options already came from loop creation.
-     if(!this.isLocal||!row?.local){row?.handle?.set({pos:this.isLocal?undefined:this.pos,volume:.25});if(row)row.local=!!this.isLocal;}
+     if(!this.isLocal||!row?.local){if(row){row.update.pos=this.isLocal?undefined:this.pos;row.handle?.set(row.update);row.local=!!this.isLocal;}}
    }return result;};
  listen('splatted',e=>stopActor(e?.victim));
  return {subCount:SUB_AUDIO_IDS.length,specialCount:SPECIAL_AUDIO_IDS.length,dispose(){stopAll();}};

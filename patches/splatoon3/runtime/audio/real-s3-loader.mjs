@@ -67,7 +67,7 @@ export class RealS3SampleLoader {
   // Event-aware demand paging. A previous v10 `loaded` bit stayed true even
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.
-  ensure(id,event=null,{priority=false}={}){
+  ensure(id,event=null,{priority=false,owner=null}={}){
     if(!this._current())return Promise.resolve({loaded:0,cancelled:true});
     if(!id)return Promise.resolve({loaded:0,unavailable:false});
     // A 503 at startup must not permanently disable audio for the entire
@@ -79,6 +79,8 @@ export class RealS3SampleLoader {
     const key=id+':'+(event||'*');
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
     if(this.inFlight.has(key)){
+      const queued=this.pendingJobs.find(row=>row.key===key);
+      if(queued){if(owner!==null)queued.owners.add(owner);else queued.required=true;}
       if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key);if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
       return this.inFlight.get(key);
     }
@@ -113,7 +115,7 @@ export class RealS3SampleLoader {
       if(result?.loaded>0)this.loaded.add(id);
       return result;
     };
-    const job=this._schedule(work,key,priority);
+    const job=this._schedule(work,key,priority,owner);
     // Cleanup belongs to the same promise returned to callers. Otherwise
     // an immediate second START can observe the previous failed, already-
     // fulfilled job and never actually retry the 2022 MP3.
@@ -122,9 +124,22 @@ export class RealS3SampleLoader {
     this.queue=tracked.catch(()=>{});
     return tracked;
   }
-  _schedule(work,key,priority){
+  // Only unstarted speculative requests are withdrawable. In-flight decode,
+  // admitted one-shots, START requirements and other consumers remain live.
+  cancelOwner(owner){
+    if(owner==null)return;
+    for(let i=this.pendingJobs.length-1;i>=0;i--){const row=this.pendingJobs[i];
+      row.owners.delete(owner);
+      if(!row.required&&row.owners.size===0){this.pendingJobs.splice(i,1);this.inFlight.delete(row.key);row.resolve({loaded:0,cancelled:true});}
+    }
+  }
+  retryPending(id,event){
+    const key=id+':'+(event||'*');
+    return this.status==='unavailable'&&Date.now()<this.manifestRetryAt||Date.now()<(this.retryAfter.get(key)||0);
+  }
+  _schedule(work,key,priority,owner){
     const job=new Promise((resolve,reject)=>{
-      const row={work,key,resolve,reject};
+      const row={work,key,resolve,reject,required:owner===null,owners:new Set(owner===null?[]:[owner])};
       if(priority)this.pendingJobs.unshift(row);else this.pendingJobs.push(row);
     });
     if(!this.draining){this.draining=true;Promise.resolve().then(()=>this._drain());}
