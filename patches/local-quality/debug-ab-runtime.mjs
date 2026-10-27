@@ -157,7 +157,13 @@ export function installDebugAB({ probe, tracer, game, env=globalThis,
         round((b?.frameGapMs?.p50||0)-(a?.frameGapMs?.p50||0))+'ms';
     } else status.textContent=notice || (ja?'待機→連射の順に各6秒':'Idle then fire, 6 seconds each');
   }
-  if (doc?.body && typeof doc.createElement==='function') {
+  // A partial DOM (test hosts, embedded/no-document environments) must not
+  // disable the core profiler merely because the optional A/B toolbar cannot
+  // mount. Actual browsers expose appendChild on created elements.
+  const canMountToolbar = !!(doc?.body && typeof doc.body.appendChild === 'function' &&
+    typeof doc.createElement === 'function' &&
+    typeof doc.createElement('div').appendChild === 'function');
+  if (canMountToolbar) {
     bar=doc.createElement('div');
     bar.id='inkwave-debug-ab-controls';
     bar.style.cssText='position:fixed;top:48px;right:6px;z-index:10001;display:flex;flex-wrap:wrap;gap:5px;max-width:54vw;justify-content:flex-end;pointer-events:auto';

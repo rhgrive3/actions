@@ -56,7 +56,7 @@ test('discovery is sorted, includes newly added tests, and rejects empty suites'
 test('unknown, duplicate, missing and malformed inputs fail before any child starts', t => {
   const directory = fixture(t);
   fs.writeFileSync(path.join(directory, 'a.test.mjs'), '');
-  for (const steps of [[], [{program: 'bash', args: ['-c', 'true']}],
+  for (const steps of [[], [{program: 'node', args: ['--test']}], [{program: 'node', args: ['missing-script.mjs']}], [{program: 'python3', args: ['-m', 'unittest', 'discover', '-s', '.', '-p', 'missing_*.py']}], [{program: 'bash', args: ['-c', 'true']}],
     [{program: 'node', args: ['--test', 'a.test.mjs', 'a.test.mjs']}],
     [{program: 'node', args: ['--test', '../a.test.mjs']}],
     [{program: 'node', args: ['--test', 'tests/**/*.test.mjs']}],
@@ -72,8 +72,8 @@ test('unknown, duplicate, missing and malformed inputs fail before any child sta
 
 test('execution retains exact flags, cwd and environment and stops on every failure form', () => {
   const suites = {fixture: {steps: [
-    {program: 'node', args: ['--max-old-space-size=128', '--test', '--test-concurrency=1']},
-    {program: 'python3', args: ['-m', 'unittest']},
+    {program: 'node', args: ['--max-old-space-size=128', '--test', '--test-concurrency=1', 'scripts/tests/inkwave-test-suites.test.mjs']},
+    {program: 'python3', args: ['-m', 'unittest', 'discover', '-s', 'tools/backup/tests', '-p', 'test_*.py']},
   ]}};
   for (const failure of [{status: 7}, {status: null, signal: 'SIGTERM'}, {status: null, error: Error('spawn failed')}]) {
     let calls = 0;
