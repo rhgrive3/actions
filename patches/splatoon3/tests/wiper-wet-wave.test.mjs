@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
+import {ShaderLib} from '../../../inkwave-public/vendor/three/build/three.module.js';
 
 async function setup() {
   const f = await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
@@ -21,8 +22,12 @@ const physical=(s,a)=>JSON.stringify({ink:a.ink,hp:a.hp,pos:a.pos.toArray(),vel:
     radius:p.radius,grav:p.grav,drag:p.drag,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),
     travel:p.catalog?.travel,lobeGone:p.catalog?.lobeGone,descriptor:p.catalog?.descriptor}))});
 function compile(f,mat) {
-  const sh={uniforms:{},vertexShader:f.THREE.ShaderLib.physical.vertexShader,
-    fragmentShader:f.THREE.ShaderLib.physical.fragmentShader};mat.onBeforeCompile(sh);return sh;
+  // Optimized shipping Three exports intentionally omit ShaderLib. Inspect the
+  // emitted material hook against the same pinned Three shader templates, not
+  // a hand-written GLSL stand-in (this still is not a real GPU compile).
+  const lib=f.THREE.ShaderLib||ShaderLib;
+  const sh={uniforms:{},vertexShader:lib.physical.vertexShader,
+    fragmentShader:lib.physical.fragmentShader};mat.onBeforeCompile(sh);return sh;
 }
 
 test('Normal/Lite charged waves and kits select wet mass; taps and Dental never inherit it',async()=>{
