@@ -1,5 +1,6 @@
 // Resolve beside this module, including subdirectory and immutable-revision
 // hosting. Both original source-derived packs ship and load on ordinary boot.
+export const HISSEN_FALLBACK_VOLUME_URL = new URL('./assets/hissen-fallback/manifest.json', import.meta.url).href;
 export const DEFAULT_INK_VOLUME_URLS = Object.freeze({
   roller: new URL('./assets/roller/manifest.json', import.meta.url).href,
   shooter: new URL('./assets/shooter/manifest.json', import.meta.url).href,
@@ -12,7 +13,7 @@ export function unpackVolumes(manifest, buffer) {
     return new Type(buffer, entry.offset, entry.length);
   };
   const indices=(l,key)=>view(l[key],l.indexBytes===2?Uint16Array:l.indexBytes===4?Uint32Array:(()=>{throw Error('Invalid index format');})());
-  return { schema: manifest.schema, patterns: manifest.patterns.map(p => ({ width: p.width, height: p.height, meshAspect:p.meshAspect, fps: p.fps, frames: p.frames.map(f => ({ rgba: view(f.rgba, Uint8Array), levels: f.levels.map(l => ({ positions: view(l.positions, Float32Array), normals: view(l.normals, l.normalBytes===2?Int16Array:l.normalBytes===undefined||l.normalBytes===4?Float32Array:(()=>{throw Error('Invalid normal format');})()), uvs: view(l.uvs, Float32Array), indices: indices(l,'indices'), ...(l.opaqueIndices||l.fringeIndices ? {opaqueIndices:indices(l,'opaqueIndices'),fringeIndices:indices(l,'fringeIndices')}: {}) })) })) })) };
+  return { schema: manifest.schema, ...(manifest.geometryOnly ? {geometryOnly:true} : {}), patterns: manifest.patterns.map(p => ({ width: p.width, height: p.height, meshAspect:p.meshAspect, fps: p.fps, frames: p.frames.map(f => ({ rgba: view(f.rgba, Uint8Array), levels: f.levels.map(l => ({ positions: view(l.positions, Float32Array), normals: view(l.normals, l.normalBytes===2?Int16Array:l.normalBytes===undefined||l.normalBytes===4?Float32Array:(()=>{throw Error('Invalid normal format');})()), uvs: view(l.uvs, Float32Array), indices: indices(l,'indices'), ...(l.opaqueIndices||l.fringeIndices ? {opaqueIndices:indices(l,'opaqueIndices'),fringeIndices:indices(l,'fringeIndices')}: {}) })) })) })) };
 }
 // Lossless gzip changes transport bytes only. The checksum is always checked
 // against the original uncompressed pack, including every RGBA/geometry byte.
