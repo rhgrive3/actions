@@ -1,0 +1,156 @@
+{
+  "testedCodeHead": "b7321a2926062ddc9e4b2036cae69c37c20dc931",
+  "previousPublishedHead": "3932bf2945d9f172f1e3cb8968b498b8ff5cab95",
+  "mainAtIntegration": "da5058b723a02374639056cca7ed840006ee5361",
+  "pr": "https://github.com/rhgrive3/actions/pull/1895",
+  "coreFix": {
+    "code": "e038d34e457bf79d5b6d10e6b690bd5b939b7793",
+    "evidence": "971b6bba8731670360202761cb2bd6daff17cea4",
+    "receipt": "../../core-emitted-coverage-pin-20261027/validation.json",
+    "workflowChanged": false,
+    "historicalHashesChanged": false,
+    "allThreeReviewedEmittedArgumentsMandatory": true
+  },
+  "hissenCommits": [
+    {
+      "original": "12ac3692fd4d51f1acf8fc06971d105bfcf18d1e",
+      "integrated": "0999e8c188f71ce88b724db5ef06e680d78bee27"
+    },
+    {
+      "original": "3c67d47ea8936f62d4f1851a28ff1a5ab276726c",
+      "integrated": "7914b24b0f2f79efad729368c1fffef228899d24"
+    },
+    {
+      "original": "04511ce3bad1063663bf10bc6aa464c39224327d",
+      "integrated": "1e5490e901a2db03e8b5cc5377d60e35f321c73e"
+    },
+    {
+      "original": "5bf78da052e2413d1d9d965e531f54211f07b14b",
+      "integrated": "942c1e317ecd95066b78f18d06c24d22453a409a"
+    }
+  ],
+  "identityFix": "ecec31eb1bdda2a2746b1411e1a6e3262f31cbf7",
+  "brushCommits": [
+    {
+      "original": "3d720d4b106cbb462b52ba5c4381da6459e9705e",
+      "integrated": "ca40889a0838c495648e9cce38e2c5b88e45873b"
+    },
+    {
+      "original": "e2a9348ce531de750d9a4d1377e52dc2191d931d",
+      "integrated": "e05c3135e542236663d392e49c67215f86985486"
+    },
+    {
+      "original": "5f6311c6f662557a3426b5243a85037143d30c34",
+      "integrated": "747400d656691414fbbc8c574f84a76f10f09a2c"
+    },
+    {
+      "original": "1eebb686340572c4f880d75571771180e4b1e142",
+      "integrated": "b7321a2926062ddc9e4b2036cae69c37c20dc931"
+    }
+  ],
+  "focusedChecks": {
+    "sourceBrush": {
+      "pass": 7,
+      "fail": 0,
+      "skipped": 0
+    },
+    "sourceHissenIncludingInputIdentity": {
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    "corePackagingAndComposition": {
+      "pass": 39,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emittedBrush": {
+      "pass": 7,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emittedHissenIncludingInputIdentity": {
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    "notes": "Hissen selections contain five runtime/ownership/budget cases plus one source identity metadata case. Brush seven includes four original five-Roller/three-Brush compatibility cases, plus matrix, actual geometry and representation transitions. No emitted source fallback."
+  },
+  "commands": {
+    "sourceBrush": "node --experimental-vm-modules --test patches/splatoon3/tests/brush-rolling-transform-cache.test.mjs patches/splatoon3/tests/brush-head-contact-geometry.test.mjs patches/splatoon3/tests/brush-contact-representation.test.mjs patches/splatoon3/tests/roller-brush-held-motion.test.mjs",
+    "sourceHissen": "node --experimental-vm-modules --test --test-name-pattern='Hissen|ordinary FX' patches/local-quality/tests/ink-volume-recipes.test.mjs patches/local-quality/tests/ink-volume-defaults.test.mjs",
+    "emitted": "Same respective test commands with INKWAVE_BUILT_SITE=/workspace/scratch/integration-reviewed-batch-site; fixtures verify real emitted composition, no source fallback.",
+    "corePackagingAndComposition": "node --test scripts/tests/inkwave-build-input-coverage.test.mjs scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-volume-packaging.test.mjs",
+    "build": "node scripts/build-inkwave.mjs inkwave-public /workspace/scratch/integration-reviewed-batch-site",
+    "identity": "node reports/brush-downhill-contact-20261027/audit-build.mjs /workspace/scratch/integration-reviewed-batch-site <receipt-output>",
+    "startup": "node scripts/check-inkwave-startup-budget.mjs /workspace/scratch/integration-reviewed-batch-site",
+    "browser": "node render-smoke.mjs /workspace/scratch/integration-reviewed-batch-site <receipt-output>; installed Chromium, chromiumSandbox:true, approved command route; no new permissions/settings/software"
+  },
+  "identity": {
+    "sourceSha": "b7321a2926062ddc9e4b2036cae69c37c20dc931",
+    "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+    "inputHash": "69308c060120b9ebe716423cc8d41e81cd318132696c180fd926cb87c318bce0",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "hissenCost": {
+    "binaryTransportBytes": 1335253,
+    "manifestBytes": 11813,
+    "decodedBytes": 3374440,
+    "ownedBytesAtCapacity128": 3685736,
+    "maxTrianglesPerBody": 5852,
+    "measuredComponentTriangles": 5300,
+    "measuredComponentGpuCalls": 1,
+    "resourcesDisposedOnce": 70,
+    "lifetime": "no startup contour transport; lazy after active Hissen use, retained until FX disposal; cold-load existing fallback remains possible",
+    "notMeasured": "total memory peak, physical device frame time, original retail morphology"
+  },
+  "brushTransition": {
+    "samples": 144,
+    "minimumMeters": 0.013574507502450261,
+    "maximumMeters": 0.01645924983974867,
+    "bodyTier": "hero",
+    "automaticBodyLodRetested": false,
+    "finalNativeInputRetested": false,
+    "retailComparisonRetested": false
+  },
+  "limitations": [
+    "Hissen main size: accepted changes zero; retail size and spherical floor-child morphology unfinished.",
+    "Brush transition CPU component cases retain body tier hero; automatic body far/native input and retail comparison not rerun on final sequence fix.",
+    "Actual WebGL smoke is a controlled emitted component render, not ordinary gameplay, first-shot readiness or retail visual acceptance.",
+    "Original horizontal Shooter inner marker, other original visual/timing and device performance gaps remain.",
+    "Final automatic CI must execute on the published head; local passes and superseded cancellations are not remote success.",
+    "Denied PR-description edit remains in effect and was not retried."
+  ],
+  "logs": {
+    "source-brush.log": {
+      "file": "source-brush.log.gz",
+      "uncompressedSha256": "22b45e579bcb74b0df03d3badb9d7579111c71c00c35ac02388c64e8078e65b1"
+    },
+    "source-hissen.log": {
+      "file": "source-hissen.log.gz",
+      "uncompressedSha256": "aee740c0cb0e56cb15bab1d1245a14dec2b17e4f57eac9a0f4af81a7e5824d66"
+    },
+    "emitted-brush.log": {
+      "file": "emitted-brush.log.gz",
+      "uncompressedSha256": "0f58bbf82de44963152bca7be849c408e2029b5c9539ec565eb2cb1cd364e769"
+    },
+    "emitted-hissen.log": {
+      "file": "emitted-hissen.log.gz",
+      "uncompressedSha256": "3810527eea0b9f233514b73e5b50c37a21a0f39da183f19e705e461ad500908d"
+    },
+    "core-packaging-composition.log": {
+      "file": "core-packaging-composition.log.gz",
+      "uncompressedSha256": "12062f3e4006bee3c09f892f8e61700a14ecf2252f07a8457b67253bb3ca83f4"
+    },
+    "build.log": {
+      "file": "build.log.gz",
+      "uncompressedSha256": "8633d6ba21bde3bc938450694a77c35dd7aae587eba8fa5bcdf06bc11cecdfc4"
+    }
+  },
+  "noPrivateMediaAdded": true,
+  "manualCi": false,
+  "mergePerformed": false,
+  "metadataRetry": false
+}

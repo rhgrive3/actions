@@ -1,0 +1,743 @@
+{
+  "kind": "deterministic production-emitted component measurement; body tier fixed hero; not ordinary input or retail comparison",
+  "samples": 144,
+  "minimumMeters": 0.013574507502450261,
+  "maximumMeters": 0.01645924983974867,
+  "rows": [
+    {
+      "id": "s3-brush-mini",
+      "rows": [
+        {
+          "near": false,
+          "tick": 1,
+          "clearance": 0.016026130629921864
+        },
+        {
+          "near": false,
+          "tick": 2,
+          "clearance": 0.01551200631937677
+        },
+        {
+          "near": false,
+          "tick": 3,
+          "clearance": 0.014814109324227998
+        },
+        {
+          "near": false,
+          "tick": 4,
+          "clearance": 0.014183154965668243
+        },
+        {
+          "near": false,
+          "tick": 5,
+          "clearance": 0.013771184719661433
+        },
+        {
+          "near": false,
+          "tick": 6,
+          "clearance": 0.013578603104283049
+        },
+        {
+          "near": false,
+          "tick": 7,
+          "clearance": 0.013586280023795694
+        },
+        {
+          "near": false,
+          "tick": 8,
+          "clearance": 0.013763583329561624
+        },
+        {
+          "near": false,
+          "tick": 9,
+          "clearance": 0.01407943633423736
+        },
+        {
+          "near": false,
+          "tick": 10,
+          "clearance": 0.014512799886194139
+        },
+        {
+          "near": false,
+          "tick": 11,
+          "clearance": 0.015049110482331263
+        },
+        {
+          "near": false,
+          "tick": 12,
+          "clearance": 0.015545081262571037
+        },
+        {
+          "near": true,
+          "tick": 1,
+          "clearance": 0.015918460007335378
+        },
+        {
+          "near": true,
+          "tick": 2,
+          "clearance": 0.016162728576508967
+        },
+        {
+          "near": true,
+          "tick": 3,
+          "clearance": 0.01625540095157585
+        },
+        {
+          "near": true,
+          "tick": 4,
+          "clearance": 0.01616875910168275
+        },
+        {
+          "near": true,
+          "tick": 5,
+          "clearance": 0.015880563180711293
+        },
+        {
+          "near": true,
+          "tick": 6,
+          "clearance": 0.015382542517310305
+        },
+        {
+          "near": true,
+          "tick": 7,
+          "clearance": 0.014706681912998454
+        },
+        {
+          "near": true,
+          "tick": 8,
+          "clearance": 0.014100409817863091
+        },
+        {
+          "near": true,
+          "tick": 9,
+          "clearance": 0.013724602334505176
+        },
+        {
+          "near": true,
+          "tick": 10,
+          "clearance": 0.013574507502450261
+        },
+        {
+          "near": true,
+          "tick": 11,
+          "clearance": 0.01360875153263158
+        },
+        {
+          "near": true,
+          "tick": 12,
+          "clearance": 0.013777396792767738
+        },
+        {
+          "near": false,
+          "tick": 1,
+          "clearance": 0.01408062565589896
+        },
+        {
+          "near": false,
+          "tick": 2,
+          "clearance": 0.014494425426870738
+        },
+        {
+          "near": false,
+          "tick": 3,
+          "clearance": 0.015000478224522329
+        },
+        {
+          "near": false,
+          "tick": 4,
+          "clearance": 0.015460391060588496
+        },
+        {
+          "near": false,
+          "tick": 5,
+          "clearance": 0.015807550550502536
+        },
+        {
+          "near": false,
+          "tick": 6,
+          "clearance": 0.01603803984516916
+        },
+        {
+          "near": false,
+          "tick": 7,
+          "clearance": 0.016130138727326715
+        },
+        {
+          "near": false,
+          "tick": 8,
+          "clearance": 0.016055657761239406
+        },
+        {
+          "near": false,
+          "tick": 9,
+          "clearance": 0.015791305510739262
+        },
+        {
+          "near": false,
+          "tick": 10,
+          "clearance": 0.015330658914529671
+        },
+        {
+          "near": false,
+          "tick": 11,
+          "clearance": 0.014706717396477553
+        },
+        {
+          "near": false,
+          "tick": 12,
+          "clearance": 0.014152294846339508
+        },
+        {
+          "near": true,
+          "tick": 1,
+          "clearance": 0.013806563686082907
+        },
+        {
+          "near": true,
+          "tick": 2,
+          "clearance": 0.01366566883224457
+        },
+        {
+          "near": true,
+          "tick": 3,
+          "clearance": 0.01370537503532887
+        },
+        {
+          "near": true,
+          "tick": 4,
+          "clearance": 0.013889772609319728
+        },
+        {
+          "near": true,
+          "tick": 5,
+          "clearance": 0.014183314476403142
+        },
+        {
+          "near": true,
+          "tick": 6,
+          "clearance": 0.014562971203907316
+        },
+        {
+          "near": true,
+          "tick": 7,
+          "clearance": 0.015017632284689109
+        },
+        {
+          "near": true,
+          "tick": 8,
+          "clearance": 0.015437560833605757
+        },
+        {
+          "near": true,
+          "tick": 9,
+          "clearance": 0.01576284231266084
+        },
+        {
+          "near": true,
+          "tick": 10,
+          "clearance": 0.015988854214448178
+        },
+        {
+          "near": true,
+          "tick": 11,
+          "clearance": 0.016092109742719685
+        },
+        {
+          "near": true,
+          "tick": 12,
+          "clearance": 0.01604194968120992
+        }
+      ]
+    },
+    {
+      "id": "s3-brush-normal",
+      "rows": [
+        {
+          "near": false,
+          "tick": 1,
+          "clearance": 0.01638779333311491
+        },
+        {
+          "near": false,
+          "tick": 2,
+          "clearance": 0.016148597401145492
+        },
+        {
+          "near": false,
+          "tick": 3,
+          "clearance": 0.015944610181011454
+        },
+        {
+          "near": false,
+          "tick": 4,
+          "clearance": 0.0154029012683492
+        },
+        {
+          "near": false,
+          "tick": 5,
+          "clearance": 0.014702148229885026
+        },
+        {
+          "near": false,
+          "tick": 6,
+          "clearance": 0.014114198624480712
+        },
+        {
+          "near": false,
+          "tick": 7,
+          "clearance": 0.013745940169834991
+        },
+        {
+          "near": false,
+          "tick": 8,
+          "clearance": 0.01359276604090176
+        },
+        {
+          "near": false,
+          "tick": 9,
+          "clearance": 0.013632748868178002
+        },
+        {
+          "near": false,
+          "tick": 10,
+          "clearance": 0.013834282072872184
+        },
+        {
+          "near": false,
+          "tick": 11,
+          "clearance": 0.0141670618909423
+        },
+        {
+          "near": false,
+          "tick": 12,
+          "clearance": 0.014613345092544083
+        },
+        {
+          "near": true,
+          "tick": 1,
+          "clearance": 0.015149573796397142
+        },
+        {
+          "near": true,
+          "tick": 2,
+          "clearance": 0.015619779376510323
+        },
+        {
+          "near": true,
+          "tick": 3,
+          "clearance": 0.015970037085193733
+        },
+        {
+          "near": true,
+          "tick": 4,
+          "clearance": 0.016190956472484364
+        },
+        {
+          "near": true,
+          "tick": 5,
+          "clearance": 0.016257958392470684
+        },
+        {
+          "near": true,
+          "tick": 6,
+          "clearance": 0.016142846938656863
+        },
+        {
+          "near": true,
+          "tick": 7,
+          "clearance": 0.01582457929649722
+        },
+        {
+          "near": true,
+          "tick": 8,
+          "clearance": 0.015297601701011965
+        },
+        {
+          "near": true,
+          "tick": 9,
+          "clearance": 0.014614918876423078
+        },
+        {
+          "near": true,
+          "tick": 10,
+          "clearance": 0.01404879948411758
+        },
+        {
+          "near": true,
+          "tick": 11,
+          "clearance": 0.01371383483463895
+        },
+        {
+          "near": true,
+          "tick": 12,
+          "clearance": 0.01359950473504945
+        },
+        {
+          "near": false,
+          "tick": 1,
+          "clearance": 0.0136555588355729
+        },
+        {
+          "near": false,
+          "tick": 2,
+          "clearance": 0.01384603615592317
+        },
+        {
+          "near": false,
+          "tick": 3,
+          "clearance": 0.014166252499613008
+        },
+        {
+          "near": false,
+          "tick": 4,
+          "clearance": 0.014594912928898474
+        },
+        {
+          "near": false,
+          "tick": 5,
+          "clearance": 0.015104480504373186
+        },
+        {
+          "near": false,
+          "tick": 6,
+          "clearance": 0.015545094158654127
+        },
+        {
+          "near": false,
+          "tick": 7,
+          "clearance": 0.015874789792041488
+        },
+        {
+          "near": false,
+          "tick": 8,
+          "clearance": 0.0160858820917531
+        },
+        {
+          "near": false,
+          "tick": 9,
+          "clearance": 0.016154217006145943
+        },
+        {
+          "near": false,
+          "tick": 10,
+          "clearance": 0.016050779021914208
+        },
+        {
+          "near": false,
+          "tick": 11,
+          "clearance": 0.015754094366189464
+        },
+        {
+          "near": false,
+          "tick": 12,
+          "clearance": 0.015260475899357528
+        },
+        {
+          "near": true,
+          "tick": 1,
+          "clearance": 0.014623843745103116
+        },
+        {
+          "near": true,
+          "tick": 2,
+          "clearance": 0.014098972558654166
+        },
+        {
+          "near": true,
+          "tick": 3,
+          "clearance": 0.013784339573239879
+        },
+        {
+          "near": true,
+          "tick": 4,
+          "clearance": 0.013671868869262194
+        },
+        {
+          "near": true,
+          "tick": 5,
+          "clearance": 0.013735279372762144
+        },
+        {
+          "near": true,
+          "tick": 6,
+          "clearance": 0.013938536254303246
+        },
+        {
+          "near": true,
+          "tick": 7,
+          "clearance": 0.014248197885524005
+        },
+        {
+          "near": true,
+          "tick": 8,
+          "clearance": 0.014645156320239938
+        },
+        {
+          "near": true,
+          "tick": 9,
+          "clearance": 0.015111510936535011
+        },
+        {
+          "near": true,
+          "tick": 10,
+          "clearance": 0.015522193150564356
+        },
+        {
+          "near": true,
+          "tick": 11,
+          "clearance": 0.015837104472405605
+        },
+        {
+          "near": true,
+          "tick": 12,
+          "clearance": 0.016047751573718794
+        }
+      ]
+    },
+    {
+      "id": "s3-brush-heavy",
+      "rows": [
+        {
+          "near": false,
+          "tick": 1,
+          "clearance": 0.013651473628804589
+        },
+        {
+          "near": false,
+          "tick": 2,
+          "clearance": 0.013721107305274094
+        },
+        {
+          "near": false,
+          "tick": 3,
+          "clearance": 0.013937634134277288
+        },
+        {
+          "near": false,
+          "tick": 4,
+          "clearance": 0.014292371840672558
+        },
+        {
+          "near": false,
+          "tick": 5,
+          "clearance": 0.01477220809035884
+        },
+        {
+          "near": false,
+          "tick": 6,
+          "clearance": 0.015326698336656008
+        },
+        {
+          "near": false,
+          "tick": 7,
+          "clearance": 0.015788268586105936
+        },
+        {
+          "near": false,
+          "tick": 8,
+          "clearance": 0.016129664035748115
+        },
+        {
+          "near": false,
+          "tick": 9,
+          "clearance": 0.016335910114810615
+        },
+        {
+          "near": false,
+          "tick": 10,
+          "clearance": 0.016379265759790207
+        },
+        {
+          "near": false,
+          "tick": 11,
+          "clearance": 0.01645924983974867
+        },
+        {
+          "near": false,
+          "tick": 12,
+          "clearance": 0.015865283769517347
+        },
+        {
+          "near": true,
+          "tick": 1,
+          "clearance": 0.015279423128136627
+        },
+        {
+          "near": true,
+          "tick": 2,
+          "clearance": 0.01457248270648731
+        },
+        {
+          "near": true,
+          "tick": 3,
+          "clearance": 0.01402232336611356
+        },
+        {
+          "near": true,
+          "tick": 4,
+          "clearance": 0.013693614277537708
+        },
+        {
+          "near": true,
+          "tick": 5,
+          "clearance": 0.01357796868637029
+        },
+        {
+          "near": true,
+          "tick": 6,
+          "clearance": 0.013651176840919238
+        },
+        {
+          "near": true,
+          "tick": 7,
+          "clearance": 0.013881414248976931
+        },
+        {
+          "near": true,
+          "tick": 8,
+          "clearance": 0.014240028120806048
+        },
+        {
+          "near": true,
+          "tick": 9,
+          "clearance": 0.014713416882256608
+        },
+        {
+          "near": true,
+          "tick": 10,
+          "clearance": 0.015257617825329972
+        },
+        {
+          "near": true,
+          "tick": 11,
+          "clearance": 0.015709917389824163
+        },
+        {
+          "near": true,
+          "tick": 12,
+          "clearance": 0.016040201896496548
+        },
+        {
+          "near": false,
+          "tick": 1,
+          "clearance": 0.016235169443199582
+        },
+        {
+          "near": false,
+          "tick": 2,
+          "clearance": 0.01626873333110712
+        },
+        {
+          "near": false,
+          "tick": 3,
+          "clearance": 0.016113304480191437
+        },
+        {
+          "near": false,
+          "tick": 4,
+          "clearance": 0.01575062055256371
+        },
+        {
+          "near": false,
+          "tick": 5,
+          "clearance": 0.01517877189610517
+        },
+        {
+          "near": false,
+          "tick": 6,
+          "clearance": 0.014487189891557062
+        },
+        {
+          "near": false,
+          "tick": 7,
+          "clearance": 0.013959101554276043
+        },
+        {
+          "near": false,
+          "tick": 8,
+          "clearance": 0.013663659047181365
+        },
+        {
+          "near": false,
+          "tick": 9,
+          "clearance": 0.013585823236612615
+        },
+        {
+          "near": false,
+          "tick": 10,
+          "clearance": 0.013664776494673903
+        },
+        {
+          "near": false,
+          "tick": 11,
+          "clearance": 0.013883884670692126
+        },
+        {
+          "near": false,
+          "tick": 12,
+          "clearance": 0.014229517834095207
+        },
+        {
+          "near": true,
+          "tick": 1,
+          "clearance": 0.014684992340721237
+        },
+        {
+          "near": true,
+          "tick": 2,
+          "clearance": 0.015201294435655016
+        },
+        {
+          "near": true,
+          "tick": 3,
+          "clearance": 0.01562564400549249
+        },
+        {
+          "near": true,
+          "tick": 4,
+          "clearance": 0.01593687089143686
+        },
+        {
+          "near": true,
+          "tick": 5,
+          "clearance": 0.016123012293099426
+        },
+        {
+          "near": true,
+          "tick": 6,
+          "clearance": 0.01615859511497364
+        },
+        {
+          "near": true,
+          "tick": 7,
+          "clearance": 0.016014890066986365
+        },
+        {
+          "near": true,
+          "tick": 8,
+          "clearance": 0.015674363893028703
+        },
+        {
+          "near": true,
+          "tick": 9,
+          "clearance": 0.0151367644894784
+        },
+        {
+          "near": true,
+          "tick": 10,
+          "clearance": 0.014492230111983917
+        },
+        {
+          "near": true,
+          "tick": 11,
+          "clearance": 0.014001320226335934
+        },
+        {
+          "near": true,
+          "tick": 12,
+          "clearance": 0.013722876893619756
+        }
+      ]
+    }
+  ]
+}

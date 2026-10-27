@@ -6573,3 +6573,9 @@ Source/emitted regressions cover nonconstant counted RNG, effective opaque+fring
 `e2a9348c` の頭部接触補正は、非ローカル表示がfarへ切り替わっても非表示の曲がったnear頭部を解き続け、ホクサイの表示far形状が約7.70cm浮いた。前フレームの `w.near` を読むだけでは戻りnearの最初の1フレームが約4.34cm潜る。武器表示の既存選択・far形状準備を本番合成adapterで共有メソッドへ分け、選択規則を複製せず、接触poseと既存animatorが同じ現在フレームの判定を読む。nearは変形頭部、farは実表示の結合形状で床補正する。キャラクターモデル／リグ／クリップ／外見／モデル統合、選択閾値、物理・塗り・乱数は変更しない。元の接地目標値と角度制限を維持する。
 
 全3 Brushでfar／nearを繰り返す決定的source／最適化emitted頂点診断の144点は約1.36〜1.65cmとなり、切替直後も0〜3cm内に収まった。既存の坂入口／出口・描画間隔回帰と、5 Roller／3 Brushの30/60/120Hz保持・空中・着地互換を含めsource／emitted各7件成功。emitted互換は独立受入済みの検証専用fixture `e6fb91fa` を使用し、本番束の実state読取関数を参照する。詳細と旧版負例は[武器表示所有者の追補](brush-contact-representation-20261027/README.md)。通常入力ブラウザ・GPU計測・本家実機の追加比較は行っておらず、原作の精密な接地高さや形状一致の未確認を解消したとは扱わない。
+
+## 2026-10-27 UTC: reviewed fallback/contact batch integration
+
+受入済みHissen fallback4commitとBrush接触／表示所有4commitを同一の本番合成へ取り込み、core CI失敗を起こした検証fixtureのpin処理も修正した。既存3本のemittedテスト引数を正確な場所・順序で必須化してから変更前のdigestを比較し、workflowや必須assertionを緩めていない。Hissen追加2資産のsource identity漏れも実際に検出し、manifest／binaryの入力SHAを登録した。合成後source／設定52件、対応emitted13件がskipなしで成功し、1493入力／2199生成物のdigest不一致0。生成版の実WebGL componentは594pixelを描き、GL error0、70資源を各1回解放したが、通常ゲーム操作や本家比較の証拠ではない。
+
+Brush切替144点は1.35745〜1.64592cm、body tier固定heroで測定した。自動body far・最終順序修正後の通常入力・実機性能・本家精密比較は未実施。Hissenは初回需要までcontour通信0、需要後binary1,335,253byte＋manifest11,813byte、所有renderer領域約3.5〜3.7MBがFX破棄まで残る。初回cold load中の既存fallback、全メモリpeak、端末frame timeは未解消。**Hissen主弾サイズの受入変更は0で、本家サイズ／床子滴形状は未完**。保存媒体は既存bundled coverage由来の生成contourとテキスト計測のみで、私的／Nintendo参照画像は追加しない。[合成結果・費用・制約](inkwave-batch-integration-20261026/reviewed-core-hissen-brush-20261027/README.md)。最終headの自動CIとmainへのmerge可否は別ゲートであり、過去のcancel／未実行を成功扱いしない。
