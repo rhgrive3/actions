@@ -1,0 +1,50 @@
+✔ precache workers claim each snapshot path once in order with at most two concurrent fetches (60.309259ms)
+✖ diorama retains live bubbler targets and hover while static key DOM stays stable (66.655276ms)
+(node:3039) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ target card writes only changed text and HP while restoring external DOM changes (243.910722ms)
+✔ outgoing Dualies snapshots retain startup, recovery and direction fields with one direction lookup (80.224676ms)
+✔ the normal production copy pass skips only the privately bundled Three core before composition (2.460165ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 3
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1177.451436
+
+✖ failing tests:
+
+test at patches/local-quality/tests/queue-ui-20261025.test.mjs:232:1
+✖ diorama retains live bubbler targets and hover while static key DOM stays stable (66.655276ms)
+  Error: UI queue composition conflict: bubbler pin visibility boundary
+      at once (file:///workspace/inkwave/patches/local-quality/queue-ui-20261025-adapter.mjs:4:70)
+      at patch (file:///workspace/inkwave/patches/local-quality/queue-ui-20261025-adapter.mjs:8:52)
+      at adaptQueueUi20261025 (file:///workspace/inkwave/patches/local-quality/queue-ui-20261025-adapter.mjs:10:5)
+      at composed (file:///workspace/inkwave/patches/local-quality/tests/queue-ui-20261025.test.mjs:13:60)
+      at TestContext.<anonymous> (file:///workspace/inkwave/patches/local-quality/tests/queue-ui-20261025.test.mjs:233:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at patches/practice-range/tests/target-feedback.test.mjs:57:1
+✖ target card writes only changed text and HP while restoring external DOM changes (243.910722ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '距離 7.0 m'
+  - 'FROM 7.0 m'
+  
+      at TestContext.<anonymous> (file:///workspace/inkwave/patches/practice-range/tests/target-feedback.test.mjs:76:57)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '距離 7.0 m',
+    expected: 'FROM 7.0 m',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

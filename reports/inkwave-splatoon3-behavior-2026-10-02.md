@@ -6527,3 +6527,11 @@ source13件＋実弾一致／寿命15件、最終emitted11件、通常build・qu
 ## 2026-10-26 Unsupported Physics bridge guide fallback
 
 `.level`を公開しないPhysics bridgeが別の`G.level.collisionRevision`を借りると、実衝突床0→-2の変更後もShooter／Dualies両手のguideだけが0に残る限定adapterケースを確認した。revision取得2か所を実`physics.level`だけに限定し、owner不明のbridgeは再計算する。[最小回帰と記録](shooter-guide-bridge-20261026/README.md)は実Physicsへのdelegateと別の正常Levelを使い、実ownerへの通知後もG.levelのrevisionが不変という条件で負例・修正を確認する。source11件・最終emitted11件、通常build・quick・startupの全artifact digestが成功し、通常Level／NativePhysicsの再利用は維持した。物理・producer・表示条件を変更せず、本家inner-markerの外見の未確認とは分離する。
+
+## 2026-10-26: 処理別最適化と独立3レビュー
+
+調査基準main `48511150`、統合基準main `d88aa68`、本家参照Splatoon 3 Ver.11.3.0を維持する。[処理別記録](inkwave-process-optimization-20261026/README.md)に、ボス探索・行動・時計、原典球スイープ、描画生成・scratch、UI、Dualies通信、読込・ビルドの変更と、変更しなかった処理の理由を保存した。ボスモード・練習場・原典／カタログDualiesを対象とし、ブキ・ギア・速度・射程・ダメージ・入力／発射時刻・乱数・塗り・カメラの既存パラメータは変更しない。歩行、泳ぎ、敵インク、変身、ジャンプ、壁登り、回復、被弾、復活の新たな本家一致を認定する作業ではない。
+
+公開ソース単独ではなく本番合成コードで、探索順／経路／時計端点／乱数選択、sourceとmovingの接触選択・UV・miss・出力所有、波／ジオメトリのバイト列、マップのターゲット・hover・入力寿命、HUDの動的値を比較した。原典balanced→highの材質channelは直接highのshader／cache keyへ一致させ、abort後のKTX2処理は実完了まで旧loaderを保持する。物理近似・フレーム間引き・画質低下による最適化は行わない。
+
+これらはINKWAVEの実装同値性と資源寿命のCPU／合成検証であり、Nintendoの非公開値を確定する根拠ではない。[任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)と既存の11.3.0参照・未確認事項を引き継ぐ。本家実機、同一ブキ・ギア・状態の動的映像、iPad／Safariの実機性能は未計測。統合ブラウザ／CIの結果も、本家実機比較とは別に扱う。

@@ -94,8 +94,7 @@ function parseKtxTexture(loader,bytes,signal,finished=()=>{}){
   const settle=(fn,value)=>{if(settled)return false;settled=true;signal?.removeEventListener?.('abort',onAbort);fn(value);return true;};
   const onAbort=()=>settle(reject,new DOMException('Aborted','AbortError'));
   if(signal?.aborted){onAbort();complete();return;}
-  signal?.addEventListener?.('abort',onAbort,{once:true});
-  try{loader.parse(bytes,texture=>{try{if(signal?.aborted)onAbort();if(!settle(resolve,texture))texture?.dispose?.();}finally{complete();}},error=>{try{settle(reject,error);}finally{complete();}});}
+  try{signal?.addEventListener?.('abort',onAbort,{once:true});loader.parse(bytes,texture=>{try{if(signal?.aborted)onAbort();if(!settle(resolve,texture))texture?.dispose?.();}finally{complete();}},error=>{try{settle(reject,error);}finally{complete();}});}
   catch(error){try{settle(reject,error);}finally{complete();}}
  });
 }
@@ -107,22 +106,24 @@ async function prebuiltCompressedTexture(variant,packs,renderer,signal,limit){
  while(Number.isFinite(limit)&&Math.max(width,height)>limit&&(width>1||height>1)){width=Math.max(1,Math.floor(width/2));height=Math.max(1,Math.floor(height/2));}
  const retry=(!blockDimension(width)||!blockDimension(height))&&bytes.byteLength>=48&&new DataView(bytes).getUint32(12,true)===0?bytes.slice(0):null;
  const entry=ktx2Loader(renderer);entry.pending++;
- try{
-  const loader=await entry.loader;
-  let texture=await parseKtxTexture(loader,bytes,signal);
-  if(!needsExactMipRgba(texture,limit))return texture;
-  const selected=texture.mipmaps[mipIndex(texture.mipmaps,limit)],expected=[selected.width,selected.height];texture.dispose();texture=null;
-  if(!retry)throw Error('Invalid compressed base mip requires universal KTX2 source');
-  // This short-lived loader is isolated from concurrent compressed jobs;
-  // only this exceptional texture uses the existing lossless RGBA32 target.
-  const rgbaLoader=new loader.constructor().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer);
-  rgbaLoader.setWorkerLimit?.(1);
-  for(const key of Object.keys(rgbaLoader.workerConfig))rgbaLoader.workerConfig[key]=false;
-  texture=await parseKtxTexture(rgbaLoader,retry,signal,()=>rgbaLoader.dispose());
-  const actual=texture.mipmaps?.[mipIndex(texture.mipmaps,limit)];
-  if(texture.format!==THREE.RGBAFormat||!actual||actual.width!==expected[0]||actual.height!==expected[1]){texture.dispose();throw Error('RGBA32 transcode changed selected mip');}
-  exactMipRgba.add(texture);return texture;
- }finally{entry.pending--;releaseKtx2(entry);}
+ const finished=()=>{entry.pending--;releaseKtx2(entry);};
+ let loader;
+ try{loader=await entry.loader;}catch(error){finished();throw error;}
+ // Aborting settles the caller before KTX2's worker finishes. Its callback
+ // still owns the loader until parseKtxTexture reports actual completion.
+ let texture=await parseKtxTexture(loader,bytes,signal,finished);
+ if(!needsExactMipRgba(texture,limit))return texture;
+ const selected=texture.mipmaps[mipIndex(texture.mipmaps,limit)],expected=[selected.width,selected.height];texture.dispose();texture=null;
+ if(!retry)throw Error('Invalid compressed base mip requires universal KTX2 source');
+ // This short-lived loader is isolated from concurrent compressed jobs;
+ // only this exceptional texture uses the existing lossless RGBA32 target.
+ const rgbaLoader=new loader.constructor().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer);
+ rgbaLoader.setWorkerLimit?.(1);
+ for(const key of Object.keys(rgbaLoader.workerConfig))rgbaLoader.workerConfig[key]=false;
+ texture=await parseKtxTexture(rgbaLoader,retry,signal,()=>rgbaLoader.dispose());
+ const actual=texture.mipmaps?.[mipIndex(texture.mipmaps,limit)];
+ if(texture.format!==THREE.RGBAFormat||!actual||actual.width!==expected[0]||actual.height!==expected[1]){texture.dispose();throw Error('RGBA32 transcode changed selected mip');}
+ exactMipRgba.add(texture);return texture;
 }
 /** Same bound as the PNG path's resize: start the chain at the first level within the cap. */
 export function capMipLevels(texture,limit){

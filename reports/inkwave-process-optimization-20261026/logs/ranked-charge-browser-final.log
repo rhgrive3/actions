@@ -1,0 +1,6 @@
+Chromium 154.0.8037.57 (custom-executable)
+online rainmaker
+ranked capture state rainmaker-online-0.jpg {"before":{"frame":213,"time":9.916666666666739,"matchTime":297.3500000000024},"after":{"frame":213,"time":9.916666666666739,"matchTime":297.3500000000024},"raf":true,"frozen":true,"skipRender":true,"mode":"rainmaker","state":"playing","actors":8,"fonts":"loaded","visibility":"visible","canvas":{"width":960,"height":600,"box":{"x":0,"y":0,"width":1280,"height":800},"display":"block","contextLost":false},"draw":{"frame":177,"calls":160,"triangles":490840,"points":0,"lines":0},"hud":"ガチホコバトルアルファ65·ブラボー1004:58残り50秒 · Ranked Guest · チャージ0% · 戻りすぎ注意！"}
+ranked capture complete via CDP rainmaker-online-0.jpg 462
+ranked capture state rainmaker-online-1.jpg {"before":{"frame":298,"time":16.55000000000034,"matchTime":297.5166666666689},"after":{"frame":300,"time":16.850000000000325,"matchTime":297.5166666666689},"raf":true,"frozen":false,"skipRender":true,"mode":"rainmaker","state":"playing","actors":8,"fonts":"loaded","visibility":"visible","canvas":{"width":720,"height":450,"box":{"x":0,"y":0,"width":1280,"height":800},"display":"block","contextLost":false},"draw":{"frame":294,"calls":0,"triangles":0,"points":0,"lines":0},"hud":"ガチホコバトルアルファ65·ブラボー1004:58残り51秒 · Ranked Guest · チャージ0% · 戻りすぎ注意！"}
+ranked capture complete via CDP rainmaker-online-1.jpg 487

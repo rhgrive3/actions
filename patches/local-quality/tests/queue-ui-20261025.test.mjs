@@ -10,7 +10,8 @@ const before = JSON.parse(fs.readFileSync(new URL('./fixtures/queue-ui-before.js
 const marks = {'hud.js':'if (dy !== 0)', 'hud-boss.js':'this.hud._bossSquadViews?', 'menus.js':'const netOff = this._netOff;', 'news.js':'this._nextTimer = setTimeout', 'menu-art.js':'r._queuePaintT', 'mobile.js':'el._queueStickTransform', 'minimap.js':'let queueJumpPulse', 'showcase.js':'this._queueFirstFree = 0;'};
 function composed(rel) {
   let code = adaptBuildSource(rel, fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8'));
-  if (!code.includes(marks[rel.split('/').at(-1)])) code = adaptQueueUi20261025(rel, code);
+  const mark = rel === 'src/ui/diorama.js' ? 'pin._keyMarkup' : marks[rel.split('/').at(-1)];
+  if (!code.includes(mark)) code = adaptQueueUi20261025(rel, code);
   return code;
 }
 function between(code, start, end) { const a=code.indexOf(start), b=code.indexOf(end,a); assert(a>=0 && b>a,start); return code.slice(a,b); }
@@ -227,4 +228,48 @@ test('actual InkFX lowest-free allocation preserves RNG, matrices and landing re
     assert.equal(b.o.drop(0,0,0,0,0,0,1,0),a.o.drop(0,0,0,0,0,0,1,0));
     assert.equal(b.o.drop(0,0,0,0,0,0,1),a.o.drop(0,0,0,0,0,0,1));
   }
+});
+
+test('diorama retains live bubbler targets and hover while static key DOM stays stable', () => {
+  const body = between(composed('src/ui/diorama.js'), '  _ensureBubblerPins(targets) {', '  releaseMatchActors(');
+  let writes = 0, keycaps = 0;
+  const el = () => {
+    let html = '';
+    return { style: new Proxy({}, { set(o, key, value) { writes++; o[key] = value; return true; } }),
+      get innerHTML() { return html; }, set innerHTML(value) { writes++; html = value; } };
+  };
+  const makePin = id => ({ id, el: el(), keyEl: el(), bubblerTarget: null });
+  const owner = { basePins: [0, 1, 2, 3].map(makePin), selfPin: makePin('self'), bubblerPins: [], hover: -1,
+    pinLayer: { insertBefore() {} }, _pin: makePin };
+  owner.pins = [...owner.basePins, owner.selfPin];
+  const pins = owner.pins;
+  const update = fn(body, '_ensureBubblerPins', { keycap: n => { keycaps++; return `<kbd>${n}</kbd>`; } });
+  const targets = Array.from({ length: 7 }, (_, id) => ({ id, serial: 1 }));
+  for (const count of [0, 1, 5, 7, 2, 0, 7]) {
+    update.call(owner, targets.slice(0, count));
+    assert.equal(owner.pins, pins, 'the overlay keeps one owned ordering array');
+    assert.deepEqual(Array.from(owner.pins, p => p.id), [0, 1, 2, 3, ...targets.slice(0, count).map((_, i) => i + 4), 'self']);
+    for (let i = 0; i < owner.bubblerPins.length; i++) {
+      const pin = owner.bubblerPins[i];
+      assert.equal(pin.bubblerTarget, targets[i] && i < count ? targets[i] : null);
+      assert.equal(pin.el.style.display, i < count ? '' : 'none');
+      assert.equal(pin.keyEl.innerHTML, i < 5 ? `<kbd>${i + 5}</kbd>` : '');
+    }
+    const before = writes;
+    for (let frame = 0; frame < 120; frame++) update.call(owner, targets.slice(0, count));
+    assert.equal(writes, before, 'unchanged frames do not replace numbered keys or styles');
+  }
+  assert.equal(keycaps, 5, 'each static numbered key is generated once');
+  owner.hover = 4;
+  const changed = [{ id: 0, serial: 2 }, ...targets.slice(1)];
+  update.call(owner, changed);
+  assert.equal(owner.hover, -1); assert.equal(owner.pins[4].bubblerTarget, changed[0]);
+  owner.bubblerPins[0].keyEl.innerHTML = 'external';
+  owner.bubblerPins[0].el.style.display = 'none';
+  update.call(owner, changed);
+  assert.equal(owner.bubblerPins[0].keyEl.innerHTML, '<kbd>5</kbd>');
+  assert.equal(owner.bubblerPins[0].el.style.display, '');
+  owner.bubblerPins[0].keyEl = el();
+  update.call(owner, changed);
+  assert.equal(owner.bubblerPins[0].keyEl.innerHTML, '<kbd>5</kbd>');
 });

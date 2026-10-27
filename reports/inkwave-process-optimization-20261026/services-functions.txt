@@ -1,0 +1,995 @@
+inkwave-public/src/audio/streamedTrack.js:3:export class StreamedTrack {
+inkwave-public/src/audio/streamedTrack.js:4:  constructor(engine, id, song, element, onFailure) {
+inkwave-public/src/audio/streamedTrack.js:26:  prime() {
+inkwave-public/src/audio/streamedTrack.js:35:  fadeIn(at, duration) {
+inkwave-public/src/audio/streamedTrack.js:51:  fadeOut(at, duration) {
+inkwave-public/src/audio/streamedTrack.js:75:  pump() {}  // HTMLMediaElement schedules its own decoding and playback.
+inkwave-public/src/audio/streamedTrack.js:76:  setIntensity() {}  // A finished recording has no independent stem layers.
+inkwave-public/src/audio/streamedTrack.js:78:  _fail(error) {
+inkwave-public/src/audio/streamedTrack.js:84:  dispose() {
+inkwave-public/src/net/transport.js:7:export const PROTO = 2;
+inkwave-public/src/net/transport.js:10:export const COMPAT = 'iw-gameplay-20261023-spawn-exclusion-v1';
+inkwave-public/src/net/transport.js:11:export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
+inkwave-public/src/net/transport.js:15:export const PROD_RELAY = 'wss://inkwave-relay.rhgrive.workers.dev';
+inkwave-public/src/net/transport.js:16:export function relayURL() {
+inkwave-public/src/net/transport.js:33:export class Transport {
+inkwave-public/src/net/transport.js:34:  constructor() {
+inkwave-public/src/net/transport.js:46:  connect(code, name, create) {
+inkwave-public/src/net/transport.js:88:  _startPing() {
+inkwave-public/src/net/transport.js:97:  _stopPing() { if (this._pingT) clearInterval(this._pingT); this._pingT = null; }
+inkwave-public/src/net/transport.js:99:  _raw(s) {
+inkwave-public/src/net/transport.js:106:  broadcast(obj) { return this._raw('b|' + JSON.stringify(obj)); }
+inkwave-public/src/net/transport.js:107:  sendTo(id, obj) { return this._raw('s|' + id + '|' + JSON.stringify(obj)); }
+inkwave-public/src/net/transport.js:108:  lock(v) { return this._raw(JSON.stringify({ t: 'lock', v: !!v })); }
+inkwave-public/src/net/transport.js:111:  close() {
+inkwave-public/src/audio/bossAudio.js:12:export function installBossAudio() {
+inkwave-public/src/audio/bossAudio.js:69:  on('match:state', ({ state, match }) => {
+inkwave-public/src/audio/bossAudio.js:77:  on('boss:spawn', (e) => begin(e && e.boss));
+inkwave-public/src/audio/bossAudio.js:78:  on('boss:intro', (e) => {
+inkwave-public/src/audio/bossAudio.js:84:  on('boss:move', (e) => {
+inkwave-public/src/audio/bossAudio.js:114:  on('boss:hit', (e) => {
+inkwave-public/src/audio/bossAudio.js:123:  on('boss:stun', (e) => {
+inkwave-public/src/audio/bossAudio.js:129:  on('boss:phase', (e) => {
+inkwave-public/src/audio/bossAudio.js:139:  on('boss:defeat', (e) => {
+inkwave-public/src/audio/bossAudio.js:148:  on('boss:foot', (e) => {
+inkwave-public/src/audio/bossAudio.js:157:  on('boss:impact', (e) => {
+inkwave-public/src/audio/bossAudio.js:164:  on('boss:fx', (e) => {
+inkwave-public/src/audio/bossAudio.js:171:  on('boss:crablet', (e) => {
+inkwave-public/src/net/netmatch.js:46:export class NetMatch {
+inkwave-public/src/net/netmatch.js:47:  constructor(session, cfg) {
+inkwave-public/src/net/netmatch.js:69:  bind(match) {
+inkwave-public/src/net/netmatch.js:82:  _setupActor(a) {
+inkwave-public/src/net/netmatch.js:96:  go() { /* intro starts on every client at the host's word (session._launch → main.netMatchGo) */ }
+inkwave-public/src/net/netmatch.js:98:  dispose() {
+inkwave-public/src/net/netmatch.js:107:  _rec(e) { this.out.push([r3(now()), ...e]); }
+inkwave-public/src/net/netmatch.js:109:  recSplat(c, radius, team, o) {
+inkwave-public/src/net/netmatch.js:116:  recProj(p) {
+inkwave-public/src/net/netmatch.js:124:  recBomb(b) {
+inkwave-public/src/net/netmatch.js:130:  _onLocalEvent(name, e) {
+inkwave-public/src/net/netmatch.js:137:  recBoss(e) { if (this.isHost && G.netm === this) this._rec(e); }
+inkwave-public/src/net/netmatch.js:139:  sendBossHit(attacker, d, weak, w, crab = -1) {
+inkwave-public/src/net/netmatch.js:146:  sendHit(attacker, victim, dmg, wid) {
+inkwave-public/src/net/netmatch.js:158:  _hitNack(d) {
+inkwave-public/src/net/netmatch.js:170:  _sendNow(d) { this.s.tr?.broadcast(d); }
+inkwave-public/src/net/netmatch.js:173:  update(dt) {
+inkwave-public/src/net/netmatch.js:191:  _sendTick() {
+inkwave-public/src/net/netmatch.js:207:  onMessage(from, d) {
+inkwave-public/src/net/netmatch.js:220:  _peer(id) {
+inkwave-public/src/net/netmatch.js:226:  _tick(from, d) {
+inkwave-public/src/net/netmatch.js:268:  _advance(p, dt) {
+inkwave-public/src/net/netmatch.js:285:  _pathAt(buf, t, S) {
+inkwave-public/src/net/netmatch.js:302:  _sample(a, t, dt) {
+inkwave-public/src/net/netmatch.js:346:  applyRemote(a, dt) {
+inkwave-public/src/net/netmatch.js:427:  _voices(dt) {
+inkwave-public/src/net/netmatch.js:440:  _voiceLoop(a, near, key, on, snd) {
+inkwave-public/src/net/netmatch.js:448:  _stopLoops(a) { const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }
+inkwave-public/src/net/netmatch.js:451:  _playEvents() {
+inkwave-public/src/net/netmatch.js:463:  _play(from, e) {
+inkwave-public/src/net/netmatch.js:495:  _sampleBoss(dt) {
+inkwave-public/src/net/netmatch.js:557:  _trigSideEffects(a, name) {
+inkwave-public/src/net/netmatch.js:564:  _playEvent(name, d) {
+inkwave-public/src/net/netmatch.js:594:  _remoteSplat(victim, attacker, cause) {
+inkwave-public/src/net/netmatch.js:614:  _remoteRespawn(a) {
+inkwave-public/src/net/netmatch.js:621:  _hit(d, from) {
+inkwave-public/src/net/netmatch.js:631:  _hostClock([state, time]) {
+inkwave-public/src/net/netmatch.js:636:  _hostState(d) {
+inkwave-public/src/net/netmatch.js:642:  sendResult(result) {
+inkwave-public/src/net/netmatch.js:647:  _result(d) {
+inkwave-public/src/net/netmatch.js:655:  sendEnd() { if (this.isHost) this._sendNow({ k: 'end' }); }
+inkwave-public/src/net/netmatch.js:660:  onLeave(id, hostChanged) {
+inkwave-public/src/net/netmatch.js:675:  _remove(a) {
+inkwave-public/src/net/netmatch.js:681:  _adopt(a) {
+inkwave-public/src/net/netmatch.js:698:  _ownership() { /* reserved: explicit transfers */ }
+inkwave-public/src/net/netmatch.js:700:  shouldApplyHit(attacker, victim) {
+inkwave-public/src/net/netmatch.js:712:function packActor(a) {
+inkwave-public/src/net/netmatch.js:742:function unpackActor(s, ts) {
+inkwave-public/src/net/netmatch.js:746:function blankSample() { return { t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, f: 0, hp: 100, ink: 100, sp: 0, ch: 0, turf: 0, tp: 0, wx: 0, wy: 0, wz: 1, lock: 0, sjT: 0 }; }
+inkwave-public/src/net/netmatch.js:747:function copySample(s, o) { for (const k in s) o[k] = s[k]; return o; }
+inkwave-public/src/net/netmatch.js:751:function quantile(arr, q, s) {
+inkwave-public/src/net/netmatch.js:759:function hermite(a, b, t, o) {
+inkwave-public/src/net/netmatch.js:763:  copySample(a, o);
+inkwave-public/src/net/netmatch.js:784:function packTrig(d) {
+inkwave-public/src/net/netmatch.js:790:function unpackTrig(d) {
+inkwave-public/src/net/netmatch.js:798:function packEvent(e) {
+inkwave-public/src/net/netmatch.js:809:function unpackEvent(d, nm) {
+inkwave-public/src/ui/hud.js:49:function arcPath(r0, r1, halfDeg, tip) {
+inkwave-public/src/ui/hud.js:56:export class HUD {
+inkwave-public/src/ui/hud.js:57:  constructor(rootEl, opts = {}) {
+inkwave-public/src/ui/hud.js:89:  _build() {
+inkwave-public/src/ui/hud.js:227:  setVisible(v) {
+inkwave-public/src/ui/hud.js:236:  attachScreenFX(fx) {
+inkwave-public/src/ui/hud.js:242:  update(dt, f) {
+inkwave-public/src/ui/hud.js:270:  banner(kind = 'custom', text) {
+inkwave-public/src/ui/hud.js:306:  countdown(n) {
+inkwave-public/src/ui/hud.js:315:  hitMarker(kind = 'hit') {
+inkwave-public/src/ui/hud.js:331:  feed({ text = '', color = '#ffffff', kind = 'info' } = {}) {
+inkwave-public/src/ui/hud.js:347:  damage(amount = 0.3, color = '#2f5bff', angle = null) {
+inkwave-public/src/ui/hud.js:357:  showSplatted({ by = null, byColor = '#2f5bff', respawn = 5 } = {}) {
+inkwave-public/src/ui/hud.js:394:  hideSplatted(instant = false) {
+inkwave-public/src/ui/hud.js:403:  judge({ colors = ['#ff8a14', '#2f5bff'], percents = [50, 50], names = TEAM_NAMES } = {}) {
+inkwave-public/src/ui/hud.js:488:  dispose() {
+inkwave-public/src/ui/hud.js:497:  _snd(name, o) { try { this.playSound && this.playSound(name, o); } catch (e) { /* optional */ } }
+inkwave-public/src/ui/hud.js:498:  _live() { if (this.lab) return true; const m = G.match; return !!(m && !m.attract && G.mode === 'match'); }
+inkwave-public/src/ui/hud.js:499:  _local() { return this.lab ? this.lab.local : G.match?.local || null; }
+inkwave-public/src/ui/hud.js:500:  _actors() { return this.lab ? this.lab.actors || [] : G.match?.actors || G.actors || []; }
+inkwave-public/src/ui/hud.js:501:  _now() { return this._fxTime; }
+inkwave-public/src/ui/hud.js:502:  _specialId() { const a = this._local(); const w = a && WEAPONS[a.weaponId]; return w ? w.special : 'slam'; }
+inkwave-public/src/ui/hud.js:504:  _bindBus() {
+inkwave-public/src/ui/hud.js:536:  _startMatchHud(match) {
+inkwave-public/src/ui/hud.js:548:  _onSplatted({ victim, attacker }) {
+inkwave-public/src/ui/hud.js:592:  _killCard(victim, kind) {
+inkwave-public/src/ui/hud.js:608:  _dropCard(card, fast) {
+inkwave-public/src/ui/hud.js:615:  _callout(text, sub, big) {
+inkwave-public/src/ui/hud.js:628:  _lineup(match) {
+inkwave-public/src/ui/hud.js:674:  _addDamageDir(attacker) {
+inkwave-public/src/ui/hud.js:688:  _clearDamageDirs() { for (const d of this._dd) d.el.remove(); this._dd = []; }
+inkwave-public/src/ui/hud.js:689:  _updDamageDirs(dt) {
+inkwave-public/src/ui/hud.js:713:  _allyDown(victim, attacker) {
+inkwave-public/src/ui/hud.js:722:  _updDowns(dt) {
+inkwave-public/src/ui/hud.js:738:  _project(cam, x, y, z) {
+inkwave-public/src/ui/hud.js:748:  _updTimer(time) {
+inkwave-public/src/ui/hud.js:764:  _myTeam() { return G.local && G.local.team === 1 ? 1 : 0; }
+inkwave-public/src/ui/hud.js:765:  _actorFor(side, i) {
+inkwave-public/src/ui/hud.js:771:  _updSquads(teams) {
+inkwave-public/src/ui/hud.js:808:  _buildReticle(kind) {
+inkwave-public/src/ui/hud.js:852:  _updCrosshair(f, dt) {
+inkwave-public/src/ui/hud.js:932:  _updTank(f, dt) {
+inkwave-public/src/ui/hud.js:971:  _drawTank(dt, sub, low, nosub) {
+inkwave-public/src/ui/hud.js:1042:  _updSpecial(f, dt) {
+inkwave-public/src/ui/hud.js:1070:  _updTurf(dt) {
+inkwave-public/src/ui/hud.js:1087:  _turfPop(n) {
+inkwave-public/src/ui/hud.js:1097:  _updHp(hp) {
+inkwave-public/src/ui/hud.js:1107:  _updMap(m, dt) {
+inkwave-public/src/ui/hud.js:1181:  _beaconTargets() {
+inkwave-public/src/ui/hud.js:1200:  _updBeacons(bw, bh, dt, u = 16) {
+inkwave-public/src/ui/hud.js:1274:  _updLegendRow(i, b, canJump) {
+inkwave-public/src/ui/hud.js:1289:  _jumpTo(i) {
+inkwave-public/src/ui/hud.js:1300:  _updMarkers(ms) {
+inkwave-public/src/ui/hud.js:1338:  _updPrompt(p) {
+inkwave-public/src/ui/hud.js:1349:  _updFps(fps, dt) {
+inkwave-public/src/ui/hud.js:1362:  _addFx(name, fn) {
+inkwave-public/src/ui/hud.js:1367:  _fxLoop(t) {
+inkwave-public/src/ui/hud.js:1376:  _restart(el, cls) {
+inkwave-public/src/ui/hud.js:1381:  _expireFeed(el, fast) {
+inkwave-public/src/ui/hud.js:1396:  _resizeCanvas() {
+inkwave-public/src/ui/hud.js:1402:  _spawnSmear(amount, hex, angle = null) {
+inkwave-public/src/ui/hud.js:1444:  _tickSmears(dt) {
+inkwave-public/src/ui/hud.js:1474:export const hudReducedMotion = prefersReducedMotion;
+inkwave-public/src/ui/diorama.js:23:export class DioramaOverlay {
+inkwave-public/src/ui/diorama.js:24:  constructor(root) {
+inkwave-public/src/ui/diorama.js:46:  _pin(i) {
+inkwave-public/src/ui/diorama.js:68:  update(dt, k) {
+inkwave-public/src/ui/diorama.js:180:  _jump(i, me) {
+inkwave-public/src/ui/diorama.js:190:  _flash(i) {
+inkwave-public/src/ui/diorama.js:195:  _head() {
+inkwave-public/src/audio/music.js:23:export const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+inkwave-public/src/audio/music.js:25:export function mulberry32(a) {
+inkwave-public/src/audio/music.js:36:function cache(ctx) {
+inkwave-public/src/audio/music.js:43:export function noiseBuffer(ctx, kind = 'white') {
+inkwave-public/src/audio/music.js:93:export function makeImpulse(ctx, seconds = 1.6, decay = 3.2, opt = {}) {
+inkwave-public/src/audio/music.js:123:export function driveCurve(k) {
+inkwave-public/src/audio/music.js:136:export function pulseWave(ctx, duty = 0.25) {
+inkwave-public/src/audio/music.js:151:export function strokeWave(ctx, sharp = 7) {
+inkwave-public/src/audio/music.js:179:export function perc(p, t, a, peak, d) {
+inkwave-public/src/audio/music.js:187:export function ahr(p, t, a, peak, h, r) {
+inkwave-public/src/audio/music.js:197:export function adsr(p, t, a, d, s, peak, gate, r) {
+inkwave-public/src/audio/music.js:211:export function pts(p, t, list) {
+inkwave-public/src/audio/music.js:216:export function sweep(p, t, f0, f1, dur, lin) {
+inkwave-public/src/audio/music.js:223:export class V {
+inkwave-public/src/audio/music.js:224:  constructor(ctx, out, t, rng) {
+inkwave-public/src/audio/music.js:229:  r(a = 0, b = 1) { return a + (b - a) * this.rng(); }
+inkwave-public/src/audio/music.js:230:  pick(arr) { return arr[Math.floor(this.rng() * arr.length) % arr.length]; }
+inkwave-public/src/audio/music.js:231:  gain(v = 0, to) {
+inkwave-public/src/audio/music.js:236:  filter(type, f, Q = 0.707, to, gainDb) {
+inkwave-public/src/audio/music.js:244:  shaper(k, to) {
+inkwave-public/src/audio/music.js:249:  pan(p, to) {
+inkwave-public/src/audio/music.js:256:  delay(time, to, max = 1) {
+inkwave-public/src/audio/music.js:261:  _src(s, t0, t1, to) {
+inkwave-public/src/audio/music.js:269:  osc(type, f, t0, t1, to) {
+inkwave-public/src/audio/music.js:275:  noise(kind, t0, t1, to, rate = 1) {
+inkwave-public/src/audio/music.js:285:  buffer(buf, t0, t1, to, rate = 1, offset) {
+inkwave-public/src/audio/music.js:295:  lfo(rate, depth, param, t0, t1, type = 'sine') {
+inkwave-public/src/audio/music.js:301:  tone(o) {
+inkwave-public/src/audio/music.js:311:  nz(o) {
+inkwave-public/src/audio/music.js:323:  bub(T, f, peak, d = 0.03, rise = 1.7, to) {
+inkwave-public/src/audio/music.js:327:  finish() {
+inkwave-public/src/audio/music.js:335:  kill(at) {
+inkwave-public/src/audio/music.js:342:  dispose() {
+inkwave-public/src/audio/music.js:355:export function kick(v, T, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:360:  sweep(x.frequency, T, o.f0 ?? 165, o.f1 ?? 46, o.sw ?? 0.085);
+inkwave-public/src/audio/music.js:367:export function snare(v, T, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:375:export function clap(v, T, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:394:export function hat(v, T, vel = 1, open = false, o = {}) {
+inkwave-public/src/audio/music.js:404:export function crash(v, T, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:413:export function rim(v, T, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:419:export function shaker(v, T, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:423:export function tom(v, T, f, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:429:export function bass(v, T, f, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:461:export function guitar(v, T, fs, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:475:export function keys(v, T, f, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:488:export function pad(v, T, f, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:497:export function pluck(v, T, f, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:502:  sweep(lp.frequency, T, o.f0 ?? 5200, o.f1 ?? 520, o.fd ?? 0.16);
+inkwave-public/src/audio/music.js:508:export function bell(v, T, f, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:522:export function brass(v, T, f, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:539:export function lead(v, T, f, gate, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:563:export function riser(v, T, dur, vel = 1, o = {}) {
+inkwave-public/src/audio/music.js:567:  sweep(bp.frequency, T, 350, 7000, dur);
+inkwave-public/src/audio/music.js:568:  pts(g.gain, T, [[0, 0], [dur * 0.9, vel], [dur, vel * 0.8], [dur + 0.02, 0]]);
+inkwave-public/src/audio/music.js:571:  pts(tg.gain, T, [[0, 0], [dur, vel * 0.08], [dur + 0.02, 0]]);
+inkwave-public/src/audio/music.js:573:  sweep(x.frequency, T, 180, 1400, dur);
+inkwave-public/src/audio/music.js:594:function pcOf(s) { return (PC[s[0]] + (s[1] === '#' ? 1 : s[1] === 'b' ? -1 : 0) + 12) % 12; }
+inkwave-public/src/audio/music.js:595:export function parseNote(s) {
+inkwave-public/src/audio/music.js:601:export function parseChord(sym) {
+inkwave-public/src/audio/music.js:613:function inRange(pc, lo) { let n = lo + ((pc - lo) % 12 + 12) % 12; return n; }
+inkwave-public/src/audio/music.js:615:function voice(ch, lo, hi) {
+inkwave-public/src/audio/music.js:621:function powerChord(ch, lo) { const r = inRange(ch.root, lo); return [r, r + 7, r + 12]; }
+inkwave-public/src/audio/music.js:622:function harmBelow(m, ch) {
+inkwave-public/src/audio/music.js:630:function parsePhrase(str, warn, label) {
+inkwave-public/src/audio/music.js:648:function patFor(src, b, nbars, fill) {
+inkwave-public/src/audio/music.js:655:export function compileSong(def) {
+inkwave-public/src/audio/music.js:823:export const SONGS = {
+inkwave-public/src/audio/music.js:1094:export function getSong(id) {
+inkwave-public/src/audio/music.js:1106:class Player {
+inkwave-public/src/audio/music.js:1107:  constructor(eng, id, t0, opts = {}) {
+inkwave-public/src/audio/music.js:1133:  weight(g, x) { const l = this.layers[g]; return l ? smooth(l[0], l[1], x) : 1; }
+inkwave-public/src/audio/music.js:1134:  setIntensity(x, now) {
+inkwave-public/src/audio/music.js:1138:  fadeAt(t) { const f = this.fadeSeg; if (!f) return 0; if (t <= f.t0) return f.v0; if (t >= f.t1) return f.v1; return f.v0 + ((f.v1 - f.v0) * (t - f.t0)) / (f.t1 - f.t0); }
+inkwave-public/src/audio/music.js:1139:  fadeIn(t, dur) {
+inkwave-public/src/audio/music.js:1144:  fadeOut(t, dur) {
+inkwave-public/src/audio/music.js:1151:  nextBarTime(after) {
+inkwave-public/src/audio/music.js:1155:  advance() {
+inkwave-public/src/audio/music.js:1159:  pump(until, now) {
+inkwave-public/src/audio/music.js:1172:  pumpDuck(T) {
+inkwave-public/src/audio/music.js:1177:  fire(e, T) {
+inkwave-public/src/audio/music.js:1244:  dispose() {
+inkwave-public/src/audio/music.js:1255:export class MusicEngine {
+inkwave-public/src/audio/music.js:1256:  constructor() {
+inkwave-public/src/audio/music.js:1264:  now() { return this.offline ? this.vnow : this.ctx.currentTime; }
+inkwave-public/src/audio/music.js:1267:  preloadFile(track, { prime = false } = {}) {
+inkwave-public/src/audio/music.js:1303:  _dropPreload() {
+inkwave-public/src/audio/music.js:1315:  _cancelFileRetry() {
+inkwave-public/src/audio/music.js:1324:  _retryFile(track, reason) {
+inkwave-public/src/audio/music.js:1347:  _init(ctx, dest, opt = {}) {
+inkwave-public/src/audio/music.js:1381:  _startTimer() {
+inkwave-public/src/audio/music.js:1403:  _syncTimer() {
+inkwave-public/src/audio/music.js:1415:  _tick() {
+inkwave-public/src/audio/music.js:1431:  advance(t) { this.vnow = t; this._tick(); }
+inkwave-public/src/audio/music.js:1433:  play(track, opts = {}) {
+inkwave-public/src/audio/music.js:1535:  _onFileFailed(player, error) {
+inkwave-public/src/audio/music.js:1548:  setIntensity(x) {
+inkwave-public/src/audio/music.js:1555:  stop(fade = 1) { this.play(null, { fade }); }
+inkwave-public/src/audio/music.js:1557:  dispose() {
+inkwave-public/src/audio/music.js:1570:export const TRACKS = Object.fromEntries(Object.entries(SONGS).map(([id, s]) => [id, {
+inkwave-public/src/audio/music.js:1575:export const music = new MusicEngine();
+inkwave-public/src/ui/ui-icons.js:15:export const WEAPON_ICONS = {
+inkwave-public/src/ui/ui-icons.js:104:export const SUB_ICONS = {
+inkwave-public/src/ui/ui-icons.js:113:export const SPECIAL_ICONS = {
+inkwave-public/src/ui/ui-icons.js:135:export const SQUID = svg(`<g ${O} stroke-width="3.4">
+inkwave-public/src/ui/ui-icons.js:152:function gearPath() {
+inkwave-public/src/ui/ui-icons.js:162:export const SQUID_PATH = 'M32 3 C40 10 49 19 50 29 L44 31.5 L44 41 C44 44.5 42 46.5 39.5 46.5 L39.5 58 L35.5 53 L32 60 L28.5 53 L24.5 58 L24.5 46.5 C22 46.5 20 44.5 20 41 L20 31.5 L14 29 C15 19 24 10 32 3 Z';
+inkwave-public/src/ui/ui-icons.js:163:export const GLYPHS = {
+inkwave-public/src/ui/ui-icons.js:223:export const SPLAT_ICON = (() => {
+inkwave-public/src/ui/ui-icons.js:227:export const DEATH_ICON = svg(`<g ${O} stroke-width="3.4">
+inkwave-public/src/ui/ui-icons.js:235:export function keycap(k) {
+inkwave-public/src/ui/ui-icons.js:241:export function mouseGlyph(which = 'L') {
+inkwave-public/src/ui/ui-icons.js:252:export function padGlyph(b) {
+inkwave-public/src/ui/ui-icons.js:263:export function richText(str) {
+inkwave-public/src/ui/ui-icons.js:271:export function logoMarkup(title = 'ZEVANT', subtitle = 'Turf Riot', size = 'xl') {
+inkwave-public/src/ui/ui-icons.js:294:export function mapThumb(map, seed = 3) {
+inkwave-public/src/ui/ui-icons.js:340:export const RULE_ART = {
+inkwave-public/src/ui/ui-icons.js:375:export const weaponIcon = (idOrKind) => WEAPON_ICONS[idOrKind] || WEAPON_ICONS.shooter;
+inkwave-public/src/ui/ui-icons.js:376:export const specialIcon = (id) => SPECIAL_ICONS[id] || SPECIAL_ICONS.slam;
+inkwave-public/src/audio/audio.js:42:export function texture(ctx, kind) {
+inkwave-public/src/audio/audio.js:86:export class AudioEngine {
+inkwave-public/src/audio/audio.js:89:  constructor(opts = {}) {
+inkwave-public/src/audio/audio.js:102:  init() {
+inkwave-public/src/audio/audio.js:145:  resume() {
+inkwave-public/src/audio/audio.js:150:  _installUnlock() {
+inkwave-public/src/audio/audio.js:158:  _warm() {
+inkwave-public/src/audio/audio.js:164:  setVolumes(v = {}) {
+inkwave-public/src/audio/audio.js:173:  setListener(pos, forward, up) {
+inkwave-public/src/audio/audio.js:191:  _dist(p) { const dx = p.x - this.L.x, dy = p.y - this.L.y, dz = p.z - this.L.z; return Math.sqrt(dx * dx + dy * dy + dz * dz); }
+inkwave-public/src/audio/audio.js:194:  _panner(pos, ref = 3) {
+inkwave-public/src/audio/audio.js:205:  _setPos(voice, pos, t) {
+inkwave-public/src/audio/audio.js:215:  _sendScale(d) { return Math.sqrt(3 / (3 + 1.2 * Math.max(0, d - 3))); }
+inkwave-public/src/audio/audio.js:217:  _voice(def, t, pos, vol, withFade) {
+inkwave-public/src/audio/audio.js:243:  _steal(voice, now) {
+inkwave-public/src/audio/audio.js:251:  _def(name) {
+inkwave-public/src/audio/audio.js:257:  play(name, o = {}) {
+inkwave-public/src/audio/audio.js:316:  loop(name, o = {}) {
+inkwave-public/src/audio/audio.js:366:  _duckAt(t) {
+inkwave-public/src/audio/audio.js:373:  duck(amount = 0.5, seconds = 1.2) {
+inkwave-public/src/audio/audio.js:389:  stopAll(fade = 0.1) {
+inkwave-public/src/audio/audio.js:398:  stats() {
+inkwave-public/src/audio/audio.js:409:export const SFX = {};
+inkwave-public/src/audio/audio.js:413:function bloops(v, t0, n, spread, fr, peak, p = 1) {
+inkwave-public/src/audio/audio.js:419:function plips(v, t0, n, spread, fr, peak, p = 1) {
+inkwave-public/src/audio/audio.js:422:function bigSplat(v, t, p, s) {
+inkwave-public/src/audio/audio.js:426:  bloops(v, t + 0.02, 3, 0.12, [400, 650], 0.35 * s, p);
+inkwave-public/src/audio/audio.js:429:function uiNote(v, t, m, p, peak) {
+inkwave-public/src/audio/audio.js:438:  build(v, p) {
+inkwave-public/src/audio/audio.js:445:  build(v, p) {
+inkwave-public/src/audio/audio.js:455:  build(v, p) {
+inkwave-public/src/audio/audio.js:464:  build(v, p) {
+inkwave-public/src/audio/audio.js:471:  build(v, p) {
+inkwave-public/src/audio/audio.js:484:  build(v, p) {
+inkwave-public/src/audio/audio.js:500:  build(v, p) {
+inkwave-public/src/audio/audio.js:516:  build(v, p) {
+inkwave-public/src/audio/audio.js:532:  build(v, p) {
+inkwave-public/src/audio/audio.js:547:  loop(v, p) {
+inkwave-public/src/audio/audio.js:569:  build(v, p) {
+inkwave-public/src/audio/audio.js:579:  build(v, p) {
+inkwave-public/src/audio/audio.js:593:  build(v, p) {
+inkwave-public/src/audio/audio.js:608:  loop(v, p) {
+inkwave-public/src/audio/audio.js:630:  build(v, p) {
+inkwave-public/src/audio/audio.js:643:  build(v, p) {
+inkwave-public/src/audio/audio.js:657:  build(v, p) {
+inkwave-public/src/audio/audio.js:672:  build(v, p) {
+inkwave-public/src/audio/audio.js:682:  loop(v, p) {
+inkwave-public/src/audio/audio.js:706:  build(v, p) {
+inkwave-public/src/audio/audio.js:715:  build(v, p) {
+inkwave-public/src/audio/audio.js:726:  build(v, p) {
+inkwave-public/src/audio/audio.js:738:  build(v, p) {
+inkwave-public/src/audio/audio.js:749:  build(v, p) {
+inkwave-public/src/audio/audio.js:758:  build(v, p) {
+inkwave-public/src/audio/audio.js:765:  build(v, p) {
+inkwave-public/src/audio/audio.js:773:  build(v, p) {
+inkwave-public/src/audio/audio.js:787:  build(v, p) {
+inkwave-public/src/audio/audio.js:795:  build(v, p) {
+inkwave-public/src/audio/audio.js:803:  loop(v, p) {
+inkwave-public/src/audio/audio.js:816:  loop(v, p) {
+inkwave-public/src/audio/audio.js:828:  build(v, p) {
+inkwave-public/src/audio/audio.js:836:  build(v, p) {
+inkwave-public/src/audio/audio.js:844:  build(v, p) {
+inkwave-public/src/audio/audio.js:857:  build(v, p) {
+inkwave-public/src/audio/audio.js:871:  build(v, p) {
+inkwave-public/src/audio/audio.js:881:  build(v, p) {
+inkwave-public/src/audio/audio.js:890:  build(v, p) {
+inkwave-public/src/audio/audio.js:906:  build(v, p) {
+inkwave-public/src/audio/audio.js:920:  build(v, p) {
+inkwave-public/src/audio/audio.js:929:  loop(v, p) {
+inkwave-public/src/audio/audio.js:944:  build(v, p) {
+inkwave-public/src/audio/audio.js:953:  build(v, p) {
+inkwave-public/src/audio/audio.js:963:  build(v, p) {
+inkwave-public/src/audio/audio.js:971:  build(v, p) {
+inkwave-public/src/audio/audio.js:984:  build(v, p) {
+inkwave-public/src/audio/audio.js:997:  build(v, p) {
+inkwave-public/src/audio/audio.js:1009:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1021:  build(v, p) {
+inkwave-public/src/audio/audio.js:1033:  build(v, p) {
+inkwave-public/src/audio/audio.js:1042:  build(v, p) {
+inkwave-public/src/audio/audio.js:1053:  build(v, p) {
+inkwave-public/src/audio/audio.js:1072:  build(v, p) {
+inkwave-public/src/audio/audio.js:1081:  build(v, p) {
+inkwave-public/src/audio/audio.js:1088:  build(v, p) {
+inkwave-public/src/audio/audio.js:1098:  build(v, p) {
+inkwave-public/src/audio/audio.js:1108:  build(v, p) {
+inkwave-public/src/audio/audio.js:1121:function snareRoll(v, T, t1, p, to) {
+inkwave-public/src/audio/audio.js:1133:  build(v, p) {
+inkwave-public/src/audio/audio.js:1138:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1145:  build(v, p) {
+inkwave-public/src/audio/audio.js:1154:  build(v, p) {
+inkwave-public/src/audio/audio.js:1176:  build(v, p) {
+inkwave-public/src/audio/audio.js:1197:  build(v, p) {
+inkwave-public/src/audio/audio.js:1204:  build(v, p) {
+inkwave-public/src/audio/audio.js:1216:  build(v, p) {
+inkwave-public/src/audio/audio.js:1225:  build(v, p) {
+inkwave-public/src/audio/audio.js:1234:  build(v, p) {
+inkwave-public/src/audio/audio.js:1243:  build(v, p) { plips(v, 0, 1, 0.01, [1100, 2100], 0.3, p); },
+inkwave-public/src/audio/audio.js:1247:  build(v, p) {
+inkwave-public/src/audio/audio.js:1256:  build(v, p) {
+inkwave-public/src/audio/audio.js:1269:  build(v, p) {
+inkwave-public/src/audio/audio.js:1279:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1298:  build(v, p) {
+inkwave-public/src/audio/audio.js:1324:  build(v, p) {
+inkwave-public/src/audio/audio.js:1335:  build(v, p) {
+inkwave-public/src/audio/audio.js:1347:  build(v, p) {
+inkwave-public/src/audio/audio.js:1358:  build(v, p) {
+inkwave-public/src/audio/audio.js:1369:  build(v, p) {
+inkwave-public/src/audio/audio.js:1378:  build(v, p) {
+inkwave-public/src/audio/audio.js:1391:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1404:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1418:  build(v, p) {
+inkwave-public/src/audio/audio.js:1429:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1444:  loop(v, p) {
+inkwave-public/src/audio/audio.js:1459:  build(v, p) {
+inkwave-public/src/audio/audio.js:1467:  build(v, p) {
+inkwave-public/src/audio/audio.js:1476:  build(v, p) {
+inkwave-public/src/audio/audio.js:1484:  build(v, p) {
+inkwave-public/src/audio/audio.js:1495:  build(v, p) {
+inkwave-public/src/audio/audio.js:1506:  build(v, p) {
+inkwave-public/src/audio/audio.js:1518:  build(v, p) {
+inkwave-public/src/audio/audio.js:1543:  build(v, p) {
+inkwave-public/src/audio/audio.js:1556:export const SFX_GROUPS = {
+inkwave-public/src/audio/audio.js:1569:export const SFX_NAMES = Object.values(SFX_GROUPS).flat();
+inkwave-public/src/audio/audio.js:1570:export const LOOP_NAMES = SFX_NAMES.filter((n) => SFX[n] && SFX[n].loop);
+inkwave-public/src/audio/audio.js:1572:export const audio = new AudioEngine();
+inkwave-public/src/i18n.js:16:export const LANG = readLang();
+inkwave-public/src/i18n.js:17:export const isJa = LANG === 'ja';
+inkwave-public/src/i18n.js:21:export const TXT = { mode: touchPrimary ? 'touch' : 'kbm' };
+inkwave-public/src/i18n.js:22:export function setTextMode(mode) { if (mode === 'touch' || mode === 'kbm' || mode === 'pad') TXT.mode = mode; }
+inkwave-public/src/i18n.js:232:export function t(s, vars) {
+inkwave-public/src/i18n.js:240:export function tx(s) {
+inkwave-public/src/i18n.js:290:export function localizeData() {
+inkwave-public/src/net/session.js:18:export class NetSession {
+inkwave-public/src/net/session.js:19:  constructor() {
+inkwave-public/src/net/session.js:38:  on(ev, fn) {
+inkwave-public/src/net/session.js:44:  _emit(ev, data) {
+inkwave-public/src/net/session.js:48:  _setState(s) {
+inkwave-public/src/net/session.js:54:  _blankLobby() {
+inkwave-public/src/net/session.js:62:  _profile() {
+inkwave-public/src/net/session.js:68:  async create(name) {
+inkwave-public/src/net/session.js:78:  async join(code, name) {
+inkwave-public/src/net/session.js:84:  async _connect(code, name, create) {
+inkwave-public/src/net/session.js:111:  leave(silent = false) {
+inkwave-public/src/net/session.js:123:  _fail(e) {
+inkwave-public/src/net/session.js:130:  _closed(reason) {
+inkwave-public/src/net/session.js:142:  _control(o) {
+inkwave-public/src/net/session.js:165:  _newPlayer(id, name, o) {
+inkwave-public/src/net/session.js:170:  _fixTeams() {
+inkwave-public/src/net/session.js:178:  _broadcastLobby() {
+inkwave-public/src/net/session.js:183:  _wireLobby() {
+inkwave-public/src/net/session.js:188:  _pushLobby() {
+inkwave-public/src/net/session.js:194:  setMe(ch = {}) {
+inkwave-public/src/net/session.js:211:  _applyMe(id, o) {
+inkwave-public/src/net/session.js:228:  setSettings(s = {}) {
+inkwave-public/src/net/session.js:246:  canStart() {
+inkwave-public/src/net/session.js:251:  startBlock() { return noBotsStartBlock(this.lobby); }
+inkwave-public/src/net/session.js:253:  emote(name) {
+inkwave-public/src/net/session.js:260:  start() {
+inkwave-public/src/net/session.js:288:  async _begin(cfg) {
+inkwave-public/src/net/session.js:309:  _markReady(id) {
+inkwave-public/src/net/session.js:319:  _go() {
+inkwave-public/src/net/session.js:326:  _launch() {
+inkwave-public/src/net/session.js:333:  endMatch() {
+inkwave-public/src/net/session.js:344:  _message(from, d) {
+inkwave-public/src/net/session.js:370:  update(dt) {
+inkwave-public/src/net/session.js:384:export function installNet() {
+inkwave-public/src/net/session.js:386:  emit('net:ready', { net: G.net });
+account/client/src/game.js:7:export const game = {
+account/client/src/game.js:9:  screen() { return document.querySelector('.iw-ui')?.dataset.screen || ''; },
+account/client/src/game.js:11:  sfx(name) { try { menus()?._sfx?.(name); } catch { /* audio is optional */ } },
+account/client/src/game.js:14:  profileName() {
+account/client/src/game.js:20:  setProfileName(name) {
+account/client/src/game.js:36:  accentVars() {
+account/client/src/game.js:48:  bindNav(el, id, accept) {
+account/client/src/game.js:61:  captureNav(handler) {
+account/client/src/game.js:74:  setMenusCovered(on) {
+account/worker/device.js:12:export function deviceLabel(ua) {
+inkwave-public/src/net/mock.js:30:export class MockNet {
+inkwave-public/src/net/mock.js:31:  constructor() {
+inkwave-public/src/net/mock.js:67:  on(ev, fn) {
+inkwave-public/src/net/mock.js:73:  async create(name) {
+inkwave-public/src/net/mock.js:101:  async join(code, name) {
+inkwave-public/src/net/mock.js:135:  leave() {
+inkwave-public/src/net/mock.js:141:  setMe(o = {}) {
+inkwave-public/src/net/mock.js:160:  setSettings(o = {}) {
+inkwave-public/src/net/mock.js:176:  canStart() {
+inkwave-public/src/net/mock.js:180:  startBlock() { return noBotsStartBlock(this.lobby); }
+inkwave-public/src/net/mock.js:182:  start() {
+inkwave-public/src/net/mock.js:187:  emote(name) {
+inkwave-public/src/net/mock.js:195:  async _launch() {
+inkwave-public/src/net/mock.js:209:  endMatch() { this._endMatch(true); }
+inkwave-public/src/net/mock.js:211:  _endMatch(now = false) {
+inkwave-public/src/net/mock.js:223:  _lose(msg) {
+inkwave-public/src/net/mock.js:231:  _schedule() {
+inkwave-public/src/net/mock.js:243:  _act() {
+inkwave-public/src/net/mock.js:262:  _pings() {
+inkwave-public/src/net/mock.js:271:  _add(o) {
+inkwave-public/src/net/mock.js:281:  _drop(id, reason = 'left') {
+inkwave-public/src/net/mock.js:292:  _migrate(id) {
+inkwave-public/src/net/mock.js:304:  _patch(id, patch) {
+inkwave-public/src/net/mock.js:312:  _teamFor(except) {
+inkwave-public/src/net/mock.js:318:  _me(name, team, host) {
+inkwave-public/src/net/mock.js:327:  _bot(o = {}) {
+inkwave-public/src/net/mock.js:337:  _p(id) { return this.lobby ? this.lobby.players.find((p) => p.id === id) : null; }
+inkwave-public/src/net/mock.js:338:  _id() { return 'p' + (++this._seq).toString(36) + ((rnd() * 1e6) | 0).toString(36); }
+inkwave-public/src/net/mock.js:339:  _rtt() { return 60 + rnd() * 70; }
+inkwave-public/src/net/mock.js:341:  _setState(s) {
+inkwave-public/src/net/mock.js:348:  _emit(ev, data) {
+inkwave-public/src/net/mock.js:357:  _later(ms, fn) {
+inkwave-public/src/net/mock.js:362:  _sleep(ms) { return new Promise((r) => setTimeout(r, ms)); } // untracked: a leave() mid-connect must still settle
+inkwave-public/src/net/mock.js:364:  _reset() {
+inkwave-public/src/net/mock.js:373:export function installMockNet() {
+inkwave-public/src/ui/boss-art.js:19:export const BOSS_NAME = 'HULLBREAKER';
+inkwave-public/src/ui/boss-art.js:20:export const BOSS_EPITHET = 'The Rust-Shelled Terror';
+inkwave-public/src/ui/boss-art.js:21:export const BOSS_BLURB = 'A giant hermit crab living in a rusted shipping container. Everyone in the room teams up to sink it before time runs out.';
+inkwave-public/src/ui/boss-art.js:22:export const MOVE_LABELS = {
+inkwave-public/src/ui/boss-art.js:55:export function bossEmblem({ cracked = false } = {}) {
+inkwave-public/src/ui/boss-art.js:81:export function bossSilhouette() {
+inkwave-public/src/ui/boss-art.js:136:export const MOVE_ICONS = {
+inkwave-public/src/ui/boss-art.js:158:export const BOSS_GLYPH = svg(`<rect x="10" y="8" width="44" height="24" rx="3" fill="currentColor"/>
+inkwave-public/src/ui/hud-boss.js:24:export class BossHud {
+inkwave-public/src/ui/hud-boss.js:25:  constructor(hud) {
+inkwave-public/src/ui/hud-boss.js:45:  _fresh() {
+inkwave-public/src/ui/hud-boss.js:52:  _build() {
+inkwave-public/src/ui/hud-boss.js:96:  dispose() { this._unsubs.forEach((u) => u()); this.layer.remove(); this.over.remove(); }
+inkwave-public/src/ui/hud-boss.js:100:  setMode(onoff, boss = null) {
+inkwave-public/src/ui/hud-boss.js:118:  _b() { return this.boss || (G.match && G.match.boss) || null; }
+inkwave-public/src/ui/hud-boss.js:119:  _mine(a) { const hd = this.hud; return !!a && (a === hd._local() || !!a.isLocal); }
+inkwave-public/src/ui/hud-boss.js:120:  _t() { return this.T; }   // own clock (the HUD's fx clock only runs while it has effects)
+inkwave-public/src/ui/hud-boss.js:121:  _u() { return Math.min(innerWidth / 100, (innerHeight * 1.7778) / 100); }
+inkwave-public/src/ui/hud-boss.js:123:  _anchor(name, up, out) {
+inkwave-public/src/ui/hud-boss.js:137:  _screen(w, out) {
+inkwave-public/src/ui/hud-boss.js:147:  _spawn(boss) {
+inkwave-public/src/ui/hud-boss.js:152:  _intro(e) {
+inkwave-public/src/ui/hud-boss.js:162:  _hp({ hp, max }) {
+inkwave-public/src/ui/hud-boss.js:183:  _move({ id, phase }) {
+inkwave-public/src/ui/hud-boss.js:196:  _showCall(id) {
+inkwave-public/src/ui/hud-boss.js:207:  _hit({ damage = 0, weak = false, attacker = null, pos = null, crab = false, blocked = false }) {
+inkwave-public/src/ui/hud-boss.js:232:  _stun({ dur = 3 }) {
+inkwave-public/src/ui/hud-boss.js:243:  _phase({ phase }) {
+inkwave-public/src/ui/hud-boss.js:257:  _defeat() {
+inkwave-public/src/ui/hud-boss.js:269:  timesUp() {
+inkwave-public/src/ui/hud-boss.js:278:  prompt(p) {
+inkwave-public/src/ui/hud-boss.js:285:  squadTeams(teams) {
+inkwave-public/src/ui/hud-boss.js:292:  update(dt) {
+inkwave-public/src/ui/hud-boss.js:336:  _writeBar(force) {
+inkwave-public/src/ui/hud-boss.js:348:  _pips(phase) {
+inkwave-public/src/ui/hud-boss.js:353:  _placeCall(dt) {
+inkwave-public/src/ui/hud-boss.js:402:  _addNum(w, dmg, weak, now) {
+inkwave-public/src/ui/hud-boss.js:419:  _crit(w, txt = 'CRIT!') {
+inkwave-public/src/ui/hud-boss.js:428:  _updNums() {
+inkwave-public/src/ui/hud-boss.js:444:  _titleCard() {
+inkwave-public/src/ui/hud-boss.js:463:  _banner(big, sub, phase) {
+inkwave-public/src/ui/hud-boss.js:474:  _ending(win) {
+inkwave-public/src/ui/hud-boss.js:498:  demo(opts = {}) {
+server/src/index.js:24:function validRelayPayload(payload) {
+server/src/index.js:33:function relaySend(socket, data) {
+server/src/index.js:44:  async fetch(request, env, ctx) {
+server/src/index.js:88:export class RoomDurableObject {
+server/src/index.js:89:  constructor(state, env) {
+server/src/index.js:105:  _restoreHibernatedSockets() {
+server/src/index.js:149:  _syncAttachments() {
+server/src/index.js:155:  _syncMemberAttachment(m) {
+server/src/index.js:185:  _memberBySocket(ws) {
+server/src/index.js:192:  async fetch(request) {
+server/src/index.js:250:  _admitJoin(consume = true) {
+server/src/index.js:260:  handleSession(ws, name, useHibernation = false, relayClock = false) {
+server/src/index.js:334:  async webSocketMessage(ws, raw) {
+server/src/index.js:341:  async webSocketClose(ws, code, reason, _wasClean) {
+server/src/index.js:350:  async webSocketError(ws, _error) {
+server/src/index.js:358:  _handleMessage(id, ws, rawData) {
+server/src/index.js:479:  _admitSemantic(member, data) {
+server/src/index.js:490:  _cleanupMember(id, ws) {
+server/src/index.js:505:  _cleanupMemberOnce(id, ws) {
+account/worker/crypto.js:5:export const PBKDF2_MAX_ITERATIONS = 100000;
+account/worker/crypto.js:9:export function b64url(bytes) {
+account/worker/crypto.js:15:export function fromB64url(s) {
+account/worker/crypto.js:20:export const randomBytes = (n) => crypto.getRandomValues(new Uint8Array(n));
+account/worker/crypto.js:21:export const randomToken = () => b64url(randomBytes(32));
+account/worker/crypto.js:23:export async function sha256Hex(text) {
+account/worker/crypto.js:29:export function timingSafeEqual(a, b) {
+account/worker/crypto.js:36:async function derive(password, salt, iterations) {
+account/worker/crypto.js:41:export async function hashPassword(password, iterations = PBKDF2_MAX_ITERATIONS) {
+account/worker/crypto.js:48:export function hashIterations(stored) {
+account/worker/crypto.js:54:export async function verifyPassword(password, stored, iterations = PBKDF2_MAX_ITERATIONS) {
+account/worker/store.js:3:export const MAX_SESSIONS_PER_USER = 20;
+account/worker/store.js:5:export const publicUser = (u) => ({
+account/worker/store.js:16:export const userByLogin = (db, norm) =>
+account/worker/store.js:19:export const userById = (db, id) => db.prepare('SELECT * FROM users WHERE id = ?1').bind(id).first();
+account/worker/store.js:22:export async function insertUser(db, u) {
+account/worker/store.js:35:export const setProfile = (db, id, { displayName, avatarIcon, avatarColor }, now) => db.prepare(`UPDATE users SET
+account/worker/store.js:39:export const setPasswordHash = (db, id, hash, now, changed = true) => changed
+account/worker/store.js:44:export const touchLogin = (db, id, now) =>
+account/worker/store.js:47:export const deleteUser = (db, id) => db.batch([
+account/worker/store.js:53:export async function insertSession(db, s) {
+account/worker/store.js:65:export const sessionWithUser = (db, tokenHash, now) => db.prepare(`SELECT s.id AS session_id, s.expires_at, s.last_seen_at, s.persistent, s.created_at AS session_created_at, u.*
+account/worker/store.js:68:export const touchSession = (db, id, now, expiresAt) =>
+account/worker/store.js:71:export const listSessions = async (db, userId, now) => (await db.prepare(`SELECT id, created_at, last_seen_at, expires_at, persistent, user_agent, country
+account/worker/store.js:74:export const deleteSession = (db, id, userId) =>
+account/worker/store.js:77:export const deleteOtherSessions = (db, userId, keepId) =>
+account/worker/store.js:80:export const deleteSessionByToken = (db, tokenHash) =>
+account/worker/store.js:84:export const throttleState = (db, key) =>
+account/worker/store.js:88:export const throttleHit = (db, key, now, { windowMs, limit, lockMs }) => db.prepare(`INSERT INTO auth_throttle (key, failures, window_start, locked_until)
+account/worker/store.js:96:export const throttleClear = (db, key) => db.prepare('DELETE FROM auth_throttle WHERE key = ?1').bind(key).run();
+account/worker/store.js:99:export const purgeExpired = (db, now, idleMs) => db.batch([
+inkwave-public/src/ui/news.js:17:export const NEWS_ID = 'mp-expansion-1';
+inkwave-public/src/ui/news.js:22:export function newsSeen() { try { return localStorage.getItem(KEY) === NEWS_ID; } catch (e) { return false; } }
+inkwave-public/src/ui/news.js:23:function markSeen() { try { localStorage.setItem(KEY, NEWS_ID); } catch (e) { /* private mode: it just shows again next time */ } }
+inkwave-public/src/ui/news.js:25:function gate() {
+inkwave-public/src/ui/news.js:58:export class WhatsNew {
+inkwave-public/src/ui/news.js:59:  constructor(menus) {
+inkwave-public/src/ui/news.js:72:  maybeShow() {
+inkwave-public/src/ui/news.js:83:  _tryOpen(n) {
+inkwave-public/src/ui/news.js:96:  show() {
+inkwave-public/src/ui/news.js:119:  _render(i, first) {
+inkwave-public/src/ui/news.js:203:  _center(node) {
+inkwave-public/src/ui/news.js:209:  _confetti() {
+inkwave-public/src/ui/news.js:225:  _ink(tone, x, y, dur, fromPrev) {
+inkwave-public/src/ui/news.js:236:  _pruneInks(keep) { for (const n of [...this.inkHost.children]) if (n !== keep) n.remove(); }
+inkwave-public/src/ui/news.js:238:  _tween(dur, step, done) {
+inkwave-public/src/ui/news.js:245:  _tick(t) {
+inkwave-public/src/ui/news.js:259:  next() {
+inkwave-public/src/ui/news.js:272:  close(how = 'later') {
+inkwave-public/src/ui/news.js:296:  _tryBoss() {
+inkwave-public/src/ui/news.js:305:  dispose() { clearTimeout(this._t); cancelAnimationFrame(this._raf); this._raf = 0; if (this.el) this.el.remove(); this.el = null; }
+account/client/src/entry.js:12:function loadPanel() {
+account/client/src/entry.js:19:function open(view) {
+account/client/src/entry.js:23:  setBusy(true);
+account/client/src/entry.js:44:function setBusy(busy) {
+account/client/src/entry.js:48:function close() {
+account/client/src/entry.js:55:  setBusy(false);
+account/client/src/entry.js:60:function chipText(a) {
+account/client/src/entry.js:70:function sweep() {
+account/client/src/entry.js:75:function renderChip(el, a) {
+account/client/src/entry.js:85:function mountMainCard(screen) {
+account/client/src/entry.js:96:  warmPanel();
+account/client/src/entry.js:104:  track(el, () => { unsub(); watch.disconnect(); });
+account/client/src/entry.js:108:function mountTitlePill(screen) {
+account/client/src/entry.js:118:  track(el, account.subscribe((a) => {
+account/client/src/entry.js:127:function syncScreens(ui) {
+account/client/src/entry.js:128:  sweep();
+account/client/src/entry.js:137:function watchMenus() {
+account/client/src/entry.js:153:function start() {
+account/client/src/entry.js:159:  watchMenus();
+account/client/src/entry.js:172:function warmPanel() {
+account/client/src/entry.js:175:  setTimeout(() => loadPanel().catch(() => { warmed = false; }), 1500);
+account/worker/account.js:14:export const PERSISTENT_TTL = 30 * DAY;   // "stay signed in"
+account/worker/account.js:15:export const SHORT_TTL = DAY;             // browser-session cookie; the server still expires it after a day idle
+account/worker/account.js:25:export function accountConfig(env) {
+account/worker/account.js:38:async function assertNotLocked(env, keys, now) {
+account/worker/account.js:47:async function verifyTurnstile(cfg, token, request) {
+account/worker/account.js:61:async function startSession(env, request, url, user, persistent, now) {
+account/worker/account.js:72:async function resolveSession(env, request, url, now) {
+account/worker/account.js:87:async function requireSession(env, request, url, now) {
+account/worker/account.js:93:async function requirePassword(env, user, password, cfg, now) {
+account/worker/account.js:107:async function getConfig(ctx) {
+account/worker/account.js:112:async function getSession({ env, request, url, now }) {
+account/worker/account.js:118:async function register({ env, request, url, now, cfg }) {
+account/worker/account.js:140:async function login({ env, request, url, now, cfg }) {
+account/worker/account.js:164:async function logout({ env, request, url }) {
+account/worker/account.js:170:async function sessions({ env, request, url, now }) {
+account/worker/account.js:179:async function revokeSessions({ env, request, url, now }) {
+account/worker/account.js:192:async function updateProfile({ env, request, url, now }) {
+account/worker/account.js:214:async function changePassword({ env, request, url, now, cfg }) {
+account/worker/account.js:229:async function deleteAccount({ env, request, url, now, cfg }) {
+account/worker/account.js:253:export async function handleAccount(request, env, url) {
+account/worker/index.js:15:  async fetch(request, env) {
+account/worker/index.js:39:  async scheduled(event, env, ctx) {
+inkwave-public/src/config.js:4:export const GAME_TITLE = 'INKWAVE';
+inkwave-public/src/config.js:5:export const GAME_SUBTITLE = 'Turf Riot';
+inkwave-public/src/config.js:6:export const VERSION = '1.0.0';
+inkwave-public/src/config.js:9:export const TEAM_PALETTES = [
+inkwave-public/src/config.js:17:export const COLORBLIND_PALETTE = { id: 'cb-yellow-blue', a: '#ffd21a', b: '#2a52ff', names: ['Sun', 'Sea'] };
+inkwave-public/src/config.js:19:export const TEAM_NAMES = ['Alpha', 'Bravo'];
+inkwave-public/src/config.js:22:export const PLAYER = {
+inkwave-public/src/config.js:91:export const WEAPONS = {
+inkwave-public/src/config.js:187:export const WEAPON_ORDER = ['shooter', 'dualies', 'splatling', 'roller', 'slosher', 'charger', 'charger_scope', 'blaster'];
+inkwave-public/src/config.js:189:export const SUB = {
+inkwave-public/src/config.js:196:export const SPECIALS = {
+inkwave-public/src/config.js:202:export const MATCH = {
+inkwave-public/src/config.js:210:export const DIFFICULTY = {
+inkwave-public/src/config.js:219:export const TIMES = ['day', 'dusk'];
+inkwave-public/src/config.js:220:export const mapTheme = (map, time = 'day') => (map && map.times && map.times[time]) || (map && map.theme) || 'day';
+inkwave-public/src/config.js:221:export const MAPS = [
+inkwave-public/src/config.js:233:export const mapById = (id) => MAPS.find((m) => m.id === id) || null;
+inkwave-public/src/config.js:234:export const mapNoBots = (id) => !!mapById(id)?.noBots;
+inkwave-public/src/config.js:235:export const mapBossOk = (id) => !!mapById(id) && !mapById(id).noBoss;
+inkwave-public/src/config.js:236:export const mapOfflineOk = (id) => !!mapById(id) && !mapById(id).onlineOnly;
+inkwave-public/src/config.js:237:export const OFFLINE_MAPS = MAPS.filter((m) => !m.onlineOnly);
+inkwave-public/src/config.js:239:export const bossFallbackMap = (prefer) => (mapBossOk(prefer) ? prefer : (MAPS.find((m) => !m.noBoss && !m.onlineOnly) || MAPS[0]).id);
+inkwave-public/src/config.js:241:export function noBotsStartBlock(lobby) {
+inkwave-public/src/config.js:249:export const BOT_NAMES = [
+inkwave-public/src/config.js:255:export const PROGRESSION = {
+inkwave-public/src/config.js:261:export const DEFAULT_SETTINGS = {
+inkwave-public/src/config.js:293:export const QUALITY = {
+inkwave-public/src/config.js:304:export function effectiveQuality(settings, mobile) {
+inkwave-public/src/ui/menu-art.js:21:export const AWARD_ICONS = {
+inkwave-public/src/ui/menu-art.js:56:export const awardIcon = (id) => AWARD_ICONS[id] || AWARD_ICONS.star;
+inkwave-public/src/ui/menu-art.js:59:export const AWARDS = {
+inkwave-public/src/ui/menu-art.js:70:export const BOSS_AWARDS = {
+inkwave-public/src/ui/menu-art.js:81:export function computeBossAwards(players = []) {
+inkwave-public/src/ui/menu-art.js:107:export const MATCH_TAGS = {
+inkwave-public/src/ui/menu-art.js:116:export function computeAwards(players = [], { win = true, percents = [50, 50] } = {}) {
+inkwave-public/src/ui/menu-art.js:172:export function medalMarkup(aw, seed = 1) {
+inkwave-public/src/ui/menu-art.js:182:export function awardBadge(aw) {
+inkwave-public/src/ui/menu-art.js:187:export const RANK_TIERS = [
+inkwave-public/src/ui/menu-art.js:194:export const rankTier = (level) => RANK_TIERS.reduce((acc, r, i) => (level >= r.lv ? i : acc), 0);
+inkwave-public/src/ui/menu-art.js:196:export function rankEmblem(tier = 0) {
+inkwave-public/src/ui/menu-art.js:210:export function inkBurst(parent, { x = 0, y = 0, color = 'var(--a)', count = 12, dist = 6, size = 1, splat = true, ring = false, life = 1100 } = {}) {
+inkwave-public/src/ui/menu-art.js:225:  setTimeout(() => w.remove(), life);
+inkwave-public/src/ui/menu-art.js:231:function tongueDown(ctx, x, y, w, L, b) {
+inkwave-public/src/ui/menu-art.js:240:function tongueUp(ctx, x, y, w, L, c) {
+inkwave-public/src/ui/menu-art.js:249:function tongueSide(ctx, x, y, w, L, c, dir) {
+inkwave-public/src/ui/menu-art.js:258:export const WIPE = { mid: 380, total: 1000, revealAt: 500 };
+inkwave-public/src/ui/menu-art.js:260:export class InkWipe {
+inkwave-public/src/ui/menu-art.js:261:  constructor(host, { isFrozen } = {}) {
+inkwave-public/src/ui/menu-art.js:276:  _pattern() {
+inkwave-public/src/ui/menu-art.js:285:  run({ a = '#ff8a14', b = '#2f5bff', mode = 'full', dir = 1, onMid = null, onDone = null } = {}) {
+inkwave-public/src/ui/menu-art.js:312:  _setupFull(r) {
+inkwave-public/src/ui/menu-art.js:330:  _setupLight(r) {
+inkwave-public/src/ui/menu-art.js:337:  _frame(now) {
+inkwave-public/src/ui/menu-art.js:355:  _finish() {
+inkwave-public/src/ui/menu-art.js:367:  cancel() { if (this.r) this._finish(); }
+inkwave-public/src/ui/menu-art.js:369:  _edge(r, x, base, ph) {
+inkwave-public/src/ui/menu-art.js:375:  _sheetDown(r, base, ph, drips, lenAt, fill, dark, pattern) {
+inkwave-public/src/ui/menu-art.js:393:  _sheetUp(r, base, ph, streaks, lenAt, fill, dark, pattern) {
+inkwave-public/src/ui/menu-art.js:410:  _gloss(r, base, ph, up) {
+inkwave-public/src/ui/menu-art.js:418:  _drawFull(r) {
+inkwave-public/src/ui/menu-art.js:476:  _drawLight(r) {
+inkwave-public/src/ui/menu-art.js:513:  _drawFade(r) {
+inkwave-public/src/ui/menu-art.js:526:function frameSVG(inner, cls = '') {
+inkwave-public/src/ui/menu-art.js:543:function previewLook(ctx, pad) {
+inkwave-public/src/ui/menu-art.js:563:  set(v);
+inkwave-public/src/ui/menu-art.js:577:function previewInvert(ctx) {
+inkwave-public/src/ui/menu-art.js:587:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:591:function previewFov(ctx) {
+inkwave-public/src/ui/menu-art.js:622:  apply();
+inkwave-public/src/ui/menu-art.js:630:function previewQuality(ctx) {
+inkwave-public/src/ui/menu-art.js:650:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:654:function previewShadows(ctx) {
+inkwave-public/src/ui/menu-art.js:664:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:668:function previewBloom(ctx) {
+inkwave-public/src/ui/menu-art.js:680:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:684:function hudFrame(inner) {
+inkwave-public/src/ui/menu-art.js:691:function previewFps(ctx) {
+inkwave-public/src/ui/menu-art.js:695:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:698:function previewMinimap(ctx) {
+inkwave-public/src/ui/menu-art.js:704:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:708:function previewShake(ctx) {
+inkwave-public/src/ui/menu-art.js:715:  set(v);
+inkwave-public/src/ui/menu-art.js:732:function previewAudio(ctx, key) {
+inkwave-public/src/ui/menu-art.js:749:  set(v);
+inkwave-public/src/ui/menu-art.js:767:function previewAimAssist(ctx) {
+inkwave-public/src/ui/menu-art.js:778:  set(v);
+inkwave-public/src/ui/menu-art.js:793:function previewAimMouse(ctx) {
+inkwave-public/src/ui/menu-art.js:797:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:801:function previewRumble(ctx) {
+inkwave-public/src/ui/menu-art.js:806:  set(v);
+inkwave-public/src/ui/menu-art.js:823:function previewColorblind(ctx) {
+inkwave-public/src/ui/menu-art.js:831:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:835:function previewDifficulty(ctx) {
+inkwave-public/src/ui/menu-art.js:844:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:848:function previewLength(ctx) {
+inkwave-public/src/ui/menu-art.js:863:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:867:function previewLink() {
+inkwave-public/src/ui/menu-art.js:874:function previewTab(ctx) {
+inkwave-public/src/ui/menu-art.js:880:function previewReset() {
+inkwave-public/src/ui/menu-art.js:891:function previewGyro(ctx, key) {
+inkwave-public/src/ui/menu-art.js:902:  set(v);
+inkwave-public/src/ui/menu-art.js:915:function previewTouchPad(ctx, key) {
+inkwave-public/src/ui/menu-art.js:949:  set(v);
+inkwave-public/src/ui/menu-art.js:981:function previewLang(ctx) {
+inkwave-public/src/ui/menu-art.js:988:  set(ctx.value);
+inkwave-public/src/ui/menu-art.js:992:export function createPreview(key, ctx = {}) {
+inkwave-public/src/ui/menu-art.js:1024:function curveThrough(pts) {
+inkwave-public/src/ui/menu-art.js:1033:export function sweepEdge(seed = 1, rows = 26) {
+inkwave-public/src/ui/menu-art.js:1047:export function sweepClip(edge, W, H, f, dir = 1) {
+inkwave-public/src/ui/menu-art.js:1055:export function splatClip(x, y, r, seed = 3) {
+inkwave-public/src/ui/menu-art.js:1059:export function splatCover(x, y, W, H) {
+inkwave-public/src/ui/menu-art.js:1065:export function skinSwatch(hex) {
+inkwave-public/src/ui/menu-art.js:1073:export function irisSwatch(pair) {
+inkwave-public/src/ui/menu-art.js:1082:export function outfitIcon(o = {}) {
+inkwave-public/src/ui/menu-art.js:1104:export const TAG_KINDS = 7;
+inkwave-public/src/ui/menu-art.js:1105:export function tagArt(seed = 1) {
+inkwave-public/src/ui/menu-art.js:1139:export function inkBand(seed = 5) {
+inkwave-public/src/ui/menu-art.js:1152:export function dripsSVG(spec, cls = 'iw-fa') {
+inkwave-public/src/ui/ui-util.js:7:export function h(tag, props = null, ...kids) {
+inkwave-public/src/ui/ui-util.js:25:  appendKids(el, kids);
+inkwave-public/src/ui/ui-util.js:28:function appendKids(el, kids) {
+inkwave-public/src/ui/ui-util.js:40:export function fitText(e, min = 0.62) {
+inkwave-public/src/ui/ui-util.js:58:export function frag(markup) {
+inkwave-public/src/ui/ui-util.js:63:export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+inkwave-public/src/ui/ui-util.js:66:export function restartAnim(el, cls) {
+inkwave-public/src/ui/ui-util.js:73:export const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
+inkwave-public/src/ui/ui-util.js:74:export const lerp = (a, b, t) => a + (b - a) * t;
+inkwave-public/src/ui/ui-util.js:75:export const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+inkwave-public/src/ui/ui-util.js:76:export const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+inkwave-public/src/ui/ui-util.js:77:export const easeOutBack = (t, s = 1.7) => 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2);
+inkwave-public/src/ui/ui-util.js:79:export function rng(seed = 1) {
+inkwave-public/src/ui/ui-util.js:90:export class Spring {
+inkwave-public/src/ui/ui-util.js:91:  constructor(value = 0, stiffness = 260, damping = 20) {
+inkwave-public/src/ui/ui-util.js:94:  step(dt) {
+inkwave-public/src/ui/ui-util.js:103:  snap(v = this.target) { this.x = this.target = v; this.v = 0; }
+inkwave-public/src/ui/ui-util.js:109:export function toHex(c, fallback = '#ff8a14') {
+inkwave-public/src/ui/ui-util.js:120:export function hexToRgb(hex) {
+inkwave-public/src/ui/ui-util.js:126:export function rgbToHex(r, g, b) {
+inkwave-public/src/ui/ui-util.js:130:export function mix(a, b, t) {
+inkwave-public/src/ui/ui-util.js:135:export const shade = (hex, t) => (t < 0 ? mix(hex, '#120e1c', -t) : mix(hex, '#ffffff', t));
+inkwave-public/src/ui/ui-util.js:136:export function luminance(hex) {
+inkwave-public/src/ui/ui-util.js:141:export const inkOn = (hex) => (luminance(hex) > 0.36 ? '#15121c' : '#ffffff');
+inkwave-public/src/ui/ui-util.js:142:export function rgba(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
+inkwave-public/src/ui/ui-util.js:145:export function colorVars(el, name, color) {
+inkwave-public/src/ui/ui-util.js:160:export function closedCurve(pts, tension = 1) {
+inkwave-public/src/ui/ui-util.js:172:export function blobPath(cx, cy, r, { points = 9, wobble = 0.16, seed = 1, sx = 1, sy = 1 } = {}) {
+inkwave-public/src/ui/ui-util.js:183:export function splatShape(cx, cy, r, { arms = 9, seed = 7, armLen = 0.42, drops = 6 } = {}) {
+inkwave-public/src/ui/ui-util.js:218:export function splatSVG({ seed = 7, cls = 'iw-fa', fill = null, viewBox = 200, r = 58, arms = 9, drops = 7, extra = '' } = {}) {
+inkwave-public/src/ui/ui-util.js:227:export function fmtTime(s) {
+inkwave-public/src/ui/ui-util.js:232:export const fmtInt = (n) => Math.round(n).toLocaleString('en-US');
+inkwave-public/src/ui/ui-util.js:234:export function pct(a, b) {
+inkwave-public/src/ui/ui-util.js:241:export const now = () => performance.now() / 1000;
+inkwave-public/src/ui/ui-util.js:242:export function safeCall(fn, ...args) { try { return fn?.(...args); } catch (e) { console.error('[ui]', e); return undefined; } }
+inkwave-public/src/ui/ui-util.js:243:export const prefersReducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+account/client/src/store.js:14:export const account = {
+account/client/src/store.js:23:  subscribe(fn) { this._subs.add(fn); fn(this); return () => this._subs.delete(fn); },
+account/client/src/store.js:24:  _emit() { for (const fn of this._subs) { try { fn(this); } catch (e) { console.error('[account]', e); } } },
+account/client/src/store.js:27:  refresh() {
+account/client/src/store.js:46:  async loadConfig() {
+account/client/src/store.js:54:  _apply(user) {
+account/client/src/store.js:62:  signedIn(user) { this._apply(user); },
+account/client/src/store.js:63:  signedOut() { this._apply(null); },
+account/client/src/store.js:65:  setPref(key, value) {
+account/client/src/store.js:73:  watch() {
+account/client/src/api.js:7:export class AccountError extends Error {
+account/client/src/api.js:8:  constructor(code, { status = 0, field = null, retryAfter = 0 } = {}) {
+account/client/src/api.js:17:export async function request(method, path, body) {
+account/client/src/api.js:46:export const api = {
+account/worker/http.js:3:export const MAX_BODY_BYTES = 8 * 1024;
+account/worker/http.js:4:export const CLIENT_HEADER = 'X-Zevant-Request';
+account/worker/http.js:6:export class ApiError extends Error {
+account/worker/http.js:7:  constructor(status, code, extra = {}, headers = {}) {
+account/worker/http.js:22:export function json(status, body, headers = {}) {
+account/worker/http.js:29:export function errorResponse(err) {
+account/worker/http.js:36:export function allowedOrigins(env, url) {
+account/worker/http.js:41:export function corsHeaders(request, env, url) {
+account/worker/http.js:55:export function assertTrustedMutation(request, env, url) {
+account/worker/http.js:61:export async function readJson(request) {
+account/worker/http.js:75:export const str = (v, max = 512) => (typeof v === 'string' ? v.slice(0, max) : '');
+account/worker/http.js:78:export function cookieName(url) {
+account/worker/http.js:83:export function readCookie(request, name) {
+account/worker/http.js:92:export function sessionCookie(env, url, value, maxAgeSec) {
+account/worker/http.js:102:export const clearCookie = (env, url) => sessionCookie(env, url, '', 0);
+inkwave-public/src/main.js:38:function loadJSON(key, def) { try { const v = JSON.parse(localStorage.getItem(key)); return v ? { ...def, ...v } : { ...def }; } catch { return { ...def }; } }
+inkwave-public/src/main.js:39:function saveJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* private mode */ } }
+inkwave-public/src/main.js:42:async function loadModule(path, stubName) {
+inkwave-public/src/main.js:53:class Game {
+inkwave-public/src/main.js:54:  async boot() {
+inkwave-public/src/main.js:225:  async _buildWorld(map) {
+inkwave-public/src/main.js:278:  _shadowRoots() { this.shadowCache?.setStaticRoots([this.levelMesh, this.props?.group, this.decor?.group, G.env?.root]); }
+inkwave-public/src/main.js:281:  _prefetchLightmapMetadata(layoutId) {
+inkwave-public/src/main.js:291:  async _loadLightmap(level, layoutId, pendingMetadata = null) {
+inkwave-public/src/main.js:313:  _footprint(level) {
+inkwave-public/src/main.js:319:  _warmup() {
+inkwave-public/src/main.js:336:  _pickPalette() {
+inkwave-public/src/main.js:343:  paletteIndex() { const i = TEAM_PALETTES.indexOf(this.palette); return i >= 0 ? i : (Math.random() * TEAM_PALETTES.length) | 0; }
+inkwave-public/src/main.js:344:  _roomPalette(l) {
+inkwave-public/src/main.js:349:  _setPalette(p) {
+inkwave-public/src/main.js:367:  _teamOfColor(color) {
+inkwave-public/src/main.js:374:  _menuApi() {
+inkwave-public/src/main.js:410:  _setSettings(partial) {
+inkwave-public/src/main.js:434:  _applyAudioVolumes() { G.audio?.setVolumes?.({ master: this.settings.master, music: this.settings.music, sfx: this.settings.sfx }); }
+inkwave-public/src/main.js:436:  _onScreen(s) {
+inkwave-public/src/main.js:452:  _playMusic(t) { this._musicTrack = t; try { G.music?.play(t, { fade: 1.2 }); } catch (e) { /* not initialised yet */ } }
+inkwave-public/src/main.js:455:  _onKey(e, repeat) {
+inkwave-public/src/main.js:465:  _onPointerUnlock() {
+inkwave-public/src/main.js:473:  _dioFog() {
+inkwave-public/src/main.js:484:  _bindEvents() {
+inkwave-public/src/main.js:587:  _startAttract() {
+inkwave-public/src/main.js:601:  _attractShot() {
+inkwave-public/src/main.js:613:  _updateAttract(dt) {
+inkwave-public/src/main.js:630:  async _loadBoss() {
+inkwave-public/src/main.js:636:  _applyNight() {
+inkwave-public/src/main.js:644:  async startMatch(o = {}) {
+inkwave-public/src/main.js:703:  async startNetMatch(cfg, nm) {
+inkwave-public/src/main.js:746:  async _warmCharacters(m) {
+inkwave-public/src/main.js:751:  netMatchGo() {
+inkwave-public/src/main.js:760:  async netMatchEnd() {
+inkwave-public/src/main.js:781:  netMatchAborted(reason) {
+inkwave-public/src/main.js:785:  _intro() {
+inkwave-public/src/main.js:805:  pause() {
+inkwave-public/src/main.js:820:  resume() {
+inkwave-public/src/main.js:828:  async quitToMenu() {
+inkwave-public/src/main.js:849:  _bossIntro(b) {
+inkwave-public/src/main.js:872:  _bossFinishCam(b) {
+inkwave-public/src/main.js:877:  async _bossResults() {
+inkwave-public/src/main.js:909:  async _judge() {
+inkwave-public/src/main.js:951:  _fade(to, ms) {
+inkwave-public/src/main.js:963:  _loop() {
+inkwave-public/src/main.js:997:  _dynRes(dt) {
+inkwave-public/src/main.js:1051:  _frame(dt) {
+inkwave-public/src/main.js:1148:  _updateAmbience(dt) {
+inkwave-public/src/main.js:1184:  _updateLocalLoops(dt) {
+inkwave-public/src/main.js:1202:  _padMenus() {
+inkwave-public/src/main.js:1222:  _updateHud(dt) {
+inkwave-public/src/main.js:1309:  _onDevice(mode) {
+inkwave-public/src/main.js:1314:  _prepareGyro() {
+inkwave-public/src/main.js:1318:  _startGyro() {
+account/client/src/panel.js:22:function h(tag, attrs, ...kids) {
+account/client/src/panel.js:43:function ensureStyle() {
+account/client/src/panel.js:51:function field({ name, label, type = 'text', value = '', autocomplete, hint, placeholder, maxLength, counter, inputmode, autocapitalize = 'off', enterkeyhint }) {
+account/client/src/panel.js:89:  updateCount();
+account/client/src/panel.js:113:function toggle({ label, hint, checked, onChange }) {
+account/client/src/panel.js:126:function button(label, { kind = 'primary', type = 'button', iconName, onClick, cls = '' } = {}) {
+account/client/src/panel.js:141:function banner() {
+account/client/src/panel.js:171:function strengthMeter() {
+account/client/src/panel.js:196:function loadTurnstile() {
+account/client/src/panel.js:207:export function mountPanel({ view: startView, onClose } = {}) {
+account/client/src/panel.js:208:  ensureStyle();
+account/client/src/panel.js:777:  show(startView || (account.user ? 'account' : 'login'));
+inkwave-public/src/ui/menus.js:174:export class Menus {
+inkwave-public/src/ui/menus.js:175:  constructor(rootEl, api = {}) {
+inkwave-public/src/ui/menus.js:237:  show(name = null, opts = {}) {
+inkwave-public/src/ui/menus.js:265:  setLoading(p, label) {
+inkwave-public/src/ui/menus.js:271:  showResults(data) {
+inkwave-public/src/ui/menus.js:276:  update(dt) {
+inkwave-public/src/ui/menus.js:281:  handleKey(e) {
+inkwave-public/src/ui/menus.js:321:  _modalBlocksKeys() { return !!(this._modal && !this._modal.dataset.keys); }
+inkwave-public/src/ui/menus.js:323:  nav(dir) {
+inkwave-public/src/ui/menus.js:338:  hasScreen(name) { return SCREENS.includes(name); }
+inkwave-public/src/ui/menus.js:342:  toast(text, { kind = 'info', icon = null, color = null, ms = 3400, tag = null } = {}) {
+inkwave-public/src/ui/menus.js:362:  launchLobby() {
+inkwave-public/src/ui/menus.js:376:  setAccent(a, b) {
+inkwave-public/src/ui/menus.js:383:  refreshSetting(key) { if (this._scr && this._scr.refreshControl) safeCall(() => this._scr.refreshControl(key)); }
+inkwave-public/src/ui/menus.js:385:  setInputMode(mode) {
+inkwave-public/src/ui/menus.js:395:  dispose() {
+inkwave-public/src/ui/menus.js:402:  _fitAll(root) {
+inkwave-public/src/ui/menus.js:409:  _loop(t) {
+inkwave-public/src/ui/menus.js:419:  _frozen() { return this.root.classList.contains('iw-lab-freeze'); }
+inkwave-public/src/ui/menus.js:421:  _tick(dt) {
+inkwave-public/src/ui/menus.js:432:  _sfx(name, minGap = 0.03) {
+inkwave-public/src/ui/menus.js:439:  _settings() {
+inkwave-public/src/ui/menus.js:444:  _setSetting(key, value) {
+inkwave-public/src/ui/menus.js:455:  _profile() {
+inkwave-public/src/ui/menus.js:463:  _loadout() {
+inkwave-public/src/ui/menus.js:469:  _weapons() { return this.api.weapons || WEAPONS; }
+inkwave-public/src/ui/menus.js:470:  _weaponOrder() { return this.api.weaponOrder || WEAPON_ORDER; }
+inkwave-public/src/ui/menus.js:471:  _specials() { return this.api.specials || SPECIALS; }
+inkwave-public/src/ui/menus.js:472:  _sub() { return this.api.sub || SUB.bomb; }
+inkwave-public/src/ui/menus.js:473:  _maps() { return this.api.maps || MAPS; }
+inkwave-public/src/ui/menus.js:474:  _diffs() { return this.api.difficulties || DIFFICULTY; }
+inkwave-public/src/ui/menus.js:475:  _version() { return this.api.version || VERSION; }
+inkwave-public/src/ui/menus.js:477:  _applyAccent() {
+inkwave-public/src/ui/menus.js:484:  _accent() {
+inkwave-public/src/ui/menus.js:489:  _accentNames() {
+inkwave-public/src/ui/menus.js:497:  _swap(name, opts) {
+inkwave-public/src/ui/menus.js:531:  _runWipe(mid, mode, dir = 1) {
+inkwave-public/src/ui/menus.js:537:  _go(name, opts = {}) { this.show(name, { ...opts, push: true }); }
+inkwave-public/src/ui/menus.js:539:  _back() {
+inkwave-public/src/ui/menus.js:553:  _titleGo() {
+inkwave-public/src/ui/menus.js:564:  _bind(el, opts = {}) {
+inkwave-public/src/ui/menus.js:588:  _fx(el, { tilt = 0, press = true } = {}) {
+inkwave-public/src/ui/menus.js:621:  _burstAt(el, opts = {}) {
+inkwave-public/src/ui/menus.js:627:  _setFocus(el, { sound = false, snap = false } = {}) {
+inkwave-public/src/ui/menus.js:640:  _candidates() {
+inkwave-public/src/ui/menus.js:646:  _nav(dir) {
+inkwave-public/src/ui/menus.js:668:  _moveFocus(next, dir) {
+inkwave-public/src/ui/menus.js:684:  _bump(el, dir) { if (el) restartAnim(el, dir === 'up' || dir === 'down' ? 'is-bump-v' : 'is-bump-h'); }
+inkwave-public/src/ui/menus.js:688:  _graphNav(graph, dir) {
+inkwave-public/src/ui/menus.js:699:  _press(el) { if (el) restartAnim(el, 'is-press'); }
+inkwave-public/src/ui/menus.js:701:  _spatial(from, dir) {
+inkwave-public/src/ui/menus.js:739:  _updateCursor(dt) {
+inkwave-public/src/ui/menus.js:777:  _openModal({ title, text, buttons, danger = false }) {
+inkwave-public/src/ui/menus.js:791:  _closeModal(silent) {
+inkwave-public/src/ui/menus.js:802:  _hint(kbm, pad, label) {
+inkwave-public/src/ui/menus.js:809:  _prompts(items) {
+inkwave-public/src/ui/menus.js:812:  _header(title, { back = true, sub = null } = {}) {
+inkwave-public/src/ui/menus.js:826:  _btn({ id, label, sub, icon, cls = '', accept, sound = 'ui_click', tilt = 0, badge = null }) {
+inkwave-public/src/ui/menus.js:838:  _panel(cls, ...kids) { return h('div', { class: `iw-panel ${cls || ''}` }, ...kids); }
+inkwave-public/src/ui/menus.js:841:  _scr_loading() {
+inkwave-public/src/ui/menus.js:873:  _scr_title() {
+inkwave-public/src/ui/menus.js:895:  _scr_main() {
+inkwave-public/src/ui/menus.js:962:  _scr_mode() {
+inkwave-public/src/ui/menus.js:1041:  _stageTime(id) {
+inkwave-public/src/ui/menus.js:1048:  _preloadStages() {
+inkwave-public/src/ui/menus.js:1065:  _scr_setup() {
+inkwave-public/src/ui/menus.js:1385:  _startMatch() {
+inkwave-public/src/ui/menus.js:1410:  _portraitInto(host, { kind = 'head', size = 128, style = null } = {}) {
+inkwave-public/src/ui/menus.js:1428:  _style() {
+inkwave-public/src/ui/menus.js:1433:  _saveStyle(style) {
+inkwave-public/src/ui/menus.js:1444:  _lockerSlots() {
+inkwave-public/src/ui/menus.js:1458:  _nameRow() {
+inkwave-public/src/ui/menus.js:1490:  _scr_locker() {
+inkwave-public/src/ui/menus.js:1718:  _scr_loadout() {
+inkwave-public/src/ui/menus.js:1881:  _seg(options, value, onChange) {
+inkwave-public/src/ui/menus.js:1910:  _slider(row, value) {
+inkwave-public/src/ui/menus.js:1958:  _toggle(row, value) {
+inkwave-public/src/ui/menus.js:1977:  _scr_settings() {
+inkwave-public/src/ui/menus.js:2160:  _controlsList(mode, compact = false) {
+inkwave-public/src/ui/menus.js:2182:  _scr_howto() {
+inkwave-public/src/ui/menus.js:2221:  _scr_credits() {
+inkwave-public/src/ui/menus.js:2264:  _sc() { return (G.game && G.game.showcase) || null; }
+inkwave-public/src/ui/menus.js:2267:  _net() {
+inkwave-public/src/ui/menus.js:2274:  _bindNet(n) {
+inkwave-public/src/ui/menus.js:2281:  _onNetState(state) {
+inkwave-public/src/ui/menus.js:2294:  _roomGone(msg) {
+inkwave-public/src/ui/menus.js:2303:  _teamColors() { return this._accent(); }
+inkwave-public/src/ui/menus.js:2306:  _syncMe(net) {
+inkwave-public/src/ui/menus.js:2320:  _scr_online() {
+inkwave-public/src/ui/menus.js:2736:  _scr_lobby(opts = {}) {
+inkwave-public/src/ui/menus.js:3606:  _resume() {
+inkwave-public/src/ui/menus.js:3613:  _matchSnapshot() {
+inkwave-public/src/ui/menus.js:3648:  _scr_pause() {
+inkwave-public/src/ui/menus.js:3766:  _scr_results() {
+inkwave-public/src/ui/menus.js:4140:  _demoResults() {

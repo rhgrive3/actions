@@ -18,20 +18,21 @@ const composed = adaptLocalBatch01('src/core/renderer.js', native, (s,a,b) => {
 });
 const methods = composed.slice(composed.indexOf('\n  resize()'),composed.lastIndexOf('\n}'));
 function fixture(ratio = 1) {
-  const env = {innerWidth:1280,innerHeight:800};
+  const env = {innerWidth:1280,innerHeight:800,devicePixelRatio:ratio};
   const canvas = {isConnected:true,style:{clipPath:'none'},width:0,height:0,
     box:{x:0,y:0,width:0,height:0},getBoundingClientRect(){return this.box;}};
   const camera = {aspect:1,userData:{s3BattleFrame:true,s3ReferenceVerticalFov:55},updateProjectionMatrix(){}};
   const m = {time:172,stateT:4};
   const G = {time:8,env:null,netm:null,game:{frozen:true,match:m,s3Clock:{ticks:480},_frame(){assert.fail('simulation frame forbidden');}}};
-  let renderCalls=0;
+  let renderCalls=0,pixelRatio=ratio;
   const ctx = vm.createContext({...env,window:env,cropBattleCanvas,resizeBattleCamera,G,s3ProbeG:G,
     getComputedStyle:()=>({display:'block',visibility:'visible',opacity:'1'})});
   const Renderer = vm.runInContext('(class {'+methods+'})',ctx), R=G.game.R=new Renderer();
-  Object.assign(R,{_w:0,_h:0,_contextLost:false,camera,grade:{uniforms:{uAspect:{value:1}}},_fxaaTexel(){},
-    renderer:{domElement:canvas,getPixelRatio:()=>ratio,getContext:()=>({isContextLost:()=>false}),
-      setSize(w,h){canvas.box={x:0,y:0,width:w,height:h};canvas.width=Math.floor(w*ratio);canvas.height=Math.floor(h*ratio);}},
-    composer:{setSize(){},render(){renderCalls++;}}});
+  Object.assign(R,{_w:0,_h:0,_contextLost:false,camera,mobile:{touch:false,ios:false},q:{pixelRatio:ratio},dynScale:1,
+    grade:{uniforms:{uAspect:{value:1}}},_fxaaTexel(){},
+    renderer:{domElement:canvas,getPixelRatio:()=>pixelRatio,setPixelRatio(value){pixelRatio=value;},getContext:()=>({isContextLost:()=>false}),
+      setSize(w,h){canvas.box={x:0,y:0,width:w,height:h};canvas.width=Math.floor(w*pixelRatio);canvas.height=Math.floor(h*pixelRatio);}},
+    composer:{setPixelRatio(){},setSize(){},render(){renderCalls++;}}});
   const viewport=()=>({width:env.innerWidth,height:env.innerHeight});
   const evaluate=(fn,arg)=>{ctx.arg=arg;return vm.runInContext('('+fn.toString()+')(arg)',ctx);};
   const resize=(width,height)=>{env.innerWidth=ctx.innerWidth=width;env.innerHeight=ctx.innerHeight=height;};

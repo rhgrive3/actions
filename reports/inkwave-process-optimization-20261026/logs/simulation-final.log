@@ -1,0 +1,13 @@
+✔ boss plans preserve exact routes and expansion order through repeated goals and disconnected searches (193.1972ms)
+✔ boss search demonstrably removes repeated grid-length and heuristic work (16.864528ms)
+ℹ {"hypotCallsBefore":61545,"hypotCallsAfter":10247,"heuristicScratchBytes":12800}
+✔ boss move weights retain exact threshold, cooldown, last-move and RNG choices (26.095623ms)
+✔ boss hazard clocks and cleanup retain exact endpoints and observe changed records (2.427761ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 678.082019

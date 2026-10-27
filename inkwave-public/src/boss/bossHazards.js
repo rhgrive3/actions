@@ -36,6 +36,8 @@ const SAFE_PAD = 0.6;      // squidkids standing on a spawn pad (+ this) are out
 const REACH_N = 96;        // headings for the floor-clipped extent of rings / danger zones
 
 export function moveTimes(m) { const [tele, act, rec] = m.d; return { tele, act, rec, end: tele + act + rec }; }
+// End-only readers run for every actor/move pair and need no phase object.
+function moveEnd(m) { const [tele, act, rec] = m.d; return tele + act + rec; }
 export function movePhaseAt(m, u) {
   const [tele, act, rec] = m.d;
   if (u < 0) return null;
@@ -83,7 +85,7 @@ export class BossHazards {
     this.boss.log.moves.push([m.t0, m.id]);
     return true;
   }
-  current(bt) { for (let i = this.moves.length - 1; i >= 0; i--) { const m = this.moves[i]; if (bt >= m.t0 && bt < m.t0 + moveTimes(m).end) return m; } return null; }
+  current(bt) { for (let i = this.moves.length - 1; i >= 0; i--) { const m = this.moves[i]; if (bt >= m.t0 && bt < m.t0 + moveEnd(m)) return m; } return null; }
   // defeat / time's up: every pending hazard stops here; barrels still in the air burst harmlessly where they are
   fizzle(bt) {
     if (this.dead >= 0) return;
@@ -99,15 +101,15 @@ export class BossHazards {
 
   // hazards still able to hurt at boss time bt (a move stays listed until its last barrel / ring is spent)
   _live(m, bt) {
-    const u = bt - m.t0, T = moveTimes(m);
+    const u = bt - m.t0, end = moveEnd(m);
     const extra = m.id === 'slam' ? (HZ.ringMax - HZ.ringR0) / HZ.ringSpeed + (m.p.rings.at(-1) || 0) : 0;
-    return u >= 0 && u < T.end + extra + 0.2 && (this.dead < 0 || bt < this.dead);
+    return u >= 0 && u < end + extra + 0.2 && (this.dead < 0 || bt < this.dead);
   }
 
   update(dt, bt, { live }) {
     for (let i = this.moves.length - 1; i >= 0; i--) {
       const m = this.moves[i];
-      if (bt - m.t0 > moveTimes(m).end + 4) { this.moves.splice(i, 1); for (const k of [...this.hits]) if (k.startsWith(m.t0 + '|')) this.hits.delete(k); }
+      if (bt - m.t0 > moveEnd(m) + 4) { this.moves.splice(i, 1); for (const k of [...this.hits]) if (k.startsWith(m.t0 + '|')) this.hits.delete(k); }
     }
     const prev = this.prevBt;
     if (live) this._hurtLocal(prev, bt, dt);

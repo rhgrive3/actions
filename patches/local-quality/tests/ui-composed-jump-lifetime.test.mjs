@@ -85,7 +85,16 @@ function rig() {
 test('#1153 fixture uses the production Bubbler → navigation → lifetime composition', () => {
   assert.throws(() => adaptRespawnNavigation(dioramaRel, readPublic(dioramaRel)), /expected exactly one connection/,
     'raw source cannot bypass the required Bubbler composition');
-  assert.ok(diorama.includes('this.pins = [...this.basePins, ...this.bubblerPins.slice(0, count), this.selfPin]'));
+  const PinOrder = new Function('return class {' + section(diorama, '  _ensureBubblerPins(targets) {', '  releaseMatchActors(') + '}')();
+  const pins = new PinOrder();
+  Object.assign(pins, { basePins: [{}, {}, {}, {}], selfPin: {}, pins: [], hover: -1,
+    bubblerPins: [{ el: { style: {} } }, { el: { style: {} } }] });
+  const targets = [{ id: 'a', serial: 1 }, { id: 'b', serial: 2 }];
+  pins._ensureBubblerPins(targets);
+  assert.deepEqual(pins.pins, [...pins.basePins, ...pins.bubblerPins, pins.selfPin]);
+  assert.equal(pins.pins[4].bubblerTarget, targets[0]);
+  pins._ensureBubblerPins([]);
+  assert.deepEqual(pins.pins, [...pins.basePins, pins.selfPin]);
   assert.ok(diorama.includes('requestMapBubblerJump(p.bubblerTarget)'));
   assert.ok(diorama.includes('p.target === me || p.target.team !== me.team'));
   assert.ok(player.includes('requestMapBubblerJump(target)'));
