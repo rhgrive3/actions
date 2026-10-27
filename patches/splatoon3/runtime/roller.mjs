@@ -312,8 +312,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     return runner.rolling === true && !fire && armsInterruption(runner);
   };
   const armAheadOf = (runner, now, fire) => {
-    const live = rollStopBlocks(now, runner.s3RollStop);
-    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;
+    if (runner.s3RollStop) {
+      const live = rollStopBlocks(now, runner.s3RollStop);
+      if (live.main || live.sub || live.squid) return false;
+    }
+    if (!rollWillStop(runner, fire)) return false;
     runner.s3RollStop = rollStopLocks(now);
     return true;
   };
@@ -350,7 +353,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     // consumes jumpBuffer. _roller runs later in this same authoritative tick.
     runner.s3RollerJumpPressed = this.weapon?.kind === 'roller' && !!this.intent?.jump && !this._prevIntent?.jump;
     const armed = armAheadOf(runner, now, !!(this.intent?.fire || this.fireBuffer > 0));
-    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;
+    const blockSquid = !!runner.s3RollStop && rollStopBlocks(now, runner.s3RollStop).squid;
     if (blockSquid && this.intent?.squid) {
       const held = this.intent.squid;
       this.intent.squid = false;
@@ -464,7 +467,8 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       (a.ink + EPS >= flickCost || depleted);
     const winding = this.flick >= 0;
     const onFlickPath = starting || winding;
-    const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
+    const coldIdle = !inp.fire && !wasHeld && !this.rolling && !this.s3RollerSuspendedHold;
+    const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);
     // The lower-and-hold action survives a jump or a brief loss of drum
     // support on a descending slope. Contact below still owns all paint,
     // damage and ink spending; an airborne trigger cannot start a new roll.
@@ -964,15 +968,18 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     const reachL = (arms.armL.a + arms.armL.b) * .9995 - .001;
     const minR = Math.abs(arms.armR.a - arms.armR.b) + .001, minL = Math.abs(arms.armL.a - arms.armL.b) + .001;
     const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
+    // Actor yaw and the fixed shaft angle are constant during this IK search.
+    const contactYaw = this.actor?.yaw || 0, contactCy = Math.cos(contactYaw), contactSy = Math.sin(contactYaw);
+    const shaftCy = Math.cos(ROLL_ROTATION[1]), shaftSy = Math.sin(ROLL_ROTATION[1]);
     const alignLeft = q => {
       if (contacting) {
         // A grounded drum owns its cross-floor axis. Reach correction must move
         // the paired wrist targets, not yaw the roller away from the ink band.
         weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
         axis.set(1,0,0).applyQuaternion(weaponQ).normalize();
-        const n=this.actor?.groundN,yaw=this.actor?.yaw||0,cy=Math.cos(yaw),sy=Math.sin(yaw);
+        const n=this.actor?.groundN,cy=contactCy,sy=contactSy;
         toLeft.set(n?n.x*cy-n.z*sy:0,n?n.y:1,n?n.x*sy+n.z*cy:0).normalize();
-        delta.set(Math.cos(ROLL_ROTATION[1]),0,-Math.sin(ROLL_ROTATION[1]));
+        delta.set(shaftCy,0,-shaftSy);
         delta.addScaledVector(toLeft,-delta.dot(toLeft)).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());
         const scale=this.kid.scale;
         if(Math.abs(scale.x)>1e-4&&Math.abs(scale.y)>1e-4&&Math.abs(scale.z)>1e-4)delta.divide(scale);
@@ -1118,7 +1125,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const scale = this.kid.scale;
       // During a form transition the source skeleton can scale kid to zero.
       // A visible roller grip never divides by a collapsed or invalid axis.
-      if (penetration > .00001 && [scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)) {
+      if (penetration > .00001 && Number.isFinite(scale.x) && Math.abs(scale.x) > 1e-4 && Number.isFinite(scale.y) && Math.abs(scale.y) > 1e-4 && Number.isFinite(scale.z) && Math.abs(scale.z) > 1e-4) {
         delta.set(0, 1, 0).applyQuaternion(inverseHandQ.copy(this.kid.quaternion).invert());
         target.x += penetration * delta.x / scale.x;
         target.y += penetration * delta.y / scale.y;
