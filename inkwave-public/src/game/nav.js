@@ -59,9 +59,10 @@ export class NavGraph {
           heights.push(y);
         }
         const list = [];
+        const clearanceIds = heights.length ? L.queryClearanceBlocks?.(x, z, PLAYER.radius + 0.08, this._clearIds || (this._clearIds = [])) : null;
         for (const y of heights) {
           // headroom + clearance (not inside geometry, not hugging walls)
-          if (!this._clear(x, y, z)) continue;
+          if (!this._clear(x, y, z, clearanceIds)) continue;
           const node = { id: this.nodes.length, x, y, z, ix, iz, nb: [], zone: -1 };
           // No global spawn-radius navigation exclusion in the S3 composition.
           this.nodes.push(node);
@@ -106,10 +107,10 @@ export class NavGraph {
     return this.cells[iz * this.nx + ix].some((id) => Math.abs(this.nodes[id].y - y) <= 0.5);
   }
 
-  _clear(x, y, z) {
+  _clear(x, y, z, clearanceIds = null) {
     const L = this.level;
     const r = PLAYER.radius + 0.08;
-    const ids = L.queryClearanceBlocks?.(x, z, r, this._clearIds || (this._clearIds = []));
+    const ids = clearanceIds || L.queryClearanceBlocks?.(x, z, r, this._clearIds || (this._clearIds = []));
     const blocked = (px, py, pz) => {
       _p.set(px, py, pz);
       if (!ids) return L.pointInside(_p, 0);
