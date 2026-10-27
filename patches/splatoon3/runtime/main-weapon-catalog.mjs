@@ -526,11 +526,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   // Feet-relative, same as the native Splat Roller flick birth (Projectiles.fireFlick:
   // 1.0 m + 0.3 m up, 0.6 m forward). INKWAVE convention; S3's swing birth point is not extracted.
   const BRUSH_SWING_ORIGIN=Object.freeze({X:0,Y:1.3,Z:0.6});
-  function angle(direction,yaw=0,pitch=0) {
+  function angle(direction,yaw=0,pitch=0,out=null) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
     const sinYaw=Math.sin(y),cosPitch=Math.cos(p);
-    return new THREE.Vector3(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
+    return (out||new THREE.Vector3()).set(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
   }
   function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
@@ -898,7 +898,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       constrainMuzzle(G.physics,base,rollerSpawnBase(a,muzzle));
       G.projectiles._aimFrom(a,muzzle,dir);
     }
-    const at=muzzle.clone(), direction=dir.clone(), volleys=new Map(), birth=new THREE.Vector3();
+    const at=muzzle.clone(), direction=dir.clone(), birth=new THREE.Vector3();
+    const volleyDepth=s.volleyScratchDepth||0;
+    const volleys=(s.volleyScratchMaps||=[])[volleyDepth]||=new Map();
+    const aimScratch=key==='slosh'?null:new THREE.Vector3();
     // The sourced Slosher launch follows the camera yaw/pitch, not muzzle
     // convergence toward a separately computed reticle intersection.
     // Otherwise a downward 45-degree view may still fire almost horizontally
@@ -918,6 +921,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const hasSlosherSweep=key==='slosh'&&catalogSlosherHasSweptAim(weaponParam(r),r.sourceActor);
     let blobSweepOrder=0,blobSweepFrames=0;
     const brushLeftToRight=key==='brush' && (s.swingCount%2===1);
+    s.volleyScratchDepth=volleyDepth+1;
+    try {
     group.Unit.forEach((u,j)=> {
       const desc=mode(r,key,j,charge);
       const count=(key==='brush'||key==='horizontal'||key==='vertical')
@@ -959,7 +964,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const pitch=key==='vertical'
           ?catalogRollerSourcePitch(u,i,true)
           :finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0));
-        const aim=angle(direction,yaw,pitch);
+        const aim=angle(direction,yaw,pitch,aimScratch);
         const d=catalogDepletedDescriptor({...desc,index:i},u,depleted,depletionCache);
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
         // S3 AddSpawnSpeedYRateByXZ scales the HORIZONTAL launch component.
@@ -988,6 +993,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(r.family==='roller'&&key==='vertical'&&j===0&&i===0&&p&&!p.ghost)configureCatalogRollerFlight(p,group);
       }
     });
+    } finally { volleys.clear();s.volleyScratchDepth=volleyDepth; }
     if(r.family==='roller'&&(key==='vertical'||key==='horizontal'))paintCatalogRollerNearest(a,group);
     if(key==='brush')paintCatalogBrushNearest(a,group,s.brushNearestOrdinal);
     // Every added Slosher owns independent NearestParam ground paint in
@@ -1533,10 +1539,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!p.ghost&&s.brellaFlight&&s.brellaFlight.volley.next<s.brellaFlight.volley.plan.count){
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
         const end=(s.brellaFlight.clipEnd||=p.prev.clone()).copy(p.prev).lerp(p.pos,fraction);
-        collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,
-          (from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
-            direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
-            catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)}));
+        const release=s.brellaSplashRelease||=(from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{
+          owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
+          direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
+          catchUpSeconds:Math.max(0,p.age+s.carry-birthFrame/HZ)});
+        collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,release);
       }
       // Apply one distance/obstruction/lifetime admission law to detached
       // source splashes and the unsupported-physics projected fallback.
@@ -1706,10 +1713,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
 
   function rolling(runner,r,dt) {
     const a=runner.a,p=r.parameters,roll=p.WeaponRollParam||{},body=p.BodyParam||{};
-    const s=state(runner),speed=Math.hypot(a.vel.x,a.vel.z),stick=Math.hypot(a.intent.move?.x||0,a.intent.move?.z||0);
+    const s=state(runner);
+    if(!a.grounded){s.rollingFrames=0;s.rollingDash=false;s.rollPaint=null;return;}
+    const speed=Math.hypot(a.vel.x,a.vel.z),stick=Math.hypot(a.intent.move?.x||0,a.intent.move?.z||0);
     // Held ZR alone is not an attack: rolling needs stick input, ground
     // contact and movement. Do not paint, hit or drain ink while stationary.
-    if(!a.grounded||stick<=EPS||speed<=EPS){s.rollingFrames=0;s.rollingDash=false;s.rollPaint=null;return;}
+    if(stick<=EPS||speed<=EPS){s.rollingFrames=0;s.rollingDash=false;s.rollPaint=null;return;}
     const normal=finite(roll.SpeedNormal,.132)*HZ;
     if(s.rollingDash&&speed+EPS<finite(roll.SpeedDashTurnBreak,normal/HZ)*HZ)s.rollingDash=false;
     if(stick>=1-EPS&&speed+EPS>=normal&&!dashTurnBreakActive(a))s.rollingFrames+=dt*HZ;
@@ -2151,7 +2160,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Connect only complete, explicit source rows. Normal/Wide omit the
     // timing fields; do not invent their type defaults. Zero interval means
     // no wait before the next fixed-frame attempt, not permanent retirement.
-    if(![radius,wait,span].every(Number.isFinite)||radius<=0||wait<0||span<0)return;
+    if(!Number.isFinite(radius)||!Number.isFinite(wait)||!Number.isFinite(span)||radius<=0||wait<0||span<0)return;
     if(!canopy.open){canopy.footFrames=0;canopy.footNext=wait;return;}
     canopy.footFrames=wasOpen?(canopy.footFrames||0)+dt*HZ:
       clamp(canopy.age*HZ-measure.open,0,dt*HZ);

@@ -159,9 +159,7 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     if(cameraPosition&&cameraPosition.distanceToSquared(d.pos)>900)continue;
     const speed=d.vel.length();
     const tri=d.sourceActor==='WeaponSlosherDiffusion';
-    direction.copy(d.vel);
-    if(speed>1e-6)direction.multiplyScalar(1/speed);
-    else direction.copy(axis);
+
     // The paint solver releases stationary drops, then integrates gravity.
     // Its vertical velocity is not a cosmetic launch heading: using it flips
     // the bead straight down on its first tick. Tri-Slosher's shared Bucket
@@ -169,6 +167,7 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // exactly with the authoritative queue. No second flight is simulated.
     if(tri&&(Math.abs(d.dirX||0)>1e-6||Math.abs(d.dirZ||0)>1e-6||Math.hypot(d.dirX||0,d.dirZ||0)>1e-6))
       direction.set(d.dirX,0,d.dirZ).normalize();
+    else { direction.copy(d.vel); if(speed>1e-6)direction.multiplyScalar(1/speed); else direction.copy(axis); }
     rotation.setFromUnitVectors(axis,direction);
     // d.radius is a *floor paint* footprint, not an ink model radius.
     // Slosher splashes carry their sourced DrawRadius; Shooter drops keep the
