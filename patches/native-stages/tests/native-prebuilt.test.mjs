@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {Texture as TestTexture} from '../../../inkwave-public/vendor/three/build/three.module.js';
-import {FACE_KEYS, FACE_F64, FACE_I32, PREBUILT_SCHEMA, unpackFaces} from '../runtime/prebuilt-format.mjs';
+import {FACE_KEYS, FACE_F64, FACE_I32, PREBUILT_SCHEMA, unpackFaces, unpackFacesAsync} from '../runtime/prebuilt-format.mjs';
 import {admitPrebuiltStages, prebuiltConverterIdentity} from '../../../scripts/lib/inkwave-native-prebuilt.mjs';
 import {copyPrebuiltNativeAssets} from '../../../scripts/lib/inkwave-native-stages.mjs';
 
@@ -29,8 +29,9 @@ function pack(faces) {
 
 test('paint faces round-trip exactly, including key order', () => {
   const faces = [face(0), face(1), face(2)], p = pack(faces), out = unpackFaces(p.f64, p.i32, p.offsets, p.ids);
-  assert.deepEqual(out, faces);
-  assert.equal(JSON.stringify(out), JSON.stringify(faces));
+  assert.deepEqual(out.map(f=>({...f,triangles:Array.from(f.triangles)})), faces);
+  for(const f of out){assert.ok(f.triangles instanceof Uint32Array);assert.equal(f.triangles.buffer,p.ids.buffer);}
+  assert.equal(JSON.stringify(out,(_k,v)=>v instanceof Uint32Array?Array.from(v):v), JSON.stringify(faces));
   assert.equal(Object.keys(out[0]).join(), FACE_KEYS);
 });
 
@@ -88,11 +89,11 @@ if (!vm.SourceTextModule) {
     execFileSync(process.execPath, ['--experimental-vm-modules', '--test', fileURLToPath(import.meta.url)], {env, stdio: 'pipe'});
   });
 } else {
-  async function loader(files) {
+  async function loader(files,{stream=false}={}) {
     const fetched = [];
-    const context = vm.createContext({URL, TextDecoder, ArrayBuffer, Uint8Array, Float32Array, Float64Array, Int32Array, Uint32Array, CustomEvent: class {constructor(t, o) { this.type = t; this.detail = o.detail; }},
+    const context = vm.createContext({URL, AbortController, DOMException, TextDecoder, ArrayBuffer, Uint8Array, Float32Array, Float64Array, Int32Array, Uint32Array, CustomEvent: class {constructor(t, o) { this.type = t; this.detail = o.detail; }},
       crypto: globalThis.crypto, Array, Object, JSON, Error, Promise, location: {href: 'https://game.test/_versions/r/index.html'}, dispatchEvent() {},
-      fetch: async url => { fetched.push(url); const body = files[url]; return body ? {ok: true, status: 200, arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)} : {ok: false, status: 404}; }});
+      fetch: async url => { fetched.push(url); const body = files[url]; return body ? {ok: true, status: 200, body:stream?new ReadableStream({start(controller){for(let at=0;at<body.byteLength;at+=7)controller.enqueue(new Uint8Array(body.buffer,body.byteOffset+at,Math.min(7,body.byteLength-at)));controller.close();}}):null, arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)} : {ok: false, status: 404}; }});
     const make = values => new vm.SyntheticModule(Object.keys(values), function () { for (const [k, v] of Object.entries(values)) this.setExport(k, v); }, {context});
     const format = new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/prebuilt-format.mjs', import.meta.url), 'utf8'), {context});
     await format.link(() => { throw Error('unexpected'); }); await format.evaluate();
@@ -121,11 +122,19 @@ if (!vm.SourceTextModule) {
     const site = siteFiles(), env = await loader(site.files), data = await load(env, site.entry, 's');
     assert.deepEqual(Array.from(data.triangles), [1.5, 2.5, 3.5]);
     assert.deepEqual(Array.from(data.mask), [1, 2, 3, 4, 5]);
-    assert.equal(JSON.stringify(data.manifest.faces), JSON.stringify(site.faces));
+    assert.equal(JSON.stringify(data.manifest.faces,(_k,v)=>v instanceof Uint32Array?Array.from(v):v), JSON.stringify(site.faces));
     assert.deepEqual(data.integrity, {x: 1});
     for (const k of ['faceF64', 'faceI32', 'faceTriangleOffsets', 'faceTriangles']) assert.equal(k in data, false);
     assert.equal(data.sourceMetrics.prebuilt, true);
     assert.ok(env.fetched.every(u => u.startsWith('https://game.test/native-prebuilt/s/')));
+  });
+  test('streamed ranges preserve byte boundaries and reject truncated or oversized bodies',async()=>{
+    const site=siteFiles(),env=await loader(site.files,{stream:true}),data=await load(env,site.entry,'s');
+    assert.deepEqual(Array.from(data.mask),[1,2,3,4,5]);assert.deepEqual(Array.from(data.triangles),[1.5,2.5,3.5]);
+    const key=Object.keys(site.files).find(k=>k.endsWith('mask.0.bin')),original=site.files[key];
+    for(const bytes of [original.subarray(0,2),Buffer.concat([original,Buffer.from([9])])]){
+      site.files[key]=bytes;await assert.rejects(load(await loader(site.files,{stream:true}),site.entry,'s'),/integrity mismatch/);
+    }
   });
   test('runtime loader rejects tampered chunks, stage records and incomplete faces', async () => {
     const site = siteFiles(), key = Object.keys(site.files).find(k => k.endsWith('triangles.0.bin'));
@@ -137,23 +146,23 @@ if (!vm.SourceTextModule) {
     await assert.rejects(load(await loader(short.files), short.entry, 's'), /faces incomplete/);
   });
 
-  async function harness({ktx2Fails = false, abort = false, parse = null} = {}) {
-    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: [], resized: [], disposedLoaders: 0}, controller = new AbortController(), signal = controller.signal;
+  async function harness({ktx2Fails = false, abort = false, parse = null, packFails = false, initFails = 0, clock = {value:0}} = {}) {
+    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: [], resized: [], disposedLoaders: 0, initialized: 0}, controller = new AbortController(), signal = controller.signal;
     class Texture extends TestTexture { dispose() { this.disposed = true; super.dispose(); } }
-    const context = vm.createContext({Map, Blob, Uint8Array, DOMException, AbortController, URL, location: {href: 'https://game.test/_versions/r/index.html'},
+    const context = vm.createContext({Date: {now: () => clock.value}, Map, Blob, Uint8Array, DOMException, AbortController, URL, location: {href: 'https://game.test/_versions/r/index.html'},
       console: {warn: m => calls.warned.push(m)},
       createImageBitmap: async (_, options) => { if (options?.resizeWidth) calls.resized.push(options.resizeWidth); else calls.bitmaps++; return {width: options?.resizeWidth || 2048, height: options?.resizeHeight || 2048, close() {}}; },
       OffscreenCanvas: class { getContext() { return {drawImage() {}, getImageData: (x, y, w, h) => ({data: new Uint8ClampedArray(w * h * 4).fill(128)})}; } }});
     const make = values => { const m = new vm.SyntheticModule(Object.keys(values), function () { for (const [k, v] of Object.entries(values)) this.setExport(k, v); }, {context}); return m; };
     const ready = async m => { await m.link(() => { throw Error('unexpected'); }); await m.evaluate(); return m; };
-    class KTX2Loader { setTranscoderPath() { return this; } detectSupport() { return this; } dispose() { calls.disposedLoaders++; }
+    class KTX2Loader { init(){return this._init||(this._init=++calls.initialized<=initFails?Promise.reject(Error('init unavailable')):Promise.resolve());} setTranscoderPath() { return this; } detectSupport() { return this; } dispose() { calls.disposedLoaders++; }
       parse(bytes, onLoad, onError) { calls.parsed++; calls.slices.push(Array.from(new Uint8Array(bytes))); if (abort) controller.abort();
         if (parse) return parse(onLoad, onError);
         if (ktx2Fails) return onError(Error('transcoder unavailable'));
         onLoad(Object.assign(new Texture({width: 2048, height: 2048}), {isCompressedTexture: true, format: 33776, mipmaps: [2048, 1024, 512, 256].map(n => ({width: n, height: n, data: new Uint8Array(1)}))})); } }
     const dynamic = {
       '../../../vendor/three/jsm/loaders/KTX2Loader.js': {KTX2Loader},
-      './prebuilt-load.mjs': {fetchVerified: async file => { calls.packs.push(file); return Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7]).buffer; }},
+      './prebuilt-load.mjs': {fetchVerified: async file => { calls.packs.push(file); if(packFails)throw Error('pack unavailable'); return Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7]).buffer; }},
     };
     const mods = {three: {Texture, DataTexture: Texture, SRGBColorSpace: 'srgb', NoColorSpace: '', RepeatWrapping: 1000, RGBAFormat: 1023},
       './registry.mjs': {nativeStageURL: () => ''}, './build-config.mjs': {nativeStageBuild: {mode: 'browser-direct'}},
@@ -172,7 +181,7 @@ if (!vm.SourceTextModule) {
     if (cover) for (const file of Object.keys(data.manifest.prebuiltTextures)) if (!cover.includes(file)) delete data.manifest.prebuiltTextures[file];
     let result, error;
     const run = (r = renderer, s = signal) => m.namespace.loadNativeTextures('fixture', data, r, quality, s, limit);
-    if (options.manual) return {calls, run, signal};
+    if (options.manual) return {calls, run, signal, m, renderer};
     try { result = await run(); }
     catch (e) { error = e; }
     return {calls, result, error};
@@ -187,6 +196,19 @@ if (!vm.SourceTextModule) {
     // Both textures are slices of one pack fetched once.
     assert.deepEqual(calls.packs, ['packs/p.bin']);
     assert.deepEqual(calls.slices.map(x => x.join()).sort(), ['2,3,4', '5,6']);
+  });
+  test('one failed KTX2 pack is fetched once per load session and later sessions can retry',async()=>{
+    const f=await textures({manual:true,packFails:true});await f.run();
+    assert.equal(f.calls.packs.length,1);assert.equal(f.calls.bitmaps,2);assert.equal(f.calls.parsed,0);
+    await f.run();assert.equal(f.calls.packs.length,2);assert.equal(f.calls.bitmaps,4);
+  });
+  test('failed transcoder initialization backs off and a later loader recovers; idle release is idempotent',async()=>{
+    const clock={value:0},f=await textures({manual:true,initFails:1,clock});
+    await f.run();assert.equal(f.calls.initialized,1);assert.equal(f.calls.parsed,0);assert.equal(f.calls.bitmaps,2);
+    await f.run();assert.equal(f.calls.initialized,1,'same failed init is not retried per texture or load');
+    clock.value=30001;const result=await f.run();assert.equal(f.calls.initialized,2);assert.equal(f.calls.parsed,2);
+    assert.equal(result._releaseWorkers(),true);assert.equal(result._releaseWorkers(),false);
+    await Promise.resolve();assert.equal(f.calls.disposedLoaders,2,'failed and recovered loaders each dispose once');
   });
   test('a failed KTX2 texture falls back to its pinned PNG; an abort does not', async () => {
     const fallback = await textures({ktx2Fails: true});
@@ -214,6 +236,14 @@ if (!vm.SourceTextModule) {
     assert.equal(calls.disposedLoaders, 1, 'retired loader disposed once its parses settled');
     for (const w of waiting.splice(0)) w.onLoad(compressed());
     assert.equal((await second).size, 2);
+  });
+  test('stage worker release waits for active parse callbacks and the next load gets a fresh owner',async()=>{
+    const waiting=[],f=await textures({manual:true,parse:onLoad=>waiting.push(onLoad)}),pending=f.run();
+    await new Promise(r=>setTimeout(r,0));assert.equal(waiting.length,2);
+    assert.equal(f.m.namespace.releaseNativeTextureWorkers(f.renderer),true);assert.equal(f.calls.disposedLoaders,0);
+    for(const finish of waiting.splice(0))finish(compressed());await pending;await Promise.resolve();
+    assert.equal(f.calls.disposedLoaders,1);const next=f.run();await new Promise(r=>setTimeout(r,0));
+    assert.equal(f.calls.initialized,2);for(const finish of waiting.splice(0))finish(compressed());await next;
   });
   test('an abort during a KTX2 transcode settles the load; the late texture is disposed', async () => {
     const waiting = [], controller = new AbortController();
@@ -300,3 +330,10 @@ test('builder input identity hashes every scripts/lib helper it runs', () => {
   const unhashed = [...reached].filter(file => !builder.includes(`'${file.split(path.sep).join('/')}'`));
   assert.deepEqual(unhashed, [], 'add these helpers to identity.files in build-inkwave.mjs');
 });
+
+ test('cooperative face unpack preserves exact values and aborts between batches',async()=>{
+ const faces=Array.from({length:300},(_,i)=>face(i%3)),p=pack(faces);let yields=0;
+ const out=await unpackFacesAsync(p.f64,p.i32,p.offsets,p.ids,{budgetMilliseconds:0,yieldTask:async()=>{yields++;}});
+ assert.equal(yields,2);assert.deepEqual(out.map(f=>({...f,triangles:Array.from(f.triangles)})),faces);
+ const controller=new AbortController();await assert.rejects(unpackFacesAsync(p.f64,p.i32,p.offsets,p.ids,{signal:controller.signal,budgetMilliseconds:0,yieldTask:async()=>controller.abort()}),{name:'AbortError'});
+ });

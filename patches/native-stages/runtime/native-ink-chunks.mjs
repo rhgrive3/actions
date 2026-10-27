@@ -44,7 +44,7 @@ export function partitionNativeInk(geometry,tileSize=16,triangleTile=null,bounds
  * original Mesh. Attributes, full bounds, transparent sort position and material
  * stay intact, including where source triangles overlap across tile boundaries. */
 export class NativeInkMesh extends THREE.Mesh {
-  constructor(geometry, material, tileSize = 16) {
+  constructor(geometry, material, tileSize = 16, {willBindPaint=false} = {}) {
     super(geometry, material);
     this.name = 'native-game-ink';
     this.tileSize = tileSize;
@@ -53,6 +53,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._frustum = new THREE.Frustum();
     this._faceCulling = true;
     this._ready = true;
+    this._deferRunTables=willBindPaint;
     this.geometry = geometry;
     this.onBeforeRender = (_renderer, scene, camera) => {
       // GTAO normal/depth override must not render transparent paint as opaque.
@@ -69,6 +70,27 @@ export class NativeInkMesh extends THREE.Mesh {
       }
       this.selectVisible(camera);
     };
+  }
+  _ensureRunTables() {
+    if(this._runTiles)return;
+    const triCount=this._triangleTile.length;
+    // The source is non-indexed. Precompute ascending contiguous runs in
+    // *source triangle order*, never in tile order: transparent overlay
+    // blending depends on the original draw order.
+    const tiles = [], starts = [], ends = [];
+    for (let start = 0; start < triCount;) {
+      const tile = this._triangleTile[start];
+      let end = start + 1;
+      while (end < triCount && this._triangleTile[end] === tile) end++;
+      tiles.push(tile); starts.push(start * 3); ends.push(end * 3);
+      start = end;
+    }
+    this._runTiles = Uint32Array.from(tiles);
+    this._runStarts = Uint32Array.from(starts);
+    this._runEnds = Uint32Array.from(ends);
+    // Many tiny interleaved runs make subarray construction more costly than
+    // the original scalar loop. Use that loop only on highly fragmented maps.
+    this._fragmentedRuns = tiles.length > triCount / 4;
   }
   get geometry() { return this._geometry; }
   /** Diagnostic switch: false restores tile-only selection for A/B checks. */
@@ -96,22 +118,10 @@ export class NativeInkMesh extends THREE.Mesh {
     // The source is non-indexed. Precompute ascending contiguous runs in
     // *source triangle order*, never in tile order: transparent overlay
     // blending depends on the original draw order.
-    let runCount = triCount ? 1 : 0;
-    for (let i = 1; i < triCount; i++) if (triangleTile[i] !== triangleTile[i - 1]) runCount++;
-    this._runTiles = new TileArray(runCount);
-    this._runStarts = new Uint32Array(runCount);
-    this._runEnds = new Uint32Array(runCount);
-    for (let start = 0, run = 0; start < triCount; run++) {
-      const tile = triangleTile[start];
-      let end = start + 1;
-      while (end < triCount && triangleTile[end] === tile) end++;
-      this._runTiles[run] = tile;
-      this._runStarts[run] = start * 3;
-      this._runEnds[run] = end * 3;
-      start = end;
-    }
-    // The threshold and original source order are unchanged.
-    this._fragmentedRuns = runCount > triCount / 4;
+    // No source-order run storage while painted chunks are known empty.
+    this._runTiles = this._runStarts = this._runEnds = null;
+    this._fragmentedRuns = false;
+    if (!this._deferRunTables) this._ensureRunTables();
     // No retained full-size identity index: avoid doubling this GPU buffer.
     this._drawIndex = new THREE.BufferAttribute(new Uint32Array(triCount * 3), 1)
       .setUsage(THREE.DynamicDrawUsage);
@@ -415,6 +425,7 @@ export class NativeInkMesh extends THREE.Mesh {
       return visibleCount;
     }
 
+    this._ensureRunTables();
     // Coalesce adjacent *visible source-order runs*, even if their tiles
     // differ. This can reduce thousands of scalar writes to a few
     // TypedArray.set operations without changing triangle order.
