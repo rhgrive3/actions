@@ -23,7 +23,7 @@ test('harness retains strict identity, failure result before image and final tra
 test('early failure does not enqueue readiness after delayed start resolves',async()=>{const p=page(),r={};let resume,waits=0;p.waitForFunction=()=>{waits++;throw Error('late readiness');};const run=observeRankedBoot(p,url,r,()=>new Promise(resolve=>{resume=resolve;}));p.emit('response',response(503));await assert.rejects(run,/503/);resume();await new Promise(resolve=>setImmediate(resolve));assert.equal(waits,0);assert.match(r.failures[0].observedAt,/^\d{4}-/);});
 test('existing readiness rejection after context closes stays handled',async()=>{const p=page(),r={};let close;p.waitForFunction=()=>new Promise((_,reject)=>{close=()=>reject(Error('Target page, context or browser has been closed'));});const unhandled=[];const listener=e=>unhandled.push(e);process.on('unhandledRejection',listener);try{const run=observeRankedBoot(p,url,r,async()=>{});await new Promise(resolve=>setImmediate(resolve));p.emit('response',response(404));await assert.rejects(run,/404/);assert.equal(p.listenerCount('response'),0);close();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',listener);}});
 test('boot receipts retain exact build identity even for document failure',()=>{const s=fs.readFileSync(new URL('../check-inkwave-ranked-browser.mjs',import.meta.url),'utf8');assert.match(s,/const receipt=\{context:contexts.length-1,inputHash:build.inputHash,revision:build.build.revision/);});
-test('dedicated ranked CI runs diagnostics and tracks both new paths',()=>{const w=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-ranked.yml',import.meta.url),'utf8');assert(w.includes('run: node --test scripts/tests/ranked-boot-diagnostics.test.mjs'));for(const p of ['scripts/lib/ranked-boot-diagnostics.mjs','scripts/tests/ranked-boot-diagnostics.test.mjs'])assert.equal(w.split("- '"+p+"'").length-1,2);assert(w.includes('timeout-minutes: 25'));assert(w.includes('contents: read'));});
+test('dedicated ranked CI runs diagnostics and tracks diagnostic and native-clock paths',()=>{const w=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-ranked.yml',import.meta.url),'utf8');assert(w.includes('run: node --test scripts/tests/ranked-boot-diagnostics.test.mjs'));for(const p of ['scripts/lib/ranked-boot-diagnostics.mjs','scripts/tests/ranked-boot-diagnostics.test.mjs','scripts/lib/ranked-roller-audio.mjs','scripts/tests/ranked-roller-audio.test.mjs'])assert.equal(w.split("- '"+p+"'").length-1,2);assert(w.includes('timeout-minutes: 25'));assert(w.includes('contents: read'));});
 
 // A graphics-heavy or stalled RAF must not be part of the readiness polling
 // contract. The 180s upper bound and exact game-ready predicate remain strict.
@@ -113,16 +113,16 @@ const rankedCheckerSource=fs.readFileSync(new URL('../check-inkwave-ranked-brows
 const recoveryStart=rankedCheckerSource.indexOf('  // Recovery must re-admit native contact');
 const recoveryEnd=rankedCheckerSource.indexOf("  phase('recovered-real-audio'",recoveryStart);
 assert(recoveryStart>=0&&recoveryEnd>recoveryStart);
-const executeRecovery=new Function('host','guest','place','setInput','lane','timeout','identities','snapshot',`return (async()=>{${rankedCheckerSource.slice(recoveryStart,recoveryEnd)};return recovered;})();`);
+const executeRecovery=new Function('host','guest','place','setInput','lane','timeout','identities','snapshot','proveRankedRollAudio','phase',`return (async()=>{${rankedCheckerSource.slice(recoveryStart,recoveryEnd)};return recovered;})();`);
 function recoveryHarness({rejectAdmission=false}={}){
  const calls=[],waits=[],pending={};
  const host={waitForFunction:async(fn,arg,options)=>{assert.equal(options.timeout,30000);calls.push('owner-admitted');}};
  const guest={waitForFunction:(predicate,nid,options)=>{
   assert.equal(nid,7);assert.equal(options.timeout,30000);waits.push(predicate);
-  if(waits.length===1){calls.push('remote-readiness');return new Promise((resolve,reject)=>{pending.resolve=resolve;pending.reject=reject;if(rejectAdmission)reject(Error('recovery admission timeout'));});}
-  calls.push('positive-audio');return Promise.resolve({remote:'positive-real-audio'});
+  assert.equal(waits.length,1,'readiness is admitted once before the native-clock helper');
+  calls.push('remote-readiness');return new Promise((resolve,reject)=>{pending.resolve=resolve;pending.reject=reject;if(rejectAdmission)reject(Error('recovery admission timeout'));});
  }};
- const run=()=>executeRecovery(host,guest,async()=>{calls.push('place');},async(_page,fire,keys=[])=>{assert.equal(fire,true);calls.push(keys.length?'pulse':'held-at-rest');}, {supported:[1,2,3],yaw:0},{timeout:30000},[{nid:7}],async p=>p);
+ const run=()=>executeRecovery(host,guest,async()=>{calls.push('place');},async(_page,fire,keys=[])=>{assert.equal(fire,true);calls.push(keys.length?'pulse':'held-at-rest');}, {supported:[1,2,3],yaw:0},{timeout:30000},[{nid:7}],async p=>p,async()=>{calls.push('positive-audio');return {remote:'positive-real-audio'};},()=>{});
  return {calls,waits,pending,run};
 }
 function withRankedRead(state,fn){const previous=globalThis.__rankedReplication;globalThis.__rankedReplication={read:nid=>{assert.equal(nid,7);return state;}};try{return fn();}finally{globalThis.__rankedReplication=previous;}}
@@ -133,10 +133,7 @@ test('ranked recovery waits for native and real remote loop admission before its
  assert(!h.calls.includes('pulse'),'relay delay cannot consume movement before readiness');
  assert.equal(withRankedRead(recoveredAtRest,()=>h.waits[0](7)),true,'a registered playing loop may be ready at zero volume');
  h.pending.resolve();assert.deepEqual(await run,{remote:'positive-real-audio'});
- assert.deepEqual(h.calls,['place','held-at-rest','owner-admitted','remote-readiness','pulse','positive-audio']);
- assert.equal(withRankedRead(recoveredAtRest,()=>h.waits[1](7)),false,'zero-volume readiness cannot pass the positive audio gate');
- const positive={...recoveredAtRest,realRollLoops:[{playing:true,registered:true,volume:.2}]};
- assert.equal(withRankedRead(positive,()=>h.waits[1](7)),positive);
+ assert.deepEqual(h.calls,['place','held-at-rest','owner-admitted','remote-readiness','positive-audio']);
  assert.match(rankedCheckerSource,/if\(keys.includes\('KeyS'\)\)state.motionTimer=setTimeout\(\(\)=>RG.input.keys.delete\('KeyS'\),250\)/,'movement remains bounded to 250 ms');
 });
 test('ranked recovery rejects suspended, stale-bit, ungrounded, distant and non-live loops before a pulse',async()=>{

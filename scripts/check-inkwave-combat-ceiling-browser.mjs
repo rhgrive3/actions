@@ -71,7 +71,7 @@ try {
   await page.addInitScript(installCombatPlacementQA);
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,matchLength:180,lastStage:'tidewater',lastMode:'turf'})));
   await page.route(base+'/**',async route=>{
-   const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
+   const response=await route.fetch({maxRetries:2}),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
    if(build.artifacts[key])assert.equal(hash(body),build.artifacts[key],'served artifact '+key);
    loaded.add(key);await route.fulfill({response,body});
   });

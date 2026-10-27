@@ -104,12 +104,12 @@ jobs:
         name: Run Backup, Restore & Transactional Patch Applier Tests
         run: npm run test:backup
 
-      - if: steps.scope.outputs.relevant == 'true'
+      - if: steps.scope.outputs.relevant == 'true' && steps.scope.outputs.build_required != 'false'
         name: Run Production Diagnostic Build & Startup Budget Gate
         run: |
           INKWAVE_BUILD_UNMINIFIED=1 node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
 
-      - if: steps.scope.outputs.relevant == 'true'
+      - if: steps.scope.outputs.relevant == 'true' && steps.scope.outputs.build_required != 'false'
         name: Execute A+ Same-Condition Performance & Parity Benchmark
         run: node scripts/benchmark-aplus-verification.mjs

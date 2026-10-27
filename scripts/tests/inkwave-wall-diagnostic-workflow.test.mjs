@@ -1,6 +1,5 @@
 import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import test from 'node:test';
-import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 const workflow = expandTestSuiteSteps(readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8'));
@@ -79,309 +78,60 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
   }
 });
 
-// Reviewed integration adds source/clock/animation acceptance guards only.
-// The later 31-PR source epoch adds its independent immutable-pair guard.
-// Existing jobs, failures, thresholds and immutable builds remain required.
-// Shared immutable build, additive acceptance guards,
-// exact-head startup clock evidence, and complete sparse diagnostic checkouts.
-const acceptedJobHashes = {
-  "validate_core": "80f5bcdbcf39f3f616c231c0cbad3eea93849fed3fb19c20e22f7c063ab47a39",
-  "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
-  "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
-  "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",
-  "network-opening-diagnostic": "f205a8473b3bfc0f86819f43bbe4121e4c590dda71490e363f3908db658ca767",
-  "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
-  "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
-};
-// A reviewed repair moves the orphaned artifact name out of Bash and into an
-// actual upload action. Restore only that exact edit when comparing the original
-// job pins; every pre-existing test command, failure gate and hash stays fixed.
-const legacyCoreEvidenceTail = '            _site-launch-packets.json\n          retention-days: 14\n';
-const repairedCoreEvidenceTail = `      - name: Retain exact emitted launch packet evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: inkwave-launch-packets-\${{ env.SOURCE_SHA }}-\${{ github.run_attempt }}
-          path: _site-launch-packets.json
-          if-no-files-found: error
-          retention-days: 14
-`;
-function canonicalCoreEvidence(body) {
-  assert.equal(body.split(repairedCoreEvidenceTail).length, 2, 'exact reviewed upload repair required');
-  assert.ok(body.includes('            patches/network-replication/tests/tower-mine-paint-admission.test.mjs\n' + repairedCoreEvidenceTail), 'all fidelity tests must run before upload');
-  assert.ok(!body.includes(legacyCoreEvidenceTail), 'artifact names cannot execute as shell commands');
-  return body.replace(repairedCoreEvidenceTail, legacyCoreEvidenceTail);
-}
-// c1c0 adds only these two approved QA regressions to the motion command in
-// 55399a7466c744e53b6205dfb80c9d78d2e3daeb. Require their exact location and
-// uniqueness, then remove only those arguments to recover the original pin.
-// The new digest binds the additive body; the old digest still proves that no
-// pre-existing command, failure gate, workload or unrelated job was changed.
-const approvedMotionTests = [
-  'scripts/tests/inkwave-frozen-hud-capture.test.mjs',
-  'scripts/tests/inkwave-ui-visual-probe-errors.test.mjs'
+// Main replaced whole historical job-body pins with focused semantic contracts.
+// Retain this branch's reviewed additive emitted coverage without restoring the
+// obsolete pins or accepting omitted, duplicated or relocated regressions.
+const guidePhaseMarker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
+const guidePhaseNext = '      - name: Verify built weapons fidelity measurements and packet parity\n';
+const guidePhaseCommand = guidePhaseMarker + '        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: >-\n          node --experimental-vm-modules --test\n';
+const existingEmittedSourceTests = [
+  'patches/splatoon3/tests/catalog-player-inertia-native.test.mjs',
+  'patches/splatoon3/tests/catalog-slosher-birth-speed.test.mjs',
+  'patches/splatoon3/tests/projectile-pool-slosher-index.test.mjs',
+  'patches/splatoon3/tests/spinner-kinematics-source.test.mjs',
+  'patches/splatoon3/tests/spinner-charge-family.test.mjs',
+  'patches/splatoon3/tests/jump-recovery-airborne-native.test.mjs',
+  'patches/splatoon3/tests/player-collision-source-1130.test.mjs',
 ];
-const approvedMotionArguments = ' ' + approvedMotionTests.join(' ');
-const approvedCoreHash = 'd91e7883718efdacc8b6af8431557419a747beeddc229252a23a2e012f5e0d5f';
-function canonicalCoreMotionTests(body) {
-  const marker = '      - name: Verify motion verifier regressions\n';
-  assert.equal(body.split(marker).length, 2, 'exact motion regression step required');
-  const start = body.indexOf(marker) + marker.length, end = body.indexOf('\n', start);
-  assert.ok(end >= 0, 'motion regression command must end with a newline');
-  const command = body.slice(start, end);
-  assert.ok(command.startsWith('        run: node --test '), 'motion regressions must remain a real test command');
-  assert.ok(command.endsWith(' scripts/tests/inkwave-responsive-progress-summary.test.mjs' + approvedMotionArguments), 'exact approved QA arguments must be appended to the motion command');
-  for (const file of approvedMotionTests) assert.equal(body.split(file).length, 2, file + ' must run exactly once');
-  return body.slice(0, end - approvedMotionArguments.length) + body.slice(end);
-}
-// The queue changes source routing and fetch preparation. Reverse only its
-// exact composed hunks before applying the unchanged seven historical pins
-// and the mandatory HUD-coverage inverse and mutation controls below.
-function canonicalQueueCoreBody(body) {
-  { const from="      - name: Verify deterministic network replication\n        run: node scripts/run-inkwave-source-remainder.mjs network\n      - name: Verify remote combat provenance and equipped hit ceilings\n", to="      - name: Verify deterministic network replication\n        run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs\n      - name: Verify remote combat provenance and equipped hit ceilings\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 1 must occur exactly once");body=body.replace(from,to); }
-  { const from="      - name: Verify local quality regressions\n        run: node scripts/run-inkwave-source-remainder.mjs quality\n      - name: Verify migrated direct game source ownership\n", to="      - name: Verify local quality regressions\n        run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs\n      - name: Verify migrated direct game source ownership\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 2 must occur exactly once");body=body.replace(from,to); }
-  { const from="      - name: Verify motion verifier regressions\n        run: node --test scripts/tests/inkwave-source-remainder.test.mjs scripts/tests/inkwave-quality-shallow-history.test.mjs scripts/tests/inkwave-optimization-workflows.test.mjs scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-ci-queue-relief.test.mjs scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs scripts/tests/inkwave-static-menu-gpu-budget.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs scripts/tests/inkwave-roller-blob-worker-binding.test.mjs scripts/tests/inkwave-exact-checkout-head.test.mjs scripts/tests/inkwave-responsive-progress-summary.test.mjs scripts/tests/inkwave-frozen-hud-capture.test.mjs scripts/tests/inkwave-ui-visual-probe-errors.test.mjs\n      - name: Verify aggregate QA acceptance guards\n", to="      - name: Verify motion verifier regressions\n        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-ci-queue-relief.test.mjs scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs scripts/tests/inkwave-static-menu-gpu-budget.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs scripts/tests/inkwave-roller-blob-worker-binding.test.mjs scripts/tests/inkwave-exact-checkout-head.test.mjs scripts/tests/inkwave-responsive-progress-summary.test.mjs scripts/tests/inkwave-frozen-hud-capture.test.mjs scripts/tests/inkwave-ui-visual-probe-errors.test.mjs\n      - name: Verify aggregate QA acceptance guards\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 3 must occur exactly once");body=body.replace(from,to); }
-  { const from="          node --max-old-space-size=128 --test --test-concurrency=1 scripts/tests/continuous-browser-video.test.mjs\n      - name: Verify pinned-fetch deduplication and dedicated QA routing\n        run: |\n          python3 -m unittest discover -s scripts/tests -p test_fetch_inkwave_pinned_references.py -v\n          node --test scripts/tests/inkwave-optimization-workflows.test.mjs\n      - name: Verify pinned primary numerical sources\n", to="          node --max-old-space-size=128 --test --test-concurrency=1 scripts/tests/continuous-browser-video.test.mjs\n      - name: Verify pinned primary numerical sources\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 4 must occur exactly once");body=body.replace(from,to); }
-  { const from="        run: |\n          python3 scripts/fetch-inkwave-pinned-references.py\n          INKWAVE_WEIGHT_PARAMS=.reference-data/data/parameter/1130/misc/params.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-weight-gear.test.mjs\n", to="        run: |\n          python3 - <<'PY'\n          import hashlib, json, pathlib, urllib.request\n          fetched={}\n          def reference_bytes(url):\n            if url not in fetched:\n              with urllib.request.urlopen(url,timeout=30) as response: fetched[url]=response.read()\n            return fetched[url]\n          reference=json.loads(pathlib.Path('patches/splatoon3/reference/curated-numbers.json').read_text())\n          for source in reference['sources']:\n            target=pathlib.Path('.reference-data')/source['id']\n            target.parent.mkdir(parents=True,exist_ok=True)\n            target.write_bytes(reference_bytes(source['url']))\n          weapons=json.loads(pathlib.Path('patches/splatoon3/reference/weapons-fidelity-reference.json').read_text())\n          for source in weapons['sources']:\n            if not source.get('expectedFileSha256'): continue\n            target=pathlib.Path('.reference-data/weapons')/source['url'].rsplit('/',1)[-1]\n            target.parent.mkdir(parents=True,exist_ok=True)\n            data=reference_bytes(source['url'])\n            assert hashlib.sha256(data).hexdigest()==source['expectedFileSha256'], source['url']\n            target.write_bytes(data)\n          PY\n          INKWAVE_WEIGHT_PARAMS=.reference-data/data/parameter/1130/misc/params.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-weight-gear.test.mjs\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 5 must occur exactly once");body=body.replace(from,to); }
-  { const from="          INKWAVE_WEIGHT_PARAMS=.reference-data/data/parameter/1130/misc/params.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-weight-gear.test.mjs\n          INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs\n", to="          INKWAVE_WEIGHT_PARAMS=.reference-data/data/parameter/1130/misc/params.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-weight-gear.test.mjs\n          python3 - <<'PYOBJ'\n          import json, pathlib, urllib.request\n          receipt=json.loads(pathlib.Path('patches/splatoon3/reference/object-shredder-1130.json').read_text())['receipt']\n          url='https://raw.githubusercontent.com/Leanny/splat3/'+receipt['commit']+'/'+receipt['path']\n          with urllib.request.urlopen(url,timeout=30) as response:\n            pathlib.Path('.reference-data/object-damage.json').write_bytes(response.read())\n          PYOBJ\n          INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 6 must occur exactly once");body=body.replace(from,to); }
-  { const from="        run: |\n          INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs\n", to="        run: |\n          node --input-type=module - <<'JS'\n          import fs from 'node:fs';\n          import { MAIN_WEAPON_CATALOG as catalog } from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';\n          fs.writeFileSync('.reference-catalog-index.json',JSON.stringify({commit:catalog.sourceCommit,paths:catalog.records.map(r=>r.sourcePath)}));\n          JS\n          python3 - <<'PY'\n          import concurrent.futures, json, pathlib, urllib.request\n          index=json.loads(pathlib.Path('.reference-catalog-index.json').read_text())\n          paths=set(index['paths']) | {'data/mush/1130/WeaponInfoMain.json','data/language/USen.json','data/language/JPja.json'}\n          def fetch_source(relative):\n            target=pathlib.Path('.reference-data/catalog')/relative\n            target.parent.mkdir(parents=True,exist_ok=True)\n            url='https://raw.githubusercontent.com/Leanny/splat3/'+index['commit']+'/'+relative\n            with urllib.request.urlopen(url,timeout=30) as response: target.write_bytes(response.read())\n          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:\n            list(pool.map(fetch_source,sorted(paths)))\n          PY\n          INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 7 must occur exactly once");body=body.replace(from,to); }
-  { const from="        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/charger-native-grip-reach.test.mjs patches/splatoon3/tests/charger-protected-trajectory.test.mjs\n      - name: Verify emitted opposing-spawn body exclusion and allied exits\n        run: INKWAVE_BUILT_SITE=_site INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/spawn-exclusion.test.mjs patches/splatoon3/tests/spawn-exclusion-fallback.test.mjs patches/reliability/tests/special-spawn-barrier.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs\n      - name: Verify emitted Boss positive-proof admission and PvP zero knockback\n", to="        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/charger-native-grip-reach.test.mjs patches/splatoon3/tests/charger-protected-trajectory.test.mjs\n      - name: Verify emitted Boss positive-proof admission and PvP zero knockback\n";
-    assert.equal(body.split(from).length,2,"queue core hunk 8 must occur exactly once");body=body.replace(from,to); }
-  return body;
-}
-const originalCoreBrowserInstall = '      - name: Install pinned source regression and build tool\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\n';
-const reviewedCoreBrowserInstall = '      - name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          npx --no-install playwright install --with-deps chromium\n';
-function canonicalCoreBrowserInstall(body) {
-  const next = '      - name: Prepare persistent worker regression fixtures\n';
-  assert.equal(body.split(reviewedCoreBrowserInstall + next).length, 2, 'exact reviewed browser setup and placement required');
-  assert.equal(body.split('playwright@1.62.1').length, 2, 'core browser dependency must occur once');
-  assert.equal(body.split('npx --no-install playwright install --with-deps chromium').length, 2, 'core browser installation must occur once');
-  assert.ok(body.indexOf(reviewedCoreBrowserInstall) < body.indexOf('      - name: Run requested focused source regressions\n'));
-  assert.ok(body.indexOf(reviewedCoreBrowserInstall) < body.indexOf('        run: node scripts/run-inkwave-source-remainder.mjs quality\n'));
-  return body.replace(reviewedCoreBrowserInstall, originalCoreBrowserInstall);
-}
-// Exact reviewed CircleCI changes are inverted before the unchanged historical
-// job pins. Each hunk is mandatory and singular; unrelated edits still fail.
-const reviewedCircleHunks = {
-  "validate_core": [
-    {
-      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
-      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n      - name: Prove CircleCI offload command parity and fail-closed SHA gate\n        run: node --test scripts/tests/inkwave-circleci-browser-lane.test.mjs scripts/tests/inkwave-circleci-offload-gate.test.mjs\n"
-    }
-  ],
-  "patch_tests": [
-    {
-      "before": "    if: inputs.diagnostic_only != true\n",
-      "after": "    # Default GitHub full-suite behavior unless explicitly offloaded.\n    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}\n"
-    },
-    {
-      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
-      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
-    }
-  ],
-  "validate": [
-    {
-      "before": "    needs: [validate_core, patch_tests]\n",
-      "after": "    needs: [validate_core, patch_tests, circleci_offload_gate]\n"
-    },
-    {
-      "before": "",
-      "after": "          CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}\n          OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}\n"
-    },
-    {
-      "before": "          printf 'validate_core=%s patch_tests=%s\\n' \"$CORE_RESULT\" \"$PATCH_RESULT\"\n",
-      "after": "          printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\\n' \"$CORE_RESULT\" \"$PATCH_RESULT\" \"$CIRCLECI_RESULT\" \"$OFFLOAD_ACTIVE\"\n"
-    },
-    {
-      "before": "          test \"$PATCH_RESULT\" = success\n",
-      "after": "          if [ \"$OFFLOAD_ACTIVE\" = true ]; then\n            test \"$PATCH_RESULT\" = skipped\n            test \"$CIRCLECI_RESULT\" = success\n          else\n            test \"$PATCH_RESULT\" = success\n            test \"$CIRCLECI_RESULT\" = skipped\n          fi\n"
-    }
-  ],
-  "browser": [
-    {
-      "before": "    if: inputs.diagnostic_only != true\n",
-      "after": "    # No offload until CircleCI is connected and enabled.\n    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}\n"
-    },
-    {
-      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
-      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
-    }
-  ],
-  "seven_claims": [
-    {
-      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
-      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
-    }
-  ],
-  "resource_paint_continuation": [
-    {
-      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
-      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
-    }
-  ]
-};
-function canonicalCircleAdditions(body,name) {
- for(const {before,after} of reviewedCircleHunks[name] || []) {
-  assert.equal(body.split(after).length,2,name+' exact CircleCI hunk once');
-  body=body.replace(after,before);
- }
- return body;
-}
-
-// The core gate reads this exact CircleCI config before dependency setup.
-// Invert only its reviewed, singular checkout addition; never replace a job pin.
-const reviewedCoreSparseInputs = '            /.github/\n            /.circleci/config.yml\n            /inkwave-public/\n';
-function canonicalCoreSparseInputs(body) {
-  assert.equal(body.split(reviewedCoreSparseInputs).length, 2, 'exact reviewed core config checkout and placement required');
-  assert.equal(body.split('            /.circleci/config.yml\n').length, 2, 'core config checkout must occur once');
-  return body.replace(reviewedCoreSparseInputs, '            /.github/\n            /inkwave-public/\n');
-}
-
-// Accepted 338755403 adds only these emitted regressions to this existing
-// command. Require every addition exactly once in that step before recovering
-// both unchanged historical hashes; omission is not an accepted old workflow.
 const approvedEmittedGuidePhaseTests = [
   'patches/native-stages/tests/collision-revision-producers.test.mjs',
   'patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs',
   'patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs',
 ];
-const approvedEmittedGuidePhaseLines = approvedEmittedGuidePhaseTests.map(file => '          ' + file + '\n').join('');
-function canonicalCoreEmittedGuidePhaseTests(body) {
-  const marker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
-  const next = '      - name: Verify built weapons fidelity measurements and packet parity\n';
-  const anchor = '          patches/splatoon3/tests/player-collision-source-1130.test.mjs\n';
-  assert.equal(body.split(marker).length, 2, 'exact emitted source-backed step required');
-  const start = body.indexOf(marker), end = body.indexOf(next, start);
-  assert.ok(end > start, 'emitted coverage remains before fidelity measurements');
-  assert.ok(body.slice(start, end).endsWith(anchor + approvedEmittedGuidePhaseLines), 'exact reviewed emitted arguments and placement required');
-  for (const file of approvedEmittedGuidePhaseTests) assert.equal(body.split(file).length, 2, file + ' must run exactly once');
-  return body.replace(anchor + approvedEmittedGuidePhaseLines + next, anchor + next);
+const emittedLines = files => files.map(file => '          ' + file + '\n').join('');
+const approvedEmittedGuidePhaseLines = emittedLines(approvedEmittedGuidePhaseTests);
+function verifyEmittedGuidePhaseCoverage(text) {
+  const core = job(text, 'validate_core');
+  assert.equal(core.split(guidePhaseMarker).length, 2, 'one emitted source-backed step in validate_core');
+  assert.equal(text.split(guidePhaseMarker).length, 2, 'emitted step cannot be duplicated outside its owner');
+  const start = core.indexOf(guidePhaseMarker), end = core.indexOf(guidePhaseNext, start);
+  assert.ok(end > start, 'emitted guide/phase coverage remains before fidelity measurements');
+  assert.equal(core.slice(start, end), guidePhaseCommand + emittedLines([...existingEmittedSourceTests, ...approvedEmittedGuidePhaseTests]),
+    'exact emitted input site, VM command, existing arguments and additive placement remain required');
+  for (const file of approvedEmittedGuidePhaseTests)
+    assert.equal(text.split(file).length, 2, file + ' must run exactly once');
+  return true;
 }
-
-function verifyAcceptedJobs(text) {
-  for(const [name, expected] of Object.entries(acceptedJobHashes)) {
-    let body = canonicalCircleAdditions(job(text,name),name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
-      .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
-    if (name === 'validate_core') {
-      body = canonicalCoreSparseInputs(body);
-      body = canonicalCoreBrowserInstall(body);
-      body = canonicalQueueCoreBody(body);
-      body = canonicalCoreEvidence(body);
-      body = canonicalCoreEmittedGuidePhaseTests(body);
-      const additiveBody = body;
-      body = canonicalCoreMotionTests(body);
-      assert.equal(createHash('sha256').update(additiveBody).digest('hex'), approvedCoreHash, 'reviewed additive core body');
-    }
-    assert.equal(createHash('sha256').update(body).digest('hex'),expected,name);
-  }
-}
-test('accepted Turf and network job bodies retain their original pins after exact artifact repair and additive QA coverage',()=>verifyAcceptedJobs(workflow));
-test('reviewed emitted guide and phase coverage rejects omission, duplication, relocation and weaker commands',()=>{
-  const marker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
-  const command = marker + '        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: >-\n          node --experimental-vm-modules --test\n';
-  const next = '      - name: Verify built weapons fidelity measurements and packet parity\n';
+test('reviewed guide and phase regressions run exactly once on the emitted site in the owned core step', () => verifyEmittedGuidePhaseCoverage(workflow));
+test('reviewed emitted guide and phase coverage rejects omission, duplication, relocation and weaker commands', () => {
+  const anchor = emittedLines([existingEmittedSourceTests.at(-1)]);
   const edits = [
-    ...approvedEmittedGuidePhaseTests.map(file => ['          ' + file + '\n', '']),
+    ...approvedEmittedGuidePhaseTests.map(file => [emittedLines([file]), '']),
     [approvedEmittedGuidePhaseLines, ''],
     [approvedEmittedGuidePhaseLines, approvedEmittedGuidePhaseLines + approvedEmittedGuidePhaseLines],
-    [approvedEmittedGuidePhaseLines, [...approvedEmittedGuidePhaseTests].reverse().map(file => '          ' + file + '\n').join('')],
+    [approvedEmittedGuidePhaseLines, emittedLines([...approvedEmittedGuidePhaseTests].reverse())],
     [approvedEmittedGuidePhaseLines, '          patches/splatoon3/tests/unreviewed.test.mjs\n'],
     [approvedEmittedGuidePhaseLines, approvedEmittedGuidePhaseLines + '          patches/splatoon3/tests/unreviewed.test.mjs\n'],
-    ['          patches/splatoon3/tests/player-collision-source-1130.test.mjs\n', ''],
-    [command, command.replace('        run: >-', '        if: false\n        run: >-')],
-    [command, command.replace('        run: >-', '        continue-on-error: true\n        run: >-')],
-    [command, command.replace('node --experimental-vm-modules --test', 'echo')],
-    [command, command.replace('github.workspace }}/_site', 'github.workspace }}/unverified')],
-    [approvedEmittedGuidePhaseLines + next, next + approvedEmittedGuidePhaseLines],
+    [anchor, ''],
+    [guidePhaseCommand, guidePhaseCommand.replace('        run: >-', '        if: false\n        run: >-')],
+    [guidePhaseCommand, guidePhaseCommand.replace('        run: >-', '        continue-on-error: true\n        run: >-')],
+    [guidePhaseCommand, guidePhaseCommand.replace('node --experimental-vm-modules --test', 'echo')],
+    [guidePhaseCommand, guidePhaseCommand.replace('github.workspace }}/_site', 'github.workspace }}/unverified')],
+    [approvedEmittedGuidePhaseLines + guidePhaseNext, guidePhaseNext + approvedEmittedGuidePhaseLines],
   ];
-  for (const [before,after] of edits) {
-    const changed=workflow.replace(before,after);
-    assert.notEqual(changed,workflow,before);assert.throws(()=>verifyAcceptedJobs(changed),before);
-  }
-});
-test('the previously pinned broken artifact command is rejected despite its original digest',()=> {
-  const broken=workflow.replace(repairedCoreEvidenceTail,legacyCoreEvidenceTail);
-  assert.notEqual(broken,workflow);
-  assert.throws(()=>verifyAcceptedJobs(broken),/exact reviewed upload repair required/);
-});
-test('artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits',()=> {
-  for(const [before,after] of [
-    ['patches/splatoon3/tests/active-special-gauge.test.mjs',''],
-    ['patches/network-replication/tests/tower-mine-paint-admission.test.mjs','patches/network-replication/tests/not-a-real-test.mjs'],
-    ['      - name: Retain exact emitted launch packet evidence\n        if: always()', '      - name: Retain exact emitted launch packet evidence\n        if: false'],
-    ['path: _site-launch-packets.json','path: another-report.json'],
-    ['if-no-files-found: error\n          retention-days: 14\n  # The test-file set','if-no-files-found: warn\n          retention-days: 14\n  # The test-file set'],
-    ['name: inkwave-launch-packets-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}','name: inkwave-launch-packets-unbound'],
-    ['      - name: Retain exact emitted launch packet evidence','            true # extra shell command\n      - name: Retain exact emitted launch packet evidence'],
-    ['test "$CORE_RESULT" = success','true # no core requirement']
-  ]) {
-    const changed=workflow.replace(before,after);
-    assert.notEqual(changed,workflow,before);
-    assert.throws(()=>verifyAcceptedJobs(changed),before);
-  }
-});
-
-test('approved motion coverage rejects omission, duplication, relocation and unrelated command edits',()=> {
-  const tail = ' scripts/tests/inkwave-responsive-progress-summary.test.mjs' + approvedMotionArguments + '\n';
-  for (const [before,after] of [
-    ...approvedMotionTests.map(file=>[' ' + file, '']),
-    [approvedMotionArguments, ''],
-    [approvedMotionArguments, approvedMotionArguments + approvedMotionArguments],
-    [approvedMotionArguments, ' ' + [...approvedMotionTests].reverse().join(' ')],
-    [tail, ' scripts/tests/inkwave-responsive-progress-summary.test.mjs\n      - name: Relocated QA regressions\n        run: node --test' + approvedMotionArguments + '\n'],
-    [tail, tail.trimEnd() + ' scripts/tests/unreviewed.test.mjs\n'],
-    ['scripts/tests/inkwave-responsive-progress-summary.test.mjs', 'scripts/tests/unreviewed.test.mjs'],
-    ['      - name: Verify motion verifier regressions\n        run: node --test ', '      - name: Verify motion verifier regressions\n        run: echo ']
-  ]) {
-    const changed = workflow.replace(before,after);
-    assert.notEqual(changed,workflow,before);
-    assert.throws(()=>verifyAcceptedJobs(changed),before);
-  }
-});
-test('additive QA coverage cannot authorize changes to any previously pinned job',()=> {
-  for (const name of Object.keys(acceptedJobHashes)) {
-    const marker = `  ${name}:\n`;
-    const changed = workflow.replace(marker,marker + '    continue-on-error: true\n');
-    assert.notEqual(changed,workflow,name);
-    assert.throws(()=>verifyAcceptedJobs(changed),name);
-  }
-});
-
-test('reviewed core browser provisioning rejects missing, altered, relocated and suppressed setup',()=>{
- const edits=[
-  [reviewedCoreBrowserInstall,originalCoreBrowserInstall],
-  ['playwright@1.62.1','playwright@1.62.0'],
-  ['npx --no-install playwright install --with-deps chromium','npx --no-install playwright install --with-deps webkit'],
-  ['npx --no-install playwright install --with-deps chromium','true # browser omitted'],
-  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall+reviewedCoreBrowserInstall],
-  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('        run: |','        if: false\n        run: |')],
-  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('        run: |','        continue-on-error: true\n        run: |')],
-  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('--with-deps chromium','--with-deps chromium || true')],
-  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          npx --no-install playwright install --with-deps chromium\n','          npx --no-install playwright install --with-deps chromium\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n')]
- ];
- for(const [before,after] of edits){const changed=workflow.replace(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verifyAcceptedJobs(changed));}
- const relocated=workflow.replace(reviewedCoreBrowserInstall,'').replace('      - name: Verify local quality regressions\n',reviewedCoreBrowserInstall+'      - name: Verify local quality regressions\n');
- assert.notEqual(relocated,workflow);assert.throws(()=>verifyAcceptedJobs(relocated));
-});
-
-
-test('reviewed core config checkout rejects omission, duplication, relocation and broader inputs',()=>{
-  for(const replacement of [
-    '            /.github/\n            /inkwave-public/\n',
-    '            /.github/\n            /.circleci/config.yml\n            /.circleci/config.yml\n            /inkwave-public/\n',
-    '            /.github/\n            /inkwave-public/\n            /.circleci/config.yml\n',
-    '            /.github/\n            /.circleci/\n            /inkwave-public/\n',
-    '            /.github/\n            /.circleci/config.yml\n            /.circleci/unreviewed.yml\n            /inkwave-public/\n',
-    '            /.github/\n            # /.circleci/config.yml\n            /inkwave-public/\n',
-  ]){
-    const changed=workflow.replace(reviewedCoreSparseInputs,replacement);
-    assert.notEqual(changed,workflow);assert.throws(()=>verifyAcceptedJobs(changed));
+  for (const [before, after] of edits) {
+    const changed = workflow.replace(before, after);
+    assert.notEqual(changed, workflow, before);
+    assert.throws(() => verifyEmittedGuidePhaseCoverage(changed), before);
   }
 });

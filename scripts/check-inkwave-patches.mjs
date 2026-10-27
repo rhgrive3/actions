@@ -3,13 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runLoggedTestProcess } from './run-logged-test-process.mjs';
-import { selectTestShard } from './lib/inkwave-test-shards.mjs';
+import { selectTestShard, discoverSourceTestFiles } from './lib/inkwave-test-shards.mjs';
 import vm from 'node:vm';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
-import { checkCompatibility, adaptSource, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
+import { checkCompatibility, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
 import { numericStatus } from './sync-inkwave-numeric-status.mjs';
-import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
-import { adaptReliability, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const quick = process.argv.includes('--quick');
 const sourceArg = process.argv.indexOf('--source');
@@ -53,7 +51,7 @@ try {
       }
     }
   }
-  const files = [...walk(path.join(PATCH_ROOT, 'tests')), ...walk(path.join(RELIABILITY_ROOT, 'tests'))].filter(f => f.endsWith('.test.mjs')).sort();
+  const files = discoverSourceTestFiles(ROOT).map(file => path.join(ROOT, file));
   if (!files.length) throw new Error('No patch tests discovered');
   const shardFiles = selectTestShard(files, shardIndex, shardCount);
   if (!shardFiles.length) throw new Error(`Patch suite shard ${shardIndex + 1}/${shardCount} has no test files`);
