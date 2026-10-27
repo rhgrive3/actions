@@ -11,7 +11,7 @@ const runtimeURL = process.env.INKWAVE_BUILT_SITE
 const source = fs.readFileSync(runtimeURL, 'utf8');
 
 async function fixture({ loaded = true, autoClear = true, fail = null, thrown = Error('backdrop failed'), restoreError = null } = {}) {
-  const events = [], originalTarget = { texture: 'caller target' };
+  const events = [], sizes = [], colors = [], originalTarget = { texture: 'caller target' };
   const texture = { image: { width: 2048, height: 1024 }, repeat: { set(x, y) { this.x = x; this.y = y; } }, offset: { set(x, y) { this.x = x; this.y = y; } } };
   let loads = 0;
   class Color { constructor(value) { this.value = value; } copy(other) { this.value = other.value; return this; } }
@@ -37,12 +37,12 @@ async function fixture({ loaded = true, autoClear = true, fail = null, thrown = 
   const initial = { autoClear, color: '#123456', alpha: 0.25, target: originalTarget, face: 4, mip: 2 };
   const renderer = {
     ...initial,
-    getSize(out) { events.push('size'); Object.assign(out, { x: 1600, y: 900 }); return out; },
+    getSize(out) { events.push('size'); sizes.push(out); Object.assign(out, { x: 1600, y: 900 }); return out; },
     getRenderTarget() { return this.target; },
     getActiveCubeFace() { return this.face; },
     getActiveMipmapLevel() { return this.mip; },
     getClearAlpha() { return this.alpha; },
-    getClearColor(out) { return out.copy(new Color(this.color)); },
+    getClearColor(out) { colors.push(out); out.value = this.color; return out; },
     setRenderTarget(target, face = 0, mip = 0) {
       events.push(['target', target, face, mip]);
       Object.assign(this, { target, face, mip });
@@ -69,7 +69,7 @@ async function fixture({ loaded = true, autoClear = true, fail = null, thrown = 
     render() { events.push(['showcase', renderer.autoClear, renderer.color, renderer.alpha, renderer.target]); },
   };
   const game = { showcase, _skipRender: false };
-  return { renderer, initial, events, texture, game, loads: () => loads,
+  return { renderer, initial, events, texture, game, sizes, colors, loads: () => loads,
     run: () => module.namespace.renderLockerStage(game, { renderer }, 1 / 60) };
 }
 
@@ -99,6 +99,29 @@ test('loading backdrop keeps its fallback clear and normal showcase rendering', 
   assert.equal(f.events.filter(e => e[0] === 'backdrop').length, 0);
   assert.equal(f.events.filter(e => e[0] === 'clear').length, 1);
   assert.equal(f.events.filter(e => e[0] === 'showcase').length, 1);
+});
+
+test('sequential locker frames reuse scratch and nested renders keep independent restoration state', async () => {
+  const f = await fixture();
+  for (let i = 0; i < 10; i++) f.run();
+  assert.equal(new Set(f.sizes).size, 1);
+  assert.equal(new Set(f.colors).size, 1);
+  const draw = f.renderer.render;let nested = false;
+  f.renderer.render = function (...args) {
+    draw.apply(this, args);
+    if (!nested) {
+      nested = true;
+      this.color = '#abcdef';this.alpha = .7;
+      f.run();
+      assert.equal(this.color, '#abcdef');assert.equal(this.alpha, .7);
+    }
+  };
+  f.run();restored(f);
+  assert.equal(new Set(f.sizes).size, 2);
+  assert.equal(new Set(f.colors).size, 2);
+  f.run();restored(f);
+  assert.equal(f.sizes.at(-1), f.sizes[0]);
+  assert.equal(f.colors.at(-1), f.colors[0]);
 });
 
 test('skipped locker frame updates animation without loading or touching renderer state', async () => {
