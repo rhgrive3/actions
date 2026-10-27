@@ -9,12 +9,16 @@ import {fileURLToPath} from 'node:url';
 import {unpackVolumes} from '../patches/local-quality/ink-volume/pack.mjs';
 import {buildInkMesh} from '../patches/local-quality/ink-volume/mesh.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url)),source=path.join(ROOT,'patches/local-quality/ink-volume/assets/roller');
+export function drawnBounds(positions,indexSets){
+ const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+ for(const indices of indexSets)for(const index of indices)for(let k=0;k<3;k++){const x=positions[index*3+k];lo[k]=Math.min(lo[k],x);hi[k]=Math.max(hi[k],x);}
+ return [lo,hi];
+}
 export function generate(out=path.join(ROOT,'patches/local-quality/ink-volume/assets/hissen-fallback')){
  const m=JSON.parse(fs.readFileSync(path.join(source,'manifest.json'))),raw=zlib.gunzipSync(fs.readFileSync(path.join(source,m.binary)));
  if(crypto.createHash('sha256').update(raw).digest('hex')!==m.binarySHA256)throw Error('Canonical pack checksum mismatch');
  const pack=unpackVolumes(m,raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength)),chunks=[];let bytes=0,maxTriangles=0;
  const append=a=>{const pad=(4-bytes%4)%4;if(pad){chunks.push(Buffer.alloc(pad));bytes+=pad;}const d={offset:bytes,length:a.length};chunks.push(Buffer.from(a.buffer,a.byteOffset,a.byteLength));bytes+=a.byteLength;return d;};
- const bounds=p=>{const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];for(let i=0;i<p.length;i++) {lo[i%3]=Math.min(lo[i%3],p[i]);hi[i%3]=Math.max(hi[i%3],p[i]);}return [lo,hi];};
  const patterns=pack.patterns.map(p=>({name:'canonical-contour-lod',width:1,height:1,meshAspect:1,fps:p.fps,frames:p.frames.map(f=>{
   const size=48,rgba=new Uint8Array(size*size*4);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
@@ -23,7 +27,12 @@ export function generate(out=path.join(ROOT,'patches/local-quality/ink-volume/as
    }
    rgba.set([255,255,255,alpha/weight>=127.5?255:0],(y*size+x)*4);
   }
-  const mesh=buildInkMesh(rgba,size,size),[lo,hi]=bounds(mesh.positions),[targetLo,targetHi]=bounds(f.levels[0].positions);
+  const generated=buildInkMesh(rgba,size,size),remap=new Int32Array(generated.positions.length/3).fill(-1),positions=[],normals=[],uvs=[],mapped=[];
+  const used=new Uint8Array(remap.length);for(const old of generated.indices)used[old]=1;
+  for(let old=0;old<used.length;old++)if(used[old]){remap[old]=positions.length/3;positions.push(...generated.positions.subarray(old*3,old*3+3));normals.push(...generated.normals.subarray(old*3,old*3+3));uvs.push(...generated.uvs.subarray(old*2,old*2+2));}
+  for(const old of generated.indices)mapped.push(remap[old]);
+  const mesh={positions:new Float32Array(positions),normals:new Float32Array(normals),uvs:new Float32Array(uvs),indices:new Uint32Array(mapped)},canonical=f.levels[0];
+  const [lo,hi]=drawnBounds(mesh.positions,[mesh.indices]),[targetLo,targetHi]=drawnBounds(canonical.positions,[canonical.opaqueIndices||canonical.indices,canonical.fringeIndices||canonical.indices]);
   // LOD filtering must not reinterpret DrawRadius or change the source envelope.
   const axisScale=hi.map((v,k)=>(targetHi[k]-targetLo[k])/(v-lo[k]));
   for(let i=0;i<mesh.positions.length;i++){const k=i%3;mesh.positions[i]=targetLo[k]+(mesh.positions[i]-lo[k])/(hi[k]-lo[k])*(targetHi[k]-targetLo[k]);}
