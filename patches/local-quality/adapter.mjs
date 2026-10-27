@@ -86,7 +86,6 @@ import { adaptDistanceHotpath } from './distance-hotpath-adapter.mjs';
 import { adaptPerfReadout } from './perf-readout-adapter.mjs';
 import { adaptFxEmptyPools } from './fx-empty-pools-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
-import { adaptLosslessShooterHud } from './shooter-hud-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
 import { adaptShoeReadTransform } from './shoe-read-transform-adapter.mjs';
 import { adaptSceneryBounds } from './scenery-bounds-adapter.mjs';
@@ -209,8 +208,7 @@ export function adaptQualitySource(rel, code) {
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, adaptSceneryBounds(rel, adaptShoeReadTransform(rel, navigated, replaceOnce), replaceOnce), replaceOnce)), replaceOnce), replaceOnce);
-  return adaptLosslessShooterHud(rel,
-    adaptMotionSampleFkRange(rel, adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce), replaceOnce), replaceOnce);
+  return adaptMotionSampleFkRange(rel, adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
