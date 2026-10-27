@@ -12,16 +12,21 @@ export function requireAbsoluteExplosherGeometries(stage,before,after){
  assert(['preflight','stills'].includes(stage),'Unsupported absolute geometry stage');
  const ticks=stage==='preflight'?[0]:[0,3,8,14,22,30];
  const views=stage==='preflight'?['behind']:['behind','tele-side','tele-oblique'];
- const expected=ticks.flatMap(tick=>views.map(view=>tick+':'+view));
+ const expected=ticks.flatMap(tick=>views.map(view=>({tick,view})));
  for(const [frames,lane] of [[before,'before'],[after,'after']]){
   assert(Array.isArray(frames),'Missing '+lane+' frames');
-  assert.deepEqual(frames.map(f=>f?.tick+':'+f?.view),expected,'Missing, duplicate or misaligned '+lane+' frames');
+  assert.equal(frames.length,expected.length,'Missing or duplicate '+lane+' frames');
+  for(let i=0;i<expected.length;i++){
+   // Raw identity only: string ticks or coercible views cannot bypass tick0 gates.
+   assert.equal(frames[i]?.tick,expected[i].tick,'Invalid/misaligned raw tick ('+lane+')');
+   assert.equal(frames[i]?.view,expected[i].view,'Invalid/misaligned raw view ('+lane+')');
+  }
  }
  return before.map((f,i)=>{
   const a=f?.measurement?.memory?.geometries,b=after[i]?.measurement?.memory?.geometries;
-  assert(Number.isFinite(a)&&Number.isFinite(b)&&a>=0&&b>=0,'Missing/invalid absolute geometry count at '+expected[i]);
+  assert(Number.isFinite(a)&&Number.isFinite(b)&&a>=0&&b>=0,'Missing/invalid absolute geometry count at '+expected[i].tick+':'+expected[i].view);
   // Exact original condition: no tolerance, baseline subtraction or override.
-  assert(b<=a,'Absolute geometry regression at '+expected[i]+': '+a+' -> '+b);
+  assert(b<=a,'Absolute geometry regression at '+expected[i].tick+':'+expected[i].view+': '+a+' -> '+b);
   return {tick:f.tick,view:f.view,before:a,after:b};
  });
 }

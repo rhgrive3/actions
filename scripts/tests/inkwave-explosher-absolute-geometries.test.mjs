@@ -40,6 +40,15 @@ test('missing duplicate misordered and wrong frame identities fail closed',()=>{
  const reordered=stills();[reordered[0],reordered[1]]=[reordered[1],reordered[0]];
  assert.throws(()=>requireAbsoluteExplosherGeometries('stills',stills(),reordered));
 });
+for(const stage of ['preflight','stills'])test(stage+' raw identities reject numeric-string/nonfinite ticks and nonstring/coercible views',()=>{
+ const good=()=>stage==='preflight'?pre():stills();
+ for(const [field,value] of [['tick','0'],['tick',null],['tick',NaN],['tick',Infinity],['view',['behind']],['view',0],['view',{toString:()=> 'behind'}]]){
+  for(const lane of ['before','after']){
+   const b=good(),a=good();(lane==='before'?b:a)[0][field]=value;
+   assert.throws(()=>requireAbsoluteExplosherGeometries(stage,b,a),/raw tick|raw view/);
+  }
+ }
+});
 test('all18stills frames retain absolute condition, including final frame',()=>{
  assert.equal(requireAbsoluteExplosherGeometries('stills',stills(),stills()).length,18);
  const a=stills();a.at(-1).measurement.memory.geometries++;
