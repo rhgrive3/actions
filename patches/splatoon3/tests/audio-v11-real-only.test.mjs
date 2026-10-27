@@ -185,7 +185,8 @@ test('selected Charger preloads HoldNoise first then the other actual cues in on
  const originalEnsure=loader.ensure.bind(loader);
  loader.ensure=(source,event)=>{orders.push([source,event]);return originalEnsure(source,event);};
  a.prepareWeapon('charger-01',{urgent:true});
- assert.deepEqual(orders.slice(0,2),[[id,'charge'],[id,undefined]],
+ // A null event explicitly requests the complete recorded source batch.
+  assert.deepEqual(orders.slice(0,2),[[id,'charge'],[id,null]],
    'a collab must load its base hold immediately before the batch');
  await loader.ensure(id);
  for(const event of ['charge','ready','fire','fire_full']){
