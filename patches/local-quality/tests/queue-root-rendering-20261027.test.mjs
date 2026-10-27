@@ -62,3 +62,26 @@ test('Cargo omitted template constants merge to identical final painted attribut
   try{const[a,b]=outputs;assert.deepEqual(Object.keys(a.attributes),Object.keys(b.attributes));for(const k of Object.keys(a.attributes))assert.deepEqual(bytes(a.attributes[k].array),bytes(b.attributes[k].array),k);assert.deepEqual(bytes(a.index.array),bytes(b.index.array));assert.deepEqual(a.boundingBox,b.boundingBox);assert.deepEqual(a.boundingSphere,b.boundingSphere);}finally{[...templates,...outputs].forEach(g=>g.dispose());}
  }
 });
+
+test('GPU-22 retains the two ring static slots and shell-only dirty uploads in composed FX', () => {
+  const rel = 'src/fx/fx.js';
+  const source = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+  const output = adaptBuildSource(rel, source);
+  assert.match(output, /function markUpdated\(geo, count, staticAttribute = null, staticAttribute2 = null\)/);
+  assert.match(output, /if \(a === staticAttribute \|\| a === staticAttribute2 \|\| a\._fxStatic\) continue;/);
+  assert.match(output, /markUpdated\(R\.geo, n, R\.staticDirty \? null : R\.geo\.attributes\.aColA/);
+  assert.match(output, /geo\.attributes\.aColA\._fxStatic = true; geo\.attributes\.aAxis\._fxStatic = true;/);
+  assert.match(output, /const sStart = S\.dirtyStart, sEnd = Math\.min\(S\.dirtyEnd, S\.n\);/);
+  assert.doesNotMatch(output, /S\.axisDirty/);
+});
+
+test('GPU-08b composes one wake-point pool with the active wake slot uniform', () => {
+  const rel = 'src/fx/swimWake.js';
+  const source = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+  const output = adaptBuildSource(rel, source);
+  assert.match(output, /function recycleWakePoints\(slot\)/);
+  assert.match(output, /actor: null, pts: \[\], pool: \[\], k: 0/);
+  assert.match(output, /function pushWakePoint\(slot, x, y, z, t\)/);
+  assert.match(output, /U\.uWakeCount\.value = activeWakeSlots;/);
+  assert.doesNotMatch(output, /actor: null, pts: \[\], free: \[\]/);
+});

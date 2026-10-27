@@ -1,5 +1,8 @@
 // Reviewed terminal transformations for legacy adapter-owned sources.
 // Direct-owned authored modules carry their edits directly under the ownership gate.
+// The terminal GPU-22 adapter owns shell static-attribute dirty ranges and GPU-08b
+// owns SwimWake point pooling. Applying the old axisDirty/free-list queue edits
+// here would double-own those buffers and break exact source composition.
 const CHANGES = [
   [
     "src/fx/fx.js",
@@ -54,30 +57,6 @@ const CHANGES = [
     "    markUpdated(R.geo, n);",
     "    markUpdated(R.geo, n, R.staticDirty ? null : R.geo.attributes.aColA, R.staticDirty ? null : R.geo.attributes.aMisc);\n    R.staticDirty = false;",
     "ring-static-upload"
-  ],
-  [
-    "src/fx/fx.js",
-    "    const S = this.shells;\n    let i;",
-    "    const S = this.shells;\n    S.axisDirty = true;\n    let i;",
-    "shell-axis-birth"
-  ],
-  [
-    "src/fx/fx.js",
-    "const last = --S.n;",
-    "const last = --S.n;\n        S.axisDirty = true;",
-    "shell-axis-swap"
-  ],
-  [
-    "src/fx/fx.js",
-    "      aA[i4] = S.A[i4]; aA[i4 + 1] = S.A[i4 + 1]; aA[i4 + 2] = S.A[i4 + 2]; aA[i4 + 3] = S.A[i4 + 3];",
-    "      if (S.axisDirty) { aA[i4] = S.A[i4]; aA[i4 + 1] = S.A[i4 + 1]; aA[i4 + 2] = S.A[i4 + 2]; aA[i4 + 3] = S.A[i4 + 3]; }",
-    "shell-axis-copy"
-  ],
-  [
-    "src/fx/fx.js",
-    "    markUpdated(S.geo, S.n);",
-    "    markUpdated(S.geo, S.n, S.axisDirty ? null : S.geo.attributes.aAxis);\n    S.axisDirty = false;",
-    "shell-axis-upload"
   ],
   [
     "src/fx/fx.js",
@@ -156,55 +135,6 @@ const CHANGES = [
     "new THREE.Color(0.6, 0.6, 0.6)",
     "(this._arcNoInkGray || (this._arcNoInkGray = new THREE.Color(0.6, 0.6, 0.6)))",
     "weapons-native-bomb-arc-cache-low-ink-gray-color",
-    1
-  ],
-  [
-    "src/fx/swimWake.js",
-    "const BREAK = -9;",
-    "const BREAK = -9;\nfunction retireWakePoint(s, p) { if (s.free.length < PTS + 1) s.free.push(p); }\nfunction clearWakePoints(s) { for (const p of s.pts) retireWakePoint(s, p); s.pts.length = 0; }\nfunction wakePoint(s, x, y, z, t) { const p = s.free.pop() || {}; p.x = x; p.y = y; p.z = z; p.t = t; return p; }",
-    "swimwake-point-helpers",
-    1
-  ],
-  [
-    "src/fx/swimWake.js",
-    "actor: null, pts: [], k: 0",
-    "actor: null, pts: [], free: [], k: 0",
-    "swimwake-point-free-storage",
-    1
-  ],
-  [
-    "src/fx/swimWake.js",
-    "s.pts.length = 0;",
-    "clearWakePoints(s);",
-    "swimwake-point-retire-clear",
-    5
-  ],
-  [
-    "src/fx/swimWake.js",
-    "function clearWakePoints(s) { for (const p of s.pts) retireWakePoint(s, p); clearWakePoints(s); }",
-    "function clearWakePoints(s) { for (const p of s.pts) retireWakePoint(s, p); s.pts.length = 0; }",
-    "swimwake-point-helper-clear",
-    1
-  ],
-  [
-    "src/fx/swimWake.js",
-    "s.pts.shift();",
-    "retireWakePoint(s, s.pts.shift());",
-    "swimwake-point-retire-front",
-    2
-  ],
-  [
-    "src/fx/swimWake.js",
-    "s.pts.push({ x: 0, y: 0, z: 0, t: BREAK });",
-    "s.pts.push(wakePoint(s, 0, 0, 0, BREAK));",
-    "swimwake-point-reuse-break",
-    2
-  ],
-  [
-    "src/fx/swimWake.js",
-    "s.pts.push({ x: p.x, y: p.y, z: p.z, t: now });",
-    "s.pts.push(wakePoint(s, p.x, p.y, p.z, now));",
-    "swimwake-point-reuse-live",
     1
   ],
   [
