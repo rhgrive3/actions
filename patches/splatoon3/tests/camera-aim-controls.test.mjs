@@ -11,6 +11,9 @@ const close = (x, y, eps = 1e-9) => assert.ok(Math.abs(x - y) <= eps, `${x} != $
 async function world(weapon = 'shooter') {
   const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
     extraExports: "export * from './patches/splatoon3/runtime/camera-aim-controls.mjs';" });
+  // Retain this fixture's ray world and use the real bounded segment method
+  // when the installed ink guide asks the partial Physics adapter for contact.
+  f.G.physics.segment = f.Physics.prototype.segment;
   const a = f.make(weapon);
   f.G.settings = { aimAssist: 0, sensitivity: 1, padSensitivity: 0, gyro: false };
   f.G.physics.cameraProbe = (_o, _d, want, _r, out) => Object.assign(out, { hard: want, soft: want, floor: false });
@@ -145,6 +148,23 @@ test('current tick input reaches world aim before actor/weapon simulation; rende
   f.G.projectiles.update = original;
   close(beforePosition.distanceTo(f.rig.gameCam.position), 0);
   close(beforeQuaternion.angleTo(f.rig.gameCam.quaternion), 0);
+});
+
+test('camera fixture native segments and installed guide share bounded wall contact', async () => {
+  const f = await world(), hit = new f.Hit(), from = new f.THREE.Vector3(0,1,0);
+  f.G.physics.raycast=(origin,dir,range,out)=>{
+    out.hit=false;out.dist=range;
+    const distance=Math.abs(dir.z)>1e-12?(3-origin.z)/dir.z:Infinity;
+    if(distance>=0&&distance<=range){out.hit=true;out.dist=distance;
+      out.point.copy(origin).addScaledVector(dir,distance);out.normal.set(0,0,dir.z>0?-1:1);}
+    return out;
+  };
+  assert.equal(f.G.physics.segment(from,new f.THREE.Vector3(0,1,2),hit).hit,false,'wall beyond segment is rejected');
+  assert.equal(f.G.physics.segment(from,new f.THREE.Vector3(0,1,4),hit).hit,true);
+  close(hit.dist,3);close(hit.point.z,3);
+  f.controller.computeAim();
+  assert.ok(f.controller.shotGuide,'actual native guide is exercised');
+  close(f.controller.shotGuide.z,3);
 });
 
 test('no simulation input delta preserves the rendered recoil ray exactly', async () => {

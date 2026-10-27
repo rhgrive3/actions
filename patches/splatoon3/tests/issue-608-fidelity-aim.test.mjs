@@ -1,9 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { fixture } from './weapon-edgecases-fixture.mjs';
+import { fixture as baseFixture } from './weapon-edgecases-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 import { adaptSource } from '../adapter.mjs';
+
+async function fixture(options) {
+  const f = await baseFixture(options);
+  // The same empty ray world also serves native ink-guide segment queries.
+  // Borrow the shipping method so future ray overrides keep bounded contact.
+  f.G.physics.segment = f.Physics.prototype.segment;
+  return f;
+}
 
 async function fireCenterline(kind, { renderHz = 60, profileTransform, targetDistance = 10.5 } = {}) {
   const f = await fixture({ profileTransform });
