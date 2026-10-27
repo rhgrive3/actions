@@ -189,12 +189,13 @@ export function validateCatalogAudioGraphResult(result) {
   const graph=result.audioGraph,worker=outputs[0];
   if(graph?.source!=='production-entry-imports-and-generated-worker'||graph.deviceInitialized!==false||graph.workerProtocol!=='invalid-id-rejected'||graph.workerTerminated!==true||graph.workerPath!=='/'+worker)fail('audio graph protocol proof');
   if(!result.loaded?.some(r=>r.file===worker&&r.sha256===artifacts[worker]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph worker receipt');
-  for(const name of ['grain','reverb']){
+  for(const name of ['grain','reverb','pitch-preserving-charge']){
     const entries=keys.filter(k=>k.endsWith('/patches/splatoon3/runtime/audio/'+name+'-worker.mjs'));
     if(!entries.length)continue;
     if(entries.length!==1)fail('audio graph prewarm worker denominator');
     const file=entries[0],proof=graph.prewarmWorkers?.filter(r=>r.path==='/'+file);
     if(proof?.length!==1||proof[0].protocol!=='canonical-pcm-byte-exact'||proof[0].terminated!==true||!Number.isSafeInteger(proof[0].bytes)||proof[0].bytes<=0)fail('audio graph prewarm protocol proof');
+    if(name==='pitch-preserving-charge'&&(proof[0].serial!==1||proof[0].key!=='catalog-charge-stretch'||proof[0].sampleRate!==8000||proof[0].ratio!==.75||proof[0].sourceFrames!==800||proof[0].outputFrames!==600||proof[0].channels!==1||proof[0].bytes!==2400))fail('audio graph charge protocol denominator');
     if(!result.loaded?.some(r=>r.file===file&&r.sha256===artifacts[file]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph prewarm receipt');
   }
 }

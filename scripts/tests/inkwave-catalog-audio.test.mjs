@@ -67,13 +67,17 @@ test('saved graph rejects duplicate/foreign worker artifacts and missing or corr
 
 test('saved graph requires each actual lazy module worker and its PCM protocol proof',()=>{
  const result=audioResult();result.audioGraph.prewarmWorkers=[];
- for(const name of ['grain','reverb']){
+ for(const name of ['grain','reverb','pitch-preserving-charge']){
   const file='_versions/test/patches/splatoon3/runtime/audio/'+name+'-worker.mjs';
   result.artifacts[file]='c'.repeat(64);result.loaded.push({file,sha256:'c'.repeat(64),bytes:1024});
   assert.throws(()=>validateCatalogAudioGraphResult(result),/prewarm protocol/);
-  result.audioGraph.prewarmWorkers.push({path:'/'+file,protocol:'canonical-pcm-byte-exact',bytes:96000,terminated:true});
+  result.audioGraph.prewarmWorkers.push({path:'/'+file,protocol:'canonical-pcm-byte-exact',bytes:name==='pitch-preserving-charge'?2400:96000,terminated:true,
+   ...(name==='pitch-preserving-charge'?{serial:1,key:'catalog-charge-stretch',sampleRate:8000,ratio:.75,sourceFrames:800,outputFrames:600,channels:1}:{})});
   validateCatalogAudioGraphResult(result);
   const missing=structuredClone(result);missing.loaded=missing.loaded.filter(r=>r.file!==file);assert.throws(()=>validateCatalogAudioGraphResult(missing),/prewarm receipt/);
   const wrong=structuredClone(result);wrong.audioGraph.prewarmWorkers.at(-1).terminated=false;assert.throws(()=>validateCatalogAudioGraphResult(wrong),/prewarm protocol/);
+  if(name==='pitch-preserving-charge')for(const field of ['serial','key','sampleRate','ratio','sourceFrames','outputFrames','channels','bytes']){
+   const corrupt=structuredClone(result);delete corrupt.audioGraph.prewarmWorkers.at(-1)[field];assert.throws(()=>validateCatalogAudioGraphResult(corrupt),/charge protocol denominator|prewarm protocol/);
+  }
  }
 });

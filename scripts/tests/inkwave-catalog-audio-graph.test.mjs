@@ -15,7 +15,7 @@ const helpers = [
 
 // Execute only the serialized graph coordinator with inert mock namespaces.
 // No production modules, browser, audio device or gameplay code is executed.
-async function probe({ missing, reject, initialized = false, badProtocol = false, badPrewarm = false } = {}) {
+async function probe({ missing, reject, initialized = false, badProtocol = false, badPrewarm = false, badChargeSerial = false, badChargeKey = false, badChargePCM = false, chargeError = false } = {}) {
   const loaded = [], workers = [];
   const namespaces = new Map([
     ['src/audio/audio.js', {audio: {ctx: initialized ? {} : null, playWeapon() {}, loopWeapon() {}}}],
@@ -24,12 +24,15 @@ async function probe({ missing, reject, initialized = false, badProtocol = false
     ...helpers.map(([file, name]) => ['patches/splatoon3/runtime/audio/' + file, {[name]() {}}]),
     ['patches/splatoon3/runtime/audio/grain-texture.mjs',{renderTexturePCM:()=>new Float32Array([1,2,3])}],
     ['patches/splatoon3/runtime/audio/reverb-impulse.mjs',{renderReverbPair:()=>[[new Float32Array([4,5]),new Float32Array([6,7])]]}],
+    ['patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs',{stretchChargerPCM:()=>[new Float32Array([7,8,9])]}],
   ]);
   if (missing) namespaces.set('patches/splatoon3/runtime/audio/' + missing, {});
   class Worker {
     constructor(url, options) { this.url = url; this.options = options; workers.push(this); }
     postMessage(message) { this.message = message; queueMicrotask(() => {
-      const data=this.url.endsWith('grain-worker.mjs')?{sampleRate:8000,generation:message.generation,kind:'bubbles',pcm:new Float32Array([badPrewarm?9:1,2,3])}:this.url.endsWith('reverb-worker.mjs')?{sampleRate:8000,generation:message.generation,pair:[[new Float32Array([4,5]),new Float32Array([6,7])]]}:{key:message.key,error:badProtocol?'wrong':'Unknown audio ID'};
+      const charge=this.url.endsWith('pitch-preserving-charge-worker.mjs');
+      if(charge&&chargeError){this.onerror({message:'mock charge worker failed'});return;}
+      const data=charge?{serial:badChargeSerial?0:message.serial,key:badChargeKey?'foreign':message.key,samples:[new Float32Array([badChargePCM?0:7,8,9])]}:this.url.endsWith('grain-worker.mjs')?{sampleRate:8000,generation:message.generation,kind:'bubbles',pcm:new Float32Array([badPrewarm?9:1,2,3])}:this.url.endsWith('reverb-worker.mjs')?{sampleRate:8000,generation:message.generation,pair:[[new Float32Array([4,5]),new Float32Array([6,7])]]}:{key:message.key,error:badProtocol?'wrong':'Unknown audio ID'};
       this.onmessage({data});
     }); }
     terminate() { this.terminated = true; }
@@ -55,13 +58,13 @@ test('isolated audio graph loads both main-owned helpers without initializing au
   const {loaded, workers, result} = await probe();
   const receipt = await result;
   for (const [file] of helpers) assert.equal(loaded.filter(url => url === prefix + 'patches/splatoon3/runtime/audio/' + file).length, 1);
-  assert.equal(loaded.length, 7);
+  assert.equal(loaded.length, 8);
   assert.equal(receipt.deviceInitialized, false);
   assert.equal(receipt.workerProtocol, 'invalid-id-rejected');
   assert.equal(receipt.workerTerminated, true);
-  assert.equal(workers.length, 3);
+  assert.equal(workers.length, 4);
   assert(workers.every(w=>w.terminated));
-  assert.equal(receipt.prewarmWorkers.length,2);
+  assert.equal(receipt.prewarmWorkers.length,3);
   assert.equal(workers[0].terminated, true);
 });
 for (const [file] of helpers) {
@@ -101,4 +104,25 @@ test('graph helpers have canonical composed-main owners and are not the reviewed
 
 test('lazy module worker PCM corruption rejects and still terminates the worker',async()=>{
  const {result,workers}=await probe({badPrewarm:true});await assert.rejects(result,/PCM bytes differ/);assert(workers.every(w=>w.terminated));
+});
+
+test('charge stretch worker uses its real protocol and terminates without an audio device',async()=>{
+ const {result,workers}=await probe();const receipt=await result;
+ const worker=workers.find(w=>w.url.endsWith('/pitch-preserving-charge-worker.mjs'));
+ assert.ok(worker,'lazy production charge Worker must actually be exercised');
+ assert.equal(worker.options.type,'module');assert.equal(worker.terminated,true);
+ assert.equal(worker.message.serial,1);assert.equal(worker.message.key,'catalog-charge-stretch');
+ assert.equal(worker.message.sampleRate,8000);assert.equal(worker.message.ratio,.75);
+ assert.equal(worker.message.samples[0].length,800);
+ assert.deepEqual(Array.from(worker.message.samples[0].slice(0,3)),[-.9375,-.875,-.8125]);
+ assert.equal(receipt.deviceInitialized,false);
+ assert.equal(receipt.prewarmWorkers.find(r=>r.path===worker.url).protocol,'canonical-pcm-byte-exact');
+});
+for(const [name,options,expected]of[
+ ['serial',{badChargeSerial:true},/protocol mismatch/],['key',{badChargeKey:true},/protocol mismatch/],
+ ['PCM',{badChargePCM:true},/PCM bytes differ/],['error',{chargeError:true},/charge worker failed/],
+ ['missing export',{missing:'pitch-preserving-charge.mjs'},/canonical export missing/],
+ ['missing import',{reject:'pitch-preserving-charge.mjs'},/missing emitted helper/],
+])test('charge worker rejects '+name+' and terminates every created worker',async()=>{
+ const {result,workers}=await probe(options);await assert.rejects(result,expected);assert(workers.every(w=>w.terminated));
 });

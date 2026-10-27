@@ -69,5 +69,32 @@ export async function catalogAudioGraph(prefix) {
       prewarmWorkers.push({path,protocol:'canonical-pcm-byte-exact',bytes,terminated:true});
     }finally{w.terminate();}
   }
+  // This module Worker is lazy at Charger loadout time. The motion catalog
+  // keeps audio.ctx null, so verify its actual transferred-PCM protocol here
+  // rather than exempting it from the installed-module denominator.
+  const {stretchChargerPCM}=await import(prefix+'patches/splatoon3/runtime/audio/pitch-preserving-charge.mjs');
+  if(typeof stretchChargerPCM!=='function')throw Error('Catalog charge canonical export missing');
+  const chargePath=prefix+'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs';
+  const chargeWorker=new Worker(chargePath,{type:'module',name:'catalog-charge-stretch'});
+  try{
+    const samples=[Float32Array.from({length:800},(_,i)=>(i%31-15)/16)],
+      expected=stretchChargerPCM(samples,8000,.75);
+    const reply=await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(Error('Catalog charge worker timeout')),10000);
+      chargeWorker.onerror=e=>{clearTimeout(timer);reject(Error('Catalog charge worker failed: '+e.message));};
+      chargeWorker.onmessage=({data})=>{clearTimeout(timer);resolve(data);};
+      chargeWorker.postMessage({serial:1,key:'catalog-charge-stretch',sampleRate:8000,ratio:.75,samples},samples.map(c=>c.buffer));
+    });
+    if(reply?.serial!==1||reply.key!=='catalog-charge-stretch'||!Array.isArray(reply.samples)||reply.samples.length!==expected.length)throw Error('Catalog charge worker protocol mismatch');
+    let bytes=0;
+    for(let i=0;i<expected.length;i++){
+      const channel=reply.samples[i];
+      if(!(channel instanceof Float32Array)||channel.length!==expected[i].length||!channel.length)throw Error('Catalog charge PCM length');
+      const a=new Uint8Array(channel.buffer,channel.byteOffset,channel.byteLength),b=new Uint8Array(expected[i].buffer,expected[i].byteOffset,expected[i].byteLength);
+      if(!a.every((v,j)=>v===b[j]))throw Error('Catalog charge PCM bytes differ');bytes+=a.length;
+    }
+    prewarmWorkers.push({path:chargePath,protocol:'canonical-pcm-byte-exact',bytes,terminated:true,
+      serial:1,key:'catalog-charge-stretch',sampleRate:8000,ratio:.75,sourceFrames:800,outputFrames:reply.samples[0].length,channels:reply.samples.length});
+  }finally{chargeWorker.terminate();}
   return {source:'production-entry-imports-and-generated-worker',deviceInitialized:false,workerPath,workerProtocol:'invalid-id-rejected',workerTerminated:true,prewarmWorkers};
 }
