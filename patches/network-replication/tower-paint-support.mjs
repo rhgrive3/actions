@@ -5,6 +5,7 @@
 const histories = new WeakMap();
 const proofListeners = new WeakMap();
 const MAX_POSES = 256;
+const SUPPORT_RETRY_MS = 2000;
 const safe = n => Number.isSafeInteger(n) && n >= 0;
 const vector = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
 const xyz = p => p && [p.x, p.y, p.z].every(Number.isFinite) ? [p.x, p.y, p.z] : null;
@@ -13,8 +14,8 @@ function state(nm) {
   if (!match || nm._disposed || match._disposed || engine?.mode !== 'tower'
       || typeof epoch !== 'string' || typeof host !== 'string') return null;
   let s = histories.get(nm);
-  if (!s || s.match !== match || s.engine !== engine || s.epoch !== epoch || s.host !== host) {
-    s = { match, engine, epoch, host, poses: new Map(), latest: -1 };
+  if (!s || s.match !== match || s.engine !== engine || s.epoch !== epoch || s.host !== host || s.session !== nm.s) {
+    s = { match, engine, epoch, host, session: nm.s, poses: new Map(), pending: new Map(), latest: -1 };
     histories.set(nm, s);
   }
   return s;
@@ -84,6 +85,27 @@ export function recordTowerHostSnapshot(nm, snapshot) {
   proofListeners.get(nm)?.();
   return true;
 }
+// Preserve the original revision until the ordered transport accepts it. A
+// bounded timeout abandons only this support capability; local Mine placement
+// and ordinary actor/event replication continue without weaker paint authority.
+export function flushTowerHostSnapshots(nm, send) {
+  const s = state(nm);
+  if (!s || !nm.isHost || !s.pending.size) return true;
+  if (s.match.state !== 'playing' || s.engine.winner != null) { s.pending.clear(); return true; }
+  const now = performance.now();
+  for (const [revision, item] of s.pending) {
+    if (now - item.at >= SUPPORT_RETRY_MS) { s.pending.delete(revision); continue; }
+    let accepted = false;
+    try { accepted = send(item.packet) === true; } catch { /* retry on next ordinary tick */ }
+    if (state(nm) !== s || !nm.isHost) return false;
+    if (!accepted) return false;
+    recordTowerHostSnapshot(nm, item.packet.rk.state);
+    if (state(nm) !== s || !nm.isHost) return false;
+    s.pending.delete(revision);
+  }
+  return true;
+}
+
 function localPoint(pose, point) {
   const d = point.map((n, i) => n - pose.center[i]);
   return [d[0] * pose.side[0] + d[2] * pose.side[2], d[1], d[0] * pose.forward[0] + d[2] * pose.forward[2]];
@@ -118,10 +140,18 @@ export function mineTowerPaintReference(nm, pos) {
     // Physics runs at 60Hz, regular objective replication at 5Hz. Publish the
     // actual host revision before the Mine event instead of trusting a peer's
     // predicted/interpolated Tower pose or silently widening origin checks.
-    nm._sendNow({ k: 'rkstate', rk: { match: s.epoch, host: s.host, state: snapshot,
-      gains: s.match.rankedGains || [0, 0] } });
+    if (!s.pending.has(revision)) {
+      if (s.pending.size >= MAX_POSES) return null;
+      // Engine snapshots are plain protocol data. Retain their original values
+      // independently of the next physics step or an external snapshot consumer.
+      const packet = JSON.parse(JSON.stringify({ k:'rkstate', rk:{ match:s.epoch, host:s.host,
+        state:snapshot, gains:s.match.rankedGains || [0,0] } }));
+      s.pending.set(revision, { packet, at:performance.now() });
+    }
+    try { nm._sendNow(s.pending.get(revision).packet); } catch { /* bounded retry */ }
   }
-  if (!s.poses.has(revision) || !colliderMatches(s.match.rankedWorld, s.poses.get(revision))) return null;
+  if (state(nm) !== s || (!s.poses.has(revision) && !(nm.isHost && s.pending.has(revision)))) return null;
+  if (s.poses.has(revision) && !colliderMatches(s.match.rankedWorld, s.poses.get(revision))) return null;
   return { support: 1, supportRevision: revision, supportX: local[0], supportY: local[1], supportZ: local[2] };
 }
 

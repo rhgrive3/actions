@@ -17,7 +17,7 @@ export function registerLimitedTorpedo(nm,parent,receipt,event,G,notify){
  const gear=receipt.torpedoGear,speed=gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high);
  const validGear=Number.isInteger(ap)&&ap>=0&&ap<=57&&gear?.ap===ap&&gear.key===parent.owner.s3?._wireGearKey&&parent.owner.s3?._wireGearApplied===parent.owner.s3?.loadout;
  if(!(ap===0&&event[5]?.subPowerAP===0&&(parent.owner.s3?.modifiers?.subPower??1)===1)&&!validGear)return false;
- if(event[5]?.subPowerAP!==ap||parent.owner.s3?.modifiers?.subPower!==speed/spec.throwSpeedTiers.low||!eligibleLimitedTorpedoBirth({receipt,snapshot:receipt.motion,event:event[5],spec,speed:gearCurve(ap,spec.throwSpeedTiers.low,spec.throwSpeedTiers.mid,spec.throwSpeedTiers.high),normalMoveTarget:receipt.normalMoveTarget}))return false;
+ if(event[5]?.subPowerAP!==ap||parent.owner.s3?.modifiers?.subPower!==speed/spec.throwSpeedTiers.low||!eligibleLimitedTorpedoBirth({receipt,snapshot:receipt.motion,event:event[5],spec,speed,normalMoveTarget:receipt.normalMoveTarget}))return false;
  const world=G.projectiles;
  let set=registries.get(nm);if(!set){set=new Set();registries.set(nm,set);}
  // This private sweep only removes current records; enrollment occurs below.
@@ -33,5 +33,5 @@ export function observeLimitedContact(world,drop,victim,damage){const r=children
  if(r.contacts.some(c=>c.drop===drop&&c.victim===victim))return false;
  if(r.contacts.length>=48)return false;r.contacts.push({drop,victim,life:life(victim),damage,at:performance.now()/1000});r.notify.call(r.nm,r.from);return true;}
 export function consumeLimitedContact(nm,from,d,t){for(const r of registries.get(nm)||[]){if(!live(r)||r.from!==from||r.owner.nid!==d.a||d.m!==r.epoch||d.w!=='torpedo-splash'||d.d!==r.parent.spec.splashDamage)continue;
- r.contacts=r.contacts.filter(c=>t-c.at>=0&&t-c.at<=.95&&c.victim.alive&&life(c.victim)===c.life&&nm.byNid.get(c.victim.nid)===c.victim&&c.victim.owner===nm.myId&&!c.victim.remote);
+ if(r.contacts.length)r.contacts=r.contacts.filter(c=>t-c.at>=0&&t-c.at<=.95&&c.victim.alive&&life(c.victim)===c.life&&nm.byNid.get(c.victim.nid)===c.victim&&c.victim.owner===nm.myId&&!c.victim.remote);
  const i=r.contacts.findIndex(c=>c.victim.nid===d.v&&c.life===d.l&&c.damage===d.d);if(i<0)continue;r.contacts.splice(i,1);if(r.parent.dead&&!r.dropCount&&!r.contacts.length)retire(r);return true;}return false;}
