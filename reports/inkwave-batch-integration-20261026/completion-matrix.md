@@ -19,6 +19,7 @@ Worker-head evidence is distinguished from final combined-head checks below.
 | Walking step and speed presentation | Monotone visual step correction and smoothed display speed; gameplay walking/collision remain unchanged | Worker source/CPU and controlled render checks, combined 17-case checkpoint. Original unpublished locomotion curves and live hardware comparison remain unverified. |
 | Roller downhill painting | Native and catalogue continuous floor tracing share the contact result, preserving support and paint along a continuous downhill surface | Real contact/turf at 30/60/120 Hz, combined source and emitted checks. No assertion of recovered Nintendo collision implementation. |
 | Roller flat-ground tracing cost | Existing cheap support test now precedes detailed collision tracing; the two support predicates and independent paint-continuity gate are preserved | Verified worker follow-up `53c472776` integrated. Combined source 20, selected paint-boundary 5 and emitted 8 cases passed. Flat 4096 calls use zero detailed rays and 8192 queries; downhill still traces and cliff/air/gap checks remain. Fresh controlled emitted browser passed at 30/60/120 Hz. This is call-count evidence, not a device FPS claim. |
+| Brush held-floor transform feedback | Refresh current weapon matrices before floor feedback and target the standing plane at the tip; no shape, character/rig/bone, physics, paint, gain or stat change | Original `ea8213beb`, text-only handoff `bbc4a19b`; new-main integration source/emitted loaded regression passes; all five Rollers/three Brushes compatibility passes in source at30/60/120Hz. Entry gap +14.57→+1.14cm across sparse1game-second samples and exit actual-vertex penetration6.03→4.05cm remain unresolved. Old bounds do not establish baseline penetration. Emitted all-kit compatibility fixture cannot import intentionally inlined rollers.mjs; not counted as passed. No new retail/native-triangle browser proof. |
 | Low-speed floor/wall swim splash | Bounded surface-rooted curls and ballistic drops; lifecycle, stealth, air and cadence handling | Worker source/emitted and controlled rendered surface checks. Shape/low-speed/wall curves remain INKWAVE calibration, not measured retail agreement. |
 | Mop / Dread Wringer low births | Both delayed streams use the established body-relative Slosher launch fallback; source velocity/lift/range/damage/paint retained | Source/emitted posed and delayed-birth checks at 30/60/120 Hz. Body fallback is INKWAVE calibration, not a measured original muzzle joint. |
 | Splat / Curling / Autobomb cues | Rolling Splat warning follows current supported surface and clears stale support; Curling forecast removed; Autobomb landing acquisition rim uses existing search radius/window | Worker source/emitted cue and render-readback evidence; final combined tests selected. Native fuse/collision/search/paint are unchanged. Thin-rim/fade pixels remain unmeasured retail art. |
@@ -40,7 +41,7 @@ Worker-head evidence is distinguished from final combined-head checks below.
 - Merge conflicts were limited to source imports, adjacent floor tracing,
   build-only registrations and append-only behavior-report entries. Both
   Charger drops and movement contact tracing were retained.
-- No hair/model editing, security changes, storage cleanup, private reference
+- No hair/character-model editing, security changes, storage cleanup, private reference
   media, manual CI launch or unrelated open-PR import is part of this batch.
 
 ## Final combined checks and release state
@@ -171,12 +172,22 @@ Actual playback, ordinary native input, original pixels/timing, Pencil squid
 semantics and other unfinished gates remain open. No extra browser matrix or
 manual CI is part of this acceptance.
 
-The branch push succeeded. Draft PR creation was rejected twice by automatic
-approval review, including one retry after explicit parent appointment. No PR
-exists for this head branch; creation is stopped without an alternate API or
-actor. See `publication-status.json` for the exact rejection and remote state.
+At the earlier release-only checkpoint, Draft PR creation was rejected twice by
+automatic approval review. `publication-status.json` preserves that historical
+rejection. Following renewed direct user authorization, the single Draft
+[PR #1895](https://github.com/rhgrive3/actions/pull/1895) was created; all later
+updates use its existing integration branch. It remains unmerged.
 
 Only one draft PR is authorized at this stage. Required automatic PR/main CI
 must run on the eventual final head; no skip flags, weakened assertions, forced
 merge or historical-head substitution is permitted. Merge is not authorized
 until scope, unfinished items and exact final checks are reviewed.
+
+## 2026-10-27 terminal HUD and Brush checkpoint
+
+[The new-main integration receipt](upstream-da5058-brush/README.md) records main
+`da5058b7` merged with both terminal HUD adapters, explicit exactly-once and
+actual emitted stage/map-packing checks, the text-only Brush handoff,39 source
+passes,19 supported emitted passes and the unsupported emitted compatibility
+invocation. Build/startup and exact git-tree/artifact audits pass. These remain
+local checks; final remote CI and unfinished visual/retail gates are open.

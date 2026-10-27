@@ -6548,3 +6548,7 @@ main `f89199ef` をバグbatch `b7f9e360` へ統合し、報告末尾の競合�
 読み込み済み本番Actor/Characterによる6更新／描画の負例・回帰、保持／空中／着地の互換確認、および通常Rリセット後の未塗装坂での生成版ブラウザ証跡は[専用記録](brush-downhill-contact-20261027/README.md)に残す。既存の先端高さ・形状はINKWAVEの校正値であり、新たな原作フレーム値や形状一致は主張しない。
 
 公開ハンドオフにはコードとテキスト計測だけを含め、画像入りローカル証跡は送信しない。source／emitted各1件と5 Roller／3 Brushの30/60/120Hz互換確認が成功し、未塗装坂の塗り面積0→2.9929→9.6620を通常入力で確認した。候補の坂進入時の頂点間隔は14.5739cm、1ゲーム秒後の保存点で1.1402cmだが、疎な測定のため正確な収束時間・最大値は未測定。出口の実頂点は6.0285cm→4.0480cm潜る。旧ブラウザ計測は境界箱のみであり、以前と同じ潜りだったという断定はできない。武器の仮想接地点と変形した頭部の実頂点を区別し、任意の高さオフセットやgain変更は追加していない。
+
+## 2026-10-27 UTC: 終端HUD合成とBrush統合の確認
+
+main `da5058b7` との合成競合は、Stringer既存annulusの段階wrapperとShooter座標文字列再利用の両方を各1回維持して解決した。実合成／emitted HUDメソッドのmap keyとCSS transform、Stringer両段階・切替、collision query順序／stamp／実Tower cacheを確認した。別公開のBrush stale matrix修正とテキスト証拠を取り込み、source39成功・対応emitted19成功、build／startup／1491入力（build script込み）・2196生成物digest不一致0。all8種保持のemitted呼出しはinlined rollers.mjsへの直接importで失敗したため成功扱いしない。Brushのentry lagと実頂点penetrationは残り、旧boundsから既存問題と断定しない。[統合結果と制約](inkwave-batch-integration-20261026/upstream-da5058-brush/README.md)。本家pixel・Hissenサイズ／床滴形状の新規認定やmain mergeは含めない。
