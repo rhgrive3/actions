@@ -1,3 +1,31 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+export const SOURCE_TEST_DIRECTORIES = [
+  'patches/splatoon3/tests', 'patches/reliability/tests',
+  'patches/network-replication/tests', 'patches/local-quality/tests',
+];
+// These two source files exercise a real browser and stay in validate_core,
+// where Chromium is already installed. CPU shards never install browsers.
+export const BROWSER_SOURCE_TESTS = [
+  'patches/local-quality/tests/paint-mipmaps.test.mjs',
+  'patches/local-quality/tests/settings-hud-queue.test.mjs',
+];
+
+export function discoverSourceTestFiles(root) {
+  const walk = directory => fs.readdirSync(path.join(root, directory), {withFileTypes: true})
+    .flatMap(entry => entry.isDirectory() ? walk(directory + '/' + entry.name)
+      : entry.isFile() && entry.name.endsWith('.test.mjs') ? [directory + '/' + entry.name] : []);
+  const files = SOURCE_TEST_DIRECTORIES.flatMap(directory => {
+    const tests = walk(directory);
+    if (!tests.length) throw Error('Empty source test directory: ' + directory);
+    return tests;
+  }).filter(file => !BROWSER_SOURCE_TESTS.includes(file));
+  const extra = 'scripts/tests/inkwave-idle-resources-gates.test.mjs';
+  if (!fs.statSync(path.join(root, extra)).isFile()) throw Error('Missing source test: ' + extra);
+  return [...files, extra].sort();
+}
+
 // Canonical sorted patch-test files are sharded by file, never by test case.
 export function selectTestShard(files, shardIndex = 0, shardCount = 1) {
   if (!Array.isArray(files)) throw new TypeError('test files must be an array');

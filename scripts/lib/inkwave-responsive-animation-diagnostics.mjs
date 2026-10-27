@@ -6,8 +6,8 @@ export const MAX_ANIMATION_MESSAGE = 16384;
 export async function settleResponsiveAnimationsInPage(observe = false) {
   const animations = document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity);
   const waits = animations.map(a => a.finished.catch(() => {}));
-  // Only the observed loadout-continuation operation has demonstrated stale
-  // finish notifications. Every other caller retains the promise-only gate.
+  // Only observed loadout-continuation and stage-switch operations use native
+  // whole-cohort confirmation. Other callers retain the promise-only gate.
   if (!observe) { await Promise.all(waits); return; }
   const settled = animations.map(() => false);
   waits.forEach((wait, i) => { wait.then(() => { settled[i] = true; }); });
