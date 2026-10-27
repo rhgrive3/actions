@@ -243,8 +243,11 @@ export class ClamsRule {
     let remaining = dt;
     let guard = 0;
     while (remaining > EPS && guard++ < 512) {
-      const interval = this._spawnInterval();
-      if (this.state.spawnTimer > interval) this.state.spawnTimer = interval;
+      const timer=this.state.spawnTimer;
+      if(this._spawnInterval!==ClamsRule.prototype._spawnInterval || !Number.isFinite(timer) || timer<0 || timer>QUICK_SPAWN_SECONDS){
+        const interval = this._spawnInterval();
+        if (this.state.spawnTimer > interval) this.state.spawnTimer = interval;
+      }
       if (remaining + EPS < this.state.spawnTimer) {
         this.state.spawnTimer -= remaining;
         break;
