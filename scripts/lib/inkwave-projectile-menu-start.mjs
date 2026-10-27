@@ -7,6 +7,11 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   note('native-menu-ready');
   await click('.iw-main [data-id="play"]');
   await waitForPhase(()=>window.__inkwave?.menus?.current==='mode','native mode menu');
+  // A pointer left on the prior screen's PLAY tile can land over an enlarged
+  // neighbouring mode card during the transition. Clear that genuine hover
+  // before choosing Turf with the ordinary hit-tested pointer gesture.
+  await page.mouse.move(1, 1);
+  note('mode-pointer-hover-cleared');
   await click('.iw-modesel [data-id="mode-turf"]');
   await waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu');
   await click('.iw-setup [data-id="map-tidewater"]');
