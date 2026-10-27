@@ -202,14 +202,19 @@ export function FAMILY_POSE(ch, dt, s, C) {
     else if (cs.swingCount < m.count) m.count = cs.swingCount;
   }
   m.age += dt; m.since += dt;
-  // Dragging keeps the ink tip on the floor. This layer cannot see the crouch
-  // and lean applied after it, so last frame's rendered tip height trims the
-  // drag pitch (ground = the actor's feet).
+  // The previous solved weapon pose trims drag pitch against the standing
+  // surface at the tip. On slopes its floor height differs from the feet.
   const w0 = ch.weapon, own = ch._owner?.();
   if ((ch.wRoll || 0) > 0.3 && ch.grounded && w0?.off && own?.pos) {
     const sc = w0.def.modelScale || 1;
+    // Several gameplay ticks can run between draws. Read the last solved
+    // weapon pose, rather than feeding the last drawn pose into every tick.
+    w0.off.updateWorldMatrix(true, false);
     _tip.set(w0.def.muzzle.x, -cfg.thick * sc, cfg.tip * sc).applyMatrix4(w0.off.matrixWorld);
-    const err = _tip.y - (own.pos.y + 0.015);
+    const n = own.groundN;
+    const floorY = own.pos.y - (n?.y > 0.7
+      ? (n.x * (_tip.x - own.pos.x) + n.z * (_tip.z - own.pos.z)) / n.y : 0);
+    const err = _tip.y - (floorY + 0.015);
     if (Math.abs(err) < 1) m.corr = clamp(m.corr + err / cfg.tip * Math.min(1, dt * 12), -0.7, 0.5);
   } else m.corr = damp(m.corr, 0, 1.5, dt);
   if (!(ch.kidForm && !ch.dance && (ch.wSub || 0) <= 0.01)) { m.w = 0; return; }

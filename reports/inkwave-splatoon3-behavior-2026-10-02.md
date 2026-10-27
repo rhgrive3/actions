@@ -6527,3 +6527,10 @@ source13件＋実弾一致／寿命15件、最終emitted11件、通常build・qu
 ## 2026-10-26 Unsupported Physics bridge guide fallback
 
 `.level`を公開しないPhysics bridgeが別の`G.level.collisionRevision`を借りると、実衝突床0→-2の変更後もShooter／Dualies両手のguideだけが0に残る限定adapterケースを確認した。revision取得2か所を実`physics.level`だけに限定し、owner不明のbridgeは再計算する。[最小回帰と記録](shooter-guide-bridge-20261026/README.md)は実Physicsへのdelegateと別の正常Levelを使い、実ownerへの通知後もG.levelのrevisionが不変という条件で負例・修正を確認する。source11件・最終emitted11件、通常build・quick・startupの全artifact digestが成功し、通常Level／NativePhysicsの再利用は維持した。物理・producer・表示条件を変更せず、本家inner-markerの外見の未確認とは分離する。
+
+
+## 2026-10-27 Brush rolling weapon transform and downhill contact
+
+`4ce9768e` の通常操作で、Brushが塗り進み中（runner/anim.rolling、wRoll≈1）でも武器先端が床から浮く表示を確認した。描画間の複数更新が古い `weapon.off.matrixWorld` を繰り返し床補正へ戻すため、保持角が上下していた。武器の既存変換キャッシュを読む前に同期し、先端位置の床高を実際の接地面法線から求める。形状、キャラクターモデル／リグ、ボーン値、移動・塗り・衝突規則は変更しない。
+
+読み込み済み本番Actor/Characterによる6更新／描画の負例・回帰、保持／空中／着地の互換確認、および通常Rリセット後の未塗装坂での生成版ブラウザ証跡は[専用記録](brush-downhill-contact-20261027/README.md)に残す。既存の先端高さ・形状はINKWAVEの校正値であり、新たな原作フレーム値や形状一致は主張しない。
