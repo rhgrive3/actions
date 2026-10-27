@@ -1,3 +1,11 @@
+import { webcrypto as _wc } from 'node:crypto';
+if (!globalThis.crypto) {
+  globalThis.crypto = {
+    getRandomValues: _wc.getRandomValues.bind(_wc),
+    randomUUID: _wc.randomUUID.bind(_wc),
+    subtle: _wc.subtle,
+  };
+}
 // Node-only platform shim for browser QA. Admission and membership always run
 // through the production Worker fetch/RoomDurableObject, never handleSession.
 import * as productionWorker from '../../server/src/index.js';
