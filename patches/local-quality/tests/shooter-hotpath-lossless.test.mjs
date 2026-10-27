@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptCollisionHotpath } from '../collision-hotpath-adapter.mjs';
 import { adaptLosslessShooterHud } from '../shooter-hud-hotpath-adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const read = path => fs.readFileSync(new URL('../../../' + path, import.meta.url), 'utf8');
 function once(source, before, after, label) {
@@ -66,63 +67,37 @@ test('single-cell Level queries preserve order, dedup, stamps and overflow with 
     /collision hotpath|already adapted|non-unique source anchor/);
 });
 
-test('map layout scalars and reused formatted positions are byte-identical', () => {
-  const compiled = adaptLosslessShooterHud('src/ui/hud.js', originalHud, once);
-  assert.ok(!compiled.includes('const fit = (sz) =>'));
-  assert.ok(compiled.includes('const w0 = wide ? small : small * asp'));
-  assert.ok(compiled.includes('translate3d(${px1}px,${py1}px,0)'));
-  for (let i = 0; i < 1800; i++) {
-    const W = 320 + (i % 1501), H = 240 + ((i * 17) % 957);
-    const asp = (i % 13 === 0 ? 1 : i % 2 ? .37 : 3.7);
-    const u = Math.min(W / 100, (H * 1.7778) / 100);
-    const fit = sz => asp >= 1 ? [sz, sz / asp] : [sz * asp, sz];
-    const [w0, h0] = fit(14.5 * u), [w1, h1] = fit(Math.min(H * .78, W * .6));
-    const small = 14.5 * u, large = Math.min(H * .78, W * .6), wide = asp >= 1;
-    const nw0 = wide ? small : small * asp, nh0 = wide ? small / asp : small;
-    const nw1 = wide ? large : large * asp, nh1 = wide ? large / asp : large;
-    assert.deepEqual([nw0, nh0, nw1, nh1], [w0, h0, w1, h1]);
-    const px = (i * 13.37) % nw0, py = (i * 3.14) % nh1;
-    const key = `${px.toFixed(1)}|${py.toFixed(1)}|${(i / 100).toFixed(2)}`;
-    const px1 = px.toFixed(1), py1 = py.toFixed(1);
-    assert.equal(`${px1}|${py1}|${(i / 100).toFixed(2)}`, key);
-  }
-  assert.throws(() => adaptLosslessShooterHud('src/ui/hud.js', compiled, once),
-    /lossless shooter HUD|non-unique source anchor/);
+
+test('full production HUD composition retains Splatoon 3 tank and reuses exact map pixel strings', () => {
+  const output = adaptBuildSource('src/ui/hud.js', originalHud);
+  assert.match(output, /const px1 = px\.toFixed\(1\), py1 = py\.toFixed\(1\);/);
+  assert.ok(output.includes('translate3d(${px1}px,${py1}px,0)'));
+  assert.ok(output.includes('_s3PaintTank('), 'the original S3 tank should remain authoritative');
+  assert.doesNotMatch(output, /depthGradient = g2/, 'never reinstate replaced legacy ink tank rendering');
 });
 
-test('CanvasGradient cache reuses only identical context, endpoints and palette; draws unchanged', () => {
-  const transformed = adaptLosslessShooterHud('src/ui/hud.js', originalHud, once);
-  const begin = transformed.indexOf('    if (T2.depthCtx !== c');
-  const end = transformed.indexOf('    // bubbles', begin);
-  assert.ok(begin > 0 && end > begin);
-  const render = new Function('T2', 'c', 'lvl', 'H', 'cDeep', transformed.slice(begin, end));
-  function ctx() {
-    const made = [], filled = [];
-    const c = {
-      createLinearGradient(...coords) {
-        const g = { coords, stops: [], addColorStop(p, value) { this.stops.push([p, value]); } };
-        made.push(g); return g;
-      },
-      fill() { filled.push(JSON.stringify([this.fillStyle.coords, this.fillStyle.stops])); },
-    };
-    return {c, made, filled};
+test('final HUD map-marker coordinates are byte-identical including dynamic heading', () => {
+  const endOfQueue = `
+    const raw = d._mapKey || (d._mapKey = {}), self = !!p.isSelf, yaw = self ? (+p.yaw || 0) : 0, alive = p.alive !== false;
+    const key = \`\${px.toFixed(1)}|\${py.toFixed(1)}|\${yaw.toFixed(2)}|\${p.alive === false ? 0 : 1}|\${p.isSelf ? 1 : 0}|\${p.team}\`;
+    d.style.transform = \`translate3d(\${px.toFixed(1)}px,\${py.toFixed(1)}px,0) rotate(\${p.isSelf ? (+p.yaw || 0).toFixed(3) : 0}rad)\`;
+  `;
+  const compiled = adaptLosslessShooterHud('src/ui/hud.js', endOfQueue, once);
+  assert.ok(compiled.includes('const px1 = px.toFixed(1), py1 = py.toFixed(1);'));
+  assert.throws(() => adaptLosslessShooterHud('src/ui/hud.js', compiled, once), /non-unique source anchor/);
+  let seed = 0xabcdef11;
+  const rand = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32;
+  for(let i=0;i<1800;i++) {
+    const px = i % 53 === 0 ? -0 : (rand()-.5)*2400;
+    const py = (rand()-.5)*1000;
+    const p={yaw:(rand()-.5)*Math.PI*2,isSelf:!!(i%3),alive:!!(i%2),team:i%2};
+    const self=!!p.isSelf, yaw=self?(+p.yaw||0):0;
+    const oldKey = `${px.toFixed(1)}|${py.toFixed(1)}|${yaw.toFixed(2)}|${p.alive===false?0:1}|${p.isSelf?1:0}|${p.team}`;
+    const oldTransform = `translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0) rotate(${p.isSelf?(+p.yaw||0).toFixed(3):0}rad)`;
+    const px1=px.toFixed(1),py1=py.toFixed(1);
+    const newKey = `${px1}|${py1}|${yaw.toFixed(2)}|${p.alive===false?0:1}|${p.isSelf?1:0}|${p.team}`;
+    const newTransform = `translate3d(${px1}px,${py1}px,0) rotate(${p.isSelf?(+p.yaw||0).toFixed(3):0}rad)`;
+    assert.equal(oldKey,newKey);
+    assert.equal(oldTransform,newTransform);
   }
-  const first = ctx(), other = ctx(), state = {};
-  const scenarios = [
-    [first, 12, 128, '#332211'], [first, 12, 128, '#332211'],
-    [first, 12.001, 128, '#332211'], [first, 12.001, 128, '#332211'],
-    [first, 12.001, 130, '#332211'], [first, 12.001, 130, '#112233'],
-    [other, 12.001, 130, '#112233'], [other, 12.001, 130, '#112233'],
-  ];
-  for (const [obj, level, h, color] of scenarios) {
-    const before = obj.made.length;
-    render(state, obj.c, level, h, color);
-    const expected = JSON.stringify([[0, level, 0, h], [
-      [0, 'rgba(255,255,255,.18)'], [.15, 'rgba(255,255,255,0)'], [1, color + '66'],
-    ]]);
-    assert.equal(obj.filled.at(-1), expected);
-    assert.ok(obj.made.length >= before && obj.made.length <= before + 1);
-  }
-  assert.equal(first.made.length, 4, 'same frame gradients are never regenerated');
-  assert.equal(other.made.length, 1, 'a new Canvas context invalidates the cache');
 });
