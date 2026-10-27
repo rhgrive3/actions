@@ -11,6 +11,21 @@ import {restoreBeforeSlosherPhaseWorkflow} from '../lib/inkwave-slosher-phase-wo
 import {createHash} from 'node:crypto';
 
 const root=new URL('../../',import.meta.url),source=fs.readFileSync(new URL('patches/splatoon3/runtime/main-weapon-catalog.mjs',root),'utf8');
+test('native Explosher observer is installed in its contact scenario before fire, never the generic visual loop',()=>{
+ const text=fs.readFileSync(new URL('scripts/check-inkwave-projectile-visuals.mjs',root),'utf8');
+ const verify=code=>{
+  const install="if(scenario.name==='floor-washtub')await page.evaluate(installSlosherPhaseObserver);";
+  assert.equal(code.split(install).length,2,'one installation');
+  const start=code.indexOf('async function runContactScenarios(page)'),body=code.slice(start,code.indexOf('\nfunction summary(',start));
+  assert.ok(body.indexOf(install)>body.indexOf('const { setup, lifecycleReset } = setupResult;'));
+  assert.ok(body.indexOf(install)<body.indexOf('const birthResult = await page.evaluate('),'observe actual native controller birth');
+ };
+ verify(text);
+ const install="    if(scenario.name==='floor-washtub')await page.evaluate(installSlosherPhaseObserver);\n";
+ const removed=text.replace(install,'');
+ assert.throws(()=>verify(removed.replace('async function runVisuals(page) {','async function runVisuals(page) {\n'+install)),'original wrong-loop negative control');
+ assert.throws(()=>verify(removed),'missing observer is never an accepted comparison');
+});
 test('the control applies exactly the accepted eight lines, rejecting duplicates and changed anchors',()=>{
  const old=source.replace(PHASE_INSERT,'');assert.equal(insertPhase(old),source);
  assert.throws(()=>insertPhase(source));assert.throws(()=>insertPhase(old.replace('splashTravel=0','splashTravel=1')));
