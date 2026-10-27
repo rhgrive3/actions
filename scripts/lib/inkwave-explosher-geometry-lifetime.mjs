@@ -145,6 +145,7 @@ export function installExplosherGeometryLifetime(env = globalThis) {
       });
       patch(Constructor.prototype, 'deleteBuffer', (gl, args) => {
         counts.deleteBuffer++;
+        for (const [target, object] of context(gl).bound) if (object === args[0]) context(gl).bound.delete(target);
         const row = bufferObjects.get(args[0]);
         if (row) { row.deleted = true; row.deleteSequence = event('buffer-delete', { id: row.id }); }
       });
@@ -223,22 +224,26 @@ export function instrumentExplosherGeometryDriver(driver) {
   once("      window.resetExplosherRandom('shot-input');", "      window.__inkwaveExplosherGeometryLifetime?.boundary('shot-input');\n      window.resetExplosherRandom('shot-input');");
   once("      window.markExplosherRandomBoundary('native-birth');", "      window.markExplosherRandomBoundary('native-birth');\n      window.__inkwaveExplosherGeometryLifetime?.boundary('native-birth');");
   once("          window.markExplosherRandomBoundary('after-draw-probe');", "          window.markExplosherRandomBoundary('after-draw-probe');\n          window.__inkwaveExplosherGeometryLifetime?.boundary('after-draw-probe');");
-  once('  await browser?.close();', `  try {
+  once('  await browser?.close();', `  let geometryDiagnosticTimer;
+  try {
     if (geometryPage && !geometryPage.isClosed()) {
-      const diagnostic = await geometryPage.evaluate(() => {
-        const observer = window.__inkwaveExplosherGeometryLifetime;
-        if (!observer) return {schema:1,acceptance:false,unavailable:'observer-not-installed'};
-        observer.boundary('capture-finally');
-        try { return observer.restore(); }
-        finally { delete window.__inkwaveExplosherGeometryLifetime; }
-      });
+      const diagnostic = await Promise.race([
+        geometryPage.evaluate(() => {
+          const observer = window.__inkwaveExplosherGeometryLifetime;
+          if (!observer) return {schema:1,acceptance:false,unavailable:'observer-not-installed'};
+          observer.boundary('capture-finally');
+          try { return observer.restore(); }
+          finally { delete window.__inkwaveExplosherGeometryLifetime; }
+        }),
+        new Promise(resolve => { geometryDiagnosticTimer = setTimeout(() => resolve({schema:1,acceptance:false,unavailable:'diagnostic-cleanup-timeout'}),2000); }),
+      ]);
       fs.writeFileSync(path.join(out,'geometry-lifetime.json'),JSON.stringify(diagnostic,null,2));
     } else fs.writeFileSync(path.join(out,'geometry-lifetime.json'),JSON.stringify({schema:1,acceptance:false,unavailable:'page-closed-before-cleanup'}));
   } catch {
     // The existing capture error remains authoritative. Closing the browser
     // below destroys this isolated realm even when evaluation is unavailable.
     try { fs.writeFileSync(path.join(out,'geometry-lifetime.json'),JSON.stringify({schema:1,acceptance:false,unavailable:'diagnostic-cleanup-unavailable'})); } catch {}
-  }
+  } finally { if (geometryDiagnosticTimer !== undefined) clearTimeout(geometryDiagnosticTimer); }
   await browser?.close();`);
   return driver;
 }

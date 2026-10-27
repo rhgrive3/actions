@@ -109,6 +109,15 @@ test('implicit VAO element bindings become unknown, not falsely attributed; WebG
     const r=f1.observer.report();assert.equal(r.buffers.length,0);assert.equal(r.counts.unmappedBufferCalls,1);
   }finally{f1.observer.restore();}
 });
+test('native deletion implicitly unbinds every observed target and later calls are unknown rather than linked to deleted allocations',()=>{
+  const f=fixture();try {
+    const gl=new f.GL(),object={},data=new Float32Array(3);
+    gl.bindBuffer(34962,object);gl.bindBuffer(36662,object);gl.bufferData(34962,data,35044);
+    assert.equal(gl.deleteBuffer(object),f.result);gl.bufferData(34962,data,35044);gl.bufferSubData(36662,0,data);
+    const r=f.observer.report();assert.equal(r.buffers.length,1);assert.equal(r.buffers[0].deleted,true);
+    assert.equal(r.buffers[0].dataCalls,1);assert.equal(r.buffers[0].subDataCalls,0);assert.equal(r.counts.unmappedBufferCalls,2);
+  }finally{f.observer.restore();}
+});
 test('full descriptor restoration, listener cleanup and late attachment/calls cannot leave a prototype or global observer leak',()=>{
   const f=fixture(),g=new f.Geometry();g.setAttribute('position',{array:new Float32Array(3)});assert.equal(g.listeners.size,1);
   const r=f.observer.restore();assert.equal(r.cleanup.conflicts,0);assert.equal(r.cleanup.restoredMethods,r.cleanup.patchedMethods);assert.equal(g.listeners.size,0);
@@ -149,4 +158,27 @@ test('source binds the helper bytes and runs focused contracts without changing 
   assert.doesNotMatch(output,/import\(/,'no second vendor module or versioned constructor-identity assumption');
   assert.throws(()=>instrumentExplosherGeometryDriver(driver.replace('let browser;','')),/anchor/);
   assert.throws(()=>instrumentExplosherGeometryDriver(driver+'\nlet browser;'),/anchor/);
+});
+test('actual generated finally bounds a never-resolving diagnostic, clears timers and retains the original failure and browser close path',async()=>{
+  const driver="let browser;\nconst page = await browser.newPage({});\n  await enterRangeFromMenu(page,base);\n      window.resetExplosherRandom('character-reset');\n      await resetCaptureCharacter(a);\n      window.resetExplosherRandom('shot-input');\n      window.markExplosherRandomBoundary('native-birth');\n          window.markExplosherRandomBoundary('after-draw-probe');\n  await browser?.close();";
+  const output=instrumentExplosherGeometryDriver(driver),begin=output.indexOf('  let geometryDiagnosticTimer;');assert(begin>=0);
+  const body=output.slice(begin),Async=Object.getPrototypeOf(async function(){}).constructor;
+  const run=new Async('geometryPage','browser','fs','path','out','setTimeout','clearTimeout','original',`try { throw original; } finally { ${body} }`);
+  for(const mode of ['pending','reject','resolve','closed','native-close-fails']){
+    const original=Error('original capture failure'),closeError=Error('native close failure'),timers=new Map(),writes=[];let next=0,closed=0,cleared=0;
+    const page={isClosed:()=>mode==='closed',evaluate:()=>mode==='pending'?new Promise(()=>{}):mode==='reject'?Promise.reject(Error('diagnostic rejection')):Promise.resolve({schema:1,acceptance:false,cleanup:{stopped:true}})};
+    const browser={close:async()=>{closed++;if(mode==='native-close-fails')throw closeError;}};
+    const promise=run(page,browser,{writeFileSync:(_path,value)=>writes.push(JSON.parse(value))},{join:(...p)=>p.join('/')},'/evidence',
+      (fn,ms)=>{assert.equal(ms,2000);timers.set(++next,fn);return next;},id=>{cleared++;timers.delete(id);},original);
+    const expected=mode==='native-close-fails'?closeError:original;
+    const rejection=assert.rejects(promise,error=>error===expected);
+    if(mode==='pending'){
+      await Promise.resolve();assert.equal(closed,0);assert.equal(timers.size,1);
+      [...timers.values()][0]();
+    }
+    await rejection;assert.equal(closed,1);assert.equal(timers.size,0);assert.equal(cleared,mode==='closed'?0:1);
+    assert.equal(writes.length,1);assert.equal(writes[0].acceptance,false);
+    if(mode==='pending')assert.equal(writes[0].unavailable,'diagnostic-cleanup-timeout');
+    if(mode==='reject')assert.equal(writes[0].unavailable,'diagnostic-cleanup-unavailable');
+  }
 });
