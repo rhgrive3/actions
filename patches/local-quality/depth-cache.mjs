@@ -44,6 +44,9 @@ export function installDepthOnlyShadowCache(ShadowCache) {
     // A disabled shadow pass may never rebuild. Root ownership must retire
     // the previous caster graph immediately, independently of GPU rendering.
     this.static.length = 0;
+    // The last cull scratch also owns actor meshes until the next shadow pass.
+    // A hidden/disabled pass may never run after this stage is retired.
+    if (this._skippedOut) this._skippedOut.length = 0;
     return result;
   };
   p._fbo = function (rt) { return rt?.valid ? (rt.valid() ? rt.framebuffer : null) : rt ? nativeFbo.call(this, rt) : null; };
@@ -60,6 +63,7 @@ export function installDepthOnlyShadowCache(ShadowCache) {
     this.renderer.domElement?.removeEventListener('webglcontextrestored', this._depthRestore);
     if (this.renderer.shadowMap.render === this._depthHook) this.renderer.shadowMap.render = this._orig;
     this.roots.length = 0; this.static.length = 0; this.dynamic = new WeakSet();
+    if (this._skippedOut) this._skippedOut.length = 0;
   };
 }
 export function attachDepthCacheLifecycle(owner, G) {
