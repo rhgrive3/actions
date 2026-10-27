@@ -1,5 +1,11 @@
 # Native integration validation — 2026-10-27
 
+## Stage-composition CI fixture repair — latest checkpoint
+
+The reviewed QA bundle was published as `9b2b8f70cc35f630c87bcd80e728654cc7102dd8`. Its shard6 and #945 cache test pass in actual CI. Shard0 instead exposed four missing-helper errors in a second checker-body unit fixture; `1de515ab9c72f35f400e968e23ee0fba6cdb7c81` passes the real imported geometry generator into that fixture without changing the original capture-count/frame0/rig gates or any shipping code. Independent review accepts the one-file repair. Full affected local shard0 passes **1556/1560,0fail,4 explicit optional skips**; all Explosher contracts **222/222** and the canonical verifier **601/601** pass without skips. The exact build remains **1493 inputs,2199 artifacts,0mismatches**, content d88.
+
+The fresh automatic **9b2b** catalog succeeds with **27cases,5370frames,349renderpairs,482verifiedmodules**, including controlled Hissen birth-relative5/7/9 observations. Its complete artifact was independently saved before another publication. This is exact9b2b evidence, **not relabeled future-head proof or retail size/morphology agreement**. Final candidate CI remains pending; no all-green, ordinary-input Hissen or native-prebuilt payload acceptance is claimed. `stage-composition-ci-repair-9b2b.json` records the source head, raw-log hashes, before/after controls, full-shard skips and retained evidence. Older sections below are preserved historical checkpoints.
+
 ## Next reviewed QA/CI repair bundle
 
 The published8bcc candidate exposed stale source/test contracts before final native acceptance. `ci-qa-repairs-8bcc.json` records the repaired HUD consumer, build-relative unit loader, exact three-lane workflow and historical audio-runner guards, plus fail-closed receipt-schema correction. It also records reviewed passive Hissen and historical geometry telemetry. **Shipping inputs/content remain d88; the +14geometry gate, fresh full catalog/three-lane proof and final-head CI remain open.** This is not an all-green or retail-parity claim.
