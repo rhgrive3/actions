@@ -135,7 +135,7 @@ export function adaptCollisionHotpath(rel, code, replaceOnce) {
       }
       return out;
     }
-    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1++) {
+    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
       const cell = this.hash[z * this.hw + x];`,
       'one-cell query keeps exact order and stamp state');
     change(
