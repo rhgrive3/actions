@@ -1,5 +1,17 @@
 # Native integration validation — 2026-10-27
 
+## Combined local candidate — supersedes earlier checkpoints
+
+Reviewed phase chain and evidence correction are now integrated. External PR1895 also advanced to **`0dd6ab6db5d509ca02f736afd6bc612c2cbdf215`**; this was verified by remote branch advertisement and merged locally, not overwritten. Validated combined code head: **`d5c7c6ebe24473f0874b6d223bf8eea5031dc6dc`**. Any publication must recheck/CAS the current external head; do not push against stale1ab.
+
+The only new conflict was the catalog Worker/selector boundary. The exact external nine-line pure selector block survives, with one canonical Charger Worker call and one actual native FX-entry bomb probe. The reset retry already matches via main. Newer main CI semantics and all three emitted guide/phase guards remain intact.
+
+Fresh combined checks: **72/72** phase/workflow/receipt guards; **60/60** catalog/audio/bomb-selector/route checks; **9/9** source phase and **9/9** emitted phase at30/60/120Hz; the whole emitted phase-control file **10/10**, including real CPU owned-cell accounting with a GPU stub; unchanged Python comparator **9/9**. The sealed phase workflow and all **29** committed execution-source bytes match. Exact-tree build audit remains **1493 inputs,2199 artifacts,0 mismatches**, content `d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5`.
+
+**Only QA implementation is accepted. Fresh original/control/target native three-lane acceptance and final catalog/CI remain UNACCEPTED/pending.** No old image or schema1 capture was relabeled. Historical860 augmentation remains rejected as final proof. No new browser pixels, native-prebuilt payload acceptance or retail Hissen morphology/size acceptance is claimed.
+
+No remote write was performed. `combined-publication-readiness.json` records exact picks, external reconciliation, checks, sparse/caller recoveries and remaining gates. Earlier sections below are preserved checkpoints, not statements that remote still equals1ab or that phase/evidence integration remains pending.
+
 ## Result and scope
 
 Local merge **`be7f904a1a21063430f5d2677cc311006a0d47ac`** has parents exactly `d3ee2a9fbbfbb32c79819021facab66840a2be70` and latest inspected main `dd93aac2c408f746adb0c9aa572ea2f06f3bed43`. External PR1895 remains at `1ab0f4d3f952e80b23df862820549e68dba9e8c2`; nothing was pushed. No PR metadata, manual CI, main merge, deployment or original-media upload occurred.

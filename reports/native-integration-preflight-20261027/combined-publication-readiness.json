@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "capturedAt": "2026-10-27T07:52:07.928731+00:00",
+  "validatedCodeHead": "d5c7c6ebe24473f0874b6d223bf8eea5031dc6dc",
+  "expectedRemoteIntegration": "0dd6ab6db5d509ca02f736afd6bc612c2cbdf215",
+  "remoteBranch": "integrate/inkwave-bug-batch-20261026-charge-owner",
+  "remoteReadback": "git ls-remote confirmed0dd6; explicit named fetch updated the local tracking ref. Default fetch config followed only the separate d3ee handoff branch, so an earlier ordinary fetch left origin/integrate stale at1ab; this was detected and corrected locally.",
+  "publicationAuthority": "No remote write by native role1. Parent owns one CAS-coordinated push after review, preserving Draft PR1895 and no main merge/manual CI.",
+  "mergeParents": [
+    "7b13c7da8ca19a71f320b2aa479bc68bf114c699",
+    "0dd6ab6db5d509ca02f736afd6bc612c2cbdf215"
+  ],
+  "preservedAncestors": [
+    "dd93aac2c408f746adb0c9aa572ea2f06f3bed43",
+    "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+    "1ab0f4d3f952e80b23df862820549e68dba9e8c2",
+    "0dd6ab6db5d509ca02f736afd6bc612c2cbdf215"
+  ],
+  "reviewedEvidenceCorrection": {
+    "original": "c4b6f111f3eb20f29e3cacb66491d0cf43111ba3",
+    "local": "35d57e3093ec83f563850471c29026533ac7e626",
+    "status": "QA implementation and correction accepted; historical860 augmentation still unaccepted; no historical raw images available."
+  },
+  "reviewedPhaseChain": {
+    "original": [
+      "10bea5bf",
+      "a4d6335e",
+      "7cba673b",
+      "4f8f820b72bf48da62819f2b4943c2255bac5247"
+    ],
+    "local": [
+      "bb14c398",
+      "0d4192b2",
+      "69e58d9f",
+      "7b13c7da8ca19a71f320b2aa479bc68bf114c699"
+    ],
+    "conflicts": [],
+    "status": "QA implementation accepted. Native original/control/target three-lane acceptance is UNACCEPTED until fresh automatic exact-event CI; no schema1 or historical-capture relabeling."
+  },
+  "externalReconciliation": {
+    "retryCommit": "ef73b2ced009030013bfce951f8b01070d899873",
+    "selectorCommit": "0dd6ab6db5d509ca02f736afd6bc612c2cbdf215",
+    "retryResolution": "combat-ceiling checker already exactly matches external retry through main0ddf081; no duplicate edit",
+    "conflict": "scripts/check-inkwave-motion-catalog.mjs Worker/selector boundary only",
+    "resolution": "Preserve external9-line pure bomb selector/import/assertion block byte-for-byte alongside one canonical Charger helper invocation and one actual native FX-entry bomb-birth probe. No duplicate Worker/native FX invocation.",
+    "chargerInvocations": 1,
+    "nativeFxProbeInvocations": 1,
+    "pureSelectorProbeInvocations": 1
+  },
+  "mainContracts": "Main updated CI contracts and narrow branch three-emitted-test guards unchanged by reviewed phase/evidence picks and external merge.",
+  "phaseWorkflowSeal": "8a0de1c78f47b01c7d99061ad06994abe57faf348986e8d76b9478f19240a9fa",
+  "unchangedComparatorSha256": "98cbde37607cdfde958991f4b218d04d0fae17e1c956ff67a17e55ec943e1cd7",
+  "executionClosure": {
+    "workflowSha256": "8a0de1c78f47b01c7d99061ad06994abe57faf348986e8d76b9478f19240a9fa",
+    "executionSources": {
+      "patches/splatoon3/runtime/alternate-weapon-kits-data.mjs": "9328187f3f29cb71be194a72aae25a7556c2f3d4e37cede5abf14ab84c9b14c3",
+      "patches/splatoon3/runtime/catalog-pose-birth.mjs": "8e3894746924cf495f5097ee1dae693f911d8690cc3db592a0ffaff503f0dccf",
+      "patches/splatoon3/runtime/projectile-visual-source-data.mjs": "293a58d1f1a483c87f34bc4bb5eb2114c47103fa5e6dd5aeb908a6cf07b0fe81",
+      "patches/splatoon3/runtime/projectile-visuals.mjs": "c5e31fd00e6c064c65e572c61c50a64f4d404fdeb28582cbe85ce2ce5b99fccf",
+      "scripts/check-inkwave-projectile-visuals.mjs": "84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4",
+      "scripts/compare-inkwave-projectile-captures.py": "98cbde37607cdfde958991f4b218d04d0fae17e1c956ff67a17e55ec943e1cd7",
+      "scripts/fixtures/inkwave-slosher-phase-workflow-20261027.json": "be56a4df36a1591769da1421f0f16b36a04b384601fef1d60de474076d8555b4",
+      "scripts/lib/inkwave-audio-readiness-diagnostics.mjs": "5975a99a53ff5dfc6edbf775a55ddf3c9139501bb8230dfdfa56f05dd05e85e7",
+      "scripts/lib/inkwave-audio-timing-observer.mjs": "949cdf95b4da22e9ede48028cbc7591cc5e1e41b587cb8b9da98ce4a81a98049",
+      "scripts/lib/inkwave-capture-source-identity.mjs": "cb9bacaf198d9493330a3ac6ed07a3c62f3b95eff29b4f3e9f56d8d451dc2874",
+      "scripts/lib/inkwave-main3003-firing-pair.mjs": "be6d1fa326d0693f01aa5f42188e38352642905dcddfe6d71856fbac54a01e39",
+      "scripts/lib/inkwave-main3003-respawn-pair.mjs": "a37454894ced92339d2fd81efa4cb4ee5576e3765d8238f7f7e54679fbbde143",
+      "scripts/lib/inkwave-projectile-atomic-intro.mjs": "7cadf30739a376f38c68fc2e3555c24924b55faa80b8acd19af0f5a32de3f761",
+      "scripts/lib/inkwave-projectile-capture-projection.mjs": "1b6b134a3dca81ae230c49b841c233fc85e717c884c61f95ada74e235998401d",
+      "scripts/lib/inkwave-projectile-capture-ui.mjs": "8cca97f2f748134e209511e3ea68a8e2b0df1b3e53355931495d72e7676493e4",
+      "scripts/lib/inkwave-projectile-ci-intro.mjs": "b9c9812b08c204cc460afb3ac993a0b7dc1a51e75aa2ee3870865b717669e4b4",
+      "scripts/lib/inkwave-projectile-ci-roster.mjs": "122a145eff0dd0dd6085bbf908e0fc7eec56e3adc2c6f8ef6832d32bb1605a6f",
+      "scripts/lib/inkwave-projectile-current-pair.mjs": "df2da8ea8029f6ac0fddcfe73320822ccaaac06cb0c1a3f7bfe6e833a9b126d9",
+      "scripts/lib/inkwave-projectile-http-file.mjs": "03aedc3492c62296f03dcee662dd93c57183cc86057c2aec2faaed889725b19a",
+      "scripts/lib/inkwave-projectile-intro-ui.mjs": "91fb3a836462b2a4c2e401ee0cf53383950cda11a40945ef2b054b81da456123",
+      "scripts/lib/inkwave-projectile-menu-start.mjs": "f512a2125e38e719668d4a99234453735b5689e1f8b92c4a70089f2fd1faea5d",
+      "scripts/lib/inkwave-slosher-phase-control.mjs": "4cffa9bfdb6930ff2d049abbe2382a83001a5523bca9286d9c1b2f862b3dfb94",
+      "scripts/lib/inkwave-slosher-phase-observer.mjs": "9ec8b0686f1f9bf3140b29e52c81a13ce9851bc2064056d0aa31ae65afb93d9d",
+      "scripts/lib/inkwave-slosher-phase-verification.mjs": "1017fa3785b3aa4dcb35c541d25073608c1bac8c3bb2c0163659e1ce6037e698",
+      "scripts/lib/inkwave-slosher-phase-workflow.mjs": "59bf7de39b537e99e274a79a9eaee25e19c4587355fe0ce8bc1318b06b221114",
+      "scripts/lib/inkwave-source-admission-cli.mjs": "162369bf62732c465a3734d057329fffc0474f08505e0f7755c1974c16a72cb4",
+      "scripts/lib/inkwave-streamed-music-diagnostics.mjs": "beb245df38eee25865ecf883647a19f58659024163a10d8b481fe1be999ab8a0",
+      "scripts/prepare-inkwave-slosher-phase-control.mjs": "92b4c95e7a0dae785a55b095b39c43f92ef8a07318ff3981c0e2a1ef91eeaa1e",
+      "scripts/verify-inkwave-slosher-phase-captures.mjs": "451fe8aab79f66bc201be20053ea5b5695a2c8a090b7da238504a81c805943fa"
+    },
+    "count": 29
+  },
+  "buildAudit": {
+    "sourceSha": "d5c7c6ebe24473f0874b6d223bf8eea5031dc6dc",
+    "contentHash": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+    "inputHash": "25a535d28da064d2d6fea8f173a14fac22fb19f508dd77b47f44e0c6106e7ec2",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "checks": [
+    {
+      "name": "combined phase/workflow/receipt guards after external reconciliation",
+      "status": "passed",
+      "tests": 72,
+      "pass": 72,
+      "fail": 0,
+      "skipped": 0,
+      "log": "external-0dd-combined-phase-workflow-receipts.log",
+      "sha256": "b9e5663d7736b88c076b97e93e26b445dde9dd23eeed4f139a4e18886e574e55"
+    },
+    {
+      "name": "catalog/audio/bomb selectors/routes after external reconciliation",
+      "status": "passed",
+      "tests": 60,
+      "pass": 60,
+      "fail": 0,
+      "skipped": 0,
+      "log": "external-0dd-catalog-route.log",
+      "sha256": "7862fa9746e680cd91c01547fab066ddd0710660eb86f6596de8df4a703dc4d6"
+    },
+    {
+      "name": "source phase at30/60/120Hz",
+      "status": "passed",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "log": "final-source-phase.log",
+      "sha256": "ee786a340b899b1f6b11a536526e1f9b6670e8a37f4cb4bf5fb10b3bf85b2469"
+    },
+    {
+      "name": "emitted phase at30/60/120Hz",
+      "status": "passed",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "log": "final-emitted-phase.log",
+      "sha256": "df3a7b2559ec72f33ea6d3da9627abcaf0e38f4bde91ef63f0bf720fdb7bccf4"
+    },
+    {
+      "name": "whole phase-control file with actual emitted CPU cell accounting (GPU stub)",
+      "status": "passed",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0,
+      "log": "final-emitted-accounting.log",
+      "sha256": "7c14debdb152481294cfb71781e8079a316a575660ebf5da669fc6cf86db3c0b"
+    },
+    {
+      "name": "safe receipt union on merged main",
+      "status": "passed",
+      "tests": 26,
+      "pass": 26,
+      "fail": 0,
+      "skipped": 0,
+      "log": "evidence-pick-safe-union.log",
+      "sha256": "a857fe22f2894a90d02295fd1fa9546a2b811f4a3d658dee84adefd3a3cec9c8"
+    }
+  ],
+  "pythonComparator": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "log": "final-unchanged-comparator.log",
+    "sha256": "732285bf7e95b3f8887877ab1530f55e8395d280890ec34b528ce24546cb2252"
+  },
+  "emittedAccountingReceipt": {
+    "path": "/workspace/shared/inkwave-native/role-1/.ci-scratch/native-integration-20261027/final-emitted-owned-cell-receipt.json",
+    "sha256": "18897cc5a25af312db5758e3e9282a3814ca57f67f7ce35562a845e6554b9599",
+    "scope": "Actual emitted CPU Physics/Paint/Actor and raw ownership accounting with GPU stub; not native screenshots or52-pair acceptance."
+  },
+  "recoveries": [
+    "Cherry-picks reapplied the original explicit sparse list and removed previously materialized new-main files; the combined runner initially hit ENOENT. Persisted already-authorized complete source roots and3narrow report directories in role1-local sparse definition, reapply, then reran72/72. No whole-repo/modeler/media expansion.",
+    "One ad-hoc execution-closure check called verifyPhaseExecutionSources arguments in reverse and failed TypeError; corrected to(expected,root), then independently matched29HEAD-committed helper bytes. No product code was changed for this caller mistake."
+  ],
+  "beforeDocCommitDiffVsExpectedRemote": {
+    "files": 132,
+    "insertions": 5917,
+    "deletions": 591
+  },
+  "localLogs": "/workspace/shared/inkwave-native/role-1/.ci-scratch/native-integration-20261027",
+  "remainingGates": [
+    "Fresh automatic full catalog at new exact PR head; old augmented860 proof not accepted",
+    "Fresh original/phase-control/target lanes with50unaffected and52strict physical pairs, both workloads/media/resource gates",
+    "Required CI completion on final published SHA",
+    "Retail Hissen size/floor morphology and exact gray aiming-cue calibration remain unverified",
+    "Native browser local routes blocked;405prebuilt LFS pointers still not payload acceptance"
+  ],
+  "noActions": [
+    "No remote push or PR mutation",
+    "No main merge/deploy",
+    "No manual CI",
+    "No sandbox/security weakening",
+    "No original Nintendo media upload",
+    "No character/hair/model/rig edits"
+  ]
+}
