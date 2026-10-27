@@ -9,8 +9,9 @@ function fakePage(overrides={}){
   const g={debug:{},bootMs:94000,match:{attract:true},profile:{weapon:'shooter'},menus:{current:'main',_scr:{name:'main'},_setup:{mode:'turf',mapId:'tidewater',difficulty:'normal',duration:180,...overrides},_stageTime:()=> 'day'}};
   const context={window:{__inkwave:g,__G:{mode:'menu'}}};
   const evaluate=fn=>vm.runInNewContext('('+fn.toString()+')()',context);
-  const page={evaluate:async fn=>evaluate(fn),locator:selector=>({click:async options=>{assert.equal(options.timeout,1234);clicks.push(selector);if(selector.includes('"play"'))g.menus.current='mode';else if(selector.includes('mode-turf'))g.menus.current='setup';else if(selector.includes('"start"'))g.menus.current=null;}})};
-  return {page,clicks,phases,events,options:{receipt:events,remainingMs:()=>1234,waitForPhase:async(fn,label)=>{phases.push(label);assert.equal(evaluate(fn),true);}}};
+  const pointerMoves=[];
+  const page={mouse:{move:async(x,y)=>{pointerMoves.push([x,y]);}},evaluate:async fn=>evaluate(fn),locator:selector=>({click:async options=>{assert.equal(options.timeout,1234);clicks.push(selector);if(selector.includes('"play"'))g.menus.current='mode';else if(selector.includes('mode-turf'))g.menus.current='setup';else if(selector.includes('"start"'))g.menus.current=null;}})};
+  return {page,clicks,pointerMoves,phases,events,options:{receipt:events,remainingMs:()=>1234,waitForPhase:async(fn,label)=>{phases.push(label);assert.equal(evaluate(fn),true);}}};
 }
 test('mobile reduced-motion mode entries do not retain scale entrance hit-box obstruction',()=>{
   const css=fs.readFileSync(new URL('../../patches/splatoon3/ui.css',import.meta.url),'utf8');
@@ -29,6 +30,7 @@ test('mobile reduced-motion mode entries do not retain scale entrance hit-box ob
 test('normal menu navigation issues one real START after verifying exact scenario',async()=>{
   const h=fakePage();await startProjectileThroughMenu(h.page,h.options);
   assert.deepEqual(h.clicks,['.iw-main [data-id="play"]','.iw-modesel [data-id="mode-turf"]','.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']);
+  assert.deepEqual(h.pointerMoves,[[1,1]],'clear the previous card hover without force-clicking');
   assert.equal(h.events.at(-1).event,'native-start-clicked');assert.equal(h.events.at(-1).attempt,1);
   assert.equal(h.events.find(e=>e.event==='native-setup-verified').config.map,'tidewater');
 });
