@@ -29,6 +29,7 @@ import { adaptWeaponOpponentPalette } from '../patches/splatoon3/weapon-opponent
 import { adaptUiLocalization } from '../patches/splatoon3/ui-localization-adapter.mjs';
 import { adaptNativeStages } from '../patches/native-stages/adapter.mjs';
 import { adaptWeaponAudio } from '../patches/splatoon3/audio-adapter.mjs';
+import { adaptLosslessShooterHud } from '../patches/local-quality/shooter-hud-hotpath-adapter.mjs';
 import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
@@ -103,7 +104,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueExtraWorld(rel, code);
   code = adaptQueueExtraWeaponsFx(rel, code);
   code = adaptQueueUi20261025(rel, code);
-  code = adaptQueueExtraDecor(rel, code);
+  code = adaptLosslessShooterHud(rel, adaptQueueExtraDecor(rel, code), replaceOnce);
   code = adaptRemainingGameplay20261026(rel, code);
   code = adaptRemainingInkFlight20261026(rel, code);
   code = adaptQueueRemainingUiNetwork20261026(rel, code);

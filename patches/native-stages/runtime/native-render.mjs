@@ -70,18 +70,19 @@ export function nativeDisplay(data,textures,quality){
  const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cache=new Map();group.name='native-source-display';
  for(const o of m.objects){
   if(!o.active)continue;const src=m.materials[o.material]||{},glass=o.glass||/_Water$/.test(o.material),alpha=src.hasAlpha||!!src.maps?.opacity;
-  let mat=cache.get(o.material);
+  let mat=cache.get(o.material)?.mat;
   if(!mat){
    mat=new THREE.MeshStandardMaterial({color:src.albedo?0xffffff:(src.tint||'#c3c3b8'),map:textures.get(src.albedo)||null,
     side:THREE.DoubleSide,roughness:glass?.24:.78,metalness:glass?.1:0,transparent:glass,opacity:glass?.48:1,depthWrite:!glass,alphaTest:alpha?.3:0});
    mat.alphaMap=textures.get(src.maps?.opacity)||null;
    if(quality==='high'){mat.normalMap=textures.get(src.maps?.normal)||null;mat.normalScale.set(.28,.28);mat.roughnessMap=textures.get(src.maps?.roughness)||null;mat.emissiveMap=textures.get(src.maps?.emissive)||null;if(mat.emissiveMap){mat.emissive.set(0xffffff);mat.emissiveIntensity=.13;}}
-   const opacity=src.channels?.opacity||'g',rough=src.channels?.roughness||'g';
+   // Carry inferred channels through profile updates: they affect the shader program.
+   const channels={opacity:src.channels?.opacity||'g',rough:src.channels?.roughness||'g'};
    mat.onBeforeCompile=shader=>{
-    if(mat.alphaMap&&opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
-    if(mat.roughnessMap&&rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
+    if(mat.alphaMap&&channels.opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
+    if(mat.roughnessMap&&channels.rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
    };
-   mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&opacity==='r'?'r':'g'}-${mat.roughnessMap&&rough==='r'?'r':'g'}`;mat.name=o.material;cache.set(o.material,mat);materials.push(mat);
+   mat.customProgramCacheKey=()=>`native-channels-${mat.alphaMap&&channels.opacity==='r'?'r':'g'}-${mat.roughnessMap&&channels.rough==='r'?'r':'g'}`;mat.name=o.material;cache.set(o.material,{mat,channels});materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
@@ -113,11 +114,15 @@ export function nativeDisplay(data,textures,quality){
   mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
  }
  return {group,currentTextures(){return liveTextures;},updateTextures(next,quality){
-  for(const [name,mat] of cache){const src=m.materials[name]||{},map=next.get(src.albedo)||null,alpha=next.get(src.maps?.opacity)||null,
+  for(const [name,{mat,channels}] of cache){const src=m.materials[name]||{},map=next.get(src.albedo)||null,alpha=next.get(src.maps?.opacity)||null,
    normal=quality==='high'?(next.get(src.maps?.normal)||null):null,rough=quality==='high'?(next.get(src.maps?.roughness)||null):null,emissive=quality==='high'?(next.get(src.maps?.emissive)||null):null;
    const changed=mat.map!==map||mat.alphaMap!==alpha||mat.normalMap!==normal||mat.roughnessMap!==rough||mat.emissiveMap!==emissive;
+   const nextOpacity=src.channels?.opacity||'g',nextRough=src.channels?.roughness||'g';
+   const channelsChanged=channels.opacity!==nextOpacity||channels.rough!==nextRough;
+   channels.opacity=nextOpacity;channels.rough=nextRough;
    mat.map=map;mat.alphaMap=alpha;mat.normalMap=normal;mat.normalScale.set(.28,.28);mat.roughnessMap=rough;mat.emissiveMap=emissive;
-   mat.emissive.set(emissive?0xffffff:0x000000);mat.emissiveIntensity=.13;if(changed)mat.needsUpdate=true;
+   mat.emissive.set(emissive?0xffffff:0x000000);mat.emissiveIntensity=.13;
+   if(changed||channelsChanged)mat.needsUpdate=true;
   }
   if(liveTextures!==next){
    const retained=new Set(next.values());
