@@ -5,7 +5,7 @@
   "type": "module",
   "description": "INKWAVE (ZEVANT) build, verification, direct-source audit, multiplayer relay and account workspace",
   "engines": {
-    "node": ">=18.20.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
     "build": "node scripts/build-inkwave.mjs inkwave-public _site",
@@ -32,6 +32,8 @@
   },
   "devDependencies": {
     "esbuild": "0.28.2",
-    "vite": "8.3.3"
+    "playwright": "1.62.1",
+    "vite": "8.3.3",
+    "ws": "8.22.0"
   }
 }
