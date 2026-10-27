@@ -1,0 +1,33 @@
+{
+  "baseSha": "8bcc34ac3d9d4713e45490bce1778d1c6d588be2",
+  "kind": "future-head-additive-controlled-passive-qa",
+  "shippingRuntimeChanged": false,
+  "defaultAbsolute18ContractPreserved": true,
+  "separate52ViewContractChanged": false,
+  "browserAttempted": false,
+  "manualCiStarted": false,
+  "currentFrozenPublicationChanged": false,
+  "retailOrSizeAcceptanceClaimed": false,
+  "localTests": {
+    "total": 80,
+    "passed": 80,
+    "failed": 0,
+    "skipped": 0,
+    "newObserverTestsIncluded": 11
+  },
+  "newCaptureFilesExpected": [
+    "hissen-main/native-browser.json",
+    "hissen-main/main-birth-f05.png",
+    "hissen-main/main-birth-f07.png",
+    "hissen-main/main-birth-f09.png"
+  ],
+  "firstRealCaptureStatus": "pending future reviewed automatic CI",
+  "fileSha256": {
+    ".github/workflows/validate-inkwave-update.yml": "09e8031b359dd2d333a4f6319389b15ce2c9b78595344b8dde77d74eb613932f",
+    "scripts/check-inkwave-trislosher-native-matched.mjs": "4d161bf8c927442deb27896034489ca8e93ac0a81336bea16d30e3b6e44cd408",
+    "scripts/lib/inkwave-hissen-capture-observer.mjs": "a03596d8510b1fa056039d9825305605b83a29d8f7660e5a99d10cd7e79a8b43",
+    "scripts/tests/inkwave-hissen-capture-observer.test.mjs": "e97019f9c916ee468a1e512da7b84a28671fc881ef92501fca0522d19e98e51a",
+    "reports/hissen-first-birth-qa-20261027/README.md": "710c2f561a5b0d35001e7b8247f0db66643274d21e6422ac50bc7805d02254e5",
+    "reports/hissen-first-birth-qa-20261027/local-tests.txt": "1c082d0238362c86f734dde209030a8a9c217c1e01e844be1028f609a656a6b6"
+  }
+}
