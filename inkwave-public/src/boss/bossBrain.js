@@ -187,9 +187,13 @@ export class BossBrain {
     const b = this.b, nav = b.nav, ph = b.phase;
     const fx = b.pos.x + Math.sin(b.yaw) * 2, fz = b.pos.z + Math.cos(b.yaw) * 2;
     const d = Math.hypot(t.pos.x - fx, t.pos.z - fz);
-    const kids = G.actors.filter((a) => a.alive && a.team === 0 && !nav.inPad(a.pos.x, a.pos.z, 1));
-    const near = kids.filter((a) => Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) < 10.5).length;
-    const far = kids.filter((a) => Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) > 13).length;
+    let near = 0, far = 0;
+    for (const a of G.actors) {
+      if (!a.alive || a.team !== 0 || nav.inPad(a.pos.x, a.pos.z, 1)) continue;
+      const distance = Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z);
+      if (distance < 10.5) near++;
+      if (distance > 13) far++;
+    }
     const aimAt = () => Math.atan2(t.pos.x - b.pos.x, t.pos.z - b.pos.z);
     const W = [];
     W.push(['slam', d < 11 ? 3 + near * 0.6 : 0.25]);
@@ -198,7 +202,11 @@ export class BossBrain {
     // charge only down a real lane toward (roughly) its mark
     const lane = this._lane(aimAt());
     W.push(['charge', lane ? (d > 5.5 ? 2.2 : 1.2) : 0]);
-    if (ph >= 2 && this.cd.crablets <= 0 && [...b.crabs.values()].filter((c) => !c.dead).length < 3) W.push(['crablets', 2.4]);
+    if (ph >= 2 && this.cd.crablets <= 0) {
+      let crabs = 0;
+      for (const c of b.crabs.values()) if (!c.dead) crabs++;
+      if (crabs < 3) W.push(['crablets', 2.4]);
+    }
     if (ph >= 3 && this.cd.frenzy <= 0) W.push(['frenzy', 1.1 + near * 0.9]);
     for (const w of W) if (w[0] === this.last) w[1] *= 0.3;   // don't repeat itself
     let sum = 0; for (const w of W) sum += w[1];

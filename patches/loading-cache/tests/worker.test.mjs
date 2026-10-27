@@ -298,3 +298,23 @@ test('uncacheable server errors retain their readable body for online callers', 
   assert.equal(result.response.status, 503);
   assert.equal(await result.response.text(), 'temporary failure');
 });
+
+test('precache workers claim each snapshot path once in order with at most two concurrent fetches', async () => {
+  const bodies = Object.fromEntries(Array.from({ length: 25 }, (_, i) => [`asset-${i}.js`, `export const value=${i};`]));
+  const build = makeBuild(REV_A, bodies), originalPrecache = [...build.config.precache], world = new World();
+  world.serve(build);
+  const fetch = world.fetch, started = [];
+  let active = 0, peak = 0;
+  world.fetch = async (...args) => {
+    const path = new URL(args[0].url).pathname.split('/').at(-1);
+    if (!path.startsWith('asset-')) return fetch(...args);
+    started.push(path); active++; peak = Math.max(peak, active);
+    try { await new Promise(resolve => setImmediate(resolve)); return await fetch(...args); }
+    finally { active--; }
+  };
+  await world.worker(build).install();
+  assert.deepEqual(started, originalPrecache);
+  assert.equal(peak, 2); assert.equal(active, 0);
+  assert.deepEqual(build.config.precache, originalPrecache);
+  assert(world.puts.at(-1).url.endsWith('__inkwave_cache_complete__'));
+});

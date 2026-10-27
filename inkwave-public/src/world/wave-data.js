@@ -14,21 +14,24 @@ export function makeWaveData(size = 256, seed = 11) {
     let kx = Math.round(Math.cos(ang) * f), ky = Math.round(Math.sin(ang) * f);
     if (kx === 0 && ky === 0) kx = 2;
     const kl = Math.hypot(kx, ky);
-    waves.push([kx, ky, 1 / Math.pow(kl, 1.3), rnd() * Math.PI * 2]);
+    const amp = 1 / Math.pow(kl, 1.3);
+    // Keep each gradient's original amplitude product once for every texel.
+    waves.push([kx, ky, amp, rnd() * Math.PI * 2, amp * kx, amp * ky]);
   }
   const N = size * size;
   const H = new Float32Array(N), GX = new Float32Array(N), GY = new Float32Array(N);
   let hMin = Infinity, hMax = -Infinity, gMax = 0;
   const TAU = Math.PI * 2;
   for (let y = 0; y < size; y++) {
+    const v = y / size;
     for (let x = 0; x < size; x++) {
-      const u = x / size, v = y / size;
+      const u = x / size;
       let h = 0, gx = 0, gy = 0;
       for (let k = 0; k < waves.length; k++) {
         const w = waves[k];
         const ph = TAU * (w[0] * u + w[1] * v) + w[3];
         const s = Math.sin(ph), c = Math.cos(ph);
-        h += w[2] * s; gx += w[2] * w[0] * c; gy += w[2] * w[1] * c;
+        h += w[2] * s; gx += w[4] * c; gy += w[5] * c;
       }
       const i = y * size + x;
       H[i] = h; GX[i] = gx; GY[i] = gy;
