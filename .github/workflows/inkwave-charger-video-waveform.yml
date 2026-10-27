@@ -1,8 +1,7 @@
 name: INKWAVE Charger video waveform evidence (research only)
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/inkwave-charger-video-waveform.yml'
+  # Research evidence depends on third-party media access and cannot act as a PR gate.
+  # Explicit runs still fail closed if no real source audio can be measured.
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,6 +17,8 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/workflows/inkwave-charger-video-waveform.yml
+            /tools/audio/compare-charger-video-waveform.py
+            /patches/splatoon3/runtime/audio/s3-real/
       - name: Prepare downloader with readable diagnostics
         shell: bash
         run: |
