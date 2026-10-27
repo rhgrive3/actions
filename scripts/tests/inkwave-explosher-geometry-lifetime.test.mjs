@@ -11,6 +11,7 @@ function fixture() {
     bufferData(...args) { calls.push({name:'bufferData', receiver:this, args}); if(args[0]==='throw')throw originalError; return result; }
     bufferSubData(...args) { calls.push({name:'bufferSubData', receiver:this, args}); if(args[0]==='throw')throw originalError; return result; }
     deleteBuffer(...args) { calls.push({name:'deleteBuffer', receiver:this, args}); if(args[0]==='throw')throw originalError; return result; }
+    bindVertexArray(...args) { calls.push({name:'bindVertexArray', receiver:this, args}); if(args[0]==='throw')throw originalError; return result; }
   }
   let id = 0;
   class Geometry {
@@ -63,6 +64,25 @@ test('observer failures cannot replace successful native calls and malformed/unm
     gl.bindBuffer(34962,buffer);assert.equal(gl.bufferData(34962,32,35044),f.result);
     const r=f.observer.report();assert.equal(r.counts.observerErrors,1);assert.deepEqual(r.buffers[0].geometryIds,[]);
   }finally{f.observer.restore();}
+});
+test('implicit VAO element bindings become unknown, not falsely attributed; WebGL1 extension bindings are not claimed',()=>{
+  const f=fixture();try {
+    const gl=new f.GL(),data=new Uint16Array(3),a={},b={};
+    gl.bindBuffer(34963,a);gl.bufferData(34963,data,35044);
+    assert.equal(gl.bindVertexArray(b),f.result);gl.bufferData(34963,data,35044);
+    let r=f.observer.report();assert.equal(r.buffers[0].dataCalls,1);assert.equal(r.counts.unmappedBufferCalls,1);
+    gl.bindBuffer(34963,b);gl.bufferSubData(34963,0,data);r=f.observer.report();
+    assert.equal(r.buffers.length,2);assert.equal(r.buffers[1].subDataCalls,1);
+    assert.throws(()=>gl.bindVertexArray('throw'),e=>e===f.originalError);assert.equal(f.observer.report().counts.vertexArrayBind,1);
+    assert.equal(r.coverage.extensionVAOBindingsObserved,false);
+  }finally{f.observer.restore();}
+  const f1=fixture();try {
+    // An extension's implicit binding changes cannot be observed through this
+    // prototype. Disabling core support is conservative, with no extra GL call.
+    delete f1.GL.prototype.bindVertexArray;
+    const gl=new f1.GL();gl.bindBuffer(34963,{});gl.bufferData(34963,new Uint16Array(3),35044);
+    const r=f1.observer.report();assert.equal(r.buffers.length,0);assert.equal(r.counts.unmappedBufferCalls,1);
+  }finally{f1.observer.restore();}
 });
 test('full descriptor restoration, listener cleanup and late attachment/calls cannot leave a prototype or global observer leak',()=>{
   const f=fixture(),g=new f.Geometry();g.setAttribute('position',{array:new Float32Array(3)});assert.equal(g.listeners.size,1);

@@ -6,10 +6,10 @@ export function installExplosherGeometryLifetime(env = globalThis) {
   const geometries = new Map(), buffers = new Map(), stacks = new Map();
   const geometryObjects = new WeakMap(), bufferObjects = new WeakMap(), arrays = new WeakMap(), contexts = new WeakMap();
   const patches = [], events = [], snapshots = [];
-  const counts = { registrations: 0, bufferData: 0, bufferSubData: 0, deleteBuffer: 0, geometryDispose: 0, observerErrors: 0 };
+  const counts = { registrations: 0, bufferData: 0, bufferSubData: 0, deleteBuffer: 0, vertexArrayBind: 0, unmappedBufferCalls: 0, geometryDispose: 0, observerErrors: 0 };
   const dropped = { geometries: 0, buffers: 0, events: 0, stacks: 0, snapshots: 0, nodes: 0, links: 0 };
   const coverage = { webglPrototypes: 0, threeAttached: false, threeAttachBeforeCanvas: null, moduleImportFailed: false,
-    weakReferences: typeof WeakRef === 'function', wrapperConflicts: 0 };
+    weakReferences: typeof WeakRef === 'function', wrapperConflicts: 0, extensionVAOBindingsObserved: false };
   let stopped = false, sequence = 0, contextId = 0, bufferId = 0, cleanup = null;
   const attempt = fn => { try { return fn(); } catch { counts.observerErrors++; } };
   const event = (kind, fields = {}) => {
@@ -45,7 +45,7 @@ export function installExplosherGeometryLifetime(env = globalThis) {
     let row = geometryObjects.get(geometry);
     if (!row) {
       if (geometries.size >= limits.geometries) { dropped.geometries++; return null; }
-      row = { id: geometry.id, firstObservation: source, firstAttributeStack: stack(), bufferIds: [], disposed: false,
+      row = { id: geometry.id, firstObservation: source, firstObservationStack: stack(), bufferIds: [], disposed: false,
         firstSequence: event('geometry-observed', { id: geometry.id }), disposeSequence: null };
       if (coverage.weakReferences) {
         row.reference = new WeakRef(geometry);
@@ -105,11 +105,23 @@ export function installExplosherGeometryLifetime(env = globalThis) {
     if (!Constructor?.prototype) continue;
     attempt(() => {
       const before = patches.length;
-      patch(Constructor.prototype, 'bindBuffer', (gl, args) => { context(gl).bound.set(args[0], args[1]); });
+      patch(Constructor.prototype, 'bindBuffer', (gl, args) => {
+        // WebGL1's optional VAO extension is not observed. Do not invent an
+        // ELEMENT_ARRAY_BUFFER binding when an unobserved extension can own it.
+        const coreVAOObserved = patches.some(p => p.name === 'bindVertexArray' && gl.bindVertexArray === p.wrapped);
+        if (args[0] === 34963 && !coreVAOObserved) context(gl).bound.delete(args[0]);
+        else context(gl).bound.set(args[0], args[1]);
+      });
+      patch(Constructor.prototype, 'bindVertexArray', (gl) => {
+        counts.vertexArrayBind++;
+        // Core VAO changes implicitly restore an element binding. Without any
+        // GL query, only a subsequent explicit bindBuffer makes it observable.
+        context(gl).bound.delete(34963);
+      });
       for (const name of ['bufferData', 'bufferSubData']) patch(Constructor.prototype, name, (gl, args) => {
         counts[name]++;
         const row = buffer(context(gl).bound.get(args[0]), gl);
-        if (!row) return;
+        if (!row) { counts.unmappedBufferCalls++; return; }
         if (name === 'bufferData') row.dataCalls++; else row.subDataCalls++;
         if (row.firstUploadStack === null) row.firstUploadStack = stack();
         const value = args[name === 'bufferData' ? 1 : 2], record = arrayRecord(value);
