@@ -29,11 +29,13 @@ test('required checks keep their identities and cancellation cannot skip the req
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
 // Only Validate core executes the CircleCI parity gate that reads this config.
 const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+// Only build_site drops unrelated report archives; native core retains them.
+const buildSiteProfile=profile.map(p=>p==='/reports/'?'/reports/ink-volume/source/':p);
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
 function assertCurrentCheckouts(name,source,count){
  const blocks=checkouts(source);assert.equal(blocks.length,count);
  if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
- for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:name==='validate-inkwave-update.yml'&&job==='build_site'?buildSiteProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
 }
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
  for(const[name,count]of[['validate-inkwave-update.yml',10],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
@@ -46,6 +48,7 @@ test('exact job-bound sparse profiles reject missing, unexpected and misplaced C
   source.replace(circle,''),
   source.replace(circle,circle+'            /unexpected-input/\n'),
   source.replace(circle,circle+circle),
+  source.replace('            /reports/ink-volume/source/\n','            /reports/\n'),
   source.replace(circle+'            /inkwave-public/\n','            /inkwave-public/\n'+circle),
   source.replace('  validate_core:\n','  renamed_core:\n'),
   source.replace('            /.github/\n','            /.github/\n'+circle),

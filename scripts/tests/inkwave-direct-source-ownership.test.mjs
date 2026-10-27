@@ -51,7 +51,7 @@ test('mural atlas and world branding use directly editable source without rebuil
   assert.match(murals, /let H = stageId === 'halyard' \|\| stageMural\(stageId\) \? FULL_H : RH \* ROWS/);
   // Execute the authored initialization prefix: selected lazy descriptors must be
   // ready before atlas sizing, including the Halyard and shared-only cases.
-  const prefix = murals.match(/export async function createMuralTexture\(stageId = 'tidewater'\) \{\n([\s\S]*?)\n  try \{ await Promise\.all/)[1];
+  const prefix = murals.match(/export async function createMuralTexture\(stageId = 'tidewater'\) \{\n([\s\S]*?)\n  const fontLoad = await waitForFontBudget/)[1];
   let prepared = null;
   const initialize = new Function('prepareStageData', 'stageMural', 'FULL_H', 'RH', 'ROWS',
     `return async function(stageId) { ${prefix}; return H; }`)(
