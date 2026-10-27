@@ -121,7 +121,6 @@ test('CanvasGradient cache reuses only identical context, endpoints and palette;
       [0, 'rgba(255,255,255,.18)'], [.15, 'rgba(255,255,255,0)'], [1, color + '66'],
     ]]);
     assert.equal(obj.filled.at(-1), expected);
-    const identical = obj === scenarios[Math.max(0, obj.filled.length === 1 ? 0 : 1)]?.[0];
     assert.ok(obj.made.length >= before && obj.made.length <= before + 1);
   }
   assert.equal(first.made.length, 4, 'same frame gradients are never regenerated');
