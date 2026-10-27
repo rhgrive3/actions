@@ -461,6 +461,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.growing.push(g);', 'this.growing.push(g);', 'paint deferred growth record');
   }
   if (rel === 'src/game/character.js') {
+    // Share the native weapon LOD decision before contact poses run. Move its
+    // existing selection/geometry preparation; do not copy its distance rule.
+    code = replaceOnce(code, '  _animWeapon(dt, s, w) {',
+      '  // Weapon contact poses also need this frame\'s representation before anchor\n  // application. Keep the native selection and far geometry preparation here.\n  _weaponPresentationNear(w) {', 'weapon presentation decision before contact pose');
+    code = replaceOnce(code, '    const st = this._wst;',
+      '    return near;\n  }\n\n  _animWeapon(dt, s, w) {\n    const near = this._weaponPresentationNear(w);\n    const st = this._wst;', 'native weapon animation reuses presentation decision');
     // Preserve animated native channels but never submit their authored invisible placeholders.
     code = replaceOnce(code, 'const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate;',
       'const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate; m.visible = pd.hidden !== true;', 'skip hidden weapon part draws');
