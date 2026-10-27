@@ -8,7 +8,8 @@ export function readRankedRollAudio({nid,owner,life,sequence}) {
     &&s.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.near&&s.rollLoop&&s.audioState==='running'
     &&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;
 }
-export async function proveRankedRollAudio(host,guest,nid,setInput,save=()=>{}) {
+export async function proveRankedRollAudio(host,guest,nid,setInput,save=()=>{},movementKey='KeyS') {
+  if(movementKey!=='KeyS'&&movementKey!=='KeyW')throw Error('Unsupported ranked native pulse key');
   const token='ranked-roll-'+ ++nextProof,pages=[host,guest],receipt={status:'running',frames:0,batches:[]};
   let originalError;
   try {
@@ -25,7 +26,7 @@ export async function proveRankedRollAudio(host,guest,nid,setInput,save=()=>{}) 
     const identity=installs[0].value;
     if(JSON.stringify(identity)!==JSON.stringify(installs[1].value))throw Error('Ranked roller owner/life mismatch');
     while(receipt.frames<15) {
-      await setInput(host,true,['KeyS']);
+      await setInput(host,true,[movementKey]);
       let sent;
       try { sent=await host.evaluate(({token,budget})=>{
         const p=__rankedRollClock,G=RG,a=p.actor;
