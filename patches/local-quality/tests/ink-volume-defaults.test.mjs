@@ -23,11 +23,11 @@ test('both shipped default packs retain every source VTF byte and all 34 decoded
   }
   assert.equal(frames,34);
 });
-test('ordinary FX construction loads both bundled names without configuration, then releases readiness',async()=>{
+test('ordinary FX construction loads bundled names and the geometry-only Hissen fallback without configuration, then releases readiness',async()=>{
   const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"}),calls=[];
   f.FX.prototype.loadInkVolume=async(name,url)=>{calls.push([name,url]);return {};};
   const fx=new f.FX(new f.THREE.Scene(),{quality:.25});assert.equal(await fx.inkVolumeReady,true);
-  assert.deepEqual(calls.map(x=>x[0]),['roller','shooter']);for(const [name,url] of calls)assert(url.endsWith('/ink-volume/assets/'+name+'/manifest.json'));
+  assert.deepEqual(calls.map(x=>x[0]),['roller','shooter','hissen-fallback']);for(const [name,url] of calls)assert(url.endsWith('/ink-volume/assets/'+name+'/manifest.json'));
   fx.dispose();assert.equal(fx.inkVolumeReady,null);
 });
 test('gzip reader rejects corrupt streams, unsupported codecs and an expanded-size overflow',async()=>{
@@ -60,4 +60,14 @@ test('default binary cache reuses verified bytes offline, repairs corruption and
   delete manifest.compression;manifest.byteLength=21*1024*1024;
   globalThis.fetch=async target=>{const response=new Response(String(target).endsWith('.json')?JSON.stringify(manifest):new Uint8Array(manifest.byteLength));Object.defineProperty(response,'url',{value:String(target)});return response;};
   await assert.rejects(loadVolumePack(url),/cache budget/);assert.equal(entries.size,1,'the slot ceiling also bounds an uncompressed extension');
+});
+
+
+test('Hissen fallback readiness survives a full-pack failure and waits for its independent contour load',async()=>{
+ const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"});
+ let finish;const pending=new Promise(resolve=>{finish=resolve;});
+ f.FX.prototype.loadInkVolume=async(name)=>{if(name==='roller')throw Error('diagnostic full-pack failure');if(name==='hissen-fallback')await pending;return {};};
+ const fx=new f.FX(new f.THREE.Scene(),{quality:.25});let settled=false;fx.inkVolumeReady.then(()=>{settled=true;});
+ await Promise.resolve();await Promise.resolve();assert.equal(settled,false,'failed full pack cannot release warmup before fallback is ready');finish();
+ assert.equal(await fx.inkVolumeReady,null);assert.match(fx.inkVolumeError,/diagnostic full-pack failure/);fx.dispose();
 });

@@ -4,7 +4,7 @@ import { buildInkMesh } from '../ink-volume/mesh.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptIssue479 } from '../../splatoon3/issue-479-adapter.mjs';
 async function api() {
-  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:adaptIssue479,extraExports:"export {InkVolumes} from './patches/local-quality/ink-volume/runtime.mjs'; export {captureInkVolume,submitInkVolume} from './patches/local-quality/ink-volume/recipes.mjs'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs'; export const buffers={Uint8Array,Uint16Array,Uint32Array,Float32Array};"});
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:adaptIssue479,extraExports:"export {FX} from './inkwave-public/src/fx/fx.js'; export {InkVolumes} from './patches/local-quality/ink-volume/runtime.mjs'; export {captureInkVolume,submitInkVolume} from './patches/local-quality/ink-volume/recipes.mjs'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs'; export const buffers={Uint8Array,Uint16Array,Uint32Array,Int16Array,Float32Array};"});
   f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;
 }
 function pack(f,width=16,height=16,frames=1) {
@@ -130,4 +130,34 @@ test('Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Buck
     assert.equal(usesBucketSlosherSheet(id),true,id);
   for(const id of ['s3-slosher-launcher','s3-slosher-launcher-01','s3-slosher-bathtub','s3-slosher-washtub-01','roller',undefined,null])
     assert.equal(usesBucketSlosherSheet(id),false,String(id));
+});
+
+
+test('Hissen canonical fallback retains frame envelopes and stays inside the volume budget',async()=>{
+  const fs=await import('node:fs'),path=await import('node:path'),zlib=await import('node:zlib');
+  const {fileURLToPath}=await import('node:url'),{unpackVolumes}=await import('../ink-volume/pack.mjs');
+  const root=process.env.INKWAVE_BUILT_SITE||fileURLToPath(new URL('../../../',import.meta.url));
+  const f=await api();let draws=0;f.setRandom(()=>{draws++;return .25;});
+  const load=slot=>{
+    const dir=path.join(root,'patches/local-quality/ink-volume/assets',slot),m=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'))),bytes=zlib.gunzipSync(fs.readFileSync(path.join(dir,m.binary))),p=unpackVolumes(m,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
+    for(const pattern of p.patterns)for(const frame of pattern.frames){frame.rgba=new f.buffers.Uint8Array(frame.rgba);for(const l of frame.levels)for(const key of ['positions','normals','uvs','indices','opaqueIndices','fringeIndices'])if(l[key])l[key]=new f.buffers[l[key].constructor.name](l[key]);}
+    return {manifest:m,pack:p};
+  };
+  const full=load('roller'),small=load('hissen-fallback');assert(small.manifest.geometryOnly);assert(small.manifest.maxTriangles<=10000);assert(small.manifest.byteLength<4*1024*1024);
+  const bounds=v=>{const a=[Infinity,Infinity,Infinity],b=[-Infinity,-Infinity,-Infinity];for(let i=0;i<v.length;i++){a[i%3]=Math.min(a[i%3],v[i]);b[i%3]=Math.max(b[i%3],v[i]);}return [...a,...b];};
+  for(let i=0;i<2;i++)for(let j=0;j<16;j++){
+    const p=small.pack.patterns[i],frame=p.frames[j];assert.equal(p.fps,full.pack.patterns[i].fps);assert.deepEqual(Array.from(frame.rgba),[255,255,255,255],'no source RGB media in geometry-only LOD');
+    const a=bounds(frame.levels[0].positions),b=bounds(full.pack.patterns[i].frames[j].levels[0].positions);a.forEach((x,k)=>assert(Math.abs(x-b[k])<1e-6,'canonical frame envelope unchanged'));
+  }
+  const e=renderer(f),holder={inkVolumes:e},registrationDraws=draws;f.FX.prototype.registerInkVolume.call(holder,'hissen-fallback',small.pack);assert.equal(draws,registrationDraws,'contour registration cannot consume the caller/gameplay RNG');f.G.fx={inkVolumes:e};
+  const ps=f.G.projectiles,a=f.make('s3-slosher-diffusion');a.pos.set(0,2,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,3,50);a.intent.fire=true;let head;
+  for(let i=0;i<100;i++){f.tick(a);ps.update(1/60);head=ps.list.find(p=>p.catalog?.descriptor.unit===0&&p.catalog.index===0&&p.age>0);if(head)a.intent.fire=false;if(head&&Math.round(head.age*60)===5)break;}
+  assert(head&&Math.abs(head.age-5/60)<1e-9);
+  const state=()=>JSON.stringify({draws,time:f.G.time,ink:a.ink,main:ps.list.map(snapshot),drops:ps._s3SplashDrops?.map(d=>[d.frames,d.seed,d.radius,d.drawRadius,...d.pos.toArray(),...d.vel.toArray()])});
+  const before=state();ps._draw();ps.syncVisuals(1);
+  assert(e.metrics.active>0,'missing full pack still draws canonical contours');assert.equal(ps.blobs.count,0,'no generic fill');assert.equal(ps.projectileVisuals.stats.vertexCount,0,'no thick history body');assert.equal(state(),before);
+  e.register('roller',full.pack);ps._draw();ps.syncVisuals(1);assert.equal(e.metrics.fallback,0,'normal loaded route retained');assert.equal(e.metrics.overflow,0);assert.equal(state(),before);
+  e.triangleBudget=30000;ps._draw();ps.syncVisuals(1);assert(e.metrics.fallback>0,'real rejection selects the contour LOD');assert(e.metrics.triangles<=30000);assert.equal(ps.blobs.count,0);assert.equal(ps.projectileVisuals.stats.vertexCount,0);assert.equal(state(),before);
+  e.triangleBudget=0;ps._draw();ps.syncVisuals(1);assert.equal(e.metrics.active,0);assert.equal(e.metrics.triangles,0);assert(e.metrics.fallbackDropped>0,'hard bound is explicit');assert.equal(ps.blobs.count,0,'hard exhaustion cannot spill unaccounted generic main');assert.equal(state(),before);
+  e.dispose();ps.disposeVisuals();f.restoreRandom();
 });
