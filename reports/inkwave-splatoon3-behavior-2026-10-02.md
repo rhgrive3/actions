@@ -6535,3 +6535,7 @@ source13件＋実弾一致／寿命15件、最終emitted11件、通常build・qu
 公開ソース単独ではなく本番合成コードで、探索順／経路／時計端点／乱数選択、sourceとmovingの接触選択・UV・miss・出力所有、波／ジオメトリのバイト列、マップのターゲット・hover・入力寿命、HUDの動的値を比較した。原典balanced→highの材質channelは直接highのshader／cache keyへ一致させ、abort後のKTX2処理は実完了まで旧loaderを保持する。物理近似・フレーム間引き・画質低下による最適化は行わない。
 
 これらはINKWAVEの実装同値性と資源寿命のCPU／合成検証であり、Nintendoの非公開値を確定する根拠ではない。[任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)と既存の11.3.0参照・未確認事項を引き継ぐ。本家実機、同一ブキ・ギア・状態の動的映像、iPad／Safariの実機性能は未計測。統合ブラウザ／CIの結果も、本家実機比較とは別に扱う。
+
+## 2026-10-27 UTC: バグ修正PRへのupstream統合
+
+main `f89199ef` をバグbatch `b7f9e360` へ統合し、報告末尾の競合だけを両側の記録を保持して解決した。[統合記録](inkwave-batch-integration-20261026/upstream-f89199ef/README.md)には原典sweep出力所有・実Tower revision／guide cache・HUD／Dualies通信・本番buildとranked proofのfocused検証、古いremote音声predicateを渡すテストfixtureだけの修正、および不適切なemitted負例呼出しの失敗を残す。source134成功／asset依存4skip、対応emitted29成功／asset依存3skip、1489入力と2194生成物のdigest不一致0。新runtimeで通常入力・音声実再生・本家pixel比較を追加認定するものではなく、Hissen主弾サイズ／床滴形状と本家HUD等の未確認は継続する。最終headの自動CI完了とmainへのmergeは別途必要。

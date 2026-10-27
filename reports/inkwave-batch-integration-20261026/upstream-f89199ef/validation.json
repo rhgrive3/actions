@@ -1,0 +1,136 @@
+{
+  "baseBefore": "b7f9e360603a83a80596257c4accecae07983649",
+  "upstream": "f89199ef9b8a58d3d6b4e7ea3fdde4808532d46b",
+  "upstreamPayloads": [
+    "70cc3b131c8e4f66ab191d862e3b2fa3bcb6175c",
+    "2f9af10107c53d0ff0f6e784f8f8dff3c218eb3c"
+  ],
+  "mergeCommit": "b735ac9cd01e9381414618a2322b2c9f7399f78d",
+  "fixtureFix": "3997a295a1129d3ea870cb8532a2fbc8842d08b8",
+  "conflicts": [
+    "reports/inkwave-splatoon3-behavior-2026-10-02.md"
+  ],
+  "resolution": "Retain full pre-merge bug-batch report and append complete distinct upstream report block; checked against original bytes. No implementation conflict.",
+  "upstreamPreservation": "At merge, all 68 other upstream-changed files matched upstream blob IDs. The subsequent fixture-only correction changes three bindings in one upstream test file; all assertions remain.",
+  "sourceSweepCache": {
+    "pass": 47,
+    "fail": 0,
+    "skip": 4
+  },
+  "sourceCompositionHudRankedBeforeBindingFix": {
+    "pass": 86,
+    "fail": 1,
+    "skip": 0,
+    "error": "ReferenceError: usesChargerRise is not defined in extracted _voices test"
+  },
+  "sourceRemoteAudioAfterBindingFix": {
+    "pass": 17,
+    "fail": 0,
+    "skip": 0,
+    "rerun": "Only affected file rerun; other 70 cases were already passing. No repeat ranked browser-clock run."
+  },
+  "sourceUniqueAfterCorrection": {
+    "pass": 134,
+    "fail": 0,
+    "skip": 4,
+    "aggregation": "47 sweep/cache + 87 composition/HUD/ranked after replacing the affected file result"
+  },
+  "emittedSupportedSweepCache": {
+    "pass": 26,
+    "fail": 0,
+    "skip": 3
+  },
+  "emittedRemoteAudio": {
+    "pass": 3,
+    "fail": 0,
+    "skip": 0,
+    "scope": "All 18 Charger routes at 30/60/120 Hz, cancellation/removal/disposal; mocked dispatch, not sound playback"
+  },
+  "emittedUnsupportedInitialInvocation": {
+    "pass": 32,
+    "fail": 3,
+    "skip": 3,
+    "preservedLog": "emitted-sweep-cache.log.gz",
+    "causes": [
+      "native-catalogue-projectile-sweep directly imports build-only sphere-triangle-entry.mjs, intentionally absent from output",
+      "two prediction-cache-lifetime negative controls rewrite source with adaptRuntime, which is not applied to emitted modules; old behavior was not installed"
+    ],
+    "action": "No tests or assertions changed to accommodate this invocation. Source versions passed; emitted supported files rerun separately."
+  },
+  "startup": {
+    "status": "passed",
+    "revision": "be07e0612ff7aa963f1b5893b980fb8e5892a4d7aa05e2db748125eb10492f5f",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78296,
+    "initialJSBytes": 1937765,
+    "criticalHTMLBytes": 24030,
+    "precacheCount": 553,
+    "precacheBytes": 7651750,
+    "workerBytes": 90819,
+    "declaredBytes": 16070409,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "identity": {
+    "contentHash": "9e42efe6cdd53bc87e251d3c6f3d32fa33b5347fb047b7c0eabb32ccf12b600f",
+    "inputHash": "986b203e7207f5f2bbaffed002083c2d020dc4cb2e3e397a636eaf0cbe0cd4d0",
+    "revision": "be07e0612ff7aa963f1b5893b980fb8e5892a4d7aa05e2db748125eb10492f5f",
+    "sourceInputs": 1489,
+    "artifacts": 2194,
+    "mismatches": [],
+    "buildAtMerge": "b735ac9cd01e9381414618a2322b2c9f7399f78d",
+    "testOnlyFollowup": "3997a295a",
+    "scope": "all manifested source inputs + build script and artifacts checked against current checkout; excludes tests/reports by producer contract"
+  },
+  "logs": {
+    "build.log": {
+      "path": "build.log.gz",
+      "sha256": "8a19f5cce0973e8878f637856ab5987caedd1b139238d94c0d63f88e2fcf0110"
+    },
+    "source-sweep-cache.log": {
+      "path": "source-sweep-cache.log.gz",
+      "sha256": "45364cb59c909d276048836c7fc3ca99d267fcf164c7b03848eb40f3f9e90f51"
+    },
+    "source-composition-hud-ranked.log": {
+      "path": "source-composition-hud-ranked.log.gz",
+      "sha256": "b456670c8d9b321126004db1605b2ebe473277583f9518b54b7589c5b51fb433"
+    },
+    "source-remote-audio-fixed.log": {
+      "path": "source-remote-audio-fixed.log.gz",
+      "sha256": "874874cbc54154fc923043fb872aae80fe42b73b42bd611e08999bdd8e268683"
+    },
+    "emitted-sweep-cache.log": {
+      "path": "emitted-sweep-cache.log.gz",
+      "sha256": "fe25daec35b7482c719dc6edbf17d6ac9e1d7513381ee7c76aec4508e886c5ab"
+    },
+    "emitted-supported-sweep-cache.log": {
+      "path": "emitted-supported-sweep-cache.log.gz",
+      "sha256": "85fbf9b0548bec69dc23ad046cbc552eb6722542bbfead63ccb278ee3318b4f6"
+    },
+    "emitted-remote-audio.log": {
+      "path": "emitted-remote-audio.log.gz",
+      "sha256": "8bc206f6af8312b217f99534924b641a0d66cf0161cfce1ac7167ed5f130fab0"
+    }
+  },
+  "ciBeforeIntegration": {
+    "head": "b7f9e360603a83a80596257c4accecae07983649",
+    "workflowRuns": 0,
+    "checks": [
+      {
+        "name": "CodeRabbit",
+        "conclusion": "skipped"
+      }
+    ],
+    "mergeability": "dirty/false observed; subsequent query temporarily unknown",
+    "interpretation": "Consistent with documented pull_request conflict suppression, not green or merely assumed startup latency."
+  },
+  "limitations": [
+    "No new ordinary-input browser, iPad/Safari, physical speaker or retail visual comparison in this integration step. Earlier fixed4ce native and continuous PCM receipts remain historical, not retested on this new runtime.",
+    "Hissen main size and falling-drop morphology remain unfinished; horizontal inner-marker original appearance and other retail parity gaps remain open.",
+    "Mixed Pencil squid-discard, 8F marker cutoff, added bow ring/persistent color and blanket drop-hide candidates remain excluded.",
+    "Final exact-head automatic CI is pending publication/readback; no manual workflow dispatch/retry, protection changes or merge to main."
+  ],
+  "originalFailureReceipt": "Previous 4ce patch_tests(5) failure and accepted b7 fixture receipt preserved unchanged in /workspace/scratch/pr1895-issue413-fix/."
+}
