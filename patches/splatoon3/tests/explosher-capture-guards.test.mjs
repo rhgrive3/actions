@@ -3,6 +3,7 @@ import realPath from 'node:path';
 import realCrypto from 'node:crypto';
 import {spawnSync as realSpawn} from 'node:child_process';
 import {requireRuntimeUIPreflight} from '../../../scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs';
+import {instrumentExplosherGeometryDriver} from '../../../scripts/lib/inkwave-explosher-geometry-lifetime.mjs';
 import {inspectCommonBuild, requireApprovedCommonBuild} from '../../../scripts/lib/inkwave-explosher-common-build.mjs';
 import {installProjectileCaptureUiGate} from '../../../scripts/lib/inkwave-projectile-capture-ui.mjs';
 import {requireControlledStartupPair} from '../../../scripts/lib/inkwave-explosher-volume-barrier.mjs';
@@ -60,7 +61,7 @@ function diagnostic({publicAdmission=false,corrupt=false,runtimeMode=false}={}){
   generation+"const captures=[];"+validation
  ).replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
 
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','requireApprovedCommonBuild','installProjectileCaptureUiGate','requireControlledStartupPair','requireRuntimeUIPreflight',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,admission,installProjectileCaptureUiGate,requireControlledStartupPair,args=>requireRuntimeUIPreflight({...args,env:process.env})),runtimeMode?/Official event path required/:publicAdmission?/Checkout head differs/:corrupt?/Output size differs/:/Wrong native capture count/);
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','requireApprovedCommonBuild','installProjectileCaptureUiGate','requireControlledStartupPair','requireRuntimeUIPreflight','instrumentExplosherGeometryDriver',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,admission,installProjectileCaptureUiGate,requireControlledStartupPair,args=>requireRuntimeUIPreflight({...args,env:process.env}),instrumentExplosherGeometryDriver),runtimeMode?/Official event path required/:publicAdmission?/Checkout head differs/:corrupt?/Output size differs/:/Wrong native capture count/);
  assert.equal(admissionCalls,runtimeMode?0:1);if(publicAdmission||corrupt||runtimeMode){assert.equal(evidenceWrites,0);assert.equal(spawns,0);}
  return saved['out/native-capture-driver.mjs'];
  }finally{fs.rmSync(fixture.dir,{recursive:true,force:true});}

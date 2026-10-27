@@ -55,7 +55,7 @@ jobs:
         with:
           node-version: 22
       - name: Strict runtime/UI preflight protocol contracts
-        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs
+        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
       - name: Install required PNG decoder
