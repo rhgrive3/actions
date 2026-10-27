@@ -74,7 +74,10 @@ export async function checkCoreMenus({ page, entry, config, engineName, evidence
       assert.equal(await page.evaluate(() => menus._setup.mapId), id, 'every stage remains reachable');
       onOperation('setup-stage-verify-id', 'after');
       onOperation('setup-stage-settle', 'before');
-      await settle(page);
+      // Scrolling stage tickets can leave a native finished notification stale,
+      // just as in loadout continuation. Confirm the same original animation
+      // cohort; elapsed time or a replacement animation never counts as success.
+      await settle(page, true);
       onOperation('setup-stage-settle', 'after');
       onOperation('setup-stage-name', 'before');
       assert(await page.locator('.iw-ss__name').evaluate((el) => el.scrollWidth <= el.clientWidth + 1), 'every stage caption must fit its ink ticket');

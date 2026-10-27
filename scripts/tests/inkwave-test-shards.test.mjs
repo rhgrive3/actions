@@ -24,3 +24,22 @@ test('composed source scan runs in exactly one mandatory patch shard', () => {
   assert.match(runner, /if \(vm\.SourceTextModule && shardIndex === 0\)/);
   assert.match(runner, /selectTestShard\(\[\], shardIndex, shardCount\)/);
 });
+
+test('real source inventory covers all CPU owners once and reserves browsers for core', async () => {
+  const {discoverSourceTestFiles, BROWSER_SOURCE_TESTS} = await import('../lib/inkwave-test-shards.mjs');
+  const {fileURLToPath} = await import('node:url');
+  const root = fileURLToPath(new URL('../../', import.meta.url));
+  const files = discoverSourceTestFiles(root);
+  assert.ok(files.length > 1400);
+  assert.equal(files.length, new Set(files).size);
+  for (const file of [
+    'patches/splatoon3/tests/turf-finish.test.mjs',
+    'patches/reliability/tests/start.test.mjs',
+    'patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs',
+    'patches/local-quality/tests/catalog-charge-bot-release.test.mjs',
+    'scripts/tests/inkwave-idle-resources-gates.test.mjs',
+  ]) assert.ok(files.includes(file), file);
+  for (const file of BROWSER_SOURCE_TESTS) assert.ok(!files.includes(file), file);
+  const shards = Array.from({length: 8}, (_, index) => selectTestShard(files, index, 8));
+  assert.deepEqual(shards.flat().sort(), files);
+});

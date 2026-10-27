@@ -63,11 +63,11 @@ node --test patches/movement-physics/tests/movement-smoke.test.mjs
 # 領域ごとのテスト（例: 練習場）
 node --experimental-vm-modules --test --test-concurrency=2 patches/practice-range/tests/*.test.mjs
 
-# splatoon3 と reliability のテスト群。長時間かかるため必要に応じて実行
+# splatoon3 / reliability / network / local-quality の CPU ソーステスト。必要に応じて実行
 node --experimental-vm-modules scripts/check-inkwave-patches.mjs
 ```
 
-最後のコマンドは全パッチ領域のテストを網羅しません。ほかの領域の `tests/`、`scripts/tests/`、ブラウザ検証は別途選びます。テスト群のログは既定で `.ci-scratch/inkwave-patches/` に保存され、`INKWAVE_TEST_LOG_DIR` で変更できます。`INKWAVE_TEST_CONCURRENCY` は並列数、`INKWAVE_TEST_SHARD_COUNT` と `INKWAVE_TEST_SHARD_INDEX` は分割数と 0 始まりの分割番号です。分割実行では全 shard の成功を確認してください。
+最後のコマンドは4領域の CPU ソーステストと idle の CI 契約を自動検出し、CI と同じ8分割にも対応します。実ブラウザを使う2ファイルは `node scripts/ci/run-inkwave-test-suite.mjs source-browser` で別途実行します。ほかのパッチ領域の `tests/`、`scripts/tests/`、生成物・ブラウザ検証は別途選びます。テスト群のログは既定で `.ci-scratch/inkwave-patches/` に保存され、`INKWAVE_TEST_LOG_DIR` で変更できます。`INKWAVE_TEST_CONCURRENCY` は並列数、`INKWAVE_TEST_SHARD_COUNT` と `INKWAVE_TEST_SHARD_INDEX` は分割数と 0 始まりの分割番号です。分割実行では全 shard の成功を確認してください。
 
 配信・統合の検証項目は [`validate-inkwave-update.yml`](../.github/workflows/validate-inkwave-update.yml)、Pages 公開前の項目は [`pages-inkwave.yml`](../.github/workflows/pages-inkwave.yml) が定義します。手動検証の `source_sha` は完全なコミット SHA を指定します。
 

@@ -300,9 +300,9 @@ test('final shipped main and platform override both connect the opt-in profiler'
   const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const main=adaptBuildSource('src/main.js',raw);
   assert.match(main,/createFrameTimingProbe\(\{ env: globalThis, game: this \}\)/);
-  // The real PlatformFrameDriver owns frame scheduling and the optional
-  // import; the old Game._loop hook no longer owns frame callbacks.
-  assert.match(main,/if \(probeEnabled\) import\('\.\.\/patches\/local-quality\/range-frame-profiler\.mjs'\)/);
+  assert.ok(main.includes("if (probeEnabled) import('../patches/local-quality/range-frame-profiler.mjs')"), 'live opt-in remains lazily loaded');
+  assert.ok(main.includes('settings?.debugMode === true'), 'persisted setting gates the optional profiler');
+  assert.match(main,/_iwProfilerEpoch === epoch/, 'stale async opt-in setup never revives a disabled profiler');
   assert.ok(!main.includes("from '../patches/local-quality/range-hitch-tracer.mjs'"),
     'GPU profiler must not enter static game imports');
   assert.doesNotThrow(()=>new vm.SourceTextModule(main));
