@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { pathToFileURL } from 'node:url';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const runtime = new URL('../runtime/', import.meta.url);
@@ -29,7 +30,12 @@ async function load(mode, negative = false) {
   }
   const context = vm.createContext({ console });
   const k = new vm.SourceTextModule(kit, { context });
-  await k.link(() => { throw Error('Unexpected kit dependency'); }); await k.evaluate();
+  await k.link(spec => {
+    assert.equal(spec, './instance-color-upload.mjs', 'only the audited color-range helper is allowed');
+    return new vm.SyntheticModule(['markAttributeRange'], function () {
+      this.setExport('markAttributeRange', markAttributeRange);
+    }, { context });
+  }); await k.evaluate();
   const m = new vm.SourceTextModule(source, { context });
   // Unused gameplay dependencies are stubs; Director track/end and RibbonPool
   // lifecycle code below are real source. No renderer or visual claim.
@@ -50,7 +56,8 @@ function fixture(api) {
   Object.assign(pool, { list: [], T: 40, M: 48, _t: {}, _s: {}, _c: {} });
   for (const key of ['pos', 'col', 'rib', 'side', 'face']) pool[key] = {
     array: new Float32Array(1024), itemSize: key === 'col' || key === 'rib' ? 4 : 3,
-    clearUpdateRanges() {}, addUpdateRange() {},
+    updateRanges: [], clearUpdateRanges() { this.updateRanges.length = 0; },
+    addUpdateRange(start, count) { this.updateRanges.push({start, count}); },
   };
   pool.mesh = { geometry: { setDrawRange() {} } };
   const d = Object.create(api.Director.prototype);
