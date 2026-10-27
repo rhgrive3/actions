@@ -455,7 +455,7 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
   const s=state(nm);
   const shots=s.proofs.get(from)||[];
   for(const p of shots) {
-    if(p.actor!==d.a || p.uses>=p.maxUses || !rayNear(p,target,type==='boss'?6:5.5))continue;
+    if(p.actor!==d.a || p.uses>=p.maxUses)continue;
     // An enrolled native birth authorizes terrain damage only via its contact receipts.
     // Keep unsupported legacy births separate, including after all native contacts retire.
     if(type==='pvp'&&d.w==='torpedo-splash'&&p.nativeTorpedoContact)continue;
@@ -464,6 +464,7 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
       !(d.w==='bomb'&&EXPLOSIVE_SUBS.has(p.cause)) &&
       !(d.w==='torpedo-splash'&&p.cause==='torpedo'))continue;
     if(p.kind==='special' && d.w!==p.cause)continue;
+    if(!rayNear(p,target,type==='boss'?6:5.5))continue;
     if(type==='pvp') {
       if(!hitSegmentOk(p,d.bg,target))continue;
       if(p.kind==='main' && d.bg && nm._combatProvenancePhysics?.los && nm._combatProvenanceTHREE?.Vector3) {
@@ -506,7 +507,7 @@ function enqueue(nm,from,d,type,t) {
     JSON.stringify(d.kb).length>300))return;
   const s=state(nm), arr=s.pending.get(from)||[];
   if(arr.some(x=>x.type===type && x.d[type==='pvp'?'h':'q']===d[type==='pvp'?'h':'q']))return;
-  if(arr.length>=MAX_PENDING)return;
+  if(arr.length+(s.flushing?.get(from)?.length||0)>=MAX_PENDING)return;
   // Never retain arbitrary attacker-supplied JSON baggage while a proof is
   // pending. Bound each claim independently of the relay's frame allowance.
   const claim=type==='pvp' ? {k:'hit',m:d.m,a:d.a,v:d.v,l:d.l,h:d.h,seq:d.seq,
@@ -525,10 +526,23 @@ export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allow
   return take(nm,from,d,type,t,sprinklerScope,allowPoseFallback);
 }
 function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
-  const s=state(nm),items=s.pending.get(from);
+  const s=state(nm);
+  // Admission prunes pending arrays in place. Iterate a detached batch so
+  // pruning and synchronous native callbacks cannot skip later live claims.
+  // Reentrant flush of this sender waits for the active batch to settle.
+  const flushing=s.flushing || (s.flushing=new Map());
+  if(flushing.has(from))return;
+  prune(s,t);
+  const items=s.pending.get(from);
   if(!items?.length)return;
+  s.pending.delete(from);
+  flushing.set(from,items);
+  const peer=nm.peers?.get(from);
+  let cursor=0;
   const still=[];
-  for(const item of items) {
+  try {
+  for(;cursor<items.length;cursor++) {
+    const item=items[cursor];
     if(t-item.at>PENDING_AGE)continue;
     // A fresh direct retry may already have delivered this queued ID. Retire
     // it before consuming another proof; native exact-ID history is authoritative.
@@ -539,7 +553,17 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
   }
-  if(still.length)s.pending.set(from,still);else s.pending.delete(from);
+  } finally {
+    flushing.delete(from);
+    // Newly enqueued claims belong after the older FIFO batch. Keep their
+    // identities and do not overwrite a callback's peer/dispose reset.
+    if(nm._combatProvenance===s && !nm._disposed && (!peer || nm.peers?.get(from)===peer)) {
+      const added=s.pending.get(from)||[];
+      const combined=still.concat(items.slice(cursor),added);
+      if(combined.length)s.pending.set(from,combined);else s.pending.delete(from);
+      prune(s,t);
+    }
+  }
 }
 export function installCombatProvenance(NetMatch,context={}) {
   const marker=Symbol.for('inkwave.combat-provenance.v1'),P=NetMatch.prototype;
