@@ -1,0 +1,28 @@
+(node:15429) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ all three flexed Brush heads follow actual ground vertices at slope entry and exit without draw-cadence lag (10641.936462ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11113.908403
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/brush-head-contact-geometry.test.mjs:23:1
+✖ all three flexed Brush heads follow actual ground vertices at slope entry and exit without draw-cadence lag (10641.936462ms)
+  AssertionError [ERR_ASSERTION]: s3-brush-mini, 1 ticks/draw, tick 122: actual surface clearance -0.004320888861443217
+      at run (file:///workspace/scratch/brush-contact-geometry-bbc4/patches/splatoon3/tests/brush-head-contact-geometry.test.mjs:51:16)
+      at async TestContext.<anonymous> (file:///workspace/scratch/brush-contact-geometry-bbc4/patches/splatoon3/tests/brush-head-contact-geometry.test.mjs:61:20)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

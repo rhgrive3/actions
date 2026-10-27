@@ -45,8 +45,41 @@ draw, with identical movement/payment/shot traces. Observed actual surface
 clearance spans 0.58–1.76 cm including first transition frames. The same final
 test fails against the reviewed emitted runtime (actual penetration at tick
 122). The existing five-Roller/three-Brush 30/60/120 Hz held/jump/landing
-compatibility test passes. Final emitted and normal-input verification are
-recorded in the follow-up evidence commit after execution.
+compatibility test passes. [Source](source-tests.txt), [emitted](emitted-tests.txt),
+[reviewed negative control](reviewed-negative.txt), [compatibility](held-compat.txt)
+and [build](build.txt) logs preserve the executed results.
+
+Code commit: `3d720d4b106cbb462b52ba5c4381da6459e9705e`.
+The final optimized emitted runtime passes both tests with 0.58–1.76 cm actual
+surface clearance across all three heads and the first transition frames.
+[build-identity.json](build-identity.json) binds 1,490 inputs and 2,194 artifacts
+to that code commit, zero mismatches. Content hash:
+`1b04d881b8591bace8cec11988d7ba784166d82710a64821002ce2260592f0c2`.
+
+Normal-input Chromium 154 verification uses the established readiness-aware
+title/Skip/loadout/range/Resume flow, real pointer lock, held left mouse,
+normal R reset and W movement. At the same saved entry position, the reviewed
+head has **14.5739 cm** normal clearance and the correction **1.6401 cm**.
+All old head bounds are inside the range ramp x[-3,3], z[-15,-11], so the old
+vertical clearance is exactly normal clearance / normal.y = **15.0225 cm**;
+the independent corrected per-vertex physics probes measure **1.6905 cm**.
+At the same exit position, actual vertical clearance changes from **-6.0285 cm**
+to **+1.3841 cm**. Later held captures measure **1.5035 cm** on the ramp and
+**1.4969 cm** on the flat, rather than a 4 cm penetration. There are no missed
+surface probes. These are sampled geometry measurements around actual rendered
+frames, not a continuous-browser peak/duration measurement.
+
+Fresh turf remains **0 → 2.992923 → 9.662021**, paint cells **0 → 48 → 159**,
+and all five ramp points become own ink. Both checkpoints stay grounded and
+rolling with zero flight projectiles. The initial flick/return is preserved:
+the held-before-reset capture belongs to that transition, before settled drag
+contact. It is not claimed to obey the settled constraint. The rear camera
+partly occludes the head; normal before/after rendered images are retained
+locally with [hashes only](capture-hashes.json). No character comparison is
+performed. [browser-validation-summary.json](browser-validation-summary.json)
+contains non-image metrics. The new browser run has no page, HTTP or failed
+request errors. Browser/server close and the port returns ECONNREFUSED (111).
+The original/reviewed private images and raw receipts are not republished.
 
 Reproduce focused regressions:
 
@@ -54,7 +87,14 @@ Reproduce focused regressions:
 node --experimental-vm-modules --test patches/splatoon3/tests/brush-head-contact-geometry.test.mjs patches/splatoon3/tests/brush-rolling-transform-cache.test.mjs
 INKWAVE_BUILT_SITE=/absolute/built-site node --experimental-vm-modules --test patches/splatoon3/tests/brush-head-contact-geometry.test.mjs patches/splatoon3/tests/brush-rolling-transform-cache.test.mjs
 node --experimental-vm-modules --test --test-name-pattern='all five Rollers and three Brushes' patches/splatoon3/tests/roller-brush-held-motion.test.mjs
+node reports/brush-head-contact-geometry-20261027/normal-input-capture.mjs /absolute/built-site /tmp/brush-head-capture SOURCE_SHA
 ```
+
+The normal-input verifier is the executed script with fixed local paths made
+portable and passes `node --check`. It requires Playwright and Chromium
+(`CHROMIUM_PATH` can override the executable). Observers read state and query
+surfaces without injecting gameplay state. A per-vertex observer query is
+verification cost, separate from the runtime's one local probe.
 
 No original-game media, screenshots, raw browser receipts or private storage
 references are included. No original-game frame/geometry agreement, hardware
