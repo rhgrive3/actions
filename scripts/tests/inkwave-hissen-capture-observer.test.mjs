@@ -60,6 +60,32 @@ test('observer restoration refuses to overwrite a newer owner',()=>{
   const newer=()=>false;f.engine.submitComposite=newer;assert.throws(()=>watch.restore(),/ownership changed/);assert.equal(f.engine.submitComposite,newer);
   f.engine.submitComposite=observed;watch.restore();
 });
+test('restoration deletes own shadows for native prototype methods',()=>{
+  const f=fixture(),prototype={begin:f.engine.begin,submitComposite:f.engine.submitComposite};
+  delete f.engine.begin;delete f.engine.submitComposite;Object.setPrototypeOf(f.engine,prototype);
+  const watch=installHissenCaptureObserver(f.engine,THREE,{width:100,height:100});
+  assert(Object.hasOwn(f.engine,'begin'));assert(Object.hasOwn(f.engine,'submitComposite'));
+  f.engine.begin();f.engine.submitComposite(f.source());assert.equal(watch.snapshot(f.camera).draws.length,1);watch.restore();
+  assert.equal(Object.hasOwn(f.engine,'begin'),false);assert.equal(Object.hasOwn(f.engine,'submitComposite'),false);
+  assert.equal(f.engine.begin,prototype.begin);assert.equal(f.engine.submitComposite,prototype.submitComposite);
+});
+test('restoration preserves exact own nondefault descriptors and unrelated replacements are never clobbered',()=>{
+  const f=fixture();
+  Object.defineProperty(f.engine,'begin',{value:f.engine.begin,writable:true,enumerable:false,configurable:false});
+  Object.defineProperty(f.engine,'submitComposite',{value:f.engine.submitComposite,writable:true,enumerable:false,configurable:true});
+  const before=Object.getOwnPropertyDescriptors(f.engine),watch=installHissenCaptureObserver(f.engine,THREE,{width:100,height:100});
+  const observed=f.engine.submitComposite,newer=()=>false;f.engine.submitComposite=newer;
+  assert.throws(()=>watch.restore(),/ownership changed/);assert.equal(f.engine.submitComposite,newer);
+  f.engine.submitComposite=observed;watch.restore();
+  assert.deepEqual(Object.getOwnPropertyDescriptor(f.engine,'begin'),before.begin);
+  assert.deepEqual(Object.getOwnPropertyDescriptor(f.engine,'submitComposite'),before.submitComposite);
+});
+test('read-only own method is rejected before installing either wrapper',()=>{
+  const f=fixture(),begin=f.engine.begin;
+  Object.defineProperty(f.engine,'submitComposite',{value:f.engine.submitComposite,writable:false,configurable:false});
+  assert.throws(()=>installHissenCaptureObserver(f.engine,THREE,{width:100,height:100}),/replaceable native methods/);
+  assert.equal(f.engine.begin,begin);
+});
 test('missing native owner is rejected instead of substituting a generic body',()=>assert.throws(()=>installHissenCaptureObserver({},THREE,{}),/native volume owner/));
 function birthDriver(birth=5){
   const source=fs.readFileSync(new URL('../check-inkwave-trislosher-native-matched.mjs',import.meta.url),'utf8');

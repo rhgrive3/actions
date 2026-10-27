@@ -4,6 +4,11 @@ export function installHissenCaptureObserver(engine, THREE, viewport) {
   if (!engine?.isInkVolumes || typeof engine.begin !== 'function' || typeof engine.submitComposite !== 'function')
     throw Error('Hissen observation requires the native volume owner');
   const originalBegin = engine.begin, originalSubmit = engine.submitComposite;
+  const descriptors = Object.fromEntries(['begin', 'submitComposite'].map(key => [key, Object.getOwnPropertyDescriptor(engine, key)]));
+  for (const descriptor of Object.values(descriptors)) {
+    if ((descriptor && (!Object.hasOwn(descriptor, 'value') || !descriptor.writable)) || (!descriptor && !Object.isExtensible(engine)))
+      throw Error('Hissen observation requires replaceable native methods');
+  }
   let records = [], restored = false;
   const actorOf = p => p?.catalog?.r?.sourceActor || p?.s3Weapon?.sourceActor;
   function begin(...args) { records = []; return originalBegin.apply(this, args); }
@@ -20,7 +25,9 @@ export function installHissenCaptureObserver(engine, THREE, viewport) {
     }
     return value;
   }
-  engine.begin = begin; engine.submitComposite = submit;
+  const install = (key, value) => Object.defineProperty(engine, key,
+    descriptors[key] ? { ...descriptors[key], value } : { value, writable: true, configurable: true, enumerable: true });
+  install('begin', begin); install('submitComposite', submit);
   const visible = mesh => {
     for (let node = mesh; node; node = node.parent) if (node.visible === false) return false;
     return true;
@@ -59,7 +66,11 @@ export function installHissenCaptureObserver(engine, THREE, viewport) {
   return { snapshot, restore() {
     if (!restored) {
       if (engine.begin !== begin || engine.submitComposite !== submit) throw Error('Hissen observer ownership changed before restoration');
-      engine.begin = originalBegin; engine.submitComposite = originalSubmit; records = []; restored = true;
+      for (const key of ['begin', 'submitComposite']) {
+        if (descriptors[key]) Object.defineProperty(engine, key, descriptors[key]);
+        else delete engine[key];
+      }
+      records = []; restored = true;
     }
     return true;
   } };

@@ -49,6 +49,8 @@ Then use each draw's unit/seed/age, actual selected mesh and camera projection t
 
 ## Local verification and remaining gate
 
-`local-tests.txt` records **80/80** relevant source/CI/workflow tests, including **11** new controlled observer/scheduling tests; zero failures/skips. Native Three geometry is used for projection checks, but the submission owner is inert and no GPU/browser ran. Syntax checks, YAML parsing and `git diff --check` pass. Shipping source/build hooks and the separate52-view workflow are byte-for-byte unchanged from the base.
+`local-tests.txt` records **83/83** relevant source/CI/workflow tests, including **14** new controlled observer/scheduling tests; zero failures/skips. Native Three geometry is used for projection checks, but the submission owner is inert and no GPU/browser ran. Syntax checks, YAML parsing and `git diff --check` pass. Shipping source/build hooks and the separate52-view workflow are byte-for-byte unchanged from the base.
 
 First actual browser execution of the new opt-in route remains pending future reviewed automatic CI. Source tests do not establish new PNGs, ordinary-input gameplay, retail timing, Hissen main-size agreement or floor-child morphology.
+
+Observer cleanup follow-up: the first QA candidate restored function references by assignment, which could leave own shadows for originally inherited native methods. The follow-up preserves original own descriptors exactly or deletes temporary own shadows, refuses unrelated replacement ownership, and rejects read-only own methods before any partial installation. New tests cover prototype methods, nondefault own descriptors and replacement/read-only controls. The original candidate commit remains immutable; its previous review does not stand in for review of this fix.
