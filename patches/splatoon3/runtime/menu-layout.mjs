@@ -78,18 +78,120 @@ function decorateSetup(menus, scr) {
     if (sel) requestAnimationFrame(() => { if (sel.isConnected) keepInView(sel, list, { smooth: false, center: true }); });
     return result;
   };
-  // Keep the native nodes, bindings and focus graph. Only the middle section
-  // scrolls on touch devices; the equipment and launch actions stay in reach.
+  // The stage is the main visual. Keep options in a native modal so the
+  // picker has room for artwork instead of three equally weighted forms.
   if (touchMenu()) {
     const content = document.createElement('div');
     content.className = 's3-setup-scroll';
     const left = scr.el.querySelector('.iw-ss__left');
     const hero = scr.el.querySelector('.iw-ss__hero');
     scr.el.querySelector('.iw-ss__foot').before(content);
-    content.append(left, hero, left.querySelector('.iw-ss__match'));
-    scr.el.classList.add('has-mobile-flow');
+    const match = left.querySelector('.iw-ss__match');
+    content.append(hero, left);
+    const count = hero.querySelector('.iw-ss__count');
+    if (count) left.querySelector('.iw-seclabel').append(count);
+    scr.el.classList.add('has-mobile-flow', 's3-stage-select');
+    decorateStageSettings(menus, scr, match, tickets);
   }
   return scr;
+}
+
+function decorateStageSettings(menus, scr, match, tickets) {
+  const foot = scr.el.querySelector('.iw-ss__foot');
+  const start = foot.querySelector('[data-id="start"]');
+  const time = scr.el.querySelector('[data-id="time"]');
+  const weapon = foot.querySelector('[data-id="weapon"]');
+  const look = foot.querySelector('[data-id="look"]');
+  const parking = document.createElement('div');
+  parking.className = 's3-stage-settings-store';
+  parking.hidden = true;
+  match.classList.remove('iw-in', 'iw-in--up');
+  parking.append(match);
+  scr.el.append(parking);
+  let modal = null, disposed = false;
+  const selected = () => tickets.find(ticket => ticket.classList.contains('is-sel')) || tickets[0];
+  const refresh = () => {
+    const values = [...match.querySelectorAll('.iw-seg__opt.is-sel')].map(el => el.textContent.trim());
+    options.querySelector('.iw-btn__sub').textContent = values.join(' · ');
+  };
+  const close = expected => {
+    if (!expected || modal !== expected || menus._modal !== expected || menus._scr !== scr) return;
+    parking.append(match);
+    modal = null;
+    options.setAttribute('aria-expanded', 'false');
+    refresh();
+    menus._closeModal(true);
+  };
+  const options = menus._btn({
+    id: 'match-options', label: L('Battle settings', 'バトル設定'), sub: ' ', icon: GLYPHS.gear,
+    cls: 's3-stage-options-btn',
+    accept: () => {
+      if (disposed || menus._scr !== scr || menus.current !== 'setup' || menus._modal) return;
+      let opened;
+      menus._openModal({ title: L('Battle settings', 'バトル設定'), buttons: [
+        { label: L('Done', '完了'), sound: 'ui_confirm', accept: () => close(opened) },
+      ] });
+      opened = modal = menus._modal;
+      opened.classList.add('s3-stage-settings');
+      opened.setAttribute('role', 'dialog');
+      opened.setAttribute('aria-modal', 'true');
+      opened.setAttribute('aria-label', L('Battle settings', 'バトル設定'));
+      opened._onBack = () => close(opened);
+      opened.querySelector('.iw-modal__btns').before(match);
+      opened.addEventListener('click', event => { if (event.target === opened) close(opened); });
+      options.setAttribute('aria-expanded', 'true');
+      if (menus._input !== 'touch') menus._setFocus(match.querySelector('[data-nav]'), { snap: true });
+    },
+  });
+  options.setAttribute('aria-haspopup', 'dialog');
+  options.setAttribute('aria-expanded', 'false');
+  start.before(options);
+  refresh();
+  start.querySelector('.iw-btn__label').textContent = L('BATTLE!', 'バトル開始');
+  for (const chip of [weapon, look]) chip.setAttribute('aria-label', chip.textContent.trim());
+
+  const onNav = scr.onNav;
+  const actions = [weapon, look, options, start];
+  scr.onNav = dir => {
+    if (menus._modal) {
+      if (menus._modal !== modal) return false;
+      if (dir === 'back') { close(modal); return true; }
+      const fields = [...match.querySelectorAll('[data-nav]'), modal.querySelector('[data-id="modal-0"]')];
+      const i = fields.indexOf(menus._focus);
+      if (['up', 'down', 'tab_prev', 'tab_next'].includes(dir)) {
+        const step = dir === 'up' || dir === 'tab_prev' ? -1 : 1;
+        menus._moveFocus(fields[Math.max(0, Math.min(fields.length - 1, i + step))], dir);
+        return true;
+      }
+      return false; // native row adjustment and native accept own the values
+    }
+    const f = menus._focus, i = actions.indexOf(f);
+    if (i >= 0 && ['left', 'right', 'up', 'down'].includes(dir)) {
+      const target = dir === 'up' ? (i < 2 ? time : selected()) : dir === 'down' ? null : actions[i + (dir === 'left' ? -1 : 1)];
+      if (target) menus._moveFocus(target, dir);
+      return true;
+    }
+    if (f === time && (dir === 'right' || dir === 'down')) {
+      menus._moveFocus(dir === 'right' ? selected() : weapon, dir);
+      return true;
+    }
+    if (tickets.includes(f) && (dir === 'left' || dir === 'down' && f === tickets.at(-1))) {
+      menus._moveFocus(dir === 'left' ? time : start, dir);
+      return true;
+    }
+    return onNav?.(dir);
+  };
+  const destroy = scr.destroy;
+  scr.destroy = (...args) => {
+    disposed = true;
+    if (modal) {
+      parking.append(match);
+      if (menus._modal === modal) menus._closeModal(true);
+      modal = null;
+    }
+    if (menus._modalPrev === options) menus._modalPrev = null;
+    return destroy?.(...args);
+  };
 }
 
 function decorateMode(menus, scr) {

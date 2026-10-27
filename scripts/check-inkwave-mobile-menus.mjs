@@ -10,6 +10,7 @@ const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null 
 const source = path.resolve(arg('--source') || '_site');
 const evidence = path.resolve(arg('--evidence-dir') || '.browser-evidence/mobile-menus');
 const audit = process.argv.includes('--audit');
+const stageOnly = process.argv.includes('--stage-only');
 const resizableViewport = process.argv.includes('--resizable-viewport');
 const engineName = arg('--engine') || 'chromium';
 const engine = {chromium,webkit}[engineName];
@@ -115,12 +116,54 @@ try {
     check(await page.evaluate(()=>menus._setup.mode==='boss'),'boss mode opens its own setup');
     await show('setup');await capture('setup','.iw-ss__foot button');
     if(touch)check(entry.screens.setup.every(r=>r.inViewport),'equipment and start visible without scrolling');
-    if(landscapePhone) {
-      check(await page.locator('.iw-daytgl, .iw-ss__match .iw-seg__opt').evaluateAll(els=>els.every(el=>{
+    if(touch) {
+      check(await page.locator('.iw-daytgl, [data-id="match-options"]').evaluateAll(els=>els.every(el=>{
         const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
         return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&r.height>=43&&(hit===el||el.contains(hit));
-      })),'time, difficulty and duration are visible and touchable together');
+      })),'time and battle options have visible finger targets');
       check(await page.locator('.s3-setup-scroll').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1),'setup uses horizontal panels without page scrolling');
+      if(landscapePhone)check(await page.locator('.iw-ss__hero').evaluate(el=>el.getBoundingClientRect().width>=innerWidth*.5),'stage preview is the main visual');
+      check(await page.locator('.iw-ss__match').evaluate(el=>el.getBoundingClientRect().height===0),'match settings stay out of the stage composition');
+      if(!audit) {
+        await page.evaluate(()=>window.__stageMatchPanel=menus._scr.el.querySelector('.iw-ss__match'));
+        await tap('[data-id="match-options"]');await page.waitForFunction(()=>menus._modal?.classList.contains('s3-stage-settings'));
+        await page.waitForFunction(()=>Number(getComputedStyle(menus._modal).opacity)>.99);
+        await capture('setup-settings','.s3-stage-settings .iw-seg__opt, .s3-stage-settings button');
+        check(entry.screens['setup-settings'].every(r=>r.inViewport&&r.height>=43),'battle settings and Done fit the dialog');
+        await tap('[data-id="difficulty"] .iw-seg__opt:last-child');
+        await tap('[data-id="length"] .iw-seg__opt:last-child');
+        const settings=await page.evaluate(()=>({difficulty:menus._setup.difficulty,duration:menus._setup.duration}));
+        await page.evaluate(()=>window.__oldStageDone=menus._binds.get(document.querySelector('.s3-stage-settings [data-id="modal-0"]')).accept);
+        await tap('.s3-stage-settings [data-id="modal-0"]');await page.waitForFunction(()=>!menus._modal);
+        check(await page.evaluate(()=>menus._scr.el.querySelector('.iw-ss__match')===__stageMatchPanel),'settings reuse the original controls');
+        check(await page.evaluate(value=>menus._setup.difficulty===value.difficulty&&menus._setup.duration===value.duration,settings),'Done preserves native settings');
+        await page.waitForFunction(()=>!document.querySelector('.iw-modal.is-leaving'));
+        await tap('[data-id="match-options"]');await page.waitForFunction(()=>!!menus._modal);
+        await page.waitForFunction(()=>Number(getComputedStyle(menus._modal).opacity)>.99);
+        await page.evaluate(()=>__oldStageDone('key'));
+        check(await page.evaluate(()=>!!menus._modal),'stale Done cannot dismiss a newer settings dialog');
+        await page.keyboard.press('ArrowDown');
+        check(await page.evaluate(()=>menus._modal.contains(menus._focus)),'dialog navigation cannot focus the stage behind it');
+        await page.keyboard.press('Escape');await page.waitForFunction(()=>!menus._modal);
+        check(await page.evaluate(()=>menus.current==='setup'&&menus._focus?.dataset.id==='match-options'),'Back returns focus to battle options');
+        await page.waitForFunction(()=>!document.querySelector('.iw-modal.is-leaving'));
+        if(name==='phone') {
+          await page.evaluate(()=>{menus._setFocus(document.querySelector('[data-id="start"]'));menus.nav('left');});
+          check(await page.evaluate(()=>menus._focus?.dataset.id==='match-options'),'pad can reach battle options from Start');
+          await page.keyboard.press('Enter');await page.waitForFunction(()=>!!menus._modal);
+          await page.keyboard.press('ArrowDown');
+          check(await page.evaluate(()=>menus._focus?.dataset.id==='length'&&menus._modal.contains(menus._focus)),'keyboard moves between the native settings rows');
+          await page.keyboard.press('Escape');await page.waitForFunction(()=>!menus._modal);
+          await page.waitForFunction(()=>!document.querySelector('.iw-modal.is-leaving'));
+          await tap('[data-id="match-options"]');
+          await page.evaluate(()=>{
+            const stale=menus._binds.get(document.querySelector('[data-id="match-options"]')).accept;
+            menus.wipe.cancel();menus.show('mode',{wipe:false,force:true});stale('key');
+          });
+          check(await page.evaluate(()=>menus.current==='mode'&&!menus._modal),'leaving an open dialog retires its old opener');
+          await show('setup');
+        }
+      }
     }
     const tickets=page.locator('.iw-ticket');
     const last=tickets.last(),id=await last.evaluate(el=>el._mid);
@@ -153,11 +196,14 @@ try {
         check(await list.evaluate(el=>el.scrollTop>20),'native finger swipe scrolls the stage list');
         check(await page.evaluate(()=>menus._setup.mapId)===before,'scrolling does not select a different stage');
       }
+      const requested=await page.evaluate(()=>({mode:menus._setup.mode,mapId:menus._setup.mapId,time:menus._stageTime(menus._setup.mapId),difficulty:menus._setup.difficulty,duration:menus._setup.duration}));
       await tap('[data-id="start"]');
       await page.evaluate(()=>document.querySelector('[data-id="start"]')?.click());
       await page.waitForFunction(()=>calls.some(c=>c.kind==='start'));
       check(await page.evaluate(()=>calls.filter(c=>c.kind==='start').length===1),'double start activates the existing match API once');
+      check(await page.evaluate(expected=>{const actual=calls.find(c=>c.kind==='start').value;return Object.entries(expected).every(([key,value])=>actual[key]===value);},requested),'Start sends the selected stage, time and dialog settings to the match API');
     }
+    if(stageOnly) {await context.close();console.log(`${name}: ${entry.checks.length} stage checks`);continue;}
     for(const mode of (name==='phone'?['turf','boss','zones','tower','rainmaker','clams']:['turf','boss','zones'])) {
       await page.evaluate(mode=>{const d=menus._demoResults();d.mode=mode;if(mode==='boss'){d.boss={defeated:true,time:142,hpLeft:0,phase:3};d.players=d.players.map((p,i)=>({...p,team:0,damage:5000-i*340,weakHits:12+i}));}else if(mode!=='turf'){d.counts=[0,65];d.penalties=[0,12];d.knockout=true;d.winner=0;}menus._results=d;},mode);
       await show('results');
@@ -211,6 +257,7 @@ try {
         await page.waitForFunction(()=>{const r=document.querySelector('[data-id="start"]').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;});
         check(await page.locator('[data-id="start"]').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth;}),'start remains visible with browser bars');
         check(await page.evaluate(()=>JSON.stringify(menus._setup))===state,'height changes preserve stage, time and match options');
+        if(landscapePhone)check(await page.locator('.iw-ss__caption').evaluate(el=>{const a=el.getBoundingClientRect(),b=el.parentElement.querySelector('.iw-ss__time').getBoundingClientRect();return a.top>=b.bottom;}),'stage title and time switch remain separate with browser bars');
         await page.screenshot({path:path.join(evidence,`${name}-shorter-setup.png`)});
       } else if(touch) {
         // Playwright WebKit mobile emulation changes innerWidth/innerHeight
@@ -226,7 +273,7 @@ try {
   result.status='failed';result.failure=error.stack;process.exitCode=1;
   if(page&&!page.isClosed()) {
     await page.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});
-    result.layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,nodes:[...document.querySelectorAll('.iw-screen:not(.is-leaving), .s3-setup-scroll, .iw-ss__foot, [data-id="start"]')].map(el=>({cls:el.className,rect:el.getBoundingClientRect().toJSON(),rows:getComputedStyle(el).gridTemplateRows,padding:getComputedStyle(el).padding}))})).catch(()=>null);
+    result.layout=await page.evaluate(()=>({width:innerWidth,height:innerHeight,nodes:[...document.querySelectorAll('.iw-screen:not(.is-leaving), .s3-setup-scroll, .iw-ss__foot, .iw-ss__caption, .iw-ss__time, [data-id="start"]')].map(el=>({cls:el.className,rect:el.getBoundingClientRect().toJSON(),rows:getComputedStyle(el).gridTemplateRows,padding:getComputedStyle(el).padding}))})).catch(()=>null);
   }
 }
 finally{await context?.close();await new Promise(resolve=>server.close(resolve));fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(`${result.status}: ${evidence}`);if(result.failure)console.error(result.failure);}

@@ -526,9 +526,6 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
   gap: 12px; overflow: hidden;
   padding: calc(var(--sat) + 12px) calc(var(--sar) + 16px) calc(var(--sab) + 14px) calc(var(--sal) + 16px);
 }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow > .iw-head { grid-column: 1; margin: 0; gap: 12px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-head__title { font-size: clamp(23px, 4vw, 32px); }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-head__sub { font-size: 12px; line-height: 1.4; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) :is(.s3-setup-scroll, .s3-results-scroll) {
   position: relative; z-index: 1; min-width: 0; min-height: 0;
   overflow: hidden auto; overscroll-behavior: contain; touch-action: pan-y;
@@ -538,37 +535,6 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .s3-setup-scroll {
   display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px; padding: 8px 6px 16px;
 }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left { display: contents; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left > .iw-seclabel { grid-row: 1; margin: 0; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list { grid-row: 2; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list.is-many {
-  max-height: min(42dvh, 300px); min-height: 144px; flex-shrink: 0; gap: 10px; padding: 8px;
-  mask-image: none; -webkit-mask-image: none; scroll-padding-block: 8px;
-}
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ticket { flex-shrink: 0; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ticket__name { white-space: normal; overflow-wrap: anywhere; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__hero { grid-column: 1; grid-row: 3; padding: 0; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__frame { min-height: 120px; aspect-ratio: 16 / 7; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__caption { margin: 12px 4px 0; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__blurb { font-size: 14px; line-height: 1.5; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__time { margin-top: 12px; padding: 12px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match { grid-row: 4; margin: 0; gap: 12px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot {
-  position: relative; z-index: 3; grid-column: 1; grid-row: 3;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 10px;
-  border-radius: 16px; background: #191422; box-shadow: 0 -2px 0 #ffffff26;
-}
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip { display: grid; grid-template-columns: 24px minmax(0, 1fr) 20px; gap: 6px; height: 48px; min-height: 48px; margin: 0; padding: 6px 8px; transform: none; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__edit { padding: 0; background: none; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text { overflow: hidden; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text :is(b, small) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text b { font-size: 13px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__text small { font-size: 10px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-wchip__icon { width: 28px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-lchip__av { width: 24px; height: 28px; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { --bg: var(--a); --fill: #fff; --fill-ink: var(--a-ink); height: auto; min-height: 64px; margin: 0; padding: 10px 16px; font-size: 23px; color: var(--a-ink); transform: none; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-btn--start .iw-btn__sub { font-size: 12px; white-space: normal; line-height: 1.4; }
-:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-start__map { display: inline; }
 
 /* Compact cards expose both choices sooner and keep the touch target still
    while focused. The existing artwork, descriptions and selection stay live. */
@@ -624,19 +590,8 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow [data-stat-label]::before { content: attr(data-stat-label); font: 700 10px/1.3 'Rubik', 'IW JP Body', sans-serif; color: var(--muted); }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-prow__turf small { display: none; }
 }
-@media (min-width: 701px) {
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .s3-setup-scroll { grid-template-columns: minmax(240px, 1fr) minmax(0, 1fr); gap: 20px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left { display: flex; grid-column: 1; grid-row: 1; gap: 12px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__hero { grid-column: 2; grid-row: 1; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.3fr); }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { grid-column: 3; min-height: 56px; }
-}
 @media (max-height: 500px) {
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow { gap: 8px; padding-block: calc(var(--sat) + 8px) calc(var(--sab) + 10px); }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-head__title { font-size: 22px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.5fr); gap: 8px; padding: 8px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { grid-column: 3; min-height: 56px; font-size: 20px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__art { height: 80px; }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__btns > .iw-btn--primary { grid-column: auto; font-size: 18px; }
@@ -671,38 +626,6 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-chip { font-size: 9px; padding: 3px 4px; white-space: nowrap; }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode__go { display: none; }
 
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .s3-setup-scroll {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(142px, .95fr); grid-template-rows: minmax(0, 1fr);
-    align-content: stretch; gap: 10px; padding: 4px; overflow: hidden;
-  }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left { display: flex; grid-column: 1; grid-row: 1; flex-direction: column; min-height: 0; gap: 6px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__left > .iw-seclabel { font-size: 11px; flex: none; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list.is-many { flex: 1 1 0; min-height: 0; max-height: none; padding: 4px; gap: 6px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list .iw-ticket { height: 52px; min-height: 52px; border-radius: 10px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list .iw-ticket__num { left: 6px; width: 22px; height: 22px; font-size: 11px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__list .iw-ticket__name { left: 34px; right: 8px; font-size: 12px; line-height: 1.3; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ticket__time { display: none; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__hero { display: grid; grid-column: 2; grid-row: 1; grid-template-rows: minmax(64px, 1fr) auto; min-height: 0; gap: 6px; overflow: hidden; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__frame { grid-column: 1; grid-row: 1; height: 100%; min-height: 64px; aspect-ratio: auto; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__caption { position: relative; grid-column: 1; grid-row: 1; align-self: end; inset: auto; z-index: 2; margin: 0; padding: 4px; gap: 0; background: linear-gradient(transparent, #15121ce6); }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__tape { transform: none; padding: 4px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__name { font-size: 13px; line-height: 1.3; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow :is(.iw-ss__blurb, .iw-ss__layout, .iw-ss__bosstag, .iw-ss__splat, .iw-ss__drips, .iw-ss__timetext) { display: none; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__count { top: 5px; left: 5px; padding: 4px; font-size: 9px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__count b { font-size: 11px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__time { grid-column: 1; grid-row: 2; margin: 0; padding: 4px; gap: 4px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__timehead { font-size: 10px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-daytgl { height: 44px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-daytgl__opt { font-size: 13px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match { grid-column: 3; grid-row: 1; min-height: 0; margin: 0; padding: 5px; gap: 4px; overflow: auto; touch-action: pan-y; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match .iw-setrow { gap: 4px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-setrow__label { font-size: 11px; line-height: 1.2; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__match .iw-seg__opt { min-width: 0; min-height: 44px; padding: 4px 2px; font-size: 12px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow :is(.iw-pips, .iw-setup__desc) { display: none; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot { grid-template-columns: minmax(0, .9fr) minmax(0, .9fr) minmax(0, 1.2fr); gap: 8px; padding: 6px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-ss__foot .iw-btn--start { grid-column: 3; min-height: 52px; height: 52px; padding: 4px 10px; font-size: 19px; gap: 6px; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow .iw-btn--start .iw-btn__sub { max-width: none; white-space: nowrap; margin-top: 2px; font-size: 11px; line-height: 1.2; }
-  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.has-mobile-flow :is(.iw-start__map, .iw-start__chev, .iw-start__ready) { display: none; }
 
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .s3-results-scroll { padding: 0 4px 12px; }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results.has-mobile-flow .iw-res__head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 6px; }
@@ -753,6 +676,109 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 }
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 700px) {
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode .iw-chip:nth-child(n+3) { display: none; }
+}
+/* Stage destination picker. Artwork and the selected name lead; match options
+   are revealed deliberately instead of occupying a third permanent column. */
+.s3-stage-settings-store { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select {
+  grid-template-rows: 44px minmax(0, 1fr) 56px; gap: 10px;
+  padding: calc(var(--sat) + 8px) calc(var(--sar) + 14px) calc(var(--sab) + 12px) calc(var(--sal) + 14px);
+  background: linear-gradient(145deg, #142131, #0a101d 70%); overflow: hidden;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select > :is(.iw-ss__bg, .iw-ss__scrim) { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-in { animation: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select > .iw-head { min-height: 44px; margin: 0; gap: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-head__title { font-size: 16px; line-height: 1.2; font-weight: 800; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-head__blob { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-head__sub { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-setup-scroll {
+  grid-template-columns: minmax(0, 1fr) clamp(184px, 31vw, 300px); grid-template-rows: minmax(0, 1fr);
+  align-content: stretch; gap: 16px; padding: 0; min-height: 0; overflow: hidden;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__hero {
+  position: relative; inset: auto; grid-column: 1; grid-row: 1; display: block; min-width: 0; min-height: 0;
+  margin: 0; padding: 0; overflow: hidden; border-radius: 18px; background: #223447;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__hero .iw-ss__frame {
+  position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; aspect-ratio: auto;
+  border: 0; border-radius: 18px; box-shadow: none; transform: none;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__hero .iw-ss__vig { background: linear-gradient(180deg, #08111c08 30%, #08111c66 60%, #08111cf5); box-shadow: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__hero .iw-ss__caption {
+  position: absolute; inset: auto 18px 16px; display: flex; align-items: flex-start; gap: 5px;
+  margin: 0; padding: 0; background: none; pointer-events: none;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__tape { margin: 0; padding: 0; max-width: 100%; background: none; transform: none; clip-path: none; box-shadow: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__name { font-size: clamp(22px, 3.2vw, 34px); font-weight: 800; line-height: 1.15; letter-spacing: 0; text-shadow: 0 2px 12px #0008; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__blurb { display: block; max-width: 100%; padding: 0; font-size: 12px; line-height: 1.4; color: #dce6ee; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select :is(.iw-ss__splat, .iw-ss__drips, .iw-ss__layout, .iw-ss__bosstag, .iw-ss__glare, .iw-ss__stars) { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__time {
+  position: absolute; inset: 12px auto auto 12px; z-index: 3; width: 142px; margin: 0; padding: 0;
+  background: none; box-shadow: none; border: 0; transform: none;
+}
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select :is(.iw-ss__timehead, .iw-ss__timetext) { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-daytgl { height: 48px; width: 142px; border: 1px solid #ffffff38; border-radius: 12px; box-shadow: 0 4px 18px #0002; background: #0c1728e8; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select :is(.iw-daytgl__sky, .iw-daytgl__thumb) { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-daytgl__opt { top: 2px; bottom: 2px; width: calc(50% - 4px); height: auto; min-height: 44px; padding: 0; border-radius: 8px; font-size: 12px; color: #d6e0ea; letter-spacing: 0; -webkit-text-stroke: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-daytgl__opt.is-day { left: 4px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-daytgl__opt.is-dusk { right: 4px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-daytgl__opt.is-on { color: #111a24; background: #ffad45; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__left { position: relative; inset: auto; grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; width: auto; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__left > .iw-seclabel { flex: none; display: flex; align-items: center; gap: 6px; min-height: 20px; margin: 0; font-size: 12px; letter-spacing: .06em; color: #9fb0c2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__count { position: static; margin-left: auto; padding: 0; background: none; box-shadow: none; font-size: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__count b { font-size: 12px; color: #ffad45; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__count em { font-size: 11px; color: #9fb0c2; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__list.is-many { flex: 1 1 0; min-height: 0; max-height: none; margin: 0; padding: 2px 6px 6px 2px; gap: 8px; background: none; border-radius: 0; box-shadow: none; mask-image: none; -webkit-mask-image: none; scrollbar-width: thin; scrollbar-color: #526273 transparent; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__list.is-many .iw-ticket { min-height: 58px; height: 58px; margin: 0; padding: 0; border-radius: 11px; background: #ffffff05; border: 1px solid #ffffff0b; box-shadow: none; transform: none; translate: none; scale: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__list.is-many .iw-ticket.is-sel { background: #ff9c2420; border-color: #ffad45; box-shadow: inset 3px 0 #ffad45; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__list.is-many .iw-ticket.is-focus { transform: none; scale: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ticket::after { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ticket__art { inset: 6px auto 6px 9px; width: 54px; border-radius: 6px; overflow: hidden; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ticket__shade { background: linear-gradient(90deg, transparent, #0c14252e); }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select :is(.iw-ticket__num, .iw-ticket__time, .iw-ticket__check, .iw-ticket__ink) { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__list.is-many .iw-ticket__name { left: 74px; right: 9px; font-size: 13px; font-weight: 700; line-height: 1.35; text-shadow: none; white-space: normal; -webkit-text-stroke: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot { display: grid; position: relative; inset: auto; grid-column: 1; grid-row: 3; grid-template-columns: auto auto minmax(0, 1fr) 180px; align-items: center; gap: 12px; margin: 0; padding: 8px 0 0; border-radius: 0; border-top: 1px solid #ffffff16; background: none; box-shadow: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip { display: flex; gap: 8px; width: auto; height: 48px; min-height: 48px; margin: 0; padding: 4px 6px; border-radius: 9px; background: none; box-shadow: none; transform: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip__text { gap: 4px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip__text small { font-size: 10px; letter-spacing: .04em; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip__text b { max-width: 128px; font-size: 12px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip__edit { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .s3-stage-options-btn { height: 48px; min-height: 48px; min-width: 0; padding: 5px 8px; gap: 8px; font-size: 13px; background: none; color: #e4ecf4; box-shadow: none; transform: none; scale: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-options-btn .iw-btn__sub { margin-top: 4px; font-size: 11px; color: #9fb0c2; white-space: nowrap; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-options-btn .iw-btn__icon { width: 20px; height: 20px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-btn--start { grid-column: 4; width: 100%; height: 48px; min-height: 48px; padding: 8px 12px; gap: 10px; border-radius: 12px; font-size: 19px; background: #ff9b28; color: #101a25; box-shadow: inset 0 1px #ffd694, 0 5px 16px #ff8b151f; transform: none; scale: 1; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-btn--start :is(.iw-btn__sub, .iw-start__charge, .iw-start__chev, .iw-start__ready) { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-btn--start .iw-btn__label { font-weight: 800; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings { position: absolute; inset: 0; padding: 12px; background: #050a13bd; backdrop-filter: none; -webkit-backdrop-filter: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-modal__card { width: min(540px, calc(100vw - var(--sal) - var(--sar) - 40px)); max-height: calc(100dvh - var(--sat) - var(--sab) - 24px); overflow: auto; padding: 20px; border-radius: 18px; background: linear-gradient(135deg, #1a2b40, #131d2e); box-shadow: 0 24px 80px #0008, 0 0 0 1px #ffffff26; rotate: 0deg; transform: none; animation: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-modal__splat { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-modal__title { margin: 0 0 16px; font-size: 22px; line-height: 1.2; text-align: left; text-shadow: none; -webkit-text-stroke: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-ss__match { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 0; padding: 0; overflow: visible; background: none; box-shadow: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-ss__match::before { display: none; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-setrow { align-self: start; gap: 8px; padding: 0; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-setrow__label { font-size: 13px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-setup__desc { display: block; grid-column: 1 / -1; grid-row: 2; min-height: 0; margin: 0; padding: 0; font-size: 12px; line-height: 1.5; text-align: left; color: #b9c8d7; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-pips { display: inline-flex; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-seg { border-radius: 10px; background: #0a1220; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-seg__opt { min-height: 44px; padding: 6px; font-size: 14px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-modal__btns { justify-content: flex-end; margin-top: 16px; }
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-stage-settings .iw-modal__btns .iw-btn { width: 140px; height: 44px; min-height: 44px; padding: 8px 14px; justify-content: center; border-radius: 10px; background: #ff9b28; color: #101a25; font-size: 17px; transform: none; scale: 1; }
+@media (max-width: 700px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select { gap: 8px; padding-inline: calc(var(--sal) + 12px) calc(var(--sar) + 12px); }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .s3-setup-scroll { grid-template-columns: minmax(0, 1fr) 184px; gap: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot { grid-template-columns: 44px 44px minmax(0, 1fr) 160px; gap: 10px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip { padding: 0; gap: 0; justify-content: center; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__foot .iw-wchip__text { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__name { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .s3-stage-settings, .s3-stage-settings .iw-modal__card { animation: none; }
+}
+@media (max-height: 300px) {
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select { gap: 6px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__blurb { display: none; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__caption { bottom: 12px; }
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-setup.s3-stage-select .iw-ss__time { top: 8px; }
 }
 /* the key hints sit top-right on results: at the bottom they covered the end of the action row */
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(var(--u) * 2.2 + var(--sat)); bottom: auto; }
