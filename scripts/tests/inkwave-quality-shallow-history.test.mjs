@@ -15,7 +15,7 @@ test('real depth-one checkout fetches only the immutable base and keeps docs/gam
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('CLI fetch failures and zero-before publish relevant true with bound endpoint summary',()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'quality-cli-'));try{git(dir,['init']);const output=path.join(dir,'output'),summary=path.join(dir,'summary');execFileSync(process.execPath,[new URL('../inkwave-quality-scope.mjs',import.meta.url).pathname,'--fetch-base'],{cwd:dir,env:{...process.env,QUALITY_BASE_SHA:'0'.repeat(40),QUALITY_HEAD_SHA:b,GITHUB_OUTPUT:output,GITHUB_STEP_SUMMARY:summary}});assert.equal(fs.readFileSync(output,'utf8'),'relevant=true\n');assert.match(fs.readFileSync(summary,'utf8'),/base=0+ head=b+; relevant=true/);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'quality-cli-'));try{git(dir,['init']);const output=path.join(dir,'output'),summary=path.join(dir,'summary');execFileSync(process.execPath,[new URL('../inkwave-quality-scope.mjs',import.meta.url).pathname,'--fetch-base'],{cwd:dir,env:{...process.env,QUALITY_BASE_SHA:'0'.repeat(40),QUALITY_HEAD_SHA:b,GITHUB_OUTPUT:output,GITHUB_STEP_SUMMARY:summary}});assert.equal(fs.readFileSync(output,'utf8'),'relevant=true\nbuild_required=true\n');assert.match(fs.readFileSync(summary,'utf8'),/base=0+ head=b+; relevant=true/);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 
 test('partial-clone availability checks cannot perform an implicit unbounded lazy fetch',()=>{
