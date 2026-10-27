@@ -1,0 +1,14 @@
+{
+  "fixtureCode": "e6fb91faf9c3e491c6589943d8d98c8b1311afa1",
+  "compiledModules": 395,
+  "emittedRuntimeModules": 394,
+  "outsideSiteIdentifiers": [
+    "/workspace/actions-held-fixture-review/fixture.mjs"
+  ],
+  "registryInspection": [
+    {
+      "prefixSha256": "43c12abfaf28598ef25ca2fff36e935bbce9eab7c091f1092edc5659d097c5c6",
+      "suffix": "\nexport { ei as catalogRollerSwing };\n"
+    }
+  ]
+}
