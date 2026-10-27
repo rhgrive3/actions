@@ -1,0 +1,353 @@
+[
+  {
+    "id": "s3-brush-mini",
+    "rows": [
+      {
+        "label": "settled near",
+        "position": [
+          0,
+          0,
+          34.04800000000006
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.016480173822654265,
+        "staticFarClearance": 0.06734262940148195
+      },
+      {
+        "label": "far tick 1",
+        "position": [
+          0,
+          0,
+          34.24600000000006
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.016021956211237698,
+        "staticFarClearance": 0.06683498955532585
+      },
+      {
+        "label": "far tick 2",
+        "position": [
+          0,
+          0,
+          34.44400000000006
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.03348914016263449,
+        "staticFarClearance": 0.015510679569235686
+      },
+      {
+        "label": "far tick 12",
+        "position": [
+          0,
+          0,
+          36.42400000000006
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.0337175781408679,
+        "staticFarClearance": 0.015546778959330099
+      },
+      {
+        "label": "near tick 1",
+        "position": [
+          0,
+          0,
+          36.622000000000064
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.03332503210439308,
+        "staticFarClearance": 0.015919116308227732
+      },
+      {
+        "label": "near tick 2",
+        "position": [
+          0,
+          0,
+          36.820000000000064
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.016163370590640158,
+        "staticFarClearance": 0.06712929592609329
+      },
+      {
+        "label": "near tick 12",
+        "position": [
+          0,
+          0,
+          38.80000000000007
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.013786935806237244,
+        "staticFarClearance": 0.0647650428541785
+      }
+    ]
+  },
+  {
+    "id": "s3-brush-normal",
+    "rows": [
+      {
+        "label": "settled near",
+        "position": [
+          0,
+          0,
+          22.398000000000042
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.016310680419202694,
+        "staticFarClearance": 0.07701754852095222
+      },
+      {
+        "label": "far tick 1",
+        "position": [
+          0,
+          0,
+          22.530000000000044
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.01638779748817515,
+        "staticFarClearance": 0.07704665311475045
+      },
+      {
+        "label": "far tick 2",
+        "position": [
+          0,
+          0,
+          22.662000000000045
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.04212338662281734,
+        "staticFarClearance": 0.01623246163936476
+      },
+      {
+        "label": "far tick 12",
+        "position": [
+          0,
+          0,
+          23.98200000000006
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.04393927397816089,
+        "staticFarClearance": 0.014599362191347942
+      },
+      {
+        "label": "near tick 1",
+        "position": [
+          0,
+          0,
+          24.11400000000006
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.043419654041137457,
+        "staticFarClearance": 0.015134453092539024
+      },
+      {
+        "label": "near tick 2",
+        "position": [
+          0,
+          0,
+          24.246000000000063
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.015602597084383552,
+        "staticFarClearance": 0.07639283343922199
+      },
+      {
+        "label": "near tick 12",
+        "position": [
+          0,
+          0,
+          25.566000000000077
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.013590291009180577,
+        "staticFarClearance": 0.07425375475477802
+      }
+    ]
+  },
+  {
+    "id": "s3-brush-heavy",
+    "rows": [
+      {
+        "label": "settled near",
+        "position": [
+          0,
+          0,
+          26.23399999999997
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.1599999999999987,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.013741847353966052,
+        "staticFarClearance": 0.05393980982203572
+      },
+      {
+        "label": "far tick 1",
+        "position": [
+          0,
+          0,
+          26.41399999999997
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.1599999999999987,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.013651469758374113,
+        "staticFarClearance": 0.053888647301643444
+      },
+      {
+        "label": "far tick 2",
+        "position": [
+          0,
+          0,
+          26.59399999999997
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.1599999999999987,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.02530408142309115,
+        "staticFarClearance": 0.013721107305538549
+      },
+      {
+        "label": "far tick 12",
+        "position": [
+          0,
+          0,
+          28.393999999999966
+        ],
+        "near": false,
+        "bodyFarVisible": true,
+        "headBend": 0.1599999999999987,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.023060271912166946,
+        "staticFarClearance": 0.01586372654487289
+      },
+      {
+        "label": "near tick 1",
+        "position": [
+          0,
+          0,
+          28.573999999999966
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999903,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": -0.023619921182810505,
+        "staticFarClearance": 0.015276139325169247
+      },
+      {
+        "label": "near tick 2",
+        "position": [
+          0,
+          0,
+          28.753999999999966
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999928,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.014567686822145404,
+        "staticFarClearance": 0.05471340428598703
+      },
+      {
+        "label": "near tick 12",
+        "position": [
+          0,
+          0,
+          30.553999999999963
+        ],
+        "near": true,
+        "bodyFarVisible": false,
+        "headBend": 0.15999999999999995,
+        "sourceMotion": "ready",
+        "grounded": true,
+        "rolling": true,
+        "nearPartClearance": 0.01602114717543557,
+        "staticFarClearance": 0.056377502760663445
+      }
+    ]
+  }
+]

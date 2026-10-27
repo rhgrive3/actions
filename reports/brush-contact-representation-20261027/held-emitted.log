@@ -1,0 +1,15 @@
+INKWAVE built fixture /tmp/inkwave-brush-visible-representation-20261027 contentHash=60ca76b3a8f82583751cd1e73be5940649f510752e18de885aa3ea5210a3b8ca
+(node:16356) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all five Rollers and three Brushes retain the lowered pose through jumps and downhill air frames at 30/60/120 Hz (24922.465603ms)
+✔ a single downhill contact gap retains the hold, but release, cancellation and reset end it; airborne cold starts stay rejected (1044.988586ms)
+✔ catalogue vertical swings use admitted mode and original interval when the first pose follows a landing (562.578499ms)
+✔ remote held-down rolling poses do not enable the ground-contact loop in air (157.544332ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28082.155205

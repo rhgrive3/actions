@@ -1,0 +1,17 @@
+{
+  "README.md": "0cbc699758294d57e32ac03ab9eb42e8bd841b79f0e193cfde4b5416dcf93b43",
+  "artifact-integrity.json": "c83bd8b36c21d0abefbeac5ccdbe76bb93099b7de628215b68610bebb5eece13",
+  "baseline-negative.log": "f4b029c8497baa6f1e35d32dd7ed5677abfca7bf0f9f574f036f98cf990acb88",
+  "build-composed.log": "73076a7fdffd522cd9416fe708dbec8a3e89fab989a27529d8b794c0782ef225",
+  "composition-equivalence.json": "956b1d5c2e84860e6fbf5741b374c139e0754187b006e93861722bdd692eb557",
+  "cost-count.json": "e71f2e4718ee19732533ffdd87c528989683291e11b049c141999260951e6fa7",
+  "current-state-diagnostic.json": "d2642826bd9a328416722d07d148ded61ec06b46bff02bc9cc01e5019132b577",
+  "current-state-negative.log": "e2a203b2cf5f206a7e43f81776dcb4ebf876b91071c36d0883e166754a2225a3",
+  "focused-emitted-transitions.json": "eefad77b89ab23bb5359d1fd029cdfc555d6c8754413aa8814220386958b3b45",
+  "focused-emitted.log": "642fcf22546d52ee73db9cf3a2545e8e71478ae279a2b1540aa1ca553902a1ce",
+  "focused-source-transitions.json": "207da4d125636952dea5caf3ad552a30ab2c50d33d4d722dba126894b9efc0a3",
+  "focused-source.log": "762eb3a33ffe13902b4f9703e22ce71493575dd6338ce2245aae61b058786d9e",
+  "held-emitted-provenance-summary.json": "5da60c87426a8cc9f0ae76fc73454d0e78548f63b7087b6435c2127cab5817b7",
+  "held-emitted.log": "efd5c8aa7cec413cd3d56efd97635fbca4327d18d3073a3320c916726050d2dd",
+  "validation.json": "7ebeb0f54344fd52ae1e356e4349fcd954fc5bde0e52997ae301299697db3613"
+}

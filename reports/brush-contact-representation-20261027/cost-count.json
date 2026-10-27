@@ -1,0 +1,35 @@
+[
+  {
+    "id": "s3-brush-mini",
+    "positionVertices": [
+      573,
+      313
+    ],
+    "vertexDotProducts": 886,
+    "positionXReadsIncludingChosenPoint": 888,
+    "partWorldMatrixUpdates": 2,
+    "localRaycasts": 1
+  },
+  {
+    "id": "s3-brush-normal",
+    "positionVertices": [
+      1928,
+      192
+    ],
+    "vertexDotProducts": 2120,
+    "positionXReadsIncludingChosenPoint": 2122,
+    "partWorldMatrixUpdates": 2,
+    "localRaycasts": 1
+  },
+  {
+    "id": "s3-brush-heavy",
+    "positionVertices": [
+      1062,
+      372
+    ],
+    "vertexDotProducts": 1434,
+    "positionXReadsIncludingChosenPoint": 1436,
+    "partWorldMatrixUpdates": 2,
+    "localRaycasts": 1
+  }
+]
