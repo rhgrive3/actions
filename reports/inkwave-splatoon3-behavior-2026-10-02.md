@@ -6539,3 +6539,10 @@ source13件＋実弾一致／寿命15件、最終emitted11件、通常build・qu
 ## 2026-10-27 UTC: バグ修正PRへのupstream統合
 
 main `f89199ef` をバグbatch `b7f9e360` へ統合し、報告末尾の競合だけを両側の記録を保持して解決した。[統合記録](inkwave-batch-integration-20261026/upstream-f89199ef/README.md)には原典sweep出力所有・実Tower revision／guide cache・HUD／Dualies通信・本番buildとranked proofのfocused検証、古いremote音声predicateを渡すテストfixtureだけの修正、および不適切なemitted負例呼出しの失敗を残す。source134成功／asset依存4skip、対応emitted29成功／asset依存3skip、1489入力と2194生成物のdigest不一致0。新runtimeで通常入力・音声実再生・本家pixel比較を追加認定するものではなく、Hissen主弾サイズ／床滴形状と本家HUD等の未確認は継続する。最終headの自動CI完了とmainへのmergeは別途必要。
+
+
+## 2026-10-27 Brush rolling weapon transform and downhill contact
+
+`4ce9768e` の通常操作で、Brushが塗り進み中（runner/anim.rolling、wRoll≈1）でも武器先端が床から浮く表示を確認した。描画間の複数更新が古い `weapon.off.matrixWorld` を繰り返し床補正へ戻すため、保持角が上下していた。武器の既存変換キャッシュを読む前に同期し、先端位置の床高を実際の接地面法線から求める。形状、キャラクターモデル／リグ、ボーン値、移動・塗り・衝突規則は変更しない。
+
+読み込み済み本番Actor/Characterによる6更新／描画の負例・回帰、保持／空中／着地の互換確認、および通常Rリセット後の未塗装坂での生成版ブラウザ証跡は[専用記録](brush-downhill-contact-20261027/README.md)に残す。既存の先端高さ・形状はINKWAVEの校正値であり、新たな原作フレーム値や形状一致は主張しない。
