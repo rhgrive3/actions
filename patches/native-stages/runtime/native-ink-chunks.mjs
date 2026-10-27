@@ -85,7 +85,7 @@ export class NativeInkMesh extends THREE.Mesh {
       tiles.push(tile); starts.push(start * 3); ends.push(end * 3);
       start = end;
     }
-    this._runTiles = Uint32Array.from(tiles);
+    this._runTiles = this._triangleTile.constructor.from(tiles);
     this._runStarts = Uint32Array.from(starts);
     this._runEnds = Uint32Array.from(ends);
     // Many tiny interleaved runs make subarray construction more costly than
