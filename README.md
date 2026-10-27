@@ -27,12 +27,13 @@
 | [`tools/`](tools/) | キャラクター制作・アセット QA・音声関連の補助ツール |
 | [`docs/`](docs/)、[`reports/`](reports/) | 開発・運用手順と、変更ごとの調査結果・証跡 |
 | [`remaining/`](remaining/) | 各作業が残した未完了範囲の記録。現在の完了状況は関連 PR・後続レポートと照合する |
+| [`.github/workflow-archive/`](.github/workflow-archive/) | 終了した単発比較・診断。現役の GitHub Actions 一覧から分離して保存 |
 | [`.github/workflows/`](.github/workflows/) | INKWAVE の検証・Pages 配信、汎用 worker、Hex 計測 |
 | [`lanes/`](lanes/)、[`bootstrap/`](bootstrap/) | Hex 計測 lane の契約と専用 worker リポジトリの準備 |
 
 ## INKWAVE の最初の確認
 
-Node.js 20.19 以上の 20.x、または 22.12 以上を使用し（CI は Node.js 22）、、リポジトリのルートで実行します。ルートの `package.json` がビルド・検証コマンドとビルド用ツールのバージョンを管理します。以下は CI と同じバージョンを使う手順です。
+Node.js 20.19 以上の 20.x、または 22.12 以上を使用し（CI は Node.js 22）、リポジトリのルートで実行します。ルートの `package.json` がビルド・検証コマンドとビルド用ツールのバージョンを管理します。以下は CI と同じバージョンを使う手順です。
 
 ```sh
 npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
