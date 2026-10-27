@@ -7,7 +7,11 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   note('native-menu-ready');
   await click('.iw-main [data-id="play"]');
   await waitForPhase(()=>window.__inkwave?.menus?.current==='mode','native mode menu');
-  await click('.iw-modesel [data-id="mode-turf"]');
+  // The neighboring Range button can cover Turf's center under Chromium's
+  // native mode-selection layout. Keyboard activation is a trusted browser
+  // button gesture, not a direct game/menu handler call or a forced click.
+  await page.locator('.iw-modesel [data-id="mode-turf"]').press('Enter',{timeout:Math.max(1,remainingMs())});
+  note('keyboard-activate',{selector:'.iw-modesel [data-id="mode-turf"]',key:'Enter'});
   await waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu');
   await click('.iw-setup [data-id="map-tidewater"]');
   const config=await page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};});

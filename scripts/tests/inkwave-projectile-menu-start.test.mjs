@@ -5,16 +5,18 @@ import vm from 'node:vm';
 import {startProjectileThroughMenu} from '../lib/inkwave-projectile-menu-start.mjs';
 
 function fakePage(overrides={}){
-  const clicks=[],phases=[],events=[];
+  const clicks=[],keys=[],phases=[],events=[];
   const g={debug:{},bootMs:94000,match:{attract:true},profile:{weapon:'shooter'},menus:{current:'main',_scr:{name:'main'},_setup:{mode:'turf',mapId:'tidewater',difficulty:'normal',duration:180,...overrides},_stageTime:()=> 'day'}};
   const context={window:{__inkwave:g,__G:{mode:'menu'}}};
   const evaluate=fn=>vm.runInNewContext('('+fn.toString()+')()',context);
-  const page={evaluate:async fn=>evaluate(fn),locator:selector=>({click:async options=>{assert.equal(options.timeout,1234);clicks.push(selector);if(selector.includes('"play"'))g.menus.current='mode';else if(selector.includes('mode-turf'))g.menus.current='setup';else if(selector.includes('"start"'))g.menus.current=null;}})};
-  return {page,clicks,phases,events,options:{receipt:events,remainingMs:()=>1234,waitForPhase:async(fn,label)=>{phases.push(label);assert.equal(evaluate(fn),true);}}};
+  const page={evaluate:async fn=>evaluate(fn),locator:selector=>({click:async options=>{assert.equal(options.timeout,1234);clicks.push(selector);if(selector.includes('"play"'))g.menus.current='mode';else if(selector.includes('"start"'))g.menus.current=null;},press:async (key,options)=>{assert.equal(options.timeout,1234);assert.equal(key,'Enter');keys.push(selector);if(selector.includes('mode-turf'))g.menus.current='setup';}})};
+  return {page,clicks,keys,phases,events,options:{receipt:events,remainingMs:()=>1234,waitForPhase:async(fn,label)=>{phases.push(label);assert.equal(evaluate(fn),true);}}};
 }
 test('normal menu navigation issues one real START after verifying exact scenario',async()=>{
   const h=fakePage();await startProjectileThroughMenu(h.page,h.options);
-  assert.deepEqual(h.clicks,['.iw-main [data-id="play"]','.iw-modesel [data-id="mode-turf"]','.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']);
+  assert.deepEqual(h.clicks,['.iw-main [data-id="play"]','.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']);
+  assert.deepEqual(h.keys,['.iw-modesel [data-id="mode-turf"]']);
+  assert.equal(h.events.filter(e=>e.event==='keyboard-activate').length,1);
   assert.equal(h.events.at(-1).event,'native-start-clicked');assert.equal(h.events.at(-1).attempt,1);
   assert.equal(h.events.find(e=>e.event==='native-setup-verified').config.map,'tidewater');
 });
@@ -40,4 +42,10 @@ test('harness keeps one admission budget and strict predicate, with retained fai
   assert.ok(!s.includes('&autostart=180'));assert.equal((s.match(/const deadline = Date.now\(\) \+ NATIVE_BOOT_TIMEOUT_MS/g)||[]).length,1);
   assert.ok(s.includes('const NATIVE_BOOT_TIMEOUT_MS = 180000;'));
   for(const bit of ["G?.mode === 'match'","m === G.match","!m.attract && m.local?.isLocal && m.controller && g.debug","G.projectiles && G.renderer",'prior failure retained separately',"await snapshotAudio('native-startup-timeout')"])assert.ok(s.includes(bit),bit);
+});
+
+test('mode selection uses native keyboard activation instead of occluded pointer forcing or programmatic handler dispatch',()=>{
+ const src=fs.readFileSync(new URL('../lib/inkwave-projectile-menu-start.mjs',import.meta.url),'utf8');
+ assert.match(src,/\.press\('Enter'/);
+ assert.doesNotMatch(src,/force:\s*true|dispatchEvent\(|\.evaluate\([^)]*\.click/);
 });
