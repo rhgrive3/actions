@@ -6588,3 +6588,7 @@ Brush切替144点は1.35745〜1.64592cm、body tier固定heroで測定した。�
 `90706e3` の追加9px接触円はShotGuideとは別に全飛翔の最初の地形接触を読むため、水平の長レーンで後の重力落下・床塗り位置を照準の補助円として出す。候補では全飛翔API／物理／塗りを維持し、HUDだけ既存の銃口→狙い方向の障害物queryを読む。原典のfield衝突半径を使い、実飛翔の最初の接触までの前方到達範囲でqueryを束縛する。面ID一致、8F等の時刻、固定画面座標の条件は追加しない。この幾何所有者の選び方は局所再構成で、本家UIアルゴリズムの抽出・精密一致ではない。
 
 source26件／最適化emitted14件が成功し、同じ9Fでも床落下の追加cueは消え、実壁・両側graze・下向き床・Towerの出入りと既存cache不変条件を維持する。HUD障害物点と曲がる実弾の着弾点は別に検証する。詳細は[所有者分離候補](shooter-aim-obstruction-owner-20261027/README.md)。通常sandbox有効ChromiumがSUID helper不整合で起動前に終了したため、この候補の通常入力・実画素・本家位置比較はまだ未受入。設定変更やsandbox無効化での再試行は行っていない。Nintendo画像は公開差分へ含めない。
+
+### 2026-10-27 Shooter obstruction owner — bounded native acceptance
+
+Independent source/emitted controls plus ordinary shipping Range touch input support the HUD ownership correction in9a4516bc: an open horizontal lane's eventual11F floor landing remains available to physical prediction while its extra obstruction cue clears; downward1F floor and actual near-wall2F cues remain. Before/candidate raw screenshot paths/hashes, trusted gesture receipts, unchanged-runtime identity and limits are in `reports/ci907-reconciled-native-entry-20261027/`. Candidate source code is unchanged by this acceptance record. The attempted farther wall was actually floor-first and is not a native wall pass; independent9F wall/Tower/graze controls are separate evidence. Main gray aim-anchor calibration, exact retail cue coordinates/timing and complete visual parity remain unverified. No age cutoff, shot trajectory or paint alteration was used to obtain pixels.
