@@ -40,7 +40,14 @@ function benchmarkComposedProductionBuildParity() {
   // Later #1861 queue work avoids intermediate draw-index buffers and keeps
   // every live runtime improvement. The benchmark must not mislabel that
   // separately tested later optimization as a failed historical migration.
-  let lodAfterSrc = replaceOnce(lodCurrentSrc,
+  // This head normalizes float64 centroids once per cluster instead of once
+  // per member. Invert ONLY these two reviewed, algebraically identical
+  // optimization hunks before checking the immutable pre-queue Lod identity.
+  // The final historical SHA still rejects every unrelated source mutation.
+  const priorLodSrc = replaceOnce(replaceOnce(lodCurrentSrc,
+    "  for (let c = 0; c < nc; c++) { const k = 1 / cn[c]; sx[c] *= k; sy[c] *= k; sz[c] *= k; }\n", "", 'queue Lod centroid precompute'),
+    "    const c = vc[i], i3 = i * 3;\n    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c], dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c], dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c], d = dx * dx + dy * dy + dz * dz;", "    const c = vc[i], k = 1 / cn[c], i3 = i * 3;\n    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c] * k, dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c] * k, dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c] * k, d = dx * dx + dy * dy + dz * dz;", 'queue Lod normalized representative');
+  let lodAfterSrc = replaceOnce(priorLodSrc,
     '  let finalIndices = tris, finalCount = nc;',
     '  out.setIndex(nc > 65535 ? new THREE.Uint32BufferAttribute(tris, 1) : new THREE.Uint16BufferAttribute(tris, 1));',
     'historical Lod index allocation');

@@ -24,7 +24,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3",
+  "patches/splatoon3/runtime/roller.mjs": "dc67c95c5e99e398f994fa5c621c56739ee0b73b7686ba1b3395f31bffba0f96",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
@@ -65,7 +65,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     let source = adaptProductionSource(rel, raw);
     if (rel === 'patches/splatoon3/runtime/roller.mjs') {
       source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
-      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+      source=exactFault(source,'const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath || coldIdle ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
     } else {
       source=exactFault(source,'    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||\n','','physical-paint-stick');
     }
