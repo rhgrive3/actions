@@ -139,12 +139,54 @@ test('driver preserves default18 and adds a bounded birth-relative passive route
   const observer=fs.readFileSync(new URL('../lib/inkwave-hissen-capture-observer.mjs',import.meta.url),'utf8');
   assert.doesNotMatch(observer,/(?:\.visible|\.count|\.instanceMatrix|\.pos|\.age)\s*=(?!=)|setMatrixAt|Math\.random|renderer\.render/);
 });
+// Exact append-only report closure, scoped to the existing binding step. This
+// transfers the accepted Wiper addition; it never accepts an arbitrary suffix.
+const catalogReceiptPaths=['catalog/motion-catalog-result.json','brellas/brella-controls-result.json','hissen-main/native-browser.json','wiper-native/wiper-native-result.json'];
+const catalogReceiptLine=paths=>"            'catalog':["+paths.map(p=>"'"+p+"'").join(',')+"],";
+const hissenHeadBinding="          if suite=='catalog': assert reports['hissen-main/native-browser.json']['sourceIdentity']['checkoutSha']==os.environ['SOURCE_SHA']";
+function requireCatalogReceiptRegistration(source){
+  const step='      - name: Bind passing browser evidence to the tested commit';
+  assert.equal(source.split('\n').filter(line=>line===step).length,1,'one existing browser evidence binding step');
+  const start=source.indexOf(step),end=source.indexOf('\n      - ',start+step.length);assert(end>start,'binding step end');
+  const block=source.slice(start,end),open='          checks={',close='          }[suite]';
+  assert.equal(block.split('\n').filter(line=>line===open).length,1,'one report table in binding step');assert.equal(block.split('\n').filter(line=>line===close).length,1,'one suite selection in binding step');
+  const a=block.indexOf(open),b=block.indexOf(close);assert(b>a,'report table order');const table=block.slice(a,b);
+  const expected=catalogReceiptLine(catalogReceiptPaths);
+  assert.equal(table.split('\n').filter(line=>line===expected).length,1,'exact ordered catalog report closure');
+  assert.equal(source.split('\n').filter(line=>line===expected).length,1,'catalog report row cannot be duplicated or relocated');
+  assert.equal((table.match(/^            'catalog':/gm)||[]).length,1,'one catalog suite row');
+  assert.equal(block.split('\n').filter(line=>line===hissenHeadBinding).length,1,'Hissen exact-head binding stays in the admitted step');
+  assert.equal(source.split('\n').filter(line=>line===hissenHeadBinding).length,1,'Hissen head binding cannot be duplicated or relocated');
+}
 test('normal catalog workflow retains old gates and binds additive Hissen report to the automatic exact head',()=>{
   const source=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
   const motion=source.indexOf('      - name: Verify the complete installed motion catalog');
   const next=source.indexOf('      - name: Observe native Hissen main draws at first-birth-relative phases');
   assert(motion>=0&&next>motion);assert.match(source.slice(next,next+450),/if: matrix\.suite == 'catalog'/);
   assert.match(source,/check-inkwave-trislosher-native-matched\.mjs \.built-site\/_site "\$CI_STORAGE\/evidence\/hissen-main" --measure-main/);
-  assert.match(source,/'catalog':\['catalog\/motion-catalog-result\.json','brellas\/brella-controls-result\.json','hissen-main\/native-browser\.json'\]/);
+  requireCatalogReceiptRegistration(source);
   assert.match(source,/reports\['hissen-main\/native-browser\.json'\]\['sourceIdentity'\]\['checkoutSha'\]==os\.environ\['SOURCE_SHA'\]/);
+});
+
+test('catalog report registration rejects omission, duplication, reorder, extras and relocation',()=>{
+  const source=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
+  requireCatalogReceiptRegistration(source);const line=catalogReceiptLine(catalogReceiptPaths);
+  const rows=[];
+  for(let i=0;i<catalogReceiptPaths.length;i++){
+    rows.push(catalogReceiptPaths.filter((_,j)=>j!==i));
+    rows.push([...catalogReceiptPaths.slice(0,i),catalogReceiptPaths[i],...catalogReceiptPaths.slice(i)]);
+  }
+  for(let i=0;i<catalogReceiptPaths.length-1;i++){const row=[...catalogReceiptPaths];[row[i],row[i+1]]=[row[i+1],row[i]];rows.push(row);}
+  rows.push([...catalogReceiptPaths,'unknown/result.json']);
+  for(const row of rows)assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,catalogReceiptLine(row))));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,'')));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,line+'\n'+line)));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,'')+'\n'+line));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,line.replace("'catalog':","'startup':"))));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(hissenHeadBinding,'')));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(hissenHeadBinding,hissenHeadBinding+'\n'+hissenHeadBinding)));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(hissenHeadBinding,'')+'\n'+hissenHeadBinding));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,'#'+line)));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(line,catalogReceiptLine([...catalogReceiptPaths,'unknown/result.json'])+'\n#'+line)));
+  assert.throws(()=>requireCatalogReceiptRegistration(source.replace(hissenHeadBinding,'#'+hissenHeadBinding)));
 });
