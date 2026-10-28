@@ -529,7 +529,8 @@ jobs:
   patch_tests:
     # Default GitHub full-suite behavior unless explicitly offloaded.
     if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    runs-on: ubuntu-latest
+    # Full shard 2 repeatedly received host SIGTERM 143; keep its tests unchanged on Ubuntu 22.04.
+    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false

@@ -286,6 +286,8 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(core.includes('scripts/check-inkwave-patches.mjs --quick'));
   assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7]'));
   assert.ok(shards.includes('max-parallel: 8'));
+  assert.equal(shards.split("    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}").length-1,1);
+  assert.equal((shards.match(/shard: \[0, 1, 2, 3, 4, 5, 6, 7\]/g)||[]).length,1);
   assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
   assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: '2'"));
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
