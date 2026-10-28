@@ -112,7 +112,7 @@ const command='        run: node scripts/check-inkwave-explosher-absolute-geomet
 const mandatory='      - name: Enforce original absolute Explosher geometry guard\n'+command;
 function workflowContract(y){
  assert.equal(y.split(mandatory).length,2,'exact mandatory unskippable absolute step');
- const prior=y.indexOf('readExplosherStagePair(\'preflight\''),guard=y.indexOf(mandatory),next=y.indexOf('      - name: Capture untouched base');
+ const prior=y.indexOf('readExplosherStagePair(\'preflight\''),guard=y.indexOf(mandatory),next=y.indexOf('      - name: Capture admitted inverse baseline stills');
  assert(prior>=0&&prior<guard&&guard<next,'original upstream admission precedes additive guard');
  assert.match(y,/^    timeout-minutes: 45$/m);
  for(const file of ['scripts/check-inkwave-explosher-absolute-geometries.mjs','scripts/tests/inkwave-explosher-absolute-geometries.test.mjs','scripts/ci/inkwave-test-suites.json'])assert(y.includes("      - '"+file+"'\n"),'focused trigger '+file);
@@ -127,7 +127,7 @@ test('workflow conjoins mandatory absolute artifact guard after unchanged native
  assert(suites.verifier.steps.some(s=>s.args.includes('scripts/tests/inkwave-explosher-absolute-geometries.test.mjs')));
 });
 test('workflow negative controls reject omission skip bypass paths missing trigger test or budget widening',()=>{
- for(const [a,b] of [[mandatory,''],[command,'        if: false\n'+command],[command,'        continue-on-error: true\n'+command],[command,command.replace('preflight-after','preflight-before')],[command,command.trimEnd()+' || true\n'],["      - 'scripts/check-inkwave-explosher-absolute-geometries.mjs'\n",''],[' scripts/tests/inkwave-explosher-absolute-geometries.test.mjs\n','\n'],['timeout-minutes: 45','timeout-minutes: 60']]){
+ for(const [a,b] of [[mandatory,''],[command,'        if: false\n'+command],[command,'        continue-on-error: true\n'+command],[command,command.replace('preflight-after','preflight-before')],[command,command.trimEnd()+' || true\n'],["      - 'scripts/check-inkwave-explosher-absolute-geometries.mjs'\n",''],[' scripts/tests/inkwave-explosher-absolute-geometries.test.mjs ',' '],['timeout-minutes: 45','timeout-minutes: 60']]){
   assert(workflow.includes(a),a);assert.throws(()=>workflowContract(workflow.replace(a,b)));
  }
 });

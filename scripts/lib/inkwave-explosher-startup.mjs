@@ -93,6 +93,15 @@ export function installExplosherRandom(trace = false){
  Math.random=random;
  const check=()=>{if(Math.random!==random)throw Error('Diagnostic RNG identity replaced');};
  window.markExplosherRandomBoundary=label=>{check();if(trace){
+  // Each still records its own pair in the captured measurement. Replace only
+  // the completed previous pair before the next probe; keep startup and shot
+  // boundaries intact, and never hide a missing or duplicated probe event.
+  const before=boundaries.filter(x=>x.label==='before-draw-probe').length;
+  const after=boundaries.filter(x=>x.label==='after-draw-probe').length;
+  if(label==='before-draw-probe'){
+   if(!((before===0&&after===0)||(before===1&&after===1)))throw Error('Incomplete previous draw probe');
+   if(before===1)for(let i=boundaries.length-1;i>=0;i--)if(['before-draw-probe','after-draw-probe'].includes(boundaries[i].label))boundaries.splice(i,1);
+  }else if(label==='after-draw-probe'&&(before!==1||after!==0))throw Error('Unpaired draw probe');
   if(boundaries.length>=12)throw Error('Too many RNG diagnostic boundaries');
   const G=window.__G,g=window.__inkwave,ch=G?.local?.character,r=G?.renderer,hooks=g?.fxHooks;
   const nativeState=G&&g?{time:G.time,renderSkipped:!!g._skipRender,
@@ -105,7 +114,7 @@ export function installExplosherRandom(trace = false){
  }};
  window.resetExplosherRandom=(label='reset')=>{check();window.markExplosherRandomBoundary('before-reset:'+label);word=seed;draws=0;resets++;phase=label;callers.clear();overflow=0;};
  window.readExplosherRandom=()=>{check();return snapshot();};
- window.readExplosherRandomDiagnostic=()=>{check();return {enabled:trace,scope:'QA captured alias only; excludes native presentationRandom direct calls; caller stacks are diagnostic, not performance evidence',phase,maxTraceDraws:512,maxCallerGroups:16,overflowDraws:overflow,untracedShotDraws:phase==='shot-input'?Math.max(0,draws-512):null,boundaries:boundaries.map(x=>({...x})),callers:[...callers.values()].map(x=>({...x})),
+ window.readExplosherRandomDiagnostic=()=>{check();return {enabled:trace,scope:'QA captured alias only; excludes native presentationRandom direct calls; caller stacks are diagnostic, not performance evidence',phase,maxTraceDraws:512,maxCallerGroups:16,overflowDraws:overflow,untracedShotDraws:phase==='shot-input'?Math.max(0,draws-512):null,boundaries:boundaries.map(x=>structuredClone(x)),callers:[...callers.values()].map(x=>({...x})),
   bootSampling:{...bootWindow,samples:bootSamples,overflowSamples:bootOverflow,capExcludedSamples:bootCapExcluded,
    unobservedSamples:bootUnobserved,observedSamples:bootSamples-bootUnobserved,
    scope:'Fixed draw-index window sampled every 32 draws; sampled caller counts are not total caller counts. No guarantee of observing the first ambient call. Native state before publication is unobserved.',

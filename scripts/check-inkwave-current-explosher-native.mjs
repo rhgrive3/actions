@@ -3,6 +3,7 @@
 // No source overlays or historical admission. Bind committed build inputs and
 // every emitted artifact before running the actual renderer/weapon path.
 import fs from 'node:fs';
+import {secureExplosherDriver,SECURE_EXPLOSHER_LAUNCH} from './lib/inkwave-explosher-secure-launch.mjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -25,6 +26,7 @@ const once=(s,a,b)=>{assert.equal(s.split(a).length,2,'Native driver anchor '+a)
 const entry=new URL('./lib/inkwave-range-menu-entry.mjs',import.meta.url).href;
 let driver=fs.readFileSync(path.join(root,'scripts/render-inkwave-projectile-shapes.mjs'),'utf8').replace(/^#!.*\n/,'');
 const originalDriverSha256=hash(driver);
+driver=secureExplosherDriver(driver);
 driver="import {enterRangeFromMenu} from "+JSON.stringify(entry)+";\n"+driver;
 driver=once(driver,"from 'playwright'","from "+JSON.stringify(import.meta.resolve('playwright')));
 driver=once(driver,"  await page.goto(base + '/?range&skipTitle');","  await enterRangeFromMenu(page,base);");
@@ -39,4 +41,4 @@ execFileSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inher
 const frames=JSON.parse(fs.readFileSync(path.join(out,'manifest.json')));
 assert.deepEqual(frames.map(f=>[f.label,f.tick,f.view]),[0,3,8].map(t=>['s3-slosher-washtub',t,'behind']));
 for(const f of frames){const png=fs.readFileSync(path.join(out,f.file));assert(png.length>1024,'Empty native capture');f.sha256=hash(png);}
-fs.writeFileSync(path.join(out,'latest-head-receipt.json'),JSON.stringify({expectedHead,tree:git('rev-parse','HEAD^{tree}').toString().trim(),inputHash:build.inputHash,contentHash:build.contentHash,originalDriverSha256,diagnosticDriverSha256:hash(driver),frames,scope:'latest-head native input/weapon/projectile/render smoke; frozen inverse pair remains separately gated; no retail parity claim'},null,2));
+fs.writeFileSync(path.join(out,'candidate-smoke-receipt.json'),JSON.stringify({secureLaunch:SECURE_EXPLOSHER_LAUNCH,secureLaunchHelperSha256:hash(fs.readFileSync(path.join(root,'scripts/lib/inkwave-explosher-secure-launch.mjs'))),harnessHead:expectedHead,harnessTree:git('rev-parse','HEAD^{tree}').toString().trim(),gameSourceHead:process.env.EXPLOSHER_GAME_SOURCE_SHA??null,gameSourceTree:process.env.EXPLOSHER_GAME_SOURCE_TREE??null,inputHash:build.inputHash,contentHash:build.contentHash,originalDriverSha256,diagnosticDriverSha256:hash(driver),frames,scope:'pinned game candidate native input/weapon/projectile/render smoke; frozen inverse pair remains separately gated; no retail parity claim'},null,2));

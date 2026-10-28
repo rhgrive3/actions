@@ -15,3 +15,14 @@ for(const key of ['captureProtocolSha256','sourceShapeSha256','nativeDummy'])tes
 // Synthetic guard regression only: never substitute for actual native evidence.
 test('extra 281-to-295 candidate post-birth allocation still fails the preflight gate',()=>{const[a,b]=lanes();for(const x of [a,b]){const m=x.frames[0].measurement;m.memory.geometries=281;for(const e of m.rngDiagnostic.boundaries)e.nativeState.resources.geometries=281;}const m=b.frames[0].measurement;m.memory.geometries=295;for(const e of m.rngDiagnostic.boundaries)if(e.label==='before-draw-probe'||e.label==='after-draw-probe')e.nativeState.resources.geometries=295;assert.throws(()=>gate('preflight',a.frames,b.frames,a.receipt,b.receipt),/Candidate allocated extra post-birth geometry: 14 > 0/);});
 test('resource diagnostic boundaries and scene provenance are required',()=>{for(const mutate of [m=>delete m.sceneCensus,m=>delete m.sceneSources,m=>delete m.rngDiagnostic,m=>m.rngDiagnostic.boundaries.pop()]){const[a,b]=lanes();mutate(b.frames[0].measurement);assert.throws(()=>gate('preflight',a.frames,b.frames,a.receipt,b.receipt));}});
+test('every still rejects disabled, missing, or duplicated resource boundaries and RNG drift',()=>{
+ for(let i=0;i<18;i++)for(const mutate of [
+  m=>m.rngDiagnostic.enabled=false,
+  m=>{m.rngDiagnostic.boundaries=m.rngDiagnostic.boundaries.filter(x=>x.label!=='after-draw-probe');},
+  m=>m.rngDiagnostic.boundaries.push(structuredClone(m.rngDiagnostic.boundaries.find(x=>x.label==='before-draw-probe'))),
+  m=>m.rng.word++,
+ ]){
+  const[a,b]=lanes('stills');mutate(b.frames[i].measurement);
+  assert.throws(()=>gate('stills',a.frames,b.frames,a.receipt,b.receipt),'frame '+i);
+ }
+});

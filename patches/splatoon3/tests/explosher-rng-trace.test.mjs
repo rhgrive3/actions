@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {installExplosherRandom} from '../../../scripts/lib/inkwave-explosher-startup.mjs';
+import {requireComparableExplosherGeometryGrowth} from '../../../scripts/lib/inkwave-explosher-stage-admission.mjs';
 function isolated(run){const random=Math.random,win=globalThis.window;globalThis.window={};try{run();}finally{Math.random=random;if(win===undefined)delete globalThis.window;else globalThis.window=win;}}
 test('bounded trace does not change same seeded sequence',()=>isolated(()=>{
  installExplosherRandom(false);window.resetExplosherRandom('shot-input');const plain=Array.from({length:600},()=>Math.random()),a=window.readExplosherRandom();
@@ -14,6 +15,40 @@ test('boundary records are owned copies and do not reset the stream',()=>isolate
  const d=window.readExplosherRandomDiagnostic();d.boundaries[0].label='changed';assert.notEqual(window.readExplosherRandomDiagnostic().boundaries[0].label,'changed');
 }));
 test('unexpected replacement remains fail-closed at phase boundary',()=>isolated(()=>{installExplosherRandom(true);Math.random=()=>.5;assert.throws(()=>window.readExplosherRandom());assert.throws(()=>window.markExplosherRandomBoundary('bad'));}));
+
+test('eighteen still snapshots retain one current probe pair and the immutable birth evidence',()=>isolated(()=>{
+ const renderer={info:{memory:{geometries:281,textures:3},render:{frame:0}}};
+ window.__G={renderer};window.__inkwave={};installExplosherRandom(true);
+ window.resetExplosherRandom('shot-input');window.markExplosherRandomBoundary('shot-input-start');window.markExplosherRandomBoundary('native-birth');
+ const states=[];let firstSnapshot;for(let i=0;i<18;i++){
+  renderer.info.render.frame=i;window.markExplosherRandomBoundary('before-draw-probe');window.markExplosherRandomBoundary('after-draw-probe');
+  const d=window.readExplosherRandomDiagnostic();assert.equal(d.enabled,true);
+  for(const label of ['shot-input-start','native-birth','before-draw-probe','after-draw-probe'])assert.equal(d.boundaries.filter(x=>x.label===label).length,1,label);
+  states.push(d);if(i===0)firstSnapshot=JSON.stringify(d);
+ }
+ assert.equal(JSON.stringify(states[0]),firstSnapshot,'later probes cannot mutate earlier frame snapshots');
+ assert.equal(states[0].boundaries.find(x=>x.label==='before-draw-probe').nativeState.resources.renderFrame,0);
+ assert.equal(states[17].boundaries.find(x=>x.label==='before-draw-probe').nativeState.resources.renderFrame,17);
+ assert.equal(states[17].boundaries.find(x=>x.label==='native-birth').nativeState.resources.geometries,281);
+ for(const d of states){
+  const m={rngDiagnostic:d,sceneCensus:{},sceneSources:[],memory:{geometries:281}};
+  assert.deepEqual(requireComparableExplosherGeometryGrowth(m,m,'stills'),{before:{born:281,growth:0},after:{born:281,growth:0}});
+ }
+ states[17].boundaries.find(x=>x.label==='native-birth').nativeState.resources.geometries=999;
+ assert.equal(window.readExplosherRandomDiagnostic().boundaries.find(x=>x.label==='native-birth').nativeState.resources.geometries,281,'nested receipt mutation cannot rewrite stored birth evidence');
+ assert.equal(states[0].boundaries.find(x=>x.label==='native-birth').nativeState.resources.geometries,281,'one snapshot cannot mutate another');
+}));
+test('probe rollover cannot hide missing, duplicate or unpaired boundary events',()=>isolated(()=>{
+ installExplosherRandom(true);assert.throws(()=>window.markExplosherRandomBoundary('after-draw-probe'),/Unpaired/);
+ window.markExplosherRandomBoundary('before-draw-probe');assert.throws(()=>window.markExplosherRandomBoundary('before-draw-probe'),/Incomplete/);
+ window.markExplosherRandomBoundary('after-draw-probe');assert.throws(()=>window.markExplosherRandomBoundary('after-draw-probe'),/Unpaired/);
+}));
+test('the original twelve-boundary cap remains fail-closed outside completed probe rollover',()=>isolated(()=>{
+ installExplosherRandom(true);
+ while(window.readExplosherRandomDiagnostic().boundaries.length<12)window.markExplosherRandomBoundary('non-probe');
+ assert.throws(()=>window.markExplosherRandomBoundary('non-probe'),/Too many RNG diagnostic boundaries/);
+ assert.equal(window.readExplosherRandomDiagnostic().boundaries.length,12);
+}));
 
 test('fixed boot samples preserve all 70010 random values and exact counter state',()=>isolated(()=>{
  installExplosherRandom(false);const expected=Array.from({length:70010},()=>Math.random()),state=window.readExplosherRandom();

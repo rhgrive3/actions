@@ -14,7 +14,8 @@ for(const[k,v]of Object.entries({GITHUB_EVENT_NAME:'pull_request_target',GITHUB_
 test('unsealed output manifest cannot self-authorize',()=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'explosher-preflight-contract-'));try{fs.writeFileSync(path.join(root,'inkwave-build.json'),JSON.stringify({schema:1,files:{},artifacts:{}}));assert.throws(()=>inspectRuntimePreflightBuild({root,site:root,lane:'after'}),/Pinned complete build manifest/);assert.throws(()=>inspectRuntimePreflightBuild({root,site:root,lane:'unknown'}),/Explicit lane/);}finally{fs.rmSync(root,{recursive:true,force:true});}});
 test('driver preserves default historical admission and explicitly scopes inverse exception',()=>{const s=fs.readFileSync(new URL('../check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');assert.match(s,/:requireApprovedCommonBuild\(sourceRoot,site\)/);assert.match(s,/if\(!runtimeUIRoute&&\(!shapeOverlay\|\|!controlled\)\)/);assert.match(s,/if\(!runtimeUIRoute\)\{\nconst counterpart=/);assert.match(s,/receipt\.diagnosticOnly=true;receipt\.fullPairAccepted=false/);});
 function integratedWorkflowContract(s) {
-  assert.equal((s.match(/if: false/g)||[]).length,3);
+  assert.doesNotMatch(s,/if: false/);
+  assert(s.includes("readExplosherStagePair('stills'"));
   assert.match(s,/ref: \$\{\{ github.event.pull_request.head.sha \}\}/);
   // Integration retains the independently admitted common-build experiment,
   // separate from current-head native execution and the PR1844-only protocol.
@@ -31,7 +32,7 @@ function integratedWorkflowContract(s) {
   assert.doesNotMatch(s,/continue-on-error|EXPLOSHER_RUNTIME_UI_PREFLIGHT:/);
   assert(s.indexOf('requireApprovedCommonBuild')<s.indexOf('readExplosherStagePair'));
 }
-test('integrated workflow preserves disabled long stages and independent exact current/common sources',()=>{
+test('integrated workflow preserves strict long stages and independent exact current/common sources',()=>{
   const s=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');
   integratedWorkflowContract(s);
   const admission=fs.readFileSync(new URL('../lib/inkwave-explosher-stage-admission.mjs',import.meta.url),'utf8');
@@ -39,7 +40,7 @@ test('integrated workflow preserves disabled long stages and independent exact c
   assert(admission.includes("assert.equal(mismatches.length,0,'Strict '+stage+' pair mismatch:"));
   for(const gate of ['ref: 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c',
     'requireApprovedCommonBuild','check-inkwave-current-explosher-native.mjs',
-    "readExplosherStagePair('preflight'",'if: false']) {
+    "readExplosherStagePair('preflight'","readExplosherStagePair('stills'"]) {
     const changed=s.replaceAll(gate,'removed');
     assert.notEqual(changed,s);assert.throws(()=>integratedWorkflowContract(changed));
   }

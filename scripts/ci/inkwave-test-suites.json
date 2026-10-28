@@ -148,6 +148,7 @@
           "--test",
           "scripts/tests/inkwave-source-coverage.test.mjs",
           "scripts/tests/inkwave-explosher-absolute-geometries.test.mjs",
+          "scripts/tests/inkwave-explosher-full-pair-workflow.test.mjs",
           "scripts/tests/inkwave-quality-shallow-history.test.mjs",
           "scripts/tests/inkwave-optimization-workflows.test.mjs",
           "scripts/tests/inkwave-test-shards.test.mjs",

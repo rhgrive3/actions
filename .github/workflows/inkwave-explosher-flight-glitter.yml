@@ -8,6 +8,8 @@ on:
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/lib/inkwave-explosher-secure-launch.mjs'
+      - 'scripts/tests/inkwave-explosher-secure-launch.test.mjs'
       - 'scripts/lib/inkwave-explosher-geometry-lifetime.mjs'
       - 'scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs'
       - 'scripts/prepare-inkwave-ci-video-tools.mjs'
@@ -30,6 +32,7 @@ on:
       - 'scripts/lib/inkwave-explosher-stage-admission.mjs'
       - 'scripts/check-inkwave-explosher-absolute-geometries.mjs'
       - 'scripts/tests/inkwave-explosher-absolute-geometries.test.mjs'
+      - 'scripts/tests/inkwave-explosher-full-pair-workflow.test.mjs'
       - 'scripts/ci/inkwave-test-suites.json'
       - 'scripts/lib/inkwave-projectile-capture-ui.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
@@ -64,7 +67,7 @@ jobs:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Strict runtime/UI preflight protocol contracts
-        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs scripts/tests/inkwave-ci-video-tools.test.mjs scripts/tests/inkwave-explosher-absolute-geometries.test.mjs
+        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs scripts/tests/inkwave-ci-video-tools.test.mjs scripts/tests/inkwave-explosher-absolute-geometries.test.mjs scripts/tests/inkwave-explosher-full-pair-workflow.test.mjs scripts/tests/inkwave-explosher-secure-launch.test.mjs
       - run: npx playwright install --with-deps chromium
       - name: Install required PNG decoder
         run: node scripts/prepare-inkwave-ci-video-tools.mjs --receipt .ci-scratch/explosher/video-tool-provision.json
@@ -97,26 +100,34 @@ jobs:
           node --input-type=module -e "import fs from 'node:fs'; import {readExplosherStagePair} from './scripts/lib/inkwave-explosher-stage-admission.mjs'; fs.writeFileSync('.ci-scratch/explosher/preflight-diagnostic.json',JSON.stringify(readExplosherStagePair('preflight','.ci-scratch/explosher/preflight-before','.ci-scratch/explosher/preflight-after'),null,2));"
       - name: Enforce original absolute Explosher geometry guard
         run: node scripts/check-inkwave-explosher-absolute-geometries.mjs preflight .ci-scratch/explosher/preflight-before .ci-scratch/explosher/preflight-after .ci-scratch/explosher/preflight-diagnostic.json .ci-scratch/explosher/absolute-geometry-admission.json
-      - name: Capture untouched base with the same Explosher driver
-        if: false # Current head is short preflight diagnostics only, not full acceptance.
-        run: EXPLOSHER_EXPECT_PREFLIGHT=.ci-scratch/explosher/preflight-before/manifest.json node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
-      - name: Capture exact candidate
-        if: false # Preserve long capture until the short diagnostic is resolved.
-        run: EXPLOSHER_EXPECT_PREFLIGHT=.ci-scratch/explosher/preflight-after/manifest.json node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/after "${{ github.event.pull_request.head.sha }}" .
-      - name: Compare equal physical states and bounded render resources
-        if: false # No full-pair claim from this diagnostic head.
+      # Historical same-build inverse only: not current-head two-build acceptance.
+      # Every following step uses normal success semantics, after both strict
+      # same-run preflight and the original absolute geometry admission pass.
+      - name: Capture admitted inverse baseline stills
+        env:
+          EXPLOSHER_PREFLIGHT: '0'
+          EXPLOSHER_VIDEO: '0'
+          EXPLOSHER_CONTROLLED_MAIN: .ci-scratch/explosher/main/controlled-main-receipt.json
+          EXPLOSHER_SHAPE_OVERLAY: .ci-scratch/explosher/shape/before-shape-receipt.json
+          EXPLOSHER_ADMIT_BEFORE: .ci-scratch/explosher/preflight-before
+          EXPLOSHER_ADMIT_AFTER: .ci-scratch/explosher/preflight-after
+          EXPLOSHER_EXPECT_PREFLIGHT: .ci-scratch/explosher/preflight-before/manifest.json
+        run: node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-common .ci-scratch/explosher/stills-before 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c .ci-explosher-base
+      - name: Capture admitted inverse candidate stills
+        env:
+          EXPLOSHER_PREFLIGHT: '0'
+          EXPLOSHER_VIDEO: '0'
+          EXPLOSHER_CONTROLLED_MAIN: .ci-scratch/explosher/main/controlled-main-receipt.json
+          EXPLOSHER_SHAPE_OVERLAY: .ci-scratch/explosher/shape/after-shape-receipt.json
+          EXPLOSHER_ADMIT_BEFORE: .ci-scratch/explosher/preflight-before
+          EXPLOSHER_ADMIT_AFTER: .ci-scratch/explosher/preflight-after
+          EXPLOSHER_EXPECT_PREFLIGHT: .ci-scratch/explosher/preflight-after/manifest.json
+        run: node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-common .ci-scratch/explosher/stills-after 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c .ci-explosher-base
+      - name: Require all-frame same-build inverse acceptance
         run: |
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';import assert from 'node:assert/strict';
-          const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/'+s+'/manifest.json'));
-          const before=read('before'),after=read('after');
-          const {compareExplosherCaptures}=await import('./scripts/lib/inkwave-explosher-scene-census.mjs');
-          const result=compareExplosherCaptures(before,after);
-          result.cpu=after.map((b,i)=>({tick:b.tick,view:b.view,before:before[i]?.measurement.drawCpuMs,after:b.measurement.drawCpuMs}));
-          fs.writeFileSync('.ci-scratch/explosher/paired.json',JSON.stringify(result,null,2));
-          console.log('EXPLOSHER_ALL_FRAME_GATE '+JSON.stringify({status:result.status,checks:result.checked.length,mismatches:result.mismatches}));
-          assert.equal(result.mismatches.length,0,'All frame physics and resource gates must pass');
-          NODE
+          set -euo pipefail
+          node --input-type=module -e "import fs from 'node:fs'; import {readExplosherStagePair} from './scripts/lib/inkwave-explosher-stage-admission.mjs'; fs.writeFileSync('.ci-scratch/explosher/stills-admission.json',JSON.stringify(readExplosherStagePair('stills','.ci-scratch/explosher/stills-before','.ci-scratch/explosher/stills-after'),null,2),{flag:'wx'});"
+          node scripts/check-inkwave-explosher-absolute-geometries.mjs stills .ci-scratch/explosher/stills-before .ci-scratch/explosher/stills-after .ci-scratch/explosher/stills-admission.json .ci-scratch/explosher/stills-absolute-geometry-admission.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

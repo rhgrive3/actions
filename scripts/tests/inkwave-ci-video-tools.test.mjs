@@ -104,9 +104,10 @@ function workflowContract(ink,native){
   assert(ink.indexOf('--frames-only')<ink.indexOf('run: node scripts/prepare-inkwave-ci-video-tools'));
   assert(ink.indexOf(encode)<ink.indexOf('node scripts/verify-ink-micro-surface-video.mjs .browser-evidence/ink-micro-surface\n'));
   assert(native.includes("readExplosherStagePair('preflight'"));assert(native.includes('ref: 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c'));
-  const nativeRequired=native.slice(native.indexOf('    steps:'),native.indexOf('      - name: Capture untouched base with the same Explosher driver'));
+  const nativeRequired=native.slice(native.indexOf('    steps:'),native.indexOf('      - name: Capture admitted inverse baseline stills'));
   assert.doesNotMatch(nativeRequired,/^\s+(?:if|continue-on-error):/m,'required native pair and decoder checks unconditional');
-  assert.equal((native.match(/if: false/g)||[]).length,3,'existing intentionally disabled long stages retained');
+  assert.doesNotMatch(native,/if: false/,'full pair cannot be silently skipped');
+  assert(native.includes("readExplosherStagePair('stills'"),'strict stills admission required');
   const inkRequired=ink.slice(ink.indexOf('      - name: Source regressions'),ink.indexOf('      - uses: actions/upload-artifact'));
   assert.doesNotMatch(inkRequired,/^\s+(?:if|continue-on-error):/m,'required native and encode checks unconditional');
 }
