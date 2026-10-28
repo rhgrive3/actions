@@ -1,0 +1,108 @@
+name: INKWAVE isolated WebKit process diagnostic
+on:
+  push:
+    branches: [diagnostic/responsive-webkit-small-2784-20261028]
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-responsive-process-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/responsive-webkit-small-2784-20261028'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      SOURCE_SHA: 2784e295af38913a3780099175baa3e77a7b2a03
+      HARNESS_SHA: ${{ github.sha }}
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+      CI_STORAGE: /mnt/workspace/inkwave-responsive-process-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout exact diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify diagnostic parent and allowed paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$HARNESS_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$WORKFLOW_SHA" = "$HARNESS_SHA"
+          test "$(git rev-parse HEAD)" = "$HARNESS_SHA"
+          test "$(git rev-parse HEAD^)" = "$SOURCE_SHA"
+          test "$(git rev-parse "$SOURCE_SHA^{tree}")" = 52786fb3f566dea817d480cbfa00b91832e73c25
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-responsive-process-diagnostic.yml' 'scripts/check-inkwave-responsive-process-diagnostic.mjs' 'scripts/tests/inkwave-responsive-process-diagnostic.test.mjs' | sort)
+          actual=$(git diff --no-renames --name-only "$SOURCE_SHA" "$HARNESS_SHA" | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse "$HARNESS_SHA:.circleci/config.yml")" = 994c56d06f86bd3f48f36b276c3fe48008723c4d
+          test "$(git rev-parse "$HARNESS_SHA:.github/workflows/bootstrap-hex-worker-repos.yml")" = 831a90ad2008b8fc862502ca72b7366f3d2ddae3
+          test "$(git rev-parse "$HARNESS_SHA:.github/workflows/hex-fast-tail-known.yml")" = 34348818da5751460b3785fff2d6da37ffff3841
+      - name: Checkout exact independent production source and runner
+        uses: actions/checkout@v4
+        with:
+          ref: 2784e295af38913a3780099175baa3e77a7b2a03
+          path: .game-source
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare pinned tools and browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-scratch diagnostic-evidence
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          sudo python3 .game-source/scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps chromium webkit
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          ln -s "$GITHUB_WORKSPACE/node_modules" .game-source/node_modules
+      - name: Test observational wrapper contracts
+        run: node --test scripts/tests/inkwave-responsive-process-diagnostic.test.mjs
+      - name: Build and attest exact production source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .game-source rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .game-source rev-parse HEAD^{tree})" = 52786fb3f566dea817d480cbfa00b91832e73c25
+          (cd .game-source && node scripts/build-inkwave.mjs inkwave-public "$GITHUB_WORKSPACE/.built-site/_site")
+          node --input-type=module -e "import fs from 'node:fs';import {verifyRuntimeBuild} from './.game-source/scripts/lib/inkwave-runtime-evidence.mjs';const m=verifyRuntimeBuild('.built-site/_site','.game-source',process.env.SOURCE_SHA);if((await import('node:crypto')).createHash('sha256').update(JSON.stringify(m.files)).digest('hex')!==m.inputHash)throw Error('Input manifest hash mismatch');if(m.contentHash!=='53a8c7995bb2108ea79c566f6808563c26e1fad818d40a08c631c067f2c86de6')throw Error('Build content differs from failed CI artifact');const r={sourceSha:process.env.SOURCE_SHA,harnessSha:process.env.HARNESS_SHA,workflowSha:process.env.WORKFLOW_SHA,contentHash:m.contentHash,inputHash:m.inputHash,acceptance:false};fs.writeFileSync('diagnostic-evidence/run-identity.json',JSON.stringify(r,null,2)+'\n');console.log(JSON.stringify(r));"
+          test "$(sha256sum .built-site/_site/inkwave-build.json | cut -d ' ' -f1)" = 98b65412764c8dc6605492f7b2a18be6b50664fef3404845b4058ddfccc3e2cb
+          sha256sum .built-site/_site/inkwave-build.json .game-source/scripts/check-inkwave-responsive.mjs .game-source/scripts/check-inkwave-responsive-core.mjs .game-source/scripts/lib/inkwave-responsive-animation-diagnostics.mjs scripts/check-inkwave-responsive-process-diagnostic.mjs > diagnostic-evidence/hashes.txt
+      - name: Observe one unchanged WebKit small-phone case
+        run: node scripts/check-inkwave-responsive-process-diagnostic.mjs "$GITHUB_WORKSPACE/.game-source" "$GITHUB_WORKSPACE/.built-site/_site" "$CI_STORAGE/evidence" "$CI_STORAGE/cache" "$GITHUB_WORKSPACE/diagnostic-evidence"
+      - name: Copy bounded case diagnostics and available screenshots
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p diagnostic-evidence
+          sanitize_rc=0
+          node scripts/check-inkwave-responsive-process-diagnostic.mjs --sanitize "$CI_STORAGE/evidence" "$GITHUB_WORKSPACE/diagnostic-evidence" || sanitize_rc=$?
+          total=0
+          shopt -s nullglob
+          for image in "$CI_STORAGE"/evidence/webkit-small-phone-*.png; do
+            bytes=$(stat -c %s "$image")
+            total=$((total + bytes))
+            if (( bytes > 8388608 || total > 67108864 )); then
+              printf 'PNG evidence exceeds bounded capture limit\n' >&2
+              exit 1
+            fi
+            cp "$image" diagnostic-evidence/
+          done
+          exit "$sanitize_rc"
+      - name: Preserve process diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: responsive-webkit-process-${{ github.sha }}
+          path: diagnostic-evidence/
+          if-no-files-found: error
+          retention-days: 7
