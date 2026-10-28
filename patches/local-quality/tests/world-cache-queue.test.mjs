@@ -4,7 +4,16 @@ const native=await loadNative(true),raw=await loadNative(false);
 const hash=a=>crypto.createHash('sha256').update(Buffer.from(a.buffer,a.byteOffset,a.byteLength)).digest('hex');
 // An omitted all-zero UV stream has the same default shader coordinates as
 // the retained all-zero attribute. Keep every nonzero UV and all other bytes.
-const state=kit=>[...kit._meshes,...kit._inst].map(m=>({name:m.name,count:m.count,attrs:Object.fromEntries(Object.entries(m.geometry.attributes).filter(([k,a])=>k!=='uv'||a.array.some(v=>v!==0)).map(([k,a])=>[k,hash(a.array)])),index:m.geometry.index&&hash(m.geometry.index.array)}));
+// A custom shader or any bound texture may sample UVs. Pure vertex-colour
+// materials do not: the optimized builder deliberately omits their unused UV
+// arrays. Compare every shader-observable attribute, including mapped UVs.
+const shaderReadsUV=m=>{
+ const mat=m.material;
+ return !mat||!(mat.isMeshBasicMaterial||mat.isMeshStandardMaterial)||
+   mat.onBeforeCompile!==native.THREE.Material.prototype.onBeforeCompile||
+   Object.values(mat).some(value=>value?.isTexture);
+};
+const state=kit=>[...kit._meshes,...kit._inst].map(m=>({name:m.name,count:m.count,attrs:Object.fromEntries(Object.entries(m.geometry.attributes).filter(([k,a])=>k!=='uv'||(shaderReadsUV(m)&&a.array.some(v=>v!==0))).map(([k,a])=>[k,hash(a.array)])),index:m.geometry.index&&hash(m.geometry.index.array)}));
 function make(N){const k=new N.PropKit(new N.THREE.Scene(),{quality:'high'}),cols=N.dressingFor('halyard').flatMap(p=>k.add(p.type,p).colliders);return{k,cols,refs:[...k._buckets.values()].flat().map(p=>p.g)};}
 test('Halyard final buffers and collisions survive last-owner eviction and exact re-entry',t=>{
  const a=make(raw);a.k.build();const expected=state(a.k);a.k.dispose();

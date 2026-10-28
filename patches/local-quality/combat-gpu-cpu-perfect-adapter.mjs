@@ -769,8 +769,11 @@ export class SwimWake {`,
   // when running inside the multi-stage build pipeline (stage !== 'quality').
   if (stage !== 'quality') {
     if (rel === 'src/game/match.js') {
-      // CPU-13: Hoist outer !a.alive check and vertical rejection in Match soft-push loop while preserving (a.remote && b.remote).
-      const postNetBefore = `    // soft push between actors
+      // CPU-13 parity repair: collision callbacks can alter both the live
+      // actor roster and PLAYER.radius. Hoisting either changes the ordered
+      // set of push operations, and is not an admissible gameplay optimization.
+      // Preserve the original pair loop and fail closed on source drift.
+      const pairBody = `    // soft push between actors
     for (let i = 0; i < this.actors.length; i++) for (let j = i + 1; j < this.actors.length; j++) {
       const a = this.actors[i], b = this.actors[j];
       if (!a.alive || !b.alive || (a.remote && b.remote)) continue;
@@ -778,42 +781,7 @@ export class SwimWake {`,
       const d2 = dx * dx + dz * dz;
       const r = PLAYER.radius * 1.7;
       if (d2 < r * r && Math.abs(dy) < 1.2 && d2 > 1e-5) {`;
-      const postNetAfter = `    // soft push between actors
-    if (this.actors.length < 2) return;
-    const rPush = PLAYER.radius * 1.7, rPush2 = rPush * rPush;
-    for (let i = 0; i < this.actors.length; i++) {
-      const a = this.actors[i];
-      if (!a.alive) continue;
-      for (let j = i + 1; j < this.actors.length; j++) {
-      const b = this.actors[j];
-      if (!b.alive || (a.remote && b.remote)) continue;
-      const dy = b.pos.y - a.pos.y;
-      if (Math.abs(dy) >= 1.2) continue;
-      const dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z;
-      const d2 = dx * dx + dz * dz;
-      const r = rPush;
-      if (d2 < rPush2 && d2 > 1e-5) {`;
-      code = applyIdempotent(
-        code,
-        postNetBefore,
-        postNetAfter,
-        replaceOnce,
-        'CPU-13 hoist outer alive check and vertical rejection in Match soft-push loop'
-      );
-      code = applyIdempotent(
-        code,
-        `        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);
-        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);
-      }
-    }`,
-        `        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);
-        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);
-      }
-      }
-    }`,
-        replaceOnce,
-        'CPU-13 close outer loop in Match soft-push'
-      );
+      if (!code.includes(pairBody)) throw new Error('CPU-13 collision loop source drift');
     }
 
     if (rel === 'src/net/netmatch.js') {

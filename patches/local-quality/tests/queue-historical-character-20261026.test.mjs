@@ -78,7 +78,26 @@ test('eyeball ring reuse observes cornea mutation between eyes and preserves acc
 });
 
 test('historical character recovery uses independently pinned 5ca sources and preserves direct outfit ownership',()=>{
- for(const[rel,entry]of Object.entries(oracle.modules)){assert.equal(sha(entry.source),entry.sha256,rel);const next=candidate(rel,raw(rel));parse(next,{ecmaVersion:'latest',sourceType:'module'});if(rel==='src/game/character-outfit.js'){assert.equal(next,raw(rel));assert.equal(adaptHistoricalCharacter20261026(rel,next),next);}else{assert.equal(adaptHistoricalCharacter20261026(rel,entry.source),next);assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);}}
+ const sourceAnchors={
+  'src/game/character-hair.js':['curve.getUtoTmapping(i / N)'],
+  'src/game/character-face.js':['const earSections = [];','const ringKernel = th =>','const derivative = new V3();'],
+  'src/game/character.js':['const stanceAlpha = 1 - Math.exp('],
+ };
+ for(const[rel,entry]of Object.entries(oracle.modules)){
+  assert.equal(sha(entry.source),entry.sha256,rel);
+  const next=candidate(rel,raw(rel)),historical=adaptHistoricalCharacter20261026(rel,entry.source);
+  parse(next,{ecmaVersion:'latest',sourceType:'module'});
+  if(rel==='src/game/character-outfit.js'){
+   assert.equal(next,raw(rel));assert.equal(historical,entry.source);
+  }else{
+   assert.notEqual(historical,entry.source,'historical transform must change independently pinned bytes');
+   // Other adapters may legitimately change the rest of these modules.
+   // Check exact authored replacement anchors in the complete live composition.
+   for(const anchor of sourceAnchors[rel])assert.equal(next.split(anchor).length-1,1,rel+' missing or duplicated '+anchor);
+   assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);
+   assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);
+  }
+ }
  assert.equal(adaptHistoricalCharacter20261026('unrelated','same'),'same');
 });
 test('actual Three.js surfaces, tube attributes and suction geometry preserve exact bytes with half as many arc mappings',()=>{

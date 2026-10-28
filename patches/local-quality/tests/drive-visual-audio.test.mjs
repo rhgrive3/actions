@@ -158,12 +158,17 @@ const scheduling=JSON.parse(schedulingBytes);
 // The independently pinned pre-aggregate source stays immutable. Reconstruct
 // the exact newer pause-aware RAF contract rather than silently weakening the
 // byte comparison or using the changed code itself as its own oracle.
-const hudNow={...scheduling.hud,_fxLoop:scheduling.hud._fxLoop
+const hudNow={...scheduling.hud,
+ _addFx:scheduling.hud._addFx.replace(
+   '    if (!this._rafId && !this._worldPaused) {',
+   '    if (!this._rafId && !this._worldPaused && !this.paused) {'),
+ _fxLoop:scheduling.hud._fxLoop
  .replace('_fxLoop(t) {','_fxLoop(t) {\n    this._rafId = 0;')
  .replace('    if (this.paused) { this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0; return; }',
           '    if (this.paused) { this._rafId = 0; return; }')
  .replace('    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;',
           '    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }')};
+assert.notEqual(hudNow._addFx,scheduling.hud._addFx,'pause gating must change the pinned add method');
 assert.notEqual(hudNow._fxLoop,scheduling.hud._fxLoop,'later pause optimization is actually represented');
 test('HUD preserves the reviewed pre-aggregate RAF methods byte-for-byte',()=>{
  assert.equal(crypto.createHash('sha256').update(schedulingBytes).digest('hex'),'a177a9c1435cddbba40e32ab303736151040f5b3db629adcfe07e786ddd3b177');

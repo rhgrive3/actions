@@ -197,8 +197,16 @@ test('shelf retries preserve stable face ordering and atomic atlas commits for f
 });
 
 test('paint source adapter is isolated and fail-closed', () => {
-  assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), candidate,
-    'production composition uses the tested candidate bytes');
+  const composed = adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8'));
+  // The full build now has later render/mipmap adapters as well. Verify the
+  // actual production bytes still contain all three queue-owned invariants,
+  // without falsely demanding no other independent paint transformation.
+  for (const contract of [
+    'const projectionSq = radius * radius - dn * dn;',
+    'const entryStride = g.entryStride === 8 ? 8 : 7;',
+    'const staging = { records: faces.map(f => ({ f, w: 0, h: 0, x: 0, y: 0 })), rects: [] };',
+  ]) assert.equal(composed.split(contract).length-1,1,'production composition lost queue-owned paint code: '+contract);
+  assert.doesNotThrow(() => new vm.SourceTextModule(composed));
   assert.equal(adaptRemainingPaint20261026('src/config.js', baseline.paint.source), baseline.paint.source);
   assert.throws(() => adaptRemainingPaint20261026('src/world/paint.js', candidate), /source anchor/);
   assert.doesNotThrow(() => new vm.SourceTextModule(candidate));
