@@ -130,7 +130,7 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  const gate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
  const body=gate.split('        run: |\n')[1];assert(body,'required gate shell');
  const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
- const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,BROWSER_RESULT:env.OFFLOAD_ACTIVE==='true'?'skipped':'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',...env},encoding:'utf8'});
+ const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,BUILD_RESULT:'success',CONTRACTS_ONLY:'false',BROWSER_RESULT:env.OFFLOAD_ACTIVE==='true'?'skipped':'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',...env},encoding:'utf8'});
  for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
   const env={OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
   const result=run(shell,env);assert.ifError(result.error);
@@ -148,4 +148,22 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
  }
+});
+
+test('contracts-only acceptance cannot pass without immutable build job and every skipped heavy lane',()=>{
+ const workflow=read('validate-inkwave-update.yml');
+ const gate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
+ const body=gate.split('        run: |\n')[1];
+ assert(body,'required final gate shell');
+ const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
+ const baseline={BUILD_RESULT:'success',CONTRACTS_ONLY:'true',CORE_RESULT:'skipped',PATCH_RESULT:'skipped',
+  CIRCLECI_RESULT:'skipped',BROWSER_RESULT:'skipped',SEVEN_RESULT:'skipped',RESOURCE_RESULT:'skipped',OFFLOAD_ACTIVE:'false'};
+ const execute=values=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',shell],
+  {env:{...process.env,...baseline,...values},encoding:'utf8'});
+ assert.equal(execute({}).status,0);
+ for(const name of ['CORE_RESULT','PATCH_RESULT','CIRCLECI_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT']){
+   for(const state of ['success','failure','cancelled'])assert.notEqual(execute({[name]:state}).status,0,name+' '+state);
+ }
+ for(const values of [{BUILD_RESULT:'failure'},{CONTRACTS_ONLY:'unknown'},{OFFLOAD_ACTIVE:'true',CORE_RESULT:'success'}])
+   assert.notEqual(execute(values).status,0,JSON.stringify(values));
 });
