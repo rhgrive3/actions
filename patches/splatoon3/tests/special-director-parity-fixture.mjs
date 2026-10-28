@@ -10,6 +10,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { nonWailVfxTicks, consumeVfxPeriod } from '../runtime/nonwail-vfx-clock.mjs';
 import { areaSpecialVfxTicks } from '../runtime/area-special-vfx-clock.mjs';
 import { inkjetVfxTicks } from '../runtime/inkjet-vfx-clock.mjs';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 
 const sourceURL = new URL('../runtime/special-vfx.mjs', import.meta.url);
 const rel = 'patches/splatoon3/runtime/special-vfx.mjs';
@@ -77,7 +78,7 @@ const emitted = (() => {
   assert.equal(hash(JSON.stringify(manifest.files)), manifest.inputHash, 'emitted input manifest seal');
   assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash, 'emitted artifact manifest seal');
   const modules = {}, hashes = {};
-  for (const file of ['special-vfx.mjs', 'special-vfx-kit.mjs', 'nonwail-vfx-clock.mjs', 'area-special-vfx-clock.mjs', 'inkjet-vfx-clock.mjs']) {
+  for (const file of ['special-vfx.mjs', 'special-vfx-kit.mjs', 'instance-color-upload.mjs', 'nonwail-vfx-clock.mjs', 'area-special-vfx-clock.mjs', 'inkjet-vfx-clock.mjs']) {
     const rel = 'patches/splatoon3/runtime/' + file, filename = fs.realpathSync(path.join(root, rel));
     assert.ok(filename.startsWith(root + path.sep), 'artifact within selected site');
     const bytes = fs.readFileSync(filename);
@@ -106,7 +107,9 @@ function evaluateEmitted(module, context, dependencies, expose, instrumentRng = 
 }
 function emittedRecipes(context, sinks, old, instrument) {
   const m = emitted.modules;
-  const kit = evaluateEmitted(m['special-vfx-kit.mjs'], context, {}, kitNames.map(name => `${name}:${exported(m['special-vfx-kit.mjs'].tree, name)}`).join(','), instrument);
+  const upload = m['instance-color-upload.mjs'];
+  const uploadApi = evaluateEmitted(upload, context, {}, `markAttributeRange:${exported(upload.tree, 'markAttributeRange')}`);
+  const kit = evaluateEmitted(m['special-vfx-kit.mjs'], context, {'./instance-color-upload.mjs': uploadApi}, kitNames.map(name => `${name}:${exported(m['special-vfx-kit.mjs'].tree, name)}`).join(','), instrument);
   const dependencies = { './special-vfx-kit.mjs': kit };
   for (const [file, names] of Object.entries({
     'nonwail-vfx-clock.mjs': ['nonWailVfxTicks', 'consumeVfxPeriod'],
@@ -159,7 +162,7 @@ export function directorFixture({ old = false, minified = false, instrument = tr
     tentaMissilesLockPreview: () => null, remoteKrakenPhase: () => null,
     WAIL_SPEAKER_POSITIONS: [],
   };
-  const context = vm.createContext({ console, Math: math, __work: work, Float32Array, ...sinks });
+  const context = vm.createContext({ console, Math: math, __work: work, Float32Array, markAttributeRange, ...sinks });
   let recipes;
   if (emitted) {
     assert.equal(minified, false, 'emitted mode never substitutes a local minification');

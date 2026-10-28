@@ -98,7 +98,17 @@ test('Crab splash live-prefix uploads preserve GPU values and pixels', {
       assert.equal(frame.prefixMatches, true, 'GPU live prefix ' + frame.count);
       assert.equal(frame.pixelsMatch, true, 'pixel parity ' + frame.count);
       if (frame.count) assert.ok(frame.paintedPixels > 0, 'visible ink must render pixels');
-      if (i) assert.equal(frame.measured.reduce((sum, x) => sum + x.bytes, 0), frame.count * 76, 'live upload bytes ' + frame.count);
+      if (i) {
+        // Matrices are written for every live instance (64 B each). Color
+        // attributes may now upload only genuinely changed contiguous RGB
+        // slots; each unchanged color is still verified by the GPU readback
+        // and by the strict equal-pixel comparison above.
+        const uploaded = frame.measured.reduce((sum, x) => sum + x.bytes, 0);
+        assert.ok(frame.measured.every(x => x.op === 'sub'), 'no live-frame full-buffer reallocation');
+        assert.ok(uploaded >= frame.count * 64 && uploaded <= frame.count * 76 &&
+          (uploaded - frame.count * 64) % 12 === 0,
+          'live matrix and bounded dirty RGB upload bytes ' + frame.count + ': ' + uploaded);
+      }
       assert.equal(frame.full.reduce((sum, x) => sum + x.bytes, 0), frame.count ? 38912 : 0, 'legacy full upload bytes');
     }
     console.log(JSON.stringify(report));

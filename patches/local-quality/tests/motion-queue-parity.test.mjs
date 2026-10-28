@@ -20,7 +20,7 @@ function baseline(rel,raw){
   for(const name of ['cos','sin']){const term=`(${name}Yaw??=Math.${name}(yaw))`;assert.equal(code.split(term).length,3);code=code.replaceAll(term,`Math.${name}(yaw)`);}
   undo('    const normalizedFrame=mod(frame/clip.frames,1);\n','');
   undo('this.gaitTargets.add(this.tmp,item.weight,p,normalizedFrame);','this.gaitTargets.add(this.tmp,item.weight,p,mod(frame/clip.frames,1));');
-  undo('    for(let i=0;i<2;i++){\n     this.contact[i]+=','    const normalizedFrame=mod(frame/clip.frames,1);\n    for(let i=0;i<2;i++){\n     this.contact[i]+=');
+  undo('    const contactSamples=sampleContactPair(p,normalizedFrame,','    const normalizedFrame=mod(frame/clip.frames,1);\n    const contactSamples=sampleContactPair(p,normalizedFrame,');
  }
  if(rel==='src/game/motion/gait-targets.js'){
   undo('sampleRunFoot,prepareRunFootBasis','sampleRunFoot');undo('this.runBasis={};','');undo('  const shared=prepareRunFootBasis(profile,framePhase,this.runBasis);\n','');undo('this.filtered,shared?this.runBasis:null)','this.filtered)');

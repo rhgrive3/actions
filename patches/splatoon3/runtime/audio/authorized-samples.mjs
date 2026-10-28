@@ -18,11 +18,6 @@ const DEFAULT_BYTES=24*1024*1024;
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 // Count each decoded AudioBuffer once even when several weapon slots point
 // to the same immutable 2022 MP3. Never deduplicate unverified content.
-function decodedBytes(rows){
-  let total=0;const seen=new Set();
-  for(const row of rows.values())if(!seen.has(row.buffer)){seen.add(row.buffer);total+=row.bytes;}
-  return total;
-}
 function canReusePCM(row,clip){
   return !!row.sha256 && !!clip.sha256 && row.sha256.toLowerCase()===clip.sha256.toLowerCase()
     && LOOP_EVENTS.has(row.event)===LOOP_EVENTS.has(clip.event)
@@ -158,12 +153,12 @@ export class AuthorizedSamplePack {
     if(!current())return {loaded:0,rejected:0,errors:[],cancelled:true,bytes:this.bytes};
     const cancelled=Symbol('cancelled audio sample load');
     const next=replace?new Map():new Map(this.loaded);
-    let total=replace?0:decodedBytes(next),done=0,repairs=0,cursor=0;
+    let total=0,done=0,repairs=0,cursor=0;
     const errors=[],decoded=new Map(),scopes=new Map();
     // Existing and staged rows reference PCM by identity. Account bytes once
     // per AudioBuffer while staging, without rebuilding a candidate Map per clip.
     const refs=new Map();
-    for(const row of next.values())refs.set(row.buffer,(refs.get(row.buffer)||0)+1);
+    for(const row of next.values()){const count=refs.get(row.buffer)||0;if(count===0)total+=row.bytes;refs.set(row.buffer,count+1);}
     // Transaction-local ordered buckets track the same first compatible row
     // as next.values(), including replacement and budget eviction.
     // Small demand-page imports keep the original scan; building an index
@@ -186,19 +181,21 @@ export class AuthorizedSamplePack {
     // Playback keeps using the published bank while this transaction awaits
     // network/decode. Mirror those real touches into staging, including a row
     // staged eviction had removed but the still-live bank just played again.
+    let lastStagedTouchKey=null;
     const trim=protect=>{
       while(total>this.maxBytes&&next.size>1){
         const victim=next.keys().next().value;
         if(victim===protect)break;
-        const removed=next.get(victim);next.delete(victim);release(removed);indexRow(removed,false);changedEvents.add(`${removed.id}:${removed.event}`);
+        const removed=next.get(victim);lastStagedTouchKey=null;next.delete(victim);release(removed);indexRow(removed,false);changedEvents.add(`${removed.id}:${removed.event}`);
       }
     };
     const stage=replace?null:{generation,touch:(key,item)=>{
       if(!current())return;
       const row=next.get(key);
+      if(lastStagedTouchKey===key&&row===item)return;
       if(row){next.delete(key);next.set(key,row);indexRow(row,false);indexRow(row,true);}
       else{next.set(key,item);acquire(item);indexRow(item,true);changedEvents.add(`${item.id}:${item.event}`);}
-      trim(key);
+      trim(key);lastStagedTouchKey=key;
     }};
     this._lruStage=stage;
     const remainingByFile=new Map();
@@ -297,6 +294,7 @@ export class AuthorizedSamplePack {
           if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
           if(cost>this.maxBytes)throw new Error('Sample cache budget exceeded');
           const key=this.key(clip.id,clip.event,clip.variant);
+          lastStagedTouchKey=null;
           const prior=next.get(key);
           if(prior){next.delete(key);release(prior);indexRow(prior,false);changedEvents.add(`${prior.id}:${prior.event}`);}
           const row=Object.freeze({...clip,buffer,bytes:cost});

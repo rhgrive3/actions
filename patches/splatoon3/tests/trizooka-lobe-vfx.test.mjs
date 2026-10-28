@@ -8,6 +8,7 @@ import {specialPresentationToken} from '../runtime/special-presentation-owner.mj
 import {createRequire} from 'node:module';
 import {compactModuleStrings} from '../../../scripts/lib/inkwave-source-compaction.mjs';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
+import {markAttributeRange} from '../runtime/instance-color-upload.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {recordGhostPush,retireGhostRound,clearGhostIndex} from '../../network-replication/ghost-live-index.mjs';
 import {throwVolley,trizookaSpecialWeapon} from '../runtime/kit-trizooka.mjs';
@@ -163,7 +164,7 @@ test('actual sprite pool keeps brief cores visible at 30/60/120 Hz and leaves da
   const begin=kitSource.indexOf('const OUT ='),end=kitSource.indexOf('// ---------------------------------------------------------------------------------------------------------------\n// Ribbon trails',begin);
   let program=kitSource.slice(begin,end).replace(/^export /gm,'')+'\nglobalThis.SpritePool=SpritePool;';
   if(process.env.TRIZOOKA_VFX_ESBUILD)program=createRequire(import.meta.url)(process.env.TRIZOOKA_VFX_ESBUILD).transformSync(program,{loader:'js',minify:true}).code;
-  const context=vm.createContext({vfxRandom:()=>.25,TAU:Math.PI*2});vm.runInContext(program,context);
+  const context=vm.createContext({vfxRandom:()=>.25,TAU:Math.PI*2,markAttributeRange});vm.runInContext(program,context);
   function pool(){const p=new context.SpritePool(THREE,8,true,{value:0});
     t.after(()=>{p.mesh.geometry.dispose();p.mesh.material.dispose();});return p;}
   const first=fixture();first.volley();const core=first.flashes[0];assert.equal(core.options.fadeIn,0);

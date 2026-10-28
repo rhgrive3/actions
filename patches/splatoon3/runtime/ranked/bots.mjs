@@ -1,3 +1,5 @@
+const escortAction = value => value === 'barrier' || value === 'defend';
+const towerCombatAction = value => value === 'ride' || value === 'defend';
 import { firstThreeFinite } from './coordinates.mjs';
 const clamArcMemo = new WeakMap();
 // Exact, directly evaluated angles; no trigonometric approximation or reordered arithmetic.
@@ -67,7 +69,6 @@ function clamThrowAim(actor, goal, engine) {
   // target instead of aiming along a level line.
   for (let step = 0; step <= 210; step++) {
     const { pitch, cosine, sine } = CLAM_ARC_SAMPLES[step];
-    if (cosine < 0.15) continue;
     const flight = horizontal / (speed * cosine);
     const y = speed * (sine + 0.42) * flight - 4.9 * flight * flight;
     const error = Math.abs(y - height);
@@ -104,7 +105,9 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
   let best = null, nonNegativeRouteCosts;
   for (const id of nav.validIds || []) {
     const node = nav.nodes[id];
-    const toDeck = Math.hypot(node.x - target.x, node.z - target.z);
+    const deckDx=node.x-target.x, deckDz=node.z-target.z;
+    if((Math.abs(deckDx)>halfSize+1.5 || Math.abs(deckDz)>halfSize+1.5) && !Number.isNaN(deckDx) && !Number.isNaN(deckDz))continue;
+    const toDeck = Math.hypot(deckDx, deckDz);
     const height = target.y - node.y;
     // A static floor node just outside the moving deck is the last safe A* goal.
     // Its height must leave the deck reachable by the actor's real jump arc.
@@ -171,7 +174,9 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
   const candidates = [];
   for (const id of nav.validIds || []) {
     const node = nav.nodes[id];
-    const distance = Math.hypot(node.x - center.x, node.z - center.z);
+    const centerDx=node.x-center.x, centerDz=node.z-center.z;
+    if((Math.abs(centerDx)>range*.82 || Math.abs(centerDz)>range*.82) && Number.isFinite(centerDx) && Number.isFinite(centerDz))continue;
+    const distance = Math.hypot(centerDx,centerDz);
     // Keep a little room for projectile spread while staying inside this
     // weapon's actual reach. A point on the live nav graph avoids steering
     // through the raised center slab to a geometrically convenient point.
@@ -314,7 +319,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   }
   const towerRide = engine.mode === 'tower' && action === 'ride';
   const towerPlatformAction = engine.mode === 'tower' && (action === 'ride' || action === 'defend');
-  const row = frameActor(a, frame);
+  const row = towerPlatformAction && a.grounded ? frameActor(a, frame) : null;
   const alreadyRiding = towerPlatformAction && a.grounded && (row.onTower === true
     || (horizontal < finite(engine.stage?.tower?.halfSize, 1.4) + 0.45
       && dy >= -0.32 && dy <= 0.28));
@@ -322,7 +327,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
 
   const originalSpecial = !!it.special;
   const originalJump = !!it.jump;
-  it.fire = ['paint', 'defend', 'barrier', 'carry'].includes(action) && finite(a.ink, 0) > 2;
+  it.fire = (action === 'paint' || action === 'defend' || action === 'barrier' || action === 'carry') && finite(a.ink, 0) > 2;
   it.sub = false;
   it.special = originalSpecial;
   it.squid = a.groundTeam === 1 && horizontal > 3 && (!it.fire || action === 'carry');
@@ -460,9 +465,9 @@ export function installRankedBots(api = {}) {
     // genuinely visible duels and resume objective steering when they end.
     const enemy = this.target;
     const rankedEscort = engine.mode === 'rainmaker' && actor.slot % 2 === 1
-      && ['barrier', 'defend'].includes(goal?.action)
+      && escortAction(goal?.action)
       && engine.rule?.state?.carrier !== actorId(actor);
-    const towerCombat = engine.mode === 'tower' && ['ride', 'defend'].includes(goal.action);
+    const towerCombat = engine.mode === 'tower' && towerCombatAction(goal.action);
     const carrier = engine.mode === 'rainmaker' && engine.rule?.state?.carrier === actorId(actor);
     // Refill owns its swim/paint cycle until the native controller releases it.
     // Replacing it with an objective fire input strands an empty tank on land.

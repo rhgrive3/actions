@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import { parse } from '../../loading-cache/vendor/acorn.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
@@ -53,7 +54,7 @@ test('real Aim Assist keeps target transitions and LOS order at 30/60/120 Hz wit
 });
 
 const kit=runtime('special-vfx-kit');
-function ribbonType(source){return compile(source,{THREE,RIBBON_VERT:'',RIBBON_FRAG:'',vfxRandom:()=>.25});}
+function ribbonType(source){return compile(source,{THREE,RIBBON_VERT:'',RIBBON_FRAG:'',vfxRandom:()=>.25,markAttributeRange});}
 const RibbonBefore=ribbonType(before.RibbonPool),RibbonAfter=ribbonType(declaration(kit,'RibbonPool'));
 test('real RibbonPool preserves ring samples and every GPU attribute at 30/60/120 Hz and spacing boundaries',()=>{
   for(const hz of [30,60,120]){

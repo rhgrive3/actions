@@ -12,6 +12,7 @@ const START_ADMISSION_COMPATS = new Set([
 ]);
 const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
 const COMPAT_TOKEN = /^[a-zA-Z0-9_-]{8,80}$/;
+const MAX_ROOM_MEMBERS = 8;
 const MAX_FRAME_BYTES = 64 * 1024;
 const FRAME_RATE = 80, FRAME_BURST = 160;
 const BYTE_RATE = 256 * 1024, BYTE_BURST = 512 * 1024;
@@ -90,11 +91,15 @@ export class RoomDurableObject {
     this.state = state;
     this.env = env;
     this.members = new Map(); // id -> { id, name, ws, joinedAt, budgetAt, framesLeft, bytesLeft }
+    this.socketBudgets = new WeakMap();
     this.hostId = null;
     this.locked = false;
     this.compat = null;
     this.joinBudgetAt = Date.now();
     this.joinsLeft = JOIN_BURST;
+    this.roomBudgetAt = Date.now();
+    this.roomFramesLeft = FRAME_BURST * MAX_ROOM_MEMBERS;
+    this.roomBytesLeft = BYTE_BURST * MAX_ROOM_MEMBERS;
     this.hibernationEnabled = typeof state?.acceptWebSocket === 'function';
     // Heartbeats must enter _handleMessage and spend the same frame/byte quotas.
     // Clear a previously installed runtime auto-response after a rolling upgrade.
@@ -124,6 +129,15 @@ export class RoomDurableObject {
         this._restoredJoinBudgetAt = this.joinBudgetAt = att.joinBudgetAt;
         this.joinsLeft = att.joinsLeft;
       }
+      if (Number.isFinite(att.roomBudgetAt) && Number.isFinite(att.roomFramesLeft) && Number.isFinite(att.roomBytesLeft)
+          && att.roomFramesLeft >= 0 && att.roomFramesLeft <= FRAME_BURST * MAX_ROOM_MEMBERS
+          && att.roomBytesLeft >= 0 && att.roomBytesLeft <= BYTE_BURST * MAX_ROOM_MEMBERS
+          && (this._restoredRoomBudgetAt === undefined || att.roomBudgetAt >= this._restoredRoomBudgetAt)) {
+        const same = att.roomBudgetAt === this._restoredRoomBudgetAt;
+        this._restoredRoomBudgetAt = this.roomBudgetAt = att.roomBudgetAt;
+        this.roomFramesLeft = same ? Math.min(this.roomFramesLeft, att.roomFramesLeft) : att.roomFramesLeft;
+        this.roomBytesLeft = same ? Math.min(this.roomBytesLeft, att.roomBytesLeft) : att.roomBytesLeft;
+      }
       if (att.compat && (!this.compat || att.isHost)) this.compat = att.compat;
       if (typeof att.locked === 'boolean' && (att.isHost || !this.hostId)) this.locked = att.locked;
       if (att.isHost && !this.hostId) this.hostId = att.id;
@@ -139,6 +153,7 @@ export class RoomDurableObject {
         emoteAt: Number.isFinite(att.emoteAt) ? att.emoteAt : null,
         attachmentSnapshot: att,
       });
+      this.socketBudgets.set(ws, this.members.get(att.id));
     }
     if (!this.hostId && this.members.size > 0) {
       const oldest = Array.from(this.members.values()).sort((a, b) => a.joinedAt - b.joinedAt)[0];
@@ -167,7 +182,8 @@ export class RoomDurableObject {
         compat: this.compat,
         relayClock: m.relayClock === true,
         emoteAt: m.emoteAt ?? null,
-        ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft } : {}),
+        ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft,
+          roomBudgetAt: this.roomBudgetAt, roomFramesLeft: this.roomFramesLeft, roomBytesLeft: this.roomBytesLeft } : {}),
       };
       const previous = m.attachmentSnapshot;
       // Accepted frames usually change at least one budget scalar. Prove a
@@ -217,7 +233,7 @@ export class RoomDurableObject {
       return new Response('Incompatible game version: refresh this tab', { status: 409 });
 
     // Room-wide admission limits cover JOIN/LEAVE fanout, before socket allocation.
-    if (!this._admitJoin(false)) return new Response('Room reconnect limit; try again shortly', { status: 429 });
+    if (!this._admitJoin()) return new Response('Room reconnect limit; try again shortly', { status: 429 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
 
@@ -242,7 +258,7 @@ export class RoomDurableObject {
         server.close(1008, 'Match in progress');
         return new Response(null, { status: 101, webSocket: client });
       }
-      if (this.members.size >= 8) {
+      if (this.members.size >= MAX_ROOM_MEMBERS) {
         server.accept();
         server.send(JSON.stringify({ t: 'err', e: 'Room is full' }));
         server.close(1008, 'Room is full');
@@ -251,7 +267,7 @@ export class RoomDurableObject {
     }
 
     if (this.members.size === 0) this.compat = compat;
-    if (this.handleSession(server, name, this.hibernationEnabled, url.searchParams.get('relayClock') === '1') === false)
+    if (this.handleSession(server, name, this.hibernationEnabled, url.searchParams.get('relayClock') === '1', true) === false)
       return new Response('Could not join room; try again shortly', { status: 503 });
 
     return new Response(null, { status: 101, webSocket: client });
@@ -263,12 +279,17 @@ export class RoomDurableObject {
     this.joinsLeft = Math.min(JOIN_BURST, this.joinsLeft + elapsed * JOIN_RATE);
     this.joinBudgetAt = at;
     if (this.joinsLeft < 1) return false;
-    if (consume) this.joinsLeft--;
+    if (consume) {
+      this.joinsLeft--;
+      this._syncMemberAttachment(this.members.get(this.hostId));
+    }
     return true;
   }
 
-  handleSession(ws, name, useHibernation = false, relayClock = false) {
-    if (!this._admitJoin()) { try { ws.close(1008, 'Room reconnect limit'); } catch {} return false; }
+  handleSession(ws, name, useHibernation = false, relayClock = false, joinAdmitted = false) {
+    // Re-entering admission for an existing socket cannot mint a new identity or budget.
+    if (this._memberBySocket(ws)) return true;
+    if (!joinAdmitted && !this._admitJoin()) { try { ws.close(1008, 'Room reconnect limit'); } catch {} return false; }
     // Allocate identity before accept/WELCOME/JOIN. Never overwrite an old socket.
     let id = null;
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -323,12 +344,15 @@ export class RoomDurableObject {
       notified.push(member);
     }
 
-    // Admission budgets are per authenticated socket and reset on reconnect.
+    // A genuinely new socket has a fresh quota. Re-admitting the same socket
+    // preserves the remaining quota even after its old membership was removed.
+    const priorBudget = this.socketBudgets.get(ws);
     const memberEntry = {
       id, name, ws, joinedAt, relayClock, emoteAt: null,
-      budgetAt: Date.now(), framesLeft: FRAME_BURST, bytesLeft: BYTE_BURST
+      budgetAt: priorBudget?.budgetAt ?? Date.now(), framesLeft: priorBudget?.framesLeft ?? FRAME_BURST, bytesLeft: priorBudget?.bytesLeft ?? BYTE_BURST
     };
     this.members.set(id, memberEntry);
+    this.socketBudgets.set(ws, memberEntry);
     this._syncAttachments();
 
     if (!(useHibernation && typeof this.state?.acceptWebSocket === 'function')) {
@@ -393,14 +417,23 @@ export class RoomDurableObject {
     m.budgetAt = now;
     m.framesLeft = Math.min(FRAME_BURST, m.framesLeft + elapsed * FRAME_RATE);
     m.bytesLeft = Math.min(BYTE_BURST, m.bytesLeft + elapsed * BYTE_RATE);
-    if (m.framesLeft < 1 || m.bytesLeft < size) {
+    // Sum of the existing eight permitted socket envelopes. A stable full
+    // room retains its entire lawful burst/rate; reconnects cannot multiply it.
+    const roomElapsed = Math.max(0, Math.min(4, (now - this.roomBudgetAt) / 1000));
+    this.roomBudgetAt = now;
+    this.roomFramesLeft = Math.min(FRAME_BURST * MAX_ROOM_MEMBERS, this.roomFramesLeft + roomElapsed * FRAME_RATE * MAX_ROOM_MEMBERS);
+    this.roomBytesLeft = Math.min(BYTE_BURST * MAX_ROOM_MEMBERS, this.roomBytesLeft + roomElapsed * BYTE_RATE * MAX_ROOM_MEMBERS);
+    if (m.framesLeft < 1 || m.bytesLeft < size || this.roomFramesLeft < 1 || this.roomBytesLeft < size) {
       try { ws.close(1008, 'Relay traffic limit'); } catch {}
       this._cleanupMember(id, ws);
       return;
     }
     m.framesLeft -= 1;
     m.bytesLeft -= size;
+    this.roomFramesLeft -= 1;
+    this.roomBytesLeft -= size;
     this._syncMemberAttachment(m);
+    if (m.id !== this.hostId) this._syncMemberAttachment(this.members.get(this.hostId));
 
     // Heartbeat ping -> pong
     if (s === 'ping') {

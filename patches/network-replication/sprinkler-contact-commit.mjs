@@ -31,7 +31,7 @@ export function recordReceiverSprinklerContact(nm,bomb,drop,victim,damage,t){
  const r=registries.get(nm)?.get(bomb?.owner?.nid);
  if(r?.bomb!==bomb||!live(nm,r)||!drop||r.drops.has(drop)||victim?.remote||!victim?.alive||victim.owner!==nm.myId||
   nm.byNid?.get(victim.nid)!==victim||victim.team===r.actor.team||damage!==bomb.s3GhostResolved.spec.dropletDamage||!Number.isFinite(t))return false;
- r.drops.add(drop);r.contacts=r.contacts.filter(c=>t-c.at>=0&&t-c.at<=r.maxAge&&c.victim.alive&&life(c.victim)===c.life);
+ r.drops.add(drop);if(r.contacts.length)r.contacts=r.contacts.filter(c=>t-c.at>=0&&t-c.at<=r.maxAge&&c.victim.alive&&life(c.victim)===c.life);
  if(r.contacts.length>=r.maxContacts)return false;
  r.contacts.push({victim,life:life(victim),damage,at:t});
  r.notify.call(nm,r.from);return true;
@@ -43,7 +43,7 @@ export function consumeReceiverSprinklerContact(nm,from,d,t,scope=null){
  if(!live(nm,r)||r.from!==from||d.m!==r.epoch||d.w!=='sprinkler'||!Number.isSafeInteger(d.h)||d.h<1||r.peer.hitSequences?.has(d.h))return false;
  const victim=nm.byNid?.get(d.v);
  if(!victim||victim.remote||victim.owner!==nm.myId||!victim.alive||d.l!==life(victim))return false;
- r.contacts=r.contacts.filter(c=>t-c.at>=0&&t-c.at<=r.maxAge&&c.victim.alive&&life(c.victim)===c.life);
+ if(r.contacts.length)r.contacts=r.contacts.filter(c=>t-c.at>=0&&t-c.at<=r.maxAge&&c.victim.alive&&life(c.victim)===c.life);
  const i=r.contacts.findIndex(c=>c.victim===victim&&c.life===d.l&&c.damage===d.d);
  if(i<0)return false;r.contacts.splice(i,1);return true;
 }

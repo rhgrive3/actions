@@ -98,6 +98,23 @@ for(const [name,mutate]of [
  assert.throws(()=>assertUnchangedDefaultVolumeJob(changed));
 });
 
+for(const [name,mutate]of [
+ ['missing sparse fetch',s=>s.replace(reviewedSparseCheckout,'')],
+ ['duplicate sparse fetch',s=>s.replace(reviewedSparseCheckout,reviewedSparseCheckout.repeat(2))],
+ ['broad sparse exclusion',s=>s.replace('!/tools/inkwave-modeler/blender/','!/tools/')],
+ ['changed fetch filter',s=>s.replace('filter: blob:none','filter: tree:0')],
+ ['changed sparse mode',s=>s.replace('sparse-checkout-cone-mode: false','sparse-checkout-cone-mode: true')],
+ ['missing retention',s=>s.replace(reviewedRetention,'')],
+ ['duplicate retention',s=>s.replace(reviewedRetention,reviewedRetention.repeat(2))],
+ ['changed retention',s=>s.replace('&& 14 || 90','&& 1 || 1')],
+ ['moved retention',s=>s.replace(reviewedRetention,'').replace(reviewedSparseCheckout,reviewedSparseCheckout+reviewedRetention)],
+ ['changed upload condition',s=>s.replace('        if: always()','        if: success()')],
+ ['changed evidence path',s=>s.replace('            .ci-scratch/evidence\n','            .ci-scratch/other\n')],
+])test('default volume guard rejects '+name,async()=>{
+ const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
+ const changed=mutate(y);assert.notEqual(changed,y);assert.throws(()=>assertUnchangedDefaultVolumeJob(changed));
+});
+
 for(const [index,trigger]of reviewedSplatlingTriggers.entries()){
  for(const [name,mutate]of [
   ['missing',s=>s.replace(trigger,'')],

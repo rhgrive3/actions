@@ -93,10 +93,10 @@ function insideStage(p, ctx) {
 // Nearest walkable floor around the feet; null when no column has one.
 function nearestFloor(world, p) {
   if (typeof world?.floorAt !== 'function') return undefined;
-  let best = null;
+  let best = null, bestDistance = Infinity;
   for (const [ox,oz] of FLOOR_PROBE_OFFSETS) {
     const y = world.floorAt(p[0] + ox*L.floorProbe, p[2] + oz*L.floorProbe, p[1] + 1.8);
-    if (finite(y) && (best === null || Math.abs(p[1]-y) < Math.abs(p[1]-best))) best = y;
+    if (finite(y)) { const d=Math.abs(p[1]-y); if(best===null || d<bestDistance){best=y;bestDistance=d;} }
   }
   return best;
 }

@@ -153,6 +153,12 @@ test('stale remote ranked special input expires together with fire/throw and can
     rki:{match:f.nm.cfg.id,id:'1',seq:1,fire:true,throw:true,aim:[0,0,1],special:a.weapon.special,specialDeployed:false,clamDrop:0} });
   assert.ok(f.nm.rankedPose.get('1'), 'the owner snapshot is admitted before pickup');
   assert.equal(f.nm.rankedInputs.get('1')?.special,a.weapon.special,'real owner input admitted before expiry');
+  const admittedInput=f.nm.rankedInputs.get('1'), admittedPose=f.nm.rankedPose.get('1');
+  for(const k of ['unknown','hit','t'])f.nm.onMessage('guest',{k,ts:10,u:600,l:{1:1},a:[row],
+    rki:{match:f.nm.cfg.id,id:'1',seq:999,fire:false,throw:false,aim:[1,0,0],special:null,clamDrop:100}});
+  assert.equal(f.nm.rankedInputs.get('1'),admittedInput,'unknown, unrelated and duplicate native ticks cannot publish input');
+  assert.equal(f.nm.rankedPose.get('1'),admittedPose,'duplicate tick cannot publish pose');
+
   const activeFrame = f.buildFrame(f.m,{G:f.G});
   assert.equal(activeFrame.actors.find(x=>x.id==='1').special,'crabTank','same-epoch positive control');
   f.engine.rule._newClam('small', null, a.pos.toArray());

@@ -16,6 +16,7 @@ const guard = 'node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.m
 const source = 'node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs';
 const emitted = 'INKWAVE_BUILT_SITE=.built-site/_site node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-production-contract.test.mjs';
 const verifier = 'node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source';
+const lock = JSON.parse(readFileSync(new URL('../../package-lock.json', import.meta.url), 'utf8'));
 function verify(text) {
   assert.match(text, /      wall_render_diagnostic:\n        description: [^\n]+\n        type: boolean\n        default: false\n/);
   assert.equal(condition(text, 'wall-render-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true");
@@ -36,12 +37,16 @@ function verify(text) {
     'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
     'node scripts/build-inkwave.mjs inkwave-public .built-site/_site',
     'test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"',
-    'esbuild@0.28.2 playwright@1.62.1', 'npx playwright install --with-deps chromium',
+    'npm ci --no-audit --no-fund', 'npx playwright install --with-deps chromium',
     guard, source, emitted, verifier,
     'uses: actions/upload-artifact@v4\n        if: always()',
     'path: ${{ env.CI_STORAGE }}/evidence/wall/',
     'name: inkwave-wall-render-diagnostic-\${{ env.SOURCE_SHA }}-${{ github.run_id }}-\${{ github.run_attempt }}'
   ]) assert.ok(native.includes(literal), `Missing ${literal}`);
+  for (const [name, version] of [['esbuild', '0.28.2'], ['playwright', '1.62.1']]) {
+    assert.equal(lock.packages[''].devDependencies[name], version);
+    assert.equal(lock.packages['node_modules/' + name].version, version);
+  }
   assert.ok(job(text,'validate_core').includes('scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs'));
   assert.ok(native.indexOf(source) < native.indexOf('node scripts/build-inkwave.mjs'));
   assert.ok(native.indexOf(emitted) > native.indexOf('node scripts/build-inkwave.mjs'));
@@ -71,7 +76,7 @@ test('all event and flag combinations isolate wall from full, network and broad 
   }
 });
 test('missing identity, real build, source/emitted contracts or full verifier fail closed', ()=> {
-  for(const literal of ['test "$WORKFLOW_SHA" = "$SOURCE_SHA"','test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"','node scripts/build-inkwave.mjs inkwave-public .built-site/_site',source,emitted,verifier,guard]) {
+  for(const literal of ['test "$WORKFLOW_SHA" = "$SOURCE_SHA"','test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"','npm ci --no-audit --no-fund','node scripts/build-inkwave.mjs inkwave-public .built-site/_site',source,emitted,verifier,guard]) {
     const changed=workflow.replaceAll(literal,'true # removed'); assert.notEqual(changed,workflow); assert.throws(()=>verify(changed));
   }
 });

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 
 const source = fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs', import.meta.url), 'utf8');
@@ -10,14 +11,20 @@ const candidate = source.slice(start, end);
 // Frozen update from main 7f863ea2, with the same swap-removal and attribute
 // uploads. The comparison executes complete production pools, not a motion model.
 const oldUpdate = fs.readFileSync(new URL('./fixtures/sprite-update-before-drag-cache.txt', import.meta.url), 'utf8');
-const u0 = candidate.indexOf('  update(dt) {'), u1 = candidate.indexOf('\n  clear()', u0);
-const baseline = candidate.slice(0, u0) + oldUpdate.trimEnd() + candidate.slice(u1);
+// Keep later dirty-range handling identical on both sides; replace only the
+// particle motion loop whose drag calculation this test compares.
+const u0 = candidate.indexOf("    // A burst's adjacent particles share drag.");
+const u1 = candidate.indexOf('    const P = this.aPos.array', u0);
+const oldStart = oldUpdate.indexOf('    for (let j = this.n - 1; j >= 0; j--) {');
+const oldEnd = oldUpdate.indexOf('    const P = this.aPos.array', oldStart);
+assert.ok(u0 >= 0 && u1 > u0 && oldStart >= 0 && oldEnd > oldStart);
+const baseline = candidate.slice(0, u0) + oldUpdate.slice(oldStart, oldEnd) + candidate.slice(u1);
 function pool(body, cap = 64, additive = false) {
   let word = 17, expCalls = 0;
   const random = () => ((word = (Math.imul(word, 1664525) + 1013904223) >>> 0) / 4294967296);
   const math = Object.create(Math); math.exp = value => { expCalls++; return Math.exp(value); };
-  const Pool = new Function('THREE', 'SPRITE_VERT', 'SPARK_FRAG', 'PUFF_FRAG', 'vfxRandom', 'TAU', 'Math', body + '\nreturn SpritePool;')
-    (THREE, '', '', '', random, Math.PI * 2, math);
+  const Pool = new Function('THREE', 'SPRITE_VERT', 'SPARK_FRAG', 'PUFF_FRAG', 'vfxRandom', 'TAU', 'Math', 'markAttributeRange', body + '\nreturn SpritePool;')
+    (THREE, '', '', '', random, Math.PI * 2, math, markAttributeRange);
   return { p: new Pool(THREE, cap, additive, { value: 0 }), calls: () => expCalls, reset: () => { expCalls = 0; } };
 }
 function spawn(p, i, drag) {

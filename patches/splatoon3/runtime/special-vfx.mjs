@@ -344,11 +344,12 @@ class Director {
   // ------------------------------------------------------------------ events (local emits and replayed remote copies)
   event(e) {
     const a = e?.actor; if (!a || !e.id) return;
+    const d = DIRECTORS[e.id];
+    if (!d?.event) { markSpecial(a, e.action, this.G.time || 0); return; }
     const pos = Array.isArray(e.pos) && e.pos.length === 3 && e.pos.every(finite) ? new this.THREE.Vector3(...e.pos) : null;
     const target = Array.isArray(e.target) && e.target.length === 3 && e.target.every(finite) ? new this.THREE.Vector3(...e.target) : null;
     markSpecial(a, e.action, this.G.time || 0);
-    const d = DIRECTORS[e.id];
-    if (d?.event) this.call(d.event, a, e, pos, target);
+    this.call(d.event, a, e, pos, target);
   }
   // ------------------------------------------------------------------ projectiles of specials
   updateRounds(dt) {
@@ -1038,7 +1039,10 @@ const DIRECTORS = {
         }
         inside.push(row);
       }
-      if (this.tentaHud(t, show, limit, inside)) return;
+      if (this.tentaHud(t, show, limit, inside)) {
+        if (t.d.locks) { for (const r of t.d.locks.values()) r.dead = true; t.d.locks.clear(); }
+        return;
+      }
       // no HUD layer (headless/tests): fall back to world-space reticles over the same opponents
       const locks = t.d.locks ||= new Map(), live = new Set();
       for (const [e] of inside) {
@@ -1536,7 +1540,7 @@ const DIRECTORS = {
           this.drop(this.v[4], (mouth.x - this.v[4].x) * k / d * 1.4, (mouth.y - this.v[4].y) * k / d * 1.4, (mouth.z - this.v[4].z) * k / d * 1.4, 0.32, 0.06, c, { drag: 0, grav: 0, stretch: 0.04, shrink: 0.3 });
         }
         t.ringAcc = (t.ringAcc || 0) + dt;
-        if (t.ringAcc > 0.14) { t.ringAcc = 0;   // rings that rush into the mouth
+        if (consumeVfxPeriod(t, 'ringAcc', 9 / 60)) {   // preserve the original nine-frame 60 Hz cadence
           const start = mouth.clone().addScaledVector(f, 2.6), end = mouth.clone(), n = f.clone();
           this.disc(true, 0.35, DISC.SHOCK, start, n, 2, 0.35, this.hdr(c, 1.2, 0.6), 0.55, { hold: 0.7, follow: (rec) => { const k = rec.t / rec.life; this.v[7].copy(start).lerp(end, k * k); rec.v[0] = this.v[7].x; rec.v[1] = this.v[7].y; rec.v[2] = this.v[7].z; } });
         }
@@ -1712,7 +1716,7 @@ export function installSpecialVfx(api) {
   FX.prototype.update = function (dt, camera, ...rest) {
     const out = update.call(this, dt, camera, ...rest);
     const d = ensure(this);
-    if (d && G.fx === this && this.s3SpecialVfxEnabled !== false) d.update(dt, camera);
+    if (d && G.fx === this && this.s3SpecialVfxEnabled !== false) d.update(Math.min(dt || 0, 0.05), camera);
     return out;
   };
   const clear = FX.prototype.clear;
