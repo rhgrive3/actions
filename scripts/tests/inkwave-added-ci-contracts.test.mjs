@@ -24,25 +24,27 @@ test('required checks keep their identities and cancellation cannot skip the req
  assert.match(quality,/^  verify-aplus-suite:\n/m);assert.doesNotMatch(quality,/^    if:.*cancelled\(\)/m);
  const source=read('validate-inkwave-update.yml'),gate=source.slice(source.indexOf('  validate:'),source.indexOf('  browser:'));
  assert.match(gate,/if: \$\{\{ always\(\) && inputs\.diagnostic_only != true \}\}/);
- assert.match(gate,/needs: \[validate_core, patch_tests, circleci_offload_gate\]/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
+ assert.match(gate,/needs: \[admission_preflight, validate_core, patch_tests, circleci_offload_gate\]/);assert.match(gate,/test "\$PREFLIGHT_RESULT" = success/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
 });
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
 // Only Validate core executes the CircleCI parity gate that reads this config.
 const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+// Exact immutable checkout input closure for the mandatory low-cost preflight.
+const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/'];
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
 function assertCurrentCheckouts(name,source,count){
  const blocks=checkouts(source);assert.equal(blocks.length,count);
  if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
- for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
 }
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
- for(const[name,count]of[['validate-inkwave-update.yml',10],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
+ for(const[name,count]of[['validate-inkwave-update.yml',11],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
  const weapon=read('inkwave-main-weapons.yml');assert.match(weapon,/ref: 83f27e5d59db944458a85122a95d1154e3543393[\s\S]*path: work\/roller-grip-baseline/);assert.match(weapon,/git fetch --no-tags --depth=1 origin "\$DIFF_BASE"/);
 });
 test('exact job-bound sparse profiles reject missing, unexpected and misplaced CircleCI inputs',()=>{
  const name='validate-inkwave-update.yml',source=read(name),circle='            /.circleci/config.yml\n';
- assertCurrentCheckouts(name,source,10);
+ assertCurrentCheckouts(name,source,11);
  for(const altered of [
   source.replace(circle,''),
   source.replace(circle,circle+'            /unexpected-input/\n'),
@@ -50,7 +52,7 @@ test('exact job-bound sparse profiles reject missing, unexpected and misplaced C
   source.replace(circle+'            /inkwave-public/\n','            /inkwave-public/\n'+circle),
   source.replace('  validate_core:\n','  renamed_core:\n'),
   source.replace('            /.github/\n','            /.github/\n'+circle),
- ]){assert.notEqual(altered,source);assert.throws(()=>assertCurrentCheckouts(name,altered,10));}
+ ]){assert.notEqual(altered,source);assert.throws(()=>assertCurrentCheckouts(name,altered,11));}
  const weapon=read('inkwave-main-weapons.yml');
  assert.throws(()=>assertCurrentCheckouts('inkwave-main-weapons.yml',weapon.replace('            /.github/\n','            /.github/\n'+circle),4));
 });
@@ -208,14 +210,18 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
  const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,...env},encoding:'utf8'});
  for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
-  const env={OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
+  const env={PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
   const result=run(shell,env);assert.ifError(result.error);
   assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
  }
+ // The new gate must reject a failed preflight even when all legacy jobs pass.
+ const preflightFailed={PREFLIGHT_RESULT:'failure',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'};
+ assert.notEqual(run(shell,preflightFailed).status,0);
+ assert.equal(run(shell.replace('test "$PREFLIGHT_RESULT" = success','true # missing preflight guard'),preflightFailed).status,0);
  for(const [needle,env]of [
-  ['test "$CORE_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
-  ['test "$PATCH_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
-  ['test "$CIRCLECI_RESULT" = success',{OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
+  ['test "$CORE_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
+  ['test "$PATCH_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
+  ['test "$CIRCLECI_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
  ]){
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);

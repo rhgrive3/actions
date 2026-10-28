@@ -119,7 +119,37 @@ env:
   RUNTIME_PERFORMANCE: ${{ inputs.runtime_performance == true || (github.event_name == 'pull_request' && (github.head_ref == 'inkwave/runtime-performance-ui' || github.head_ref == 'inkwave/final-nine-way-integration')) }}
   REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
 jobs:
+  admission_preflight:
+    if: inputs.diagnostic_only != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /patches/
+            /inkwave-public/src/
+            /inkwave-public/index.html
+            /inkwave-public/sw.js
+            /.github/workflows/
+      - name: Verify immutable source checkout before other jobs
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reject invalid or duplicated YAML workflow definitions
+        run: ruby scripts/ci/check-workflow-yaml.rb .github/workflows
+      - name: Reject production composition anchor drift before heavy lanes
+        run: node scripts/ci/check-composition-preflight.mjs
+
   build_site:
+    needs: admission_preflight
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -534,6 +564,7 @@ jobs:
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
+    needs: admission_preflight
     # Default GitHub full-suite behavior unless explicitly offloaded.
     if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
@@ -639,18 +670,20 @@ jobs:
 
   validate:
     if: ${{ always() && inputs.diagnostic_only != true }}
-    needs: [validate_core, patch_tests, circleci_offload_gate]
+    needs: [admission_preflight, validate_core, patch_tests, circleci_offload_gate]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Require every source and patch regression to pass
         env:
+          PREFLIGHT_RESULT: ${{ needs.admission_preflight.result }}
           CORE_RESULT: ${{ needs.validate_core.result }}
           PATCH_RESULT: ${{ needs.patch_tests.result }}
           CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}
           OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
         run: |
           printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$OFFLOAD_ACTIVE"
+          test "$PREFLIGHT_RESULT" = success
           test "$CORE_RESULT" = success
           if [ "$OFFLOAD_ACTIVE" = true ]; then
             test "$PATCH_RESULT" = skipped
@@ -1257,6 +1290,7 @@ jobs:
           retention-days: 14
 
   seven_claims:
+    needs: admission_preflight
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1332,6 +1366,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   resource_paint_continuation:
+    needs: admission_preflight
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 15

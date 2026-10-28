@@ -1,9 +1,11 @@
 name: INKWAVE Charger video waveform evidence (research only)
+# This is external-media research, never a PR admission check: unauthenticated
+# providers can block hosted runners even with unchanged gameplay source.
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/inkwave-charger-video-waveform.yml'
   workflow_dispatch:
+concurrency:
+  group: charger-external-research-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -14,6 +16,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Ensure FFmpeg is present before attempting media extraction
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ffmpeg
+          fi
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
       - name: Prepare downloader with readable diagnostics
         shell: bash
         run: |
