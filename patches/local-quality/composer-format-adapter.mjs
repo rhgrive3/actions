@@ -190,6 +190,23 @@ export function configureComposerColorTargets(THREE, composer, selection) {
   return composer;
 }
 
+// Private build-time helper, injected into the renderer with the other format
+// controls. Reuse all passes/programs and the scene target on a precision edge.
+function updateComposerTargetPrecision(THREE, composer, packed) {
+  const target = composer?.renderTarget1;
+  if (!target || !composer.renderTarget2) return; // a lazy generation selects on creation
+  if (!composer._iwPrecisionRoles) {
+    configureComposerColorTargets(THREE, composer, { packed: true });
+    composer._iwPrecisionRoles = true;
+  }
+  const format = packed ? THREE.RGBFormat : THREE.RGBAFormat;
+  const type = packed ? THREE.UnsignedInt101111Type : THREE.HalfFloatType;
+  if (target.texture.format === format && target.texture.type === type) return;
+  target.dispose();
+  target.texture.format = format;
+  target.texture.type = type;
+}
+
 const BASELINE_TARGET =
   '    const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples });';
 const LAZY_TARGET_OPTIONS = '        { type: THREE.HalfFloatType, samples });';
@@ -198,11 +215,14 @@ const RENDER_GRADE_ANCHOR =
 const RENDER_GRADE_GUARD =
   '    const gr = G.env && G.env.grade;\n' +
   '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr) && !this.extraPass?.enabled;\n' +
-  '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) this._buildComposer();\n' +
+  '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) {\n' +
+  '      updateComposerTargetPrecision(THREE, this.composer, gradeCanUsePackedTarget);\n' +
+  '      this._composerUsesPackedTarget = gradeCanUsePackedTarget;\n' +
+  '    }\n' +
   '    if (gr && gr !== this._gradeSrc && this.grade) {';
 
 const HELPER_ANCHOR = 'const BLOOM = [0.28, 0.45, 2.4];';
-const HELPER_SOURCE = `${composerGradeKeepsPackedTargetNonnegative.toString()}\n\n${selectComposerTargetFormat.toString()}\n\n${configureComposerColorTargets.toString()}\n\n`;
+const HELPER_SOURCE = `${composerGradeKeepsPackedTargetNonnegative.toString()}\n\n${selectComposerTargetFormat.toString()}\n\n${configureComposerColorTargets.toString()}\n\n${updateComposerTargetPrecision.toString()}\n\n`;
 
 const DIRECT_TARGET =
   '    const composerColorTarget = selectComposerTargetFormat(THREE, r, {\n' +
