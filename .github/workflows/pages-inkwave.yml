@@ -78,7 +78,7 @@ jobs:
           npx --no-install playwright install --with-deps --no-shell chromium
           node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
           node scripts/check-inkwave-patches.mjs --quick
-          node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs
+          node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs --test-concurrency=2
           node --experimental-vm-modules --test patches/practice-range/tests/*.test.mjs
           node --experimental-vm-modules --test patches/loading-cache/tests/adapter.test.mjs patches/loading-cache/tests/worker.test.mjs patches/loading-cache/tests/recovery.test.mjs
           python3 patches/loading-cache/tests/harness.test.py
