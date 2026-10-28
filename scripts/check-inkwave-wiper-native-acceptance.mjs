@@ -137,13 +137,19 @@ export async function installWiperProbe(testCase) {
       gear:JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1')),teams:G.teamColors.map(c=>c.getHexString()),camera:camState(G.camera),inspectionCamera:camState(camera),
       environment:{time:G.env?.time,theme:G.env?.theme,grade:G.env?.grade},pipeline:{ao:!!g.R.gtao,shadows:r.shadowMap.enabled,bloom:!!g.R.bloom?.enabled},bootSeed:'0x515e7021',shotSeed:'0x515e7080'},
     capture(frame,view){
+      // Strict phase-specific GL admission: the *first* queued error is fatal.
+      // Never drain an error to continue, and never replace the native renderer.
+      const glBoundary=stage=>window.__assertWiperWebGLError(gl,frame,view+':'+stage);
+      glBoundary('before-native-phase');
       scheduler.advanceTo(frame);
+      glBoundary('after-native-phase');
       const R=P._s3Shapes,mesh=R?.[testCase.mesh];
       if(!mesh||mesh.count!==2)throw Error('Missing actual two-instance native slash');
       const currentRefs=[R,mesh,mesh.geometry,mesh.material,mesh.instanceMatrix.array,mesh.instanceColor.array];
       if(refs&&refs.some((x,i)=>x!==currentRefs[i]))throw Error('Native mesh/geometry/buffers replaced during flight');refs=currentRefs;
       const before=JSON.stringify(state()),counts=JSON.stringify(P.s3ShapeCounts);
       P._draw();P._draw();
+      glBoundary('after-geometry-upload');
       if(before!==JSON.stringify(state())||counts!==JSON.stringify(P.s3ShapeCounts))throw Error('Repeated shape draw mutated gameplay/RNG/counts');
       const vertices=mesh.geometry.getAttribute('position'),index=mesh.geometry.index;
       let bytes=0;for(const attribute of Object.values(mesh.geometry.attributes))bytes+=attribute.array.byteLength;if(index)bytes+=index.array.byteLength;
@@ -161,10 +167,11 @@ export async function installWiperProbe(testCase) {
         if(view==='native-postprocessed')g.R.render();
         else if(view==='fixed-side-raw'){r.setRenderTarget(null);r.autoClear=true;r.render(G.scene,camera);}
         else throw Error('Unknown capture view');
+        glBoundary('after-render');
         render={...r.info.render};pixels=readPixels();
+        glBoundary('after-readback');
       }finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}
       if(!drawReceipts.some(d=>!d.override))throw Error('Actual source-bound mesh did not draw in this view');
-      window.__assertWiperWebGLError(gl,frame,view);
       if(before!==JSON.stringify(state()))throw Error('Render changed gameplay/native camera/visibility/clock/RNG');
       return {frame,tick:scheduler.tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,
         attributeBytes:bytes,projectedVertices:vertices.count*mesh.count,visibleProjectedVertices,matrices,castShadow:mesh.castShadow},

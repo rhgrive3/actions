@@ -52,7 +52,9 @@ test('WebGL failure retains exact first queued enum and context without a pre-dr
   assert.throws(()=>probe(broken,8,'fixed-side-raw'),e=>e.message.includes('code=0x502')&&e.message.includes('frame=8 view=fixed-side-raw')&&e.message.includes('contextLost=unknown drawingBuffer=unknownxunknown'));
   assert.equal(errorReads,1,'failed optional reads never drain or replace the original error');
   const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
-  assert.match(driver,/window\.__assertWiperWebGLError\(gl,frame,view\)/);
+  assert.match(driver,/window\.__assertWiperWebGLError\(gl,frame,view\+':'\+stage\)/);
+  for(const stage of ['before-native-phase','after-native-phase','after-geometry-upload','after-render','after-readback'])
+    assert.ok(driver.includes("glBoundary('"+stage+"')"),'missing first-error GL boundary '+stage);
   assert.match(driver,/assertWiperWebGLError\.toString\(\)/);
 });
 
