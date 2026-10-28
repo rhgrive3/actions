@@ -7,6 +7,10 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptRemainingPaint20261026 } from '../queue-remaining-paint-20261026-adapter.mjs';
+import { adaptCombatWorldQueue20261027 } from '../queue-combat-world-20261027-adapter.mjs';
+import { adaptCombatGpuCpuPerfect } from '../combat-gpu-cpu-perfect-adapter.mjs';
+import { adaptPaintRenderRegions } from '../paint-render-regions-adapter.mjs';
+import { replaceOnce } from '../adapter.mjs';
 import { geometryFixture } from './geometry-build-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url)), SRC = path.join(ROOT, 'inkwave-public');
@@ -197,8 +201,10 @@ test('shelf retries preserve stable face ordering and atomic atlas commits for f
 });
 
 test('paint source adapter is isolated and fail-closed', () => {
-  assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), candidate,
-    'production composition uses the tested candidate bytes');
+  const rel = 'src/world/paint.js';
+  const restored = adaptPaintRenderRegions(rel, adaptCombatGpuCpuPerfect(rel, adaptCombatWorldQueue20261027(rel, candidate), replaceOnce), replaceOnce);
+  assert.equal(adaptBuildSource(rel, fs.readFileSync(path.join(SRC, rel), 'utf8')), restored,
+    'production composition retains the tested candidate and subsequent reviewed transforms');
   assert.equal(adaptRemainingPaint20261026('src/config.js', baseline.paint.source), baseline.paint.source);
   assert.throws(() => adaptRemainingPaint20261026('src/world/paint.js', candidate), /source anchor/);
   assert.doesNotThrow(() => new vm.SourceTextModule(candidate));
