@@ -18,6 +18,26 @@ export async function mapResponsiveCases(cases, workers, runCase) {
   return output;
 }
 
+// A crashing WebKit renderer must never share a runner with another WebKit
+// renderer. Retain two browser workers by giving Chromium and WebKit one
+// isolated serial lane each, allowing the two engines to overlap.
+export async function mapResponsiveByEngine(cases,workers,runCase) {
+  if (workers===1) return mapResponsiveCases(cases,1,runCase);
+  if (workers!==2 || !Array.isArray(cases) || typeof runCase!=='function')
+    throw TypeError('Invalid engine-owned responsive work');
+  const chromium=cases.filter(x=>x?.engine==='chromium');
+  const webkit=cases.filter(x=>x?.engine==='webkit');
+  if (!chromium.length || !webkit.length || chromium.length+webkit.length!==cases.length)
+    throw TypeError('Both browser engines must own every responsive case');
+  // Promise.all waits for both complete 7-case lanes. No case disappears if
+  // another lane fails; the full 14-case acceptance receipt still fails closed.
+  const [a,b]=await Promise.all([
+    mapResponsiveCases(chromium,1,runCase),
+    mapResponsiveCases(webkit,1,runCase),
+  ]);
+  return cases.map(item=>item.engine==='chromium'?a[chromium.indexOf(item)]:b[webkit.indexOf(item)]);
+}
+
 export function spawnResponsiveCase(program,args,{cwd,timeoutMs=20*60*1000,maxBuffer=16*1024*1024}={}) {
   if (typeof program !== 'string' || !program || !Array.isArray(args) || args.some(a=>typeof a!=='string')
       || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1
