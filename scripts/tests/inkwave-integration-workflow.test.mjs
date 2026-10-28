@@ -294,6 +294,7 @@ test('all eight patch shards report into the existing required validate gate', (
   const shardRunner="    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}";
   assert.equal(shards.split(shardRunner).length-1,1,'Exact runner routing required for shard 2');
   assert.equal((shards.match(/^    runs-on:/gm)||[]).length,2,'Only patch and offload jobs set a runner');
+  assert.equal((shards.match(/shard: \[0, 1, 2, 3, 4, 5, 6, 7\]/g)||[]).length,1);
   assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
   assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: '2'"));
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));

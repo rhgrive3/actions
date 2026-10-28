@@ -88,13 +88,20 @@ export function createGpuRenderTimer(renderer, { every = 8, maxPending = 3 } = {
 
 const round = n => Number.isFinite(n) ? Math.round(n * 1000) / 1000 : null;
 const utf8Bytes = text => new TextEncoder().encode(text).byteLength;
+const installedTracers = new WeakMap();
+// Compatibility labels refer to one measured call, not nested instrumentation.
+const nativeScopeAliases = Object.freeze({
+  'physics-ray': 'world-ray',
+  'paint-splat': 'paint-stamp',
+});
 
 export function installHitchTracer(game, {
   env = globalThis, now = () => performance.now(), maxFrames = 360, gpuEvery = 8,
 } = {}) {
   if (!game || typeof game._frame !== 'function') throw new TypeError('Game._frame required');
   if (!Number.isInteger(maxFrames) || maxFrames < 30 || maxFrames > 2000) throw new RangeError('invalid frame capacity');
-  const current = [], hitches = [], saved = new Map(), recentTasks = [];
+  if (installedTracers.has(game)) return installedTracers.get(game);
+  const current = [], hitches = [], recentTasks = [];
   // Explicit, opt-in capture is separate from the small rolling HUD sample.
   // Store immutable record-time snapshots so delayed GPU/long-task delivery
   // cannot silently grow the byte budget after admission.
@@ -122,6 +129,7 @@ export function installHitchTracer(game, {
     }) : null;
   };
   const originalFrame = game._frame;
+  const originalFrameDescriptor = Object.getOwnPropertyDescriptor(game, '_frame');
   let active = null, last = null, previousStamp = 0, nextId = 0, disposed = false;
   let longTasks = 0, longTaskSupported = false, observer = null;
   let gpuTimer = null, paintGpuTimer = null; const pendingEvents = [];
@@ -174,9 +182,7 @@ export function installHitchTracer(game, {
         ['native-contact', physics, '_nativeContacts'],
         ['body-collision', physics, 'collideBody'],
         ['ground-ring', physics, 'groundProbe'],
-        ['physics-ray', physics, 'raycast'],
         ['route-search', nav, 'path'],
-        ['paint-splat', G.paint, 'splat'],
         ['paint-region', G.paint, 'regionStats']
       );
       const actors = G.match?.actors || [];
@@ -193,28 +199,44 @@ export function installHitchTracer(game, {
     if (active) active.events.push(item);
     else pendingEvents.push(item);
   };
+  const restoreBinding = prior => {
+    // Other extensions may retain a wrapper in their own closure. Retired
+    // wrappers must become transparent even when they cannot be unlinked.
+    prior.enabled = false;
+    if (prior.owner?.[prior.method] !== prior.wrapper) return;
+    // An extension can freeze an object after instrumentation. A disabled
+    // retained wrapper is still transparent; failure to unlink it must not
+    // abort cleanup of all the other owners, timers and observer.
+    try {
+      if (prior.descriptor) Object.defineProperty(prior.owner, prior.method, prior.descriptor);
+      else delete prior.owner[prior.method];
+    } catch {}
+  };
   const rebind = () => {
     const owners = stageOwners();
     // World swaps replace stage/actor owners. Do not retain old native actor
     // objects (and their complete Character graphs) just because the debug
     // recorder stays open across several matches.
-    const names = new Set(owners.map(([name]) => name));
+    const next = new Map(owners.map(entry => [entry[0], entry]));
+    // Restore every stale slot before installing any replacement. Otherwise
+    // actor reordering can capture another slot's still-installed wrapper.
     for (const [name, prior] of stageState) {
-      if (name === 'dynamicScale' || names.has(name)) continue;
-      if (prior.owner?.[prior.method] === prior.wrapper)
-        prior.owner[prior.method] = prior.original;
+      if (name === 'dynamicScale') continue;
+      const entry = next.get(name);
+      if (entry && entry[1] === prior.owner && entry[2] === prior.method &&
+          prior.owner?.[prior.method] === prior.wrapper) continue;
+      restoreBinding(prior);
       stageState.delete(name);
     }
     for (const [name, owner, method] of owners) {
-      const prior = stageState.get(name);
-      if (prior && (prior.owner !== owner || owner?.[method] !== prior.wrapper)) {
-        if (prior.owner?.[prior.method] === prior.wrapper) prior.owner[prior.method] = prior.original;
-        stageState.delete(name);
-      }
       if (!owner || typeof owner[method] !== 'function' || stageState.has(name)) continue;
       const original = owner[method];
+      const binding = { owner, method, original, enabled: true,
+        descriptor: Object.getOwnPropertyDescriptor(owner, method) };
       const wrapper = function (...args) {
+        if (!binding.enabled || disposed) return original.apply(this, args);
         const rec = active;
+        if (!rec) return original.apply(this, args);
         const countOnly = name === 'source-capsule-distance' || name === 'block-query';
         const t = rec && !countOnly ? now() : 0;
         let gpuStarted = false, timer = null;
@@ -239,17 +261,21 @@ export function installHitchTracer(game, {
         }
       };
       owner[method] = wrapper;
-      stageState.set(name, { owner, method, wrapper, original });
+      binding.wrapper = wrapper;
+      stageState.set(name, binding);
     }
     const owner = game.R, method = 'setDynamicScale', name = 'dynamicScale';
     const prior = stageState.get(name);
     if (prior && (owner !== prior.owner || owner?.[method] !== prior.wrapper)) {
-      if (prior.owner?.[method] === prior.wrapper) prior.owner[method] = prior.original;
+      restoreBinding(prior);
       stageState.delete(name);
     }
     if (owner && typeof owner[method] === 'function' && !stageState.has(name)) {
       const original = owner[method];
+      const binding = { owner, method, original, enabled: true,
+        descriptor: Object.getOwnPropertyDescriptor(owner, method) };
       const wrapper = function (scale) {
+        if (!binding.enabled || disposed) return original.apply(this, arguments);
         const old = this.dynScale;
         const t = now();
         try { return original.apply(this, arguments); }
@@ -261,7 +287,8 @@ export function installHitchTracer(game, {
         }
       };
       owner[method] = wrapper;
-      stageState.set(name, {owner,method,wrapper,original});
+      binding.wrapper = wrapper;
+      stageState.set(name, binding);
     }
   };
 
@@ -313,6 +340,15 @@ export function installHitchTracer(game, {
           queries: Math.max(0, sourceWorld.queryCount-beforeQueries),
           triangleTests: Math.max(0, sourceWorld.triangleTests-beforeTriangles),
         };
+      }
+      // Copy compatibility labels once per frame, never once per ray/stamp.
+      // Counts and inclusive durations intentionally reference the same work.
+      rec.scopeAliases = getWorld().level?.native ? nativeScopeAliases : null;
+      if (rec.scopeAliases) {
+        for (const [alias, canonical] of Object.entries(rec.scopeAliases)) {
+          if (canonical in rec.calls) rec.calls[alias] = rec.calls[canonical];
+          if (canonical in rec.cpu) rec.cpu[alias] = rec.cpu[canonical];
+        }
       }
       active = null;
       last = rec;
@@ -406,11 +442,12 @@ export function installHitchTracer(game, {
     sourceBVH: rec.sourceBVH || null,
     sourceBVHCounterCoverage: rec.sourceBVH ? 'ray and sphere-sweep only; box/capsule work is in methodCalls' : null,
     methodCalls: { ...rec.calls },
+    scopeAliases: rec.scopeAliases || null,
     fixedClock: rec.fixedClock || null,
     // Exclude inclusive parent groups so the user can see which native
     // method family dominates without mistaking nested totals for a sum.
     topNativeScopes: rec.sourceBVH
-      ? Object.entries(rec.cpu).filter(([k])=>!['simulation','render','paint','projectiles'].includes(k))
+      ? Object.entries(rec.cpu).filter(([k])=>!['simulation','render','paint','projectiles'].includes(k) && !rec.scopeAliases?.[k])
           .sort((a,b)=>b[1]-a[1]).slice(0,5)
           .map(([name,ms])=>({name,ms:round(ms)}))
       : [],
@@ -482,15 +519,16 @@ export function installHitchTracer(game, {
       if (disposed) return;
       finishCapture('disposed');
       disposed=true;
-      if (game._frame===wrappedFrame) game._frame=originalFrame;
-      for(const item of stageState.values()) {
-        if(item.owner?.[item.method]===item.wrapper) item.owner[item.method]=item.original;
-      }
+      restoreBinding({ owner: game, method: '_frame', wrapper: wrappedFrame,
+        original: originalFrame, descriptor: originalFrameDescriptor });
+      for(const item of stageState.values()) restoreBinding(item);
+      if (installedTracers.get(game) === result) installedTracers.delete(game);
       stageState.clear();
       observer?.disconnect?.();
       gpuTimer?.dispose?.();
       paintGpuTimer?.dispose?.();
     },
   };
+  installedTracers.set(game, result);
   return result;
 }
