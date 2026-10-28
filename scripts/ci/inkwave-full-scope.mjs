@@ -8,7 +8,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const hash=/^[a-f0-9]{40}$/;
-const contractTests=/^scripts\/tests\/inkwave-(?:staged-ci-policy|added-ci-contracts|network-diagnostic-workflow|wall-diagnostic-workflow|test-suites|workflow-inputs|source-coverage|optimization-workflows|ci-source-admission|ci-sparse-checkout)\.test\.mjs$/;
+const contractTests=/^scripts\/tests\/inkwave-(?:staged-ci-policy|added-ci-contracts|network-diagnostic-workflow|wall-diagnostic-workflow|test-suites|workflow-inputs|source-coverage|optimization-workflows|ci-source-admission|ci-sparse-checkout|full-scope)\.test\.mjs$/;
 const isolatedWorkflow=/^\.github\/workflows\/(?!validate-inkwave-update\.yml$)[a-zA-Z0-9_-]+\.yml$/;
 const docs=/^(?:docs|reports)\/[^\\\0\n]+\.md$/;
 
