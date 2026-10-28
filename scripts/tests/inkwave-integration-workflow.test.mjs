@@ -250,7 +250,7 @@ test('worker source regressions have their pinned dependency and writable persis
   const manifest=JSON.parse(fs.readFileSync(new URL('../../package.json',import.meta.url),'utf8'));
   assert.equal(manifest.devDependencies.esbuild,'0.28.2');
   assert.equal(manifest.devDependencies.playwright,'1.62.1');
-  assert.equal((validate.match(/^\\s+npm ci --no-audit --no-fund$/gm)||[]).length,1);
+  assert.equal((validate.match(/^\s+npm ci --no-audit --no-fund$/gm)||[]).length,1);
   const storage=validate.slice(prepare,validate.indexOf('name: Prepare persistent focused test evidence'));
   assert(!storage.includes('if:'), 'storage is required even when focused_tests is empty');
   assert(storage.indexOf('realpath -m')<storage.indexOf('sudo mkdir'));
