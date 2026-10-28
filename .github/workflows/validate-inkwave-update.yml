@@ -126,6 +126,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       content_hash: ${{ steps.identity.outputs.content_hash }}
+      contracts_only: ${{ steps.scope.outputs.contracts_only }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -148,7 +149,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Classify immutable tree difference, not commit-message or historical SHA
+        id: scope
+        env:
+          CONTRACT_SCOPE_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node scripts/ci/inkwave-full-scope.mjs
+      - name: CI-only source contract acceptance (no browser or unnecessary rebuild)
+        if: steps.scope.outputs.contracts_only == 'true'
+        run: |
+          node scripts/check-inkwave-patches.mjs --quick
+          node scripts/ci/run-inkwave-test-suite.mjs runner-contracts
+          node scripts/ci/run-inkwave-test-suite.mjs verifier
+          node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-full-scope.test.mjs
       - name: Build immutable production site once
+        if: steps.scope.outputs.contracts_only != 'true'
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
@@ -157,9 +173,11 @@ jobs:
           git rev-parse HEAD > _site-source-sha.txt
           tar -cf immutable-site.tar _site _site-source-sha.txt
       - name: Bind shared artifact identity
+        if: steps.scope.outputs.contracts_only != 'true'
         id: identity
         run: node --input-type=module -e "import fs from 'node:fs'; const b=JSON.parse(fs.readFileSync('_site/inkwave-build.json')); fs.appendFileSync(process.env.GITHUB_OUTPUT,'content_hash='+b.contentHash+'\n');"
       - uses: actions/upload-artifact@v4
+        if: steps.scope.outputs.contracts_only != 'true'
         with:
           retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
@@ -169,7 +187,7 @@ jobs:
 
   validate_core:
     needs: build_site
-    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     # CPU source regressions live in the eight patch shards; keep browser-backed source and emitted checks here.
     timeout-minutes: 90
@@ -532,7 +550,8 @@ jobs:
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
     # Default GitHub full-suite behavior unless explicitly offloaded.
-    if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    needs: build_site
+    if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -667,7 +686,7 @@ jobs:
   browser:
     needs: build_site
     # No offload until CircleCI is connected and enabled.
-    if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -1252,7 +1271,8 @@ jobs:
           retention-days: 14
 
   seven_claims:
-    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    needs: build_site
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -1327,7 +1347,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   resource_paint_continuation:
-    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    needs: build_site
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     # The formerly 13-minute idle GPU probe now overlaps the active browser shard.
     timeout-minutes: 45
