@@ -1,0 +1,114 @@
+name: INKWAVE isolated Wiper link before-after diagnostic
+# Link proof is diagnostic-only. Candidate original native acceptance runs separately.
+on:
+  push:
+    branches: [diagnostic/wiper-link-fix-126-20261028]
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-wiper-link-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/wiper-link-fix-126-20261028'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {lane: baseline, source: 126231d4d7d039ddde26a67eead5a4f27c73a425, tree: 34ab34c0890cebf9d638429d585cc6f2328072aa, expected: unlinked}
+          - {lane: candidate, source: e17441e069edf6d321eb65d54cd2be233aa6be74, tree: 570ebc9ad935f0f49209f370fb842b68072f200b, expected: linked}
+    env:
+      SOURCE_SHA: ${{ matrix.source }}
+      SOURCE_TREE: ${{ matrix.tree }}
+      EXPECTED_LINK: ${{ matrix.expected }}
+      HARNESS_SHA: ${{ github.sha }}
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - name: Checkout exact harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify immutable ancestry, source trees and harness blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$WORKFLOW_SHA" = "$HARNESS_SHA"
+          test "$(git rev-parse HEAD)" = "$HARNESS_SHA"
+          test "$(git rev-parse HEAD^)" = e17441e069edf6d321eb65d54cd2be233aa6be74
+          test "$(git rev-parse HEAD^^)" = 126231d4d7d039ddde26a67eead5a4f27c73a425
+          test "$(git rev-parse HEAD^^^{tree})" = 34ab34c0890cebf9d638429d585cc6f2328072aa
+          test "$(git rev-parse HEAD^^{tree})" = 570ebc9ad935f0f49209f370fb842b68072f200b
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-wiper-link-fix-diagnostic.yml' 'scripts/check-inkwave-wiper-link-diagnostic-capture.mjs' 'scripts/check-inkwave-wiper-link-diagnostic.mjs' 'scripts/check-inkwave-wiper-secure-acceptance.mjs' 'scripts/check-inkwave-wiper-secure-acceptance-runner.mjs' 'scripts/lib/inkwave-wiper-link-probe.mjs' 'scripts/lib/inkwave-wiper-console-evidence.mjs' 'scripts/lib/inkwave-wiper-secure-launcher.mjs' 'scripts/tests/inkwave-wiper-link-diagnostic-integration.test.mjs' 'scripts/tests/inkwave-wiper-link-probe.test.mjs' 'scripts/tests/inkwave-wiper-link-source.test.mjs' 'scripts/tests/inkwave-wiper-console-evidence.test.mjs' | sort)
+          actual=$(git diff --no-renames --name-only HEAD^ HEAD | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse "$HARNESS_SHA:.circleci/config.yml")" = 7b0d59ddebafb84ccb2ad951b87ac4814dfbdb18
+          test "$(git rev-parse "$HARNESS_SHA:.github/workflows/bootstrap-hex-worker-repos.yml")" = a89d98f9bae894b5b7986fb52aa8c75c458ae070
+          test "$(git rev-parse "$HARNESS_SHA:.github/workflows/hex-fast-tail-known.yml")" = 1705f39a68e78ac7d61d5aaf0972f082a1b4c479
+          test "$(git rev-parse "$HARNESS_SHA:scripts/check-inkwave-wiper-link-diagnostic-capture.mjs")" = 1c948bbf22f82bb0c984d3b7ec527a2fd77ea1d5
+          test "$(git rev-parse "$HARNESS_SHA:scripts/check-inkwave-wiper-link-diagnostic.mjs")" = 126d846d39c94c75687f3ebecbc53a0538fac35c
+          test "$(git rev-parse "$HARNESS_SHA:scripts/check-inkwave-wiper-secure-acceptance.mjs")" = 61bbbcdd191b330e3a02603cab6035e2e0b86f40
+          test "$(git rev-parse "$HARNESS_SHA:scripts/check-inkwave-wiper-secure-acceptance-runner.mjs")" = 5572bfb7c318dd2f3d776bf3e1d03a2a0ea0f5d1
+          test "$(git rev-parse "$HARNESS_SHA:scripts/lib/inkwave-wiper-link-probe.mjs")" = a38fd6ca98c4db55c3c75a1d1e4478ab67b58ec1
+          test "$(git rev-parse "$HARNESS_SHA:scripts/lib/inkwave-wiper-console-evidence.mjs")" = 15a05f8a26ea636e381f0e60cd19739e1a27df5c
+          test "$(git rev-parse "$HARNESS_SHA:scripts/lib/inkwave-wiper-secure-launcher.mjs")" = 4a38005b4b95dde523bb9d6b33fd4498c123bfd6
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-link-diagnostic-integration.test.mjs")" = 32e20748169ba8e45293b8adefb03cac77bd8d49
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-link-probe.test.mjs")" = 91f959c4000debbf96dc0c37884b4f9fde35e828
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-link-source.test.mjs")" = 8cd02fafbfac3091a138681e35c0e05e403c3508
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-console-evidence.test.mjs")" = 2a920f837331d3bb2c9c44178d542873c7605ffb
+      - name: Checkout independently pinned game source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.source }}
+          path: .game-source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Prepare source identity and evidence directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .game-source rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .game-source rev-parse HEAD^{tree})" = "$SOURCE_TREE"
+          mkdir -p diagnostic-evidence
+          printf '{"sourceSha":"%s","harnessSha":"%s","workflowSha":"%s","lane":"%s","sandbox":true,"extraArgs":[],"actualBackend":"unverified","acceptance":false}\n' "$SOURCE_SHA" "$HARNESS_SHA" "$WORKFLOW_SHA" '${{ matrix.lane }}' > diagnostic-evidence/run-identity.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Provision pinned JS tools and secure Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+          ln -s "$GITHUB_WORKSPACE/node_modules" .game-source/node_modules
+      - name: Verify link probe contracts without launching a browser
+        run: WIPER_SOURCE_ROOT="$GITHUB_WORKSPACE/.game-source" node --test scripts/tests/inkwave-wiper-link-probe.test.mjs scripts/tests/inkwave-wiper-link-source.test.mjs scripts/tests/inkwave-wiper-console-evidence.test.mjs scripts/tests/inkwave-wiper-link-diagnostic-integration.test.mjs
+      - name: Build immutable source once
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd .game-source && node scripts/build-inkwave.mjs inkwave-public "$GITHUB_WORKSPACE/.built-site/_site")
+      - name: Verify actual target shader link proof
+        run: node scripts/check-inkwave-wiper-link-diagnostic.mjs .built-site/_site diagnostic-evidence/link --source-sha "$SOURCE_SHA" --source-root "$GITHUB_WORKSPACE/.game-source" --harness-sha "$HARNESS_SHA" --expect "$EXPECTED_LINK"
+      # Same assertion body as check-inkwave-wiper-native-acceptance.mjs; secure launcher differs.
+      - name: Run full Wiper assertions with secure-launcher variant
+        if: ${{ always() && matrix.lane == 'candidate' && steps.build.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '{"kind":"secure-launcher-variant","originalLauncherIdentical":false,"backend":"unverified","sourceSha":"%s","harnessSha":"%s"}\n' "$SOURCE_SHA" "$HARNESS_SHA" > diagnostic-evidence/secure-variant-identity.json
+          sha256sum .game-source/scripts/check-inkwave-wiper-native-acceptance.mjs scripts/check-inkwave-wiper-secure-acceptance.mjs scripts/lib/inkwave-wiper-secure-launcher.mjs > diagnostic-evidence/secure-variant-hashes.txt
+          node scripts/check-inkwave-wiper-secure-acceptance-runner.mjs .built-site/_site diagnostic-evidence/secure-wiper --source-sha "$SOURCE_SHA" --source-root "$GITHUB_WORKSPACE/.game-source"
+      - name: Preserve evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiper-link-${{ matrix.lane }}-${{ github.sha }}
+          path: diagnostic-evidence/
+          if-no-files-found: error
+          retention-days: 7
