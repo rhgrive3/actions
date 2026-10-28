@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import {sphereTriangleEntry} from './sphere-triangle-entry.mjs';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const V=()=>new THREE.Vector3();
+const _groundOrigin=V(),_groundDown=new THREE.Vector3(0,-1,0);
 
 /** Read-only source-triangle BVH. The render model is never substituted with boxes. */
 export class TriangleWorld {
@@ -15,12 +16,13 @@ export class TriangleWorld {
   this._box=new THREE.Box3();this._ta=V();this._tb=V();this._tc=V();this._triangle=new THREE.Triangle();
   this._u=V();this._v=V();this._w=V();this._p=V();this._q=V();this._cp=V();this._sp=V();this._bestp=V();this._bests=V();this._d=V();this._s0=V();this._s1=V();this._center=V();this._normal=V();
   this.queryCount=0;this.triangleTests=0;
-  // One traversal stack per active nesting level. Callbacks may issue another
-  // box/ray query; finally releases even an interrupted or throwing traversal.
+  // One stack per active nesting level. Indexed writes preserve its numeric
+  // backing capacity; pop()/length=0 may discard it. Each query owns a local
+  // cursor, and finally releases the nesting slot even when a callback throws.
   this._queryStacks=[];this._queryDepth=0;
  }
- _acquireStack(){const depth=this._queryDepth++,stack=this._queryStacks[depth]||(this._queryStacks[depth]=[]);stack.push(0);return stack;}
- _releaseStack(stack){stack.length=0;this._queryDepth--;}
+ _acquireStack(){const depth=this._queryDepth++,stack=this._queryStacks[depth]||(this._queryStacks[depth]=[]);stack[0]=0;return stack;}
+ _releaseStack(_stack){this._queryDepth--;}
  // anyHit is reserved for Boolean ground support; ordinary callers retain exact nearest-hit data.
  // Optional out owns point/normal Vector3s distinct from the ray inputs. Misses
  // leave it untouched; callers omitting it still receive independently owned hits.
@@ -31,9 +33,9 @@ export class TriangleWorld {
   // Ground/edge probes use this exact direction. Keep native division and
   // traversal order; no reciprocal approximation or cross-query cache.
   const verticalDown=dir.x===0&&dir.z===0&&dir.y===-1;
-  this.queryCount++;
-  while(stack.length){
-   const ni=stack.pop()*8;let low=0,high=best,miss=false;
+  this.queryCount++;let top=1;
+  while(top){
+   const ni=stack[--top]*8;let low=0,high=best,miss=false;
    if(verticalDown){
     if(origin.x<nodes[ni]||origin.x>nodes[ni+3]||origin.z<nodes[ni+2]||origin.z>nodes[ni+5])miss=true;
     else {const a=(nodes[ni+1]-origin.y)/dir.y,b=(nodes[ni+4]-origin.y)/dir.y;
@@ -51,7 +53,7 @@ export class TriangleWorld {
    }
    if(miss)continue;
    const left=nodes[ni+6]|0,right=nodes[ni+7]|0;
-   if(left>=0){stack.push(left,right);continue;}
+   if(left>=0){stack[top++]=left;stack[top++]=right;continue;}
    const start=-left-1;
    for(let q=start;q<start+right;q++){
     const t=this.order[q];if((ignoreGrates&&(this.flags[t]&4))||norm[t*3+1]<minNormalY)continue;
@@ -73,12 +75,71 @@ export class TriangleWorld {
   out.triangle=id;out.distance=best;out.u=bu;out.v=bv;out.flags=this.flags[id];out.object=this.objectIds[id];return out;
   } finally {this._releaseStack(stack);}
  }
+ // Ordered, masked BVH traversal for the nine parallel footprint samples.
+ // Each sample keeps ray()'s exact triangle equations and tie winner. Sharing
+ // the traversal and triangle setup does not combine or approximate contacts.
+ hasCanonicalRay(){return this.ray===CANONICAL_RAY;}
+ rayDownBatch(origins,far,options,outputs){
+  const count=origins.length,{ignoreGrates=false,minNormalY=-2}=options||{};
+  if(count>30||!(far>0)||!Number.isFinite(far)||options?.anyHit||this.ray!==CANONICAL_RAY){
+   for(let i=0;i<count;i++)outputs[i].hit=!!this.ray(origins[i],_groundDown,far,options,outputs[i]);
+   return outputs;
+  }
+  const state=this._downBatch||(this._downBatch={dist:new Float64Array(30),ids:new Int32Array(30),u:new Float64Array(30),v:new Float64Array(30)});
+  const {dist,ids,u,v}=state,nodes=this.nodes,verts=this.triangles,norm=this.normals,dir=_groundDown;
+  let mask=0;
+  for(let i=0;i<count;i++){
+   outputs[i].hit=false;dist[i]=far;ids[i]=-1;
+   const o=origins[i];if(Number.isFinite(o.x+o.y+o.z+dir.x+dir.y+dir.z)){mask|=1<<i;this.queryCount++;}
+  }
+  if(!mask)return outputs;
+  const stack=this._acquireStack();stack[1]=mask;let top=2;
+  try {
+   while(top){
+    const pending=stack[--top],ni=stack[--top]*8;let active=0;
+    for(let i=0;i<count;i++){
+     if(!(pending&(1<<i)))continue;const o=origins[i];
+     if(o.x<nodes[ni]||o.x>nodes[ni+3]||o.z<nodes[ni+2]||o.z>nodes[ni+5])continue;
+     const a=(nodes[ni+1]-o.y)/dir.y,b=(nodes[ni+4]-o.y)/dir.y;
+     if(a>=b){if(a<0||b>dist[i])continue;}
+     else if(Math.min(dist[i],Math.max(a,b))<Math.max(0,Math.min(a,b)))continue;
+     active|=1<<i;
+    }
+    if(!active)continue;
+    const left=nodes[ni+6]|0,right=nodes[ni+7]|0;
+    if(left>=0){stack[top++]=left;stack[top++]=active;stack[top++]=right;stack[top++]=active;continue;}
+    const start=-left-1;
+    for(let q=start;q<start+right;q++){
+     const t=this.order[q];if((ignoreGrates&&(this.flags[t]&4))||norm[t*3+1]<minNormalY)continue;
+     const n=t*9,ax=verts[n],ay=verts[n+1],az=verts[n+2],ex=verts[n+3]-ax,ey=verts[n+4]-ay,ez=verts[n+5]-az,fx=verts[n+6]-ax,fy=verts[n+7]-ay,fz=verts[n+8]-az;
+     const hx=dir.y*fz-dir.z*fy,hy=dir.z*fx-dir.x*fz,hz=dir.x*fy-dir.y*fx,det=ex*hx+ey*hy+ez*hz;
+     for(let i=0;i<count;i++){
+      if(!(active&(1<<i)))continue;this.triangleTests++;if(Math.abs(det)<1e-10)continue;
+      const o=origins[i],inv=1/det,sx=o.x-ax,sy=o.y-ay,sz=o.z-az,tu=(sx*hx+sy*hy+sz*hz)*inv;
+      if(tu<-.000001||tu>1.000001)continue;
+      const qx=sy*ez-sz*ey,qy=sz*ex-sx*ez,qz=sx*ey-sy*ex,tv=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;
+      if(tv<-.000001||tu+tv>1.000001)continue;
+      const distance=(fx*qx+fy*qy+fz*qz)*inv;
+      if(distance<.00001||distance>dist[i]||distance===dist[i]&&ids[i]>=0&&t>ids[i])continue;
+      dist[i]=distance;ids[i]=t;u[i]=tu;v[i]=tv;
+     }
+    }
+   }
+   for(let i=0;i<count;i++){
+    const t=ids[i];if(t<0)continue;const out=outputs[i];
+    out.hit=true;out.triangle=t;out.distance=dist[i];out.u=u[i];out.v=v[i];out.flags=this.flags[t];out.object=this.objectIds[t];
+    out.normal.fromArray(norm,t*3);if(out.normal.dot(dir)>0)out.normal.negate();
+    out.point.copy(origins[i]).addScaledVector(dir,dist[i]);
+   }
+   return outputs;
+  }finally{this._releaseStack(stack);}
+ }
  // Opt-in early termination leaves existing callback return semantics intact.
  queryBox(min,max,fn,stopOnFalse=false){
-  const a=this.nodes,stack=this._acquireStack();
+  const a=this.nodes,stack=this._acquireStack();let top=1;
   try {
-  while(stack.length){const n=stack.pop()*8;if(a[n]>max.x||a[n+1]>max.y||a[n+2]>max.z||a[n+3]<min.x||a[n+4]<min.y||a[n+5]<min.z)continue;
-   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)if(fn(this.order[k])===false&&stopOnFalse)return;
+  while(top){const n=stack[--top]*8;if(a[n]>max.x||a[n+1]>max.y||a[n+2]>max.z||a[n+3]<min.x||a[n+4]<min.y||a[n+5]<min.z)continue;
+   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack[top++]=left;stack[top++]=right;continue;}const start=-left-1;for(let k=start;k<start+right;k++)if(fn(this.order[k])===false&&stopOnFalse)return;
   }
   } finally {this._releaseStack(stack);}
  }
@@ -157,7 +218,7 @@ export class TriangleWorld {
   return hi;
  }
  triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.fromArray(a,i);out.b.fromArray(a,i+3);out.c.fromArray(a,i+6);return out;}
- ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(new THREE.Vector3(x,y+up,z),new THREE.Vector3(0,-1,0),up+down,{ignoreGrates:squid,minNormalY:.62});}
+ ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(_groundOrigin.set(x,y+up,z),_groundDown,up+down,{ignoreGrates:squid,minNormalY:.62});}
  // Closest pair of points on two finite segments (degenerates included).
  _segments(a,b,c,d,outP,outQ){
   const u=this._u.subVectors(b,a),v=this._v.subVectors(d,c),w=this._w.subVectors(a,c),A=u.dot(u),B=u.dot(v),C=v.dot(v),D=u.dot(w),E=v.dot(w);let s=0,t=0;
@@ -194,7 +255,7 @@ export class TriangleWorld {
   return Math.sqrt(best);
  }
  resolveCapsule(feet,height=1.45,radius=.38,ignoreGrates=false){
-  let ground=false,wall=false,maxPush=0;const velocityNormal=new THREE.Vector3();
+  let ground=false,wall=false,maxPush=0;const velocityNormal=(this._capsuleNormal||(this._capsuleNormal=V())).set(0,0,0);
   const s0=this._s0,s1=this._s1,box=this._box,tri=this._triangle;
   for(let pass=0;pass<4;pass++){
    s0.set(feet.x,feet.y+radius,feet.z);s1.set(feet.x,feet.y+Math.max(radius,height-radius),feet.z);
@@ -219,3 +280,5 @@ export class TriangleWorld {
   this.queryBox(box.min,box.max,id=>{this.triangle(id);depth=Math.max(depth,radius-this._capsuleDistance(s0,s1,this._triangle));});return depth;
  }
 }
+
+const CANONICAL_RAY=TriangleWorld.prototype.ray;
