@@ -109,9 +109,10 @@
       "run": 40756964070,
       "job": 123065843170,
       "cause": "optimized-only charger scratch fixture expects removed module-global names instead of per-install per-depth scratch",
-      "fix": null,
-      "followup": "Agent3 implementing isolated behavioral ownership/reuse checks; pending local commit and independentAgent1 review",
-      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843170"
+      "fix": "c8ae9404645c5d706d03114495c52c3c4dead6b7",
+      "followup": "Actual installer source16/16 and actual optimized emitted16/16, four mutation controls reject; Agent1 independent approval. Optimized-only test repair; next exact-head hosted result pending.",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843170",
+      "integrated_fix": "87b289b0fc3c169956d56e780e44eecbc8cf74d1"
     },
     {
       "pr": 1907,
@@ -119,12 +120,31 @@
       "run": 40756964070,
       "job": 123065843380,
       "cause": "Charger endpoint call-list fixture assumes full scan after new broadphase; surviving endpoints and culled capsule safety under review",
-      "fix": null,
-      "followup": "Agent2 isolated fixture/geometry audit; pending local commit and independentAgent4 review",
-      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843380"
+      "fix": "606d6b148e7da3de86e234a8ee913e994e436a53",
+      "followup": "Source10/10 and mixed emitted-suite10/10; source-only936-case native geometry matrix proves4800 omitted misses and3766 unchanged hits. Five mutants reject; Agent4 independent approval. Optimized-only test repair; next exact-head hosted result pending.",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843380",
+      "integrated_fix": "73a789978863953c625bf12b9bd6d1b08d1d6b64"
     }
   ],
   "distinct_causes": 8,
   "main_merge_performed": false,
-  "snapshot_all_hosted_failures_resolved": false
+  "snapshot_all_hosted_failures_resolved": false,
+  "optimized_0706_patch_snapshot": {
+    "source": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+    "run": 40756964070,
+    "passed_shards": [
+      0,
+      3,
+      4,
+      5,
+      7
+    ],
+    "failed_shards": {
+      "1": 123065843380,
+      "2": 123065843170,
+      "6": 123065843180
+    },
+    "all_eight_terminal": true,
+    "interpretation": "Each failed patch job has one confirmed primary test failure; all three are locally repaired and reviewed. This is not acceptance of the next published head."
+  }
 }
