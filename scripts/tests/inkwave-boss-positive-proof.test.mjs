@@ -11,7 +11,8 @@ const sourceRoot = new URL('../../', import.meta.url);
 const built = process.env.INKWAVE_BUILT_SITE;
 const runtimeRoot = built ? pathToFileURL(path.resolve(built) + path.sep) : sourceRoot;
 const runtimePaths = ['patches/network-replication/combat-provenance.mjs',
-  'patches/splatoon3/runtime/sub-special-fidelity.mjs'];
+  'patches/splatoon3/runtime/sub-special-fidelity.mjs',
+  'patches/network-replication/owner-tick-receipt.mjs'];
 if (built) {
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   const manifest = JSON.parse(fs.readFileSync(new URL('inkwave-build.json', runtimeRoot), 'utf8'));
@@ -23,12 +24,14 @@ if (built) {
   for (const [key, rel] of [
     ['network-replication/combat-provenance.mjs', runtimePaths[0]],
     ['patch/runtime/sub-special-fidelity.mjs', runtimePaths[1]],
+    ['network-replication/owner-tick-receipt.mjs', runtimePaths[2]],
     ['local-quality/boss-hit-adapter.mjs', 'patches/local-quality/boss-hit-adapter.mjs'],
     ['upstream/src/net/netmatch.js', 'inkwave-public/src/net/netmatch.js'],
   ]) assert.equal(hash(fs.readFileSync(new URL(rel, sourceRoot))), manifest.files[key], 'current source input ' + key);
 }
 const { combatAdmission, installCombatProvenance } = await import(new URL(runtimePaths[0], runtimeRoot));
 const { applyBlasterKnockback } = await import(new URL(runtimePaths[1], runtimeRoot));
+const { commitOwnerTick } = await import(new URL(runtimePaths[2], runtimeRoot));
 // BUILT uses actual emitted admission/knockback modules, never source fallbacks.
 // The modeled Boss guard below remains generated from the matching source input.
 
@@ -76,12 +79,15 @@ function fixture(kind = 'shooter') {
       // This modeled fixture supplies a native-installed row, not merely a
       // retained presentation flag. Full row admission is tested separately
       // by contact-/special-provenance production-composition suites.
+      const admitted = [];
       for (const row of d.a || []) {
         const actor = this.byNid.get(row[0]);
         if (!actor || actor.owner !== from || d.l?.[row[0]] !== actor.netLife) continue;
         actor.net.buf = [{ t: d.ts, x: row[1], y: row[2], z: row[3],
           f: actor.net.cur.f, life: actor.netLife }];
+        admitted.push({actor,nid:actor.nid,owner:actor.owner,x:row[1],y:row[2],z:row[3]});
       }
+      commitOwnerTick(this, from, d, d.e || [], admitted);
     }
     _hit() { throw Error('PvP transport is outside this Boss fixture'); }
     onMessage() {}
@@ -97,7 +103,7 @@ const boss = (damage = 36, q = 1, w = 'shooter', c = -1) =>
 const pending = nm => nm._combatProvenance?.pending.get('peer')?.length || 0;
 const contacts = nm => nm._combatProvenance?.contacts.size || 0;
 function fire(nm) {
-  nm._tick('peer', { k: 't', ts: 100.05, a: [[1, 0, 0, 0]],
+  nm._tick('peer', { k: 't', ts: 100.05, a: [[1, 0, 0, 0]], l: {1: 0},
     e: [[100, 'p', 1, 'shot', 'shooter', 0, 1, 0, 0, 0, 45]] });
   const proof = nm._combatProvenance.proofs.get('peer')?.[0];
   assert(proof, 'real ordered event must create a proof');

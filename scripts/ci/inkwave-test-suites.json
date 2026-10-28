@@ -147,6 +147,7 @@
         "program": "node",
         "args": [
           "--test",
+          "scripts/tests/inkwave-build-input-coverage.test.mjs",
           "scripts/tests/inkwave-source-coverage.test.mjs",
           "scripts/tests/inkwave-explosher-absolute-geometries.test.mjs",
           "scripts/tests/inkwave-quality-shallow-history.test.mjs",
