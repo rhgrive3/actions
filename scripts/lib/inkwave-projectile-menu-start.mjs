@@ -12,15 +12,23 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   // before choosing Turf with the ordinary hit-tested pointer gesture.
   await page.mouse.move(1, 1);
   note('mode-pointer-hover-cleared');
-  // A native touch page must select Turf with a genuine tap. Pressing
-  // Enter on touch-primary CI pages can also reach the training range instead
-  // of advancing the ordinary mode card, leaving the setup wait hung.
-  // Keep keyboard navigation for non-touch desktop sessions.
+  // The separate Range card intercepts direct Turf taps on some touch-sized
+  // screens. Performance capture may use genuine keyboard navigation; touch
+  // admission itself remains covered by independent native UI tests.
   const turfSelector='.iw-modesel [data-id="mode-turf"]',turf=page.locator(turfSelector);
   const touchPrimary=await page.evaluate(()=>navigator.maxTouchPoints>0&&matchMedia('(pointer:coarse)').matches);
   if(touchPrimary){
-    await turf.tap({timeout:Math.max(1,remainingMs())});
-    note('touch-activate',{selector:turfSelector,gesture:'tap'});
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    const focus=await page.evaluate(()=>{
+      const m=window.__inkwave?.menus;
+      return {screen:m?.current??null,button:m?._focus?.dataset?.id??null};
+    });
+    if(focus.screen!=='mode'||focus.button!=='mode-turf')
+      throw Error('Native Turf keyboard focus mismatch: '+JSON.stringify(focus));
+    note('native-turf-focused',{focus,inputs:['ArrowLeft','ArrowLeft']});
+    await page.keyboard.press('Enter');
+    note('keyboard-activate-on-touch',{selector:turfSelector,key:'Enter'});
   }else{
     await turf.press('Enter',{timeout:Math.max(1,remainingMs())});
     note('keyboard-activate',{selector:turfSelector,key:'Enter'});
