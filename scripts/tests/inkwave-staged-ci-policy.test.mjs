@@ -92,3 +92,27 @@ test('specialized main-weapon numerical and browser work waits until Ready but r
     assert(active(weapons, name, {event: 'push'}), 'main runs ' + name);
   }
 });
+
+
+test('full CI critical-path optimizations retain fail-closed coverage',()=>{
+  const core=job(full,'validate_core');
+  const install=core.slice(core.indexOf('name: Install pinned source regression and build tool'));
+  const mirror=install.indexOf('sudo python3 scripts/prepare-inkwave-ci-apt.py');
+  const browser=install.indexOf('npx --no-install playwright install --with-deps chromium');
+  assert(mirror>0 && browser>mirror, 'apt mirror must be rewritten before dependency installation');
+  const browserJob=job(full,'browser');
+  assert.match(browserJob,/check-inkwave-responsive-isolated\.mjs[^\n]+--workers 2/);
+  assert.doesNotMatch(browserJob,/node scripts\/check-inkwave-idle-resources\.mjs/);
+  assert.match(browserJob,/chromium_pid=\$!/);
+  assert.match(browserJob,/webkit_pid=\$!/);
+  assert.match(browserJob,/wait "\$chromium_pid" \|\| result=1/);
+  assert.match(browserJob,/wait "\$webkit_pid" \|\| result=1/);
+  const resources=job(full,'resource_paint_continuation');
+  assert.match(resources,/node scripts\/check-inkwave-idle-resources\.mjs[^\n]+--exact-source/);
+  assert.match(resources,/assert\.equal\(report\.sourceSha,process\.env\.SOURCE_SHA\)/);
+  assert.match(resources,/assert\.equal\(report\.contentHash,build\.contentHash\)/);
+  assert.match(job(full,'validate'),/test "\$RESOURCE_RESULT" = success/);
+  const activeChecks=browserJob.match(/'active':\[[^\n]+\]/)?.[0];
+  assert(activeChecks, 'active browser receipt remains mandatory');
+  assert(!activeChecks.includes('idle-resources/'), 'idle work must not double-run');
+});
