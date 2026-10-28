@@ -333,8 +333,8 @@ const changes = [
   },
   {
     "rel": "src/game/motion/retarget.js",
-    "old": "invRot=c.kid.getWorldQuaternion(this.groundInvQ).invert();",
-    "new": "invRot=c.kid.getWorldQuaternion(this.groundInvQ);this.groundForwardQ.copy(invRot);invRot.invert();",
+    "old": "invRot=(c.kid.matrixWorld.decompose(this.ccdA,this.groundInvQ,this.ccdB),this.groundInvQ.invert());",
+    "new": "invRot=(c.kid.matrixWorld.decompose(this.ccdA,this.groundInvQ,this.ccdB),this.groundForwardQ.copy(this.groundInvQ),this.groundInvQ.invert());",
     "slug": "source-retarget-share-kid-quaternion-forward-across-feet",
     "count": 1
   },

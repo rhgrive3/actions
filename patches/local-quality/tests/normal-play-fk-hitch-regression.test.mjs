@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {adaptRetargetBranchUpdates} from '../retarget-branch-update-adapter.mjs';
 import {adaptMotionSampleFkRange} from '../motion-fk-hotpath-adapter.mjs';
 import {installHitchTracer} from '../range-hitch-tracer.mjs';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
 const rel='src/game/motion/retarget.js';
 const raw=fs.readFileSync(new URL('../../../inkwave-public/src/game/motion/retarget.js',import.meta.url),'utf8');
@@ -18,6 +19,16 @@ const open=assembled.indexOf('{',start);let pos=open+1,depth=1;
 while(depth>0&&pos<assembled.length){if(assembled[pos]==='{')depth++;else if(assembled[pos]==='}')depth--;pos++;}
 assert.equal(depth,0);
 const runRootWorld=new Function(`return function()${assembled.slice(open,pos)}`)();
+
+test('production composition retains refreshed kid FK and the shared forward quaternion',()=>{
+ const composed=adaptBuildSource(rel,raw);
+ const combined='invRot=(c.kid.matrixWorld.decompose(this.ccdA,this.groundInvQ,this.ccdB),this.groundForwardQ.copy(this.groundInvQ),this.groundInvQ.invert());';
+ assert.equal(composed.split(combined).length-1,1,'one exact owner performs decomposition before the retained forward copy');
+ assert.equal(composed.split('q.copy(this.groundForwardQ).multiply(f.orientation);').length-1,1,'both feet read the retained forward quaternion');
+ const original='invRot=c.kid.getWorldQuaternion(this.groundInvQ).invert();';
+ assert.equal(raw.split(original).length-1,1);
+ assert.throws(()=>adaptBuildSource(rel,raw.replace(original,'invRot=this.groundInvQ;')),/conflict|expected/,'upstream drift must fail closed');
+});
 
 function makeGraph(){
  const visited=[];
