@@ -57,7 +57,7 @@ function verifySettingsBrowserConsumers(p,u,s){
  const shards=u.slice(u.indexOf('  patch_tests:'),u.indexOf('\n  # Required /validate'));
  assert.equal(build.split(pagesBrowserSetup).length,2,'Pages installs exact dependencies and managed Chromium once');
  assert.equal(core.split(coreBrowserSetup).length,2,'core installs exact dependencies and managed Chromium once');
- assert.ok(build.indexOf(pagesBrowserSetup)<build.indexOf('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'));
+ assert.ok(build.indexOf(pagesBrowserSetup)<build.indexOf('node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs'));
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('      - name: Run requested focused source regressions'));
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('node scripts/ci/run-inkwave-test-suite.mjs source-browser'));
  // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
