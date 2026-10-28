@@ -61,3 +61,13 @@ test('toast eviction cancels both delay and exit timers without detached mutatio
  const a=add(),b=add();assert.equal(pending.size,2);const timerA=o._toastTimers.get(a);const c=add();assert(!a.isConnected);assert(!pending.has(timerA));assert.equal(pending.size,2);
  fire(o._toastTimers.get(b));assert.equal(b.exits,1);const exit=o._toastTimers.get(b);add();assert(!b.isConnected);assert(!pending.has(exit));assert.equal(pending.size,2);assert.equal(a.exits,0);assert(c.isConnected);
 });
+
+test('post-FK retarget composition preserves one cached forward kid rotation for both feet',()=>{
+ const rel='src/game/motion/retarget.js';
+ const raw=fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
+ const composed=adaptBuildSource(rel,raw);
+ assert.equal(composed.split('this.groundForwardQ=new THREE.Quaternion();').length-1,1);
+ assert.equal(composed.split('this.groundForwardQ.copy(this.groundInvQ)').length-1,1);
+ assert.equal(composed.split('q.copy(this.groundForwardQ).multiply(f.orientation);').length-1,1);
+ assert(!composed.includes('invRot=c.kid.getWorldQuaternion(this.groundInvQ).invert();'));
+});
