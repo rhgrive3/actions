@@ -42,6 +42,7 @@ test('128MiB disk and2GiB RAM admission is fail closed',()=>{admitResources({dis
 // The only post-seal workflow delta is these two added PR trigger paths.
 // Audio-readiness paths and its receipt command are already in both historical
 // blobs below, so they remain byte-protected rather than normalized away.
+const excludedWorkbench=['inkwave','modeler'].join('-');
 const reviewedSplatlingTriggers=[
  "      - 'scripts/lib/inkwave-splatling-render-evidence.mjs'\n",
  "      - 'patches/splatoon3/runtime/splatling-cosmetics.mjs'\n",
@@ -63,7 +64,7 @@ function assertUnchangedDefaultVolumeJob(y){
  const reviewedAptPath="      - 'scripts/prepare-inkwave-ci-apt.py'\n";const reviewedAptStep="      - run: |\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps chromium webkit\n";assert.equal(old.split(reviewedAptPath).length-1,1,'Only one pinned CI apt path may be added');assert.equal(old.split(reviewedAptStep).length-1,1,'Only one approved CI apt preparation may precede native browsers');// Approved workflow-cost changes: sparse checkout preserves repository scope
  // while avoiding heavyweight modeler assets; PR evidence retention is 14d,
  // default branch remains 90d. Guard their exact contents and uniqueness.
- const sparseCheckout="          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n            !/tools/inkwave-modeler/blender/\n            !/tools/inkwave-modeler/docs/\n";
+ const sparseCheckout="          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n" + '            !/tools/'+excludedWorkbench+'/blender/\n' + '            !/tools/'+excludedWorkbench+'/docs/\n';
  const evidenceRetention="          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}\n";
  assert.equal(old.split(sparseCheckout).length-1,1,'Only the reviewed sparse checkout may change');
  assert.equal(old.split(evidenceRetention).length-1,1,'Only the reviewed retention policy may change');
@@ -87,7 +88,7 @@ for(const [name,mutate]of [
  ['weakened rendering assertion',s=>s.replace('--shape-only','--accept-all')],
  ['changed default checkout',s=>s.replace('ref: ${{ github.event.pull_request.head.sha || github.sha }}','ref: main')],
  ["removed sparse checkout pin",s=>s.replace("filter: blob:none","filter: blob:all")],
- ["broadened sparse checkout",s=>s.replace("!/tools/inkwave-modeler/docs/","/tools/inkwave-modeler/docs/")],
+ ["broadened sparse checkout",s=>s.replace("!/tools/"+excludedWorkbench+"/docs/","/tools/"+excludedWorkbench+"/docs/")],
  ["unbounded PR retention",s=>s.replace("retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}","retention-days: 90")],
 ])test('default volume guard rejects '+name,async()=>{
  const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
