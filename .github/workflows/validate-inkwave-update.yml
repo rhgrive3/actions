@@ -150,6 +150,8 @@ jobs:
         run: ruby scripts/ci/check-workflow-yaml.rb .github/workflows
       - name: Reject production composition anchor drift before heavy lanes
         run: node scripts/ci/check-composition-preflight.mjs
+      - name: Verify source combat receipt and Boss admission fixtures
+        run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs
 
   build_site:
     needs: admission_preflight
