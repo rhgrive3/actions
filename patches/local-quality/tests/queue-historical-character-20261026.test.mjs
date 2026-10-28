@@ -6,6 +6,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
+import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
@@ -104,10 +105,10 @@ test('historical character source retains independently pinned input and both la
      assert.throws(()=>replaceOnce(historical+anchor,anchor,'','duplicate owner anchor'),/expected exactly one/);
     }
    }
-   expected=adaptCombatGpuCpuPerfect(rel,expected,replaceOnce);
+   expected=adaptCombatGpuCpuPerfect(rel,adaptRemainingVisualQueue20261027(rel,expected),replaceOnce);
    // Independently reconstruct the incoming side's complete extraction after
    // the GPU/CPU pass, and require the two owner-order paths to agree.
-   let incoming=adaptCombatGpuCpuPerfect(rel,historical,replaceOnce);
+   let incoming=adaptCombatGpuCpuPerfect(rel,adaptRemainingVisualQueue20261027(rel,historical),replaceOnce);
    if(rel==='src/game/character.js'){
     assert.throws(()=>replaceOnce(incoming.replace(characterWeaponBefore,''),characterWeaponBefore,characterWeaponAfter,'missing full presentation owner'),/expected exactly one/);
     assert.throws(()=>replaceOnce(incoming+characterWeaponBefore,characterWeaponBefore,characterWeaponAfter,'duplicate full presentation owner'),/expected exactly one/);

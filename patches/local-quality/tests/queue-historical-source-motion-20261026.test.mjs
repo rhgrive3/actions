@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalSourceMotion20261026,restoreHistoricalSourceMotion20261026} from '../queue-historical-source-motion-20261026-adapter.mjs';
 import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
+import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const REL='src/game/motion/source-controller.js';
@@ -36,13 +37,13 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
- assert.equal(restoreHistoricalSourceMotion20261026(REL,current),composed,'pinned historical source plus exact walk owner anchors');
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composed)),'pinned walk, historical owner and subsequent visual queue compose exactly');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
  let expected=adaptWalkPresentation(REL,before,replaceOnce);
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
- assert.equal(restoreHistoricalSourceMotion20261026(REL,current),expected,'prior composition plus the reviewed walking presentation is retained');
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,expected)),'walk adapter and later visual owner retain the pinned source composition');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');
  const speedAnchor='  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;';

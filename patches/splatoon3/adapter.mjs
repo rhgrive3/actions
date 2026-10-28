@@ -293,6 +293,12 @@ export function adaptSource(rel, code) {
       '  minimap: true,', '  minimap: false,', 'optional corner map default');
   }
   if (rel === 'src/ui/menus.js') {
+    // The native touch tooltip describes the pre-adapter gyro table. Keep the
+    // shared, translated profile description in both settings views.
+    code = replaceOnce(code,
+      'Same scale as the Switch game: 0 = 132° of device turn per 360°, +5 = 110°, −5 = 278°.',
+      'Motion-control aiming sensitivity for the selected profile.',
+      'gyro touch tooltip');
     code = replaceOnce(code,
       'const fnv = (str) => { let x = 2166136261;',
       'export const fnv = (str) => { let x = 2166136261;',

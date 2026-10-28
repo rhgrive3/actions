@@ -1,9 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import crypto from 'node:crypto';
 const sha=data=>crypto.createHash('sha256').update(data).digest('hex');
-async function fixture({chunks=[],digest=crypto.webcrypto.subtle.digest.bind(crypto.webcrypto.subtle),read=null}={}){
+async function fixture({chunks=[],digest=crypto.webcrypto.subtle.digest.bind(crypto.webcrypto.subtle),read=null,metadata=null}={}){
  const calls={fetch:0,cancel:0,release:0,arrayBuffer:0};let at=0;
  const context=vm.createContext({URL,DOMException,AbortController,TextDecoder,crypto:{subtle:{digest}},location:{href:'https://test.invalid/index.html'},
- fetch:async()=>{calls.fetch++;return{ok:true,body:{getReader:()=>({read:()=>read?read():Promise.resolve(at<chunks.length?{value:chunks[at++],done:false}:{done:true}),cancel:async()=>{calls.cancel++;},releaseLock:()=>{calls.release++;}})},arrayBuffer:async()=>{calls.arrayBuffer++;throw Error('stream must not allocate a full chunk');}};}});
+ fetch:async()=>{calls.fetch++;return{ok:true,body:{getReader:()=>({read:()=>read?read():Promise.resolve(at<chunks.length?{value:chunks[at++],done:false}:{done:true}),cancel:async()=>{calls.cancel++;},releaseLock:()=>{calls.release++;}})},arrayBuffer:async()=>{calls.arrayBuffer++;if(metadata)return metadata.buffer.slice(metadata.byteOffset,metadata.byteOffset+metadata.byteLength);throw Error('stream must not allocate a full chunk');}};}});
  const synthetic=values=>new vm.SyntheticModule(Object.keys(values),function(){for(const [k,v]of Object.entries(values))this.setExport(k,v);},{context});
  const mod=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/prebuilt-load.mjs',import.meta.url),'utf8'),{context});
  await mod.link(s=>s==='./build-config.mjs'?synthetic({nativeStageBuild:{prebuilt:{baseURL:'/native/'}}}):synthetic({PREBUILT_SCHEMA:2,unpackFacesAsync(){throw Error('unused')}}));await mod.evaluate();return {api:mod.namespace,calls};
@@ -37,4 +37,11 @@ test('already cancelled or wrong-sized destinations start no requests',async()=>
  await assert.rejects(f.api.fetchVerifiedInto('data',{bytes:3},controller.signal,new Uint8Array(3)),{name:'AbortError'});
  await assert.rejects(f.api.fetchVerifiedInto('data',{bytes:3},undefined,new Uint8Array(2)),/target size mismatch/);
  assert.equal(f.calls.fetch,0);
+});
+test('metadata verification observes cancellation during digest',async()=>{
+ const controller=new AbortController(),data=new Uint8Array([1,2,3]);let release;
+ const f=await fixture({metadata:data,digest:async(a,b)=>{await new Promise(r=>release=r);return crypto.webcrypto.subtle.digest(a,b);}});
+ const pending=f.api.fetchVerified('stage.json',{bytes:3,sha256:sha(data)},controller.signal);
+ while(!release)await Promise.resolve();controller.abort();release();await assert.rejects(pending,{name:'AbortError'});
+ assert.equal(f.calls.fetch,1);assert.equal(f.calls.arrayBuffer,1);
 });

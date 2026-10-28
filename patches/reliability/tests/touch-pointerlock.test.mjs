@@ -112,6 +112,12 @@ for(const name of ['Error','NotAllowedError','SecurityError'])test(`#1396 ${name
  assert.equal(h.requests(),1,name+' must not trigger automatic plain request');
  assert.equal(h.input._pointerLockPlainPreference??null,null,name+' must not establish a preference');
 });
+for(const name of ['NotAllowedError','SecurityError'])test(`#1396 ${name} rejection with pointerlockerror never causes an automatic plain request`,async()=>{
+  const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();h.lockError();h.rejectPendingLock(name);
+  await Promise.resolve();await Promise.resolve();await Promise.resolve();
+  assert.equal(h.requests(),1,'permission rejection cannot be retried without a fresh user gesture');
+  assert.equal(h.input._pointerLockPlainPreference??null,null);
+});
 test('#1396 legacy event-only error retires a failed request for a new user gesture',async()=>{
  const h=await boot();h.unlocked();h.input.requestLock();h.lockError();h.input.requestLock();
  assert.equal(h.requests(),2);h.locked();assert.equal(h.input.locked,true);

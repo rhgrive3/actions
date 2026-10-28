@@ -591,7 +591,7 @@ jobs:
     # Default GitHub full-suite behavior unless explicitly offloaded.
     needs: build_site
     if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -603,7 +603,7 @@ jobs:
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
       # Full-Character VM/geometry tests can retain large heaps. Keep the
       # complete eight-way partition, with at most two test processes per VM.
-      INKWAVE_TEST_CONCURRENCY: '2'
+      INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -1321,7 +1321,7 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs
       - name: Install pinned build and browser dependencies
         run: |
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npm ci --no-audit --no-fund
           sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium
       - name: Build the exact source without production overrides
