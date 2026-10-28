@@ -7,7 +7,7 @@ import {sandboxBrowserOptions,launchSandboxBrowser,closeWiperCaptureOwners} from
 import {verifyWiperCaptureFiles} from '../check-inkwave-wiper-native-receipt.mjs';
 import {hash} from '../lib/inkwave-runtime-evidence.mjs';
 import {parseBrowserLane} from '../ci/run-circleci-browser-lane.mjs';
-import {createWiperNativeShotSchedule,wrapWiperDrawCallback,assertWiperWebGLError,finishWiperContext} from '../check-inkwave-wiper-native-acceptance.mjs';
+import {createWiperNativeShotSchedule,wrapWiperDrawCallback,wrapWiperComposerPasses,assertWiperWebGLError,finishWiperContext} from '../check-inkwave-wiper-native-acceptance.mjs';
 
 const sourceSha='a'.repeat(40),digest='c'.repeat(64);
 const revision='e'.repeat(64),modules=Object.fromEntries(['s3-projectile-shapes.mjs','s3-ink-sheets.mjs'].map(n=>[`_versions/${revision}/patches/splatoon3/runtime/${n}`,digest]));
@@ -56,6 +56,22 @@ test('WebGL failure retains exact first queued enum and context without a pre-dr
   for(const stage of ['before-native-phase','after-native-phase','after-geometry-upload','after-render','after-readback'])
     assert.ok(driver.includes("glBoundary('"+stage+"')"),'missing first-error GL boundary '+stage);
   assert.match(driver,/assertWiperWebGLError\.toString\(\)/);
+});
+
+test('composer diagnostics preserve pass calls and restore own and inherited methods, including failures',()=>{
+  class Pass {render(value){return value+1;}}
+  const inherited=new Pass(),own=new Pass(),calls=[];
+  Object.defineProperty(own,'render',{value(v){return v*2;},writable:true,configurable:true,enumerable:true});
+  const descriptor=Object.getOwnPropertyDescriptor(own,'render');
+  const restore=wrapWiperComposerPasses({passes:[inherited,own]},(index,pass)=>calls.push([index,pass]));
+  assert.equal(inherited.render(2),3);assert.equal(own.render(3),6);
+  assert.deepEqual(calls,[[0,inherited],[1,own]]);restore();
+  assert.equal(Object.hasOwn(inherited,'render'),false);assert.deepEqual(Object.getOwnPropertyDescriptor(own,'render'),descriptor);
+  const failure=Error('WebGL error');const restoreFailure=wrapWiperComposerPasses({passes:[inherited]},()=>{throw failure;});
+  assert.throws(()=>inherited.render(1),e=>e===failure);restoreFailure();assert.equal(Object.hasOwn(inherited,'render'),false);
+  const unsupported={};Object.defineProperty(unsupported,'render',{value(){},writable:false});
+  assert.throws(()=>wrapWiperComposerPasses({passes:[inherited,unsupported]},()=>{}),/Unsupported/);
+  assert.equal(Object.hasOwn(inherited,'render'),false,'failed installation restores earlier passes');
 });
 
 test('context cleanup preserves the primary capture failure and records cleanup failure',async()=>{
