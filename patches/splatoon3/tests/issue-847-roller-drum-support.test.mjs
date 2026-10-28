@@ -25,7 +25,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
+  "patches/splatoon3/runtime/roller.mjs": "27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -67,7 +67,21 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
       // The downhill fix adds only a shared collision-floor import and this
       // admission fallback. Undo those exact reviewed edits and prove the
       // entire previous pinned source is byte-identical; no pin is relaxed.
-      const previous=exactFault(exactFault(raw,
+      // #1897 applied five exact optimization edits after the pinned downhill
+      // input. Reconstruct that input and keep both hashes and fault controls.
+      let reviewed=raw;
+      for (const [before, after, name] of [
+        ["    if (runner.s3RollStop) {\n      const live = rollStopBlocks(now, runner.s3RollStop);\n      if (live.main || live.sub || live.squid) return false;\n    }\n    if (!rollWillStop(runner, fire)) return false;", "    const live = rollStopBlocks(now, runner.s3RollStop);\n    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;", 'idle-stop'],
+        ["const blockSquid = !!runner.s3RollStop && rollStopBlocks(now, runner.s3RollStop).squid;", "const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;", 'squid-stop'],
+        ["    const coldIdle = !inp.fire && !wasHeld && !this.rolling && !this.s3RollerSuspendedHold;\n    const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);", "    const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);", 'cold-idle-support'],
+        ["    // Actor yaw and the fixed shaft angle are constant during this IK search.\n    const contactYaw = this.actor?.yaw || 0, contactCy = Math.cos(contactYaw), contactSy = Math.sin(contactYaw);\n    const shaftCy = Math.cos(ROLL_ROTATION[1]), shaftSy = Math.sin(ROLL_ROTATION[1]);\n", '', 'ik-constants'],
+        ["const n=this.actor?.groundN,cy=contactCy,sy=contactSy;", "const n=this.actor?.groundN,yaw=this.actor?.yaw||0,cy=Math.cos(yaw),sy=Math.sin(yaw);", 'ik-yaw'],
+        ["delta.set(shaftCy,0,-shaftSy);", "delta.set(Math.cos(ROLL_ROTATION[1]),0,-Math.sin(ROLL_ROTATION[1]));", 'ik-shaft'],
+        ["Number.isFinite(scale.x) && Math.abs(scale.x) > 1e-4 && Number.isFinite(scale.y) && Math.abs(scale.y) > 1e-4 && Number.isFinite(scale.z) && Math.abs(scale.z) > 1e-4", "[scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)", 'ik-scale'],
+      ]) reviewed=exactFault(reviewed,before,after,name);
+      assert.equal(createHash('sha256').update(reviewed).digest('hex'),
+        'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39', 'previous #847 counterfactual input');
+      const previous=exactFault(exactFault(reviewed,
         "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
         "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
       assert.equal(createHash('sha256').update(previous).digest('hex'),
@@ -87,7 +101,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     let source = adaptProductionSource(rel, raw);
     if (rel === 'patches/splatoon3/runtime/roller.mjs') {
       source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
-      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+      source=exactFault(source,'const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath || coldIdle ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
     } else {
       source=exactFault(source,'    negligiblePlanarMotion(a.intent?.move?.x || 0, a.intent?.move?.z || 0) ||\n','','physical-paint-stick');
     }
