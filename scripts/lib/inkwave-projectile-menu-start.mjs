@@ -18,17 +18,40 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   const turfSelector='.iw-modesel [data-id="mode-turf"]',turf=page.locator(turfSelector);
   const touchPrimary=await page.evaluate(()=>navigator.maxTouchPoints>0&&matchMedia('(pointer:coarse)').matches);
   if(touchPrimary){
-    await page.keyboard.press('ArrowLeft');
-    await page.keyboard.press('ArrowLeft');
-    const focus=await page.evaluate(()=>{
-      const m=window.__inkwave?.menus;
-      return {screen:m?.current??null,button:m?._focus?.dataset?.id??null};
+    // Follow native focus through the actual rendered responsive grid. The
+    // Practice Range card is appended after six modes; two ArrowLeft presses
+    // do NOT necessarily reach Turf on a three-column mobile viewport.
+    const readFocus=()=>page.evaluate(()=>{
+      const m=window.__inkwave?.menus,row=m?._scr?.el?.querySelector('.iw-modesel__row');
+      const cards=row?[...row.querySelectorAll('.iw-mode')]:[];
+      const focused=cards.indexOf(m?._focus);
+      const target=cards.findIndex(c=>c.dataset.id==='mode-turf');
+      const columns=row?Math.max(1,getComputedStyle(row).gridTemplateColumns.trim().split(/\s+/).length):0;
+      return {screen:m?.current??null,button:m?._focus?.dataset?.id??null,focused,target,columns};
     });
-    if(focus.screen!=='mode'||focus.button!=='mode-turf')
-      throw Error('Native Turf keyboard focus mismatch: '+JSON.stringify(focus));
-    note('native-turf-focused',{focus,inputs:['ArrowLeft','ArrowLeft']});
-    await page.keyboard.press('Enter');
-    note('keyboard-activate-on-touch',{selector:turfSelector,key:'Enter'});
+    let reached=false;
+    for(let step=0;step<12;step++){
+      const focus=await readFocus();
+      if(focus.screen!=='mode'||focus.focused<0||focus.target<0||focus.columns<1)
+        throw Error('Native Turf keyboard focus unavailable: '+JSON.stringify(focus));
+      if(focus.focused===focus.target&&focus.button==='mode-turf'){
+        await page.keyboard.press('Enter');
+        note('keyboard-activate-on-touch',{selector:turfSelector,key:'Enter',steps:step});
+        reached=true;
+        break;
+      }
+      // Range's own native menu handler routes Left to Boss. From the other
+      // cards navigate the grid up when possible, otherwise left. Every
+      // movement must be observed; no guessed or forced activation.
+      const key=focus.button==='mode-range'?'ArrowLeft':
+        focus.focused-focus.columns>=focus.target?'ArrowUp':'ArrowLeft';
+      await page.keyboard.press(key);
+      const after=await readFocus();
+      if(after.screen!=='mode'||after.focused===focus.focused)
+        throw Error('Native Turf focus navigation stalled: '+JSON.stringify({key,before:focus,after}));
+      note('native-focus-step',{key,from:focus.button,to:after.button});
+    }
+    if(!reached)throw Error('Native Turf keyboard route exhausted without verified focus');
   }else{
     await turf.press('Enter',{timeout:Math.max(1,remainingMs())});
     note('keyboard-activate',{selector:turfSelector,key:'Enter'});
