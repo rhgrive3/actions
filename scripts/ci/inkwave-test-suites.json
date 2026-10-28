@@ -147,6 +147,7 @@
         "args": [
           "--test",
           "scripts/tests/inkwave-source-coverage.test.mjs",
+          "scripts/tests/inkwave-explosher-absolute-geometries.test.mjs",
           "scripts/tests/inkwave-quality-shallow-history.test.mjs",
           "scripts/tests/inkwave-optimization-workflows.test.mjs",
           "scripts/tests/inkwave-test-shards.test.mjs",
@@ -157,6 +158,7 @@
           "scripts/tests/inkwave-queued-workflow-policy.test.mjs",
           "scripts/tests/inkwave-ci-queue-relief.test.mjs",
           "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+          "scripts/tests/inkwave-wiper-capture-isolation.test.mjs",
           "scripts/tests/inkwave-ci-source-admission.test.mjs",
           "scripts/tests/inkwave-main9fe-paint-admission.test.mjs",
           "scripts/tests/inkwave-maine1f-paint-admission.test.mjs",
@@ -176,6 +178,7 @@
           "scripts/tests/inkwave-roller-blob-worker-binding.test.mjs",
           "scripts/tests/inkwave-exact-checkout-head.test.mjs",
           "scripts/tests/inkwave-responsive-progress-summary.test.mjs",
+          "scripts/tests/inkwave-responsive-session-retry.test.mjs",
           "scripts/tests/inkwave-frozen-hud-capture.test.mjs",
           "scripts/tests/inkwave-ui-visual-probe-errors.test.mjs"
         ]

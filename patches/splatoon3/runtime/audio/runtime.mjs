@@ -1,3 +1,4 @@
+import { catalogChargeStage } from '../catalog-charge-stages.mjs';
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
@@ -58,7 +59,7 @@ export function installWeaponAudioRuntime(api){
     return o;
   }
   function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume,true));return null;}
-  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
+  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){if(!enabled&&!r?._mainAudioState?.loops[event])return;const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
@@ -93,7 +94,8 @@ export function installWeaponAudioRuntime(api){
     // The actor:form event itself is an actual transition edge. Do not
     // retain a separate squid flag here: catalog WeaponRunner.update invokes
     // stop() on every squid frame, which resets transient audio state before
-    // this kid-form event is emitted. Rely on the gameplay s3Stored identity.
+    // this kid-form event is emitted. Native keep uses s3Stored; catalogue
+    // keep is consumed inside update and is handled at that actual edge below.
     if(e.form!=='kid'||a.alive===false)return;
     // Native Actor._events emits form after WeaponRunner.update. Use the
     // surviving gameplay-owned store rather than assuming a particular
@@ -144,6 +146,7 @@ export function installWeaponAudioRuntime(api){
     }
     }
     s.firedThisUpdate=false;
+    const priorCatalog=this.catalogState,keptFrames=priorCatalog?.stored?.frames;
     const result=oldUpdate.call(this,dt,input,...rest);
     const recipe=WEAPON_AUDIO[id],isCharger=recipe?.family==='charger';
     // Native weapon runners also tick while submerged. Their audio wrapper
@@ -156,12 +159,20 @@ export function installWeaponAudioRuntime(api){
     // from WeaponRunner.update if a remote runner is ticked for prediction.
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
+      // The catalogue consumes its own saved charge before returning here.
+      // Recognize that restore instead of replaying a fresh rise/full-ready.
+      // Partial Goo keeps must still announce a later genuine full boundary.
+      if(priorCatalog&&this.catalogState===priorCatalog&&keptFrames>0&&!priorCatalog.stored&&nowCharging&&this.charge>0){
+        s.wasCharge=true;
+        s.wasReady=keptFrames+1e-6>=a.weapon.chargeTime*60;
+        play(a,'charge',a.pos,a.isLocal?.55:.35);
+      }
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
         // All Charger types play the same user-selected Splat Charger rise.
         // Pitch-preserving WSOLA supplies per-weapon duration asynchronously.
         // Do not layer a separate weapon-specific HoldNoise at charge start.
         s.chargeRise=usesChargerRise(id)?G.audio?.playChargerChargeRise?.({
-          volume:a.isLocal?.55:.28,weaponId:id,chargeTime:a.weapon?.chargeTime,
+          volume:a.isLocal?.55:.28,pos:a.isLocal?undefined:a.pos,weaponId:id,chargeTime:a.weapon?.chargeTime,
         })||null:null;
         if(s.chargeRise)active.add(this);
       }
@@ -186,7 +197,15 @@ export function installWeaponAudioRuntime(api){
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
     const rollingSE=!!this.rolling&&a.grounded&&!this.s3RollerSuspendedHold;
     keepLoop(this,'roll',rollingSE,rollingSE ? .8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25 : .8);
-    if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
+    const bowPhase=catalogChargeStage(a.weapon,q);
+    if(bowPhase){
+      const previous=s.chargeStage||0;
+      // The retained pack has no Stringer ready recording. Use the existing
+      // INKWAVE stage ding explicitly; this is not a claimed retail cue.
+      for(let stage=previous+1;charging&&stage<=bowPhase.stage;stage++)
+        G.audio?.play('charger_full',{...options(a,a.pos,.45),pitch:stage===1?.8:1});
+      s.chargeStage=charging?bowPhase.stage:0;
+    }else if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
     if(s.wasCharge&&!charging&&!s.firedThisUpdate)play(a,'release',a.pos,.27);
     if(r.scope&&charging&&!s.wasCharge)play(a,'scope',a.pos,.26);
     // Brush_Move is a sustained floor-contact loop, not a swing windup.

@@ -6,7 +6,7 @@ import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
 import { queueRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
 import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops, clearSplashDrops } from './blaster-flight-paint.mjs';
 import { applyBlasterBurstKnockback } from './main-knockback.mjs';
-import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
+import { dualiesGuideInputsChanged, shooterGuideCache } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
@@ -1836,6 +1836,8 @@ export function installWeaponsFidelity(context,profile) {
     // Presentation predictions never enter list/pool. Retire their match-owned
     // cache keys too, while retaining the reusable projectile/vector storage.
     this._s3GuideCache=null;this._s3ShooterImpactCache=null;this._s3MuzzleFeedbackCache=null;
+    const shooterGuide=this._s3ShooterGuideCache;
+    if(shooterGuide){shooterGuide.ready=false;shooterGuide.values.length=0;}
     for(const p of [this._s3ShooterImpact,this._s3SlosherGuideProjectile,this._s3BlasterGuideProjectile,
       ...(this._s3DualiesGuideProjectiles||[])])if(p)p.owner=null;
     if(context.G?.projectiles===this&&context._shotGuide?.probe)context._shotGuide.probe.owner=null;
@@ -2309,6 +2311,7 @@ export function installWeaponsFidelity(context,profile) {
     const shots=this._s3DualiesGuideProjectiles||(this._s3DualiesGuideProjectiles=[0,1].map(()=>({
       pos:new THREE.Vector3(),prev:new THREE.Vector3(),start:new THREE.Vector3(),vel:new THREE.Vector3()
     })));
+    const hit=this._s3DualiesGuideHit||(this._s3DualiesGuideHit=new context.Hit());
     for(let hand=0;hand<2;hand++){
       const p=shots[hand];
       this._muzzleHand(actor,hand,p.pos);p.prev.copy(p.pos);p.start.copy(p.pos);
@@ -2328,7 +2331,14 @@ export function installWeaponsFidelity(context,profile) {
       this._aimFrom(actor,p.start,dir,targets[hand]);
       const ink=this._nominalInkGuide?.(p,actor,w,p.start,dir,targets[hand],w.projSpeed);
       let remaining=Math.max(0,frame/60);
-      while(remaining>EPSILON){const step=Math.min(1/60,remaining);if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,step);remaining-=step;}
+      while(remaining>EPSILON){
+        const step=Math.min(1/60,remaining);
+        if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,step);
+        if(ink)this._inkGuideContact(p,hit);
+        else sweptWorldHit(context.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+        if(hit.hit){p.pos.copy(hit.point);break;}
+        remaining-=step;
+      }
       out.copy(p.pos);
     }
     if(actor.weaponRunner?.s3Turret){
@@ -2369,8 +2379,7 @@ export function installWeaponsFidelity(context,profile) {
   };
   // Issue #94: the Shooter-only weapon-side reticle previews the nominal
   // (unspread) shot's first field contact. Spawn state comes from the same
-  // _muzzle/_aimFrom/_ballistic path fireShooter uses, integration from
-  // advanceFidelityProjectile, and the field query from the composed swept
+  // installed muzzle/aim/InkFlight launch path fireShooter uses, and the field query from the composed swept
   // sweep with the sourced field collision radius, all bounded by the existing
   // projectile lifetime — so the preview point is the real impact of the center
   // shot, and geometry beyond the shot's flight never warns. Read-only: one
@@ -2385,37 +2394,56 @@ export function installWeaponsFidelity(context,profile) {
     const dir=this._s3ShooterImpactDir||(this._s3ShooterImpactDir=new THREE.Vector3());
     const cache=this._s3ShooterImpactCache||(this._s3ShooterImpactCache={
       valid:false, muzzle:new THREE.Vector3(),dir:new THREE.Vector3(),
-      aimPoint:new THREE.Vector3(),aimDir:new THREE.Vector3(),result:null
+      aimPoint:new THREE.Vector3(),aimDir:new THREE.Vector3(),velocity:new THREE.Vector3(),result:null
     });
     // Observe the real muzzle every render, but only replay the up-to-72
-    // swept collisions when a simulation input or field generation changes.
+    // swept collisions when a simulation input or verified collision revision changes.
     // This is exact-pose reuse: no quantized aim, no alteration to first-hit
     // geometry, and no extra render pass / physics step.
     this._muzzle(actor,p.pos);
     this._aimFrom(actor,p.pos,dir);
-    const t=api.G.time,gen=level?.geometryGeneration??level?._geometryGeneration??level?._generation;
-    if(cache.valid&&cache.actor===actor&&cache.weapon===w&&cache.physics===physics&&
-      cache.raycast===physics.raycast&&cache.segment===physics.segment&&
+    const t=api.G.time,revision=physics.level?.collisionRevision;
+    const reusable=Number.isSafeInteger(revision)&&revision>=0;
+    const runner=actor.weaponRunner,charge=runner?.fidelitySplatlingCharge??runner?.charge??0;
+    if(reusable&&cache.valid&&cache.revision===revision&&cache.actor===actor&&cache.character===actor.character&&
+      cache.weapon===w&&cache.actorWeapon===actor.weapon&&cache.weaponId===actor.weaponId&&cache.physics===physics&&
+      cache.raycast===physics.raycast&&cache.segment===physics.segment&&cache.los===physics.los&&
       cache.level===level&&cache.blocks===level?.blocks&&cache.faces===level?.faces&&
+      cache.gameLevel===api.G.level&&cache.hash===level?.hash&&cache.queryBlocks===level?.queryBlocks&&cache.queryDynamicBlocks===level?.queryDynamicBlocks&&
+      cache.triangleWorld===level?.triangleWorld&&cache.triangleSweep===level?.triangleWorld?.sweepSphere&&
+      cache.triangleRaycast===level?.triangleWorld?.raycast&&cache.nativeData===level?.data&&cache.native===level?.native&&
+      cache.staticBlockCount===level?.staticBlockCount&&cache.inkFlight===this.inkFlight&&cache.inkWorld===this.inkFlight?.world&&
+      cache.muzzleFn===this._muzzle&&cache.aimFn===this._aimFrom&&cache.ballisticFn===this._ballistic&&
+      cache.nominalFn===this._nominalInkGuide&&cache.advanceFn===this._advanceInkGuide&&cache.contactFn===this._inkGuideContact&&
       cache.blocksLength===level?.blocks?.length&&cache.facesLength===level?.faces?.length&&
-      cache.generation===gen&&cache.form===actor.form&&cache.grounded===actor.grounded&&
+      cache.form===actor.form&&cache.grounded===actor.grounded&&cache.team===actor.team&&cache.remote===actor.remote&&
+      cache.runner===runner&&cache.charge===charge&&cache.chargeTime===w.chargeTime&&
       cache.speed===w.projSpeed&&cache.straight===w.straightTime&&
       cache.range===w.range&&cache.radius===w.impactRadius&&
+      cache.guideFrame===w.shotGuideFrame&&cache.inkProfile===w.inkFlightProfile&&
+      cache.yaw===actor.yaw&&cache.velocity.equals(actor.vel)&&
       cache.ballistics===w.ballistics&&cache.muzzle.equals(p.pos)&&cache.dir.equals(dir)&&
       cache.aimPoint.equals(actor.aimPoint)&&cache.aimDir.equals(actor.aimDir)&&
       (!Number.isFinite(t)||(t>=cache.at&&t-cache.at<.2)))return cache.result;
     cache.valid=false;
-    cache.actor=actor;cache.weapon=w;cache.physics=physics;cache.raycast=physics.raycast;
+    cache.actor=actor;cache.character=actor.character;cache.weapon=w;cache.actorWeapon=actor.weapon;cache.weaponId=actor.weaponId;
+    cache.physics=physics;cache.raycast=physics.raycast;cache.los=physics.los;
     cache.segment=physics.segment;cache.level=level;cache.blocks=level?.blocks;
     cache.faces=level?.faces;cache.blocksLength=level?.blocks?.length;
-    cache.facesLength=level?.faces?.length;cache.generation=gen;
+    cache.facesLength=level?.faces?.length;cache.revision=revision;cache.gameLevel=api.G.level;cache.hash=level?.hash;
+    cache.queryBlocks=level?.queryBlocks;cache.queryDynamicBlocks=level?.queryDynamicBlocks;
+    cache.triangleWorld=level?.triangleWorld;cache.triangleSweep=level?.triangleWorld?.sweepSphere;cache.triangleRaycast=level?.triangleWorld?.raycast;
+    cache.nativeData=level?.data;cache.native=level?.native;cache.staticBlockCount=level?.staticBlockCount;
+    cache.inkFlight=this.inkFlight;cache.inkWorld=this.inkFlight?.world;cache.muzzleFn=this._muzzle;cache.aimFn=this._aimFrom;cache.ballisticFn=this._ballistic;
+    cache.nominalFn=this._nominalInkGuide;cache.advanceFn=this._advanceInkGuide;cache.contactFn=this._inkGuideContact;
+    cache.team=actor.team;cache.remote=actor.remote;cache.runner=runner;cache.charge=charge;cache.chargeTime=w.chargeTime;
     cache.form=actor.form;cache.grounded=actor.grounded;
     cache.speed=w.projSpeed;cache.straight=w.straightTime;
     cache.range=w.range;cache.radius=w.impactRadius;cache.ballistics=w.ballistics;
+    cache.guideFrame=w.shotGuideFrame;cache.inkProfile=w.inkFlightProfile;
+    cache.yaw=actor.yaw;cache.velocity.copy(actor.vel);
     cache.muzzle.copy(p.pos);cache.dir.copy(dir);cache.aimPoint.copy(actor.aimPoint);
     cache.aimDir.copy(actor.aimDir);cache.at=t;
-    // fireShooter pitches the nominal launch toward the aim point before spread.
-    this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
     p.owner=actor;p.team=actor.team;p.type='shot';p.ghost=false;p.delay=0;p.vol=null;
     p.s3DamageGroup=null;p.fidelitySloshUnit=null;p.fidelityRollerUnit=null;p.fidelityMode=null;
     p.fidelityWallDrop=null;p.fidelityImpactActor=null;p.fidelityImpactT=null;
@@ -2424,15 +2452,26 @@ export function installWeaponsFidelity(context,profile) {
     p.prev.copy(p.pos);p.start.copy(p.pos);
     p.vel.copy(dir).multiplyScalar(w.projSpeed);
     initialize(p,w);
+    // Use the installed live launch/integrator/collision owner. The source
+    // Shooter now uses InkFlight; the former legacy _ballistic + fidelity
+    // replay could put a cue on a different floor contact from the real shot.
+    this._aimFrom(actor,p.start,dir);
+    const ink=this._nominalInkGuide?.(p,actor,w,p.start,dir,actor.aimPoint,w.projSpeed);
+    if(ink){p.s3ShooterForwardApplied=false;applyShooterSpawnVelocity(p);}
+    else {
+      this._ballistic(p.pos,dir,actor.aimPoint,w.projSpeed,w.straightTime,28,0.8,w.range);
+      p.vel.copy(dir).multiplyScalar(w.projSpeed);
+    }
     const hit=this._s3ShooterImpactHit||(this._s3ShooterImpactHit=new api.Hit());
     let guard=0,result=null;
     while(p.age+EPSILON<p.life){
-      advanceFidelityProjectile(p,1/60);
-      sweptWorldHit(physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
-      if(hit.hit){result=hit;break;}
+      if(ink)this._advanceInkGuide(p);else advanceFidelityProjectile(p,1/60);
+      if(ink)this._inkGuideContact(p,hit);
+      else sweptWorldHit(physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge),fieldRadiusAt(p,p.age),hit,true);
+      if(hit.hit){hit.guideFrame=Math.round(p.age*60);result=hit;break;}
       if(p.pos.y<api.PLAYER.waterY-1.8||++guard>144)break;
     }
-    cache.result=result;cache.valid=true;
+    cache.result=result;cache.valid=reusable;
     return result;
   };
   const reset=WeaponRunner.prototype.reset,auto=WeaponRunner.prototype._auto,spin=WeaponRunner.prototype._splatling;
@@ -2597,6 +2636,7 @@ function guideScratch() {
       age: 0, life: 1, straight: 0, grav: 0, drag: 0, fidelityMove: null, fidelityPhase: 0, fidelityPrevAge: 0,
     },
     state: { x: 0, y: 0, z: 0, frames: 0 },
+    hit: guideApi.Hit ? new guideApi.Hit() : null,
   });
 }
 
@@ -2613,6 +2653,7 @@ function guideLaunchState(actor, weapon, out) {
   const speed = weapon.kind === 'splatling' ? splatlingLaunchSpeed(weapon, charge) : weapon.projSpeed;
   if (!Number.isFinite(speed) || speed <= 0) return null;
   probe.owner=actor; probe.s3Weapon=weapon; probe.s3ShooterForwardApplied=false;
+  probe.type='shot';probe.ghost=false;
   if (guideApi.G.projectiles._nominalInkGuide?.(probe,actor,weapon,out.muzzle,out.dir,actor.aimPoint,speed)) {
     applyShooterSpawnVelocity(probe);
     return probe;
@@ -2644,11 +2685,31 @@ export function computeShotGuide(actor) {
   s.state.frames = 0;
   const probe = guideLaunchState(actor, weapon, s);
   if (!probe) return null;
+  // Keep native muzzle safety/convergence live, then reuse only a deterministic
+  // launch in a verified, unchanged collision world. Projection remains separate.
+  const cached = weapon.kind==='shooter'
+    ? shooterGuideCache(guideApi.G.projectiles,actor,weapon,guideApi.G,probe) : null;
+  if(cached&&!cached.dirty){
+    s.state.x=cached.point.x;s.state.y=cached.point.y;s.state.z=cached.point.z;s.state.frames=cached.point.frames;
+    return s.state;
+  }
+  if(cached)cached.ready=false;
   for (let i = 0; i < frames; i++) {
     if(probe.inkProfile)guideApi.G.projectiles._advanceInkGuide(probe);
     else advanceFidelityProjectile(probe, 1 / GUIDE_HZ);
+    // Shooter guide frame is a maximum age, not permission to draw through
+    // the field. Stop on the actual shot's sphere contact when aiming down.
+    if(weapon.kind==='shooter'&&s.hit){
+      if(probe.inkProfile)guideApi.G.projectiles._inkGuideContact(probe,s.hit);
+      else sweptWorldHit(guideApi.G.physics,probe.prev,probe.pos,fieldRadiusAt(probe,probe.fidelityPrevAge),fieldRadiusAt(probe,probe.age),s.hit,true);
+      if(s.hit.hit){probe.pos.copy(s.hit.point);break;}
+    }
   }
   s.state.x = probe.pos.x; s.state.y = probe.pos.y; s.state.z = probe.pos.z; s.state.frames = frames;
+  if(cached){
+    cached.point.x=s.state.x;cached.point.y=s.state.y;cached.point.z=s.state.z;cached.point.frames=frames;
+    cached.ready=cached.cacheable;
+  }
   return s.state;
 }
 

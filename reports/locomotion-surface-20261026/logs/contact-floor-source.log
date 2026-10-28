@@ -1,0 +1,188 @@
+NATIVE_GAP 0 1
+NATIVE_GAP 0 1
+SUBTOLERANCE_RAY_HIT 0.000001 true
+NATIVE_GAP 0 0
+SUBTOLERANCE_RAY_HIT 0.000001 true
+NATIVE_GAP 0 0
+NATIVE_GAP 0 0
+NATIVE_GAP 0 0
+NATIVE_GAP 0 0
+NATIVE_GAP 0 0
+NATIVE_GAP 0 0
+NATIVE_GAP 0 0
+NATIVE_GAP 1 1
+NATIVE_GAP 1 1
+NATIVE_GAP 16 1
+SYNTHETIC_SEAM 1 0 1
+SYNTHETIC_SEAM 1 0.0001 0
+SYNTHETIC_SEAM -1 0 1
+SYNTHETIC_SEAM -1 0.0001 0
+(node:925) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ distinct native faces gap 0 offpath detour false (104.778465ms)
+✔ distinct native faces gap 0 offpath detour true (74.695853ms)
+✔ distinct native faces gap 0.000001 offpath detour false (69.958275ms)
+✔ distinct native faces gap 0.000001 offpath detour true (75.056776ms)
+✔ distinct native faces gap 0.0001 offpath detour false (83.639667ms)
+✔ distinct native faces gap 0.0001 offpath detour true (90.262481ms)
+✔ distinct native faces gap 0.01 offpath detour false (101.528811ms)
+✔ distinct native faces gap 0.01 offpath detour true (88.440483ms)
+✔ distinct native faces gap 0.2 offpath detour false (96.981067ms)
+✔ distinct native faces gap 0.2 offpath detour true (101.25293ms)
+✔ continuous native tessellation 64 (86.299843ms)
+✔ continuous native tessellation 65 (94.259987ms)
+✔ continuous native tessellation 1024 (95.697456ms)
+✔ generic float32 shared-edge planes mirror 1 gap 0 (75.92473ms)
+✔ generic float32 shared-edge planes mirror 1 gap 0.0001 (86.609658ms)
+✔ generic float32 shared-edge planes mirror -1 gap 0 (79.581135ms)
+✔ generic float32 shared-edge planes mirror -1 gap 0.0001 (72.703171ms)
+ACTOR_SUPPORT 0 [ 0, 0, 4.012 ] 2 1
+ACTOR_SUPPORT 45 [ 0, 4.252, 4.012 ] 7 1
+FLUSH_SEAM {"pos":[0,0,3.912],"grounded":true,"support":7,"drumHit":true,"drumFace":11,"calls":1,"ink":99.98}
+SHIFTED_PLANE_REJECTED -0.1 [ 0, -0.1, 4.5 ]
+SHIFTED_PLANE_REJECTED 0.1 [ 0, 0.09999999999999995, 4.5 ]
+RAMP_JUNCTION {"pos":[0,0,3.912],"grounded":true,"support":2,"drumHit":true,"drumFace":7,"drumPoint":[0,0.03333333333333306,4.5],"normal":[0,0.9863939238321437,-0.1643989873053573],"calls":1}
+THREE_STRIPS [ 0, 0, 0.012 ] 7 1
+NATIVE_GAP 0 0
+BURIED_RAMP {"pos":[1.4695761589768239e-18,0.42800000000000227,0.188],"support":7,"calls":[{"at":[7.406663841243191e-17,-2.7755575615628914e-17,-0.40479999999999994],"face":2}]}
+(node:926) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ stationary, no-stick and blocked rollers never paint, damage or drain ink (1917.760968ms)
+✔ all seven families acquire real floor cells at 30/60/120Hz (1903.872325ms)
+✔ release and ink exhaustion do not bridge old paint positions (610.826178ms)
+✔ large steps preserve real paint acquisition with at most six stamps (258.46838ms)
+✔ uphill rolling finds native ramp face at 30 and45 degrees (291.516903ms)
+✔ all families confirm uphill and downhill45 degree contact at30/60/120Hz (5289.626555ms)
+✔ ledge does not paint lower ground and overhang never becomes support (198.555631ms)
+✔ changing accepted support face cannot bridge an old stroke across a gap (92.468922ms)
+✔ real Actor integration refreshes support before rolling on flat and ramp (228.013643ms)
+✔ adjacent coplanar boxes: real Actor preserves paint contact across a flush seam (110.632032ms)
+✔ nearby parallel planes above and below cannot masquerade as contact (181.33298ms)
+✔ connected noncoplanar ramp junction retains actual contact (95.678583ms)
+✔ three adjacent coplanar strips remain continuously paintable (87.360057ms)
+✔ native chart bounds must not prove connectivity across an actual mesh hole (86.950123ms)
+✔ downhill ramp must not paint its buried extension below covering floor (122.105747ms)
+✔ seam s3-roller-compact angle 0 reverse false rise 2 (106.843319ms)
+✔ seam s3-roller-compact angle 0 reverse false rise 12 (138.950434ms)
+✔ seam s3-roller-compact angle 0 reverse true rise 2 (95.24576ms)
+✔ seam s3-roller-compact angle 0 reverse true rise 12 (101.50619ms)
+✔ seam s3-roller-heavy angle 0 reverse false rise 2 (90.735043ms)
+✔ seam s3-roller-heavy angle 0 reverse false rise 12 (100.591157ms)
+✔ seam s3-roller-heavy angle 0 reverse true rise 2 (98.300833ms)
+✔ seam s3-roller-heavy angle 0 reverse true rise 12 (105.585725ms)
+✔ seam s3-roller-hunter angle 0 reverse false rise 2 (105.17266ms)
+✔ seam s3-roller-hunter angle 0 reverse false rise 12 (124.640129ms)
+✔ seam s3-roller-hunter angle 0 reverse true rise 2 (116.757212ms)
+✔ seam s3-roller-hunter angle 0 reverse true rise 12 (141.690027ms)
+✔ seam s3-roller-wide angle 0 reverse false rise 2 (101.996309ms)
+✔ seam s3-roller-wide angle 0 reverse false rise 12 (150.22456ms)
+✔ seam s3-roller-wide angle 0 reverse true rise 2 (116.764002ms)
+✔ seam s3-roller-wide angle 0 reverse true rise 12 (135.46754ms)
+✔ seam s3-brush-mini angle 0 reverse false rise 2 (133.240456ms)
+✔ seam s3-brush-mini angle 0 reverse false rise 12 (141.361437ms)
+✔ seam s3-brush-mini angle 0 reverse true rise 2 (107.773782ms)
+✔ seam s3-brush-mini angle 0 reverse true rise 12 (109.168955ms)
+✔ seam s3-brush-normal angle 0 reverse false rise 2 (95.099728ms)
+✔ seam s3-brush-normal angle 0 reverse false rise 12 (107.129294ms)
+✔ seam s3-brush-normal angle 0 reverse true rise 2 (92.2065ms)
+✔ seam s3-brush-normal angle 0 reverse true rise 12 (106.37604ms)
+✔ seam s3-brush-heavy angle 0 reverse false rise 2 (94.266803ms)
+✔ seam s3-brush-heavy angle 0 reverse false rise 12 (152.22014ms)
+✔ seam s3-brush-heavy angle 0 reverse true rise 2 (114.382988ms)
+✔ seam s3-brush-heavy angle 0 reverse true rise 12 (115.624085ms)
+✔ seam s3-roller-compact angle 1.5707963267948966 reverse false rise 2 (129.383105ms)
+✔ seam s3-roller-compact angle 1.5707963267948966 reverse false rise 12 (110.735545ms)
+✔ seam s3-roller-compact angle 1.5707963267948966 reverse true rise 2 (97.806667ms)
+✔ seam s3-roller-compact angle 1.5707963267948966 reverse true rise 12 (112.947438ms)
+✔ seam s3-roller-heavy angle 1.5707963267948966 reverse false rise 2 (96.160945ms)
+✔ seam s3-roller-heavy angle 1.5707963267948966 reverse false rise 12 (137.133125ms)
+✔ seam s3-roller-heavy angle 1.5707963267948966 reverse true rise 2 (99.103921ms)
+✔ seam s3-roller-heavy angle 1.5707963267948966 reverse true rise 12 (117.94112ms)
+✔ seam s3-roller-hunter angle 1.5707963267948966 reverse false rise 2 (117.604109ms)
+✔ seam s3-roller-hunter angle 1.5707963267948966 reverse false rise 12 (109.820642ms)
+✔ seam s3-roller-hunter angle 1.5707963267948966 reverse true rise 2 (90.058076ms)
+✔ seam s3-roller-hunter angle 1.5707963267948966 reverse true rise 12 (107.609382ms)
+✔ seam s3-roller-wide angle 1.5707963267948966 reverse false rise 2 (94.218662ms)
+✔ seam s3-roller-wide angle 1.5707963267948966 reverse false rise 12 (132.18107ms)
+✔ seam s3-roller-wide angle 1.5707963267948966 reverse true rise 2 (101.945699ms)
+✔ seam s3-roller-wide angle 1.5707963267948966 reverse true rise 12 (115.41178ms)
+✔ seam s3-brush-mini angle 1.5707963267948966 reverse false rise 2 (103.554273ms)
+✔ seam s3-brush-mini angle 1.5707963267948966 reverse false rise 12 (105.812022ms)
+✔ seam s3-brush-mini angle 1.5707963267948966 reverse true rise 2 (93.870959ms)
+✔ seam s3-brush-mini angle 1.5707963267948966 reverse true rise 12 (109.880627ms)
+✔ seam s3-brush-normal angle 1.5707963267948966 reverse false rise 2 (91.551317ms)
+✔ seam s3-brush-normal angle 1.5707963267948966 reverse false rise 12 (131.304946ms)
+✔ seam s3-brush-normal angle 1.5707963267948966 reverse true rise 2 (92.895254ms)
+✔ seam s3-brush-normal angle 1.5707963267948966 reverse true rise 12 (110.638924ms)
+✔ seam s3-brush-heavy angle 1.5707963267948966 reverse false rise 2 (93.643937ms)
+✔ seam s3-brush-heavy angle 1.5707963267948966 reverse false rise 12 (106.171759ms)
+✔ seam s3-brush-heavy angle 1.5707963267948966 reverse true rise 2 (102.79514ms)
+✔ seam s3-brush-heavy angle 1.5707963267948966 reverse true rise 12 (113.616331ms)
+✔ seam s3-roller-compact angle 3.141592653589793 reverse false rise 2 (93.096964ms)
+✔ seam s3-roller-compact angle 3.141592653589793 reverse false rise 12 (133.733403ms)
+✔ seam s3-roller-compact angle 3.141592653589793 reverse true rise 2 (93.178124ms)
+✔ seam s3-roller-compact angle 3.141592653589793 reverse true rise 12 (109.658013ms)
+✔ seam s3-roller-heavy angle 3.141592653589793 reverse false rise 2 (85.430622ms)
+✔ seam s3-roller-heavy angle 3.141592653589793 reverse false rise 12 (113.518475ms)
+✔ seam s3-roller-heavy angle 3.141592653589793 reverse true rise 2 (111.561191ms)
+✔ seam s3-roller-heavy angle 3.141592653589793 reverse true rise 12 (116.657551ms)
+✔ seam s3-roller-hunter angle 3.141592653589793 reverse false rise 2 (101.799496ms)
+✔ seam s3-roller-hunter angle 3.141592653589793 reverse false rise 12 (120.713733ms)
+✔ seam s3-roller-hunter angle 3.141592653589793 reverse true rise 2 (94.257232ms)
+✔ seam s3-roller-hunter angle 3.141592653589793 reverse true rise 12 (108.317032ms)
+✔ seam s3-roller-wide angle 3.141592653589793 reverse false rise 2 (99.665653ms)
+✔ seam s3-roller-wide angle 3.141592653589793 reverse false rise 12 (106.306279ms)
+✔ seam s3-roller-wide angle 3.141592653589793 reverse true rise 2 (94.962938ms)
+✔ seam s3-roller-wide angle 3.141592653589793 reverse true rise 12 (113.780739ms)
+✔ seam s3-brush-mini angle 3.141592653589793 reverse false rise 2 (94.328757ms)
+✔ seam s3-brush-mini angle 3.141592653589793 reverse false rise 12 (139.105711ms)
+✔ seam s3-brush-mini angle 3.141592653589793 reverse true rise 2 (95.791761ms)
+✔ seam s3-brush-mini angle 3.141592653589793 reverse true rise 12 (101.001058ms)
+✔ seam s3-brush-normal angle 3.141592653589793 reverse false rise 2 (96.439463ms)
+✔ seam s3-brush-normal angle 3.141592653589793 reverse false rise 12 (105.080329ms)
+✔ seam s3-brush-normal angle 3.141592653589793 reverse true rise 2 (97.715812ms)
+✔ seam s3-brush-normal angle 3.141592653589793 reverse true rise 12 (110.598358ms)
+✔ seam s3-brush-heavy angle 3.141592653589793 reverse false rise 2 (130.887076ms)
+✔ seam s3-brush-heavy angle 3.141592653589793 reverse false rise 12 (170.743522ms)
+✔ seam s3-brush-heavy angle 3.141592653589793 reverse true rise 2 (113.86006ms)
+✔ seam s3-brush-heavy angle 3.141592653589793 reverse true rise 12 (125.846157ms)
+✔ seam s3-roller-compact angle 4.71238898038469 reverse false rise 2 (99.355602ms)
+✔ seam s3-roller-compact angle 4.71238898038469 reverse false rise 12 (230.18593ms)
+✔ seam s3-roller-compact angle 4.71238898038469 reverse true rise 2 (103.846338ms)
+✔ seam s3-roller-compact angle 4.71238898038469 reverse true rise 12 (215.914953ms)
+✔ seam s3-roller-heavy angle 4.71238898038469 reverse false rise 2 (91.501459ms)
+✔ seam s3-roller-heavy angle 4.71238898038469 reverse false rise 12 (158.074569ms)
+✔ seam s3-roller-heavy angle 4.71238898038469 reverse true rise 2 (96.968463ms)
+✔ seam s3-roller-heavy angle 4.71238898038469 reverse true rise 12 (111.703709ms)
+✔ seam s3-roller-hunter angle 4.71238898038469 reverse false rise 2 (92.836177ms)
+✔ seam s3-roller-hunter angle 4.71238898038469 reverse false rise 12 (117.360945ms)
+✔ seam s3-roller-hunter angle 4.71238898038469 reverse true rise 2 (105.225323ms)
+✔ seam s3-roller-hunter angle 4.71238898038469 reverse true rise 12 (97.368676ms)
+✔ seam s3-roller-wide angle 4.71238898038469 reverse false rise 2 (99.960848ms)
+✔ seam s3-roller-wide angle 4.71238898038469 reverse false rise 12 (132.443059ms)
+✔ seam s3-roller-wide angle 4.71238898038469 reverse true rise 2 (106.947072ms)
+✔ seam s3-roller-wide angle 4.71238898038469 reverse true rise 12 (110.615828ms)
+✔ seam s3-brush-mini angle 4.71238898038469 reverse false rise 2 (96.878939ms)
+✔ seam s3-brush-mini angle 4.71238898038469 reverse false rise 12 (123.827965ms)
+✔ seam s3-brush-mini angle 4.71238898038469 reverse true rise 2 (103.866119ms)
+✔ seam s3-brush-mini angle 4.71238898038469 reverse true rise 12 (124.790103ms)
+✔ seam s3-brush-normal angle 4.71238898038469 reverse false rise 2 (88.040023ms)
+✔ seam s3-brush-normal angle 4.71238898038469 reverse false rise 12 (137.711039ms)
+✔ seam s3-brush-normal angle 4.71238898038469 reverse true rise 2 (109.151204ms)
+✔ seam s3-brush-normal angle 4.71238898038469 reverse true rise 12 (123.367703ms)
+✔ seam s3-brush-heavy angle 4.71238898038469 reverse false rise 2 (95.462212ms)
+✔ seam s3-brush-heavy angle 4.71238898038469 reverse false rise 12 (109.516225ms)
+✔ seam s3-brush-heavy angle 4.71238898038469 reverse true rise 2 (94.39446ms)
+✔ seam s3-brush-heavy angle 4.71238898038469 reverse true rise 12 (107.161493ms)
+✔ narrow open gaps reject disconnected coplanar destinations in all orientations (1159.125089ms)
+✔ missing collision-query capability skips paint without breaking rolling (89.663064ms)
+✔ supported stage floor survives native grounded Actor 5cm pose clearance (6.041619ms)
+✔ no false supported roll off a ledge, at height, or while airborne (1.172642ms)
+ℹ tests 148
+ℹ suites 0
+ℹ pass 148
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27477.245047

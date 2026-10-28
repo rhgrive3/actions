@@ -652,6 +652,7 @@ export class RankedWorld {
       this.tower.updateMatrixWorld(true);
       this._updateTowerPaintGeometry();
       this._towerTransformReady = true; this._towerYaw = yaw;
+      this.level?.markCollisionChanged?.();
     }
     for (const rider of riders) {
       const { actor, x, y, z } = rider;
@@ -1018,6 +1019,7 @@ export class RankedWorld {
     }
     const level = this.level;
     const removal = [[this.towerPoleBlockId, this.towerPoleBlock], [this.towerBlockId, this.towerBlock]];
+    const collisionChanged = !!level && removal.some(([id, block]) => block && level.blocks?.[id] === block && block.solid);
     if (level) {
       const pole = this.towerPoleBlock ? this.towerPoleBlockId : -1, tower = this.towerBlock ? this.towerBlockId : -1;
       for (const bucket of level.hash || []) {
@@ -1043,6 +1045,7 @@ export class RankedWorld {
         }
       }
     }
+    if (collisionChanged) level.markCollisionChanged?.();
     const preserveStamp = !!level && !this.towerBlock && !this.towerPoleBlock &&
       level?.blocks === this._spatialBlocks && level?.hash === this._spatialHash &&
       level?.blocks?.length === this._spatialBlockCount &&

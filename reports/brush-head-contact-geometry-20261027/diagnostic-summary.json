@@ -1,0 +1,165 @@
+{
+  "scope": "Deterministic CPU diagnostic using the same actual vertex metric and real Actor/Physics; starting pose is fixture setup, not native browser acceptance.",
+  "metric": "Minimum actual displayed vertex Y minus exact fixture collision height at that vertex X/Z. Same metric for all versions; fixture setup is not normal gameplay acceptance.",
+  "versions": {
+    "baseline": "4ce9768e6177b19f11f17e28f086a4da36f35fcd",
+    "reviewed": "bbc4a19b9778306b4ebd3f92b630964e612670dc",
+    "working": "3d720d4b106cbb462b52ba5c4381da6459e9705e"
+  },
+  "batch": 6,
+  "runs": [
+    {
+      "mode": "baseline",
+      "id": "s3-brush-mini",
+      "attributes": 886,
+      "flatBefore": {
+        "min": -0.07028756730959052,
+        "max": -0.022156109461952678
+      },
+      "slope": {
+        "min": -0.06862032390940187,
+        "max": 0.47029833626434914
+      },
+      "flatAfter": {
+        "min": -0.264105765602608,
+        "max": 0.2546256522858821
+      }
+    },
+    {
+      "mode": "baseline",
+      "id": "s3-brush-normal",
+      "attributes": 2120,
+      "flatBefore": {
+        "min": 0.024387906929208558,
+        "max": 0.0847814446188182
+      },
+      "slope": {
+        "min": -0.11542167419649407,
+        "max": 1.0824462315027932
+      },
+      "flatAfter": {
+        "min": -0.392672067565352,
+        "max": 0.7626361589399997
+      }
+    },
+    {
+      "mode": "baseline",
+      "id": "s3-brush-heavy",
+      "attributes": 1434,
+      "flatBefore": {
+        "min": -0.2475657828014597,
+        "max": -0.19431781422121297
+      },
+      "slope": {
+        "min": -0.2733897601157097,
+        "max": 0.7717494761518372
+      },
+      "flatAfter": {
+        "min": -0.3148093278049134,
+        "max": 0.6257733312913025
+      }
+    },
+    {
+      "mode": "reviewed",
+      "id": "s3-brush-mini",
+      "attributes": 886,
+      "flatBefore": {
+        "min": 0.008464836835947231,
+        "max": 0.008756513800523003
+      },
+      "slope": {
+        "min": -0.048495402751596584,
+        "max": 0.032067592909050924
+      },
+      "flatAfter": {
+        "min": -0.04596587227465404,
+        "max": -0.036497168026092375
+      }
+    },
+    {
+      "mode": "reviewed",
+      "id": "s3-brush-normal",
+      "attributes": 2120,
+      "flatBefore": {
+        "min": 0.004640825796266457,
+        "max": 0.004908742081885187
+      },
+      "slope": {
+        "min": -0.28013211405388605,
+        "max": 0.028534377689829804
+      },
+      "flatAfter": {
+        "min": -0.05919062174751838,
+        "max": -0.05025694379862777
+      }
+    },
+    {
+      "mode": "reviewed",
+      "id": "s3-brush-heavy",
+      "attributes": 1434,
+      "flatBefore": {
+        "min": 0.005909969392818626,
+        "max": 0.00621004430157357
+      },
+      "slope": {
+        "min": -0.25946776078381023,
+        "max": 0.0724141256016797
+      },
+      "flatAfter": {
+        "min": -0.0397359978558946,
+        "max": -0.029416491874650508
+      }
+    },
+    {
+      "mode": "working",
+      "id": "s3-brush-mini",
+      "attributes": 886,
+      "flatBefore": {
+        "min": 0.014918757395820492,
+        "max": 0.01507942115547456
+      },
+      "slope": {
+        "min": 0.014542505792209948,
+        "max": 0.015755211338713826
+      },
+      "flatAfter": {
+        "min": 0.013716290440653367,
+        "max": 0.016355389417896382
+      }
+    },
+    {
+      "mode": "working",
+      "id": "s3-brush-normal",
+      "attributes": 2120,
+      "flatBefore": {
+        "min": 0.01491878965035065,
+        "max": 0.015079411227048922
+      },
+      "slope": {
+        "min": 0.01423904283446975,
+        "max": 0.016184394630093912
+      },
+      "flatAfter": {
+        "min": 0.013716296284105367,
+        "max": 0.01617124641624962
+      }
+    },
+    {
+      "mode": "working",
+      "id": "s3-brush-heavy",
+      "attributes": 1434,
+      "flatBefore": {
+        "min": 0.014917718930146595,
+        "max": 0.015079327700387335
+      },
+      "slope": {
+        "min": 0.013849315642329885,
+        "max": 0.015588039543954324
+      },
+      "flatAfter": {
+        "min": 0.013716296003823902,
+        "max": 0.016355381694793752
+      }
+    }
+  ]
+}

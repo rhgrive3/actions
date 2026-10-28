@@ -4,16 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { adaptSource } from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
-import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
-import { adaptRange } from '../../practice-range/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.resolve(process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public'));
-const adaptBuildSource = (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 let loaded;
 
 async function production() {
@@ -33,6 +27,7 @@ async function production() {
   };
   const entry = new vm.SourceTextModule(`
     export { install } from './patches/splatoon3/runtime/install.mjs';
+    export { Level } from './inkwave-public/src/world/level.js';
   `, { context, identifier: path.join(ROOT, 'issue-94-composition-entry.mjs') });
   await entry.link((specifier, from) => load(specifier === 'three'
     ? path.join(SRC, 'vendor/three/build/three.module.js')
@@ -42,7 +37,7 @@ async function production() {
   await entry.evaluate();
   const profile = JSON.parse(fs.readFileSync(path.join(ROOT, 'patches/splatoon3/profile.json')));
   const api = entry.namespace.install(profile);
-  loaded = { ...api, profile, vmContext: context };
+  loaded = { ...api, Level: entry.namespace.Level, profile, vmContext: context };
   return loaded;
 }
 
@@ -51,14 +46,8 @@ async function nearCoverScene() {
   const { G, THREE, Physics, Hit, Actor, Character, Projectiles, PlayerController } = api;
   G.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
   G.scene = new THREE.Scene();
-  G.level = {
-    blocks: [], faces: [], groundHeight: () => 0,
-    queryBlocks(_minX, _minZ, _maxX, _maxZ, out) {
-      out.length = 0;
-      this.blocks.forEach((_block, index) => out.push(index));
-      return out;
-    },
-  };
+  G.level = new api.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-80,0,0],[80,0,0]],
+    spawnBarrier:0,single:[],half:[]});
   G.physics = new Physics(G.level);
   G.paint = { sample: () => 1, splat: () => 0 };
   G.match = { playing: () => true };
@@ -87,12 +76,9 @@ async function nearCoverScene() {
   const direction = projectiles._aimFrom(actor, muzzle, new THREE.Vector3());
   const nearDistance = Math.min(0.75, muzzle.distanceTo(actor.aimPoint) * 0.25);
   const center = muzzle.clone().addScaledVector(direction, nearDistance);
-  G.level.blocks.push({
-    id: 0, solid: true, grate: false, center,
-    half: new THREE.Vector3(0.025, 0.12, 0.025),
-    axes: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)],
-    faces: [-1, -1, -1, -1, -1, -1],
-  });
+  G.level._addBlock({kind:'box',min:[center.x-.025,center.y-.12,center.z-.025],
+    max:[center.x+.025,center.y+.12,center.z+.025],paint:false});
+  G.level._buildHash();
   G.physics = new Physics(G.level);
   controller.computeAim();
 
@@ -170,15 +156,16 @@ test('#94 presentation query is read-only and clears when the field line is clea
   assert.deepEqual({ ...actor.stats }, before.stats);
 
   api.G.level.blocks.length = 0;
+  api.G.level._buildHash();
   assert.equal(projectiles.muzzleBlockFeedback(actor), null, 'cleared field removes the marker input');
 });
 
 
 test('#94 stationary Shooter HUD reuses first-hit sweep, invalidating on aim, stage and time', async () => {
   const { api, actor, projectiles } = await nearCoverScene();
-  const original = projectiles._ballistic;
+  const original = projectiles._nominalInkGuide;
   let solved = 0;
-  projectiles._ballistic = function (...args) { solved++; return original.apply(this, args); };
+  projectiles._nominalInkGuide = function (...args) { solved++; return original.apply(this, args); };
   try {
     assert.ok(projectiles.muzzleBlockFeedback(actor)?.hit);
     const initial = solved;
@@ -188,22 +175,24 @@ test('#94 stationary Shooter HUD reuses first-hit sweep, invalidating on aim, st
     actor.aimPoint.x += 0.025;
     projectiles.muzzleBlockFeedback(actor);
     assert.equal(solved, initial + 1, 'changed aim invalidates immediately');
-    api.G.level.geometryGeneration = 2;
+    api.G.level.markCollisionChanged();
     projectiles.muzzleBlockFeedback(actor);
-    assert.equal(solved, initial + 2, 'stage geometry generation invalidates immediately');
+    assert.equal(solved, initial + 2, 'actual collision revision invalidates immediately');
     api.G.time += 0.21;
     projectiles.muzzleBlockFeedback(actor);
-    assert.equal(solved, initial + 3, 'refresh is bounded even for in-place unversioned geometry edits');
+    assert.equal(solved, initial + 3, 'existing periodic refresh remains bounded');
     api.G.level.blocks.length = 0;
+    api.G.level._buildHash();
     assert.equal(projectiles.muzzleBlockFeedback(actor), null, 'a removed obstacle removes the contact marker');
     assert.equal(solved, initial + 4, 'block collection mutation invalidates immediately');
-  } finally { projectiles._ballistic = original; }
+  } finally { projectiles._nominalInkGuide = original; }
 });
 
 
 test('#94 open-field fixed aim bounds swept broadphase cost at 60 Hz', async () => {
   const { api, actor, projectiles } = await nearCoverScene();
   api.G.level.blocks.length = 0;
+  api.G.level._buildHash();
   const level = api.G.level, nativeQuery = level.queryBlocks;
   let broadphaseQueries = 0;
   level.queryBlocks = function (...args) {

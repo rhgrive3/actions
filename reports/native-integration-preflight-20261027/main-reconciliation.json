@@ -1,0 +1,295 @@
+{
+  "schema": 1,
+  "capturedAt": "2026-10-27T07:21:43.442197+00:00",
+  "mergeCommit": "be7f904a1a21063430f5d2677cc311006a0d47ac",
+  "parents": [
+    "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+    "dd93aac2c408f746adb0c9aa572ea2f06f3bed43"
+  ],
+  "authority": "Parent explicitly authorized LOCAL merge only; remote publication, PR metadata, manual CI, main merge and deployment remain deferred.",
+  "resolution": {
+    "file": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+    "mainSemanticTestsRetained": 4,
+    "additiveTests": 2,
+    "negativeMutations": 14,
+    "wholeHistoricalJobPinsRestored": false,
+    "threeRequiredEmittedTests": [
+      "patches/native-stages/tests/collision-revision-producers.test.mjs",
+      "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+      "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+    ]
+  },
+  "featureAndExternalPreservation": "git diff d3ee against selected Shooter, catalog helper, frozen pose and both1ab stub paths is empty after merge.",
+  "upstreamRankedFix": "7d38cd95fc044927a84c3419cfbcd2e9b8529e86 inherited through main, not duplicate cherry-pick.",
+  "sparseRecovery": {
+    "initialFailure": "Postmerge canonical runner/verifier and one ranked source check encountered ENOENT because31 new main paths were absent under the original explicit sparse selection. These initial failures remain in local logs.",
+    "action": "git checkout --ignore-skip-worktree-bits -- [31 exact index-owned new main paths]",
+    "result": "Materialized unchanged committed blobs; no dependency/package/lock/source repair. All affected checks were rerun successfully."
+  },
+  "builtSite": "/workspace/shared/inkwave-native/evidence/native-integration-20261027/site-main",
+  "buildCommand": "ESBUILD_MODULE=/workspace/shared/inkwave-native/deps/node_modules/esbuild/lib/main.js node scripts/build-inkwave.mjs inkwave-public _site-main; after validation output moved to builtSite outside checkout.",
+  "buildAudit": {
+    "sourceSha": "be7f904a1a21063430f5d2677cc311006a0d47ac",
+    "contentHash": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+    "inputHash": "25a535d28da064d2d6fea8f173a14fac22fb19f508dd77b47f44e0c6106e7ec2",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "14e82b7ceeb34f0d06f09adbbc5d25a53cacb187b49a3f548a8678b2a49eaa30",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78296,
+    "initialJSBytes": 1937922,
+    "criticalHTMLBytes": 24030,
+    "precacheCount": 553,
+    "precacheBytes": 7657294,
+    "workerBytes": 91095,
+    "declaredBytes": 16088539,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "artifactDelta": {
+    "sourceBefore": "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+    "sourceAfter": "be7f904a1a21063430f5d2677cc311006a0d47ac",
+    "contentBefore": "39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b",
+    "contentAfter": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+    "revisionBefore": "5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319",
+    "revisionAfter": "14e82b7ceeb34f0d06f09adbbc5d25a53cacb187b49a3f548a8678b2a49eaa30",
+    "totalBefore": 2199,
+    "totalAfter": 2199,
+    "inputChanges": [
+      {
+        "file": "local-quality/debug-ab-runtime.mjs",
+        "before": "4435b18330dd2315638c764647a8fe3b122b8e490cfceb0fcd0f8b004b51e354",
+        "after": "680084e7f9fc4e44551f44aec131a101d6c4883a29cb5f55b93c1b98cb2ddba6"
+      }
+    ],
+    "changedArtifacts": [
+      {
+        "file": "_versions/REVISION/patches/local-quality/debug-ab-runtime.mjs",
+        "before": "803d583099e5847c376fecdcaa6d5e65caa6823b4c9c6dc6f331f649e7f96f89",
+        "after": "d9a5c965d85429844131ea6dc71f15539a40eb55c0ff3ac856c3b578e8e28392"
+      },
+      {
+        "file": "index.html",
+        "before": "a9be664adf55cef28452297856f40ea5bfa51750680692e51139070e930e6d7b",
+        "after": "08d1a9f05ecf88dd57927d0b425f2f75f4b9214bca229815d8fecbf2010955e5"
+      },
+      {
+        "file": "patches/local-quality/debug-ab-runtime.mjs",
+        "before": "803d583099e5847c376fecdcaa6d5e65caa6823b4c9c6dc6f331f649e7f96f89",
+        "after": "d9a5c965d85429844131ea6dc71f15539a40eb55c0ff3ac856c3b578e8e28392"
+      },
+      {
+        "file": "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json",
+        "before": "0bd54b98af2703840aeabd63adef0d4d03fa486d65ffd4467c35148505e2a120",
+        "after": "2005d2835f3b84d71402f1fc5fb13ecd981293a8a70e5529b933430fc4c42344"
+      },
+      {
+        "file": "patches/local-quality/ink-volume/assets/roller/manifest.json",
+        "before": "b541f309251ff52878f92536ca1d9c713a3366d3ed9b949f2cd740571051fa12",
+        "after": "e6e3c01cc5e1b9f8457edbb7344d268526ff52916b6e65dc5c5acdcc1301be7d"
+      },
+      {
+        "file": "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+        "before": "caef86535070151ecec3a9a54a5343ae2b6d59d129505318b9c1e497c96be52f",
+        "after": "1d39cc04bde762145e547c331e3db263a6076ef71869eeb614c610dbf31f8d86"
+      },
+      {
+        "file": "sw.js",
+        "before": "820f02ae801f74400ff43bbe79463333318a2e10ba1ece5c91c97e55cbb84dce",
+        "after": "dd825a9ef046e1559acee8f9d7077ff8f702ee9e988d5241059fff32aecfea9b"
+      }
+    ]
+  },
+  "artifactDeltaExplanation": "Only input change is upstream debug-ab-runtime.mjs partial-DOM toolbar guard. Normalized7 artifact deltas: the debug module in versioned and compatibility paths, index.html, sw.js, and3volume manifests whose only changed JSON field is binary URL with new revision. All Shooter, motion, canonical FX and audio Worker module bytes are unchanged. Whole manifest content hash is deliberately NOT claimed unchanged.",
+  "checks": [
+    {
+      "name": "baseline wall workflow",
+      "command": "node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+      "status": "passed",
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "before-wall-workflow.log",
+      "sha256": "9bd25a3b049ad573e36cb9a96668bfce5c8ce1dbe8ea3b347fd8262235ef54a5"
+    },
+    {
+      "name": "resolved wall workflow",
+      "command": "node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+      "status": "passed",
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-wall-workflow.log",
+      "sha256": "62ef2ef0e1d5efbf873e049c9c492cdec303146e982b8e2e874a678e28a16972"
+    },
+    {
+      "name": "affected workflow/source-coverage/receipt-packaging/ranked contracts",
+      "command": "node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/ranked-roller-audio.test.mjs scripts/tests/ranked-boot-diagnostics.test.mjs scripts/tests/inkwave-test-suites.test.mjs scripts/tests/inkwave-source-coverage.test.mjs scripts/tests/inkwave-evidence-packaging.test.mjs",
+      "status": "passed",
+      "tests": 47,
+      "pass": 47,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-affected-contracts-materialized.log",
+      "sha256": "9e1ac34cf19853232cf46356d46fdeace336c172b93f0fa37de47b1dc8c726ea"
+    },
+    {
+      "name": "canonical suite runner",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs runner-contracts",
+      "status": "passed",
+      "tests": 23,
+      "pass": 23,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-runner-contracts.log",
+      "sha256": "2e0c3f95b00cc2c610ff03d5cf4095201fd2e4513d24eadb735d2bb8b986ba5e"
+    },
+    {
+      "name": "canonical verifier",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs verifier",
+      "status": "passed",
+      "tests": 600,
+      "pass": 599,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "todo": 0,
+      "log": "after-main-verifier-materialized.log",
+      "sha256": "6557a6044137750134d51442fcc5a2dc7832d73719148b403abebbabe318260f"
+    },
+    {
+      "name": "canonical bounded acceptance",
+      "command": "node scripts/ci/run-inkwave-test-suite.mjs acceptance",
+      "status": "passed",
+      "tests": 190,
+      "pass": 190,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-acceptance.log",
+      "sha256": "85371ee26ca00674483758e3d2414cfe1a69578889bcafe47dbbaa91a74ae055"
+    },
+    {
+      "name": "focused source/catalog/frozen pose",
+      "command": "same seven-file source command as baseline verification.json",
+      "status": "passed",
+      "tests": 69,
+      "pass": 69,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-focused-source.log",
+      "sha256": "ebe3cb5296ac4d748c7699aa051efc22fc45713f42bcd8fc7dab992a1f3b4fc6"
+    },
+    {
+      "name": "ranked native input/live-audio source",
+      "command": "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/ranked-browser-target-setup.test.mjs patches/splatoon3/tests/ranked-live-audio.test.mjs",
+      "status": "passed",
+      "tests": 16,
+      "pass": 16,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-ranked-source-materialized.log",
+      "sha256": "276af0e834881919a80378281a9632332f4f7f1b1de9e3c93108ce7350e9769c"
+    },
+    {
+      "name": "upstream debug/profiler source",
+      "command": "node --experimental-vm-modules --test patches/local-quality/tests/range-hitch-tracer.test.mjs",
+      "status": "passed",
+      "tests": 15,
+      "pass": 15,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-debug-source.log",
+      "sha256": "6c15e734904e49f52be91d55807159272506eddc0d1d7fd6a14c8185dfae4b0a"
+    },
+    {
+      "name": "emitted Shooter/guide/phase/collision contracts",
+      "command": "INKWAVE_BUILT_SITE=$PWD/_site-main node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/shooter-dualies-projection.test.mjs patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs patches/native-stages/tests/collision-revision-producers.test.mjs patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs",
+      "status": "passed",
+      "tests": 29,
+      "pass": 29,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-focused-emitted.log",
+      "sha256": "b4f35beec346a4aab8669d582c1407f2f7575c8999005057dc336232a2edfe7b"
+    },
+    {
+      "name": "separate emitted optional pack contract omitted without site in canonical verifier",
+      "command": "INKWAVE_BUILT_SITE=$PWD/_site-main node --test scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs",
+      "status": "passed",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "log": "after-main-emitted-pack-contracts.log",
+      "sha256": "b6861e1d8c162b2b3b46bf023b1f79c657250118d1c409a1aab39fe55edd1a44"
+    }
+  ],
+  "canonicalVerifierSkip": "One emitted optional-pack body skips without INKWAVE_BUILT_SITE. A separate exact-site file run passes4/4 with0 skips, including that body. This does not rewrite the canonical run as zero-skip.",
+  "historicalCatalogEvidence": {
+    "sourceChanges": "accepted by independent review",
+    "historicalAugmentation": "unaccepted; final catalog remains open",
+    "trackedFlawedHelper": "reports/ci907-reconciled-native-entry-20261027/browser-probe.mjs:33",
+    "helperSha256": "2797c0f58cf1f562a788b47e754e2c042953ed04cdb8a30daa88a4c560253def",
+    "combinedSavedJsonSha256": "ce3f2a6f3786357f8328a07fa893bc275f20a7415e10d81da679ad07f878b198",
+    "finding": "Old receipts are converted to Map; fresh duplicate overwrites before validation can hide corruption. Canonical current-run collector does not perform a historical union and validates bytes before recording.",
+    "rawHistoricalPngsAvailableHere": false,
+    "requiredReplacement": "Fresh automatic CI catalog at the new exact final head; not another unsupported saved aggregation.",
+    "owner": "audit_native_evidence_integrity owns historical correction/helper files; integration role has preserved originals."
+  },
+  "browser": "Native routes failed before launch/navigation; no new gameplay pixels. Existing bounded Shooter receipts and unchanged relevant emitted module hashes remain separately labeled, not a fresh merged-head browser pass.",
+  "openGates": [
+    "Fresh exact-head full catalog and final CI",
+    "Retail Hissen size/floor morphology",
+    "Native-prebuilt stage payload acceptance (405LFS pointers remain)",
+    "Separately owned phase handoff and evidence correction commits pending integration/review"
+  ],
+  "localLogs": "/workspace/shared/inkwave-native/role-1/.ci-scratch/native-integration-20261027",
+  "logSha256": {
+    "after-main-verifier-materialized.log": "6557a6044137750134d51442fcc5a2dc7832d73719148b403abebbabe318260f",
+    "after-main-exact-build-audit.json": "8bbd40c263dc105b12d7386cd03a9c411d8b2b8bd0d903a62eb8e35b4e85d15f",
+    "after-main-debug-source.log": "6c15e734904e49f52be91d55807159272506eddc0d1d7fd6a14c8185dfae4b0a",
+    "after-main-artifact-delta.json": "6e6298c02743ea90c773ccf412508f8a995147c2f30ef119c243af162d93c54b",
+    "after-main-build.log": "f30c8d59bf5f5219db8e7610bb14c24348a376268445555b9f4bfc732956f669",
+    "after-wall-workflow.log": "62ef2ef0e1d5efbf873e049c9c492cdec303146e982b8e2e874a678e28a16972",
+    "after-main-affected-contracts-materialized.log": "9e1ac34cf19853232cf46356d46fdeace336c172b93f0fa37de47b1dc8c726ea",
+    "after-main-focused-source.log": "ebe3cb5296ac4d748c7699aa051efc22fc45713f42bcd8fc7dab992a1f3b4fc6",
+    "after-main-emitted-pack-contracts.log": "b6861e1d8c162b2b3b46bf023b1f79c657250118d1c409a1aab39fe55edd1a44",
+    "after-main-verifier.log": "e0a5ca573f84df04cb2007de0192fcf169d079b4a7deebc9f13e5d6a6ae4496c",
+    "after-main-affected-contracts.log": "d842f320d4788144a14fbc57c153727e5aef9a0cfdca48f191ce3cc07bcf0156",
+    "after-main-acceptance.log": "85371ee26ca00674483758e3d2414cfe1a69578889bcafe47dbbaa91a74ae055",
+    "after-main-focused-emitted.log": "b4f35beec346a4aab8669d582c1407f2f7575c8999005057dc336232a2edfe7b",
+    "after-main-startup-budget.log": "62896cc901477f5f2d538bdf679e1a5fca45feef873ea8843177bb49d81b93c0",
+    "after-main-ranked-source-materialized.log": "276af0e834881919a80378281a9632332f4f7f1b1de9e3c93108ce7350e9769c",
+    "after-main-quick-check.log": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+    "after-main-runner-contracts.log": "2e0c3f95b00cc2c610ff03d5cf4095201fd2e4513d24eadb735d2bb8b986ba5e",
+    "after-main-ranked-source.log": "a75d967eb452b9c56553bac4bdaa0a5e9a69c9f7f5b349c562885f348921f2fd"
+  }
+}

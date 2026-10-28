@@ -250,7 +250,7 @@ test('charged selector does not rotate Dental waves or swing sheets into the ver
       const before = system.list.map(snapshot);
       system._draw();
       assert.deepEqual(system.list.map(snapshot), before, id + ' drawing remains read-only');
-      const mesh = charged ? system._s3Shapes.slashV : system._s3Shapes.slashH;
+      const mesh = charged ? (horizontal ? system._s3Shapes.slashV : system._s3Shapes.wetSlashV) : system._s3Shapes.slashH;
       const matrix = new f.THREE.Matrix4(), axis = new f.THREE.Vector3();
       mesh.getMatrixAt(0, matrix);
       axis.setFromMatrixColumn(matrix, 0).normalize();

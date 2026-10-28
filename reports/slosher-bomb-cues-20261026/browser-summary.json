@@ -1,0 +1,191 @@
+{
+  "kind": "Live trusted touch and native clock; no forced game state",
+  "contentHash": "a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc",
+  "inputHash": "57ac7fd299c02d5e8f15b787828867f4dcf6221f56f6ac84b054242d3f463ed8",
+  "browser": "154.0.8037.57",
+  "errors": [],
+  "verified": [
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/patches/splatoon3/runtime/bomb-cues.mjs",
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/src/fx/fxHooks.js",
+    "_versions/4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2/src/game/weapons.js"
+  ],
+  "allGesturesTrusted": true,
+  "cases": [
+    {
+      "id": "roller",
+      "naturalSimSecondsObserved": 4.483333333333422,
+      "cueCounts": {},
+      "bombDrawFrames": 177,
+      "mainDrawFrames": 0,
+      "paused": false,
+      "frozenProperty": "undefined (native default)",
+      "pointerErrors": 0,
+      "screenshotRequestTime": {
+        "time": 6.483199999999978
+      }
+    },
+    {
+      "id": "charger",
+      "naturalSimSecondsObserved": 4.250000000000163,
+      "cueCounts": {
+        "dangerRing": 4,
+        "mark": 4,
+        "beepPulse": 1
+      },
+      "bombDrawFrames": 83,
+      "mainDrawFrames": 0,
+      "paused": false,
+      "frozenProperty": "undefined (native default)",
+      "pointerErrors": 0,
+      "screenshotRequestTime": {
+        "time": 13.466533333333578
+      },
+      "warningCenters": [
+        [
+          0.8191843911479026,
+          0.02,
+          13.598910395312837
+        ],
+        [
+          0.8191843911479026,
+          0.020000000000000056,
+          15.287161102539391
+        ],
+        [
+          0.8191843911479026,
+          0.020000000000000056,
+          15.365552288127791
+        ],
+        [
+          0.8191843911479026,
+          0.01999999999999989,
+          15.368595499302955
+        ]
+      ],
+      "warningFollowsBombXZ": true,
+      "centerTravelXZ": 1.7696851039901187
+    },
+    {
+      "id": "blaster",
+      "naturalSimSecondsObserved": 4.333333333333087,
+      "cueCounts": {
+        "mark": 7,
+        "dangerRing": 4,
+        "beepPulse": 2
+      },
+      "bombDrawFrames": 90,
+      "mainDrawFrames": 0,
+      "paused": false,
+      "frozenProperty": "undefined (native default)",
+      "pointerErrors": 0,
+      "screenshotRequestTime": {
+        "time": 20.51653333333345
+      },
+      "warningCenters": [
+        [
+          0.8140407598954673,
+          0.02000000000000011,
+          -3.290467766507217
+        ],
+        [
+          0.8140407598954673,
+          0.02000000000000011,
+          -3.290467766507217
+        ],
+        [
+          0.8140407598954673,
+          0.02,
+          -3.290467766507217
+        ],
+        [
+          0.8140407598954673,
+          0.02000000000000011,
+          -3.290467766507217
+        ]
+      ],
+      "warningFollowsBombXZ": true,
+      "centerTravelXZ": 0.0,
+      "searchMarks": [
+        {
+          "time": 20.266533333333463,
+          "position": [
+            0.8140407598954673,
+            0.02000000000000011,
+            -3.290467766507217
+          ],
+          "quadRadius": 13.440860215053762,
+          "rimRadius": 12.5,
+          "alpha": 0.5366666666666666,
+          "bombAge": 0.4833333333333333,
+          "phase": "scanning"
+        },
+        {
+          "time": 20.51653333333345,
+          "position": [
+            0.8140407598954673,
+            0.02000000000000011,
+            -3.290467766507217
+          ],
+          "quadRadius": 13.440860215053762,
+          "rimRadius": 12.5,
+          "alpha": 0.18666666666666576,
+          "bombAge": 0.733333333333334,
+          "phase": "waiting"
+        },
+        {
+          "time": 20.58320000000011,
+          "position": [
+            0.8140407598954673,
+            0.02000000000000011,
+            -3.290467766507217
+          ],
+          "quadRadius": 13.440860215053762,
+          "rimRadius": 12.5,
+          "alpha": 0.09333333333333214,
+          "bombAge": 0.8000000000000008,
+          "phase": "waiting"
+        }
+      ]
+    },
+    {
+      "id": "s3-slosher-double",
+      "naturalSimSecondsObserved": 4.499999999999744,
+      "cueCounts": {},
+      "bombDrawFrames": 0,
+      "mainDrawFrames": 24,
+      "paused": false,
+      "frozenProperty": "undefined (native default)",
+      "pointerErrors": 0,
+      "screenshotRequestTime": {
+        "time": 26.89986666666642
+      },
+      "birthHeightsAboveActor": [
+        1.05
+      ]
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "naturalSimSecondsObserved": 4.499999999999744,
+      "cueCounts": {},
+      "bombDrawFrames": 0,
+      "mainDrawFrames": 32,
+      "paused": false,
+      "frozenProperty": "undefined (native default)",
+      "pointerErrors": 0,
+      "screenshotRequestTime": {
+        "time": 33.48319999999938
+      },
+      "birthHeightsAboveActor": [
+        1.05
+      ]
+    }
+  ],
+  "audio": {
+    "state": "running",
+    "played": 45,
+    "dropped": 2,
+    "realLoaderErrors": [],
+    "interpretation": "Live engine/loader receipt; no loopback listening or acoustic/retail parity claimed"
+  }
+}

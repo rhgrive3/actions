@@ -4,8 +4,12 @@ import fs from 'node:fs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 import {contactPoseSnapshot} from './source-contact-fixture.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
+import {replaceOnce} from '../adapter.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/added-ui-motion-before.json',import.meta.url)));
-const baseline=(rel,raw)=>{if(before.motionSources[rel])return before.motionSources[rel];let code=adaptBuildSource(rel,raw);if(rel==='src/game/cameraRig.js'){const start=code.indexOf('  _follow(dt) {'),end=code.indexOf('\n  _',start+4);assert(start>=0&&end>start);code=code.slice(0,start)+'  '+before.methods._follow+code.slice(end);}return code;};
+// Compare sparse storage with the same later walking presentation on both
+// sides. The frozen source bytes and every strict pose assertion stay intact.
+const baseline=(rel,raw)=>{if(before.motionSources[rel])return adaptWalkPresentation(rel,before.motionSources[rel],replaceOnce);let code=adaptBuildSource(rel,raw);if(rel==='src/game/cameraRig.js'){const start=code.indexOf('  _follow(dt) {'),end=code.indexOf('\n  _',start+4);assert(start>=0&&end>start);code=code.slice(0,start)+'  '+before.methods._follow+code.slice(end);}return code;};
 const extraExports="export {GaitTargets} from './src/game/motion/gait-targets.js';export {BodyBalance} from './src/game/motion/body-balance.js';export {CameraRig} from './src/game/cameraRig.js';";
 const json=x=>JSON.parse(JSON.stringify(x));
 function cameraSnapshot(r){const out={};for(const k of ['yaw','pitch','pivotY','curDist','fovKick','scopeK','wantDist','shoulder','kick','_lastTY','_vyF','_sjLandT'])out[k]=r[k];for(const k of ['sx','sy','sz','hgt','side','boom','lensLift','kickS','dipS'])out[k]=json(r[k]);return json({...out,pivot:r.pivot.toArray(),p:r.camera.position.toArray(),q:r.camera.quaternion.toArray()});}

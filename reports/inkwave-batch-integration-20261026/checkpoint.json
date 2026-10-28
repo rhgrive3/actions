@@ -1,0 +1,512 @@
+{
+  "base": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "localBranch": "integrate/inkwave-bug-batch-20261026-charge-owner",
+  "productHeadAtBuild": "4de58c67266c40b2f5d6068856ca4c19c4676688",
+  "chargeCommits": [
+    "9a89494320a7f9cfed62c83e0830bfe52d72f76e",
+    "4bc974451bf3147080a9fb76ea7d27341d79a3a0",
+    "63a7413688f08c8c42909be7cf04dd13dd6ba389"
+  ],
+  "movementHandoff": {
+    "verifiedBranch": "codex/inkwave-movement-20261026-153847-6142e490",
+    "verifiedHead": "6142e49045700b7c8ad70a902f963c1a64fe8c70",
+    "cherryPicks": {
+      "1d993e3fdd007695c9db9aadbe06b9bb8a05d80b": "4d55d75be8580140a8d9cabb4bd538e94ba0720c",
+      "3dfa67552ba835462ea230a52469ac870e314ce1": "d1c7cd4283be5b701ac65ad3738f8a13d59dec91",
+      "4360948d4cb970d56daacea644ac760a9c25ff76": "a7b6835942429c2b3679f9a641d80085d7b98141",
+      "6142e49045700b7c8ad70a902f963c1a64fe8c70": "4de58c67266c40b2f5d6068856ca4c19c4676688"
+    },
+    "conflictsResolved": [
+      "main-weapon-catalog imports combined; Charger helper retained beside extracted rolling-floor caller",
+      "both behavior-report entries retained",
+      "both build-only adapter registrations retained"
+    ],
+    "fastPathFollowup": {
+      "verifiedSource": "53c4727765cc8a9a89f14098d35ecd14122bdba7",
+      "integrated": "af48bc405408c76d457122b085f7be793220e4d5",
+      "validation": "post-flat-fastpath/validation.json"
+    }
+  },
+  "validation": {
+    "sourceFocused": {
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "bowHudComponent": {
+      "passed": 15,
+      "additionalCircles": 0,
+      "nativeChargeRadius": 25,
+      "nativeTrackRadius": 25,
+      "retailParity": false,
+      "ordinaryInput": false,
+      "status": "prior checkpoint superseded for color by the native-style correction; final combined rerun pending"
+    },
+    "build": "passed",
+    "startupBudget": "passed",
+    "identity": "charge-movement-identity.json",
+    "emittedFocused": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "cases": [
+        "catalogue Charger falling paint and draw at 30/60/120Hz",
+        "ghost paint exclusion and clearing",
+        "Stringer stage publication/reset for all kits",
+        "native downhill Roller turf at 30Hz",
+        "native downhill Roller turf at 60Hz",
+        "native downhill Roller turf at 120Hz"
+      ]
+    },
+    "audioRegressionScope": {
+      "unchangedFromEightKindRealAudioBuild": 426,
+      "changed": 0,
+      "meaning": "All emitted audio-tree artifacts, src/audio/audio.js, and catalog charge-stage helper hashes match the already-played charge build; playback was not redundantly rerun for movement-only changes."
+    },
+    "reticleSourceFocused": {
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "nativeDynamicImportWarnings": "Existing VM source-motion fallback; not browser or retail visual proof.",
+      "quick": "passed",
+      "emittedAfterThisMerge": "pending final combined build"
+    },
+    "bowHudNativeStyleSource": {
+      "passed": 3,
+      "failed": 0,
+      "nativeTrackAndArcStyleUnchanged": true
+    }
+  },
+  "pending": [
+    "Original horizontal inner-marker owner/parallax/late-floor appearance and broader visual/hardware comparisons",
+    "Hissen/slosher unfinished work and original-comparison scope review",
+    "Resolve rejected PR creation; no further retry or bypass",
+    "required automatic CI on eventual final head",
+    "Original Pencil post-first-shot squid-round discard and remaining-round ink-settlement semantics"
+  ],
+  "remoteActions": {
+    "prCreated": false,
+    "merged": false,
+    "manualCiStarted": false,
+    "integrationBranchPushed": true,
+    "lastVerifiedRemoteHead": "f8b5eafc38f8d80641d823c950cbe7d560c9bfc0",
+    "prCreation": "denied twice; stopped, no matching PR exists",
+    "lastVerifiedRemoteHeadScope": "Readback before release-only append; exact post-push head reported to parent separately"
+  },
+  "ciHandoffPlan": "Current push workflows are main/custom-branch scoped or diagnostic-file scoped; no unfiltered push workflow found. Keep one integration branch and push consolidated changes without skip-CI flags. Preserve normal required PR/main CI.",
+  "reticleHandoff": {
+    "verifiedBranch": "handoff/20261026-shooter-dualies-68ba135e7-154402",
+    "verifiedHead": "68ba135e704db79cdb126a298ea653daef60adb6",
+    "cherryPicks": {
+      "85e7967a7986817951089b9339add558fbe3bb58": "931950cfe2ab632c1c11d36408623fffb33db489",
+      "68ba135e704db79cdb126a298ea653daef60adb6": "4964afaa80748468cc55d6fc56d5715aca0bc2ba"
+    },
+    "sourceConflicts": [],
+    "reportConflict": "All charge/movement/reticle entries retained",
+    "retailInnerMarkerCutoffVerified": false,
+    "pending575FixtureFollowup": false,
+    "fixture575Followup": {
+      "verifiedSource": "ad38e1f96bb2938f879b7fd0276f344bdbee65c7",
+      "integrated": "692dcc486",
+      "assertions": "six exact keys, normal/turret, left/right, replay/dedup retained"
+    },
+    "cutoffRuntimeStatus": "Excluded by integration review in 1ad7af7b3; full-flight marker admission retained pending original UI evidence"
+  },
+  "stringerOriginalReview": {
+    "source": "Independent parent-supplied reviewer of a private original Tri clip; media and private locator not copied into the repository",
+    "reviewedFrames": 31,
+    "preliminaryObservations": [
+      "Frame 0 gray annulus; frame 1 yellow center/halo pulse",
+      "Frames 2-10 white arc grows clockwise on the same gray annulus",
+      "Frames 11-16 full white annulus while center/halo fades",
+      "Unfilled parts in frames 3-9 remain gray; no persistent completed-first-stage color"
+    ],
+    "status": "final narrow structural/color verdict; exact stages and timing remain unobserved",
+    "notEstablished": [
+      "exact stage fractions",
+      "all first/second/full stage transitions",
+      "pixel/layout/color/timing parity",
+      "ordinary-input comparison of final INKWAVE build"
+    ],
+    "nativeStyleCorrection": "Removed stage-owned stroke/opacity overrides; stage installer now modifies progress and the existing pulse only"
+  },
+  "effectsHandoff": {
+    "verifiedBranch": "codex/slosher-bomb-handoff-20261026-67ea075-4d8f2a9c",
+    "verifiedHead": "67ea07501387f282464ac8b76d93842650c976d1",
+    "cherryPicks": {
+      "6370967b31ac51d0f8955800cde701bdcd4c835c": "2b39bb96fc6f10ae11f72452ea0faebdd785f706",
+      "8fc7b34848bdb84d150f29845570eb638ed7da95": "97c0281053a322a8c408fb15bd5b6e6d8aa8247c",
+      "67ea07501387f282464ac8b76d93842650c976d1": "7f0ec3e5ebe53d351063de0b8410914553c09004"
+    },
+    "scope": "Dread Wringer birth origin and native bomb cues only",
+    "unfinished": [
+      "Hissen main size",
+      "Slosher floor-drop visual correction"
+    ]
+  },
+  "preFlatFastpathCandidate": {
+    "buildCommit": "8c1f83bc2ca2a77d76aafda2cca1b860787c5aec",
+    "contentHash": "bef398c7163daafa2b119a158e234b90e38155ab38189fbdebc7ff5ef4beb3b2",
+    "sourcePassed": 22,
+    "emittedPassed": 19,
+    "sourceAndEmittedSkipped": 0,
+    "audioBaseChargersPassed": 8,
+    "missingAssetNegativeControl": "passed",
+    "bowHudComponentPassed": 15,
+    "nativeTrackAndArcInlineStyling": "unchanged; computed unfilled track color/opacity stable across stages",
+    "sourceInputsMatched": 1490,
+    "artifactsHashed": 2194,
+    "mismatches": 0,
+    "budget": "passed",
+    "status": "intermediate; new flat-ground tracing cost correction pending; not final head evidence",
+    "evidenceDirectory": "pre-flat-fastpath"
+  },
+  "postFlatFastpathCandidate": {
+    "sourceHead": "c922a773b6e15be90332aca066fbdfb39c0aa09b",
+    "upstreamMainMerged": "ce34bf34359ca5e8ee82d1effc50e649783a1d3d",
+    "contentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+    "inputHash": "472bb723b7424abccdc8e6eb1a08978462c58d104db02d56163140f679176bbc",
+    "sourceAffectedPassed": 20,
+    "sourceBoundaryPassed": 5,
+    "emittedPassed": 8,
+    "browser": "passed, actual emitted Actor/Physics/GPU paint and controlled FX",
+    "evidenceDirectory": "post-flat-fastpath",
+    "status": "affected checks passed; partial batch, publication blocked; not final CI"
+  },
+  "nativeTouch90bb": {
+    "sourceHead": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+    "review": "native-touch-90bb/review.json",
+    "execution": "One approved require_escalated invocation; browser sandbox true; no no-sandbox, chmod/chown or browser/OS security changes",
+    "trustedFireTouchInputs": 2,
+    "charger": "full charge, actual 1x recorded source, nonzero charge-only PCM, native head fired",
+    "bow": "runner 0/1/2, actual HUD first/second/full progress, both cue calls, native three-arrow volley",
+    "pageErrors": 0,
+    "pointerLockErrors": 0,
+    "notProven": [
+      "mid-stage DOM HUD pixels from canvas-only snapshots",
+      "E-liter short-head/falling-drop rendered frames",
+      "hardware/original agreement",
+      "overall or final-head performance/CI success"
+    ]
+  },
+  "producerPhaseAppend": {
+    "sourceHead": "669f4d616f04e1014ee9453ed6149b933871ca84",
+    "upstreamMainMerged": "d88aa683074f8c85765308b274a04a03feeb99f6",
+    "producer": {
+      "branch": "codex/inkwave-collision-revision-20261026-fee0c005f",
+      "source": "fee0c005ffe129e8248c2122c41f5fad6612130d",
+      "integrated": "11aac831306b96ca271b421735bcf9f261287d9e",
+      "contract": "Audited Level/NativeLevel block append/rebuild and Tower actual transform/removal producers. No query stamp use, no per-frame all-static scan. Unknown worlds remain unversioned; invalid/exhausted revisions disable reuse. No consumer included."
+    },
+    "phase": {
+      "branch": "codex/slosher-initial-phase-20261026",
+      "verifiedHead": "a40ca3179fa6a483d43f6b7773fa61c29d04c5bf",
+      "acceptedBase": "67ea07501387f282464ac8b76d93842650c976d1",
+      "commitsAboveBase": [
+        "f41a35346caff97b5eed55a953c7893b344acf09",
+        "a40ca3179fa6a483d43f6b7773fa61c29d04c5bf"
+      ],
+      "integrated": [
+        "72277deadd4e2f36df9bb1fecc56badcd15cfdd0",
+        "669f4d616f04e1014ee9453ed6149b933871ca84"
+      ],
+      "rejectedVisibilityCandidateExcluded": true,
+      "sourceReview": "Only initializes generic Slosher nextSplash using dimensionless source rates times already-runtime-unit splashSpacing, reusing p.seed. No additional RNG calls, suppression or physical size/velocity/damage/count change.",
+      "firstDistances": {
+        "Machine": [
+          0.36,
+          1.26
+        ],
+        "Bloblobber": [
+          3,
+          3
+        ],
+        "Explosher": [
+          1.55,
+          1.705
+        ]
+      },
+      "independentParentReport": "24 emitted frames/family preserve main births/damage/physics, RNG counts 10/8/2 and positive drop visibility; not rerun or presented as this local measurement"
+    },
+    "checks": {
+      "producerUpstreamSource": {
+        "head": "af0dbbcfb951a1bfa20e87f667ebb9a3da11a3e1",
+        "pass": 29,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Producer6 plus catalogue charge/flight/stages3, new upstream piercing5 and motion-contact15"
+      },
+      "selectedTowerSource": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "phaseSource": {
+        "head": "669f4d616f04e1014ee9453ed6149b933871ca84",
+        "pass": 28,
+        "fail": 0,
+        "skip": 0,
+        "scope": "New phase9 plus protected Slosher flight/contact/main attack/origin/visibility/paint cases"
+      },
+      "emitted": {
+        "head": "669f4d616f04e1014ee9453ed6149b933871ca84",
+        "pass": 23,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Producer6, phase9 including positive drawing, catalogue charge/flight/stages3, upstream Charger piercing5"
+      },
+      "quick": "passed",
+      "optimizedBuild": "passed",
+      "startupBudget": "passed"
+    },
+    "validation": "producer-phase-append/validation.json"
+  },
+  "guideConsumerAppend": {
+    "sourceHead": "21e42d804a13f9c793ea62a5edb17e2440b73217",
+    "handoff": {
+      "verifiedBranch": "handoff/20261026-shooter-guide-cache-6ef3678bf-173300",
+      "verifiedHead": "6ef3678bf19e3c9562b238ebff8cbc6d1dd115ed",
+      "onlySelectedCommits": {
+        "2eeed372d8341393e0d1fd860e9f52e963bbf6be": "efaf0e86e432d16c97f18d932494132e0ca89208",
+        "6ef3678bf19e3c9562b238ebff8cbc6d1dd115ed": "21e42d804a13f9c793ea62a5edb17e2440b73217"
+      },
+      "producerAlreadyPresent": "11aac831306b96ca271b421735bcf9f261287d9e (source fee0c005ffe129e8248c2122c41f5fad6612130d)"
+    },
+    "checks": {
+      "source": {
+        "pass": 19,
+        "fail": 0,
+        "skip": 0
+      },
+      "emitted": {
+        "pass": 19,
+        "fail": 0,
+        "skip": 0
+      },
+      "quick": "passed",
+      "optimizedBuild": "passed",
+      "startupBudget": "passed",
+      "sourceAndEmittedScope": "Collision producer6, Shooter cache6, Dualies cache3, actual-head projection/contact4"
+    },
+    "validation": "guide-consumer-append/validation.json",
+    "peerReview": "pending",
+    "status": "specific repeated-prediction CPU cost checks pass; not hardware/visual/final-CI approval"
+  },
+  "guideConsumerPeerReview": "Ordinary consumer accepted; unsupported bridge fallback now independently accepted. Original visual and remote-CI gates remain open.",
+  "impactRevisionAppend": {
+    "sourceHead": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e",
+    "handoff": {
+      "verifiedBranch": "handoff/20261026-shooter-impact-revision-7955ee32d-181034",
+      "verifiedHead": "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9",
+      "selectedCommits": {
+        "77d07c7ab5c591cc02e33791aa207139bfa3c724": "0b65c3e0bbff5e2a7cb293da82b9fa0b485bda1f",
+        "7955ee32d2fbd9fbab677f1f57da5c8aaebde0b9": "2ca0e5de6248f80cc5c74ac74a93a34e3401738e"
+      }
+    },
+    "checks": {
+      "source": {
+        "pass": 28,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Cache/owner/near-cover13 and actual-impact agreement/cache lifetime15"
+      },
+      "emitted": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0,
+        "scope": "Shooter cache/invalidation7 and actual-head projection4"
+      },
+      "quick": "passed",
+      "optimizedBuild": "passed",
+      "startupBudget": "passed"
+    },
+    "validation": "impact-revision-append/validation.json",
+    "physicsAndAdmissionUnchanged": true,
+    "hissenAcceptedSizeChanges": 0
+  },
+  "limitedAdapterFinding": {
+    "status": "Resolved by a94e9e9a; local source11/emitted11 and independent narrow acceptance pass",
+    "source": "Parent independent review",
+    "scope": "Nominal ShotGuide consumer with Physics lacking .level borrows G.level.collisionRevision",
+    "counterexample": "Actual adapter collision floor changes from y0 to -2; cached guide remains y0",
+    "ordinaryNativePhysicsImplicated": false,
+    "ownership": "Reticle owner making narrow fail-closed fallback and regression",
+    "resolution": "guide-bridge-append/validation.json"
+  },
+  "emittedSelectionAppend": {
+    "sourceHead": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+    "handoff": {
+      "verifiedBranch": "codex/emitted-phase-guide-registration-20261026",
+      "verifiedHead": "3387554035db4f9a8580ba27c2ac2c69e3ca8fe1",
+      "sourceCommit": "3387554035db4f9a8580ba27c2ac2c69e3ca8fe1",
+      "integratedCommit": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+      "sourceDiff": "Only three additive test selections in the existing validate-inkwave-update.yml emitted step"
+    },
+    "checks": {
+      "newlySelectedEmitted": {
+        "pass": 22,
+        "fail": 0,
+        "skip": 0,
+        "files": [
+          "patches/native-stages/tests/collision-revision-producers.test.mjs",
+          "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+          "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+        ],
+        "caseCounts": {
+          "producer": 6,
+          "guideCache": 7,
+          "phase": 9
+        },
+        "workerHistoricalPass": 21,
+        "countDifference": "The accepted full-flight follow-up adds a seventh guide-cache case to the current integration."
+      },
+      "workflowRunnerContracts": {
+        "pass": 35,
+        "fail": 0,
+        "skip": 0,
+        "files": [
+          "scripts/tests/inkwave-integration-workflow.test.mjs",
+          "scripts/tests/inkwave-test-suites.test.mjs"
+        ]
+      },
+      "missingBuild": {
+        "exit": 1,
+        "mustFailWithoutSourceFallback": true,
+        "missingArtifactMessage": true,
+        "successfulCaseCount": 0
+      },
+      "yamlAndByteDiff": "passed; removing exactly the three added lines reconstructs the prior workflow byte for byte"
+    },
+    "validation": "emitted-selection-append/validation.json",
+    "coverage": {
+      "phaseGuideSource": "Automatically discovered by existing eight patch source shards; no source coverage removed",
+      "producerSource": "Existing .github/workflows/validate-inkwave-native-stage5.yml source glob (line56), separate from /validate fan-in",
+      "newEmittedTests": "All three are now in existing validate_core emitted step with inherited INKWAVE_BUILT_SITE pointing at the complete _site build",
+      "remoteCi": "No final-head run/success claim. PR creation hold remains; no manual workflow dispatch or retry"
+    }
+  },
+  "guideBridgeAppend": {
+    "sourceHead": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb",
+    "handoff": {
+      "verifiedBranch": "handoff/20261026-guide-bridge-9446f5d9d-182858",
+      "verifiedHead": "9446f5d9dc46fe3944bfad2c5fdc4697c7e3986d",
+      "onlySelectedCommits": {
+        "a94e9e9a18e32642894810d040fdc29abcefa7e0": "cdd2747bd9c161024c969bcc32fc324d7f90bcb0",
+        "9446f5d9dc46fe3944bfad2c5fdc4697c7e3986d": "d62bd78efdc29860a3083df77a6a44f94ee6d9bb"
+      }
+    },
+    "checks": {
+      "source": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0
+      },
+      "emitted": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0
+      },
+      "scope": "Shooter/bridge/full-flight cache8 and existing Dualies cache3",
+      "quick": "passed",
+      "freshOptimizedBuild": "passed",
+      "startupBudget": "passed"
+    },
+    "independentAcceptance": {
+      "source": "Parent-provided separate bounded reviewer, not presented as an additional local run",
+      "accepted": true,
+      "observations": [
+        "Shooter and both Dualies follow floor0 to-2 and match fresh solver",
+        "Unsupported bridges recompute",
+        "Supported owners add0 sweeps over10 repeated calls, including return from a bridge",
+        "Full-flight impact and marker also correct"
+      ],
+      "remainingDefectInThatNarrowAcceptance": false
+    },
+    "validation": "guide-bridge-append/validation.json"
+  },
+  "keptChargeAudioAppend": {
+    "sourceHead": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+    "priorIntegration": "26a69c1c8795e5177808028fd818c7f0a5036de8",
+    "handoff": {
+      "verifiedBranch": "fix/catalog-charger-kept-audio-20261026",
+      "verifiedHead": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+      "commitsPreservedByFastForward": [
+        "3b7be8b8c205d34f26bb29db712f9edbf8fea879",
+        "e707d30faed3f4d772f8da2690069e3781bbfa58"
+      ]
+    },
+    "independentReview": "Parent-supplied independent reviewer accepted3selected cases; this is separately reported event-dispatch acceptance, not an additional local playback run.",
+    "checks": {
+      "freshEmitted": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0,
+        "selection": "Actual catalogue full keep, partial Goo/expiry, native Charger redive"
+      },
+      "freshOptimizedBuild": "passed",
+      "startupBudget": "passed",
+      "exactIdentity": {
+        "sourceSha": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+        "contentHash": "69291e5f1c92f807fed830b126ee0ec3b90be3539b5876537fa25db095cd3fb6",
+        "inputHash": "f120f4b24b08b036f1b6c89208a42c79bba668406af88c5f330329c2539922f0",
+        "sourceInputs": 1490,
+        "artifacts": 2194,
+        "mismatches": 0,
+        "failures": [],
+        "matchesAcceptedCandidateBuild": true
+      },
+      "candidateHistoricalChecks": "Candidate source11/emitted11 plus existing handler/native2/2 retained at their actual source/content hashes; no redundant matrix rerun"
+    },
+    "validation": "kept-charge-audio-append/validation.json",
+    "eventDispatchOnly": true,
+    "retailTimingAndNewPlaybackVerified": false
+  },
+  "pencilReleaseOnlyAppend": {
+    "sourceHead": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+    "base": "f8b5eafc38f8d80641d823c950cbe7d560c9bfc0",
+    "validation": "pencil-release-only/validation.json",
+    "productionScope": "Exactly one hunk in main-weapon-catalog.mjs moves loaded divided shots to the real held-to-released edge. Existing cooldown, payment, stats and squid block retained.",
+    "excludedCandidate": {
+      "branch": "fix/pencil-five-shot-cycle-20261026",
+      "head": "1d6df6d8af4c41aeecda1589e25f5e7727274122",
+      "code": "68cf341170a4c5c19d9ac76ea68c8974cfdbd591",
+      "excludedHunk": "Adding ||s.rounds>0 to squid cancellation",
+      "reviewCorrection": "No-charge-keep wording alone does not establish post-first-shot remaining-round discard or its ink settlement. Do not mark that semantic verified or completed."
+    },
+    "checks": {
+      "source": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "freshEmitted": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "selection": "All5 Pencil event/drawn-flight cycle for both kits, cooldown/duplicate release boundaries, existing full-pack payment/damage test",
+      "emittedNegativeOnF8": {
+        "expectedFailures": 2,
+        "actualFailures": 2
+      },
+      "optimizedBuild": "passed",
+      "freshBuildCount": 1,
+      "startupBudget": "passed",
+      "diffCheck": "passed",
+      "identity": {
+        "sourceSha": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+        "contentHash": "56105e36758c15f89e0f2c69db020bf6a1f0d6124efb05acda9653c71e91d69e",
+        "inputHash": "a736650292dd13b932bf3877b3923d8cf5b1b1ecec8163053b1765ac415c6ea5",
+        "sourceInputs": 1490,
+        "artifacts": 2194,
+        "mismatches": 0,
+        "failures": [],
+        "unchangedPackagedAudioFiles": 390,
+        "changedAudioFiles": [],
+        "sourceDataUnchanged": true,
+        "squidBlockByteIdenticalToF8": true
+      }
+    },
+    "actualPlaybackAndOriginalPixelsVerified": false
+  }
+}

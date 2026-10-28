@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "capturedAt": "2026-10-27T09:30:49.344146+00:00",
+  "scope": "Reviewed QA/CI repair bundle; shipping inputs unchanged; not full native acceptance or CI completion",
+  "basePublishedHead": "8bcc34ac3d9d4713e45490bce1778d1c6d588be2",
+  "validatedCodeHead": "fad9f4bf7a2cf4b0e383835263ed1413c3fe2cd7",
+  "reviewedLocalCommits": [
+    "3284f42dec2e036c44874b074b22f277a263fb29",
+    "8a486288876b4a9afe547a6e13c42c14205ecb91",
+    "b71ac57dec6567df268ae142b9c4163cc10bbbc9",
+    "38ed16af27edca587b74397137f3c3841ce364f9",
+    "af12ee631b70a1a6beda38e36c24486caab32c03",
+    "bfc725f43bb6837bb327b809862cc5857c253b4c",
+    "7879b22030104b0da14ab5e7420681c4698a9dd1",
+    "a2824a55d3cecf4186aec50d68371acd30e09cfc",
+    "149b7f97336ae4c80afa8e4874c2f14290aab177",
+    "faea1ddbce36c47602737e66e225dce6913b0b82",
+    "95865a758d81e4ea3f76d730c71fe96ac8f2bead",
+    "6034e1dcdfc88762c64bb9b7748fb57e5962e867",
+    "fad9f4bf7a2cf4b0e383835263ed1413c3fe2cd7"
+  ],
+  "repairs": [
+    {
+      "failure": "Validate patch shard6 stale full-flight HUD-call regex",
+      "fix": "Execute actual composed HUD producer, require(actor,true), retain full-flight default and all cache/clear/arc bodies, reject6bad-wiring controls",
+      "tests": "10/10 plus full canonical shard6 below"
+    },
+    {
+      "failure": "Projectiles after lane blanket if: rejection before browser",
+      "fix": "Admit only the exact sealed reviewed original/phase-control/target workflow; other route/command mutations still reject"
+    },
+    {
+      "failure": "Validate patch shard0 raw Node import of build-relative muzzle runtime",
+      "fix": "Use existing actual source/emitted module graph and realVector3/Hit; retain10cache expectations and oneboundedcorridor per miss",
+      "scan": "3395actualESMmodules parsed; no remaining direct/transitive Node test importer of muzzle module"
+    },
+    {
+      "failure": "Historical audio-runner reverse seal did not account for accepted phase observations",
+      "fix": "Reverse9fixed immutable phase hunks to actual d3ee bytes before unchanged14protocol2 hunks and original historical failure/workload hashes; negative layers tested independently"
+    },
+    {
+      "failure": "Historical receipt helper assumed builder belonged to files table",
+      "fix": "Accept canonical separately bound builder receipt schema without permitting corrupt originals or conflicting duplicates"
+    }
+  ],
+  "qaObservability": [
+    {
+      "hissen": "First-native-birth-relative frames5/7/9; controlled observer not ordinary-input/retail calibration; exact own/inherited method restoration plus read-only/foreign-owner controls; default18 matched cases unchanged"
+    },
+    {
+      "historicalExplosher": "Passive actual-prototype geometry upload/dispose/ID diagnostics, no secondThree import, zeroadditionalGLqueries/calls, conservative VAO/delete unknowns and bounded cleanup. Original281\u2192295 geometry gate is unchanged and unresolved; futureautomaticCI must supply attribution, not a claimed leak/cache fix."
+    }
+  ],
+  "checks": [
+    {
+      "log": "final-bundle-focused.log",
+      "sha256": "67c8fcb94b9bc9da3fce645470c9f2385b06dddb9cd7d10600c2b604109c3d16",
+      "tests": 127,
+      "pass": 127,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "publication-bundle-verifier.log",
+      "sha256": "88ac7d2eb8e4be5febe2308e710f5009895ba8c8279966a2ece76ec76980d233",
+      "tests": 601,
+      "pass": 601,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "final-geometry-qa-guards.log",
+      "sha256": "e44bd66f7f252bbff620946582b27dc6fadd06514482fb10a53cb20c18ce05e3",
+      "tests": 130,
+      "pass": 130,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "bundle-mandatory-source-admission.log",
+      "sha256": "13dc12583cd3c2f049728ea742a9e1c9859dbdd9eaa0eb214f01a3ba0e0ded15",
+      "tests": 262,
+      "pass": 261,
+      "fail": 0,
+      "skipped": 1
+    },
+    {
+      "log": "muzzle-cache-after.log",
+      "sha256": "3d4706fec1a7d796f7768ca41785d0afbb8a413f34eea5a3741f732b66d0dbf5",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "muzzle-cache-emitted.log",
+      "sha256": "02749b0687ba904d36fcb6820b80327093df36c0a7d18640c2f9947b80beeaf4",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "prediction-consumer-related-source.log",
+      "sha256": "4e5746cd8f670578d1d126c8489b1d6a3acb884d83f02da8a78677a4eb87c12b",
+      "tests": 26,
+      "pass": 26,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "prediction-consumer-related-emitted.log",
+      "sha256": "1bd5bb0d7edd76e4b0e9375b767f9096aad86267dfb2ed3efe1fe0a6fd6e578b",
+      "tests": 14,
+      "pass": 14,
+      "fail": 0,
+      "skipped": 0
+    }
+  ],
+  "canonicalVerifier": {
+    "pass": 601,
+    "fail": 0,
+    "skip": 0,
+    "site": "actual audited emitted d88 site"
+  },
+  "fullShard6": {
+    "sourceCommit": "3284f42dec2e036c44874b074b22f277a263fb29",
+    "files": 195,
+    "tests": 1383,
+    "pass": 1377,
+    "fail": 0,
+    "skip": 6,
+    "durationMs": 838899.110253,
+    "manifestSha256": "146173139df4ee6e4ae738d485f75d75332acdd58fdc42cbca58a24c08e8b09c",
+    "logSha256": "714f70afce1ce348f8ee2aad5946bb799b2eebe460c11dd16b894ff8dee6365c",
+    "skipReasons": [
+      "forced-GC variant not enabled",
+      "3emitted-menu fixture modes not enabled in source-only run",
+      "optional downloaded main-weapon reference absent",
+      "optional pinned PR1223 restore absent"
+    ],
+    "limits": "Not a fresh final-head remote shard0/shard2/all-shards/browser pass. Changed tests were also run directly; no unrelated hours-long suites repeated."
+  },
+  "mandatoryAdmissionSkip": {
+    "name": "real separate candidates reject a same-eleven-path altered checker and a same-tree different commit",
+    "reason": "INKWAVE_RESPAWN_PAIR_BASELINE absent; optional historical real baseline pair, not counted as passed"
+  },
+  "preservedOldEvidence": {
+    "validateRun": 40472337224,
+    "shard6Job": 122082178023,
+    "shard0Job": 122082178206,
+    "nativePairRun": 40472337172,
+    "nativePairJob": 122082180275,
+    "nativePairArtifact": 12721115433,
+    "phaseRun": 40472337256,
+    "phaseBeforeArtifact": 12720280841,
+    "phaseBeforeZipSha256": "d53e511c1568b22eebe6346933b5e843696b8623d27221819e30e1ad89fe8a30",
+    "phaseControlArtifact": 12720571694,
+    "phaseControlZipSha256": "1d29c9a5b1e50c121b30428ab89eb1f2bd6696afa792d6834f487489301d0f6c",
+    "phaseStatus": "before/control full52captures/schema2/media/workloads and50unaffected physical pairs verified; after failed before browser, compare skipped; NOthree-lane pass",
+    "logHashes": {
+      "patch-shard6-122082178023.log": "eb1f66fe7a46d14e3ef15947d4d9e21e72630117e89f8e921ad874a509b29a97",
+      "patch-shard0-122082178206.log": "fd7b28595591f09204708214a11e39830ced616c76c30c7a45f1b00080463209",
+      "bundle-verifier.log": "051bd5dcfef8df19b6e3514b69ab4e1b8836e3b1523f40deefc8640583860c30"
+    }
+  },
+  "shippingIdentity": {
+    "contentHash": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+    "inputHash": "25a535d28da064d2d6fea8f173a14fac22fb19f508dd77b47f44e0c6106e7ec2",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "publication": "Parent conditionally authorized same Draft PR1895, non-force CAS expected8bcc through existingGitHub app; local\u2192remote mapping saved separately because connector commit metadata changes SHAs. No manual CI/main merge/newPR/credentials/security changes.",
+  "remaining": [
+    "Fresh exact-next-head catalog, original/control/target52-pair acceptance and all required CI",
+    "Historical native-pair+14geometry attribution and actual remedy if needed",
+    "Real Hissen size/floor morphology and exact retail cue calibration",
+    "No native-prebuilt acceptance from405localLFS pointers; no new local browser pixels"
+  ],
+  "localLogRoot": "/workspace/shared/inkwave-native/role-1/.ci-scratch/native-integration-20261027/ci-8bcc-monitor"
+}

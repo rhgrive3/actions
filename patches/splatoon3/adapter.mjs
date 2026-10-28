@@ -461,6 +461,12 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.growing.push(g);', 'this.growing.push(g);', 'paint deferred growth record');
   }
   if (rel === 'src/game/character.js') {
+    // Share the native weapon LOD decision before contact poses run. Move its
+    // existing selection/geometry preparation; do not copy its distance rule.
+    code = replaceOnce(code, '  _animWeapon(dt, s, w) {',
+      '  // Weapon contact poses also need this frame\'s representation before anchor\n  // application. Keep the native selection and far geometry preparation here.\n  _weaponPresentationNear(w) {', 'weapon presentation decision before contact pose');
+    code = replaceOnce(code, '    const st = this._wst;',
+      '    return near;\n  }\n\n  _animWeapon(dt, s, w) {\n    const near = this._weaponPresentationNear(w);\n    const st = this._wst;', 'native weapon animation reuses presentation decision');
     // Preserve animated native channels but never submit their authored invisible placeholders.
     code = replaceOnce(code, 'const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate;',
       'const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate; m.visible = pd.hidden !== true;', 'skip hidden weapon part draws');
@@ -545,6 +551,16 @@ export function adaptSource(rel, code) {
       'Heavy Splatling axis-aligned outer corner brackets (#1100)');
   }
   if (rel === 'src/ui/hud.js') {
+    // Keep screen projection outside the animated ring. A WAAPI transform on
+    // the circle otherwise replaces its SVG translate during each shot.
+    code = replaceOnce(code,
+      '<circle cx="-10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin l"/><circle cx="10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin r"/>',
+      '<g class="iw-ret__hand l"><circle cx="-10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin l"/></g><g class="iw-ret__hand r"><circle cx="10.5" r="6.2" class="iw-ret__ring thin iw-ret__twin r"/></g>',
+      'Dualies separate guide and shot-kick transform owners');
+    code = replaceOnce(code,
+      "      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];",
+      "      this._twin = [r.querySelector('.iw-ret__twin.r'), r.querySelector('.iw-ret__twin.l')];\n      this._twinGuide = [r.querySelector('.iw-ret__hand.r'), r.querySelector('.iw-ret__hand.l')];",
+      'Dualies live projection handles rebuilt with their ring DOM');
     // Reticle art was calibrated at 720 CSS pixels high. Keep that geometry
     // on small viewports without scaling the projected impact coordinates.
     code = replaceOnce(code,
@@ -589,7 +605,13 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;\n' +
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.charging = null; this._L.scope = null; this._L.chargeDelay = null;\n' +
+      '    this._L.streaming = null;\n' +
+      "    if (kind === 'splatling') r.classList.toggle('is-first-complete', this._L.splatFirstComplete === true);\n" +
+      '    this._L.dualGuide = false; this._L.lock = null; this._L.roll = null;\n' +
+      '    this._dualMerged = kind === \'dualies\' ? r.querySelector(\'.iw-ret__merged\') : null;\n' +
+      '    if (kind !== \'dualies\') this._twin = null;\n' +
+      '    if (kind !== \'dualies\') this._twinGuide = null;\n' +
       '    this._L.blasterCue = null; this._L.blasterCuePhase = null;\n' +
       '    this._blasterBiasEl = kind === \'blaster\' ? r.querySelector(\'.iw-ret__bias\') : null;',
       'reset charge-delay and Blaster bias presentation state');
@@ -694,7 +716,7 @@ export function adaptSource(rel, code) {
     if (L.kind === 'dualies') {
       const pair = guideMe && guideCam && G.projectiles?.s3DualiesGuides?.(guideMe, guideMe.weapon, guideCam);
       const turret = !!guideMe?.weaponRunner?.s3Turret;
-      if (pair && this._twin) {
+      if (pair && this._twinGuide) {
         const previous = L.dualGuideValues || (L.dualGuideValues = []);
         for (let i = 0; i < 2; i++) {
           const point = this._project(guideCam, pair[i].x, pair[i].y, pair[i].z);
@@ -705,15 +727,21 @@ export function adaptSource(rel, code) {
             previous[i * 2] = keyX; previous[i * 2 + 1] = keyY;
             const baseX = i === 0 ? 10.5 : -10.5;
             const lockX = turret ? (i === 0 ? 4 : -4) : 0;
-            this._twin[i]?.setAttribute('transform',
+            this._twinGuide[i]?.setAttribute('transform',
               \`translate(\${(x / reticleScale - baseX + lockX).toFixed(2)} \${(y / reticleScale).toFixed(2)})\`);
           }
         }
         L.dualGuide = true; L.dualGuideTurret = turret;
+        if (turret && this._dualMerged) {
+          const point = this._project(guideCam, pair[0].x, pair[0].y, pair[0].z);
+          const x = point && point.z < 1 ? point.x * innerWidth * .5 / reticleScale : 0;
+          const y = point && point.z < 1 ? -point.y * innerHeight * .5 / reticleScale : 0;
+          this._dualMerged.setAttribute('transform', \`translate(\${x.toFixed(2)} \${y.toFixed(2)})\`);
+        }
       }
     } else if (L.dualGuide != null) {
       L.dualGuide = null;
-      for (const twin of this._twin || []) twin?.removeAttribute('transform');
+      for (const twin of this._twinGuide || []) twin?.removeAttribute('transform');
     }
     // per-shot kick (recoil events) on top of the live cone the engine reports in screen px (already includes bloom)`,
       'S3 weapon ShotGuide HUD projection');
@@ -970,7 +998,7 @@ export function adaptSource(rel, code) {
     code = code.slice(0, start) + code.slice(end);
     code = replaceOnce(code, '    this.inRange = a.aimPoint.distanceTo(a.pos) <= range + 0.5;\n  }',
       "    if (w.kind === 'charger') {\n" +
-      "      const fullRange = G.projectiles?.chargerReach ? G.projectiles.chargerReach(1) : w.rangeMax;\n" +
+      "      const fullRange = G.projectiles?.chargerReach ? G.projectiles.chargerReach(1, a.weapon) : w.rangeMax;\n" +
       "      const stop = Math.min(range, this.onTarget === G.boss ? a.aimPoint.distanceTo(start) : best);\n" +
       "      this.chargerCurrentReach.copy(start).addScaledVector(fwd, stop);\n" +
       "      this.chargerFullReach.copy(start).addScaledVector(fwd, fullRange);\n" +
@@ -987,7 +1015,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "it.special = inp.down('KeyF')", "it.special = inp.wasPressed('KeyF') || inp.wasPressed('KeyQ') || inp.down('KeyF')", 'latched special input');
     code = replaceOnce(code, "    const range = w.kind === 'charger' ? w.rangeMax : w.kind === 'roller' ? 6 : (w.range || 12);",
       "    const chargeNow = clamp(w.kind === 'splatling' ? (a.weaponRunner?.streaming ? (a.weaponRunner?.fidelitySplatlingCharge ?? a.weaponRunner?.charge ?? 0) : (a.weaponRunner?.charge ?? 0)) : (a.weaponRunner?.s3Stored?.charge ?? a.weaponRunner?.charge ?? 0), 0, 1);\n" +
-      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
+      "    const range = w.kind === 'charger' ? (G.projectiles?.chargerReach ? G.projectiles.chargerReach(chargeNow, a.weapon) : w.rangeMin + (w.rangeMax - w.rangeMin) * chargeNow) : w.kind === 'splatling' ? (G.projectiles?.splatlingReach ? G.projectiles.splatlingReach(w, chargeNow) : (w.range || 12)) : w.kind === 'roller' ? 6 : w.reticleRange ? (a.grounded ? w.reticleRange.ground : w.reticleRange.air) : (w.range || 12);",
       'Charger and Splatling HUD reach follow charge');
     code = replaceOnce(code,
       '    const pick = (i) => { const o = allies[i]; if (o && o.alive && !o.superJumpState) a.superJump(o); };',
@@ -1719,7 +1747,7 @@ export function animateWeapon(w, st) {`, 'Slosher liquid paired spring coefficie
 
     code = replaceOnce(code,
       '    const frame = {\n      time: m.time,',
-      `    const muzzleContact = w.kind === 'shooter' ? G.projectiles?.muzzleBlockFeedback?.(a) : null;
+      `    const muzzleContact = w.kind === 'shooter' ? G.projectiles?.muzzleBlockFeedback?.(a, true) : null;
     let muzzleBlock = null;
     if (muzzleContact) {
       const projectedContact = this._muzzleBlockScreen || (this._muzzleBlockScreen = new THREE.Vector3());

@@ -1,0 +1,111 @@
+{
+  "base": "4ce9768e6177b19f11f17e28f086a4da36f35fcd",
+  "codeCommit": "ea8213beba44e96cc674bbc1d1df6d3884d1346e",
+  "tests": {
+    "source": {
+      "pass": 1,
+      "fail": 0
+    },
+    "emitted": {
+      "pass": 1,
+      "fail": 0
+    },
+    "oldEmitted": {
+      "expectedFail": 1,
+      "spanM": 0.5010290180127905
+    },
+    "heldCompatibility": {
+      "pass": 1,
+      "rollermodels": 5,
+      "brushmodels": 3,
+      "ratesHz": [
+        30,
+        60,
+        120
+      ]
+    }
+  },
+  "fixedDeterministicVertexNormalM": {
+    "flatOneTick": [
+      -0.043715471118211224,
+      -0.036257168250263594
+    ],
+    "flatSixTicks": [
+      -0.04350230108304831,
+      -0.036406162969668254
+    ],
+    "slopeSixTicks": [
+      -0.03794395689179189,
+      -0.032942532695721116
+    ]
+  },
+  "browser": {
+    "kind": "normal-input ordinary range, nativeTriangles false",
+    "browser": "Chromium 154.0.8037.57",
+    "freshLane": {
+      "turf": [
+        0,
+        2.9929225330572793,
+        9.662021119006205
+      ],
+      "occupiedCells": [
+        0,
+        48,
+        159
+      ],
+      "rampSamples": {
+        "count": 5,
+        "before": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "end": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "groundedAndRollingAtBothCheckpoints": true,
+      "flightProjectilesAtCheckpoints": 0
+    },
+    "midSamePosition": {
+      "position": [
+        0.9904027378916139,
+        0.7381072579814894,
+        -13.952429031925956
+      ],
+      "oldHeadAabbNormalLowerBoundM": 0.5390694101651032,
+      "fixedHeadVertexNormalM": 0.011402030262541718
+    },
+    "fixedEntry": {
+      "gameTime": 18.166433333333337,
+      "headVertexNormalM": 0.14573939540726874,
+      "laterCaptureGameTime": 19.16643333333328,
+      "laterHeadVertexNormalM": 0.011402030262541718
+    },
+    "fixedEnd": {
+      "gameTime": 20.91643333333318,
+      "headVertexNormalM": -0.06028465640281028,
+      "laterCaptureGameTime": 21.96643333333312,
+      "laterHeadVertexNormalM": -0.040479600247526615
+    },
+    "browserClosed": true,
+    "serverClosed": true,
+    "closedPortsConnectResult": 111,
+    "pageErrors": 0,
+    "httpErrorResponses": 0,
+    "abortedUnrelatedAudioRequests": 1
+  },
+  "privacy": "No screenshots, raw browser receipts, private storage references, original-game media or compressed artifacts are included. Local a059174600c138e363901bc5527f8ba003da9f7d is excluded from this branch ancestry.",
+  "limitations": [
+    "Old browser receipts did not measure actual head vertices. Negative old AABB bounds cannot prove actual vertex penetration.",
+    "Exact lag duration and maximum are not measured; sparse fixed snapshots show +0.145739 m then +0.011402 m 1.0 gameplay second later.",
+    "Fixed end vertex penetration is measured at 6.028 cm then 4.048 cm, not established as unchanged versus baseline.",
+    "No original-game pixel/frame agreement or native triangle terrain browser claim."
+  ]
+}

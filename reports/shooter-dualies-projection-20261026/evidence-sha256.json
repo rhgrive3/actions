@@ -1,0 +1,118 @@
+{
+  "after-browser.log.gz": {
+    "sha256": "eb05d1abcd84e33581116faa6b3336bbf9a185f6c077800f3d712bc9d57baf6a",
+    "bytes": 41
+  },
+  "after-verified/dualies-after-kick.png": {
+    "sha256": "cd7edee24cb6f839e1d6d1c768a094184d635dc5397bf1736c77955ee56bb2b5",
+    "bytes": 706384
+  },
+  "after-verified/dualies-floor.png": {
+    "sha256": "bef0828081620258c31019ea189efcd4a5b99dbc36006ef361e1249eceb2cdfb",
+    "bytes": 518785
+  },
+  "after-verified/dualies-horizontal.png": {
+    "sha256": "082bdc47793a228c5af927e7531ef67b6ff78ad1df41e9e149e160c53fd4a490",
+    "bytes": 703217
+  },
+  "after-verified/probe.mjs.txt": {
+    "sha256": "3bbd061fc6a1cbfc769e97cc5c2a5d26fe62a3e2bbced97d60df901652f133cb",
+    "bytes": 10444
+  },
+  "after-verified/receipt.json": {
+    "sha256": "988d34177f46d151e421f4cbf5673f747d2c5bea7d634284a7b961de6a98e9bb",
+    "bytes": 58029
+  },
+  "after-verified/shooter-floor.png": {
+    "sha256": "c8fd3689227683a10768bd82737d4655c762ac257fdeef6ab05843dfee4dd149",
+    "bytes": 519656
+  },
+  "after-verified/shooter-horizontal.png": {
+    "sha256": "4b35fee09493ac29ebd851c3d75c0afca677879c416fda0dddb4114b4702b36d",
+    "bytes": 701122
+  },
+  "baseline-575-emitted.tap.gz": {
+    "sha256": "d5ca0ce30602ca9b539c28b4cb496659cf2287db5a3e494ec47252174c824a04",
+    "bytes": 1107
+  },
+  "baseline-negative-emitted.tap.gz": {
+    "sha256": "349c668157f6ce71e42f79705409a22fda57878b5c1a62676af6ac5d8a4699a6",
+    "bytes": 1279
+  },
+  "before-browser.log.gz": {
+    "sha256": "eb05d1abcd84e33581116faa6b3336bbf9a185f6c077800f3d712bc9d57baf6a",
+    "bytes": 41
+  },
+  "before-verified/dualies-after-kick.png": {
+    "sha256": "38055752f0b3dcff3c644b4410ed4ef801326486da6ed26a8d517196edcbf6df",
+    "bytes": 706290
+  },
+  "before-verified/dualies-floor.png": {
+    "sha256": "a2d96afca4f21ed73ce96f5c5f7bb3262e8034707de6d60ce245957f1873529c",
+    "bytes": 519676
+  },
+  "before-verified/dualies-horizontal.png": {
+    "sha256": "527450441cc2ea25012f577707dbb3ab8c6fac8d71ec2dc17937bc6891323faa",
+    "bytes": 703681
+  },
+  "before-verified/probe.mjs.txt": {
+    "sha256": "3bbd061fc6a1cbfc769e97cc5c2a5d26fe62a3e2bbced97d60df901652f133cb",
+    "bytes": 10444
+  },
+  "before-verified/receipt.json": {
+    "sha256": "2167afd8f548e4b7801f12e5c0101f54024336050b60cb13af37fd47f51ff436",
+    "bytes": 213712
+  },
+  "before-verified/shooter-floor.png": {
+    "sha256": "cea59c059e2584ebadf988e9c4a7a2444121032f247cccc3c049d5ad298fd8d2",
+    "bytes": 519847
+  },
+  "before-verified/shooter-horizontal.png": {
+    "sha256": "e5a600114d222cb508a51ad19ed34f61a22e89c17a96041e86a9419b066301b6",
+    "bytes": 701253
+  },
+  "build.log.gz": {
+    "sha256": "82c11571f51c9d973ce59342905f0c5eb520306be43fde28655ce55792cec33a",
+    "bytes": 740
+  },
+  "candidate-575-emitted.tap.gz": {
+    "sha256": "67081fd1fb8f007f31563fb497c4998e74e154940adc4c597d1b1835c65ac912",
+    "bytes": 1621
+  },
+  "emitted-projection.tap.gz": {
+    "sha256": "6c5cb80dd69189b96274bd599024296e053dba20d31c3aa1ade7f16a913d464f",
+    "bytes": 1007
+  },
+  "open-pr-overlap.json": {
+    "sha256": "8e451df5776b4961771fcee8c361aeaee1c55054a8ebb87cca298ae16c629d3b",
+    "bytes": 919
+  },
+  "quick.log.gz": {
+    "sha256": "f3d8dc8809329136eada79b6f0147fcf52ffa687efcdf38ecc8d9f24bca8ed0d",
+    "bytes": 83
+  },
+  "source-cache-rerun.tap.gz": {
+    "sha256": "640409d5f53080fb6bf3cf92985239dc754d35bf853da2f6e232bd69c539cd91",
+    "bytes": 938
+  },
+  "source-css-rerun.tap.gz": {
+    "sha256": "270b60f6830aa30f89cddd1a97693fe0c29a23d978718c271bd7852545f1722b",
+    "bytes": 405
+  },
+  "source-focused.tap.gz": {
+    "sha256": "f06e8ba2e5a021ad13e3e63b5c2d5cfea3b28fdf7481cc6481f7d9f8b5e0500a",
+    "bytes": 2502
+  },
+  "source-guide-state-first.tap.gz": {
+    "sha256": "76d4def4ec36d4e62ac2b67f2f00e8c806c6f17b3cd23ecb9f8d6455a601e584",
+    "bytes": 3246
+  },
+  "startup-budget.log.gz": {
+    "sha256": "03a58238b52f6a580d2580c85295f8950be7fff41e33077cad9adf8f43484d02",
+    "bytes": 315
+  },
+  "verification.json": {
+    "sha256": "4378f394089b51d7bc8b34689530866a4f65246654a7660d9c9b7333fbc19458",
+    "bytes": 4828
+  }
+}

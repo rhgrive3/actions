@@ -4,7 +4,7 @@ import { buildInkMesh } from '../ink-volume/mesh.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptIssue479 } from '../../splatoon3/issue-479-adapter.mjs';
 async function api() {
-  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:adaptIssue479,extraExports:"export {InkVolumes} from './patches/local-quality/ink-volume/runtime.mjs'; export {captureInkVolume,submitInkVolume} from './patches/local-quality/ink-volume/recipes.mjs'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs'; export const buffers={Uint8Array,Uint16Array,Uint32Array,Float32Array};"});
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:adaptIssue479,extraExports:"export {FX} from './inkwave-public/src/fx/fx.js'; export {InkVolumes} from './patches/local-quality/ink-volume/runtime.mjs'; export {captureInkVolume,submitInkVolume,prepareHissenVolumeLOD} from './patches/local-quality/ink-volume/recipes.mjs'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs'; export const buffers={Uint8Array,Uint16Array,Uint32Array,Int16Array,Float32Array};"});
   f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;
 }
 function pack(f,width=16,height=16,frames=1) {
@@ -130,4 +130,71 @@ test('Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Buck
     assert.equal(usesBucketSlosherSheet(id),true,id);
   for(const id of ['s3-slosher-launcher','s3-slosher-launcher-01','s3-slosher-bathtub','s3-slosher-washtub-01','roller',undefined,null])
     assert.equal(usesBucketSlosherSheet(id),false,String(id));
+});
+
+
+test('Hissen canonical fallback retains frame envelopes and stays inside the volume budget',async()=>{
+  const fs=await import('node:fs'),path=await import('node:path'),zlib=await import('node:zlib');
+  const {fileURLToPath}=await import('node:url'),{unpackVolumes}=await import('../ink-volume/pack.mjs');
+  const root=process.env.INKWAVE_BUILT_SITE||fileURLToPath(new URL('../../../',import.meta.url));
+  const f=await api();let draws=0,rngState=0x51e39a17;f.setRandom(()=>{draws++;rngState=(Math.imul(rngState,1664525)+1013904223)>>>0;return rngState/4294967296;});
+  const load=slot=>{
+    const dir=path.join(root,'patches/local-quality/ink-volume/assets',slot),m=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'))),bytes=zlib.gunzipSync(fs.readFileSync(path.join(dir,m.binary))),p=unpackVolumes(m,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
+    for(const pattern of p.patterns)for(const frame of pattern.frames){frame.rgba=new f.buffers.Uint8Array(frame.rgba);for(const l of frame.levels)for(const key of ['positions','normals','uvs','indices','opaqueIndices','fringeIndices'])if(l[key])l[key]=new f.buffers[l[key].constructor.name](l[key]);}
+    return {manifest:m,pack:p};
+  };
+  const full=load('roller'),small=load('hissen-fallback');assert(small.manifest.geometryOnly);assert(small.manifest.maxTriangles<=10000);assert(small.manifest.byteLength<4*1024*1024);
+  const bounds=l=>{const a=[Infinity,Infinity,Infinity],b=[-Infinity,-Infinity,-Infinity];for(const indices of [l.opaqueIndices||l.indices,l.fringeIndices||l.indices])for(const index of indices)for(let k=0;k<3;k++){const v=l.positions[index*3+k];a[k]=Math.min(a[k],v);b[k]=Math.max(b[k],v);}return [...a,...b];};
+  for(let i=0;i<2;i++)for(let j=0;j<16;j++){
+    const p=small.pack.patterns[i],frame=p.frames[j];assert.equal(p.fps,full.pack.patterns[i].fps);assert.deepEqual(Array.from(frame.rgba),[255,255,255,255],'no source RGB media in geometry-only LOD');
+    const a=bounds(frame.levels[0]),b=bounds(full.pack.patterns[i].frames[j].levels[0]);a.forEach((x,k)=>assert(Math.abs(x-b[k])<1e-6,'canonical frame envelope unchanged'));
+  }
+  const e=renderer(f),holder={inkVolumes:e},registrationDraws=draws,registrationState=rngState;f.FX.prototype.registerInkVolume.call(holder,'hissen-fallback',small.pack);assert.equal(draws,registrationDraws,'contour registration cannot consume the caller/gameplay RNG');assert.equal(rngState,registrationState);e.register('roller',full.pack);const savedFull=e.assets.get('roller');f.G.fx={inkVolumes:e};
+  const ps=f.G.projectiles,a=f.make('s3-slosher-diffusion');a.pos.set(0,2,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,3,50);a.intent.fire=true;let head;
+  for(let i=0;i<100;i++){f.tick(a);ps.update(1/60);head=ps.list.find(p=>p.catalog?.descriptor.unit===0&&p.catalog.index===0&&p.age>0);if(head)a.intent.fire=false;if(head&&Math.round(head.age*60)===5)break;}
+  assert(head&&Math.abs(head.age-5/60)<1e-9);
+  const state=()=>JSON.stringify({draws,rngState,time:f.G.time,ink:a.ink,main:ps.list.map(snapshot),drops:ps._s3SplashDrops?.map(d=>[d.frames,d.seed,d.radius,d.drawRadius,...d.pos.toArray(),...d.vel.toArray()])});
+  const before=state();let begins=0,ends=0;const begin=e.begin,end=e.end;e.begin=function(...args){begins++;return begin.apply(this,args);};e.end=function(...args){ends++;return end.apply(this,args);};const draw=()=>{const b=begins,d=ends;ps._draw();ps.syncVisuals(1);assert.equal(begins,b+1,'one shared begin');assert.equal(ends,d+1,'one shared end');};e.assets.delete('roller');draw();
+  assert(e.metrics.active>0,'missing full pack still draws canonical contours');assert.equal(ps.blobs.count,0,'no generic fill');assert.equal(ps.projectileVisuals.stats.vertexCount,0,'no thick history body');assert.equal(state(),before);
+  e.assets.set('roller',savedFull);draw();assert.equal(e.metrics.fallback,0,'normal loaded route retained');assert.equal(e.metrics.overflow,0);assert.equal(state(),before);
+  const cameraBefore=f.G.camera;f.G.camera=new f.THREE.PerspectiveCamera(55,16/9,.1,100);f.G.camera.position.set(1000,1000,1000);f.G.camera.lookAt(2000,1000,1000);draw();assert.equal(e.metrics.active,0);assert(e.metrics.culled>0);assert.equal(e.metrics.fallback,0,'successful culling never triggers a fallback');assert.equal(e.metrics.overflow,0);assert.equal(ps.blobs.count,0);assert.equal(state(),before);assert.equal(e.frameDemandTriangles,0);assert.equal(e.frameDemandInstances,0);const budgetBefore=e.triangleBudget;e.triangleBudget=30000;draw();assert.equal(e.metrics.active,0);assert(e.metrics.culled>0);assert.equal(e.metrics.fallback,0,'preselected contour culling emits no fallback instance');assert.equal(e.metrics.fallbackDropped,0);assert.equal(e.metrics.overflow,0);assert.equal(state(),before);e.triangleBudget=budgetBefore;f.G.camera=cameraBefore;
+  e.triangleBudget=30000;draw();assert(e.metrics.fallback>0,'real rejection selects the contour LOD');assert.equal(e.metrics.fallback,e.metrics.active,'crowded Hissen frame chooses one contour tier before greedy full fragments starve siblings');assert.equal(e.metrics.fallbackDropped,0,'five cheap contour bodies fit the test budget');assert(e.metrics.triangles<=30000);assert.equal(ps.blobs.count,0);assert.equal(ps.projectileVisuals.stats.vertexCount,0);assert.equal(state(),before);
+  const capacity=e.capacity;e.capacity=1;draw();assert.equal(e.metrics.active,1);assert.equal(e.metrics.fallbackDropped,4);assert.equal(ps.blobs.count,0);assert(e.metrics.triangles<=30000);assert.equal(state(),before);e.capacity=capacity;
+  e.triangleBudget=0;draw();assert.equal(e.metrics.active,0);assert.equal(e.metrics.triangles,0);assert(e.metrics.fallbackDropped>0,'hard bound is explicit');assert.equal(ps.blobs.count,0,'hard exhaustion cannot spill unaccounted generic main');assert.equal(state(),before);
+  const resources=[...e.assets.values()].flatMap(asset=>[...asset.resources,...asset.batches.flatMap(b=>[b.mesh,b.fringe])]),disposed=new Map();for(const resource of resources)resource.addEventListener('dispose',()=>disposed.set(resource,(disposed.get(resource)||0)+1));
+  const ownedBytes=e.metrics.bytes;ps.disposeVisuals();assert.equal(e.metrics.bytes,ownedBytes,'projectile visual disposal leaves shared FX-owned packs alive');assert.equal(e.assets.size,2);assert.equal(disposed.size,0);
+  const originalLoad=f.FX.prototype.loadInkVolume;f.FX.prototype.loadInkVolume=async()=>({});const fx=new f.FX(new f.THREE.Scene(),{quality:.25});await fx.inkVolumeReady;fx.inkVolumes=e;fx.root.add(e.root);fx.dispose();f.FX.prototype.loadInkVolume=originalLoad;
+  assert.equal(e.metrics.bytes,0);assert.equal(e.root.children.length,0);assert(resources.every(r=>disposed.get(r)===1),'FX owner releases every shared contour/full resource exactly once');
+  let lazyLoads=0;f.FX.prototype.loadInkVolume=async function(name){if(name==='hissen-fallback'){lazyLoads++;return this.registerInkVolume(name,small.pack);}return {};};
+  const lazy=new f.FX(new f.THREE.Scene(),{quality:1});await lazy.inkVolumeReady;assert.equal(lazyLoads,0);assert.equal(lazy.inkVolumes,undefined,'non-Hissen startup owns no contour bytes');
+  const lazyBefore=[draws,rngState];await lazy.requestHissenFallback();assert.deepEqual([draws,rngState],lazyBefore);assert.equal(lazyLoads,1);const lazyEngine=lazy.inkVolumes,contour=lazyEngine.assets.get('hissen-fallback'),released=new Map();assert.equal(contour.resources.length,70);assert.equal(lazyEngine.metrics.bytes,3685736);for(const r of contour.resources)r.addEventListener('dispose',()=>released.set(r,(released.get(r)||0)+1));lazy.dispose();assert.equal(lazyEngine.metrics.bytes,0);assert(contour.resources.every(r=>released.get(r)===1));f.FX.prototype.loadInkVolume=originalLoad;
+  console.log('Hissen safeguards',JSON.stringify({nonconstantSeed:'0x51e39a17',renderRngPreserved:true,successfulCullHasNoFallback:true,sharedBegins:begins,sharedEnds:ends,capacityOneActive:1,capacityOneGenericMains:0,fxDisposals:resources.length,fxOwnedBytesReleased:ownedBytes,lazyStartupContourBytes:0,lazyContourResourcesDisposed:70}));f.restoreRandom();
+});
+
+
+async function reviewPack(f,slot){
+ const fs=await import('node:fs'),path=await import('node:path'),zlib=await import('node:zlib'),{fileURLToPath}=await import('node:url'),{unpackVolumes}=await import('../ink-volume/pack.mjs');
+ const root=process.env.INKWAVE_BUILT_SITE||fileURLToPath(new URL('../../../',import.meta.url)),dir=path.join(root,'patches/local-quality/ink-volume/assets',slot),m=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'))),raw=zlib.gunzipSync(fs.readFileSync(path.join(dir,m.binary))),pack=unpackVolumes(m,raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));
+ for(const p of pack.patterns)for(const frame of p.frames){frame.rgba=new f.buffers.Uint8Array(frame.rgba);for(const l of frame.levels)for(const k of ['positions','normals','uvs','indices','opaqueIndices','fringeIndices'])if(l[k])l[k]=new f.buffers[l[k].constructor.name](l[k]);}return pack;
+}
+
+test('Hissen geometry bound rejects 10001 effective drawn triangles',async t=>{
+ const f=await api(),e=renderer(f),B=f.buffers;t.after(()=>e.dispose());
+ const level={positions:new B.Float32Array([0,0,0,1,0,0,0,1,0]),normals:new B.Float32Array([0,0,1,0,0,1,0,0,1]),uvs:new B.Float32Array([0,0,1,0,0,1]),indices:new B.Uint16Array([0,1,2]),opaqueIndices:B.Uint16Array.from({length:30003},(_,i)=>i%3),fringeIndices:new B.Uint16Array()};
+ const pack={schema:'inkwave-volume-v1',geometryOnly:true,patterns:[{width:1,height:1,fps:30,frames:[{rgba:new B.Uint8Array([255,255,255,255]),levels:[level]}]}]};
+ assert.throws(()=>e.register('over-bound',pack),/bounded|triangle|draw/i);assert.equal(e.assets.size,0);assert.equal(e.metrics.bytes,0);
+ level.opaqueIndices=B.Uint16Array.from({length:15000},(_,i)=>i%3);level.fringeIndices=B.Uint16Array.from({length:15003},(_,i)=>i%3);assert.throws(()=>e.register('over-combined',pack),/bounded|triangle|draw/i);level.fringeIndices=new B.Uint16Array();
+ level.opaqueIndices=B.Uint16Array.from({length:30000},(_,i)=>i%3);e.register('at-bound',pack);assert.equal(e.assets.get('at-bound').patterns[0].frames[0][0].triangles,10000);e.dispose();
+});
+
+test('Hissen mixed weapon demand avoids the 60000 triangle omission',async t=>{
+ const f=await api();f.setRandom(()=>.75);const e=renderer(f);t.after(()=>{e.dispose();f.restoreRandom();});for(const slot of ['roller','shooter','hissen-fallback'])e.register(slot,await reviewPack(f,slot));f.G.fx={inkVolumes:e};
+ const a=f.make('s3-slosher-diffusion');a.pos.set(0,2,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,3,50);a.intent.fire=true;let head;
+ for(let i=0;i<100;i++){f.tick(a);f.G.projectiles.update(1/60);head=f.G.projectiles.list.find(p=>p.catalog?.descriptor.unit===0&&p.catalog.index===0&&p.age>0);if(head)break;}a.intent.fire=false;
+ for(let i=0;i<2;i++){f.tick(a);f.G.projectiles.update(1/60);}
+ const owner=f.make('dualies'),others=Array.from({length:5},(_,i)=>{const p={wid:'dualies',type:'shot',owner,age:.1,seed:.25,size:.1,vis:.1,pos:new f.THREE.Vector3(i*.2,1,2),start:new f.THREE.Vector3(i*.2,1,0),vel:new f.THREE.Vector3(0,0,20)};f.captureInkVolume(p,owner.weapon);return p;});
+ const list=[...others,...f.G.projectiles.list];e.triangleBudget=60000;
+ const run=negative=>{e.begin();f.prepareHissenVolumeLOD(e,list);if(negative)e.hissenContourFrame=false;for(const p of list)if(!(p.delay>0))f.submitInkVolume(e,p);e.end();return {...e.metrics};};
+ const corrected=run(false);assert.equal(e.frameDemandTriangles,36940+21244+25018);assert.equal(e.frameDemandInstances,17);assert.equal(corrected.triangles,47784);assert.equal(corrected.fallback,2);assert.equal(corrected.fallbackDropped,0);assert.equal(corrected.active,17);
+ const negative=run(true);assert.equal(negative.triangles,58184);assert.equal(negative.fallbackDropped,1,'negative control reproduces published-prefix omission');e.dispose();f.restoreRandom();
 });

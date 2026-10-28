@@ -1,0 +1,232 @@
+{
+  "scope": "Native target run only; three-way acceptance remains unverified because observer incorrectly rejected a buried non-scoring cell",
+  "status": "passed",
+  "sourceIdentity": {
+    "checkoutSha": "da3376f1f05455b06defdacba4ced18c3cf05d6a",
+    "eventSha": null,
+    "checkoutIdentityStatus": "verified-git-head"
+  },
+  "build": {
+    "revision": "ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb",
+    "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+    "inputHash": "69308c060120b9ebe716423cc8d41e81cd318132696c180fd926cb87c318bce0"
+  },
+  "provenance": {
+    "harnessSha256": "84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4",
+    "slosherPhaseObserverSha256": "485143ac7b158d75b432ad8885d141d44e9a49ff40b8b1d92a4db88eab3a900b"
+  },
+  "rawSha256": "33e08982fd5ee2c12d258e2b3db41153783ed8b1062a52dc1f5e6a384039df19",
+  "screenshots": 52,
+  "savedPngs": 94,
+  "workloads": [
+    {
+      "scenario": "desktop-long-fire",
+      "nativeFrames": 13,
+      "fireCalls": 33,
+      "durationMs": 78800.5,
+      "renderSamples": 13,
+      "rafSamples": 11
+    },
+    {
+      "scenario": "mobile-emulated-long-fire",
+      "nativeFrames": 12,
+      "fireCalls": 30,
+      "durationMs": 25303.5,
+      "renderSamples": 12,
+      "rafSamples": 22
+    }
+  ],
+  "birth": {
+    "seed": 0.6154763356316835,
+    "initialDistance": 1.6453988320229112,
+    "unit": 0,
+    "index": 0,
+    "spacing": 3.1,
+    "count": 7,
+    "width": 1.344,
+    "depth": 2,
+    "drawRadius": 0.1
+  },
+  "snapshots": [
+    {
+      "label": "initial",
+      "frame": 0,
+      "creditCount": 0,
+      "cellCount": 0,
+      "turf": 71.01544117647057,
+      "special": 0,
+      "counts": [
+        0,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        0,
+        0
+      ],
+      "coverage": [
+        0,
+        0
+      ]
+    },
+    {
+      "label": "F0",
+      "frame": 0,
+      "creditCount": 1,
+      "cellCount": 149,
+      "turf": 80.21838235294115,
+      "special": 9.20294117647058,
+      "counts": [
+        149,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        9.20294117647058,
+        0
+      ],
+      "coverage": [
+        0.002120181367377163,
+        0
+      ]
+    },
+    {
+      "label": "F5",
+      "frame": 5,
+      "creditCount": 1,
+      "cellCount": 149,
+      "turf": 80.21838235294115,
+      "special": 9.20294117647058,
+      "counts": [
+        149,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        9.20294117647058,
+        0
+      ],
+      "coverage": [
+        0.002120181367377163,
+        0
+      ]
+    },
+    {
+      "label": "F15",
+      "frame": 15,
+      "creditCount": 2,
+      "cellCount": 235,
+      "turf": 85.53014705882349,
+      "special": 14.51470588235292,
+      "counts": [
+        235,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        14.51470588235299,
+        0
+      ],
+      "coverage": [
+        0.0033439102102928555,
+        0
+      ]
+    },
+    {
+      "label": "impact",
+      "frame": 25,
+      "creditCount": 4,
+      "cellCount": 1140,
+      "turf": 142.0926470588235,
+      "special": 71.07720588235293,
+      "counts": [
+        1140,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        71.0772058823531,
+        0
+      ],
+      "coverage": [
+        0.016374826771933054,
+        0
+      ]
+    },
+    {
+      "label": "floor-contact-F25-capture-F33",
+      "frame": 33,
+      "creditCount": 7,
+      "cellCount": 1498,
+      "turf": 164.4676470588235,
+      "special": 93.45220588235293,
+      "counts": [
+        1498,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        93.4522058823531,
+        0
+      ],
+      "coverage": [
+        0.02152959818526696,
+        0
+      ]
+    },
+    {
+      "label": "end",
+      "frame": 33,
+      "creditCount": 7,
+      "cellCount": 1498,
+      "turf": 164.4676470588235,
+      "special": 93.45220588235293,
+      "counts": [
+        1498,
+        0
+      ],
+      "turfTotal": 69366,
+      "ownedAreas": [
+        93.4522058823531,
+        0
+      ],
+      "coverage": [
+        0.02152959818526696,
+        0
+      ]
+    }
+  ],
+  "observerFailuresPreserved": [
+    "unobserved paint cell 8642",
+    "unobserved paint cell 8642",
+    "unobserved paint cell 8642"
+  ],
+  "buriedCellDiagnostic": {
+    "source": "production Level(Tidewater) and PaintSystem._initGrid; GPU stub, no extra dressing needed to establish burial",
+    "cell": 8642,
+    "dead": 1,
+    "turf": true,
+    "pointEligible": false,
+    "face": {
+      "grid": 3520,
+      "nu": 168,
+      "nv": 352,
+      "cu": 0.25,
+      "cv": 0.25,
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "block": 0
+    },
+    "point": [
+      0.375,
+      0.06,
+      -36.375
+    ],
+    "inside": true
+  },
+  "notAFullPairedComparison": true,
+  "media": "local only; no PNG/reference media committed"
+}

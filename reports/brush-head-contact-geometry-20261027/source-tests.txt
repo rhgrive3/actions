@@ -1,0 +1,18 @@
+(node:16074) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+BRUSH_HEAD_CONTACT {"id":"s3-brush-mini","singleMaxError":0.007161766829579461,"batchedMaxError":0.001355810286993095,"singleMin":0.007838233170420539,"singleMax":0.017635796201952658}
+BRUSH_HEAD_CONTACT {"id":"s3-brush-normal","singleMaxError":0.009180767985760382,"batchedMaxError":0.001827639579076959,"singleMin":0.005819232014239617,"singleMax":0.017277562524772416}
+BRUSH_HEAD_CONTACT {"id":"s3-brush-heavy","singleMaxError":0.005560096364605957,"batchedMaxError":0.0013558167811058702,"singleMin":0.009439903635394042,"singleMax":0.017238074545123716}
+✔ all three flexed Brush heads follow actual ground vertices at slope entry and exit without draw-cadence lag (27374.494964ms)
+(node:16075) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+BRUSH_CONTACT [{"min":0.013604605847359008,"max":0.016416944301595293},{"min":0.013606375699557083,"max":0.01632815680875671},{"min":0.01353553598694121,"max":0.015501201120563635}]
+✔ loaded Brush floor correction stays stable between draws and follows the slope at its tip (21050.102573ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27967.878897

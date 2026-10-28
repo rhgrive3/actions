@@ -1,0 +1,54 @@
+{
+  "baseHead": "9b2b8f70cc35f630c87bcd80e728654cc7102dd8",
+  "baselineContentHash": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+  "candidateContentHash": "4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630",
+  "candidateInputHash": "38672f2e6f7abc6a3558043705160e9451a5ea4a5277c7afab36a5f0d5fbe8c6",
+  "candidateManifestSha256": "38e391679f64094533ba117a0c34d2a8cb9c8b6b4d27188bb3c41fcc00c91b7d",
+  "manifestFileEntries": 1492,
+  "artifacts": 2199,
+  "badArtifacts": [],
+  "changedArtifacts": [
+    {
+      "file": "index.html",
+      "before": "08d1a9f05ecf88dd57927d0b425f2f75f4b9214bca229815d8fecbf2010955e5",
+      "candidate": "a63064a95f024afde46819c01fc68534f014cb8006c132a49f1b81f2bf30749c"
+    },
+    {
+      "file": "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json",
+      "before": "2005d2835f3b84d71402f1fc5fb13ecd981293a8a70e5529b933430fc4c42344",
+      "candidate": "91605dea67d75a095f7791230e8861abf55ba8fced35c1e7ee2785659f2f7da7"
+    },
+    {
+      "file": "patches/local-quality/ink-volume/assets/roller/manifest.json",
+      "before": "e6e3c01cc5e1b9f8457edbb7344d268526ff52916b6e65dc5c5acdcc1301be7d",
+      "candidate": "d88771b984db1fbbdd25cf671d5a3113aa8c25f792b0791f9968eb89f0104db8"
+    },
+    {
+      "file": "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+      "before": "1d39cc04bde762145e547c331e3db263a6076ef71869eeb614c610dbf31f8d86",
+      "candidate": "08bf8b1562228a4c6adac06da2680778cd18c20a7cedea2019cc2ec33bcbe533"
+    },
+    {
+      "file": "patches/splatoon3/runtime/projectile-presentation.mjs",
+      "before": "a991ea1ad952aadfb25ee121b51ec6ae6685da3af200d0b24f4268a2ea6b1b00",
+      "candidate": "c38abc9239083d05de0e43a012c7a9253b0e0c7ca18437ff57bcad0d09b9e0e7"
+    },
+    {
+      "file": "sw.js",
+      "before": "dd825a9ef046e1559acee8f9d7077ff8f702ee9e988d5241059fff32aecfea9b",
+      "candidate": "d0ffd0f6d8dc34c2400eb6ee47bb310df35e72b7901b6e20e94fd5b863eae53a"
+    }
+  ],
+  "builderSha256": "0b2b0c7503f9522449a840b829b1f65076f02824a5ada0fe59d212b56b389f7f",
+  "changedInputFiles": [
+    {
+      "file": "patch/runtime/projectile-presentation.mjs",
+      "before": "3a7fccac519cd7e15ebfbb31cdd1fcd4fc8b0712e9dcb71e02f3cf1bd8eaa1a2",
+      "candidate": "aa950e9ee2ef6015fb7936b0825851f7c743ad1d9f39d0872650f44a8c83c343"
+    }
+  ],
+  "versionedCopies": "Version namespace changed; root module byte delta below. Full manifest preserves every generated path/digest.",
+  "verifiedWorkingInputEntries": 1492,
+  "separateBuilderMatches": true,
+  "badInputEntries": []
+}

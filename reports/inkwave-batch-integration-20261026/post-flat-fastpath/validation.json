@@ -1,0 +1,127 @@
+{
+  "status": "affected checks passed; unfinished batch and PR creation remain blocked",
+  "sourceHead": "c922a773b6e15be90332aca066fbdfb39c0aa09b",
+  "originalCommonBase": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "upstreamMainMerged": "ce34bf34359ca5e8ee82d1effc50e649783a1d3d",
+  "workerFix": "53c4727765cc8a9a89f14098d35ecd14122bdba7",
+  "integratedFix": "af48bc405408c76d457122b085f7be793220e4d5",
+  "identity": {
+    "sourceSha": "c922a773b6e15be90332aca066fbdfb39c0aa09b",
+    "contentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+    "inputHash": "472bb723b7424abccdc8e6eb1a08978462c58d104db02d56163140f679176bbc",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0
+  },
+  "checks": {
+    "sourceAffected": {
+      "pass": 20,
+      "fail": 0,
+      "skip": 0
+    },
+    "sourcePaintBoundaries": {
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    "emittedSupportAndDownhill": {
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    "quick": "passed",
+    "build": "optimized passed",
+    "startupBudget": "passed"
+  },
+  "browser": {
+    "status": "passed",
+    "browser": "154.0.8037.57",
+    "contentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+    "errors": [],
+    "roller": [
+      {
+        "hz": 30,
+        "rollingTicks": 60,
+        "paintTicks": 60,
+        "cells": 1074,
+        "turf": 67.16622235415859
+      },
+      {
+        "hz": 60,
+        "rollingTicks": 60,
+        "paintTicks": 60,
+        "cells": 1074,
+        "turf": 67.16622235415859
+      },
+      {
+        "hz": 120,
+        "rollingTicks": 60,
+        "paintTicks": 60,
+        "cells": 1074,
+        "turf": 67.16622235415859
+      }
+    ],
+    "controlledSwimCases": 6,
+    "walkingDecayPassed": true,
+    "screenshotInspected": "roller-downhill-60.png",
+    "scope": "Renderer: Chromium SwiftShader. Roller: real Actor input/Physics and GPU paint atlas. Swim: controlled floor/wall Actor states and actual FX pixel differences. Walking: exact emitted step-presentation decay. No Switch, iOS, audio, hardware or pointer-lock parity claim."
+  },
+  "carriedEvidence": {
+    "priorContentHash": "bef398c7163daafa2b119a158e234b90e38155ab38189fbdebc7ff5ef4beb3b2",
+    "currentContentHash": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+    "selectedArtifacts": 428,
+    "changed": [],
+    "scope": "Emitted audio tree, actual audio entry, stage helper, HUD installer and production HUD. Byte identity permits carrying prior real AudioContext playback and 15-stage component evidence; not a new gameplay or hardware check."
+  },
+  "logs": {
+    "source": {
+      "path": "source.log.gz",
+      "rawSha256": "c3c1e747af0e7ef2bca9929101f9772dcb59e68191e64e87cfef691b2ed952e8",
+      "gzipSha256": "b9c9c47cb406d6792066ffa92f1d0a99be7f5f1720be543adfd8e092c67d4565"
+    },
+    "boundaries": {
+      "path": "boundaries.log.gz",
+      "rawSha256": "21394a37bbc2ac34b45002980b2ecffb2b5b9910810753f8b9aead867d69508c",
+      "gzipSha256": "befaf152a1a7e1b5406a15f1c367ca28adfa74a92e1ee1589700884ed7406bc6"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "6893388306561ebe92eeeb59dbd3f4b4f35d9ba09944f6f2252b8bff8f57a67d",
+      "gzipSha256": "78db6153a8cf97790b1f1391a4568bf81d6873182b5abd742390243c04190512"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "18c928e83de68101ebb2e868429eedce080fedc9def221433b355f9d219ffcd5",
+      "gzipSha256": "2b362ce81681c5104064425fa63f5312eb9806171990ef234278c8190df84bee"
+    },
+    "quick": {
+      "path": "quick.log.gz",
+      "rawSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "gzipSha256": "f3d8dc8809329136eada79b6f0147fcf52ffa687efcdf38ecc8d9f24bca8ed0d"
+    },
+    "browser": {
+      "path": "browser.log.gz",
+      "rawSha256": "cc66f262f58cfba56bb9724e181c0dc4761cd94e73842b1764665756ff3a1238",
+      "gzipSha256": "e37c54f61b02f73f615b0bc8344327bff320df8494507dc1e809c14a7082ea4b"
+    },
+    "browserReceipt": {
+      "path": "browser-receipt.json.gz",
+      "rawSha256": "fd1d89dbe5fa5830b6cdc87fd705ac0fa531a294b17c2f2402779a9bed698e8a",
+      "gzipSha256": "d2709e8e7fd78005a1ef50341d26b636d0ddc3eda0eea8f8c3b437532e9773ae"
+    }
+  },
+  "commands": [
+    "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/roller-support-fast-path.test.mjs patches/splatoon3/tests/roller-downhill-contact.test.mjs patches/splatoon3/tests/roller-drum-stage-floor-contact.test.mjs patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs",
+    "node --experimental-vm-modules --test --test-name-pattern='all families confirm uphill|ledge does|nearby parallel|native chart bounds|narrow open gaps' patches/splatoon3/tests/catalog-rolling-support.test.mjs",
+    "node scripts/build-inkwave.mjs inkwave-public /workspace/scratch/integration-fastpath-site",
+    "INKWAVE_BUILT_SITE=/workspace/scratch/integration-fastpath-site node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/roller-support-fast-path.test.mjs patches/splatoon3/tests/roller-downhill-contact.test.mjs",
+    "node scripts/check-inkwave-locomotion-surface.mjs /workspace/scratch/integration-fastpath-site /workspace/scratch/integration-fastpath-browser"
+  ],
+  "limits": [
+    "Known optional VM source-motion fallback warning remains in source tests; actual emitted browser loaded source motion separately.",
+    "Controlled Actor/FX browser is not ordinary gameplay input, original-game or hardware parity.",
+    "Audio/HUD prior playback/component evidence carried by 428 unchanged emitted hashes, not claimed as new playback.",
+    "Hissen/floor droplets and original marker comparisons remain unfinished.",
+    "No final-head required CI claim; no PR exists after two creation denials, no manual workflow dispatch or retry."
+  ]
+}

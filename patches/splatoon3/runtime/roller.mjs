@@ -1,3 +1,4 @@
+import { traceRollingFloor } from './rolling-floor.mjs';
 import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { createVerticalShaftReturn } from './roller-vertical-shaft-return.mjs';
@@ -228,6 +229,15 @@ export function rollerDrumSupport(a, G, scratch) {
   if (!floor && a.grounded && typeof level.groundHeight === 'function') {
     const height=level.groundHeight(cx,cz,a.pos.y+0.09);
     if (Number.isFinite(height) && Math.abs(a.pos.y-height)<=0.075) floor=true;
+  }
+  // The lowered drum follows continuous floor, including a descending ramp.
+  // A fixed world-height tolerance mistakes the ramp's forward drop for a
+  // ledge. Reuse the paint path's collision intervals: missing floor or an
+  // actual height discontinuity still rejects support.
+  if (!floor && a.grounded && a.ground?.hit) {
+    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );
+    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);
+    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;
   }
   return { floor, wall, supported: floor || wall };
 }

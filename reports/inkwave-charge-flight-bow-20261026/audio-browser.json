@@ -1,0 +1,274 @@
+{
+  "contentHash": "32ad27a7264b34c2497796261b32105a70bc2be664e13364691600553e946cc3",
+  "inputHash": "3d975e375e930275d8867dc3f7a14fb14de7b4de6e800659950d2cb556b7bfe7",
+  "errors": [],
+  "rows": [
+    {
+      "id": "charger",
+      "chargeTime": 1,
+      "admission": {
+        "ready": true,
+        "id": "charger",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 0
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 80640,
+          "duration": 1.8285714285714285,
+          "args": [
+            0.43247165532879817,
+            0.4591,
+            1.215
+          ]
+        }
+      ],
+      "peak": 0.1924421787261963,
+      "rmsMax": 0.03595218613379459
+    },
+    {
+      "id": "s3-charger-quick",
+      "chargeTime": 0.75,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-quick",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 1
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 40187,
+          "duration": 0.9112698412698412,
+          "args": [
+            1.1319727891156464,
+            0,
+            0.9112698412698412
+          ]
+        }
+      ],
+      "peak": 0.1705930531024933,
+      "rmsMax": 0.032244331732051636
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "chargeTime": 1,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-normalscope",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 1
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 80640,
+          "duration": 1.8285714285714285,
+          "args": [
+            1.5325170068027212,
+            0.4591,
+            1.215
+          ]
+        }
+      ],
+      "peak": 0.1924421787261963,
+      "rmsMax": 0.0372529533098933
+    },
+    {
+      "id": "s3-charger-long",
+      "chargeTime": 1.5333333333333334,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-long",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 2
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 82159,
+          "duration": 1.863015873015873,
+          "args": [
+            2.162358276643991,
+            0,
+            1.863015873015873
+          ]
+        }
+      ],
+      "peak": 0.17837387323379517,
+      "rmsMax": 0.037019093796493506
+    },
+    {
+      "id": "s3-charger-longscope",
+      "chargeTime": 1.5333333333333334,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-longscope",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 2
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 82159,
+          "duration": 1.863015873015873,
+          "args": [
+            2.4816326530612245,
+            0,
+            1.863015873015873
+          ]
+        }
+      ],
+      "peak": 0.17837387323379517,
+      "rmsMax": 0.037019093796493506
+    },
+    {
+      "id": "s3-charger-light",
+      "chargeTime": 0.3333333333333333,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-light",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 3
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 17861,
+          "duration": 0.4050113378684807,
+          "args": [
+            2.8415419501133785,
+            0,
+            0.4050113378684807
+          ]
+        }
+      ],
+      "peak": 0.1923116147518158,
+      "rmsMax": 0.022247881869460303
+    },
+    {
+      "id": "s3-charger-keeper",
+      "chargeTime": 1.1833333333333333,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-keeper",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 4
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 63405,
+          "duration": 1.4377551020408164,
+          "args": [
+            3.201451247165533,
+            0,
+            1.4377551020408164
+          ]
+        }
+      ],
+      "peak": 0.1795434206724167,
+      "rmsMax": 0.03796108376789919
+    },
+    {
+      "id": "s3-charger-pencil",
+      "chargeTime": 1.2,
+      "admission": {
+        "ready": true,
+        "id": "s3-charger-light",
+        "recording": "fire"
+      },
+      "context": "running",
+      "playing": true,
+      "status": {
+        "ready": true,
+        "loading": false,
+        "error": null,
+        "stretched": 5
+      },
+      "captures": [
+        {
+          "rate": 1,
+          "loop": false,
+          "frames": 64298,
+          "duration": 1.4580045351473923,
+          "args": [
+            3.5526530612244898,
+            0,
+            1.4580045351473923
+          ]
+        }
+      ],
+      "peak": 0.1795434206724167,
+      "rmsMax": 0.036554922167398106
+    }
+  ],
+  "kind": "emitted-audio-component",
+  "unlock": {
+    "trusted": true,
+    "state": "running"
+  },
+  "missingAsset": {
+    "blocked": true,
+    "error": "チャージ音の録音を読み込めません。通信を確認してSTARTを押してください",
+    "state": "running"
+  },
+  "passed": true
+}

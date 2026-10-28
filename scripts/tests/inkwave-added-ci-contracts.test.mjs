@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
 const root=new URL('../../',import.meta.url);
@@ -62,8 +63,65 @@ test('both main-weapon event filters cover every executed test entrypoint, inclu
 });
 const sparseFixtureFile='scripts/tests/inkwave-ci-sparse-checkout.test.mjs';
 const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png','tools/inkwave-modeler/src/editor.js'];
+// The exception is limited to the two audited fixture snapshots. This also
+// prevents an added prototype mutation or dynamic side effect from intercepting
+// approved text operations. Future fixture edits require an explicit re-review.
+const fixtureSourcePins={
+ [sparseFixtureFile]:'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
+ 'scripts/tests/continuous-browser-video.test.mjs':'1e15c0668d8179753b99e947c35c8bf4c2c91f1c5333c760b4bdbc0165b96f03',
+};
+// Only four literal nodes in this one audited test describe sparse exclusions;
+// none is an input consumed by the build or runtime. The owning constructs
+// are pinned as a whole: permitting an otherwise legitimate identifier as an
+// arbitrary subexpression would allow an alias, import, or filesystem read.
+const volumeFixtureFile='scripts/tests/continuous-browser-video.test.mjs';
+const volumeSparseLiteral='          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n            !/tools/inkwave-modeler/blender/\n            !/tools/inkwave-modeler/docs/\n';
+const volumeConsumerPins={
+ assertUnchangedDefaultVolumeJob:'21c5260329a72134ccd25df81c597362ffd5e03373155e79c2fb0c44df7f5c0f',
+ sparseNegativeControls:'536b2a51855b47a205fb9ea08bf4b78e1b0df743916715d47fba74a85c4fca7a',
+ workflowNegativeControls:'2090dd9f7cc10b7fcd94c91e3d53bdef2dfc3c3fd160348145d19c07eff3ccc5',
+};
+function maskReviewedVolumeFixture(source){
+ const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
+ const declarations=ast.body.filter(n=>n.type==='VariableDeclaration'&&n.kind==='const').flatMap(n=>n.declarations).filter(n=>n.id.type==='Identifier'&&n.id.name==='reviewedSparseCheckout');
+ assert.equal(declarations.length,1,'one audited sparse literal binding');
+ const declaration=declarations[0];
+ assert.equal(declaration.init?.type,'Literal','sparse exclusion must be literal data');
+ assert.equal(declaration.init.value,volumeSparseLiteral);
+ const functions=ast.body.filter(n=>n.type==='FunctionDeclaration'&&n.id?.name==='assertUnchangedDefaultVolumeJob');
+ const negatives=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing sparse fetch',"));
+ assert.equal(functions.length,1);assert.equal(negatives.length,1);
+ const workflowNegatives=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing build trigger',"));
+ assert.equal(workflowNegatives.length,1);
+ const allowed=[functions[0],negatives[0]],workflowNegative=workflowNegatives[0];
+ for(const [node,pin]of [[allowed[0],volumeConsumerPins.assertUnchangedDefaultVolumeJob],[allowed[1],volumeConsumerPins.sparseNegativeControls],[workflowNegative,volumeConsumerPins.workflowNegativeControls]])
+  assert.equal(createHash('sha256').update(source.slice(node.start,node.end)).digest('hex'),pin,'sparse data consumers must remain audited text-only operations');
+ let literals=[];let identifiers=0;
+ const visit=(node,ancestors=[])=>{
+  if(!node||typeof node!=='object')return;
+  assert(!(node.type==='Identifier'&&node.name==='eval'),'dynamic eval cannot access audited fixture bindings');
+  if(node.type==='Identifier'&&node.name==='reviewedSparseCheckout'&&node!==declaration.id){
+   assert(allowed.some(owner=>ancestors.includes(owner)),'sparse exclusion may not be used outside audited consumers');identifiers++;
+  }
+  if(node.type==='Literal'&&typeof node.value==='string'&&node.value.includes('tools/inkwave-modeler/')&&node!==declaration.init){
+   if(ancestors.includes(allowed[1]))assert.equal(node.value,'!/tools/inkwave-modeler/blender/');
+   else {
+    assert(ancestors.includes(workflowNegative),'only audited negative-control literals are data');
+    assert(['!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].includes(node.value));
+   }
+   literals.push(node);
+  }
+  for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,[...ancestors,node]);}else if(value&&typeof value==='object')visit(value,[...ancestors,node]);
+ };
+ visit(ast);assert.equal(identifiers,6);
+ assert.deepEqual(literals.map(n=>n.value).sort(),['!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].sort());
+ let checked=source;for(const node of [declaration.init,...literals].sort((a,b)=>b.start-a.start))checked=checked.slice(0,node.start)+"''"+checked.slice(node.end);
+ return checked;
+}
 function assertNoAuthoringDependency(file,source){
- let checked=source;
+ if(Object.hasOwn(fixtureSourcePins,file))
+  assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[file],'audited fixture changed; re-review before updating its narrow literal exemption');
+ let checked=file===volumeFixtureFile?maskReviewedVolumeFixture(source):source;
  if(file===sparseFixtureFile){
   // Only the reviewed literal data in this temporary-repository fixture is
   // exempt. Imports, filesystem references and the rest of its code are scanned.
@@ -74,16 +132,27 @@ function assertNoAuthoringDependency(file,source){
   const declaration=declarations[0],data=declaration.init;
   assert.equal(data?.type,'ArrayExpression','fixture paths are data, never executable expressions');
   assert.deepEqual(data.elements.map(n=>n?.type==='Literal'?n.value:null),excludedFixturePaths);
-  const examples=bindings.find(n=>n.id.type==='Identifier'&&n.id.name==='examples')?.init;
-  const visit=(node,parent,grandparent)=>{
+  const exampleDeclarations=bindings.filter(n=>n.id.type==='Identifier'&&n.id.name==='examples');
+  assert.equal(exampleDeclarations.length,1,'one synthetic examples binding');
+  const examples=exampleDeclarations[0].init;
+  assert.equal(examples?.type,'ArrayExpression');
+  const loops=ast.body.filter(n=>n.type==='ForOfStatement');
+  assert.equal(loops.length,1,'one audited temporary-repository consumer');
+  const hash=node=>createHash('sha256').update(source.slice(node.start,node.end)).digest('hex');
+  assert.equal(hash(examples),'d4adf6f46026455bd6a5de54b1c53b292882aabc3c6f92239824cdda4ceb6b51','examples are only reviewed synthetic data');
+  assert.equal(hash(loops[0]),'a2d12f255e47de617fd9304380266dddc110d5d1a2fdaada4ee1c31edb748ad8','synthetic data are only used in the audited temporary fixture');
+  const visit=(node,parent,grandparent,ancestors=[])=>{
    if(!node||typeof node!=='object')return;
+   assert(!(node.type==='Identifier'&&node.name==='eval'),'dynamic eval cannot access audited fixture bindings');
    if(node.type==='Identifier'&&node.name==='excludedAuthoringFixturePaths'&&node!==declaration.id){
     const list=parent?.type==='SpreadElement'&&grandparent===examples&&examples?.type==='ArrayExpression';
     const membership=parent?.type==='MemberExpression'&&parent.object===node&&!parent.computed&&parent.property.name==='includes'
-     &&grandparent?.type==='CallExpression'&&grandparent.callee===parent;
+     &&grandparent?.type==='CallExpression'&&grandparent.callee===parent&&ancestors.includes(loops[0]);
     assert(list||membership,'synthetic paths cannot become an import or filesystem dependency');
    }
-   for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,node,parent);}else if(value&&typeof value==='object')visit(value,node,parent);
+   if(node.type==='Identifier'&&node.name==='examples'&&node!==exampleDeclarations[0].id)
+    assert(ancestors.includes(loops[0]),'synthetic examples cannot become an import or filesystem dependency outside the audited fixture');
+   for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,node,parent,[...ancestors,node]);}else if(value&&typeof value==='object')visit(value,node,parent,[...ancestors,node]);
   };
   visit(ast);
   checked=source.slice(0,data.start)+'[]'+source.slice(data.end);
@@ -118,6 +187,13 @@ test('synthetic sparse paths cannot hide real authoring imports or filesystem re
   'await import(excludedAuthoringFixturePaths[1]);',
   'fs.readFileSync(excludedAuthoringFixturePaths[0]);',
   'fs.readFileSync(...excludedAuthoringFixturePaths);',
+  'await import(examples[2]);',
+  'fs.readFileSync(examples[0]);',
+  'const alias=examples; fs.readFileSync(alias[0]);',
+  "await import(eval('examples')[2]);",
+  'Array.prototype.includes=function(){fs.readFileSync(this[0]);return false};excludedAuthoringFixturePaths.includes(0);',
+  'const readAlias=fs.readFileSync.bind(fs);readAlias(examples[0]);',
+  "Array.prototype.includes=(()=>{}).constructor('fs.readFileSync(this[0])');",
  ])assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,source+'\n'+extra));
  assert.throws(()=>assertNoAuthoringDependency('inkwave-public/src/main.js',source),'fixture data is not a general source exemption');
  assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,source.replace("['tools/inkwave-modeler/blender/large.blend'","[fs.readFileSync('tools/inkwave-modeler/blender/large.blend')")),'fixture initializer cannot execute a read');
@@ -144,4 +220,42 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
  }
+});
+
+
+test('volume exclusions are limited to audited literal data, never executable consumers',()=>{
+ const source=fs.readFileSync(new URL(volumeFixtureFile,root),'utf8');
+ assertNoAuthoringDependency(volumeFixtureFile,source);
+ // Exercise the AST restriction independently of the whole-source pin as well.
+ maskReviewedVolumeFixture(source);
+ for(const changed of [
+  source+'\nconst alias=reviewedSparseCheckout;',
+  source+"\neval('reviewedSparseCheckout');",
+  source.replace('s.replace("!/tools/inkwave-modeler/docs/","/tools/inkwave-modeler/docs/")','fs.readFileSync("/tools/inkwave-modeler/docs/")'),
+ ]){assert.notEqual(changed,source);assert.throws(()=>maskReviewedVolumeFixture(changed));}
+ for(const extra of [
+  "import '../../tools/inkwave-modeler/src/editor.js';",
+  "await import('../../tools/inkwave-modeler/src/editor.js');",
+  "fs.readFileSync('tools/inkwave-modeler/blender/large.blend');",
+  'await import(reviewedSparseCheckout);',
+  'fs.readFileSync(reviewedSparseCheckout);',
+  'const alias=reviewedSparseCheckout;',
+  'const loader=()=>reviewedSparseCheckout;',
+  "fs.readFileSync(eval('reviewedSparseCheckout').split('\\n')[4].trim().slice(2));",
+  "await import(eval('reviewedSparseCheckout').split('\\n')[4].trim().slice(2));",
+  "const indirect=eval; indirect('reviewedSparseCheckout');",
+  "String.prototype.replace=function(...args){fs.readFileSync(args[0]);return this;};",
+  'const bound=fs.readFileSync.bind(fs);bound(reviewedSparseCheckout);',
+  "String.prototype.replace=(()=>{}).constructor('fs.readFileSync(arguments[0])');",
+ ])assert.throws(()=>assertNoAuthoringDependency(volumeFixtureFile,source+'\n'+extra));
+ for(const changed of [
+  source.replace("const reviewedSparseCheckout = '","const reviewedSparseCheckout = String('").replace('const reviewedRetention',"); const reviewedRetention"),
+  source.replace('!/tools/inkwave-modeler/docs/','!/tools/inkwave-modeler/'),
+  source.replace("s.replace('!/tools/inkwave-modeler/blender/','!/tools/')","fs.readFileSync('!/tools/inkwave-modeler/blender/')"),
+  source.replace('s.replace("!/tools/inkwave-modeler/docs/","/tools/inkwave-modeler/docs/")','fs.readFileSync("/tools/inkwave-modeler/docs/")'),
+  source.replace('[reviewedSparseCheckout,checkoutAnchor]','fs.readFileSync([reviewedSparseCheckout,checkoutAnchor])'),
+  source.replace("assert.equal(old.split(addition).length-1,1,", "fs.readFileSync(addition);assert.equal(old.split(addition).length-1,1,"),
+  source.replace("s.replace(reviewedSparseCheckout,'')","fs.readFileSync(s.replace(reviewedSparseCheckout,''))"),
+ ]){assert.notEqual(changed,source);assert.throws(()=>assertNoAuthoringDependency(volumeFixtureFile,changed));}
+ assert.throws(()=>assertNoAuthoringDependency('scripts/runtime.mjs',source),'exception belongs only to audited test');
 });

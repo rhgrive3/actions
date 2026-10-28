@@ -1,0 +1,14 @@
+{
+  "sourceSha": "6370967b31ac51d0f8955800cde701bdcd4c835c",
+  "contentHash": "a064cdee3cfe86ac6d0d370e1f7034c86c395366f77cb549224b3d47bc7ad0bc",
+  "inputHash": "57ac7fd299c02d5e8f15b787828867f4dcf6221f56f6ac84b054242d3f463ed8",
+  "buildRevision": "4f678931d8172878c7f75696866f130ed9aa09be2163c87285c1574331cb82d2",
+  "sourceFilesVerified": 1481,
+  "artifactsVerified": 2180,
+  "selected": {
+    "src/fx/fxHooks.js": "ac67dc1155d45b81297238e718a7849654267eb1bbbe2228ccfa0f25ab80576f",
+    "patches/splatoon3/runtime/bomb-cues.mjs": "44691b1944c8ae821156d144598fc9d74f910ee5d49f44714db8c25270bbc3d7",
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "64b74d43d9ed04c51dda66b93a462e6976831900580159c2560ea5fc1175510a",
+    "src/game/weapons.js": "2d8180b863f822653ffda50833fc1cb61e0b5c122cdf0051cdd490565a78bbf7"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "base": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "branch": "fix/shooter-dualies-reticle-20261026",
+  "sourceBuildInputReadback": [
+    {
+      "file": "patches/local-quality/s3-hud-look-adapter.mjs",
+      "key": "local-quality/s3-hud-look-adapter.mjs",
+      "sha256": "a99e618201322b13aad67a3ee8ff2d5bd1dc3db0e00b0c024491232d316c759a"
+    },
+    {
+      "file": "patches/splatoon3/adapter.mjs",
+      "key": "patch/adapter.mjs",
+      "sha256": "177a87b3680d968e2d3fb6832a325185e13c6751e63753f3aadb133d4fa00c34"
+    },
+    {
+      "file": "patches/splatoon3/weapons-adapter.mjs",
+      "key": "patch/weapons-adapter.mjs",
+      "sha256": "6df70d436277257c1c93c8594d861c772c9ecb29148a1d4ddd5faebc76d953dd"
+    },
+    {
+      "file": "patches/splatoon3/ui.css",
+      "key": "patch/ui.css",
+      "sha256": "f524a0f120940646479a8060b8fcebeb6548bab4fe246f277bdd8a0f9b900221"
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "key": "patch/runtime/weapons-fidelity.mjs",
+      "sha256": "b1d4614fc6b6868ebd888123e7607916f83099fa787768e32200449343f6a0fb"
+    },
+    {
+      "file": "patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "key": "patch/runtime/muzzle-feedback.mjs",
+      "sha256": "3c3ab0137761db8a7f182c9101c1e5730f9e96e4651b6c20f342c23a717fb34e"
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "key": "patch/runtime/dualies-guide-cache.mjs",
+      "sha256": "04e8f13f6ed38e7a8ef750c19b44ede58a8d3193deef563127ab2cf1f104279b"
+    }
+  ],
+  "unchangedUpstreamInputs": 203,
+  "emittedArtifactReadback": [
+    {
+      "file": "src/ui/hud.js",
+      "sha256": "2cdb2b7eba6775fd8f86eb2792626c1061af27a0fea6033f246bd0811d675e4a",
+      "bytes": 80329
+    },
+    {
+      "file": "src/game/weapons.js",
+      "sha256": "1eba14499c366330a59fd0b296cf9929af54b8b3cb76d7f7856f52c5dac1dbc1",
+      "bytes": 77896
+    },
+    {
+      "file": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "sha256": "95241a1d2c8f4065c26bb3450c483134ce24c197c9b59fb32ed482f7bb4ef216",
+      "bytes": 85947
+    },
+    {
+      "file": "patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "sha256": "dabd1937a1631776d860f9f9e59dbb25b866799a32d615e9c46ee37a37e7d730",
+      "bytes": 2396
+    },
+    {
+      "file": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "sha256": "58a517bb1970d8a40d2d16dcee98886af111d287d6bd51934cc106cfd289c37e",
+      "bytes": 1508
+    },
+    {
+      "file": "patches/splatoon3/ui.css",
+      "sha256": "20092eca19a399acea084a7d5a23865bc1874cdf35c6df05a5f04589643f4443",
+      "bytes": 28975
+    }
+  ],
+  "build": {
+    "before": {
+      "contentHash": "7031d167d31a6aedf55686be1c17bde5998073f1e35e7c511602c717f030aad0",
+      "inputHash": "8ad7248b66aad17dfde94cf77756bd58433c3094275e66a5eef9211cec4b154a"
+    },
+    "candidate": {
+      "contentHash": "024bfccbf2401ce05e91ae1d528b56e9c91f466a044dc1973f07abec48700bb0",
+      "inputHash": "02b2fdee285748682ecb034248ab1f186fec693e2b7610f01558ac94c8aef9a1"
+    }
+  },
+  "tests": {
+    "sourceFocused": {
+      "pass": 39,
+      "fail": 0
+    },
+    "emittedProjection": {
+      "pass": 4,
+      "fail": 0
+    },
+    "baselineNegative": {
+      "pass": 0,
+      "fail": 3
+    },
+    "sourceGuideStateFirst": {
+      "pass": 40,
+      "fail": 1,
+      "then": "obsolete ballistic spy fixed; source cache rerun 5/5"
+    },
+    "existing575Emitted": {
+      "baseline": "1 pass, 1 fail: existing added mode field differs from stale 5-key expectation",
+      "candidate": "same failure; no packet fields changed here"
+    }
+  },
+  "browser": [
+    {
+      "directory": "before-verified",
+      "scriptSha256": "3bbd061fc6a1cbfc769e97cc5c2a5d26fe62a3e2bbced97d60df901652f133cb",
+      "contentHash": "7031d167d31a6aedf55686be1c17bde5998073f1e35e7c511602c717f030aad0",
+      "pageErrors": [],
+      "live": {
+        "fires": [],
+        "pointerlock": false,
+        "pointerErrors": 1,
+        "weapon": "dualies"
+      }
+    },
+    {
+      "directory": "after-verified",
+      "scriptSha256": "3bbd061fc6a1cbfc769e97cc5c2a5d26fe62a3e2bbced97d60df901652f133cb",
+      "contentHash": "024bfccbf2401ce05e91ae1d528b56e9c91f466a044dc1973f07abec48700bb0",
+      "pageErrors": [],
+      "live": {
+        "fires": [],
+        "pointerlock": false,
+        "pointerErrors": 1,
+        "weapon": "dualies"
+      }
+    }
+  ],
+  "limits": [
+    "No matched retail image/footage observed: upstream HTTP 403; Nintendo media not bundled.",
+    "Software Chromium RAF had multi-second gaps. Only observed active kick samples are certified.",
+    "Trusted mouse live fire produced pointerlockerror and zero observed fire events.",
+    "CPU native Character test uses fallback pose because VM dynamic import is unavailable."
+  ],
+  "codeCommit": "85e7967a7986817951089b9339add558fbe3bb58"
+}

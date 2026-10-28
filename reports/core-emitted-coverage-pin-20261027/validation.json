@@ -1,0 +1,89 @@
+{
+  "codeCommit": "e038d34e457bf79d5b6d10e6b690bd5b939b7793",
+  "base": "3932bf2945d9f172f1e3cb8968b498b8ff5cab95",
+  "failedHead": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b",
+  "run": 40442074376,
+  "job": 121994097756,
+  "primaryFailure": {
+    "step": "Verify scoped network diagnostic workflow contracts",
+    "file": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs:263",
+    "message": "reviewed additive core body",
+    "expected": "d91e7883718efdacc8b6af8431557419a747beeddc229252a23a2e012f5e0d5f",
+    "actual": "3ecfd7aa1ff836ee9cbaf0b4fa97019d1e1dbaca30a576c6fd69b6156a946d25",
+    "time": "2026-10-27T04:05:06Z"
+  },
+  "secondaryFailures": [
+    "if:always Turf evidence upload: producer skipped after primary failure, no files",
+    "if:always launch packet upload: producer skipped after primary failure, no files"
+  ],
+  "cause": "Accepted338755403 added three emitted regression arguments; old whole-core pin canonicalizer did not yet recognize that mandatory reviewed addition. Removing only those exact lines in memory makes all old pins pass.",
+  "fix": "Require all three paths exactly once, in original emitted step, original order and position; invert only these three lines before comparing unchanged additive digest and seven unchanged historical job digests. Add fifteen omission/duplicate/relocation/weakened-command mutations. No workflow/settings/pin hash changes.",
+  "proof": {
+    "threeAcceptedLinesExplainEntirePinMismatch": true,
+    "originalApprovedCoreHash": "d91e7883718efdacc8b6af8431557419a747beeddc229252a23a2e012f5e0d5f",
+    "originalJobPins": {
+      "validate_core": "80f5bcdbcf39f3f616c231c0cbad3eea93849fed3fb19c20e22f7c063ab47a39",
+      "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
+      "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
+      "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",
+      "network-opening-diagnostic": "f205a8473b3bfc0f86819f43bbe4121e4c590dda71490e363f3908db658ca767",
+      "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
+      "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
+    },
+    "workflowChangedOnDisk": false
+  },
+  "localBefore": {
+    "pass": 28,
+    "fail": 1,
+    "total": 29
+  },
+  "localAfter": {
+    "pass": 30,
+    "fail": 0,
+    "total": 30
+  },
+  "cancellations": {
+    "supersedingHead": "3932bf2945d9f172f1e3cb8968b498b8ff5cab95",
+    "supersedingRun": 40448198681,
+    "createdAt": "2026-10-27T04:09:45Z",
+    "config": "same PR1895 concurrency group; cancel-in-progress true on normal pull_request; browser fail-fast false",
+    "interpretation": "Cancellation timestamps04:09:46\u201304:10:26 match normal supersession by new head. Available startup/catalog/ui logs report only operation was canceled, no assertion failure. This timing/config conclusion is distinguished from the earlier primary core assertion.",
+    "availableCancelledLogs": [
+      121994097813,
+      121994097852,
+      121994097898
+    ],
+    "unavailableLogs": [
+      {
+        "job": 121994097862,
+        "error": "GitHub API404BlobNotFound"
+      },
+      {
+        "job": 121994097932,
+        "error": "GitHub API404BlobNotFound"
+      },
+      {
+        "job": 122002880565,
+        "error": "GitHub API404BlobNotFound"
+      }
+    ],
+    "notTreatedAsPass": true
+  },
+  "logs": {
+    "source-before.log": {
+      "file": "source-before.log.gz",
+      "sha256": "5d9ffda86510e90783d88565be56d349748bcac9fb05542c3f33aaf73957e768"
+    },
+    "source-after.log": {
+      "file": "source-after.log.gz",
+      "sha256": "3c04a12d9e38b531d449624814d349131aa2f72a25eb302954e8be449bc0977f"
+    },
+    "job-121994097756-full.log": {
+      "file": "job-121994097756-full.log.gz",
+      "sha256": "5c8382b50aa3ed2c510603749e966f64cf387ea3557a8eb8b5993e5bd0655845"
+    }
+  },
+  "integrationHeadUnchangedUntilCombinedHissenBatch": true,
+  "manualCi": false,
+  "metadataRetry": false
+}

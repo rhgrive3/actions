@@ -1,0 +1,101 @@
+{
+  "kind": "Hashes only; no screenshots or reference media included.",
+  "files": [
+    {
+      "version": "reviewed",
+      "filename": "brush-downhill-end.png",
+      "sha256": "41f4cdf17e66df5b0e6af77af95e85ed5f7e3a390a1091dad12da1553331e0d1",
+      "bytes": 461150,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "reviewed",
+      "filename": "brush-downhill-mid.png",
+      "sha256": "079f1ba06ed454aa95fbd0f1f4bf4d7ba6ab0c04fdd91c17f9f3a6b4b558cbf8",
+      "bytes": 527328,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "reviewed",
+      "filename": "weapon-held-before-reset.png",
+      "sha256": "fb0d4e32a3e5d3fb1929ff894e5031686802b3ae88d657eb827dd498f63e3d8b",
+      "bytes": 21264,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "reviewed",
+      "filename": "weapon-held-downhill-end.png",
+      "sha256": "284d72ed67e28d78048a3efed0a60a49d759a65bfaf51f1f6d86136a45d8a9ad",
+      "bytes": 13960,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "reviewed",
+      "filename": "weapon-held-downhill-mid.png",
+      "sha256": "cec1c3a38aa0d362fbd0c524a95d0b428edc5fbd20d14ecdee1c9601c4e05a27",
+      "bytes": 16402,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "reviewed",
+      "filename": "weapon-idle-carry.png",
+      "sha256": "770028cccf3e7b5981d38c5ed789e5a3bfe9ec3c5d88fd3a0ac0fcc59f07dd10",
+      "bytes": 58113,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "corrected",
+      "filename": "brush-downhill-end.png",
+      "sha256": "e1d39e9819d606ae6bdbdf8dbfb6282e35dd38e1e1e8180ac01e4ec21a3c94de",
+      "bytes": 457916,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "corrected",
+      "filename": "brush-downhill-mid.png",
+      "sha256": "db159d61fefb23bb8bf59b0772f4b5165048be05a623af0b579962f33b7512b9",
+      "bytes": 526767,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "corrected",
+      "filename": "weapon-held-before-reset.png",
+      "sha256": "44670482942e4bde4b218981ceb39bcc38913d860523db41a0fa93361982d084",
+      "bytes": 21157,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "corrected",
+      "filename": "weapon-held-downhill-end.png",
+      "sha256": "1c1b84c1c5bafb0d6c181f426eb938beea135944c56285ae33b1bb19e8f52720",
+      "bytes": 13748,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "corrected",
+      "filename": "weapon-held-downhill-mid.png",
+      "sha256": "d4e9eb6c343c884422d6039560cf0e18eea777707b8010c0ad17281936a85290",
+      "bytes": 16583,
+      "retainedLocally": true,
+      "published": false
+    },
+    {
+      "version": "corrected",
+      "filename": "weapon-idle-carry.png",
+      "sha256": "ebd806bca1c4f39009fc68b62f3304fbc9bb6a6325a045f2c073a3bbcbdef066",
+      "bytes": 62582,
+      "retainedLocally": true,
+      "published": false
+    }
+  ]
+}

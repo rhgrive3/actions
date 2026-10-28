@@ -124,6 +124,10 @@ export function installWeaponAudioEngine(Engine){
       if(!bank.authorized.byEvent.has(id+':'+event))
         throw new Error('本家チャージ・射撃MP3の準備に失敗しました: '+id+'/'+event);
     }
+    // All Charger onsets use the selected Splat phrase. Admit START only after
+    // its real buffer has decoded; a cold one-shot must not silently disappear.
+    if(usesChargerRise(requested)&&!await chargerRiseBuffer(this.ctx,{retry:true}))
+      throw new Error('チャージ音の録音を読み込めません。通信を確認してSTARTを押してください');
     // AudioContext can be temporarily suspended by the browser. The caller
     // must enter the game only after the selected recording and device are live.
     if(this.ctx.state&&this.ctx.state!=='running'){

@@ -1,0 +1,107 @@
+{
+  "decision": "ready-for-independent-review",
+  "code": "5f6311c6f662557a3426b5243a85037143d30c34",
+  "base": "e2a9348ce531de750d9a4d1377e52dc2191d931d",
+  "source": {
+    "pass": 7,
+    "fail": 0,
+    "skip": 0
+  },
+  "emitted": {
+    "contactPass": 3,
+    "heldCompatibilityPass": 4,
+    "fail": 0,
+    "skip": 0
+  },
+  "build": {
+    "contentHash": "60ca76b3a8f82583751cd1e73be5940649f510752e18de885aa3ea5210a3b8ca",
+    "inputHash": "8d6f76443eb52c03952c6335ef276569631fd12ab05c3383af17209f7a4c3045",
+    "checked": 2194,
+    "mismatches": []
+  },
+  "sourceComposedCharacter": {
+    "identicalComposedRuntime": true,
+    "sha256": "cd8c92017f42e57acfdcbac3f6119a30dda1c0ff4a05be57fbf3423cca949a08",
+    "upstreamCompatibility": "pass"
+  },
+  "controlledTransitions": [
+    {
+      "id": "s3-brush-mini",
+      "samples": 48,
+      "min": 0.013574507502450261,
+      "max": 0.01625540095157585,
+      "firstFar": 0.016026130629921864,
+      "firstReturn": 0.015918460007335378
+    },
+    {
+      "id": "s3-brush-normal",
+      "samples": 48,
+      "min": 0.01359276604090176,
+      "max": 0.01638779333311491,
+      "firstFar": 0.01638779333311491,
+      "firstReturn": 0.015149573796397142
+    },
+    {
+      "id": "s3-brush-heavy",
+      "samples": 48,
+      "min": 0.01357796868637029,
+      "max": 0.01645924983974867,
+      "firstFar": 0.013651473628804589,
+      "firstReturn": 0.015279423128136627
+    }
+  ],
+  "costCounts": [
+    {
+      "id": "s3-brush-mini",
+      "positionVertices": [
+        573,
+        313
+      ],
+      "vertexDotProducts": 886,
+      "positionXReadsIncludingChosenPoint": 888,
+      "partWorldMatrixUpdates": 2,
+      "localRaycasts": 1
+    },
+    {
+      "id": "s3-brush-normal",
+      "positionVertices": [
+        1928,
+        192
+      ],
+      "vertexDotProducts": 2120,
+      "positionXReadsIncludingChosenPoint": 2122,
+      "partWorldMatrixUpdates": 2,
+      "localRaycasts": 1
+    },
+    {
+      "id": "s3-brush-heavy",
+      "positionVertices": [
+        1062,
+        372
+      ],
+      "vertexDotProducts": 1434,
+      "positionXReadsIncludingChosenPoint": 1436,
+      "partWorldMatrixUpdates": 2,
+      "localRaycasts": 1
+    }
+  ],
+  "emittedHeldProvenance": {
+    "fixtureCode": "e6fb91faf9c3e491c6589943d8d98c8b1311afa1",
+    "compiledModules": 395,
+    "emittedRuntimeModules": 394,
+    "outsideSiteIdentifiers": [
+      "/workspace/actions-held-fixture-review/fixture.mjs"
+    ],
+    "registryInspection": [
+      {
+        "prefixSha256": "43c12abfaf28598ef25ca2fff36e935bbce9eab7c091f1092edc5659d097c5c6",
+        "suffix": "\nexport { ei as catalogRollerSwing };\n"
+      }
+    ]
+  },
+  "limits": [
+    "Controlled CPU source/emitted geometry fixtures; no new native browser or GPU timing.",
+    "No new original-game measurements or precise original visual parity claim.",
+    "Original Brush owner native input captures belong to e2a9348, not this follow-up."
+  ]
+}

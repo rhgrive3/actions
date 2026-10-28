@@ -1,0 +1,43 @@
+{
+  "parent": "68ba135e704db79cdb126a298ea653daef60adb6",
+  "fixture": "patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs",
+  "fixtureSha256": "13c3e393921b1de5cc7793413404e0eb0f72baaa18c258055ba202035f457dd3",
+  "emittedContentHash": "024bfccbf2401ce05e91ae1d528b56e9c91f466a044dc1973f07abec48700bb0",
+  "runs": [
+    {
+      "command": "node --experimental-vm-modules --test patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs",
+      "pass": 2,
+      "fail": 0,
+      "log": "fixture-575-source.tap.gz",
+      "uncompressedSha256": "9ba51918c48c751c4dd5b0563a3dc692e475d56bb9d2fd83d299abbb64f1c927"
+    },
+    {
+      "command": "INKWAVE_BUILT_SITE=/tmp/reticle-verified-site node --experimental-vm-modules --test patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs",
+      "pass": 2,
+      "fail": 0,
+      "log": "fixture-575-emitted.tap.gz",
+      "uncompressedSha256": "5acda0f5aa5881bd304b2a06811b9404e5970f2da2cc7e25e5aaa09956838899"
+    }
+  ],
+  "scope": "fixture-only correction: canonical production composer and audio event runtime; no deployed game-code changes",
+  "preservedAssertions": [
+    "exact36-field birth tuple",
+    "projectile/event counts, order and IDs",
+    "native cadence and RNG counts",
+    "independent hand trajectories",
+    "native roll and release",
+    "exact replay FX muzzle and direction"
+  ],
+  "addedAssertions": [
+    "exact6 event keys including mode",
+    "normal and turret mode values",
+    "exactly2 fire_left/fire production audio events",
+    "zero legacy procedural shot audio"
+  ],
+  "innerMarkerCutoff": {
+    "existingData": "profile.weapons.shooter.shotGuideFrame = 8; weaponsFidelityCompletion.weapons.shooter.WeaponParam.ShotGuideFrame = 8",
+    "newHeuristic": "hide inner field cue when impact.guideFrame > weapon.shotGuideFrame",
+    "originalEvidenceConfirmed": false,
+    "unresolved": "Whether retail hides the inner marker when a horizontal shot first contacts the floor after12F, beyond its8F guide, or displays it at another depth/position."
+  }
+}

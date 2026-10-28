@@ -105,7 +105,7 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.ok(a.weaponRunner.s3Stored?.charge>0,'real underwater frame preserves charge keep');
  a.form='kid';a.submerged=false;
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,1,'squid-frame stop may not erase real emergence click');
+ assert.equal(onsets().length,1,'squid-frame stop may not erase real emergence onset');
  f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,1,'duplicate form events cannot repeat a click');
  // A fresh dive whose stored charge was lost must not play the keep cue.
@@ -132,8 +132,8 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.equal(f.calls.filter(c=>c.id==='s3-charger-keeper'&&c.event==='charge').length,1,
    'stored partial charge on Goo Tuber triggers one emergence cue');
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,1,'weapon switching clears Charger stored-charge click routing');
- assert.equal(f.rises.length,1,'switching never repeats the initial rising phrase');
+ assert.equal(onsets().length,1,'weapon switching clears Charger onset routing');
+ assert.equal(f.rises.length,1,'switching does not introduce an extra rising tone');
 });
 
 test('all 14 actual sub admissions produce the corresponding sub sound',async()=>{

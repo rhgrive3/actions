@@ -1,0 +1,13 @@
+{
+  "sourceSha": "a9d32888fdc63996c4c28cde4d96215df61691c6",
+  "contentHash": "56105e36758c15f89e0f2c69db020bf6a1f0d6124efb05acda9653c71e91d69e",
+  "inputHash": "a736650292dd13b932bf3877b3923d8cf5b1b1ecec8163053b1765ac415c6ea5",
+  "sourceInputs": 1490,
+  "artifacts": 2194,
+  "mismatches": 0,
+  "failures": [],
+  "unchangedPackagedAudioFiles": 390,
+  "changedAudioFiles": [],
+  "sourceDataUnchanged": true,
+  "squidBlockByteIdenticalToF8": true
+}

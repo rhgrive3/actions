@@ -1,0 +1,83 @@
+{
+  "status": "accepted fixture corrections combined locally; final-head automatic CI still required after normal push",
+  "baseBefore": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b",
+  "upstreamMain": "da5058b723a02374639056cca7ed840006ee5361",
+  "acceptedOriginalCommits": [
+    "e6fb91faf9c3e491c6589943d8d98c8b1311afa1",
+    "8121de0069d171593dc6d2bcec0085e5946cfffa",
+    "a45886edad7fec791fb5cf46e141cbe991c845c5",
+    "e889dcb906dfc14f9369df06add383ee3715ce41"
+  ],
+  "integratedCommits": [
+    "e6fb91faf9c3e491c6589943d8d98c8b1311afa1",
+    "8121de0069d171593dc6d2bcec0085e5946cfffa",
+    "2ba803d05f9b993062e523835f7bf9dd1a6f5e8b",
+    "6f50c0ebb0ac5a5871556bddc7d4fbf53f7f96d9"
+  ],
+  "codeCheckpoint": "6f50c0ebb0ac5a5871556bddc7d4fbf53f7f96d9",
+  "productionChanges": 0,
+  "changedVerificationFiles": [
+    "patches/splatoon3/tests/roller-brush-held-motion.test.mjs",
+    "patches/splatoon3/tests/camera-aim-controls.test.mjs",
+    "patches/splatoon3/tests/charger-calibrated-mask.metadata.test.mjs",
+    "patches/splatoon3/tests/issue-608-fidelity-aim.test.mjs"
+  ],
+  "sourceAndComposition": {
+    "pass": 45,
+    "fail": 0,
+    "skip": 0,
+    "files": [
+      "roller-brush-held-motion.test.mjs",
+      "camera-aim-controls.test.mjs",
+      "charger-calibrated-mask.metadata.test.mjs",
+      "issue-608-fidelity-aim.test.mjs",
+      "stringer-charge-hud.test.mjs",
+      "shooter-hotpath-lossless.test.mjs",
+      "inkwave-build-input-coverage.test.mjs"
+    ]
+  },
+  "selectedEmitted": {
+    "pass": 8,
+    "fail": 0,
+    "skip": 0,
+    "cases": "four unchanged eight-kit cases plus same-tick aim, bounded wall guide,608centerlines and actual immediate/delayed Charger masks; both fixture-root environment variables point to the same audited site"
+  },
+  "harnessContract": {
+    "originalTestBodies": 4,
+    "byteIdentical": true,
+    "emittedPrefixUnchanged": true,
+    "onlyAddedSource": "export { Kc as catalogRollerSwing };",
+    "registrySha256": "f0af78bbefee2201c90bc4d66dd09ffd4b721d39bcd7dfb3241e3314817423bf",
+    "missingInspectionFailsClosed": true,
+    "standaloneFamilyAbsent": true,
+    "sourceFallback": false
+  },
+  "identity": {
+    "sourceSha": "6f50c0ebb0ac5a5871556bddc7d4fbf53f7f96d9",
+    "contentHash": "596e029ef336213de97d337c5f12752bfb4f3887de28907dde1a6ef5e36fdafd",
+    "inputHash": "8112dc6c08a03da565de515233ef85d41d7fda6f2f5b95ad8336ed7bffaa626d",
+    "sourceInputs": 1491,
+    "artifacts": 2196,
+    "mismatches": 0
+  },
+  "logs": {
+    "source-combined.log": {
+      "file": "source-combined.log.gz",
+      "sha256": "a2dd5269f1ca1ff2899cffae574f02f5e2b8f222e337a0f6640bf7ce50fd41e0"
+    },
+    "emitted-combined.log": {
+      "file": "emitted-combined.log.gz",
+      "sha256": "d1b36d2f3692290940315ab83912d83449b8df6d1e3de1c97c289b7d4db3a712"
+    }
+  },
+  "independentReviewAsReportedByParent": {
+    "heldCompatibility": "all four original statements byte-identical; source4/emitted4 accepted;394gameplay modules from emitted site, no source fallback; missing binding rejected; allartifact hashes unchanged",
+    "ciFixtures": "all19camera/5issue608 bodies byte-identical; five focused source checks accepted; zero delayed stretch and missing terminal scaling each fail the new semantic test; reviewer verified emitted log hashes without independently rebuilding emitted"
+  },
+  "priorFailures": "Exact65 jobs121984873256/shard5 and121984873001/shard4, run40442074376 remain preserved in reports/ci65-guide-mask-fixtures-20261027; local passes are not historical remote passes.",
+  "limits": [
+    "No runtime, new Hissen or Brush geometry, character/rig, weapon data or media changes.",
+    "No rebuild or new browser/audio/retail/hardware observation; runtime artifacts are byte-identical to audited65.",
+    "No manual CI, new PR or denied metadata edit. Final-head normal automatic checks must be read after publication; PR stays Draft/unmerged."
+  ]
+}

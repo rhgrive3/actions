@@ -1,0 +1,44 @@
+(node:5761) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-double body-relative horizontal launch is independent of the low animated rim (2821.68325ms)
+✔ s3-slosher-double-01 body-relative horizontal launch is independent of the low animated rim (2505.343216ms)
+✔ s3-slosher-double-02 body-relative horizontal launch is independent of the low animated rim (2512.141015ms)
+✔ posed native Dread Wringer keeps both streams on body-level launch at 30/60/120 Hz (42723.826985ms)
+(node:5762) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-launcher falling splash releases are clipped before free (3030.05316ms)
+✔ s3-slosher-launcher falling splash releases are clipped before wall (4192.013875ms)
+✔ s3-slosher-launcher falling splash releases are clipped before range (4956.248642ms)
+✔ s3-slosher-launcher falling splash releases are clipped before life (4732.358669ms)
+✔ s3-slosher-launcher falling splash releases are clipped before ghost (6804.701836ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before free (5603.647443ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before wall (4660.264009ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before range (5316.900865ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before life (3479.003678ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before ghost (3872.824073ms)
+✔ Sloshing Machine already has an airborne 38-damage outer attack beyond its direct core (3225.361995ms)
+✔ all four airborne Bloblobber bubbles own independent 32-damage attacks (2667.683994ms)
+(node:5763) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ WeaponSlosherLauncher uses source first-rate endpoints and midpoint without a new random draw (14970.234827ms)
+✔ WeaponSlosherLauncher first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (11296.688412ms)
+✔ WeaponSlosherLauncher source first distance respects lifetime and head-contact boundaries (26751.490889ms)
+✔ WeaponSlosherBathtub uses source first-rate endpoints and midpoint without a new random draw (10322.909992ms)
+✔ WeaponSlosherBathtub first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (6046.444225ms)
+✔ WeaponSlosherBathtub source first distance respects lifetime and head-contact boundaries (15133.353381ms)
+✔ WeaponSlosherWashtub uses source first-rate endpoints and midpoint without a new random draw (12316.479735ms)
+✔ WeaponSlosherWashtub first release keeps native age, interpolated distance and positive drawing at 30/60/120 Hz (10802.958619ms)
+✔ WeaponSlosherWashtub source first distance respects lifetime and head-contact boundaries (30727.775786ms)
+(node:5874) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (2776.178959ms)
+✔ Tri-Slosher floor bead never rotates into a vertical launch when gravity first acts (1733.77285ms)
+✔ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (6830.523019ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140486.209012

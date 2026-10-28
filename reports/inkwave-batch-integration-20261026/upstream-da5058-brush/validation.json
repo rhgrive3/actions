@@ -1,0 +1,119 @@
+{
+  "baseBefore": "85c28b456f1fffe77962c6d52110b013067060d5",
+  "upstream": "da5058b723a02374639056cca7ed840006ee5361",
+  "upstreamMerge": "55760252e814daea6fe3ca43529fa167b993c19c",
+  "focusedCompositionTests": "628e0273824083706e14b45b2ef2326eb77e39be",
+  "brushSourceBranch": "fix/brush-rolling-presentation-20261027",
+  "brushSourceHead": "bbc4a19b9778306b4ebd3f92b630964e612670dc",
+  "brushOriginalCode": "ea8213beba44e96cc674bbc1d1df6d3884d1346e",
+  "brushIntegratedCode": "2c24030143fa85581e64b122a12d23a8ea4bb036",
+  "brushIntegratedTextEvidence": "a3c121bda5c6537ca5051242b92e8d1aaea73033",
+  "sourceConflict": [
+    "scripts/inkwave-source-composition.mjs"
+  ],
+  "compositionResolution": "Retain adaptStringerChargeHud before terminal adaptLosslessShooterHud(rel, adaptQueueExtraDecor(rel, code), replaceOnce). Stringer appends an idempotent crosshair wrapper; terminal formatting follows queue map-marker rewrites; Decor is identity for HUD.",
+  "semanticInteractions": [
+    "single-cell Level queries must preserve exact candidate order, duplicate stamps and overflow; upstream stress test and actual guide/Tower cache tests pass",
+    "native S3 tank remains authoritative; terminal HUD formatting must not reintroduce replaced legacy tank",
+    "Stringer native annulus, track color, stage clocks and wrapper cleanup remain intact; exactly one installer/import and one terminal marker-coordinate formatting block",
+    "Brush updates only current weapon matrix-cache feedback and standing-plane target; no correction-gain, geometry, character/rig/bone, movement, paint or stat change"
+  ],
+  "source": {
+    "hudCompositionPackingAndBuildInputs": 23,
+    "guideAndCollisionRevisions": 14,
+    "loadedBrush": 1,
+    "fiveRollerThreeBrushCompatibility": 1,
+    "totalPass": 39,
+    "fail": 0,
+    "skip": 0
+  },
+  "emitted": {
+    "hudStagesPackingAndGuideRevisions": 18,
+    "loadedBrush": 1,
+    "totalSupportedPass": 19,
+    "failSupported": 0,
+    "skipSupported": 0
+  },
+  "unsupportedEmittedCompatibility": {
+    "commandLog": "emitted-brush.log.gz",
+    "supportedBrushPass": 1,
+    "heldCompatibilityFail": 1,
+    "error": "ENOENT: patches/splatoon3/runtime/weapon-models/rollers.mjs",
+    "cause": "The existing held-motion fixture directly exports a model family which the production builder deliberately inlines into registry.mjs. Its source path passed; no assertion or fixture was changed to conceal this unsupported emitted invocation.",
+    "automaticEmittedSelection": false
+  },
+  "build": "one fresh standard optimized build",
+  "identity": {
+    "sourceSha": "a3c121bda5c6537ca5051242b92e8d1aaea73033",
+    "contentHash": "596e029ef336213de97d337c5f12752bfb4f3887de28907dde1a6ef5e36fdafd",
+    "inputHash": "8112dc6c08a03da565de515233ef85d41d7fda6f2f5b95ad8336ed7bffaa626d",
+    "sourceInputs": 1491,
+    "artifacts": 2196,
+    "mismatches": 0
+  },
+  "startup": {
+    "status": "passed",
+    "revision": "eda8dcfe1ec3098522bce1ed40cf915504a56a595c55353919245ab05d992de1",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78296,
+    "initialJSBytes": 1937922,
+    "criticalHTMLBytes": 24030,
+    "precacheCount": 553,
+    "precacheBytes": 7652000,
+    "workerBytes": 90948,
+    "declaredBytes": 16071479,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "logs": {
+    "source-hud.log": {
+      "file": "source-hud.log.gz",
+      "sha256": "686e723fe1d346eacd9386175a3d29681318b7df6ae8dbdb1ac835799aef9a50"
+    },
+    "source-cache.log": {
+      "file": "source-cache.log.gz",
+      "sha256": "fc3e219f58cb75c90ae91866a6072bf80a06447946e921f2681146afd746b4cb"
+    },
+    "source-brush.log": {
+      "file": "source-brush.log.gz",
+      "sha256": "584257bf901864d3646a0315e6d417392929ae339ae1302631a5fe9d146159c2"
+    },
+    "source-brush-compat.log": {
+      "file": "source-brush-compat.log.gz",
+      "sha256": "306ee01d934c0394c5b51e0086f9ec34eae91bff5363010e27b0add65fc4cbdd"
+    },
+    "build.log": {
+      "file": "build.log.gz",
+      "sha256": "c36aa324deb4b9e4c1d6c6defe85e25fb706dcb9710bdbedc74004352a79f34f"
+    },
+    "emitted-hud-cache.log": {
+      "file": "emitted-hud-cache.log.gz",
+      "sha256": "831ccd73f0fdc7e8cf3c0a485829a7549ea6d1f42a16a8742df86c977883db8f"
+    },
+    "emitted-brush.log": {
+      "file": "emitted-brush.log.gz",
+      "sha256": "70df45a01c49f9f0cbd33e2e3d1df505058daea3483e468432d9cbdd47ed70cd"
+    }
+  },
+  "browserEvidence": "No new browser run in this integration. Imported owner text binds historical normal-input Brush captures to that candidate; earlier fixed4ce Pencil and90bb Charger/Tri receipts remain historical.",
+  "brushRemainingLimits": [
+    "entry actual-vertex clearance +14.5739cm to +1.1402cm over one sampled gameplay second; sparse sampling does not establish exact settling duration",
+    "actual exit vertex penetration6.0285cm to4.0480cm; old bounding-box data does not establish baseline actual penetration or attribution",
+    "loaded regression represents Inkbrush; held compatibility spans fiveRollers/threeBrushes at30/60/120Hz; no original pixel or native-triangle browser parity claim"
+  ],
+  "handoffSafety": {
+    "changedFiles": 12,
+    "publishedAbove4ceCommits": 2,
+    "onlyTextSuffixes": true,
+    "privateImageCommitImported": false,
+    "optionalPrivateObjectAncestryQuery": "a0591746 unavailable remotely (upload-pack not our ref, exit128); no successful object fetch and no retry; published two-commit delta and all12 text paths inspected"
+  },
+  "unresolved": [
+    "Hissen main size/floor-drop morphology not accepted or imported",
+    "horizontal inner-marker original projection and retail/hardware/audio coverage gaps remain",
+    "exact final-head automatic CI must be inspected after normal push; no manual duplicateCI or merge"
+  ],
+  "originalReceipts": "4ce failing CI and b7 correction receipts preserved unchanged; prior f891 integration retained."
+}

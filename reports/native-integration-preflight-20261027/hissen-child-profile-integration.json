@@ -1,0 +1,149 @@
+{
+  "recordedAt": "2026-10-27T12:21:06.804795+00:00",
+  "status": "reviewed-implementation-candidate-not-pixel-acceptance",
+  "localSourceHead": "04bd3d307746f7679eb862466ed3a31954d93369",
+  "localSourceTree": "96af5d4ecbb069469e9f80649789a1a1bc666c60",
+  "incomingReviewedCommit": "257a6223efe7b206826de1c2a409e6b6fa0de472",
+  "currentPublishedParent": "0f9cbe016bac8018c2a16520a7bf11ec0bb34bfa",
+  "cleanCherryPick": true,
+  "allNineIncomingFileBlobsExactlyPreserved": true,
+  "preservedFixtureAndCatalogFileBlobs": [
+    "patches/splatoon3/tests/explosher-stage-composition.test.mjs",
+    "patches/splatoon3/tests/explosher-capture-guards.test.mjs",
+    "scripts/check-inkwave-motion-catalog.mjs"
+  ],
+  "buildAudit": {
+    "sourceSha": "04bd3d307746f7679eb862466ed3a31954d93369",
+    "contentHash": "4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630",
+    "inputHash": "38672f2e6f7abc6a3558043705160e9451a5ea4a5277c7afab36a5f0d5fbe8c6",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "shippingDelta": {
+    "beforeContent": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+    "candidateContent": "4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630",
+    "sourceInputDeltas": [
+      "patch/runtime/projectile-presentation.mjs"
+    ],
+    "builderScriptUnchanged": true,
+    "toolchainUnchanged": true,
+    "rawArtifactKeyOrHashChangesIncludingRevisionNames": 2206
+  },
+  "checks": {
+    "source": {
+      "pass": 62,
+      "fail": 0,
+      "skip": 0
+    },
+    "emitted": {
+      "pass": 20,
+      "fail": 0,
+      "skip": 0
+    },
+    "canonicalVerifier": {
+      "pass": 601,
+      "fail": 0,
+      "skip": 0
+    },
+    "preservedFixtureObserver": {
+      "pass": 37,
+      "fail": 0,
+      "skip": 0
+    },
+    "additionalDirectNodeImportConsumers": {
+      "pass": 26,
+      "fail": 0,
+      "skip": 0
+    },
+    "oldEmittedNegative": {
+      "exit": 1,
+      "expectedActual": [
+        0.12,
+        4,
+        0.9
+      ],
+      "expectedCandidate": [
+        0.3,
+        4,
+        0.32
+      ],
+      "isCandidateFailure": false
+    }
+  },
+  "beforeReference": {
+    "head": "9b2b8f70cc35f630c87bcd80e728654cc7102dd8",
+    "artifactId": 12732101436,
+    "bytes": 73074746,
+    "zipSHA256": "4d27f9d7175a6a45bb6c920f9436b1e25c0e196810ea3a7024d9b1adfd357879",
+    "independentlyPreserved": true,
+    "frames": [
+      5,
+      7,
+      9
+    ]
+  },
+  "current0fCIStatusBeforePublication": {
+    "run": 40501091251,
+    "observed": "2026-10-27T12:19:40Z",
+    "queuedRealJobs": 11,
+    "explicitDiagnosticSkips": 3,
+    "running": 0,
+    "noUsefulCaptureYet": true
+  },
+  "nextAcceptance": [
+    "normal automatic exact-new-head catalog/Hissen source/build identity",
+    "actual matched F5/F7/F9 visible child fragments and unchanged main/physical/paint/camera/seed state",
+    "independent raw PNG/receipt review; profile metadata alone is not pixel proof",
+    "complete required exact-new-head CI; retain Draft/unmerged"
+  ],
+  "limitations": [
+    "shipping runtime is CHANGED from d88 to4ec, not a QA-only unchanged-runtime claim",
+    "existing Slosher thinness/rim is an INKWAVE reconstruction calibration, not measured retail morphology",
+    "Hissen main size and precise retail child morphology remain unverified",
+    "native-prebuilt files are LFS pointers; normal build fallback is not payload stage acceptance",
+    "no new local browser capture, original/private media upload, manualCI or main merge"
+  ],
+  "evidence": {
+    "build.log": {
+      "bytes": 1210,
+      "sha256": "78319747a9e23a2c29f434a2bf00d65ce5280dc4ee3feee3bb184941092c2035"
+    },
+    "startup-budget.log": {
+      "bytes": 520,
+      "sha256": "8a105d9dc2fd7d23b1576cb24408c95048d6904c32a5ab97951730193c5d75a9"
+    },
+    "build-audit.json": {
+      "bytes": 294,
+      "sha256": "288a05b1e24451014143ff2c32bad5aa36df65567ed234b288f1ac5065c94574"
+    },
+    "source-delta.json": {
+      "bytes": 383,
+      "sha256": "be34040f4de64ae92e5f6b6c662971526d25992e0d7634d795234098a47850e8"
+    },
+    "source-complete.log": {
+      "bytes": 9920,
+      "sha256": "fe72ece682cd704da50349beba8ba589955de88b56d3b1340e5995b958404b05"
+    },
+    "emitted.log": {
+      "bytes": 8500,
+      "sha256": "a574ce978a4698f62fc63419d462294e484074c4a4b2acd77962c18e42af3dda"
+    },
+    "verifier.log": {
+      "bytes": 55168,
+      "sha256": "bbf1d2b6897efb411b65654163316e04ebfe6bf9a2e6bbab71197e6bfd921d67"
+    },
+    "preserved-fixture-observer.log": {
+      "bytes": 4068,
+      "sha256": "48d523ce8388bed7d1801a604912e1f9395cf76afbcbb311396bff231cc83a34"
+    },
+    "direct-import-consumers.log": {
+      "bytes": 3163,
+      "sha256": "1f3b7aade68b5e53b9b371212d237c78cdf4011ad9af30f11ef01ea811a8b5a3"
+    },
+    "old-emitted-negative.log": {
+      "bytes": 1448,
+      "sha256": "6f67f9119d42ebb4613589739fa6e4ba8de785b2710229729a7305f4c716d88c"
+    }
+  }
+}

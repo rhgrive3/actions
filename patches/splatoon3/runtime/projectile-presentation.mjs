@@ -4,6 +4,7 @@
 // shooter cross-section multiplier below is an INKWAVE visual calibration,
 // never used for player or field collision, damage, trajectory or turf paint.
 import { sharedBucketDraw, sharedBucketDrawIndex, VISUAL_WIDTH_CALIBRATION } from './projectile-visuals.mjs';
+import { INK_LOOK } from './weapons-fidelity.mjs';
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -184,10 +185,14 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;
-    // Rounded bead stretched along its fall (S3 Splattershot side frames).
+    // Keep the existing short tail. Hissen's child uses the already-shipped
+    // analytic Slosher rim/vertical-thin profile rather than a round Shooter
+    // bead. This is a visual-coherence reconstruction, not a retail mesh claim;
+    // source radius, instance scale/heading, count and physical state stay put.
     shapes[o]=strand?2.4:1.05+Math.min(.6,speed*.006);
     shapes[o+1]=.03;shapes[o+2]=(d.seed||0)*30+(d.frames||0)*.65;shapes[o+3]=0;
-    inkLook[o]=.12;inkLook[o+1]=4;inkLook[o+2]=.9;
+    const look=tri?INK_LOOK.slosh:INK_LOOK.droplet;
+    inkLook[o]=look[0];inkLook[o+1]=look[1];inkLook[o+2]=look[2];
     inkLook[o+3]=((d.seed||0)*43.98)%(Math.PI*2);
     petals[count*2]=0;petals[count*2+1]=0;
     count++;drawn++;

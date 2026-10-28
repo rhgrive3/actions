@@ -12,6 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { ALL_31_PRS_FIXTURE_SHA256 } from '../../../scripts/lib/inkwave-31pr-paint-source-pair.mjs';
 import { rollerDrumSupport, rollerStickActive } from '../runtime/roller.mjs';
+import { traceRollingFloor } from '../runtime/rolling-floor.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
@@ -24,7 +25,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3",
+  "patches/splatoon3/runtime/roller.mjs": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -62,6 +63,27 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     const raw = read(rel);
     assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
     assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
+    if(rel==='patches/splatoon3/runtime/roller.mjs'){
+      // The downhill fix adds only a shared collision-floor import and this
+      // admission fallback. Undo those exact reviewed edits and prove the
+      // entire previous pinned source is byte-identical; no pin is relaxed.
+      const previous=exactFault(exactFault(raw,
+        "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
+        "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
+      assert.equal(createHash('sha256').update(previous).digest('hex'),
+        '121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3', 'previous reviewed #847 roller input');
+    } else {
+      // Incoming main only replaces the two numeric no-motion predicates.
+      // Undo those exact edits and retain the entire pre-merge contact pin.
+      const previous=exactFault(exactFault(exactFault(raw,
+        'function negligiblePlanarMotion(x, z) {\n  if (x === 0 && z === 0) return true;\n  if (Math.abs(x) > 1e-9 || Math.abs(z) > 1e-9) return false;\n  return Math.hypot(x, z) <= 1e-9;\n}\n','', 'contact-motion-helper'),
+        'negligiblePlanarMotion(a.intent?.move?.x || 0, a.intent?.move?.z || 0)',
+        'Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9','contact-stick-predicate'),
+        'negligiblePlanarMotion(a.vel.x, a.vel.z)',
+        'Math.hypot(a.vel.x, a.vel.z) <= 1e-9','contact-velocity-predicate');
+      assert.equal(createHash('sha256').update(previous).digest('hex'),
+        'e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d','previous reviewed #847 contact input');
+    }
     let source = adaptProductionSource(rel, raw);
     if (rel === 'patches/splatoon3/runtime/roller.mjs') {
       source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
@@ -338,4 +360,39 @@ test('847 explicit current-source admission faults expose the guarded regression
   airborne.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,airborne);
   assert.equal(airborne.weaponRunner.rolling, false, 'counterfactual feet-only support rejects airborne drum wall contact');
   f.G.actors = [];
+});
+
+// Direct helper CPU controls: no browser/GPU or retail-equivalence claim.
+test('847 incoming no-motion shortcut preserves the exact numeric contact threshold',()=>{
+  const raw=fs.readFileSync(path.join(ROOT,'patches/splatoon3/runtime/roller-contact-paint.mjs'),'utf8');
+  const source=raw.match(/function negligiblePlanarMotion\(x, z\) \{[\s\S]*?\n\}/)?.[0];assert.ok(source);
+  const negligible=new Function(source+';return negligiblePlanarMotion;')();
+  const values=[0,-0,1e-12,-1e-12,.7e-9,-.7e-9,.8e-9,-.8e-9,1e-9,-1e-9,1.0000001e-9,-1.0000001e-9,1,-1,Infinity,-Infinity,NaN];
+  for(const x of values)for(const z of values)assert.equal(negligible(x,z),Math.hypot(x,z)<=1e-9);
+});
+
+test('847 shared floor trace retains nested leases and clears pooled references on early returns and errors',async()=>{
+  const f=await production(),V=(x=0,y=0,z=0)=>new f.THREE.Vector3(x,y,z);
+  const owner={pos:V(),ground:{hit:true,face:0}},at=V(0,0,.75);
+  const contact={point:V(),origin:V(),down:V(),hit:new f.Hit()};
+  const face={paintable:true,n:V(0,1,0),origin:V(-2,0,-2),u:V(1,0,0),v:V(0,0,1),su:4,sv:4};
+  const level={faces:[face],blocks:[{solid:true,grate:false,faces:[0]}]};
+  const physics={raycast(_origin,_down,_length,hit){hit.hit=true;hit.face=0;hit.point.copy(at);return hit;}};
+  const buffers=[];let inside=false,fail=false,reenter=true;
+  level.queryBlocks=(_x,_z,_mx,_mz,ids)=>{
+    assert.deepEqual(ids,[]);ids.push(0);buffers.push(ids);
+    if(reenter&&!inside){inside=true;try{assert.ok(traceRollingFloor(owner,at,level,physics,contact));}finally{inside=false;}assert.deepEqual(ids,[0]);}
+    if(fail)throw Error('floor-query-fault');
+  };
+  assert.ok(traceRollingFloor(owner,at,level,physics,contact));
+  assert.notEqual(buffers[0],buffers[1],'nested invocations cannot borrow the outer ids');
+  const leases=contact.rollScratch.slice();assert.equal(leases.length,2);
+  const clean=()=>{assert.equal(contact.rollScratchDepth,0);for(const lease of leases){assert.deepEqual(lease.ids,[]);assert.deepEqual(lease.triangle,[null,null,null]);}};
+  clean();assert.ok(traceRollingFloor(owner,at,level,physics,contact));assert.equal(buffers[0],buffers[2]);assert.deepEqual(contact.rollScratch,leases);clean();
+  fail=true;assert.throws(()=>traceRollingFloor(owner,at,level,physics,contact),/floor-query-fault/);fail=false;clean();
+  reenter=false;level.blocks[0].grate=true;assert.equal(traceRollingFloor(owner,at,level,physics,contact),undefined);clean();
+  const triangle={a:V(-3,0,-3),b:V(3,0,-3),c:V(0,0,3)};
+  level.triangleWorld={flags:[0],normals:[0,1,0],queryBox(_min,_max,visit){visit(0);},triangle:()=>triangle};level.data={triangleFace:[0]};
+  level.queryDynamicBlocks=(_x,_z,_mx,_mz,ids)=>{assert.deepEqual(contact.rollScratch[0].triangle,[triangle.a,triangle.b,triangle.c]);ids.push(0);throw Error('native-query-fault');};
+  assert.throws(()=>traceRollingFloor(owner,at,level,physics,contact),/native-query-fault/);clean();
 });

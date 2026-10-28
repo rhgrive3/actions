@@ -16,6 +16,7 @@ import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';
 import {adaptQualitySource} from '../../local-quality/adapter.mjs';
 import {adoptCanvasTouch as sourceAdopt,continueCanvasTouch as sourceContinue} from '../../local-quality/first-touch-adapter.mjs';
 import {adaptTouchPointerLock} from '../touch-pointerlock-adapter.mjs';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const RAW = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -42,7 +43,7 @@ async function boot({exit='async',request='immediate'}={}) {
  function load(file){if(modules.has(file))return modules.get(file);const rel=path.relative(UPSTREAM,file);let mod;
   if(['src/core/ctx.js','src/config.js','src/game/physics.js'].includes(rel))mod=synthetic(file,f);
   else if(file==='three')mod=synthetic(file,f.THREE);
-  else {const raw=fs.readFileSync(file,'utf8');const code=!SITE&&file.startsWith(UPSTREAM+path.sep)?adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,raw)))):raw;mod=new vm.SourceTextModule(code,{context,identifier:file});}
+  else {const raw=fs.readFileSync(file,'utf8');const code=!SITE&&file.startsWith(UPSTREAM+path.sep)?(rel==='src/core/input.js'?adaptBuildSource(rel,raw):adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,raw))))):raw;mod=new vm.SourceTextModule(code,{context,identifier:file});}
   modules.set(file,mod);return mod;}
  const entry=new vm.SourceTextModule("export {Input} from './src/core/input.js';",{context,identifier:path.join(UPSTREAM,'pointer-lock-fixture.js')});
  await entry.link((spec,from)=>{if(spec==='three')return load('three');let file=path.resolve(path.dirname(from.identifier),spec);if(!SITE&&file.startsWith(path.join(UPSTREAM,'patches')+path.sep))file=path.join(ROOT,path.relative(UPSTREAM,file));return load(file);});await entry.evaluate();
@@ -57,7 +58,7 @@ async function boot({exit='async',request='immediate'}={}) {
   mouse(target=canvas){event('pointerdown',{pointerType:'mouse',target});},move(){event('mousemove',{movementX:1,movementY:2});},
   overlay:(kind='look')=>overlayTarget(kind),
   completePendingLock(){assert.equal(typeof resolvePendingLock,'function');resolvePendingLock();},
-  rejectPendingLock(){assert.equal(typeof rejectPendingLock,'function');rejectPendingLock(Error('unadjusted movement unavailable'));},
+  rejectPendingLock(name='NotSupportedError'){assert.equal(typeof rejectPendingLock,'function');const error=Error('unadjusted movement unavailable');error.name=name;rejectPendingLock(error);},
   lockError(){for(const fn of docListeners.get('pointerlockerror')||[])fn();},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
@@ -104,6 +105,12 @@ test('#1396 modern error event preserves the eligible plain-pointer fallback',as
  const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
  h.lockError();h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
  assert.equal(h.requests(),2);h.completePendingLock();assert.equal(h.input.locked,true);
+});
+for(const name of ['Error','NotAllowedError','SecurityError'])test(`#1396 ${name} rejection never auto-retries or remembers a preference`,async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();h.rejectPendingLock(name);
+ await Promise.resolve();await Promise.resolve();await Promise.resolve();
+ assert.equal(h.requests(),1,name+' must not trigger automatic plain request');
+ assert.equal(h.input._pointerLockPlainPreference??null,null,name+' must not establish a preference');
 });
 test('#1396 legacy event-only error retires a failed request for a new user gesture',async()=>{
  const h=await boot();h.unlocked();h.input.requestLock();h.lockError();h.input.requestLock();

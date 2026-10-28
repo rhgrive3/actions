@@ -1,0 +1,150 @@
+{
+  "target": "26a69c1c8795e5177808028fd818c7f0a5036de8",
+  "kind": "read-only inventory and artifact consistency audit; no gameplay/test replay",
+  "chargers": [
+    {
+      "base": "s3-charger-quick",
+      "actor": "WeaponChargerQuick",
+      "route": "catalogue Charger",
+      "fullFrames": 45,
+      "scoped": false,
+      "divide": 1,
+      "alternateIds": [
+        "s3-charger-quick-01"
+      ]
+    },
+    {
+      "base": "charger",
+      "actor": "WeaponChargerNormal",
+      "route": "native Charger",
+      "fullFrames": 60,
+      "scoped": false,
+      "divide": 1,
+      "alternateIds": [
+        "charger-01",
+        "charger-02"
+      ]
+    },
+    {
+      "base": "s3-charger-normalscope",
+      "actor": "WeaponChargerNormalScope",
+      "route": "catalogue Charger",
+      "fullFrames": 60,
+      "scoped": true,
+      "divide": 1,
+      "alternateIds": [
+        "s3-charger-normalscope-01",
+        "s3-charger-normalscope-02"
+      ]
+    },
+    {
+      "base": "s3-charger-long",
+      "actor": "WeaponChargerLong",
+      "route": "catalogue Charger",
+      "fullFrames": 92,
+      "scoped": false,
+      "divide": 1,
+      "alternateIds": [
+        "s3-charger-long-01"
+      ]
+    },
+    {
+      "base": "s3-charger-longscope",
+      "actor": "WeaponChargerLongScope",
+      "route": "catalogue Charger",
+      "fullFrames": 92,
+      "scoped": true,
+      "divide": 1,
+      "alternateIds": [
+        "s3-charger-longscope-01"
+      ]
+    },
+    {
+      "base": "s3-charger-light",
+      "actor": "WeaponChargerLight",
+      "route": "catalogue Charger",
+      "fullFrames": 20,
+      "scoped": false,
+      "divide": 1,
+      "alternateIds": [
+        "s3-charger-light-01"
+      ]
+    },
+    {
+      "base": "s3-charger-keeper",
+      "actor": "WeaponChargerKeeper",
+      "route": "catalogue Charger",
+      "fullFrames": 71,
+      "scoped": false,
+      "divide": 1,
+      "alternateIds": [
+        "s3-charger-keeper-01"
+      ]
+    },
+    {
+      "base": "s3-charger-pencil",
+      "actor": "WeaponChargerPencil",
+      "route": "catalogue Charger",
+      "fullFrames": 72,
+      "scoped": false,
+      "divide": 5,
+      "alternateIds": [
+        "s3-charger-pencil-01"
+      ]
+    }
+  ],
+  "bows": [
+    {
+      "base": "s3-stringer-normal",
+      "actor": "WeaponStringerNormal",
+      "firstFrames": 30,
+      "fullFrames": 72,
+      "arrows": 3,
+      "alternateIds": [
+        "s3-stringer-normal-01",
+        "s3-stringer-normal-02"
+      ]
+    },
+    {
+      "base": "s3-stringer-short",
+      "actor": "WeaponStringerShort",
+      "firstFrames": 12,
+      "fullFrames": 34,
+      "arrows": 3,
+      "alternateIds": [
+        "s3-stringer-short-01",
+        "s3-stringer-short-02"
+      ]
+    },
+    {
+      "base": "s3-stringer-explosion",
+      "actor": "WeaponStringerExplosion",
+      "firstFrames": 40,
+      "fullFrames": 80,
+      "arrows": 5,
+      "alternateIds": [
+        "s3-stringer-explosion-01"
+      ]
+    }
+  ],
+  "counts": {
+    "chargerBases": 8,
+    "chargerAlternates": 10,
+    "bowBases": 3,
+    "bowAlternates": 5,
+    "additionalLegacyScopeAliases": 1
+  },
+  "legacyScopeAlias": {
+    "id": "charger_scope",
+    "audioSource": "s3-charger-normalscope",
+    "route": "native Charger; original optics/kit retained"
+  },
+  "artifactContinuity": {
+    "eightKindAudioAndHudComponentBuild": "bef398c7163daafa2b119a158e234b90e38155ab38189fbdebc7ff5ef4beb3b2",
+    "nativeELiterTriTouchBuild": "6a41bfa4a334910e156f484fee14e5e09f4bba5b210a18bdffbe1d53057168a5",
+    "fixedCurrentBuild": "d23f81a8cd4457830c6fff53367a21e63f551e8321b8bd9eef3295eb5825d0a0",
+    "selectedAudioAssetStageHudDataAndRegistryArtifacts": 433,
+    "changed": [],
+    "meaning": "Identical relevant modules/data/asset bytes support shared-path reuse of historical audio/component evidence; ordinary game-input and visual/hardware claims remain attributed to their actual tested head."
+  }
+}

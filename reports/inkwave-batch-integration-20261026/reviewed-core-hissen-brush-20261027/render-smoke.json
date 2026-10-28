@@ -1,0 +1,61 @@
+{
+  "kind": "controlled real-WebGL emitted component smoke, no gameplay/input/retail acceptance",
+  "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+  "inputHash": "69308c060120b9ebe716423cc8d41e81cd318132696c180fd926cb87c318bce0",
+  "chromiumSandbox": true,
+  "verified": [
+    "patches/local-quality/ink-volume/pack.mjs",
+    "patches/local-quality/ink-volume/runtime.mjs",
+    "vendor/three/build/three.module.js",
+    "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json",
+    "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/ink-volume/assets/hissen-fallback/volumes.bin.gz"
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "path": "patches/local-quality/ink-volume/pack.mjs",
+      "bytes": 3639
+    },
+    {
+      "path": "patches/local-quality/ink-volume/runtime.mjs",
+      "bytes": 12899
+    },
+    {
+      "path": "vendor/three/build/three.module.js",
+      "bytes": 618739
+    },
+    {
+      "path": "patches/local-quality/ink-volume/assets/hissen-fallback/manifest.json",
+      "bytes": 11813
+    },
+    {
+      "path": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/local-quality/ink-volume/assets/hissen-fallback/volumes.bin.gz",
+      "bytes": 1335253
+    }
+  ],
+  "browser": "154.0.8037.57",
+  "render": {
+    "status": "passed",
+    "nonzeroPixels": 594,
+    "glError": 0,
+    "metrics": {
+      "active": 1,
+      "culled": 0,
+      "overflow": 0,
+      "fallback": 0,
+      "fallbackDropped": 0,
+      "triangles": 5300,
+      "bytes": 3685736,
+      "batches": 1
+    },
+    "gpu": {
+      "calls": 1,
+      "triangles": 5300
+    },
+    "resources": 70,
+    "disposedOnce": true,
+    "bytesAfterDispose": 0
+  },
+  "status": "passed",
+  "closed": true
+}

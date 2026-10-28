@@ -1,18 +1,18 @@
 // Presentation calibration from Nintendo's JP ikatohito/movie/modal_pc.mp4 (2026-10-21).
 // Retail particle counts/curves are unknown; these are INKWAVE visual settings.
-// The swimming crest is connected liquid geometry; normal swimming emits no bead particles.
+// Surface curls and a fixed eight-drop geometry pool use the same surface owner.
 export function adaptSwimSplash(rel, code, replaceOnce) {
   if (rel === 'src/game/actor.js') {
-    return replaceOnce(code,
+    return "import { swimSurfaceVisible, swimSurfaceSpeed } from '../../patches/local-quality/swim-surface.mjs';\n" + replaceOnce(code,
       `    if (a.form === 'swim' && hs > 2 && G.fx && swimSplashVisible(this)) {
       this._wakeT = (this._wakeT || 0) + dt;
       if (this._wakeT > 0.05) { this._wakeT = 0; G.fx.wake(this.pos, _v.set(this.vel.x, 0, this.vel.z).normalize(), this.color, hs); }
     }`,
-      `    if (a.form === 'swim' && this.grounded && hs > 2 && G.fx && swimSplashVisible(this)) {
+      `    if (((a.form === 'swim' && this.grounded) || a.form === 'climb') && swimSurfaceSpeed(this) > 1e-4 && G.fx && swimSurfaceVisible(this)) {
       this._wakeT = (this._wakeT || 0) + dt;
       while (this._wakeT + 1e-10 >= 1 / 60) {
         this._wakeT = Math.max(0, this._wakeT - 1 / 60);
-        G.fx.wake(this.pos, _v.set(this.vel.x, 0, this.vel.z).normalize(), this.color, hs, this.groundN, this);
+        G.fx.wake(this.pos, _v.set(this.vel.x, 0, this.vel.z).normalize(), this.color, hs, this.climbing ? a.wallNormal : this.groundN, this);
       }
     } else this._wakeT = 0;`, 'swim splash cadence');
   }

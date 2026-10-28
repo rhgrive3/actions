@@ -111,6 +111,11 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-mode--range .iw-mode__tape .iw-dis
 @keyframes iwr-target { 0%, 100% { rotate: 0deg; } 30% { rotate: -6deg; translate: 0 calc(var(--u) * -.4); } 60% { rotate: 4deg; } }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range .iw-mode { width: 100%; min-height: 300px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Match the compact landscape grid; the more-specific range rule above otherwise
+     forces every card to 300px and makes the grid rows overlap. */
+  :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range .iw-mode { min-height: 96px; }
+}
 @media (max-width: 600px) {
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel__row.has-range { grid-template-columns: minmax(0, 1fr); }
 }

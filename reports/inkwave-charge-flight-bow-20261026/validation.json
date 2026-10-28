@@ -1,0 +1,136 @@
+{
+  "sourceCommit": "9a89494320a7f9cfed62c83e0830bfe52d72f76e",
+  "contentHash": "32ad27a7264b34c2497796261b32105a70bc2be664e13364691600553e946cc3",
+  "inputHash": "3d975e375e930275d8867dc3f7a14fb14de7b4de6e800659950d2cb556b7bfe7",
+  "inputsMatchedToCommit": 1483,
+  "artifactsHashed": 2186,
+  "baseCommit": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "sourceRegressionTests": {
+    "uniqueCases": 132,
+    "passedAfterFocusedCorrections": 132,
+    "fullSuiteRun": false,
+    "groups": [
+      {
+        "paths": [
+          "catalog-charger-stripe",
+          "pitch-preserving-charge",
+          "shared-splat-rise",
+          "stringer-source-1130"
+        ],
+        "tests": 21
+      },
+      {
+        "paths": [
+          "catalog-charge-flight-stages",
+          "catalog-charger-remote-audio",
+          "reported-audio-fidelity",
+          "weapon-audio",
+          "charger-charge-rise",
+          "catalog-charge-keep-input",
+          "catalog-lact-charge-keep"
+        ],
+        "tests": 83,
+        "initialFailures": 3,
+        "correctedRerunCases": 21
+      },
+      {
+        "paths": [
+          "audio-v11-real-only",
+          "audio-borrowed-recorded-mains"
+        ],
+        "tests": 26,
+        "initialFailures": 1,
+        "correctedRerunCases": 1
+      },
+      {
+        "paths": [
+          "charger-postshot-flight (high-stage and native footprint cases only)"
+        ],
+        "tests": 2,
+        "warning": "Existing headless fixture logged ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING for dynamic imports; both selected paint cases passed."
+      }
+    ]
+  },
+  "emittedRegressionTests": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "paths": [
+      "catalog-charge-flight-stages",
+      "catalog-charger-stripe",
+      "stringer-source-1130",
+      "catalog-charger-remote-audio",
+      "shared-splat-rise"
+    ]
+  },
+  "quickCheck": "passed",
+  "startupBudget": "passed",
+  "audioBrowser": {
+    "passed": true,
+    "baseChargers": 8,
+    "trustedUnlock": true,
+    "runningContext": true,
+    "nonSilentMasterGraph": true,
+    "actualPitchPreservingWorkerVariants": 5,
+    "playbackRate": 1,
+    "missingChargeAssetBlocksStart": true,
+    "evidence": "audio-browser.json"
+  },
+  "ordinaryInput": {
+    "status": "incomplete",
+    "action": "observe E-liter full charge from ordinary held mouse input",
+    "target": "s3-charger-long, Practice Range",
+    "outcome": "timed out after 15000 ms; full-charge and short-flight observation incomplete",
+    "notDenied": true,
+    "completed": [
+      "trusted main -> mode -> Practice Range menu input",
+      "Bamboo charge observations q=0, 0.75, 1",
+      "actual Bamboo and E-liter gameplay screenshots inspected"
+    ],
+    "limitations": [
+      "software Chromium produced only three Bamboo render samples",
+      "three pointerlockerror events recorded",
+      "no head or falling drop was sampled by the ordinary-input observer",
+      "Stringer ordinary-input stage observation not reached",
+      "no debug stepping, injected fire, clock changes or actor state writes used"
+    ],
+    "evidence": "ordinary-input-limitation.json",
+    "localScreenshots": [
+      "/workspace/scratch/charge-evidence/input-final/s3-charger-light.png",
+      "/workspace/scratch/charge-evidence/input-final/failure.png"
+    ]
+  },
+  "reticleHandoff": {
+    "status": "separate worker integration required",
+    "helper": "patches/splatoon3/runtime/catalog-charge-stages.mjs:catalogChargeStage(weapon, charge)",
+    "runnerFields": [
+      "chargeStage",
+      "chargeStageProgress"
+    ],
+    "weaponField": "firstChargeTime",
+    "projectionOrCssEditsInThisBranch": false
+  },
+  "originalGameParity": {
+    "reference": "Splatoon 3 11.3.0 / Leanny 7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+    "noGear": true,
+    "retailVisualCaptureCompared": false,
+    "retailSoundParity": false,
+    "newNintendoMediaAdded": false
+  },
+  "remaining": [
+    "reticle worker must bind the Stringer phase into its visible gauge",
+    "ordinary-input airborne visual/paint timing and bow stage capture require a browser with usable frame cadence",
+    "physical speakers, Switch, WebKit and hardware iPad not measured"
+  ],
+  "sourceLogsLocal": [
+    "/workspace/scratch/charge-tests-first.log",
+    "/workspace/scratch/charge-tests-second.log",
+    "/workspace/scratch/charge-tests-fixed.log",
+    "/workspace/scratch/charge-tests-admission.log",
+    "/workspace/scratch/charge-tests-admission-fixed.log",
+    "/workspace/scratch/charge-emitted-tests.log",
+    "/workspace/scratch/charge-native-parity.log"
+  ],
+  "sourceIdentityPassed": true,
+  "status": "implemented; ordinary-input visual validation incomplete; Stringer reticle integration pending"
+}

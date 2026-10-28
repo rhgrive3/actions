@@ -1,6 +1,21 @@
 import {adaptNativeRuleAvailability} from './rule-availability-adapter.mjs';
 export function adaptNativeStages(rel,code){
  const once=(a,b)=>{if(code.split(a).length!==2)throw Error('Native stage adapter conflict: '+rel+' / '+a.slice(0,70));code=code.replace(a,b);};
+ if(rel==='src/world/level.js'){
+  // This revision belongs to the real collision writers, never query stamps.
+  // NativeLevel inherits these hooks; unrelated/custom worlds stay unversioned.
+  once('    this._stamp = 1;', '    this._stamp = 1;\n    this.collisionRevision = 0;');
+  once('    this.blocks.push(b);', '    this.blocks.push(b);\n    this.markCollisionChanged();');
+  once('  _buildHash() {', '  _buildHash() {\n    this.markCollisionChanged();');
+  once('  _hxi(x) {', `  // Explicit producers call this after an in-place collision change. A rebuild
+  // also invalidates conservatively. Exhaustion disables reuse instead of wrapping.
+  markCollisionChanged() {
+    const revision = this.collisionRevision;
+    this.collisionRevision = Number.isSafeInteger(revision) && revision >= 0 && revision < Number.MAX_SAFE_INTEGER
+      ? revision + 1 : undefined;
+  }
+  _hxi(x) {`);
+ }
  if(rel==='src/config.js'){
   code="import { nativeStageEnabled, NATIVE_MAPS } from '../patches/native-stages/runtime/registry.mjs';\n"+code;
   once('export const OFFLINE_MAPS =',"if (nativeStageEnabled) { for (const m of NATIVE_MAPS) { const i = MAPS.findIndex(x => x.id === m.id); if (i >= 0) MAPS[i] = m; else MAPS.push(m); } }\nexport const OFFLINE_MAPS =");

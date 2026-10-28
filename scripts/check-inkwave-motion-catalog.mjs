@@ -9,7 +9,8 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { catalogAudioGraph, validateCatalogAudioWorker } from './lib/inkwave-catalog-audio.mjs';
+import { catalogAudioGraph, catalogChargeWorker, validateCatalogAudioWorker } from './lib/inkwave-catalog-audio.mjs';
+import { catalogBombFxGraph } from './lib/inkwave-catalog-fx-graph.mjs';
 import { pixelDifference } from './check-inkwave-motion-detail.mjs';
 import { assertCatalogGeometryPresent, summarizeCatalogEmptyGeometry } from './lib/inkwave-motion-detail-failure-summary.mjs';
 
@@ -189,20 +190,33 @@ export function validateCatalogAudioGraphResult(result) {
   const graph=result.audioGraph,worker=outputs[0];
   if(graph?.source!=='production-entry-imports-and-generated-worker'||graph.deviceInitialized!==false||graph.workerProtocol!=='invalid-id-rejected'||graph.workerTerminated!==true||graph.workerPath!=='/'+worker)fail('audio graph protocol proof');
   if(!result.loaded?.some(r=>r.file===worker&&r.sha256===artifacts[worker]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph worker receipt');
-  for(const name of ['grain','reverb']){
+  for(const name of ['grain','reverb','pitch-preserving-charge']){
     const entries=keys.filter(k=>k.endsWith('/patches/splatoon3/runtime/audio/'+name+'-worker.mjs'));
     if(!entries.length)continue;
     if(entries.length!==1)fail('audio graph prewarm worker denominator');
     const file=entries[0],proof=graph.prewarmWorkers?.filter(r=>r.path==='/'+file);
     if(proof?.length!==1||proof[0].protocol!=='canonical-pcm-byte-exact'||proof[0].terminated!==true||!Number.isSafeInteger(proof[0].bytes)||proof[0].bytes<=0)fail('audio graph prewarm protocol proof');
+    if(name==='pitch-preserving-charge'&&(proof[0].serial!==901||proof[0].key!=='catalog-charger'||proof[0].sampleRate!==8000||proof[0].ratio!==1.25||proof[0].sourceFrames!==800||proof[0].outputFrames!==1000||proof[0].channels!==1||proof[0].bytes!==4000))fail('audio graph charge worker protocol proof');
     if(!result.loaded?.some(r=>r.file===file&&r.sha256===artifacts[file]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph prewarm receipt');
   }
+}
+export function validateCatalogBombFxGraphResult(result) {
+  const artifacts=result?.artifacts||{},keys=Object.keys(artifacts);
+  const cues=keys.filter(k=>k.endsWith('/patches/splatoon3/runtime/bomb-cues.mjs'));
+  if(!cues.length)return;
+  const entries=keys.filter(k=>k.endsWith('/src/fx/fxHooks.js')),proof=result.bombFxGraph;
+  if(cues.length!==1||entries.length!==1||proof?.entryPath!=='/'+entries[0]||proof.cuePath!=='/'+cues[0]||
+    proof.source!=='native-throwBomb-record'||proof.nativeBirths!==1||proof.bombVisits!==1||proof.birthTrails!==1||
+    typeof proof.cueId!=='string'||!proof.cueId||proof.gameplayUnchanged!==true||proof.ownerDisabled!==true||
+    proof.callbacksRestored!==true||proof.servicesRestored!==true)fail('native bomb FX invocation proof');
+  for(const file of [entries[0],cues[0]])if(!result.loaded?.some(r=>r.file===file&&r.sha256===artifacts[file]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('native bomb FX entry receipt');
 }
 export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');
   if (result.gpu.pixelControls?.dither !== false || result.gpu.pixelControls?.samples !== 0 || result.gpu.pixelControls?.target !== 'explicit-srgb-rgba8') fail('controlled pixel framebuffer');
   validateCatalogReceipts({ contentHash: result.contentHash, artifacts: result.artifacts }, result.loaded);
   validateCatalogAudioGraphResult(result);
+  validateCatalogBombFxGraphResult(result);
   validateCatalogTurfFinish(result.turfFinish);
   if (result.duplicateRealm?.modules !== CATALOG_MODULES.length || result.duplicateRealm?.unchanged !== true) fail('cross-realm install');
   if (!Array.isArray(result.data) || result.data.length !== CATALOG_SCENARIOS.length || new Set(result.data.map(r => r.name)).size !== CATALOG_SCENARIOS.length) fail('scenario denominator');
@@ -463,29 +477,17 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // motion fixture never enters the ranked bootstrap path. Load and verify its
   // immutable emitted graph without changing the Turf fixture's behaviour.
   const audioGraph=await globalThis.catalogAudioGraph(prefix);
-  // WSOLA is a demand-launched module Worker, not an eagerly imported runtime
-  // module. Verify its actual worker protocol here rather than exempting it
-  // from the immutable installed-graph byte receipts.
-  const chargerWorker = new Worker(prefix + 'patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs', { type: 'module' });
-  try {
-    await new Promise((resolve, reject) => {
-      const frames = 800, ratio = 1.25, samples = new Float32Array(frames);
-      for (let i = 0; i < frames; i++) samples[i] = Math.sin(i * .16);
-      const deadline = setTimeout(() => reject(Error('Charger WSOLA worker protocol timed out')), 15000);
-      const finish = error => { clearTimeout(deadline); error ? reject(error) : resolve(); };
-      chargerWorker.onerror = e => finish(Error('Charger WSOLA module Worker error: ' + e.message));
-      chargerWorker.onmessage = ({ data }) => {
-        const output = data?.samples?.[0];
-        if (data.serial !== 901 || data.key !== 'catalog-charger' || !Array.isArray(data.samples) ||
-            data.samples.length !== 1 || !(output instanceof Float32Array) ||
-            output.length !== Math.round(frames * ratio) || !output.every(Number.isFinite)) {
-          finish(Error('Charger WSOLA worker output invariant failed')); return;
-        }
-        finish(null);
-      };
-      chargerWorker.postMessage({ serial: 901, key: 'catalog-charger', samples: [samples], sampleRate: 8000, ratio }, [samples.buffer]);
-    });
-  } finally { chargerWorker.terminate(); }
+  // One real module Worker, retaining the external probe's original protocol.
+  audioGraph.prewarmWorkers.push(await globalThis.catalogChargeWorker(prefix));
+  // Production bomb FX is activated through the main FX hook graph, outside
+  // this isolated motion-only fixture. Verify the real event selectors and
+  // include the immutable emitted module in the independent graph audit.
+  const { bombCuePresentation, drawAutobombScan } = await import(prefix + 'patches/splatoon3/runtime/bomb-cues.mjs');
+  const safeBombCue = bombCuePresentation({ ghost:false, s3Resolved:null, s3FuseTotal:0 },
+    {bomb:{radius:2,fuse:6}}, {});
+  if(safeBombCue.id!=='bomb' || safeBombCue.radius!==2 || safeBombCue.fuse!==6 ||
+    !safeBombCue.warning || !safeBombCue.follows || typeof drawAutobombScan!=='function')
+    throw Error('Native Splat Bomb presentation selector mismatch');
   const { installRanked } = await import(prefix + 'patches/splatoon3/runtime/ranked/install.mjs');
   if (typeof installRanked !== 'function') throw Error('Ranked runtime installer missing');
   // Exercise the real Match dependency entry, including its deadline helper.
@@ -1054,7 +1056,15 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       try { if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready; if (ch.sourceMotion?.status !== 'ready') throw Error('Variable-dt source unavailable'); ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
       finally { collect(ch.root); ch.dispose(); }
     }
-    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, audioGraph, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
+    // Exercise main's lazy FX entry once, after motion observations. This is
+    // an isolated native-method invocation, not an ordinary-input render case.
+    const bombActor=new Actor({team:0,name:'catalog FX birth',weapon:'shooter',isLocal:true,CharacterClass:Character});
+    let bombFxGraph;
+    try{
+      bombActor.pos.copy(camera.position);
+      bombFxGraph=await globalThis.catalogBombFxGraph(prefix,G,projectiles,bombActor,()=>gameState(bombActor));
+    }finally{collect(bombActor.character.root);bombActor.character.dispose();}
+    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, audioGraph, bombFxGraph, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
     globalThis.catalogPartial = result; return result;
   } finally {
     projectiles.clear(); collect(scene);
@@ -1130,7 +1140,7 @@ async function main() {
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.captureSubmergedPresentation='+captureSubmergedPresentation.toString()+';globalThis.classifySubmergedPresentation='+classifySubmergedPresentation.toString()+';globalThis.catalogAudioGraph='+catalogAudioGraph.toString()+';globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.captureSubmergedPresentation='+captureSubmergedPresentation.toString()+';globalThis.classifySubmergedPresentation='+classifySubmergedPresentation.toString()+';globalThis.catalogAudioGraph='+catalogAudioGraph.toString()+';globalThis.catalogChargeWorker='+catalogChargeWorker.toString()+';globalThis.catalogBombFxGraph='+catalogBombFxGraph.toString()+';globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout, wallHeight: CATALOG_WALL_HEIGHT });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.

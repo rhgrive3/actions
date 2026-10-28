@@ -1,0 +1,12 @@
+(node:13398) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+BRUSH_CONTACT [{"min":-0.043715471118211224,"max":-0.036257168250263594},{"min":-0.04350230108304831,"max":-0.036406162969668254},{"min":-0.03794395689179189,"max":-0.032942532695721116}]
+✔ loaded Brush floor correction stays stable between draws and follows the slope at its tip (23833.977036ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24723.326252

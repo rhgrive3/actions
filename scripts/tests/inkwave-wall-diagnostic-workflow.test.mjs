@@ -77,3 +77,61 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
     const changed=workflow.replaceAll(before,after); assert.notEqual(changed,workflow); assert.throws(()=>verify(changed));
   }
 });
+
+// Main replaced whole historical job-body pins with focused semantic contracts.
+// Retain this branch's reviewed additive emitted coverage without restoring the
+// obsolete pins or accepting omitted, duplicated or relocated regressions.
+const guidePhaseMarker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
+const guidePhaseNext = '      - name: Verify built weapons fidelity measurements and packet parity\n';
+const guidePhaseCommand = guidePhaseMarker + '        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: >-\n          node --experimental-vm-modules --test\n';
+const existingEmittedSourceTests = [
+  'patches/splatoon3/tests/catalog-player-inertia-native.test.mjs',
+  'patches/splatoon3/tests/catalog-slosher-birth-speed.test.mjs',
+  'patches/splatoon3/tests/projectile-pool-slosher-index.test.mjs',
+  'patches/splatoon3/tests/spinner-kinematics-source.test.mjs',
+  'patches/splatoon3/tests/spinner-charge-family.test.mjs',
+  'patches/splatoon3/tests/jump-recovery-airborne-native.test.mjs',
+  'patches/splatoon3/tests/player-collision-source-1130.test.mjs',
+];
+const approvedEmittedGuidePhaseTests = [
+  'patches/native-stages/tests/collision-revision-producers.test.mjs',
+  'patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs',
+  'patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs',
+];
+const emittedLines = files => files.map(file => '          ' + file + '\n').join('');
+const approvedEmittedGuidePhaseLines = emittedLines(approvedEmittedGuidePhaseTests);
+function verifyEmittedGuidePhaseCoverage(text) {
+  const core = job(text, 'validate_core');
+  assert.equal(core.split(guidePhaseMarker).length, 2, 'one emitted source-backed step in validate_core');
+  assert.equal(text.split(guidePhaseMarker).length, 2, 'emitted step cannot be duplicated outside its owner');
+  const start = core.indexOf(guidePhaseMarker), end = core.indexOf(guidePhaseNext, start);
+  assert.ok(end > start, 'emitted guide/phase coverage remains before fidelity measurements');
+  assert.equal(core.slice(start, end), guidePhaseCommand + emittedLines([...existingEmittedSourceTests, ...approvedEmittedGuidePhaseTests]),
+    'exact emitted input site, VM command, existing arguments and additive placement remain required');
+  for (const file of approvedEmittedGuidePhaseTests)
+    assert.equal(text.split(file).length, 2, file + ' must run exactly once');
+  return true;
+}
+test('reviewed guide and phase regressions run exactly once on the emitted site in the owned core step', () => verifyEmittedGuidePhaseCoverage(workflow));
+test('reviewed emitted guide and phase coverage rejects omission, duplication, relocation and weaker commands', () => {
+  const anchor = emittedLines([existingEmittedSourceTests.at(-1)]);
+  const edits = [
+    ...approvedEmittedGuidePhaseTests.map(file => [emittedLines([file]), '']),
+    [approvedEmittedGuidePhaseLines, ''],
+    [approvedEmittedGuidePhaseLines, approvedEmittedGuidePhaseLines + approvedEmittedGuidePhaseLines],
+    [approvedEmittedGuidePhaseLines, emittedLines([...approvedEmittedGuidePhaseTests].reverse())],
+    [approvedEmittedGuidePhaseLines, '          patches/splatoon3/tests/unreviewed.test.mjs\n'],
+    [approvedEmittedGuidePhaseLines, approvedEmittedGuidePhaseLines + '          patches/splatoon3/tests/unreviewed.test.mjs\n'],
+    [anchor, ''],
+    [guidePhaseCommand, guidePhaseCommand.replace('        run: >-', '        if: false\n        run: >-')],
+    [guidePhaseCommand, guidePhaseCommand.replace('        run: >-', '        continue-on-error: true\n        run: >-')],
+    [guidePhaseCommand, guidePhaseCommand.replace('node --experimental-vm-modules --test', 'echo')],
+    [guidePhaseCommand, guidePhaseCommand.replace('github.workspace }}/_site', 'github.workspace }}/unverified')],
+    [approvedEmittedGuidePhaseLines + guidePhaseNext, guidePhaseNext + approvedEmittedGuidePhaseLines],
+  ];
+  for (const [before, after] of edits) {
+    const changed = workflow.replace(before, after);
+    assert.notEqual(changed, workflow, before);
+    assert.throws(() => verifyEmittedGuidePhaseCoverage(changed), before);
+  }
+});

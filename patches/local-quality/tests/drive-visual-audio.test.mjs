@@ -158,13 +158,16 @@ const scheduling=JSON.parse(schedulingBytes);
 // The independently pinned pre-aggregate source stays immutable. Reconstruct
 // the exact newer pause-aware RAF contract rather than silently weakening the
 // byte comparison or using the changed code itself as its own oracle.
-const hudNow={...scheduling.hud,_fxLoop:scheduling.hud._fxLoop
+const hudNow={...scheduling.hud,
+ _fxLoop:scheduling.hud._fxLoop
  .replace('_fxLoop(t) {','_fxLoop(t) {\n    this._rafId = 0;')
  .replace('    if (this.paused) { this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0; return; }',
           '    if (this.paused) { this._rafId = 0; return; }')
  .replace('    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;',
-          '    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }')};
+          '    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }'),
+ _addFx:scheduling.hud._addFx.replace('if (!this._rafId && !this._worldPaused) {','if (!this._rafId && !this._worldPaused && !this.paused) {')};
 assert.notEqual(hudNow._fxLoop,scheduling.hud._fxLoop,'later pause optimization is actually represented');
+assert.notEqual(hudNow._addFx,scheduling.hud._addFx,'paused scheduling guard is actually represented');
 test('HUD preserves the reviewed pre-aggregate RAF methods byte-for-byte',()=>{
  assert.equal(crypto.createHash('sha256').update(schedulingBytes).digest('hex'),'a177a9c1435cddbba40e32ab303736151040f5b3db629adcfe07e786ddd3b177');
  assert.equal(scheduling.provenance.publicRef,'e3a8c3b');
@@ -180,7 +183,7 @@ test('reviewed HUD scheduling retains world pause, paused RAF, judge cancellatio
   self._worldPaused=true;self._addFx('waiting',()=>{events.push('waiting');return false;});record();
   self._fxLoop(1100);record(); // must not advance clocks or request a frame
   self._worldPaused=false;now=1200;self._addFx('waiting',()=>{events.push('waiting');return false;});record();
-  self.paused=true;self._fxLoop(1300);record(); // native paused RAF remains while a task exists
+  self.paused=true;self._fxLoop(1300);record(); // no new RAF is scheduled while paused
   self.paused=false;self._fxLoop(1400);record();
   self.paused=true;self._fxLoop(1500);record(); // no tasks: no paused idle loop
   self.paused=false;self._judgeOwner={current:()=>false,cancel(){events.push('judge-cancel');self._judgeOwner=null;}};
@@ -225,3 +228,5 @@ test('SetBuilder consumes only merged scratch geometries and preserves singleton
  const retained=build.call(self);assert.deepEqual(retained.merged.combined,['a','b']);assert.equal(self.buckets.size,2);assert.deepEqual(disposed,[]);
  const consumed=build.call(self,{consume:true});assert.deepEqual(consumed.merged.combined,['a','b']);assert.equal(consumed.single,c);assert.equal(self.buckets.size,0);assert.deepEqual(disposed,['a','b']);
 });
+
+test('paused _addFx records the task without requesting RAF until unpaused',()=>{let requests=0;const self={paused:true,_worldPaused:false,_rafId:0,_fxLoop(){}};const add=compile(member('src/ui/hud.js','HUD','_addFx'),'_addFx',{performance:{now:()=>123},requestAnimationFrame(){requests++;return 1;}});const fn=()=>false;add.call(self,'pending',fn);assert.equal(self._fxMap.get('pending'),fn);assert.equal(requests,0);self.paused=false;add.call(self,'pending',fn);assert.equal(requests,1);assert.equal(self._rafId,1);});

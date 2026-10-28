@@ -1,0 +1,155 @@
+{
+  "status": "focused source/emitted consumer checks passed; peer review and visual/original scope remain open",
+  "sourceHead": "21e42d804a13f9c793ea62a5edb17e2440b73217",
+  "priorIntegration": "bcdb7b3d3647025bdbf3b12cbc1a339fdc062b98",
+  "handoff": {
+    "verifiedBranch": "handoff/20261026-shooter-guide-cache-6ef3678bf-173300",
+    "verifiedHead": "6ef3678bf19e3c9562b238ebff8cbc6d1dd115ed",
+    "onlySelectedCommits": {
+      "2eeed372d8341393e0d1fd860e9f52e963bbf6be": "efaf0e86e432d16c97f18d932494132e0ca89208",
+      "6ef3678bf19e3c9562b238ebff8cbc6d1dd115ed": "21e42d804a13f9c793ea62a5edb17e2440b73217"
+    },
+    "producerAlreadyPresent": "11aac831306b96ca271b421735bcf9f261287d9e (source fee0c005ffe129e8248c2122c41f5fad6612130d)"
+  },
+  "checks": {
+    "source": {
+      "pass": 19,
+      "fail": 0,
+      "skip": 0
+    },
+    "emitted": {
+      "pass": 19,
+      "fail": 0,
+      "skip": 0
+    },
+    "quick": "passed",
+    "optimizedBuild": "passed",
+    "startupBudget": "passed",
+    "sourceAndEmittedScope": "Collision producer6, Shooter cache6, Dualies cache3, actual-head projection/contact4"
+  },
+  "sweepTraces": {
+    "source": [
+      {
+        "pitch": 0,
+        "hz": 30,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 60,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 120,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 30,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 60,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 120,
+        "initial": 1,
+        "repeated120": 0
+      }
+    ],
+    "emitted": [
+      {
+        "pitch": 0,
+        "hz": 30,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 60,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": 0,
+        "hz": 120,
+        "initial": 8,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 30,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 60,
+        "initial": 1,
+        "repeated120": 0
+      },
+      {
+        "pitch": -0.8,
+        "hz": 120,
+        "initial": 1,
+        "repeated120": 0
+      }
+    ]
+  },
+  "identity": {
+    "sourceSha": "21e42d804a13f9c793ea62a5edb17e2440b73217",
+    "contentHash": "51374bf004e1b72ce180d46b398b0e7077f63dac84c2c50e1965e8ef23b97774",
+    "inputHash": "ee01198def8b28f8b0e0d986e596417d2adfbc696e858265904555f2b3e5b3c8",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0
+  },
+  "logs": {
+    "source": {
+      "path": "source.log.gz",
+      "rawSha256": "65a04f0b90f2966458bdca71c4eba2167e08263e9a7cbe7b7cf718e32868ef53",
+      "gzipSha256": "7803936500ab3289587b20061ef0dc49521e0ac5f9bda9e500a504c5eb5ff60a"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "793591cdcc149e408fa6c64df71c97adc6b5e5d98d6217ddbdb88fb3e5abca13",
+      "gzipSha256": "71f3bd670d8914319580fe19bbef2fe67641218e89ad64ced53d130829662a2a"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "92c2b1124b54b9e8536f0ebf6f0e93cdffcdfdec51afe9047d8bd12f16563bf3",
+      "gzipSha256": "fbadd63dbc1cdbc6559958c4a434e0d0f7160e4ccf5ca34c268ce183507bd4fb"
+    },
+    "quick": {
+      "path": "quick.log.gz",
+      "rawSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "gzipSha256": "f3d8dc8809329136eada79b6f0147fcf52ffa687efcdf38ecc8d9f24bca8ed0d"
+    }
+  },
+  "integrationReview": [
+    "Native deterministic launch/muzzle safety is evaluated before admission; only numeric world guide is reused.",
+    "World/query/triangleWorld identities and actual collision revision bind reuse; unknown/exhausted revisions recompute.",
+    "Actual launch, owner, weapon/mode, aim, velocity and camera changes invalidate without TTL, smoothing or pose quantization.",
+    "Target flags are still updated and clear releases cached owner/world references.",
+    "Only the two named consumer code/evidence commits were cherry-picked. Source had no conflicts; both report append sections were retained.",
+    "No cutoff or new HUD geometry was reintroduced; no source change to muzzle-feedback in this append."
+  ],
+  "peerCorrectnessReview": "Separate peer inspection remains pending; these integration checks do not substitute for it",
+  "limits": [
+    "CPU native source/emitted fixtures, not a new browser/GPU/retail check. VM optional source motion fallback warnings are retained.",
+    "Identical-pose call-count reuse is verified; actual animated muzzle changes can correctly invalidate, so no device FPS or universal zero-sweep promise.",
+    "Original horizontal inner-marker ownership/admission and late-floor UI parity remain unresolved; rejected 8F hide remains excluded.",
+    "Hissen size, generic floor-droplet shape and other original/hardware comparisons remain open.",
+    "Fixed90bb native-touch proof and prior phase/charge check receipts stay attributed to their actual historical heads.",
+    "No PR creation retry, external merge, Ready status or manual workflow dispatch/retry; eventual final-head required CI pending."
+  ]
+}

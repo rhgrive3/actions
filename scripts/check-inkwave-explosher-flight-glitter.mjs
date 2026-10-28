@@ -3,6 +3,7 @@
 // deterministic clocks and receipts; neither production checkout is rewritten.
 import fs from 'node:fs';
 import {requireRuntimeUIPreflight} from './lib/inkwave-explosher-runtime-ui-preflight.mjs';
+import {instrumentExplosherGeometryDriver} from './lib/inkwave-explosher-geometry-lifetime.mjs';
 import {requireApprovedCommonBuild} from './lib/inkwave-explosher-common-build.mjs';
 import {requireInverseShapePair} from './lib/inkwave-explosher-inverse-contract.mjs';
 import {requireControlledStartupPair}from'./lib/inkwave-explosher-volume-barrier.mjs';
@@ -283,9 +284,13 @@ if(controlled){
   fs.writeFileSync(path.join(out,'controlled-startup.json'),JSON.stringify(startup,null,2));`);
   driver=once(driver,'return {rngDiagnostic:', 'return {controlledStartup:globalThis.__inkwaveExplosherControlledStartup,rngDiagnostic:');
 }
+// Controlled QA observation only; ordinary startup is not delayed, geometry is
+// not repaired, and the original native memory/resource assertion is unchanged.
+if(!runtimeUIRoute)driver=instrumentExplosherGeometryDriver(driver);
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const captureProtocolSha256=hash(JSON.stringify([fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),...['inkwave-explosher-startup.mjs','inkwave-explosher-scene-census.mjs','inkwave-explosher-capture-surface.mjs','inkwave-explosher-volume-barrier.mjs','inkwave-explosher-stage-admission.mjs','inkwave-explosher-video-gate.mjs','inkwave-projectile-capture-ui.mjs','inkwave-range-menu-entry.mjs'].map(p=>fs.readFileSync(path.join(root,'scripts/lib',p),'utf8'))]));
+const captureProtocolSha256=hash(JSON.stringify([fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),...['inkwave-explosher-startup.mjs','inkwave-explosher-scene-census.mjs','inkwave-explosher-capture-surface.mjs','inkwave-explosher-volume-barrier.mjs','inkwave-explosher-stage-admission.mjs','inkwave-explosher-video-gate.mjs','inkwave-projectile-capture-ui.mjs','inkwave-range-menu-entry.mjs','inkwave-explosher-geometry-lifetime.mjs'].map(p=>fs.readFileSync(path.join(root,'scripts/lib',p),'utf8'))]));
 const receipt={commonBuildAdmission,captureProtocolSha256,stageAdmission,captureMode:preflight?'preflight':video?'continuous-native-60Hz':'multi-view-stills',captureTicks,captureViews,simulationHz:60,captureUiGateSha256:hash(installProjectileCaptureUiGate.toString()),shapeOverlay,controlledMain:controlled,sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+  geometryLifetime:{controlledInstrumentedQA:!runtimeUIRoute,artifact:runtimeUIRoute?null:'geometry-lifetime.json',nativeResourceGateUnchanged:true,ordinaryInputAcceptance:false,gpuAllocationOwnershipProven:false},
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,

@@ -1,0 +1,151 @@
+{
+  "recordedAt": "2026-10-27T12:02:26.499236+00:00",
+  "ciHead": "9b2b8f70cc35f630c87bcd80e728654cc7102dd8",
+  "ciRun": 40483163321,
+  "ciJob": 122123127809,
+  "localFix": "1de515ab9c72f35f400e968e23ee0fba6cdb7c81",
+  "localTree": "04597aa1dfd7c8fdecf4b57528b31bd018e7f54f",
+  "scope": [
+    "patches/splatoon3/tests/explosher-stage-composition.test.mjs"
+  ],
+  "actualFailure": {
+    "tests": 4,
+    "file": "explosher-stage-composition.test.mjs",
+    "reason": "checker-body Function fixture omitted the new imported instrumentExplosherGeometryDriver collaborator; ReferenceError occurred before unchanged Wrong native capture count assertion"
+  },
+  "previous945Repair": {
+    "actualCI": "ok955at11:29:12",
+    "name": "#945 stationary Shooter reticle avoids repeat sweeps and invalidates on every source change",
+    "notCauseOfNewFailure": true
+  },
+  "before": {
+    "pass": 0,
+    "fail": 4
+  },
+  "after": {
+    "pass": 5,
+    "fail": 0,
+    "skip": 0
+  },
+  "allExplosher": {
+    "pass": 222,
+    "fail": 0,
+    "skip": 0
+  },
+  "canonicalVerifier": {
+    "pass": 601,
+    "fail": 0,
+    "skip": 0
+  },
+  "fullAffectedShard": {
+    "index": 0,
+    "count": 8,
+    "concurrency": 2,
+    "sourceSha": "1de515ab9c72f35f400e968e23ee0fba6cdb7c81",
+    "selectedFiles": 196,
+    "totalFiles": 1563,
+    "tests": 1560,
+    "pass": 1556,
+    "fail": 0,
+    "skip": 4,
+    "durationMs": 1046012.737944,
+    "skips": [
+      "FxHooks forcedGC optional environment",
+      "emitted Game frame fixture mode",
+      "retired minimap Actor forcedGC optional environment",
+      "Crab GPU live-prefix optional environment"
+    ]
+  },
+  "build": {
+    "sourceSha": "1de515ab9c72f35f400e968e23ee0fba6cdb7c81",
+    "contentHash": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+    "inputHash": "25a535d28da064d2d6fea8f173a14fac22fb19f508dd77b47f44e0c6106e7ec2",
+    "sourceInputs": 1493,
+    "artifacts": 2199,
+    "mismatches": 0
+  },
+  "node": "v24.22.1",
+  "peer": "continue_native_phase_contract ACCEPT32/32+original4/4negative",
+  "classScan": {
+    "checkerBodyEvalConsumers": [
+      "explosher-stage-composition.test.mjs",
+      "explosher-capture-guards.test.mjs"
+    ],
+    "bothNowPassRealImportedHelper": true,
+    "otherReaders": "regex-only; generator tests import real helper"
+  },
+  "limitations": [
+    "QA fixture repair only; no shipping source/checker/comparator/native gate changes",
+    "No new local browser acceptance",
+    "9b2b catalog is exact9b2b evidence; not relabeled to futurehead"
+  ],
+  "evidence": {
+    "patch-shard0-122123127809.log": {
+      "bytes": 804779,
+      "sha256": "276ba13737053a465d76e8a5be760c44b6b3c679b18f075bab1a247d9a5f46d2"
+    },
+    "stage-composition-before.log": {
+      "bytes": 9109,
+      "sha256": "1a0d8d6c0ce99411f2b5e49b36afbba3d95f1a58168ca15eeddaba857c8d85aa"
+    },
+    "stage-composition-after.log": {
+      "bytes": 526,
+      "sha256": "2530da421ed52c9321b288caa7976a1d65a8613996e4964f354636122cb9e8a0"
+    },
+    "stage-composition-combined.log": {
+      "bytes": 3869,
+      "sha256": "07c820247c9e1d9b8dcd00acf171a047642b0fd0a998ad56ad67419d64eb60fd"
+    },
+    "stage-composition-all-explosher.log": {
+      "bytes": 16706,
+      "sha256": "a05eb7d65b8f18a94ff09d1070d192bc0b5956f231df4eb7a2fdaa89ed2b565b"
+    },
+    "stage-composition-verifier.log": {
+      "bytes": 55165,
+      "sha256": "2be78dbc4b74beda727bc7b8f596dbeedd2120bb44a024083325e90657b8e874"
+    },
+    "stage-composition-build-audit.json": {
+      "bytes": 294,
+      "sha256": "50bf6c24b6630c14704dac198e9221547ca44bf4ce67cc0dfd65720fce84a6ea"
+    },
+    "fix-shard0-runner.log": {
+      "bytes": 249651,
+      "sha256": "fcda35cf1a7cced017f8dfbe3fe33183786484066c6ba60d2b9ee062c17fd16c"
+    },
+    "fix-shard0/patch-tests.log": {
+      "bytes": 245173,
+      "sha256": "171fa4807a5dfd15e40fa611ab630fad2bf8ac282aec635c75edeced1560ab14"
+    },
+    "fix-shard0/shard-manifest.json": {
+      "bytes": 12895,
+      "sha256": "4c7b7ea74b3cebde25658739b58cd1d08ccba50851e4c30e563e805f5283c1e1"
+    }
+  },
+  "publishedCheckpoint": {
+    "head": "9b2b8f70cc35f630c87bcd80e728654cc7102dd8",
+    "catalog": {
+      "run": 40483163321,
+      "job": 122132064337,
+      "status": "success",
+      "cases": 27,
+      "frames": 5370,
+      "renderPairs": 349,
+      "verifiedModules": 482,
+      "contentHash": "d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5",
+      "artifactId": 12732101436,
+      "zipBytes": 73074746,
+      "zipSHA256": "4d27f9d7175a6a45bb6c920f9436b1e25c0e196810ea3a7024d9b1adfd357879",
+      "logSHA256": "ee718fdfe61068a807e5c29637dc24bd45279f7119b61f9382399780b1b408ad",
+      "sourceEnvelopeExactHead": true,
+      "hissenControlledBirthRelativeFrames": [
+        5,
+        7,
+        9
+      ],
+      "retailMatchClaim": false,
+      "artifactPreservation": "Independent reviewer downloaded and extracted full unchanged ZIP before next publication"
+    },
+    "allGreen": false,
+    "newHeadAcceptance": false
+  }
+}

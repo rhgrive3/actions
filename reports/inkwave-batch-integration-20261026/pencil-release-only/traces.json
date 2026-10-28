@@ -1,0 +1,306 @@
+{
+  "source": {
+    "cycles": [
+      {
+        "id": "s3-charger-pencil",
+        "trace": [
+          {
+            "shot": 1,
+            "reserve": 4,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 2,
+            "reserve": 3,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 3,
+            "reserve": 2,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 4,
+            "reserve": 1,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 5,
+            "reserve": 0,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          }
+        ],
+        "freshCharge": 0.013888888888888888,
+        "fullShotCues": 5
+      },
+      {
+        "id": "s3-charger-pencil-01",
+        "trace": [
+          {
+            "shot": 1,
+            "reserve": 4,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 2,
+            "reserve": 3,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 3,
+            "reserve": 2,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 4,
+            "reserve": 1,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 5,
+            "reserve": 0,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          }
+        ],
+        "freshCharge": 0.013888888888888888,
+        "fullShotCues": 5
+      }
+    ],
+    "releaseBoundaries": [
+      {
+        "id": "s3-charger-pencil",
+        "admittedFullShots": 2,
+        "remaining": 3,
+        "duplicateReleaseShots": 0
+      },
+      {
+        "id": "s3-charger-pencil-01",
+        "admittedFullShots": 2,
+        "remaining": 3,
+        "duplicateReleaseShots": 0
+      }
+    ]
+  },
+  "emitted": {
+    "cycles": [
+      {
+        "id": "s3-charger-pencil",
+        "trace": [
+          {
+            "shot": 1,
+            "reserve": 4,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 2,
+            "reserve": 3,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 3,
+            "reserve": 2,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 4,
+            "reserve": 1,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 5,
+            "reserve": 0,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          }
+        ],
+        "freshCharge": 0.013888888888888888,
+        "fullShotCues": 5
+      },
+      {
+        "id": "s3-charger-pencil-01",
+        "trace": [
+          {
+            "shot": 1,
+            "reserve": 4,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 2,
+            "reserve": 3,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 3,
+            "reserve": 2,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 4,
+            "reserve": 1,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          },
+          {
+            "shot": 5,
+            "reserve": 0,
+            "charge": 1,
+            "speed": 288,
+            "damage": 68,
+            "range": 26.037,
+            "moved": true,
+            "drawnHead": true,
+            "drawnDrop": true,
+            "landingStamps": 5
+          }
+        ],
+        "freshCharge": 0.013888888888888888,
+        "fullShotCues": 5
+      }
+    ],
+    "releaseBoundaries": [
+      {
+        "id": "s3-charger-pencil",
+        "admittedFullShots": 2,
+        "remaining": 3,
+        "duplicateReleaseShots": 0
+      },
+      {
+        "id": "s3-charger-pencil-01",
+        "admittedFullShots": 2,
+        "remaining": 3,
+        "duplicateReleaseShots": 0
+      }
+    ]
+  }
+}

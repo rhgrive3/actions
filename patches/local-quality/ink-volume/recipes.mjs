@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { INK_LOOK, shotTailFrames, fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { captureRollerVolume, ROLLER_VOLUME } from './roller.mjs';
-import { usesBucketSlosherSheet, sharedBucketDraw, sharedBucketTailLength, projectileDrawRadius } from '../../splatoon3/runtime/projectile-visuals.mjs';
+import { usesBucketSlosherSheet, sharedBucketDraw, hissenVolumeFallback, sharedBucketTailLength, projectileDrawRadius } from '../../splatoon3/runtime/projectile-visuals.mjs';
 import { poseBirthOffset } from '../../splatoon3/runtime/catalog-pose-birth.mjs';
 
 const states = new WeakMap();
@@ -50,6 +50,25 @@ function nativeRadius(p) {
   if(d2&&Number.isFinite(d2.InitRadius)){const index=p.catalog.descriptor.index||0,init=d2.InitRadius+index*(d2.AfterOffsetInitRadius||0),end=(Number.isFinite(d2.EndRadius)?d2.EndRadius:d2.InitRadius)+index*(d2.AfterOffsetEndRadius||0),t=d2.ChangeFrame>0?Math.min(1,p.age*60/d2.ChangeFrame):1;return init+(end-init)*t;}
   return p.vis||p.size;
 }
+// Choose one contour tier for a crowded Hissen frame before a cheap full
+// fragment can consume the remaining budget and starve its sibling lobes.
+export function prepareHissenVolumeLOD(engine,list,visuals) {
+  if(!engine?.assets?.has('hissen-fallback'))return;
+  let interested=false;
+  for(const p of list)if(hissenVolumeFallback(p)&&!p._qualityDead&&!(p.delay>0)&&projectileDrawRadius(p)>0){interested=true;break;}
+  if(!interested)return;
+  // Reuse the exact recipe/frustum/LOD planner for ALL competing volume parts.
+  // Measurement never reserves instances, changes metrics, or starts a pass.
+  engine.measureOnly=true;engine.frameDemandTriangles=0;engine.frameDemandInstances=0;
+  try {
+    for(const p of list){
+      if(p._s3SloshBirthPending||visuals?.nativeShapeOwns(p)||visuals?.handles(p))continue;
+      submitInkVolume(engine,p);
+    }
+  } finally {engine.measureOnly=false;}
+  engine.hissenContourFrame=engine.frameDemandTriangles+engine.metrics.triangles>engine.triangleBudget||engine.frameDemandInstances+engine.metrics.active>engine.capacity;
+}
+
 export function submitInkVolume(engine,p) {
   if(!engine||!p._inkVolumeRecipe||p._qualityDead||p.delay>0)return false;
   const recipe=p._inkVolumeRecipe,pattern=p.seed<.5?0:1;
@@ -63,15 +82,31 @@ export function submitInkVolume(engine,p) {
     // Machine/vortex, bouncing bubbles and explosive Sloshers own different
     // artwork. Do not relabel the Roller sheet as those assets. Bucket,
     // Tri-Slosher, Dread Wringer and their alternate kits share Bucket's sheet.
-    const name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)?'roller':null);
+    const fallback=hissenVolumeFallback(p)&&engine.assets.has('hissen-fallback');
+    let name=engine.assets.has(specific)?specific:(usesBucketSlosherSheet(p.wid)&&engine.assets.has('roller')?'roller':fallback?'hissen-fallback':null);
+    if(fallback&&!engine.measureOnly&&(engine.hissenContourFrame||engine.metrics?.fallback||engine.metrics?.fallbackDropped))name='hissen-fallback';
     if(!name)return false;
     const shared=sharedBucketDraw(p);
     const radius=shared?projectileDrawRadius(p):p.fidelitySloshDraw?fidelitySlosherDrawRadius(p):nativeRadius(p),width=radius*2*INK_LOOK.slosh[4];
     const d=p.catalog?.descriptor?.b?.DrawSizeParam,min=Math.max(0,d?.TailLengthMin||0),max=Math.max(min,d?.TailLengthMax||0),solid=Math.max(0,(d?.TailSolidFrame||0)/60);
+    if(fallback&&!(radius>0))return true;
     const tail=shared?sharedBucketTailLength(p,p.vel.length()):p.fidelitySloshDraw?(fidelitySlosherDrawTail(p,p.vel.length())-1)*radius:Math.max(min,Math.min(max,p.vel.length()*Math.min(p.age,solid)));
     part.name=name;part.pattern=pattern;part.size=1;part.rotation.copy(s.rotation);
     part.stretch.set(width,width+tail,width*INK_LOOK.slosh[2]);part.position.addScaledVector(s.dir,-tail*.5);
-    return engine.submitComposite(p,s.single);
+    // Retry only the derived contour LOD, through the SAME capacity/triangle reservation.
+    const activeBefore=engine.metrics?.active||0;
+    let ok=engine.submitComposite(p,s.single);
+    if(!engine.measureOnly&&!ok&&fallback&&name!=='hissen-fallback'){part.name='hissen-fallback';ok=engine.submitComposite(p,s.single);}
+    if(fallback&&part.name==='hissen-fallback'){
+      if(!engine.measureOnly&&engine.metrics){
+        if(!ok)engine.metrics.fallbackDropped++;
+        else if(engine.metrics.active>activeBefore)engine.metrics.fallback++;
+      }
+      // At hard exhaustion the existing bounded owner omits this main body.
+      // Do not spill an unaccounted generic blob beyond the renderer budget.
+      return true;
+    }
+    return ok;
   }
   if(recipe==='shooter') {
     const name=engine.assets.has(specific)?specific:'shooter',asset=engine.assets.get(name);

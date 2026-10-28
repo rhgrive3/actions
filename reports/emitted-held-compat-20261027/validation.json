@@ -1,0 +1,79 @@
+{
+  "status": "separate fixture-only candidate for review; integration head unchanged",
+  "baseAndRuntime": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b",
+  "codeCommit": "e6fb91faf9c3e491c6589943d8d98c8b1311afa1",
+  "branch": "test/emitted-held-compat-registry-20261027",
+  "productionChanges": 0,
+  "changedTest": "patches/splatoon3/tests/roller-brush-held-motion.test.mjs",
+  "diff": "25insertions/1deletion; parser-backed export alias in fixture VM, emitted import uses registry instead of excluded family",
+  "source": {
+    "pass": 4,
+    "fail": 0,
+    "skip": 0
+  },
+  "emitted": {
+    "pass": 4,
+    "fail": 0,
+    "skip": 0
+  },
+  "coverage": {
+    "roller": [
+      "Carbon Roller",
+      "Splat Roller",
+      "Dynamo Roller",
+      "Flingza Roller",
+      "Big Swig Roller"
+    ],
+    "brush": [
+      "Inkbrush",
+      "Octobrush",
+      "Painbrush"
+    ],
+    "cadencesHz": [
+      30,
+      60,
+      120
+    ],
+    "cases": [
+      "hold/air/landing with ink, paint, contact damage, pose and cross-cadence traces",
+      "cold-air rejection, one-frame contact gap, release/cancellation/reset",
+      "catalogue vertical-swing mode, original interval and elapsed clock after delayed first pose",
+      "remote snapshot admission and airborne/grounded rolling-audio gating"
+    ]
+  },
+  "contract": {
+    "originalTestBodies": 4,
+    "byteIdentical": true,
+    "emittedPrefixUnchanged": true,
+    "onlyAddedSource": "export { Kc as catalogRollerSwing };",
+    "registrySha256": "f0af78bbefee2201c90bc4d66dd09ffd4b721d39bcd7dfb3241e3314817423bf",
+    "missingInspectionFailsClosed": true,
+    "standaloneFamilyAbsent": true,
+    "sourceFallback": false
+  },
+  "identity": {
+    "sourceSha": "65ad3508a30b26d9264acafc76f6ab9f77a48c1b",
+    "contentHash": "596e029ef336213de97d337c5f12752bfb4f3887de28907dde1a6ef5e36fdafd",
+    "inputHash": "8112dc6c08a03da565de515233ef85d41d7fda6f2f5b95ad8336ed7bffaa626d",
+    "sourceInputs": 1491,
+    "artifacts": 2196,
+    "mismatches": 0
+  },
+  "logs": {
+    "source.log": {
+      "file": "source.log.gz",
+      "sha256": "40abe0de5e8c9069b8788aeadb5630bc040e79e8afe0020daf6bdab9c1844583"
+    },
+    "emitted.log": {
+      "file": "emitted.log.gz",
+      "sha256": "adb193812a262590ecc49f9ec5263325cc829d71feb2d197f4719bf32469a966"
+    }
+  },
+  "limits": [
+    "CPU verification of actual emitted composition; no new browser, audio playback, retail or hardware visual evidence",
+    "existing fixture synthesizes scene/input/airborne conditions; this is not ordinary gameplay input acceptance",
+    "all four original test bodies are byte identical; only fixture wiring changes",
+    "old unsupported emitted failure receipt remains unchanged in upstream-da5058-brush evidence",
+    "no integration push, PR metadata edit or manualCI as part of this candidate"
+  ]
+}

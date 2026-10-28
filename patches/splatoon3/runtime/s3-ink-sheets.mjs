@@ -86,7 +86,7 @@ const NOISE = `
   float s3n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     return mix(mix(s3h(i), s3h(i + vec2(1.0, 0.0)), f.x), mix(s3h(i + vec2(0.0, 1.0)), s3h(i + vec2(1.0, 1.0)), f.x), f.y); }`;
 
-// aSheetA: (0 = splash | arc texture tiles (+0.25 = solid), age 0..1, seed, length)
+// aSheetA: (0 = splash | arc tiles (+0.25 = solid, +0.5 = wet wave), age 0..1, seed, length)
 // aSheetB: (radius, width, arc0, arc1)
 const SHEET_VERTEX = `
   attribute vec4 aSheetA;
@@ -106,8 +106,19 @@ const SHEET_VERTEX = `
     float sweep = clamp(age * 3.0, 0.0, 1.0);
     float phi = mix(aSheetB.z, aSheetB.w, u * sweep);
     float rho = aSheetB.x * (1.0 - aSheetB.y + aSheetB.y * v) * (0.9 + 0.1 * grow);
-    float curl = (s3n(vec2(u * 4.0 + seed * 7.0, v * 2.0)) - 0.5) * 0.35 * aSheetB.y * aSheetB.x;
-    curl += (v - 0.5) * 0.25 * aSheetB.y * aSheetB.x * sin(u * 3.1 + seed * 9.0);
+    float curl;
+    if (fract(aSheetA.x) > 0.4) {
+      // Normal/Lite charged launch: broad uneven rolled edge, not a flat fan.
+      // Existing radius, sweep/lifetime, layers and droplets are unchanged.
+      float edge = smoothstep(0.35, 1.0, v);
+      float lobe = 0.055 * sin(u * 12.0 + seed * 7.0) + 0.035 * sin(u * 23.0 - seed * 3.0);
+      rho *= 1.0 - edge * (0.09 + lobe);
+      curl = (s3n(vec2(u * 3.0 + seed * 7.0, v * 1.3)) - 0.5) * 0.22 * aSheetB.y * aSheetB.x;
+      curl += edge * edge * sin(u * 6.5 + seed * 4.0) * 0.18 * aSheetB.x;
+    } else {
+      curl = (s3n(vec2(u * 4.0 + seed * 7.0, v * 2.0)) - 0.5) * 0.35 * aSheetB.y * aSheetB.x;
+      curl += (v - 0.5) * 0.25 * aSheetB.y * aSheetB.x * sin(u * 3.1 + seed * 9.0);
+    }
     // a positive length winds the ribbon forward into a spiral (Stringer)
     return vec3(cos(phi) * rho, sin(phi) * rho, curl + u * sweep * aSheetA.w);
   }
@@ -151,9 +162,12 @@ const SHEET_CUT = `
       // the oldest end of the sweep thins out first; the wave stays whole early
       ref = mix(0.06, 0.85, age * age) + 0.5 * (1.0 - smoothstep(0.0, 0.08 + 0.5 * age * age, uv.x));
     }
-    vS3Dh = vec2(dFdx(h), dFdy(h)) * 2.5;
+    // Texture fingers still cut the edge, but do not emboss every texel into
+    // parallel ribs across a solid charged wave's broad glossy body.
+    float wetBody = fract(vS3A.x) > 0.4 ? 1.0 - smoothstep(0.55, 0.95, uv.y) : 0.0;
+    vS3Dh = vec2(dFdx(h), dFdy(h)) * mix(2.5, 0.45, wetBody);
     if (h < ref) discard;
-    vS3Streak = 0.8 + 0.3 * h;
+    vS3Streak = mix(0.8 + 0.3 * h, 0.97 + 0.06 * h, wetBody);
   }`;
 
 // Sloshing Machine round (Splatoon 3 promotional screenshot shared by the
@@ -223,7 +237,12 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   const coneScratch = {};
   const splashTex = decodeAlpha(THREE, MUZZLE_SPLASH, false), ringTex = decodeAlpha(THREE, INK_RING, true);
   const uniforms = { s3Splash: { value: splashTex }, s3Ring: { value: ringTex } };
-  const mesh = new THREE.InstancedMesh(sheetGeometry(THREE), inkMaterial(THREE, 's3-ink-sheet-2', nearDither, rim, uniforms, {
+  const mesh = new THREE.InstancedMesh(sheetGeometry(THREE), inkMaterial(THREE, 's3-ink-sheet-wet-wave-1', nearDither, `
+    if (fract(vS3A.x) > 0.4) {
+      float iwRim = pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), 3.0);
+      totalEmissiveRadiance += vColor.rgb * (0.02 + 0.08 * iwRim);
+    } else { ${rim} }
+  `, uniforms, {
     vertexHead: SHEET_VERTEX,
     vertexBody: [['#include <beginnormal_vertex>', `
         vec3 objectNormal;
@@ -354,7 +373,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
             }
             const off = (layer - (cfg.layers - 1) / 2) * 0.12 * cfg.radius;
             m.compose(drop.copy(burst.at).addScaledVector(x, burst.kind === 'arrow' ? 0 : off), q, s.setScalar(1 - 0.12 * layer));
-            A[o] = cfg.tiles + (cfg.solid ? 0.25 : 0); A[o + 3] = cfg.length || 0; B[o] = cfg.radius;
+            A[o] = cfg.tiles + (burst.wetWave ? 0.5 : cfg.solid ? 0.25 : 0); A[o + 3] = cfg.length || 0; B[o] = cfg.radius;
           }
           mesh.setMatrixAt(n, m); mesh.setColorAt(n, burst.color);
           A[o + 1] = clamp(age, 0, 1); A[o + 2] = ls;

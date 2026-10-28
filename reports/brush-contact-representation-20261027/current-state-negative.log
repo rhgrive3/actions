@@ -1,0 +1,27 @@
+(node:15673) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ held Brush contact follows near/far transitions for every Brush head (12395.95813ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12878.969274
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/brush-contact-representation.test.mjs:25:1
+✖ held Brush contact follows near/far transitions for every Brush head (12395.95813ms)
+  AssertionError [ERR_ASSERTION]: s3-brush-mini, near=false, tick 1: displayed clearance 0.06683345419065534
+      at TestContext.<anonymous> (file:///workspace/actions-brush-contact-fix/patches/splatoon3/tests/brush-contact-representation.test.mjs:53:18)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

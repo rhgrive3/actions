@@ -1,0 +1,11 @@
+(node:15435) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all five Rollers and three Brushes retain the lowered pose through jumps and downhill air frames at 30/60/120 Hz (25929.617962ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26403.311734

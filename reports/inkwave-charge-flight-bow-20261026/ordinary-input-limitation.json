@@ -1,0 +1,77 @@
+{
+  "contentHash": "32ad27a7264b34c2497796261b32105a70bc2be664e13364691600553e946cc3",
+  "kind": "ordinary-input",
+  "errors": [],
+  "scenes": [
+    {
+      "id": "s3-charger-light",
+      "rows": [
+        {
+          "wall": 129980.79999999981,
+          "time": 6.133266666666656,
+          "id": "s3-charger-light",
+          "q": 0,
+          "stage": 0,
+          "charging": false,
+          "ink": 100,
+          "heads": 0,
+          "drops": 0
+        },
+        {
+          "wall": 136069.69999999995,
+          "time": 6.383266666666655,
+          "id": "s3-charger-light",
+          "q": 0.75,
+          "stage": 0,
+          "charging": true,
+          "ink": 94.75000000000004,
+          "heads": 0,
+          "drops": 0
+        },
+        {
+          "wall": 136309,
+          "time": 6.633266666666654,
+          "id": "s3-charger-light",
+          "q": 1,
+          "stage": 0,
+          "charging": true,
+          "ink": 93.00000000000007,
+          "heads": 0,
+          "drops": 0
+        }
+      ],
+      "pointerErrors": 2,
+      "ink": 93.00000000000007
+    }
+  ],
+  "console": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "requestFailures": [],
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  },
+  "failure": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /workspace/actions/scripts/check-inkwave-charge-input-browser.mjs:47:20",
+  "failureState": {
+    "menu": null,
+    "mode": "match",
+    "body": "READY!\nF\n33\np\nLOW INK\n60%\nE-liter 4K\nSPEED\n0.0m/s\nZONE\nHub\nTARGET\nLAST HIT\nCOMBO\nHITS\nNow using E-liter 4K\nR\nReset paint\nT\nReset targets\nG\nBack to start",
+    "pointerErrors": 3
+  }
+}

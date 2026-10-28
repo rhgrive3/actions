@@ -1,0 +1,15 @@
+{
+  "onlyThreeLinesAdded": true,
+  "triggersPermissionsConcurrencyUnchanged": true,
+  "allOtherWorkflowBytesUnchanged": true,
+  "job": "validate_core",
+  "step": "Verify emitted source-backed inertia, launch, charge and hurtbox behavior",
+  "emittedEnvironment": {
+    "INKWAVE_BUILT_SITE": "${{ github.workspace }}/_site"
+  },
+  "files": [
+    "patches/native-stages/tests/collision-revision-producers.test.mjs",
+    "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+    "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+  ]
+}

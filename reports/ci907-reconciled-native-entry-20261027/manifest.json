@@ -1,0 +1,26 @@
+{
+  "base": "1ab0f4d3f952e80b23df862820549e68dba9e8c2",
+  "catalogAndPoseCode": "76a6d01d989f92b960ac72918ee9d4e71bafbfed",
+  "ownershipCode": "97e53671c",
+  "originalOwnershipCode": "9a4516bc6f5fa6d3fb03831b884a795934a363ae",
+  "originalOwnershipEvidence": "3ac390696adbdcf2438e9ecb280efd5439b98ae1",
+  "preservedExternalFixtures": {
+    "patches/local-quality/tests/offline-pause-simulation-work.test.mjs": true,
+    "patches/local-quality/tests/queue-extra-world.test.mjs": true
+  },
+  "poseFileMatchesReviewed3643": true,
+  "frozenMotionBytesUnchanged": true,
+  "files": {
+    "shooter-native-bounded-acceptance.json": "4e2ded6ce778ed2034c32e24ac1c5c810570a867e06ca4cb6c369539e5158d0b",
+    "pose-after.log": "2ef9f3ba002cd7529a186f989f05e780feb2b4abe90ad201853949bba066f6bd",
+    "ownership-integration-identity.json": "df1777c18fb2717f2dc3b20fa1bf2206773d51c5326dede3dbf65094b1e0054c",
+    "catalog-focused.log": "0f989d795b0e953f9d73170db58f584d24ea6146265065c83e71932d7d35f44c",
+    "external-head-identity.json": "e6c5c5412402f3cd451c6e7575ff31015fdc07892ef1a0902bea6dbc097e1ced",
+    "browser-probe.mjs": "2797c0f58cf1f562a788b47e754e2c042953ed04cdb8a30daa88a4c560253def",
+    "combined-saved-validation.json": "ce3f2a6f3786357f8328a07fa893bc275f20a7415e10d81da679ad07f878b198",
+    "ownership-emitted.log": "84d1cb81feba35cd09126621fbb5b21643163b9cbcb46f7cbfcc724482d631f7",
+    "external-world.log": "7ca0764fbe5d4956dd051adb98c84f8b64d4a477dc151bc40b1dce64b7dbe785",
+    "bounded-entry-receipt.json": "ffe87d6e96bb29d6552077ddebb93e4d9458632d9d2bd2aad33d6a9f13bd6942",
+    "external-pause.log": "5ad00f5ff9baf583fbc765eed53b1f7ebae29f3d648e0604cef1519813aa7232"
+  }
+}

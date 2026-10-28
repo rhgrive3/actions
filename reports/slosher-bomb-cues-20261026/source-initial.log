@@ -1,0 +1,36 @@
+(node:1308) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Curling has no post-release explosion forecast (owner) (1690.555227ms)
+✔ Curling has no post-release explosion forecast (ghost) (1323.369645ms)
+✔ Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming (1246.136345ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (owner) (1355.131641ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (ghost) (1617.152107ms)
+✔ Autobomb observed after its search window and removed bombs leave no delayed scan (1393.472254ms)
+(node:1309) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-double body-relative horizontal launch is independent of the low animated rim (2097.469821ms)
+✔ s3-slosher-double-01 body-relative horizontal launch is independent of the low animated rim (1639.072014ms)
+✔ s3-slosher-double-02 body-relative horizontal launch is independent of the low animated rim (1561.14894ms)
+(node:1322) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-diffusion delayed globs select ground/air base speed at birth across 30/60/120 Hz (104.73361ms)
+✔ s3-slosher-launcher delayed globs select ground/air base speed at birth across 30/60/120 Hz (30.434911ms)
+✔ s3-slosher-bathtub delayed globs select ground/air base speed at birth across 30/60/120 Hz (20.274662ms)
+✔ s3-slosher-double delayed globs select ground/air base speed at birth across 30/60/120 Hz (65.769871ms)
+✔ stationary delayed globs preserve the admitted velocity exactly when grounded state stays the same (45.770382ms)
+✔ Bloblobber delayed bubbles retain the windup-release direction and replay without double-aim (10.130214ms)
+(node:1329) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ retained Autobomb launch consumes its own source Y clamp, axis inheritance and AP57 throw-speed tier (1678.670598ms)
+✔ Autobomb wall/ceiling bounces never arm a fuse or scan until an actual floor landing (1467.18659ms)
+✔ retained Autobomb owner and ghost apply the same extracted airborne XZ resistance at 30/60/120 render Hz (4178.739585ms)
+✔ a chasing Autobomb keeps supported floor clearance, then falls off a ledge and lands without a second scan (1391.547995ms)
+✔ a live target inside the community ~0.3-line approach range arms the warning without borrowing the .65 death parameter (1800.724257ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20212.337745

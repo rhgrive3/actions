@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { WEAPON_AUDIO, mainAudioSourceId } from '../runtime/audio/weapon-recipes.mjs';
+import { WEAPON_AUDIO } from '../runtime/audio/weapon-recipes.mjs';
 import { VARIANT_BASE_WEAPON } from '../runtime/alternate-weapon-kits-data.mjs';
 import { usesChargerRise } from '../runtime/audio/charger-charge-rise.mjs';
 

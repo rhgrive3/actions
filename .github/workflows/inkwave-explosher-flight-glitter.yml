@@ -8,6 +8,11 @@ on:
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/lib/inkwave-explosher-geometry-lifetime.mjs'
+      - 'scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs'
+      - 'scripts/prepare-inkwave-ci-video-tools.mjs'
+      - 'scripts/prepare-inkwave-ci-apt.py'
+      - 'scripts/tests/inkwave-ci-video-tools.test.mjs'
       - 'scripts/check-inkwave-current-explosher-native.mjs'
       - 'scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs'
       - 'scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs'
@@ -23,6 +28,9 @@ on:
       - 'scripts/lib/inkwave-explosher-volume-barrier.mjs'
       - 'scripts/lib/inkwave-explosher-video-gate.mjs'
       - 'scripts/lib/inkwave-explosher-stage-admission.mjs'
+      - 'scripts/check-inkwave-explosher-absolute-geometries.mjs'
+      - 'scripts/tests/inkwave-explosher-absolute-geometries.test.mjs'
+      - 'scripts/ci/inkwave-test-suites.json'
       - 'scripts/lib/inkwave-projectile-capture-ui.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'scripts/render-inkwave-projectile-shapes.mjs'
@@ -54,15 +62,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Strict runtime/UI preflight protocol contracts
-        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - name: Strict runtime/UI preflight protocol contracts
+        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs scripts/tests/inkwave-ci-video-tools.test.mjs scripts/tests/inkwave-explosher-absolute-geometries.test.mjs
       - run: npx playwright install --with-deps chromium
       - name: Install required PNG decoder
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y ffmpeg
-          ffmpeg -hide_banner -version
+        run: node scripts/prepare-inkwave-ci-video-tools.mjs --receipt .ci-scratch/explosher/video-tool-provision.json
       - name: Native production-composition regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-explosher-workflow-admission.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
       - name: Build exact candidate and admitted immutable common source
@@ -90,6 +95,8 @@ jobs:
             EXPLOSHER_SHAPE_OVERLAY=".ci-scratch/explosher/shape/${lane}-shape-receipt.json" node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-common ".ci-scratch/explosher/preflight-${lane}" 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c .ci-explosher-base
           done
           node --input-type=module -e "import fs from 'node:fs'; import {readExplosherStagePair} from './scripts/lib/inkwave-explosher-stage-admission.mjs'; fs.writeFileSync('.ci-scratch/explosher/preflight-diagnostic.json',JSON.stringify(readExplosherStagePair('preflight','.ci-scratch/explosher/preflight-before','.ci-scratch/explosher/preflight-after'),null,2));"
+      - name: Enforce original absolute Explosher geometry guard
+        run: node scripts/check-inkwave-explosher-absolute-geometries.mjs preflight .ci-scratch/explosher/preflight-before .ci-scratch/explosher/preflight-after .ci-scratch/explosher/preflight-diagnostic.json .ci-scratch/explosher/absolute-geometry-admission.json
       - name: Capture untouched base with the same Explosher driver
         if: false # Current head is short preflight diagnostics only, not full acceptance.
         run: EXPLOSHER_EXPECT_PREFLIGHT=.ci-scratch/explosher/preflight-before/manifest.json node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base

@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {fileURLToPath} from 'node:url';import crypto from 'node:crypto';
 import {validateCatalogAudioWorker} from '../lib/inkwave-catalog-audio.mjs';
-import {validateCatalogReceipts,validateCatalogAudioGraphResult,validateCatalogResult,CATALOG_MODULES} from '../check-inkwave-motion-catalog.mjs';
+import {validateCatalogReceipts,validateCatalogAudioGraphResult,validateCatalogBombFxGraphResult,validateCatalogResult,CATALOG_MODULES} from '../check-inkwave-motion-catalog.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'catalog-audio-test-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));fs.cpSync(path.join(root,'patches/splatoon3/runtime'),path.join(dir,'patches/splatoon3/runtime'),{recursive:true});fs.mkdirSync(path.join(dir,'tools/audio'),{recursive:true});fs.copyFileSync(path.join(root,'tools/audio/build-worker.mjs'),path.join(dir,'tools/audio/build-worker.mjs'));return dir;}
 test('generated worker equals authoritative generator and production reference',()=>validateCatalogAudioWorker(root));
@@ -67,13 +67,22 @@ test('saved graph rejects duplicate/foreign worker artifacts and missing or corr
 
 test('saved graph requires each actual lazy module worker and its PCM protocol proof',()=>{
  const result=audioResult();result.audioGraph.prewarmWorkers=[];
- for(const name of ['grain','reverb']){
+ for(const name of ['grain','reverb','pitch-preserving-charge']){
   const file='_versions/test/patches/splatoon3/runtime/audio/'+name+'-worker.mjs';
   result.artifacts[file]='c'.repeat(64);result.loaded.push({file,sha256:'c'.repeat(64),bytes:1024});
   assert.throws(()=>validateCatalogAudioGraphResult(result),/prewarm protocol/);
-  result.audioGraph.prewarmWorkers.push({path:'/'+file,protocol:'canonical-pcm-byte-exact',bytes:96000,terminated:true});
+  result.audioGraph.prewarmWorkers.push({path:'/'+file,protocol:'canonical-pcm-byte-exact',bytes:name==='pitch-preserving-charge'?4000:96000,terminated:true,...(name==='pitch-preserving-charge'?{serial:901,key:'catalog-charger',sampleRate:8000,ratio:1.25,sourceFrames:800,outputFrames:1000,channels:1}:{})});
   validateCatalogAudioGraphResult(result);
   const missing=structuredClone(result);missing.loaded=missing.loaded.filter(r=>r.file!==file);assert.throws(()=>validateCatalogAudioGraphResult(missing),/prewarm receipt/);
   const wrong=structuredClone(result);wrong.audioGraph.prewarmWorkers.at(-1).terminated=false;assert.throws(()=>validateCatalogAudioGraphResult(wrong),/prewarm protocol/);
  }
 });
+
+ test('saved native FX proof requires both emitted HTTP receipts and a real bomb invocation',()=>{
+  const file='_versions/test/src/fx/fxHooks.js',cue='_versions/test/patches/splatoon3/runtime/bomb-cues.mjs',sha256='a'.repeat(64);
+  const r={artifacts:{[file]:sha256,[cue]:sha256},loaded:[file,cue].map(file=>({file,sha256,bytes:100})),bombFxGraph:{entryPath:'/'+file,cuePath:'/'+cue,source:'native-throwBomb-record',nativeBirths:1,bombVisits:1,birthTrails:1,cueId:'bomb',gameplayUnchanged:true,ownerDisabled:true,callbacksRestored:true,servicesRestored:true}};
+  validateCatalogBombFxGraphResult(r);
+  for(const key of ['nativeBirths','bombVisits','birthTrails','gameplayUnchanged','ownerDisabled','callbacksRestored','servicesRestored']){const bad=structuredClone(r);bad.bombFxGraph[key]=false;assert.throws(()=>validateCatalogBombFxGraphResult(bad),/FX invocation proof/);}
+  for(const missing of [file,cue]){const bad=structuredClone(r);bad.loaded=bad.loaded.filter(x=>x.file!==missing);assert.throws(()=>validateCatalogBombFxGraphResult(bad),/FX entry receipt/);}
+  const bad=structuredClone(r);bad.loaded[0].sha256='b'.repeat(64);assert.throws(()=>validateCatalogBombFxGraphResult(bad),/FX entry receipt/);
+ });

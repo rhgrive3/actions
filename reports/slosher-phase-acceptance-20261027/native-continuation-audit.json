@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "scope": "QA-only native-continuation audit; no fresh browser captures or three-lane acceptance",
+  "publishedHandoff": "ccb0b02071fba736d285edace7454bc8681e8b19",
+  "localImportedBase": "7cba673bd2836d52f6ca4c0753a886237f43225c",
+  "accountingProtocol": "native-cell-credit-ranges-v2",
+  "runtimeSha256": "94796637f69c44cc77a8e9a6a1c4336391d3ae6c3d2e205757ddd3d91659b3e8",
+  "comparatorSha256": "98cbde37607cdfde958991f4b218d04d0fae17e1c956ff67a17e55ec943e1cd7",
+  "workflowSha256": "8a0de1c78f47b01c7d99061ad06994abe57faf348986e8d76b9478f19240a9fa",
+  "executionSources": {
+    "patches/splatoon3/runtime/alternate-weapon-kits-data.mjs": "9328187f3f29cb71be194a72aae25a7556c2f3d4e37cede5abf14ab84c9b14c3",
+    "patches/splatoon3/runtime/catalog-pose-birth.mjs": "8e3894746924cf495f5097ee1dae693f911d8690cc3db592a0ffaff503f0dccf",
+    "patches/splatoon3/runtime/projectile-visual-source-data.mjs": "293a58d1f1a483c87f34bc4bb5eb2114c47103fa5e6dd5aeb908a6cf07b0fe81",
+    "patches/splatoon3/runtime/projectile-visuals.mjs": "c5e31fd00e6c064c65e572c61c50a64f4d404fdeb28582cbe85ce2ce5b99fccf",
+    "scripts/check-inkwave-projectile-visuals.mjs": "84fa9bf827fe699b0b9929c915678f6bc2063d45226a6e547117bbb1fa14e7c4",
+    "scripts/compare-inkwave-projectile-captures.py": "98cbde37607cdfde958991f4b218d04d0fae17e1c956ff67a17e55ec943e1cd7",
+    "scripts/fixtures/inkwave-slosher-phase-workflow-20261027.json": "be56a4df36a1591769da1421f0f16b36a04b384601fef1d60de474076d8555b4",
+    "scripts/lib/inkwave-audio-readiness-diagnostics.mjs": "5975a99a53ff5dfc6edbf775a55ddf3c9139501bb8230dfdfa56f05dd05e85e7",
+    "scripts/lib/inkwave-audio-timing-observer.mjs": "949cdf95b4da22e9ede48028cbc7591cc5e1e41b587cb8b9da98ce4a81a98049",
+    "scripts/lib/inkwave-capture-source-identity.mjs": "cb9bacaf198d9493330a3ac6ed07a3c62f3b95eff29b4f3e9f56d8d451dc2874",
+    "scripts/lib/inkwave-main3003-firing-pair.mjs": "be6d1fa326d0693f01aa5f42188e38352642905dcddfe6d71856fbac54a01e39",
+    "scripts/lib/inkwave-main3003-respawn-pair.mjs": "a37454894ced92339d2fd81efa4cb4ee5576e3765d8238f7f7e54679fbbde143",
+    "scripts/lib/inkwave-projectile-atomic-intro.mjs": "7cadf30739a376f38c68fc2e3555c24924b55faa80b8acd19af0f5a32de3f761",
+    "scripts/lib/inkwave-projectile-capture-projection.mjs": "1b6b134a3dca81ae230c49b841c233fc85e717c884c61f95ada74e235998401d",
+    "scripts/lib/inkwave-projectile-capture-ui.mjs": "8cca97f2f748134e209511e3ea68a8e2b0df1b3e53355931495d72e7676493e4",
+    "scripts/lib/inkwave-projectile-ci-intro.mjs": "b9c9812b08c204cc460afb3ac993a0b7dc1a51e75aa2ee3870865b717669e4b4",
+    "scripts/lib/inkwave-projectile-ci-roster.mjs": "122a145eff0dd0dd6085bbf908e0fc7eec56e3adc2c6f8ef6832d32bb1605a6f",
+    "scripts/lib/inkwave-projectile-current-pair.mjs": "df2da8ea8029f6ac0fddcfe73320822ccaaac06cb0c1a3f7bfe6e833a9b126d9",
+    "scripts/lib/inkwave-projectile-http-file.mjs": "03aedc3492c62296f03dcee662dd93c57183cc86057c2aec2faaed889725b19a",
+    "scripts/lib/inkwave-projectile-intro-ui.mjs": "91fb3a836462b2a4c2e401ee0cf53383950cda11a40945ef2b054b81da456123",
+    "scripts/lib/inkwave-projectile-menu-start.mjs": "f512a2125e38e719668d4a99234453735b5689e1f8b92c4a70089f2fd1faea5d",
+    "scripts/lib/inkwave-slosher-phase-control.mjs": "4cffa9bfdb6930ff2d049abbe2382a83001a5523bca9286d9c1b2f862b3dfb94",
+    "scripts/lib/inkwave-slosher-phase-observer.mjs": "9ec8b0686f1f9bf3140b29e52c81a13ce9851bc2064056d0aa31ae65afb93d9d",
+    "scripts/lib/inkwave-slosher-phase-verification.mjs": "1017fa3785b3aa4dcb35c541d25073608c1bac8c3bb2c0163659e1ce6037e698",
+    "scripts/lib/inkwave-slosher-phase-workflow.mjs": "59bf7de39b537e99e274a79a9eaee25e19c4587355fe0ce8bc1318b06b221114",
+    "scripts/lib/inkwave-source-admission-cli.mjs": "162369bf62732c465a3734d057329fffc0474f08505e0f7755c1974c16a72cb4",
+    "scripts/lib/inkwave-streamed-music-diagnostics.mjs": "beb245df38eee25865ecf883647a19f58659024163a10d8b481fe1be999ab8a0",
+    "scripts/prepare-inkwave-slosher-phase-control.mjs": "92b4c95e7a0dae785a55b095b39c43f92ef8a07318ff3981c0e2a1ef91eeaa1e",
+    "scripts/verify-inkwave-slosher-phase-captures.mjs": "451fe8aab79f66bc201be20053ea5b5695a2c8a090b7da238504a81c805943fa"
+  },
+  "existingEmitted": {
+    "producerSource": "d3ee2a9fbbfbb32c79819021facab66840a2be70",
+    "contentHash": "39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b",
+    "inputHash": "511a1bee578eadba62c93897ff16e2bddc86e01a77f87b6f239640fce6558be4",
+    "catalogInput": "94796637f69c44cc77a8e9a6a1c4336391d3ae6c3d2e205757ddd3d91659b3e8"
+  },
+  "checks": {
+    "focusedSourceCpuSynthetic": {
+      "pass": 11,
+      "fail": 0
+    },
+    "emittedCpuAccounting": {
+      "pass": 4,
+      "fail": 0
+    },
+    "workflowSourceCompatibility": {
+      "pass": 43,
+      "fail": 0
+    },
+    "unchangedComparator": {
+      "pass": 9,
+      "fail": 0
+    },
+    "sourcePhase30_60_120Hz": {
+      "pass": 9,
+      "fail": 0
+    },
+    "emittedPhase30_60_120Hz": {
+      "pass": 9,
+      "fail": 0
+    }
+  },
+  "negativeControls": [
+    "coherently forged +1 turf/SP with no new eligible cell",
+    "duplicate raw ownership cell",
+    "missing release with retained drop-count increment",
+    "forged snapshot counts",
+    "forged raw dead flag or eligible/dead mask",
+    "Tidal Slam SP-lock mutation",
+    "incomplete body-face group range",
+    "legacy schema-1 capture",
+    "legacy three-file execution receipt",
+    "modified transitive verification helper",
+    "source old fallback 1"
+  ],
+  "nativeThreeLaneAcceptance": "pending fresh automatic CI on reviewed exact PR/event route",
+  "oldRawCaptureAvailability": "not transferred to this executor",
+  "emittedOldFallback": "not run: no uncorrected emitted build",
+  "browserRunsHere": 0
+}

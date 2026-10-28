@@ -7,6 +7,33 @@ function once(code,before,after,label) {
   return code.slice(0,at)+after+code.slice(at+before.length);
 }
 export function adaptProjectileVisuals(rel,code) {
+  if(rel==='src/fx/fxHooks.js') {
+    code="import { bombCuePresentation, drawAutobombScan } from '../../patches/splatoon3/runtime/bomb-cues.mjs';\n"+code;
+    code=once(code,'    const R = SUB.bomb.radius, fuse0 = SUB.bomb.fuse;',
+      '    // Each native bomb retains its own display identity and fuse.', 'per-bomb warning spec');
+    code=once(code,'      const near = this._near(b.pos, 40);',
+      `      const near = this._near(b.pos, 40);
+      const cue = bombCuePresentation(b, SUB, r), R = cue.radius, fuse0 = cue.fuse;
+      drawAutobombScan(this, b, r, cue, col, near);`, 'landing-owned Autobomb scan');
+    code=once(code,"      } else if (b.kind === 'bomb') {\n        if (!r.armed) {\n          r.armed = true;",
+      `      } else if (b.kind === 'bomb' && cue.warning) {
+        const firstArm = !r.armed;
+        if (firstArm || cue.follows && (r.bx !== b.pos.x || r.by !== b.pos.y || r.bz !== b.pos.z)) {
+          r.armed = true;
+          r.bx = b.pos.x; r.by = b.pos.y; r.bz = b.pos.z;`, 'moving Splat warning and no Curling forecast');
+    code=once(code,'          if (h && h.hit) { r.gp.copy(h.point); r.gn.copy(h.normal); r.ground = true; } else { r.gp.copy(b.pos); r.gp.y -= 0.2; }\n          fx.bounceSplash?.(r.gp, r.gn, col);\n          this._bump(\'bombArm\');',
+      `          r.ground = !!(h && h.hit);
+          if (r.ground) { r.gp.copy(h.point); r.gn.copy(h.normal); }
+          if (firstArm) {
+            if (r.ground) fx.bounceSplash?.(r.gp, r.gn, col);
+            this._bump('bombArm');
+          }`, 'refresh support without repeating arming effects');
+    code=once(code,'        fx.dangerRing?.(_v.copy(r.gp).addScaledVector(r.gn, 0.02), r.gn, col, R, k);',
+      '        if (near && r.ground) fx.dangerRing?.(_v.copy(r.gp).addScaledVector(r.gn, 0.02), r.gn, col, R, k);', 'no stale unsupported forecast');
+    code=once(code,'fx.beepPulse?.(b.pos, r.gp, r.gn, col, R, k);',
+      'fx.beepPulse?.(b.pos, r.ground ? r.gp : null, r.gn, col, R, k);', 'no stale beep floor marker');
+    return code;
+  }
   if(rel==='src/game/inkFlightRuntime.js') {
     return once(code,'      advanceInkFrame(p, p.inkProfile);',
       '      advanceInkFrame(p, p.inkProfile);\n      this.system.projectileVisuals?.recordPhysicsPoint(p, previousAge);',

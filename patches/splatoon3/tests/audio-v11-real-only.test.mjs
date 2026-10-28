@@ -1,3 +1,4 @@
+import {chargerRiseBuffer} from '../runtime/audio/charger-charge-rise.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -51,6 +52,12 @@ test('original main shot and normal, strong, critical and splat recordings are r
  ]);
  audio._realS3Loader.fetcher=async()=>({ok:true,json:async()=>mock});
  b.authorized.fetcher=async()=>res;
+ // Independently prime the newly required shared charge asset. Keep the
+ // pack decoder below dedicated to the event recordings this test counts.
+ const decode=ctx.decodeAudioData;
+ ctx.decodeAudioData=async()=>ctx.createBuffer(1,Math.round(ctx.sampleRate*1.82857),ctx.sampleRate);
+ await chargerRiseBuffer(ctx,{fetcher:async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(36571)})});
+ ctx.decodeAudioData=decode;
  assert.equal((await audio.requireRecordedMainShot('charger')).ready,true);
  for(const id of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
   assert.ok(b.authorized.pick(id,'fire'),id+' resident before first shot');
@@ -243,8 +250,9 @@ test('network Charger voices use the shared Splat rise instead of an indefinite 
  const source=fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/net/netmatch.js',source);
  assert.ok(adapted.includes('a.net._chargerOnsetActive = chargerStarting;'));
- assert.ok(adapted.includes('chargerStarting?G.audio?.playChargerChargeRise'),'all remote Charger identities use the Splat phrase');
- assert.ok(adapted.includes('chargeTime=a.weapon.chargeTime'),'remote rise follows weapon clock');
+ assert.ok(adapted.includes('usesChargerRise(wid)?G.audio?.playChargerChargeRise'),'all recorded Charger identities use the Splat phrase');
+ assert.ok(adapted.includes('const wid=a.weapon.id,chargeTime=a.weapon.chargeTime'),'remote rise follows weapon identity and clock');
+ assert.ok(adapted.includes('G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos,weaponId:wid,chargeTime}'),'remote rise stays positional');
  assert.ok(!adapted.includes("G.audio?.playWeapon?.(a.weapon.id,'charge'"),'no individual HoldNoise on fresh hold');
  assert.ok(!adapted.includes("this._voiceLoop(a, near, 'charge', wr.charging"),
    'remote Charger hold must never be passed to the looping sound adapter');

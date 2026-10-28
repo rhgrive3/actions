@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "9a89494320a7f9cfed62c83e0830bfe52d72f76e",
+  "contentHash": "32ad27a7264b34c2497796261b32105a70bc2be664e13364691600553e946cc3",
+  "inputHash": "3d975e375e930275d8867dc3f7a14fb14de7b4de6e800659950d2cb556b7bfe7",
+  "inputsMatchedToCommit": 1483,
+  "artifactsHashed": 2186,
+  "passed": true
+}

@@ -6,6 +6,15 @@ import { gzipSync } from 'node:zlib';
 import { DEFAULT_INK_VOLUME_URLS, decodeVolumeBinary, unpackVolumes, loadVolumePack } from '../ink-volume/pack.mjs';
 import { decodeVTF } from '../ink-volume/vtf.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
+import { qualityIdentity } from '../adapter.mjs';
+
+test('Hissen contour manifest and binary are exact production build inputs',()=>{
+  const identity=qualityIdentity();
+  for(const name of ['manifest.json','volumes.bin.gz']){
+    const file='ink-volume/assets/hissen-fallback/'+name;
+    assert.equal(identity[file],crypto.createHash('sha256').update(fs.readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),file);
+  }
+});
 
 test('both shipped default packs retain every source VTF byte and all 34 decoded RGBA frames',async()=>{
   let frames=0;
@@ -23,7 +32,7 @@ test('both shipped default packs retain every source VTF byte and all 34 decoded
   }
   assert.equal(frames,34);
 });
-test('ordinary FX construction loads both bundled names without configuration, then releases readiness',async()=>{
+test('ordinary FX construction excludes Hissen contour transport from startup, then releases readiness',async()=>{
   const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"}),calls=[];
   f.FX.prototype.loadInkVolume=async(name,url)=>{calls.push([name,url]);return {};};
   const fx=new f.FX(new f.THREE.Scene(),{quality:.25});assert.equal(await fx.inkVolumeReady,true);
@@ -60,4 +69,12 @@ test('default binary cache reuses verified bytes offline, repairs corruption and
   delete manifest.compression;manifest.byteLength=21*1024*1024;
   globalThis.fetch=async target=>{const response=new Response(String(target).endsWith('.json')?JSON.stringify(manifest):new Uint8Array(manifest.byteLength));Object.defineProperty(response,'url',{value:String(target)});return response;};
   await assert.rejects(loadVolumePack(url),/cache budget/);assert.equal(entries.size,1,'the slot ceiling also bounds an uncompressed extension');
+});
+
+
+test('Hissen contour demand is idempotent nonblocking and owned by FX disposal',async t=>{
+ const f=await fixture({productionComposition:true,fullRuntime:true,extraExports:"export { FX } from './inkwave-public/src/fx/fx.js';"}),calls=[];let finish;
+ const pending=new Promise(resolve=>{finish=resolve;});f.FX.prototype.loadInkVolume=async(name)=>{calls.push(name);if(name==='hissen-fallback')await pending;return {};};
+ const fx=new f.FX(new f.THREE.Scene(),{quality:.25});t.after(()=>{finish();if(!fx._inkVolumeDisposed)fx.dispose();});assert.deepEqual(calls,['roller','shooter'],'no eager contour request');fx.update(1/60);assert.equal(await fx.inkVolumeReady,true);
+ const localBefore=f.G.local;f.G.local={weapon:{sourceMainActor:'WeaponSlosherDiffusion'}};f.G.match.attract=true;fx.update(1/60);assert.deepEqual(calls,['roller','shooter'],'attract Hissen never starts transport');f.G.match.attract=false;fx.update(1/60);f.G.local=localBefore;const first=fx._hissenFallbackReady,again=fx.requestHissenFallback();assert.equal(first,again);assert.deepEqual(calls,['roller','shooter','hissen-fallback']);assert.equal(await fx.inkVolumeReady,true,'demand load cannot block the already admitted game');finish();assert.equal(await first,true);fx.dispose();assert.equal(fx._hissenFallbackReady,null);assert.equal(fx.requestHissenFallback(),null);
 });

@@ -1,3 +1,4 @@
+import { queueChargerPaintDrop } from './charger-paint-drop.mjs';
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { CHARGER_FOOTPRINT } from './main-ink-footprints.mjs';
 import { WORLD_UNITS_PER_SOURCE_UNIT } from './source-distance.mjs';
@@ -99,7 +100,19 @@ export function installChargerFlight(api,completion) {
     const q=chargerRangeCharge(charge);
     return raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*q;
   };
-  P.chargerReach=function(charge){return reachFor(charge);};
+  // Added Chargers use the catalogue projectile owner, whose charge frames,
+  // full-charge threshold and distance endpoints can differ from Splat Charger.
+  // The optional weapon preserves the old native query for all other families.
+  P.chargerReach=function(charge,weapon){
+    const record=weapon?.catalogRecord;
+    if(record?.family !== 'charger')return reachFor(charge);
+    const p=record.parameters, move=p.MoveParam, clock=p.WeaponParam;
+    const c=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
+    const fullFrames=Number.isFinite(clock?.ChargeFrameFullCharge)?clock.ChargeFrameFullCharge:60;
+    const minFrames=Number.isFinite(clock?.ChargeFrameMinCharge)?clock.ChargeFrameMinCharge:8;
+    const q=Math.max(0,Math.min(1,(c*fullFrames-minFrames)/(fullFrames-minFrames)));
+    return c+1e-9>=1?move.DistanceFullCharge:move.DistanceMinCharge+(move.DistanceMaxCharge-move.DistanceMinCharge)*q;
+  };
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
   function feetSplash(actor,w){
     const radius=w.feetPaintRadius;
@@ -184,24 +197,8 @@ export function installChargerFlight(api,completion) {
     return G.physics.raycast(point,paintDown,limit,paintHit,true);
   }
   function postponePaint(system,job,from,hit,radius,seed) {
-    // Pooling shares the live Projectiles renderer, keeping zero new draw calls.
-    if(!system.chargerDrops)return; // gameplay paint is not limited by the 64 visible-instance reservation
-    const drop=system.chargerDropPool.pop()||{
-      pos:new THREE.Vector3(),start:new THREE.Vector3(),target:new THREE.Vector3(),
-      normal:new THREE.Vector3(),direction:new THREE.Vector3()
-    };
-    drop.start.copy(from);drop.pos.copy(from);
-    drop.landed=!!hit?.hit;
-    if(drop.landed){drop.target.copy(hit.point);drop.normal.copy(hit.normal);drop.face=hit.face;}
-    else{drop.target.copy(from).setY(PLAYER.waterY-1.8);drop.normal.set(0,1,0);drop.face=-1;}
-    drop.direction.copy(job.dir).addScaledVector(drop.normal,-job.dir.dot(drop.normal));
-    if(drop.direction.lengthSq()<1e-8)drop.direction.set(1,0,0);
-    else drop.direction.normalize();
-    const stretch=Math.max(0,job.paint.depth/radius-1)*1.6;
-    drop.shift=radius*stretch*0.375;drop.stretchAmt=stretch;
-    drop.age=0;drop.life=Math.max(0.05,Math.sqrt(Math.max(0,2*(from.y-drop.target.y)/20)));
-    drop.radius=radius;drop.owner=job.owner;drop.team=job.team;drop.seed=seed;
-    system.chargerDrops.push(drop);
+    queueChargerPaintDrop(system,{from,hit,radius,depth:job.paint.depth,direction:job.dir,
+      owner:job.owner,team:job.team,seed,waterY:PLAYER.waterY});
   }
   function splatTravelPoint(system,job,at,radius,terminal=false){
     const h=groundUnder(at),seed=Math.random();

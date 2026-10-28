@@ -1,0 +1,10 @@
+{
+  "sourceSha": "e707d30faed3f4d772f8da2690069e3781bbfa58",
+  "contentHash": "69291e5f1c92f807fed830b126ee0ec3b90be3539b5876537fa25db095cd3fb6",
+  "inputHash": "f120f4b24b08b036f1b6c89208a42c79bba668406af88c5f330329c2539922f0",
+  "sourceInputs": 1490,
+  "artifacts": 2194,
+  "mismatches": 0,
+  "failures": [],
+  "matchesAcceptedCandidateBuild": true
+}

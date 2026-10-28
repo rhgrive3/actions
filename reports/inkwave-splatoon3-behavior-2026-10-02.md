@@ -6455,6 +6455,85 @@ Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physics
 
 原典HIGHの読み込み直後には、旧版・途中版ともBC7の400×30 base mipでGL1282を記録した。既存normal上限512が800×60のUASTCソースから同mipを選ぶが、BC系base寸法の4ブロック境界に合わなかった。該当するuniversal KTX2だけ同ソース・同mipのRGBA32へ変換し、寸法・既存cap・色空間・通常の圧縮経路を維持する。RGBAの局所容量増加を記録し、縮小mipやPNG再resizeによる画質低下へ置き換えない。実loadNativeTextures→KTX2Loader→GPUの対照で同400×30、48,000RGBAバイト一致、GL0を確認した。物理・CPU塗り・当たり判定・通信には変更を加えない。
 
+## 2026-10-26: Charger shared onset, airborne stripe landing and Stringer stages
+
+Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. 詳細・参照条件・検証範囲は
+[`inkwave-charge-flight-bow-2026-10-26.md`](inkwave-charge-flight-bow-2026-10-26.md)。
+追加チャージャーの高所の線状塗りは、床への即時投影から既存 Splat Charger と同じ可視の落下レコード・着地後の塗りへ接続した。充電音は既存の選択済み Splat 録音を全 Charger で再利用し、START 時に実デコードを確認する。弓の既存 Mid/Full 発射結果を保持し、第一・第二段階の進行状態と到達音を公開した。基準は 11.3.0 の固定抽出行、ギアなし・インク十分の静止射撃。Splatune 2 録音は選択された代理音、落下の 20-unit 重力は既存 INKWAVE モデルであり、本家の実機映像・音声・落下時間の一致は未確認。新規 Nintendo メディアは追加しない。描画バッファ・単独ロジック・ブラウザ音声出力・通常入力の証拠を区別し、照準の描画接続は担当者の統合対象とする。
+
+2026-10-26 bounded coverage追補（固定26a69c1c）: E-liter／Squiffer／Goo Tuberの実カタログ保持は `catalogState.stored` を消費するが、音声の既存保持判定はnative `s3Stored` だけを読んでいた。通常Actor入力でFire保持→Squid→kidへ戻ると新規チャージのrise/full-readyが再生されるdispatch回帰を確認。別候補では実際の保持消費を1回だけ認識し、既存keep cueへ接続する。Goo部分保持後の新たなfull-ready、保持期限切れ後の新規rise、同一入力の反復、実発射／インク予約は区別する。S3 11.3.0・ギアなしの従来保持資料を継承し、音源・ゲームプレイ時計・弾道は変更しない。この追加確認はCPU合成ソース／生成物の音声dispatchであり、新規ブラウザ再生・本家keep音のタイミング一致は未確認。[変種別coverageと制約](inkwave-batch-integration-20261026/charge-bow-coverage-26a69c1c/README.md)。
+
+2026-10-26 Pencil release-only追補（固定f8b5eafc）: 残弾2～5がFire押下で発射される挙動を再現し、最初の1発と同じreleaseへ変更する。[任天堂公式2022-11-17発表](https://x.com/SplatoonJP/status/1593167058514026497)の検索取得本文と親の独立reviewはrelease発射を支持する。元の72F／15F・5発・37.5%予約・68damage・288WU/s・26.037WUを保持し、5H/5Bの全5発event／head移動・描画バッファ／落下後塗り、空マガジン後の新規charge、既存cooldown拒否と重複releaseを区別して確認する。別候補68cf34117のSquid残弾破棄hunkは根拠不足として除外し、元候補1d6df6d8を変更せず保存する。チャージキープ不可という説明から発射済みpackの残弾破棄・ink精算までは確定しない。直接公式本文取得403・映像未取得、実音声／通常入力／本家pixel・発射間隔・Squid残弾semanticsは未確認。[採用範囲と負例](inkwave-batch-integration-20261026/pencil-release-only/README.md)。
+
+## 2026-10-26: 下り坂ローラー・歩行表示・床／壁の泳ぎ飛沫
+
+基点 `48511150bbaeab182dd04c712d39bd5b26df18f3`。実Actorで下り坂の標準ローラーが
+連続する床を未支持とする問題を再現し、塗り側の衝突面追跡を支持判定と共通化した。
+歩行は表示用の段差スプリングと歩調用の速度だけを平滑化。泳ぎは低速の完全非表示・
+壁除外を修正し、床／壁面を根元に持つ小さなカールと固定数の短い滴へ置換した。
+詳細、再現操作、原作根拠、ソース／生成物／GPUの確認範囲は
+[担当記録](locomotion-surface-20261026/README.md)を参照。
+公式説明は取得できたが、既存比較の公式MP4再取得はHTTP 403で拒否されている。
+本家の未公開の歩行曲線・低速／壁の飛沫曲線の一致は未確認のまま維持する。
+
+## 2026-10-26 UTC: Shooter / Dualies の床向き照準と射撃キック
+
+基準 main は `48511150bbaeab182dd04c712d39bd5b26df18f3`。Long Lane、Splattershot / Splat Dualies、pitch 0 / -0.8 で、指定フレーム後の床下を投影するガイド、水平時に遅い落下を内側マーカーへ出す経路、Dualies の SVG 投影 transform を射撃時の WAAPI transform が上書きする経路を分けて確認した。ガイドは native head と同じ球 sweep の最初の field 接触に止め、Shooter 接触予測を実際の InkFlight へ接続する。全飛行の接触と照準フレーム内の遮蔽物表示は区別する。左右の projection group と shot-kick circle を分離し、各手1個の Animation、武器／非表示時の cleanup、DOM 再構築時の cache invalidation を追加する。turret の判定は既存 `s3Turret` を維持し、merged ring を実際のガイドへ投影して解除後の3個重複をなくす。
+
+新規回帰は実 Character / Level / Physics / 発射した head と、-0.45 / -0.8 / -1.05、30 / 60 / 120Hz で床接触を照合する。基準 emitted の負例3件は全失敗、候補 emitted は移動時試験も含む4件成功。限定ソース回帰39件成功。旧 #575 emitted のイベント `mode` 期待不一致は基準と候補で同じことを記録した。原典の `ShotGuideFrame` 8 / 7 は不変。公式画像と実ゲーム画像の直接取得は HTTP 403 であり、今回の数値試験を本家の視覚証明にはしていない。内側表示の cutoff と本家での同条件映像・Switch／実 GPU は未確認。ブラウザの実測値、操作と fixture の区別、制約は [個別記録](shooter-dualies-projection-20261026.md) を参照する。
+
+## 2026-10-26 Slosher origin / bomb-cue local candidate
+
+Base `48511150bbaeab182dd04c712d39bd5b26df18f3`. Dread Wringer's low animated rim is removed from the physical birth-origin selection, using the established Tri-Slosher body origin for both delayed streams without changing sourced velocities, ranges, damage or paint parameters. The final FX composition excludes Curling's inappropriate armed-bomb danger forecast, follows a rolling Splat Bomb's current supported surface, and adds a landing-owned Autobomb acquisition rim with bounded initial-rotation lifetime. The thin style/fade and origin remain INKWAVE calibrations. Hissen main-blob matched retail size and the other Slosher families' generic falling floor beads remain **unresolved**; source tests are not visual proof. See [exact scope, references, source/emitted checks and limits](slosher-bomb-cues-20261026/README.md). This local worker does not push, open a PR, merge or launch CI.
+
+## 2026-10-26: Four-worker integration review and Roller fast path
+
+The combined branch preserves newer upstream main `ce34bf34359ca5e8ee82d1effc50e649783a1d3d`.
+Roller support now tries its existing short floor-height test before collecting
+continuous collision surfaces. The two support predicates, tolerances and
+independent paint-continuity gate are unchanged. Flat support avoids the added
+trace work; the real downhill Actor still maintains contact and scored paint
+at 30/60/120 Hz. This does not add a Nintendo collision or device-FPS claim.
+Exact combined checks are in
+[post-flat-fastpath/validation.json](inkwave-batch-integration-20261026/post-flat-fastpath/validation.json).
+
+Stringer stage feedback is connected through its existing annulus without new
+geometry or persistent first-stage track color. The independent original-pixel
+review supports that narrow structural/color constraint; the complete stage
+cycle and timing remain unmeasured. The proposed Shooter inner-marker 8F
+visibility cutoff was excluded because source data alone did not establish an
+original UI rule. Horizontal inner-marker behavior, Hissen size and Slosher
+floor-droplet visual corrections remain open in the
+[completion matrix](inkwave-batch-integration-20261026/completion-matrix.md).
+
+## 2026-10-26: Collision revision producers for safe reticle reuse
+
+The composed Level/NativeLevel now publishes `collisionRevision` on real block
+append/index rebuild, and ranked Tower transform/removal/solid-disable. Queries
+and unchanged Tower updates do not advance it. This supplies an actual terrain
+mutation signal for the separately owned reticle cache; unknown worlds remain
+unversioned. Source tests exercise real mutation methods and physical contacts,
+not manually injected generation values. This is internal INKWAVE cache
+correctness and cost control, not a Nintendo frame/layout or visual-parity claim.
+See the [bounded producer contract and verification](collision-revision-producers-20261026/README.md).
+## 2026-10-26 Slosher initial falling-splash distance
+
+Separate branch from accepted `67ea075`, excluding the rejected blanket visibility candidate. The added Sloshing Machine, Bloblobber and Explosher owners read a Shooter nearest-distance field absent from their source records and initialized all falling splashes at distance 1. Their explicit S3 11.3.0 `FirstSplashRateForLengthMin/Max × SpawnBetweenLength` gives .36–1.26, 3, and 1.55–1.705 respectively. The existing admitted projectile seed now chooses the initial distance using the already established INKWAVE Slosher sampling policy, without a new random draw. Positive DrawRadius and the sole airborne renderer remain; main physics/damage and source splash count, spacing and dimensions are unchanged. Falling-drop release and paint locations intentionally change with phase. The current distance metric is retained, and Nintendo RNG/flight silhouettes/Hissen main diameter remain unverified. See [source fields, exact emitted reproduction and focused checks](slosher-initial-phase-20261026/README.md).
+
+## 2026-10-26 Shooter/Dualies guide CPU reuse and actual collision revisions
+
+統合 `90bb98c2ffbbe0fdaf959001808d6dd43e085f90` のShooter床接触ガイドは、同一水平 `computeAim` 120回で960回のsphere sweepを繰り返していた。producer依存 `fee0c005ffe129e8248c2122c41f5fad6612130d` の実 `collisionRevision` に接続し、native muzzle安全確認と発射状態を毎回評価した上で、world/query/triangleWorld・カメラ・ブキ・owner・aimが同一ならworld guideを再利用する。未計装worldは毎回再計算し、query stampや未更新のgeneration値を世代とみなさない。Dualiesの既存cacheも同じproducerに接続する。clear時は参照を解放し記録のstorageを再利用する。
+
+source/emittedとも水平・下向き、30/60/120Hzの同一入力120回で追加sweepは0。実Tower移動／削除、native triangleWorld交換、通知された床／solid変更、各launch/query入力、targetフラグの更新、寿命を確認した。最終sourceはcache9件＋互換32件、emitted13件、通常最適化build・quick・startup/digest gate成功。[詳細と全ログ](shooter-guide-cache-20261026/README.md)には旧generation fixtureの中間失敗と実producerへ直した再検証も保存した。これはCPU上の数値一致と重複除去であり、実GPUのFPS改善や本家のinner-marker表示仕様の証明ではない。新しいhide／convergence／physics規則やメディアは追加していない。
+## 2026-10-26 Shooter full-flight/marker cache follow-up
+
+統合 `550ec3219c0b8e20a842949322efe22e516f3ce0` に残る `s3ShooterImpact` / `muzzleBlockFeedback` の衝突revision未照合を修正した。実Towerの移動でrevision8→9となっても両方が古いpole接触 z=-.28を再利用し、fresh solverの床接触 z=9.4998700597と不一致になる負例を既存counterで確認した。2つの既存consumerだけを実 `physics.level.collisionRevision` とworld/query/triangleWorld/ownerの照合へ接続し、未計装ownerは再計算する。物理、nominal guide、full-flight接触表示の採用条件、入力は不変であり、新しいhide規則は加えていない。
+
+source13件＋実弾一致／寿命15件、最終emitted11件、通常build・quick・startup全artifact digestが成功した。修正後はimpact・marker・fresh solverが同一点となり、実native地形交換、query/owner交換、未知world、静止時の再利用も確認した。[追補記録](shooter-impact-revision-20261026/README.md)に負例・実測・hashを保存した。固定aim/muzzle/timeのprediction API検証であり、自然なプレイヤー操作のHUD画像や本家inner-markerの見え方の証明とは扱わない。
+## 2026-10-26 Unsupported Physics bridge guide fallback
+
+`.level`を公開しないPhysics bridgeが別の`G.level.collisionRevision`を借りると、実衝突床0→-2の変更後もShooter／Dualies両手のguideだけが0に残る限定adapterケースを確認した。revision取得2か所を実`physics.level`だけに限定し、owner不明のbridgeは再計算する。[最小回帰と記録](shooter-guide-bridge-20261026/README.md)は実Physicsへのdelegateと別の正常Levelを使い、実ownerへの通知後もG.levelのrevisionが不変という条件で負例・修正を確認する。source11件・最終emitted11件、通常build・quick・startupの全artifact digestが成功し、通常Level／NativePhysicsの再利用は維持した。物理・producer・表示条件を変更せず、本家inner-markerの外見の未確認とは分離する。
+
 ## 2026-10-26: 処理別最適化と独立3レビュー
 
 調査基準main `48511150`、統合基準main `d88aa68`、本家参照Splatoon 3 Ver.11.3.0を維持する。[処理別記録](inkwave-process-optimization-20261026/README.md)に、ボス探索・行動・時計、原典球スイープ、描画生成・scratch、UI、Dualies通信、読込・ビルドの変更と、変更しなかった処理の理由を保存した。ボスモード・練習場・原典／カタログDualiesを対象とし、ブキ・ギア・速度・射程・ダメージ・入力／発射時刻・乱数・塗り・カメラの既存パラメータは変更しない。歩行、泳ぎ、敵インク、変身、ジャンプ、壁登り、回復、被弾、復活の新たな本家一致を認定する作業ではない。
@@ -6462,3 +6541,87 @@ Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physics
 公開ソース単独ではなく本番合成コードで、探索順／経路／時計端点／乱数選択、sourceとmovingの接触選択・UV・miss・出力所有、波／ジオメトリのバイト列、マップのターゲット・hover・入力寿命、HUDの動的値を比較した。原典balanced→highの材質channelは直接highのshader／cache keyへ一致させ、abort後のKTX2処理は実完了まで旧loaderを保持する。物理近似・フレーム間引き・画質低下による最適化は行わない。
 
 これらはINKWAVEの実装同値性と資源寿命のCPU／合成検証であり、Nintendoの非公開値を確定する根拠ではない。[任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)と既存の11.3.0参照・未確認事項を引き継ぐ。本家実機、同一ブキ・ギア・状態の動的映像、iPad／Safariの実機性能は未計測。統合ブラウザ／CIの結果も、本家実機比較とは別に扱う。
+
+## 2026-10-27 UTC: バグ修正PRへのupstream統合
+
+main `f89199ef` をバグbatch `b7f9e360` へ統合し、報告末尾の競合だけを両側の記録を保持して解決した。[統合記録](inkwave-batch-integration-20261026/upstream-f89199ef/README.md)には原典sweep出力所有・実Tower revision／guide cache・HUD／Dualies通信・本番buildとranked proofのfocused検証、古いremote音声predicateを渡すテストfixtureだけの修正、および不適切なemitted負例呼出しの失敗を残す。source134成功／asset依存4skip、対応emitted29成功／asset依存3skip、1489入力と2194生成物のdigest不一致0。新runtimeで通常入力・音声実再生・本家pixel比較を追加認定するものではなく、Hissen主弾サイズ／床滴形状と本家HUD等の未確認は継続する。最終headの自動CI完了とmainへのmergeは別途必要。
+
+
+## 2026-10-27 Brush rolling weapon transform and downhill contact
+
+`4ce9768e` の通常操作で、Brushが塗り進み中（runner/anim.rolling、wRoll≈1）でも武器先端が床から浮く表示を確認した。描画間の複数更新が古い `weapon.off.matrixWorld` を繰り返し床補正へ戻すため、保持角が上下していた。武器の既存変換キャッシュを読む前に同期し、先端位置の床高を実際の接地面法線から求める。形状、キャラクターモデル／リグ、ボーン値、移動・塗り・衝突規則は変更しない。
+
+読み込み済み本番Actor/Characterによる6更新／描画の負例・回帰、保持／空中／着地の互換確認、および通常Rリセット後の未塗装坂での生成版ブラウザ証跡は[専用記録](brush-downhill-contact-20261027/README.md)に残す。既存の先端高さ・形状はINKWAVEの校正値であり、新たな原作フレーム値や形状一致は主張しない。
+
+公開ハンドオフにはコードとテキスト計測だけを含め、画像入りローカル証跡は送信しない。source／emitted各1件と5 Roller／3 Brushの30/60/120Hz互換確認が成功し、未塗装坂の塗り面積0→2.9929→9.6620を通常入力で確認した。候補の坂進入時の頂点間隔は14.5739cm、1ゲーム秒後の保存点で1.1402cmだが、疎な測定のため正確な収束時間・最大値は未測定。出口の実頂点は6.0285cm→4.0480cm潜る。旧ブラウザ計測は境界箱のみであり、以前と同じ潜りだったという断定はできない。武器の仮想接地点と変形した頭部の実頂点を区別し、任意の高さオフセットやgain変更は追加していない。
+
+## 2026-10-27 UTC: 終端HUD合成とBrush統合の確認
+
+main `da5058b7` との合成競合は、Stringer既存annulusの段階wrapperとShooter座標文字列再利用の両方を各1回維持して解決した。実合成／emitted HUDメソッドのmap keyとCSS transform、Stringer両段階・切替、collision query順序／stamp／実Tower cacheを確認した。別公開のBrush stale matrix修正とテキスト証拠を取り込み、source39成功・対応emitted19成功、build／startup／1491入力（build script込み）・2196生成物digest不一致0。all8種保持のemitted呼出しはinlined rollers.mjsへの直接importで失敗したため成功扱いしない。Brushのentry lagと実頂点penetrationは残り、旧boundsから既存問題と断定しない。[統合結果と制約](inkwave-batch-integration-20261026/upstream-da5058-brush/README.md)。本家pixel・Hissenサイズ／床滴形状の新規認定やmain mergeは含めない。
+
+### 2026-10-27: Hissen main fallback renderer consistency
+
+Missing full-volume and budget-rejection routes can use a geometry-only contour LOD derived from the existing bundled ink coverage. It preserves actual drawn-frame XYZ envelopes and current source radius/tail/orientation/pattern/age. A shared planner measures all competing volume parts before selecting Hissen's tier; there is no second budget or generic main spill beyond the hard limits. Culling contributes zero planned demand and no fallback count. Separate floor-child owners and physical state are unchanged.
+
+The independent 1,335,253-byte contour pack is demand-loaded for active Hissen equipment/births, excluded from ordinary boot readiness, and deduplicated to one deployed binary. It costs zero contour transport/registration when Hissen is never active. After first use, its 3,374,440 decoded bytes become GC-eligible after registration; about 3.5-3.7 MB of accounted owned renderer storage persists until FX disposal. The 5,852 maximum triangles/body is bounded, not a proven minimum tier. Cold loading can still expose the existing last-resort path before readiness; this is not an unconditional first-shot guarantee.
+
+Source/emitted regressions cover nonconstant counted RNG, effective opaque+fringe caps, mixed-weapon demand, culling, resource ownership and lazy readiness. Controlled images remain local; source-only results and cost limits are in `reports/hissen-canonical-review-20261027.md`. Original lesson frames support ragged/perforated main lobes, but original projection/depth/release conditions remain unknown. This is a renderer consistency candidate, not a retail-size calibration or completed floor-morphology match.
+
+## 2026-10-27 Brush actual head-contact geometry follow-up
+
+安定候補 `bbc4a19b` を保持し、仮想点が速度依存で曲がった頭部を追わない差を武器表示だけで修正する。実頭部頂点と先端直下の床面からピッチを解く。足元の坂平面を出口の先まで延長せず、既存の局所衝突queryで実際の面を読む。1.5cmの既存目標値・補正角限界は維持し、新たな固定オフセットやgain調整、モデル／リグ、物理・塗り変更はしない。3 Brushの同一実頂点指標による旧版／候補／修正版の決定的診断と、1／15更新・描画の入口／出口回帰、通常操作による生成版の確認は[追補記録](brush-head-contact-geometry-20261027/README.md)へ分離する。診断用初期姿勢は通常入力の受入証拠とは扱わない。
+
+修正 `3d720d4b` のsource・最適化emittedは各2件成功し、旧候補は同一回帰で実頂点の潜りを検出して失敗。5 Roller／3 Brushの30/60/120Hz保持・空中・着地確認も成功した。通常入力の同一坂進入位置で法線方向の頭部間隔14.5739cm→1.6401cm、出口の実床への距離-6.0285cm→+1.3841cmとなり、後続保持点は約1.5cm。未塗装面の塗り面積0→2.9929→9.6620と坂5点への塗りを維持した。初期振り／戻りは保持接地拘束の対象外のまま、瞬時の全フレーム収束や原作との精密一致は主張しない。追加画像・raw receiptはローカルだけに保存し、公開証跡はテキストとハッシュのみ。
+
+
+## 2026-10-27 Brush contact geometry follows native near/far presentation
+
+`e2a9348c` の頭部接触補正は、非ローカル表示がfarへ切り替わっても非表示の曲がったnear頭部を解き続け、ホクサイの表示far形状が約7.70cm浮いた。前フレームの `w.near` を読むだけでは戻りnearの最初の1フレームが約4.34cm潜る。武器表示の既存選択・far形状準備を本番合成adapterで共有メソッドへ分け、選択規則を複製せず、接触poseと既存animatorが同じ現在フレームの判定を読む。nearは変形頭部、farは実表示の結合形状で床補正する。キャラクターモデル／リグ／クリップ／外見／モデル統合、選択閾値、物理・塗り・乱数は変更しない。元の接地目標値と角度制限を維持する。
+
+全3 Brushでfar／nearを繰り返す決定的source／最適化emitted頂点診断の144点は約1.36〜1.65cmとなり、切替直後も0〜3cm内に収まった。既存の坂入口／出口・描画間隔回帰と、5 Roller／3 Brushの30/60/120Hz保持・空中・着地互換を含めsource／emitted各7件成功。emitted互換は独立受入済みの検証専用fixture `e6fb91fa` を使用し、本番束の実state読取関数を参照する。詳細と旧版負例は[武器表示所有者の追補](brush-contact-representation-20261027/README.md)。通常入力ブラウザ・GPU計測・本家実機の追加比較は行っておらず、原作の精密な接地高さや形状一致の未確認を解消したとは扱わない。
+
+## 2026-10-27 UTC: reviewed fallback/contact batch integration
+
+受入済みHissen fallback4commitとBrush接触／表示所有4commitを同一の本番合成へ取り込み、core CI失敗を起こした検証fixtureのpin処理も修正した。既存3本のemittedテスト引数を正確な場所・順序で必須化してから変更前のdigestを比較し、workflowや必須assertionを緩めていない。Hissen追加2資産のsource identity漏れも実際に検出し、manifest／binaryの入力SHAを登録した。合成後source／設定52件、対応emitted13件がskipなしで成功し、1493入力／2199生成物のdigest不一致0。生成版の実WebGL componentは594pixelを描き、GL error0、70資源を各1回解放したが、通常ゲーム操作や本家比較の証拠ではない。
+
+Brush切替144点は1.35745〜1.64592cm、body tier固定heroで測定した。自動body far・最終順序修正後の通常入力・実機性能・本家精密比較は未実施。Hissenは初回需要までcontour通信0、需要後binary1,335,253byte＋manifest11,813byte、所有renderer領域約3.5〜3.7MBがFX破棄まで残る。初回cold load中の既存fallback、全メモリpeak、端末frame timeは未解消。**Hissen主弾サイズの受入変更は0で、本家サイズ／床子滴形状は未完**。保存媒体は既存bundled coverage由来の生成contourとテキスト計測のみで、私的／Nintendo参照画像は追加しない。[合成結果・費用・制約](inkwave-batch-integration-20261026/reviewed-core-hissen-brush-20261027/README.md)。最終headの自動CIとmainへのmerge可否は別ゲートであり、過去のcancel／未実行を成功扱いしない。
+
+
+## 2026-10-27 Shooter aiming cue versus eventual paint contact — browser acceptance pending
+
+親と参照担当がGame8のVer9.2.0比較欄BEFORE／AFTER埋込クリップを通常ブラウザで実見した。BEFOREの約0:01は紫の射撃と67.4ダメージ表示があり、灰色の小円がHUD照準点に残る。約0:03の標的破壊後も同じ点付近に残り、下の床塗り・標的残骸へ別円が移った様子は見えない。画像中心とHUD照準点は異なり、idleの青／シアン反応図形も灰色照準とは別。正確な旧版・ギア・入力・数値カットオフは不明で、当担当executor自身の画像実見ではない。
+
+`90706e3` の追加9px接触円はShotGuideとは別に全飛翔の最初の地形接触を読むため、水平の長レーンで後の重力落下・床塗り位置を照準の補助円として出す。候補では全飛翔API／物理／塗りを維持し、HUDだけ既存の銃口→狙い方向の障害物queryを読む。原典のfield衝突半径を使い、実飛翔の最初の接触までの前方到達範囲でqueryを束縛する。面ID一致、8F等の時刻、固定画面座標の条件は追加しない。この幾何所有者の選び方は局所再構成で、本家UIアルゴリズムの抽出・精密一致ではない。
+
+source26件／最適化emitted14件が成功し、同じ9Fでも床落下の追加cueは消え、実壁・両側graze・下向き床・Towerの出入りと既存cache不変条件を維持する。HUD障害物点と曲がる実弾の着弾点は別に検証する。詳細は[所有者分離候補](shooter-aim-obstruction-owner-20261027/README.md)。通常sandbox有効ChromiumがSUID helper不整合で起動前に終了したため、この候補の通常入力・実画素・本家位置比較はまだ未受入。設定変更やsandbox無効化での再試行は行っていない。Nintendo画像は公開差分へ含めない。
+
+### 2026-10-27 Shooter obstruction owner — bounded native acceptance
+
+Independent source/emitted controls plus ordinary shipping Range touch input support the HUD ownership correction in9a4516bc: an open horizontal lane's eventual11F floor landing remains available to physical prediction while its extra obstruction cue clears; downward1F floor and actual near-wall2F cues remain. Before/candidate raw screenshot paths/hashes, trusted gesture receipts, unchanged-runtime identity and limits are in `reports/ci907-reconciled-native-entry-20261027/`. Candidate source code is unchanged by this acceptance record. The attempted farther wall was actually floor-first and is not a native wall pass; independent9F wall/Tower/graze controls are separate evidence. Main gray aim-anchor calibration, exact retail cue coordinates/timing and complete visual parity remain unverified. No age cutoff, shot trajectory or paint alteration was used to obtain pixels.
+
+### 2026-10-27 Hissen floor-child visual-coherence candidate — after pixels pending
+
+ユーザーが指摘した床塗り子滴の球状表現に対し、自動catalog `9b2b8f70` の実F9画像で2個の小球を確認した。主弾17/17の原典radius/tail行列は維持し、Hissenの子滴だけ既存のanalytic Slosher rim／薄さ `[.3,4,.32]` を共有する候補とする。元のdraw radius `.3`→一様行列scale `.15`、水平heading、位置／速度／乱数／数／塗り／衝突は変えず、既存1,360三角形／子滴・同じinstanced draw／材質／shader／照明で描く。新規形状資産・モデル修正・子滴非表示化は行わない。source62件／新最適化emitted20件がskipなしで成功し、旧emittedは新profile回帰で失敗する。これは元映像の子滴を同定して抽出した形状ではなく、既存INKWAVE profileを使う非球状の整合候補。本家version／gear／状態／対応phase・投影が未確定のため本家一致は未認定。既存自動F5/F7/F9で同じpose／camera／seed／palette／照明の新実画素と子滴の可視性を確認するまで受入完了とはしない。[費用・不変条件・検証と残ゲート](hissen-child-profile-20261027/README.md)。
+
+
+### 2026-10-27 Wiper系チャージ波の見た目候補（実画面の再検証待ち）
+- 本家根拠: ユーザー比較画像は濡れた不均一な塊と、INKWAVE側の平行な尖った二枚・密な筋の違いを示す。ただし本家版・ブキ・ギア・画角・時間・寸法は確定せず、私有画像や原本素材は同梱しない。
+- 実装・再現: `s3-projectile-shapes.mjs` と `s3-ink-sheets.mjs` のNormal/Stamper・Lite/Wiperのチャージ縦波だけを既存の範囲・分割数で不均一な湿った輪郭と短い剥がれへ再構成。各キットでチャージ解除して観察し、tapとHeavy/Dentalの横向きチャージを対照にする。
+- プレイ影響: 弾の数・位置・速度・寿命・塗り・ダメージ・RNGは変更しない。対象波の初回描画時だけ追加mesh/geometry/material各1と13600bytes、混在時は描画passごとに最大1draw追加を許容した候補であり、GPU時間や実機FPSは未測定。
+- 確認状態: 新main9f82433を保つ統合候補でsource163・emitted38・verifier601等の限定検証が通る。自動CIのNormal/Lite/Heavy×charge/tap・元PNG36枚とHissen5/7/9の実描画、遮蔽、材質・影、見た目の改善は別途確認が必要で、本家一致・寸法・時間や完了は主張しない。詳細 `reports/wiper-wet-wave-20261027/README.md`、`reports/native-integration-preflight-20261027/wiper-external-integration.json`。
+
+
+### 2026-10-27 main6e61との挙動統合（実画面・本家一致は未確認）
+Chargerの録音rise／実際のkeep復帰・Stringer段階音と、新mainの取消可能な読込・音源解放を両立し、Rollerの下り坂連続接地を残した共有traceに再入可能なscratch lease／finally解放を移した。Wiper対象縦波・Hissen子滴profileは維持し、物理弾数・塗り・RNGを見た目のため変更しない。本家版・ギア・位相・寸法の未確認項目は解消しない。30/60/120Hzのsource／新最適化8f emitted CPU検証、verifier627件等は実機比較・可聴性・実画面の代用ではない。自動の新headでnative52三lane、Hissen5/7/9、Wiper36PNGと元画像との独立レビューが必要。上流のgeometry成長率判定は保持するが、従来の絶対after<=before条件も別の必須artifact gateとしてANDで課す。旧295/295や取消runのoffline動画は新8fのCI完了証拠ではない。詳細: reports/native-integration-preflight-20261027/main-6e61-reconciliation.json。
+
+## 2026-10-28: reconstructed unpublished correction candidate
+
+The unpublished local candidate previously identified as `5b04fec9397c323325fac397ec4b1c9d43c7da23` was no longer available in the selected workspace. This section records a new reconstruction from public PR #1895 head `c8d19051d69e4fdd0a55e2fb2e172f5c1b2b628e`, retained source snapshots, and six SHA-verified Git blobs. It does not claim recovery of the original commit history or every historical report.
+
+Restored correction scope: selected-owner Charger reach; CPU-13 per-pair actor/alive/radius reads across collision callbacks; wet Wiper InstancedMesh disposal; pointer-based native menu selection; measure-main-only Hissen screenshot timeout; early renderer geometry census; Wiper diagnostic isolation and mandatory verifier registration; exact fixture/provenance regression repairs. Required Validate fan-in remains unchanged. CircleCI retains its prior fail-fast behavior and does not collect Wiper diagnostics after an earlier failing command.
+
+The production build contains 2,223 declared artifacts. Their independently rechecked content hash is `60ded601ce39a357226cea84f41bfecd9a6a412399c1a9114bfcbefe8740d6d7`, matching the previously recorded candidate output hash. This hash excludes `inkwave-build.json` itself. The current 1,513-input hash is `762670d596cc9da7a6cf3440ed84556fcbbb74ddcc5d6a57fc08940d846bc353`, which differs from the historical input hash; exact source-tree identity is not claimed. Runtime artifact equality does not prove equal network services, native device performance, or reference-game fidelity.
+
+Revalidated focused evidence includes source wet lifecycle 8/8, emitted Charger/wet 10/10, CPU-13 source mutation tests 4/4, source wall tests 4/4, emitted collision/wall tests 4/4, capture helper tests 38/38, and deterministic startup budget gates. Broader reconstructed test and verifier results are recorded separately at the frozen candidate. Test-only fixtures were restored by their public Git blob identities rather than weakening checks to ignore missing data.
+
+Still unverified: live final-head mandatory CI, actual Hissen/Wiper screenshots, full mobile three-lane acceptance, original-game comparison and hardware performance. The native Explosher absolute geometry increase 281→295 remains a failed gate, not waived or offset. Native prebuilt stage payloads are not hydrated; runtime fallback may fetch external stage data, and offline stage availability is not guaranteed. No character or hair model was edited. Character provenance acceptance is source-text-only, not character visual verification.

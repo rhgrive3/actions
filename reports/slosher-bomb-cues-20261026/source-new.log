@@ -1,0 +1,22 @@
+(node:1390) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Curling has no post-release explosion forecast (owner) (2364.331313ms)
+✔ Curling has no post-release explosion forecast (ghost) (2518.36302ms)
+✔ Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming (2461.779552ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (owner) (1935.447344ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (ghost) (1616.081897ms)
+✔ Autobomb observed after its search window and removed bombs leave no delayed scan (1339.574597ms)
+(node:1391) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-double body-relative horizontal launch is independent of the low animated rim (2659.001627ms)
+✔ s3-slosher-double-01 body-relative horizontal launch is independent of the low animated rim (3147.728286ms)
+✔ s3-slosher-double-02 body-relative horizontal launch is independent of the low animated rim (2304.733908ms)
+✔ posed native Dread Wringer keeps both streams on body-level launch at 30/60/120 Hz (29311.113369ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38082.588483

@@ -1,0 +1,30 @@
+(node:1411) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an unseen film skips its shape rebuild and a rendering camera that sees it gets the exact current shape (2199.922762ms)
+✔ the bounding sphere used for the visibility test contains every film shape (2195.811756ms)
+(node:1412) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ local/remote swim and wall bodies hide immediately for source and fallback; jumps and returns draw again (23367.472071ms)
+✔ wake cadence retains elapsed time at 30/60/120 Hz and respects stealth, air and restart (27862.271298ms)
+✔ ordinary swim uses bounded curls and ballistic drops, and respects lifecycle and stealth (19194.190226ms)
+(node:1413) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ continuous film keeps its shape/time at 30/60/120Hz and remains film at low quality (3772.343647ms)
+(node:1433) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ step presentation decays without a rebound and is invariant at 30/60/120Hz (1.58719ms)
+✔ walking display speed smooths sample noise, pauses, and has an idle endpoint (0.751949ms)
+✔ composed Actor keeps physical walking and collision while visual step correction is monotone (22135.275568ms)
+(node:1441) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ downhill roller keeps real contact and claims slope turf at 30Hz (24899.507185ms)
+✔ downhill roller keeps real contact and claims slope turf at 60Hz (24908.53681ms)
+✔ downhill roller keeps real contact and claims slope turf at 120Hz (18076.793759ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73508.113814

@@ -1,0 +1,56 @@
+{
+  "base": "90bb98c2ffbbe0fdaf959001808d6dd43e085f90",
+  "checks": [
+    {
+      "command": "node --experimental-vm-modules --test patches/native-stages/tests/collision-revision-producers.test.mjs",
+      "exit": 0,
+      "pass": 6,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-name-pattern='moving tower paint face|tower world installs' patches/splatoon3/tests/ranked-world.test.mjs",
+      "exit": 0,
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "command": "INKWAVE_BUILT_SITE=/workspace/scratch/collision-revision-site node --experimental-vm-modules --test patches/native-stages/tests/collision-revision-producers.test.mjs",
+      "exit": 0,
+      "pass": 6,
+      "fail": 0,
+      "skip": 0
+    }
+  ],
+  "negativeControl": {
+    "source": "isolated source snapshot of exact base 90bb98c2",
+    "pattern": "real add/rebuild",
+    "exit": 1,
+    "pass": 0,
+    "fail": 2,
+    "expected": "both Level and NativeLevel lack collisionRevision"
+  },
+  "build": {
+    "command": "ESBUILD_MODULE=/workspace/actions/node_modules/esbuild/lib/main.js node scripts/build-inkwave.mjs inkwave-public /workspace/scratch/collision-revision-site",
+    "exit": 0,
+    "contentHash": "1270bfe841ff0b169e3d630cc7efe8223a63d3b7994a198b4f97ca25049a038b",
+    "inputHash": "4f4ad8cf9b5888b6c27c4284773605f1b9ea5d1112aa2b73879c75e92c6a1231",
+    "inputs": 1490,
+    "artifacts": 2194,
+    "initialEnvironmentFailure": "Without ESBUILD_MODULE, ERR_MODULE_NOT_FOUND esbuild; resolved using the existing dependency without installation."
+  },
+  "sourceSHA256": {
+    "patches/native-stages/adapter.mjs": "02360540baca17f1a97ed50309f0e602c569a61dc33f42eeadedc5733397e4a7",
+    "patches/splatoon3/runtime/ranked/world.mjs": "0004eee5ba2e2e61627b052de2bf6805bf934a3a35f62d4a070eb1d1b2405304",
+    "patches/native-stages/tests/collision-revision-producers.test.mjs": "30c6e86e6ce46bd44d46388f084e4cc09b2762760c55330fe73108e288d70330"
+  },
+  "limitations": [
+    "No consumer/cache implementation in this change.",
+    "No browser, Nintendo visual-parity or device-FPS claim.",
+    "Current open-PR lookup blocked by GitHub GraphQL HTTP403; no alternate route attempted.",
+    "Arbitrary external in-place buffer writes are outside the audited producer contract."
+  ],
+  "commitBindingCommand": "node reports/locomotion-surface-20261026/audit-build-identity.mjs /workspace/scratch/collision-revision-site (run after committing; exact result included in handoff)",
+  "rotationCoverage": "Actual Tower route revisits the identical position with a different bearing; source and emitted both require revision advance for rotation alone."
+}

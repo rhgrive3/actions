@@ -1,0 +1,105 @@
+{
+  "status": "automatic emitted selections registered and locally verified; remote final-head CI remains pending",
+  "sourceHead": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+  "priorIntegration": "530e689544119ca8c1042b6e75dce7256a0a7657",
+  "handoff": {
+    "verifiedBranch": "codex/emitted-phase-guide-registration-20261026",
+    "verifiedHead": "3387554035db4f9a8580ba27c2ac2c69e3ca8fe1",
+    "sourceCommit": "3387554035db4f9a8580ba27c2ac2c69e3ca8fe1",
+    "integratedCommit": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+    "sourceDiff": "Only three additive test selections in the existing validate-inkwave-update.yml emitted step"
+  },
+  "workflowReadback": {
+    "onlyThreeLinesAdded": true,
+    "triggersPermissionsConcurrencyUnchanged": true,
+    "allOtherWorkflowBytesUnchanged": true,
+    "job": "validate_core",
+    "step": "Verify emitted source-backed inertia, launch, charge and hurtbox behavior",
+    "emittedEnvironment": {
+      "INKWAVE_BUILT_SITE": "${{ github.workspace }}/_site"
+    },
+    "files": [
+      "patches/native-stages/tests/collision-revision-producers.test.mjs",
+      "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+      "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+    ]
+  },
+  "checks": {
+    "newlySelectedEmitted": {
+      "pass": 22,
+      "fail": 0,
+      "skip": 0,
+      "files": [
+        "patches/native-stages/tests/collision-revision-producers.test.mjs",
+        "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+        "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+      ],
+      "caseCounts": {
+        "producer": 6,
+        "guideCache": 7,
+        "phase": 9
+      },
+      "workerHistoricalPass": 21,
+      "countDifference": "The accepted full-flight follow-up adds a seventh guide-cache case to the current integration."
+    },
+    "workflowRunnerContracts": {
+      "pass": 35,
+      "fail": 0,
+      "skip": 0,
+      "files": [
+        "scripts/tests/inkwave-integration-workflow.test.mjs",
+        "scripts/tests/inkwave-test-suites.test.mjs"
+      ]
+    },
+    "missingBuild": {
+      "exit": 1,
+      "mustFailWithoutSourceFallback": true,
+      "missingArtifactMessage": true,
+      "successfulCaseCount": 0
+    },
+    "yamlAndByteDiff": "passed; removing exactly the three added lines reconstructs the prior workflow byte for byte"
+  },
+  "identity": {
+    "sourceSha": "c6625ed4e932e10d51d080ed39df8a4a3dc0fa71",
+    "contentHash": "00e32b89582a0272c9c6f6d4948ddb3ccd2c0b00774e83be70a0b1b03a42d955",
+    "inputHash": "af1bec9f6c8850dea3f00ba1e3b1a8c12bb427760e43f44a2b6a56fdb0278001",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0
+  },
+  "buildReuse": "Reused the existing complete 00e32b89 optimized site after exact-current-commit input/output audit. No runtime/build inputs changed, so no redundant rebuild.",
+  "coverage": {
+    "phaseGuideSource": "Automatically discovered by existing eight patch source shards; no source coverage removed",
+    "producerSource": "Existing .github/workflows/validate-inkwave-native-stage5.yml source glob (line56), separate from /validate fan-in",
+    "newEmittedTests": "All three are now in existing validate_core emitted step with inherited INKWAVE_BUILT_SITE pointing at the complete _site build",
+    "remoteCi": "No final-head run/success claim. PR creation hold remains; no manual workflow dispatch or retry"
+  },
+  "logs": {
+    "positive": {
+      "path": "positive.log.gz",
+      "rawSha256": "257ea04e60e8aee34729f371fc8a9089314565004bf62407cf6036e3560306de",
+      "gzipSha256": "af0a86d95a80bb16964ece6ca3cb9d7558ed38bd3a42ea6d7d1f5d22d27dea39"
+    },
+    "missing": {
+      "path": "missing.log.gz",
+      "rawSha256": "1298e346441e57b1a2b60df1b643fe1e6a58fe471ece2ee25c0aceab13eca7e4",
+      "gzipSha256": "e22458fcea9742b28cfadb6ffa1fd48e989429a42296f53d9746bb8c5da39453"
+    },
+    "contract": {
+      "path": "contract.log.gz",
+      "rawSha256": "d1fd9c886e657836d7ef1183762f7e97dd5b1defd5ef073ec6ca7b9ef02befad",
+      "gzipSha256": "e0ef6afa0dabc00628799425b959b61ebbefaf9d7c511412f7b87b225ee8ae8c"
+    }
+  },
+  "review": [
+    "Triggers, permissions, concurrency and all other workflow bytes are unchanged. No jobs/workflows/framework added.",
+    "Existing source-fixture requires the build manifest and directly reads emitted modules under INKWAVE_BUILT_SITE; missing modules do not fall back to source. Missing-manifest negative exits1 with zero successful cases.",
+    "Known optional VM Character source-motion fallback is separate from emitted runtime-source fallback and remains a stated CPU-fixture limitation.",
+    "This path overlaps other open CI/menu PRs; no other PR was modified/imported, and future main reconciliation must retain these three selections."
+  ],
+  "remaining": [
+    "Limited nominal ShotGuide Physics-without-.level fail-closed follow-up remains owned elsewhere and pending.",
+    "Accepted Hissen size changes remain0; ground-drop shape and original visual/hardware comparisons remain unfinished.",
+    "Local emitted22 and contract35 do not establish required remote CI completion on the eventual final head. No PR retry, external merge or manual CI launch."
+  ]
+}

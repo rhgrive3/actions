@@ -1,0 +1,263 @@
+{
+  "base": "48511150bbaeab182dd04c712d39bd5b26df18f3",
+  "implementationCommit": "1d993e3fdd007695c9db9aadbe06b9bb8a05d80b",
+  "branch": "fix/roller-walk-swim-20261026",
+  "identity": {
+    "sourceSha": "1d993e3fdd007695c9db9aadbe06b9bb8a05d80b",
+    "contentHash": "609615676035ac77da7d3d15ff32865acad3a9141c84bca162ee2950b16c1b51",
+    "inputHash": "beeb5d108854c852cbc78cc7cbf3d60178bfb415d3798bd1685b2b98544c9593",
+    "sourceInputs": 1483,
+    "artifacts": 2182,
+    "mismatches": 0
+  },
+  "tests": {
+    "contact-floor-source": {
+      "file": "reports/locomotion-surface-20261026/logs/contact-floor-source.log",
+      "sha256": "1d0e150f0448fe11c86f61132b25f47b2c81bcace75796606d2e9eeb0ed27dd6",
+      "tests": 148,
+      "pass": 148,
+      "fail": 0,
+      "skipped": 0
+    },
+    "focused-source": {
+      "file": "reports/locomotion-surface-20261026/logs/focused-source.log",
+      "sha256": "cd1b2529ad3e4a38a40bbbcce9871b87df2b10ac25586eb418249eb897341f28",
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0
+    },
+    "walk-source-gameplay": {
+      "file": "reports/locomotion-surface-20261026/logs/walk-source-gameplay.log",
+      "sha256": "630eaa432c755ba02360ff172d0d0f11848784b72c61fd771ed83ee14f272de9",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "skipped": 0
+    },
+    "floor-wall-fps-source": {
+      "file": "reports/locomotion-surface-20261026/logs/floor-wall-fps-source.log",
+      "sha256": "c5a7b6c21064cf5a43cae897f4b47a97780d95f0b9579bd148bb5c1bacd506dc",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    "roller-before-control": {
+      "file": "reports/locomotion-surface-20261026/logs/roller-before-control.raw.log.gz",
+      "sha256": "d9b3da60e3b7603e30c68f585dbe32c135644ca6fde71156a39d5d735a3dd586",
+      "tests": 3,
+      "pass": 0,
+      "fail": 3,
+      "skipped": 0,
+      "rawSha256": "7821ef639fa536cc1f394c423a0b3bb7f767e5381cf2a3fbd73df2019128e23a",
+      "encoding": "gzip; exact raw test output"
+    },
+    "related-source-initial": {
+      "file": "reports/locomotion-surface-20261026/logs/related-source-initial.raw.log.gz",
+      "sha256": "9362b58a95d34e38638d525bbd4206c8a63402158f31caebff8ed7fc6aca7426",
+      "tests": 41,
+      "pass": 34,
+      "fail": 2,
+      "skipped": 5,
+      "rawSha256": "4c15e415ea5d98190351efb6b9d672f730f0aafb1e743d6c97d4c5b8e3628036",
+      "encoding": "gzip; exact raw test output"
+    },
+    "roller-847-reviewed": {
+      "file": "reports/locomotion-surface-20261026/logs/roller-847-reviewed.log",
+      "sha256": "4ca0790c25a86efa6fe12ec9050929617338f2ad8e3182161959f0a8e27ff8ff",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emitted": {
+      "file": "reports/locomotion-surface-20261026/logs/emitted.log",
+      "sha256": "7614adc383871d774939674526df1fe6d2aec89af8249594c6405aec6a222dc5",
+      "tests": 23,
+      "pass": 23,
+      "fail": 0,
+      "skipped": 0
+    },
+    "build-final": {
+      "file": "reports/locomotion-surface-20261026/logs/build-final.log",
+      "sha256": "6ad910bfcf84f9028634ed557c508417e9fdd23f7a8aaefdf0d8590243321f94"
+    },
+    "quick": {
+      "file": "reports/locomotion-surface-20261026/logs/quick.log",
+      "sha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b"
+    },
+    "budget": {
+      "file": "reports/locomotion-surface-20261026/logs/budget.log",
+      "sha256": "7b49cc616d0cbff2aec223bda73bc07d0a1af89850252ec774ffb5856182dba8"
+    },
+    "browser-final": {
+      "file": "reports/locomotion-surface-20261026/logs/browser-final.log",
+      "sha256": "9e3f685b79bea5876bad06e7933d0c2cdb3b6e6aa08f30103cbf12459cc1d9dd"
+    }
+  },
+  "browser": {
+    "receipt": "browser/receipt.json",
+    "browser": "154.0.8037.57",
+    "roller": [
+      {
+        "hz": 30,
+        "rollingTicks": 60,
+        "paintTicks": 60,
+        "cells": 1067,
+        "turf": 66.72845367959704
+      },
+      {
+        "hz": 60,
+        "rollingTicks": 60,
+        "paintTicks": 60,
+        "cells": 1065,
+        "turf": 66.60337691543657
+      },
+      {
+        "hz": 120,
+        "rollingTicks": 60,
+        "paintTicks": 60,
+        "cells": 1079,
+        "turf": 67.4789142645597
+      }
+    ],
+    "swim": [
+      {
+        "wall": false,
+        "speed": 0.5,
+        "visible": true,
+        "pixels": 75,
+        "vertices": 635,
+        "maxLift": 0.012064267881214619,
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "up": [
+          0,
+          1,
+          0
+        ]
+      },
+      {
+        "wall": false,
+        "speed": 2,
+        "visible": true,
+        "pixels": 260,
+        "vertices": 635,
+        "maxLift": 0.032538894563913345,
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "up": [
+          0,
+          1,
+          0
+        ]
+      },
+      {
+        "wall": false,
+        "speed": 8,
+        "visible": true,
+        "pixels": 1200,
+        "vertices": 635,
+        "maxLift": 0.10471922904253006,
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "up": [
+          0,
+          1,
+          0
+        ]
+      },
+      {
+        "wall": true,
+        "speed": 0.5,
+        "visible": true,
+        "pixels": 79,
+        "vertices": 635,
+        "maxLift": 0.012064267881214619,
+        "position": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          -2.220446049250313e-16,
+          1
+        ]
+      },
+      {
+        "wall": true,
+        "speed": 2,
+        "visible": true,
+        "pixels": 301,
+        "vertices": 635,
+        "maxLift": 0.032538894563913345,
+        "position": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          -2.220446049250313e-16,
+          1
+        ]
+      },
+      {
+        "wall": true,
+        "speed": 8,
+        "visible": true,
+        "pixels": 1174,
+        "vertices": 635,
+        "maxLift": 0.10471922904253006,
+        "position": [
+          0,
+          1,
+          0
+        ],
+        "up": [
+          0,
+          -2.220446049250313e-16,
+          1
+        ]
+      }
+    ],
+    "errors": [],
+    "scope": "Renderer: Chromium SwiftShader. Roller: real Actor input/Physics and GPU paint atlas. Swim: controlled floor/wall Actor states and actual FX pixel differences. Walking: exact emitted step-presentation decay. No Switch, iOS, audio, hardware or pointer-lock parity claim."
+  },
+  "resolvedFailures": [
+    {
+      "group": "related-source-initial",
+      "failures": 2,
+      "cause": "#847 current roller input pin changed by the reviewed downhill addition",
+      "resolution": "Current raw pin updated only after exact reversal of import and support fallback proved the complete previous pinned source; original fault controls maintained. roller-847-reviewed passes10/10."
+    }
+  ],
+  "limits": [
+    "Original official MP4 request returned HTTP403; not retried or bypassed. No new input-aligned original visual comparison.",
+    "Browser uses Chromium SwiftShader and controlled Actor/FX fixtures; no interactive match UI/pointer-lock claim.",
+    "Browser rolling stamps use normal random morphology; cell counts across rates are not claimed byte-identical. Fixed-clock/source gameplay comparisons are separate.",
+    "iOS/iPad, real GPU, network match, audio fidelity and Switch measurements were not performed.",
+    "No pushes, PRs, CI launches, merges or external publications by this worker."
+  ],
+  "handoffSourceCommit": "4360948d4cb970d56daacea644ac760a9c25ff76",
+  "handoffIdentity": {
+    "sourceSha": "4360948d4cb970d56daacea644ac760a9c25ff76",
+    "contentHash": "609615676035ac77da7d3d15ff32865acad3a9141c84bca162ee2950b16c1b51",
+    "inputHash": "ff5cd4a92b691d3b84395f3f3b3981683bb39748c52bff6e38c7e4d15db07024",
+    "sourceInputs": 1483,
+    "artifacts": 2182,
+    "mismatches": 0
+  },
+  "handoffEquality": "handoff-runtime-equality.json"
+}

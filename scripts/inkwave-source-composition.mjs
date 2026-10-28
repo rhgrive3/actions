@@ -1,3 +1,4 @@
+import { adaptLockOptionRecovery } from '../patches/reliability/lock-option-recovery-adapter.mjs';
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
 import { adaptRemainingGameplay20261026 } from '../patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs';
 import { adaptRemainingInkFlight20261026 } from '../patches/local-quality/queue-remaining-inkflight-20261026-adapter.mjs';
@@ -45,6 +46,7 @@ import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-a
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';
+import { adaptStringerChargeHud } from '../patches/splatoon3/stringer-charge-hud-adapter.mjs';
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
 // grid. Apply at build time so the upstream game snapshot remains immutable.
@@ -106,6 +108,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueExtraWorld(rel, code);
   code = adaptQueueExtraWeaponsFx(rel, code);
   code = adaptQueueUi20261025(rel, code);
+  code = adaptStringerChargeHud(rel, code);
   code = adaptLosslessShooterHud(rel, adaptQueueExtraDecor(rel, code), replaceOnce);
   code = adaptRemainingGameplay20261026(rel, code);
   code = adaptRemainingInkFlight20261026(rel, code);
@@ -115,7 +118,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptHistoricalSourceMotion20261026(rel, code);
   code = adaptHistoricalCharacter20261026(rel, code);
   code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
-  return adaptPaintRenderRegions(rel, code, replaceOnce);
+  return adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

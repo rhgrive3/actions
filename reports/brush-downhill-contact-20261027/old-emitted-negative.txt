@@ -1,0 +1,27 @@
+(node:13574) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ loaded Brush floor correction stays stable between draws and follows the slope at its tip (15451.330277ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15994.358219
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/brush-rolling-transform-cache.test.mjs:5:1
+✖ loaded Brush floor correction stays stable between draws and follows the slope at its tip (15451.330277ms)
+  AssertionError [ERR_ASSERTION]: settled brush head must not oscillate above/below the floor: 0.5010290180127905
+      at TestContext.<anonymous> (file:///workspace/scratch/brush-presentation-4ce9768e/patches/splatoon3/tests/brush-rolling-transform-cache.test.mjs:54:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

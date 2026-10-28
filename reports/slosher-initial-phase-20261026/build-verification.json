@@ -1,0 +1,20 @@
+{
+  "sourceSha": "f41a35346caff97b5eed55a953c7893b344acf09",
+  "contentHash": "9ffcb90467b8553f2c825a5805ad7a021d91421a60ca6184e01b3cafeff5aa96",
+  "inputHash": "60b784f26026273fbb8c66d8421152ff3b587322305616cb442a580643f787ff",
+  "revision": "71c1f399cfa445cbabcb8f9a716b87bf5fce1f014170fcc4e1f84f0c9f1da88a",
+  "sourceFilesVerified": 1481,
+  "artifactsVerified": 2180,
+  "changedBuildInputs": [
+    "patch/runtime/main-weapon-catalog.mjs"
+  ],
+  "unchangedEmittedModules": {
+    "patches/splatoon3/runtime/projectile-presentation.mjs": "a991ea1ad952aadfb25ee121b51ec6ae6685da3af200d0b24f4268a2ea6b1b00",
+    "patches/splatoon3/runtime/projectile-visuals.mjs": "0e8d4d96320ed5e1963b4d4db29f2e3bc59bd7fe78cbe77634fda2deeddae81a",
+    "patches/splatoon3/runtime/blaster-flight-paint.mjs": "88e39c594e640ce4b30a6fc137ba419d07f391b160375c6bccc76da5cff8ea74",
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": "9e41c74b0a76f0e882d810a61f1cce4f17e51e7c04df84e22358aae24ea84cc9",
+    "patches/splatoon3/runtime/bomb-cues.mjs": "44691b1944c8ae821156d144598fc9d74f910ee5d49f44714db8c25270bbc3d7",
+    "src/game/weapons.js": "2d8180b863f822653ffda50833fc1cb61e0b5c122cdf0051cdd490565a78bbf7",
+    "src/fx/fxHooks.js": "ac67dc1155d45b81297238e718a7849654267eb1bbbe2228ccfa0f25ab80576f"
+  }
+}

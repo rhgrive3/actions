@@ -1,0 +1,100 @@
+{
+  "status": "passed",
+  "sourceSha": "76a6d01d989f92b960ac72918ee9d4e71bafbfed",
+  "runtime": "1ab0f4d3f952e80b23df862820549e68dba9e8c2 byte-identical907",
+  "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+  "kind": "isolated emitted native method/Worker graph; not native input, gameplay render or playback",
+  "chromiumSandbox": true,
+  "errors": [],
+  "browser": "154.0.8037.57",
+  "audioGraph": {
+    "source": "production-entry-imports-and-generated-worker",
+    "deviceInitialized": false,
+    "workerPath": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/render-worker.js",
+    "workerProtocol": "invalid-id-rejected",
+    "workerTerminated": true,
+    "prewarmWorkers": [
+      {
+        "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/grain-worker.mjs",
+        "protocol": "canonical-pcm-byte-exact",
+        "bytes": 96000,
+        "terminated": true
+      },
+      {
+        "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/reverb-worker.mjs",
+        "protocol": "canonical-pcm-byte-exact",
+        "bytes": 236800,
+        "terminated": true
+      },
+      {
+        "path": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs",
+        "protocol": "canonical-pcm-byte-exact",
+        "serial": 901,
+        "key": "catalog-charger",
+        "sampleRate": 8000,
+        "ratio": 1.25,
+        "sourceFrames": 800,
+        "outputFrames": 1000,
+        "channels": 1,
+        "bytes": 4000,
+        "terminated": true
+      }
+    ]
+  },
+  "bombFxGraph": {
+    "entryPath": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/fx/fxHooks.js",
+    "cuePath": "/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/bomb-cues.mjs",
+    "source": "native-throwBomb-record",
+    "nativeBirths": 1,
+    "bombVisits": 1,
+    "birthTrails": 1,
+    "cueId": "suction",
+    "gameplayUnchanged": true,
+    "ownerDisabled": true,
+    "callbacksRestored": true,
+    "servicesRestored": true
+  },
+  "replay": {
+    "path": "/workspace/scratch/catalog-full-af41c627/evidence/motion-catalog-result.json",
+    "sha256": "9d5c9880217e0132d7f7976a60f8ef8771a2bb3de7d273c97abd4dc1fb2255c6",
+    "originalStatus": "failed",
+    "originalModules": 480,
+    "required": 303,
+    "missingBefore": [
+      "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/bomb-cues.mjs"
+    ],
+    "missingAfter": [],
+    "receiptUnion": "passed immutable bytes/required installed graph; distinct bounded invocation, no render rerun",
+    "fullDiagnosticPresent": {
+      "data": 27,
+      "images": 860,
+      "audioGraph": true
+    }
+  },
+  "closed": true,
+  "actualHttpReceipts": [
+    {
+      "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/audio/pitch-preserving-charge-worker.mjs",
+      "sha256": "efca49add79e852b98cc8c8451142302c391bb302737e272c932fc38ef0a3e66",
+      "bytes": 345,
+      "status": 200
+    },
+    {
+      "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/fx/fxHooks.js",
+      "sha256": "ac67dc1155d45b81297238e718a7849654267eb1bbbe2228ccfa0f25ab80576f",
+      "bytes": 22337,
+      "status": 200
+    },
+    {
+      "file": "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/bomb-cues.mjs",
+      "sha256": "44691b1944c8ae821156d144598fc9d74f910ee5d49f44714db8c25270bbc3d7",
+      "bytes": 1202,
+      "status": 200
+    }
+  ],
+  "fullLocalReceipt": {
+    "path": "/workspace/scratch/ci-reconcile-1ab0/browser-result.json",
+    "sha256": "425c1987d21018e93f26db00e4a7bbdd413ef43d2cfc8418a0c8857bdef3efe6",
+    "verifiedResponses": 450
+  }
+}

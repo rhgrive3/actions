@@ -69,9 +69,9 @@ test('real axis-aligned Level blocks preserve all six AABB values across finite 
  let seed=42;const rand=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32-.5)*1e5;
  const cases=[{min:[-0,-0,-0],max:[-0,0,0]},{min:[0,0,0],max:[Number.MIN_VALUE,1,2]},{min:[1,1,1],max:[-1,-1,-1]},{min:[NaN,0,0],max:[Infinity,1,2]}];
  for(let i=0;i<10000;i++){const min=[rand(),rand(),rand()];cases.push({min,max:min.map(v=>v+Math.abs(rand()))});}
- for(const d of cases){d.kind='box';const a={blocks:[]},b={blocks:[]};before.call(a,d);f.Level.prototype._addBlock.call(b,d);for(const bound of ['aabbMin','aabbMax'])for(const axis of ['x','y','z'])assert.ok(Object.is(a.blocks[0][bound][axis],b.blocks[0][bound][axis]),bound+axis);}
+ for(const d of cases){d.kind='box';const a={blocks:[],markCollisionChanged(){}},b={blocks:[],markCollisionChanged(){}};before.call(a,d);f.Level.prototype._addBlock.call(b,d);for(const bound of ['aabbMin','aabbMax'])for(const axis of ['x','y','z'])assert.ok(Object.is(a.blocks[0][bound][axis],b.blocks[0][bound][axis]),bound+axis);}
  const getterShape=()=>{let reads=0;return {get kind(){return ++reads<=2?'obox':'box';},get reads(){return reads;},center:[1,2,3],size:[4,5,6],rotY:37};};
- const a={blocks:[]},b={blocks:[]},x=getterShape(),y=getterShape();before.call(a,x);f.Level.prototype._addBlock.call(b,y);assert.equal(y.reads,x.reads);
+ const a={blocks:[],markCollisionChanged(){}},b={blocks:[],markCollisionChanged(){}},x=getterShape(),y=getterShape();before.call(a,x);f.Level.prototype._addBlock.call(b,y);assert.equal(y.reads,x.reads);
  for(const bound of ['aabbMin','aabbMax'])for(const axis of ['x','y','z'])assert.ok(Object.is(a.blocks[0][bound][axis],b.blocks[0][bound][axis]));
 });
 test('Native minimap axis pruning preserves candidate selection and exact ray traces',()=>{

@@ -1,3 +1,7 @@
+import { queueChargerPaintDrop } from './charger-paint-drop.mjs';
+import { catalogChargeStage } from './catalog-charge-stages.mjs';
+
+import { traceRollingFloor } from './rolling-floor.mjs';
 import { toxicMistScale } from './toxic-mist.mjs';
 import { brushRollIgnoresEnemyInk } from './brush-roll-ink.mjs';
 import { paintCatalogBlasterBurst } from './catalog-blaster-paint.mjs';
@@ -71,8 +75,10 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const finite = (v, fallback) => Number.isFinite(v) ? v : fallback;
 // Stable INKWAVE body origin, taken from Projectiles._muzzle's existing
 // player-centred fallback. It is not an extracted Nintendo muzzle position.
-// Tri-Slosher's cosmetic low rim otherwise shortens the horizontal trajectory.
-const TRI_SLOSHER_ORIGIN=Object.freeze({X:0,Y:1.05,Z:.3});
+// Tri-Slosher/Dread Wringer's cosmetic low rims otherwise put a horizontal
+// camera launch below the aimed line. Keep the same body fallback for both;
+// this does not alter sourced speed, lift, range, damage or paint parameters.
+const BODY_SLOSHER_ORIGIN=Object.freeze({X:0,Y:1.05,Z:.3});
 function playerLocalOrigin(actor,offset,out){
   const yaw=Math.atan2(actor.aimDir.x,actor.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
   const x=finite(offset.X,0),z=finite(offset.Z,0);
@@ -217,6 +223,7 @@ function definition(r, api) {
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,
     fireInterval:Math.max(1,rate)/HZ, chargeTime:charge?chargeFrames(r)/HZ:0,
+    ...(r.family==='stringer'?{firstChargeTime:t.ChargeFrameMidCharge/HZ}:{}),
     ...(r.family==='slosher'?{windup:finite(t.SwingLiftFrame,12)/HZ}:{}),
     moveSpeedFiring:(r.family==='splatana'?finite(p.spl__WeaponSaberParam.SwingParam.WeakSwingMoveVelLimit,.06):finite(t.MoveSpeed, finite(t.SwingMoveSpeed, finite(t.MoveSpeedFullCharge,.072))))*HZ,
     // Saber charge uses DU/frame while simple-family speed fields use source
@@ -397,6 +404,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; s.canopy.age = 0; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
+    runner.chargeStage=0;runner.chargeStageProgress=0;
     runner.s3RollerSuspendedHold = false;
     runner.slosh = -1;
   }
@@ -413,7 +421,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return result;
   };
-  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null; return legacyReset.apply(this,args); };
+  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null;this.chargeStage=0;this.chargeStageProgress=0; return legacyReset.apply(this,args); };
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
@@ -565,111 +573,26 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (h.hit) paint(owner,h.point,radius,depth,direction,h.face,footprint);
   }
 
+  function chargerLinePaint(system, projectile, at, stripe) {
+    const h=G.physics.raycast(at,down,Math.max(3.5,Math.min(512,at.y-PLAYER.waterY+6)),floorHit,true);
+    if(h.hit&&h.dist<=3.5) {
+      paint(projectile.owner,h.point,stripe.width,stripe.depth/stripe.width,
+        projectile.vel,h.face,mainInkFootprint(projectile.catalog.r));
+      return;
+    }
+    // No floor projection from a high shot: hold the real paint claim on the
+    // same visible falling bead that Splat Charger uses, until its landing.
+    queueChargerPaintDrop(system,{from:at,hit:h,radius:stripe.width,depth:stripe.depth,
+      direction:projectile.vel,owner:projectile.owner,team:projectile.team,
+      seed:projectile.seed,waterY:PLAYER.waterY});
+  }
+
   // Trace the centre path on actual collision polygons, never paint-chart
   // rectangles. Coalesced intervals and streamed plane crossings follow
   // continuous upper support without a geometry-density cut-off.
   function rollingPaint(owner, at, radius, depth, direction, contact) {
-    const level=G.level, from=owner.pos, tol=1e-9;
-    if(!owner.ground?.hit || !level || !Number.isFinite(from.x+from.y+from.z+at.x+at.z))return;
-    // Partial/test levels without collision queries cannot prove floor contact.
-    if(typeof (level.triangleWorld?level.queryDynamicBlocks:level.queryBlocks)!=='function')return;
-    const scratchDepth=contact.rollScratchDepth||0,scratch=contact.rollScratch||=([]);
-    const lease=scratch[scratchDepth]||=( {ids:[],triangle:[null,null,null]} );contact.rollScratchDepth=scratchDepth+1;
-    const surfaces=[], dx=at.x-from.x,dz=at.z-from.z;
-    try {
-    function polygon(points,normal,faceId){
-      const face=level.faces[faceId];
-      if(!face?.paintable || !(normal.y>0))return;
-      // Collision vertices define the plane. Stored float32 shading/contact
-      // normals can disagree across an exact shared edge after rounding.
-      const o=points[0],ex=points[1].x-o.x,ey=points[1].y-o.y,ez=points[1].z-o.z;
-      const fx=points[2].x-o.x,fy=points[2].y-o.y,fz=points[2].z-o.z;
-      const nx=ey*fz-ez*fy,ny=ez*fx-ex*fz,nz=ex*fy-ey*fx;
-      if(ny===0)return;
-      const y0=o.y-((from.x-o.x)*nx+(from.z-o.z)*nz)/ny;
-      const dy=-(dx*nx+dz*nz)/ny;
-      if(!Number.isFinite(y0+dy))return;
-      let area=0,lo=0,hi=1;
-      for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];area+=a.x*b.z-b.x*a.z;}
-      if(Math.abs(area)<1e-12)return;
-      const sign=Math.sign(area);
-      for(let i=0;i<points.length;i++){
-        const a=points[i],b=points[(i+1)%points.length],ex=b.x-a.x,ez=b.z-a.z;
-        const q=sign*(ex*(from.z-a.z)-ez*(from.x-a.x)),d=sign*(ex*dz-ez*dx);
-        if(Math.abs(d)<1e-12){if(q < -tol)return;}
-        else if(d>0)lo=Math.max(lo,-q/d);else hi=Math.min(hi,-q/d);
-      }
-      if(lo>hi+tol || hi<0 || lo>1)return;
-      surfaces.push({lo:Math.max(0,lo),hi:Math.min(1,hi),y0,dy,normal:normal.clone(),face:faceId,start:faceId===owner.ground.face&&lo<=tol,endFaces:hi>=1-tol?[faceId]:[]});
-    }
-    const min=contact.origin.set(Math.min(from.x,at.x),-Infinity,Math.min(from.z,at.z));
-    const max=contact.down.set(Math.max(from.x,at.x),Infinity,Math.max(from.z,at.z));
-    const world=level.triangleWorld;
-    if(world)world.queryBox(min,max,id=>{
-      if(world.flags[id]&4)return;
-      const normal=contact.point.fromArray(world.normals,id*3);
-      const tri=world.triangle(id);
-      lease.triangle[0]=tri.a;lease.triangle[1]=tri.b;lease.triangle[2]=tri.c;
-      polygon(lease.triangle,normal,level.data.triangleFace[id]);
-    });
-    const ids=lease.ids;ids.length=0;
-    if(world)level.queryDynamicBlocks(min.x,min.z,max.x,max.z,ids);
-    else level.queryBlocks(min.x,min.z,max.x,max.z,ids);
-    for(const id of ids){
-      const block=level.blocks[id];if(!block?.solid||block.grate)continue;
-      for(const faceId of block.faces){
-        const face=level.faces[faceId];if(!face || !(face.n.y>0))continue;
-        const o=face.origin,u=face.u,v=face.v;
-        const corners=contact.blockCorners||=( [null,new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()] );
-        corners[0]=o;corners[1].copy(o).addScaledVector(u,face.su);
-        corners[2].copy(o).addScaledVector(u,face.su).addScaledVector(v,face.sv);
-        corners[3].copy(o).addScaledVector(v,face.sv);
-        polygon(corners,face.n,faceId);
-      }
-    }
-    if(!surfaces.length)return;
-    // Merge actual overlapping/touching intervals on the exact same path
-    // plane across chart IDs; retain accepted support membership explicitly.
-    // Missing collision intervals remain gaps regardless of chart identity.
-    surfaces.sort((a,b)=>a.y0-b.y0||a.dy-b.dy||a.lo-b.lo);
-    let count=0;
-    for(const s of surfaces){
-      const prior=surfaces[count-1];
-      if(prior&&prior.y0===s.y0&&prior.dy===s.dy&&s.lo<=prior.hi+tol)
-        {prior.hi=Math.max(prior.hi,s.hi);prior.start ||= s.start;for(const face of s.endFaces)if(!prior.endFaces.includes(face))prior.endFaces.push(face);}
-      else surfaces[count++]=s;
-    }
-    surfaces.length=count;
-    let current=surfaces.find(s=>s.start&&s.lo<=tol);
-    if(!current)return;
-    // Stream the next endpoint/upper-plane crossing instead of constructing
-    // all pairwise events. Storage is linear in intersecting collision pieces;
-    // mesh density never silently disables a valid contact.
-    let t=0;
-    while(t<1-tol){
-      const y=current.y0+current.dy*t;
-      let next=null;
-      for(const s of surfaces){
-        if(s.lo>t+tol||s.hi<=t+tol||Math.abs(s.y0+s.dy*t-y)>1e-8)continue;
-        if(!next||s.dy>next.dy||(s.dy===next.dy&&s.hi>next.hi))next=s;
-      }
-      if(!next)return;current=next;
-      let end=current.hi;
-      for(const s of surfaces){
-        if(s.dy<=current.dy)continue;
-        const cross=(current.y0-s.y0)/(s.dy-current.dy);
-        if(cross>t+tol&&cross<end&&cross>=s.lo-tol&&cross<=s.hi+tol)end=cross;
-      }
-      if(!(end>t))return;
-      t=end;
-    }
-    contact.point.set(at.x,current.y0+current.dy,at.z);
-    contact.origin.copy(contact.point).addScaledVector(current.normal,.15);
-    contact.down.copy(current.normal).negate();
-    const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);
-    if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
-      paint(owner,h.point,radius,depth,direction,h.face,'ink-contact');
-    }finally{lease.ids.length=0;lease.triangle.fill(null);contact.rollScratchDepth=scratchDepth;}
+    const hit=traceRollingFloor(owner,at,G.level,G.physics,contact);
+    if(hit)paint(owner,hit.point,radius,depth,direction,hit.face,'ink-contact');
   }
 
   function mode(r, key='normal', unit=0, charge=0) {
@@ -785,6 +708,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         splashRadius:splash?.widthHalf??0,splashSpacing:splash?.spacing??0,
         sloshFall:splash?{drawRadius:splash.drawRadius,spec:splash.drop}:null};
       p.catalog.nextSplash=splash?.targetLength??0;p.catalog.splashTravel=0;
+    }else if(descriptor.key==='slosh'&&descriptor.sloshFall){
+      const splash=descriptor.packet.SplashAndSplashWallHitSpawnPrm?.SplashParam?.[0]?.SpawnParam;
+      const min=splash?.FirstSplashRateForLengthMin,max=splash?.FirstSplashRateForLengthMax;
+      // Slosher first-distance fields are rates of SpawnBetweenLength, not
+      // Shooter SpawnNearestLength. Reuse the admitted glob seed, as the
+      // native Slosher resolver does, without changing the random budget.
+      if(Number.isFinite(min)&&Number.isFinite(max)&&min>=0&&max>=min)
+        p.catalog.nextSplash=lerp(min,max,clamp(p.seed))*descriptor.splashSpacing;
     }
     // Keep the five-entry catalogue tuple readable by existing peers. Older
     // receivers ignore these named visual-only extensions on the same object.
@@ -885,7 +816,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // the 1F follow-up swings start from the low sweep pose, so the rendered tip
     // dropped every swing's birth from 1.6 m to 0.36 m (owner review 2026-10-18).
     const bodyOrigin=key==='brush'?BRUSH_SWING_ORIGIN:
-      key==='slosh'&&r.sourceActor==='WeaponSlosherDiffusion'?TRI_SLOSHER_ORIGIN:null;
+      key==='slosh'&&(r.sourceActor==='WeaponSlosherDiffusion'||r.sourceActor==='WeaponSlosherDouble')?BODY_SLOSHER_ORIGIN:null;
     origin(a,null,bodyOrigin);
     // Roller swings leave from the shared player-relative base plus each
     // glob's sourced Spawn* offset (weapons-fidelity ROLLER_SPAWN_BASE), as the
@@ -1525,7 +1456,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           // segment overpainted short frames and erased Bamboo's SkipNum gaps.
           while(s.nextChargerPaint<endTravel-EPS){
             sample.copy(p.prev).lerp(p.pos,clamp((s.nextChargerPaint-travelBefore)/len));
-            floorPaint(p.owner,sample,stripe.width,stripe.depth/stripe.width,p.vel,mainInkFootprint(s.r));
+            chargerLinePaint(this,p,sample,stripe);
             s.nextChargerPaint+=stripe.interval;
           }
         }
@@ -1795,11 +1726,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         runner.firingT=.35; a.lastFire=0;
       }return;
     }
-    if(input.fire && !s.pending && runner.cooldown<=EPS) {
-      if(s.rounds>0){
-        if(input.firePressed){emitSingle(runner,r,'normal',1);s.rounds--;runner.cooldown=finite(t.PostDelayFrame,15)/HZ;}
-        return;
+    // R-PEN's remaining divided shots share the first shot's release edge.
+    // Holding ZR aims the loaded round; it must not emit on the new press.
+    if(s.rounds>0){
+      if(!input.fire&&s.pressed&&!s.pending&&runner.cooldown<=EPS){
+        emitSingle(runner,r,'normal',1);s.rounds--;runner.cooldown=finite(t.PostDelayFrame,15)/HZ;
       }
+      return;
+    }
+    if(input.fire && !s.pending && runner.cooldown<=EPS) {
       if(s.stored){s.chargeF=s.stored.frames;s.paid=s.stored.paid;s.stored=null;}
       if(s.stream>0){
         s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(a);
@@ -1826,6 +1761,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(cost>0){if(!pay(runner,cost))return;s.paid+=cost;}
       s.chargeF=target;
       runner.charging=true;runner.charge=s.chargeF/full;runner.chargeT=runner.charge;a.lastFire=0;
+      if(r.family==='stringer'){const phase=catalogChargeStage(a.weapon,runner.charge);runner.chargeStage=phase.stage;runner.chargeStageProgress=phase.progress;}
       return;
     }
     if(s.chargeF>0 && !input.fire && !s.pending) {
@@ -1885,7 +1821,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const n=p.WeaponDivideChargerParam?.FullChargeDivideNum;
         if(c+EPS>=1&&n>1)s.rounds=n-1;
       }
-      s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;
+      s.chargeF=0;s.paid=0;runner.charging=false;runner.charge=0;runner.chargeStage=0;runner.chargeStageProgress=0;
       // Endpoints are explicit 1130 fields. Linear recovery between them is
       // the catalogue's interpolation model, not a recovered engine rule.
       if(r.family==='stringer')runner.cooldown=stageValue(r,{

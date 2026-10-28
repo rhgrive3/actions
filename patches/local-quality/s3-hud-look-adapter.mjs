@@ -285,6 +285,8 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
 // inflation, aim-target zoom and reticle recoil were presentation embellishments,
 // not measurements of Splatoon 3. Dynamic retail matching remains an open gate.
 const RETICLE_FEEDBACK = `  _clearReticleFeedback() {
+    for (const animation of this._twinKickAnimations || []) animation?.cancel();
+    if (this._twinKickAnimations) this._twinKickAnimations.length = 0;
     for (const animation of this._hitAnimations || []) animation.cancel();
     this.hitEl?.classList.remove('is-on', 'is-heavy', 'is-weak');
     this.killEl?.classList.remove('is-on');
@@ -346,6 +348,20 @@ export function adaptS3HudLook(rel, code) {
     "        this.hud?.hitMarker(killed ? 'kill' : 'hit');",
     "        this.hud?.hitMarker(killed ? 'kill' : 'hit', { damage });", 'accepted damage feedback payload');
   if (rel === 'src/ui/hud.js') {
+    // The guide's parent SVG group owns projection; the ring retains its
+    // original local kick. Reuse one animation per hand so rapid fire cannot
+    // leave multiple effects or a detached weapon's animation owner alive.
+    code = once(code,
+      "if (this._L.kind === 'dualies' && this._twin) { const el = this._twin[hand ? 1 : 0]; if (el && el.animate) el.animate(TWIN_KICK, TWIN_KICK_T); }",
+      `if (this._L.kind === 'dualies' && this._twin) {
+          const index = hand ? 1 : 0, el = this._twin[index];
+          if (el?.animate) {
+            const kicks = this._twinKickAnimations || (this._twinKickAnimations = []);
+            let animation = kicks[index];
+            if (animation?.effect?.target !== el) { animation?.cancel(); animation = kicks[index] = el.animate(TWIN_KICK, TWIN_KICK_T); }
+            else { animation.currentTime = 0; animation.play(); }
+          }
+        }`, 'bounded per-hand Dualies kick animation owner');
     code = section(code, "  hitMarker(kind = 'hit') {\n", '  feed(', RETICLE_FEEDBACK, 'bounded confirmed-hit feedback');
     code = once(code, "    v = !!v;\n    if (v === this._visible) return;", "    v = !!v;\n    if (!v) this._clearReticleFeedback();\n    if (v === this._visible) return;", 'hide feedback cleanup');
     code = once(code, '  _startMatchHud(match) {\n', '  _startMatchHud(match) {\n    this._clearReticleFeedback();\n', 'match feedback reset');

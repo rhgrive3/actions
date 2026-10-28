@@ -20,10 +20,20 @@ function materialState(material) {
   state.shader = material.onBeforeCompile.toString();
   return state;
 }
+// Expand index order into the actual triangle stream. Index width and vertex
+// reuse are storage details; positions, winding, normals, colors and mapped UVs
+// are compared byte-for-byte in draw order.
+function expandedAttribute(g, a) {
+  const indices=g.index?.array, count=indices?indices.length:a.count;
+  const expanded=new a.array.constructor(count*a.itemSize);
+  for(let i=0;i<count;i++)for(let j=0;j<a.itemSize;j++)expanded[i*a.itemSize+j]=a.array[(indices?indices[i]:i)*a.itemSize+j];
+  return {hash:hash(expanded),type:a.array.constructor.name,itemSize:a.itemSize,normalized:a.normalized,count};
+}
 const meshState = kit => [...kit._meshes, ...kit._inst].map(m => ({
   name: m.name, count: m.count ?? 1, material: materialState(m.material),
-  attributes: Object.fromEntries(Object.entries(m.geometry.attributes).map(([k, a]) => [k, { hash: hash(a.array), type: a.array.constructor.name, itemSize: a.itemSize, normalized: a.normalized, count: a.count }])),
-  index: m.geometry.index && { hash: hash(m.geometry.index.array), type: m.geometry.index.array.constructor.name, count: m.geometry.index.count },
+  drawRange: {...m.geometry.drawRange}, groups: m.geometry.groups.map(g=>({...g})),
+  instanceMatrix: m.instanceMatrix ? hash(m.instanceMatrix.array) : null,
+  attributes: Object.fromEntries(Object.entries(m.geometry.attributes).map(([k,a])=>[k,expandedAttribute(m.geometry,a)])),
 }));
 function sameRenderedMeshes(actual, expected) {
   const next = meshState(actual), prior = meshState(expected), a = allMeshes(actual), b = allMeshes(expected);
@@ -45,7 +55,7 @@ function sameRenderedMeshes(actual, expected) {
     }
   }
   assert.ok(omitted > 0, 'exercise the reviewed unused UV omission');
-  assert.deepEqual(next, prior, 'all other attributes, indices, counts and material settings remain exact');
+  assert.deepEqual(next, prior, 'ordered triangle attributes, counts and material settings remain exact');
 }
 function make(N, list = placements) {
   const kit = new N.PropKit(new N.THREE.Scene(), { quality: 'high', castShadow: true });
@@ -99,4 +109,15 @@ test('pending PR183 Practice dressing remains isolated and banner instances surv
   const state = meshState(banner), stats = banner.stats();assert.equal(banner._banners.length, 1);
   banner.build();assert.deepEqual(meshState(banner), state);assert.deepEqual(banner.stats(), stats);assert.equal(banner._banners.length, 1);
   banner.update(1 / 60, 3);banner.dispose();
+});
+
+test('Halyard triangle comparator narrowly rejects inverse/mapped/custom UV omissions and changed streams',()=>{
+ const T=fixed.THREE;
+ function mesh(kind='solid',hasUv=true){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute([0,0,0,1,0,0,0,1,0],3));g.setAttribute('normal',new T.Float32BufferAttribute([0,0,1,0,0,1,0,0,1],3));if(hasUv)g.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,0,1],2));g.setIndex([0,1,2]);const m=new T.MeshStandardMaterial(kind==='mapped'?{map:new T.Texture()}:{});if(kind==='custom')m.onBeforeCompile=()=>{};return new T.Mesh(g,m);}
+ const kit=(...meshes)=>({_meshes:meshes,_inst:[]});
+ const compare=(a,b)=>sameRenderedMeshes(kit(a),kit(b));
+ assert.doesNotThrow(()=>compare(mesh('solid',false),mesh('solid',true)));
+ assert.throws(()=>compare(mesh('solid',true),mesh('solid',false)),'opposite omission rejected');
+ for(const kind of ['mapped','custom'])assert.throws(()=>compare(mesh(kind,false),mesh(kind,true)),kind+' UV omission rejected');
+ for(const mutate of [g=>g.index.array.set([0,2,1]),g=>{g.attributes.position.array[0]=.5;},g=>{g.attributes.normal.array[2]=-1;}]){const changed=mesh('solid',false);mutate(changed.geometry);assert.throws(()=>compare(changed,mesh('solid',true)),'ordered position/normal stream');}
 });

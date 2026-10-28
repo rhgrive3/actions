@@ -46,6 +46,12 @@ const reviewedSplatlingTriggers=[
  "      - 'scripts/lib/inkwave-splatling-render-evidence.mjs'\n",
  "      - 'patches/splatoon3/runtime/splatling-cosmetics.mjs'\n",
 ];
+// Exact source-fetch and evidence-retention additions from upstream c17f2abe.
+// Undo only these reviewed placements before checking the original immutable pins.
+const reviewedSparseCheckout = '          filter: blob:none\n          sparse-checkout-cone-mode: false\n          sparse-checkout: |\n            /*\n            !/tools/inkwave-modeler/blender/\n            !/tools/inkwave-modeler/docs/\n';
+const reviewedRetention = "          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}\n";
+const checkoutAnchor = '      - uses: actions/checkout@v4\n        with:\n';
+const retentionAnchor = '      - uses: actions/upload-artifact@v4\n        if: always()\n        with:\n';
 function assertUnchangedDefaultVolumeJob(y){
  let old=y.slice(0,y.indexOf('  video-lifecycle-pilot:\n'));old=old.replace(/  workflow_dispatch:\n[\s\S]*?permissions:\n/,'  workflow_dispatch:\npermissions:\n').replace("    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.video_lifecycle_pilot }}\n",'');const buildTrigger="      - 'scripts/build-inkwave.mjs'\n";
  const compositionTrigger="      - 'scripts/inkwave-source-composition.mjs'\n";
@@ -60,6 +66,11 @@ function assertUnchangedDefaultVolumeJob(y){
  const splatlingSuffix=workflowTrigger+reviewedSplatlingTriggers.join('')+'  workflow_dispatch:\n';
  assert.ok(old.includes(splatlingSuffix),'Reviewed Splatling triggers must remain last in pull_request.paths');
  old=old.replace(splatlingSuffix,workflowTrigger+'  workflow_dispatch:\n');
+ for(const [addition,anchor] of [[reviewedSparseCheckout,checkoutAnchor],[reviewedRetention,retentionAnchor]]){
+  assert.equal(old.split(addition).length-1,1,'Exactly one reviewed default-job addition is required');
+  assert.equal(old.split(anchor+addition).length-1,1,'Reviewed addition must stay at its exact owner');
+  old=old.replace(anchor+addition,anchor);
+ }
  const reviewedAptPath="      - 'scripts/prepare-inkwave-ci-apt.py'\n";const reviewedAptStep="      - run: |\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps chromium webkit\n";assert.equal(old.split(reviewedAptPath).length-1,1,'Only one pinned CI apt path may be added');assert.equal(old.split(reviewedAptStep).length-1,1,'Only one approved CI apt preparation may precede native browsers');const integratedBlob=createHash('sha1').update('blob '+Buffer.byteLength(old)+'\0').update(old).digest('hex');assert.equal(integratedBlob,'29c322adaaad48c9a19431f5049c3800378ba0c9','The integrated default volume job may not drift beyond the two reviewed additions');old=old.replace(reviewedAptPath,'').replace(reviewedAptStep,'      - run: npx playwright install --with-deps chromium webkit\n');const originalBlob=createHash('sha1').update('blob '+Buffer.byteLength(old)+'\0').update(old).digest('hex');assert.equal(originalBlob,'582cc30c606d0d4963d8f172f157b6d8a2dbbf9e','All original volume assertions and native gates must be byte-exact');
 }
 test('existing workflow body remains byte-exact after only reviewed pilot, source/Splatling triggers and apt additions',async()=>{const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');assertUnchangedDefaultVolumeJob(y);});
@@ -78,6 +89,9 @@ for(const [name,mutate]of [
  ['changed timeout',s=>s.replace('    timeout-minutes: 30','    timeout-minutes: 60')],
  ['weakened rendering assertion',s=>s.replace('--shape-only','--accept-all')],
  ['changed default checkout',s=>s.replace('ref: ${{ github.event.pull_request.head.sha || github.sha }}','ref: main')],
+ ["removed sparse checkout pin",s=>s.replace("filter: blob:none","filter: blob:all")],
+ ["broadened sparse checkout",s=>s.replace("!/tools/inkwave-modeler/docs/","/tools/inkwave-modeler/docs/")],
+ ["unbounded PR retention",s=>s.replace("retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}","retention-days: 90")],
 ])test('default volume guard rejects '+name,async()=>{
  const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
  const changed=mutate(y);assert.notEqual(changed,y,'negative control must change the real workflow');
@@ -108,4 +122,21 @@ for(const [name,mutate]of [
  const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
  const changed=mutate(y);assert.notEqual(changed,y,'negative control must change the real workflow');
  assert.throws(()=>assertUnchangedDefaultVolumeJob(changed));
+});
+
+for(const [name,mutate]of [
+ ['missing sparse fetch',s=>s.replace(reviewedSparseCheckout,'')],
+ ['duplicate sparse fetch',s=>s.replace(reviewedSparseCheckout,reviewedSparseCheckout.repeat(2))],
+ ['broad sparse exclusion',s=>s.replace('!/tools/inkwave-modeler/blender/','!/tools/')],
+ ['changed fetch filter',s=>s.replace('filter: blob:none','filter: tree:0')],
+ ['changed sparse mode',s=>s.replace('sparse-checkout-cone-mode: false','sparse-checkout-cone-mode: true')],
+ ['missing retention',s=>s.replace(reviewedRetention,'')],
+ ['duplicate retention',s=>s.replace(reviewedRetention,reviewedRetention.repeat(2))],
+ ['changed retention',s=>s.replace('&& 14 || 90','&& 1 || 1')],
+ ['moved retention',s=>s.replace(reviewedRetention,'').replace(reviewedSparseCheckout,reviewedSparseCheckout+reviewedRetention)],
+ ['changed upload condition',s=>s.replace('        if: always()','        if: success()')],
+ ['changed evidence path',s=>s.replace('            .ci-scratch/evidence\n','            .ci-scratch/other\n')],
+])test('default volume guard rejects '+name,async()=>{
+ const y=await fs.readFile(new URL('../../.github/workflows/inkwave-ink-volumes.yml',import.meta.url),'utf8');
+ const changed=mutate(y);assert.notEqual(changed,y);assert.throws(()=>assertUnchangedDefaultVolumeJob(changed));
 });

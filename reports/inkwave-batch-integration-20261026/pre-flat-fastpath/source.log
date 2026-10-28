@@ -1,0 +1,170 @@
+(node:6263) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Curling has no post-release explosion forecast (owner) (4650.238339ms)
+✔ Curling has no post-release explosion forecast (ghost) (2961.681912ms)
+✔ Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming (2654.519213ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (owner) (2348.878537ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (ghost) (2269.885587ms)
+✔ Autobomb observed after its search window and removed bombs leave no delayed scan (2062.436705ms)
+(node:6264) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ every catalogue Charger, including scope/Bamboo/Pencil kits, draws falling ink before it paints at 30/60/120Hz (5125.61835ms)
+✔ replicated Charger heads never create a second falling-paint claim and clear retires live leases (2707.389082ms)
+✔ every Stringer kit exposes two source-timed charge rings, dings once per boundary and resets on release/cancel (2741.479838ms)
+(node:6322) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-double body-relative horizontal launch is independent of the low animated rim (2717.073811ms)
+✔ s3-slosher-double-01 body-relative horizontal launch is independent of the low animated rim (1631.626515ms)
+✔ s3-slosher-double-02 body-relative horizontal launch is independent of the low animated rim (1616.837238ms)
+✔ posed native Dread Wringer keeps both streams on body-level launch at 30/60/120 Hz (26774.194326ms)
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:55:17)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:161:21)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:80:19)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:161:21)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:55:17)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:161:21)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:55:17)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-575-dualies-independent-aim.test.mjs:249:19)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:6332) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native grounded and airborne Dualies keep two independent aim centers and trajectory-matched guides (30885.416465ms)
+✔ NativeRunner roll transition alone merges turret targets, then release restores normal hand guides (18316.309675ms)
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:44:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:59:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:68:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:78:22)
+    at scene (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:17:11)
+    at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/shooter-dualies-projection.test.mjs:76:11)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:6339) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Shooter and each Dualies guide stop at the actual downward head contact before the nominal frame (24505.006296ms)
+✔ Shooter full-flight contact remains available without inventing an inner-marker age cutoff (41.838753ms)
+✔ Dualies contact cache invalidates when in-place floor geometry changes its generation (33.540203ms)
+✔ moving Shooter prediction uses the actual spawn-velocity addition and invalidates same-pose cache (32.108889ms)
+✔ every Stringer kit fills the existing native circle once per actual charge stage, with no added geometry (2.415922ms)
+✔ HUD wrapper preserves native projection, calls and return values, and clears Stringer styling on switch (2.584184ms)
+✔ Stringer adapter appends only an installer after the complete HUD owner and stays build-only (239.115872ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100891.255346

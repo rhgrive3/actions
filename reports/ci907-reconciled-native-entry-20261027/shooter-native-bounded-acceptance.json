@@ -1,0 +1,400 @@
+{
+  "status": "bounded native ownership correction accepted by parent after independent source/emitted review; complete retail parity unverified",
+  "candidate": "3ac390696adbdcf2438e9ecb280efd5439b98ae1",
+  "browser": "154.0.8037.57",
+  "chromiumSandbox": true,
+  "closed": true,
+  "runs": [
+    {
+      "label": "before907",
+      "contentHash": "af180bade0c09f1c0b32a8eab99016aa5f697991a32a7cd8ccb076cf3311ae84",
+      "cases": [
+        {
+          "name": "open-horizontal",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "aimPitch": -0.0002611465216192793,
+          "blocked": true,
+          "fullContact": {
+            "point": [
+              5.784779118563565,
+              5.551115123125783e-17,
+              12.414910441875266
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "frame": 11,
+            "face": 2
+          },
+          "hudContact": {
+            "point": [
+              5.784779118563565,
+              5.551115123125783e-17,
+              12.414910441875266
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "face": 2
+          },
+          "image": "/workspace/scratch/shooter-owner-native-3ac/before907-open-horizontal-held.png",
+          "sha256": "38d236b2a0805c374a953fc7ced5f508587cf06f923f27b32cef7c9a558a7e16",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": false,
+          "imageInspected": true,
+          "note": "Raw native page screenshot inspected; no exact retail match claim"
+        },
+        {
+          "name": "down-floor",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "aimPitch": -0.6494676713617847,
+          "blocked": true,
+          "fullContact": {
+            "point": [
+              5.750965282951347,
+              2.220446049250313e-16,
+              1.8513192707197195
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "frame": 1,
+            "face": 2
+          },
+          "hudContact": {
+            "point": [
+              5.750965282951347,
+              2.220446049250313e-16,
+              1.8513192707197195
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "face": 2
+          },
+          "image": "/workspace/scratch/shooter-owner-native-3ac/before907-down-floor-held.png",
+          "sha256": "8fb636df3ba001bcd1b5b1ef9b13f3c0b4a2e7668e264f811e911ac15ce43d87",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": false,
+          "imageInspected": true,
+          "note": "Raw native page screenshot inspected; no exact retail match claim"
+        },
+        {
+          "name": "near-wall",
+          "position": [
+            -26.5,
+            0.025000000000000022,
+            45
+          ],
+          "aimPitch": -0.0002611465216192793,
+          "blocked": true,
+          "fullContact": {
+            "point": [
+              -26.776111631666165,
+              1.9725108990775735,
+              49.940000000000005
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ],
+            "frame": 2,
+            "face": 598
+          },
+          "hudContact": {
+            "point": [
+              -26.776111631666165,
+              1.9725108990775735,
+              49.940000000000005
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ],
+            "face": 598
+          },
+          "image": "/workspace/scratch/shooter-owner-native-3ac/before907-near-wall-held.png",
+          "sha256": "9eced88fab9e7ea8f2788f7262dc8b446c9eb07e308a9f247a3625d97ad49ebb",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": true,
+          "imageInspected": true,
+          "note": "Raw native page screenshot inspected; no exact retail match claim"
+        },
+        {
+          "name": "distant-wall",
+          "position": [
+            -26.5,
+            0,
+            36.56004422763852
+          ],
+          "aimPitch": 0.03991234987526315,
+          "blocked": true,
+          "fullContact": {
+            "point": [
+              -26.77733954200443,
+              0,
+              49.51112468719509
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "frame": 17,
+            "face": 10
+          },
+          "hudContact": {
+            "point": [
+              -26.77733954200443,
+              0,
+              49.51112468719509
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "face": 10
+          },
+          "image": "/workspace/scratch/shooter-owner-native-3ac/before907-distant-wall-held.png",
+          "sha256": "346054897f9280ac1969787f4939b21d2d6fd869deb76a163f4499f15418d277",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": false,
+          "imageInspected": false,
+          "note": "Invalid as distant-wall proof: actual first hit is floor"
+        }
+      ],
+      "gestures": 27,
+      "allCapturedGesturesTrusted": true,
+      "pointerErrors": 0,
+      "pageErrors": [],
+      "verifiedResponses": [
+        "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/muzzle-feedback.mjs",
+        "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/patches/splatoon3/runtime/weapons-fidelity.mjs",
+        "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/core/mobile.js",
+        "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/main.js",
+        "_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/src/ui/hud.js"
+      ],
+      "requestFailures": [
+        {
+          "url": "http://127.0.0.1:38637/_versions/ef8bb8b9517d5b26ec826af0b71fef5442b58a3ac53b222ad1d35939dbabd8bb/assets/audio/Jet_Arrow.mp3",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "label": "candidate3ac",
+      "contentHash": "39d1892cc3348ef9152227f035307356918bf4834436b96ccce8290ca6c6ad6b",
+      "cases": [
+        {
+          "name": "open-horizontal",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "aimPitch": -0.0002611465216192793,
+          "blocked": false,
+          "fullContact": {
+            "point": [
+              5.781168818167652,
+              -5.551115123125783e-17,
+              12.380702659304694
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "frame": 11,
+            "face": 2
+          },
+          "hudContact": null,
+          "image": "/workspace/scratch/shooter-owner-native-3ac/candidate3ac-open-horizontal-held.png",
+          "sha256": "540d381094253c3e90fcd89f098025cb3f40b4754515436d2af43f428fe64474",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": false,
+          "imageInspected": true,
+          "note": "Raw native page screenshot inspected; no exact retail match claim"
+        },
+        {
+          "name": "down-floor",
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "aimPitch": -0.6498281248393806,
+          "blocked": true,
+          "fullContact": {
+            "point": [
+              5.750456683603067,
+              -2.7755575615628914e-16,
+              1.8748656979075466
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "frame": 1,
+            "face": 2
+          },
+          "hudContact": {
+            "point": [
+              5.750456683603067,
+              0,
+              1.8748656979075449
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "face": 2
+          },
+          "image": "/workspace/scratch/shooter-owner-native-3ac/candidate3ac-down-floor-held.png",
+          "sha256": "a03b753c49ccac8db7c9b1cf0611ce3a25f89784e55049bf794f4919aca9e4d3",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": false,
+          "imageInspected": true,
+          "note": "Raw native page screenshot inspected; no exact retail match claim"
+        },
+        {
+          "name": "near-wall",
+          "position": [
+            -26.5,
+            0.025000000000000022,
+            45
+          ],
+          "aimPitch": -0.0002611465216192793,
+          "blocked": true,
+          "fullContact": {
+            "point": [
+              -26.776351295684837,
+              1.9726706349800334,
+              49.940000000000005
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ],
+            "frame": 2,
+            "face": 598
+          },
+          "hudContact": {
+            "point": [
+              -26.776351295684837,
+              1.9726706349800327,
+              49.94
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ],
+            "face": 598
+          },
+          "image": "/workspace/scratch/shooter-owner-native-3ac/candidate3ac-near-wall-held.png",
+          "sha256": "2c7c6284a5f76fab62dfcd2922953ae2ad9b1a34df6379270744115d3d824273",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": true,
+          "imageInspected": true,
+          "note": "Raw native page screenshot inspected; no exact retail match claim"
+        },
+        {
+          "name": "distant-wall",
+          "position": [
+            -26.5,
+            0,
+            35.6222713640428
+          ],
+          "aimPitch": 0.03991234987526315,
+          "blocked": false,
+          "fullContact": {
+            "point": [
+              -26.771504219139775,
+              0.024999999999999967,
+              48.508752794091315
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "frame": 16,
+            "face": 599
+          },
+          "hudContact": null,
+          "image": "/workspace/scratch/shooter-owner-native-3ac/candidate3ac-distant-wall-held.png",
+          "sha256": "f87f71c32cca2edd3f4f3c1fe21b707dd3319bf8d1eb83611b71fbb52af2f16b",
+          "reset": true,
+          "cueStableAcrossCapture": true,
+          "validWall": false,
+          "imageInspected": false,
+          "note": "Invalid as distant-wall proof: actual first hit is floor"
+        }
+      ],
+      "gestures": 30,
+      "allCapturedGesturesTrusted": true,
+      "pointerErrors": 0,
+      "pageErrors": [],
+      "verifiedResponses": [
+        "_versions/5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319/patches/splatoon3/runtime/muzzle-feedback.mjs",
+        "_versions/5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319/patches/splatoon3/runtime/weapons-fidelity.mjs",
+        "_versions/5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319/src/core/mobile.js",
+        "_versions/5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319/src/main.js",
+        "_versions/5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319/src/ui/hud.js"
+      ],
+      "requestFailures": [
+        {
+          "url": "http://127.0.0.1:39009/_versions/5ac61c091044c3dcf6f5528496369c8e443ee41dec0ec2d4858a6bc84e3ad319/patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Explosion_00.mp3",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "No actor/camera/time/input state assigned; shipping menu travel, touch look/joystick/Fire only.",
+    "Before open lane reused from preserved first attempt; first down-flight observer failed because a1F head retired before draw. Remaining cases used accepted native intent plus actual ink consumption, not a short-flight pixel claim.",
+    "Distant-wall-labelled attempts actually hit the floor first, so they do not satisfy valid distant-wall acceptance.",
+    "Main aim-anchor/gray color and original-game timing/pixel calibration remain unverified; this confirms only the changed extra cue behavior.",
+    "No candidate integration or original/media upload."
+  ],
+  "historicalStatus": "ordinary-input pixels accepted for open/floor/near-cover owner behavior; valid distant-wall condition not established; do not integrate yet",
+  "acceptance": {
+    "openFloorExtraCueRemoved": true,
+    "downwardAndNearWallCueRetained": true,
+    "nativeDistantWallExercised": false,
+    "independentDistantWallControl": "actual9F wall source/emitted; no age cutoff; separate from browser",
+    "noFurtherFarWallAttempts": "parent instruction: observed scenes hit floor first; no trajectory alteration",
+    "originalReviewSha256": "29a5e3d86561de7e643231901248e4b71d425a9971693dbe170585fe559a253d",
+    "originalResultSha256": "0f919e64755ace92dc195de032faee0e65a5ecce16aed698728947b54aebe8e9"
+  }
+}

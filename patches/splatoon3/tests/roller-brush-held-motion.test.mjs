@@ -2,14 +2,38 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
+import { parse } from '../../loading-cache/vendor/acorn.mjs';
 
 const families = MAIN_WEAPON_CATALOG.records.filter(r => r.family === 'roller' || r.family === 'brush');
+function exposeEmittedInspection(rel, code) {
+  if (rel !== 'patches/splatoon3/runtime/weapon-models/registry.mjs') return code;
+  // The production bundle retains this inspection function in its Roller
+  // namespace. Alias that exact binding; never load the excluded source family
+  // or replace its state reader. Existing emitted statements stay byte intact.
+  const names = [], ast = parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+  const visit = node => {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'Property' && (node.key.name ?? node.key.value) === 'catalogRollerSwing') {
+      assert.equal(node.value.type, 'ArrowFunctionExpression');
+      assert.equal(node.value.body.type, 'Identifier');
+      names.push(node.value.body.name);
+    }
+    for (const child of Object.values(node)) {
+      if (Array.isArray(child)) child.forEach(visit); else if (child && typeof child === 'object') visit(child);
+    }
+  };
+  visit(ast);
+  assert.equal(names.length, 1, 'one actual bundled Roller inspection binding');
+  assert.ok(ast.body.some(n => n.type === 'FunctionDeclaration' && n.id.name === names[0]), 'bundled function exists');
+  return code + `\nexport { ${names[0]} as catalogRollerSwing };\n`;
+}
 let cached;
 async function production() {
   if (!cached) cached = fixture({ fullRuntime: true, productionComposition: true,
     includeCharacter: true, realProjectiles: true, vmMathRandom: () => .5,
+    adaptEmittedRuntime: exposeEmittedInspection,
     extraExports: `
-      export { catalogRollerSwing } from './patches/splatoon3/runtime/weapon-models/rollers.mjs';
+      export { catalogRollerSwing } from './patches/splatoon3/runtime/weapon-models/${process.env.INKWAVE_BUILT_SITE ? 'registry' : 'rollers'}.mjs';
       export { recordMovementLaunch } from './patches/splatoon3/runtime/roller-freefall.mjs';
     ` }).then(f => {
     f.G.scene = new f.THREE.Scene();

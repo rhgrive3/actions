@@ -1,0 +1,251 @@
+Node v24.22.1
+Candidate site: /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site
+Old site: /workspace/shared/inkwave-native/evidence/native-integration-20261027/site-main
+No candidate browser attempted. These are CPU/source/emitted/file gates.
+Initial development fixture setup errors (getter color/source record lookup/circular actor snapshot) were corrected before these final runs; scratch logs retained locally.
+
+## Source floor/observer
+$ node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs scripts/tests/inkwave-hissen-capture-observer.test.mjs
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (1114.154567ms)
+✔ Tri-Slosher floor bead never rotates into a vertical launch when gravity first acts (832.408433ms)
+✔ all three Hissen kits reuse the existing non-spherical Slosher shader profile without new resources or RNG (812.395169ms)
+✔ only Hissen floor-child profile changes; other actors retain their bead or strand and the existing culls/caps (863.198889ms)
+✔ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (3441.236145ms)
+✔ serialized passive observer delegates once and records actual slot, matrix and projection without mutations (5.508032ms)
+✔ planning, other weapons and rejected submissions cannot manufacture Hissen draw records (1.251024ms)
+✔ records per-source slot ranges and clears only observer records at the next real begin (0.707295ms)
+✔ passive reads respect hidden parents and native instance counts without changing either (0.501796ms)
+✔ observer restoration refuses to overwrite a newer owner (0.600043ms)
+✔ restoration deletes own shadows for native prototype methods (1.521771ms)
+✔ restoration preserves exact own nondefault descriptors and unrelated replacements are never clobbered (0.499472ms)
+✔ read-only own method is rejected before installing either wrapper (0.468014ms)
+✔ missing native owner is rejected instead of substituting a generic body (0.163176ms)
+✔ actual serialized driver captures5/7/9 after observed active birth, not after Fire press (1.272015ms)
+✔ actual serialized driver fails at120 ticks when native active birth never arrives (0.867777ms)
+✔ default actual driver still captures absolute18 and releases at12 without a birth-relative dependency (0.687114ms)
+✔ actual child trace passively copies native shader/profile/slot data only in measurement mode (1.018593ms)
+✔ driver preserves default18 and adds a bounded birth-relative passive route without visibility manipulation (0.324769ms)
+✔ normal catalog workflow retains old gates and binds additive Hissen report to the automatic exact head (12.928484ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7653.936641
+
+## Source surrounding
+$ node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs patches/splatoon3/tests/ink-look.test.mjs patches/splatoon3/tests/firing-cosmetics-budget.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs patches/local-quality/tests/slosher-shared-envelope.test.mjs
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher and Dread Wringer share Bucket art but retain source envelopes, including alternate kits (1001.829653ms)
+✔ real FX hooks give catalogue Bucket sheets the same flight droplets and head spacing as native Bucket (826.656412ms)
+BLOBLOBBER_ACTUAL_PITCH_TRACES {"level":{"frames":74,"reach":28.533294562208315,"contacts":[{"frame":25,"distance":12.17097465406588},{"frame":51,"distance":21.798332812473333}]},"upward":[{"deg":5,"frames":84,"reach":31.13561583407207,"contacts":[{"frame":30,"distance":14.243569028563613},{"frame":59,"distance":24.409299001320456}]},{"deg":20,"frames":119,"reach":35.84482309598065,"contacts":[{"frame":45,"distance":18.70451399546264},{"frame":85,"distance":29.47971078391295}]},{"deg":40,"frames":155,"reach":33.057672046496535,"contacts":[{"frame":61,"distance":19.25531636051409},{"frame":112,"distance":28.318977962099012}]},{"deg":75,"frames":181,"reach":11.897804141507455,"contacts":[{"frame":74,"distance":7.457309010353922},{"frame":133,"distance":10.46922081454125}]},{"deg":90,"frames":178,"reach":1.1102230246251565e-15,"contacts":[{"frame":73,"distance":1.1102230246251565e-15},{"frame":131,"distance":1.1102230246251565e-15}]}],"downward":[{"deg":-10,"frames":56,"reach":22.704202677640986,"contacts":[{"frame":16,"distance":7.804496702933686},{"frame":37,"distance":16.439097240719835}]},{"deg":-20,"frames":47,"reach":19.01805966741993,"contacts":[{"frame":9,"distance":4.351235139619818},{"frame":29,"distance":12.861665793333357}]},{"deg":-30,"frames":55,"reach":19.674650779665747,"contacts":[{"frame":6,"distance":2.4597581931860417},{"frame":32,"distance":12.716003547252381}]},{"deg":-40,"frames":68,"reach":20.361573729656033,"contacts":[{"frame":4,"distance":1.5150917647109738},{"frame":38,"distance":12.983071878958977}]},{"deg":-45,"frames":75,"reach":20.099178815863564,"contacts":[{"frame":4,"distance":1.2163927984247365},{"frame":42,"distance":13.063827307598643}]},{"deg":-60,"frames":97,"reach":16.75911912706689,"contacts":[{"frame":3,"distance":0.6364018707363703},{"frame":54,"distance":11.209217060926955}]}]}
+(node:20) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher and Dread Wringer share Bucket sheet art with their own source dimensions (1.402882ms)
+✔ Bloblobber bubbles grow over five frames and shrink 25% each rebound (35.446313ms)
+✔ actual Bloblobber projectile rebounding preserves swept travel, sourced paint taper and ghost safety (1091.223887ms)
+✔ long-range Shooter keeps a compact, non-collision-sized visual rod (0.296427ms)
+✔ all pinned Charger full-charge ranges are retained by the actual catalog flight (938.416422ms)
+✔ sourced falling shooter droplets reuse simulated positions without paint side-effects (854.952333ms)
+✔ Bloblobber physical launch remains level against a short ground reticle and rebounds for its whole arc (937.474955ms)
+✔ Bloblobber actual 60Hz velocity integrator honors source 3F straight, brake and free-fall transitions (991.943585ms)
+✔ Bloblobber small-bubble floor-normal cap preserves forward travel and wall speed (1003.022133ms)
+mixed-pool {"sharedCount":700,"retainedFallingDrops":40,"oldSplatlingParts":0,"additionalShooter":0}
+(node:28) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 32 Splatlings cannot evict the 40 existing late drops at saturation (984.668513ms)
+✔ zero residual capacity preserves all existing slots and suppresses both optional cosmetics (876.061325ms)
+✔ partial residual capacity submits only available Splatling and Shooter beads (783.703059ms)
+✔ one residual slot preserves every native prefix for either optional family (828.374606ms)
+✔ ordinary mixed firing keeps smaller Splatling and muzzle Shooter cosmetics in free slots (819.113393ms)
+✔ repeated full/partial/clear/reuse draws retain the fixed buffers and resources (952.375853ms)
+(node:36) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ each projectile kind writes its own look; the slosher sheet is narrower and bead-free (383.850647ms)
+✔ the blob shader consumes aInkLook (spikes + vertical-thin cross-section) (366.804104ms)
+✔ a Shooter round rod is its tail: MaxLengthFrame frames of travel behind the head, never behind the muzzle (1226.141472ms)
+(node:44) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ current S3 shape renderer and history renderer never submit the same native Shooter body twice (967.881246ms)
+✔ pinned source data keeps unknown shooter defaults distinct from explicit Splatling tails (0.217087ms)
+✔ pinned Roller DrawSizeParam stays split between horizontal and vertical sheet modes (0.195414ms)
+✔ pinned Slosher front-four and rear-five records preserve exact DrawSize, offsets, and tail bounds (0.17323ms)
+✔ fixed-size projectile history retains curved samples and has identical 30/60/120 Hz timelines (3.233698ms)
+✔ source-aware renderer assigns distinct geometry to shooter, Roller, and Slosher modes in one bounded batch (493.626399ms)
+✔ source-sized Slosher caps stay at recorded endpoints across short and long retained histories (446.852343ms)
+✔ hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path (0.507835ms)
+✔ color uploads reuse stable body colors and merge pending ranges across changed and reordered slots (405.406085ms)
+✔ history backend unit: native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (884.417228ms)
+✔ history backend unit: native coarse 30 Hz projectile update records both actual 60 Hz physics points (1500.350198ms)
+✔ final build composition renders the native nine-glob Slosher volley without changing gameplay state (795.329051ms)
+✔ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (6385.774592ms)
+✔ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (973.559018ms)
+✔ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (831.353589ms)
+✔ history backend unit: a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (805.180541ms)
+✔ native horizontal Roller links stay inside each of two real 13-glob volleys (857.893658ms)
+✔ horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins (738.078212ms)
+✔ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (995.464495ms)
+✔ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (876.069246ms)
+✔ source VTF Roller owns its GPU draw when installed, with geometry fallback when absent (545.431838ms)
+✔ native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher (0.400804ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35347.954993
+
+## Candidate emitted floor
+$ INKWAVE_BUILT_SITE=<candidate site> node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (540.22649ms)
+✔ Tri-Slosher floor bead never rotates into a vertical launch when gravity first acts (375.989563ms)
+✔ all three Hissen kits reuse the existing non-spherical Slosher shader profile without new resources or RNG (376.196192ms)
+✔ only Hissen floor-child profile changes; other actors retain their bead or strand and the existing culls/caps (360.896929ms)
+✔ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (1730.26483ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3773.467135
+
+## Candidate emitted surrounding
+$ INKWAVE_BUILT_SITE=<candidate site> node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs patches/splatoon3/tests/firing-cosmetics-budget.test.mjs
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+BLOBLOBBER_ACTUAL_PITCH_TRACES {"level":{"frames":74,"reach":28.533294562208315,"contacts":[{"frame":25,"distance":12.17097465406588},{"frame":51,"distance":21.798332812473333}]},"upward":[{"deg":5,"frames":84,"reach":31.13561583407207,"contacts":[{"frame":30,"distance":14.243569028563613},{"frame":59,"distance":24.409299001320456}]},{"deg":20,"frames":119,"reach":35.84482309598065,"contacts":[{"frame":45,"distance":18.70451399546264},{"frame":85,"distance":29.47971078391295}]},{"deg":40,"frames":155,"reach":33.057672046496535,"contacts":[{"frame":61,"distance":19.25531636051409},{"frame":112,"distance":28.318977962099012}]},{"deg":75,"frames":181,"reach":11.897804141507455,"contacts":[{"frame":74,"distance":7.457309010353922},{"frame":133,"distance":10.46922081454125}]},{"deg":90,"frames":178,"reach":1.1102230246251565e-15,"contacts":[{"frame":73,"distance":1.1102230246251565e-15},{"frame":131,"distance":1.1102230246251565e-15}]}],"downward":[{"deg":-10,"frames":56,"reach":22.704202677640986,"contacts":[{"frame":16,"distance":7.804496702933686},{"frame":37,"distance":16.439097240719835}]},{"deg":-20,"frames":47,"reach":19.01805966741993,"contacts":[{"frame":9,"distance":4.351235139619818},{"frame":29,"distance":12.861665793333357}]},{"deg":-30,"frames":55,"reach":19.674650779665747,"contacts":[{"frame":6,"distance":2.4597581931860417},{"frame":32,"distance":12.716003547252381}]},{"deg":-40,"frames":68,"reach":20.361573729656033,"contacts":[{"frame":4,"distance":1.5150917647109738},{"frame":38,"distance":12.983071878958977}]},{"deg":-45,"frames":75,"reach":20.099178815863564,"contacts":[{"frame":4,"distance":1.2163927984247365},{"frame":42,"distance":13.063827307598643}]},{"deg":-60,"frames":97,"reach":16.75911912706689,"contacts":[{"frame":3,"distance":0.6364018707363703},{"frame":54,"distance":11.209217060926955}]}]}
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher and Dread Wringer share Bucket sheet art with their own source dimensions (1.420859ms)
+✔ Bloblobber bubbles grow over five frames and shrink 25% each rebound (31.81151ms)
+✔ actual Bloblobber projectile rebounding preserves swept travel, sourced paint taper and ghost safety (497.130446ms)
+✔ long-range Shooter keeps a compact, non-collision-sized visual rod (0.272771ms)
+✔ all pinned Charger full-charge ranges are retained by the actual catalog flight (523.403347ms)
+✔ sourced falling shooter droplets reuse simulated positions without paint side-effects (548.373916ms)
+✔ Bloblobber physical launch remains level against a short ground reticle and rebounds for its whole arc (502.308757ms)
+✔ Bloblobber actual 60Hz velocity integrator honors source 3F straight, brake and free-fall transitions (429.084498ms)
+✔ Bloblobber small-bubble floor-normal cap preserves forward travel and wall speed (375.160844ms)
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+mixed-pool {"sharedCount":700,"retainedFallingDrops":40,"oldSplatlingParts":0,"additionalShooter":0}
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/hissen-child-profile-20261027/site contentHash=4ec03d518cef7c5385a97c533fad0b24b6cfa883dbe883c169c11ba1bc60d630
+(node:20) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 32 Splatlings cannot evict the 40 existing late drops at saturation (531.951407ms)
+✔ zero residual capacity preserves all existing slots and suppresses both optional cosmetics (511.225156ms)
+✔ partial residual capacity submits only available Splatling and Shooter beads (411.460631ms)
+✔ one residual slot preserves every native prefix for either optional family (428.08673ms)
+✔ ordinary mixed firing keeps smaller Splatling and muzzle Shooter cosmetics in free slots (400.274866ms)
+✔ repeated full/partial/clear/reuse draws retain the fixed buffers and resources (490.417676ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6519.034173
+
+## Old emitted negative — expected failure
+$ INKWAVE_BUILT_SITE=<old d88 site> node --experimental-vm-modules --test --test-name-pattern="all three Hissen kits reuse" patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs
+INKWAVE built fixture /workspace/shared/inkwave-native/evidence/native-integration-20261027/site-main contentHash=d88c045597751993ae7fa4047046eadab15e09a6440e5ab6f8ac10913a7ebeb5
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ all three Hissen kits reuse the existing non-spherical Slosher shader profile without new resources or RNG (547.901329ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 923.407381
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:48:1
+✖ all three Hissen kits reuse the existing non-spherical Slosher shader profile without new resources or RNG (547.901329ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+  +   0.12,
+  -   0.3,
+      4,
+  +   0.9
+  -   0.32
+    ]
+
+      at TestContext.<anonymous> (file:///workspace/shared/inkwave-native/role-4/patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:79:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0.12, 4, 0.9 ],
+    expected: [ 0.3, 4, 0.32 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+## Build
+$ node scripts/build-inkwave.mjs inkwave-public <candidate site>
+native prebuilt: payload absent or unverified for scorch, hagglefish, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+lightmap cargo.png: 220594 -> 168115 bytes (same pixels)
+lightmap halyard.png: 63401 -> 54085 bytes (same pixels)
+lightmap kelpline.png: 153108 -> 121155 bytes (same pixels)
+lightmap range.png: 161986 -> 112128 bytes (same pixels)
+lightmap tidewater.png: 149335 -> 119063 bytes (same pixels)
+three.js: 187 of 444 exports kept · 2071 KB → 605 KB (gzip diagnostics disabled)
+reviewed audio helper: omitted (reviewed current orphan; no literal reference)
+startup runtime: 11489 -> 6062 bytes
+patch: splatoon3+quality+range · build 4ec03d518cef
+JS transforms (excludes replaced Three inputs): 4860 KB → 2920 KB  (gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)
+CSS: 478 KB → 402 KB
+repeated module strings: saved 30469 bytes total, 30216 in the offline precache
+modulepreload: 145 modules (384 deferred, all precached)
+lossless lightmaps: 173878 bytes saved with identical decoded pixels
+
+## Startup gate
+$ node scripts/check-inkwave-startup-budget.mjs <candidate site>
+{
+  "status": "passed",
+  "revision": "12a1443961625df5030fb665dae086ff723a4f7a420beb8e03efdaac2431ba3e",
+  "initialJSRequests": 146,
+  "modulePreloads": 145,
+  "coreModulePreloads": 131,
+  "practiceRangeModulePreloads": 14,
+  "practiceRangePreloadBytes": 78296,
+  "initialJSBytes": 1937922,
+  "criticalHTMLBytes": 24030,
+  "precacheCount": 553,
+  "precacheBytes": 7657378,
+  "workerBytes": 91095,
+  "declaredBytes": 16088623,
+  "measurementKind": "deterministic file and dependency gates; not native browser timings"
+}

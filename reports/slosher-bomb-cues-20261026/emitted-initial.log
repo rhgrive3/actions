@@ -1,0 +1,55 @@
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+(node:1554) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Curling has no post-release explosion forecast (owner) (756.700524ms)
+✔ Curling has no post-release explosion forecast (ghost) (659.644666ms)
+✔ Splat Bomb warning and beep follow rolling, lose unsupported ground and reacquire it without rearming (670.856918ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (owner) (780.090321ms)
+✔ Autobomb scan starts at actual floor contact and expires before chase (ghost) (803.378715ms)
+✔ Autobomb observed after its search window and removed bombs leave no delayed scan (713.25999ms)
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+(node:1555) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-double body-relative horizontal launch is independent of the low animated rim (1078.74958ms)
+✔ s3-slosher-double-01 body-relative horizontal launch is independent of the low animated rim (1020.692605ms)
+✔ s3-slosher-double-02 body-relative horizontal launch is independent of the low animated rim (994.101381ms)
+✔ posed native Dread Wringer keeps both streams on body-level launch at 30/60/120 Hz (14178.297002ms)
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+(node:1568) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-diffusion delayed globs select ground/air base speed at birth across 30/60/120 Hz (118.994515ms)
+✔ s3-slosher-launcher delayed globs select ground/air base speed at birth across 30/60/120 Hz (36.92905ms)
+✔ s3-slosher-bathtub delayed globs select ground/air base speed at birth across 30/60/120 Hz (20.991514ms)
+✔ s3-slosher-double delayed globs select ground/air base speed at birth across 30/60/120 Hz (62.387215ms)
+✔ stationary delayed globs preserve the admitted velocity exactly when grounded state stays the same (54.422261ms)
+✔ Bloblobber delayed bubbles retain the windup-release direction and replay without double-aim (14.434919ms)
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+INKWAVE built fixture /workspace/slosher-bomb-site contentHash=fb389d1f35fae188c95274bbdfee0230fd581271d8350ed6b25ac394a879dd3c
+(node:1575) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ retained Autobomb launch consumes its own source Y clamp, axis inheritance and AP57 throw-speed tier (793.95648ms)
+✔ Autobomb wall/ceiling bounces never arm a fuse or scan until an actual floor landing (911.685538ms)
+✔ retained Autobomb owner and ghost apply the same extracted airborne XZ resistance at 30/60/120 render Hz (2861.169828ms)
+✔ a chasing Autobomb keeps supported floor clearance, then falls off a ledge and lands without a second scan (1080.396447ms)
+✔ a live target inside the community ~0.3-line approach range arms the warning without borrowing the .65 death parameter (828.538298ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17891.706063

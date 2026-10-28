@@ -105,6 +105,15 @@ export function splatanaHorizontalSweep(p, kind) {
   return r?.sourceActor === 'WeaponSaberHeavy';
 }
 
+// The user's static comparison identifies the vertical charged ink-wave read,
+// not a proven kit: both Wiper/Lite and Stamper/Normal used the same duplicated
+// ribbon. Dental/Heavy's source-aware horizontal charged presentation stays put.
+export function splatanaWetWave(p, kind) {
+  if (kind !== 'slash-v') return false;
+  const r = p?.catalog?.r || RECORDS.get(p?.wid);
+  return r?.sourceActor === 'WeaponSaberLite' || r?.sourceActor === 'WeaponSaberNormal';
+}
+
 // Unit body: rings of (cos t, sin t, s); s in [0,1] is the head (tip at 1),
 // s in [-1,0) the body (tail tip at -1). The vertex shader shapes it.
 function bodyGeometry(THREE, around = 14, headRings = 7, bodyRings = 18) {
@@ -160,6 +169,32 @@ export function crescentGeometry(THREE, { halfSpan, bow, depth, thickness }, spa
   return g;
 }
 
+// Same 28x12 topology and span as the existing slab. Broad, unequal poured
+// lobes replace its uniformly tapered outline; the back edge rolls out of the
+// plane instead of reading as a second flat blade. No reference media is used
+// at runtime. This is visual calibration, not recovered Nintendo mesh data.
+function wetCrescentGeometry(THREE, { halfSpan, bow, depth, thickness }, span = 28, ring = 12) {
+  const g = crescentGeometry(THREE, { halfSpan, bow, depth, thickness }, span, ring);
+  const pos = g.getAttribute('position');
+  for (let i = 0; i <= span; i++) {
+    const a = -1 + 2 * i / span, w = Math.max(0, 1 - a * a);
+    const wetWidth = Math.max(0.035, w); // blunt torn ends, never sword-like zero-width points
+    const centre = -bow * (0.88 * a * a + 0.1 * a + 0.02);
+    const lobes = 1 + 0.17 * Math.sin(a * 8.6 + 0.7) + 0.09 * Math.sin(a * 17.3 - 1.2);
+    const d = depth * Math.pow(wetWidth, 0.42) * lobes;
+    const t = thickness * Math.pow(w, 0.44) * (1 + 0.22 * Math.sin(a * 7.7 + 1.1));
+    for (let j = 0; j < ring; j++) {
+      const th = j / ring * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
+      const back = Math.max(0, -c), roll = back * back * Math.sin(a * 5.4 + 0.8);
+      pos.setXYZ(i * ring + j, a * halfSpan,
+        0.5 * t * sn + thickness * 0.8 * Math.pow(w, 0.6) * roll,
+        centre + (c > 0 ? 0.48 : 0.72) * d * c);
+    }
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
 const NEAR_DITHER = `
         {
           float iwNear = smoothstep(0.55, 1.6, length(vViewPosition));
@@ -172,13 +207,13 @@ const RIM = `
           totalEmissiveRadiance += vColor.rgb * (0.16 + 0.55 * iwRim);
         }`;
 
-function glossy(THREE, key, vertex) {
+function glossy(THREE, key, vertex, rim = RIM) {
   const mat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.15 });
   mat.onBeforeCompile = sh => {
     if (vertex) vertex(sh);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>' + NEAR_DITHER)
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>' + RIM);
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>' + rim);
   };
   mat.customProgramCacheKey = () => key;
   return mat;
@@ -342,11 +377,40 @@ function createRenderer(THREE, scene) {
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
     basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
+    wetSlashV: null,
     dispose() {
       sheets.dispose();
+      if (this.wetSlashV) {
+        scene.remove(this.wetSlashV); this.wetSlashV.dispose(); this.wetSlashV.geometry.dispose(); this.wetSlashV.material.dispose();
+        this.wetSlashV = null;
+      }
       scene.remove(body, slashH, slashV, shell, core, sparks);
       for (const o of [body, slashH, slashV, shell, core, sparks]) { o.geometry.dispose(); o.material.dispose(); }
     } };
+}
+
+// Allocate only when a Normal/Lite charged wave is actually drawn. Actual
+// geometry (not color-pass vertex deformation) keeps shadows and scene normal /
+// depth overrides on the same wet contour. Legacy slash meshes stay untouched.
+function createWetSlash(THREE, scene) {
+  const mat = glossy(THREE, 's3-wet-slash-1', sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vS3Local;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvS3Local = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vS3Local;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        { float iwWetPatch = sin(vS3Local.x * 3.7 + vS3Local.z * 4.1)
+            + 0.45 * sin(vS3Local.x * 7.3 - vS3Local.z * 5.2 + 1.1);
+          diffuseColor.rgb *= 0.94 + 0.09 * smoothstep(-0.3, 1.0, iwWetPatch); }`);
+  }, `
+    { float iwRim = pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), 3.0);
+      totalEmissiveRadiance += vColor.rgb * (0.02 + 0.08 * iwRim); }
+  `);
+  const mesh = new THREE.InstancedMesh(wetCrescentGeometry(THREE, S3_SHAPE.slashV), mat, MAX_SLASH);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  mesh.setColorAt(0, new THREE.Color(1, 1, 1)); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+  mesh.frustumCulled = false; mesh.count = 0; mesh.visible = false; mesh.castShadow = true;
+  scene.add(mesh);
+  return mesh;
 }
 
 function upload(mesh, n) {
@@ -459,6 +523,7 @@ function fireInk(R, p, kind, f, G, system) {
   const burst = R.sheets.add(kind, at, f, p.owner.color, p.seed || 0, t0, follow);
   if (burst) {
     burst.horizontalSweep = splatanaHorizontalSweep(p, kind);
+    burst.wetWave = splatanaWetWave(p, kind);
     R.sheets.specks(G?.fx, burst);
   }
 }
@@ -467,7 +532,7 @@ export function drawS3Shapes(system, THREE, G) {
   const R = system._s3Shapes || (system._s3Shapes = createRenderer(THREE, system.scene));
   const { body, bodyData, slashH, slashV, shell, core, sparkPos, sparkSize, m, q, q2, s, v, f, x, y, basis, Z, UP } = R;
   const bd = bodyData.array, cam = G?.camera?.position;
-  let nb = 0, nh = 0, nv = 0, ns = 0, nc = 0, nk = 0;
+  let nb = 0, nh = 0, nv = 0, nw = 0, ns = 0, nc = 0, nk = 0;
   for (const p of system.list) {
     const kind = p.s3Shape;
     if (!kind || p.delay > 0 || !p.owner?.color) continue;
@@ -491,8 +556,10 @@ export function drawS3Shapes(system, THREE, G) {
       const o = nb * 4; bd[o] = b.L; bd[o + 1] = b.kind; bd[o + 2] = b.rag; bd[o + 3] = p.seed || 0;
       nb++;
     } else if (kind === 'slash-h' || kind === 'slash-v') {
-      const mesh = kind === 'slash-h' ? slashH : slashV, n = kind === 'slash-h' ? nh : nv;
-      if (n >= MAX_SLASH) continue;
+      const wetWave = splatanaWetWave(p, kind);
+      if ((kind === 'slash-h' ? nh : nv + nw) >= MAX_SLASH) continue;
+      const mesh = wetWave ? (R.wetSlashV ||= createWetSlash(THREE, system.scene)) : kind === 'slash-h' ? slashH : slashV;
+      const n = wetWave ? nw : kind === 'slash-h' ? nh : nv;
       // forward = travel; span horizontal (H) or vertical (V)
       x.crossVectors(UP, f); if (x.lengthSq() < 1e-6) x.set(1, 0, 0); x.normalize();
       y.crossVectors(f, x).normalize();
@@ -503,14 +570,22 @@ export function drawS3Shapes(system, THREE, G) {
       s.set(born * (1 - 0.15 * late), born * (1 - 0.6 * late), born * (1 - 0.35 * late));
       m.compose(p.pos, q, s);
       mesh.setMatrixAt(n, m); mesh.setColorAt(n, color);
-      if (kind === 'slash-h') nh++; else nv++;
-      // a thinner second layer peels off behind the leading slab
-      if ((kind === 'slash-h' ? nh : nv) < MAX_SLASH) {
+      if (wetWave) nw++; else if (kind === 'slash-h') nh++; else nv++;
+      // Preserve two render instances per physical projectile. The wet peel is
+      // an unequal rolled lobe, not another near-identical full-height blade.
+      if ((kind === 'slash-h' ? nh : nv + nw) < MAX_SLASH) {
         v.copy(p.pos).addScaledVector(f, -0.28 - 0.1 * born);
         q2.setFromAxisAngle(Z, ((p.seed || 0) - 0.5) * 0.35); q.multiply(q2);
-        m.compose(v, q, s.multiplyScalar(0.82));
-        mesh.setMatrixAt(kind === 'slash-h' ? nh : nv, m); mesh.setColorAt(kind === 'slash-h' ? nh : nv, color);
-        if (kind === 'slash-h') nh++; else nv++;
+        if (wetWave) {
+          // Stay inside the previous combined two-slab envelope. Offset along
+          // the existing span basis (vertical here), without moving the shot.
+          v.addScaledVector(y, -0.18 * born);
+          s.set(s.x * 0.58, s.y * 0.9, s.z * 0.72);
+        } else s.multiplyScalar(0.82);
+        m.compose(v, q, s);
+        const peel = wetWave ? nw : kind === 'slash-h' ? nh : nv;
+        mesh.setMatrixAt(peel, m); mesh.setColorAt(peel, color);
+        if (wetWave) nw++; else if (kind === 'slash-h') nh++; else nv++;
       }
     } else if (kind === 'bubble') {
       const r = drawRadius(p);
@@ -588,6 +663,7 @@ export function drawS3Shapes(system, THREE, G) {
   }
   bodyData.clearUpdateRanges(); bodyData.addUpdateRange(0, nb * 4); bodyData.needsUpdate = nb > 0;
   upload(body, nb); upload(slashH, nh); upload(slashV, nv); upload(shell, ns); upload(core, nc);
+  if (R.wetSlashV) upload(R.wetSlashV, nw);
   // SWEPs MuzzleSplash renders at the muzzle attachment every frame
   for (const b of R.sheets.bursts) if (b.owner?.character?.getMuzzle && b.owner.pos) {
     system._muzzle(b.owner, R.v2);
@@ -600,7 +676,7 @@ export function drawS3Shapes(system, THREE, G) {
     sparkPos.clearUpdateRanges(); sparkPos.addUpdateRange(0, nk * 3); sparkPos.needsUpdate = true;
     sparkSize.clearUpdateRanges(); sparkSize.addUpdateRange(0, nk); sparkSize.needsUpdate = true;
   }
-  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, drills: ink.drills };
+  return { body: nb, slashH: nh, slashV: nv + nw, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, drills: ink.drills };
 }
 
 // Classify every live projectile before the native pass (which skips

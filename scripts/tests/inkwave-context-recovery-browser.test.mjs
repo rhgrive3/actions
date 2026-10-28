@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { nativeContextRecoveryProof, validateContextRecoveryReceipt, validateContextStartupReceipt, recoveryInputPath } from '../check-inkwave-context-recovery-browser.mjs';
+import { nativeContextRecoveryProof, validateContextRecoveryReceipt, validateContextStartupReceipt, recoveryInputPath, contextMenuControlForPhase } from '../check-inkwave-context-recovery-browser.mjs';
 const proof = () => {
   const state = { time: 170, gameTime: 10, ticks: 600, frame: 602, paused: true, paintVersion: 7, counts: [20, 30], gridLength: 100, gridHash: 42, actors: [{ nid: 1, pos: [0, 0, 0], hp: 100, alive: true, respawnTimer: 0 }] };
   return { stages: ['paint-seeded', 'ordinary-pause-resume', 'context-lost', 'context-restored', 'terminal-restart-rejected'].map(stage => ({ stage })), realGPUEvents: true,
@@ -65,4 +65,18 @@ test('startup uses shipped trusted menu helper, not a direct match/audio bypass'
   assert.match(startup, /startProjectileThroughMenu\(page/); assert.match(startup, /rangeMenuControlReady/);
   assert.match(startup, /trusted: event\.isTrusted/); assert.match(startup, /recordedShooterFire:/);
   assert.doesNotMatch(startup, /\.startMatch\(|requireRecordedMainShot\(|\.resume\(|\.init\(|wipe\.cancel/);
+});
+
+test('shared menu phases retain strict context-recovery control admission and reject unknown labels', () => {
+  const expected = {
+    'native main menu readiness': { selector: '.iw-main [data-id="play"]', menu: 'main' },
+    'native mode menu': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
+    'native turf pointer readiness': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
+    'native setup menu': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
+  };
+  for (const [label, control] of Object.entries(expected)) assert.deepEqual(contextMenuControlForPhase(label), control);
+  for (const bad of ['unknown', 'toString', '__proto__', '']) assert.throws(() => contextMenuControlForPhase(bad), /Unknown native menu phase/);
+  const script=fs.readFileSync(new URL('../check-inkwave-context-recovery-browser.mjs',import.meta.url),'utf8');
+  assert.match(script,/const control = contextMenuControlForPhase\(label\)/);
+  assert.match(script,/page\.waitForFunction\(rangeMenuControlReady, control, \{ timeout: remainingMs\(\) \}\)/);
 });

@@ -1,0 +1,5797 @@
+{
+  "scope": "Deterministic CPU diagnostic using the same actual vertex metric and real Actor/Physics; starting pose is fixture setup, not native browser acceptance.",
+  "runs": [
+    {
+      "mode": "baseline",
+      "id": "s3-brush-mini",
+      "attributes": 886,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 1.4999999999999996,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999969251201,
+          "bend": 0,
+          "headVertexNormal": -0.022156109461952678,
+          "actualSurfaceVertical": -0.022156109461952678,
+          "virtualNormal": -0.017966623472992382,
+          "contactVertex": [
+            0.0016539441622679604,
+            0.9778438905380473,
+            -1.9335027346532543
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 1.5999999999999992,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999992417439,
+          "bend": 0,
+          "headVertexNormal": -0.039674916868495114,
+          "actualSurfaceVertical": -0.039674916868495114,
+          "virtualNormal": -0.036842979615253846,
+          "contactVertex": [
+            0.000740199771881625,
+            0.9603250831315049,
+            -1.949272621079197
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 1.6999999999999988,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998130163,
+          "bend": 0,
+          "headVertexNormal": -0.0615353042417377,
+          "actualSurfaceVertical": -0.0615353042417377,
+          "virtualNormal": -0.05993382915802914,
+          "contactVertex": [
+            0.0014198128075340495,
+            0.9384646957582623,
+            -1.9386570985228397
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 1.7999999999999985,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999538904,
+          "bend": 0,
+          "headVertexNormal": -0.06455453960739377,
+          "actualSurfaceVertical": -0.06455453960739377,
+          "virtualNormal": -0.06306902618466759,
+          "contactVertex": [
+            0.0013294518548953652,
+            0.9354454603926062,
+            -1.9414176675171313
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 1.8999999999999981,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999886295,
+          "bend": 0,
+          "headVertexNormal": -0.07028756730959052,
+          "actualSurfaceVertical": -0.07028756730959052,
+          "virtualNormal": -0.06903317520533514,
+          "contactVertex": [
+            0.0010894173031564917,
+            0.9297124326904095,
+            -1.9473688554591275
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 1.9999999999999978,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999997196,
+          "bend": 0,
+          "headVertexNormal": -0.06477091343913499,
+          "actualSurfaceVertical": -0.06477091343913499,
+          "virtualNormal": -0.06331187413144768,
+          "contactVertex": [
+            0.001497729602621574,
+            0.935229086560865,
+            -1.9428085308153693
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 2.0999999999999974,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999993086,
+          "bend": 0.11441373754575543,
+          "headVertexNormal": -0.058939437579264564,
+          "actualSurfaceVertical": -0.058939437579264564,
+          "virtualNormal": -0.020617543556597395,
+          "contactVertex": [
+            -0.0019229134098332629,
+            0.9410605624207354,
+            -1.5723374394426939
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 2.199999999999997,
+          "position": [
+            0,
+            1,
+            -1.5059999999999993
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999998296,
+          "bend": 0.1524646414980998,
+          "headVertexNormal": -0.1766405782523366,
+          "actualSurfaceVertical": -0.1766405782523366,
+          "virtualNormal": -0.14139657538911954,
+          "contactVertex": [
+            -0.00976127070316267,
+            0.8233594217476634,
+            -0.6039899177464152
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 2.2999999999999967,
+          "position": [
+            0,
+            1,
+            -0.31799999999999956
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999579,
+          "bend": 0.15875441361727588,
+          "headVertexNormal": -0.009735374035432232,
+          "actualSurfaceVertical": 0.1664319535883958,
+          "virtualNormal": 0.048004146833035666,
+          "contactVertex": [
+            -0.0052937600357131145,
+            0.9902646259645678,
+            0.7279205935288661
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 2.3999999999999964,
+          "position": [
+            0,
+            0.7825,
+            0.8700000000000006
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999897,
+          "bend": 0.15979410595574955,
+          "headVertexNormal": 0.45625640375768556,
+          "actualSurfaceVertical": 0.47029833626434914,
+          "virtualNormal": 0.5643916218361691,
+          "contactVertex": [
+            0.005695837156300912,
+            0.9653910102424919,
+            2.019629304087429
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 2.499999999999996,
+          "position": [
+            0,
+            0.4855000000000001,
+            2.0580000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999974,
+          "bend": 0.1599659659433934,
+          "headVertexNormal": 0.437936313792884,
+          "actualSurfaceVertical": 0.4514144197654254,
+          "virtualNormal": 0.5444158916106228,
+          "contactVertex": [
+            0.010417554860612688,
+            0.6500056975994538,
+            3.2056348886638864
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 2.5999999999999956,
+          "position": [
+            0,
+            0.18850000000000006,
+            3.246
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999993,
+          "bend": 0.15999437420828114,
+          "headVertexNormal": -0.055956601862096805,
+          "actualSurfaceVertical": -0.06862032390940187,
+          "virtualNormal": -0.00863318705210489,
+          "contactVertex": [
+            -0.0014659423511374208,
+            -0.06290529218589597,
+            4.020906188815525
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 2.6999999999999953,
+          "position": [
+            0,
+            0,
+            4.434000000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599990700628835,
+          "headVertexNormal": -0.26299734116957696,
+          "actualSurfaceVertical": -0.26299734116957696,
+          "virtualNormal": -0.23455868632120058,
+          "contactVertex": [
+            -0.01369657809154385,
+            -0.26299734116957696,
+            5.254812860014701
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 2.799999999999995,
+          "position": [
+            0,
+            0,
+            5.622000000000003
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999984628242853,
+          "headVertexNormal": -0.21263608468847645,
+          "actualSurfaceVertical": -0.21263608468847645,
+          "virtualNormal": -0.17885923302750295,
+          "contactVertex": [
+            -0.01322854280045169,
+            -0.21263608468847645,
+            6.517956145655836
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 2.8999999999999946,
+          "position": [
+            0,
+            0,
+            6.810000000000006
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999997459065632,
+          "headVertexNormal": 0.028345255285850524,
+          "actualSurfaceVertical": 0.028345255285850524,
+          "virtualNormal": 0.0905353746990667,
+          "contactVertex": [
+            -0.0011237731006700606,
+            0.028345255285850524,
+            7.911031358971549
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 2.9999999999999942,
+          "position": [
+            0,
+            0,
+            7.998000000000008
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999957998637,
+          "headVertexNormal": 0.2546256522858821,
+          "actualSurfaceVertical": 0.2546256522858821,
+          "virtualNormal": 0.3446791446577126,
+          "contactVertex": [
+            0.010193617466685161,
+            0.2546256522858821,
+            9.215382267982124
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 3.099999999999994,
+          "position": [
+            0,
+            0,
+            9.18600000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999930572212,
+          "headVertexNormal": -0.1773379104787387,
+          "actualSurfaceVertical": -0.1773379104787387,
+          "virtualNormal": -0.14050845697805148,
+          "contactVertex": [
+            -0.0027903318971508953,
+            -0.1773379104787387,
+            10.120799566640605
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 3.1999999999999935,
+          "position": [
+            0,
+            0,
+            10.374000000000013
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999998852366,
+          "headVertexNormal": -0.2596485173504848,
+          "actualSurfaceVertical": -0.2596485173504848,
+          "virtualNormal": -0.2312096953302234,
+          "contactVertex": [
+            -0.011437333244910003,
+            -0.2596485173504848,
+            11.1911331723847
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 3.299999999999993,
+          "position": [
+            0,
+            0,
+            11.562000000000015
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": -0.258581224424988,
+          "actualSurfaceVertical": -0.258581224424988,
+          "virtualNormal": -0.2295706756135275,
+          "contactVertex": [
+            -0.015542295760305169,
+            -0.258581224424988,
+            12.391831658029766
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 3.399999999999993,
+          "position": [
+            0,
+            0,
+            12.750000000000018
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": -0.016232352041076814,
+          "actualSurfaceVertical": -0.016232352041076814,
+          "virtualNormal": 0.04107685498479219,
+          "contactVertex": [
+            -0.0037407917514223968,
+            -0.016232352041076814,
+            13.813492021538933
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 3.4999999999999925,
+          "position": [
+            0,
+            0,
+            13.93800000000002
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": 0.2245963701463849,
+          "actualSurfaceVertical": 0.2245963701463849,
+          "virtualNormal": 0.3113210110673836,
+          "contactVertex": [
+            0.007874456167657883,
+            0.2245963701463849,
+            15.138606307673257
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 3.599999999999992,
+          "position": [
+            0,
+            0,
+            15.126000000000023
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": 0.050706805255512744,
+          "actualSurfaceVertical": 0.050706805255512744,
+          "virtualNormal": 0.11614896952459053,
+          "contactVertex": [
+            0.0057286168908727494,
+            0.050706805255512744,
+            16.22048093928143
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 3.6999999999999917,
+          "position": [
+            0,
+            0,
+            16.314000000000025
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": -0.25748608203396234,
+          "actualSurfaceVertical": -0.25748608203396234,
+          "virtualNormal": -0.2290472599930703,
+          "contactVertex": [
+            -0.010083201792833632,
+            -0.25748608203396234,
+            17.12908241359948
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 3.7999999999999914,
+          "position": [
+            0,
+            0,
+            17.502000000000027
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": -0.264105765602608,
+          "actualSurfaceVertical": -0.264105765602608,
+          "virtualNormal": -0.23566694356171403,
+          "contactVertex": [
+            -0.01459638984243106,
+            -0.264105765602608,
+            18.32449707338426
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": -0.07028756730959052,
+        "max": -0.022156109461952678
+      },
+      "slope": {
+        "min": -0.06862032390940187,
+        "max": 0.47029833626434914
+      },
+      "flatAfter": {
+        "min": -0.264105765602608,
+        "max": 0.2546256522858821
+      }
+    },
+    {
+      "mode": "baseline",
+      "id": "s3-brush-normal",
+      "attributes": 2120,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 5.33333333333332,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999921806677,
+          "bend": 0,
+          "headVertexNormal": 0.0847814446188182,
+          "actualSurfaceVertical": 0.0847814446188182,
+          "virtualNormal": 0.09294161164487891,
+          "contactVertex": [
+            0.026257052103515248,
+            1.0847814446188182,
+            -1.5005950864847477
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 5.433333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999980717763,
+          "bend": 0,
+          "headVertexNormal": 0.05921605779918471,
+          "actualSurfaceVertical": 0.05921605779918471,
+          "virtualNormal": 0.06805883894707798,
+          "contactVertex": [
+            0.025507795110046437,
+            1.0592160577991847,
+            -1.5132475292095715
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 5.533333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999995245058,
+          "bend": 0,
+          "headVertexNormal": 0.030452664050920397,
+          "actualSurfaceVertical": 0.030452664050920397,
+          "virtualNormal": 0.04006201532923104,
+          "contactVertex": [
+            0.024645970092113896,
+            1.0304526640509204,
+            -1.527853419494723
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 5.633333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998827446,
+          "bend": 0,
+          "headVertexNormal": 0.028613480382523093,
+          "actualSurfaceVertical": 0.028613480382523093,
+          "virtualNormal": 0.038271878573609364,
+          "contactVertex": [
+            0.02466291173721169,
+            1.028613480382523,
+            -1.5288041217933916
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 5.733333333333318,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999710852,
+          "bend": 0,
+          "headVertexNormal": 0.024387906929208558,
+          "actualSurfaceVertical": 0.024387906929208558,
+          "virtualNormal": 0.03416586798825838,
+          "contactVertex": [
+            0.024610986045499328,
+            1.0243879069292086,
+            -1.5315599953010353
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 5.833333333333318,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999928697,
+          "bend": 0,
+          "headVertexNormal": 0.035039437108493665,
+          "actualSurfaceVertical": 0.035039437108493665,
+          "virtualNormal": 0.04453827416443712,
+          "contactVertex": [
+            0.02506482245522685,
+            1.0350394371084937,
+            -1.5264178476596169
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 5.933333333333318,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999982416,
+          "bend": 0.11441373754558429,
+          "headVertexNormal": 0.05988388566727987,
+          "actualSurfaceVertical": 0.05988388566727987,
+          "virtualNormal": 0.11246343696176786,
+          "contactVertex": [
+            0.022650777391642722,
+            1.0598838856672799,
+            -1.1402119218555613
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 6.033333333333317,
+          "position": [
+            0,
+            1,
+            -1.787999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999995663,
+          "bend": 0.1524646414980157,
+          "headVertexNormal": -0.11971660823101415,
+          "actualSurfaceVertical": -0.11971660823101415,
+          "virtualNormal": -0.054654709541157365,
+          "contactVertex": [
+            0.013612850679738372,
+            0.8802833917689858,
+            -0.4685560430526781
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 6.133333333333317,
+          "position": [
+            0,
+            1,
+            -0.9959999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999998931,
+          "bend": 0.15875441361724826,
+          "headVertexNormal": 0.237067274897093,
+          "actualSurfaceVertical": 0.36435833936880346,
+          "virtualNormal": 0.3066378281389721,
+          "contactVertex": [
+            0.020141951684916823,
+            1.237067274897093,
+            0.5131907673630474
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 6.2333333333333165,
+          "position": [
+            0,
+            1,
+            -0.2039999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999736,
+          "bend": 0.15979410595574162,
+          "headVertexNormal": 0.7945295091272406,
+          "actualSurfaceVertical": 1.03001003623126,
+          "virtualNormal": 0.8796622120674331,
+          "contactVertex": [
+            -0.15957727666811083,
+            1.7945295091272406,
+            1.1092348865358048
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 6.333333333333316,
+          "position": [
+            0,
+            0.8529999999999995,
+            0.5880000000000017
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999934,
+          "bend": 0.15996596594339127,
+          "headVertexNormal": 1.0501270933030125,
+          "actualSurfaceVertical": 1.0824462315027932,
+          "virtualNormal": 1.2359290942953813,
+          "contactVertex": [
+            -0.23291317597961264,
+            1.6484968155816742,
+            1.735797663684476
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 6.433333333333316,
+          "position": [
+            0,
+            0.6549999999999996,
+            1.3800000000000021
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999984,
+          "bend": 0.15999437420828055,
+          "headVertexNormal": -0.045389530177503246,
+          "actualSurfaceVertical": -0.046786456804751464,
+          "virtualNormal": 0.02253452049897431,
+          "contactVertex": [
+            0.019669529383405278,
+            0.3197960773623141,
+            2.533669863331738
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 6.5333333333333155,
+          "position": [
+            0,
+            0.45699999999999924,
+            2.172000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999996,
+          "bend": 0.1599990700628833,
+          "headVertexNormal": -0.11197547157594667,
+          "actualSurfaceVertical": -0.11542167419649407,
+          "virtualNormal": -0.04516299572673449,
+          "contactVertex": [
+            0.013651546127150867,
+            0.06647134555701772,
+            3.272427920985953
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 6.633333333333315,
+          "position": [
+            0,
+            0.25899999999999906,
+            2.9640000000000035
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999984628242847,
+          "headVertexNormal": 0.021082417648752294,
+          "actualSurfaceVertical": -0.024667375990648888,
+          "virtualNormal": 0.08991877955807728,
+          "contactVertex": [
+            0.015054534014805492,
+            -0.023997530973049908,
+            4.182915158701391
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 6.733333333333315,
+          "position": [
+            0,
+            0.060999999999999,
+            3.7560000000000042
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999997459065632,
+          "headVertexNormal": 0.645909025375967,
+          "actualSurfaceVertical": 0.34359704884056036,
+          "virtualNormal": 0.7187909924153251,
+          "contactVertex": [
+            0.025075570098033358,
+            0.34440443509454216,
+            5.285533395786701
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 6.833333333333314,
+          "position": [
+            0,
+            0,
+            4.548000000000003
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999957998637,
+          "headVertexNormal": 0.7403337176829461,
+          "actualSurfaceVertical": 0.7403337176829461,
+          "virtualNormal": 0.8127834639055155,
+          "contactVertex": [
+            0.03191810183630944,
+            0.7403337176829461,
+            6.141988531033987
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 6.933333333333314,
+          "position": [
+            0,
+            0,
+            5.340000000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999930572212,
+          "headVertexNormal": -0.008668453909540408,
+          "actualSurfaceVertical": -0.008668453909540408,
+          "virtualNormal": 0.0603026409836509,
+          "contactVertex": [
+            0.025255751795750667,
+            -0.008668453909540408,
+            6.7655652973427545
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 7.033333333333314,
+          "position": [
+            0,
+            0,
+            6.131999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999998852366,
+          "headVertexNormal": -0.3882148285082303,
+          "actualSurfaceVertical": -0.3882148285082303,
+          "virtualNormal": -0.328491933746469,
+          "contactVertex": [
+            0.003438911775361056,
+            -0.3882148285082303,
+            7.228164582994796
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 7.133333333333313,
+          "position": [
+            0,
+            0,
+            6.923999999999997
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": -0.37363065099990556,
+          "actualSurfaceVertical": -0.37363065099990556,
+          "virtualNormal": -0.3131250749096892,
+          "contactVertex": [
+            0.00024158531648408796,
+            -0.37363065099990556,
+            8.047628532699823
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 7.233333333333313,
+          "position": [
+            0,
+            0,
+            7.715999999999995
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": 0.20370062236302056,
+          "actualSurfaceVertical": 0.20370062236302056,
+          "virtualNormal": 0.27374427642856225,
+          "contactVertex": [
+            0.02267376696339648,
+            0.20370062236302056,
+            9.239532766639421
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 7.333333333333313,
+          "position": [
+            0,
+            0,
+            8.507999999999994
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": 0.7626361589399997,
+          "actualSurfaceVertical": 0.7626361589399997,
+          "virtualNormal": 0.8396143799699176,
+          "contactVertex": [
+            -0.15594906161521127,
+            0.7626361589399997,
+            9.819788533982894
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 7.433333333333312,
+          "position": [
+            0,
+            0,
+            9.299999999999992
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": 0.4561487188624683,
+          "actualSurfaceVertical": 0.4561487188624683,
+          "virtualNormal": 0.5286105225211367,
+          "contactVertex": [
+            0.03355877129788007,
+            0.4561487188624683,
+            10.875159518688106
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 7.533333333333312,
+          "position": [
+            0,
+            0,
+            10.09199999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": -0.386052383996712,
+          "actualSurfaceVertical": -0.386052383996712,
+          "virtualNormal": -0.3263294892104648,
+          "contactVertex": [
+            0.004793043570697389,
+            -0.386052383996712,
+            11.186135850220138
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 7.6333333333333115,
+          "position": [
+            0,
+            0,
+            10.883999999999988
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": -0.392672067565352,
+          "actualSurfaceVertical": -0.392672067565352,
+          "virtualNormal": -0.33294917277910263,
+          "contactVertex": [
+            0.00027985552109830586,
+            -0.392672067565352,
+            11.985549727469504
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.024387906929208558,
+        "max": 0.0847814446188182
+      },
+      "slope": {
+        "min": -0.11542167419649407,
+        "max": 1.0824462315027932
+      },
+      "flatAfter": {
+        "min": -0.392672067565352,
+        "max": 0.7626361589399997
+      }
+    },
+    {
+      "mode": "baseline",
+      "id": "s3-brush-heavy",
+      "attributes": 1434,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 9.166666666666702,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999973297363185,
+          "bend": 0,
+          "headVertexNormal": -0.19431781422121297,
+          "actualSurfaceVertical": -0.19431781422121297,
+          "virtualNormal": -0.18091241881613007,
+          "contactVertex": [
+            -0.04286096800362094,
+            0.805682185778787,
+            -1.8068956538928198
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 9.266666666666707,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999993415210833,
+          "bend": 0,
+          "headVertexNormal": -0.21474397873322304,
+          "actualSurfaceVertical": -0.21474397873322304,
+          "virtualNormal": -0.20087323954211755,
+          "contactVertex": [
+            -0.04403264176682374,
+            0.785256021266777,
+            -1.8267184816443922
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 9.366666666666712,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999998376210983,
+          "bend": 0,
+          "headVertexNormal": -0.23848116513041928,
+          "actualSurfaceVertical": -0.23848116513041928,
+          "virtualNormal": -0.22407026025932597,
+          "contactVertex": [
+            -0.04542921401501025,
+            0.7615188348695807,
+            -1.8503625419251206
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 9.466666666666717,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999599578558,
+          "bend": 0,
+          "headVertexNormal": -0.2421992929241975,
+          "actualSurfaceVertical": -0.2421992929241975,
+          "virtualNormal": -0.2277033048901319,
+          "contactVertex": [
+            -0.04558653770623802,
+            0.7578007070758025,
+            -1.854186986344388
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 9.566666666666721,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999901257288,
+          "bend": 0,
+          "headVertexNormal": -0.2475657828014597,
+          "actualSurfaceVertical": -0.2475657828014597,
+          "virtualNormal": -0.23294112362136432,
+          "contactVertex": [
+            -0.045848614816001956,
+            0.7524342171985403,
+            -1.8604308581277822
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 9.666666666666726,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999975650347,
+          "bend": 0,
+          "headVertexNormal": -0.24125312192227588,
+          "actualSurfaceVertical": -0.24125312192227588,
+          "virtualNormal": -0.22676807861983017,
+          "contactVertex": [
+            -0.04534964748039386,
+            0.7587468780777241,
+            -1.8544459510184939
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 9.766666666666731,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999993995449,
+          "bend": 0.11441373744954561,
+          "headVertexNormal": -0.2122436774160722,
+          "actualSurfaceVertical": -0.2122436774160722,
+          "virtualNormal": -0.17583403897066552,
+          "contactVertex": [
+            -0.0469863650919109,
+            0.7877563225839278,
+            -1.4548925337293046
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 9.866666666666736,
+          "position": [
+            0,
+            1,
+            -1.5599999999999994
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998519296,
+          "bend": 0.1524646414508439,
+          "headVertexNormal": -0.31262704496209304,
+          "actualSurfaceVertical": -0.31262704496209304,
+          "virtualNormal": -0.27164688663638104,
+          "contactVertex": [
+            -0.056012911669836546,
+            0.687372955037907,
+            -0.5589178331845781
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 9.966666666666741,
+          "position": [
+            0,
+            1,
+            -0.4799999999999997
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999634863,
+          "bend": 0.15875441360173312,
+          "headVertexNormal": -0.04492938027539628,
+          "actualSurfaceVertical": 0.15186577799993417,
+          "virtualNormal": 0.002481358938539291,
+          "contactVertex": [
+            -0.044232227273225816,
+            0.9550706197246037,
+            0.787180633101322
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 10.066666666666746,
+          "position": [
+            0,
+            0.8499999999999999,
+            0.6000000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999909959,
+          "bend": 0.1597941059512738,
+          "headVertexNormal": 0.7487069662797936,
+          "actualSurfaceVertical": 0.7717494761518372,
+          "virtualNormal": 0.8002678719050151,
+          "contactVertex": [
+            -0.0386250012541209,
+            1.2531609258688379,
+            2.0743542011319973
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 10.166666666666751,
+          "position": [
+            0,
+            0.5800000000000001,
+            1.68
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999977796,
+          "bend": 0.15996596594218343,
+          "headVertexNormal": 0.7376426537890379,
+          "actualSurfaceVertical": 0.7603446438832807,
+          "virtualNormal": 0.7892624762843603,
+          "contactVertex": [
+            -0.03363179651935344,
+            0.9715421413137366,
+            3.1552100102781764
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 10.266666666666756,
+          "position": [
+            0,
+            0.3099999999999998,
+            2.7600000000000007
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999994524,
+          "bend": 0.15999437420796517,
+          "headVertexNormal": -0.04809061808292864,
+          "actualSurfaceVertical": -0.049570674489288424,
+          "virtualNormal": -0.0010412399083070123,
+          "contactVertex": [
+            -0.03778334173822098,
+            0.001474604938196511,
+            3.7958188822900603
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 10.366666666666761,
+          "position": [
+            0,
+            0.039999999999999536,
+            3.8400000000000016
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999999865,
+          "bend": 0.15999907006280267,
+          "headVertexNormal": -0.05106487498890738,
+          "actualSurfaceVertical": -0.2733897601157097,
+          "virtualNormal": -0.004014513661200092,
+          "contactVertex": [
+            -0.04101962920793189,
+            -0.2733897601157097,
+            4.883013167124612
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 10.466666666666766,
+          "position": [
+            0,
+            0,
+            4.92
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999667,
+          "bend": 0.1599998462824081,
+          "headVertexNormal": -0.22931057542882943,
+          "actualSurfaceVertical": -0.22931057542882943,
+          "virtualNormal": -0.18485798556167787,
+          "contactVertex": [
+            -0.05080774809415694,
+            -0.22931057542882943,
+            6.058055877030778
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 10.566666666666771,
+          "position": [
+            0,
+            0,
+            5.999999999999998
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999918,
+          "bend": 0.1599999745906512,
+          "headVertexNormal": 0.2579946717624251,
+          "actualSurfaceVertical": 0.2579946717624251,
+          "virtualNormal": 0.307309777888902,
+          "contactVertex": [
+            -0.032188002561052066,
+            0.2579946717624251,
+            7.442808795349661
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 10.666666666666776,
+          "position": [
+            0,
+            0,
+            7.0799999999999965
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999999998,
+          "bend": 0.15999999579986246,
+          "headVertexNormal": 0.6257733312913025,
+          "actualSurfaceVertical": 0.6257733312913025,
+          "virtualNormal": 0.6773803075768638,
+          "contactVertex": [
+            -0.03186567697250116,
+            0.6257733312913025,
+            8.58383231319074
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 10.766666666666781,
+          "position": [
+            0,
+            0,
+            8.159999999999995
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999994,
+          "bend": 0.15999999930572184,
+          "headVertexNormal": -0.08924525794949983,
+          "actualSurfaceVertical": -0.08924525794949983,
+          "virtualNormal": -0.04214584755096029,
+          "contactVertex": [
+            -0.03543528266487089,
+            -0.08924525794949983,
+            9.416362523109598
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 10.866666666666786,
+          "position": [
+            0,
+            0,
+            9.239999999999993
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999988523658,
+          "headVertexNormal": -0.3103520826114408,
+          "actualSurfaceVertical": -0.3103520826114408,
+          "virtualNormal": -0.26828981991658196,
+          "contactVertex": [
+            -0.05032829218109229,
+            -0.3103520826114408,
+            10.279417080873781
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 10.966666666666791,
+          "position": [
+            0,
+            0,
+            10.319999999999991
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": -0.3062828701732195,
+          "actualSurfaceVertical": -0.3062828701732195,
+          "virtualNormal": -0.26396169394993985,
+          "contactVertex": [
+            -0.05431452576635208,
+            -0.3062828701732195,
+            11.373897597937102
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 11.066666666666796,
+          "position": [
+            0,
+            0,
+            11.39999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": 0.14639005969659316,
+          "actualSurfaceVertical": 0.14639005969659316,
+          "virtualNormal": 0.19554297588953368,
+          "contactVertex": [
+            -0.03546184258312956,
+            0.14639005969659316,
+            12.79629141575474
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 11.166666666666801,
+          "position": [
+            0,
+            0,
+            12.479999999999988
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": 0.6033211481102178,
+          "actualSurfaceVertical": 0.6033211481102178,
+          "virtualNormal": 0.6548824858346156,
+          "contactVertex": [
+            -0.03337217357852332,
+            0.6033211481102178,
+            13.98044097600389
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 11.266666666666806,
+          "position": [
+            0,
+            0,
+            13.559999999999986
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": 0.28448233327162176,
+          "actualSurfaceVertical": 0.28448233327162176,
+          "virtualNormal": 0.33376298819931116,
+          "contactVertex": [
+            -0.024071228869134976,
+            0.28448233327162176,
+            15.01703934073058
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 11.366666666666811,
+          "position": [
+            0,
+            0,
+            14.639999999999985
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": -0.3081896442307249,
+          "actualSurfaceVertical": -0.3081896442307249,
+          "virtualNormal": -0.2661273815195142,
+          "contactVertex": [
+            -0.04897416061696227,
+            -0.3081896442307249,
+            15.677374216849127
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 11.466666666666816,
+          "position": [
+            0,
+            0,
+            15.719999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": -0.3148093278049134,
+          "actualSurfaceVertical": -0.3148093278049134,
+          "virtualNormal": -0.2727470650937015,
+          "contactVertex": [
+            -0.053487348661970135,
+            -0.3148093278049134,
+            16.764788642058704
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": -0.2475657828014597,
+        "max": -0.19431781422121297
+      },
+      "slope": {
+        "min": -0.2733897601157097,
+        "max": 0.7717494761518372
+      },
+      "flatAfter": {
+        "min": -0.3148093278049134,
+        "max": 0.6257733312913025
+      }
+    },
+    {
+      "mode": "reviewed",
+      "id": "s3-brush-mini",
+      "attributes": 886,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 1.4999999999999996,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999969251201,
+          "bend": 0,
+          "headVertexNormal": 0.008464836835947231,
+          "actualSurfaceVertical": 0.008464836835947231,
+          "virtualNormal": 0.014946892815074442,
+          "contactVertex": [
+            0.0031972191246662993,
+            1.0084648368359472,
+            -1.9080327375108375
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 1.5999999999999992,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999992417439,
+          "bend": 0,
+          "headVertexNormal": 0.00862970827488474,
+          "actualSurfaceVertical": 0.00862970827488474,
+          "virtualNormal": 0.015115688224444312,
+          "contactVertex": [
+            0.0032283599662284376,
+            1.0086297082748847,
+            -1.9081739913149298
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 1.6999999999999988,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998130163,
+          "bend": 0,
+          "headVertexNormal": 0.008559306170630165,
+          "actualSurfaceVertical": 0.008559306170630165,
+          "virtualNormal": 0.015045577984440284,
+          "contactVertex": [
+            0.0032835997427735943,
+            1.0085593061706302,
+            -1.9080451213861163
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 1.7999999999999985,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999538904,
+          "bend": 0,
+          "headVertexNormal": 0.008465817492645078,
+          "actualSurfaceVertical": 0.008465817492645078,
+          "virtualNormal": 0.014945866432614974,
+          "contactVertex": [
+            0.0033566815189088987,
+            1.008465817492645,
+            -1.908094325335988
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 1.8999999999999981,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999886295,
+          "bend": 0,
+          "headVertexNormal": 0.008596491761245773,
+          "actualSurfaceVertical": 0.008596491761245773,
+          "virtualNormal": 0.01506898091621256,
+          "contactVertex": [
+            0.003447436014223256,
+            1.0085964917612458,
+            -1.9085563190981918
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 1.9999999999999978,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999997196,
+          "bend": 0,
+          "headVertexNormal": 0.008756513800523003,
+          "actualSurfaceVertical": 0.008756513800523003,
+          "virtualNormal": 0.015223417729969935,
+          "contactVertex": [
+            0.0035546211333455924,
+            1.008756513800523,
+            -1.9089921830539243
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 2.0999999999999974,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999993086,
+          "bend": 0.11441373754575543,
+          "headVertexNormal": -0.022255322136031874,
+          "actualSurfaceVertical": -0.022255322136031874,
+          "virtualNormal": 0.019501315015071796,
+          "contactVertex": [
+            8.199870921061711e-05,
+            0.9777446778639681,
+            -1.5392174641652883
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 2.199999999999997,
+          "position": [
+            0,
+            1,
+            -1.5059999999999993
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999998296,
+          "bend": 0.1524646414980998,
+          "headVertexNormal": -0.03929743920677631,
+          "actualSurfaceVertical": -0.03929743920677631,
+          "virtualNormal": 0.013656519380225385,
+          "contactVertex": [
+            -0.0031465593469979652,
+            0.9607025607932237,
+            -0.4942895465206883
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 2.2999999999999967,
+          "position": [
+            0,
+            1,
+            -0.31799999999999956
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999579,
+          "bend": 0.15875441361727588,
+          "headVertexNormal": -0.03652338297750557,
+          "actualSurfaceVertical": 0.13483524454492324,
+          "virtualNormal": 0.018198333376707287,
+          "contactVertex": [
+            -0.006712218716687909,
+            0.9634766170224944,
+            0.7045479813002675
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 2.3999999999999964,
+          "position": [
+            0,
+            0.7825,
+            0.8700000000000006
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999897,
+          "bend": 0.15979410595574955,
+          "headVertexNormal": 0.03111013475842933,
+          "actualSurfaceVertical": 0.032067592909050924,
+          "virtualNormal": 0.08897535599440523,
+          "contactVertex": [
+            -0.0047898226611016,
+            0.5939690890959534,
+            1.7523940152523905
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 2.499999999999996,
+          "position": [
+            0,
+            0.4855000000000001,
+            2.0580000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999974,
+          "bend": 0.1599659659433934,
+          "headVertexNormal": -0.021389537783895463,
+          "actualSurfaceVertical": -0.02204783089153506,
+          "virtualNormal": 0.03075064172668482,
+          "contactVertex": [
+            -0.0024532121984698757,
+            0.2552876789640648,
+            2.8906579605776006
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 2.5999999999999956,
+          "position": [
+            0,
+            0.18850000000000006,
+            3.246
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999993,
+          "bend": 0.15999437420828114,
+          "headVertexNormal": -0.029931863600696218,
+          "actualSurfaceVertical": -0.048495402751596584,
+          "virtualNormal": 0.020733199310796008,
+          "contactVertex": [
+            0.00011434870060895996,
+            -0.04415642903610245,
+            4.053213480947159
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 2.6999999999999953,
+          "position": [
+            0,
+            0,
+            4.434000000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599990700628835,
+          "headVertexNormal": -0.15749272410120563,
+          "actualSurfaceVertical": -0.15749272410120563,
+          "virtualNormal": -0.11758397180791325,
+          "contactVertex": [
+            -0.007178584526527218,
+            -0.15749272410120563,
+            5.364073967566907
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 2.799999999999995,
+          "position": [
+            0,
+            0,
+            5.622000000000003
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999984628242853,
+          "headVertexNormal": -0.07103917533403659,
+          "actualSurfaceVertical": -0.07103917533403659,
+          "virtualNormal": -0.019561074964115743,
+          "contactVertex": [
+            -0.005548150982662765,
+            -0.07103917533403659,
+            6.645795758021057
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 2.8999999999999946,
+          "position": [
+            0,
+            0,
+            6.810000000000006
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999997459065632,
+          "headVertexNormal": -0.04596587227465404,
+          "actualSurfaceVertical": -0.04596587227465404,
+          "virtualNormal": 0.008013897167885031,
+          "contactVertex": [
+            -0.004934068119870672,
+            -0.04596587227465404,
+            7.848328666447896
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 2.9999999999999942,
+          "position": [
+            0,
+            0,
+            7.998000000000008
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999957998637,
+          "headVertexNormal": -0.0451043389030949,
+          "actualSurfaceVertical": -0.0451043389030949,
+          "virtualNormal": 0.00971874101911896,
+          "contactVertex": [
+            -3.2700698696104535e-05,
+            -0.0451043389030949,
+            9.049893222746517
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 3.099999999999994,
+          "position": [
+            0,
+            0,
+            9.18600000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999930572212,
+          "headVertexNormal": -0.03765881819096206,
+          "actualSurfaceVertical": -0.03765881819096206,
+          "virtualNormal": 0.017438037799392903,
+          "contactVertex": [
+            0.00405268493544899,
+            -0.03765881819096206,
+            10.234312796124213
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 3.1999999999999935,
+          "position": [
+            0,
+            0,
+            10.374000000000013
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999998852366,
+          "headVertexNormal": -0.040914712283032506,
+          "actualSurfaceVertical": -0.040914712283032506,
+          "virtualNormal": 0.013893934203751734,
+          "contactVertex": [
+            0.002333919160605602,
+            -0.040914712283032506,
+            11.420701573741338
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 3.299999999999993,
+          "position": [
+            0,
+            0,
+            11.562000000000015
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": -0.04183322248009419,
+          "actualSurfaceVertical": -0.04183322248009419,
+          "virtualNormal": 0.01331451392171945,
+          "contactVertex": [
+            -0.0020961844370499666,
+            -0.04183322248009419,
+            12.615893316936866
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 3.399999999999993,
+          "position": [
+            0,
+            0,
+            12.750000000000018
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": -0.036497168026092375,
+          "actualSurfaceVertical": -0.036497168026092375,
+          "virtualNormal": 0.01849782202092276,
+          "contactVertex": [
+            -0.004825443204180234,
+            -0.036497168026092375,
+            13.795613050969825
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 3.4999999999999925,
+          "position": [
+            0,
+            0,
+            13.93800000000002
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": -0.04283251446044256,
+          "actualSurfaceVertical": -0.04283251446044256,
+          "virtualNormal": 0.0120448358047891,
+          "contactVertex": [
+            -0.0014138575634682904,
+            -0.04283251446044256,
+            14.988043374013355
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 3.599999999999992,
+          "position": [
+            0,
+            0,
+            15.126000000000023
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": -0.03939840820389129,
+          "actualSurfaceVertical": -0.03939840820389129,
+          "virtualNormal": 0.015792123037513095,
+          "contactVertex": [
+            0.0030994622494167415,
+            -0.03939840820389129,
+            16.177692018225823
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 3.6999999999999917,
+          "position": [
+            0,
+            0,
+            16.314000000000025
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": -0.03823447203069574,
+          "actualSurfaceVertical": -0.03823447203069574,
+          "virtualNormal": 0.016634607242781874,
+          "contactVertex": [
+            0.0037165530799826603,
+            -0.03823447203069574,
+            17.359121131963605
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 3.7999999999999914,
+          "position": [
+            0,
+            0,
+            17.502000000000027
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": -0.04337384554774448,
+          "actualSurfaceVertical": -0.04337384554774448,
+          "virtualNormal": 0.011667668928911024,
+          "contactVertex": [
+            -0.0007153521381150496,
+            -0.04337384554774448,
+            18.555876911279416
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.008464836835947231,
+        "max": 0.008756513800523003
+      },
+      "slope": {
+        "min": -0.048495402751596584,
+        "max": 0.032067592909050924
+      },
+      "flatAfter": {
+        "min": -0.04596587227465404,
+        "max": -0.036497168026092375
+      }
+    },
+    {
+      "mode": "reviewed",
+      "id": "s3-brush-normal",
+      "attributes": 2120,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 5.33333333333332,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999921806677,
+          "bend": 0,
+          "headVertexNormal": 0.004651208380452854,
+          "actualSurfaceVertical": 0.004651208380452854,
+          "virtualNormal": 0.014952592089979566,
+          "contactVertex": [
+            0.023694463989914497,
+            1.0046512083804529,
+            -1.5417698947198435
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 5.433333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999980717763,
+          "bend": 0,
+          "headVertexNormal": 0.004818072025553732,
+          "actualSurfaceVertical": 0.004818072025553732,
+          "virtualNormal": 0.015117966072345057,
+          "contactVertex": [
+            0.02372492529860675,
+            1.0048180720255537,
+            -1.5419230420669776
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 5.533333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999995245058,
+          "bend": 0,
+          "headVertexNormal": 0.004747917863261897,
+          "actualSurfaceVertical": 0.004747917863261897,
+          "virtualNormal": 0.01504769842042375,
+          "contactVertex": [
+            0.02378011797763311,
+            1.004747917863262,
+            -1.5417950011630541
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 5.633333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998827446,
+          "bend": 0,
+          "headVertexNormal": 0.004640825796266457,
+          "actualSurfaceVertical": 0.004640825796266457,
+          "virtualNormal": 0.014943249971331785,
+          "contactVertex": [
+            0.023853917136216367,
+            1.0046408257962665,
+            -1.5418311542898526
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 5.733333333333318,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999710852,
+          "bend": 0,
+          "headVertexNormal": 0.0047558737425275055,
+          "actualSurfaceVertical": 0.0047558737425275055,
+          "virtualNormal": 0.015061485042985101,
+          "contactVertex": [
+            0.023945574314985736,
+            1.0047558737425275,
+            -1.542276790367418
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 5.833333333333318,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999928697,
+          "bend": 0,
+          "headVertexNormal": 0.004908742081885187,
+          "actualSurfaceVertical": 0.004908742081885187,
+          "virtualNormal": 0.015216589649558188,
+          "contactVertex": [
+            0.024053578104151006,
+            1.0049087420818852,
+            -1.5426981228437633
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 5.933333333333318,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999982416,
+          "bend": 0.11441373754558429,
+          "headVertexNormal": -0.033361101147844074,
+          "actualSurfaceVertical": -0.033361101147844074,
+          "virtualNormal": 0.0193506650569355,
+          "contactVertex": [
+            0.019413452997217674,
+            0.9666388988521559,
+            -1.1923285661402958
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 6.033333333333317,
+          "position": [
+            0,
+            1,
+            -1.787999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999995663,
+          "bend": 0.1524646414980157,
+          "headVertexNormal": -0.05262927954412411,
+          "actualSurfaceVertical": -0.05262927954412411,
+          "virtualNormal": 0.013288901208817538,
+          "contactVertex": [
+            0.016406920737186692,
+            0.9473707204558759,
+            -0.4233039038090955
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 6.133333333333317,
+          "position": [
+            0,
+            1,
+            -0.9959999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999998931,
+          "bend": 0.15875441361724826,
+          "headVertexNormal": -0.05036800418273901,
+          "actualSurfaceVertical": 0.04812699841208512,
+          "virtualNormal": 0.017691446230135188,
+          "contactVertex": [
+            0.012929947535624167,
+            0.949631995817261,
+            0.39715286168855213
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 6.2333333333333165,
+          "position": [
+            0,
+            1,
+            -0.2039999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999736,
+          "bend": 0.15979410595574162,
+          "headVertexNormal": -0.05494972834131051,
+          "actualSurfaceVertical": 0.24494472403457523,
+          "virtualNormal": 0.013428716139264774,
+          "contactVertex": [
+            0.014718591928477014,
+            0.9450502716586895,
+            1.2024428568924688
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 6.333333333333316,
+          "position": [
+            0,
+            0.8529999999999995,
+            0.5880000000000017
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999934,
+          "bend": 0.15996596594339127,
+          "headVertexNormal": 0.027682412512102628,
+          "actualSurfaceVertical": 0.028534377689829804,
+          "virtualNormal": 0.09660175807575852,
+          "contactVertex": [
+            0.019372817189346636,
+            0.5745315235219595,
+            1.8160114166714814
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 6.433333333333316,
+          "position": [
+            0,
+            0.6549999999999996,
+            1.3800000000000021
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999984,
+          "bend": 0.15999437420828055,
+          "headVertexNormal": -0.034160289974905444,
+          "actualSurfaceVertical": -0.03521162094206565,
+          "virtualNormal": 0.033932156347551146,
+          "contactVertex": [
+            0.020127132310308174,
+            0.32884340396679024,
+            2.5437799003645765
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 6.5333333333333155,
+          "position": [
+            0,
+            0.45699999999999924,
+            2.172000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999996,
+          "bend": 0.1599990700628833,
+          "headVertexNormal": -0.05137211571309502,
+          "actualSurfaceVertical": -0.05295316482413592,
+          "virtualNormal": 0.016506406956291297,
+          "contactVertex": [
+            0.01630888869245862,
+            0.11451671665106788,
+            3.3301204740991848
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 6.633333333333315,
+          "position": [
+            0,
+            0.25899999999999906,
+            2.9640000000000035
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999984628242847,
+          "headVertexNormal": -0.05186027698955409,
+          "actualSurfaceVertical": -0.08402509425658217,
+          "virtualNormal": 0.016001607992197908,
+          "contactVertex": [
+            0.012224764424648274,
+            -0.08336188572941056,
+            4.1196221431159215
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 6.733333333333315,
+          "position": [
+            0,
+            0.060999999999999,
+            3.7560000000000042
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999997459065632,
+          "headVertexNormal": -0.05191536503832023,
+          "actualSurfaceVertical": -0.28013211405388605,
+          "virtualNormal": 0.015898015256151643,
+          "contactVertex": [
+            0.011518977912383412,
+            -0.2794691810368136,
+            4.903824190501762
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 6.833333333333314,
+          "position": [
+            0,
+            0,
+            4.548000000000003
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999957998637,
+          "headVertexNormal": -0.15177234253015237,
+          "actualSurfaceVertical": -0.15177234253015237,
+          "virtualNormal": -0.08482559423523406,
+          "contactVertex": [
+            0.015578506910489592,
+            -0.15177234253015237,
+            5.886743791882944
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 6.933333333333314,
+          "position": [
+            0,
+            0,
+            5.340000000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999930572212,
+          "headVertexNormal": -0.07196904080571087,
+          "actualSurfaceVertical": -0.07196904080571087,
+          "virtualNormal": -0.0037778445641473146,
+          "contactVertex": [
+            0.02281417524110934,
+            -0.07196904080571087,
+            6.726127597640047
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 7.033333333333314,
+          "position": [
+            0,
+            0,
+            6.131999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999998852366,
+          "headVertexNormal": -0.05919062174751838,
+          "actualSurfaceVertical": -0.05919062174751838,
+          "virtualNormal": 0.009187743400691284,
+          "contactVertex": [
+            0.02177897602051404,
+            -0.05919062174751838,
+            7.527601986058489
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 7.133333333333313,
+          "position": [
+            0,
+            0,
+            6.923999999999997
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": -0.056006215970344,
+          "actualSurfaceVertical": -0.056006215970344,
+          "virtualNormal": 0.012464572705276122,
+          "contactVertex": [
+            0.017466985395489062,
+            -0.056006215970344,
+            8.328679108042353
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 7.233333333333313,
+          "position": [
+            0,
+            0,
+            7.715999999999995
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": -0.05025694379862777,
+          "actualSurfaceVertical": -0.05025694379862777,
+          "virtualNormal": 0.018202145748693166,
+          "contactVertex": [
+            0.014774211872962274,
+            -0.05025694379862777,
+            9.113008187863892
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 7.333333333333313,
+          "position": [
+            0,
+            0,
+            8.507999999999994
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": -0.05646845413046736,
+          "actualSurfaceVertical": -0.05646845413046736,
+          "virtualNormal": 0.01197908132925063,
+          "contactVertex": [
+            0.01820630422243843,
+            -0.05646845413046736,
+            9.909783028164467
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 7.433333333333312,
+          "position": [
+            0,
+            0,
+            9.299999999999992
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": -0.05259227907814512,
+          "actualSurfaceVertical": -0.05259227907814512,
+          "virtualNormal": 0.015895927423008382,
+          "contactVertex": [
+            0.02269546285094983,
+            -0.05259227907814512,
+            10.702994451441441
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 7.533333333333312,
+          "position": [
+            0,
+            0,
+            10.09199999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": -0.05195093327023853,
+          "actualSurfaceVertical": -0.05195093327023853,
+          "virtualNormal": 0.016494622150327376,
+          "contactVertex": [
+            0.02333463397318858,
+            -0.05195093327023853,
+            11.48883163779862
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 7.6333333333333115,
+          "position": [
+            0,
+            0,
+            10.883999999999988
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": -0.05671107368615991,
+          "actualSurfaceVertical": -0.05671107368615991,
+          "virtualNormal": 0.011758700815907464,
+          "contactVertex": [
+            0.018894776968450717,
+            -0.05671107368615991,
+            12.289430908263379
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.004640825796266457,
+        "max": 0.004908742081885187
+      },
+      "slope": {
+        "min": -0.28013211405388605,
+        "max": 0.028534377689829804
+      },
+      "flatAfter": {
+        "min": -0.05919062174751838,
+        "max": -0.05025694379862777
+      }
+    },
+    {
+      "mode": "reviewed",
+      "id": "s3-brush-heavy",
+      "attributes": 1434,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 9.166666666666702,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999973297363185,
+          "bend": 0,
+          "headVertexNormal": 0.005909969392818626,
+          "actualSurfaceVertical": 0.005909969392818626,
+          "virtualNormal": 0.014914501015033554,
+          "contactVertex": [
+            -0.033466248110297955,
+            1.0059099693928186,
+            -1.6541642021709528
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 9.266666666666707,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999993415210833,
+          "bend": 0,
+          "headVertexNormal": 0.006104945833122599,
+          "actualSurfaceVertical": 0.006104945833122599,
+          "virtualNormal": 0.015107680220698416,
+          "contactVertex": [
+            -0.03343388731521297,
+            1.0061049458331226,
+            -1.654296074091413
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 9.366666666666712,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999998376210983,
+          "bend": 0,
+          "headVertexNormal": 0.006041974386193472,
+          "actualSurfaceVertical": 0.006041974386193472,
+          "virtualNormal": 0.015044461869521797,
+          "contactVertex": [
+            -0.033378249730545755,
+            1.0060419743861935,
+            -1.654163144869208
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 9.466666666666717,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999599578558,
+          "bend": 0,
+          "headVertexNormal": 0.005938934905233673,
+          "actualSurfaceVertical": 0.005938934905233673,
+          "virtualNormal": 0.01494344240540757,
+          "contactVertex": [
+            -0.033304610719466464,
+            1.0059389349052337,
+            -1.654202566603527
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 9.566666666666721,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999901257288,
+          "bend": 0,
+          "headVertexNormal": 0.006056864904091297,
+          "actualSurfaceVertical": 0.006056864904091297,
+          "virtualNormal": 0.015063850646252597,
+          "contactVertex": [
+            -0.03321325785475117,
+            1.0060568649040913,
+            -1.6546533527200795
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 9.666666666666726,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999975650347,
+          "bend": 0,
+          "headVertexNormal": 0.00621004430157357,
+          "actualSurfaceVertical": 0.00621004430157357,
+          "virtualNormal": 0.015218805638193889,
+          "contactVertex": [
+            -0.03310553923660997,
+            1.0062100443015736,
+            -1.6550793746756491
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 9.766666666666731,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999993995449,
+          "bend": 0.11441373744954561,
+          "headVertexNormal": -0.018002065546434465,
+          "actualSurfaceVertical": -0.018002065546434465,
+          "virtualNormal": 0.019401615472590672,
+          "contactVertex": [
+            -0.037264841713987536,
+            0.9819979344535655,
+            -1.2967046922227115
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 9.866666666666736,
+          "position": [
+            0,
+            1,
+            -1.5599999999999994
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998519296,
+          "bend": 0.1524646414508439,
+          "headVertexNormal": -0.03258083250879118,
+          "actualSurfaceVertical": -0.03258083250879118,
+          "virtualNormal": 0.01359374091118859,
+          "contactVertex": [
+            -0.04009251073015711,
+            0.9674191674912088,
+            -0.29905777058097494
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 9.966666666666741,
+          "position": [
+            0,
+            1,
+            -0.4799999999999997
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999634863,
+          "bend": 0.15875441360173312,
+          "headVertexNormal": -0.029605423654051055,
+          "actualSurfaceVertical": 0.16983450657383248,
+          "virtualNormal": 0.01798297987785613,
+          "contactVertex": [
+            -0.04357856505247474,
+            0.970394576345949,
+            0.7977597209115344
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 10.066666666666746,
+          "position": [
+            0,
+            0.8499999999999999,
+            0.6000000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999909959,
+          "bend": 0.1597941059512738,
+          "headVertexNormal": 0.0702520208570517,
+          "actualSurfaceVertical": 0.0724141256016797,
+          "virtualNormal": 0.1186392835305464,
+          "contactVertex": [
+            -0.0411495828483784,
+            0.6345908910294824,
+            1.7512929382887892
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 10.166666666666751,
+          "position": [
+            0,
+            0.5800000000000001,
+            1.68
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999977796,
+          "bend": 0.15996596594218343,
+          "headVertexNormal": -0.012567265849225406,
+          "actualSurfaceVertical": -0.012954041130393446,
+          "virtualNormal": 0.035017165371253295,
+          "contactVertex": [
+            -0.03929893016087208,
+            0.2960501199626715,
+            2.7639833556277402
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 10.266666666666756,
+          "position": [
+            0,
+            0.3099999999999998,
+            2.7600000000000007
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999994524,
+          "bend": 0.15999437420796517,
+          "headVertexNormal": -0.025997366883731887,
+          "actualSurfaceVertical": -0.02679747241239039,
+          "virtualNormal": 0.021367802061918434,
+          "contactVertex": [
+            -0.036781279051955176,
+            0.018857166281278315,
+            3.817381445225325
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 10.366666666666761,
+          "position": [
+            0,
+            0.039999999999999536,
+            3.8400000000000016
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999999865,
+          "bend": 0.15999907006280267,
+          "headVertexNormal": -0.033351266149206193,
+          "actualSurfaceVertical": -0.25946776078381023,
+          "virtualNormal": 0.013954553819208904,
+          "contactVertex": [
+            -0.040212675959305985,
+            -0.25946776078381023,
+            4.900360250053977
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 10.466666666666766,
+          "position": [
+            0,
+            0,
+            4.92
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999667,
+          "bend": 0.1599998462824081,
+          "headVertexNormal": -0.10403462278845343,
+          "actualSurfaceVertical": -0.10403462278845343,
+          "virtualNormal": -0.05711094185100507,
+          "contactVertex": [
+            -0.04387434615105136,
+            -0.10403462278845343,
+            6.171141031839269
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 10.566666666666771,
+          "position": [
+            0,
+            0,
+            5.999999999999998
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999918,
+          "bend": 0.1599999745906512,
+          "headVertexNormal": -0.047909998020903316,
+          "actualSurfaceVertical": -0.047909998020903316,
+          "virtualNormal": -0.0002652253999191334,
+          "contactVertex": [
+            -0.04207131237469498,
+            -0.047909998020903316,
+            7.284596303892849
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 10.666666666666776,
+          "position": [
+            0,
+            0,
+            7.0799999999999965
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999999998,
+          "bend": 0.15999999579986246,
+          "headVertexNormal": -0.0397359978558946,
+          "actualSurfaceVertical": -0.0397359978558946,
+          "virtualNormal": 0.008083835998418443,
+          "contactVertex": [
+            -0.03694551078878191,
+            -0.0397359978558946,
+            8.381746738187648
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 10.766666666666781,
+          "position": [
+            0,
+            0,
+            8.159999999999995
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999994,
+          "bend": 0.15999999930572184,
+          "headVertexNormal": -0.030750156437177684,
+          "actualSurfaceVertical": -0.030750156437177684,
+          "virtualNormal": 0.01711479848358799,
+          "contactVertex": [
+            -0.03282491432690189,
+            -0.030750156437177684,
+            9.458672428719908
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 10.866666666666786,
+          "position": [
+            0,
+            0,
+            9.239999999999993
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999988523658,
+          "headVertexNormal": -0.03408686836836039,
+          "actualSurfaceVertical": -0.03408686836836039,
+          "virtualNormal": 0.013748547247625087,
+          "contactVertex": [
+            -0.03451554150137479,
+            -0.03408686836836039,
+            10.53754772711958
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 10.966666666666791,
+          "position": [
+            0,
+            0,
+            10.319999999999991
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": -0.03448312166951928,
+          "actualSurfaceVertical": -0.03448312166951928,
+          "virtualNormal": 0.013391922012288338,
+          "contactVertex": [
+            -0.03896079791617009,
+            -0.03448312166951928,
+            11.624451704050378
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 11.066666666666796,
+          "position": [
+            0,
+            0,
+            11.39999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": -0.029416491874650508,
+          "actualSurfaceVertical": -0.029416491874650508,
+          "virtualNormal": 0.01844036017943529,
+          "contactVertex": [
+            -0.04168466281135594,
+            -0.029416491874650508,
+            12.696282204275192
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 11.166666666666801,
+          "position": [
+            0,
+            0,
+            12.479999999999988
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": -0.035814924418134775,
+          "actualSurfaceVertical": -0.035814924418134775,
+          "virtualNormal": 0.01202952778679367,
+          "contactVertex": [
+            -0.03826284128243822,
+            -0.035814924418134775,
+            13.780893787760125
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 11.266666666666806,
+          "position": [
+            0,
+            0,
+            13.559999999999986
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": -0.03201189414918401,
+          "actualSurfaceVertical": -0.03201189414918401,
+          "virtualNormal": 0.015867783091409016,
+          "contactVertex": [
+            -0.03376830514340728,
+            -0.03201189414918401,
+            14.86219163139989
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 11.366666666666811,
+          "position": [
+            0,
+            0,
+            14.639999999999985
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": -0.0312989747345197,
+          "actualSurfaceVertical": -0.0312989747345197,
+          "virtualNormal": 0.01654370389882387,
+          "contactVertex": [
+            -0.033134988564535985,
+            -0.0312989747345197,
+            15.935932328401755
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 11.466666666666816,
+          "position": [
+            0,
+            0,
+            15.719999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": -0.036136012469353024,
+          "actualSurfaceVertical": -0.036136012469353024,
+          "virtualNormal": 0.011727254265501807,
+          "contactVertex": [
+            -0.03757305332955176,
+            -0.036136012469353024,
+            17.024562054939175
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.005909969392818626,
+        "max": 0.00621004430157357
+      },
+      "slope": {
+        "min": -0.25946776078381023,
+        "max": 0.0724141256016797
+      },
+      "flatAfter": {
+        "min": -0.0397359978558946,
+        "max": -0.029416491874650508
+      }
+    },
+    {
+      "mode": "working",
+      "id": "s3-brush-mini",
+      "attributes": 886,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 1.4999999999999996,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999969251201,
+          "bend": 0,
+          "headVertexNormal": 0.014918757395820492,
+          "actualSurfaceVertical": 0.014918757395820492,
+          "virtualNormal": 0.02187403194505455,
+          "contactVertex": [
+            0.0035082166849391416,
+            1.0149187573958205,
+            -1.9029092257534879
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 1.5999999999999992,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999992417439,
+          "bend": 0,
+          "headVertexNormal": 0.01504685701481856,
+          "actualSurfaceVertical": 0.01504685701481856,
+          "virtualNormal": 0.02200334121383385,
+          "contactVertex": [
+            0.003537559684259936,
+            1.0150468570148186,
+            -1.9030801153670909
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 1.6999999999999988,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998130163,
+          "bend": 0,
+          "headVertexNormal": 0.01507942115547456,
+          "actualSurfaceVertical": 0.01507942115547456,
+          "virtualNormal": 0.022043717617006298,
+          "contactVertex": [
+            0.0035977191468964907,
+            1.0150794211554746,
+            -1.9028702244895939
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 1.7999999999999985,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999538904,
+          "bend": 0,
+          "headVertexNormal": 0.014972587006020444,
+          "actualSurfaceVertical": 0.014972587006020444,
+          "virtualNormal": 0.02192973003128973,
+          "contactVertex": [
+            0.0036702264320857964,
+            1.0149725870060204,
+            -1.9029288468802987
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 1.8999999999999981,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999886295,
+          "bend": 0,
+          "headVertexNormal": 0.014950673693125971,
+          "actualSurfaceVertical": 0.014950673693125971,
+          "virtualNormal": 0.021889160443567146,
+          "contactVertex": [
+            0.0037537591810218075,
+            1.014950673693126,
+            -1.9035097270521728
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 1.9999999999999978,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999997196,
+          "bend": 0,
+          "headVertexNormal": 0.015070230135429963,
+          "actualSurfaceVertical": 0.015070230135429963,
+          "virtualNormal": 0.022000212976230005,
+          "contactVertex": [
+            0.0038590635301761836,
+            1.01507023013543,
+            -1.9039765292874202
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 2.0999999999999974,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999993086,
+          "bend": 0.11441373754575543,
+          "headVertexNormal": 0.011227462500980057,
+          "actualSurfaceVertical": 0.011227462500980057,
+          "virtualNormal": 0.05592871696434809,
+          "contactVertex": [
+            0.0017298767157483616,
+            1.01122746250098,
+            -1.5115413158173725
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 2.199999999999997,
+          "position": [
+            0,
+            1,
+            -1.5059999999999993
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999998296,
+          "bend": 0.1524646414980998,
+          "headVertexNormal": 0.013769593156049309,
+          "actualSurfaceVertical": 0.013769593156049309,
+          "virtualNormal": 0.07237574264349389,
+          "contactVertex": [
+            -0.00044098316006283694,
+            1.0137695931560493,
+            -0.44976566095621423
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 2.2999999999999967,
+          "position": [
+            0,
+            1,
+            -0.31799999999999956
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999579,
+          "bend": 0.15875441361727588,
+          "headVertexNormal": -0.1334567024047073,
+          "actualSurfaceVertical": 0.01705161637408914,
+          "virtualNormal": -0.09111170757065434,
+          "contactVertex": [
+            -0.012732896965357517,
+            0.8665432975952927,
+            0.604780353734885
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 2.3999999999999964,
+          "position": [
+            0,
+            0.7825,
+            0.8700000000000006
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999897,
+          "bend": 0.15979410595574955,
+          "headVertexNormal": 0.014108302927632488,
+          "actualSurfaceVertical": 0.014542505792209948,
+          "virtualNormal": 0.07005995493148562,
+          "contactVertex": [
+            -0.00566410576673923,
+            0.5810470652978561,
+            1.7339817619774156
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 2.499999999999996,
+          "position": [
+            0,
+            0.4855000000000001,
+            2.0580000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999974,
+          "bend": 0.1599659659433934,
+          "headVertexNormal": 0.014543671879260117,
+          "actualSurfaceVertical": 0.014991273835628871,
+          "virtualNormal": 0.0709156194096828,
+          "contactVertex": [
+            -0.0004965062308141741,
+            0.28213434516745456,
+            2.9314277146726972
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 2.5999999999999956,
+          "position": [
+            0,
+            0.18850000000000006,
+            3.246
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999993,
+          "bend": 0.15999437420828114,
+          "headVertexNormal": 0.05015977941706079,
+          "actualSurfaceVertical": 0.015755211338713826,
+          "virtualNormal": 0.11009046627408808,
+          "contactVertex": [
+            0.004376663493102315,
+            0.016103881266229192,
+            4.142398543629308
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 2.6999999999999953,
+          "position": [
+            0,
+            0,
+            4.434000000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599990700628835,
+          "headVertexNormal": 0.013847232169401535,
+          "actualSurfaceVertical": 0.013847232169401535,
+          "virtualNormal": 0.07508514999421623,
+          "contactVertex": [
+            0.003059823974173561,
+            0.013847232169401535,
+            5.5335088798054715
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 2.799999999999995,
+          "position": [
+            0,
+            0,
+            5.622000000000003
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999984628242853,
+          "headVertexNormal": 0.016183350674216,
+          "actualSurfaceVertical": 0.016183350674216,
+          "virtualNormal": 0.07756346283056137,
+          "contactVertex": [
+            -0.0009152139991930423,
+            0.016183350674216,
+            6.722141004492261
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 2.8999999999999946,
+          "position": [
+            0,
+            0,
+            6.810000000000006
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999997459065632,
+          "headVertexNormal": 0.014505560545883533,
+          "actualSurfaceVertical": 0.014505560545883533,
+          "virtualNormal": 0.07524985941211648,
+          "contactVertex": [
+            -0.0017829571985184742,
+            0.014505560545883533,
+            7.9002167382343345
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 2.9999999999999942,
+          "position": [
+            0,
+            0,
+            7.998000000000008
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999957998637,
+          "headVertexNormal": 0.014416592080347124,
+          "actualSurfaceVertical": 0.014416592080347124,
+          "virtualNormal": 0.07581546035904907,
+          "contactVertex": [
+            0.003018955749198627,
+            0.014416592080347124,
+            9.100111485334079
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 3.099999999999994,
+          "position": [
+            0,
+            0,
+            9.18600000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999930572212,
+          "headVertexNormal": 0.016355389417896382,
+          "actualSurfaceVertical": 0.016355389417896382,
+          "virtualNormal": 0.07742320139106129,
+          "contactVertex": [
+            0.006824155950075857,
+            0.016355389417896382,
+            10.279921712261928
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 3.1999999999999935,
+          "position": [
+            0,
+            0,
+            10.374000000000013
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999998852366,
+          "headVertexNormal": 0.013716290440653367,
+          "actualSurfaceVertical": 0.013716290440653367,
+          "virtualNormal": 0.07458841729704757,
+          "contactVertex": [
+            0.00515178312755064,
+            0.013716290440653367,
+            11.467083596968797
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 3.299999999999993,
+          "position": [
+            0,
+            0,
+            11.562000000000015
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": 0.015431670051750002,
+          "actualSurfaceVertical": 0.015431670051750002,
+          "virtualNormal": 0.0768862021130341,
+          "contactVertex": [
+            0.0008278409828105515,
+            0.015431670051750002,
+            12.664003449046064
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 3.399999999999993,
+          "position": [
+            0,
+            0,
+            12.750000000000018
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": 0.01575528712289087,
+          "actualSurfaceVertical": 0.01575528712289087,
+          "virtualNormal": 0.07654501323340002,
+          "contactVertex": [
+            -0.0021331419540565194,
+            0.01575528712289087,
+            13.839926441736617
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 3.4999999999999925,
+          "position": [
+            0,
+            0,
+            13.93800000000002
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": 0.013749064136731493,
+          "actualSurfaceVertical": 0.013749064136731493,
+          "virtualNormal": 0.07488856704809876,
+          "contactVertex": [
+            0.001493821217976976,
+            0.013749064136731493,
+            15.035896728874645
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 3.599999999999992,
+          "position": [
+            0,
+            0,
+            15.126000000000023
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": 0.016171243535908097,
+          "actualSurfaceVertical": 0.016171243535908097,
+          "virtualNormal": 0.07748699210331766,
+          "contactVertex": [
+            0.00594003077342186,
+            0.016171243535908097,
+            16.224431040528284
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 3.6999999999999917,
+          "position": [
+            0,
+            0,
+            16.314000000000025
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": 0.014437351552287259,
+          "actualSurfaceVertical": 0.014437351552287259,
+          "virtualNormal": 0.07515716668609673,
+          "contactVertex": [
+            0.006436212390252112,
+            0.014437351552287259,
+            17.403888560088635
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 3.7999999999999914,
+          "position": [
+            0,
+            0,
+            17.502000000000027
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": 0.014362508976108801,
+          "actualSurfaceVertical": 0.014362508976108801,
+          "virtualNormal": 0.0757707814724683,
+          "contactVertex": [
+            0.0022376162577853118,
+            0.014362508976108801,
+            18.604466451864578
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.014918757395820492,
+        "max": 0.01507942115547456
+      },
+      "slope": {
+        "min": 0.014542505792209948,
+        "max": 0.015755211338713826
+      },
+      "flatAfter": {
+        "min": 0.013716290440653367,
+        "max": 0.016355389417896382
+      }
+    },
+    {
+      "mode": "working",
+      "id": "s3-brush-normal",
+      "attributes": 2120,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 5.33333333333332,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999921806677,
+          "bend": 0,
+          "headVertexNormal": 0.01491878965035065,
+          "actualSurfaceVertical": 0.01491878965035065,
+          "virtualNormal": 0.02494396693537948,
+          "contactVertex": [
+            0.024045489714225356,
+            1.0149187896503507,
+            -1.5361145403824905
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 5.433333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999980717763,
+          "bend": 0,
+          "headVertexNormal": 0.015046808725819094,
+          "actualSurfaceVertical": 0.015046808725819094,
+          "virtualNormal": 0.02507154324756966,
+          "contactVertex": [
+            0.024074598998180242,
+            1.015046808725819,
+            -1.5362894851228643
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 5.533333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999995245058,
+          "bend": 0,
+          "headVertexNormal": 0.015079411227048922,
+          "actualSurfaceVertical": 0.015079411227048922,
+          "virtualNormal": 0.025101271076432452,
+          "contactVertex": [
+            0.024133267029509367,
+            1.015079411227049,
+            -1.5361054766246518
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 5.633333333333319,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998827446,
+          "bend": 0,
+          "headVertexNormal": 0.014972631090885313,
+          "actualSurfaceVertical": 0.014972631090885313,
+          "virtualNormal": 0.024997120800560824,
+          "contactVertex": [
+            0.024207142988297257,
+            1.0149726310908853,
+            -1.5361403509655744
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 5.733333333333318,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999710852,
+          "bend": 0,
+          "headVertexNormal": 0.01495065357572356,
+          "actualSurfaceVertical": 0.01495065357572356,
+          "virtualNormal": 0.02498200642512094,
+          "contactVertex": [
+            0.024294239846010673,
+            1.0149506535757236,
+            -1.5366593801915114
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 5.833333333333318,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999928697,
+          "bend": 0,
+          "headVertexNormal": 0.015070217614884474,
+          "actualSurfaceVertical": 0.015070217614884474,
+          "virtualNormal": 0.025104697310423196,
+          "contactVertex": [
+            0.024401170775359457,
+            1.0150702176148845,
+            -1.5370979562338491
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 5.933333333333318,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999982416,
+          "bend": 0.11441373754558429,
+          "headVertexNormal": 0.010192446748683581,
+          "actualSurfaceVertical": 0.010192446748683581,
+          "virtualNormal": 0.0628826506165332,
+          "contactVertex": [
+            0.020964429107646697,
+            1.0101924467486836,
+            -1.166785163798916
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 6.033333333333317,
+          "position": [
+            0,
+            1,
+            -1.787999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999995663,
+          "bend": 0.1524646414980157,
+          "headVertexNormal": 0.0134933441136047,
+          "actualSurfaceVertical": 0.0134933441136047,
+          "virtualNormal": 0.08000557553564303,
+          "contactVertex": [
+            0.01883717800485292,
+            1.0134933441136047,
+            -0.3841135352053242
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 6.133333333333317,
+          "position": [
+            0,
+            1,
+            -0.9959999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999998931,
+          "bend": 0.15875441361724826,
+          "headVertexNormal": -0.07743780718080195,
+          "actualSurfaceVertical": 0.016886358254114442,
+          "virtualNormal": -0.009740431817580442,
+          "contactVertex": [
+            0.011839741387903786,
+            0.922562192819198,
+            0.37951689577737097
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 6.2333333333333165,
+          "position": [
+            0,
+            1,
+            -0.2039999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999736,
+          "bend": 0.15979410595574162,
+          "headVertexNormal": -0.248738586877584,
+          "actualSurfaceVertical": 0.013899316845057408,
+          "virtualNormal": -0.18416552627101912,
+          "contactVertex": [
+            0.0054883113182461266,
+            0.751261413122416,
+            1.0523558987486576
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 6.333333333333316,
+          "position": [
+            0,
+            0.8529999999999995,
+            0.5880000000000017
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999934,
+          "bend": 0.15996596594339127,
+          "headVertexNormal": 0.014557158844080598,
+          "actualSurfaceVertical": 0.015005175880759669,
+          "virtualNormal": 0.08333134356542501,
+          "contactVertex": [
+            0.018899551319945862,
+            0.563699818953137,
+            1.8052214277104905
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 6.433333333333316,
+          "position": [
+            0,
+            0.6549999999999996,
+            1.3800000000000021
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999984,
+          "bend": 0.15999437420828055,
+          "headVertexNormal": 0.015217883814763411,
+          "actualSurfaceVertical": 0.01568623559166188,
+          "virtualNormal": 0.08395861157789664,
+          "contactVertex": [
+            0.022029216236969087,
+            0.36908612053956696,
+            2.5864004602083797
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 6.5333333333333155,
+          "position": [
+            0,
+            0.45699999999999924,
+            2.172000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999996,
+          "bend": 0.1599990700628833,
+          "headVertexNormal": 0.01381390061510901,
+          "actualSurfaceVertical": 0.01423904283446975,
+          "virtualNormal": 0.08257405654584549,
+          "contactVertex": [
+            0.01885063553883041,
+            0.16751456267153542,
+            3.3868979206517373
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 6.633333333333315,
+          "position": [
+            0,
+            0.25899999999999906,
+            2.9640000000000035
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999984628242847,
+          "headVertexNormal": 0.07021912123343302,
+          "actualSurfaceVertical": 0.016184394630093912,
+          "virtualNormal": 0.13953787269857237,
+          "contactVertex": [
+            0.016752883992496255,
+            0.016858839496451283,
+            4.222085495797691
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 6.733333333333315,
+          "position": [
+            0,
+            0.060999999999999,
+            3.7560000000000042
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999997459065632,
+          "headVertexNormal": 0.2949183576170071,
+          "actualSurfaceVertical": 0.014506152975936382,
+          "virtualNormal": 0.3651679465189833,
+          "contactVertex": [
+            0.020685996670847646,
+            0.02025874469471911,
+            5.134944560609727
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 6.833333333333314,
+          "position": [
+            0,
+            0,
+            4.548000000000003
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999957998637,
+          "headVertexNormal": 0.014416644798594724,
+          "actualSurfaceVertical": 0.014416644798594724,
+          "virtualNormal": 0.08366121174937347,
+          "contactVertex": [
+            0.022295857207845445,
+            0.014416644798594724,
+            5.995420122534226
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 6.933333333333314,
+          "position": [
+            0,
+            0,
+            5.340000000000001
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999930572212,
+          "headVertexNormal": 0.016355408320534393,
+          "actualSurfaceVertical": 0.016355408320534393,
+          "virtualNormal": 0.08557150446133044,
+          "contactVertex": [
+            0.026143233368620608,
+            0.016355408320534393,
+            6.779856389735256
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 7.033333333333314,
+          "position": [
+            0,
+            0,
+            6.131999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999998852366,
+          "headVertexNormal": 0.013716296284105367,
+          "actualSurfaceVertical": 0.013716296284105367,
+          "virtualNormal": 0.08291538683817112,
+          "contactVertex": [
+            0.0244959029075639,
+            0.013716296284105367,
+            7.571433409394181
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 7.133333333333313,
+          "position": [
+            0,
+            0,
+            6.923999999999997
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": 0.015431661307567679,
+          "actualSurfaceVertical": 0.015431661307567679,
+          "virtualNormal": 0.08468097767373262,
+          "contactVertex": [
+            0.020097665736574913,
+            0.015431661307567679,
+            8.371100679300316
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 7.233333333333313,
+          "position": [
+            0,
+            0,
+            7.715999999999995
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": 0.01575531079038378,
+          "actualSurfaceVertical": 0.01575531079038378,
+          "virtualNormal": 0.08494720178210013,
+          "contactVertex": [
+            0.017221547932760983,
+            0.01575531079038378,
+            9.15248296070951
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 7.333333333333313,
+          "position": [
+            0,
+            0,
+            8.507999999999994
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": 0.013749081916068218,
+          "actualSurfaceVertical": 0.013749081916068218,
+          "virtualNormal": 0.08297137528600873,
+          "contactVertex": [
+            0.020803744535673352,
+            0.013749081916068218,
+            9.951675518349926
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 7.433333333333312,
+          "position": [
+            0,
+            0,
+            9.299999999999992
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": 0.01617124641624962,
+          "actualSurfaceVertical": 0.01617124641624962,
+          "virtualNormal": 0.08540870025956682,
+          "contactVertex": [
+            0.025227494758042902,
+            0.01617124641624962,
+            10.743825148760786
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 7.533333333333312,
+          "position": [
+            0,
+            0,
+            10.09199999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": 0.014437386191380575,
+          "actualSurfaceVertical": 0.014437386191380575,
+          "virtualNormal": 0.08362315089961414,
+          "contactVertex": [
+            0.025799881380466967,
+            0.014437386191380575,
+            11.528597653149424
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 7.6333333333333115,
+          "position": [
+            0,
+            0,
+            10.883999999999988
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": 0.014362547006458615,
+          "actualSurfaceVertical": 0.014362547006458615,
+          "virtualNormal": 0.08360791713207849,
+          "contactVertex": [
+            0.02151331744186994,
+            0.014362547006458615,
+            12.331657471013811
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.01491878965035065,
+        "max": 0.015079411227048922
+      },
+      "slope": {
+        "min": 0.01423904283446975,
+        "max": 0.016184394630093912
+      },
+      "flatAfter": {
+        "min": 0.013716296284105367,
+        "max": 0.01617124641624962
+      }
+    },
+    {
+      "mode": "working",
+      "id": "s3-brush-heavy",
+      "attributes": 1434,
+      "rows": [
+        {
+          "tick": 89,
+          "time": 9.166666666666702,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999973297363185,
+          "bend": 0,
+          "headVertexNormal": 0.014917718930146595,
+          "actualSurfaceVertical": 0.014917718930146595,
+          "virtualNormal": 0.02372911366794961,
+          "contactVertex": [
+            -0.033126056873737146,
+            1.0149177189301466,
+            -1.6486742436509374
+          ]
+        },
+        {
+          "tick": 95,
+          "time": 9.266666666666707,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999993415210833,
+          "bend": 0,
+          "headVertexNormal": 0.015046605155169424,
+          "actualSurfaceVertical": 0.015046605155169424,
+          "virtualNormal": 0.023857621745686952,
+          "contactVertex": [
+            -0.03309622760027108,
+            1.0150466051551694,
+            -1.6488469745967473
+          ]
+        },
+        {
+          "tick": 101,
+          "time": 9.366666666666712,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999998376210983,
+          "bend": 0,
+          "headVertexNormal": 0.015079327700387335,
+          "actualSurfaceVertical": 0.015079327700387335,
+          "virtualNormal": 0.023888048009625296,
+          "contactVertex": [
+            -0.03303701732878656,
+            1.0150793277003873,
+            -1.6486564109666606
+          ]
+        },
+        {
+          "tick": 107,
+          "time": 9.466666666666717,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999599578558,
+          "bend": 0,
+          "headVertexNormal": 0.014972590656689544,
+          "actualSurfaceVertical": 0.014972590656689544,
+          "virtualNormal": 0.02378340638471088,
+          "contactVertex": [
+            -0.032963452044456144,
+            1.0149725906566895,
+            -1.6486969812064514
+          ]
+        },
+        {
+          "tick": 113,
+          "time": 9.566666666666721,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999901257288,
+          "bend": 0,
+          "headVertexNormal": 0.014950669734579591,
+          "actualSurfaceVertical": 0.014950669734579591,
+          "virtualNormal": 0.023766954898295722,
+          "contactVertex": [
+            -0.03287725536849609,
+            1.0149506697345796,
+            -1.6492309005283559
+          ]
+        },
+        {
+          "tick": 119,
+          "time": 9.666666666666726,
+          "position": [
+            0,
+            1,
+            -3
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999975650347,
+          "bend": 0,
+          "headVertexNormal": 0.0150702094784263,
+          "actualSurfaceVertical": 0.0150702094784263,
+          "virtualNormal": 0.023888987592257216,
+          "contactVertex": [
+            -0.03277074054122243,
+            1.0150702094784263,
+            -1.649676308346149
+          ]
+        },
+        {
+          "tick": 125,
+          "time": 9.766666666666731,
+          "position": [
+            0,
+            1,
+            -2.5799999999999996
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999993995449,
+          "bend": 0.11441373744954561,
+          "headVertexNormal": 0.012160618144371416,
+          "actualSurfaceVertical": 0.012160618144371416,
+          "virtualNormal": 0.04958465051187666,
+          "contactVertex": [
+            -0.03610287738590573,
+            1.0121606181443714,
+            -1.277408539467845
+          ]
+        },
+        {
+          "tick": 131,
+          "time": 9.866666666666736,
+          "position": [
+            0,
+            1,
+            -1.5599999999999994
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999998519296,
+          "bend": 0.1524646414508439,
+          "headVertexNormal": 0.013965418051488765,
+          "actualSurfaceVertical": 0.013965418051488765,
+          "virtualNormal": 0.06054096343765725,
+          "contactVertex": [
+            -0.03823372220661561,
+            1.0139654180514888,
+            -0.2690423263076801
+          ]
+        },
+        {
+          "tick": 137,
+          "time": 9.966666666666741,
+          "position": [
+            0,
+            1,
+            -0.4799999999999997
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999634863,
+          "bend": 0.15875441360173312,
+          "headVertexNormal": -0.1573413679774227,
+          "actualSurfaceVertical": 0.017238074545123827,
+          "virtualNormal": -0.11164695435503069,
+          "contactVertex": [
+            -0.04970004716675495,
+            0.8426586320225773,
+            0.698317770090186
+          ]
+        },
+        {
+          "tick": 143,
+          "time": 10.066666666666746,
+          "position": [
+            0,
+            0.8499999999999999,
+            0.6000000000000003
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999909959,
+          "bend": 0.1597941059512738,
+          "headVertexNormal": 0.013938224172207081,
+          "actualSurfaceVertical": 0.014367192623886749,
+          "virtualNormal": 0.06176195549448049,
+          "contactVertex": [
+            -0.04332808437318837,
+            0.5887172444101126,
+            1.7025997928550964
+          ]
+        },
+        {
+          "tick": 149,
+          "time": 10.166666666666751,
+          "position": [
+            0,
+            0.5800000000000001,
+            1.68
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999977796,
+          "bend": 0.15996596594218343,
+          "headVertexNormal": 0.014508007381975607,
+          "actualSurfaceVertical": 0.014954511713281604,
+          "virtualNormal": 0.062416453024522645,
+          "contactVertex": [
+            -0.03816962057137824,
+            0.3177642189470063,
+            2.7887611710651012
+          ]
+        },
+        {
+          "tick": 155,
+          "time": 10.266666666666756,
+          "position": [
+            0,
+            0.3099999999999998,
+            2.7600000000000007
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999994524,
+          "bend": 0.15999437420796517,
+          "headVertexNormal": 0.01512261965553624,
+          "actualSurfaceVertical": 0.015588039543954324,
+          "virtualNormal": 0.06300266612598743,
+          "contactVertex": [
+            -0.03503075892711528,
+            0.05168730188710485,
+            3.855602950627398
+          ]
+        },
+        {
+          "tick": 161,
+          "time": 10.366666666666761,
+          "position": [
+            0,
+            0.039999999999999536,
+            3.8400000000000016
+          ],
+          "normal": [
+            0,
+            0.9701425001453319,
+            0.24253562503633297
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999999865,
+          "bend": 0.15999907006280267,
+          "headVertexNormal": 0.2920461525022015,
+          "actualSurfaceVertical": 0.013849315642329885,
+          "virtualNormal": 0.34136412074260425,
+          "contactVertex": [
+            -0.02960148088109578,
+            0.013849315642329885,
+            5.1487398717525
+          ]
+        },
+        {
+          "tick": 167,
+          "time": 10.466666666666766,
+          "position": [
+            0,
+            0,
+            4.92
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999667,
+          "bend": 0.1599998462824081,
+          "headVertexNormal": 0.01618356896848719,
+          "actualSurfaceVertical": 0.01618356896848719,
+          "virtualNormal": 0.0645606662411411,
+          "contactVertex": [
+            -0.03870321022794122,
+            0.01618356896848719,
+            6.254855119958505
+          ]
+        },
+        {
+          "tick": 173,
+          "time": 10.566666666666771,
+          "position": [
+            0,
+            0,
+            5.999999999999998
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999918,
+          "bend": 0.1599999745906512,
+          "headVertexNormal": 0.014505660231026063,
+          "actualSurfaceVertical": 0.014505660231026063,
+          "virtualNormal": 0.06282752564832117,
+          "contactVertex": [
+            -0.039511689200995855,
+            0.014505660231026063,
+            7.32596509290428
+          ]
+        },
+        {
+          "tick": 179,
+          "time": 10.666666666666776,
+          "position": [
+            0,
+            0,
+            7.0799999999999965
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.999999999999998,
+          "bend": 0.15999999579986246,
+          "headVertexNormal": 0.014416601323250844,
+          "actualSurfaceVertical": 0.014416601323250844,
+          "virtualNormal": 0.06279532978495372,
+          "contactVertex": [
+            -0.03477087143849047,
+            0.014416601323250844,
+            8.41686701798302
+          ]
+        },
+        {
+          "tick": 185,
+          "time": 10.766666666666781,
+          "position": [
+            0,
+            0,
+            8.159999999999995
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999994,
+          "bend": 0.15999999930572184,
+          "headVertexNormal": 0.016355381694793752,
+          "actualSurfaceVertical": 0.016355381694793752,
+          "virtualNormal": 0.06470550469552905,
+          "contactVertex": [
+            -0.030934876148026015,
+            0.016355381694793752,
+            9.48919547955744
+          ]
+        },
+        {
+          "tick": 191,
+          "time": 10.866666666666786,
+          "position": [
+            0,
+            0,
+            9.239999999999993
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999988523658,
+          "headVertexNormal": 0.013716296003823902,
+          "actualSurfaceVertical": 0.013716296003823902,
+          "virtualNormal": 0.06204936312028231,
+          "contactVertex": [
+            -0.03258895609371974,
+            0.013716296003823902,
+            10.568665996289052
+          ]
+        },
+        {
+          "tick": 197,
+          "time": 10.966666666666791,
+          "position": [
+            0,
+            0,
+            10.319999999999991
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999810297,
+          "headVertexNormal": 0.0154316629003175,
+          "actualSurfaceVertical": 0.0154316629003175,
+          "virtualNormal": 0.06381517036271511,
+          "contactVertex": [
+            -0.036967148529349805,
+            0.0154316629003175,
+            11.65664269507912
+          ]
+        },
+        {
+          "tick": 203,
+          "time": 11.066666666666796,
+          "position": [
+            0,
+            0,
+            11.39999999999999
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999968642,
+          "headVertexNormal": 0.015755284553851223,
+          "actualSurfaceVertical": 0.015755284553851223,
+          "virtualNormal": 0.06408113699495821,
+          "contactVertex": [
+            -0.0398661591489267,
+            0.015755284553851223,
+            12.725653552137812
+          ]
+        },
+        {
+          "tick": 209,
+          "time": 11.166666666666801,
+          "position": [
+            0,
+            0,
+            12.479999999999988
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999948164,
+          "headVertexNormal": 0.013749071392809287,
+          "actualSurfaceVertical": 0.013749071392809287,
+          "virtualNormal": 0.06210541584543239,
+          "contactVertex": [
+            -0.03627189544377471,
+            0.013749071392809287,
+            13.813047764802302
+          ]
+        },
+        {
+          "tick": 215,
+          "time": 11.266666666666806,
+          "position": [
+            0,
+            0,
+            13.559999999999986
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.1599999999999143,
+          "headVertexNormal": 0.016171247294742314,
+          "actualSurfaceVertical": 0.016171247294742314,
+          "virtualNormal": 0.06454282359342922,
+          "contactVertex": [
+            -0.03184208355467659,
+            0.016171247294742314,
+            14.893294900806147
+          ]
+        },
+        {
+          "tick": 221,
+          "time": 11.366666666666811,
+          "position": [
+            0,
+            0,
+            14.639999999999985
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999998582,
+          "headVertexNormal": 0.014437358752788287,
+          "actualSurfaceVertical": 0.014437358752788287,
+          "virtualNormal": 0.06275707519771556,
+          "contactVertex": [
+            -0.03129024342123815,
+            0.014437358752788287,
+            15.96572955951905
+          ]
+        },
+        {
+          "tick": 227,
+          "time": 11.466666666666816,
+          "position": [
+            0,
+            0,
+            15.719999999999983
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grounded": true,
+          "rolling": true,
+          "wRoll": 0.9999999999999998,
+          "bend": 0.15999999999999764,
+          "headVertexNormal": 0.014362515155627642,
+          "actualSurfaceVertical": 0.014362515155627642,
+          "virtualNormal": 0.06274205196867999,
+          "contactVertex": [
+            -0.035553085022216505,
+            0.014362515155627642,
+            17.057179775123736
+          ]
+        }
+      ],
+      "flatBefore": {
+        "min": 0.014917718930146595,
+        "max": 0.015079327700387335
+      },
+      "slope": {
+        "min": 0.013849315642329885,
+        "max": 0.015588039543954324
+      },
+      "flatAfter": {
+        "min": 0.013716296003823902,
+        "max": 0.016355381694793752
+      }
+    }
+  ],
+  "versions": {
+    "baseline": "4ce9768e6177b19f11f17e28f086a4da36f35fcd",
+    "reviewed": "bbc4a19b9778306b4ebd3f92b630964e612670dc",
+    "working": "3d720d4b106cbb462b52ba5c4381da6459e9705e"
+  }
+}

@@ -1,0 +1,25 @@
+(node:10844) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ offline pause 0.1s at 30Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (117.682325ms)
+✔ offline pause 1s at 30Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (78.657363ms)
+✔ offline pause 10s at 30Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (91.104414ms)
+✔ offline pause 60s at 30Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (208.167853ms)
+✔ offline pause 0.1s at 60Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (46.525252ms)
+✔ offline pause 1s at 60Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (57.698884ms)
+✔ offline pause 10s at 60Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (68.197954ms)
+✔ offline pause 60s at 60Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (218.342681ms)
+✔ offline pause 0.1s at 120Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (26.506179ms)
+✔ offline pause 1s at 120Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (44.288622ms)
+✔ offline pause 10s at 120Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (44.382189ms)
+✔ offline pause 60s at 120Hz preserves clock/input/controller/RNG/resume with zero snapshot writes and aim queries (229.272124ms)
+✔ online/attract exclusion {"online":true} preserves every query/tick/write (56.586745ms)
+✔ online/attract exclusion {"attract":true} preserves every query/tick/write (70.660865ms)
+✔ online/attract exclusion {"online":true,"boss":true} preserves every query/tick/write (61.401594ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4503.392473

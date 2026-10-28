@@ -244,10 +244,12 @@ function tailLimits(p) {
  * VTF pack must take precedence over a second polygon body. If unavailable,
  * the bounded history renderer remains the visual fallback. This is a
  * presentation decision only: projectile simulation/paint are untouched. */
+export function hissenVolumeFallback(p) { return actorOf(p)==='WeaponSlosherDiffusion'; }
 export function nativeVolumeOwns(p, engine) {
   if (!p?._inkVolumeRecipe || p._qualityDead || p.delay > 0 ||
       engine?.isInkVolumes !== true || !engine.assets) return false;
   const assets = engine.assets, recipe = p._inkVolumeRecipe;
+  if(recipe==='slosher'&&hissenVolumeFallback(p)&&assets.has('hissen-fallback'))return true;
   if (p._inkVolumeAssetName && assets.has(p._inkVolumeAssetName)) return true;
   if (recipe === 'roller-horizontal' || recipe === 'roller-vertical' || recipe === 'brush')
     return assets.has('roller');

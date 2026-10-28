@@ -189,8 +189,8 @@ test('reviewed native recovery engine exact epoch rejects old and tampered targe
 // Admit only that reviewed owner epoch, never the prior synchronous source proof.
 test('sliced navigation owner rejects its previous pin and unreviewed source bytes', () => fixture(root => {
  const row=SOURCE_SITE_REFERENCES.find(r=>r.source==='inkwave-public/src/game/nav.js');
- const reviewed='4b38ce452c58b1ec60660cb90660603a4a156e2ce58a9d76f013135fa3ebe151';
- const previous='c2a2920e677fd69c6c11848881ffafda90bdd9ff2ba8662579713e5944fceb6a';
+ const reviewed='c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc';
+ const previous=['c2a2920e677fd69c6c11848881ffafda90bdd9ff2ba8662579713e5944fceb6a','4b38ce452c58b1ec60660cb90660603a4a156e2ce58a9d76f013135fa3ebe151'];
  assert.equal(row.sourceSha256,reviewed);
  const current=fs.readFileSync(path.join(repo,row.source));assert.equal(sha(current),reviewed);
  assert.match(current.toString(),/import \{ runBuildSlices \} from '\.\.\/core\/buildSlices\.js'/);
@@ -206,7 +206,7 @@ test('sliced navigation owner rejects its previous pin and unreviewed source byt
  const files={[row.sourceInputKey]:reviewed,[row.inputKey]:row.targetSha256};
  const save=()=>put(site,'inkwave-build.json',JSON.stringify({build:{revision:rev},files,artifacts:Object.fromEntries(paths.map(p=>[p,sha(payload)]))}));
  save();assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
- files[row.sourceInputKey]=previous;save();assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/input manifest mismatch/);
+ for(const old of previous){files[row.sourceInputKey]=old;save();assert.throws(()=>verifyMappedReference(root,row.source,row.ref,site),/input manifest mismatch/);}
  files[row.sourceInputKey]=reviewed;save();
  assert.equal(verifyMappedReference(root,row.source,row.ref,site).emittedVerified,true);
 }));

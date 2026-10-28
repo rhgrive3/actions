@@ -1,0 +1,136 @@
+{
+  "status": "focused append checks passed; reticle consumer and unfinished visual scope remain open",
+  "buildHead": "669f4d616f04e1014ee9453ed6149b933871ca84",
+  "upstreamMainMerged": "d88aa683074f8c85765308b274a04a03feeb99f6",
+  "localMerge": "af0dbbcfb951a1bfa20e87f667ebb9a3da11a3e1",
+  "producerHandoff": {
+    "branch": "codex/inkwave-collision-revision-20261026-fee0c005f",
+    "source": "fee0c005ffe129e8248c2122c41f5fad6612130d",
+    "integrated": "11aac831306b96ca271b421735bcf9f261287d9e",
+    "contract": "Audited Level/NativeLevel block append/rebuild and Tower actual transform/removal producers. No query stamp use, no per-frame all-static scan. Unknown worlds remain unversioned; invalid/exhausted revisions disable reuse. No consumer included."
+  },
+  "phaseHandoff": {
+    "branch": "codex/slosher-initial-phase-20261026",
+    "verifiedHead": "a40ca3179fa6a483d43f6b7773fa61c29d04c5bf",
+    "acceptedBase": "67ea07501387f282464ac8b76d93842650c976d1",
+    "commitsAboveBase": [
+      "f41a35346caff97b5eed55a953c7893b344acf09",
+      "a40ca3179fa6a483d43f6b7773fa61c29d04c5bf"
+    ],
+    "integrated": [
+      "72277deadd4e2f36df9bb1fecc56badcd15cfdd0",
+      "669f4d616f04e1014ee9453ed6149b933871ca84"
+    ],
+    "rejectedVisibilityCandidateExcluded": true,
+    "sourceReview": "Only initializes generic Slosher nextSplash using dimensionless source rates times already-runtime-unit splashSpacing, reusing p.seed. No additional RNG calls, suppression or physical size/velocity/damage/count change.",
+    "firstDistances": {
+      "Machine": [
+        0.36,
+        1.26
+      ],
+      "Bloblobber": [
+        3,
+        3
+      ],
+      "Explosher": [
+        1.55,
+        1.705
+      ]
+    },
+    "independentParentReport": "24 emitted frames/family preserve main births/damage/physics, RNG counts 10/8/2 and positive drop visibility; not rerun or presented as this local measurement"
+  },
+  "checks": {
+    "producerUpstreamSource": {
+      "head": "af0dbbcfb951a1bfa20e87f667ebb9a3da11a3e1",
+      "pass": 29,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Producer6 plus catalogue charge/flight/stages3, new upstream piercing5 and motion-contact15"
+    },
+    "selectedTowerSource": {
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    "phaseSource": {
+      "head": "669f4d616f04e1014ee9453ed6149b933871ca84",
+      "pass": 28,
+      "fail": 0,
+      "skip": 0,
+      "scope": "New phase9 plus protected Slosher flight/contact/main attack/origin/visibility/paint cases"
+    },
+    "emitted": {
+      "head": "669f4d616f04e1014ee9453ed6149b933871ca84",
+      "pass": 23,
+      "fail": 0,
+      "skip": 0,
+      "scope": "Producer6, phase9 including positive drawing, catalogue charge/flight/stages3, upstream Charger piercing5"
+    },
+    "quick": "passed",
+    "optimizedBuild": "passed",
+    "startupBudget": "passed"
+  },
+  "identity": {
+    "sourceSha": "669f4d616f04e1014ee9453ed6149b933871ca84",
+    "contentHash": "995cca20731686d56ee5e71d87f85c22b8378921dddab3acafb22ed52174531a",
+    "inputHash": "b6e5426f0d4ed6d39c96e4909bd3acbb48cd1be188808e13876542bef245e146",
+    "sourceInputs": 1490,
+    "artifacts": 2194,
+    "mismatches": 0
+  },
+  "logs": {
+    "producer-upstream-source": {
+      "path": "producer-upstream-source.log.gz",
+      "rawSha256": "6e22a7924c53635e17b0e48ad377cf57ab8bb81a4048ee2ae700279bff2fcd0b",
+      "gzipSha256": "0799a80e9f2cd0fd7d37e18668ab2b637be80611a669fcc4a36dc8e975435d59"
+    },
+    "tower-source": {
+      "path": "tower-source.log.gz",
+      "rawSha256": "61bf8103cf31f10b53c8c4ca6e3ea431fcef1d29b77db4f0fa996fafc346ce97",
+      "gzipSha256": "fa6f4461e40b338c714cd941e018337a5d284b437578e9b34cac85fa720c7410"
+    },
+    "phase-source": {
+      "path": "phase-source.log.gz",
+      "rawSha256": "1d003b65115e0e99efb69a90d271a5123225d9d3bde65bfb2c060275a0c3986c",
+      "gzipSha256": "f71470505db6bb2434aace67b8bd14fabbdf3d62bdfcbd1cc9c5dd1abcbf26f0"
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "2f7236bce381ff4df68fd7e03b606794a08d3f2542352d10a39dc18bcea7079f",
+      "gzipSha256": "602bbbb81bf9ac0c9b81c89a2cb3c50b9fbd505695add2066c4fea9b6b415198"
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "8047a7ee6719cd926343b7aee0030bcc20034338e18d64463bb2c4cdd7943f37",
+      "gzipSha256": "e0107bf7a528c60d84328ab27c267621dbfe4f2cf941c5d9f9ec6018edcb4ee7"
+    },
+    "quick": {
+      "path": "quick.log.gz",
+      "rawSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+      "gzipSha256": "f3d8dc8809329136eada79b6f0147fcf52ffa687efcdf38ecc8d9f24bca8ed0d"
+    }
+  },
+  "conflicts": {
+    "source": "No manual source conflicts. Existing charge/floor/body-origin helpers and newer upstream collision changes preserved.",
+    "reports": "One append-only behavior-report conflict; both integration/producer and phase entries retained."
+  },
+  "reportedOpenPrOverlap": {
+    "source": "Parent-provided public metadata, not a retried admin endpoint",
+    "1882": {
+      "head": "0cd867aa39103bd9cb7d7de523e4894f692a603d",
+      "overlap": "native-stages adapter/native-level plus already traced audio overlap; preserve provenance and review future merge conflicts"
+    },
+    "1894": {
+      "headPrefix": "70cc3b",
+      "paths": "native-projectile-sweep.mjs and triangle-world.mjs; no direct overlap with the two producer files"
+    },
+    "otherPrChanged": false
+  },
+  "limits": [
+    "No reticle consumer is integrated; repeated-guide cost remains unresolved.",
+    "No new browser/audio matrix was run for this append. Fixed90bb native-touch proof remains historical and distinct from newer upstream renderer changes.",
+    "Hissen primary size, family-wide floor-droplet shape and retail silhouettes remain unverified/unresolved. Phase correction is numerical, not original visual agreement.",
+    "Current generic path-distance convention is retained; Nintendo three-dimensional/horizontal travel metric is not established.",
+    "No PR creation retry, external merge, Ready status or manual CI dispatch/retry. Eventual final-head required CI remains pending."
+  ]
+}

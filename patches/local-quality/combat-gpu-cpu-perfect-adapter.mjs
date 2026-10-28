@@ -769,7 +769,10 @@ export class SwimWake {`,
   // when running inside the multi-stage build pipeline (stage !== 'quality').
   if (stage !== 'quality') {
     if (rel === 'src/game/match.js') {
-      // CPU-13: Hoist outer !a.alive check and vertical rejection in Match soft-push loop while preserving (a.remote && b.remote).
+      // CPU-13: Keep actor/alive/radius reads inside every native pair iteration.
+      // softPushActor invokes collision callbacks which may mutate the live roster,
+      // radius, or alive state, append actors, reenter, or throw. Hoisting any of
+      // those reads across a callback changes native collision semantics.
       const postNetBefore = `    // soft push between actors
     for (let i = 0; i < this.actors.length; i++) for (let j = i + 1; j < this.actors.length; j++) {
       const a = this.actors[i], b = this.actors[j];
@@ -778,42 +781,9 @@ export class SwimWake {`,
       const d2 = dx * dx + dz * dz;
       const r = PLAYER.radius * 1.7;
       if (d2 < r * r && Math.abs(dy) < 1.2 && d2 > 1e-5) {`;
-      const postNetAfter = `    // soft push between actors
-    if (this.actors.length < 2) return;
-    const rPush = PLAYER.radius * 1.7, rPush2 = rPush * rPush;
-    for (let i = 0; i < this.actors.length; i++) {
-      const a = this.actors[i];
-      if (!a.alive) continue;
-      for (let j = i + 1; j < this.actors.length; j++) {
-      const b = this.actors[j];
-      if (!b.alive || (a.remote && b.remote)) continue;
-      const dy = b.pos.y - a.pos.y;
-      if (Math.abs(dy) >= 1.2) continue;
-      const dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z;
-      const d2 = dx * dx + dz * dz;
-      const r = rPush;
-      if (d2 < rPush2 && d2 > 1e-5) {`;
-      code = applyIdempotent(
-        code,
-        postNetBefore,
-        postNetAfter,
-        replaceOnce,
-        'CPU-13 hoist outer alive check and vertical rejection in Match soft-push loop'
-      );
-      code = applyIdempotent(
-        code,
-        `        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);
-        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);
-      }
-    }`,
-        `        softPushActor(G.physics, PLAYER, a, -(dx / d) * push * ka, -(dz / d) * push * ka);
-        softPushActor(G.physics, PLAYER, b, (dx / d) * push * kb, (dz / d) * push * kb);
-      }
-      }
-    }`,
-        replaceOnce,
-        'CPU-13 close outer loop in Match soft-push'
-      );
+      // Preserve the original loop, but keep the exact unique source guard.
+      code = replaceOnce(code, postNetBefore, postNetBefore,
+        'CPU-13 preserve live per-pair reads in Match soft-push loop');
     }
 
     if (rel === 'src/net/netmatch.js') {

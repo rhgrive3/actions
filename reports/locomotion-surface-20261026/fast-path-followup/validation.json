@@ -1,0 +1,106 @@
+{
+  "parentMovementHead": "6142e49045700b7c8ad70a902f963c1a64fe8c70",
+  "change": "Move pre-existing short floor-height fallback before continuous collision-surface tracing; both predicates and the independent paint path are unchanged.",
+  "rollerSourceSha256": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
+  "tests": {
+    "affected-source": {
+      "path": "affected-source.log.gz",
+      "rawSha256": "788285c8979a5050f29676285593493391879af7e090e9706e44db57ea27911e",
+      "gzipSha256": "ebeb69f2e66f58b11c2096ec3d3fb9093a715cd0d74a17df66d885d938ea6731",
+      "tests": 20,
+      "pass": 20,
+      "fail": 0,
+      "skipped": 0
+    },
+    "paint-boundaries": {
+      "path": "paint-boundaries.log.gz",
+      "rawSha256": "47c847409cb1b69aafdaf00a5d348968b155f443cb10b3a1c7a2dbaba7babb06",
+      "gzipSha256": "b5eee148c1b986f707dcaf4a44671f5ff44cfd51c67891a30567c6b8a3f7757e",
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emitted": {
+      "path": "emitted.log.gz",
+      "rawSha256": "dcf1ac6d0c20ae2c2852d534be81eec8dc4d6dbae80309b96b62610a9e2b5633",
+      "gzipSha256": "b5be2f38e3a69269fa05104bb881e8c9206c981b970040d3e43efd2ac18c8f78",
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0
+    },
+    "before-control": {
+      "path": "before-control.log.gz",
+      "rawSha256": "84a384570e372b29c5fd4c975603182c40f45f79304312b94e4ccefc7b1f5ce6",
+      "gzipSha256": "e17edcc3f39d2622b62f24e46c4722c3457c5d8201646228797b534f64c5bdfc",
+      "tests": 5,
+      "pass": 2,
+      "fail": 3,
+      "skipped": 0
+    },
+    "after-isolated": {
+      "path": "after-isolated.log.gz",
+      "rawSha256": "23798fbff17ccd43e927c1a53642ed775e5da8699833c747e53bc0c0a7624806",
+      "gzipSha256": "43b1c8d582dda07ebb9af9391f0f0e1128e40d0ccdc399f317314521604ad820",
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0
+    },
+    "build": {
+      "path": "build.log.gz",
+      "rawSha256": "694731d8825768ebac03cb89f8b563378ab9f1d8d5aa31e07fbeea9ff8e4a8df",
+      "gzipSha256": "e8bc8fa0c1c097ff184211464b7b9741dff332fd10a5d4295699fa8e032a65c9"
+    }
+  },
+  "samples": {
+    "affected-source": {
+      "scope": "real Level/Physics; stationary flat support micro-sample, not device FPS",
+      "baseline": false,
+      "iterations": 4096,
+      "elapsedMs": 80.65519199999972,
+      "queries": 8192,
+      "height": 4096,
+      "rays": 0,
+      "traceScratch": false
+    },
+    "emitted": {
+      "scope": "real Level/Physics; stationary flat support micro-sample, not device FPS",
+      "baseline": false,
+      "iterations": 4096,
+      "elapsedMs": 54.522079000000076,
+      "queries": 8192,
+      "height": 4096,
+      "rays": 0,
+      "traceScratch": false
+    },
+    "before-control": {
+      "scope": "real Level/Physics; stationary flat support micro-sample, not device FPS",
+      "baseline": true,
+      "iterations": 4096,
+      "elapsedMs": 60.74910499999987,
+      "queries": 12288,
+      "height": 0,
+      "rays": 4096,
+      "traceScratch": true
+    },
+    "after-isolated": {
+      "scope": "real Level/Physics; stationary flat support micro-sample, not device FPS",
+      "baseline": false,
+      "iterations": 4096,
+      "elapsedMs": 45.73635599999989,
+      "queries": 8192,
+      "height": 4096,
+      "rays": 0,
+      "traceScratch": false
+    }
+  },
+  "emittedContentHash": "1169f58454634eeaceb136eb8138301f7c4cec5015b618951ebd3eba6b8cc7d4",
+  "emittedInputHash": "581b062c11279049f35fcc92b09d666e01467b8bb41ff060e3457bc4416cb3e2",
+  "limits": [
+    "CPU micro-samples on shared host; elapsed timings are descriptive, not device FPS or a robust performance comparison.",
+    "No new browser pass; the affected production-minified support function, actual Level/Physics and paint-boundary source paths were exercised.",
+    "Prior original-reference media fetch work is not included in this commit."
+  ]
+}

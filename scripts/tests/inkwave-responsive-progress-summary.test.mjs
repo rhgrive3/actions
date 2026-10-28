@@ -82,10 +82,11 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
   const { spawnSync } = await import('node:child_process');
   const candidate = fs.readFileSync(new URL('../check-inkwave-responsive-isolated.mjs', import.meta.url), 'utf8');
   const baseline = candidate.replace("import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';\n", '')
-    .replace('  emitFailedResponsiveProgress(row.ok, { shardDir, engine, name, startedAt });\n', '');
+    .replace('  emitFailedResponsiveProgress(row.ok, { shardDir: resultDir, engine, name, startedAt });\n', '');
   const dir = path.join(root, 'integration'), scripts = path.join(dir, 'scripts');
   fs.mkdirSync(path.join(scripts, 'lib'), { recursive: true });
   fs.copyFileSync(new URL('../lib/inkwave-responsive-progress-summary.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-progress-summary.mjs'));
+  fs.copyFileSync(new URL('../lib/inkwave-responsive-session-retry.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-session-retry.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-animation-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-animation-diagnostics.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-diagnostics.mjs'));
   fs.writeFileSync(path.join(scripts, 'fake-child.mjs'), `
@@ -180,4 +181,11 @@ test('official log summary revalidates at most two bounded animation observation
   assert(!JSON.stringify(summary).includes(secret));
   value.diagnostics.animationSnapshots = [observation(secret)];
   assert.equal(responsiveProgressSummary(fixture(value).identity).animationSnapshots, undefined);
+});
+
+test('session-loss retry classifier is mandatory and unfiltered in the verifier registry',()=>{
+ const registry=JSON.parse(fs.readFileSync(new URL('../ci/inkwave-test-suites.json',import.meta.url),'utf8'));
+ const verify=suites=>{const steps=suites.verifier?.steps||[],name='scripts/tests/inkwave-responsive-session-retry.test.mjs';const matches=steps.filter(x=>Array.isArray(x.args)&&x.args.includes(name));assert.equal(matches.length,1);const s=matches[0];assert.equal(s.program,'node');assert.ok(s.args.includes('--test'));assert.equal(s.args.filter(x=>x===name).length,1);assert.ok(!s.args.some(x=>/^(?:--test-name-pattern|--test-skip-pattern|--test-only)/.test(x)));};
+ verify(registry);
+ for(const mutate of [s=>s.args=s.args.filter(x=>x!=='scripts/tests/inkwave-responsive-session-retry.test.mjs'),s=>s.program='echo',s=>s.args.push('--test-name-pattern=none'),s=>s.args.push('--test-skip-pattern=all'),s=>s.args.push('--test-only')]){const broken=structuredClone(registry),step=broken.verifier.steps.find(x=>x.args?.includes('scripts/tests/inkwave-responsive-session-retry.test.mjs'));mutate(step);assert.throws(()=>verify(broken));}
 });
