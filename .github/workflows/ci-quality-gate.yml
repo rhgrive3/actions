@@ -53,6 +53,9 @@ jobs:
           printf 'Expected source: %s\nActual checkout: %s\n' "$EXPECTED_SOURCE_SHA" "$actual_source_sha"
           test "$actual_source_sha" = "$EXPECTED_SOURCE_SHA"
 
+      - name: Verify workflow YAML syntax and duplicate keys before expensive tests
+        run: ruby scripts/ci/check-workflow-yaml.rb .github/workflows
+
       - name: Determine game quality scope
         id: scope
         env:
@@ -75,6 +78,14 @@ jobs:
       - if: steps.scope.outputs.relevant == 'true'
         name: Verify shared test suite runner
         run: npm run test:ci-config
+
+      - if: steps.scope.outputs.relevant == 'true'
+        name: Prove recurrence guards reject broken YAML and adapter anchors
+        run: node --test scripts/tests/inkwave-ci-recurrence-guards.test.mjs
+
+      - if: steps.scope.outputs.relevant == 'true'
+        name: Preflight the exact production source adapter chain before heavy checks
+        run: node scripts/ci/check-composition-preflight.mjs
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Verify immutable CI source admission contracts
