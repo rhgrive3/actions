@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';
 import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
-import { mapResponsiveCases, spawnResponsiveCase } from './lib/inkwave-responsive-child-pool.mjs';
+import { mapResponsiveCases, spawnResponsiveCase } from './ci/inkwave-responsive-child-pool.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => {
