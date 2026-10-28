@@ -79,7 +79,7 @@ function allocPiece(idx) {
     p = { type: 0, ax: 0, ay: 0, bx: 0, by: 0, ra: 0, rb: 0, x: 0, y: 0, radius: 0, ux: 0, uy: 0, el: 0, x0: 0, yTop: 0, len: 0, w: 0, h2: 0, k: 0, r: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
     _ancillaryPiecePool[idx] = p;
   }
-  _ancillaryPieces.push(p);
+  _ancillaryPieces[idx] = p;
   return p;
 }
 
@@ -129,7 +129,6 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const r = Math.sqrt(r2), fall = clamp(r / Math.max(R, 1e-3), 0, 1);
   const kind = g.kind, [rayCount, satelliteCount, spatterCount, dripCount] = counts(kind, contract.shapes);
   if (rayCount + satelliteCount + spatterCount + dripCount === 0) return null;
-  _ancillaryPieces.length = 0;
   let pIdx = 0;
   const seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
   const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
@@ -198,7 +197,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
       p3.minX = x0 - w * 2; p3.maxX = x0 + w * 2; p3.minY = yTop - len - w * 2; p3.maxY = yTop + w * 2;
     }
   }
-  if (!_ancillaryPieces.length) return null;
+  // Retain V8 elements capacity while exposing only the current live prefix.
+  _ancillaryPieces.length = pIdx;
+  if (!pIdx) return null;
   _ancillaryMask.sa = sa; _ancillaryMask.sdu = sdu; _ancillaryMask.sdv = sdv;
   _ancillaryMask.margin = pixel * 1.5; _ancillaryMask.seed = seed; _ancillaryMask.dT = dT;
   return _ancillaryMask;
@@ -402,6 +403,7 @@ function paintOrderComesAfter(paint, nextId, previousId) {
 }
 
 function claimPaintCell(paint, index, value, orderId, orderState = null) {
+  if (paint.level?.native && paint.dead[index]) return false;
   const current = orderId || paint._paintCurrentOrder || 0;
   const previous = paint._paintOwnershipOrder[index] || 0;
   if (current && previous === current) return false;
@@ -456,9 +458,9 @@ function cellCacheSlot(paint, g, n, n2, tn, face, piece) {
   // Only native source stages (many small wall charts) and only once growth
   // can no longer change ray/bead/satellite shapes; drip ticks re-use them.
   if (!paint.level?.native || tn < 1.45 || !face.wall || !g.dripDur || piece.type === 3) return null;
+  const entryStride = g.entryStride === 8 ? 8 : 7, slot = n / entryStride;
   const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);
-  const entry = n / (g.entryStride === 8 ? 8 : 7);
-  const pieces = byEntry[entry] || (byEntry[entry] = []);
+  const pieces = byEntry[slot] || (byEntry[slot] = []);
   return pieces[n2] || (pieces[n2] = { key: null, cells: null });
 }
 function cellCacheKey(key, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
@@ -482,7 +484,7 @@ function sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1
   return true;
 }
 function storeCellCache(cache, cells, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
-  cache.key = cellCacheKey([], face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
+  cache.key = cellCacheKey(cache.key || new Array(35), face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
   cache.cells = cells;
 }
 
@@ -701,10 +703,14 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     if (callOpts !== opts) { delete callOpts.claimOwner; delete callOpts.claimMode; }
     const order = paintOrderId(this, opts.__netOrder,true);
     const previousOrder = this._paintCurrentOrder, previousContext = this._paintOwnerContext;
+    const ctxDepth = this._paintOwnerDepth || 0, ctxPool = this._paintOwnerPool || (this._paintOwnerPool = []);
+    const ctx = ctxPool[ctxDepth] || (ctxPool[ctxDepth] = { owner: null, mode: 0, order: 0, accepted: false });
+    ctx.owner = owner; ctx.mode = mode; ctx.order = order; ctx.accepted = false;
+    this._paintOwnerDepth = ctxDepth + 1;
     this._paintCurrentOrder = order;
-    this._paintOwnerContext = { owner, mode, order, accepted: false };
+    this._paintOwnerContext = ctx;
     try { return nativeSplat.call(this, center, radius, team, callOpts); }
-    finally { this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext; }
+    finally { ctx.owner = null; this._paintOwnerDepth = ctxDepth; this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext; }
   };
 
   proto._advanceSplatOwnership = function issue264AdvanceOwnership(g, phase, dripPhase) {
@@ -727,6 +733,7 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     this._hiddenPaintGrowth = null;
     this._hiddenPaintInsertions = 0;
     this._paintOwnerContext = null;
+    this._paintOwnerDepth = 0;
     this._paintCurrentOrder = 0;
   };
   proto.useFixedPaintClock = function issue264UseFixedPaintClock() {
