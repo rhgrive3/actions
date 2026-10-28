@@ -170,15 +170,15 @@ export function installChargerFlight(api,completion) {
     return Number.isFinite(out.x) && Number.isFinite(out.y) && Number.isFinite(out.z) &&
       out.distanceToSquared(keepBody) <= 2.5 && G.physics.los(keepBody, out);
   }
+  const _chargerMuzzleOut = new THREE.Vector3(), _chargerAimOut = new THREE.Vector3(), _chargerKept = new THREE.Vector3();
   P.fireCharger=function(actor,w,charge){
-    const muzzleMethod=this._muzzle,muzzleOut=new THREE.Vector3(),muzzle=muzzleMethod.call(this,actor,muzzleOut);
-    const origin=muzzleMethod===nativeMuzzle&&muzzle===muzzleOut?muzzleOut:muzzle.clone();
+    const muzzleMethod=this._muzzle,muzzle=muzzleMethod.call(this,actor,_chargerMuzzleOut);
+    const origin=muzzleMethod===nativeMuzzle&&muzzle===_chargerMuzzleOut?_chargerMuzzleOut:muzzle.clone();
     if (actor.weaponRunner?.s3KeepMuzzleFiring) {
-      const kept = new THREE.Vector3();
-      if (resolveKeepOrigin(actor, kept)) origin.copy(kept);
+      if (resolveKeepOrigin(actor, _chargerKept)) origin.copy(_chargerKept);
     }
-    const aimMethod=this._aimFrom,aimOut=new THREE.Vector3(),aim=aimMethod.call(this,actor,origin,aimOut);
-    const dir=aimMethod===nativeAimFrom&&aim===aimOut?aimOut:aim.clone();
+    const aimMethod=this._aimFrom,aim=aimMethod.call(this,actor,origin,_chargerAimOut);
+    const dir=aimMethod===nativeAimFrom&&aim===_chargerAimOut?_chargerAimOut:aim.clone();
     begin(this,actor,w,charge,origin,dir);
   };
   P.ghostFire=function(actor,event){
@@ -267,7 +267,14 @@ export function installChargerFlight(api,completion) {
         job.moved.set(job.pos.x-(actor.pos.x-motion.x0)*fraction,job.pos.y-(actor.pos.y-motion.y0)*fraction,job.pos.z-(actor.pos.z-motion.z0)*fraction);
         end=job.moved;
       }else job.base.copy(actor.pos);
-      const t=capsuleEntry(job.prev,end,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
+      const bodyRadius=hurtboxRadius(actor,PLAYER);
+      const reach=bodyRadius+(collision.InitRadiusForPlayer>collision.EndRadiusForPlayer?collision.InitRadiusForPlayer:collision.EndRadiusForPlayer)+1e-4;
+      const px0=job.prev.x,pz0=job.prev.z,px1=end.x,pz1=end.z;
+      const segMinX=(px0<px1?px0:px1)-reach,segMaxX=(px0>px1?px0:px1)+reach;
+      const segMinZ=(pz0<pz1?pz0:pz1)-reach,segMaxZ=(pz0>pz1?pz0:pz1)+reach;
+      const bx=job.base.x,bz=job.base.z;
+      if(bx<segMinX||bx>segMaxX||bz<segMinZ||bz>segMaxZ)continue;
+      const t=capsuleEntry(job.prev,end,job.base,bodyRadius,hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(chargerActorBeforeStop(t,length,distance)){
         const row=lease.rows[actors.length]||=( {actor:null,d:0} );row.actor=actor;row.d=t*length;actors.push(row);
