@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {execFileSync} from 'node:child_process';import {CASES,classifyTransition,installTrace,validateGestures,secureBrowserOptions,assertInputHash,finalizeDiagnostic,closeDiagnosticOwners,boundedAction,orderedFrames,harnessIdentity,run} from '../check-inkwave-charger-reticle-native.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {execFileSync} from 'node:child_process';import {CASES,classifyTransition,installTrace,validateGestures,secureBrowserOptions,assertInputHash,finalizeDiagnostic,closeDiagnosticOwners,boundedAction,orderedFrames,harnessIdentity,actionBudget,clickTimeout,checkpointSnapshot,saveFailureEvidence,run} from '../check-inkwave-charger-reticle-native.mjs';
 const normal=CASES[0],scoped=CASES[1];const before=c=>({time:1,gameTime:1,matchState:'playing',paused:false,menu:null,weapon:c.source,hudWeapon:c.source,runnerCharging:true,charge:1,chargingCache:true,scopeCache:1,scopeComputedOpacity:1,scopeSemanticFamily:'charger',scopeSemanticConfigured:true,scopeExpectedFactor:1,chargingClass:true,scoped:true,chargeElement:1});const after=(c,shown)=>({time:3,gameTime:3,matchState:'playing',paused:false,menu:null,weapon:c.target,hudWeapon:c.target,runnerCharging:true,charge:1,chargingCache:true,scopeCache:1,scopeComputedOpacity:1,scopeSemanticFamily:'charger',scopeSemanticConfigured:true,scopeExpectedFactor:1,chargingClass:shown,scoped:shown,chargeElement:2});
 const fullSequence=(c,shown)=>{const b=before(c),a=after(c,shown);return [b,{...b,time:2,gameTime:2},a,{...a,time:4,gameTime:4}];};
 for(const c of [normal,scoped])test(c.name+' rAF results remain inconclusive about the first rebuild',()=>{
@@ -66,4 +66,22 @@ test('truncated bounded history cannot report class-present even if retained tai
 test('target HUD readiness never gates on cached charge or scope state',()=>{
  const s=fs.readFileSync(new URL('../check-inkwave-charger-reticle-native.mjs',import.meta.url),'utf8');const at=s.indexOf("'target HUD owner'"),start=s.lastIndexOf('await bounded',at),expr=s.slice(start,at);assert.ok(at>0);assert.doesNotMatch(expr,/chargingCache|L\.charging|L\.scope|_L\?\.scope/);
  const c=scoped,q=fullSequence(c,false);q[3].chargingCache=false;q[3].scopeCache=0;assert.equal(classifyTransition(q,c).observation,'class-missing');
+});
+
+test('critical click timeout leaves time in shared deadline and never extends it',()=>{assert.equal(actionBudget(()=>180000),165000);assert.equal(clickTimeout(()=>180000),20000);assert.equal(clickTimeout(()=>19321),4321);assert.throws(()=>clickTimeout(()=>15000),/evidence reserve/);assert.throws(()=>clickTimeout(()=>{throw Error('expired');}),/expired/);});
+test('critical controls are checkpointed before real clicks and failures preserve evidence',()=>{
+ const s=fs.readFileSync(new URL('../check-inkwave-charger-reticle-native.mjs',import.meta.url),'utf8');
+ for(const bit of ["await checkpoint(label,selector)","page.locator(selector).click({timeout:clickTimeout(remaining)})","row.failureTrace=await observe('failure trace'","row.failureImage={file,sha256:hash(bytes)","deadline=Date.now()+180000","'entry-'+id","'source-tab'","'source-weapon'","label+'-canvas'","'target-tab'","'target-weapon'"])assert.ok(s.includes(bit),bit);
+ assert.doesNotMatch(s,/force:\s*true|dispatchEvent\(|setWeapon\(/);
+ const snapshot=checkpointSnapshot.toString();for(const bit of ['elementsFromPoint','getBoundingClientRect','getComputedStyle','availableIds','recentEvents','recentFrames'])assert.ok(snapshot.includes(bit),bit);
+});
+
+test('failure evidence attempts independent reads, preserves errors, and respects deadline',async()=>{
+ const row={name:'case',currentAction:{selector:'#game-canvas'}},calls=[];let saved=0;
+ const page={evaluate:async(fn)=>{calls.push('evaluate');if(calls.length===1)throw Error('snapshot broke');return {frames:[1]};},screenshot:async()=>{calls.push('screenshot');return Buffer.from('png');},close:async()=>{calls.push('close');}};
+ await saveFailureEvidence({page,row,deadline:Date.now()+1000,out:'/tmp',save:()=>saved++,limit:30});
+ assert.match(row.failureSnapshotError,/snapshot broke/);assert.deepEqual(row.failureTrace,{frames:[1]});assert.equal(row.failureImage.bytes,3);assert.equal(saved,3);assert.deepEqual(calls,['evaluate','evaluate','screenshot']);
+ const dead={name:'dead',currentAction:{selector:'#x'}};calls.length=0;await saveFailureEvidence({page,row:dead,deadline:Date.now()-1,out:'/tmp',save:()=>{},limit:10});assert.ok(dead.failureSnapshotError&&dead.failureTraceError&&dead.failureImageError);assert.ok(!calls.includes('evaluate')&&!calls.includes('screenshot'));assert.ok(calls.includes('close'));
+ const hung={name:'hung',currentAction:{selector:'#x'}};let n=0;const hungPage={...page,evaluate:()=>++n===1?new Promise(()=>{}):Promise.resolve('trace'),screenshot:async()=>{throw Error('screenshot broke');}};
+ await saveFailureEvidence({page:hungPage,row:hung,deadline:Date.now()+1000,out:'/tmp',save:()=>{},limit:10});assert.match(hung.failureSnapshotError,/Deadline exceeded/);assert.equal(hung.failureTrace,'trace');assert.match(hung.failureImageError,/screenshot broke/);
 });

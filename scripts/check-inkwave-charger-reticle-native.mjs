@@ -7,7 +7,7 @@ import path from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {hash,verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
-import {enterRangeFromMenu,rangeMenuControlReady} from './lib/inkwave-range-menu-entry.mjs';
+import {rangeMenuControlReady} from './lib/inkwave-range-menu-entry.mjs';
 
 export const CASES=Object.freeze([
  {name:'normal',source:'charger',target:'s3-charger-quick',scope:false},
@@ -23,6 +23,21 @@ export function orderedFrames(samples){
  if(!Array.isArray(samples)||samples.some(s=>!Number.isFinite(s?.time)))return null;
  return samples.map((s,index)=>({s,index})).sort((a,b)=>a.s.time-b.s.time||a.index-b.index).map(x=>x.s);
 }
+// A failed action must leave time within the shared case deadline to preserve evidence.
+export function actionBudget(remaining){const budget=remaining()-15000;if(budget<=0)throw Error('Insufficient time: preserve failure evidence reserve');return budget;}
+export function clickTimeout(remaining){return Math.min(20000,actionBudget(remaining));}
+// Read-only and bounded: identify the actual control, its ancestors and hit stack.
+export function checkpointSnapshot(selector){
+ const g=window.__inkwave,G=window.__G,root=g?.menus?._scr?.el,nodes=[...document.querySelectorAll(selector)],el=nodes[0],trace=window.__chargerDiagnosticTrace;
+ const describe=e=>e?{tag:e.tagName,id:e.id||null,dataId:e.getAttribute?.('data-id')||null,className:typeof e.className==='string'?e.className:null}:null;
+ const rect=el?.getBoundingClientRect(),box=rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height,right:rect.right,bottom:rect.bottom}:null;
+ const x=rect?.left+rect?.width/2,y=rect?.top+rect?.height/2,inside=Number.isFinite(x)&&Number.isFinite(y)&&x>=0&&y>=0&&x<innerWidth&&y<innerHeight;
+ const ancestors=[];for(let n=el;n&&ancestors.length<12;n=n.parentElement){const cs=getComputedStyle(n);ancestors.push({...describe(n),display:cs.display,visibility:cs.visibility,opacity:cs.opacity,pointerEvents:cs.pointerEvents,inert:!!n.inert,hidden:!!n.hidden,scrollTop:n.scrollTop,clientHeight:n.clientHeight,scrollHeight:n.scrollHeight});}
+ const ids=[...(root||document).querySelectorAll('[data-id]')];
+ return {selector,count:nodes.length,target:describe(el),connected:!!el?.isConnected,disabled:!!el?.disabled,hidden:!!el?.hidden,box,viewport:{width:innerWidth,height:innerHeight},center:inside?{x,y}:null,hitStack:inside?document.elementsFromPoint(x,y).slice(0,12).map(describe):[],ancestors,
+  menu:g?.menus?.current??null,screen:g?.menus?._scr?.name??null,screenConnected:!!root?.isConnected,screenInert:!!root?.inert,weapon:G?.local?.weaponId??null,paused:!!G?.match?.paused,matchState:G?.match?.state??null,tab:document.querySelector('.iwr-tab.is-on')?.dataset.tab??null,filter:document.querySelector('.iwr-filter.is-on')?.dataset.cat??null,availableIdCount:ids.length,availableIds:ids.slice(0,200).map(e=>e.dataset.id),
+  trace:trace?{eventCount:trace.eventCount,frameCount:trace.frameCount,recentEvents:trace.events.slice(-20),recentFrames:trace.frames.slice(-5),scopeModuleError:trace.scopeModuleError}:null};
+}
 export function secureBrowserOptions(){return {headless:true,chromiumSandbox:true,args:['--disable-dev-shm-usage']};}
 export function assertInputHash(manifest){assert.equal(hash(JSON.stringify(manifest.files)),manifest.inputHash,'Build input manifest hash mismatch');}
 export async function withTimeout(action,ms,label){let timer;try{return await Promise.race([Promise.resolve().then(action),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Deadline exceeded: '+label)),ms);})]);}finally{clearTimeout(timer);}}
@@ -30,6 +45,13 @@ export async function boundedAction(action,remaining,onTimeout,label){
  const ms=remaining();let timer;
  try{return await Promise.race([Promise.resolve().then(()=>{remaining();return action();}),new Promise((_,reject)=>{timer=setTimeout(()=>{try{onTimeout();}catch{}reject(Error('Native Charger diagnostic deadline: '+label));},ms);})]);}
  finally{clearTimeout(timer);}
+}
+// Best-effort readback does not replace the primary action failure. No new input.
+export async function saveFailureEvidence({page,row,deadline,out,save,limit=5000}){
+ const observe=async(label,fn)=>{const left=deadline-Date.now();if(left<=0){page.close({runBeforeUnload:false}).catch(()=>{});throw Error('case deadline elapsed before '+label);}return withTimeout(fn,Math.min(limit,left),label);};
+ if(row.currentAction?.selector)try{row.failureSnapshot=await observe('failure snapshot',()=>page.evaluate(checkpointSnapshot,row.currentAction.selector));}catch(e){row.failureSnapshotError=String(e);}save();
+ try{row.failureTrace=await observe('failure trace',()=>page.evaluate(()=>{const t=window.__chargerDiagnosticTrace;if(!t)return null;t.stopped=true;return t;}));}catch(e){row.failureTraceError=String(e);}save();
+ try{const file=row.name+'-failure.png',bytes=await observe('failure screenshot',()=>page.screenshot({path:path.join(out,file),timeout:Math.min(limit,Math.max(1,deadline-Date.now()))}));row.failureImage={file,sha256:hash(bytes),bytes:bytes.length};}catch(e){row.failureImageError=String(e);}save();
 }
 export async function closeDiagnosticOwners({browser,server},errors,timeout=10000){
  const result={browserClosed:false,serverClosed:false};
@@ -119,43 +141,71 @@ export async function run({site,root,sha,out}){
   server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://local'),file=path.resolve(site,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!file.startsWith(site+path.sep)||!fs.statSync(file).isFile())throw Error('unknown artifact');const key=path.relative(site,file).split(path.sep).join('/'),bytes=fs.readFileSync(file);if(hash(bytes)!==manifest.artifacts[key])throw Error('artifact mismatch');if(key===scopeKey)result.scopeModule.served=true;res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(bytes);}catch{res.writeHead(404);res.end();}});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const {chromium}=await import('playwright');const browserOptions=secureBrowserOptions();result.browserLaunch=browserOptions;save();browser=await chromium.launch(browserOptions);result.browser=browser.version();
   for(const c of CASES){
-   const row={...c,status:'running',contextClosed:false};result.cases.push(row);save();const context=await browser.newContext({viewport:{width:960,height:720},deviceScaleFactor:1});let primary,page;
+   const row={...c,status:'running',contextClosed:false};result.cases.push(row);save();const context=await browser.newContext({viewport:{width:960,height:720},deviceScaleFactor:1});let primary,page,deadline=0;
    try{
-    page=await context.newPage();const deadline=Date.now()+180000;const remaining=()=>{const n=deadline-Date.now();if(n<=0)throw Error('Native Charger diagnostic deadline exceeded');return n;};
+    page=await context.newPage();deadline=Date.now()+180000;const remaining=()=>{const n=deadline-Date.now();if(n<=0)throw Error('Native Charger diagnostic deadline exceeded');return n;};
     const bounded=(fn,label)=>boundedAction(fn,remaining,()=>{page.close({runBeforeUnload:false}).catch(()=>{});},label);
     await page.addInitScript(installTrace);page.on('pageerror',e=>result.errors.push('page: '+e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push('console: '+m.text());});
-    row.entry=await bounded(()=>enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:remaining()}),'range entry');
+    row.checkpoints=[];row.phases=[];
+    const timed=async(label,fn)=>{const phase={label,startedMs:180000-remaining()};row.phases.push(phase);save();try{return await fn();}catch(e){phase.error=String(e);throw e;}finally{phase.endedMs=Date.now()-(deadline-180000);save();}};
+    const checkpoint=async(label,selector)=>timed('checkpoint '+label,async()=>{
+     const item={label,...await bounded(()=>page.evaluate(checkpointSnapshot,selector),'snapshot '+label)};row.checkpoints.push(item);save();
+     const file=c.name+'-'+label+'.png',bytes=await bounded(()=>page.screenshot({path:path.join(out,file),timeout:clickTimeout(remaining)}),'screenshot '+label);
+     item.image={file,sha256:hash(bytes),bytes:bytes.length};save();
+    });
+    const click=async(label,selector,menu)=>{
+     row.currentAction={label,selector,menu};save();
+     if(menu)await timed(label+' readiness',()=>bounded(()=>page.waitForFunction(rangeMenuControlReady,{selector,menu},{timeout:clickTimeout(remaining)}),label+' readiness'));
+     await checkpoint(label,selector);
+     await timed(label+' click',()=>bounded(()=>page.locator(selector).click({timeout:clickTimeout(remaining)}),label+' click'));
+     row.currentAction=null;save();
+    };
+    // Same native entry and readiness guard as enterRangeFromMenu, with evidence
+    // before each click and a capped action deadline. No forced or synthetic input.
+    row.entry={route:['main'],gestures:[]};
+    await timed('load',()=>bounded(()=>page.goto('http://127.0.0.1:'+server.address().port+'/?skipTitle',{timeout:actionBudget(remaining)}),'load'));
+    await timed('main readiness',()=>bounded(()=>page.waitForFunction(()=>window.__inkwave?.menus?.current==='main',null,{timeout:actionBudget(remaining)}),'main readiness'));
+    for(const [id,menu,next] of [['play','main','mode'],['mode-range','mode',null]]){
+     const selector=`.iw-ui [data-id="${id}"]`,before=await bounded(()=>page.evaluate(()=>window.__chargerDiagnosticTrace?.eventCount??0),'entry event count');
+     await click('entry-'+id,selector,menu);
+     const observed=await bounded(()=>page.evaluate(({before,id})=>{const t=window.__chargerDiagnosticTrace;return {eventCount:t.eventCount,retained:t.events.length,gesture:t.events.slice(before).find(e=>e.type==='click'&&e.id===id&&e.trusted)||null};},{before,id}),'entry trusted event');
+     if(observed.eventCount>observed.retained||!observed.gesture)throw Error('Range entry requires trusted menu input: '+id);
+     row.entry.gestures.push(observed.gesture);save();
+     if(next){await timed('mode readiness',()=>bounded(()=>page.waitForFunction(expected=>window.__inkwave?.menus?.current===expected,next,{timeout:actionBudget(remaining)}),'mode readiness'));row.entry.route.push(next);save();}
+    }
+    await timed('range readiness',()=>bounded(()=>page.waitForFunction(()=>window.__G?.match?.range&&window.__G.match.state==='playing',null,{timeout:actionBudget(remaining)}),'range readiness'));row.entry.route.push('range');save();
     // Start the bounded observation window only after trusted range entry.
     // This resets our own trace buffers, never game/DOM/input state.
     await bounded(()=>page.evaluate(()=>{const t=window.__chargerDiagnosticTrace;t.events=[];t.eventCount=0;t.frames=[];t.frameCount=0;}),'begin trace window');row.traceWindow='after trusted range entry through target release';save();
     const select=async id=>{
      await bounded(()=>page.keyboard.press('KeyP'),'pause');const tab='.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]';
-     await bounded(()=>page.waitForFunction(rangeMenuControlReady,{selector:tab,menu:'pause'},{timeout:remaining()}),'weapon tab readiness');await bounded(()=>page.locator(tab).click({timeout:remaining()}),'weapon tab');
+     await click('source-tab',tab,'pause');
      const selector=`.iwr-pausescr:not(.is-leaving) [data-id="w-${id}"]`;
-     await bounded(()=>page.waitForFunction(rangeMenuControlReady,{selector,menu:'pause'},{timeout:remaining()}),'weapon readiness');await bounded(()=>page.locator(selector).click({timeout:remaining()}),'select '+id);
-     await bounded(()=>page.waitForFunction(id=>window.__G?.local?.weaponId===id&&window.__G?.match?.state==='playing'&&!window.__G?.match?.paused&&!window.__inkwave?.menus?.current,id,{timeout:remaining()}),'weapon resume');
+     await click('source-weapon',selector,'pause');
+     await timed('source weapon resume',()=>bounded(()=>page.waitForFunction(id=>window.__G?.local?.weaponId===id&&window.__G?.match?.state==='playing'&&!window.__G?.match?.paused&&!window.__inkwave?.menus?.current,id,{timeout:actionBudget(remaining)}),'weapon resume'));
     };
-    const fire=async()=>{await bounded(()=>page.locator('canvas').first().click({timeout:remaining()}),'canvas click');await bounded(()=>page.mouse.down(),'hold fire');await bounded(()=>page.waitForFunction(()=>window.__G?.local?.weaponRunner?.charging&&window.__G.local.weaponRunner.charge>=.99,null,{timeout:remaining()}),'full charge');const t=await bounded(()=>page.evaluate(()=>window.__G?.time),'read full-charge clock');await bounded(()=>page.waitForFunction(t=>Number.isFinite(window.__G?.time)&&window.__G.time>t,t,{timeout:remaining()}),'one natural full-charge frame');};
-    await select(c.source);await fire();row.before=await page.evaluate(()=>{const g=window.__inkwave,a=window.__G?.local;return{weapon:a?.weaponId,charge:a?.weaponRunner?.charge,charging:a?.weaponRunner?.charging,hudWeapon:g?.hud?._L?.weapon,cache:g?.hud?._L?.charging,scope:g?.hud?._L?.scope,className:g?.hud?.ret?.className};});
-    const beforeImage=await bounded(()=>page.screenshot({path:path.join(out,c.name+'-before.png'),timeout:remaining()}),'before screenshot');row.images=[{file:c.name+'-before.png',sha256:hash(beforeImage),bytes:beforeImage.length}];
+    const fire=async(label)=>{await click(label+'-canvas','#game-canvas',null);await bounded(()=>page.mouse.down(),'hold fire');await timed(label+' full charge',()=>bounded(()=>page.waitForFunction(()=>window.__G?.local?.weaponRunner?.charging&&window.__G.local.weaponRunner.charge>=.99,null,{timeout:actionBudget(remaining)}),'full charge'));const t=await bounded(()=>page.evaluate(()=>window.__G?.time),'read full-charge clock');await bounded(()=>page.waitForFunction(t=>Number.isFinite(window.__G?.time)&&window.__G.time>t,t,{timeout:actionBudget(remaining)}),'one natural full-charge frame');};
+    await select(c.source);await fire('source');row.before=await page.evaluate(()=>{const g=window.__inkwave,a=window.__G?.local;return{weapon:a?.weaponId,charge:a?.weaponRunner?.charge,charging:a?.weaponRunner?.charging,hudWeapon:g?.hud?._L?.weapon,cache:g?.hud?._L?.charging,scope:g?.hud?._L?.scope,className:g?.hud?.ret?.className};});
+    const beforeImage=await bounded(()=>page.screenshot({path:path.join(out,c.name+'-before.png'),timeout:clickTimeout(remaining)}),'before screenshot');row.images=[{file:c.name+'-before.png',sha256:hash(beforeImage),bytes:beforeImage.length}];
     // Pause while the real fire button is held. Release for the native menu
     // click, then use real fire input again after the selected weapon resumes.
     await bounded(()=>page.keyboard.press('KeyP'),'pause from charge');await bounded(()=>page.mouse.up(),'release for selection');
-    const tab='.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]';await bounded(()=>page.waitForFunction(rangeMenuControlReady,{selector:tab,menu:'pause'},{timeout:remaining()}),'target tab readiness');await bounded(()=>page.locator(tab).click({timeout:remaining()}),'target tab');
-    const selector=`.iwr-pausescr:not(.is-leaving) [data-id="w-${c.target}"]`;await bounded(()=>page.waitForFunction(rangeMenuControlReady,{selector,menu:'pause'},{timeout:remaining()}),'target readiness');await bounded(()=>page.locator(selector).click({timeout:remaining()}),'target select');
-    await bounded(()=>page.waitForFunction(id=>window.__G?.local?.weaponId===id&&!window.__G?.match?.paused&&!window.__inkwave?.menus?.current,c.target,{timeout:remaining()}),'target resume');await fire();
-    await bounded(()=>page.waitForFunction(id=>window.__G?.local?.weaponId===id&&window.__inkwave?.hud?._L?.weapon===id,c.target,{timeout:remaining()}),'target HUD owner');
+    const tab='.iwr-pausescr:not(.is-leaving) [data-id="r-tab-weapon"]';await click('target-tab',tab,'pause');
+    const selector=`.iwr-pausescr:not(.is-leaving) [data-id="w-${c.target}"]`;await click('target-weapon',selector,'pause');
+    await timed('target resume',()=>bounded(()=>page.waitForFunction(id=>window.__G?.local?.weaponId===id&&!window.__G?.match?.paused&&!window.__inkwave?.menus?.current,c.target,{timeout:actionBudget(remaining)}),'target resume'));await fire('target');
+    await bounded(()=>page.waitForFunction(id=>window.__G?.local?.weaponId===id&&window.__inkwave?.hud?._L?.weapon===id,c.target,{timeout:actionBudget(remaining)}),'target HUD owner');
     const observedTime=await bounded(()=>page.evaluate(()=>window.__G?.time),'read observation clock');
-    await bounded(()=>page.waitForFunction(t=>Number.isFinite(window.__G?.time)&&window.__G.time>t,observedTime,{timeout:remaining()}),'next natural observation frame');
+    await bounded(()=>page.waitForFunction(t=>Number.isFinite(window.__G?.time)&&window.__G.time>t,observedTime,{timeout:actionBudget(remaining)}),'next natural observation frame');
     row.visualEvidence=await bounded(()=>page.evaluate(()=>{const h=window.__inkwave?.hud;const inspect=e=>{if(!e||!e.isConnected)return null;const rect=e.getBoundingClientRect();let opacity=1,shown=true;for(let n=e;n;n=n.parentElement){const cs=getComputedStyle(n);opacity*=Number(cs.opacity);if(cs.display==='none'||cs.visibility==='hidden'||cs.visibility==='collapse')shown=false;}return {x:rect.x,y:rect.y,width:rect.width,height:rect.height,opacity,shown,intersectsViewport:rect.right>0&&rect.bottom>0&&rect.left<innerWidth&&rect.top<innerHeight};};return {ring:inspect(h?._chargeEl),reticle:inspect(h?.ret),scope:inspect(h?.scopeMask),note:'Layout/style evidence only; occlusion and rendered pixels are not established.'};}),'read visual evidence');
-    const afterImage=await bounded(()=>page.screenshot({path:path.join(out,c.name+'-after.png'),timeout:remaining()}),'after screenshot');row.images.push({file:c.name+'-after.png',sha256:hash(afterImage),bytes:afterImage.length});await bounded(()=>page.mouse.up(),'release fire');
+    const afterImage=await bounded(()=>page.screenshot({path:path.join(out,c.name+'-after.png'),timeout:clickTimeout(remaining)}),'after screenshot');row.images.push({file:c.name+'-after.png',sha256:hash(afterImage),bytes:afterImage.length});await bounded(()=>page.mouse.up(),'release fire');
     const trace=await page.evaluate(()=>{const t=window.__chargerDiagnosticTrace;t.stopped=true;if(t.frameCount>t.frames.length){const i=t.frameCount%t.frames.length;t.frames=t.frames.slice(i).concat(t.frames.slice(0,i));}return t;});
     row.scopeModuleError=trace.scopeModuleError;row.frameCount=trace.frameCount;row.eventCount=trace.eventCount;row.eventHistoryStatus=trace.eventCount>trace.events.length?'raw-history-truncated':'complete';row.trusted=trace.events.filter(e=>e.trusted);row.gesturesValid=row.eventHistoryStatus==='complete'&&validateGestures(trace.events,c);
     // Preserve real frame timing. Classify only a transition actually observed
     // in the same uninterrupted trace; no synthetic cache or render timing.
     row.classification=classifyTransition(trace.frames,{...c},trace.frameCount);row.classification.firstObservedTarget=orderedFrames(trace.frames)?.find(s=>s.hudWeapon===c.target&&s.weapon===c.target)??null;
     if(!row.gesturesValid)throw Error('Native input trust evidence incomplete');row.status=row.classification.status;row.frames=trace.frames;row.events=trace.events;
-   }catch(e){primary=e;row.error=String(e.stack||e);if(page)try{row.failureTrace=await withTimeout(()=>page.evaluate(()=>{const t=window.__chargerDiagnosticTrace;if(!t)return null;t.stopped=true;return t;}),2000,'failure trace');}catch(traceError){row.failureTraceError=String(traceError);}throw e;}finally{try{await withTimeout(()=>context.close(),10000,'context cleanup');row.contextClosed=true;}catch(e){result.errors.push('context cleanup: '+String(e));if(!primary)throw e;}finally{save();}}
+    }catch(e){primary=e;row.error=String(e.stack||e);save();
+    if(page)await saveFailureEvidence({page,row,deadline,out,save});throw e;}finally{try{await withTimeout(()=>context.close(),10000,'context cleanup');row.contextClosed=true;}catch(e){result.errors.push('context cleanup: '+String(e));if(!primary)throw e;}finally{save();}}
   }
   if(result.errors.length)throw Error('Native diagnostic emitted errors: '+result.errors.join('; '));
   result.uiStatus=result.cases.every(c=>c.classification?.observation==='class-present')?'classes-present':result.cases.some(c=>c.classification?.observation==='class-missing')?'classes-missing':'inconclusive';

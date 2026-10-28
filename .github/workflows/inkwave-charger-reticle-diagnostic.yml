@@ -1,7 +1,7 @@
 name: INKWAVE Charger reticle native diagnostic
 on:
   push:
-    branches: ['diagnostic/charger-reticle-20261028']
+    branches: ['diagnostic/charger-reticle-evidence-20261028']
     paths:
       - '.github/workflows/inkwave-charger-reticle-diagnostic.yml'
       - 'scripts/check-inkwave-charger-reticle-native.mjs'
