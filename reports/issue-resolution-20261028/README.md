@@ -140,3 +140,5 @@ root shard0の別失敗はKrakenの`attacker-life-change-keeps-committed-hit`。
 19:03 UTCの[ownerのスコープ記録](https://github.com/rhgrive3/actions/pull/1907#issuecomment-6478009679)は、`MOV-08b`のcharacter-model最適化を含む間は#1907全体をマージ保留とし、元PRと部分作業の保持を求めている。これを不具合認定やマージ許可に読み替えず、#1908の独立CI修正を続行する。両PRへの修正反映と検証はmainへのマージとは別であり、当作業はmainをマージしていない。
 
 19:40 UTC時点ではrootの全8shardが完了し、0/5だけが同じKraken fixtureで失敗、ほか6shardは成功。catalog以外のbrowser6系統、resource、seven-claimsも成功した。catalogのWiperは実行中で、全体の成功を主張しない。[新規失敗のjob別対応表](new-ci-failures.json)は初回の過去1,002失敗jobと区別する。次の反映バッチはfixture・admission・記録のみで、製品入力と配布byteを変更しない。
+
+19:42 UTC追記: 固定headのcatalog/Wiperは両側とも成功（root job `123034976366`、最適化 job `123035443236`）。Wiper step48はそれぞれ19:41:26 / 19:41:24 UTCに完了した。最適化shard5 `123035443313`の唯一の失敗も同じKraken fixtureであり、同じ共有修正を再利用する。新headの正式CI受入とは区別する。

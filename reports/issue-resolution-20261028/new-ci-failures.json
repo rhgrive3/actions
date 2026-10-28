@@ -1,6 +1,6 @@
 {
   "repository": "rhgrive3/actions",
-  "observed_at_utc": "2026-10-28T19:35:11.025103+00:00",
+  "observed_at_utc": "2026-10-28T19:44:00Z",
   "scope": "new primary failures during this session, separate from initial1002historicalfailedjobarchive; secondary cancellation/evidence failures are not independent gameplay causes",
   "primary_failed_jobs": [
     {
@@ -62,6 +62,16 @@
       "fix": "3f855091782d734c48198a171fdc88849213d96f",
       "followup": "source/emitted32/32 plus independent review; nextsource hosted pending",
       "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747849465/job/123034976587"
+    },
+    {
+      "pr": 1907,
+      "source": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+      "run": 40747856613,
+      "job": 123035443313,
+      "cause": "same Kraken fixture; only unique failure,1568tests1557pass1fail10skip",
+      "fix": "3f855091782d734c48198a171fdc88849213d96f",
+      "followup": "local source/emitted32/32 and independent review pass; original evidence uploaded12845008704; nextsource hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747856613/job/123035443313"
     }
   ],
   "distinct_causes": 4,
