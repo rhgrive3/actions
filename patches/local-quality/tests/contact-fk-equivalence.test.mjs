@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptGroundContactFk} from '../motion-fk-hotpath-adapter.mjs';
@@ -7,14 +8,28 @@ import {replaceOnce} from '../adapter.mjs';
 
 // Reverse only the new contact specialization. Every earlier optimization,
 // source bank, pose coefficient and all unrelated production adapters match.
+const sharedKidRead='invRot=(c.kid.matrixWorld.decompose(this.ccdA,this.groundInvQ,this.ccdB),this.groundForwardQ.copy(this.groundInvQ),this.groundInvQ.invert());';
+const controlKidRead='invRot=(c.kid.getWorldQuaternion(this.groundInvQ),this.groundForwardQ.copy(this.groundInvQ),this.groundInvQ.invert());';
 const beforeContact = (rel, raw) => adaptGroundContactFk(rel,adaptBuildSource(rel,raw),
- (code,before,after,label)=>replaceOnce(code,after,before,'control '+label));
+ (code,before,after,label)=>label==='contact FK: read refreshed kid rotation'
+  ?replaceOnce(code,sharedKidRead,controlKidRead,'control '+label)
+  :replaceOnce(code,after,before,'control '+label));
 const snapshot = ch => JSON.parse(JSON.stringify({
  bones:ch.boneList.map(b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray(),...b.matrixWorld.elements]),
  skin:Array.from(ch.skeleton.boneMatrices),
  feet:ch.sourceMotion.retarget.contacts.map(f=>({locked:f.locked,anchor:f.anchor.toArray(),actual:f.actual.toArray(),slip:f.slip})),
  muzzle:ch.getMuzzle(new ch.root.position.constructor()).toArray(),
 },(_key,value)=>{if(typeof value==='number')assert(Number.isFinite(value));return value;}));
+
+test('contact-only control preserves the later shared forward quaternion and exact ownership',()=>{
+ const rel='src/game/motion/retarget.js',raw=fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
+ const candidate=adaptBuildSource(rel,raw),control=beforeContact(rel,raw);
+ assert.equal(candidate.split(sharedKidRead).length-1,1);
+ assert.equal(control.split(controlKidRead).length-1,1);
+ assert.equal(control.includes(sharedKidRead),false);
+ for(const token of ['this.groundForwardQ=new THREE.Quaternion();','q.copy(this.groundForwardQ).multiply(f.orientation);'])assert.equal(control.split(token).length-1,1);
+ for(const replacement of ['',sharedKidRead+'\n'+sharedKidRead])assert.throws(()=>replaceOnce(candidate.replace(sharedKidRead,replacement),sharedKidRead,controlKidRead,'control contact FK: read refreshed kid rotation'),/expected exactly one connection/);
+});
 
 test('contact branch FK preserves real loaded motion and reduces world matrix calls',async()=>{
  const counts=[0,0],times=[0,0];let comparisons=0;

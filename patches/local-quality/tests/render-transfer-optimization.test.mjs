@@ -26,7 +26,7 @@ test('ring transfer adapter is registered, composed once, and fails closed on ch
   assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/render-transfer-optimization-adapter.mjs'));
   assert.ok(qualityIdentity()['render-transfer-optimization-adapter.mjs']);
   assert.equal(adaptRenderTransfers('src/fx/fx.js', built, replaceOnce), built);
-  assert.ok(built.includes('a === staticAttribute || a._fxStatic'), 'owned static ring streams avoid full-update overwrite');
+  assert.ok(built.includes('a === staticAttribute || a === staticAttribute2 || a._fxStatic'), 'both owned static ring streams avoid full-update overwrite');
   assert.ok(raw.includes('    if (a === staticAttribute) continue;'), 'fixture uses original single-attribute ownership');
   assert.throws(() => adaptRenderTransfers('src/fx/fx.js', raw.replace('    if (a === staticAttribute) continue;', '    if (a.attribute === staticAttribute) continue;'), replaceOnce), /static FX/);
 });
