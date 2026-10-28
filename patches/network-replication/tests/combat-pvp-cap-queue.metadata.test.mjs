@@ -180,7 +180,7 @@ class Stub {
  onLeave(){} dispose(){} bind(){}
 }
 // Explicit synthetic payload policy for cap-only wrappers, not token/native acceptance.
-installCombatProvenance(Stub,{hitPayloadAllowed:d=>Number.isFinite(d?.d)&&d.d>0&&d.d<=500&&['storm','angleShooter'].includes(d.w)&&(d.w!=='angleShooter'||d.d<=40)});
+installCombatProvenance(Stub,{hitPayloadAllowed:d=>Number.isFinite(d?.d)&&d.d>0&&d.d<=500&&['storm','angleShooter'].includes(d.w)&&(d.w!=='angleShooter'||d.d<=40),hitReceiptAllowed:()=>true});
 function claim(nm,h,damage=161){if(++nm.calls>3)throw Error('event budget');nm.onMessage('peer',{k:'hit',m:'m',a:1,v:2,l:0,h,seq:h,w:'storm',d:damage});}
 function tick(nm,time){if(++nm.ticks>2)throw Error('tick budget');clock=time;nm._tick('peer',{k:'t',ts:time,a:[],e:[]});}
 function proof(nm){state(nm).proofs.set('peer',[{actor:1,kind:'special',cause:'storm',at:clock,origin:[0,0,0],unit:[0,0,1],reach:30,uses:0,maxUses:24,key:'metadata'}]);}

@@ -539,7 +539,7 @@ export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allow
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
   return take(nm,from,d,type,t,sprinklerScope,allowPoseFallback);
 }
-function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
+function flush(nm,from,t,oldHit,oldBoss,receiptAllowed,bossReceiptAllowed) {
   const s=state(nm);
   // Admission prunes pending arrays in place. Iterate a detached batch so
   // pruning and synchronous native callbacks cannot skip later live claims.
@@ -562,7 +562,10 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
     // it before consuming another proof; native exact-ID history is authoritative.
     if(item.type==='pvp' && nm.peers?.get(from)?.hitSequences?.has(item.d.h))continue;
     if(item.type==='boss' && item.d.q<=(nm.peers?.get(from)?.lastBossHit??0))continue;
-    if(item.type==='pvp'&&(item.d.w==='sprinkler'||item.d.w==='torpedo-splash')&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
+    // Deferred claims can outlive their victim/attacker life or a replay-window
+    // advance. Recheck the native read-only policy before consuming any proof.
+    const allowed=item.type==='pvp'?receiptAllowed:bossReceiptAllowed;
+    if(typeof allowed!=='function'||!allowed.call(nm,item.d,from))continue;
     if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope,!item.proofOnly)) {still.push(item);continue;}
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
@@ -586,14 +589,14 @@ export function installCombatProvenance(NetMatch,context={}) {
   const oldTick=P._tick,oldHit=P._hit,oldMessage=P.onMessage;
   const oldBoss=P._acceptBossHit,oldLeave=P.onLeave,oldDispose=P.dispose;
   // One callback per installed prototype, not per owner packet.
-  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed);};
+  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);};
   const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
     const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
     if(accepted&&receipt.subId==='torpedo'&&registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler))accepted.nativeTorpedoContact=true;
     if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
-    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed);
+    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
   };
   P._tick=function(from,d) {
     bindSubBirthCommit(this,commitSubBirth);
@@ -604,7 +607,7 @@ export function installCombatProvenance(NetMatch,context={}) {
       sampleLocalHistory(this,t);
       recordContactSnapshots(this,from,d,t);
       record(this,from,d,t);
-      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed);
+      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
     }
     return result;
   };
@@ -616,8 +619,8 @@ export function installCombatProvenance(NetMatch,context={}) {
     // before proof consumption or pending hit-ID reservation. Missing context
     // is fail-closed, never permission to bypass that policy.
     if(typeof context.hitPayloadAllowed!=='function' || !context.hitPayloadAllowed(d))return;
-    if(d.w==='torpedo-splash'&&(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
-    if(d.w==='sprinkler'&&(d.d!==SPRINKLER.dropletDamage||typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
+    if(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from))return;
+    if(d.w==='sprinkler'&&d.d!==SPRINKLER.dropletDamage)return;
     const t=now();
     sampleLocalHistory(this,t);
     // Only incoming remote owner claims are deferred; internally retried
@@ -627,6 +630,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   };
   P.onMessage=function(from,d) {
     if(d?.k==='bhit' && this.isHost) {
+      if(typeof context.bossReceiptAllowed!=='function'||!context.bossReceiptAllowed.call(this,d,from))return;
       const t=now();
       if(combatAdmission(this,from,d,'boss',t)) {
         if(oldBoss?.call(this,from,d))this.match.boss.remoteHit(d);
