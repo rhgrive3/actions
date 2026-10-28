@@ -322,8 +322,9 @@ const game = new Game();`);
       mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
       if (nativeFirstGrowing && mask) {
         const view = nativeView || (nativeView = { pieces: [], sa: 0, sdu: 0, sdv: 0, margin: 0, seed: 0, dT: 0 });
-        view.pieces.length = 0;
-        for (const p of mask.pieces) if (nativePieceHasInterior(mask, p, true)) view.pieces.push(p);
+        let count = 0;
+        for (const p of mask.pieces) if (nativePieceHasInterior(mask, p, true)) view.pieces[count++] = p;
+        view.pieces.length = count;
         if (view.pieces.length) {
           view.sa = mask.sa; view.sdu = mask.sdu; view.sdv = mask.sdv;
           view.margin = mask.margin; view.seed = mask.seed; view.dT = mask.dT;
