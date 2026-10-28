@@ -51,12 +51,6 @@ jobs:
             !/tools/inkwave-modeler/blender/
             !/tools/inkwave-modeler/docs/
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          filter: blob:none
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /*
-            !/tools/inkwave-modeler/blender/
-            !/tools/inkwave-modeler/docs/
       - name: Assert exact alpha source checkout
         env:
           EXPECTED_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
