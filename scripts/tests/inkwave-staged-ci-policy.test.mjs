@@ -127,3 +127,38 @@ test('CI-admission-only edits do not launch redundant three-job weapon validatio
   for (const name of ['numerical-main','browser-origins','roller-grip-comparison'])
     assert.match(weapons,new RegExp('  '+name+':\\n'));
 });
+
+test('specialized CI preserves relevant paths and skips unrelated test/CI-only edits',()=>{
+  function matches(pattern,file){
+    let r='^';for(let i=0;i<pattern.length;i++){
+      const c=pattern[i];
+      if(c==='*'){if(pattern[i+1]==='*'){r+='.*';i++;}else r+='[^/]*';}
+      else if(c==='?')r+='[^/]';
+      else r+=/[a-zA-Z0-9/_-]/.test(c)?c:'\\'+c;
+    }
+    return new RegExp(r+'$').test(file);
+  }
+  function routed(source,file){
+    const section=source.split('  pull_request:\n')[1]?.split(/^  (?:push|workflow_dispatch|permissions):/m)[0]||'';
+    const entries=section.split('\n').filter(s=>/^      - ['"]/.test(s)).map(s=>s.trim().slice(3,-1));
+    assert(entries.length>0,'missing PR paths');
+    let accepted=false;
+    for(const entry of entries){const excluded=entry.startsWith('!');if(matches(excluded?entry.slice(1):entry,file))accepted=!excluded;}
+    return accepted;
+  }
+  const asset=read('inkwave-character-asset-qa.yml'),touch=read('inkwave-touch-frame-pacing.yml');
+  const account=read('zevant-account.yml'),relay=read('inkwave-relay-security.yml');
+  for(const target of [asset,touch])assert(!routed(target,'patches/local-quality/tests/drive-visual-audio.test.mjs'));
+  assert(!routed(asset,'patches/splatoon3/tests/charger-fresh-start.test.mjs'));
+  assert(routed(asset,'patches/local-quality/character-shadow-batch-adapter.mjs'));
+  assert(routed(asset,'patches/splatoon3/runtime/install.mjs'));
+  assert(routed(touch,'patches/local-quality/tests/range-frame-pacing.test.mjs'));
+  assert(routed(touch,'patches/local-quality/tests/quality.test.mjs'));
+  assert(routed(touch,'patches/local-quality/roller-motion.mjs'));
+  for(const target of [account,relay]){
+    assert(!routed(target,'scripts/ci/inkwave-responsive-child-pool.mjs'));
+    assert(routed(target,'scripts/ci/run-inkwave-test-suite.mjs'));
+    assert(routed(target,'scripts/ci/inkwave-test-suites.json'));
+  }
+  assert(!routed(weapons,'scripts/tests/inkwave-added-ci-contracts.test.mjs'));
+});
