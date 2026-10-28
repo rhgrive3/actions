@@ -52,8 +52,12 @@ try{
   });
   step='enter range';receipt.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:180000,onProgress:r=>console.log('entry',r.route.join('/'))});
   await page.evaluate(()=>{window.__pointerOwner=window.__G.match;});
-  if(!await page.evaluate(()=>document.pointerLockElement===window.__inkwave.input.canvas&&window.__inkwave.input.locked))await page.locator('#game-canvas').click({timeout:45000});
-  step='initial ownership';receipt.initial=await lock(null);
+  // Range startup can reject its non-gesture lock request. Record that state,
+  // then start cycle 1 with the game's ordinary Escape -> Resume gesture.
+  // A bare canvas click is not a general lock request in the native KBM path.
+  step='initial playing state';receipt.initial=await snapshot();
+  assert.equal(receipt.initial.sameMatch,true);assert.equal(receipt.initial.playing,true);
+  assert.equal(receipt.initial.paused,false);assert.equal(receipt.initial.menu,null);
   for(let i=0;i<weapons.length;i++){
     const cycle={number:i+1,weapon:weapons[i]};receipt.cycles.push(cycle);
     step=`cycle ${i+1} pause for resume`;await pause();
@@ -70,6 +74,7 @@ try{
   receipt.status='failed';receipt.failure={step,error:error.stack,state:page?await snapshot().catch(()=>null):null};
   process.exitCode=1;
 }finally{
+  if(page) receipt.pointerErrors=await page.evaluate(()=>window.__pointerErrors).catch(()=>receipt.pointerErrors);
   fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');
   await browser?.close();await new Promise(resolve=>server.close(resolve));
 }
