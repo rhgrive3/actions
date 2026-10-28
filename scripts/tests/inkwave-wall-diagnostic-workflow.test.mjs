@@ -23,7 +23,7 @@ function verify(text) {
   assert.equal(condition(text, 'network-opening-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
   for (const name of ['validate_core','seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), fullCondition);
   for (const name of ['patch_tests','browser']) assert.equal(condition(text,name), nativeOffloadCondition);
-  assert.equal(condition(text,'validate'), '${{ always() && '+fullCondition+' }}');
+  assert.equal(condition(text,'validate'), '${{ always() && inputs.diagnostic_only != true && (github.event_name != \'pull_request\' || github.event.pull_request.draft == false) }}');
   assert.ok(text.includes("inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || ''"));
   assert.ok(text.includes("group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}"));
   assert.ok(text.includes('cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}'));
