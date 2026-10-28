@@ -70,7 +70,7 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
  [sparseFixtureFile]:'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
- 'scripts/tests/continuous-browser-video.test.mjs':'1e15c0668d8179753b99e947c35c8bf4c2c91f1c5333c760b4bdbc0165b96f03',
+ 'scripts/tests/continuous-browser-video.test.mjs':'8d3f6b4f9f5ce634efafb8d9dd76e69b04e48d57bababa1014ebb6546a855a2f',
 };
 // Only four literal nodes in this one audited test describe sparse exclusions;
 // none is an input consumed by the build or runtime. The owning constructs
@@ -92,11 +92,11 @@ function maskReviewedVolumeFixture(source){
  assert.equal(declaration.init.value,volumeSparseLiteral);
  const functions=ast.body.filter(n=>n.type==='FunctionDeclaration'&&n.id?.name==='assertUnchangedDefaultVolumeJob');
  const negatives=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing sparse fetch',"));
- assert.equal(functions.length,1);assert.equal(negatives.length,1);
+ assert.equal(functions.length,1);assert.equal(negatives.length,2,'exactly two identical reviewed sparse negative loops');
  const workflowNegatives=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing build trigger',"));
  assert.equal(workflowNegatives.length,1);
- const allowed=[functions[0],negatives[0]],workflowNegative=workflowNegatives[0];
- for(const [node,pin]of [[allowed[0],volumeConsumerPins.assertUnchangedDefaultVolumeJob],[allowed[1],volumeConsumerPins.sparseNegativeControls],[workflowNegative,volumeConsumerPins.workflowNegativeControls]])
+ const allowed=[functions[0],...negatives],workflowNegative=workflowNegatives[0];
+ for(const [node,pin]of [[allowed[0],volumeConsumerPins.assertUnchangedDefaultVolumeJob],...negatives.map(node=>[node,volumeConsumerPins.sparseNegativeControls]),[workflowNegative,volumeConsumerPins.workflowNegativeControls]])
   assert.equal(createHash('sha256').update(source.slice(node.start,node.end)).digest('hex'),pin,'sparse data consumers must remain audited text-only operations');
  let literals=[];let identifiers=0;
  const visit=(node,ancestors=[])=>{
@@ -106,7 +106,7 @@ function maskReviewedVolumeFixture(source){
    assert(allowed.some(owner=>ancestors.includes(owner)),'sparse exclusion may not be used outside audited consumers');identifiers++;
   }
   if(node.type==='Literal'&&typeof node.value==='string'&&node.value.includes('tools/inkwave-modeler/')&&node!==declaration.init){
-   if(ancestors.includes(allowed[1]))assert.equal(node.value,'!/tools/inkwave-modeler/blender/');
+   if(negatives.some(owner=>ancestors.includes(owner)))assert.equal(node.value,'!/tools/inkwave-modeler/blender/');
    else {
     assert(ancestors.includes(workflowNegative),'only audited negative-control literals are data');
     assert(['!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].includes(node.value));
@@ -115,8 +115,8 @@ function maskReviewedVolumeFixture(source){
   }
   for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,[...ancestors,node]);}else if(value&&typeof value==='object')visit(value,[...ancestors,node]);
  };
- visit(ast);assert.equal(identifiers,6);
- assert.deepEqual(literals.map(n=>n.value).sort(),['!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].sort());
+ visit(ast);assert.equal(identifiers,11);
+ assert.deepEqual(literals.map(n=>n.value).sort(),['!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].sort());
  let checked=source;for(const node of [declaration.init,...literals].sort((a,b)=>b.start-a.start))checked=checked.slice(0,node.start)+"''"+checked.slice(node.end);
  return checked;
 }
@@ -238,6 +238,17 @@ test('volume exclusions are limited to audited literal data, never executable co
  assertNoAuthoringDependency(volumeFixtureFile,source);
  // Exercise the AST restriction independently of the whole-source pin as well.
  maskReviewedVolumeFixture(source);
+ // Each duplicate loop is separately pinned: removing, adding or modifying either
+ // must fail even when bypassing the outer whole-file digest check.
+ const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
+ const loops=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing sparse fetch',"));
+ assert.equal(loops.length,2);
+ for(const loop of loops){
+  assert.throws(()=>maskReviewedVolumeFixture(source.slice(0,loop.start)+source.slice(loop.end)));
+  const body=source.slice(loop.start,loop.end),bad=body.replace("s.replace(reviewedSparseCheckout,'')","fs.readFileSync(reviewedSparseCheckout)");
+  assert.notEqual(bad,body);assert.throws(()=>maskReviewedVolumeFixture(source.slice(0,loop.start)+bad+source.slice(loop.end)));
+ }
+ assert.throws(()=>maskReviewedVolumeFixture(source+'\n'+source.slice(loops[0].start,loops[0].end)));
  for(const changed of [
   source+'\nconst alias=reviewedSparseCheckout;',
   source+"\neval('reviewedSparseCheckout');",

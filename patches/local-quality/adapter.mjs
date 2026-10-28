@@ -175,6 +175,8 @@ const IDENTITY_FILES = [
   'queue-remaining-ui-network-20261026-adapter.mjs', 'queue-remaining-world-20261026-adapter.mjs',
   'queue-remaining-paint-20261026-adapter.mjs', 'queue-reviewed-world-carryover-20261026-adapter.mjs', 'queue-historical-character-20261026-adapter.mjs',
   'queue-historical-source-motion-20261026-adapter.mjs',
+  'queue-remaining-visual-20261027-adapter.mjs', 'queue-audio-build-20261027-adapter.mjs',
+  'queue-combat-world-20261027-adapter.mjs',
   'added-ui-motion-adapter.mjs', 'drive-core-queue-adapter.mjs',
   'drive-visual-audio-adapter.mjs', 'fx-empty-pools-adapter.mjs',
   'ink-ripple-presentation-adapter.mjs', 'perf-readout-adapter.mjs',

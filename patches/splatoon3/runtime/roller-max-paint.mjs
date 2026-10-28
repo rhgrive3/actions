@@ -6,10 +6,10 @@
 // no intermediate curve, so the linear bridge below is an explicit INKWAVE
 // approximation, not a claim about the retail interpolation.
 export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,referenceHz,fx,fz) {
-  const a=runner.a,hs=Math.hypot(a.vel.x,a.vel.z);
+  const a=runner.a;
   if(a.remote || !a.alive || !a.grounded || weapon.kind!=='roller' ||
       !Number.isFinite(scale) || !(scale>0) || !Number.isFinite(referenceHz) || !(referenceHz>0) ||
-      !Number.isFinite(weapon.rollWidth) || !Number.isFinite(hs) ||
+      !Number.isFinite(weapon.rollWidth) ||
       !Number.isFinite(paintSource?.SpeedMax) || !Number.isFinite(paintSource?.WidthHalfMax) ||
       !(paintSource.SpeedMax>0) || !(paintSource.WidthHalfMax>0)) return 0;
   const target=paintSource.WidthHalfMax*scale*.3;
@@ -22,6 +22,8 @@ export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,ref
   if(!(target>nativeHalf))return 0;
   const maxSpeed=paintSource.SpeedMax*referenceHz*scale;
   if(!(maxSpeed>0))return 0;
+  const hs=Math.hypot(a.vel.x,a.vel.z);
+  if(!Number.isFinite(hs))return 0;
   const speedRatio=Math.max(0,Math.min(1,hs/maxSpeed));
   const targetHalf=nativeHalf+(target-nativeHalf)*speedRatio;
   if(!(targetHalf>nativeHalf))return 0;
@@ -32,7 +34,7 @@ export function paintRollerMaximumWidth(game,runner,weapon,paintSource,scale,ref
   const state=runner.s3MaxRollPaint||(runner.s3MaxRollPaint={point:a.pos.clone(),direction:a.pos.clone(),sequence:0});
   state.direction.set(fx,0,fz);state.sequence++;
   let area=0;
-  for(const side of [-1,1]){
+  for(let side=-1;side<=1;side+=2){
     state.point.set(a.pos.x+fx*.75+fz*offset*side,a.pos.y+.35,a.pos.z+fz*.75-fx*offset*side);
     const result=game.paint.splat(state.point,radius,a.team,{kind:'rollFloor',stretch:state.direction,seed:((Math.imul(state.sequence,2654435761)^(side<0?0x189:0x981))>>>0)/4294967296,claimOwner:a});
     if(Number.isFinite(result))area+=result;

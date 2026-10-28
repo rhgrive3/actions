@@ -128,6 +128,11 @@ const outsideRadiusAxis = (a, b, radius) => {
   const x=a[0]-b[0],y=a[1]-b[1],z=a[2]-b[2];
   return Number.isFinite(x+y+z)&&(Math.abs(x)>radius||Math.abs(y)>radius||Math.abs(z)>radius);
 };
+function nearUnclaimedCenter(pos,center){
+  const dx=pos[0]-center[0],dy=pos[1]-center[1],dz=pos[2]-center[2];
+  if(Math.abs(dx)>=1e-8||Math.abs(dy)>=1e-8||Math.abs(dz)>=1e-8)return false;
+  return Math.hypot(dx,dy,dz)<1e-8;
+}
 const positionOf = actor => copyPos(actor?.pos);
 const validId = id => typeof id === 'string' || (typeof id === 'number' && Number.isFinite(id));
 const ageBy = (value, dt) => value === null ? null : value + dt;
@@ -741,7 +746,7 @@ export class RainmakerRule {
 
   _ageUnclaimed(dt) {
     if (this.state.carrier !== null || !this.state.dropped || this.state.barrier.active || this.state.respawnRemaining > 0
-      || distance(this.state.pos, this.center) < 1e-8) return;
+      || nearUnclaimedCenter(this.state.pos, this.center)) return;
     this.state.dropTimer += dt;
     if (this.state.dropTimer >= RAINMAKER_DROP_RETURN_SECONDS) this._resetToCenter('unclaimed');
   }

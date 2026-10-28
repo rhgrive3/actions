@@ -54,7 +54,7 @@ jobs:
       - name: Install existing native QA tools
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --only-shell chromium
       - name: Verify existing native swim contracts
         run: node --experimental-vm-modules --test patches/splatoon3/tests/swim-motion.test.mjs
       - name: Verify normal input and native QA contracts

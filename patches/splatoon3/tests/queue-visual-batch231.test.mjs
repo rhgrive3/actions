@@ -1,3 +1,4 @@
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
@@ -6,7 +7,7 @@ import {krakenDashSweptContact} from '../runtime/all-specials.mjs';
 import {S3_SHAPE} from '../runtime/s3-projectile-shapes.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 function method(source,cls,key,bindings={}){const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});const c=ast.body.map(n=>n.declaration||n).find(n=>n.type==='ClassDeclaration'&&n.id.name===cls);const m=c.body.body.find(n=>n.key.name===key);return new Function(...Object.keys(bindings),'return ({'+source.slice(m.start,m.end)+'})['+JSON.stringify(key)+']')(...Object.values(bindings));}
-function RibbonClass(source){const start=source.indexOf('class RibbonPool {'),end=source.indexOf('// Instanced shape pools',start);return new Function('THREE','RIBBON_VERT','RIBBON_FRAG','vfxRandom',source.slice(start,end<0?source.length:end)+'\nreturn RibbonPool;')(T,'','',()=>.25);}
+function RibbonClass(source){const start=source.indexOf('class RibbonPool {'),end=source.indexOf('// Instanced shape pools',start);return new Function('THREE','RIBBON_VERT','RIBBON_FRAG','vfxRandom','markAttributeRange',source.slice(start,end<0?source.length:end)+'\nreturn RibbonPool;')(T,'','',()=>.25,markAttributeRange);}
 test('circular ribbons retain exact chronological points and all uploaded vertices through wrap, expiry and eviction',()=>{
  const Old=RibbonClass(read('./fixtures/special-ribbons-before-oct23.txt')),New=RibbonClass(read('../runtime/special-vfx-kit.mjs'));
  for(const hz of [30,60,120])for(const additive of [false,true]){
@@ -69,8 +70,9 @@ test('unsupported special kinds allocate no Group or team color work',()=>{
 test('idle local movement audio skips only absent handles and still fades existing loops after death',()=>{
  const raw=read('../../../inkwave-public/src/main.js'),source=adaptBuildSource('src/main.js',raw),calls=[];
  const update=method(source,'Game','_updateLocalLoops',{G:{audio:{loop:()=>{throw Error('must stay dormant');}}},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)});
- const dormant={match:null};for(let i=0;i<100;i++)update.call(dormant,1/60);assert.equal(dormant._loops,undefined);
- const active={match:null,_loops:{swim:{_v:.5,set(p){calls.push(['set',p.volume]);},stop(){calls.push(['stop']);}}}};
+ const want=method(source,'Game','_wantLocalLoop',{G:{audio:{loop:()=>{throw Error('must stay dormant');}}},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)});
+ const dormant={match:null,_wantLocalLoop:want};for(let i=0;i<100;i++)update.call(dormant,1/60);assert.equal(dormant._loops,undefined);
+ const active={match:null,_wantLocalLoop:want,_loops:{swim:{_v:.5,set(p){calls.push(['set',p.volume]);},stop(){calls.push(['stop']);}}}};
  for(let i=0;i<100;i++)update.call(active,1/60);assert.ok(calls.some(c=>c[0]==='set'));assert.equal(calls.filter(c=>c[0]==='stop').length,1);assert.equal(active._loops.swim,null);
 });
 test('ranked objective projection scratch retains every Canvas command for all four ranked rules',()=>{

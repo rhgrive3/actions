@@ -1,3 +1,4 @@
+import { commitOwnerTick } from '../../network-replication/owner-tick-receipt.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {RankedEngine} from '../runtime/ranked/engine.mjs';
@@ -5,7 +6,7 @@ import {installRankedNetwork} from '../runtime/ranked/network.mjs';
 const stage={id:'network-stage',zones:[{center:[0,0,0],size:[6,6]}],tower:{path:[[0,0,-10],[0,0,0],[0,0,10]],centerIndex:1,checkpoints:[[],[]],speed:1.2,halfSize:1.4},rainmaker:{center:[0,0,0],goals:[[0,0,10],[0,0,-10]],checkpoints:[[[0,0,5]],[[0,0,-5]]],retreatZ:[-8,8]},clams:{spawns:[[0,0,0]],goals:[[0,0,10],[0,0,-10]]}};
 function setup(mode='zones',host=false){
  const packets=[];
- class NetMatch{constructor(){this.myId=host?'host':'guest';this.s={hostId:'host',isHost:host,tr:{broadcast:d=>packets.push(d)}};this.cfg={id:'match-1'};this.match={mode,state:'playing',follower:!host,ranked:new RankedEngine(mode,stage),rankedGains:[0,0],rankedBarrierHits:[],actors:[],playRankedEvents:e=>{this.events=e;}};}get isHost(){return this.s.isHost;}_sendNow(d){packets.push(d);}_sendTick(){this.s.tr.broadcast({k:'t'});}onMessage(from,d){this.native={from,d};}_hostClock(){}onLeave(){}dispose(){}}
+ class NetMatch{constructor(){this.myId=host?'host':'guest';this.s={hostId:'host',isHost:host,tr:{broadcast:d=>packets.push(d)}};this.cfg={id:'match-1'};this.match={mode,state:'playing',follower:!host,ranked:new RankedEngine(mode,stage),rankedGains:[0,0],rankedBarrierHits:[],actors:[],playRankedEvents:e=>{this.events=e;}};}get isHost(){return this.s.isHost;}_sendNow(d){packets.push(d);}_sendTick(){this.s.tr.broadcast({k:'t'});}onMessage(from,d){this.native={from,d};if(d.k==='t'&&!this.rejectTick)commitOwnerTick(this,from,d,d.e||[],this.match.actors.filter(a=>a.owner===from));}_hostClock(){}onLeave(){}dispose(){}}
  const G={time:2,netm:null};installRankedNetwork({NetMatch,G,emit(){}});const nm=G.netm=new NetMatch();return{nm,G,packets};
 }
 function packet(nm,e,k='t'){return{k,rk:{match:nm.cfg.id,host:nm.s.hostId,state:e.snapshot(),gains:[0,0]}};}
@@ -42,4 +43,17 @@ test('render-rate-sized intervals produce identical ranked counts and regulation
   }
   for(const r of results)assert.deepEqual(r,results[0],mode);
  }
+});
+
+test('unrelated and rejected parent packets cannot publish ranked input or host state',()=>{
+ const {nm}=setup('clams',true);const actor={nid:7,owner:'guest',alive:true,team:1,net:{lastLife:0}};
+ nm.match.actors=[actor];nm.byNid=new Map([[7,actor]]);
+ const rki={match:'match-1',id:'7',seq:1,fire:true,throw:true,aim:[0,0,1]};
+ for(const k of ['unknown','hit','wc']){nm.onMessage('guest',{k,rki});assert.equal(nm.rankedInputs?.size||0,0);}
+ nm.rejectTick=true;nm.onMessage('guest',{k:'t',rki});assert.equal(nm.rankedInputs?.size||0,0);
+ nm.rejectTick=false;nm.onMessage('guest',{k:'t',rki});assert.equal(nm.rankedInputs.get('7').throw,true);
+ const guest=setup().nm,host=new RankedEngine('zones',stage);host.setCount(0,40);host.revision=60;
+ guest.onMessage('host',packet(guest,host,'unknown'));assert.equal(guest.match.ranked.counts[0],100);
+ guest.rejectTick=true;guest.onMessage('host',packet(guest,host));assert.equal(guest.match.ranked.counts[0],100);
+ guest.rejectTick=false;guest.onMessage('host',packet(guest,host));assert.equal(guest.match.ranked.counts[0],40);
 });

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {SnapshotPool} from '../runtime/snapshot-pool.mjs';
@@ -91,7 +92,7 @@ const newShape=declarations(read('../runtime/special-vfx-kit.mjs'),['ShapePool']
 function shape(Class){const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(new Float32Array(9),3));return new Class(T,'parity',g,16,['a','b','c','d'],'','',false,{value:0});}
 const shapeState=p=>({recs:p.recs.map(r=>({id:r.id,t:r.t,life:r.life,dead:r.dead,retired:r.retired,v:Array.from(r.v)})),buf:p.buf.map(b=>Array.from(b.array)),draw:p.mesh.geometry.instanceCount});
 test('ShapePool compaction retains order, callbacks, reentrant births and every uploaded Float32 value',()=>{
- const Old=compile(before.ShapePool,'ShapePool'),Next=compile(newShape,'ShapePool');
+ const Old=compile(before.ShapePool,'ShapePool'),Next=compile(newShape,'ShapePool',{markAttributeRange});
  for(const mode of ['plain','follow','onEnd','reenter']){
   const a=shape(Old),b=shape(Next),logs=[[],[]];
   for(const [which,p]of [a,b].entries())for(let i=0;i<13;i++){
@@ -105,7 +106,7 @@ test('ShapePool compaction retains order, callbacks, reentrant births and every 
  }
 });
 test('ShapePool unchanged buffers keep their pending upload range/version and write changed values once',()=>{
- const p=shape(compile(newShape,'ShapePool')),r=p.addRaw(0,...new Array(16).fill(.2));p.update(0);
+ const p=shape(compile(newShape,'ShapePool',{markAttributeRange})),r=p.addRaw(0,...new Array(16).fill(.2));p.update(0);
  const versions=p.buf.map(x=>x.version),ranges=p.buf.map(x=>x.updateRanges[0]);p.update(.01);
  assert.deepEqual(p.buf.map(x=>x.version),versions);assert.deepEqual(p.buf.map(x=>x.updateRanges[0]),ranges);
  r.v[5]=.7;p.update(.01);assert.deepEqual(p.buf.map(x=>x.version),versions.map((v,i)=>v+(i===1?1:0)));

@@ -38,7 +38,8 @@ export function exportSplatlingReservation(runner) {
 export function isValidSplatlingReservation(snapshot, inkMax = 100) {
   if (!Array.isArray(snapshot) || snapshot.length !== 8 || !Number.isFinite(inkMax) || inkMax <= 0) return false;
   const [paid, unspent, elapsed, emitted, shots, duration, burstT, exactInk] = snapshot;
-  return [paid, unspent, elapsed, duration, burstT, exactInk].every(Number.isFinite)
+  return Number.isFinite(paid) && Number.isFinite(unspent) && Number.isFinite(elapsed)
+    && Number.isFinite(duration) && Number.isFinite(burstT) && Number.isFinite(exactInk)
     && paid >= 0 && paid <= inkMax && unspent >= 0 && unspent <= paid
     && Number.isSafeInteger(emitted) && emitted >= 0
     && Number.isSafeInteger(shots) && shots >= 1 && shots <= 200 && emitted <= shots

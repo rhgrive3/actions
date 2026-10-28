@@ -40,6 +40,18 @@ class MixerStub {
 }
 installWeaponAudioEngine(MixerStub);
 
+test('weapon preparation prewarms the recorded rise only for Charger families',()=>{
+ const {ctx}=mkctx(),audio=new MixerStub(ctx),prewarms=[];
+ audio.weaponBank();
+ audio._realS3Loader.ensure=()=>Promise.resolve();
+ audio.prewarmChargerChargeRise=id=>prewarms.push(id);
+ audio.prepareWeapon('shooter');
+ audio.prepareWeapon('s3-charger-long-01');
+ audio.prepareWeapon('charger');
+ assert.deepEqual(prewarms,['s3-charger-long','charger']);
+ audio.disposeWeaponAudio();
+});
+
 test('original main shot and normal, strong, critical and splat recordings are resident before a Charger first shot',async()=>{
  const {ctx}=mkctx(),audio=new MixerStub(ctx),b=audio.weaponBank();
  const mock=manifest([
@@ -192,7 +204,8 @@ test('selected Charger preloads HoldNoise first then the other actual cues in on
  const originalEnsure=loader.ensure.bind(loader);
  loader.ensure=(source,event)=>{orders.push([source,event]);return originalEnsure(source,event);};
  a.prepareWeapon('charger-01',{urgent:true});
- assert.deepEqual(orders.slice(0,2),[[id,'charge'],[id,undefined]],
+ // A null event explicitly requests the complete recorded source batch.
+  assert.deepEqual(orders.slice(0,2),[[id,'charge'],[id,null]],
    'a collab must load its base hold immediately before the batch');
  await loader.ensure(id);
  for(const event of ['charge','ready','fire','fire_full']){

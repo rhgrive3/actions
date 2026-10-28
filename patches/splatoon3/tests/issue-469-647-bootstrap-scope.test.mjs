@@ -32,9 +32,9 @@ async function bootstrap({ negative = null } = {}) {
       return out.replaceAll(' && !this.s3TidalSlamGaugeFinish', '');
     }
     if (negative === 'storm' && rel === 'patches/local-quality/hud-snapshots.mjs') {
-      const projection = '  const spentGauge = specialGaugeFraction(a);\n  frame.special = spentGauge ?? a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = spentGauge !== null || !!a.specialActive;';
+      const projection = '  const spentGauge = specialGaugeFraction(a);\n  frame.special = spentGauge ?? a.specialFrac(); frame.specialReady = specialReady; frame.specialActive = spentGauge !== null || !!a.specialActive;';
       assert.ok(out.includes(projection));
-      return out.replace(projection, '  frame.special = a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = !!a.specialActive;');
+      return out.replace(projection, '  frame.special = a.specialFrac(); frame.specialReady = specialReady; frame.specialActive = !!a.specialActive;');
     }
     return out;
   };

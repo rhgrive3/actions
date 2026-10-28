@@ -36,7 +36,7 @@ function fft(re,im,inverse){
   }
   if(inverse)for(let i=0;i<n;i++){re[i]/=n;im[i]/=n;}
 }
-function bandsAt(data,t){
+function bandsAt(data,t,out){
   // Short WAVs (e.g. a 133 ms charge-complete chime) do not have 200 ms spectra.
   // Clamp to the last *measured* frame rather than interpolating through null.
   let last=0;for(let i=0;i<data.seq.length;i++)if(data.seq[i])last=i;
@@ -44,7 +44,8 @@ function bandsAt(data,t){
   let i=0;while(i<last-1&&t>SAMPLE_TIMES[i+1])i++;
   if(!data.seq[i]||!data.seq[i+1])return data.seq[i]||data.seq[i+1]||data.seq[last];
   const q=Math.max(0,Math.min(1,(t-SAMPLE_TIMES[i])/(SAMPLE_TIMES[i+1]-SAMPLE_TIMES[i])));
-  return data.seq[i].map((v,k)=>mix(v,data.seq[i+1][k],q));
+  for(let k=0;k<data.seq[i].length;k++)out[k]=mix(data.seq[i][k],data.seq[i+1][k],q);
+  return out;
 }
 function dbEnvelope(data,t,loop,measured){
   // null is an explicit "not measured" marker, never an amplitude of 0 dB.
@@ -58,6 +59,24 @@ function dbEnvelope(data,t,loop,measured){
   return mix(data.env[idx],data.env[idx+1],q-idx);
 }
 function taper(x){return .5-.5*Math.cos(Math.PI*Math.max(0,Math.min(1,x)));}
+// These tables are read-only after creation. Keep at most two rates so hostile
+// or diagnostic callers cannot retain one table per arbitrary sample rate.
+let guidedWindow=null;
+const guidedRateTables=new Map();
+function guidedTables(sampleRate){
+  const cached=guidedRateTables.get(sampleRate);if(cached)return cached;
+  const N=1024;
+  if(!guidedWindow){guidedWindow=new Float64Array(N);for(let i=0;i<N;i++)guidedWindow[i]=Math.sqrt(.5-.5*Math.cos(TAU*i/(N-1)));}
+  const counts=new Array(BANDS.length-1).fill(0),bandByBin=new Int8Array(N/2).fill(-1);
+  for(let k=1;k<N/2;k++){
+    const f=k*sampleRate/N;
+    for(let b=0;b<counts.length;b++)if(f>=BANDS[b]&&f<BANDS[b+1]){bandByBin[k]=b;counts[b]++;break;}
+  }
+  for(let b=0;b<counts.length;b++)counts[b]=Math.max(1,counts[b]);
+  const row={win:guidedWindow,counts,bandByBin};
+  if(guidedRateTables.size>=2)guidedRateTables.delete(guidedRateTables.keys().next().value);
+  guidedRateTables.set(sampleRate,row);return row;
+}
 export function renderGuidedSample(recipe,event,variant=0,sampleRate=48000){
   const source=sourceMeasurementFor(recipe,event,variant);
   if(!source)return null;
@@ -66,24 +85,16 @@ export function renderGuidedSample(recipe,event,variant=0,sampleRate=48000){
   const seconds=looping?.72:Math.max(.12,Math.min(1.06,source.ms/1000));
   const length=Math.ceil(seconds*sampleRate),out=new Float32Array(length);
   const N=1024,H=N/4,r=rng(randomSeed(recipe.id+event+String(variant)));
-  const win=new Float64Array(N);for(let i=0;i<N;i++)win[i]=Math.sqrt(.5-.5*Math.cos(TAU*i/(N-1)));
-  const centers=BANDS.slice(0,-1).map((lo,j)=>[lo,BANDS[j+1]]);
-  const counts=centers.map(([low,high])=>{
-    let n=0;for(let k=1;k<N/2;k++)if(k*sampleRate/N>=low&&k*sampleRate/N<high)n++;return Math.max(1,n);
-  });
+  const {win,counts,bandByBin}=guidedTables(sampleRate);
   let measured=source.env.findIndex(v=>!Number.isFinite(v));
   if(measured<0)measured=source.env.length;
-  const bandByBin=new Int8Array(N/2).fill(-1),bandPower=new Float64Array(centers.length);
-  for(let k=1;k<N/2;k++){
-    const f=k*sampleRate/N;
-    bandByBin[k]=centers.findIndex(([lo,hi])=>f>=lo&&f<hi);
-  }
+  const bandPower=new Float64Array(BANDS.length-1);
   const ampScale=0.25;
   // Every transform starts with silent DC/Nyquist and unmapped bins.
-  const real=new Float64Array(N),imag=new Float64Array(N);
+  const real=new Float64Array(N),imag=new Float64Array(N),ampScratch=new Float64Array(BANDS.length-1);
   for(let start=-N+H;start<length;start+=H){
     const t=Math.max(0,(start+N/2)/sampleRate);
-    const amps=bandsAt(source,t);
+    const amps=bandsAt(source,t,ampScratch);
     for(let b=0;b<bandPower.length;b++)bandPower[b]=Math.pow(10,amps[b]/10)/counts[b];
     real.fill(0);imag.fill(0);
     for(let k=1;k<N/2;k++){
@@ -113,8 +124,7 @@ export function renderGuidedSample(recipe,event,variant=0,sampleRate=48000){
   for(let i=0;i<length;i++)out[i]=(out[i]-dc)*scale;
   // Smooth loop boundary after FFT generation, no sudden clicks when the source wraps.
   if(looping){const blend=Math.min(Math.floor(.03*sampleRate),length>>3);
-    const first=out.slice(0,blend),last=out.slice(length-blend);
-    for(let i=0;i<blend;i++){const q=taper(i/(blend-1));const v=last[i]*(1-q)+first[i]*q;out[i]=v;out[length-blend+i]=v;}
+    for(let i=0;i<blend;i++){const q=taper(i/(blend-1));const v=out[length-blend+i]*(1-q)+out[i]*q;out[i]=v;out[length-blend+i]=v;}
     out[length-1]=out[0];
   }else{out[0]=0;out[length-1]=0;}
   return out;

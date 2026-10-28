@@ -20,7 +20,17 @@ const kitCache=new Map();
 async function kitFor(emitted){
  if(kitCache.has(emitted))return kitCache.get(emitted);
  const code=emitted?compactModuleStrings(esbuild.transformSync(kitRaw,{format:'esm',minify:true,charset:'utf8',legalComments:'inline'}).code).code:kitRaw;
- const module=new vm.SourceTextModule(code);await module.link(()=>{throw Error('unexpected kit import');});await module.evaluate();kitCache.set(emitted,module.namespace);return module.namespace;
+ // Use the real dirty-range helper in source and minified realms, not an
+ // empty export: the GPU upload mutation must remain observable in tests.
+ const helperRaw=fs.readFileSync(path.join(root,'patches/splatoon3/runtime/instance-color-upload.mjs'),'utf8');
+ const helper=emitted?compactModuleStrings(esbuild.transformSync(helperRaw,{format:'esm',minify:true,charset:'utf8',legalComments:'inline'}).code).code:helperRaw;
+ const context=vm.createContext({console});
+ const module=new vm.SourceTextModule(code,{context});
+ await module.link(spec=>{
+  if(spec!=='./instance-color-upload.mjs')throw Error('unexpected kit import: '+spec);
+  return new vm.SourceTextModule(helper,{context});
+ });
+ await module.evaluate();kitCache.set(emitted,module.namespace);return module.namespace;
 }
 const original=process.env.CHUMP_VFX_BASELINE ? fs.readFileSync(process.env.CHUMP_VFX_BASELINE,'utf8') : candidate.replace(comment,'').replace(newLine,oldLine);
 class Vec {

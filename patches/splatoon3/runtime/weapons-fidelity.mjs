@@ -26,6 +26,7 @@ import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
 const DAMAGE_FALLOFF_FAMILIES=Object.freeze(['shooter','dualies','splatling']);
+const FRIEND_THROUGH_FAMILIES=Object.freeze(['shooter','slosher','roller','splatling','dualies']);
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 const NORMALIZED_PROJECTILE_PACKET = Symbol('inkwave.normalizedProjectilePacket');
 const inkFlightHelpers = new WeakMap();
@@ -106,7 +107,8 @@ export function advanceFidelityProjectile(p, dt) {
         Math.hypot(p.vel.x,p.vel.z) < move.freeVelocityXZ && p.vel.y < move.freeVelocityY)
       p.fidelityPhase = 2;
     const brake = p.fidelityPhase === 1;
-    p.vel.multiplyScalar(Math.pow(1 - (brake ? move.brakeDrag : move.freeDrag), step * move.hz));
+    const retain=1-(brake?move.brakeDrag:move.freeDrag),exponent=step*move.hz;
+    p.vel.multiplyScalar(exponent===1?retain:Math.pow(retain,exponent));
     p.vel.y -= (brake ? move.brakeGravity : move.freeGravity) * step;
     if (brake && shooterComponentTransition) {
       // #1053: Shooter brake->free waits until both lower-speed components are satisfied.
@@ -454,11 +456,14 @@ function seededFrames(seed, min, max, salt) {
 // Current horizontal births have two disjoint, source-defined speed envelopes.
 // Nominal-speed nearest selection misclassifies slow main globs as near globs.
 // This does not recover an immutable unit after a future player-velocity addition.
+function invalidHorizontalRollerUnit(u) {
+  return !Number.isFinite(u.SpawnSpeedBase) || !Number.isFinite(u.SpawnSpeedRandom) ||
+    u.SpawnSpeedRandom < 0 || (u.AfterOffsetSpawnSpeed || 0) !== 0;
+}
 export function horizontalRollerReplayUnit(units, speed) {
   if (units?.length !== 2 || !Number.isFinite(speed)) return null;
   const [a, b] = units;
-  if ([a, b].some(u => !Number.isFinite(u.SpawnSpeedBase) || !Number.isFinite(u.SpawnSpeedRandom) ||
-      u.SpawnSpeedRandom < 0 || (u.AfterOffsetSpawnSpeed || 0) !== 0)) return null;
+  if (invalidHorizontalRollerUnit(a) || invalidHorizontalRollerUnit(b)) return null;
   const alo = (a.SpawnSpeedBase - a.SpawnSpeedRandom) * 60, ahi = (a.SpawnSpeedBase + a.SpawnSpeedRandom) * 60;
   const blo = (b.SpawnSpeedBase - b.SpawnSpeedRandom) * 60, bhi = (b.SpawnSpeedBase + b.SpawnSpeedRandom) * 60;
   if (!(ahi < blo || bhi < alo)) return null;
@@ -1035,7 +1040,7 @@ function setCollision(p,c,offset=0,depleted=false) {
   p.fidelityPlayerCollision=scale(collisionRecord(c,'Player',offset));
   p.fidelityFieldCollision=scale(collisionRecord(c,'Field',offset));
   // Restore the pinned family-specific window consumed by the existing solver.
-  p.fidelityFriendThrough=['shooter','slosher','roller','splatling','dualies'].includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
+  p.fidelityFriendThrough=FRIEND_THROUGH_FAMILIES.includes(p.s3Weapon?.kind) ? p.fidelityPlayerCollision.FriendThroughFrameForPlayer : null;
   // Existing size carries initial radius; Roller unit identity is transmitted separately.
   p.size=p.fidelityPlayerCollision.initRadius;
 }
@@ -1160,7 +1165,7 @@ function setSlosherDraw(p,unit,index) {
   const init=Number(d.InitRadius)+index*Number(d.AfterOffsetInitRadius??0);
   const end=Number(d.EndRadius)+index*Number(d.AfterOffsetEndRadius??0);
   const frame=Number(d.ChangeFrame??0),min=Number(d.TailLengthMin),max=Number(d.TailLengthMax),solid=Number(d.TailSolidFrame);
-  if(![init,end,frame,min,max,solid].every(Number.isFinite)||init<0||end<0||frame<0||min<0||max<min||solid<0)return;
+  if(!Number.isFinite(init)||!Number.isFinite(end)||!Number.isFinite(frame)||!Number.isFinite(min)||!Number.isFinite(max)||!Number.isFinite(solid)||init<0||end<0||frame<0||min<0||max<min||solid<0)return;
   p.fidelitySloshDraw={initRadius:init*scale,endRadius:end*scale,changeTime:frame/60,
     tailMin:min*scale,tailMax:max*scale,tailSolidTime:solid/60,worldUnitsPerSourceUnit:scale};
   p.vis=fidelitySlosherDrawRadius(p);
@@ -1574,9 +1579,12 @@ export function rollerHitAngle(p,point) {
 export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
   const w=p.s3Weapon||p.owner.weapon;
   if(w.kind==='roller'&&w.ballistics){
-    const b=w.ballistics,d=p.start.distanceTo(point),xz=Math.hypot(point.x-p.start.x,point.z-p.start.z);
-    const hitAngle=rollerHitAngle(p,point);
-    const outside=!p.s3Vertical&&hitAngle!==null&&xz>b.horizontalInsideDistance&&Math.abs(hitAngle)>radians(b.horizontalInsideDegrees);
+    const b=w.ballistics,d=p.start.distanceTo(point);
+    let outside=false;
+    if(!p.s3Vertical){
+      const xz=Math.hypot(point.x-p.start.x,point.z-p.start.z),hitAngle=rollerHitAngle(p,point);
+      outside=hitAngle!==null&&xz>b.horizontalInsideDistance&&Math.abs(hitAngle)>radians(b.horizontalInsideDegrees);
+    }
     const bands=p.s3Vertical?w.verticalDamageBands:outside?b.horizontalOutsideDamageBands:w.flickDamageBands;
     const source=rawWeapon(w)[p.s3Vertical?'VerticalSwingUnitGroupParam':'WideSwingUnitGroupParam'].DamageParam;
     const age=(p.fidelityPrevAge??p.age??0)+((p.age??0)-(p.fidelityPrevAge??p.age??0))*impactT;
@@ -2124,9 +2132,8 @@ export function installWeaponsFidelity(context,profile) {
   }
   function sameS3GuideFields(a,b,fields){for(const k of fields)if(a[k]!==b[k])return false;return true;}
   function copyS3GuideFields(out,input){for(const k of S3_GUIDE_FIELDS)out[k]=input[k];}
-  function s3GuidePoseError(cache,mode){
-    const a=cache.key,b=cache.sample,dx=b.poseX-a.poseX,dy=b.poseY-a.poseY,dz=b.poseZ-a.poseZ;
-    const moved=Math.hypot(dx,dy,dz);
+  function s3GuidePoseError(cache,mode,moved){
+    const a=cache.key,b=cache.sample;
     if(!Number.isFinite(moved))return Infinity;
     if(mode==='slosher')return moved; // fixed aimDir and movement law: the whole prediction translates with its muzzle.
     const x=a.aimPointX-a.poseX,y=a.aimPointY-a.poseY,z=a.aimPointZ-a.poseZ;
@@ -2213,7 +2220,7 @@ export function installWeaponsFidelity(context,profile) {
       if(sameS3GuideFields(cache.key,cache.sample,S3_GUIDE_CORE_FIELDS)){
         const moved=Math.hypot(cache.sample.poseX-cache.key.poseX,cache.sample.poseY-cache.key.poseY,cache.sample.poseZ-cache.key.poseZ);
         if(moved<=cache.clearRadius){
-          const error=s3GuidePoseError(cache,mode);
+          const error=s3GuidePoseError(cache,mode,moved);
           if(projectedS3GuideErrorFits(cache.point,camera,width,height,error))return cache.point;
         }
       }

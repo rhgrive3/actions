@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,readdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const pages=read('.github/workflows/pages-inkwave.yml'),ranked=read('.github/workflows/validate-inkwave-ranked.yml'),runner=read('scripts/check-inkwave-ranked-browser.mjs');
@@ -23,7 +23,7 @@ test('deployment, checkout SHA and existing artifact remain one strict sequence'
  assert.match(pages,/node scripts\/build-inkwave.mjs inkwave-public _site/);
  assert.match(block,/node scripts\/check-inkwave-ranked-browser.mjs _site reports\/ranked-public-browser/);
  assert.doesNotMatch(block,/build-inkwave|checkout@|deploy-pages@|continue-on-error|workflow_dispatch/);
- assert.match(pages,/group: "pages-inkwave"\n  cancel-in-progress: true/);
+ assert.match(pages,/group: "pages-inkwave-\$\{\{ github\.ref \}\}"\n  cancel-in-progress: true/);
  assert.match(pages,/            server\/src\n/);
 });
 test('push and PR local ranked coverage, strict gate and existing permissions remain',()=>{
@@ -50,7 +50,7 @@ test('actual public identity gate accepts exact artifact and rejects stale or ch
 
 const updateWorkflow=read('.github/workflows/validate-inkwave-update.yml');
 const settingsHudTest=read('patches/local-quality/tests/settings-hud-queue.test.mjs');
-const pagesBrowserSetup='          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8\n          npx --no-install playwright install --with-deps chromium\n';
+const pagesBrowserSetup='          npm ci --no-audit --no-fund\n          npx --no-install playwright install --with-deps --no-shell chromium\n';
 const coreBrowserSetup='      - name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).\n          # Rewrite only the stalled mirror before Playwright\'s unchanged dependency installation.\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx --no-install playwright install --with-deps chromium\n';
 // Inspect only the named job, not a coincidental dependency string elsewhere.
 function jobBlock(u,name){
@@ -80,7 +80,7 @@ function verifyRequiredDag(u){
 }
 function verifyPagesSequence(p){
  assert.doesNotMatch(p,/^defaults\s*:/m);
- const deploy=jobBlock(p,'deploy');assert.doesNotMatch(deploy,/^    defaults\s*:/m);assert.doesNotMatch(deploy,/^\s*(?:-\s*)?continue-on-error\s*:/m);const names=['Checkout','Build optimized site','Upload INKWAVE site','Deploy to GitHub Pages','Verify deployed ranked modes'];let previous=-1;
+ const deploy=jobBlock(p,'deploy');assert.match(deploy,/^    if: github\.repository == 'rhgrive3\/actions' && github\.ref == 'refs\/heads\/main'$/m);assert.doesNotMatch(deploy,/^    defaults\s*:/m);assert.doesNotMatch(deploy,/^\s*(?:-\s*)?continue-on-error\s*:/m);const names=['Checkout','Build optimized site','Upload INKWAVE site','Deploy to GitHub Pages','Verify deployed ranked modes'];let previous=-1;
  const blocks={};for(const name of names){const re=new RegExp(`^      - name: ${name}$`,'gm'),hits=[...deploy.matchAll(re)];assert.equal(hits.length,1,`unique Pages step ${name}`);const start=hits[0].index;assert.ok(start>previous,`Pages step order ${name}`);previous=start;const next=deploy.slice(start+1).search(/^      - (?:name:|uses:)/m);blocks[name]=deploy.slice(start,next<0?deploy.length:start+1+next);}
  for(const name of names.slice(0,4)){assert.doesNotMatch(blocks[name],/^\s*(?:-\s*)?(?:if|continue-on-error):/m,`${name} must use ordinary success sequencing`);}
  assert.match(blocks.Checkout,/ref: \${\{ github\.sha \}\}/);assert.match(blocks['Build optimized site'],/set -euo pipefail/);assert.doesNotMatch(blocks['Build optimized site'],/\|\|\s*true|set \+e|continue-on-error|exit 0/);
@@ -114,6 +114,7 @@ function verifySettingsBrowserConsumers(p,u,s){
 test('both settings HUD consumers provision matching browsers before required source tests without touching CPU shards',()=>verifySettingsBrowserConsumers(pages,updateWorkflow,settingsHudTest));
 test('settings browser dependency, ordering, mandatory coverage and failure controls reject mutations',()=>{
  const mutations=[
+  [pages.replace("    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/main'",'    if: true'),updateWorkflow,settingsHudTest],
   [pages.replace('  deploy:\n','  deploy:\n    defaults:\n      run:\n        shell: sh\n'),updateWorkflow,settingsHudTest],
   [pages, 'defaults:\n  run:\n    shell: sh\n'+updateWorkflow,settingsHudTest],
   ['defaults:\n  run:\n    shell: sh\n'+pages,updateWorkflow,settingsHudTest],
@@ -138,8 +139,8 @@ test('settings browser dependency, ordering, mandatory coverage and failure cont
   [pages,updateWorkflow.replace('  validate_core:\n    needs: build_site\n    if:', '  validate_core:\n    needs: build_site\n    if: always() ||'),settingsHudTest],
   [pages,updateWorkflow.replace('          test "$CORE_RESULT" = success','          true # weakened core'),settingsHudTest],
   [pages.replace(pagesBrowserSetup,''),updateWorkflow,settingsHudTest],
-  [pages.replace('playwright@1.62.1','playwright@1.62.0'),updateWorkflow,settingsHudTest],
-  [pages.replace('--with-deps chromium','--with-deps webkit'),updateWorkflow,settingsHudTest],
+  [pages.replace('npm ci --no-audit --no-fund','npm install --no-audit --no-fund'),updateWorkflow,settingsHudTest],
+  [pages.replace('--with-deps --no-shell chromium','--with-deps --no-shell webkit'),updateWorkflow,settingsHudTest],
   [pages.replace(pagesBrowserSetup,'').replace('      - name: Upload INKWAVE site',pagesBrowserSetup+'      - name: Upload INKWAVE site'),updateWorkflow,settingsHudTest],
   [pages,updateWorkflow.replace(coreBrowserSetup,''),settingsHudTest],
   [pages,updateWorkflow.replace(coreBrowserSetup,coreBrowserSetup.replace('--with-deps chromium','--with-deps chromium || true')),settingsHudTest],
@@ -162,4 +163,17 @@ test('CI missing browser fails and local missing browser keeps explicit skip wit
  assert.equal(select({env:{}},chromium,{existsSync:()=>false},t),'skipped');
  assert.deepEqual(skips,['Chromium is not installed']);
  assert.equal(select({env:{CHROMIUM_EXECUTABLE:'/local/chromium'}},chromium,{existsSync:p=>p==='/local/chromium'},t),'/local/chromium');
+});
+
+test('Pages publication is main-only and lockfile pins its full toolchain',()=>{
+ assert.match(pages,/deploy:\n    if: github.repository == 'rhgrive3\/actions' && github.ref == 'refs\/heads\/main'/);
+ const pkg=JSON.parse(read('package.json')),lock=JSON.parse(read('package-lock.json'));
+ for(const name of ['esbuild','playwright','ws','vite'])assert.equal(lock.packages['node_modules/'+name].version,pkg.devDependencies[name]);
+ assert.equal(pkg.devDependencies.playwright,'1.62.1');
+});
+
+test('ranked QA provisions full Chromium used by the runner without unused headless shell',()=>{
+ assert.match(ranked,/playwright install --with-deps --no-shell chromium/);
+ assert.match(runner,/launchOptions.channel='chromium'/);
+ for(const name of readdirSync(new URL('../../patches/splatoon3/tests',import.meta.url)).filter(n=>/^ranked-.*\.test\.mjs$/.test(n)))assert.doesNotMatch(read('patches/splatoon3/tests/'+name),/from ['"]playwright|import\(['"]playwright/);
 });
