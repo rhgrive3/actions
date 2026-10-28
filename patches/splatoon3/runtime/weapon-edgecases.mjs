@@ -339,7 +339,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
     const blocked = !inp.fire || inp.sub || this.a.form === 'squid';
     const postRoll = !!this.dodge || this.lockT > 0 || this.s3Turret || this.s3DodgeShotPending;
     if (blocked || postRoll) clear(this);
-    if (inp.sub) return dualies.call(this, dt, { ...inp, fire: false }, w);
+    if (inp.sub && inp.fire !== false) return dualies.call(this, dt, { ...inp, fire: false }, w);
     if (!blocked && !postRoll) {
       if (this.s3DualiesSwimStart != null) {
         if (this.s3DualiesSwimStart > EPS) { this.cooldown = Math.max(0, this.cooldown); this.firingT = .35; return; }

@@ -37,7 +37,14 @@ export async function validateSourceInventory(pinned,bytes,expectedSha256){
  for(const parent of directories.keys())if(parent&&byPath.get(parent)?.type!=='tree')throw Error('Source inventory missing parent tree');
  // Validate descendants too: root-only hashing would miss altered contents
  // beneath an unchanged directory hash in a recursive API response.
- for(const [path,children] of directories){const expected=path?byPath.get(path).sha:pinned;if(await gitTreeHash(children)!==expected)throw Error('Source inventory Git tree mismatch: '+(path||'/'));}
+ const checks=[...directories];let cursor=0;
+ // WebCrypto digests are independent; two consumers bound temporary tree bytes.
+ const results=await Promise.allSettled(Array.from({length:Math.min(2,checks.length)},async()=>{
+  while(cursor<checks.length){const [path,children]=checks[cursor++],expected=path?byPath.get(path).sha:pinned;
+   if(await gitTreeHash(children)!==expected)throw Error('Source inventory Git tree mismatch: '+(path||'/'));
+  }
+ }));
+ const failed=results.find(row=>row.status==='rejected');if(failed)throw failed.reason;
  return {sha:pinned,truncated:false,tree:entries};
 }
 export async function loadPinnedSourceTree(pinned,expectedSha256,url,signal){

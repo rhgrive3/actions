@@ -47,6 +47,10 @@ import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-a
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
 import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';
+import { adaptRemainingVisualQueue20261027 } from '../patches/local-quality/queue-remaining-visual-20261027-adapter.mjs';
+import { adaptQueueNetwork20261027 } from '../patches/network-replication/queue-network-20261027-adapter.mjs';
+import { adaptQueueAudioBuild20261027 } from '../patches/local-quality/queue-audio-build-20261027-adapter.mjs';
+import { adaptCombatWorldQueue20261027 } from '../patches/local-quality/queue-combat-world-20261027-adapter.mjs';
 import { adaptStringerChargeHud } from '../patches/splatoon3/stringer-charge-hud-adapter.mjs';
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
@@ -118,6 +122,10 @@ export function adaptBuildSource(rel, code) {
   code = adaptRemainingPaint20261026(rel, code);
   code = adaptHistoricalSourceMotion20261026(rel, code);
   code = adaptHistoricalCharacter20261026(rel, code);
+  code = adaptRemainingVisualQueue20261027(rel, code);
+  code = adaptQueueAudioBuild20261027(rel, code);
+  code = adaptCombatWorldQueue20261027(rel, code);
+  code = adaptQueueNetwork20261027(rel, code, replaceOnce);
   code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
   code = adaptRenderTransfers(rel, code, replaceOnce);
   return adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));

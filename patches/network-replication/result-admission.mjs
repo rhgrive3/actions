@@ -7,7 +7,7 @@ export function validResultPacket(packet) {
   // Native Turf sendResult omits mode; preserve that older wire representation.
   if (packet.mode !== undefined && packet.mode !== 'turf' && packet.mode !== 'boss') return false;
   if (packet.st == null) return true;
-  if (!Array.isArray(packet.st)) return false;
+  if (!Array.isArray(packet.st) || packet.st.length > 8) return false;
   for (const row of packet.st) {
     if (!Array.isArray(row) || row.length < 4 || !Number.isSafeInteger(row[0]) || row[0] < 0) return false;
     for (let i = 1; i < 4; i++) if (!Number.isFinite(row[i]) || row[i] < 0) return false;

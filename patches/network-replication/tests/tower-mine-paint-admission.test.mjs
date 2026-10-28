@@ -23,13 +23,13 @@ function setup(host = false) {
   const packets = [];
   class NetMatch {
     constructor() {
-      this.cfg = { id: 'tower-paint' }; this.s = { hostId: 'a', isHost: host, tr: { broadcast: d => packets.push(d) } };
+      this.cfg = { id: 'tower-paint' }; this.s = { hostId: 'a', isHost: host, tr: { broadcast: d => {packets.push(d);return true;} } };
       this.match = { mode: 'tower', state: 'playing', ranked: new RankedEngine('tower',stage), rankedGains:[0,0], actors:[] };
       this.match.rankedWorld = { mode:'tower', update(engine) { syncWorld(this,engine); } };
       this.match.rankedWorld.update(this.match.ranked);
     }
     get isHost() { return this.s.isHost; }
-    _sendNow(d) { packets.push(json(d)); }
+    _sendNow(d) { if(this.throwSend)throw Error('send unavailable'); if(this.rejectSend)return false; packets.push(json(d));return true; }
     _sendTick() { this.s.tr.broadcast({ k:'t' }); }
     onMessage() {} onLeave() {} dispose() {} _hostClock() {}
   }
@@ -106,7 +106,7 @@ function renderer(THREE) {
 }
 async function wireClient(id) {
   const f=await fixture({productionComposition:true,rankedNetwork:true}), packets=[];
-  const session=f.makeSession(id,'a',[['a','A'],['b','B'],['c','C']]);session.tr.broadcast=d=>packets.push(json(d));
+  const session=f.makeSession(id,'a',[['a','A'],['b','B'],['c','C']]);session.tr.broadcast=d=>{packets.push(json(d));return true;};
   const nm=f.makeNetMatch(session,{id:'tower-paint'});
   const actors=['a','b','c'].map((owner,nid)=>f.makeActor({nid,owner,remote:id!==owner,team:nid%2,roller:false}));
   const match=f.bind(nm,actors);Object.assign(match,{mode:'tower',ranked:new RankedEngine('tower',stage),rankedGains:[0,0]});
@@ -283,4 +283,36 @@ test('older recovered birth envelopes retain original ts/u admission across late
       assert.equal(c.f.G.paint.counts[1],0,original+' remains rejected after expiry');
     }
   }
+});
+
+
+test('refused Tower snapshot retries the original revision before birth tick and clears on host migration', () => {
+  const h=setup(true), f=setup();
+  move(h.engine,7,.25);h.nm.match.rankedWorld.update(h.engine);
+  h.nm.rejectSend=true;
+  const ref=mineTowerPaintReference(h.nm,v(.4,0,-4.8));
+  assert.ok(ref);assert.equal(h.packets.length,0);
+  assert.equal(mineTowerPaintBirth(h.nm,birth(ref,v(.4,0,-4.8))),null,'ref is provisional, not authority');
+  h.nm._sendTick();assert.equal(h.packets.length,0,'birth tick cannot overtake refused original snapshot');
+  h.nm.throwSend=true;assert.doesNotThrow(()=>h.nm._sendTick());assert.equal(h.packets.length,0);h.nm.throwSend=false;
+  move(h.engine,8,.3);h.nm.match.rankedWorld.update(h.engine);
+  h.nm.rejectSend=false;h.nm._sendTick();
+  assert.equal(h.packets[0].rk.state.revision,7);assert.equal(h.packets[1].k,'t');
+  f.nm.onMessage('a',json(h.packets[0]));
+  assert.ok(mineTowerPaintBirth(f.nm,birth(ref,v(.4,0,-4.8))));
+  h.nm.rejectSend=true;
+  const old=mineTowerPaintReference(h.nm,v(.4,0,-3.8));assert.ok(old);
+  h.nm.s.hostId='new-host';h.nm.s.isHost=false;h.nm.rejectSend=false;
+  const at=h.packets.length;h.nm._sendTick();
+  assert.equal(h.packets.length,at+1);assert.equal(h.packets.at(-1).k,'t');
+  assert.equal(mineTowerPaintBirth(h.nm,birth(old,v(.4,0,-3.8))),null);
+});
+
+
+test('Tower retry expiry resumes ticks without granting an unsent paint revision', t=>{
+ let now=0;t.mock.method(performance,'now',()=>now);
+ const h=setup(true);move(h.engine,7,.25);h.nm.match.rankedWorld.update(h.engine);h.nm.rejectSend=true;
+ const ref=mineTowerPaintReference(h.nm,v(.4,0,-4.8));assert.ok(ref);now=2001;
+ h.nm._sendTick();assert.equal(h.packets.at(-1).k,'t');
+ assert.equal(mineTowerPaintBirth(h.nm,birth(ref,v(.4,0,-4.8))),null);
 });

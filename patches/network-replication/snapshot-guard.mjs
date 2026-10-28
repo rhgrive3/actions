@@ -215,12 +215,12 @@ export function validBossSnapshotRow(row, timestamp) {
   if (!Array.isArray(row) || (row.length !== 18 && row.length !== 19) || !validSnapshotTimestamp(timestamp)) return false;
   if (!validSnapshotTimestamp(row[0])) return false;
   for (const i of SNAPSHOT_FIELDS_0) if (!bounded(row[i], -1e6, 1e6)) return false;
-  for (const i of [5, 6]) if (!bounded(row[i], -1e4, 1e4)) return false;
+  if (!bounded(row[5], -1e4, 1e4) || !bounded(row[6], -1e4, 1e4)) return false;
   if (!bounded(row[4], -1e5, 1e5) || !bounded(row[12], -1e5, 1e5)) return false;
   if (!finite(row[7]) || !finite(row[17]) || row[17] <= 0) return false;
   if (!integer(row[8], 1, 3) || !integer(row[9], 0, 15) || !integer(row[11], 0, 2)) return false;
   if (row[10] !== -1 && !validSnapshotTimestamp(row[10])) return false;
-  for (const i of [13, 14]) if (!integer(row[i], 0, Number.MAX_SAFE_INTEGER)) return false;
+  if (!integer(row[13], 0, Number.MAX_SAFE_INTEGER) || !integer(row[14], 0, Number.MAX_SAFE_INTEGER)) return false;
   if (!integer(row[15], -1, Number.MAX_SAFE_INTEGER) || !Array.isArray(row[16]) || row[16].length > NETWORK_BOSS_CRABLET_LIMIT) return false;
   const crabs = row[16];
   for (let at = 0; at < crabs.length; at++) {
@@ -241,15 +241,15 @@ export function validBossMove(move) {
   if (!move || typeof move !== 'object' || Array.isArray(move) || !validSnapshotTimestamp(move.t0)
     || !integer(move.s, 0, 0xffffffff) || !Array.isArray(move.d) || move.d.length !== 3
     || !(move.d[0] > 0) || !move.d.every(v => wireScalar(v) && v >= 0) || !move.p || typeof move.p !== 'object' || Array.isArray(move.p)) return false;
-  const p = move.p, fields = keys => keys.every(key => wireScalar(p[key]));
+  const p = move.p;
   switch (move.id) {
-    case 'slam': return fields(['x', 'y', 'z']) && Array.isArray(p.rings) && p.rings.length <= 2 && p.rings.every(v => wireScalar(v) && v >= 0);
-    case 'barrage': return fields(['sx', 'sy', 'sz']) && Array.isArray(p.b) && p.b.length > 0 && p.b.length <= 7
+    case 'slam': return (wireScalar(p.x) && wireScalar(p.y) && wireScalar(p.z)) && Array.isArray(p.rings) && p.rings.length <= 2 && p.rings.every(v => wireScalar(v) && v >= 0);
+    case 'barrage': return (wireScalar(p.sx) && wireScalar(p.sy) && wireScalar(p.sz)) && Array.isArray(p.b) && p.b.length > 0 && p.b.length <= 7
       && p.b.every(b => Array.isArray(b) && b.length === 4 && b.every(wireScalar));
-    case 'sweep': return move.d[1] > 0 && fields(['ox', 'oy', 'oz', 'y', 'a0', 'a1', 'c']);
-    case 'charge': return fields(['x', 'y', 'z', 'yaw', 'L', 'v', 'wall', 'stun']) && p.L >= 0 && p.v > 0;
+    case 'sweep': return move.d[1] > 0 && (wireScalar(p.ox) && wireScalar(p.oy) && wireScalar(p.oz) && wireScalar(p.y) && wireScalar(p.a0) && wireScalar(p.a1) && wireScalar(p.c));
+    case 'charge': return (wireScalar(p.x) && wireScalar(p.y) && wireScalar(p.z) && wireScalar(p.yaw) && wireScalar(p.L) && wireScalar(p.v) && wireScalar(p.wall) && wireScalar(p.stun)) && p.L >= 0 && p.v > 0;
     case 'crablets': return integer(p.n, 0, 5);
-    case 'frenzy': return fields(['x', 'y', 'z', 'rot0', 'spin', 'stun']);
+    case 'frenzy': return (wireScalar(p.x) && wireScalar(p.y) && wireScalar(p.z) && wireScalar(p.rot0) && wireScalar(p.spin) && wireScalar(p.stun));
     default: return false;
   }
 }

@@ -2,6 +2,7 @@ import { catalogChargeStage } from '../catalog-charge-stages.mjs';
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
+import { KIT_AUDIO } from './kit-recipes.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
 import { sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE } from './extra-source-routes.mjs';
 import { usesChargerRise } from './charger-charge-rise.mjs';
@@ -59,7 +60,7 @@ export function installWeaponAudioRuntime(api){
     return o;
   }
   function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume,true));return null;}
-  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
+  function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const key in s.loops){s.loops[key]?.stop(.04);delete s.loops[key];}s.wasCharge=s.wasReady=false;s.chargeStage=0;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
   function keepLoop(r,event,enabled,pitch=1){if(!enabled&&!r?._mainAudioState?.loops[event])return;const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
@@ -135,7 +136,7 @@ export function installWeaponAudioRuntime(api){
     const kitKey=String(sub||'')+'|'+String(special||'');
     if(s.preloadedKit!==kitKey){
       s.preloadedKit=kitKey;
-      for(const [kit,events] of [['sub:'+sub,['fire','explosion']],['special:'+special,['open','fire','explosion','ready','release','spin']]])
+      for(const [kit,events] of [['sub:'+sub,KIT_AUDIO['sub:'+sub]?.events||[]],['special:'+special,KIT_AUDIO['special:'+special]?.events||[]]])
         for(const event of events){
           loader.ensure(kit,event).catch(()=>{});
           const extra=sourceEventRoute(kit,event);

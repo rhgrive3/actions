@@ -13,7 +13,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/native-stages/runtime/engine.mjs",
     "inputKey": "native-stages/runtime/engine.mjs",
     "sourceInputKey": "upstream/src/game/nav.js",
-    "sourceSha256": "c33f08bfdc7636ef98847ed0de23b128276830fc4039b6c4645a410dfad414bc",
+    "sourceSha256": "1f840278f1fff43b30dccfd0aec5835ba4c94608d88eb05455f85b6656943f56",
     "targetSha256": "7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26"
   },
   {

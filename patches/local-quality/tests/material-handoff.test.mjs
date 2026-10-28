@@ -15,6 +15,12 @@ function runtimeSource(rel){return SITE?fs.readFileSync(path.join(CONTROL||SITE,
 function aliasScope(code,bindings){
  const out={claimPreloadedMusic,cancelPreloadedMusic,...bindings};
  if('DEV_STAGE' in bindings){const m=code.match(/mannequins:\s*(?:!this\._staticMenuAttract\s*&&\s*)?([A-Za-z_$][\w$]*)/);assert(m,'native dev-stage binding');out[m[1]]=bindings.DEV_STAGE;}
+ if ('beginMaterialHandoff' in bindings) {
+  const source = attractMethod(code);
+  const uses = [...source.matchAll(/\b(?:const|let)\s+[\w$]+\s*=\s*([\w$]+)\s*\(\s*this\s*,\s*this\.match\s*,\s*[\w$]+\.renderer\s*\)/g)];
+  assert.equal(uses.length,1,'exactly one real attract material-handoff call');
+  out[uses[0][1]]=bindings.beginMaterialHandoff;
+ }
  for(const match of code.matchAll(/import\s*\{([^}]+)\}\s*from\s*["'][^"']+["']/g))for(const spec of match[1].split(',')){const [name,alias]=spec.trim().split(/\s+as\s+/);if(name in out)out[alias||name]=out[name];}
  for(const match of code.matchAll(/import\s*\*\s*as\s+(\w+)\s*from\s*["']three["']/g))out[match[1]]=T;
  return out;

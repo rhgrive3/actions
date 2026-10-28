@@ -153,6 +153,7 @@ export class PaintPacketNegotiation {
   if(tick?.k!=='t'||!Object.hasOwn(tick,'pe'))return tick;
   const p=this.members.get(from);
   if(!p?.received||!p.peerNonce||tick.pn!==p.peerNonce||Object.hasOwn(tick,'e'))return null;
+  if(Array.isArray(tick.pe) && Array.isArray(tick.pe[2]) && tick.pe[2].length>256)return null;
   const rows=decodePaintEvents(tick.pe);if(!rows)return null;
   const {pe,pn,...out}=tick;out.e=rows;return out;
  }

@@ -7,7 +7,6 @@ import {PREBUILT_SCHEMA, unpackFacesAsync} from './prebuilt-format.mjs';
 const TYPES = {Float32Array, Float64Array, Uint32Array, Int32Array, Uint8Array};
 const hex = b => Array.from(new Uint8Array(b), v => v.toString(16).padStart(2, '0')).join('');
 const FACE_ARRAYS = ['faceF64', 'faceI32', 'faceTriangleOffsets', 'faceTriangles'];
-function checkAbort(signal){if(signal?.aborted)throw new DOMException('Aborted','AbortError');}
 
 export function prebuiltEntry(id) {
   return nativeStageBuild?.prebuilt?.stages?.[id] || null;
@@ -16,23 +15,20 @@ export function prebuiltURL(file) {
   return new URL(nativeStageBuild.prebuilt.baseURL + file, globalThis.document?.baseURI || globalThis.location?.href).href;
 }
 export async function fetchVerified(file, expected, signal) {
-  checkAbort(signal);
   const response = await fetch(prebuiltURL(file), {signal});
   if (!response.ok) throw Error('Prebuilt asset ' + response.status + ': ' + file);
   const bytes = await response.arrayBuffer();
   if (bytes.byteLength !== expected.bytes || hex(await crypto.subtle.digest('SHA-256', bytes)) !== expected.sha256)
     throw Error('Prebuilt integrity mismatch: ' + file);
-  checkAbort(signal);
   return bytes;
 }
 
 // Stream into an unpublished final-array range, then authenticate that range.
 // A failed length/hash never exposes partially trusted data to a stage owner.
 export async function fetchVerifiedInto(file,expected,signal,target){
- checkAbort(signal);
- if(target.byteLength!==expected.bytes)throw Error('Prebuilt target size mismatch');
  const response=await fetch(prebuiltURL(file),{signal});
  if(!response.ok)throw Error('Prebuilt asset '+response.status+': '+file);
+ if(target.byteLength!==expected.bytes)throw Error('Prebuilt target size mismatch');
  const reader=response.body?.getReader?.();
  if(reader){let offset=0;try{while(true){
   if(signal?.aborted)throw new DOMException('Aborted','AbortError');
@@ -44,7 +40,6 @@ export async function fetchVerifiedInto(file,expected,signal,target){
  else {const bytes=await response.arrayBuffer();if(bytes.byteLength!==target.byteLength)throw Error('Prebuilt integrity mismatch: '+file);target.set(new Uint8Array(bytes));}
  if(signal?.aborted)throw new DOMException('Aborted','AbortError');
  if(hex(await crypto.subtle.digest('SHA-256',target))!==expected.sha256)throw Error('Prebuilt integrity mismatch: '+file);
- checkAbort(signal);
 }
 
 async function loadArray(id, spec, signal) {

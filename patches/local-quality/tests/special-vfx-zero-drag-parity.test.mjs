@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { markAttributeRange } from '../../splatoon3/runtime/instance-color-upload.mjs';
 
 const file = new URL('../../splatoon3/runtime/special-vfx-kit.mjs', import.meta.url);
 const source = readFileSync(file, 'utf8');
@@ -14,10 +15,10 @@ class Geometry {
   setIndex() { return this; }
 }
 class Attribute {
-  constructor(array) { this.array = array; this.needsUpdate = false; }
+  constructor(array) { this.array = array; this.needsUpdate = false; this.updateRanges=[]; }
   setUsage() { return this; }
-  clearUpdateRanges() {}
-  addUpdateRange() {}
+  clearUpdateRanges() {this.updateRanges.length=0;}
+  addUpdateRange(start,count) {this.updateRanges.push({start,count});}
 }
 class Mesh {
   constructor(geometry, material) { this.geometry = geometry; this.material = material; }
@@ -35,9 +36,9 @@ function makePool(expCalls) {
   const spyMath = Object.create(Math);
   spyMath.exp = (x) => { expCalls.push(x); return Math.exp(x); };
   const SpritePool = new Function(
-    'THREE', 'SPRITE_VERT', 'SPARK_FRAG', 'PUFF_FRAG', 'vfxRandom', 'TAU', 'Math',
+    'THREE', 'SPRITE_VERT', 'SPARK_FRAG', 'PUFF_FRAG', 'vfxRandom', 'TAU', 'Math', 'markAttributeRange',
     spriteClass + '\nreturn SpritePool;'
-  )(THREE, '', '', '', () => 0.125, 2 * Math.PI, spyMath);
+  )(THREE, '', '', '', () => 0.125, 2 * Math.PI, spyMath, markAttributeRange);
   return new SpritePool(THREE, 1, false, { value: 0 });
 }
 
@@ -101,16 +102,25 @@ test('idle SpritePool uploads its warm buffer once and re-uploads on active-to-i
     return tracker;
   });
   pool.update(1 / 60);
-  assert.deepStrictEqual(updateCounts.map(x => x.count), [1, 1, 1, 1]);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [1, 0, 1, 1]);
   for (let frame = 0; frame < 60; frame++) pool.update(1 / 60);
-  assert.deepStrictEqual(updateCounts.map(x => x.count), [1, 1, 1, 1]);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [1, 0, 1, 1]);
   pool.spawn(1, 2, 3, 0, 0, 0, 2, 0.1, 0.1, 1, 1, 1, 1, 0, { drag: 0 });
   pool.update(1 / 60);
-  assert.deepStrictEqual(updateCounts.map(x => x.count), [2, 2, 2, 2]);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [2, 0, 2, 2]);
   pool.clear();
   pool.update(1 / 60);
-  assert.deepStrictEqual(updateCounts.map(x => x.count), [3, 3, 3, 3]);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [3, 0, 3, 3]);
   for (let frame = 0; frame < 60; frame++) pool.update(1 / 60);
-  assert.deepStrictEqual(updateCounts.map(x => x.count), [3, 3, 3, 3]);
+  assert.deepStrictEqual(updateCounts.map(x => x.count), [3, 0, 3, 3]);
   assert.equal(pool.mesh.geometry.instanceCount, 1);
+});
+
+test('SpritePool uploads changed direction and retains its pending range until renderer consumption',()=>{
+ const pool=makePool([]);pool.spawn(0,0,0,2,3,4,2,.1,.1,1,1,1,1,0,{drag:0,stretch:1});pool.update(1/60);
+ assert.deepEqual(pool.aDir.updateRanges,[{start:4,count:4}]);const pending=pool.aDir.updateRanges[0];pool.update(1/60);
+ assert.equal(pool.aDir.updateRanges[0],pending);pool.aDir.clearUpdateRanges();pool.aDir.needsUpdate=false;pool.update(1/60);
+ assert.equal(pool.aDir.updateRanges.length,0);assert.equal(pool.aDir.needsUpdate,false);
+ pool.clear();pool.spawn(0,0,0,0,0,0,2,.1,.1,1,1,1,1,0,{drag:0});pool.update(1/60);
+ assert.deepEqual(Array.from(pool.aDir.array.slice(4,8)),[0,0,0,0]);assert.deepEqual(pool.aDir.updateRanges,[{start:4,count:4}]);
 });

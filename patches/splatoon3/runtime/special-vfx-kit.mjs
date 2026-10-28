@@ -1,3 +1,4 @@
+import { markAttributeRange } from './instance-color-upload.mjs';
 // GPU effect pools for the Splatoon 3 special presentation (special-vfx.mjs).
 //
 // Presentation only. Nothing here reads or writes gameplay state: the special
@@ -308,20 +309,23 @@ class SpritePool {
       p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;
     }
     const P = this.aPos.array, D = this.aDir.array, C = this.aCol.array, R = this.aPar.array;
+    let dirStart = Infinity, dirEnd = 0;
     // instance 0 is the degenerate warm-up instance
     P[0] = P[1] = P[2] = 0; P[3] = 0; C[3] = 0;
     for (let j = 0; j < this.n; j++) {
       const i = j * S, o = (j + 1) * 4, t = p[i + 6] / p[i + 7];
       const fi = Math.min(1, p[i + 6] / Math.max(1e-3, p[i + 21])), fo = 1 - t * t;
       P[o] = p[i]; P[o + 1] = p[i + 1]; P[o + 2] = p[i + 2]; P[o + 3] = p[i + 8] + (p[i + 9] - p[i + 8]) * t;
-      const st = p[i + 20];
+      const st = p[i + 20], d0 = D[o], d1 = D[o + 1], d2 = D[o + 2], d3 = D[o + 3];
       if (st > 0) { D[o] = p[i + 3]; D[o + 1] = p[i + 4]; D[o + 2] = p[i + 5]; D[o + 3] = Math.hypot(p[i + 3], p[i + 4], p[i + 5]) * st; }
       else { D[o] = D[o + 1] = D[o + 2] = D[o + 3] = 0; }
+      if (!Object.is(d0,D[o]) || !Object.is(d1,D[o+1]) || !Object.is(d2,D[o+2]) || !Object.is(d3,D[o+3])) { dirStart = Math.min(dirStart,o); dirEnd = o+4; }
       C[o] = p[i + 12]; C[o + 1] = p[i + 13]; C[o + 2] = p[i + 14]; C[o + 3] = p[i + 15] * fi * (this.additive ? fo : 1 - Math.pow(t, 1.6));
       R[o] = p[i + 16]; R[o + 1] = p[i + 17]; R[o + 2] = t; R[o + 3] = p[i + 19];
     }
     const count = this.n + 1;
-    for (const a of this.updateAttributes) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
+    for (const a of this.updateAttributes) { if (a === this.aDir) continue; a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
+    markAttributeRange(this.aDir, dirStart, dirEnd);
     this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;this._drawCount=this.n;
   }
   clear() { this.n = 0;this._emptyUploaded=false;this._heapValid=false;this._heapBlocked=false;if(this._evictionHeap)this._evictionHeap.length=0; }
@@ -396,6 +400,7 @@ class RibbonPool {
     if (additive) { m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor; m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor; }
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = additive ? 7 : 6;
     this.mesh.name = additive ? 'special-vfx:ribbons+' : 'special-vfx:ribbons';
+    g.boundingSphere = new THREE.Sphere();
     this._t = new THREE.Vector3(); this._s = new THREE.Vector3(); this._c = new THREE.Vector3();
   }
   // opts: { width, widthTail, color [r,g,b], alpha, style, life (point lifetime s), spacing (m), flat (ground-aligned) }
@@ -429,7 +434,7 @@ class RibbonPool {
   end(r) { if (r) r.ended = true; }
   update(now, camPos) {
     if(this.list.length===0&&this._emptyUploaded)return;
-    let v = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array, SD = this.side.array, FC = this.face.array;
+    let v = 0, ribStart = Infinity, ribEnd = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array, SD = this.side.array, FC = this.face.array;
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const r = this.list[i];
@@ -458,7 +463,9 @@ class RibbonPool {
           const vi = base + k * 2 + side, sg = side ? 1 : -1;
           P[vi * 3] = q[0] + s.x * w * sg; P[vi * 3 + 1] = q[1] + s.y * w * sg; P[vi * 3 + 2] = q[2] + s.z * w * sg;
           C[vi * 4] = r.o.color[0]; C[vi * 4 + 1] = r.o.color[1]; C[vi * 4 + 2] = r.o.color[2]; C[vi * 4 + 3] = alpha;
-          R[vi * 4] = along; R[vi * 4 + 1] = sg; R[vi * 4 + 2] = r.o.style; R[vi * 4 + 3] = r.o.seed;
+          const ri=vi*4, r0=R[ri], r1=R[ri+1], r2=R[ri+2], r3=R[ri+3];
+          R[ri] = along; R[ri+1] = sg; R[ri+2] = r.o.style; R[ri+3] = r.o.seed;
+          if (!Object.is(r0,R[ri]) || !Object.is(r1,R[ri+1]) || !Object.is(r2,R[ri+2]) || !Object.is(r3,R[ri+3])) { ribStart=Math.min(ribStart,ri); ribEnd=Math.max(ribEnd,ri+4); }
           SD[vi * 3] = s.x; SD[vi * 3 + 1] = s.y; SD[vi * 3 + 2] = s.z; FC[vi * 3] = c.x; FC[vi * 3 + 1] = c.y; FC[vi * 3 + 2] = c.z;
         }
       }
@@ -472,7 +479,9 @@ class RibbonPool {
         SD.copyWithin(to * 3, from * 3, (from + count) * 3);
         FC.copyWithin(to * 3, from * 3, (from + count) * 3);
         C.copyWithin(to * 4, from * 4, (from + count) * 4);
-        R.copyWithin(to * 4, from * 4, (from + count) * 4);
+        for (let c=0;c<count*4;c++) { const at=to*4+c,value=R[from*4+c];
+          if (!Object.is(R[at],value)) { R[at]=value; ribStart=Math.min(ribStart,at); ribEnd=Math.max(ribEnd,at+1); }
+        }
         if (!copied) C[to * 4 + 3] = C[(to + 1) * 4 + 3] = 0;
         copied += count;
       }
@@ -481,7 +490,17 @@ class RibbonPool {
     // keep one degenerate segment drawn (warm program); zero alpha
     if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
     this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;this._drawCount=slot;
-    for (const a of [this.pos, this.col, this.rib, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
+    const sphere=this.mesh.geometry.boundingSphere;
+    let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
+    for(let i=0,end=slot*this.M*2*3;i<end;i+=3){
+      minX=Math.min(minX,P[i]);minY=Math.min(minY,P[i+1]);minZ=Math.min(minZ,P[i+2]);
+      maxX=Math.max(maxX,P[i]);maxY=Math.max(maxY,P[i+1]);maxZ=Math.max(maxZ,P[i+2]);
+    }
+    const radius=Math.hypot(maxX-minX,maxY-minY,maxZ-minZ)*.5;
+    this.mesh.frustumCulled=!!this._warmed&&slot>0&&Number.isFinite(radius);
+    if(this.mesh.frustumCulled){sphere.center.set((minX+maxX)*.5,(minY+maxY)*.5,(minZ+maxZ)*.5);sphere.radius=radius+1e-6*(1+radius);}
+    markAttributeRange(this.rib, ribStart, ribEnd);
+    for (const a of [this.pos, this.col, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
   }
   clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; r.samples.length=0; r.count=0; } this.list.length = 0; this._emptyUploaded = false; }
 }
@@ -846,12 +865,12 @@ class ShapePool {
     const n = this.recs.length;
     for (let k = 0; k < this.buf.length; k++) {
       const A = this.buf[k].array;
-      let dirty = this._drawCount !== n;
-      for (let c = 0; c < 4; c++) { if (!Object.is(A[c], 0)) dirty = true; A[c] = 0; }
+      let start = Infinity, end = 0;
+      for (let c = 0; c < 4; c++) { if (!Object.is(A[c], 0)) { start = Math.min(start, c); end = Math.max(end, c + 1); A[c] = 0; } }
       for (let j = 0; j < n; j++) { const v = this.recs[j].v; const o = (j + 1) * 4, s = k * 4;
-        for (let c = 0; c < 4; c++) { if (!Object.is(A[o+c], v[s+c])) dirty = true; A[o+c] = v[s+c]; }
+        for (let c = 0; c < 4; c++) { if (!Object.is(A[o+c], v[s+c])) { start = Math.min(start, o+c); end = Math.max(end, o+c+1); A[o+c] = v[s+c]; } }
       }
-      if (dirty) { this.buf[k].clearUpdateRanges(); this.buf[k].addUpdateRange(0, (n + 1) * 4); this.buf[k].needsUpdate = true; }
+      markAttributeRange(this.buf[k], start, end);
     }
     // degenerate warm instance: alpha 0
     const col = this.buf[2].array; col[3] = 0;
@@ -890,7 +909,7 @@ export class SpecialVfxKit {
     this.inkDiscs = new ShapePool(THREE, 'discs', quad(), 48, discAttrs, DISC_VERT, DISC_FRAG, false, uT, { order: 4 }, L);
     this.pools = [this.sparks, this.puffs, this.beams, this.inkBeams, this.shells, this.inkShells, this.bands, this.inkBands, this.discs, this.inkDiscs];
     this.allPools = [...this.pools, this.ribbons, this.glowRibbons];
-    this._restoreWarmMeshes = () => { for (const p of this.allPools) { p._warmed = false; p.mesh.visible = true; p.mesh.onAfterRender = p._warmCallback; } };
+    this._restoreWarmMeshes = () => { for (const p of this.allPools) { p._warmed = false; p.mesh.visible = true; p.mesh.frustumCulled = false; p.mesh.onAfterRender = p._warmCallback; } };
     for (const p of this.allPools) {
       this.root.add(p.mesh); excludeFromOverridePasses(p.mesh);
       const mesh = p.mesh, previous = mesh.onAfterRender;

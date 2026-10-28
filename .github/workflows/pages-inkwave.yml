@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'package.json'
+      - 'package-lock.json'
       - "inkwave-public/**"
       - "scripts/build-inkwave.mjs"
       - "scripts/check-inkwave-patches.mjs"
@@ -33,11 +34,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages-inkwave"
+  group: "pages-inkwave-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
   deploy:
+    if: github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -64,23 +66,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       # Minify every JS/CSS file in place (same module layout, same behaviour), tree-shake three.js to the symbols
       # the game uses and preload the module graph. Source of truth stays the readable inkwave-public/.
-      - name: Cache esbuild
-        id: esbuild-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/esbuild
-            node_modules/@esbuild
-          key: ${{ runner.os }}-${{ runner.arch }}-esbuild-0.28.2
-
       - name: Build optimized site
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
-          npx --no-install playwright install --with-deps chromium
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps --no-shell chromium
           node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
           node scripts/check-inkwave-patches.mjs --quick
           node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs --test-concurrency=2
@@ -115,3 +110,4 @@ jobs:
         with:
           name: inkwave-ranked-public-browser
           path: reports/ranked-public-browser
+          retention-days: 30
