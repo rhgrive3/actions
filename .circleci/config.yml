@@ -30,6 +30,5 @@ workflows:
             scripts/tests/test_fetch_inkwave_pinned_references.py run-inkwave true
             package.json run-inkwave true
             package-lock.json run-inkwave true
-            .github/workflows/inkwave-.*[.]yml run-inkwave true
             .github/workflows/validate-inkwave-update.yml run-inkwave true
             .circleci/.* run-inkwave true
