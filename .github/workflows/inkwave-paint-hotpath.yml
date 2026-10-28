@@ -23,6 +23,9 @@ on:
       - 'patches/splatoon3/adapter.mjs'
       - 'scripts/inkwave-source-composition.mjs'
       - "patches/local-quality/**"
+      - "!patches/local-quality/tests/**"
+      - "patches/local-quality/tests/paint-hotpath.test.mjs"
+      - "patches/local-quality/tests/quality.test.mjs"
       - "scripts/lib/inkwave-build-only-modules.mjs"
       - ".github/workflows/inkwave-paint-hotpath.yml"
   workflow_dispatch:
