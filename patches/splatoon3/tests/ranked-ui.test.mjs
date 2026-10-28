@@ -170,3 +170,12 @@ test('ranked mode grid owns card size and title size over the practice range and
   assert.match(transformed, /blurb: tr\('Everyone is one squad against \{boss\}\. Defeat it before time runs out!', \{ boss: tr\(BOSS_NAME\) \}\)/);
   assert.match(transformed, /sub: tr\('Pick a stage and the time of day · your squad of 8 vs \{boss\}', \{ boss: tr\(BOSS_NAME\) \}\)/);
 });
+
+test('compact touch landscape gives every mode row a positive minimum, including the range row', () => {
+  const rangeCss = readFileSync(new URL('../../practice-range/styles/range.css', import.meta.url), 'utf8');
+  const touchCss = readFileSync(new URL('../ui.css', import.meta.url), 'utf8');
+  // Seven cards need three rows; two zero-minimum explicit rows collapse when a
+  // higher-specificity range rule forces the implicit third row to 300px.
+  assert.match(touchCss, /@media \(orientation: landscape\) and \(max-height: 500px\)[\s\S]*?grid-template-rows: none; grid-auto-rows: minmax\(96px, 1fr\)/);
+  assert.match(rangeCss, /\.iw-modesel__row\.has-range \.iw-mode \{ width: 100%; min-height: 300px; \}[\s\S]*?@media \(orientation: landscape\) and \(max-height: 500px\) \{[\s\S]*?\.iw-modesel__row\.has-range \.iw-mode \{ min-height: 96px; \}/);
+});

@@ -1,0 +1,64 @@
+name: INKWAVE touch menu before-after diagnostic
+on:
+  push:
+    branches: [diagnostic/touch-menu-fix-c694-20261028]
+permissions:
+  contents: read
+jobs:
+  menu-layout:
+    name: ${{ matrix.side }} / ${{ matrix.viewport }} native menu diagnostic
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [before, after]
+        viewport: [landscape, portrait, desktop]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify probe checkout
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.side == 'before' && 'c694e177a443a79801bf73f8b6cd986d100cf531' || github.sha }}
+          path: game
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify probe contract
+        run: node --test scripts/tests/inkwave-touch-layout-probe.test.mjs
+      - name: Install pinned capture tools
+        run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build native source
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+          EXPECTED_SOURCE: ${{ matrix.side == 'before' && 'c694e177a443a79801bf73f8b6cd986d100cf531' || github.sha }}
+        run: |
+          set -o pipefail
+          test "$(git -C game rev-parse HEAD)" = "$EXPECTED_SOURCE"
+          test -z "$(git -C game status --porcelain)"
+          mkdir -p "$RUNNER_TEMP/menu-evidence"
+          node game/scripts/build-inkwave.mjs game/inkwave-public "$RUNNER_TEMP/menu-site" 2>&1 | tee "$RUNNER_TEMP/menu-evidence/build.log"
+      - name: Observe native menu and ordinary input
+        env:
+          EXPECTED_SOURCE: ${{ matrix.side == 'before' && 'c694e177a443a79801bf73f8b6cd986d100cf531' || github.sha }}
+          MENU_SIDE: ${{ matrix.side }}
+          MENU_CASE: ${{ matrix.viewport }}
+          GAME_SOURCE: ${{ github.workspace }}/game
+          MENU_SITE: ${{ runner.temp }}/menu-site
+          MENU_EVIDENCE: ${{ runner.temp }}/menu-evidence
+        run: node scripts/check-touch-menu-layout-probe.mjs
+      - name: Preserve diagnostic evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-layout-${{ matrix.side }}-${{ matrix.viewport }}-${{ github.sha }}
+          path: ${{ runner.temp }}/menu-evidence/
+          if-no-files-found: warn
+          retention-days: 7
