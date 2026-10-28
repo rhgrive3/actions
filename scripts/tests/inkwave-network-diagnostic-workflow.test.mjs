@@ -48,7 +48,7 @@ function verify(text){
 }
 // Evaluate only this deliberately restricted, validated boolean grammar, never arbitrary source.
 function evaluate(expression,context){
- if(expression===ordinaryFull)return context.diagnostic_only!==true&&(context.event!=='pull_request'||context.draft===false);
+ if(expression===ordinaryFull)return context.diagnostic_only!==true&&context.ciOnly!==true&&(context.event!=='pull_request'||context.draft===false);
  assert.match(expression,/^(?:github\.event_name == 'workflow_dispatch' && )?inputs\.diagnostic_only (?:==|!=) true(?: && inputs\.(?:network_opening_diagnostic|wall_render_diagnostic) (?:==|!=) true)*$/);
  return expression.split(' && ').every(term=>{
   if(term==="github.event_name == 'workflow_dispatch'")return context.event==='workflow_dispatch';
