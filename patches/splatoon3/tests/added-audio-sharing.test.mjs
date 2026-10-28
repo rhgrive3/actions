@@ -53,8 +53,11 @@ test('full actual noise functions preserve PCM and cache identity at seven rates
 test('idempotent init resumes audio without replaying historical preparation; a new owner still prepares intents',async()=>{
  class Engine{constructor(){this.ctx=null;this.byName=new Map();}init(){if(!this.ctx)this.ctx=context();this.ctx.resume();return this;}_def(){return null;}stats(){return{};}stopAll(){}}
  installWeaponAudioEngine(Engine);const ensure=RealS3SampleLoader.prototype.ensure,declares=RealS3SampleLoader.prototype.declares;const calls=[];RealS3SampleLoader.prototype.ensure=function(...args){calls.push({owner:this,args});return Promise.resolve({});};RealS3SampleLoader.prototype.declares=function(){return true;};
- try{const e=new Engine();e.init();const ids=Object.values(WEAPON_AUDIO).filter(r=>!['charger','splatling'].includes(r.family)).slice(0,8).map(r=>r.id);for(const id of ids)e.prepareWeapon(id);assert.equal(calls.length,ids.length,'one elected source recording per prepared weapon');const bank=e._weaponBank;for(let i=0;i<10;i++)assert.equal(e.init(),e);assert.equal(calls.length,ids.length,'repeated init never requeues MP3 sources');assert.equal(e.ctx.resumes,11);
- e.ctx=context(44100);e.init();assert.notEqual(e._weaponBank,bank);assert.equal(calls.length,ids.length*2,'new AudioContext requires each selected source again');e.disposeWeaponAudio();assert.equal(e._warmPreparedBank,null);assert.equal(e._warmPreparedContext,null);
- const pending=new Engine();pending.prepareWeapon('shooter');assert.equal(calls.length,ids.length*2);pending.init();assert.equal(calls.length,ids.length*2+1,'one queued selected source warms on context unlock');pending.disposeWeaponAudio();
+ try{const e=new Engine();e.init();const ids=Object.values(WEAPON_AUDIO).filter(r=>!['charger','splatling'].includes(r.family)).slice(0,8).map(r=>r.id);for(const id of ids)e.prepareWeapon(id);
+ const mains=()=>calls.filter(c=>!c.args[0].startsWith('combat:')).map(c=>c.args[0]);
+ assert.deepEqual(mains(),ids,'each selection prepares its recorded main');const firstCalls=calls.length,bank=e._weaponBank;
+ for(let i=0;i<10;i++)assert.equal(e.init(),e);assert.equal(calls.length,firstCalls,'repeated init never requeues MP3 sources');assert.equal(e.ctx.resumes,11);
+ e.ctx=context(44100);e.init();assert.notEqual(e._weaponBank,bank);assert.deepEqual(mains(),[...ids,ids.at(-1)],'new context prepares the latest selected weapon once');e.disposeWeaponAudio();assert.equal(e._warmPreparedBank,null);assert.equal(e._warmPreparedContext,null);
+ const pending=new Engine();pending.prepareWeapon('shooter');const beforeUnlock=calls.length;pending.init();assert.equal(mains().at(-1),'shooter');assert.equal(mains().length,ids.length+2,'one queued selected source warms on context unlock');assert.ok(calls.length>beforeUnlock);pending.disposeWeaponAudio();
  }finally{RealS3SampleLoader.prototype.ensure=ensure;RealS3SampleLoader.prototype.declares=declares;}
 });

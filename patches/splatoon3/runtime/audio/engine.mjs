@@ -254,7 +254,9 @@ export function installWeaponAudioEngine(Engine){
       const bank=this.weaponBank();
       if(this._warmPreparedContext!==this.ctx||this._warmPreparedBank!==bank){
         this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
-        for(const id of this._warmWeapons)this.prepareWeapon(id,{urgent:true});
+        // prepareWeapon updates the selected set; iterate a snapshot so a
+        // re-added entry cannot keep the live Set iterator running forever.
+        for(const id of [...this._warmWeapons])this.prepareWeapon(id,{urgent:true});
       }
     }
     return result;
