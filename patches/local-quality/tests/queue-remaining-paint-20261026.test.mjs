@@ -7,6 +7,9 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptRemainingPaint20261026 } from '../queue-remaining-paint-20261026-adapter.mjs';
+import { adaptCombatGpuCpuPerfect } from '../combat-gpu-cpu-perfect-adapter.mjs';
+import { adaptPaintRenderRegions } from '../paint-render-regions-adapter.mjs';
+import { replaceOnce } from '../adapter.mjs';
 import { geometryFixture } from './geometry-build-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url)), SRC = path.join(ROOT, 'inkwave-public');
@@ -18,6 +21,8 @@ const candidate = adaptRemainingPaint20261026('src/world/paint.js', baseline.pai
 const names = [['aPos', 2], ['aLocal', 3], ['aSplat', 4], ['aStretch', 3], ['aGrow', 4]];
 const plain = x => structuredClone(x);
 
+// Behavioral parity below loads the remaining-paint intermediate; regional
+// GPU/mip execution is not exercised by these mocked draw methods.
 async function loadPaint(changed) {
   const counts = { hypot: 0, sqrt: 0, random: 0 }, math = Object.create(Math), document = { hidden: false };
   for (const key of ['hypot', 'sqrt']) math[key] = (...args) => { counts[key]++; return Math[key](...args); };
@@ -197,8 +202,16 @@ test('shelf retries preserve stable face ordering and atomic atlas commits for f
 });
 
 test('paint source adapter is isolated and fail-closed', () => {
-  assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), candidate,
-    'production composition uses the tested candidate bytes');
+  // Remaining-paint owns this intermediate. Two later production owners alter
+  // the terminal bytes; verify their exact ordered composition rather than
+  // falsely asserting that the intermediate is the final source.
+  const cpu = adaptCombatGpuCpuPerfect('src/world/paint.js', candidate, replaceOnce);
+  const terminal = adaptPaintRenderRegions('src/world/paint.js', cpu, replaceOnce);
+  assert.notEqual(cpu, candidate, 'CPU owner is actually exercised');
+  assert.notEqual(terminal, cpu, 'regional rendering owner is actually exercised');
+  assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), terminal,
+    'production composition is remaining-paint → CPU → regional rendering');
+  assert.throws(() => adaptPaintRenderRegions('src/world/paint.js', terminal, replaceOnce), /already composed/);
   assert.equal(adaptRemainingPaint20261026('src/config.js', baseline.paint.source), baseline.paint.source);
   assert.throws(() => adaptRemainingPaint20261026('src/world/paint.js', candidate), /source anchor/);
   assert.doesNotThrow(() => new vm.SourceTextModule(candidate));

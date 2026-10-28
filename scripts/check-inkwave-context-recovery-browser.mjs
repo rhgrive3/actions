@@ -7,6 +7,19 @@ import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
+// Every phase emitted by the shared menu helper has an explicit native control
+// admission. Unknown phases fail closed rather than skipping the input guard.
+export function contextMenuControlForPhase(label) {
+  const phases = {
+    'native main menu readiness': { selector: '.iw-main [data-id="play"]', menu: 'main' },
+    'native mode menu': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
+    'native turf pointer readiness': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
+    'native setup menu': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
+  };
+  assert(Object.hasOwn(phases,label), 'Unknown native menu phase: ' + label);
+  return phases[label];
+}
+
 // A separate terminal browser lane. Do not run more gameplay checks on this
 // page after intentional context loss; it closes with the reload dialog up.
 export async function nativeContextRecoveryProof() {
@@ -275,12 +288,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
       remainingMs, receipt: startup.events,
       waitForPhase: async (predicate, label) => {
         await page.waitForFunction(predicate, null, { timeout: remainingMs() });
-        const control = {
-          'native main menu readiness': { selector: '.iw-main [data-id="play"]', menu: 'main' },
-          'native mode menu': { selector: '.iw-modesel [data-id="mode-turf"]', menu: 'mode' },
-          'native setup menu': { selector: '.iw-setup [data-id="map-tidewater"]', menu: 'setup' },
-        }[label];
-        assert(control, 'Unknown native menu phase: ' + label);
+        const control = contextMenuControlForPhase(label);
         await page.waitForFunction(rangeMenuControlReady, control, { timeout: remainingMs() });
         lastStage = label;
       },

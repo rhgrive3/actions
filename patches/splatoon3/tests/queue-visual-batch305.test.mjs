@@ -89,3 +89,15 @@ test('Booyah cheer ends its ribbon when the carrier retires before its final fol
  const kit=new SpecialVfxKit(T,new T.Group()),owner={pos:new T.Vector3(),team:1,specialActive:{id:'booyahBomb'}},a={pos:new T.Vector3(2,0,0),team:1},track={d:{}},self={THREE:T,kit,G:{actors:[owner]},tracks:new Map([[owner,track]]),v:Array.from({length:8},()=>new T.Vector3()),rgb:()=>[1,1,1],hdr:c=>c,stars(){},ribbon:(_add,o)=>kit.glowRibbons.start(o),shell:(_add,life,_style,_pos,_s0,_s1,_col,_a,o)=>kit.shells.add(life,new Array(16).fill(0),o.follow),pushRibbon:(r,p)=>kit.glowRibbons.push(r,p.x,p.y,p.z,0)};
  run.call(self,a,{action:'cheer'});const rib=kit.glowRibbons.list[0];assert.equal(rib.ended,false);assert.equal(track.d.recs.length,1);kit.shells.update(.5);assert.equal(rib.ended,true);assert.equal(track.d.recs.length,0);assert.equal(track.d.ribbons.length,0);kit.dispose();
 });
+
+test('recorded START admits each of five combat cues individually after the shot in exact order',async()=>{
+ const cues=['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'];
+ const weapons=['s3-shooter-short','s3-shooter-first','s3-shooter-precision','s3-shooter-blaze','shooter','s3-shooter-gravity','s3-shooter-quickmiddle','s3-shooter-expert'];
+ class Engine{_def(){return null;}}installWeaponAudioEngine(Engine);
+ function make(fail,misleading=false){const calls=[],byEvent=new Map(),bank={authorized:{byEvent}},e=new Engine();e.ctx={state:'running'};e.weaponBank=()=>bank;e._realS3Loader={errors:[],declares:(_id,event)=>event==='fire',ensureMany(){throw Error('bulk load must not replace individual receipts');},async ensure(id,event,opts){calls.push([id,event,opts]);if(id!==fail)byEvent.set(id+':'+event,{});return id===fail&&!misleading?{errors:[{error:'synthetic decode failure'}]}:{loaded:1};}};return{e,calls,byEvent};}
+ const all=[];
+ for(const weapon of weapons){const f=make();assert.equal((await f.e.requireRecordedMainShot(weapon)).ready,true);const expected=[weapon,...cues].map(id=>[id,'fire',{priority:true}]);assert.deepEqual(f.calls,expected,weapon);for(const [id,event]of expected)assert.ok(f.byEvent.has(id+':'+event));all.push(...f.calls);}
+ assert.equal(all.length,48,'eight independent shot + five-cue ordered sequences');
+ const shot=make('shooter');await assert.rejects(shot.e.requireRecordedMainShot('shooter'),/synthetic decode failure/);assert.deepEqual(shot.calls.map(x=>x[0]),['shooter'],'failed shot never requests combat cues');
+ for(const cue of cues)for(const misleading of [false,true]){const f=make(cue,misleading);await assert.rejects(f.e.requireRecordedMainShot('shooter'),error=>error.message.includes(cue)&&(misleading||error.message.includes('synthetic decode failure')));assert.deepEqual(f.calls.map(x=>x[0]),['shooter',...cues.slice(0,cues.indexOf(cue)+1)]);assert.equal(f.byEvent.has(cue+':fire'),false,'success result without authorized receipt is not sufficient');}
+});

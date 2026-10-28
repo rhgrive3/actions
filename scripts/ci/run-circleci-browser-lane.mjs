@@ -22,6 +22,8 @@ const EXTERNAL_STEPS = new Set([
 const STEP_HEADER = /^      - (?:name|uses):/;
 const RUN_STEP = /^        run: (.*)$/;
 const INDENTED_RUN = /^          /;
+const WIPER_TITLE = 'Capture all current-head Wiper charged and tap native views';
+const WIPER_GUARD = "${{ !cancelled() && matrix.suite == 'catalog' && steps.verified-site.outcome == 'success' && steps.browser-prepare.outcome == 'success' }}";
 const MATCH_SUITE = /^matrix\.suite == '([a-z]+)'(?: && env\.RUNTIME_PERFORMANCE == 'true')?$/;
 
 function parseCommand(attrs, label) {
@@ -51,6 +53,20 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
   if (end === -1) end = lines.length;
   const block = lines.slice(start, end);
   const sourceHash = createHash('sha256').update(block.join('\n')).digest('hex');
+  // Step IDs are job-local in Actions. Bind the exact prerequisites to this
+  // browser job, before the single Wiper step; matching another job or a
+  // later/duplicate step must not silently admit a weakened native condition.
+  const uniqueIndex = (line, label) => {
+    const positions = block.flatMap((value, i) => value === line ? [i] : []);
+    if (positions.length !== 1) throw Error('Missing or ambiguous Wiper ' + label);
+    return positions[0];
+  };
+  const wiperIndex = uniqueIndex('      - name: ' + WIPER_TITLE, 'capture');
+  for (const [title, id] of [['Verify immutable site for this browser shard', 'verified-site'], ['Prepare workspace storage and browser', 'browser-prepare']]) {
+    const index = uniqueIndex('      - name: ' + title, 'prerequisite: ' + id);
+    const idIndex = uniqueIndex('        id: ' + id, 'prerequisite ID: ' + id);
+    if (index >= wiperIndex || idIndex !== index + 1) throw Error('Invalid Wiper prerequisite order: ' + id);
+  }
   const commands = [];
   const coverage = {};
   for (let i = 0; i < block.length; i++) {
@@ -61,6 +77,8 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
     const attrs = block.slice(i + 1, j);
     i = j - 1;
     const command = parseCommand(attrs, title);
+    if (title === WIPER_TITLE && (command === null || attrs.filter(x => /^        if: /.test(x)).length !== 1 || attrs.some(x => /^        continue-on-error:/.test(x))))
+      throw Error('Invalid Wiper capture step');
     if (command === null) continue; // GitHub-only actions: checkout/cache/upload artifacts.
     if (title === 'Package bounded browser failure evidence') {
       if (command !== 'node scripts/ci/package-inkwave-evidence.mjs --browser-failure "$CI_STORAGE/evidence" "$CI_STORAGE/failure-evidence" .built-site/_site/inkwave-build.json'
@@ -73,10 +91,12 @@ export function parseBrowserLane(workflowText, suite, runtimePerformance = false
     const condition = whenLine ? whenLine.slice(12).trim() : null;
     if (condition === null && title !== 'Bind passing browser evidence to the tested commit')
       throw Error('New unconditional native step requires CircleCI audit: ' + title);
-    if (condition !== null && !MATCH_SUITE.test(condition))
+    const isolatedWiper = title === WIPER_TITLE && condition === WIPER_GUARD;
+    if (title === WIPER_TITLE && !isolatedWiper) throw Error('Unrecognized native browser conditional: ' + title + ': ' + condition);
+    if (condition !== null && !isolatedWiper && !MATCH_SUITE.test(condition))
       throw Error('Unrecognized native browser conditional: ' + title + ': ' + condition);
     if (condition !== null) {
-      const m = condition.match(MATCH_SUITE);
+      const m = isolatedWiper ? [condition, 'catalog'] : condition.match(MATCH_SUITE);
       if (!SUITES.includes(m[1])) throw Error('Unknown source suite ' + m[1] + ': ' + title);
       coverage[m[1]] = (coverage[m[1]] || 0) + 1;
       if (m[1] !== suite) continue;

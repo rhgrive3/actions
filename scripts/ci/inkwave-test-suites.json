@@ -158,6 +158,7 @@
           "scripts/tests/inkwave-queued-workflow-policy.test.mjs",
           "scripts/tests/inkwave-ci-queue-relief.test.mjs",
           "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+          "scripts/tests/inkwave-wiper-capture-isolation.test.mjs",
           "scripts/tests/inkwave-ci-source-admission.test.mjs",
           "scripts/tests/inkwave-main9fe-paint-admission.test.mjs",
           "scripts/tests/inkwave-maine1f-paint-admission.test.mjs",

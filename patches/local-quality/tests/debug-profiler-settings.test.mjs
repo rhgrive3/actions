@@ -201,3 +201,81 @@ test('failed lazy import is reported once rather than retried every RAF',async()
   f.game.disposePlatform();
   assert.equal(f.counters().disposed,1);
 });
+
+
+function makeResolutionFixture() {
+  let time=0,latest=null,dynResCalls=0;
+  const canvas={width:750,height:450};
+  const renderer={domElement:canvas,getPixelRatio(){return game.R.dynScale;}};
+  const game={
+    settings:{quality:'medium',shadows:true,bloom:true,frameRate:'display'},
+    match:{mode:'practice',actors:[{}],local:{weapon:{id:'shooter'}}},
+    R:{_w:750,_h:450,dynScale:.75,renderer,
+      setDynamicScale(next) {
+        this.dynScale=next;
+        canvas.width=Math.round(1000*next);
+        canvas.height=Math.round(600*next);
+      }},
+    _dynRes(){dynResCalls++;},
+    perf:{calls:50,tris:200000}
+  };
+  const originalDynRes=game._dynRes;
+  const env={__G:{level:{layout:{id:'range'}},match:game.match,paint:{size:2048}}};
+  const ab=installDebugAB({probe:{},tracer:{lastFrameMetrics:()=>latest,pollGpu(){}},
+    game,env,now:()=>time});
+  const run=(kind,step,work=4)=>{
+    assert.equal(ab.start(kind),true);
+    for(let i=0;i<Math.ceil(6100/step);i++){
+      time+=step;
+      latest={frameGapMs:step,workMs:work,scale:game.R.dynScale,
+        cpu:{simulation:work/2,render:work/2},calls:{render:1},
+        gpuMs:null,gpuPaintMs:null};
+      ab.frame();
+    }
+  };
+  return {ab,game,run,originalDynRes,getDynCalls:()=>dynResCalls};
+}
+
+test('mobile fixed-density diagnosis captures four trials and never invents GPU milliseconds',()=>{
+  const f=makeResolutionFixture();
+  assert.equal(f.ab.setResolution('low'),true);
+  f.game._dynRes();
+  assert.equal(f.getDynCalls(),0,'adaptive scaler pauses only for an explicit diagnostic lock');
+  f.run('idle',16.7);
+  f.run('fire',18);
+  assert.equal(f.ab.resolutionComparison().completed,2);
+  assert.equal(f.ab.setResolution('high'),true);
+  f.run('idle',18.5);
+  f.run('fire',30);
+  const sweep=f.ab.resolutionComparison();
+  assert.equal(sweep.status,'compared');
+  assert.equal(sweep.completed,4);
+  assert.equal(sweep.sensitivity,'resolution-sensitive');
+  assert.equal(sweep.directlyMeasuredGPU,false,'sensitivity does not equal measured GPU time');
+  assert.equal(sweep.phases.fire.lowDrawingBuffer[0],600);
+  assert.equal(sweep.phases.fire.highDrawingBuffer[0],1000);
+  assert.equal(sweep.phases.fire.highMinusLowFrameGapP50Ms,12);
+  assert.equal(f.ab.comparison().resolutionSweep.status,'compared');
+  assert.equal(f.ab.setResolution('auto'),true);
+  assert.equal(f.game.R.dynScale,.75,'original render scale restored exactly');
+  assert.strictEqual(f.game._dynRes,f.originalDynRes);
+  f.game._dynRes();
+  assert.equal(f.getDynCalls(),1);
+  f.ab.dispose();
+});
+
+test('invalid modes, interrupted trials and disposal do not leak a render-density lock',()=>{
+  const f=makeResolutionFixture();
+  assert.equal(f.ab.setResolution('banana'),false);
+  assert.equal(f.ab.setResolution('low'),true);
+  assert.equal(f.ab.start('idle'),true);
+  assert.equal(f.ab.setResolution('high'),true,'change cancels unfinished trial');
+  assert.equal(f.ab.resolutionComparison().completed,0);
+  f.game.settings.quality='ultra';
+  f.run('fire',16.7);
+  assert.equal(f.ab.resolutionComparison().status,'incomplete');
+  f.ab.dispose();
+  assert.equal(f.game.R.dynScale,.75);
+  assert.strictEqual(f.game._dynRes,f.originalDynRes);
+  assert.equal(f.ab.setResolution('low'),false,'disposed UI must not re-enable work');
+});

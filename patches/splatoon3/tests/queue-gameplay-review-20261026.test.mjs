@@ -85,17 +85,42 @@ test('Aim Assist prunes only the private camera vector and preserves original cu
   for(const kind of ['near','far','throw-call','throw-lookup'])assert.deepEqual(run(after,kind),run(sourceBefore.assistTarget,kind),kind);
 });
 
-test('soft push retains live roster and radius reads across native collision callbacks and exceptions',()=>{
+test('soft push retains live pair reads and ordering across mutation, reentry, walls, and exceptions',()=>{
   const source=adaptBuildSource('src/game/match.js',read('../../../inkwave-public/src/game/match.js'));
   const start=source.indexOf('    // soft push between actors'),end=source.indexOf('\n  }\n\n  updateController',start);
   assert.ok(start>=0&&end>start);const after=source.slice(start,end);
   const run=(body,kind)=>{
     const PLAYER={radius:.4,stepUp:.2,height:1.5,squidHeight:.5,squidBodyLift:.1};
     const make=(id,x)=>({id,alive:true,remote:false,form:'kid',pos:new THREE.Vector3(x,0,0)});
-    const a=make('A',0),b=make('B',.1),d=make('D',.2),replacement=make('replacement',10),match={actors:[a,b,d]},log=[];let changed=false,error;
-    const G={physics:{bodyFits(){if(!changed){changed=true;if(kind==='roster'||kind==='both')match.actors[0]=replacement;if(kind==='radius'||kind==='both')PLAYER.radius=.8;if(kind==='throw')throw Error('collision failure');}return true;}}};
-    try{new Function('PLAYER','G','softPushActor',body).call(match,PLAYER,G,(...args)=>{log.push(args[2].id);return softPushActor(...args);});}catch(e){error=e.message;}
-    return{log,error,positions:[a,b,d,replacement].map(x=>[x.id,...x.pos.toArray()]),radius:PLAYER.radius};
+    const a=make('A',0),b=make('B',.1),d=make('D',.2),extra=make('extra',.15),replacement=make('replacement',10);
+    const match={actors:[a,b,d]},log=[];let changed=false,depth=0,calls=0,error;
+    let invoke;
+    const G={physics:{bodyFits(pos){
+      calls++;log.push(['fits',depth,pos.x,pos.z]);
+      if(!changed){
+        changed=true;
+        if(kind==='roster'||kind==='both')match.actors[0]=replacement;
+        if(kind==='radius'||kind==='both')PLAYER.radius=.8;
+        if(kind==='death')a.alive=false;
+        if(kind==='append')match.actors.push(extra);
+        if(kind==='reentrant'){depth++;try{invoke();}finally{depth--;}}
+        if(kind==='throw-first')throw Error('collision failure first');
+      }
+      if(kind==='throw-later'&&calls===3)throw Error('collision failure later');
+      return kind!=='wall'||pos.x>=-.05;
+    }}};
+    const fn=new Function('PLAYER','G','softPushActor',body);
+    invoke=()=>fn.call(match,PLAYER,G,(...args)=>{log.push(['push',depth,args[2].id,args[3],args[4]]);return softPushActor(...args);});
+    try{invoke();}catch(e){error=e.message;}
+    return{log,error,positions:[a,b,d,extra,replacement].map(x=>[x.id,...x.pos.toArray(),x.alive]),roster:match.actors.map(x=>x.id),radius:PLAYER.radius};
   };
-  for(const kind of ['roster','radius','both','throw'])assert.deepEqual(run(after,kind),run(before.softPushBody,kind),kind);
+  for(const kind of ['roster','radius','both','death','append','reentrant','throw-first','throw-later','wall']){
+    const actual=run(after,kind),expected=run(before.softPushBody,kind);
+    assert.deepEqual(actual,expected,kind);
+    if(kind==='death')assert.equal(actual.positions[0][4],false);
+    if(kind==='append'){assert.ok(actual.roster.includes('extra'));assert.ok(actual.log.some(row=>row[0]==='push'&&row[2]==='extra'));}
+    if(kind==='reentrant')assert.ok(actual.log.some(row=>row[0]==='push'&&row[1]===1));
+    if(kind==='throw-first'||kind==='throw-later')assert.match(actual.error,/collision failure/);
+    if(kind==='wall'){assert.ok(actual.log.some(row=>row[0]==='fits'&&row[2]<-.05));assert.ok(actual.positions[0][1]>=-.05);}
+  }
 });

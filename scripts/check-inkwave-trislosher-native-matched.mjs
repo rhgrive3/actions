@@ -115,7 +115,7 @@ try{
       };
     },{target,measureMain});
     result.frames.push(row);const file=measureMain?'main-birth-f'+String(target).padStart(2,'0')+'.png':'sim'+target+'.png';
-    await page.screenshot({path:path.join(out,file)});
+    await page.screenshot({path:path.join(out,file),...(measureMain?{timeout:120000}:{})});
     if(measureMain){
       const image=fs.readFileSync(path.join(out,file));row.image={file,sha256:hash(image),bytes:image.length};
       const after=await page.evaluate(()=>({time:__G.time,camera:{matrixWorld:__G.camera.matrixWorld.toArray(),projection:__G.camera.projectionMatrix.toArray()},

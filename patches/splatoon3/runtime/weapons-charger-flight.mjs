@@ -100,7 +100,19 @@ export function installChargerFlight(api,completion) {
     const q=chargerRangeCharge(charge);
     return raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*q;
   };
-  P.chargerReach=function(charge){return reachFor(charge);};
+  // Added Chargers use the catalogue projectile owner, whose charge frames,
+  // full-charge threshold and distance endpoints can differ from Splat Charger.
+  // The optional weapon preserves the old native query for all other families.
+  P.chargerReach=function(charge,weapon){
+    const record=weapon?.catalogRecord;
+    if(record?.family !== 'charger')return reachFor(charge);
+    const p=record.parameters, move=p.MoveParam, clock=p.WeaponParam;
+    const c=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
+    const fullFrames=Number.isFinite(clock?.ChargeFrameFullCharge)?clock.ChargeFrameFullCharge:60;
+    const minFrames=Number.isFinite(clock?.ChargeFrameMinCharge)?clock.ChargeFrameMinCharge:8;
+    const q=Math.max(0,Math.min(1,(c*fullFrames-minFrames)/(fullFrames-minFrames)));
+    return c+1e-9>=1?move.DistanceFullCharge:move.DistanceMinCharge+(move.DistanceMaxCharge-move.DistanceMinCharge)*q;
+  };
   const feetDown=new THREE.Vector3(0,-1,0),feetFrom=new THREE.Vector3(),feetAt=new THREE.Vector3(),feetHit=new Hit();
   function feetSplash(actor,w){
     const radius=w.feetPaintRadius;

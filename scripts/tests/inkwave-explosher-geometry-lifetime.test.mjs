@@ -139,6 +139,75 @@ test('bounded observations remain explicit about truncation and attachment cover
     assert(Buffer.byteLength(JSON.stringify(r))<600000,'bounded artifact even after saturation');
   }finally{f.observer.restore();}
 });
+test('early startup hook wraps only constructed native renderer and censuses before its actual render uploads',()=>{
+  const f=fixture({attach:false});try {
+    const gl=new f.GL(),data=new Float32Array(3),buffer={},geometry=new f.Geometry();
+    geometry.attributes.position={array:data};
+    const scene={geometry,children:[]},sentinel={},calls=[];
+    const renderer={render(...args){calls.push({receiver:this,args});gl.bindBuffer(34962,buffer);gl.bufferData(34962,data,35044);return sentinel;}};
+    const originalRender=Object.getOwnPropertyDescriptor(renderer,'render');
+    const startup={measure(name,run,...args){calls.push({name,receiver:this,args});return Reflect.apply(run,this,args);}};
+    const originalMeasure=Object.getOwnPropertyDescriptor(startup,'measure');
+    f.env.__inkwaveStartup=startup;
+    assert.equal(f.observer.report().coverage.startupMeasureHook,true);
+    const nativeMeasure=startup.measure,unrelated={renderer:{render(){throw Error('not called');}}};
+    assert.equal(nativeMeasure('construct/Other',()=>unrelated),unrelated);
+    assert.equal(f.observer.report().coverage.earlyRendererRenderHook,false);
+    const owner={renderer},runReceiver={},marker={};
+    assert.equal(nativeMeasure.call(runReceiver,'construct/Renderer',function(arg){assert.equal(this,runReceiver);assert.equal(arg,marker);return owner;},marker),owner);
+    assert.equal(calls.length,2,'startup hook adds no native render or GL call');
+    assert.equal(renderer.render(scene,marker),sentinel);
+    let r=f.observer.report();assert.equal(calls.length,3);assert.equal(calls[2].receiver,renderer);assert.deepEqual(calls[2].args,[scene,marker]);
+    assert.equal(r.counts.renderCensusCalls,1);assert.equal(r.coverage.earlyRendererRenderHook,true);
+    assert.equal(r.coverage.geometryAttachment,'early-render-census-and-late-existing-object');assert.equal(r.coverage.preConstructionCoverage,false);
+    assert.equal(r.geometries[0].firstObservation,'render-census');assert.deepEqual(r.buffers[0].geometryIds,[geometry.id]);
+    assert(r.geometries[0].firstSequence<r.events.find(e=>e.kind==='bufferData').sequence);
+    assert.deepEqual(f.calls.map(c=>c.name),['bindBuffer','bufferData'],'only calls made by the actual renderer');
+    const failure=Error('render fails');const originalWrapped=renderer.render;
+    Object.defineProperty(scene,'geometry',{get(){throw Error('observer metadata');},configurable:true});
+    assert.equal(renderer.render(scene,marker),sentinel,'observer error cannot replace native result');
+    assert.equal(f.observer.report().counts.observerErrors,1);
+    assert.throws(()=>nativeMeasure('construct/Renderer',()=>{throw failure;}),e=>e===failure);
+    assert.equal(renderer.render,originalWrapped);
+    r=f.observer.restore();assert.equal(r.cleanup.conflicts,0);
+    assert.deepEqual(Object.getOwnPropertyDescriptor(renderer,'render'),originalRender);
+    assert.deepEqual(Object.getOwnPropertyDescriptor(startup,'measure'),originalMeasure);
+    assert.equal(f.env.__inkwaveStartup,startup,'normal startup data property remains installed');
+    assert.equal(Object.hasOwn(f.env,'__inkwaveExplosherGeometryLifetime'),false);
+  }finally{f.observer.restore();}
+});
+test('early hook preserves native render errors and bounded event eviction/drop accounting',()=>{
+  const f=fixture({attach:false});try {
+    const failure=Error('native render failure'),g=new f.Geometry(),scene={geometry:g,children:[]};
+    const gl=new f.GL();let calls=0;const renderer={render(){calls++;gl.bindBuffer(34962,{});gl.bufferData(34962,16,35044);if(calls===201)throw failure;return calls;}};
+    f.env.__inkwaveStartup={measure:(_name,run)=>run()};f.env.__inkwaveStartup.measure('construct/Renderer',()=>({renderer}));
+    for(let i=0;i<200;i++)assert.equal(renderer.render(scene),i+1);
+    assert.throws(()=>renderer.render(scene),e=>e===failure);assert.equal(calls,201);
+    const r=f.observer.report();assert.equal(r.counts.renderCensusCalls,201);assert.equal(r.events.length,r.limits.events);
+    assert.equal(r.dropped.events,74,'one geometry observation plus 201 uploads minus retained events');
+    assert.equal(r.events[0].sequence,75);assert.equal(r.events.at(-1).sequence,202);
+    assert.equal(r.counts.bufferData,201);assert.equal(r.counts.registrations,1);
+  }finally{f.observer.restore();}
+});
+test('actual composed and minified startup expose the renderer construction before shader warmup',async()=>{
+  const {adaptBuildSource}=await import('../inkwave-source-composition.mjs');
+  const {adaptCompiledMain}=await import('../../patches/loading-cache/adapter.mjs');
+  const {transform}=await import('esbuild');
+  const startup=fs.readFileSync(new URL('../../patches/loading-cache/runtime/startup.mjs',import.meta.url),'utf8');
+  assert.match(startup,/window\.__inkwaveStartup\s*=\s*\{/);
+  const raw=fs.readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8');
+  const composed=adaptBuildSource('src/main.js',raw);
+  for(const source of [composed,(await transform(composed,{minify:true,format:'esm',target:'es2022'})).code]){
+    const adapted=adaptCompiledMain(source).code;
+    const construct=adapted.indexOf('\"construct/Renderer\"'),compile=adapted.indexOf('\"boot/shader-compile\"');
+    assert(construct>=0&&compile>construct,'native construction hook precedes the real warmup');
+    assert.equal(adapted.split('\"construct/Renderer\"').length,2,'exactly one target construction');
+  }
+});
+test('unassigned startup hook is removed without inventing a startup global',()=>{
+  const f=fixture({attach:false});assert.equal(Object.hasOwn(f.env,'__inkwaveStartup'),true);
+  f.observer.restore();assert.equal(Object.hasOwn(f.env,'__inkwaveStartup'),false);
+});
 test('source binds the helper bytes and runs focused contracts without changing stage gates, GL state, startup barrier or cleanup error authority',()=>{
   const source=fs.readFileSync(new URL('../check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
   assert.match(source,/if\(!runtimeUIRoute\)driver=instrumentExplosherGeometryDriver\(driver\)/);

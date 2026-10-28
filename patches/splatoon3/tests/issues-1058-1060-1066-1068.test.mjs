@@ -92,7 +92,7 @@ test('#1066 Private Battle gates persistent level progression and omits the norm
 test('#1058 Charger publishes current/clamped and unobstructed full reach to two HUD markers', () => {
   const player = compose('src/game/player.js');
   assert.match(player, /chargerCurrentReach = new THREE\.Vector3\(\)/);
-  assert.match(player, /const fullRange = G\.projectiles\?\.chargerReach \? G\.projectiles\.chargerReach\(1\) : w\.rangeMax/);
+  assert.match(player, /const fullRange = G\.projectiles\?\.chargerReach \? G\.projectiles\.chargerReach\(1, a\.weapon\) : w\.rangeMax/);
   assert.match(player, /const stop = Math\.min\(range,[\s\S]*best\)/);
   assert.match(player, /chargerCurrentReach\.copy\(start\)\.addScaledVector\(fwd, stop\)/);
   assert.match(player, /chargerFullReach\.copy\(start\)\.addScaledVector\(fwd, fullRange\)/);

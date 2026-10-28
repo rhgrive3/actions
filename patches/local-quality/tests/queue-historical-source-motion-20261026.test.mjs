@@ -8,7 +8,8 @@ import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const REL='src/game/motion/source-controller.js';
-const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-historical-source-motion-before-20261026.json',import.meta.url)));
+const fixtureBytes=fs.readFileSync(new URL('./fixtures/queue-historical-source-motion-before-20261026.json',import.meta.url));
+const fixture=JSON.parse(fixtureBytes);
 const before=fixture.modules[REL].source,after=adaptHistoricalSourceMotion20261026(REL,before);
 const sha=s=>createHash('sha256').update(s).digest('hex');
 const method=s=>{const a=s.indexOf(' actionClip('),b=s.indexOf('\n sampleManual',a);return new Function('return ({'+s.slice(a,b)+'});')().actionClip;};
@@ -19,19 +20,36 @@ const rates=[24,12,10,12,7,8],modes=['exp','exp','expm1','expm1','exp','expm1'];
 const kernels=math=>new Function('Math',helper+'\nreturn ['+names.join(',')+'];')(math);
 const original=(math,index,dt)=>modes[index]==='exp'?1-math.exp(-rates[index]*dt):-math.expm1(-rates[index]*dt);
 
-test('only the two reviewed historical transforms change the frozen current composition',()=>{
+test('pinned source-controller reconstructs the walk owner and historical queue (text only)',()=>{
+ assert.equal(sha(fixtureBytes),'92b24e5c1ff331c66623e73988d176561c8b47875fc6bdeffc85c799870c598a','frozen fixture bytes');
  assert.equal(sha(before),fixture.modules[REL].sha256);
  assert.equal(restoreHistoricalSourceMotion20261026(REL,after),before);
  assert.equal(adaptHistoricalSourceMotion20261026('unrelated','same'),'same');
  assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,after),/composition conflict/);
  assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,''),/composition conflict/);
  const current=adaptBuildSource(REL,fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8'));
+ // Independently pinned pre-owner bytes plus the precise later walk owner
+ // anchors; this checks source composition only, not Character behavior.
+ const unique=(s,from,to)=>{const i=s.indexOf(from);assert.ok(i>=0&&s.indexOf(from,i+from.length)<0,'unique walk owner anchor');return s.slice(0,i)+to+s.slice(i+from.length);};
+ const importAnchor="import { nativeWeaponPoseRequired, sourceActionUpperOnly } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';";
+ let composed=unique(before,importAnchor,"import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n"+importAnchor);
+ composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
+  const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
+  this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
+ assert.equal(restoreHistoricalSourceMotion20261026(REL,current),composed,'pinned historical source plus exact walk owner anchors');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
  let expected=adaptWalkPresentation(REL,before,replaceOnce);
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
  assert.equal(restoreHistoricalSourceMotion20261026(REL,current),expected,'prior composition plus the reviewed walking presentation is retained');
+ // Both independently reconstructed ownership paths must agree byte-for-byte.
+ assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');
+ const speedAnchor='  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;';
+ assert.throws(()=>adaptWalkPresentation(REL,before.replace(speedAnchor,''),replaceOnce),/expected exactly one/);
+ assert.throws(()=>adaptWalkPresentation(REL,before+speedAnchor,replaceOnce),/expected exactly one/);
+ assert.throws(()=>unique(before.replace(importAnchor,''),importAnchor,''),/unique walk owner anchor/);
+ assert.throws(()=>unique(before+importAnchor,importAnchor,''),/unique walk owner anchor/);
  assert.ok(after.includes('if(name===undefined){name=this.choose([`${prefix}_${family}`,`${prefix}_Nrml`,...Array.from(this.bank.clips.keys()).filter(k=>k.startsWith(prefix))]);dances.set(danceKey,name);}'),'dance eager lookup remains unchanged');
  assert.equal(/\bFunction\b/.test(after),false,'no dynamic-code identifier changes the existing orphan scanner gate');
 });

@@ -130,6 +130,16 @@ test('actual child trace passively copies native shader/profile/slot data only i
   assert.deepEqual(Object.keys(plain(run(false))[0]).sort(),['direction','frames','radius','scale'],'default historical row unchanged');
   row.inkLook[0]=99;row.shape[0]=99;assert.equal(look[0],Math.fround(.3));assert.equal(shape[0],Math.fround(1.05));
 });
+test('screenshot budget extends only controlled main measurement and preserves the default options',async()=>{
+  const source=fs.readFileSync(new URL('../check-inkwave-trislosher-native-matched.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('    await page.screenshot('),end=source.indexOf('\n',start);assert(start>=0&&end>start);
+  const command=source.slice(start,end);
+  const run=vm.runInNewContext('async (page,path,out,file,measureMain)=>{'+command+'}');
+  const options=[],page={screenshot:value=>{options.push(plain(value));}},path={join:(a,b)=>a+'/'+b};
+  await run(page,path,'/evidence','sim18.png',false);await run(page,path,'/evidence','main-birth-f05.png',true);
+  assert.deepEqual(options,[{path:'/evidence/sim18.png'},{path:'/evidence/main-birth-f05.png',timeout:120000}]);
+  assert.equal((source.match(/page\.screenshot\(/g)||[]).length,1,'no extra capture or retry');
+});
 test('driver preserves default18 and adds a bounded birth-relative passive route without visibility manipulation',()=>{
   const source=fs.readFileSync(new URL('../check-inkwave-trislosher-native-matched.mjs',import.meta.url),'utf8');
   assert.match(source,/process\.argv\.includes\('--measure-main'\)/);assert.match(source,/measureMain\?\[5,7,9\]:\[18\]/);

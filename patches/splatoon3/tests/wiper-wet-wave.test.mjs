@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 import {fixture} from './source-fixture.mjs';
 import {ShaderLib} from '../../../inkwave-public/vendor/three/build/three.module.js';
 
@@ -112,8 +114,34 @@ test('wet mesh is lazy, reused, capacity-bounded, and disposed once with its ren
   x=fire(f,'s3-saber-lite');x.s._draw();const mesh=R.wetSlashV;
   x=fire(f,'s3-saber-normal');x.s._draw();assert.equal(R.wetSlashV,mesh,'shared by the two selected source actors');
   assert.equal(mesh.instanceMatrix.count,16);assert.equal(mesh.count,2);
-  let ge=0,ma=0;mesh.geometry.addEventListener('dispose',()=>ge++);mesh.material.addEventListener('dispose',()=>ma++);
-  R.dispose();assert.equal(ge,1);assert.equal(ma,1);assert.equal(R.wetSlashV,null);
+  // Exercise the actual pinned Three disposal listener without a GPU or browser.
+  // The backend records identities, so geometry/material disposal alone cannot
+  // masquerade as releasing this InstancedMesh's matrix/color buffers.
+  const threeSource=readFileSync(new URL('../../../inkwave-public/vendor/three/build/three.module.js',import.meta.url),'utf8');
+  const start=threeSource.indexOf('function WebGLObjects( ');
+  const end=threeSource.indexOf('\nconst toneMappingMap =',start);
+  assert.ok(start>=0&&end>start,'pinned Three WebGLObjects closure is available');
+  const WebGLObjects=runInNewContext(threeSource.slice(start,end)+'\nWebGLObjects');
+  const uploaded=[],removed=[],released=[],order=[];
+  const backend=WebGLObjects({ARRAY_BUFFER:34962},
+    {get:(_object,geometry)=>geometry,update(){}},
+    {update:attribute=>uploaded.push(attribute),remove:attribute=>removed.push(attribute)},
+    {releaseStatesOfObject:object=>released.push(object)}, {render:{frame:0}});
+  backend.update(mesh);
+  assert.deepEqual(uploaded,[mesh.instanceMatrix,mesh.instanceColor]);
+  let ge=0,ma=0,me=0;
+  mesh.addEventListener('dispose',()=>{me++;order.push('mesh');});
+  mesh.geometry.addEventListener('dispose',()=>{ge++;order.push('geometry');});
+  mesh.material.addEventListener('dispose',()=>{ma++;order.push('material');});
+  R.dispose();
+  assert.equal(me,1,'wet InstancedMesh dispatches its own dispose event');
+  assert.deepEqual(released,[mesh],'release the exact wet mesh binding state');
+  assert.deepEqual(removed,[mesh.instanceMatrix,mesh.instanceColor],'release both exact instance buffers');
+  assert.deepEqual(order,['mesh','geometry','material'],'instance resources are released before geometry/material');
+  assert.equal(ge,1);assert.equal(ma,1);assert.equal(R.wetSlashV,null);
+  R.dispose();
+  assert.equal(me,1);assert.equal(ge,1);assert.equal(ma,1,'repeat renderer disposal cannot redispose wet resources');
+  assert.equal(released.length,1);assert.equal(removed.length,2);
 });
 
 

@@ -723,6 +723,7 @@ jobs:
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
           path: .built-site
       - name: Verify immutable site for this browser shard
+        id: verified-site
         run: |
           mkdir -p .built-site
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
@@ -736,6 +737,7 @@ jobs:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-${{ runner.arch }}-playwright-1.62.1-${{ matrix.browsers }}-${{ hashFiles('node_modules/playwright-core/browsers.json') }}
       - name: Prepare workspace storage and browser
+        id: browser-prepare
         run: |
           mkdir -p .ci-scratch
           test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
@@ -905,7 +907,7 @@ jobs:
           node --test scripts/tests/inkwave-hissen-capture-observer.test.mjs
           node scripts/check-inkwave-trislosher-native-matched.mjs .built-site/_site "$CI_STORAGE/evidence/hissen-main" --measure-main
       - name: Capture all current-head Wiper charged and tap native views
-        if: matrix.suite == 'catalog'
+        if: ${{ !cancelled() && matrix.suite == 'catalog' && steps.verified-site.outcome == 'success' && steps.browser-prepare.outcome == 'success' }}
         run: |
           node --experimental-vm-modules --test scripts/tests/inkwave-wiper-native-acceptance.test.mjs
           timeout 30m node scripts/check-inkwave-wiper-native-acceptance.mjs .built-site/_site "$CI_STORAGE/evidence/wiper-native" --source-sha "$SOURCE_SHA"

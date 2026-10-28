@@ -381,7 +381,7 @@ function createRenderer(THREE, scene) {
     dispose() {
       sheets.dispose();
       if (this.wetSlashV) {
-        scene.remove(this.wetSlashV); this.wetSlashV.geometry.dispose(); this.wetSlashV.material.dispose();
+        scene.remove(this.wetSlashV); this.wetSlashV.dispose(); this.wetSlashV.geometry.dispose(); this.wetSlashV.material.dispose();
         this.wetSlashV = null;
       }
       scene.remove(body, slashH, slashV, shell, core, sparks);

@@ -6,10 +6,11 @@ export function installExplosherGeometryLifetime(env = globalThis) {
   const geometries = new Map(), buffers = new Map(), stacks = new Map();
   const geometryObjects = new WeakMap(), bufferObjects = new WeakMap(), arrays = new WeakMap(), contexts = new WeakMap();
   const patches = [], events = [], snapshots = [];
-  const counts = { registrations: 0, bufferData: 0, bufferSubData: 0, deleteBuffer: 0, vertexArrayBind: 0, unmappedBufferCalls: 0, geometryDispose: 0, observerErrors: 0 };
+  const counts = { registrations: 0, bufferData: 0, bufferSubData: 0, deleteBuffer: 0, vertexArrayBind: 0, unmappedBufferCalls: 0, geometryDispose: 0, renderCensusCalls: 0, observerErrors: 0 };
   const dropped = { geometries: 0, buffers: 0, events: 0, stacks: 0, snapshots: 0, nodes: 0, links: 0 };
   const coverage = { webglPrototypes: 0, geometryMethodOwners: 0, geometryAttachment: 'late-existing-object-only', preConstructionCoverage: false,
-    weakReferences: typeof WeakRef === 'function', wrapperConflicts: 0, extensionVAOBindingsObserved: false };
+    weakReferences: typeof WeakRef === 'function', wrapperConflicts: 0, extensionVAOBindingsObserved: false,
+    startupMeasureHook: false, earlyRendererRenderHook: false };
   let stopped = false, sequence = 0, contextId = 0, bufferId = 0, cleanup = null;
   const attempt = fn => { try { return fn(); } catch { counts.observerErrors++; } };
   const event = (kind, fields = {}) => {
@@ -86,17 +87,19 @@ export function installExplosherGeometryLifetime(env = globalThis) {
     }
     return row;
   };
-  const patch = (prototype, name, observe) => {
+  const patch = (prototype, name, observe, before = false) => {
     let owner = prototype;
     while (owner && !Object.hasOwn(owner, name)) owner = Object.getPrototypeOf(owner);
     if (!owner || patches.some(p => p.owner === owner && p.name === name)) return;
     const descriptor = Object.getOwnPropertyDescriptor(owner, name), original = descriptor?.value;
     if (typeof original !== 'function' || (!descriptor.configurable && !descriptor.writable)) return;
     const wrapped = function (...args) {
-      // The native call is first, exactly once. Its receiver, arguments, return
-      // identity and thrown error are never replaced by observation failures.
+      // WebGL calls are observed after return; only the bounded render census
+      // reads before delegation. Native call, receiver, arguments, return identity
+      // and thrown error are never replaced by observation failures.
+      if (before && !stopped) attempt(() => observe(this, args));
       const result = Reflect.apply(original, this, args);
-      if (!stopped) attempt(() => observe(this, args));
+      if (!before && !stopped) attempt(() => observe(this, args));
       return result;
     };
     Object.defineProperty(owner, name, { ...descriptor, value: wrapped });
@@ -112,6 +115,61 @@ export function installExplosherGeometryLifetime(env = globalThis) {
     patch(proto, 'setIndex', object => register(object, 'index-assignment'));
     coverage.geometryMethodOwners = patches.filter(p => p.name === 'setAttribute').length;
   };
+  // A real render already scheduled by the application supplies the scene. A
+  // bounded census immediately before that very call can relate attributes to
+  // subsequent native uploads; it never calls render, compiles, or adds frames.
+  const attachRenderer = owner => {
+    const renderer = owner?.renderer;
+    if (!renderer || typeof renderer !== 'object') return;
+    const before = patches.length;
+    patch(renderer, 'render', (_renderer, args) => {
+      counts.renderCensusCalls++;
+      const seen = new Set(), queue = args[0] ? [args[0]] : []; let visited = 0;
+      while (queue.length && visited < limits.nodes) {
+        const object = queue.pop(); if (!object || seen.has(object)) continue;
+        seen.add(object); visited++;
+        register(object.geometry, 'render-census');
+        if (Array.isArray(object.children)) for (const child of object.children) queue.push(child);
+      }
+      if (queue.length) dropped.nodes++;
+    }, true);
+    if (patches.length > before) {
+      coverage.earlyRendererRenderHook = true;
+      coverage.geometryAttachment = 'early-render-census-and-late-existing-object';
+    }
+  };
+  const attachStartup = startup => {
+    if (!startup || typeof startup !== 'object') return;
+    const descriptor = Object.getOwnPropertyDescriptor(startup, 'measure'), original = descriptor?.value;
+    if (typeof original !== 'function' || (!descriptor.configurable && !descriptor.writable)) return;
+    const wrapped = function (...args) {
+      if (!stopped && args[0] === 'construct/Renderer' && typeof args[1] === 'function') {
+        const run = args[1];
+        args[1] = function (...runArgs) {
+          const value = Reflect.apply(run, this, runArgs);
+          if (!stopped) attempt(() => attachRenderer(value));
+          return value;
+        };
+      }
+      return Reflect.apply(original, this, args);
+    };
+    Object.defineProperty(startup, 'measure', { ...descriptor, value: wrapped });
+    patches.push({ owner: startup, name: 'measure', descriptor, wrapped });
+    coverage.startupMeasureHook = true;
+  };
+  // Startup assigns this global after init scripts run. Intercept just that
+  // existing assignment and immediately restore its ordinary data property;
+  // no readiness barrier or separately imported Three closure is introduced.
+  let startupSetter = null;
+  attempt(() => {
+    const descriptor = Object.getOwnPropertyDescriptor(env, '__inkwaveStartup');
+    if (descriptor) { attachStartup(env.__inkwaveStartup); return; }
+    startupSetter = function (value) {
+      Object.defineProperty(env, '__inkwaveStartup', { value, writable: true, enumerable: true, configurable: true });
+      if (!stopped) attempt(() => attachStartup(value));
+    };
+    Object.defineProperty(env, '__inkwaveStartup', { configurable: true, enumerable: true, get() { return undefined; }, set: startupSetter });
+  });
   for (const Constructor of [env.WebGLRenderingContext, env.WebGL2RenderingContext]) {
     if (!Constructor?.prototype) continue;
     attempt(() => {
@@ -195,6 +253,10 @@ export function installExplosherGeometryLifetime(env = globalThis) {
           if (Object.getOwnPropertyDescriptor(p.owner, p.name)?.value !== p.wrapped) { conflicts++; return; }
           Object.defineProperty(p.owner, p.name, p.descriptor); restored++;
         });
+        if (startupSetter) attempt(() => {
+          const descriptor = Object.getOwnPropertyDescriptor(env, '__inkwaveStartup');
+          if (descriptor?.set === startupSetter) delete env.__inkwaveStartup;
+        });
         for (const row of geometries.values()) attempt(() => { row.reference?.deref()?.removeEventListener('dispose', row.listener); });
         coverage.wrapperConflicts = conflicts;
         cleanup = { stopped: true, patchedMethods: patches.length, restoredMethods: restored, conflicts };
@@ -214,8 +276,8 @@ export function instrumentExplosherGeometryDriver(driver) {
   once('const page = await browser.newPage(', 'const page = geometryPage = await browser.newPage(');
   once('  await enterRangeFromMenu(page,base);', `  await page.addInitScript(() => {
     window.__inkwaveExplosherGeometryLifetime = (${installExplosherGeometryLifetime.toString()})();
-    // No module import or startup barrier. Geometry method observation starts
-    // late from actual existing scene objects and reports that partial coverage.
+    // The existing startup measurement attaches to the real renderer before
+    // warmup; bounded censuses run only inside native calls. Coverage remains partial.
   });
   await enterRangeFromMenu(page,base);
   await page.evaluate(() => window.__inkwaveExplosherGeometryLifetime?.boundary('range-entry'));`);
