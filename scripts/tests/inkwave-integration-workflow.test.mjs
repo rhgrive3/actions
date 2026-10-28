@@ -476,7 +476,7 @@ function assertCoreEvidenceAndProvisioning(text) {
 test('core retains browser provisioning and source-bound launch packet evidence', () => assertCoreEvidenceAndProvisioning(workflow));
 test('provisioning and evidence guards reject disabled, reordered, missing and unbound requirements', () => {
   for (const [before, after] of [
-    ['npm ci --no-audit --no-fund', 'npm install --no-save esbuild'],
+    ['name: Install pinned source regression and build tool\n        run: |\n          npm ci --no-audit --no-fund', 'name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save esbuild'],
     ['npx --no-install playwright install --with-deps chromium', 'true # browser omitted'],
     ['name: Install pinned source regression and build tool\n', 'name: Install pinned source regression and build tool\n        if: false\n'],
     ['name: Retain exact emitted launch packet evidence\n        if: always()', 'name: Retain exact emitted launch packet evidence\n        if: success()'],
