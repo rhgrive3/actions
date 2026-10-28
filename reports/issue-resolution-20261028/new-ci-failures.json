@@ -1,0 +1,70 @@
+{
+  "repository": "rhgrive3/actions",
+  "observed_at_utc": "2026-10-28T19:35:11.025103+00:00",
+  "scope": "new primary failures during this session, separate from initial1002historicalfailedjobarchive; secondary cancellation/evidence failures are not independent gameplay causes",
+  "primary_failed_jobs": [
+    {
+      "pr": 1907,
+      "source": "3a8e6f578fb039ca0c5165ee7e35a779cd089a89",
+      "run": 40741994389,
+      "job": 123005744692,
+      "cause": "emitted recovery fixture missing actual WALKABLE export",
+      "fix": "6950b7dc654edcd0824b97d110332c611c6335b9",
+      "followup": "latest terminal recovery workflows pass on472/7e",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40741994389/job/123005744692"
+    },
+    {
+      "pr": 1907,
+      "source": "3a8e6f578fb039ca0c5165ee7e35a779cd089a89",
+      "run": 40741994140,
+      "job": 123005980076,
+      "cause": "injection-only helpers accidentally exported by strict build-only transformer",
+      "fix": "ae3fb3058679791ea568fe65ead5c969d119fff1",
+      "followup": "candidate packaging and paired52capture workflow pass on7e",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40741994140/job/123005980076"
+    },
+    {
+      "pr": 1908,
+      "source": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+      "run": 40747849465,
+      "job": 123034975959,
+      "cause": "modeled native receiver omitted actual receipt and used invalid positive rows",
+      "fix": "ab8863a88ab3b66ff66a0eecffc5f97e57b29e8f",
+      "followup": "local source/emitted74/74 and independent review pass; nextsource hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747849465/job/123034975959"
+    },
+    {
+      "pr": 1907,
+      "source": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+      "run": 40747856613,
+      "job": 123035442865,
+      "cause": "same modeled native receipt/row cause as1908; do not count25assertions as25causes",
+      "fix": "ab8863a88ab3b66ff66a0eecffc5f97e57b29e8f",
+      "followup": "same tested shared fix; nextsource hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747856613/job/123035442865"
+    },
+    {
+      "pr": 1908,
+      "source": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+      "run": 40747849465,
+      "job": 123034976494,
+      "cause": "Kraken committed-hit positive advanced attacker life before activation admission",
+      "fix": "3f855091782d734c48198a171fdc88849213d96f",
+      "followup": "local source/emitted32/32 and independent review pass; nextsource hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747849465/job/123034976494"
+    },
+    {
+      "pr": 1908,
+      "source": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+      "run": 40747849465,
+      "job": 123034976587,
+      "cause": "same Kraken fixture via all-specials import; not new defect",
+      "fix": "3f855091782d734c48198a171fdc88849213d96f",
+      "followup": "source/emitted32/32 plus independent review; nextsource hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747849465/job/123034976587"
+    }
+  ],
+  "distinct_causes": 4,
+  "main_merge_performed": false,
+  "snapshot_all_hosted_failures_resolved": false
+}

@@ -116,3 +116,27 @@ Agent1の追加ターンは自動審査が「サイバーセキュリティ上�
 #1767は、保存済みと同じ`check-inkwave-native-online.mjs --owner-clock`を現行`8c7f27a2`の実production buildに実行した。ゲームやclock/peer状態を変えず、起動用scratch preloadで既存のsandbox browser policyを適用し、Chromium151を選択した。2隔離context、実Game/Match/Actor/Character・実WebSocket・production Worker relayでcold/rematch/socket reconnectの3局面・6方向すべて成功。実際の各timestamp対は旧guardでは拒否され、新guardではfreshness originが不変のままsnapshot/buffer/playingが進む。page/console errorは0、終了後に当該browser/server processが残らないことも確認した。必要なhosted CIの結果待ちであり、まだIssueをCloseしていない。
 
 [現行clock受入の6方向・条件・実timestamp](owner-clock-current.md)と[機械可読receipt](owner-clock-current.json)、実行時launcherを保存した。raw/PNG archiveのhashも同資料に記録する。
+
+## 全体CIで見つかった独立fixtureの修正（19:25 UTC）
+
+現行head `472c85fa` / `7e968611`のfull CIは両production buildに成功した。core2jobの共通失敗は`inkwave-combat-provenance.test.mjs`のmodeled receiverがnative受理receiptを発行せず、正当な入力にも4要素の無効actor rowを使っていたこと。元のcore3ファイル71caseをNode22で再現すると46成功・25失敗。Agent1の`ab8863a8`は実際と同じ`commitOwnerTick` module instance、合法21要素rowとlife sidecarを使い、元の全期待値を維持する。無効短rowとlife欠落の負の対照3件を追加し、source74/74・実配布module mode74/74が成功した。Agent3も独立に同じ結果を確認。sourceから生成したmodeled policyであり、native HP/physics/browserの受入とは呼ばない。
+
+Agent2の`1d8f90a9`は、この2ファイルのsource60caseをadmissionへ追加した。約1秒で完了し、Node標準機能と既存sparse checkoutだけで動く。古いsourceは同じcommandで25失敗し、修正後は通常・sparseとも60/60成功。full coreの元の試験を残し、重いbuild・8shard・browser開始前に同種のAPI driftを拒否する。DAG/source/Pages31、CI-config36、YAML81本も成功。
+
+root shard0の別失敗はKrakenの`attacker-life-change-keeps-committed-hit`。fixtureがlife2のactivation受理前にattackerをlife3へ進めており、まだcommitted hitがない状態だった。Agent2の`3f855091`は受理済みsnapshotと未消費Special proofを先に確認し、その後life3へ進めて同じ命中1回・最終HP=-20（100から120damage）を検証する。受理前にlifeを変える負の対照はproofなし・0damage・HP100を検証する。file全32caseがsource/emittedとも成功。製品のlife guardや物理・HP期待値は変更していない。
+
+同じruntimeの実native network browser job `123034976276`は成功。2player軌道/FX、100ms ordered delay、Chromium/WebKit paint masks、fixed owner clock、実Actorの命中上限/証拠/hit-IDを含む。root UIとresponsive viewport/mobile遷移も成功。これらをmodeled fixtureの成功と混同せず、次のsource headの正式CI成功へも読み替えない。新しい修正バッチのhosted CIは別途確認する。
+
+中止されたcharacter QAと同じ受入を、元の20分上限のまま両候補でローカル実行した。各24scenario・10解放cycleが成功し、前後の全入力/artifact hashを確認した。[条件と限界](character-local.md)、圧縮済み[root](character-local-root.json.gz)/[最適化側](character-local-opt.json.gz)receiptを保存する。isolated expanded Three coreのsynthetic fixtureであり、実character・production-core GLTFLoader・retail/実端末parityの証明ではない。rootの中止jobだけは原因確認とローカル成功後に1回再実行した。取消の過去履歴は残し、繰返しretryしない。
+
+そのroot character再実行は`472c85fa`のrun `40747849317` attempt2 / job `123035846433`で成功した。所要12分37秒、browser24scenario・10cycle合格、既存20分上限を変更していない。成功artifactは`12844621418`（旧cancelled attemptの小さなartifactとは区別する）。Kraken修正もAgent3が独立にsource32/32・emitted32/32、skip0で確認し、blocking指摘はなかった。
+
+#1767のmain条件は[履歴と28箇所の等価性](owner-clock-main-inclusion.md) / [hash一覧](owner-clock-main-inclusion.json)で確認した。実際にはmerged PR #1843 (`726e338a`) がclock/catalogをmainへ届け、#1882 (`6e61cfcc`) が後続のscan cacheを導入している。個別の旧PR #1842/#1846が未マージであることを、mainに未実装と誤認しない。必要なfull CIがまだ成功していないため、IssueはOpenのままとする。
+
+## 固定base/headのprojectile比較とスコープ保留
+
+#1907のrun `40747856762`は、base `e67c636b` とhead `7e968611`をそれぞれ通常buildした元のcaptureで、比較job `123043229422`まで成功した。[原artifact・52pair・hash・比較条件](projectile-pair-7e968611.md)と[機械可読receipt](projectile-pair-7e968611.json)を保存する。独立した原ZIP再検証でも52/52の物理状態・native発射後RNG、全workload、両側各94枚の原PNG hash、GL error 0を確認した。画素のbefore/after同一性、Wiper catalog、全武器/全stage、物理端末の性能は認定しない。baseにも既存最適化が含まれるため、最適化on/off単独比較とは呼ばない。
+
+19:03 UTCの[ownerのスコープ記録](https://github.com/rhgrive3/actions/pull/1907#issuecomment-6478009679)は、`MOV-08b`のcharacter-model最適化を含む間は#1907全体をマージ保留とし、元PRと部分作業の保持を求めている。これを不具合認定やマージ許可に読み替えず、#1908の独立CI修正を続行する。両PRへの修正反映と検証はmainへのマージとは別であり、当作業はmainをマージしていない。
+
+19:40 UTC時点ではrootの全8shardが完了し、0/5だけが同じKraken fixtureで失敗、ほか6shardは成功。catalog以外のbrowser6系統、resource、seven-claimsも成功した。catalogのWiperは実行中で、全体の成功を主張しない。[新規失敗のjob別対応表](new-ci-failures.json)は初回の過去1,002失敗jobと区別する。次の反映バッチはfixture・admission・記録のみで、製品入力と配布byteを変更しない。

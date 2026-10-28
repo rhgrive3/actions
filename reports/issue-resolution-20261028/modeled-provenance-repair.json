@@ -1,0 +1,78 @@
+{
+  "baseSha": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+  "commitSha": "ab8863a88ab3b66ff66a0eecffc5f97e57b29e8f",
+  "files": [
+    "scripts/tests/inkwave-combat-provenance.test.mjs",
+    "scripts/tests/inkwave-boss-positive-proof.test.mjs"
+  ],
+  "productionFilesChanged": false,
+  "wireOrGuardChanges": false,
+  "hostedFailure": {
+    "pr": 1907,
+    "sha": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+    "run": 40747856613,
+    "job": 123035442865,
+    "step": "Verify remote combat provenance and equipped hit ceilings",
+    "test": "legitimate hit queued before next 20Hz shot event is applied exactly once",
+    "originalLine": 122
+  },
+  "rootCause": "Modeled Stub._tick did not invoke the actual receiver-private commitOwnerTick and positive producers supplied four-column actor rows rejected by the actual native row guard. The production gate correctly withheld attack proof.",
+  "changes": [
+    "Modeled native tick uses actual commitOwnerTick with copied accepted actor poses and legal native actor/life rows.",
+    "Source/emitted test modes import provenance, owner receipt, snapshot guard and sub-birth capability from the same runtime root; emitted artifacts and matching source policy inputs are hash checked.",
+    "Boss modeled positives now use full native rows and actual guard; removed the PvP model artificial sub-event snapshot overwrite.",
+    "All original test assertions retained; three new short-row/missing-life negative cases added."
+  ],
+  "nodeVersion": "22.23.4",
+  "coreCommand": "node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-open-pr-source-pairs.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs",
+  "baseline": {
+    "tests": 71,
+    "pass": 46,
+    "fail": 25
+  },
+  "fixedSource": {
+    "tests": 74,
+    "pass": 74,
+    "fail": 0,
+    "skip": 0
+  },
+  "fixedEmitted": {
+    "tests": 74,
+    "pass": 74,
+    "fail": 0,
+    "skip": 0,
+    "site": "/workspace/wt-integration/_site",
+    "inputHash": "bdb851a80a79a984f15dc002c4fb0b997a8931c4d7b51caefc24f64cbd34210e",
+    "contentHash": "fcec6e8db8e58c0ff5bd0c27da583e6a105b2949c27c1a8d0970152904c2429c"
+  },
+  "independentReview": {
+    "reviewer": "Agent 3",
+    "sourcePass": 74,
+    "emittedPass": 74,
+    "blockingFindings": 0
+  },
+  "diffCheck": "passed",
+  "logs": {
+    "/workspace/scratch/agent1-modeled-provenance-baseline.log": {
+      "bytes": 36058,
+      "sha256": "be19cdc2a7c624839ccd48b3ca4bf75484ba9d5a9f8a558b9dbf87c9e0f2b050"
+    },
+    "/workspace/scratch/agent1-modeled-provenance-source-final.log": {
+      "bytes": 16261,
+      "sha256": "5e682387f946aacfb7abe1196c8f34496214d816f177e1e5a1b26db17206fd4f"
+    },
+    "/workspace/scratch/agent1-modeled-provenance-emitted.log": {
+      "bytes": 16258,
+      "sha256": "b931d6f2b8a83e9daeee2f80ca2bca98a3c1ce876726af7d588a39d1502a15a1"
+    },
+    "/workspace/scratch/agent3-provenance-model-source-review.log": {
+      "bytes": 16259,
+      "sha256": "b4f0277793f5959dcf88d4a8cfdb103ed6615d0ef8d169442235fb653b9ac463"
+    },
+    "/workspace/scratch/agent3-provenance-model-emitted-review.log": {
+      "bytes": 16262,
+      "sha256": "bd3213dc8024649230d19fc1acafa40b10e09d1c13629e8d6e17c2d00984efec"
+    }
+  },
+  "scopeLimit": "These remain modeled transport/damage sinks with source-generated native policy. Emitted mode exercises actual minified runtime capability identity; it is not full native NetMatch HP, physics, Character, browser, or a closure of #1665/#1666 owner action forgery."
+}

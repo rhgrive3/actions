@@ -1,0 +1,369 @@
+{
+  "issue": 1767,
+  "finding": "The clock-specific implementation and catalogue native-admission companion already exist on latest main and equal the tested source. Main integration condition is met; full required CI remains pending.",
+  "mainSha": "e67c636b81762df56b346a09ef570964d43084df",
+  "testedSha": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+  "nativeSixPhaseEvidenceSource": "8c7f27a23513b1fc650a5465a3eef8a2b1645823 (runtime/build inputs verified identical to472 by the committed native receipt)",
+  "fileBlobs": [
+    {
+      "path": "patches/network-replication/owner-clock.mjs",
+      "mainBlob": "552919a71f88a3fee2b834a5c3fd9c219cb8d2a9",
+      "testedBlob": "552919a71f88a3fee2b834a5c3fd9c219cb8d2a9",
+      "identical": true
+    },
+    {
+      "path": "patches/network-replication/snapshot-guard.mjs",
+      "mainBlob": "d8f8d6374cbe40b82ed9e3b73319f77d3e11b832",
+      "testedBlob": "d8f8d6374cbe40b82ed9e3b73319f77d3e11b832",
+      "identical": true
+    },
+    {
+      "path": "patches/network-replication/utf8-length.mjs",
+      "mainBlob": "d1f21f047b88f0e89317bbdf87d7bd99c916cbc0",
+      "testedBlob": "d1f21f047b88f0e89317bbdf87d7bd99c916cbc0",
+      "identical": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/catalogue.mjs",
+      "mainBlob": "deaf1e8d1c5716419539b830fbf431bf72111b54",
+      "testedBlob": "deaf1e8d1c5716419539b830fbf431bf72111b54",
+      "identical": true
+    },
+    {
+      "path": "inkwave-public/src/net/netmatch.js",
+      "mainBlob": "7b81be3aa98ec75c4124b22e472e8f62f1a97e35",
+      "testedBlob": "7b81be3aa98ec75c4124b22e472e8f62f1a97e35",
+      "identical": true
+    },
+    {
+      "path": "inkwave-public/src/net/session.js",
+      "mainBlob": "9b86c6ceb987744ad6a6d9c2fdbf8f98de9f694a",
+      "testedBlob": "9b86c6ceb987744ad6a6d9c2fdbf8f98de9f694a",
+      "identical": true
+    },
+    {
+      "path": "inkwave-public/src/net/transport.js",
+      "mainBlob": "331b19f8eca109027138498a8beab2a8eb24c1d3",
+      "testedBlob": "331b19f8eca109027138498a8beab2a8eb24c1d3",
+      "identical": true
+    },
+    {
+      "path": "server/src/index.js",
+      "mainBlob": "dd756b12244aee3ce103ae76926ce6242078a324",
+      "testedBlob": "dd756b12244aee3ce103ae76926ce6242078a324",
+      "identical": true
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "mainBlob": "900174d09abac48ad9d98f4eaac90517d92c9708",
+      "testedBlob": "900174d09abac48ad9d98f4eaac90517d92c9708",
+      "identical": true
+    },
+    {
+      "path": "patches/network-replication/adapter.mjs",
+      "mainBlob": "71e767a8074c531999c318c284a60dae21e6728e",
+      "testedBlob": "9f017a47a72f41fb7f7d2d30865b5d4916ab3e8f",
+      "identical": false
+    },
+    {
+      "path": "patches/network-replication/owner-tick-receipt.mjs",
+      "mainBlob": "5667ee2f194db39afde95c01aedb3c392542ef70",
+      "testedBlob": "56c27c2d49c7b933c60b49f90330a727bd4d1373",
+      "identical": false
+    },
+    {
+      "path": "patches/network-replication/queue-network-20261027-adapter.mjs",
+      "mainBlob": "5a59caf21497515568b85b9cd15fb68cab0136c4",
+      "testedBlob": "ac641492a2cdcc5bd9e83089b961fdfeabd4163c",
+      "identical": false
+    }
+  ],
+  "generated": {
+    "mainSha": "e67c636b81762df56b346a09ef570964d43084df",
+    "testedSha": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+    "method": "Actual adaptBuildSource independently imported from exact main snapshot and tested472 source tree; no game execution or source edits.",
+    "rows": [
+      {
+        "part": "NetMatch.bind",
+        "mainSha256": "2e3a063bebab9c75cff58afdc947ce1094186fd4b9a8ac1b7ed0c698ae1432b4",
+        "testedSha256": "2e3a063bebab9c75cff58afdc947ce1094186fd4b9a8ac1b7ed0c698ae1432b4",
+        "bytes": 1170,
+        "identical": true
+      },
+      {
+        "part": "NetMatch.update",
+        "mainSha256": "88df0491945ccd712a034862d5127038fee4d3cad7e7f0bf480e2b9f165e7da1",
+        "testedSha256": "88df0491945ccd712a034862d5127038fee4d3cad7e7f0bf480e2b9f165e7da1",
+        "bytes": 666,
+        "identical": true
+      },
+      {
+        "part": "NetMatch.dispose",
+        "mainSha256": "ff197bbf7132f5ecf1ee1b3539c5db565d580e9c814955a390c0e53a8c8109bb",
+        "testedSha256": "ff197bbf7132f5ecf1ee1b3539c5db565d580e9c814955a390c0e53a8c8109bb",
+        "bytes": 743,
+        "identical": true
+      },
+      {
+        "part": "NetMatch.onLeave",
+        "mainSha256": "a6624082805ba679b3952788a63b797e4af80487facb5368865e381f40e528e9",
+        "testedSha256": "a6624082805ba679b3952788a63b797e4af80487facb5368865e381f40e528e9",
+        "bytes": 2361,
+        "identical": true
+      },
+      {
+        "part": "NetMatch._sendTick",
+        "mainSha256": "8aea3181f3aeae73f2c7ad9c06b1da471a8fb21dc9939ca0f4accdc6d63131c2",
+        "testedSha256": "8aea3181f3aeae73f2c7ad9c06b1da471a8fb21dc9939ca0f4accdc6d63131c2",
+        "bytes": 4408,
+        "identical": true
+      },
+      {
+        "part": "NetMatch.onMessage",
+        "mainSha256": "fbfba63b4e8cc93e8f1f07082f3000146c418148f51edf32d78f08f53af469ab",
+        "testedSha256": "fbfba63b4e8cc93e8f1f07082f3000146c418148f51edf32d78f08f53af469ab",
+        "bytes": 1033,
+        "identical": true
+      },
+      {
+        "part": "NetSession.constructor",
+        "mainSha256": "b4a7d449bb9799cd5839df3e64c4deb349809b21cbd6bd4282f464a77c00f099",
+        "testedSha256": "b4a7d449bb9799cd5839df3e64c4deb349809b21cbd6bd4282f464a77c00f099",
+        "bytes": 702,
+        "identical": true
+      },
+      {
+        "part": "NetSession._begin",
+        "mainSha256": "a1999a906b86058c9328c9f781b38744d665a07dd1a9ac7ca3e9a55a96fa5d72",
+        "testedSha256": "a1999a906b86058c9328c9f781b38744d665a07dd1a9ac7ca3e9a55a96fa5d72",
+        "bytes": 2407,
+        "identical": true
+      },
+      {
+        "part": "beginOwnerClock",
+        "mainSha256": "41513c54ee6146416d5ed37e4af98ccb27e1195ed3857084800d537c09e9a974",
+        "testedSha256": "41513c54ee6146416d5ed37e4af98ccb27e1195ed3857084800d537c09e9a974",
+        "bytes": 193,
+        "identical": true
+      },
+      {
+        "part": "advanceOwnerClock",
+        "mainSha256": "32d71ef5079862f51263ce2507fe8fc6024f76bca31658c35003c23667e86aef",
+        "testedSha256": "32d71ef5079862f51263ce2507fe8fc6024f76bca31658c35003c23667e86aef",
+        "bytes": 245,
+        "identical": true
+      },
+      {
+        "part": "retireOwnerClock",
+        "mainSha256": "ba5496428f735243bdb8ecc20747ac11b1e964b1d547dbdeab04b9a6c48cdf42",
+        "testedSha256": "ba5496428f735243bdb8ecc20747ac11b1e964b1d547dbdeab04b9a6c48cdf42",
+        "bytes": 143,
+        "identical": true
+      },
+      {
+        "part": "closeOwnerClock",
+        "mainSha256": "e69e5398d5044cb5b57065af25dd507261dd98c289af2bee074eebf3e37535d7",
+        "testedSha256": "e69e5398d5044cb5b57065af25dd507261dd98c289af2bee074eebf3e37535d7",
+        "bytes": 103,
+        "identical": true
+      },
+      {
+        "part": "handleOwnerClockMessage",
+        "mainSha256": "96cfca5da23b2c17d90f7ecdbd521524ed9fded5944f28eb2fd91a44d25c002f",
+        "testedSha256": "96cfca5da23b2c17d90f7ecdbd521524ed9fded5944f28eb2fd91a44d25c002f",
+        "bytes": 3005,
+        "identical": true
+      },
+      {
+        "part": "validOwnerClockTick",
+        "mainSha256": "1988ceb3d7fe3c4361f984978b63956e5b84998ffc9a2ecf08333722bff74e06",
+        "testedSha256": "1988ceb3d7fe3c4361f984978b63956e5b84998ffc9a2ecf08333722bff74e06",
+        "bytes": 1484,
+        "identical": true
+      },
+      {
+        "part": "validOwnerTickAdvance",
+        "mainSha256": "9e87ed9470d6774feac94be48665f80370695780497ccb71ad4e37a584365101",
+        "testedSha256": "9e87ed9470d6774feac94be48665f80370695780497ccb71ad4e37a584365101",
+        "bytes": 626,
+        "identical": true
+      },
+      {
+        "part": "validOwnerClockOriginAdvance",
+        "mainSha256": "87b6ec6eedbeec51033ac2339ed03f099c459ae8c5ec564de4aca6341f7deaa1",
+        "testedSha256": "87b6ec6eedbeec51033ac2339ed03f099c459ae8c5ec564de4aca6341f7deaa1",
+        "bytes": 568,
+        "identical": true
+      },
+      {
+        "part": "Transport.constructor",
+        "mainSha256": "fe873994767bb90bbf3f8120324896e31bb5d12dad241e5251d446a088e36407",
+        "testedSha256": "fe873994767bb90bbf3f8120324896e31bb5d12dad241e5251d446a088e36407",
+        "bytes": 414,
+        "identical": true
+      },
+      {
+        "part": "Transport.connect",
+        "mainSha256": "09a1964333b5ef4d2de2b53ea6e1e62d3f9aa85a950b93887dc2a462964c9c4c",
+        "testedSha256": "09a1964333b5ef4d2de2b53ea6e1e62d3f9aa85a950b93887dc2a462964c9c4c",
+        "bytes": 4588,
+        "identical": true
+      },
+      {
+        "part": "Transport._startPing",
+        "mainSha256": "9e5b20d3f8d07ac33145b27becb755ec6ea8d337ea45258e240b1aadeea10256",
+        "testedSha256": "9e5b20d3f8d07ac33145b27becb755ec6ea8d337ea45258e240b1aadeea10256",
+        "bytes": 1033,
+        "identical": true
+      },
+      {
+        "part": "Transport._stopPing",
+        "mainSha256": "e9d1a1504101073c9e2f468e17dee9f38d3ed896731bc040ff4d527bef63d69c",
+        "testedSha256": "e9d1a1504101073c9e2f468e17dee9f38d3ed896731bc040ff4d527bef63d69c",
+        "bytes": 137,
+        "identical": true
+      },
+      {
+        "part": "Transport._raw",
+        "mainSha256": "80739a397efe42fd5d124e207553a5ae95d2f8372992792385162707676a1e77",
+        "testedSha256": "80739a397efe42fd5d124e207553a5ae95d2f8372992792385162707676a1e77",
+        "bytes": 369,
+        "identical": true
+      },
+      {
+        "part": "Transport.broadcast",
+        "mainSha256": "52b2f36db1020a40e9c0635f22e4bee542d7240fa10414bf85abc80f5e3a6a59",
+        "testedSha256": "52b2f36db1020a40e9c0635f22e4bee542d7240fa10414bf85abc80f5e3a6a59",
+        "bytes": 271,
+        "identical": true
+      },
+      {
+        "part": "Transport.sendTo",
+        "mainSha256": "c75515f2620346ff4c92f39d4a79633ffca1d2d139768fa334cd01c8f9f84f66",
+        "testedSha256": "c75515f2620346ff4c92f39d4a79633ffca1d2d139768fa334cd01c8f9f84f66",
+        "bytes": 190,
+        "identical": true
+      },
+      {
+        "part": "Transport.lock",
+        "mainSha256": "dcdd1490259a5513bba450d1ef504245e63156fef75b0ae4da10fa743608686a",
+        "testedSha256": "dcdd1490259a5513bba450d1ef504245e63156fef75b0ae4da10fa743608686a",
+        "bytes": 68,
+        "identical": true
+      },
+      {
+        "part": "Transport.open",
+        "mainSha256": "dc4f4bc0cfd063df52d3f02043f6fb2064edcc6491b7b4ac45b47520f8911d40",
+        "testedSha256": "dc4f4bc0cfd063df52d3f02043f6fb2064edcc6491b7b4ac45b47520f8911d40",
+        "bytes": 60,
+        "identical": true
+      },
+      {
+        "part": "Transport.relayReceipt",
+        "mainSha256": "97cab549153432a3fa2147ab5bfc9c856e66bbeb2c13d0e0f84ec2e6ab634c41",
+        "testedSha256": "97cab549153432a3fa2147ab5bfc9c856e66bbeb2c13d0e0f84ec2e6ab634c41",
+        "bytes": 124,
+        "identical": true
+      },
+      {
+        "part": "Transport.close",
+        "mainSha256": "d285d913914fedbe794155309649c92956165608d768945076ff0cc193b3c13e",
+        "testedSha256": "d285d913914fedbe794155309649c92956165608d768945076ff0cc193b3c13e",
+        "bytes": 301,
+        "identical": true
+      },
+      {
+        "part": "NetMatch._tick native prebind/fixed-origin/relay admission prefix",
+        "mainSha256": "9aa2cbf6a21eef7f986a6ae9cfc0f7a2e51785ea3b70e90362495826c015dd46",
+        "testedSha256": "9aa2cbf6a21eef7f986a6ae9cfc0f7a2e51785ea3b70e90362495826c015dd46",
+        "bytes": 1215,
+        "identical": true
+      }
+    ],
+    "allModules": [
+      {
+        "path": "src/net/netmatch.js",
+        "mainSha256": "38e398047158cb4504e111916a8eb5f8de78221d3c7eaf46206ec7746f050a52",
+        "testedSha256": "c83f1a25c746551b7562e41317a56a3c5cba35e0eb43b44d66d9ff0502a56821",
+        "wholeModuleIdentical": false
+      },
+      {
+        "path": "src/net/session.js",
+        "mainSha256": "07f911e643ad6acc26a05dcce3282615165a1bfafdb18177221f0344e7cd3806",
+        "testedSha256": "07f911e643ad6acc26a05dcce3282615165a1bfafdb18177221f0344e7cd3806",
+        "wholeModuleIdentical": true
+      },
+      {
+        "path": "src/net/transport.js",
+        "mainSha256": "ca2a026003a2130b859c8b46e8f2709fd0d2f743f27411ef0dd87091d05fa1a3",
+        "testedSha256": "ca2a026003a2130b859c8b46e8f2709fd0d2f743f27411ef0dd87091d05fa1a3",
+        "wholeModuleIdentical": true
+      }
+    ]
+  },
+  "delivery": {
+    "freshProofSourceCommit": "dfc0bd6e92c75f505825ea9d176c89b869706797",
+    "catalogueAdmissionCommit": "492305e4c7e7669d589d1d79c2781b00e23c41f9",
+    "aggregatePR": {
+      "number": 1843,
+      "url": "https://github.com/rhgrive3/actions/pull/1843",
+      "mergedAt": "2026-10-23T10:20:21Z",
+      "mergeCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "commitUrl": "https://github.com/rhgrive3/actions/commit/726e338ac256ba9609086ce65e25a68ddd99df85",
+      "firstParent": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+      "beforeMergeOwnerClock": "GitHub contents API404 at first parent; module absent",
+      "afterMergeOwnerClockBlob": "cf92ae3346dfea18d877b059937de8ff379ed8ad",
+      "afterMergeCatalogueBlob": "7fae1d7138ad68b45e0c2f88a3af93367d1575a8",
+      "catalogueSourceCommitBlob": "7fae1d7138ad68b45e0c2f88a3af93367d1575a8",
+      "associationEvidence": "GitHub commits/{dfc0bd6e,492305e4}/pulls both return mergedPR1843; PRbody explicitly includes1842 and1846 in its aggregate."
+    },
+    "latestClockRefinement": {
+      "commit": "e5b1b9b2bbbf213fe6eaa557856a605479f18fb5",
+      "currentOwnerClockBlob": "552919a71f88a3fee2b834a5c3fd9c219cb8d2a9",
+      "change": "Cache count of unproven peers to skip completed challenge scans; retire/decrement with lifecycle. No fresh-origin/protocol widening.",
+      "pr": 1882,
+      "url": "https://github.com/rhgrive3/actions/pull/1882",
+      "mergedAt": "2026-10-27T15:18:17Z",
+      "mergeCommit": "6e61cfcc6dc1874b0aa851ffdc78da9d430392d1",
+      "commitUrl": "https://github.com/rhgrive3/actions/commit/6e61cfcc6dc1874b0aa851ffdc78da9d430392d1"
+    },
+    "historicalIndividualPRs": "1842 and1846 were closed without their own merge commit; their implementation arrived through merged aggregate1843. Their individual unmerged status does not negate current main inclusion.",
+    "historyMethod": "GitHub complete path history and commit-associated PR metadata; local repository is shallow and its boundary logs were not used as delivery proof."
+  },
+  "nonClockDifferences": [
+    "network adapter differs only in networkIdentity adding owner-tick-receipt and its adapter files.",
+    "Generated NetMatch differs in admitted actor pose capture, PvP read-only hit peer default, and new Boss receipt predicate/installer argument. The native clock prefix and clock lifecycle/ACK/send/retry parts remain byte-identical.",
+    "owner-tick-receipt/queue adapter changes support combat proof admission; they are not the owner-clock.mjs nonce/fixed-origin protocol.",
+    "Whole NetMatch/build equivalence is not asserted. Generated Session and Transport whole modules are byte-identical."
+  ],
+  "networkBrowserSuccess": {
+    "clock_related_steps": [
+      {
+        "conclusion": "success",
+        "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify fixed-origin owner clock regressions",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+        "status": "completed"
+      }
+    ],
+    "completed_at": "2026-10-28T19:13:48Z",
+    "conclusion": "success",
+    "head_sha": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
+    "html_url": "https://github.com/rhgrive3/actions/actions/runs/40747849465/job/123034976276",
+    "id": 123034976276,
+    "name": "browser (network, chromium webkit)",
+    "started_at": "2026-10-28T19:05:33Z",
+    "status": "completed"
+  },
+  "pendingAcceptance": "Keep issue OPEN until the full required exact-head CI is green; the known modeled provenance fixture CI repair is unrelated to clock implementation.",
+  "deploymentCondition": "No deployment requirement is added to the issue acceptance conditions.",
+  "activity": "Read-only file/blob/history and pure source-composition comparison only; no runtime/source edit, unit/browser rerun, external comment/close or lifecycle action."
+}
