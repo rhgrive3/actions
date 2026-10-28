@@ -75,7 +75,17 @@ export class NativeLevel extends Level {
   // Project to the exact source triangle plane, avoiding a rectangular footprint.
   const projected=this._projNative||(this._projNative=new THREE.Vector3());
   projected.copy(p).addScaledVector(face.n,-rel.dot(face.n));
-  for(const id of face.triangles)if(this.triangleWorld.triangle(id).containsPoint(projected))return true;
+  const px=projected.x,py=projected.y,pz=projected.z,verts=this.triangleWorld.triangles,tris=face.triangles;
+  for(let i=0;i<tris.length;i++){
+   const id=tris[i],o=id*9;
+   const x0=verts[o],x1=verts[o+3],x2=verts[o+6];
+   if(px<Math.min(x0,x1,x2)-1e-6||px>Math.max(x0,x1,x2)+1e-6)continue;
+   const z0=verts[o+2],z1=verts[o+5],z2=verts[o+8];
+   if(pz<Math.min(z0,z1,z2)-1e-6||pz>Math.max(z0,z1,z2)+1e-6)continue;
+   const y0=verts[o+1],y1=verts[o+4],y2=verts[o+7];
+   if(py<Math.min(y0,y1,y2)-1e-6||py>Math.max(y0,y1,y2)+1e-6)continue;
+   if(this.triangleWorld.triangle(id).containsPoint(projected))return true;
+  }
   return false;
  }
  containsFaceUV(face,u,v){
