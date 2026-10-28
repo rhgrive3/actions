@@ -1,0 +1,50 @@
+// Local-only diagnostic plan. Observer installation and native entry occur before
+// this driver; this code never requests pointer lock or writes game state.
+export function installTrustedPauseKeys(){const ids=new WeakMap();let next=0;const t={keys:[],count:0,id:o=>{if(!o)return null;if(!ids.has(o))ids.set(o,++next);return ids.get(o);}};document.addEventListener('keydown',e=>{t.count++;if(t.keys.length<32)t.keys.push({code:e.code,trusted:e.isTrusted,time:performance.now()});},true);window.__resumeProbeKeys=t;}
+export function readResumeState(){const G=window.__G,g=window.__inkwave,i=g?.input,o=window.__nativeLockOutcome,e=window.__nativeLockEvidence,k=window.__resumeProbeKeys,m=G?.match,range=m?.range;return {time:performance.now(),playing:m?.state==='playing',paused:!!m?.paused,menu:g?.menus?.current??null,weapon:G?.local?.weaponId??null,range:!!range,ownerConsistent:!!range&&g?.match===m&&range.m===m&&range.local===G?.local,matchIdentity:k?.id?.(m)??null,sessionIdentity:k?.id?.(range)??null,actorIdentity:k?.id?.(G?.local)??null,pending:!!i?._pointerLockPending,inputLocked:i?.locked??null,canvasLocked:document.pointerLockElement===document.querySelector('#game-canvas'),device:i?.lastDevice??null,observer:o?{...o,calls:o.calls.slice()}:null,events:e?{...e,events:e.events.slice()}:null,keys:k?{count:k.count,keys:k.keys.slice()}:null};}
+export function assertIntegrity(s){const o=s?.observer,e=s?.events,k=s?.keys;if(!o?.installed||!o.attributeMatch||o.count>o.calls.length||!e||e.eventCount>e.events.length||!k||k.count>k.keys.length)throw Error('Incomplete observer evidence; no input');}
+export function assertEvidence(s){assertIntegrity(s);if(s.observer.stopFurtherInput)throw Error('NotAllowedError/SecurityError observed; no input');}
+export function assertStartup(s){assertEvidence(s);if(!s.playing||s.paused||s.menu||!s.range||!s.ownerConsistent||!s.matchIdentity||!s.sessionIdentity||!s.actorIdentity||!s.weapon||s.pending||s.canvasLocked||s.inputLocked!==false||s.device!=='kbm')throw Error('Range is not ready with settled native owner');const calls=s.observer.calls,invokes=calls.filter(x=>x.phase==='invoke');if(!invokes.length)throw Error('No observed startup request');for(const inv of invokes){const end=calls.find(x=>x.sequence===inv.sequence&&['fulfilled','rejected','throw','non-promise','outcome-unavailable'].includes(x.phase));if(!end||!['rejected','throw'].includes(end.phase)||end.error?.name!=='NotSupportedError'||typeof end.error?.message!=='string')throw Error('Startup outcomes are not exclusively known NotSupportedError; no input');}if(!calls.some(x=>['rejected','throw'].includes(x.phase)&&x.error?.name==='NotSupportedError'))throw Error('Known NotSupportedError startup not established');}
+// Already-owned is a distinct no-recovery path, never a relaxation of assertStartup.
+export function alreadyOwnedStartup(s){
+ assertEvidence(s);
+ if(!s.playing||s.paused||s.menu||!s.range||!s.ownerConsistent||!['matchIdentity','sessionIdentity','actorIdentity'].every(k=>Number.isSafeInteger(s[k])&&s[k]>0)||!s.weapon||s.pending||s.canvasLocked!==true||s.inputLocked!==true||s.device!=='kbm')return false;
+ const calls=s.observer.calls,invokes=calls.filter(x=>x.phase==='invoke');
+ if(!invokes.length)return false;
+ let fulfilledCanvas=false;
+ for(const inv of invokes){
+  if(inv.isCanvas!==true)return false;
+  const endings=calls.filter(x=>x.sequence===inv.sequence&&['fulfilled','rejected','throw','non-promise','outcome-unavailable'].includes(x.phase));
+  if(endings.length!==1)return false;
+  const end=endings[0];
+  if(end.phase==='fulfilled'){
+   if(inv.isCanvas===true)fulfilledCanvas=true;
+  }else if(!(['rejected','throw'].includes(end.phase)&&end.error?.name==='NotSupportedError'&&typeof end.error?.message==='string')) return false;
+ }
+ return fulfilledCanvas;
+}
+export function assertPaused(s,start){assertEvidence(s);if(!s.playing||!s.paused||s.menu!=='pause'||!s.range||!s.ownerConsistent||s.weapon!==start.weapon||s.matchIdentity!==start.matchIdentity||s.sessionIdentity!==start.sessionIdentity||s.actorIdentity!==start.actorIdentity||s.pending)throw Error('Pause owner is not ready');if(s.observer.count!==start.observer.count)throw Error('New lock invocation/outcome before resume; no input');if(s.events.events.slice(start.events.eventCount).some(x=>x.type==='pointerlockerror'))throw Error('New pointerlockerror before resume; no input');if(!s.keys.keys.slice(start.keys.count).some(x=>x.code==='KeyP'&&x.trusted))throw Error('Trusted pause key not observed');}
+export function resumeOutcomeReady({marker,clickTime}){const o=window.__nativeLockOutcome;if(!o||!o.installed||o.count>o.calls.length||o.stopFurtherInput)return true;const calls=o.calls.slice(marker),inv=calls.filter(x=>x.phase==='invoke'&&x.context?.time>=clickTime);if(!inv.length)return false;const last=inv.at(-1),end=calls.find(x=>x.sequence===last.sequence&&['fulfilled','rejected','throw','non-promise','outcome-unavailable'].includes(x.phase));return !!end&&!window.__inkwave?.input?._pointerLockPending;}
+export function samePlayingOwner(s,owner){return !!(s.playing&&!s.paused&&!s.menu&&s.range&&s.ownerConsistent&&s.weapon===owner.weapon&&s.matchIdentity===owner.matchIdentity&&s.sessionIdentity===owner.sessionIdentity&&s.actorIdentity===owner.actorIdentity);}
+export function assessResume(s,{marker,clickTime,weapon,owner}){assertEvidence(s);if(!samePlayingOwner(s,owner)||s.weapon!==weapon)return {status:'inconclusive',reason:'resumed playing owner not established'};const calls=s.observer.calls.slice(marker),all=calls.filter(x=>x.phase==='invoke'),inv=all.filter(x=>x.context?.time>=clickTime);if(!inv.length)return {status:'inconclusive',reason:'no time-ordered native invocation'};const ownerValid=inv.every(x=>x.context?.matchState==='playing'&&x.context?.paused===false&&x.context?.menu===null&&x.context?.ownerConsistent===true&&x.context?.matchIdentity===owner.matchIdentity&&x.context?.sessionIdentity===owner.sessionIdentity&&x.context?.actorIdentity===owner.actorIdentity);const endings=all.map(x=>calls.find(y=>y.sequence===x.sequence&&['fulfilled','rejected','throw','non-promise','outcome-unavailable'].includes(y.phase)));const known=endings.every(x=>x&&(x.phase==='fulfilled'||(['rejected','throw'].includes(x.phase)&&typeof x.error?.name==='string'&&typeof x.error?.message==='string')));return {status:known&&ownerValid&&!s.pending?'observed':'inconclusive',requestOwnerValidated:ownerValid,lockOwnership:s.canvasLocked&&s.inputLocked===true?'canvas-and-input':'not-established',requestCount:all.length,afterClickInvocations:inv.length,knownOutcomes:endings.filter(x=>x&&(x.phase==='fulfilled'||(['rejected','throw'].includes(x.phase)&&typeof x.error?.name==='string'&&typeof x.error?.message==='string'))).length,scope:'Recorded request outcomes at snapshot only; event timing is not proof of causation and does not establish reticle or device parity.'};}
+export function rangeReady(){if(window.__nativeLockOutcome?.stopFurtherInput)return true;const G=window.__G,m=G?.match,r=m?.range;return !!(m?.state==='playing'&&!m.paused&&!window.__inkwave?.menus?.current&&window.__inkwave?.match===m&&r&&r.m===m&&r.local===G.local);}
+export async function drivePauseResume({page,bounded,cap,rangeTimeout,readiness,record=()=>{}}){
+ await bounded(()=>page.waitForFunction(rangeReady,null,{timeout:rangeTimeout()}),'range playing ready');
+ const start=await bounded(()=>page.evaluate(readResumeState),'initial ready');
+ if(alreadyOwnedStartup(start)){record('startupAlreadyOwned',start);return {status:'not-needed',reason:'already-owned-at-startup',lockOwnership:'canvas-and-input',end:start,scope:'Recorded outcomes and ownership at snapshot only; pre-input checks and native dispatch are not atomic.'};}
+ assertStartup(start);record('startup',start);
+ await bounded(()=>page.keyboard.press('KeyP'),'native pause');
+ const selector='.iwr-pausescr:not(.is-leaving) [data-id="resume"]';
+ await bounded(()=>page.waitForFunction(readiness,{selector,menu:'pause'},{timeout:cap()}),'pause resume readiness');
+ const before=await bounded(()=>page.evaluate(readResumeState),'before resume');assertPaused(before,start);record('pause',before);
+ // Playwright performs its ordinary hit-tested native click; never force.
+ await bounded(()=>page.locator(selector).click({timeout:cap()}),'native resume');
+ const after=await bounded(()=>page.evaluate(readResumeState),'after resume');record('afterResume',after);assertIntegrity(after);
+ const click=after.events.events.slice(before.events.eventCount).find(x=>x.type==='click'&&x.id==='resume'&&x.trusted);if(!click)throw Error('Trusted resume click not observed');if(after.observer.stopFurtherInput)return {status:'inconclusive',reason:'explicit-like error observed; no further driver input',click,end:after};
+ await bounded(()=>page.waitForFunction(rangeReady,null,{timeout:cap()}),'resumed playing owner readiness');const ready=await bounded(()=>page.evaluate(readResumeState),'resumed owner');record('resumedOwner',ready);assertEvidence(ready);if(!samePlayingOwner(ready,start))throw Error('Resumed match, session or actor owner changed');
+ const marker=before.observer.calls.length;let waitError=null;
+ try{await bounded(()=>page.waitForFunction(resumeOutcomeReady,{marker,clickTime:click.time},{timeout:cap()}),'passive native outcome');}catch(e){waitError=String(e);}
+ const end=await bounded(()=>page.evaluate(readResumeState),'resume outcome');record('outcome',end);
+ if(end.observer?.stopFurtherInput)return {status:'inconclusive',reason:'explicit-like error observed; no further driver input',click,waitError,end};
+ const assessment=assessResume(end,{marker,clickTime:click.time,weapon:start.weapon,owner:start});return {...assessment,click,waitError,end};
+}

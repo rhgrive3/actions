@@ -1,0 +1,118 @@
+name: INKWAVE source-bound native weapon evidence diagnostic
+on:
+  push:
+    branches: [diagnostic/inkwave-3aef-native-evidence-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/inkwave-3aef-native-evidence-20261028'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [bow, pencil, dualies]
+    steps:
+      - name: Checkout exact isolated harness and its source parent
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source parent, changed paths and harness blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.workflow_sha }}" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD^)" = 3aef3e896b643cb540761d9238ce9f6f2246916d
+          test "$(git rev-parse HEAD^^{tree})" = 78b346c4f1ac5bf59e0072d90101ade805b21841
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-three-weapon-native-diagnostic.yml' 'scripts/check-inkwave-bow-flow.mjs' 'scripts/check-inkwave-bow-native.mjs' 'scripts/check-inkwave-bow-observer.mjs' 'scripts/check-inkwave-charge-observation-probe.mjs' 'scripts/check-inkwave-charger-selection-probe.mjs' 'scripts/check-inkwave-dualies-live-native.mjs' 'scripts/check-inkwave-dualies-live-probe.mjs' 'scripts/check-inkwave-lock-outcome-observer.mjs' 'scripts/check-inkwave-lock-resume-probe.mjs' 'scripts/check-inkwave-pencil-native.mjs' 'scripts/check-inkwave-pencil-probe.mjs' 'scripts/check-inkwave-safe-pause-probe.mjs' 'scripts/check-inkwave-safe-resume-probe.mjs' 'scripts/ci/extract-native-site.py' 'scripts/lib/inkwave-offline-range-gate.mjs' 'scripts/tests/inkwave-bow-native.test.mjs' 'scripts/tests/inkwave-dualies-live-native.test.mjs' 'scripts/tests/inkwave-dualies-live-probe.test.mjs' 'scripts/tests/inkwave-offline-range-gate.test.mjs' 'scripts/tests/inkwave-pencil-native.test.mjs' 'scripts/tests/inkwave-pencil-probe.test.mjs' 'scripts/tests/inkwave-pencil-selection-nowait.test.mjs' 'scripts/tests/test_extract_native_site.py' | sort)
+          actual=$(git diff --no-renames --name-only HEAD^ HEAD | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:.circleci/config.yml)" = 035c960ae89a034676b132eefe162aabfbce946f
+          test "$(git rev-parse HEAD:.github/workflows/bootstrap-hex-worker-repos.yml)" = 4326adb0f334998ee313b0d93c555d7e69942af1
+          test "$(git rev-parse HEAD:.github/workflows/hex-fast-tail-known.yml)" = 9e34ff0c709a06d4005edca76e8e9c56c3c350ef
+          test "$(git rev-parse HEAD:scripts/check-inkwave-bow-flow.mjs)" = 3714f927f47e24e568dad3b5b7cc89ccdf78eed6
+          test "$(git rev-parse HEAD:scripts/check-inkwave-bow-native.mjs)" = 6501a2de3b5988bdd993833e5d26ab85c264c7be
+          test "$(git rev-parse HEAD:scripts/check-inkwave-bow-observer.mjs)" = 5ca72d2f5eb716e92cc51142a0b51fbeb306d7aa
+          test "$(git rev-parse HEAD:scripts/check-inkwave-charge-observation-probe.mjs)" = f8f80772de5b55f320fd86056f8ee18c52da1df7
+          test "$(git rev-parse HEAD:scripts/check-inkwave-charger-selection-probe.mjs)" = 9203202db1817d050f349faa527625adac23071a
+          test "$(git rev-parse HEAD:scripts/check-inkwave-dualies-live-native.mjs)" = 16ae6df57ba70a8305e030d3c0a9a4b6d6afb3d2
+          test "$(git rev-parse HEAD:scripts/check-inkwave-dualies-live-probe.mjs)" = 89307ecda0aab76d31fd39f4f6e6ef5b2a12853c
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-outcome-observer.mjs)" = fe2473487261e479d4f8b93e4193908aa643a350
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-resume-probe.mjs)" = 5900a8d6c0ccaa9260b550865f4220dda7b4a963
+          test "$(git rev-parse HEAD:scripts/check-inkwave-pencil-native.mjs)" = 55ea93591c3ecc116c2fc5818949c48db8687a85
+          test "$(git rev-parse HEAD:scripts/check-inkwave-pencil-probe.mjs)" = 8e36df0e9f051e383960b1e3d52303b31e6dd15b
+          test "$(git rev-parse HEAD:scripts/check-inkwave-safe-pause-probe.mjs)" = 200ed8dd1959ea1282765bc7b15270cbac0f14dc
+          test "$(git rev-parse HEAD:scripts/check-inkwave-safe-resume-probe.mjs)" = a35b1eeffb34f4156b6ec244813b58350c05658e
+          test "$(git rev-parse HEAD:scripts/ci/extract-native-site.py)" = 34bbfd4b3f274f5d1662dfbae194c8fa892c581a
+          test "$(git rev-parse HEAD:scripts/lib/inkwave-offline-range-gate.mjs)" = 5267336fef8afd2a6f7f273cd0104f8e0c7d2902
+          test "$(git rev-parse HEAD:scripts/lib/inkwave-range-menu-entry.mjs)" = ad12a3987e17540b7a15f61745100acd601c1af2
+          test "$(git rev-parse HEAD:scripts/lib/inkwave-runtime-evidence.mjs)" = eda5bf0f09dd87a34cffa20833ca228373c8453f
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-bow-native.test.mjs)" = 5f5962097d67c0f614bd09a212c0329a504c41d2
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-dualies-live-native.test.mjs)" = 7f4227129e6653122be4bc746b52c41875429580
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-dualies-live-probe.test.mjs)" = 89f93e918eaffe09c790b36e120b3c7776a1f1d8
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-offline-range-gate.test.mjs)" = 4be9ae757912e5679ff6c70ffebe57b1b743cef6
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-pencil-native.test.mjs)" = 659a0d3a4b9ecbfa847e7368cd4b75b296051958
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-pencil-probe.test.mjs)" = d3209db8a5bd2c8e607073c187025af890fcbaa8
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-pencil-selection-nowait.test.mjs)" = 43bfd12d220cb9fd5287fb7a5b57cd5e3f114dde
+          test "$(git rev-parse HEAD:scripts/tests/test_extract_native_site.py)" = e7f73b31bdb301056b8526233563cbb6c924ab81
+      - name: Download the exact official source build
+        uses: actions/download-artifact@v4
+        with:
+          name: inkwave-patched-site-3aef3e896b643cb540761d9238ce9f6f2246916d
+          path: diagnostic-build
+          github-token: ${{ github.token }}
+          repository: rhgrive3/actions
+          run-id: 40725931420
+      - name: Verify archive and immutable source binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(stat -c %s diagnostic-build/immutable-site.tar)" = 122562560
+          python3 scripts/ci/extract-native-site.py diagnostic-build/immutable-site.tar verified-build 6ed3507d640af01003cc30bf43001368eccb7fb63e02c65636a38a0b4bfefe2b
+          test "$(cat verified-build/_site-source-sha.txt)" = 3aef3e896b643cb540761d9238ce9f6f2246916d
+          echo 'c469cef5f78e391bcdc15424bd83caa798b42c8b2e7a192e0611c0bc956bb1a6  verified-build/_site/inkwave-build.json' | sha256sum -c -
+          echo '106af32717b2c61693a63c4886ca01831e358fb68f09c2321871c0b846b3f46b  verified-build/_site/sw.js' | sha256sum -c -
+      - name: Install pinned tools and secure Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Run all observer and offline gate contracts
+        run: node --test scripts/tests/inkwave-bow-native.test.mjs scripts/tests/inkwave-pencil-native.test.mjs scripts/tests/inkwave-pencil-probe.test.mjs scripts/tests/inkwave-pencil-selection-nowait.test.mjs scripts/tests/inkwave-dualies-live-native.test.mjs scripts/tests/inkwave-dualies-live-probe.test.mjs scripts/tests/inkwave-offline-range-gate.test.mjs
+      - name: Verify bounded archive extraction controls
+        run: python3 -m unittest discover -s scripts/tests -p 'test_extract_native_site.py' -v
+      - name: Observe native Range for selected role
+        shell: bash
+        env:
+          ROLE: ${{ matrix.role }}
+        run: |
+          set +e
+          mkdir -p evidence
+          case "$ROLE" in
+            bow) driver=scripts/check-inkwave-bow-native.mjs ;;
+            pencil) driver=scripts/check-inkwave-pencil-native.mjs ;;
+            dualies) driver=scripts/check-inkwave-dualies-live-native.mjs ;;
+            *) exit 1 ;;
+          esac
+          timeout --signal=TERM --kill-after=10s 1140s node "$driver" --root "$GITHUB_WORKSPACE" --site "$GITHUB_WORKSPACE/verified-build/_site" --out "$GITHUB_WORKSPACE/evidence/outcome"
+          code=$?
+          printf 'exit=%s\n' "$code" > evidence/exit-code.txt
+          if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+            CODE="$code" node -e 'const fs=require("fs"),p="evidence/outcome/"+(process.env.ROLE==="dualies"?"dualies-live-result.json":"lock-outcome-result.json");fs.mkdirSync("evidence/outcome",{recursive:true});let r={schema:1};try{r=JSON.parse(fs.readFileSync(p))}catch{}r.status="failed";r.observedExitCode=Number(process.env.CODE);r.terminationReason="unverified: timeout wrapper or process may produce the same exit code";r.cleanupOutcome="unknown after exit 124 or 137";r.error ||= "Process returned exit 124 or 137; reason unknown";fs.writeFileSync(p,JSON.stringify(r,null,2)+"\n")'
+          fi
+          exit "$code"
+      - name: Preserve diagnostic receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3aef-evidence-${{ matrix.role }}-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 7
