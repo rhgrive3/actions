@@ -44,10 +44,13 @@ jobs:
           case "$LANE" in
             contracts)
               ruby scripts/ci/check-workflow-yaml.rb .github/workflows
+              node scripts/ci/check-composition-preflight.mjs
               node --experimental-vm-modules --test --test-concurrency=1 \
                 scripts/tests/inkwave-owner-clock-diagnostic.test.mjs \
                 scripts/tests/inkwave-responsive-progress-summary.test.mjs \
                 scripts/tests/inkwave-source-coverage.test.mjs \
+                scripts/tests/inkwave-ci-recurrence-guards.test.mjs \
+                scripts/tests/inkwave-idle-resources-gates.test.mjs \
                 scripts/tests/continuous-browser-video.test.mjs \
                 scripts/tests/inkwave-added-ci-contracts.test.mjs
               ;;
@@ -58,6 +61,7 @@ jobs:
             motion)
               node --experimental-vm-modules --test --test-concurrency=1 \
                 patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs \
+                patches/local-quality/tests/normal-play-fk-hitch-regression.test.mjs \
                 patches/local-quality/tests/queue-historical-character-20261026.test.mjs \
                 patches/local-quality/tests/drive-visual-audio.test.mjs
               ;;
