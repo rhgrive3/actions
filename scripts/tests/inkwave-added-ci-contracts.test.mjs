@@ -145,7 +145,9 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   ['test "$SEVEN_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',SEVEN_RESULT:'failure'}],
   ['test "$RESOURCE_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',RESOURCE_RESULT:'failure'}],
  ]){
-  const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
+  // The contracts-only guard precedes the native/offload one; mutate the latter.
+  const offset=shell.lastIndexOf(needle);assert(offset>=0);
+  const altered=shell.slice(0,offset)+'true # removed required receipt'+shell.slice(offset+needle.length);assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
  }
 });
