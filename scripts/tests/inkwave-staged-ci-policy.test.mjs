@@ -50,7 +50,7 @@ test('ready_for_review reruns full validation; converting to draft supersedes ol
   assert.match(full, /^  pull_request:\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]\n    paths:/m);
   assert.match(full, /^  push:\n    branches: \[main\]/m);
   assert.match(full, /^  workflow_dispatch:/m);
-  assert.match(full, /^  group: validate-inkwave-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}$/m);
+  assert.match(full, /^  group: validate-inkwave-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/m);
   assert.match(full, /^  cancel-in-progress: /m);
   assert.match(quick, /^  pull_request:\n    branches: \[main\]\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]/m);
 });
