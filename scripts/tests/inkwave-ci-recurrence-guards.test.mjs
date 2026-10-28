@@ -58,3 +58,21 @@ test('production preflight validates every source module read-only and exposes f
 test('missing production source fails rather than producing a false green', () => {
   assert.throws(() => preflightComposition(path.join(os.tmpdir(), 'nonexistent-inkwave-source-does-not-exist'), {adapt:code => code}), /Missing production source directory/);
 });
+
+test('heavy full-CI lanes require successful admission preflight and final gate refuses failure', () => {
+  const yaml = fs.readFileSync(path.join(ROOT, '.github/workflows/validate-inkwave-update.yml'), 'utf8');
+  assert.match(yaml, /^  admission_preflight:\n/m);
+  for (const name of ['build_site', 'patch_tests', 'seven_claims', 'resource_paint_continuation']) {
+    assert.match(yaml, new RegExp('^  ' + name + ':\\n    needs: admission_preflight\\n', 'm'), name);
+  }
+  assert.match(yaml, /needs: \[admission_preflight, validate_core, patch_tests, circleci_offload_gate\]/);
+  assert.match(yaml, /test "\$PREFLIGHT_RESULT" = success/);
+});
+
+test('external Charger waveform research cannot auto-trigger from pull requests or pushes', () => {
+  const yaml = fs.readFileSync(path.join(ROOT, '.github/workflows/inkwave-charger-video-waveform.yml'), 'utf8');
+  const triggers = yaml.slice(0, yaml.indexOf('\npermissions:'));
+  assert.match(triggers, /^on:\n  workflow_dispatch:\n/m);
+  assert.doesNotMatch(triggers, /^\s{2}(?:pull_request|push|schedule):/m);
+  assert.match(yaml, /cancel-in-progress: true/);
+});
