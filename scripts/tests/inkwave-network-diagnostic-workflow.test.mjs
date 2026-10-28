@@ -27,7 +27,7 @@ function verify(text){
   assert(rule.includes('inkwave/runtime-performance-ui'),name+' must preserve special baseline CI');
  }
  assert(condition(text,'circleci_offload_gate').includes("vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled'"));
- assert.equal(condition(text,'validate'),'${{ always() && '+ordinaryFull+' }}');
+ assert.equal(condition(text,'validate'),'${{ always() && inputs.diagnostic_only != true && (github.event_name != \'pull_request\' || github.event.pull_request.draft == false) }}');
  assert.ok(text.includes("  group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}"));
  assert.match(text,/^  cancel-in-progress: \$\{\{ !\(inputs.diagnostic_only == true && \(inputs.network_opening_diagnostic == true \|\| inputs.wall_render_diagnostic == true\)\) \}\}$/m);
  const native=job(text,'network-opening-diagnostic');
