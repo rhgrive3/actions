@@ -35,12 +35,13 @@ function section(source, start, end) {
 
 // Instantiate the shipped Hud method with a minimal reticle stub (the fixture
 // pattern: only display plumbing is stubbed, the method body is the real one).
-function buildReticle(kind) {
+function buildReticle(kind, firstComplete = false) {
   const method = section(installed('src/ui/hud.js'), '  _buildReticle(kind) {', '\n  _updCrosshair(f, dt) {');
   const Hud = new Function(`return class {${method}\n};`)();
   const hud = new Hud();
-  hud._L = {};
-  hud.ret = { className: '', innerHTML: '', style: { setProperty() {} }, querySelector: () => null };
+  hud._L = { splatFirstComplete: firstComplete };
+  const classes = new Set();
+  hud.ret = { classList: { toggle(name, enabled) { enabled ? classes.add(name) : classes.delete(name); }, contains(name) { return classes.has(name); } }, className: '', innerHTML: '', style: { setProperty() {} }, querySelector: () => null };
   hud._buildReticle(kind);
   return hud.ret;
 }
@@ -75,6 +76,12 @@ test('the other weapon reticles keep their dedicated structures', () => {
   assert.match(html('dualies'), /iw-ret__lock/);
   assert.match(html('splatling'), /iw-ret__segs/);
   assert.match(html('splatling'), /iw-ret__charge/);
+});
+
+test('Splatling rebuild restores first-stage class without modifying other reticle kinds', () => {
+  assert.equal(buildReticle('splatling', false).classList.contains('is-first-complete'), false);
+  assert.equal(buildReticle('splatling', true).classList.contains('is-first-complete'), true);
+  assert.equal(buildReticle('charger', true).classList.contains('is-first-complete'), false);
 });
 
 test('no kick-driven arch geometry survives in the installed HUD source', () => {
