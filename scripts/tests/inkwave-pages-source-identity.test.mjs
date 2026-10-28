@@ -30,7 +30,17 @@ test('every published gameplay patch group can trigger Pages', () => {
   }
 });
 
-test('Pages caps focused test concurrency without bypassing the full source suite', () => {
-  assert.ok(workflow.includes('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs --test-concurrency=2'),
-    'Pages must run the exact local-quality regression suite at bounded parallelism');
+test('Pages stays deployable while mandatory Validate still owns the full regression matrix', () => {
+  const gate = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
+  const deploymentBuild = workflow.slice(workflow.indexOf('      - name: Build optimized site'), workflow.indexOf('      - name: Upload INKWAVE site'));
+  assert.match(deploymentBuild, /node --test scripts\/tests\/inkwave-pages-source-identity\.test\.mjs scripts\/tests\/inkwave-ranked-pages-sequencing\.test\.mjs/);
+  assert.match(deploymentBuild, /node scripts\/check-inkwave-patches\.mjs --quick/);
+  assert.match(deploymentBuild, /node scripts\/build-inkwave\.mjs inkwave-public _site/);
+  assert.match(deploymentBuild, /node scripts\/check-inkwave-startup-budget\.mjs _site/);
+  assert.doesNotMatch(deploymentBuild, /--test patches\/local-quality\/tests\/\*\.test\.mjs/);
+  const full = gate.slice(gate.indexOf('  patch_tests:'),gate.indexOf('  circleci_offload_gate:'));
+  assert.match(full, /INKWAVE_TEST_SHARD_COUNT: '8'/);
+  assert.match(full, /run: node --experimental-vm-modules scripts\/check-inkwave-patches\.mjs/);
+  const final = gate.slice(gate.indexOf('  validate:'),gate.indexOf('  browser:'));
+  assert.match(final, /test "\$PATCH_RESULT" = success/);
 });
