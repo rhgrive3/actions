@@ -28,15 +28,21 @@ export function adaptRenderTransfers(rel, code, once) {
   if (rel !== 'src/fx/fx.js') return code;
   const marker = '// INKWAVE persistent ring attribute transfers v1';
   if (code.includes(marker)) return code;
-  const hasExtendedOwner = code.includes('a === staticAttribute || a._fxStatic');
-  if (!hasExtendedOwner && !code.includes('    if (a === staticAttribute) continue;'))
+  const pairedOwnership = code.includes('    if (a === staticAttribute || a === staticAttribute2) continue;') ||
+    code.includes('    if (a === staticAttribute || a === staticAttribute2 || a._fxStatic) continue;');
+  const hasExtendedOwner = code.includes('    if (a === staticAttribute || a._fxStatic) continue;') ||
+    code.includes('    if (a === staticAttribute || a === staticAttribute2 || a._fxStatic) continue;');
+  if (!hasExtendedOwner && !code.includes('    if (a === staticAttribute) continue;') && !pairedOwnership)
     throw new Error('Ring transfers require static FX attribute ownership');
   const patch = (before, after, label) => { code = once(code, before, after, 'ring transfers: ' + label); };
-  // The source stage still skips only its optional explicit staticAttribute.
-  // Teach it the two owned ring attributes BEFORE making their uploads sparse.
-  // Otherwise markUpdated() overwrites their partial update ranges every tick.
-  if (!hasExtendedOwner) patch('    if (a === staticAttribute) continue;',
-    '    if (a === staticAttribute || a._fxStatic) continue;', 'honour static FX attributes in markUpdated');
+  // 2026-10-28 main also manages two static ring attributes via staticDirty.
+  // Preserve that ownership contract while restricting only the dirty slots.
+  if (!hasExtendedOwner) {
+    if (pairedOwnership) patch('    if (a === staticAttribute || a === staticAttribute2) continue;',
+      '    if (a === staticAttribute || a === staticAttribute2 || a._fxStatic) continue;', 'honour paired FX attributes in markUpdated');
+    else patch('    if (a === staticAttribute) continue;',
+      '    if (a === staticAttribute || a._fxStatic) continue;', 'honour static FX attributes in markUpdated');
+  }
   patch('export class FX {', marker + '\n' + clearFxUploadRanges.toString() + '\n' + markFxStaticRange.toString() + '\n\nexport class FX {', 'helper');
   patch('    this.rings = { cap, n: 0, geo, mesh, P:',
     '    geo.attributes.aColA._fxStatic = true; geo.attributes.aMisc._fxStatic = true;\n    geo.attributes.aColA.onUpload(clearFxUploadRanges); geo.attributes.aMisc.onUpload(clearFxUploadRanges);\n    this.rings = { cap, n: 0, dirtyStart: cap, dirtyEnd: 0, geo, mesh, P:', 'static ring attributes');
@@ -44,9 +50,16 @@ export function adaptRenderTransfers(rel, code, once) {
     '    R.X[x + 7] = style === R_DISC || style === R_BLOT ? 0.55 : style === R_DUST ? 0.35 : 0.22;\n    R.dirtyStart = Math.min(R.dirtyStart, i); R.dirtyEnd = Math.max(R.dirtyEnd, i + 1);\n    return i;', 'birth and recycling');
   patch('if (i !== last) { R.P.copyWithin(i3, last * 3, last * 3 + 3); R.V.copyWithin(i3, last * 3, last * 3 + 3); R.N.copyWithin(i3, last * 3, last * 3 + 3); R.C.copyWithin(i3, last * 3, last * 3 + 3); X.copyWithin(x, last * 8, last * 8 + 8); }',
     'if (i !== last) { R.P.copyWithin(i3, last * 3, last * 3 + 3); R.V.copyWithin(i3, last * 3, last * 3 + 3); R.N.copyWithin(i3, last * 3, last * 3 + 3); R.C.copyWithin(i3, last * 3, last * 3 + 3); X.copyWithin(x, last * 8, last * 8 + 8); R.dirtyStart = Math.min(R.dirtyStart, i); R.dirtyEnd = Math.max(R.dirtyEnd, i + 1); }', 'compaction');
-  patch('      aC[i4] = R.C[i3]; aC[i4 + 1] = R.C[i3 + 1]; aC[i4 + 2] = R.C[i3 + 2]; aC[i4 + 3] = X[x + 3];\n      aM[i4] = X[x + 6]; aM[i4 + 1] = X[x + 4]; aM[i4 + 2] = X[x + 5]; aM[i4 + 3] = 0;',
+  const staticValues = '      aC[i4] = R.C[i3]; aC[i4 + 1] = R.C[i3 + 1]; aC[i4 + 2] = R.C[i3 + 2]; aC[i4 + 3] = X[x + 3];\n      aM[i4] = X[x + 6]; aM[i4 + 1] = X[x + 4]; aM[i4 + 2] = X[x + 5]; aM[i4 + 3] = 0;';
+  const mainPairValues = '      if (R.staticDirty) {\n        aC[i4] = R.C[i3]; aC[i4 + 1] = R.C[i3 + 1]; aC[i4 + 2] = R.C[i3 + 2]; aC[i4 + 3] = X[x + 3];\n        aM[i4] = X[x + 6]; aM[i4 + 1] = X[x + 4]; aM[i4 + 2] = X[x + 5]; aM[i4 + 3] = 0;\n      }';
+  patch(pairedOwnership ? mainPairValues : staticValues,
     '      if (i >= R.dirtyStart && i < R.dirtyEnd) {\n        aC[i4] = R.C[i3]; aC[i4 + 1] = R.C[i3 + 1]; aC[i4 + 2] = R.C[i3 + 2]; aC[i4 + 3] = X[x + 3];\n        aM[i4] = X[x + 6]; aM[i4 + 1] = X[x + 4]; aM[i4 + 2] = X[x + 5]; aM[i4 + 3] = 0;\n      }', 'persistent values');
-  patch('    M.n = 0;\n    R.geo.instanceCount = n;\n    markUpdated(R.geo, n);',
+  const updateCall = pairedOwnership
+    ? '    markUpdated(R.geo, n, R.geo.attributes.aColA, R.geo.attributes.aMisc);\n    R.staticDirty = false;'
+    : '    markUpdated(R.geo, n);';
+  const mainPairEnd = '    M.n = 0;\n    R.geo.instanceCount = n;\n    markUpdated(R.geo, n, R.staticDirty ? null : R.geo.attributes.aColA, R.staticDirty ? null : R.geo.attributes.aMisc);\n    R.staticDirty = false;';
+  const originalEnd = '    M.n = 0;\n    R.geo.instanceCount = n;\n    markUpdated(R.geo, n);';
+  patch(pairedOwnership ? mainPairEnd : originalEnd,
     `    // A render can be skipped for several simulation updates. Coalesce with
     // all unconsumed ranges; WebGLAttributes clears them after actual upload.
     let first = R.dirtyStart, last = Math.min(R.dirtyEnd, R.n);
@@ -56,7 +69,7 @@ export function adaptRenderTransfers(rel, code, once) {
     R.dirtyStart = R.cap; R.dirtyEnd = 0;
     M.n = 0;
     R.geo.instanceCount = n;
-    markUpdated(R.geo, n);`, 'dirty uploads and marks');
+` + updateCall, 'dirty uploads and marks');
   patch('    this.marks.n = 0; this.pillars.n = 0; this._sqN = 0;',
     '    this.rings.dirtyStart = this.rings.cap; this.rings.dirtyEnd = 0;\n    this.marks.n = 0; this.pillars.n = 0; this._sqN = 0;', 'clear');
   return code;

@@ -31,6 +31,25 @@ test('ring transfer adapter is registered, composed once, and fails closed on ch
   assert.throws(() => adaptRenderTransfers('src/fx/fx.js', raw.replace('    if (a === staticAttribute) continue;', '    if (a.attribute === staticAttribute) continue;'), replaceOnce), /static FX/);
 });
 
+test('main paired staticAttribute2 ownership composes with fine-grained ring uploads', () => {
+  const raw = fs.readFileSync(new URL('../../../inkwave-public/src/fx/fx.js', import.meta.url), 'utf8');
+  const sourceCopy = '      aC[i4] = R.C[i3]; aC[i4 + 1] = R.C[i3 + 1]; aC[i4 + 2] = R.C[i3 + 2]; aC[i4 + 3] = X[x + 3];\n      aM[i4] = X[x + 6]; aM[i4 + 1] = X[x + 4]; aM[i4 + 2] = X[x + 5]; aM[i4 + 3] = 0;';
+  let main = raw.replace('function markUpdated(geo, count, staticAttribute = null) {',
+    'function markUpdated(geo, count, staticAttribute = null, staticAttribute2 = null) {');
+  main = main.replace('if (a === staticAttribute) continue;',
+    'if (a === staticAttribute || a === staticAttribute2) continue;');
+  main = main.replace(sourceCopy,
+    '      if (R.staticDirty) {\n' + sourceCopy.split('\n').map(line=>'  '+line).join('\n') + '\n      }');
+  main = main.replace('    M.n = 0;\n    R.geo.instanceCount = n;\n    markUpdated(R.geo, n);',
+    '    M.n = 0;\n    R.geo.instanceCount = n;\n    markUpdated(R.geo, n, R.staticDirty ? null : R.geo.attributes.aColA, R.staticDirty ? null : R.geo.attributes.aMisc);\n    R.staticDirty = false;');
+  assert.ok(main.includes('if (R.staticDirty) {'), 'preimage accurately reflects the main adapter');
+  const optimized = adaptRenderTransfers('src/fx/fx.js', main, replaceOnce);
+  assert.ok(optimized.includes('a === staticAttribute || a === staticAttribute2 || a._fxStatic'));
+  assert.ok(optimized.includes('if (i >= R.dirtyStart && i < R.dirtyEnd)'));
+  assert.ok(optimized.includes('markUpdated(R.geo, n, R.geo.attributes.aColA, R.geo.attributes.aMisc);'));
+  assert.equal(adaptRenderTransfers('src/fx/fx.js', optimized, replaceOnce), optimized);
+});
+
 test('live rings halve attribute transfers with exact simulation and render attributes', () => {
   const a=ringFixture(THREE,false,300), b=ringFixture(THREE,true,300), ta=uploadTracker(), tb=uploadTracker();
   for(let i=0;i<300;i++) for(const f of [a,b]) f._ringRaw(new THREE.Vector3(i*.01,0,0),new THREE.Vector3(0,1,0),new THREE.Color(.9,.1,.4),1,10,i%8,.8,1,.1,0,.2);
