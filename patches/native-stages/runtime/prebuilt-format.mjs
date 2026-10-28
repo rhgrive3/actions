@@ -7,14 +7,25 @@ export const PREBUILT_CHUNK_BYTES = 16 * 1024 * 1024;
 export const FACE_KEYS = 'origin,u,v,n,su,sv,nu,nv,cu,cv,grid,object,triangles,bounds,area';
 export const FACE_F64 = 23; // origin3 u3 v3 n3 su sv cu cv min3 max3 area
 export const FACE_I32 = 4;  // nu nv grid object
-export function unpackFaces(f64, i32, offsets, ids) {
+function* unpackFaceSteps(f64, i32, offsets, ids) {
   const n = offsets.length - 1, faces = new Array(n);
   for (let i = 0; i < n; i++) {
     const a = i * FACE_F64, b = i * FACE_I32, d = f64;
     faces[i] = {origin: [d[a], d[a + 1], d[a + 2]], u: [d[a + 3], d[a + 4], d[a + 5]], v: [d[a + 6], d[a + 7], d[a + 8]], n: [d[a + 9], d[a + 10], d[a + 11]],
       su: d[a + 12], sv: d[a + 13], nu: i32[b], nv: i32[b + 1], cu: d[a + 14], cv: d[a + 15], grid: i32[b + 2], object: i32[b + 3],
-      triangles: Array.from(ids.subarray(offsets[i], offsets[i + 1])),
+      triangles: ids.subarray(offsets[i], offsets[i + 1]),
       bounds: [[d[a + 16], d[a + 17], d[a + 18]], [d[a + 19], d[a + 20], d[a + 21]]], area: d[a + 22]};
+    if((i&127)===127)yield;
   }
   return faces;
+}
+
+export function unpackFaces(f64,i32,offsets,ids){const steps=unpackFaceSteps(f64,i32,offsets,ids);let next;do{next=steps.next();}while(!next.done);return next.value;}
+export async function unpackFacesAsync(f64,i32,offsets,ids,{signal,budgetMilliseconds=4,yieldTask=()=>new Promise(resolve=>setTimeout(resolve,0))}={}){
+ const check=()=>{if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
+ const now=()=>globalThis.performance?.now?.()??Date.now();let started=now();
+ const steps=unpackFaceSteps(f64,i32,offsets,ids);
+ while(true){check();const next=steps.next();if(next.done)return next.value;
+  if(now()-started>=budgetMilliseconds){await yieldTask();check();started=now();}
+ }
 }

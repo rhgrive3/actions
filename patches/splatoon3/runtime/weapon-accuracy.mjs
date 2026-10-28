@@ -74,6 +74,8 @@ export function withShotBias(actor, bias, pitchBias, launch) {
   const r = actor?.weaponRunner;
   if (!r) return launch();
   const previous = r.s3ShotBias;
+  // The public launch callback may return or retain this published record.
+  // Its immutable post-call lifetime is independent of later shots/reentry.
   r.s3ShotBias = { horizontal: bias, pitch: pitchBias };
   try { return launch(); } finally { r.s3ShotBias = previous; }
 }

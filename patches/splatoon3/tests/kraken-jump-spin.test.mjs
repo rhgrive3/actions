@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {markAttributeRange} from '../runtime/instance-color-upload.mjs';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const {transform}=require(process.env.ESBUILD_MODULE || 'esbuild');
@@ -20,7 +21,10 @@ async function load(file, emitted){
  await module.link(spec=>new vm.SyntheticModule(imports.get(spec),function(){for(const name of imports.get(spec))this.setExport(name,name==='vfxRandom'?()=>.95:name==='RIBBON'?{INK:1,GLOW:2}:()=>{});},{context}));
  await module.evaluate();return module.namespace;
 }
-const kit= new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs',import.meta.url),'utf8')+'\nexport {RibbonPool};');await kit.link(()=>{throw Error('unexpected import')});await kit.evaluate();
+const kit= new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs',import.meta.url),'utf8')+'\nexport {RibbonPool};');await kit.link(spec=>{
+  assert.equal(spec,'./instance-color-upload.mjs','the RibbonPool test uses only the real upload helper');
+  return new vm.SyntheticModule(['markAttributeRange'],function(){this.setExport('markAttributeRange',markAttributeRange);});
+});await kit.evaluate();
 const Pool=kit.namespace.RibbonPool;
 const results=[];
 for(const [label,file] of [['baseline',base],['candidate',candidate]])for(const emitted of [false,true]){

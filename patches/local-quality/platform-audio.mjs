@@ -67,7 +67,7 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
   const P = MusicEngine.prototype;
   if (Object.hasOwn(P, MUSIC)) return;
   Object.defineProperty(P, MUSIC, { value: true });
-  const lifecycle = getPlatformLifecycle(env), start = P._startTimer, tick = P._tick, dispose = P.dispose;
+  const lifecycle = getPlatformLifecycle(env), start = P._startTimer, tick = P._tick, dispose = P.dispose, play = P.play;
   function stop(m) {
     if (m.worker) { const worker = m.worker; m.worker = null; worker.onmessage = worker.onerror = null; worker.terminate(); }
     if (m.timer != null) env.clearInterval(m.timer);
@@ -116,15 +116,34 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
     }
     r.time = now;
   }
+  function rearm(m,r,trusted=false){
+    const current=m.current,media=current?.element;
+    if(trusted)r.mediaBlocked=false;
+    if(r.mediaBlocked||r.mediaPending||!lifecycle.active||m.offline||m.ctx?.state!=='running'||
+       m._desiredTrack!==current?.id||!media||current.disposed||current.failed||current.stopAt!==Infinity||
+       media.paused!==true||media.ended||media.error)return;
+    const failed=error=>{
+      if(m._platformMusic!==r||m.current!==current||current.disposed)return;
+      if(error?.name==='NotAllowedError')r.mediaBlocked=true;
+      else current._fail?.(error);
+    };
+    try {
+      const pending=Promise.resolve(media.play());r.mediaPending=pending;
+      pending.catch(failed).finally(()=>{if(r.mediaPending===pending)r.mediaPending=null;});
+    } catch(error) {failed(error);}
+  }
   function ensure(m) {
     if (m._platformMusic) return m._platformMusic;
-    const r = m._platformMusic = { off: null, time: null, restarts: 0 };
+    const r = m._platformMusic = { off: null, time: null, restarts: 0, mediaPending:null,mediaBlocked:false,unlock:null };
+    r.unlock=()=>rearm(m,r,true);
+    for(const type of ['pointerdown','keydown','touchend','click'])env.addEventListener?.(type,r.unlock,{capture:true,passive:true});
     r.off = lifecycle.subscribe({
       suspend() { r.time = m.ctx?.currentTime ?? null; stop(m); },
-      resume() { rebase(m, r); if (m.ctx && !m.offline) m._startTimer(); },
+      resume() { rebase(m, r); rearm(m,r); if (m.ctx && !m.offline) m._startTimer(); },
     });
     return r;
   }
+  if(typeof play==='function')P.play=function(...args){const result=play.apply(this,args);if(this.ctx&&!this.offline)rearm(this,ensure(this));return result;};
   P._startTimer = function () {
     if (this.offline || !this.ctx) return;
     ensure(this);
@@ -140,12 +159,20 @@ export function installMusicPlatform(MusicEngine, env = globalThis) {
     return tick.call(this);
   };
   P.dispose = function (...args) {
-    this._platformMusic?.off?.(); this._platformMusic = null;
+    const r=this._platformMusic;r?.off?.();
+    if(r)for(const type of ['pointerdown','keydown','touchend','click'])env.removeEventListener?.(type,r.unlock,true);
+    this._platformMusic = null;
     stop(this); return dispose.apply(this, args);
   };
 }
 
 
+// Preserve the exact hypot boundary while avoiding its normalization for ordinary deltas.
+export function audioLoopPositionChanged(dx,dy,dz){
+  if(dx===0&&dy===0&&dz===0)return false;
+  const d2=dx*dx+dy*dy+dz*dz,low=1e-6*(1-16*Number.EPSILON),high=1e-6*(1+16*Number.EPSILON);
+  return d2>high||(d2>=low&&Math.hypot(dx,dy,dz)>1e-3);
+}
 const LOOP_DEDUPE = Symbol.for('inkwave.audio.loop-parameter-dedupe.v1');
 // Compare to the last scheduled target (not the last request), so a sequence of
 // sub-epsilon changes eventually moves the sound instead of permanently sticking.
@@ -174,7 +201,7 @@ export function installAudioLoopDedupe(AudioEngine) {
       }
       const pos=p.pos;
       if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y)&&Number.isFinite(pos.z)&&
-        (!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(z)||Math.hypot(pos.x-x,pos.y-y,pos.z-z)>1e-3))
+        (!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(z)||audioLoopPositionChanged(pos.x-x,pos.y-y,pos.z-z)))
         (changes||={}).pos=pos;
       if(!changes)return;
       const result=set.call(h,changes);

@@ -12,6 +12,7 @@ const NETPLAY_SHOT_INSTALLED = Symbol.for('inkwave.weapon-detail-motion.blaster-
 const tracks = new WeakMap(), fills = new WeakMap(), reaches = new WeakMap(), disposed = new WeakSet();
 const activeBlasterEmissions = new WeakMap(), acceptedRemoteBlasterEmission = new WeakMap();
 const remoteBlasterNetState = new WeakMap();
+const emissionSlots = new WeakMap(), rememberHeads = new WeakMap();
 const recoilOverlayStates = new WeakMap(), spreadSymbols = new WeakMap(), EMPTY_SYMBOLS = Object.freeze([]);
 const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
@@ -84,9 +85,9 @@ function activeSpecial(ch, T) {
     Number.isInteger(T.T_SLAM) && ch.tr[T.T_SLAM] < 1.4 ||
     Number.isInteger(T.T_LEAP) && ch.tr[T.T_LEAP] < 1.9));
 }
-function withRecoil(ch, fn) {
+function withRecoil(ch, fn, a, b, args) {
   const original = ch.hold, tune = recoil[ch.weaponKind];
-  if (!enabled(ch) || !tune || !original) return fn();
+  if (!enabled(ch) || !tune || !original) return args ? fn.apply(ch, args) : fn.call(ch, a, b);
   const state = recoilOverlayState(ch), depth = state.depth;
   state.depth = depth + 1;
   try {
@@ -99,13 +100,18 @@ function withRecoil(ch, fn) {
     spreadInto(overlay.rc, tune);
     overlay.hold.rc = overlay.rc;
     ch.hold = overlay.hold;
-    try { return fn(); } finally { ch.hold = original; }
+    try { return args ? fn.apply(ch, args) : fn.call(ch, a, b); } finally { ch.hold = original; }
   } finally { state.depth = depth; }
 }
 function boundedRemember(set, order, key, limit = 1024) {
   if (set.has(key)) return false;
-  set.add(key); order.push(key);
-  if (order.length > limit) set.delete(order.shift());
+  set.add(key);
+  if (order.length < limit) order.push(key);
+  else if (limit > 0) {
+    const head = rememberHeads.get(order) || 0;
+    set.delete(order[head]); order[head] = key;
+    rememberHeads.set(order, (head + 1) % limit);
+  } else set.delete(key);
   return true;
 }
 function remoteNetState(net) {
@@ -118,9 +124,9 @@ function remoteNetState(net) {
 }
 // Integrate the exponential motor's angle as well as velocity. Updating angle
 // with the end-of-step velocity produces different coast at 30 and 120 Hz.
-export function splatlingMotorStep(speed, angle, target, dt) {
+export function splatlingMotorStep(speed, angle, target, dt, out = {}) {
   dt = Math.max(0, Number.isFinite(dt) ? dt : 0);
-  if (!dt) return { speed, angle };
+  if (!dt) { out.speed = speed; out.angle = angle; return out; }
   const rate = target === 0 ? WEAPON_DETAIL_CALIBRATION.splatlingCoastRate : target > speed ? 5 : 1.6;
   let elapsed = dt;
   if (!target) elapsed = speed > WEAPON_DETAIL_CALIBRATION.splatlingStopSpeed
@@ -129,7 +135,7 @@ export function splatlingMotorStep(speed, angle, target, dt) {
   angle = (angle + target * elapsed + (speed - target) * (1 - decay) / rate) % TAU;
   speed = !target && elapsed < dt ? 0 : target + (speed - target) * decay;
   if (!target && speed <= WEAPON_DETAIL_CALIBRATION.splatlingStopSpeed * (1 + 1e-10)) speed = 0;
-  return { speed, angle };
+  out.speed = speed; out.angle = angle; return out;
 }
 export function bucketDrain(age, recovery) {
   if (age == null || age < 0 || !(recovery > 0) || age >= recovery) return 0;
@@ -212,12 +218,17 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     WeaponRunner.prototype._auto = function (dt, input, w) {
       if (w?.kind !== 'blaster' || !this.a?.character) return auto.call(this, dt, input, w);
       const ch = this.a.character, previous = activeBlasterEmissions.get(ch);
-      const emission = { actor: this.a, pending: 0 };
+      let slots = emissionSlots.get(ch);
+      if (!slots) { slots = { depth: 0, values: [] }; emissionSlots.set(ch, slots); }
+      const depth = slots.depth++;
+      const emission = slots.values[depth] || (slots.values[depth] = { actor: null, pending: 0 });
+      emission.actor = this.a; emission.pending = 0;
       activeBlasterEmissions.set(ch, emission);
       try { return auto.call(this, dt, input, w); }
       finally {
         if (previous) activeBlasterEmissions.set(ch, previous);
         else activeBlasterEmissions.delete(ch);
+        emission.actor = null; emission.pending = 0; slots.depth = depth;
       }
     };
   }
@@ -235,8 +246,12 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
         const result = play.call(this, from, e, ...args);
         // Only a ghost actually admitted by the production owner/sequence/ID
         // gates is evidence. Rejected packets must not authorize a later trigger.
-        const admitted = projectiles?.list?.slice(before).some(p =>
-          p.ghost && p.owner === actor && p.type === 'blast');
+        let admitted = false;
+        const list = projectiles?.list, end = list?.length || 0;
+        for (let i = before; i < end; i++) {
+          const p = list[i];
+          if (p.ghost && p.owner === actor && p.type === 'blast') { admitted = true; break; }
+        }
         if (!admitted) return result;
         const key = `${actorKey}\u001f${String(e[0])}\u001f${JSON.stringify(e.slice(3))}`;
         if (!boundedRemember(state.projectiles, state.projectileOrder, key)) return result;
@@ -339,7 +354,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     }
     if (enabled(this) && this.kidForm && !this.dance && !activeSpecial(this, T) &&
       limb === this.limbs.armR && endQuat && weight > .99 &&
-      ['slosher', 'splatling', 'blaster'].includes(this.weaponKind)) {
+      (this.weaponKind === 'slosher' || this.weaponKind === 'splatling' || this.weaponKind === 'blaster')) {
       let x = reaches.get(this);
       if (!x) { x = { right: new THREE.Vector3(), left: new THREE.Vector3(), delta: new THREE.Vector3(),
         leftCenter: new THREE.Vector3(), point: new THREE.Vector3(), original: new THREE.Vector3(),
@@ -377,7 +392,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     }
     return solveLimb.call(this, limb, target, pole, endQuat, weight, slot);
   };
-  P._recoil = function (...args) { return withRecoil(this, () => nativeRecoil.apply(this, args)); };
+  P._recoil = function (...args) { return withRecoil(this, nativeRecoil, undefined, undefined, args); };
   P.trigger = function (name, ...args) {
     const owner = name === 'shoot' && this.weaponKind === 'blaster' ? this._owner() : null;
     const canAnimateBlaster = name === 'shoot' && this.weaponKind === 'blaster' && this.kidForm && !this.dance
@@ -447,8 +462,8 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     if (enabled(this) && this.weaponKind === 'blaster' && this.weapon) this.weapon.pump = 0;
     // A partially detached sub-throw hand is not trying to reach the foregrip.
     // Its raw partial-IK error must not build next frame's gun-shoulder reach.
-    if (enabled(this) && this.wSub > .05 && ['blaster', 'slosher'].includes(this.weaponKind)) this.ikErrPre = 0;
-    const result = withRecoil(this, () => poseWeapon.call(this, dt, s));
+    if (enabled(this) && this.wSub > .05 && (this.weaponKind === 'blaster' || this.weaponKind === 'slosher')) this.ikErrPre = 0;
+    const result = withRecoil(this, poseWeapon, dt, s);
     if (!enabled(this) || !this.kidForm || this.dance || this.wSub > .05 || activeSpecial(this, T)) return result;
     const A = this.P, r = this._runner(s), k = this.wAim;
     if (this.weaponKind === 'blaster') {
@@ -522,7 +537,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
     if (w.def.kind === 'splatling') {
       const target = this.kidForm && this.visible && !this.dance && this._owner()?.alive !== false ? r ? r.charging ? 14 + 46 * (r.charge || 0) : r.streaming ? 64 : 0
         : s.firing ? 30 + 30 * (s.charge || 0) : 0 : 0;
-      const motor = splatlingMotorStep(oldSpeed, oldAngle, target, Math.max(0, Math.min(.1, dt || 0)));
+      const motor = splatlingMotorStep(oldSpeed, oldAngle, target, Math.max(0, Math.min(.1, dt || 0)), m.motor || (m.motor = {}));
       w.spinW = motor.speed; w.spinA = motor.angle;
       if (parts.barrels) parts.barrels.rotation.z = w.spinA;
     }

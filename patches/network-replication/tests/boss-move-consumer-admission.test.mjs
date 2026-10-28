@@ -28,7 +28,7 @@ async function rig({old=false}={}) {
       for(const [before,after] of [
         ['const wireScalar = value => finite(value) && Number.isSafeInteger(Math.round(value * 1000));', 'const wireScalar = finite;'],
         ['Array.isArray(p.b) && p.b.length > 0', 'Array.isArray(p.b)'],
-        ["case 'sweep': return move.d[1] > 0 && fields", "case 'sweep': return fields"],
+        ["case 'sweep': return move.d[1] > 0 && (", "case 'sweep': return ("],
         ['|| !(move.d[0] > 0) ', ''],
       ]) {
         assert.equal(out.split(before).length,2,'counterfactual changes exactly this guard');

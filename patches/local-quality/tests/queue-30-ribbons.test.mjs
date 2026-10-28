@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { markAttributeRange } from '../../splatoon3/runtime/instance-color-upload.mjs';
 
 const source = readFileSync(new URL('../../splatoon3/runtime/special-vfx-kit.mjs', import.meta.url), 'utf8');
 const start = source.indexOf('class RibbonPool {');
@@ -25,11 +26,12 @@ class Vector3 {
 }
 class BufferAttribute {
   constructor(array, itemSize) {
-    this.array = array; this.itemSize = itemSize; this.updates = 0;
+    this.array = array; this.itemSize = itemSize; this.updates = 0; this.updateRanges = [];
   }
   setUsage() { return this; }
-  clearUpdateRanges() {}
-  addUpdateRange() { this.updates++; }
+  clearUpdateRanges() { this.updateRanges.length = 0; }
+  addUpdateRange(start, count) { this.updateRanges.push({ start, count }); }
+  set needsUpdate(value) { if (value) this.updates++; }
 }
 class BufferGeometry {
   constructor() { this.attributes = {}; }
@@ -41,14 +43,14 @@ class Mesh {
   constructor(geometry, material) { this.geometry = geometry; this.material = material; }
 }
 const THREE = {
-  Vector3, BufferAttribute, BufferGeometry, Mesh,
+  Vector3, BufferAttribute, BufferGeometry, Mesh, Sphere: class { constructor() { this.center = new Vector3(); this.radius = 0; } },
   ShaderMaterial: class { constructor(o) { Object.assign(this, o); } },
   DynamicDrawUsage: 1, DoubleSide: 2, NormalBlending: 3,
   CustomBlending: 4, OneFactor: 5, ZeroFactor: 6,
 };
-const RibbonPool = new Function('THREE', 'RIBBON_VERT', 'RIBBON_FRAG', 'vfxRandom',
+const RibbonPool = new Function('THREE', 'RIBBON_VERT', 'RIBBON_FRAG', 'vfxRandom', 'markAttributeRange',
   source.slice(start, end) + '\nreturn RibbonPool;'
-)(THREE, '', '', () => 0.25);
+)(THREE, '', '', () => 0.25, markAttributeRange);
 
 const makePool = () => new RibbonPool(THREE, 2, 8, false, { value: 0 });
 
@@ -112,24 +114,24 @@ test('idle ShapePool preserves warmed instancing without 4 redundant uploads per
   class InstancedBufferGeometry extends BufferGeometry {}
   class InstancedBufferAttribute extends BufferAttribute {}
   const STHREE = { ...THREE, InstancedBufferGeometry, InstancedBufferAttribute };
-  const ShapePool = new Function('THREE', source.slice(begin, finish) + '\nreturn ShapePool;')(STHREE);
+  const ShapePool = new Function('THREE', 'markAttributeRange', source.slice(begin, finish) + '\nreturn ShapePool;')(STHREE, markAttributeRange);
   const geo = new BufferGeometry();
   geo.setAttribute('position', new BufferAttribute(new Float32Array(12), 3));
   geo.dispose = () => {};
   const pool = new ShapePool(STHREE, 'idle-test', geo, 8,
     ['iA', 'iB', 'iCol', 'iPar'], '', '', false, { value: 0 });
   pool.update(1 / 60);
-  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [0, 0, 0, 0]);
   for (let i = 0; i < 180; i++) pool.update(1 / 60);
-  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
-  pool.add(10, new Float32Array(16));
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [0, 0, 0, 0]);
+  pool.add(10, new Float32Array(16).fill(.5));
   pool.update(1 / 60);
-  assert.deepStrictEqual(pool.buf.map(a => a.updates), [2, 2, 2, 2]);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
   pool.clear();
   pool.update(1 / 60);
-  assert.deepStrictEqual(pool.buf.map(a => a.updates), [3, 3, 3, 3]);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
   for (let i = 0; i < 60; i++) pool.update(1 / 60);
-  assert.deepStrictEqual(pool.buf.map(a => a.updates), [3, 3, 3, 3]);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
   assert.equal(pool.mesh.geometry.instanceCount, 1);
 });
 

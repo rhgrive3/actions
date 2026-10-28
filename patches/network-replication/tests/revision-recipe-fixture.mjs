@@ -11,7 +11,7 @@ export function emittedRevision(rel, bytes, {cached = false, inputHash = 'identi
   assert.equal(recipes.length, 1, 'One actual production revision expression');
   const BUILD = '/virtual-build', file = path.join(BUILD, rel);
   return vm.runInNewContext(recipes[0] + '\nrevision;', {
-    BUILD, path, sha256: hash, walk: () => [file],
+    BUILD, path, sha256: hash, versionFiles: [file],
     loadingPlan: {inputHash, assets: cached ? {[rel]: [bytes.length, hash(bytes)]} : {}},
     fs: {readFileSync(name) { assert.equal(name, file); assert.equal(cached, false, 'Cached digest avoids rereading'); return bytes; }},
   }, {timeout: 1000, contextCodeGeneration: {strings: false, wasm: false}});

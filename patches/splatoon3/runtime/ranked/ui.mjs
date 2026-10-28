@@ -148,6 +148,14 @@ export function objectiveText(engine, G, api = {}) {
 }
 
 function writeHudText(node, text) { if (node.textContent !== text) node.textContent = text; }
+// Cache formatting inputs, while retaining DOM repair for supported outside writers.
+function writeRankedLabel(node, language, source, number) {
+  let saved = node._rankedLabel;
+  if (!saved || saved.language !== language || saved.source !== source || !Object.is(saved.number, number)) {
+    saved = node._rankedLabel = { language, source, number, text: source === '' ? '' : rankedText(language, source, number === undefined ? undefined : { n: number }) };
+  }
+  writeHudText(node, saved.text);
+}
 
 function updateHud(hud, G, api) {
   const engine = rankedOf(G);
@@ -174,10 +182,10 @@ function updateHud(hud, G, api) {
   });
   const names = G.palette?.names || G.match?.palette?.names;
   if (el.dataset.mode !== engine.mode) el.dataset.mode = engine.mode;
-  writeHudText(refs.rule, t(RULE_LABELS[engine.mode]));
+  writeRankedLabel(refs.rule, api.LANG, RULE_LABELS[engine.mode]);
   refs.teams.forEach(node => {
     const team = Number(node.dataset.team);
-    writeHudText(node, t(teamName(team, names)));
+    writeRankedLabel(node, api.LANG, teamName(team, names));
     const color = G.teamHex?.[team] || (team ? '#3675ff' : '#ff8a14');
     if (node._rankedColor !== color) { node.style.setProperty('--rkt', color); node._rankedColor = color; }
   });
@@ -189,14 +197,14 @@ function updateHud(hud, G, api) {
   });
   refs.penalties.forEach(node => {
     const team = Number(node.dataset.penalty), penalty = Math.ceil(finite(engine.penalties?.[team]));
-    writeHudText(node, penalty > 0 ? t('PEN {n}', { n: penalty }) : '');
+    writeRankedLabel(node, api.LANG, penalty > 0 ? 'PEN {n}' : '', penalty);
   });
   const clock = engine.overtime ? t('OT {time}', { time: fmtClock(engine.overtimeElapsed) }) : fmtClock(engine.time);
   writeHudText(refs.clock, clock);
   writeHudText(refs.objective, objectiveText(engine, G, api));
   const hint = refs.hint;
   if (hint.hidden !== (engine.mode !== 'clams')) hint.hidden = engine.mode !== 'clams';
-  writeHudText(hint, engine.mode === 'clams' ? t(api.TXT?.mode === 'touch' ? 'THROW' : api.TXT?.mode === 'pad' ? 'THROW [A]' : 'THROW [C]') : '');
+  writeRankedLabel(hint, api.LANG, engine.mode === 'clams' ? (api.TXT?.mode === 'touch' ? 'THROW' : api.TXT?.mode === 'pad' ? 'THROW [A]' : 'THROW [C]') : '');
 }
 
 function rankedJudge(hud, engine, data = {}, G = {}, api = {}) {

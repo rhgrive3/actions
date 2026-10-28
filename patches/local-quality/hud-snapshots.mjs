@@ -29,7 +29,7 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
   t0.players.length = n0; t1.players.length = n1;
   return viewerTeam === 1 ? cache.reverse : cache.forward;
 }
-export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, subCost = SUB.bomb.inkCost, guide, healthMarkers, muzzleBlock, chargerCurrent, chargerFull) {
+export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt, showMinimap, PLAYER, SUB, subCost = SUB.bomb.inkCost, guide, healthMarkers, muzzleBlock, chargerCurrent, chargerFull, specialReady = a.specialReady()) {
   let cache = game._hudTransport;
   if (!cache) cache = game._hudTransport = { frame: {}, crosshair: {}, map: {}, mobile: {} };
   const frame = cache.frame, crosshair = cache.crosshair, map = cache.map;
@@ -37,7 +37,7 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   frame.ink = a.ink / PLAYER.inkMax; frame.inkLow = game._lowInkFlash > 0; frame.subCost = subCost / PLAYER.inkMax; frame.subReady = a.ink >= subCost;
   // The spent gauge follows its deployed clock, independently of zeroed charge.
   const spentGauge = specialGaugeFraction(a);
-  frame.special = spentGauge ?? a.specialFrac(); frame.specialReady = a.specialReady(); frame.specialActive = spentGauge !== null || !!a.specialActive;
+  frame.special = spentGauge ?? a.specialFrac(); frame.specialReady = specialReady; frame.specialActive = spentGauge !== null || !!a.specialActive;
   frame.hp = a.hp / PLAYER.hp; frame.weapon = a.weaponId; frame.charge = a.weaponRunner.charge;
   crosshair.spread = spread; crosshair.onTarget = m.controller?.onTarget ? 'enemy' : null; crosshair.inRange = m.controller ? m.controller.inRange !== false : true;
   if (guide === undefined) delete crosshair.guide; else crosshair.guide = guide;

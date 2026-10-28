@@ -9,6 +9,7 @@
 //                              -xLen face heights (the original rows), yLen <= 0 = full face height
 //   fx    [weather, chip]      how much the surface's paint mottling shows through / its chips + peeling cut the mural
 import * as THREE from 'three';
+import { waitForFontBudget, repaintAfterFonts } from '../core/font-ready-budget.js';
 import { STAGES, prepareStageData } from './stages/data.js';
 
 const W = 2048, RH = 256, ROWS = 4, FULL_H = 2048;
@@ -27,7 +28,7 @@ const stageMural = (id) => STAGES[id]?.drawMurals;
 export async function createMuralTexture(stageId = 'tidewater') {
   await prepareStageData(stageId);
   let H = stageId === 'halyard' || stageMural(stageId) ? FULL_H : RH * ROWS;
-  try { await Promise.all([document.fonts.load('120px "Titan One"'), document.fonts.load('800 100px Rubik')]); } catch { /* fallback font */ }
+  const fontLoad = await waitForFontBudget(() => Promise.all([document.fonts.load('120px "Titan One"'), document.fonts.load('800 100px Rubik')]));
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const g = c.getContext('2d');
@@ -48,6 +49,8 @@ export async function createMuralTexture(stageId = 'tidewater') {
       current.length === sharedFonts.length && current.every((face, i) => face === sharedFonts[i] && face.status === 'loaded');
   };
   const tex = new THREE.CanvasTexture(c);
+  const fontRepaint = { repaint: null }, disposeTexture = tex.dispose; let resizing = false;
+  tex.dispose = function () { if (!resizing) fontRepaint.repaint = null; return disposeTexture.call(this); };
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
   tex.wrapS = THREE.RepeatWrapping;
@@ -76,7 +79,8 @@ export async function createMuralTexture(stageId = 'tidewater') {
     if (nextHeight !== H) {
       const redraw = canRedrawShared();
       const shared = redraw ? null : g.getImageData(0, 0, W, RH * ROWS);
-      tex.dispose(); // WebGL allocation dimensions cannot be mutated in place.
+      resizing = true;
+      try { tex.dispose(); } finally { resizing = false; } // Dimensions require a new GPU allocation.
       c.height = H = nextHeight;
       if (redraw) drawShared(); else g.putImageData(shared, 0, 0);
     }
@@ -96,6 +100,12 @@ export async function createMuralTexture(stageId = 'tidewater') {
     tex.needsUpdate = true;
   };
   tex.userData.setStage(stageId);
+  if (!fontLoad.settled) {
+    fontRepaint.repaint = () => {
+      const latest = cur; drawShared(); cur = null; tex.userData.setStage(latest); tex.needsUpdate = true;
+    };
+    repaintAfterFonts(fontLoad.ready, fontRepaint);
+  }
   return tex;
 }
 

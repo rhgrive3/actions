@@ -66,7 +66,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps --no-shell chromium
       - name: Pages sequencing regression
         run: node --test scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
       - name: Ranked boot failure diagnostics regression

@@ -34,8 +34,15 @@ function updateBlock(stand,index){
   }
   const block=stand.s3CoolerCollision ||= {id:index,solid:true,center:new THREE.Vector3(),half:new THREE.Vector3(),
     axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],faces:[],stand};
-  block.id=index;block.center.copy(b.min).add(b.max).multiplyScalar(.5).add(stand.pos);
-  block.half.copy(b.max).sub(b.min).multiplyScalar(.5);return block;
+  block.id=index;
+  // Stand geometry is immutable; only its translated world position changes.
+  // Tower attachment above still runs on every call, including same-tick moves.
+  if(!Object.is(block._coolerX,stand.pos.x)||!Object.is(block._coolerY,stand.pos.y)||!Object.is(block._coolerZ,stand.pos.z)){
+    block.center.copy(b.min).add(b.max).multiplyScalar(.5).add(stand.pos);
+    block.half.copy(b.max).sub(b.min).multiplyScalar(.5);
+    block._coolerX=stand.pos.x;block._coolerY=stand.pos.y;block._coolerZ=stand.pos.z;
+  }
+  return block;
 }
 function levelFor(system){
   const level=system._s3CoolerCollisionLevel ||= {blocks:[],faces:[],queryBlocks(_x,_z,_xx,_zz,out){out.length=0;for(let i=0;i<this.blocks.length;i++)out.push(i);return out;}};
@@ -48,6 +55,10 @@ const projectileSweepFrames=new WeakMap();
 // Radius is the caller's own physical sphere, never its paint/burst radius.
 export function coolerSegmentContact(system,start,end,radius=0){
   if(!api||!system||!start?.isVector3||!end?.isVector3)return null;
+  if(!system._s3SupportCoolers?.length){
+    if(system._s3CoolerCollisionLevel)system._s3CoolerCollisionLevel.blocks.length=0;
+    return null;
+  }
   const level=levelFor(system);if(!level.blocks.length)return null;
   let lease=projectileSweepFrames.get(system);
   if(!lease)projectileSweepFrames.set(system,lease={depth:0,frames:[]});

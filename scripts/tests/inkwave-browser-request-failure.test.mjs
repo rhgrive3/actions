@@ -28,3 +28,15 @@ test('source-bound S3 recorded MP3 aborts require completed per-request verifica
  const result=partitionRequestFailures([{request:a,event},{request:b,event}],verified);
  assert.deepEqual(result.audioCancellations,[event]);assert.deepEqual(result.failures,[event]);
 });
+
+test('source-bound S3 recorded MP3 aborts require completed per-request verification',()=>{
+ const root='http://127.0.0.1:8080/_versions/'+'a'.repeat(64)+'/';
+ const event={url:root+'patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_Explosion_00.mp3',error:'net::ERR_ABORTED'};
+ assert.equal(verifiedAudioCancellation(event,true),true);
+ assert.equal(verifiedAudioCancellation(event,false),false);
+ for(const error of ['net::ERR_FAILED','net::ERR_CONNECTION_RESET'])assert.equal(verifiedAudioCancellation({...event,error},true),false);
+ for(const url of [root+'patches/splatoon3/runtime/audio/s3-real/a/b.mp3',root+'patches/splatoon3/runtime/audio/s3-real/voice.wav',root+'src/net/netmatch.js'])assert.equal(verifiedAudioCancellation({...event,url},true),false);
+ const a={},b={},verified=new WeakSet([a]);
+ const result=partitionRequestFailures([{request:a,event},{request:b,event}],verified);
+ assert.deepEqual(result.audioCancellations,[event]);assert.deepEqual(result.failures,[event]);
+});

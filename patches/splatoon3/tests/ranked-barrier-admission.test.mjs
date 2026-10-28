@@ -1,3 +1,4 @@
+import { commitOwnerTick } from '../../network-replication/owner-tick-receipt.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RankedEngine } from '../runtime/ranked/engine.mjs';
@@ -26,7 +27,7 @@ function fixture(position = {x:0,y:0,z:-8}) {
     get isHost() {return this.s.isHost;}
     _sendNow(d){outgoing.push(d);}
     _sendTick(){}
-    onMessage(from,d){this.native={from,d};}
+    onMessage(from,d){this.native={from,d};if(d.k==='t'&&!this.rejectTick)commitOwnerTick(this,from,d,d.e||[],this.match.actors.filter(a=>a.owner===from));}
     _hostClock(){}
     onLeave(){}
     dispose(){}
@@ -111,4 +112,10 @@ test('a host handoff invalidates outstanding shot evidence and pending hit propo
   assert.equal(f.nm.rankedBarrierPending?.size||0,0);
   f.nm.onMessage('guest',proposal(1));
   assert.equal(f.hits.length,0,'prior shot must not authorize an after-migration hit');
+});
+
+test('rejected native tick cannot mint or flush Rainmaker barrier proof',()=>{
+ const f=fixture();f.nm.onMessage('guest',proposal(1));f.nm.rejectTick=true;
+ f.nm.onMessage('guest',tick(shooterBirth()));assert.equal(f.hits.length,0);assert.equal(f.nm.rankedBarrierProofs?.size||0,0);
+ f.nm.rejectTick=false;f.nm.onMessage('guest',tick(shooterBirth()));assert.equal(f.hits.length,1);
 });

@@ -99,3 +99,18 @@ test('aerial insufficient-ink admission cannot consume a roll or create an extra
   a.grounded=false;a.coyote=0;a.ink=0;a.intent.fire=true;a.intent.jump=true;a.intent.move.set(0,0,1);
   a.update(1/60);assert.equal(a.weaponRunner.dodge,null);assert.equal(a.weaponRunner.rollsLeft,2);assert(a.vel.y<=0);assert(a.ink>=0);
 });
+
+
+test('published shot bias records may escape the launch callback without later shots mutating them',()=>{
+ const actor={weaponRunner:{}},held=[];
+ const first=withShotBias(actor,.3,.4,()=>{
+  const outer=actor.weaponRunner.s3ShotBias;held.push(outer);
+  const inner=withShotBias(actor,.7,.8,()=>actor.weaponRunner.s3ShotBias);
+  held.push(inner);assert.equal(actor.weaponRunner.s3ShotBias,outer);return outer;
+ });
+ withShotBias(actor,.1,.2,()=>held.push(actor.weaponRunner.s3ShotBias));
+ assert.equal(first,held[0]);assert.deepEqual(held,[{horizontal:.3,pitch:.4},{horizontal:.7,pitch:.8},{horizontal:.1,pitch:.2}]);
+ assert.equal(actor.weaponRunner.s3ShotBias,undefined);
+ let thrown;assert.throws(()=>withShotBias(actor,.5,.6,()=>{thrown=actor.weaponRunner.s3ShotBias;throw Error('launch');}),/launch/);
+ assert.deepEqual(thrown,{horizontal:.5,pitch:.6});assert.equal(actor.weaponRunner.s3ShotBias,undefined);
+});
