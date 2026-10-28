@@ -46,7 +46,8 @@ test('actual splash arbitration snapshots shared collision hits across reentrant
   const seen=[],projectiles={_s3TorpedoSplashes:[d],kitDefenseCandidate(){world.point.x=99;if(stand)stand.point.x=99;return defenseWins?{distance:1,onHit(){seen.push('defense');}}:null;}};
   const api={THREE:{Vector3:V},Hit:class{},G:{physics:{segment:()=>world}}};
   const context=vm.createContext({coolerSegmentContact:()=>stand,remove(){seen.push('retire');},syncVisuals(){}});
-  vm.runInContext(body,context);context.stepTorpedoSplashes(api,projectiles,1/60,(_,at)=>seen.push([at.x,at.y,at.z]));
+  const sync=source.slice(source.indexOf('function requestVisualSync('),source.indexOf('\nexport function beginTorpedoVisualBatch'));
+  vm.runInContext(sync+'\n'+body,context);context.stepTorpedoSplashes(api,projectiles,1/60,(_,at)=>seen.push([at.x,at.y,at.z]));
   assert.deepEqual(seen,defenseWins?['defense','retire']:[standWins?[4.035,5,6]:[1,2.035,3],'retire']);
  }
 });
