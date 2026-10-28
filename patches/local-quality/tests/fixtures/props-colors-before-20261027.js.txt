@@ -1,0 +1,13 @@
+// Baseline da5058b723a02374639056cca7ed840006ee5361; retain eager native color writes as differential oracle.
+  _applyColors() {
+    for (const mesh of this._inst) {
+      if (!mesh.userData.cloth) continue;
+      mesh.userData.recs.forEach((r, i) => {
+        if (r.team != null) _c1.copy(this.teamColors[r.team]).lerp(_white, r.tint || 0); else _c1.copy(r.color);
+        mesh.setColorAt(i, _c1);
+      });
+      mesh.instanceColor.needsUpdate = true;
+    }
+  }
+
+  // Time of day:

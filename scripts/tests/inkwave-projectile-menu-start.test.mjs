@@ -193,3 +193,8 @@ test('harness keeps one admission budget and strict predicate, with retained fai
   assert.ok(s.includes('const NATIVE_BOOT_TIMEOUT_MS = 180000;'));
   for(const bit of ["G?.mode === 'match'","m === G.match","!m.attract && m.local?.isLocal && m.controller && g.debug","G.projectiles && G.renderer",'prior failure retained separately',"await snapshotAudio('native-startup-timeout')"])assert.ok(s.includes(bit),bit);
 });
+test('invalid map is still rejected before START',async()=>{
+ const h=fakePage({mapId:'range'});
+ await assert.rejects(startProjectileThroughMenu(h.page,h.options),/configuration mismatch/);
+ assert.equal(h.clicks.some(selector=>selector.includes('"start"')),false);
+});

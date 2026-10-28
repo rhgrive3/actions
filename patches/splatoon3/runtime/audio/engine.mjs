@@ -44,9 +44,15 @@ export function installWeaponAudioEngine(Engine){
     if(!AUDIO_RECIPES[id]||!urgent)return;
     // Remote bots must not block the iPad player's first shot behind an
     // unbounded serial MP3 decode queue. Admit the active local weapon first.
-    this._warmWeapons||=new Set();this._warmWeapons.add(id);
+    this._warmWeapons||=new Set();this._warmWeapons.clear();this._warmWeapons.add(id);
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
+    const ownerKey=id;
+    if(this._prewarmId!==ownerKey||this._prewarmLoader!==this._realS3Loader){
+      this._prewarmLoader?.cancelOwner?.(this._prewarmOwner);this._prewarmOwner={};this._prewarmId=ownerKey;this._prewarmLoader=this._realS3Loader;
+    }
+    const prewarmOwner=this._prewarmOwner;
+    if(usesChargerRise(id))this.prewarmChargerChargeRise?.(id);
     this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
     if(!id.includes(':')){
       const loader=this._realS3Loader;
@@ -59,8 +65,8 @@ export function installWeaponAudioEngine(Engine){
       // The second request reuses the decoded hold buffer, rather than
       // serializing four separate event-specific fetch/decode transactions.
       const isCharger=AUDIO_RECIPES[id].family==='charger';
-      const main=loader?.ensure(id,isCharger?'charge':'fire');
-      if(isCharger)loader?.ensure(id);
+      const main=loader?.ensure(id,isCharger?'charge':'fire',{priority:true,owner:prewarmOwner});
+      if(isCharger)loader?.ensure(id,null,{owner:prewarmOwner});
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
@@ -69,12 +75,12 @@ export function installWeaponAudioEngine(Engine){
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
-        for(const event of ['charge','spin'])if(bank.has(id,event))loader?.ensure(id,event);
+        for(const event of ['charge','spin'])if(bank.has(id,event))loader?.ensure(id,event,{owner:prewarmOwner});
       }
       main?.then(()=>{
         // Only weapons confirmed to lack a recorded base shot can be authored.
         // The existing Worker and 12 MiB LRU keep this off the game loop.
-        if(this._weaponBank===bank&&!borrowed&&loader?.declares(id,'fire')===false)
+        if(this._weaponBank===bank&&this._prewarmOwner===prewarmOwner&&!borrowed&&loader?.declares(id,'fire')===false)
           bank.warm(id,{focus:true,events:['fire','fire_full','fire_alt','fire_left','fire_vertical']});
       }).catch(()=>{});
     }else this._realS3Loader?.ensure(id,'fire');
@@ -224,16 +230,18 @@ export function installWeaponAudioEngine(Engine){
     // exists. Returning a permanent silent handle here leaves special effects
     // muted for their entire lifetime in kit-runtime's active map.
     const context=this.ctx,loader=this._realS3Loader,engine=this;
+    if(loader?.retryPending?.(id,event))return null;
+    const requestOwner={};
     let stopped=false,failed=false,actual=null,currentOptions={...options};
     const handle={
       // A pending loop counts as active to avoid duplicate registration. A
       // failed fetch does not: active gameplay may retry after loader backoff.
       get playing(){return !stopped&&!failed&&(actual?actual.playing!==false:true);},
       set(update={}){if(stopped)return;if(!actual)currentOptions={...currentOptions,...update};actual?.set?.(update);},
-      stop(fade=.15){if(stopped)return;stopped=true;actual?.stop?.(fade);actual=null;},
+      stop(fade=.15){if(stopped)return;stopped=true;loader?.cancelOwner?.(requestOwner);actual?.stop?.(fade);actual=null;},
     };
     if(!loader){failed=true;return handle;}
-    loader.ensure(id,event).then(()=>{
+    loader.ensure(id,event,{owner:requestOwner}).then(()=>{
       if(stopped)return;
       if(engine.ctx!==context||engine._weaponBank!==bank||
          !bank.authorized.byEvent.has(`${id}:${event}`)){failed=true;return;}
@@ -245,12 +253,14 @@ export function installWeaponAudioEngine(Engine){
     return handle;
   };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
-    if(this.ctx)chargerRiseBuffer(this.ctx).catch(()=>{});
+    // Only selected Splat Charger loadouts request their separate rise clip.
     if(this.ctx&&this._warmWeapons?.size){
       const bank=this.weaponBank();
       if(this._warmPreparedContext!==this.ctx||this._warmPreparedBank!==bank){
         this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
-        for(const id of this._warmWeapons)this.prepareWeapon(id,{urgent:true});
+        // prepareWeapon updates the selected set; iterate a snapshot so a
+        // re-added entry cannot keep the live Set iterator running forever.
+        for(const id of [...this._warmWeapons])this.prepareWeapon(id,{urgent:true});
       }
     }
     return result;

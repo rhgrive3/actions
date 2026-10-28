@@ -59,19 +59,19 @@ export function renderPrioritySound(recipe,event,variant=0,sr=48000,guided=null)
   // are feature-guided synthesis, never redistributed / resampled audio bytes.
   const hasGuide=!!(guided?.length&&['fire','fire_full','fire_vertical','roll','windup','ready'].includes(event));
   seconds=clamp(hasGuide?guided.length/sr:seconds*tailColor,.09,.84);
-  const len=Math.ceil(seconds*sr),x=new Float32Array(len),noise=new Float32Array(len),lo=new Float32Array(len),mid=new Float32Array(len),hi=new Float32Array(len);
+  const len=Math.ceil(seconds*sr),x=new Float32Array(len),lo=new Float32Array(len),mid=new Float32Array(len),hi=new Float32Array(len);
   let a=0,b=0,c=0;
   const lowHz=clamp(coarse*.92,80,680),highHz=clamp((brush?6400:kit?4600:pro?4400:brella?5300:rapid?3600:roller?4500:2600)/weight,1200,sr*.43);
   const kLo=1-Math.exp(-TAU*lowHz/sr),kMid=1-Math.exp(-TAU*Math.min(sr*.46,highHz*.37*brightColor)/sr),kHi=1-Math.exp(-TAU*Math.min(sr*.46,highHz*brightColor)/sr);
   for(let i=0;i<len;i++){
     const n=r()*2-1;a+=kLo*(n-a);b+=kMid*(n-b);c+=kHi*(n-c);
-    noise[i]=n;lo[i]=a;mid[i]=(b-a);hi[i]=(c-b);
+    lo[i]=a;mid[i]=(b-a);hi[i]=(c-b);
   }
   // All component pulses have their own attack/ring rather than changing one
   // shared waveform's pitch. Layer offsets are in seconds from the admitted event.
   function burst(at,amp,dec=.05,attack=.001,type='mid',shift=0){
     const from=Math.max(0,Math.floor(at*sr)),dur=Math.min(len-from,Math.ceil(sr*dec*7));
-    const src=type==='low'?lo:type==='hi'?hi:type==='raw'?noise:mid;
+    const src=type==='low'?lo:type==='hi'?hi:mid;
     for(let j=0;j<dur;j++){
       const t=j/sr,env=(1-Math.exp(-t/attack))*Math.exp(-t/dec),idx=from+j;
       // Reuse one coherent noise stream but start each pulse at a distinct phase.

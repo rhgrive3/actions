@@ -245,7 +245,12 @@ test('worker source regressions have their pinned dependency and writable persis
   const focus=validate.indexOf('name: Run requested focused source regressions');
   const canonical=validate.indexOf('name: Verify loading/cache regressions');
   assert(install>=0 && install<focus && prepare>=0 && prepare<focus && prepare<canonical);
-  assert.equal((validate.match(/npm install --no-save --no-package-lock --silent esbuild@0\.28\.2/g)||[]).length,1);
+  // Source/build tools are now pinned by package.json and the committed npm lockfile.
+  // A clean npm ci provides the same exact esbuild/playwright dependency pair.
+  const manifest=JSON.parse(fs.readFileSync(new URL('../../package.json',import.meta.url),'utf8'));
+  assert.equal(manifest.devDependencies.esbuild,'0.28.2');
+  assert.equal(manifest.devDependencies.playwright,'1.62.1');
+  assert.equal((validate.match(/^\s+npm ci --no-audit --no-fund$/gm)||[]).length,1);
   const storage=validate.slice(prepare,validate.indexOf('name: Prepare persistent focused test evidence'));
   assert(!storage.includes('if:'), 'storage is required even when focused_tests is empty');
   assert(storage.indexOf('realpath -m')<storage.indexOf('sudo mkdir'));
@@ -451,7 +456,7 @@ function assertCoreEvidenceAndProvisioning(text) {
   const provision = steps.find(step => step.startsWith('name: Install pinned source regression and build tool\n'));
   assert.ok(provision);
   assert.doesNotMatch(provision, /^        (?:if|continue-on-error):|\|\|/m);
-  const install = provision.indexOf('npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1');
+  const install = provision.indexOf('npm ci --no-audit --no-fund');
   const chromium = provision.indexOf('npx --no-install playwright install --with-deps chromium');
   assert.ok(install >= 0 && chromium > install);
   assert.ok(core.indexOf(provision) < core.indexOf('name: Run requested focused source regressions'));
@@ -471,6 +476,7 @@ function assertCoreEvidenceAndProvisioning(text) {
 test('core retains browser provisioning and source-bound launch packet evidence', () => assertCoreEvidenceAndProvisioning(workflow));
 test('provisioning and evidence guards reject disabled, reordered, missing and unbound requirements', () => {
   for (const [before, after] of [
+    ['name: Install pinned source regression and build tool\n        run: |\n          npm ci --no-audit --no-fund', 'name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save esbuild'],
     ['npx --no-install playwright install --with-deps chromium', 'true # browser omitted'],
     ['name: Install pinned source regression and build tool\n', 'name: Install pinned source regression and build tool\n        if: false\n'],
     ['name: Retain exact emitted launch packet evidence\n        if: always()', 'name: Retain exact emitted launch packet evidence\n        if: success()'],

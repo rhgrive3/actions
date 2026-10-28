@@ -23,7 +23,7 @@ export function nativeInkGeometry(level,paint){
     ['nativeFaceSize',2],['nativeWall',1],['faceTan',3]];
   let count=0;
   for(const f of paint.paintFaces)if(f.atlas&&f.triangles)count+=f.triangles.length*3;
-  const arrays=Object.fromEntries(specs.map(([name,size])=>[name,new Float32Array(count*size)]));
+  const arrays=Object.fromEntries(specs.map(([name,size])=>[name,name==='nativeWall'?new Uint8Array(count*size):new Float32Array(count*size)]));
   const {position,normal,paintUv,faceUv,nativeFaceSize,nativeWall,faceTan}=arrays;
   const p=new THREE.Vector3(),rel=new THREE.Vector3();
   let vertex=0;

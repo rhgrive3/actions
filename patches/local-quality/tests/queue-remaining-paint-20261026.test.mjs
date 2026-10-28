@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptRemainingPaint20261026 } from '../queue-remaining-paint-20261026-adapter.mjs';
+import { adaptCombatWorldQueue20261027 } from '../queue-combat-world-20261027-adapter.mjs';
 import { adaptCombatGpuCpuPerfect } from '../combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptPaintRenderRegions } from '../paint-render-regions-adapter.mjs';
 import { replaceOnce } from '../adapter.mjs';
@@ -205,9 +206,11 @@ test('paint source adapter is isolated and fail-closed', () => {
   // Remaining-paint owns this intermediate. Two later production owners alter
   // the terminal bytes; verify their exact ordered composition rather than
   // falsely asserting that the intermediate is the final source.
-  const cpu = adaptCombatGpuCpuPerfect('src/world/paint.js', candidate, replaceOnce);
+  const queue = adaptCombatWorldQueue20261027('src/world/paint.js', candidate);
+  const cpu = adaptCombatGpuCpuPerfect('src/world/paint.js', queue, replaceOnce);
   const terminal = adaptPaintRenderRegions('src/world/paint.js', cpu, replaceOnce);
-  assert.notEqual(cpu, candidate, 'CPU owner is actually exercised');
+  assert.notEqual(queue, candidate, 'combat-world owner is actually exercised');
+  assert.notEqual(cpu, queue, 'CPU owner is actually exercised');
   assert.notEqual(terminal, cpu, 'regional rendering owner is actually exercised');
   assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), terminal,
     'production composition is remaining-paint → CPU → regional rendering');

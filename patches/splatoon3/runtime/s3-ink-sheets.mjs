@@ -1,3 +1,4 @@
+import { setTrackedInstanceColor, uploadTrackedInstanceColors } from './instance-color-upload.mjs';
 // Splatoon 3 firing ink: the torn ink sheets each main weapon throws out at the
 // moment of firing, and the Sloshing Machine's spinning membrane. Separate
 // from the other flying rounds. Render only: never touches projectiles, collision, paint
@@ -288,8 +289,9 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
     o.frustumCulled = false; o.count = 0; o.visible = false; o.onBeforeRender = gate;
   }
   scene.add(mesh, drillMesh);
-  const bursts = [];
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), s = new THREE.Vector3(),
+  const bursts = [], freeBursts = [];
+  const releaseBurst = burst => { burst.owner = null; if (freeBursts.length < MAX_BURST) freeBursts.push(burst); };
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), coneBase = new THREE.Quaternion(), s = new THREE.Vector3(),
     x = new THREE.Vector3(), y = new THREE.Vector3(), z = new THREE.Vector3(), basis = new THREE.Matrix4(),
     Z = new THREE.Vector3(0, 0, 1), UP = new THREE.Vector3(0, 1, 0), drop = new THREE.Vector3();
   const upload = (o, n, attrs, size) => {
@@ -297,7 +299,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
     if (!n) return;
     for (const attr of attrs) { attr.clearUpdateRanges(); attr.addUpdateRange(0, n * size); attr.needsUpdate = true; }
     o.instanceMatrix.clearUpdateRanges(); o.instanceMatrix.addUpdateRange(0, n * 16); o.instanceMatrix.needsUpdate = true;
-    o.instanceColor.clearUpdateRanges(); o.instanceColor.addUpdateRange(0, n * 3); o.instanceColor.needsUpdate = true;
+    uploadTrackedInstanceColors(o);
   };
   return {
     mesh, drillMesh, bursts, drills,
@@ -314,9 +316,12 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
     add(kind, at, dir, color, seed, time, owner = null) {
       const cfg = FIRE_INK[kind];
       if (!cfg) return null;
-      if (bursts.length >= MAX_BURST) bursts.shift();
-      const burst = { kind, cfg, t0: time, seed, color: color.clone ? color.clone() : color,
-        at: at.clone(), dir: dir.clone().normalize(), owner };
+      if (bursts.length >= MAX_BURST) releaseBurst(bursts.shift());
+      const burst = freeBursts.pop() || { at: at.clone(), dir: dir.clone(), color: null };
+      burst.kind = kind; burst.cfg = cfg; burst.t0 = time; burst.seed = seed; burst.owner = owner; burst.horizontalSweep = false;
+      if (color.clone && burst.color?.copy && burst.color.constructor === color.constructor) burst.color.copy(color);
+      else burst.color = color.clone ? color.clone() : color;
+      burst.at.copy(at); burst.dir.copy(dir).normalize();
       bursts.push(burst);
       return burst;
     },
@@ -343,7 +348,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
       let n = 0;
       for (let i = bursts.length - 1; i >= 0; i--) {
         const burst = bursts[i], cfg = burst.cfg, age = (time - burst.t0) * 60 / cfg.life;
-        if (!(age >= 0) || age >= 1) { bursts.splice(i, 1); continue; }
+        if (!(age >= 0) || age >= 1) { bursts.splice(i, 1); releaseBurst(burst); continue; }
         if (cam && cam.distanceToSquared(burst.at) > 1600) continue;
         const d = burst.dir;
         const staticSweep = cfg.style !== 0 && !(burst.kind === 'arrow' && !burst.horizontalSweep);
@@ -353,12 +358,13 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
           if (burst.kind === 'slash-h' || burst.horizontalSweep) basis.makeBasis(z, x, UP); else basis.makeBasis(z, UP, x);
           q.setFromRotationMatrix(basis);
         }
+        if (cfg.style === 0) coneBase.setFromUnitVectors(Z, d);
         for (let layer = 0; layer < cfg.layers && n < MAX_SHEET; layer++) {
           const ls = burst.seed + layer * 0.37, o = n * 4;
           if (cfg.style === 0) {
             // SWEPs: each cone at its own random roll
             const cone = splashCone(cfg, age, layer, coneScratch);
-            q.setFromUnitVectors(Z, d); q2.setFromAxisAngle(Z, (ls * 7.31 % 1) * 6.2832); q.multiply(q2);
+            q.copy(coneBase); q2.setFromAxisAngle(Z, (ls * 7.31 % 1) * 6.2832); q.multiply(q2);
             m.compose(burst.at, q, s.setScalar(1));
             A[o] = 0; A[o + 3] = cone.length; B[o] = cone.radius;
           } else {
@@ -375,7 +381,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
             m.compose(drop.copy(burst.at).addScaledVector(x, burst.kind === 'arrow' ? 0 : off), q, s.setScalar(1 - 0.12 * layer));
             A[o] = cfg.tiles + (burst.wetWave ? 0.5 : cfg.solid ? 0.25 : 0); A[o + 3] = cfg.length || 0; B[o] = cfg.radius;
           }
-          mesh.setMatrixAt(n, m); mesh.setColorAt(n, burst.color);
+          mesh.setMatrixAt(n, m); setTrackedInstanceColor(mesh, n, burst.color);
           A[o + 1] = clamp(age, 0, 1); A[o + 2] = ls;
           B[o + 1] = cfg.width || 0; B[o + 2] = cfg.arc0 || 0; B[o + 3] = cfg.arc1 || 0;
           n++;
@@ -391,7 +397,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
         y.crossVectors(d.dir, x);
         basis.makeBasis(x, y, d.dir); q.setFromRotationMatrix(basis);
         m.compose(d.at, q, s.setScalar(1));
-        drillMesh.setMatrixAt(nd, m); drillMesh.setColorAt(nd, d.color);
+        drillMesh.setMatrixAt(nd, m); setTrackedInstanceColor(drillMesh, nd, d.color);
         D[nd * 4] = Math.max(0.05, d.length); D[nd * 4 + 1] = MACHINE_DRILL.radius;
         // wrapped in double precision so a long match keeps float32 phase steps exact
         D[nd * 4 + 2] = (d.seed * 6.2832 + d.time * MACHINE_DRILL.spin) % 6.283185307179586; D[nd * 4 + 3] = d.seed;
@@ -402,9 +408,9 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
       upload(drillMesh, nd, drillAttrs, 4);
       return { sheets: n, drills: nd };
     },
-    clear() { bursts.length = 0; for (const d of drillSlots) { d.at = null; d.color = null; } drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },
+    clear() { for (const burst of bursts) releaseBurst(burst); bursts.length = 0; for (const d of drillSlots) { d.at = null; d.color = null; } drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },
     dispose() {
-      this.clear(); drillSlots.length = 0;
+      this.clear(); freeBursts.length = 0; drillSlots.length = 0;
       scene.remove(mesh, drillMesh);
       for (const o of [mesh, drillMesh]) { o.geometry.dispose(); o.material.dispose(); }
       splashTex.dispose(); ringTex.dispose();

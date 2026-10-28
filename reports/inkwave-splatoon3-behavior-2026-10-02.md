@@ -6625,3 +6625,12 @@ The production build contains 2,223 declared artifacts. Their independently rech
 Revalidated focused evidence includes source wet lifecycle 8/8, emitted Charger/wet 10/10, CPU-13 source mutation tests 4/4, source wall tests 4/4, emitted collision/wall tests 4/4, capture helper tests 38/38, and deterministic startup budget gates. Broader reconstructed test and verifier results are recorded separately at the frozen candidate. Test-only fixtures were restored by their public Git blob identities rather than weakening checks to ignore missing data.
 
 Still unverified: live final-head mandatory CI, actual Hissen/Wiper screenshots, full mobile three-lane acceptance, original-game comparison and hardware performance. The native Explosher absolute geometry increase 281→295 remains a failed gate, not waived or offset. Native prebuilt stage payloads are not hydrated; runtime fallback may fetch external stage data, and offline stage availability is not guaranteed. No character or hair model was edited. Character provenance acceptance is source-text-only, not character visual verification.
+## 2026-10-28: 接触・通信の統合回帰
+
+公開版の合成 `src/game/match.js` で、衝突判定コールバックが処理中にアクター配列や半径を変更すると、先読み最適化により後続ペアが旧値を使う差分を再現した。`patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs` の先読みを外し、ペアごとに値を読む既存の処理順へ戻した。配列・半径の変更と例外を伴う単体回帰は通過した。通常プレイやフレーム間隔別のブラウザ実行、本家との接触・押し出し比較は未確認。本家の参照条件は従来の Splatoon 3 Ver.11.3.0 とし、このテストを本家との一致証拠にはしない。
+
+スロッシャーの通信塗り証明でも `patches/splatoon3/runtime/weapons-fidelity.mjs` の有限値検査を従来の評価順に戻した。後続要素のゲッターを含む反例と通常入力の単体回帰が通過したが、実機間通信の確認は未実施。
+
+## 2026-10-28: 縦斬り表示の統合後クリア
+
+#1895 の濡れた縦斬り専用メッシュと #1897 の空状態の早期復帰を合わせると、弾一覧のクリア後に専用メッシュのインスタンスが残る差分を確認した。統合候補では空状態でそのメッシュも非表示・件数ゼロにする。再現操作は対象の縦斬りを表示して弾をクリアし、続けて別の縦斬りを表示すること。30/60/120Hzの合成実装テストで物理・塗り・ダメージ・乱数を変えず表示を片付けることを確認する。本家の参照条件は既存の Splatoon 3 Ver.11.3.0 とし、ブラウザ実画面・実機での見た目や本家との一致は未確認。

@@ -2,9 +2,9 @@ import * as THREE from 'three';
 const origin=new THREE.Vector3(),down=new THREE.Vector3(0,-1,0);
 function reachableLayers(level){
  const nav=level.nativeNav;if(nav?.level!==level||!nav.validIds?.length)return null;
- const reachable=new Uint8Array(nav.nodes.length),queue=[];
- for(const pad of level.spawnPads){const id=nav.nearest(pad,1.2);if(id>=0&&nav.valid[id]&&!reachable[id]){reachable[id]=1;queue.push(id);}}
- for(let i=0;i<queue.length;i++)for(const edge of nav.nodes[queue[i]].nb)if(nav.valid[edge.to]&&!reachable[edge.to]){reachable[edge.to]=1;queue.push(edge.to);}
+ const reachable=new Uint8Array(nav.nodes.length),queue=nav.nodes.length<=65536?new Uint16Array(nav.nodes.length):new Uint32Array(nav.nodes.length);let tail=0;
+ for(const pad of level.spawnPads){const id=nav.nearest(pad,1.2);if(id>=0&&nav.valid[id]&&!reachable[id]){reachable[id]=1;queue[tail++]=id;}}
+ for(let i=0;i<tail;i++)for(const edge of nav.nodes[queue[i]].nb)if(nav.valid[edge.to]&&!reachable[edge.to]){reachable[edge.to]=1;queue[tail++]=edge.to;}
  return {nav,reachable};
 }
 
@@ -54,10 +54,12 @@ function visitSupportValues(map,layers,emit){
 }
 function supportMatches(map,layers,cache){
  const refs=supportReferences(map,layers);if(refs.length!==cache.refs.length||refs.some((value,i)=>value!==cache.refs[i]))return false;
- let index=0,same=true;visitSupportValues(map,layers,value=>{if(!Object.is(value,cache.values[index++]))same=false;});return same&&index===cache.values.length;
+ let index=0,same=true;visitSupportValues(map,layers,value=>{if(!Object.is(value,cache.values.get(index++)))same=false;});return same&&index===cache.values.length;
 }
 function rememberSupport(map,layers,hits){
- const values=[];visitSupportValues(map,layers,value=>values.push(value));
+ const chunks=[],other=new Map();let length=0;
+ visitSupportValues(map,layers,value=>{const chunk=length>>>13,slot=length&8191;if(!chunks[chunk])chunks[chunk]=new Float64Array(8192);if(typeof value==='number')chunks[chunk][slot]=value;else other.set(length,value);length++;});
+ const values={length,get(i){return other.has(i)?other.get(i):i<length?chunks[i>>>13][i&8191]:undefined;}};
  map._nativeSupportCache={refs:supportReferences(map,layers),values,flip:map.flip,hits};
 }
 function rotateSupport(map,cache){
@@ -87,7 +89,8 @@ function* nativeMinimapSteps(map,canonicalProjection=false){
  const hits=canonicalProjection?(cache?.hits?.length===N?cache.hits:new Uint8Array(N)):null;if(hits)hits.fill(0);
  map._nativeSupportCache=null;
  if(map.hgt?.length!==N)map.hgt=new Float32Array(N);map.hgt.fill(-99);
- if(map.topBlock?.length!==N)map.topBlock=new Int32Array(N);map.topBlock.fill(-1);
+ const BlockIndex=L.staticBlockCount<=32768?Int16Array:Int32Array;
+ if(map.topBlock?.length!==N||!(map.topBlock instanceof BlockIndex))map.topBlock=new BlockIndex(N);map.topBlock.fill(-1);
  if(map.nrm?.length!==N*2)map.nrm=new Float32Array(N*2);else map.nrm.fill(0);
  if(map.pixCell?.length!==N)map.pixCell=new Int32Array(N);map.pixCell.fill(-1);
  // Native projection selects one exact paint cell; no bilinear neighbors exist.

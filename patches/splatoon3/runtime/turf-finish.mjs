@@ -124,30 +124,30 @@ export function requestTurfFinish(match) {
 }
 // Frozen offline worlds retain controller neutralization/gyro cancellation
 // while the clock may omit their unchanged collision-derived aim query.
+function advanceMatchInterval(match, G, aim, span, controller = true) {
+  if (!(span > 0)) return;
+  if (controller) { match.updateController(span); if (aim) match.controller?.computeAim?.(true); }
+  match.update(span);
+  if (!match.paused) G.projectiles.update(span);
+  if (!match.paused) match.advanceRanked?.(span);
+}
 export function simulateMatchInterval(match, dt, G, aim = true) {
-  const advance = (span, controller = true) => {
-    if (!(span > 0)) return;
-    if (controller) { match.updateController(span); if (aim) match.controller?.computeAim?.(true); }
-    match.update(span);
-    if (!match.paused) G.projectiles.update(span);
-    if (!match.paused) match.advanceRanked?.(span);
-  };
   const turf = !match.bossMode && !match.attract && (match.mode == null || match.mode === 'turf');
   if (match.ranked && !match.paused && match.state === 'playing' && !match.ranked.overtime && match.ranked.time <= dt + 1e-10) {
     const legal = Math.max(0, Math.min(dt, match.ranked.time));
-    advance(legal);
-    advance(Math.max(0, dt - legal), match.state === 'playing');
+    advanceMatchInterval(match, G, aim, legal);
+    advanceMatchInterval(match, G, aim, Math.max(0, dt - legal), match.state === 'playing');
     return;
   }
   const boundary = turf && !match.paused && match.state === 'playing'
     && Number.isFinite(match.time) && match.time <= dt + 1e-10;
-  if (!boundary) { advance(dt); return; }
+  if (!boundary) { advanceMatchInterval(match, G, aim, dt); return; }
   const legal = Math.max(0, Math.min(dt, match.time));
   const endTime = G.time;
   // Preserve endpoint timestamps for both fractions of this fixed-clock step.
   G.time = endTime - dt + legal;
   match.s3DeadlineStep = true;
-  try { advance(legal); }
+  try { advanceMatchInterval(match, G, aim, legal); }
   finally { match.s3DeadlineStep = false; }
   // Floating-point subtraction can leave a sub-epsilon remainder at 180 s.
   match.time = 0;
@@ -156,5 +156,5 @@ export function simulateMatchInterval(match, dt, G, aim = true) {
   match.s3FinishPending = false;
   G.time = endTime;
   // Visual effects may use the remainder; score and combat authority have ended.
-  advance(Math.max(0, dt - legal), false);
+  advanceMatchInterval(match, G, aim, Math.max(0, dt - legal), false);
 }

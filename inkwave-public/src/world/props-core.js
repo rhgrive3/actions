@@ -3398,11 +3398,14 @@ export class PropKit {
   _applyColors() {
     for (const mesh of this._inst) {
       if (!mesh.userData.cloth) continue;
+      let changed = false;
       mesh.userData.recs.forEach((r, i) => {
         if (r.team != null) _c1.copy(this.teamColors[r.team]).lerp(_white, r.tint || 0); else _c1.copy(r.color);
-        mesh.setColorAt(i, _c1);
+        const values = mesh.instanceColor?.array, at = i * 3;
+        if (values && Object.is(values[at], Math.fround(_c1.r)) && Object.is(values[at + 1], Math.fround(_c1.g)) && Object.is(values[at + 2], Math.fround(_c1.b))) return;
+        mesh.setColorAt(i, _c1); changed = true;
       });
-      mesh.instanceColor.needsUpdate = true;
+      if (changed) mesh.instanceColor.needsUpdate = true;
     }
   }
 

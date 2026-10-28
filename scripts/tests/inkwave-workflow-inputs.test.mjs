@@ -44,7 +44,7 @@ for(const [workflow,entries,extra]of[
 const composedCpuBrowserInstall = `      - name: Install Chromium for emitted CPU trace smoke
         run: |
           sudo python3 scripts/prepare-inkwave-ci-apt.py
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --only-shell chromium
 `;
 const composedCpuRecorder = `      - name: Actual browser CPU recorder, finite gameplay state and GC trace
         env:
@@ -55,7 +55,7 @@ function composedCpuBrowserContract(source){
  const triggers=source.slice(0,source.indexOf('\npermissions:'));
  assert(triggers.includes("      - 'scripts/prepare-inkwave-ci-apt.py'\n"),'APT helper updates trigger the workflow');
  assert.match(source,/^    timeout-minutes: 20$/m,'existing job timeout remains bounded');
- assert(source.includes(composedCpuBrowserInstall),'prepare the signed HTTPS archive before the unchanged Playwright install');
+ assert(source.includes(composedCpuBrowserInstall),'prepare the signed HTTPS archive before the bounded headless Playwright install');
  assert(source.includes(composedCpuRecorder),'retain the source-bound actual browser CPU recorder command');
  assert(source.indexOf(composedCpuBrowserInstall)<source.indexOf(composedCpuRecorder),'browser installation precedes the CPU trace');
  const required=source.slice(source.indexOf('  source-and-emitted:'),source.indexOf('      - uses: actions/upload-artifact@v4'));
@@ -72,7 +72,7 @@ function composedCpuBrowserContract(source){
   'node --experimental-vm-modules scripts/benchmark-inkwave-body-balance.mjs balance-benchmark.json',
  ])assert(required.includes(command),'retain existing gate: '+command);
 }
-test('composed CPU browser setup prepares APT before the unchanged install and actual trace gates',()=>{
+test('composed CPU browser setup prepares APT before the headless install and actual trace gates',()=>{
  composedCpuBrowserContract(read('.github/workflows/inkwave-composed-cpu.yml'));
 });
 test('composed CPU browser contract rejects lost setup, reordered commands and weakened gates',()=>{
@@ -80,9 +80,10 @@ test('composed CPU browser contract rejects lost setup, reordered commands and w
  for(const [before,after]of [
   ["      - 'scripts/prepare-inkwave-ci-apt.py'\n",''],
   ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n',''],
-  ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps chromium','          npx playwright install --with-deps chromium\n          sudo python3 scripts/prepare-inkwave-ci-apt.py'],
+  ['          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps --only-shell chromium','          npx playwright install --with-deps --only-shell chromium\n          sudo python3 scripts/prepare-inkwave-ci-apt.py'],
   ['timeout-minutes: 20','timeout-minutes: 30'],
-  ['--with-deps chromium','chromium'],
+  ['--with-deps --only-shell chromium','chromium'],
+  ['--only-shell chromium','chromium'],
   [composedCpuBrowserInstall+composedCpuRecorder,composedCpuRecorder+composedCpuBrowserInstall],
   ['--source-sha "$SOURCE_SHA" --frames 30','--source-sha "$SOURCE_SHA" --frames 1'],
   ['        run: node scripts/benchmark-inkwave-composed-cpu.mjs','        if: false\n        run: node scripts/benchmark-inkwave-composed-cpu.mjs'],

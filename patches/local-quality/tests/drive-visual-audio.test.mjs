@@ -143,7 +143,7 @@ test('game-owned ambience and movement loops recover into a free slot without fu
  const damp=(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt)),binding={G:{audio},damp};
  for(const name of ['_updateAmbience','_updateLocalLoops']){
   audio.loops.clear();audio.created=0;const update=method('src/main.js','Game',name,binding);
-  const self={_audioOn:true,showcase:{fullFrame:true},match:{local:{alive:true,anim:{form:'swim'},vel:{x:2,y:0,z:0},grounded:false}}};
+  const self={_audioOn:true,showcase:{fullFrame:true},match:{local:{alive:true,anim:{form:'swim'},vel:{x:2,y:0,z:0},grounded:false}},_wantLocalLoop:method('src/main.js','Game','_wantLocalLoop',binding)};
   update.call(self,1/60);assert.equal(audio.created,1);const initial=name==='_updateAmbience'?self._amb:self._loops.swim;initial.stop();
   for(let i=0;i<24;i++)audio.loops.add({playing:true});for(let i=0;i<100;i++)update.call(self,1/60);assert.equal(audio.created,1);
   audio.loops.delete(audio.loops.values().next().value);update.call(self,1/60);assert.equal(audio.created,2);const replacement=name==='_updateAmbience'?self._amb:self._loops.swim;assert.notEqual(replacement,initial);assert.equal(replacement.playing,true);assert.equal(audio.loops.size,24);

@@ -124,16 +124,13 @@ function eligibleSlosherWallHit(hit) {
   return face?.paintable !== false;
 }
 
-function makeWallDropTrack(p, hit, plan, salt, ordinal = 0, total = 1) {
-  const normal = hit.normal.clone().normalize();
+function makeWallDropTrack(p, hit, plan, salt, ordinal = 0, total = 1, wallNormal = null, wallTangent = null) {
+  const normal = wallNormal ? wallNormal.clone() : hit.normal.clone().normalize();
   const pos = hit.point.clone().addScaledVector(normal, 0.08);
   if (plan.spawn) {
     // The source gives XZ spacing, not a recovered full spawn transform. Keep the
     // configured spacing on the contacted wall plane and label that mapping here.
-    const tangent = p.vel.clone().addScaledVector(normal, -p.vel.dot(normal));
-    tangent.y = 0;
-    if (tangent.lengthSq() < EPSILON) tangent.set(-normal.z, 0, normal.x);
-    else tangent.normalize();
+    const tangent = wallTangent || wallDropTangent(p.vel, normal);
     const rank = Math.floor(ordinal / 2);
     const sign = total > 1 && ordinal % 2 ? -1 : 1;
     const distance = ((Number(plan.spawn.FirstDistance) || 0) + rank * (Number(plan.spawn.BetweenDistance) || 0)) *
@@ -153,6 +150,14 @@ function makeWallDropTrack(p, hit, plan, salt, ordinal = 0, total = 1) {
     paintIndex: 0,
     done: false,
   };
+}
+
+function wallDropTangent(velocity, normal) {
+  const tangent = velocity.clone().addScaledVector(normal, -velocity.dot(normal));
+  tangent.y = 0;
+  if (tangent.lengthSq() < EPSILON) tangent.set(-normal.z, 0, normal.x);
+  else tangent.normalize();
+  return tangent;
 }
 
 function paintWallDrop(p, track, radius) {
@@ -176,8 +181,11 @@ export function beginAgent3SlosherWallDrop(system, p, hit) {
   );
   if (!plan?.main) return false;
   const tracks = [makeWallDropTrack(p, hit, plan.main, 1)];
+  const normal = tracks[0].normal;
+  let tangent = null;
   for (let i = 0; i < plan.wallHits.length; i++) {
-    tracks.push(makeWallDropTrack(p, hit, plan.wallHits[i], 100 + i, i, plan.wallHits.length));
+    if (plan.wallHits[i].spawn && !tangent) tangent = wallDropTangent(p.vel, normal);
+    tracks.push(makeWallDropTrack(p, hit, plan.wallHits[i], 100 + i, i, plan.wallHits.length, normal, tangent));
   }
   p.agent3SlosherWallDrop = { tracks, main: tracks[0] };
   p.prev.copy(p.pos);

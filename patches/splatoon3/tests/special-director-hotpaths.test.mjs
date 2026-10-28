@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { directorFixture, directorState, addStrikes, directorEmittedIdentity } from './special-director-parity-fixture.mjs';
 
 if (directorEmittedIdentity) test('actual emitted director, pools and clocks are bound to the selected build', t => {
-  assert.equal(Object.keys(directorEmittedIdentity.hashes).length, 5);
+  assert.equal(Object.keys(directorEmittedIdentity.hashes).length, 6);
   t.diagnostic('SPECIAL_DIRECTOR_EMITTED_RECEIPT ' + JSON.stringify(directorEmittedIdentity));
 });
 else test('an explicitly selected missing emitted build fails instead of falling back to source', () => {

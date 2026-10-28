@@ -43,7 +43,7 @@ jobs:
       - name: Validate binary, case denominators and lifetime gates
         run: node --test tools/character-asset-qa/test.mjs
       - name: Install CI browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps --only-shell chromium
       - name: Build unchanged production runtime for the fixture
         run: |
           node scripts/build-inkwave.mjs inkwave-public _site

@@ -124,7 +124,7 @@ export async function buildNativeWorld(game,map,current){
   let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
-  inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint,{knownEmpty:true});
+  inkMesh=new NativeInkMesh(inkGeometry,inkMat,16,{willBindPaint:true}).bindPaint(paint,{knownEmpty:true});
   // Link the stage's display/ink programs now (parallel compile where
   // available) instead of synchronously on the first battle frames. Any
   // render target selects the composer's key: linear output, no tone map.
@@ -157,6 +157,7 @@ export async function buildNativeWorld(game,map,current){
     safely(()=>G.scene?.remove?.(inkMesh),'ink detach');
     safely(()=>display.dispose(),'display');safely(()=>inkMesh.dispose(),'ink');
     safely(()=>inkMat.dispose(),'material');
+    safely(()=>textures._releaseWorkers?.(),'idle texture workers');
    }};
   snapshot=captureWorld(game);
   published=true;
@@ -176,6 +177,8 @@ export async function buildNativeWorld(game,map,current){
   // Once published, the display alone holds views of the source vertex/index
   // arrays and releases them as they upload. A failed attempt keeps its input.
   data.vertices=null;data.indices=null;
+  // Only activated NativeLevel data remains authoritative after publication.
+  data.manifest.faces=null;data.faceTriangles=null;
   disposeOldWorld(game,snapshot);
  }catch(error){
   controller.abort(error);
