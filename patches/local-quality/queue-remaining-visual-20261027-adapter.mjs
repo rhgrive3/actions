@@ -574,7 +574,15 @@ export function adaptRemainingVisualQueue20261027(rel, code) {
   for (const change of changes) {
     if (change.rel !== rel) continue;
     const count = code.split(change.old).length - 1;
-    if (count !== change.count) throw new Error(`Remaining visual queue ${change.slug}: expected ${change.count} anchors in ${rel}, found ${count}`);
+    if (count !== change.count) {
+      // A previous, separately reviewed retarget optimization may already
+      // supply the exact desired forward quaternion. Accept that exact
+      // equivalent once; missing/duplicated or unrelated anchors remain red.
+      const exactShared = change.slug === 'source-retarget-share-kid-quaternion-forward-across-feet'
+        && count === 0 && change.new.length > 0 && code.split(change.new).length - 1 === 1;
+      if (exactShared) continue;
+      throw new Error(`Remaining visual queue ${change.slug}: expected ${change.count} anchors in ${rel}, found ${count} (anchor ${JSON.stringify(change.old.slice(0,110))})`);
+    }
     code = code.split(change.old).join(change.new);
   }
   return code;

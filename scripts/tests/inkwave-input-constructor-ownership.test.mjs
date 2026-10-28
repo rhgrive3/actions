@@ -22,6 +22,8 @@ test('current input constructor preserves ten platform-owned listeners and expli
   assert.match(section,/ticket\.errorObserved = true/,'browser pointer-lock denial is recorded');
   assert.match(source,/error\?\.name !== 'NotSupportedError'/,
     'only a browser-confirmed unsupported raw movement option can retry');
+  assert.match(source,/ticket\.raw && ticket\.errorObserved === true && error\?\.name === 'NotSupportedError'/,
+    'downstream preference owner retains the same observed-browser-error requirement');
   assert.doesNotMatch(section,/\b(?:window|document)\.addEventListener\(/,
     'platform-owned listeners must not be duplicated by a second owner');
 });

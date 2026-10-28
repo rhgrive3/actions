@@ -57,7 +57,7 @@ test('idempotent init resumes audio without replaying historical preparation; a 
  const mains=()=>calls.filter(c=>!c.args[0].startsWith('combat:')).map(c=>c.args[0]);
  assert.deepEqual(mains(),ids,'each selection prepares its recorded main');const firstCalls=calls.length,bank=e._weaponBank;
  for(let i=0;i<10;i++)assert.equal(e.init(),e);assert.equal(calls.length,firstCalls,'repeated init never requeues MP3 sources');assert.equal(e.ctx.resumes,11);
- e.ctx=context(44100);e.init();assert.notEqual(e._weaponBank,bank);assert.deepEqual(mains(),[...ids,...ids],'new context prepares each retained weapon once');e.disposeWeaponAudio();assert.equal(e._warmPreparedBank,null);assert.equal(e._warmPreparedContext,null);
- const pending=new Engine();pending.prepareWeapon('shooter');const beforeUnlock=calls.length;pending.init();assert.equal(mains().at(-1),'shooter');assert.equal(mains().length,ids.length*2+1,'one queued selected source warms on context unlock');assert.ok(calls.length>beforeUnlock);pending.disposeWeaponAudio();
+ e.ctx=context(44100);e.init();assert.notEqual(e._weaponBank,bank);assert.deepEqual([...e._warmWeapons],[ids.at(-1)],'only the active local weapon is retained for a new context');assert.deepEqual(mains(),[...ids,ids.at(-1)],'context replacement reloads the active weapon, not seven inactive selections');e.disposeWeaponAudio();assert.equal(e._warmPreparedBank,null);assert.equal(e._warmPreparedContext,null);
+ const pending=new Engine();pending.prepareWeapon('shooter');const beforeUnlock=calls.length;pending.init();assert.equal(mains().at(-1),'shooter');assert.deepEqual(mains(),[...ids,ids.at(-1),'shooter'],'one queued selected source warms on unlock without unrelated weapon reloads');assert.ok(calls.length>beforeUnlock);pending.disposeWeaponAudio();
  }finally{RealS3SampleLoader.prototype.ensure=ensure;RealS3SampleLoader.prototype.declares=declares;}
 });
