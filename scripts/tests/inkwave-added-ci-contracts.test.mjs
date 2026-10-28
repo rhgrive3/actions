@@ -31,7 +31,7 @@ const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/
 // Only Validate core executes the CircleCI parity gate that reads this config.
 const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
 // Exact immutable checkout input closure for the mandatory low-cost preflight.
-const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/'];
+const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/','/package-lock.json'];
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
 function assertCurrentCheckouts(name,source,count){
  const blocks=checkouts(source);assert.equal(blocks.length,count);
@@ -46,6 +46,9 @@ test('exact job-bound sparse profiles reject missing, unexpected and misplaced C
  const name='validate-inkwave-update.yml',source=read(name),circle='            /.circleci/config.yml\n';
  assertCurrentCheckouts(name,source,11);
  for(const altered of [
+  source.replace('            /package-lock.json\n',''),
+  source.replace('            /package-lock.json\n','            /package.json\n'),
+  source.replace('            /package-lock.json\n','            /package-lock.json\n            /package-lock.json\n'),
   source.replace(circle,''),
   source.replace(circle,circle+'            /unexpected-input/\n'),
   source.replace(circle,circle+circle),

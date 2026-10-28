@@ -139,6 +139,7 @@ jobs:
             /inkwave-public/index.html
             /inkwave-public/sw.js
             /.github/workflows/
+            /package-lock.json
       - name: Verify immutable source checkout before other jobs
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
@@ -152,6 +153,8 @@ jobs:
         run: node scripts/ci/check-composition-preflight.mjs
       - name: Verify source combat receipt and Boss admission fixtures
         run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs
+      - name: Verify emitted coverage contracts before heavy lanes
+        run: node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
 
   build_site:
     needs: admission_preflight
