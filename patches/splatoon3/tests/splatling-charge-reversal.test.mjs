@@ -3,19 +3,15 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 
-// Remove only the provisional model, leaving the production-composed ground
-// solver and every other installed adapter intact for an independent control.
-const withoutModel = (rel, source) => {
-  if (rel !== 'patches/splatoon3/runtime/splatling.mjs') return source;
-  const anchor='const chargeDownRate = splatlingChargeDownRate(profile, this.weapon);';
-  assert.equal(source.split(anchor).length,2,'control must disable exactly one model');
-  return source.replace(anchor,'const chargeDownRate = 0;');
-};
-
+// The control clears only the source parameter read by the provisional model.
+// This also exercises the copied/minified emitted runtime without rewriting it.
 async function makePair() {
   const [model, native] = await Promise.all([
-    fixture({productionComposition:true}), fixture({productionComposition:true, adaptRuntime:withoutModel})
+    fixture({productionComposition:true}), fixture({productionComposition:true})
   ]);
+  const param=native.profile.weaponsFidelityCompletion.weapons.splatling.WeaponParam;
+  assert.equal(param.VelGnd_DownRt_Charge,.05);
+  param.VelGnd_DownRt_Charge=0;
   return [model, native].map(f => {
     const a=f.make('splatling'); a.weaponRunner.charging=true;
     a.weaponRunner.charge=.4; a.vel.set(0,0,5.76);
@@ -26,6 +22,12 @@ const velocity=a=>[a.vel.x,a.vel.z];
 function near(a,b,label) {
   assert.ok(Math.hypot(a[0]-b[0],a[1]-b[1])<1e-9, `${label}: model ${a}, ground solver ${b}`);
 }
+
+test('the control removes the model on aligned charge entry', async () => {
+  const pair=await makePair();
+  for(const {a} of pair){a.intent.move.set(0,0,1);a._horizontal(1/60,false,false);}
+  assert.ok(Math.abs(pair[0].a.vel.z-pair[1].a.vel.z)>.1,'control must exercise a different slowdown');
+});
 
 test('charge model preserves the ground solver when reversing, including weak input', async () => {
   const pair=await makePair();
