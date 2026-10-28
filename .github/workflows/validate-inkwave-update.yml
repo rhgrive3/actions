@@ -542,7 +542,9 @@ jobs:
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
       # Full-Character VM/geometry tests can retain large heaps. Keep the
       # complete eight-way partition, with at most two test processes per VM.
-      INKWAVE_TEST_CONCURRENCY: '2'
+      # Shard 2 repeatedly triggers hosted runner SIGTERM 143 at concurrency
+      # two. Run every test unchanged; serialize this memory-heavy shard only.
+      INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}
     steps:
       - uses: actions/checkout@v4
         with:
