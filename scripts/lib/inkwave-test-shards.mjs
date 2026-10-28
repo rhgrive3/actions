@@ -35,3 +35,18 @@ export function selectTestShard(files, shardIndex = 0, shardCount = 1) {
     throw new RangeError('shard index must be within the configured shard count');
   return files.filter((_, index) => index % shardCount === shardIndex);
 }
+
+
+// Partition a single, already-selected shard without altering discovery,
+// source order, test counts or membership. New Node coordinators release VM
+// heaps between portions; acceptance requires every portion to exit 0.
+export function batchSelectedTestFiles(files,maxSize=24){
+ if(!Array.isArray(files)||!Number.isSafeInteger(maxSize)||maxSize<1)
+   throw new TypeError('Invalid selected patch test batch');
+ const chunks=[];
+ for(let i=0;i<files.length;i+=maxSize)chunks.push(files.slice(i,i+maxSize));
+ if(chunks.flat().length!==files.length||
+    chunks.flat().some((file,i)=>file!==files[i]))
+   throw new Error('Lost or reordered patch tests during batching');
+ return chunks;
+}
