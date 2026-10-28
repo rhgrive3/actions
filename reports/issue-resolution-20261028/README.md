@@ -94,3 +94,13 @@ Agent1の追加ターンは自動審査が「サイバーセキュリティ上�
 `ca30ae1f5ebcc1d56e6e1c4c636c5a1ef626bec4`でproduction buildとstartup budgetは成功したが、strict sandbox Chromium151/SwiftShaderのWiper受入は初期main menu待ち120秒でtimeoutし、frame capture前に終了した。pageerrorは未観測、browser/server cleanupは成功。CDP pauseではpaint-native-mip-guardの同期readPixelsとGPU stallを観測したが、全120秒の単独原因とは確定していない。pixel-equivalence guardやtimeout条件を弱めず、実画素受入は未確認とする。
 
 追加17case・既存event-only/metadata/FIFOを含む29件はNode22で全成功。通信全件の最初の実行で見つかった3失敗を原因別に修正した（metadataの新しい依存境界、native event-only正当packetの保持）。この実行中に修正を進めたため、最終headの不変な全件成功とは扱わず、最終8shard CIの結果を正とする。
+
+## Hosted CIからの追加修正（18:25 UTC時点）
+
+`ec7b3c15` / `3a8e6f57`をGitHubへ反映し、重点CI成功後に両PRをReadyへ移した。Draft時のValidate成功はadmissionのみであり、共有build・core・8shard・browser・seven-claims・最終fan-inの成功とは数えない。Readyのfull runは#1908 `40742606355`、#1907 `40742614329`。この記録時点では共有buildにランナー待ちがあり、全CI合格は未確定。
+
+#1907のterminal recovery run `40741994389`は、実emitted native physicsがimportする`WALKABLE`をsynthetic externalが提供していないため、publication fixtureが16/17失敗した。実製品のphysics exportは存在し、後続のブラウザ回復stepは成功していた。Agent6の`6950b7dc`（共有候補へ`baa9e97c`として適用）は、検証済みemitted physicsそのものから値を取得する。閾値のハードコード、未知のimportの許可、失敗assertionの削除はしない。
+
+旧fixtureの16失敗を再現後、修正fixtureは両emitted候補で18/18成功。export欠落・閾値の変更・未知importの負の対照を含む。source回復suite295/295、修正commitをbuildしたChromium151/SwiftShaderでnative stageのrecoverable/rollback-fatalと実context loss/restorationの各browser laneが成功、page errorは0。これは物理iPadやnative LFS deliveryの受入ではない。
+
+同じhosted候補でCrab/Torpedoの実WebGL buffer/pixel比較、Explosher飛沫、squid heading/input、lobby CSSOM、audio integrationは成功した。native stage contractsは648成功・128skipで、23個のnative prebuilt実体が不在と明示されるため、synthetic/fallbackの成功として扱う。paired projectileのafter側はbuild-only export分類で停止しており、最適化adapterの実際のruntime利用と分類を別途調査・修正中。paired画素/物理の同等性をまだ認定しない。
