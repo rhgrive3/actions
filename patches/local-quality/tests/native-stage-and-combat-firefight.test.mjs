@@ -1,12 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { compactModuleStrings } from '../../../scripts/lib/inkwave-source-compaction.mjs';
 import { sphereTriangleEntry } from '../../native-stages/runtime/sphere-triangle-entry.mjs';
 import { advanceSplashDrops, spawnSplashDrop } from '../../splatoon3/runtime/blaster-flight-paint.mjs';
 import { globGrazePaint } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { installIssue264PaintOwnership } from '../../splatoon3/runtime/paint-ownership.mjs';
+import { fixture as chargerFixture } from '../../splatoon3/tests/source-fixture.mjs';
 
 const readRepo = (rel) => fs.readFileSync(new URL('../../../' + rel, import.meta.url), 'utf8');
 const readPublic = (rel) => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
@@ -253,6 +256,222 @@ test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and charger fli
   assert.match(catalog, /const reach=bodyRadius\+\(pr0>radius\?pr0:radius\)\+1e-4;/);
 
   const chargerFlight = readRepo('patches/splatoon3/runtime/weapons-charger-flight.mjs');
-  assert.match(chargerFlight, /const _chargerMuzzleOut = new THREE\.Vector3\(\), _chargerAimOut = new THREE\.Vector3\(\)/);
   assert.match(chargerFlight, /const reach=bodyRadius\+\(collision\.InitRadiusForPlayer>collision\.EndRadiusForPlayer/);
+});
+
+const CHARGER_REL = 'patches/splatoon3/runtime/weapons-charger-flight.mjs';
+const chargerCanonical = readRepo(CHARGER_REL);
+const builtRoot = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
+const chargerProfile = JSON.parse(builtRoot
+  ? fs.readFileSync(path.join(builtRoot, 'patches/splatoon3/profile.json'), 'utf8')
+  : readRepo('patches/splatoon3/profile.json'));
+let chargerCompiler;
+async function chargerSubject(change = source => source) {
+  let source = change(chargerCanonical), expected = chargerCanonical;
+  if (builtRoot) {
+    chargerCompiler ??= import('esbuild').then(({ transformSync }) => text => compactModuleStrings(
+      transformSync(adaptBuildSource(CHARGER_REL, text), {
+        loader: 'js', format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: CHARGER_REL,
+      }).code).code);
+    const compile = await chargerCompiler, actual = fs.readFileSync(path.join(builtRoot, CHARGER_REL), 'utf8');
+    assert.equal(compile(chargerCanonical), actual, 'counterfactual starts from exact actual emitted Charger bytes');
+    expected = actual;
+    source = source === chargerCanonical ? actual : compile(source);
+  }
+  // The existing VM loader resolves the browser's bare-three import map and
+  // preserves every other actual source/emitted module. Only this subject may
+  // change in a control; neither gameplay nor module resolution is replaced.
+  let observed = 0;
+  const transform = (rel, text) => {
+    if (rel !== CHARGER_REL) return text;
+    observed++;
+    assert.equal(text, expected, 'subject is the selected actual source/emitted module');
+    return source;
+  };
+  const f = await chargerFixture({ productionComposition: true,
+    extraExports: `export { installChargerFlight } from './${CHARGER_REL}';`,
+    adaptRuntime: transform, adaptEmittedRuntime: transform });
+  assert.equal(observed, 1, 'real installer subject is consumed exactly once');
+  return f;
+}
+
+function chargerRig(subject) {
+  const install = subject.installChargerFlight;
+  let allocations = 0;
+  class Vector3 extends THREE.Vector3 { constructor(...args) { super(...args); allocations++; } }
+  class Hit {}
+  class Projectiles {
+    constructor() { this.beams = []; this.calls = []; }
+    // These methods are captured by the real installer BEFORE instrumentation
+    // hooks run. Replacing them afterward would disable the native fast path.
+    _muzzle(actor, out) {
+      this.calls.push({ kind: 'muzzle', actor, out, before: out.toArray() });
+      out.copy(actor.muzzle); this.onMuzzle?.(actor, out); return out;
+    }
+    _aimFrom(actor, origin, out) {
+      this.calls.push({ kind: 'aim', actor, origin, out, before: out.toArray() });
+      out.copy(actor.aimDir); this.onAim?.(actor, origin, out); return out;
+    }
+    _ghostBeam() { this.beams.push({ mesh: { scale: {}, material: { uniforms: { uLen: {} } } } }); }
+    ghostFire() {}
+    update() {}
+    clear() {}
+  }
+  const events = [], actors = new Set(), G = { physics: { raycast(_from, _dir, _length, hit) { hit.hit = false; return hit; }, los: () => true } };
+  // The production composition borrows vectors at emit() and snapshots them
+  // inside the actual dispatcher. A raw collector would bypass that contract.
+  subject.on('weapon:fire', event => { if (actors.has(event.actor)) events.push(event); });
+  const weapon = { id: 'charger', kind: 'charger', ...chargerProfile.weapons.charger };
+  const api = { Projectiles, THREE: { ...THREE, Vector3 }, Hit, G, PLAYER: chargerProfile.player,
+    WEAPONS: { charger: weapon }, emit: subject.emit };
+  const completion = chargerProfile.weaponsFidelityCompletion;
+  install(api, completion);
+  const system = new Projectiles();
+  const actor = (x = 3) => { const a = { pos: new THREE.Vector3(), muzzle: new THREE.Vector3(x, 1.05, 4),
+    aimDir: new THREE.Vector3(0, 0, 1), form: 'kid', team: 0, alive: true, isLocal: true,
+    weaponRunner: { chargeT: 1 }, character: {}, addTurf() {} }; actors.add(a); return a; };
+  return { system, actor, events, weapon, allocations: () => allocations,
+    fire(a) { system.fireCharger(a, weapon, 1); },
+    reinstall() { install(api, completion); } };
+}
+const callFor = (calls, actor, kind) => calls.find(call => call.actor === actor && call.kind === kind);
+const xyz = vector => [vector.x, vector.y, vector.z];
+const shotGeometry = (job, event, muzzle, aim) => {
+  assert.deepEqual(xyz(job.origin), muzzle, 'flight retains its own muzzle');
+  assert.deepEqual(xyz(event.muzzle), muzzle, 'event retains its own muzzle');
+  assert.deepEqual(xyz(job.dir), aim, 'flight retains its own aim');
+  assert.deepEqual(xyz(event.dir), aim, 'event retains its own aim');
+};
+function warmCharger(install) {
+  const h = chargerRig(install), a = h.actor(), before = h.allocations();
+  h.fire(a);
+  const cold = h.allocations() - before, first = h.system.calls.slice(), firstJob = h.system._fidelityChargerFlights[0];
+  const oldMuzzle = a.muzzle.toArray(), oldAim = a.aimDir.toArray();
+  a.muzzle.set(9, 2, 7); a.aimDir.set(1, 0, 0);
+  first[0].out.set(100, 100, 100); first[1].out.set(200, 200, 200);
+  const at = h.allocations(); h.fire(a);
+  const warm = h.allocations() - at, second = h.system.calls.slice(2);
+  assert.equal(second[0].out, first[0].out, 'warm native local muzzle reuses its scratch');
+  assert.equal(second[1].out, first[1].out, 'warm native local aim reuses its scratch');
+  assert.deepEqual(second.map(call => call.before), [[0, 0, 0], [0, 0, 0]], 'each output is reset before native callbacks');
+  assert.equal(cold - warm, 3, 'warming saves the three scratch constructors; flight/event snapshots still allocate');
+  shotGeometry(firstJob, h.events[0], oldMuzzle, oldAim);
+  shotGeometry(h.system._fidelityChargerFlights[1], h.events[1], a.muzzle.toArray(), a.aimDir.toArray());
+  assert.notEqual(firstJob.origin, first[0].out, 'published flight cannot retain mutable scratch');
+  assert.notEqual(h.events[0].dir, first[1].out, 'published event cannot retain mutable scratch');
+}
+function nestedCharger(install) {
+  for (const trigger of ['onMuzzle', 'onAim']) {
+    const h = chargerRig(install), outer = h.actor(3), inner = h.actor(8);
+    inner.aimDir.set(1, 0, 0);
+    h.system[trigger] = actor => { if (actor === outer) h.fire(inner); };
+    let previous;
+    for (let cycle = 0; cycle < 2; cycle++) {
+      const at = h.system.calls.length; h.fire(outer);
+      const calls = h.system.calls.slice(at), slots = [];
+      for (const kind of ['muzzle', 'aim']) {
+        const a = callFor(calls, outer, kind), b = callFor(calls, inner, kind);
+        assert.notEqual(a.out, b.out, 'nested native shots require different live depth scratch');
+        assert.deepEqual(a.before, [0, 0, 0]); assert.deepEqual(b.before, [0, 0, 0]);
+        slots.push(a.out, b.out);
+      }
+      if (previous) slots.forEach((slot, i) => assert.equal(slot, previous[i], 'each warmed depth reuses its own slot'));
+      previous = slots;
+      const jobs = h.system._fidelityChargerFlights.slice(cycle * 2);
+      shotGeometry(jobs[0], h.events[cycle * 2], inner.muzzle.toArray(), inner.aimDir.toArray());
+      shotGeometry(jobs[1], h.events[cycle * 2 + 1], outer.muzzle.toArray(), outer.aimDir.toArray());
+    }
+  }
+}
+function installedCharger(install) {
+  const left = chargerRig(install), right = chargerRig(install), a = left.actor(3), b = right.actor(8);
+  const fire = left.system.fireCharger; left.reinstall();
+  assert.equal(left.system.fireCharger, fire, 'duplicate installation is idempotent');
+  left.system.onAim = () => right.fire(b); left.fire(a);
+  for (const kind of ['muzzle', 'aim']) assert.notEqual(
+    callFor(left.system.calls, a, kind).out, callFor(right.system.calls, b, kind).out,
+    'different installations cannot share live scratch');
+  shotGeometry(left.system._fidelityChargerFlights[0], left.events[0], a.muzzle.toArray(), a.aimDir.toArray());
+  shotGeometry(right.system._fidelityChargerFlights[0], right.events[0], b.muzzle.toArray(), b.aimDir.toArray());
+}
+function callbackCharger(install) {
+  for (const mode of ['remote', 'muzzle', 'aim']) {
+    const h = chargerRig(install), a = h.actor(); h.fire(a);
+    const native = h.system.calls.slice(), owned = new THREE.Vector3(2, 0, 0), custom = [];
+    if (mode === 'remote') a.isLocal = false;
+    else if (mode === 'muzzle') {
+      a.weaponRunner.s3KeepMuzzleFiring = true;
+      const off = new THREE.Object3D(); off.position.set(0, 1.05, 0); off.updateMatrixWorld(true);
+      a.character.weapon = { off };
+      h.system._muzzle = (_actor, out) => { custom.push(out); return owned; };
+    } else h.system._aimFrom = (_actor, _origin, out) => { custom.push(out); return owned; };
+    const borrowed = [];
+    for (let i = 0; i < 2; i++) {
+      const at = h.system.calls.length; h.fire(a);
+      const calls = h.system.calls.slice(at);
+      const muzzle = mode === 'muzzle' ? custom.at(-1) : callFor(calls, a, 'muzzle').out;
+      const aim = mode === 'aim' ? custom.at(-1) : callFor(calls, a, 'aim').out;
+      assert.notEqual(muzzle, native[0].out, 'remote/custom callbacks cannot borrow native muzzle scratch');
+      assert.notEqual(aim, native[1].out, 'remote/custom callbacks cannot borrow native aim scratch');
+      if (i) { assert.notEqual(muzzle, borrowed[0]); assert.notEqual(aim, borrowed[1]); }
+      borrowed.splice(0, borrowed.length, muzzle, aim);
+      assert.deepEqual(owned.toArray(), [2, 0, 0], 'custom callback retains its returned vector, including kept-origin retargeting');
+      const job = h.system._fidelityChargerFlights.at(-1), event = h.events.at(-1);
+      if (mode === 'muzzle') {
+        assert.ok(job.origin.x < 0 && job.origin.z > .8, 'kept origin uses the actual calibrated gun transform');
+        shotGeometry(job, event, job.origin.toArray(), [0, 0, 1]);
+      } else shotGeometry(job, event, a.muzzle.toArray(), mode === 'aim' ? [1, 0, 0] : [0, 0, 1]);
+    }
+  }
+}
+test('CMB-10 native local Charger warming reuses reset scratch while flight/event geometry stays independent', async () => {
+  warmCharger(await chargerSubject());
+});
+test('CMB-10 nested native muzzle/aim callbacks keep distinct reusable depth leases', async () => {
+  nestedCharger(await chargerSubject());
+});
+test('CMB-10 a throwing native callback restores the scratch depth before the next shot', async () => {
+  const install = await chargerSubject();
+  for (const trigger of ['onMuzzle', 'onAim']) {
+    const h = chargerRig(install), a = h.actor(), error = new Error('native callback failure');
+    h.system[trigger] = () => { throw error; };
+    assert.throws(() => h.fire(a), e => e === error);
+    assert.equal(h.system._fidelityChargerFlights, undefined); assert.equal(h.events.length, 0);
+    const first = h.system.calls[0].out; h.system[trigger] = null; h.fire(a);
+    assert.equal(h.system.calls.findLast(call => call.kind === 'muzzle').out, first, 'exception releases depth zero');
+    shotGeometry(h.system._fidelityChargerFlights[0], h.events[0], a.muzzle.toArray(), a.aimDir.toArray());
+  }
+});
+test('CMB-10 independent Charger installations own their scratch and duplicate install is inert', async () => {
+  installedCharger(await chargerSubject());
+});
+test('CMB-10 remote and each custom callback retain independent outputs and returned-vector ownership', async () => {
+  callbackCharger(await chargerSubject());
+});
+function changeOnce(source, before, after) {
+  assert.equal(source.split(before).length, 2, 'counterfactual changes exactly one current subject expression');
+  return source.replace(before, after);
+}
+test('CMB-10 ownership and warming oracles reject controlled subject regressions', async t => {
+  const cases = [
+    ['always-new output vectors', source => changeOnce(source,
+      'const scratch = reuse ? (localShotScratch[depth] || (localShotScratch[depth] = { muzzle: new THREE.Vector3(), aim: new THREE.Vector3(), kept: new THREE.Vector3() })) : null;',
+      'const scratch = null;'), warmCharger, /warm native local muzzle reuses its scratch/],
+    ['one slot for all nested depths', source => {
+      assert.equal(source.split('localShotScratch[depth]').length, 3);
+      return source.replaceAll('localShotScratch[depth]', 'localShotScratch[0]');
+    }, nestedCharger, /nested native shots require different live depth scratch/],
+    ['one module-global pool for independent installs', source => changeOnce(changeOnce(source,
+      '  const localShotScratch = []; let localShotDepth = 0;', '  let localShotDepth = 0;'),
+      'export function installChargerFlight(api,completion) {',
+      'const localShotScratch = [];\nexport function installChargerFlight(api,completion) {'), installedCharger,
+    /different installations cannot share live scratch/],
+    ['unconditional reuse for remote/custom callbacks', source => changeOnce(source,
+      'reuse = actor.isLocal && this._muzzle === nativeMuzzle && this._aimFrom === nativeAimFrom', 'reuse = true'),
+    callbackCharger, /remote\/custom callbacks cannot borrow native muzzle scratch/],
+  ];
+  for (const [name, change, oracle, expected] of cases) await t.test(name, async () => {
+    const install = await chargerSubject(change);
+    assert.throws(() => oracle(install), expected, 'the same positive oracle must reject the isolated regression');
+  });
 });
