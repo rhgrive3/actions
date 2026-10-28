@@ -212,6 +212,9 @@ jobs:
       - name: Install pinned source regression and build tool
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).
+          # Rewrite only the stalled mirror before Playwright's unchanged dependency installation.
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx --no-install playwright install --with-deps chromium
       - name: Prepare persistent worker regression fixtures
         run: |
