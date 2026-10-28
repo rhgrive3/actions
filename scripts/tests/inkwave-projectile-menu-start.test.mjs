@@ -3,42 +3,43 @@ import assert from 'node:assert/strict';
 import {startProjectileThroughMenu} from '../lib/inkwave-projectile-menu-start.mjs';
 
 const canonicalConfig={mode:'turf',map:'tidewater',difficulty:'normal',duration:180,weapon:'shooter',time:'day'};
-function harness({touch=false,config=canonicalConfig,touchReject=false}={}){
- const events=[],receipt=[];
+function harness({touch=false,config=canonicalConfig,blockedFocus=false}={}){
+ const events=[],receipt=[];let focus='mode-range';
  const page={
-  locator(selector){return{
-   async click(options){assert(options.timeout>0);events.push(['click',selector]);},
-   async tap(options){assert(options.timeout>0);events.push(['tap',selector]);if(touchReject)throw Error('touch blocked');},
-   async press(key,options){assert(options.timeout>0);events.push(['press',selector,key]);}
-  };},
+  locator(selector){return{async click(){events.push(['click',selector]);},async press(key){events.push(['press',key]);},async tap(){throw Error('touch tap is not a performance admission');}};},
   mouse:{async move(x,y){events.push(['move',x,y]);}},
+  keyboard:{async press(key){events.push(['key',key]);if(key==='ArrowLeft'&&!blockedFocus)focus=focus==='mode-range'?'mode-boss':'mode-turf';}},
   async evaluate(fn){
-   if(fn.toString().includes('navigator.maxTouchPoints'))return touch;
-   if(fn.toString().includes('g.menus?._setup'))return config;
-   throw Error('unexpected browser evaluation');
+   const src=fn.toString();
+   if(src.includes('navigator.maxTouchPoints'))return touch;
+   if(src.includes('m?._focus'))return {screen:'mode',button:focus};
+   if(src.includes('g.menus?._setup'))return config;
+   throw Error('unknown page evaluation');
   }
  };
- const waitForPhase=async(_predicate,label)=>{events.push(['phase',label]);};
- return{events,receipt,page,waitForPhase};
+ return{page,events,receipt,waitForPhase:async(_fn,label)=>events.push(['phase',label])};
 }
-for(const touch of [false,true]){
- test('Turf navigation uses only native '+(touch?'touch tap':'desktop keyboard')+' activation',async()=>{
-  const h=harness({touch});
-  await startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt});
-  const activation=h.events.filter(e=>['tap','press'].includes(e[0]));
-  assert.deepEqual(activation,touch?[['tap','.iw-modesel [data-id="mode-turf"]']]:[['press','.iw-modesel [data-id="mode-turf"]','Enter']]);
-  assert.deepEqual(h.events.filter(e=>e[0]==='phase').map(e=>e[1]),['native main menu readiness','native mode menu','native setup menu']);
-  assert.deepEqual(h.events.filter(e=>e[0]==='click').map(e=>e[1]),['.iw-main [data-id="play"]','.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']);
-  assert.equal(h.receipt.filter(r=>r.event==='native-start-clicked').length,1);
- });
-}
-test('native menu configuration mismatch fails closed before START',async()=>{
+test('desktop follows existing Turf Enter button admission',async()=>{
+ const h=harness();
+ await startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt});
+ assert.deepEqual(h.events.filter(e=>e[0]==='press'),[['press','Enter']]);
+ assert.equal(h.receipt.filter(e=>e.event==='native-start-clicked').length,1);
+});
+test('touch-sized performance scenario reaches Turf via native Range/Boss/Turf navigation',async()=>{
+ const h=harness({touch:true});
+ await startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt});
+ assert.deepEqual(h.events.filter(e=>e[0]==='key').map(e=>e[1]),['ArrowLeft','ArrowLeft','Enter']);
+ assert.deepEqual(h.events.filter(e=>e[0]==='phase').map(e=>e[1]),['native main menu readiness','native mode menu','native setup menu']);
+ assert.equal(h.receipt.filter(e=>e.event==='native-start-clicked').length,1);
+});
+test('unfocused Turf rejects without Enter or START',async()=>{
+ const h=harness({touch:true,blockedFocus:true});
+ await assert.rejects(startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt}),/Native Turf keyboard focus mismatch/);
+ assert.deepEqual(h.events.filter(e=>e[0]==='key').map(e=>e[1]),['ArrowLeft','ArrowLeft']);
+ assert.equal(h.events.some(e=>e[0]==='click'&&e[1].includes('start')),false);
+});
+test('invalid map still rejects before START',async()=>{
  const h=harness({touch:true,config:{...canonicalConfig,map:'range'}});
  await assert.rejects(startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt}),/configuration mismatch/);
  assert.equal(h.events.some(e=>e[0]==='click'&&e[1].includes('start')),false);
-});
-test('touch failure never falls back to synthetic keyboard input',async()=>{
- const h=harness({touch:true,touchReject:true});
- await assert.rejects(startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt}),/touch blocked/);
- assert.equal(h.events.some(e=>e[0]==='press'),false);
 });
