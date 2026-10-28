@@ -1,6 +1,6 @@
 {
   "repository": "rhgrive3/actions",
-  "observed_at_utc": "2026-10-28T20:29:00Z",
+  "observed_at_utc": "2026-10-28T20:53:00Z",
   "scope": "new primary failures during this session, separate from initial1002historicalfailedjobarchive; secondary cancellation/evidence failures are not independent gameplay causes",
   "primary_failed_jobs": [
     {
@@ -124,9 +124,19 @@
       "followup": "Source10/10 and mixed emitted-suite10/10; source-only936-case native geometry matrix proves4800 omitted misses and3766 unchanged hits. Five mutants reject; Agent4 independent approval. Optimized-only test repair; next exact-head hosted result pending.",
       "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843380",
       "integrated_fix": "73a789978863953c625bf12b9bd6d1b08d1d6b64"
+    },
+    {
+      "pr": 1908,
+      "source": "187e4dddd46820aa6f5bef7e540fe88393bc02f1",
+      "run": 40764672581,
+      "job": 123087085459,
+      "cause": "companion exact workflow-header contract omitted newly correct emitted EDGECASE selector;2of46assertions, including no-op negative edit",
+      "fix": "2edc12f037e0041455b9bd2be7388518536cb3d3",
+      "followup": "46/46aftercompanionfix; requiredwallcoverage6cases moved intoadmissionwithonly41KBlockmetadata, combined106/106+independentreview; nextheadhostedpending. MissingTurf/launch artifacts are secondary to skipped producers.",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40764672581/job/123087085459"
     }
   ],
-  "distinct_causes": 8,
+  "distinct_causes": 9,
   "main_merge_performed": false,
   "snapshot_all_hosted_failures_resolved": false,
   "optimized_0706_patch_snapshot": {

@@ -162,3 +162,13 @@ CIのhurtbox stepは、fixtureが読む`INKWAVE_EDGECASE_SITE`を設定せずsou
 `606d6b14`（統合`73a78997`）は全8候補へのnarrowphase呼出を必須にしていたfixtureを修正する。残る候補のidentity/順序・relative endpoint・entryを元の完全scanと厳密比較し、省略された全候補が実capsule solverでnullになることを確認する。source936条件では21,816回から17,016回へ減った4,800回すべてがmissで、報告hit3,766件・stop/seen/event/lease状態が一致した。初期/終端半径、境界epsilon/equality、coherent/不連続/古いmotion、ghost、zero/NaN/short/range-clipped shot、full/partialとworld/defense stopを含み、5種類の不正cull/time対照を拒否する。
 
 全fileはsource10/10・最適化emitted選択suite10/10で成功し、Agent4が独立再実行・承認した。936条件のgeometry matrixは明示的にsourceを読む。emitted選択は元からあるreal-composed Charger helper caseに適用されるため、936件の実emitted検証とは扱わない。[比較方法・command・対象hash・限界](optimized-charger-broadphase.json)。両修正は#1907だけへ適用し、通常版のroot branchや製品runtimeを変更しない。新headの必須hosted CI成功は引き続き別途確認する。
+
+## 最適化固有の残りfixtureと契約の再発防止（20:53 UTC）
+
+最適化`0706b35a`の全8source shardが完走し、0/3/4/5/7は成功、1/2/6の失敗はそれぞれ古いbroadphase call-list、scratch名、GPU22文字列形に特定された。scratchの`c8ae9404`は実installer/dispatcherによる再利用・depth・例外unwind・installation別所有権と4mutationを確認し、source/actual emitted各16/16、Agent1が独立承認。[範囲とreceipt](optimized-charger-scratch.json)。broadphaseの`606d6b14`は、元の8caseとclip/Math.min条件を維持し、936のsource-kernel条件で全除外候補が実capsule solverでnull、命中順序等が同じことを検証。sourceとmixed emitted suite各10/10、Agent4が独立承認。[936caseがemitted全件ではないという境界を含むreceipt](optimized-charger-broadphase.json)。両方とも#1907固有のtest変更でruntimeを変更しない。
+
+通常版`187e4ddd`のcoreは、私が正しい`INKWAVE_EDGECASE_SITE`を追加した際に固定header契約の追随を漏らし、依存install前のstep7で44/46成功・2失敗となった。`2edc12f0`を`2e3c072b`へ適用し、厳密header equalityと既存の全条件を維持したまま欠落/誤siteの負の対照を追加、46/46成功。Agent6も独立承認。[再現と修正receipt](wall-edgecase-contract-repair.json)。Turf/launch artifact欠落はproducer step未実行の二次結果である。
+
+`cc17d93d`では、実際に失敗したemitted coverage契約6caseだけを必須admissionに追加した。既存のsparse payloadに必要だった追加は41,467byteのcommitted `package-lock.json`のみ。実payloadで6/6、vendor/npm/historyなし、約90ms。[依存関係の最小proof](wall-admission-lock-proof.json)の46case probeに加え、最終6case commandを別途確認した。全6ファイルを早期に重複実行すると既存の診断route契約に干渉したため採用せず、元のrouteとcoreの全commandを維持する。metadataの欠落/誤入力/重複とcommandの削除/filterを拒否し、mutation setupはassertThrowsの外で必ず実変更を確認する。関連106/106、fastの残る205/205とquick、YAML81、Agent6の独立18/18が成功。これらの数は重複し単純加算しない。
+
+現行29Open Issueと2Open PR、main `e67c636b`が変わっていないことを再取得した。`187e4ddd`のcharacter QAは20:40:36 UTCに`@rhgrive3`によって取り消され、成功・assertion失敗のどちらにも分類しない。当方はこのjobを再実行していない。過去の同一配布byteでの24/10成功とは区別する。新しい公開headの正式CIはPRチェックと本文へ反映する。#401は対象外、mainへのマージとIssueの形式的Closeは行わない。

@@ -9,6 +9,7 @@ import {preflightComposition} from '../ci/check-composition-preflight.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const checker = path.join(ROOT, 'scripts/ci/check-workflow-yaml.rb');
+const EMITTED_COVERAGE_CONTRACT = 'node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs';
 
 function fixture(body, callback) {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-ci-recurrence-'));
@@ -86,6 +87,8 @@ function assertAdmissionDag(yaml) {
   assert.match(admission, /^      - name: Reject production composition anchor drift before heavy lanes\n        run: node scripts\/ci\/check-composition-preflight\.mjs$/m);
   assert.match(admission, /^      - name: Verify source combat receipt and Boss admission fixtures\n        run: node --test scripts\/tests\/inkwave-combat-provenance\.test\.mjs scripts\/tests\/inkwave-boss-positive-proof\.test\.mjs$/m);
   assert.ok(admission.indexOf('run: node scripts/ci/check-composition-preflight.mjs') < admission.indexOf('run: node --test scripts/tests/inkwave-combat-provenance.test.mjs'), 'source admission follows production composition');
+  assert.match(admission, /^            \/package-lock\.json$/m, 'scoped contracts need only the committed dependency metadata');
+  assert.ok(admission.includes('      - name: Verify emitted coverage contracts before heavy lanes\n        run: ' + EMITTED_COVERAGE_CONTRACT + '\n'), 'emitted coverage contracts must run before heavy lanes');
   const gate = jobBlock(yaml, 'validate');
   assert.ok(gate.includes("    if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}\n"), 'validate must run for failed prerequisites in admitted full CI');
   assert.doesNotMatch(gate, /^    defaults:|^        shell:/m, 'validate uses GitHub default fail-fast shell');
@@ -141,6 +144,9 @@ test('admission DAG and final shell gate reject dependency and status bypass mut
     ['admission_preflight', s => s.replace('run: node scripts/ci/check-composition-preflight.mjs', 'run: node scripts/ci/check-composition-preflight.mjs\n        if: false')],
     ['admission_preflight', s => s.replace('run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs', 'run: echo bypass source admission')],
     ['admission_preflight', s => s.replace('run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs', 'run: node --test scripts/tests/inkwave-combat-provenance.test.mjs')],
+    ['admission_preflight', s => s.replace('run: ' + EMITTED_COVERAGE_CONTRACT, 'run: echo bypass emitted coverage contracts')],
+    ['admission_preflight', s => s.replace('run: ' + EMITTED_COVERAGE_CONTRACT, 'run: node --test --test-name-pattern=guide scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs')],
+    ['admission_preflight', s => s.replace('            /package-lock.json\n', '')],
     ['admission_preflight', s => s.replace('      - name: Reject production composition', '      - continue-on-error: true\n        name: Reject production composition')],
     ['build_site', s => s.replace('    needs: admission_preflight', '    needs: admission_preflight\n    continue-on-error: true')],
     ['validate', s => s.replace('always() && ', '')],
@@ -155,7 +161,10 @@ test('admission DAG and final shell gate reject dependency and status bypass mut
     ['validate', s => s.replace('      - name: Require every source', '      - continue-on-error: true\n        name: Require every source')],
     ['validate', s => s.replace('          test "$PREFLIGHT_RESULT" = success', '          set +e\n          test "$PREFLIGHT_RESULT" = success')],
   ];
-  for (const [name, mutate] of mutations) assert.throws(() => assertAdmissionDag(mutateJob(yaml, name, mutate)), undefined, 'mutation in ' + name + ' was accepted');
+  for (const [name, mutate] of mutations) {
+    const changed = mutateJob(yaml, name, mutate);
+    assert.throws(() => assertAdmissionDag(changed), undefined, 'mutation in ' + name + ' was accepted');
+  }
 });
 
 test('external Charger waveform research cannot auto-trigger from pull requests or pushes', () => {
