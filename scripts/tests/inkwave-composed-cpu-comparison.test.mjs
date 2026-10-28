@@ -9,3 +9,18 @@ test('comparison requires reproducible A/A and exact workload/output parity',()=
   const altered=report();mutate(altered);assert.throws(()=>compareComposedCpu(a,b,altered));assert.throws(()=>compareComposedCpu(a,altered,c));
  }
 });
+test('explicit BVH reduction mode keeps exact A/A and gameplay/render gates',()=>{
+ const a=report(),b=report(),c=report();
+ for(const r of [a,b,c])r.scenarios[0].bvh={queries:20,triangleTests:100};
+ c.scenarios[0].bvh={queries:18,triangleTests:60};
+ assert.throws(()=>compareComposedCpu(a,b,c));
+ const options={allowBvhWorkReduction:true};
+ const row=compareComposedCpu(a,b,c,options)[0];
+ assert.equal(row.bvh.policy,'explicit-non-increasing-candidate-work');
+ assert.deepEqual(row.bvh.after,c.scenarios[0].bvh);
+ for(const mutate of [r=>r.scenarios[0].bvh.queries=21,r=>r.scenarios[0].bvh.triangleTests=101,r=>r.scenarios[0].bvh.queries=-1,r=>r.scenarios[0].bvh.queries=1.5,r=>delete r.scenarios[0].bvh.triangleTests,r=>r.scenarios[0].bvh.extra=0,r=>r.scenarios[0].digests[0]++,r=>r.scenarios[0].counts[0]++,r=>r.scenarios[0].draw.calls--]){
+  const changed=structuredClone(c);mutate(changed);assert.throws(()=>compareComposedCpu(a,b,changed,options));
+ }
+ const changedRepeat=structuredClone(b);changedRepeat.scenarios[0].bvh.triangleTests--;
+ assert.throws(()=>compareComposedCpu(a,changedRepeat,c,options));
+});
