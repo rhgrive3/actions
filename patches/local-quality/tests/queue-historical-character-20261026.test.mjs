@@ -6,6 +6,8 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
+import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
+import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const oracle=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-historical-character-before-20261026.json',import.meta.url),'utf8'));
 const raw=rel=>fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
@@ -78,7 +80,11 @@ test('eyeball ring reuse observes cornea mutation between eyes and preserves acc
 });
 
 test('historical character recovery uses independently pinned 5ca sources and preserves direct outfit ownership',()=>{
- for(const[rel,entry]of Object.entries(oracle.modules)){assert.equal(sha(entry.source),entry.sha256,rel);const next=candidate(rel,raw(rel));parse(next,{ecmaVersion:'latest',sourceType:'module'});if(rel==='src/game/character-outfit.js'){assert.equal(next,raw(rel));assert.equal(adaptHistoricalCharacter20261026(rel,next),next);}else{assert.equal(adaptHistoricalCharacter20261026(rel,entry.source),next);assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);}}
+ for(const[rel,entry]of Object.entries(oracle.modules)){assert.equal(sha(entry.source),entry.sha256,rel);const next=candidate(rel,raw(rel));parse(next,{ecmaVersion:'latest',sourceType:'module'});if(rel==='src/game/character-outfit.js'){assert.equal(next,raw(rel));assert.equal(adaptHistoricalCharacter20261026(rel,next),next);}else{const historical=adaptHistoricalCharacter20261026(rel,entry.source);
+    // The terminal 2026-10-26 GPU/CPU adapter follows historical character
+    // recovery in the production composer. Compare the complete exact output.
+    const fullyComposed=adaptCombatGpuCpuPerfect(rel,historical,replaceOnce);
+    assert.equal(fullyComposed,next,rel);assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);}}
  assert.equal(adaptHistoricalCharacter20261026('unrelated','same'),'same');
 });
 test('actual Three.js surfaces, tube attributes and suction geometry preserve exact bytes with half as many arc mappings',()=>{
