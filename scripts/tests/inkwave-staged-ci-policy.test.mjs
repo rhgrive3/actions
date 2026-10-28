@@ -22,11 +22,12 @@ function expression(block) {
   if (condition.startsWith('${{ ') && condition.endsWith(' }}')) condition = condition.slice(4, -3);
   return condition;
 }
-function active(source, name, {event = 'pull_request', draft = false, diagnostic = false, offload = false} = {}) {
+function active(source, name, {event = 'pull_request', draft = false, diagnostic = false, offload = false, ciOnly = false} = {}) {
   const inputs = {diagnostic_only: diagnostic};
   const github = {event_name: event, event: {pull_request: {draft}}, head_ref: 'feature/test'};
   const vars = {INKWAVE_CIRCLECI_OFFLOAD: offload ? 'enabled' : ''};
-  return Boolean(Function('github', 'inputs', 'vars', 'always', 'return (' + expression(job(source, name)) + ')')(github, inputs, vars, () => true));
+  const needs = {build_site: {outputs: {contracts_only: ciOnly ? 'true' : 'false'}}};
+  return Boolean(Function('github', 'inputs', 'vars', 'needs', 'always', 'return (' + expression(job(source, name)) + ')')(github, inputs, vars, needs, () => true));
 }
 
 test('draft PRs omit all heavy jobs; ready PRs and main preserve the full native suite', () => {
@@ -68,7 +69,7 @@ test('fast preflight binds exact PR head without installing browsers or running 
 
 test('full gate requires native or offloaded browser evidence and both independent regressions', () => {
   const gate = job(full, 'validate');
-  assert.match(gate, /needs: \[validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
+  assert.match(gate, /needs: \[build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
   for (const required of ['CORE_RESULT', 'PATCH_RESULT', 'CIRCLECI_RESULT', 'BROWSER_RESULT', 'SEVEN_RESULT', 'RESOURCE_RESULT'])
     assert.match(gate, new RegExp('test "\\$' + required + '" = (?:success|skipped)'));
   assert.match(gate, /test "\$BROWSER_RESULT" = skipped/);
@@ -175,4 +176,27 @@ test('specialized CI preserves relevant paths and skips unrelated test/CI-only e
   assert(!routed(native,'.github/workflows/zevant-account.yml'));
   assert(!routed(native,'.github/workflows/inkwave-weapon-lod-boundaries.yml'));
   assert(routed(native,'patches/native-stages/runtime/native-world.mjs'));
+});
+
+test('CI-only exact-tree acceptance never substitutes success for unverified source code',()=>{
+  const build=job(full,'build_site');
+  assert.match(build,/contracts_only: \$\{\{ steps\.scope\.outputs\.contracts_only \}\}/);
+  assert.match(build,/node scripts\/ci\/inkwave-full-scope\.mjs/);
+  assert.match(build,/CONTRACT_SCOPE_BASE: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
+  assert.match(build,/if: steps\.scope\.outputs\.contracts_only == 'true'/);
+  assert.match(build,/node scripts\/ci\/run-inkwave-test-suite\.mjs verifier/);
+  assert.match(build,/node scripts\/ci\/run-inkwave-test-suite\.mjs runner-contracts/);
+  assert.match(build,/if: steps\.scope\.outputs\.contracts_only != 'true'/);
+  assert(active(full,'build_site',{ciOnly:true}));
+  assert(active(full,'validate',{ciOnly:true}));
+  for(const name of ['validate_core','patch_tests','browser','seven_claims','resource_paint_continuation']){
+    assert(!active(full,name,{ciOnly:true}),'CI-only must skip heavy '+name);
+    assert(active(full,name,{ciOnly:false}),'changed game code must run '+name);
+  }
+  const gate=job(full,'validate');
+  assert.match(gate,/test "\$BUILD_RESULT" = success/);
+  assert.match(gate,/if \[ "\$CONTRACTS_ONLY" = true \]; then/);
+  for(const env of ['CORE_RESULT','PATCH_RESULT','CIRCLECI_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'])
+    assert(gate.includes('test "$'+env+'" = skipped'),'unexecuted '+env+' must be skipped for CI-only gate');
+  assert.match(gate,/test "\$CONTRACTS_ONLY" = false/);
 });
