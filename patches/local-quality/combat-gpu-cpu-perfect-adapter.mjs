@@ -22,11 +22,13 @@ export const adaptCombatGpuCpuPerfectTargets = Object.freeze([
   'src/game/character-weapons.js',
   'src/world/paint.js',
   'src/game/actor.js',
+  'src/game/inkFlightRuntime.js',
   'src/game/weapons.js',
   'src/game/bots.js',
   'src/boss/boss.js',
   'src/game/match.js',
   'src/game/player.js',
+  'src/game/cameraRig.js',
   'src/ui/hud.js',
   'src/net/netmatch.js',
   'src/main.js',
@@ -626,6 +628,7 @@ export class SwimWake {`,
       replaceOnce,
       'CPU-07a fast-path empty clouds and reuse _rainHits Map in _updateClouds'
     );
+
   }
 
   if (rel === 'src/game/bots.js') {
@@ -845,6 +848,285 @@ export class SwimWake {`,
     }]));`;
         code = applyIdempotent(code, beforeBlockD8, exactAfterDD, replaceOnce, 'CPU-17b single-pass sc, l, and rl packing in NetMatch._sendTick (d88aa683)');
       }
+    }
+    if (rel === 'src/game/cameraRig.js') {
+      // MOV-03: Remove redundant unconditional gc.updateProjectionMatrix() after projectionDirty guard.
+      code = applyIdempotent(
+        code,
+        `    if (projectionDirty) gc.updateProjectionMatrix();
+    gc.updateProjectionMatrix();
+    gc.updateMatrixWorld();`,
+        `    if (projectionDirty) gc.updateProjectionMatrix();
+    gc.updateMatrixWorld();`,
+        replaceOnce,
+        'MOV-03 remove duplicate unconditional gameCam.updateProjectionMatrix in CameraRig.update'
+      );
+    }
+
+    if (rel === 'src/game/player.js') {
+      // MOV-04a: Reuse cached effective weapon descriptor in _assistTarget and computeAim instead of per-frame object spread.
+      code = applyIdempotent(
+        code,
+        `    const fwd = cam.getWorldDirection(_fwd);
+    const w = (a.weapon?.behaviorKind || a.weapon?.kind === 'catalog') ? {
+      ...a.weapon,
+      kind: ({
+        stringer: 'charger',
+        splatana: 'charger',
+        brush: 'roller',
+        brella: 'shooter',
+      }[a.weapon.behaviorKind || a.weapon.modelKind] || a.weapon.behaviorKind || a.weapon.modelKind),
+    } : a.weapon;`,
+        `    const fwd = cam.getWorldDirection(_fwd);
+    let w = a.weapon;
+    if (w?.behaviorKind || w?.kind === 'catalog') {
+      const bk = w.behaviorKind || w.modelKind;
+      const rk = bk === 'stringer' || bk === 'splatana' ? 'charger' : bk === 'brush' ? 'roller' : bk === 'brella' ? 'shooter' : bk;
+      const ew = this._effWeapon || (this._effWeapon = {});
+      if (this._effWeaponSrc !== w) { this._effWeaponSrc = w; Object.assign(ew, w); }
+      else { ew.range = w.range; ew.rangeMin = w.rangeMin; ew.rangeMax = w.rangeMax; ew.reticleRange = w.reticleRange; ew.combatRange = w.combatRange; }
+      ew.kind = rk;
+      w = ew;
+    }`,
+        replaceOnce,
+        'MOV-04a reuse _effWeapon in PlayerController._assistTarget'
+      );
+      code = applyIdempotent(
+        code,
+        `    // is the crosshair point inside the weapon's effective range? (HUD reticle state)
+    const w = (a.weapon?.behaviorKind || a.weapon?.kind === 'catalog') ? {
+      ...a.weapon,
+      kind: ({
+        stringer: 'charger',
+        splatana: 'charger',
+        brush: 'roller',
+        brella: 'shooter',
+      }[a.weapon.behaviorKind || a.weapon.modelKind] || a.weapon.behaviorKind || a.weapon.modelKind),
+    } : a.weapon;`,
+        `    // is the crosshair point inside the weapon's effective range? (HUD reticle state)
+    let w = a.weapon;
+    if (w?.behaviorKind || w?.kind === 'catalog') {
+      const bk = w.behaviorKind || w.modelKind;
+      const rk = bk === 'stringer' || bk === 'splatana' ? 'charger' : bk === 'brush' ? 'roller' : bk === 'brella' ? 'shooter' : bk;
+      const ew = this._effWeapon || (this._effWeapon = {});
+      if (this._effWeaponSrc !== w) { this._effWeaponSrc = w; Object.assign(ew, w); }
+      else { ew.range = w.range; ew.rangeMin = w.rangeMin; ew.rangeMax = w.rangeMax; ew.reticleRange = w.reticleRange; ew.combatRange = w.combatRange; }
+      ew.kind = rk;
+      w = ew;
+    }`,
+        replaceOnce,
+        'MOV-04a reuse _effWeapon in PlayerController.computeAim'
+      );
+      // MOV-04b: Reuse _padMapAllies and eliminate per-tick direction/shoulder array allocations in respawn & pad map navigation.
+      code = applyIdempotent(
+        code,
+        `    this.updatePadMapSelection(standard);
+    const allies = G.actors.filter(o => o.team === a.team && o !== a);
+    // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.
+    const touchIndex = touch?.jumpTarget ?? -1; if (touch) touch.jumpTarget = -1;
+    for (let i = 0; i < 4; i++) {
+      const key = 'Digit' + (i + 1), direction = [14,12,15,13][i];`,
+        `    this.updatePadMapSelection(standard);
+    const allies = this._padMapAllies || (this._padMapAllies = []); allies.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o.team === a.team && o !== a) allies.push(o); }
+    // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.
+    const touchIndex = touch?.jumpTarget ?? -1; if (touch) touch.jumpTarget = -1;
+    for (let i = 0; i < 4; i++) {
+      const key = 'Digit' + (i + 1), direction = i === 0 ? 14 : i === 1 ? 12 : i === 2 ? 15 : 13;`,
+        replaceOnce,
+        'MOV-04b reuse _padMapAllies and branch direction lookup in updateRespawnNavigation'
+      );
+      code = applyIdempotent(
+        code,
+        `    if (!this.mapHeld || !standardPad) { this.padJumpTarget = null; this.padJumpIndex = -1; return; }
+    const allies = G.actors.filter(o => o.team === a.team && o !== a);
+    let selected = false;
+    // W3C standard positions: D-pad left/up/right/down, LB/RB cycle Bubblers, right face = Nintendo A.
+    const directions = [14, 12, 15, 13], confirm = 1;
+    const bubblers = G.bigBubblerJumpTargets?.(a.team) || [];
+    for (let i = 0; i < directions.length; i++) if (inp.padPressed.has(directions[i])) {
+      this.padJumpTarget = i === 3 ? { spawn: true } : { actor: allies[i] || null };
+      this._mapGyroYaw = this._mapGyroPitch = 0;
+      this._mapGyroCursor = false; this.mapGyroTarget = null;
+      selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(directions[i]);
+    }
+    for (const [button, delta] of [[4, -1], [5, 1]]) if (inp.padPressed.has(button)) {
+      const current = this.padJumpTarget?.bubblerIndex ?? (delta > 0 ? -1 : bubblers.length);
+      const index = (current + delta + bubblers.length) % bubblers.length;
+      this.padJumpTarget = bubblers.length ? { bubbler: bubblers[index], bubblerIndex: index } : null;
+      this._mapGyroYaw = this._mapGyroPitch = 0;
+      this._mapGyroCursor = false; this.mapGyroTarget = null;
+      selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(button);
+    }`,
+        `    if (!this.mapHeld || !standardPad) { this.padJumpTarget = null; this.padJumpIndex = -1; return; }
+    const allies = this._padMapAllies || (this._padMapAllies = []); allies.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o.team === a.team && o !== a) allies.push(o); }
+    let selected = false;
+    // W3C standard positions: D-pad left/up/right/down, LB/RB cycle Bubblers, right face = Nintendo A.
+    const confirm = 1;
+    const bubblers = G.bigBubblerJumpTargets?.(a.team) || [];
+    for (let i = 0; i < 4; i++) {
+      const dirBtn = i === 0 ? 14 : i === 1 ? 12 : i === 2 ? 15 : 13;
+      if (inp.padPressed.has(dirBtn)) {
+        this.padJumpTarget = i === 3 ? { spawn: true } : { actor: allies[i] || null };
+        this._mapGyroYaw = this._mapGyroPitch = 0;
+        this._mapGyroCursor = false; this.mapGyroTarget = null;
+        selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(dirBtn);
+      }
+    }
+    for (let s = 0; s < 2; s++) {
+      const button = s === 0 ? 4 : 5, delta = s === 0 ? -1 : 1;
+      if (inp.padPressed.has(button)) {
+        const current = this.padJumpTarget?.bubblerIndex ?? (delta > 0 ? -1 : bubblers.length);
+        const index = (current + delta + bubblers.length) % bubblers.length;
+        this.padJumpTarget = bubblers.length ? { bubbler: bubblers[index], bubblerIndex: index } : null;
+        this._mapGyroYaw = this._mapGyroPitch = 0;
+        this._mapGyroCursor = false; this.mapGyroTarget = null;
+        selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(button);
+      }
+    }`,
+        replaceOnce,
+        'MOV-04b reuse _padMapAllies and unroll direction/shoulder loops in updatePadMapSelection'
+      );
+    }
+
+    if (rel === 'src/game/actor.js') {
+      // MOV-05: Reuse _stormIntent and preserve jumpPressed consumption on this.intent during Ink Storm hold.
+      code = applyIdempotent(
+        code,
+        `    const stormHolding = isStormHolding(this);
+    const intent = stormHolding ? { ...this.intent, fire: false, sub: false, special: false } : this.intent;`,
+        `    const stormHolding = isStormHolding(this);
+    let intent = this.intent;
+    if (stormHolding) {
+      const si = this._stormIntent || (this._stormIntent = { move: intent.move, squid: false, jump: false, jumpPressed: undefined, fire: false, sub: false, special: false });
+      si.move = intent.move; si.squid = intent.squid; si.jump = intent.jump; si.jumpPressed = intent.jumpPressed;
+      si.fire = false; si.sub = false; si.special = false;
+      if (intent.jumpPressed !== undefined) intent.jumpPressed = false;
+      intent = si;
+    }`,
+        replaceOnce,
+        'MOV-05 reuse _stormIntent and clear this.intent.jumpPressed during Ink Storm hold'
+      );
+    }
+
+    if (rel === 'src/game/bots.js') {
+      // MOV-08a: Reuse _paintChoices, _paintChoicePool, _mates, and _triedGoals in BotMind._pickPaintGoal.
+      code = applyIdempotent(
+        code,
+        `    const choices = [];
+    const enemyPad = G.level.spawnPads[1 - a.team];
+    const ownPad = G.level.spawnPads[a.team];
+    const total = ownPad.distanceTo(enemyPad);
+    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);`,
+        `    const choices = this._paintChoices || (this._paintChoices = []); choices.length = 0;
+    const choicePool = this._paintChoicePool || (this._paintChoicePool = []);
+    const enemyPad = G.level.spawnPads[1 - a.team];
+    const ownPad = G.level.spawnPads[a.team];
+    const total = ownPad.distanceTo(enemyPad);
+    const mates = this._mates || (this._mates = []); mates.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o !== a && o.team === a.team && o.bot) mates.push(o); }`,
+        replaceOnce,
+        'MOV-08a reuse _paintChoices, _paintChoicePool, and _mates in BotMind._pickPaintGoal'
+      );
+      code = applyIdempotent(
+        code,
+        `      choices.push({ id, score });
+    }
+    this.goalTimer = 4 + Math.random() * 3;
+    choices.sort((a, b) => b.score - a.score);
+    // Try at most three distinct goals. A one-way drop or isolated height must
+    // not trigger sixteen new paint scans on every simulation tick.
+    const tried = new Set();`,
+        `      let entry = choicePool[choices.length];
+      if (!entry) entry = choicePool[choices.length] = { id: 0, score: 0 };
+      entry.id = id; entry.score = score;
+      choices.push(entry);
+    }
+    this.goalTimer = 4 + Math.random() * 3;
+    choices.sort((a, b) => b.score - a.score);
+    // Try at most three distinct goals. A one-way drop or isolated height must
+    // not trigger sixteen new paint scans on every simulation tick.
+    const tried = this._triedGoals || (this._triedGoals = new Set()); tried.clear();`,
+        replaceOnce,
+        'MOV-08a pool choice entries and reuse _triedGoals Set in BotMind._pickPaintGoal'
+      );
+    }
+
+    if (rel === 'src/game/character.js') {
+      // MOV-08b: Fast-path unit-scale world quaternion in Character._updateSquid climb orientation and avoid redundant _v5.copy.
+      code = applyIdempotent(
+        code,
+        `      this.model.matrixWorld.decompose(_v3, _q3, _v4);
+      q.copy(_q3).invert().multiply(_q2);
+      _v5.copy(this.root.getWorldPosition(_v5)).addScaledVector(UP, 0.26 + 0.025 * climbPulse * climbV).addScaledVector(n, -this.climbInset - 0.07);`,
+        `      const _cms = this.model.scale, _crs = this.root?.scale;
+      if (_cms.x === 1 && _cms.y === 1 && _cms.z === 1 && (!_crs || (_crs.x === 1 && _crs.y === 1 && _crs.z === 1))) {
+        _q3.setFromRotationMatrix(this.model.matrixWorld);
+      } else {
+        this.model.matrixWorld.decompose(_v3, _q3, _v4);
+      }
+      q.copy(_q3).invert().multiply(_q2);
+      this.root.getWorldPosition(_v5).addScaledVector(UP, 0.26 + 0.025 * climbPulse * climbV).addScaledVector(n, -this.climbInset - 0.07);`,
+        replaceOnce,
+        'MOV-08b fast-path unit-scale world quaternion in Character._updateSquid climb'
+      );
+    }
+
+    if (rel === 'src/game/inkFlightRuntime.js') {
+      // CMB-04: Add finite XZ segment AABB broadphase precheck before capsuleEntry in InkFlightRuntime.stepHead.
+      code = applyIdempotent(
+        code,
+        `      for (const actor of G.actors) {
+        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
+        const friendly = actor.team === p.team;
+        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
+        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);
+        const motion = coherentMotionStart(actor);`,
+        `      let segBoundsReady = false, segMinX = 0, segMaxX = 0, segMinZ = 0, segMaxZ = 0;
+      for (const actor of G.actors) {
+        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
+        const friendly = actor.team === p.team;
+        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
+        const motion = coherentMotionStart(actor);
+        if (!motion) {
+          if (!segBoundsReady) {
+            const pr = p.inkPlayerRadius;
+            if (Number.isFinite(p.prev.x) && Number.isFinite(p.prev.z) && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.z) && Number.isFinite(pr) && pr >= 0) {
+              segMinX = Math.min(p.prev.x, p.pos.x) - pr; segMaxX = Math.max(p.prev.x, p.pos.x) + pr;
+              segMinZ = Math.min(p.prev.z, p.pos.z) - pr; segMaxZ = Math.max(p.prev.z, p.pos.z) + pr;
+              segBoundsReady = true;
+            } else segBoundsReady = null;
+          }
+          if (segBoundsReady && Number.isFinite(actor.pos?.x) && Number.isFinite(actor.pos?.z)) {
+            const reach = (Number.isFinite(PLAYER?.radius) && PLAYER.radius > 0 ? PLAYER.radius : 0.38) + 0.25;
+            if (actor.pos.x < segMinX - reach || actor.pos.x > segMaxX + reach || actor.pos.z < segMinZ - reach || actor.pos.z > segMaxZ + reach) continue;
+          }
+        }
+        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);`,
+        replaceOnce,
+        'CMB-04 add finite XZ segment AABB broadphase precheck in InkFlightRuntime.stepHead'
+      );
+    }
+
+    if (rel === 'src/game/bots.js') {
+      // CMB-06: Squared-distance pre-rejection before Math.sqrt in BotMind._perceive.
+      code = applyIdempotent(
+        code,
+        `    for (const e of G.actors) {
+      if (e.team === a.team || !e.alive) continue;
+      const d = e.pos.distanceTo(a.pos);
+      if (d > aw) continue;`,
+        `    const awSq = aw * aw;
+    for (const e of G.actors) {
+      if (e.team === a.team || !e.alive) continue;
+      const dSq = e.pos.distanceToSquared(a.pos);
+      if (dSq > awSq) continue;
+      const d = Math.sqrt(dSq);
+      if (d > aw) continue;`,
+        replaceOnce,
+        'CMB-06 squared-distance pre-rejection in BotMind._perceive'
+      );
     }
     return code;
 }
