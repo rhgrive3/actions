@@ -1,0 +1,116 @@
+name: INKWAVE Charger reticle native diagnostic
+on:
+  push:
+    branches: ['diagnostic/charger-reticle-lock-20261028']
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/charger-reticle-lock-20261028'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact isolated harness lineage and allowed paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.workflow_sha }}" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD^)" = 66d8c5724b1fbd34b31d83880da43cb049098a7b
+          test "$(git rev-parse HEAD^^{tree})" = bd322eb534e0d43a19f397c0417f69234449e854
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-charger-reticle-diagnostic.yml' 'scripts/check-inkwave-charger-reticle-native.mjs' 'scripts/tests/inkwave-charger-reticle-native.test.mjs' | sort)
+          actual=$(git diff --no-renames --name-only HEAD^ HEAD | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:.circleci/config.yml)" = 767ec177bd70a8e4406f541220e8d5a702f4e123
+          test "$(git rev-parse HEAD:.github/workflows/bootstrap-hex-worker-repos.yml)" = 2ce623b462808c864dca70470a4e694b935acd36
+          test "$(git rev-parse HEAD:.github/workflows/hex-fast-tail-known.yml)" = bbe5bd2da259be754732584fd00a5ff8c1a6ad57
+          test "$(git rev-parse HEAD:scripts/check-inkwave-charger-reticle-native.mjs)" = 12a9f9eb8ad886d4f1a3a3991154e5c689aedcdb
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-charger-reticle-native.test.mjs)" = bf5dd0a406ac26f4001e410820b5c5adbed5f99d
+      - name: Check out exact published baseline
+        uses: actions/checkout@v4
+        with:
+          ref: a8877a086cc377074a07de60eba5f17c7b1213a1
+          path: baseline
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Check out exact immutable Charger candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 66d8c5724b1fbd34b31d83880da43cb049098a7b
+          path: candidate
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact heads and trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C baseline rev-parse HEAD)" = a8877a086cc377074a07de60eba5f17c7b1213a1
+          test "$(git -C baseline rev-parse HEAD^{tree})" = 5ae30f11763b952df917d7b272a884e4fbc8a98e
+          test "$(git -C candidate rev-parse HEAD)" = 66d8c5724b1fbd34b31d83880da43cb049098a7b
+          test "$(git -C candidate rev-parse HEAD^{tree})" = bd322eb534e0d43a19f397c0417f69234449e854
+          test -z "$(git -C baseline status --porcelain)"
+          test -z "$(git -C candidate status --porcelain)"
+      - name: Install pinned tools and secure Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Check diagnostic contracts
+        run: node --test scripts/tests/inkwave-charger-reticle-native.test.mjs
+      - name: Build both exact source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          ln -s "$GITHUB_WORKSPACE/node_modules" baseline/node_modules
+          ln -s "$GITHUB_WORKSPACE/node_modules" candidate/node_modules
+          (cd baseline && node scripts/build-inkwave.mjs inkwave-public _site)
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public _site)
+      - name: Observe trusted native Charger actions on both builds
+        shell: bash
+        run: |
+          set +e
+          mkdir -p evidence
+          timeout --signal=TERM --kill-after=10s 780s node scripts/check-inkwave-charger-reticle-native.mjs --root "$GITHUB_WORKSPACE/baseline" --site "$GITHUB_WORKSPACE/baseline/_site" --sha a8877a086cc377074a07de60eba5f17c7b1213a1 --out "$GITHUB_WORKSPACE/evidence/baseline"
+          before=$?
+          timeout --signal=TERM --kill-after=10s 780s node scripts/check-inkwave-charger-reticle-native.mjs --root "$GITHUB_WORKSPACE/candidate" --site "$GITHUB_WORKSPACE/candidate/_site" --sha 66d8c5724b1fbd34b31d83880da43cb049098a7b --out "$GITHUB_WORKSPACE/evidence/candidate"
+          after=$?
+          printf 'baseline=%s candidate=%s\n' "$before" "$after" > evidence/exit-codes.txt
+          for side in baseline candidate; do
+            code=$before; [ "$side" = candidate ] && code=$after
+            if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+              SIDE="$side" CODE="$code" node --input-type=module - <<'MARK'
+          import fs from 'node:fs';
+          const file=`evidence/${process.env.SIDE}/charger-reticle-result.json`;
+          fs.mkdirSync(`evidence/${process.env.SIDE}`,{recursive:true});
+          const r=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):{schema:1};
+          r.status='failed';r.externalTimeout=process.env.CODE==='124';r.externalKill=process.env.CODE==='137';r.error ||= 'External timeout or kill; browser cleanup outcome unknown';
+          fs.writeFileSync(file,JSON.stringify(r,null,2)+'\n');
+          MARK
+            fi
+          done
+          if [ "$before" -ne 0 ] || [ "$after" -ne 0 ]; then echo 'DIAGNOSTIC FAILED; inspect retained receipts'; exit 1; fi
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const a=JSON.parse(fs.readFileSync('evidence/baseline/charger-reticle-result.json'));
+          const b=JSON.parse(fs.readFileSync('evidence/candidate/charger-reticle-result.json'));
+          const summary={status:'inconclusive',reason:'RAF observation cannot prove first synchronous HUD rebuild; CSS classes do not establish pixel visibility',baselineUI:a.uiStatus,candidateUI:b.uiStatus,baseline:a.cases.map(c=>({name:c.name,observation:c.classification?.observation})),candidate:b.cases.map(c=>({name:c.name,observation:c.classification?.observation}))};
+          fs.writeFileSync('evidence/comparison.json',JSON.stringify(summary,null,2)+'\n');console.log(JSON.stringify(summary));
+          if(b.uiStatus==='classes-missing'){console.error('Candidate charged class missing; inspect evidence.');process.exitCode=1;}
+          else if(b.uiStatus!=='classes-present'){console.error('INCONCLUSIVE: target class observations did not qualify; this is not a product failure.');process.exitCode=1;}
+
+          JS
+      - name: Preserve unmodified screenshots and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: charger-native-reticle-diagnostic-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 7
