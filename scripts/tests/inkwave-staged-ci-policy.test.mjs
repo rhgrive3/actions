@@ -173,6 +173,7 @@ test('specialized CI preserves relevant paths and skips unrelated test/CI-only e
   assert(routed(reopened,'patches/splatoon3/runtime/roller.mjs'));
   assert(routed(paint,'patches/local-quality/tests/paint-hotpath.test.mjs'));
   assert(routed(frame,'patches/local-quality/tests/runtime-frame-scratch.test.mjs'));
+  assert.match(native,/cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
   assert(!routed(native,'.github/workflows/zevant-account.yml'));
   assert(!routed(native,'.github/workflows/inkwave-weapon-lod-boundaries.yml'));
   assert(routed(native,'patches/native-stages/runtime/native-world.mjs'));
