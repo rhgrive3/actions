@@ -2,16 +2,17 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {loadNative} from './prop-retention-fixture.mjs';
 const native=await loadNative(true),raw=await loadNative(false);
 const hash=a=>crypto.createHash('sha256').update(Buffer.from(a.buffer,a.byteOffset,a.byteLength)).digest('hex');
-// An omitted all-zero UV stream has the same default shader coordinates as
-// the retained all-zero attribute. Keep every nonzero UV and all other bytes.
-const state=kit=>[...kit._meshes,...kit._inst].map(m=>({name:m.name,count:m.count,attrs:Object.fromEntries(Object.entries(m.geometry.attributes).filter(([k,a])=>k!=='uv'||a.array.some(v=>v!==0)).map(([k,a])=>[k,hash(a.array)])),index:m.geometry.index&&hash(m.geometry.index.array)}));
+// Solid built-in materials do not read UVs; compare those separately from
+// mapped/custom materials, whose UV bytes must remain identical to baseline.
+const uvUsed=m=>!m.material || !(m.material.isMeshBasicMaterial || m.material.isMeshStandardMaterial) || m.material.onBeforeCompile!==native.THREE.Material.prototype.onBeforeCompile || Object.values(m.material).some(v=>v?.isTexture);
+const state=(kit,{rendered=false}={})=>[...kit._meshes,...kit._inst].map(m=>({name:m.name,count:m.count,attrs:Object.fromEntries(Object.entries(m.geometry.attributes).filter(([k])=>!rendered||k!=='uv'||uvUsed(m)).map(([k,a])=>[k,hash(a.array)])),index:m.geometry.index&&hash(m.geometry.index.array)}));
 function make(N){const k=new N.PropKit(new N.THREE.Scene(),{quality:'high'}),cols=N.dressingFor('halyard').flatMap(p=>k.add(p.type,p).colliders);return{k,cols,refs:[...k._buckets.values()].flat().map(p=>p.g)};}
 test('Halyard final buffers and collisions survive last-owner eviction and exact re-entry',t=>{
- const a=make(raw);a.k.build();const expected=state(a.k);a.k.dispose();
+ const a=make(raw);a.k.build();const expected=state(a.k,{rendered:true});a.k.dispose();
  for(let cycle=0;cycle<3;cycle++){
   const b=make(native),c=make(native),shared=new Set(b.refs.filter(g=>c.refs.includes(g))),released=new Set();for(const g of shared)g.addEventListener('dispose',()=>released.add(g));
-  b.k.build();c.k.build();assert.deepEqual(state(b.k),expected);assert.deepEqual(state(c.k),expected);assert.deepEqual(b.cols,a.cols);
-  const live=new Set(c.k._inst.map(m=>m.geometry));b.k.dispose();assert.equal(released.size,0,'other pending/live pack user retains source templates');c.k.update(1/60,cycle);c.k.build();assert.deepEqual(state(c.k),expected);
+  b.k.build();c.k.build();assert.deepEqual(state(b.k,{rendered:true}),expected);assert.deepEqual(state(c.k,{rendered:true}),expected);assert.deepEqual(state(c.k),state(b.k),'all candidate bytes match across owners');assert.deepEqual(b.cols,a.cols);
+  const accepted=state(c.k),live=new Set(c.k._inst.map(m=>m.geometry));b.k.dispose();assert.equal(released.size,0,'other pending/live pack user retains source templates');c.k.update(1/60,cycle);c.k.build();assert.deepEqual(state(c.k),accepted,'re-entry retains all candidate bytes');
   c.k.dispose();assert.ok(released.size>0,'private dock/vessel generation is released');t.diagnostic(JSON.stringify({cycle,releasedGeometries:released.size,releasedLogicalBytes:[...released].reduce((n,g)=>n+Object.values(g.attributes).reduce((m,a)=>m+a.array.byteLength,g.index?.array.byteLength||0),0)}));for(const g of live)assert.ok(!shared.has(g),'live instance sources have separate ownership');
   const n=released.size;c.k.dispose();assert.equal(released.size,n,'idempotent disposal');
  }
