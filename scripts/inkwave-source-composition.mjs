@@ -1,3 +1,4 @@
+import { adaptLockOptionRecovery } from '../patches/reliability/lock-option-recovery-adapter.mjs';
 import { adaptDriveCoreQueue } from '../patches/local-quality/drive-core-queue-adapter.mjs';
 import { adaptRemainingGameplay20261026 } from '../patches/local-quality/queue-remaining-gameplay-20261026-adapter.mjs';
 import { adaptRemainingInkFlight20261026 } from '../patches/local-quality/queue-remaining-inkflight-20261026-adapter.mjs';
@@ -117,7 +118,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptHistoricalSourceMotion20261026(rel, code);
   code = adaptHistoricalCharacter20261026(rel, code);
   code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
-  return adaptPaintRenderRegions(rel, code, replaceOnce);
+  return adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

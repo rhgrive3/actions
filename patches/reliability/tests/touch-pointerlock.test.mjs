@@ -57,7 +57,7 @@ async function boot({exit='async',request='immediate'}={}) {
   mouse(target=canvas){event('pointerdown',{pointerType:'mouse',target});},move(){event('mousemove',{movementX:1,movementY:2});},
   overlay:(kind='look')=>overlayTarget(kind),
   completePendingLock(){assert.equal(typeof resolvePendingLock,'function');resolvePendingLock();},
-  rejectPendingLock(){assert.equal(typeof rejectPendingLock,'function');rejectPendingLock(Error('unadjusted movement unavailable'));},
+  rejectPendingLock(name='NotSupportedError'){assert.equal(typeof rejectPendingLock,'function');const error=Error('unadjusted movement unavailable');error.name=name;rejectPendingLock(error);},
   lockError(){for(const fn of docListeners.get('pointerlockerror')||[])fn();},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
@@ -104,6 +104,12 @@ test('#1396 modern error event preserves the eligible plain-pointer fallback',as
  const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
  h.lockError();h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
  assert.equal(h.requests(),2);h.completePendingLock();assert.equal(h.input.locked,true);
+});
+for(const name of ['Error','NotAllowedError','SecurityError'])test(`#1396 ${name} rejection never auto-retries or remembers a preference`,async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();h.rejectPendingLock(name);
+ await Promise.resolve();await Promise.resolve();await Promise.resolve();
+ assert.equal(h.requests(),1,name+' must not trigger automatic plain request');
+ assert.equal(h.input._pointerLockPlainPreference??null,null,name+' must not establish a preference');
 });
 test('#1396 legacy event-only error retires a failed request for a new user gesture',async()=>{
  const h=await boot();h.unlocked();h.input.requestLock();h.lockError();h.input.requestLock();

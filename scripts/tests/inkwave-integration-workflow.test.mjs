@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import {assertSourceSuiteCoverage} from '../ci/inkwave-source-coverage.mjs';
 import './inkwave-live-test-log.test.mjs';
@@ -481,4 +482,36 @@ test('provisioning and evidence guards reject disabled, reordered, missing and u
     assert.notEqual(changed, workflow);
     assert.throws(() => assertCoreEvidenceAndProvisioning(changed));
   }
+});
+
+
+test('pointer-lock successful-pair source and emitted tests are mandatory, isolated and source-bound',()=>{
+ const check = candidate => {
+  const core=candidate.slice(candidate.indexOf('  validate_core:'),candidate.indexOf('  patch_tests:'));
+  const one=name=>{const marker='      - name: '+name;assert.equal(core.split(marker).length,2,'exactly one '+name);const at=core.indexOf(marker),end=core.indexOf('\n      - ',at+marker.length);return {at,body:core.slice(at,end<0?undefined:end)}};
+  const source=one('Verify pointer-lock successful-pair source regressions'),emitted=one('Verify emitted pointer-lock successful-pair regressions');
+  const clean='env -u TEST_FROM -u TEST_TO -u TEST_EMITTED -u INKWAVE_TEST_ROOT -u INKWAVE_TEST_ADAPTER -u INKWAVE_UPSTREAM_SOURCE -u INKWAVE_BUILT_SITE -u INKWAVE_POINTER_LOCK_SITE -u INKWAVE_ESBUILD_MODULE';
+  for(const item of [source,emitted]){assert.doesNotMatch(item.body,/\n\s*(?:if:|continue-on-error:)|\|\|/);assert.ok(item.body.includes(clean),'overrides must be removed');assert.ok(item.body.includes('node scripts/tests/lock-option-recovery.test.mjs'));}
+  assert.doesNotMatch(source.body,/INKWAVE_POINTER_LOCK_SITE="\$PWD\/_site"/);assert.ok(emitted.body.includes('INKWAVE_POINTER_LOCK_SITE="$PWD/_site"'));
+  assert.ok(source.at>core.indexOf('Verify immutable checkout identity'));assert.ok(source.at<core.indexOf('actions/download-artifact@v4'));
+  assert.ok(emitted.at>core.indexOf('test "$(cat _site-source-sha.txt)" = "$SOURCE_SHA"'));assert.ok(emitted.at>core.indexOf("EXPECTED_CONTENT_HASH='${{ needs.build_site.outputs.content_hash }}'"));
+ };
+ check(workflow);
+ for(const broken of [workflow.replace('      - name: Verify pointer-lock successful-pair source regressions','      - name: disabled source'),workflow.replace('      - name: Verify emitted pointer-lock successful-pair regressions','      - name: disabled emitted'),workflow.replace('      - name: Verify pointer-lock successful-pair source regressions\n','      - name: Verify pointer-lock successful-pair source regressions\n        if: false\n'),workflow.replace('      - name: Verify emitted pointer-lock successful-pair regressions\n','      - name: Verify emitted pointer-lock successful-pair regressions\n        continue-on-error: true\n'),workflow.replace('env -u TEST_FROM','env'),workflow.replace('INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node scripts/tests/lock-option-recovery.test.mjs','node scripts/tests/lock-option-recovery.test.mjs')])assert.throws(()=>check(broken));
+});
+
+
+test('pointer-lock batch supervisor rejects partial, duplicate, failed and overflow case reports',()=>{
+ const src=fs.readFileSync(new URL('./lock-option-recovery.test.mjs',import.meta.url),'utf8');
+ const start=src.indexOf("if (!Object.hasOwn(process.env,'TEST_FROM')) {"),end=src.indexOf('\nconst ROOT =',start);assert.ok(start>=0&&end>start);
+ const program=src.slice(start,end).replaceAll('fileURLToPath(import.meta.url)',"'/repo/scripts/tests/lock-option-recovery.test.mjs'");
+ const run=bad=>{
+  const proc={env:{},execPath:'/node',cwd:()=>'/repo',stdout:{write(){}},stderr:{write(){}},exit(code){throw {exit:code}}};
+  const spawn=(_node,_args,opts)=>{const n=Number(opts.env.TEST_FROM),count=bad==='overflow'?41:38,results=[];for(let i=n;i<Math.min(n+5,count);i++)results.push({ordinal:i,name:'case-'+i,passed:true});
+   if(n===0&&bad==='missing')results.pop();if(n===0&&bad==='duplicate')results[1].name=results[0].name;if(n===0&&bad==='failed')results[0].passed=false;if(n===0&&bad==='wrong-ordinal')results[0].ordinal=6;
+   const report={candidateOverride:bad==='override',sourceRoot:bad==='wrong-source'?'/other':'/repo',site:bad==='wrong-site'?'/other':null,ordinalCount:count,results};
+   return {status:bad==='child-exit'&&n===0?1:0,stdout:JSON.stringify(report),stderr:''};};
+  try{vm.runInNewContext(program,{process:proc,spawnSync:spawn,path,console:{error(){}}});assert.fail('supervisor must exit')}catch(e){if(!Object.hasOwn(e,'exit'))throw e;return e.exit;}
+ };
+ assert.equal(run('good'),0);for(const bad of ['overflow','missing','duplicate','failed','wrong-ordinal','override','wrong-source','wrong-site','child-exit'])assert.equal(run(bad),1,bad);
 });
