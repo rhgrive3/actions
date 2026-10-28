@@ -9,10 +9,11 @@ export function sweepNativeCatalogueSphere(physics,from,to,r0,r1,out,skipGrates,
  const level=physics.level;
  let state=catalogueViews.get(level);
  if(!state){
-  const view={get blocks(){return level.blocks;},get faces(){return level.faces;},queryBlocks:(...args)=>level.queryDynamicBlocks(...args)};
-  state={physics:{level:view},hit:{point:scratchVector(from),normal:scratchVector(from)},sourceHit:{point:scratchVector(from),normal:scratchVector(from)}};catalogueViews.set(level,state);
+  const view={get blocks(){return level.blocks;},get faces(){return level.faces;},queryBlocks:(minX,minZ,maxX,maxZ,out)=>level.queryDynamicBlocks(minX,minZ,maxX,maxZ,out)};
+  state={physics:{level:view},options:{ignoreGrates:false,endRadius:0},hit:{point:scratchVector(from),normal:scratchVector(from)},sourceHit:{point:scratchVector(from),normal:scratchVector(from)}};catalogueViews.set(level,state);
  }
- const source=level.triangleWorld.sweepSphere(from,to,r0,{ignoreGrates:skipGrates,endRadius:r1},state.sourceHit);
+ state.options.ignoreGrates=skipGrates;state.options.endRadius=r1;
+ const source=level.triangleWorld.sweepSphere(from,to,r0,state.options,state.sourceHit);
  const moving=level.blocks.length===level.staticBlockCount?null:sweepOBB(state.physics,from,to,r0,r1,state.hit,skipGrates);
  out.hit=false;out.dist=from.distanceTo(to);out.block=out.face=out.triangle=-1;out.u=out.v=0;
  if(moving?.hit&&(!source||moving.dist<source.distance)){
@@ -31,10 +32,11 @@ export function sweepNativeCatalogueSphere(physics,from,to,r0,r1,out,skipGrates,
 export function sweepNativeLevelSphere(level,from,to,radius,out,skipGrates,sweepOBB){
  let state=dynamicViews.get(level);
  if(!state){
-  const view={get blocks(){return level.blocks;},get faces(){return level.faces;},queryBlocks:(...args)=>level.queryDynamicBlocks(...args)};
-  state={view,hit:{point:scratchVector(from),normal:scratchVector(from)},sourceHit:{point:scratchVector(from),normal:scratchVector(from)}};dynamicViews.set(level,state);
+  const view={get blocks(){return level.blocks;},get faces(){return level.faces;},queryBlocks:(minX,minZ,maxX,maxZ,out)=>level.queryDynamicBlocks(minX,minZ,maxX,maxZ,out)};
+  state={view,options:{ignoreGrates:false},hit:{point:scratchVector(from),normal:scratchVector(from)},sourceHit:{point:scratchVector(from),normal:scratchVector(from)}};dynamicViews.set(level,state);
  }
- const source=level.triangleWorld.sweepSphere(from,to,radius,{ignoreGrates:skipGrates},state.sourceHit);
+ state.options.ignoreGrates=skipGrates;
+ const source=level.triangleWorld.sweepSphere(from,to,radius,state.options,state.sourceHit);
  const moving=level.blocks.length===level.staticBlockCount?null:sweepOBB(state.view,from,to,radius,state.hit,skipGrates);
  out.hit=false;out.dist=from.distanceTo(to);out.block=out.face=out.triangle=-1;out.u=out.v=0;
  if(moving?.hit&&(!source||moving.dist<source.distance)){
