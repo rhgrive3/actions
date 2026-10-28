@@ -7,7 +7,7 @@ import http from 'node:http';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
-import {verifyRuntimeBuild, hash, persistentDirectory, persistentBrowserTemp} from './lib/inkwave-runtime-evidence.mjs';
+import {verifyRuntimeBuild, hash, persistentDirectory, persistentBrowserTemp, indexPrebuiltRuntimeAssets} from './lib/inkwave-runtime-evidence.mjs';
 import {summarizeGcTrace} from './lib/inkwave-cpu-trace.mjs';
 import {installCpuGameplayDigest} from './lib/inkwave-cpu-gameplay-digest.mjs';
 import {installCpuCounters} from './lib/inkwave-cpu-counters.mjs';
@@ -21,6 +21,7 @@ const frames=Number(get('--frames','600')),hz=Number(get('--hz','60'));
 if(!Number.isInteger(frames)||frames<30||frames>18000||![30,60,120].includes(hz))throw Error('Invalid frames/hz');
 const stages=get('--stages','range,tidewater,kelpline').split(',');
 const render=process.argv.includes('--render'),wrappers=!process.argv.includes('--no-wrappers');
+const allocations=process.argv.includes('--allocations');
 const quality=get('--quality','high');
 const temp=persistentBrowserTemp(path.join(evidence,'tmp'));
 for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=temp;
@@ -28,7 +29,7 @@ const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html'
 // Local prepared reference assets intentionally live outside public artifacts.
 // Authenticate their private integrity tables against the build configuration;
 // runtime loadNativeData independently checks each payload too.
-const privateArtifacts={};
+const privateArtifacts=indexPrebuiltRuntimeAssets(site,manifest);
 if(manifest.build.nativeStages.mode==='local-prepared')for(const stage of manifest.build.nativeStages.stages){
  const prefix='_native-reference-assets/'+stage.id+'/',bytes=fs.readFileSync(path.join(site,prefix,'integrity.json'));
  if(hash(bytes)!==stage.integritySha256)throw Error('Private native integrity table changed');
@@ -51,11 +52,12 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
 const report={schema:2,sourceSha,contentHash:manifest.contentHash,revision:manifest.build.revision,
  harness:Object.fromEntries(['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))])),
- environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,viewport:[960,640],render,wrappers},
+ environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,viewport:[960,640],render,wrappers,allocations},
  limits:['Linux Chromium/SwiftShader; no physical iPad or FPS evidence.',
  'Fixed-step CPU transaction; loading, async cold startup and presentation pacing are excluded.',
  'Inclusive scopes overlap. Wrappers and GC tracing perturb timings; use --no-wrappers as a control.',
  'GC pause intervals are observed V8 trace events on the measured renderer thread, not inferred from heap drops.',
+ 'Optional allocation sampling estimates collected and live allocation sites, includes harness work, and perturbs timing; do not use sampled runs for performance claims.',
  'Draw frames and GPU allocations are measured-window deltas; raw startup/process totals and active-scene workload are retained separately.'],scenarios:[]};
 try{
  browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -114,6 +116,7 @@ try{
   await cdp.send('Performance.enable',{timeDomain:'threadTicks'});
   const before=await cdp.send('Performance.getMetrics');
   await cdp.send('Tracing.start',{categories:'v8,devtools.timeline,blink.user_timing',transferMode:'ReturnAsStream'});
+  if(allocations)await cdp.send('HeapProfiler.startSampling',{samplingInterval:32768,includeObjectsCollectedByMajorGC:true,includeObjectsCollectedByMinorGC:true});
   const result=await page.evaluate(({frames,hz,wrappers})=>{
    const G=window.__G,g=window.__inkwave,acc={},restore=[];
    const wrap=(obj,key,name)=>{const fn=obj?.[key];if(typeof fn!=='function')return;
@@ -149,6 +152,21 @@ try{
     categories:Object.fromEntries(Object.entries(acc).sort((a,b)=>b[1].ms-a[1].ms).map(([k,v])=>[k,{msPerTick:v.ms/ticks,callsPerTick:v.calls/ticks}])),
     draw:counters.draw,resources:counters.resources,scene:counters.scene,rawCounters:counters.raw,contextLost:G.renderer.getContext().isContextLost()};
   },{frames,hz,wrappers});
+  if(allocations){
+   const {profile}=await cdp.send('HeapProfiler.stopSampling');
+   fs.writeFileSync(path.join(evidence,stage+'-allocations.json'),JSON.stringify(profile)+'\n');
+   const sites=new Map();
+   const visit=node=>{
+    const {functionName,url,lineNumber,columnNumber}=node.callFrame;
+    const key=JSON.stringify([functionName,url,lineNumber,columnNumber]);
+    if(node.selfSize)sites.set(key,(sites.get(key)||0)+node.selfSize);
+    for(const child of node.children)visit(child);
+   };
+   visit(profile.head);
+   result.allocationSample={intervalBytes:32768,scope:'estimated allocation sites including collected objects; harness included',
+    totalEstimatedBytes:[...sites.values()].reduce((a,b)=>a+b,0),
+    topSites:[...sites].sort((a,b)=>b[1]-a[1]).slice(0,30).map(([key,bytes])=>({frame:JSON.parse(key),estimatedBytes:bytes}))};
+  }
   const completed=new Promise(resolve=>cdp.once('Tracing.tracingComplete',resolve));
   await cdp.send('Tracing.end');const {stream}=await completed;
   let trace='';for(;;){const part=await cdp.send('IO.read',{handle:stream});trace+=part.base64Encoded?Buffer.from(part.data,'base64').toString():part.data;if(part.eof)break;}await cdp.send('IO.close',{handle:stream});
