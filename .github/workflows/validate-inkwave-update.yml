@@ -38,6 +38,7 @@ on:
       - "scripts/fixtures/inkwave-murals-ba5a2d57.js.txt"
       - "tests/issue-queue/**"
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - 'scripts/check-weapons-reference.mjs'
       - 'scripts/verify-completion-sources.mjs'
@@ -108,7 +109,7 @@ on:
         type: boolean
         default: false
 concurrency:
-  group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}
+  group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}
   cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}
 permissions:
   contents: read
@@ -122,7 +123,7 @@ env:
   REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}
 jobs:
   build_site:
-    if: inputs.diagnostic_only != true
+    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -170,7 +171,7 @@ jobs:
 
   validate_core:
     needs: build_site
-    if: inputs.diagnostic_only != true
+    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     # CPU source regressions live in the eight patch shards; keep browser-backed source and emitted checks here.
     timeout-minutes: 90
@@ -533,7 +534,7 @@ jobs:
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
     # Default GitHub full-suite behavior unless explicitly offloaded.
-    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     # Shard 2 has repeatedly received an external runner shutdown (SIGTERM 143).
     # Keep its full tests on a separate supported runner without bypassing acceptance.
     runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}
@@ -602,7 +603,7 @@ jobs:
   # Required /validate passes only when core and all eight regression shards pass.
   circleci_offload_gate:
     # Refuse stale/partial/unrelated CircleCI results. Native perf branches stay on GitHub.
-    if: ${{ (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     needs: validate_core
     runs-on: ubuntu-latest
     timeout-minutes: 85
@@ -638,8 +639,8 @@ jobs:
           node scripts/ci/check-circleci-offload.mjs
 
   validate:
-    if: ${{ always() && inputs.diagnostic_only != true }}
-    needs: [validate_core, patch_tests, circleci_offload_gate]
+    if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
+    needs: [validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -648,22 +649,29 @@ jobs:
           CORE_RESULT: ${{ needs.validate_core.result }}
           PATCH_RESULT: ${{ needs.patch_tests.result }}
           CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+          SEVEN_RESULT: ${{ needs.seven_claims.result }}
+          RESOURCE_RESULT: ${{ needs.resource_paint_continuation.result }}
           OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
         run: |
-          printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$OFFLOAD_ACTIVE"
+          printf 'validate_core=%s patch_tests=%s circleci=%s browser=%s seven=%s resource=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$BROWSER_RESULT" "$SEVEN_RESULT" "$RESOURCE_RESULT" "$OFFLOAD_ACTIVE"
           test "$CORE_RESULT" = success
+          test "$SEVEN_RESULT" = success
+          test "$RESOURCE_RESULT" = success
           if [ "$OFFLOAD_ACTIVE" = true ]; then
             test "$PATCH_RESULT" = skipped
             test "$CIRCLECI_RESULT" = success
+            test "$BROWSER_RESULT" = skipped
           else
             test "$PATCH_RESULT" = success
             test "$CIRCLECI_RESULT" = skipped
+            test "$BROWSER_RESULT" = success
           fi
 
   browser:
     needs: build_site
     # No offload until CircleCI is connected and enabled.
-    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     # Catalogue Wiper capture requires Chromium's real namespace sandbox.
     # Ubuntu 24.04 AppArmor blocks unprofiled Playwright binaries; route only
     # catalog to supported Ubuntu 22.04 rather than disabling browser sandbox.
@@ -1257,7 +1265,7 @@ jobs:
           retention-days: 14
 
   seven_claims:
-    if: inputs.diagnostic_only != true
+    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -1332,7 +1340,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   resource_paint_continuation:
-    if: inputs.diagnostic_only != true
+    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

@@ -64,6 +64,7 @@ on:
       - 'patches/splatoon3/kit-rescue-adapter.mjs'
       - 'patches/splatoon3/agent3-weapon-physics-adapter.mjs'
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - 'inkwave-public/src/core/**'
       - 'inkwave-public/src/game/**'
@@ -129,10 +130,11 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: inkwave-main-weapons-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: inkwave-main-weapons-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   numerical-main:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -178,6 +180,7 @@ jobs:
       - name: Verify 11.3.0 attack volumes, motion phases and remote state
         run: node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/catalog-dualies-phases-1130.test.mjs patches/splatoon3/tests/catalog-dualies-motion-1130.test.mjs patches/splatoon3/tests/catalog-brella-1130.test.mjs patches/splatoon3/tests/brella-physics.test.mjs patches/splatoon3/tests/catalog-hard-cancel.test.mjs patches/splatoon3/tests/catalog-saber-melee.test.mjs patches/splatoon3/tests/catalog-saber-step.test.mjs patches/splatoon3/tests/catalog-saber-motion.test.mjs patches/splatoon3/tests/catalog-saber-visual-wire.test.mjs patches/splatoon3/tests/stringer-source-1130.test.mjs patches/splatoon3/tests/stringer-tilt-motion.test.mjs patches/network-replication/tests/catalog-dualies-1130.test.mjs patches/network-replication/tests/brella-presentation.test.mjs
   browser-origins:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -229,6 +232,7 @@ jobs:
           path: work/weapon-stage-gaps/
           if-no-files-found: ignore
   roller-grip-comparison:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

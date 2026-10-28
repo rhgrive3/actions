@@ -300,7 +300,7 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assertShardEvidencePolicy(workflow);
-  assert.ok(gate.includes('needs: [validate_core, patch_tests, circleci_offload_gate]'));
+  assert.ok(gate.includes('needs: [validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'));
   assert.ok(gate.includes('always()'));
   assert.ok(gate.includes('test "$CORE_RESULT" = success'));
   assert.ok(gate.includes('test "$PATCH_RESULT" = success'));

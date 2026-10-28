@@ -23,8 +23,8 @@ test('A+ replaces obsolete PR checks while retaining every main and manual run',
 test('required checks keep their identities and cancellation cannot skip the required Validate fan-in',()=>{
  assert.match(quality,/^  verify-aplus-suite:\n/m);assert.doesNotMatch(quality,/^    if:.*cancelled\(\)/m);
  const source=read('validate-inkwave-update.yml'),gate=source.slice(source.indexOf('  validate:'),source.indexOf('  browser:'));
- assert.match(gate,/if: \$\{\{ always\(\) && inputs\.diagnostic_only != true \}\}/);
- assert.match(gate,/needs: \[validate_core, patch_tests, circleci_offload_gate\]/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
+ assert.match(gate,/always\(\) && inputs\.diagnostic_only != true && \(github\.event_name != 'pull_request' \|\| github\.event\.pull_request\.draft == false\)/);
+ assert.match(gate,/needs: \[validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
 });
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
@@ -209,7 +209,7 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  const gate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
  const body=gate.split('        run: |\n')[1];assert(body,'required gate shell');
  const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
- const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,...env},encoding:'utf8'});
+ const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,BROWSER_RESULT:env.OFFLOAD_ACTIVE==='true'?'skipped':'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',...env},encoding:'utf8'});
  for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
   const env={OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
   const result=run(shell,env);assert.ifError(result.error);
@@ -219,6 +219,10 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   ['test "$CORE_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
   ['test "$PATCH_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
   ['test "$CIRCLECI_RESULT" = success',{OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
+  ['test "$BROWSER_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',BROWSER_RESULT:'failure'}],
+  ['test "$BROWSER_RESULT" = skipped',{OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:'failure'}],
+  ['test "$SEVEN_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',SEVEN_RESULT:'failure'}],
+  ['test "$RESOURCE_RESULT" = success',{OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',RESOURCE_RESULT:'failure'}],
  ]){
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);

@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
 
 concurrency:
   # Cancel obsolete PR-head checks; keep every main push and manually dispatched run.
@@ -16,6 +17,8 @@ permissions:
 
 jobs:
   verify-aplus-suite:
+    # Drafts use the exact-head fast preflight; ready PRs and main retain this full gate.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
