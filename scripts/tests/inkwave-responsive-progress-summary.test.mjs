@@ -85,6 +85,9 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
     .replace('  emitFailedResponsiveProgress(row.ok, { shardDir: resultDir, engine, name, startedAt });\n', '');
   const dir = path.join(root, 'integration'), scripts = path.join(dir, 'scripts');
   fs.mkdirSync(path.join(scripts, 'lib'), { recursive: true });
+  fs.mkdirSync(path.join(scripts, 'ci'), { recursive: true });
+  fs.copyFileSync(new URL('../ci/inkwave-responsive-child-pool.mjs', import.meta.url), path.join(scripts, 'ci/inkwave-responsive-child-pool.mjs'));
+
   fs.copyFileSync(new URL('../lib/inkwave-responsive-progress-summary.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-progress-summary.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-session-retry.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-session-retry.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-animation-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-animation-diagnostics.mjs'));

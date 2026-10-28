@@ -1,0 +1,77 @@
+name: INKWAVE focused CI repair regressions
+on:
+  push:
+    branches:
+      - fix/inkwave-ci-stabilization-20261028
+    paths:
+      - '.github/workflows/inkwave-ci-repair-focused.yml'
+      - 'scripts/**'
+      - 'patches/**'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-focused-repair-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused:
+    name: Repair regressions (${{ matrix.lane }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [contracts, pointerlock, motion, world, audio]
+    env:
+      LANE: ${{ matrix.lane }}
+      INKWAVE_UPSTREAM_SOURCE: ${{ github.workspace }}/inkwave-public
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact audited dependency lock
+        run: npm ci --no-audit --no-fund
+      - name: Execute only previously failing source regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$LANE" in
+            contracts)
+              ruby scripts/ci/check-workflow-yaml.rb .github/workflows
+              node --experimental-vm-modules --test --test-concurrency=1 \
+                scripts/tests/inkwave-owner-clock-diagnostic.test.mjs \
+                scripts/tests/inkwave-responsive-progress-summary.test.mjs \
+                scripts/tests/inkwave-source-coverage.test.mjs \
+                scripts/tests/continuous-browser-video.test.mjs \
+                scripts/tests/inkwave-added-ci-contracts.test.mjs
+              ;;
+            pointerlock)
+              node --experimental-vm-modules --test --test-concurrency=1 \
+                patches/reliability/tests/touch-pointerlock.test.mjs
+              ;;
+            motion)
+              node --experimental-vm-modules --test --test-concurrency=1 \
+                patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs \
+                patches/local-quality/tests/queue-historical-character-20261026.test.mjs \
+                patches/local-quality/tests/drive-visual-audio.test.mjs
+              ;;
+            world)
+              node --experimental-vm-modules --test --test-concurrency=1 \
+                patches/local-quality/tests/world-cache-queue.test.mjs \
+                patches/local-quality/tests/added-assets-decor-parity.test.mjs \
+                patches/local-quality/tests/added-assets-render-parity.test.mjs \
+                patches/local-quality/tests/queue-remaining-paint-20261026.test.mjs
+              ;;
+            audio)
+              node --experimental-vm-modules --test --test-concurrency=1 \
+                patches/splatoon3/tests/added-audio-sharing.test.mjs \
+                patches/splatoon3/tests/audio-v11-real-only.test.mjs
+              ;;
+            *) echo "Unknown focused lane: $LANE" >&2; exit 1 ;;
+          esac
