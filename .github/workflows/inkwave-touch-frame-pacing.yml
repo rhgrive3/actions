@@ -1,6 +1,7 @@
 name: INKWAVE touch frame pacing
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - 'patches/loading-cache/tests/cargo-offline-precache.test.mjs'
       - "patches/local-quality/**"
@@ -17,6 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   frame-pacing:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
