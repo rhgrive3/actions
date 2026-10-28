@@ -72,6 +72,43 @@ export function sampleStats(values){
  return{n:a.length,mean:a.reduce((sum,value)=>sum+value,0)/a.length,median:a.length%2?a[middle]:(a[middle-1]+a[middle])/2,p95:a[Math.min(a.length-1,Math.floor(a.length*.95))],max:a.at(-1)};
 }
 
+// Native prebuilt payloads intentionally sit outside the revision manifest.
+// Admit their exact paths through the stage record sealed by that manifest;
+// the local server still checks each requested body's hash before serving it.
+export function indexPrebuiltRuntimeAssets(site, manifest) {
+ const artifacts = {};
+ const safe = value => typeof value === 'string' && value.length > 0 &&
+  !path.isAbsolute(value) && !value.includes('\\') && !value.includes('\0') &&
+  value.split('/').every(part => part && part !== '.' && part !== '..');
+ const add = (name, receipt) => {
+  if (!safe(name) || !/^[a-f0-9]{64}$/.test(receipt?.sha256) ||
+      !Number.isSafeInteger(receipt.bytes) || receipt.bytes < 0)
+   throw Error('Invalid prebuilt runtime receipt: ' + name);
+  if (artifacts[name] && artifacts[name] !== receipt.sha256)
+   throw Error('Conflicting prebuilt runtime receipt: ' + name);
+  artifacts[name] = receipt.sha256;
+ };
+ for (const [id, sealed] of Object.entries(manifest.build?.nativeStages?.prebuilt?.stages || {})) {
+  if (!/^[-a-z0-9]+$/.test(id)) throw Error('Invalid prebuilt stage id');
+  const prefix = 'native-prebuilt/' + id + '/', name = prefix + 'stage.json';
+  const bytes = fs.readFileSync(path.join(site, name));
+  if (bytes.length !== sealed.bytes || hash(bytes) !== sealed.stageSha256)
+   throw Error('Prebuilt stage record changed: ' + id);
+  add(name, {bytes: sealed.bytes, sha256: sealed.stageSha256});
+  const record = JSON.parse(bytes);
+  if (record.id !== id) throw Error('Prebuilt stage identity mismatch: ' + id);
+  for (const array of Object.values(record.arrays || {})) for (const chunk of array.chunks || []) {
+   if (!safe(chunk.file)) throw Error('Invalid prebuilt chunk path');
+   add(prefix + chunk.file, chunk);
+  }
+  for (const pack of record.manifest?.prebuiltTexturePacks || []) {
+   if (!safe(pack.file) || !pack.file.startsWith('packs/')) throw Error('Invalid prebuilt pack path');
+   add('native-prebuilt/' + pack.file, pack);
+  }
+ }
+ return artifacts;
+}
+
 export function invalidWindows(scenarios,fixed){
  return scenarios.flatMap(s=>s.runs.filter(r=>fixed?r.counts.frame!==30:r.frames.n<30).map(r=>({scenario:s.scenario,repeat:r.repeat,menu:r.menu})));
 }
