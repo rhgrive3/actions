@@ -33,6 +33,7 @@ export function installWeaponAudioEngine(Engine){
     return originalDef.call(this,name);
   };
   p.weaponBank=function(){if(!this.ctx)return null;if(!this._weaponBank||this._weaponBank.ctx!==this.ctx){
+    this._warmCombatCueBank=null; // No strong hold on the previous AudioContext's decoded resources.
     this._weaponBank?.dispose();this._weaponBank=new WeaponSoundBank(this.ctx,{realOnly:true,audibleShotFallback:true});
     this._realS3Loader=new RealS3SampleLoader(this._weaponBank);
   }return this._weaponBank;};
@@ -64,8 +65,13 @@ export function installWeaponAudioEngine(Engine){
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
-      for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
-        loader?.ensure(cue,'fire')?.catch(()=>{});
+      // Combat sounds belong to the AudioContext's shared bank, not each
+      // weapon. Warm exactly once per bank and refresh on context replacement.
+      if(this._warmCombatCueBank!==bank){
+        this._warmCombatCueBank=bank;
+        for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
+          loader?.ensure(cue,'fire')?.catch(()=>{});
+      }
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
         // (stream) recordings. Demand-page both while the loadout is active.
@@ -258,7 +264,7 @@ export function installWeaponAudioEngine(Engine){
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmCombatCueBank=null;this._warmWeapons?.clear();};
   p.prewarmChargerChargeRise=function(weaponId='charger',chargeTime=1){
     if(!this.ctx||!usesChargerRise(weaponId))return false;
     // Pre-stretch the Splat Charger recorded rise in an offline Worker,

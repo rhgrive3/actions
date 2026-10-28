@@ -100,19 +100,16 @@ export function adaptMotionSampleFkRange(rel, code, replaceOnce) {
       'this.bodyBalance.add(idleProfile,1);',
       'this.bodyBalance.add(idleProfile,1,this.bodyBalance._centerFk);',
       'motion idle balance centre range');
-    // applyBody runs retarget.apply, which ends by updating the whole kid
-    // subtree, then retarget.ground. Only the activation crossfade touches
-    // bone transforms between the two.
+    // Keep the activation marker compatible with the upstream retarget rewrite.
+    // adaptGroundContactFk below defers its obsolete full-subtree refresh.
     code = replaceOnce(code,
       '  if(activation<1)for(let i=0;i<this.character.boneList.length;i++){',
       '  if(activation<1)this.retarget._kidWorldFresh=false;\n  if(activation<1)for(let i=0;i<this.character.boneList.length;i++){',
       'retarget kid world invalidated by activation blend');
   }
   if (rel === 'src/game/motion/retarget.js') {
-    // ground()/protectTurningFeet() start by updating the complete root
-    // subtree. When apply() has just updated the kid subtree and no transform
-    // changed since, recomputing it reproduces the same matrices; the root,
-    // its ancestors and its other children are still updated.
+    // Preserve guarded upstream anchors until the final contact specialization
+    // below replaces this historical full-tree handoff.
     code = replaceOnce(code,
       ' apply(pose,{upper=true,aimPitch=0,rootScale=1,trajectory=pose,pelvisTrajectory=null}={}) {\n',
       ' _rootWorld(){\n' +
@@ -136,5 +133,71 @@ export function adaptMotionSampleFkRange(rel, code, replaceOnce) {
       ' protectTurningFeet(){\n  const c=this.character;\n  this._rootWorld();',
       'retarget turning feet reuse fresh kid world');
   }
+  return adaptGroundContactFk(rel, code, replaceOnce);
+}
+
+/**
+ * Build-only contact-phase FK specialization. No physics, sampling cadence,
+ * geometry, pose coefficients or contact mathematics are changed.
+ *
+ * The final renderer refreshes the complete graph. Before that boundary, the
+ * contact solver reads the kid matrix and the two leg subtrees only; weapon
+ * and eye world-space consumers explicitly refresh their own ancestor paths.
+ * This rewrite runs LAST, after retarget-branch-update and quality adapters.
+ */
+export function adaptGroundContactFk(rel, code, replaceOnce) {
+  if (rel !== 'src/game/motion/retarget.js') return code;
+  code = replaceOnce(code,
+    ' _rootWorld(){\n' +
+    '  const c=this.character,fresh=this._kidWorldFresh;this._kidWorldFresh=false;\n' +
+    '  if(!fresh||c.kid.parent!==c.root||!c.root.matrixAutoUpdate){c.root.updateWorldMatrix(true,true);return;}\n' +
+    '  c.root.updateWorldMatrix(true,false);\n' +
+    '  for(const child of c.root.children)if(child!==c.kid)child.updateWorldMatrix(false,true,true);\n' +
+    ' }',
+    ` _rootWorld(){
+  const c=this.character,root=c.root,model=c.model,kid=c.kid,hips=c.bones.hips;
+  this._kidWorldFresh=false;
+  if(!model||model.parent!==root||kid.parent!==model||hips.parent!==kid||
+     this.contacts[0].limb.up.parent!==hips||this.contacts[1].limb.up.parent!==hips){
+   root.updateWorldMatrix(true,true);return;
+  }
+  // Preserve Three's dirty/force propagation even with manually managed matrices.
+  // Only the contact consumers need world transforms before rendering.
+  let force=!!(root.matrixAutoUpdate||root.matrixWorldNeedsUpdate);
+  root.updateWorldMatrix(true,false);
+  let next=force||model.matrixAutoUpdate||model.matrixWorldNeedsUpdate;
+  model.updateWorldMatrix(false,false,force);force=!!next;
+  next=force||kid.matrixAutoUpdate||kid.matrixWorldNeedsUpdate;
+  kid.updateWorldMatrix(false,false,force);force=!!next;
+  next=force||hips.matrixAutoUpdate||hips.matrixWorldNeedsUpdate;
+  hips.updateWorldMatrix(false,false,force);force=!!next;
+  for(const f of this.contacts)f.limb.up.updateWorldMatrix(false,true,force);
+ }`, 'contact FK: update only read branches');
+  code = replaceOnce(code,
+    '  c.kid.updateWorldMatrix(true,true);this._kidWorldFresh=true;\n }\n applyAccessories(',
+    '  // Local leg IK has no world-space reader until ground/protectTurningFeet.\n' +
+    '  this._kidWorldFresh=false;\n }\n applyAccessories(',
+    'contact FK: defer unused pre-contact tree walk');
+  code = replaceOnce(code,
+    'invRot=c.kid.getWorldQuaternion(this.groundInvQ).invert();',
+    'invRot=(c.kid.matrixWorld.decompose(this.ccdA,this.groundInvQ,this.ccdB),this.groundInvQ.invert());',
+    'contact FK: read refreshed kid rotation');
+  code = replaceOnce(code,
+    'p=bone.getWorldPosition(f.ankle),q=bone.getWorldQuaternion(f.worldQ);',
+    'p=f.ankle.setFromMatrixPosition(bone.matrixWorld),q=(bone.matrixWorld.decompose(this.ccdA,f.worldQ,this.ccdB),f.worldQ);',
+    'contact FK: read refreshed foot pose');
+  code = replaceOnce(code,
+    'const hip=limb.up.getWorldPosition(this.v2),reach=',
+    'const hip=this.v2.setFromMatrixPosition(limb.up.matrixWorld),reach=',
+    'contact FK: read refreshed thigh position');
+  // Other adapters may insert an offscreen early-return before this anchor.
+  code = replaceOnce(code,
+    'c.kid.updateWorldMatrix(true,true);\n  for(let side=0;side<2;side++){',
+    'c.bones.hips.updateWorldMatrix(true,false);\n  for(let side=0;side<2;side++){',
+    'contact FK: defer unrelated descendants after pelvis correction');
+  code = replaceOnce(code,
+    'f.limb.up.updateWorldMatrix(true,true);f.bone.getWorldPosition(f.actual);',
+    'f.limb.up.updateWorldMatrix(true,true);f.actual.setFromMatrixPosition(f.bone.matrixWorld);',
+    'contact FK: read refreshed solved foot');
   return code;
 }

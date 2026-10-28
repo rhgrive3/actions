@@ -47,6 +47,7 @@
           "patches/local-quality/tests/nav-heuristic.test.mjs",
           "patches/local-quality/tests/pose-rotation.test.mjs",
           "patches/local-quality/tests/motion-fk-hotpath.test.mjs",
+          "patches/local-quality/tests/normal-play-fk-hitch-regression.test.mjs",
           "patches/local-quality/tests/squid-rapid-idle-regression.test.mjs",
           "patches/local-quality/tests/prop-atlas.test.mjs",
           "patches/local-quality/tests/prop-retention.test.mjs",
