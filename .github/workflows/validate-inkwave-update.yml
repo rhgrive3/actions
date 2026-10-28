@@ -655,12 +655,14 @@ jobs:
 
   validate:
     if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
-    needs: [validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]
+    needs: [build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Require every source and patch regression to pass
         env:
+          BUILD_RESULT: ${{ needs.build_site.result }}
+          CONTRACTS_ONLY: ${{ needs.build_site.outputs.contracts_only }}
           CORE_RESULT: ${{ needs.validate_core.result }}
           PATCH_RESULT: ${{ needs.patch_tests.result }}
           CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}
@@ -669,7 +671,20 @@ jobs:
           RESOURCE_RESULT: ${{ needs.resource_paint_continuation.result }}
           OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
         run: |
-          printf 'validate_core=%s patch_tests=%s circleci=%s browser=%s seven=%s resource=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$BROWSER_RESULT" "$SEVEN_RESULT" "$RESOURCE_RESULT" "$OFFLOAD_ACTIVE"
+          printf 'build=%s scope=%s core=%s patch=%s circleci=%s browser=%s seven=%s resource=%s offload=%s\n' "$BUILD_RESULT" "$CONTRACTS_ONLY" "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$BROWSER_RESULT" "$SEVEN_RESULT" "$RESOURCE_RESULT" "$OFFLOAD_ACTIVE"
+          test "$BUILD_RESULT" = success
+          if [ "$CONTRACTS_ONLY" = true ]; then
+            # Scope was proven by an exact commit/base tree diff in build_site;
+            # CI contracts were executed in that same mandatory job.
+            test "$CORE_RESULT" = skipped
+            test "$PATCH_RESULT" = skipped
+            test "$CIRCLECI_RESULT" = skipped
+            test "$BROWSER_RESULT" = skipped
+            test "$SEVEN_RESULT" = skipped
+            test "$RESOURCE_RESULT" = skipped
+            exit 0
+          fi
+          test "$CONTRACTS_ONLY" = false
           test "$CORE_RESULT" = success
           test "$SEVEN_RESULT" = success
           test "$RESOURCE_RESULT" = success
