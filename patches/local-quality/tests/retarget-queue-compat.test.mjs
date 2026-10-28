@@ -22,6 +22,21 @@ test('visual adapter accepts exact post-FK anchors only; missing or repeated inp
  for(const anchor of [ccd,init,fk,forward])for(const replacement of ['',anchor+'\n'+anchor])assert.throws(()=>adaptRemainingVisualQueue20261027(rel,input.replace(anchor,replacement)),/Remaining visual queue .*expected 1 anchors/);
  assert.equal(adaptRemainingVisualQueue20261027('src/other.js',input),input);
 });
+test('exact existing shared quaternion stays single and partial shared state fails closed',()=>{
+ const replacements=[[init,init+'this.groundForwardQ=new THREE.Quaternion();'],[fk,outputInv],[forward,outputFoot]];
+ const shared=replacements.reduce((code,[old,value])=>code.replace(old,value),input);
+ const expected=adaptRemainingVisualQueue20261027(rel,input);
+ assert.equal(adaptRemainingVisualQueue20261027(rel,shared),expected);
+ for(let mask=1;mask<7;mask++){
+  const partial=replacements.reduce((code,[old,value],index)=>(mask&(1<<index))?code.replace(old,value):code,input);
+  assert.throws(()=>adaptRemainingVisualQueue20261027(rel,partial),/Remaining visual queue .*shared quaternion/,'partial shared state '+mask);
+ }
+ for(const [,value] of replacements){
+  assert.throws(()=>adaptRemainingVisualQueue20261027(rel,shared+'\n'+value),/Remaining visual queue .*shared quaternion/,'duplicate shared anchor');
+  assert.throws(()=>adaptRemainingVisualQueue20261027(rel,shared.replace(value,'')),/Remaining visual queue .*shared quaternion/,'missing shared anchor');
+ }
+ for(const code of [input,shared])assert.throws(()=>adaptRemainingVisualQueue20261027(rel,code+'\nthis.groundForwardQ=new THREE.Quaternion();'),/Remaining visual queue .*shared quaternion/,'unpaired or duplicate initializer');
+});
 test('source composition still rejects missing and duplicated pre-FK anchor',()=>{
  const original='invRot=c.kid.getWorldQuaternion(this.groundInvQ).invert();';assert.equal(source.split(original).length-1,1);
  for(const replacement of ['',original+'\n'+original])assert.throws(()=>adaptBuildSource(rel,source.replace(original,replacement)),/contact FK: read refreshed kid rotation/);
