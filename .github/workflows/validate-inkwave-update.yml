@@ -531,6 +531,7 @@ jobs:
       - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+          INKWAVE_EDGECASE_SITE: ${{ github.workspace }}/_site
         run: >-
           node --experimental-vm-modules --test
           patches/splatoon3/tests/catalog-player-inertia-native.test.mjs
