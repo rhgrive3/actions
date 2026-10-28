@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runLoggedTestProcess } from './run-logged-test-process.mjs';
-import { selectTestShard, discoverSourceTestFiles, batchSelectedTestFiles } from './lib/inkwave-test-shards.mjs';
+import { selectTestShard, discoverSourceTestFiles } from './lib/inkwave-test-shards.mjs';
 import vm from 'node:vm';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 import { checkCompatibility, PATCH_ROOT } from '../patches/splatoon3/adapter.mjs';
@@ -75,27 +75,11 @@ try {
     const turf = await runLoggedTestProcess(process.execPath, ['scripts/run-inkwave-turf-finish-isolated.mjs', ROOT, 'source', path.join(logDir, 'turf-finish')], { cwd: ROOT, env: process.env, logFile: path.join(logDir, 'turf-finish.log') });
     if (turf.status !== 0) throw Error(`Isolated Turf failed (exit ${turf.status}); evidence: ${logDir}/turf-finish`);
   }
-  // A complete shard may load hundreds of heavyweight VM/geometry files in
-  // one Node test coordinator. The 24-file pilot still lost its runner before
-  // the first TAP result (SIGTERM 143); isolate every file to leave the host
-  // a small, bounded per-process heap while preserving the full test matrix.
-  // Each child must pass; batch boundaries are memory ownership, not skips.
-  const batches=shardIndex===2 && shardCount===8
-    ? batchSelectedTestFiles(ordinaryFiles,1) : (ordinaryFiles.length?[ordinaryFiles]:[]);
-  const result={status:0,signal:null};
-  fs.writeFileSync(log,'');
-  for(let i=0;i<batches.length;i++){
-    const part=batches[i], sublog=batches.length===1?log:path.join(logDir,`patch-tests-batch-${String(i+1).padStart(2,'0')}.log`);
-    console.log(`INKWAVE patch test batch ${i+1}/${batches.length}: ${part.length} original test files`);
-    const step=await runLoggedTestProcess(process.execPath,
-      ['--experimental-vm-modules','--test',`--test-concurrency=${concurrency}`,...part],
-      {cwd:ROOT,env:{...process.env,INKWAVE_UPSTREAM_SOURCE:SRC},logFile:sublog});
-    if(sublog!==log)fs.appendFileSync(log,fs.readFileSync(sublog));
-    if(step.status!==0){result.status=step.status??1;result.signal=step.signal;break;}
-  }
-  if(!batches.length)fs.writeFileSync(log,'All selected files executed through isolated Turf.\n');
-  result.stdout=fs.readFileSync(log,'utf8');
-  result.stderr='';
+  const result = ordinaryFiles.length
+    ? await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...ordinaryFiles], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log })
+    : (fs.writeFileSync(log, 'All selected files executed through isolated Turf.\n'), {status: 0});
+  result.stdout = fs.readFileSync(log, 'utf8');
+  result.stderr = '';
   if (result.status !== 0) {
     const lines = (result.stdout || '').split('\n'), failures = [];
     for (let i = 0; i < lines.length; i++) if (/^\s*not ok\b/.test(lines[i])) {
