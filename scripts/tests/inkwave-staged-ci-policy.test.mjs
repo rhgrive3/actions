@@ -76,6 +76,7 @@ test('full gate requires native or offloaded browser evidence and both independe
 });
 
 test('A+ heavy game quality gate skips drafts and remains on ready PRs and main', () => {
+  assert.match(quality, /^  pull_request:\n    branches: \[ main \]\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]/m);
   assert(!active(quality, 'verify-aplus-suite', {draft: true}));
   assert(active(quality, 'verify-aplus-suite'));
   assert(active(quality, 'verify-aplus-suite', {event: 'push'}));
