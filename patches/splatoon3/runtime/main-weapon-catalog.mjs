@@ -540,6 +540,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const sinYaw=Math.sin(y),cosPitch=Math.cos(p);
     return new THREE.Vector3(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
   }
+  const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();
   function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
@@ -547,7 +548,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||paintFallbackUp;
-      const tangent=direction.clone().addScaledVector(normal,-direction.dot(normal));
+      const tangent=_paintTangent.copy(direction).addScaledVector(normal,-direction.dot(normal));
       // This source depth envelope is interpreted on floor-like contacts only.
       // Wall projection remains unchanged until its separate source law is verified.
       if(Math.abs(normal.y)<.4){options.stretch=direction;options.stretchAmt=Math.max(0,depth-1);}
@@ -560,8 +561,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));return;
         }
         const shape=catalogPaintEllipse(radius,depth);
-        if(shape.rotate)tangent.crossVectors(normal,tangent.clone()).normalize();
-        paintRadius=shape.radius;centre=at.clone().addScaledVector(tangent,-shape.centreBack);
+        if(shape.rotate)tangent.crossVectors(normal,_paintCross.copy(tangent)).normalize();
+        paintRadius=shape.radius;centre=_paintCentre.copy(at).addScaledVector(tangent,-shape.centreBack);
         options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
       }
     }
@@ -1285,7 +1286,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if(p.ghost)return true;
     const footprint=impactPaint(p);
-    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
+    paint(p.owner,at,footprint.width,footprint.depth,_impactHorizDir.copy(p.vel).setY(0).normalize(),h.face,mainInkFootprint(r));
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
        (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
       G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
@@ -1391,6 +1392,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(pierced)pierced.length=0;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
+      let segBoundsReady=false,segMinX=0,segMaxX=0,segMinZ=0,segMaxZ=0;
       if(unitCanDamage)for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
         q.playerRadius0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale);
@@ -1402,6 +1404,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         const motion=coherentTick?coherentMotionStart(a):null;
+        if(!motion&&shapes.length===1){
+          if(!segBoundsReady){
+            const q0=shapes[0],prMax=Math.max(q0.playerRadius0,q0.playerRadius1);
+            if(Number.isFinite(q0.from.x)&&Number.isFinite(q0.from.z)&&Number.isFinite(q0.to.x)&&Number.isFinite(q0.to.z)&&Number.isFinite(prMax)&&prMax>=0){
+              segMinX=Math.min(q0.from.x,q0.to.x)-prMax;segMaxX=Math.max(q0.from.x,q0.to.x)+prMax;
+              segMinZ=Math.min(q0.from.z,q0.to.z)-prMax;segMaxZ=Math.max(q0.from.z,q0.to.z)+prMax;
+              segBoundsReady=true;
+            }else segBoundsReady=null;
+          }
+          if(segBoundsReady&&Number.isFinite(a.pos?.x)&&Number.isFinite(a.pos?.z)){
+            // Pre-reject only if the shot cannot reach the actual weapon hurtbox.
+            // Terrain radius + 0.25 is too small for the squid bullet radius
+            // (0.675 in the current profile) and can suppress a genuine hit.
+            const reach=hurtboxRadius(a,PLAYER)+1e-4;
+            if(a.pos.x<segMinX-reach||a.pos.x>segMaxX+reach||a.pos.z<segMinZ-reach||a.pos.z>segMaxZ+reach)continue;
+          }
+        }
         const scratch=s.collisionScratch;
         const base=motion?scratch.motionBase.set(motion.x0,motion.y0,motion.z0):a.pos;
         let entry=null;
@@ -1418,6 +1437,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const pr0=q.playerRadius0,radius=q.playerRadius1;
           const end=motion?scratch.motionEnd.set(q.to.x-motionX,
             q.to.y-motionY,q.to.z-motionZ):q.to;
+          const reach=bodyRadius+(pr0>radius?pr0:radius)+1e-4;
+          const qfx=q.from.x,qfz=q.from.z,qtx=end.x,qtz=end.z;
+          const qminX=(qfx<qtx?qfx:qtx)-reach,qmaxX=(qfx>qtx?qfx:qtx)+reach;
+          const qminZ=(qfz<qtz?qfz:qtz)-reach,qmaxZ=(qfz>qtz?qfz:qtz)+reach;
+          const bx=base.x,bz=base.z;
+          if(bx<qminX||bx>qmaxX||bz<qminZ||bz>qmaxZ)continue;
           const contact=capsuleEntry(q.from,end,base,bodyRadius,bodyHeight,pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
@@ -1485,15 +1510,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const from=(s.splashReleasePoint ||= p.prev.clone()).copy(p.prev).lerp(p.pos,clamp((s.nextSplash-splashBefore)/splashLength));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
-            const args={owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-              from,direction,radius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,
-              catchUpSeconds:s.carry,footprint:null};
+            const args=s.splashArgs||={owner:null,team:0,seed:0,salt:0,from:null,direction:null,radius:0,spec:null,depth:true,catchUpSeconds:0,footprint:null};
             const record=s.r;
             if(!footprintReady||record!==footprintRecord){
               footprint=mainInkFootprint(record);footprintRecord=record;
               footprintReady=canShareSourceFootprint(record)&&Object.getOwnPropertyDescriptor(s,'r')?.value===record;
             }
-            args.footprint=footprint;
+            args.owner=p.owner;args.team=p.team;args.seed=p.seed;args.salt=s.dropCount;
+            args.from=from;args.direction=direction;args.radius=radius;args.spec=d.splashDropSpec||d.sloshFall.spec;
+            args.depth=true;args.catchUpSeconds=s.carry;args.footprint=footprint;
             const drop=spawnSplashDrop(G,args);
             if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           }else{
