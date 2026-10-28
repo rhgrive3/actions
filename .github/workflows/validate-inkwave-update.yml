@@ -207,7 +207,7 @@ jobs:
       - name: Prove CircleCI offload command parity and fail-closed SHA gate
         run: node --test scripts/tests/inkwave-circleci-browser-lane.test.mjs scripts/tests/inkwave-circleci-offload-gate.test.mjs
       - name: Verify scoped network diagnostic workflow contracts
-        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
+        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-sandbox-runner-route.test.mjs
       - name: Install pinned source regression and build tool
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
