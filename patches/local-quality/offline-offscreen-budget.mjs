@@ -266,7 +266,11 @@ export function installOfflineOffscreenBudget(api, G) {
     const feetReady = (this.feetValid && !this.replant) ||
       !!(this.sourceMotion?.active && this.sourceMotion.grounded && this.sourceMotion.activationTime >= 0.12);
     this._oobGroundBudget = budget && s?.grounded !== false && feetReady;
-    this._oobGroundMemoActive = this._oobGroundBudget && G.level?.native === true;
+    // Source contacts can repeat the same sole/anchor query in the visible
+    // path as well. Physics cannot advance during this synchronous visual
+    // update; the exact key still observes root height and physics ownership.
+    this._oobGroundMemoActive = G.level?.native === true &&
+      !!(this.sourceMotion?.active || this._oobGroundBudget);
     if (this._oobGroundMemoActive) (this._oobGroundMemo ||= []).length = 0;
     this._oobPoseTailSkip = budget && s?.grounded !== false && feetReady;
     this._oobTicks++;
