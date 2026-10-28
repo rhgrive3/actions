@@ -2,6 +2,7 @@ name: INKWAVE relay admission and security
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - "scripts/ci/run-inkwave-test-suite.mjs"
       - "scripts/ci/inkwave-test-suites.json"
@@ -45,6 +46,7 @@ permissions:
   contents: read
 jobs:
   relay-regressions:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
