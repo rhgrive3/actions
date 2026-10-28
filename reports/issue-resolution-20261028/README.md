@@ -103,4 +103,6 @@ Agent1の追加ターンは自動審査が「サイバーセキュリティ上�
 
 旧fixtureの16失敗を再現後、修正fixtureは両emitted候補で18/18成功。export欠落・閾値の変更・未知importの負の対照を含む。source回復suite295/295、修正commitをbuildしたChromium151/SwiftShaderでnative stageのrecoverable/rollback-fatalと実context loss/restorationの各browser laneが成功、page errorは0。これは物理iPadやnative LFS deliveryの受入ではない。
 
-同じhosted候補でCrab/Torpedoの実WebGL buffer/pixel比較、Explosher飛沫、squid heading/input、lobby CSSOM、audio integrationは成功した。native stage contractsは648成功・128skipで、23個のnative prebuilt実体が不在と明示されるため、synthetic/fallbackの成功として扱う。paired projectileのafter側はbuild-only export分類で停止しており、最適化adapterの実際のruntime利用と分類を別途調査・修正中。paired画素/物理の同等性をまだ認定しない。
+同じhosted候補でCrab/Torpedoの実WebGL buffer/pixel比較、Explosher飛沫、squid heading/input、lobby CSSOM、audio integrationは成功した。native stage contractsは648成功・128skipで、23個のnative prebuilt実体が不在と明示されるため、synthetic/fallbackの成功として扱う。paired projectileのafter側はbuild-only export分類で停止した。Agent2の`ae3fb305`は、adapter内部の`.toString()`注入だけが使う2個のhelperをprivateにし、唯一の外部APIを`adaptRenderTransfers`へ戻した。strictなbuild-only一覧・export whitelistは変えていない。private API/ring5件と、正常minified buildの全packaging10件が成功。注入されたruntimeは変更前とbyte単位で同一（SHA-256 `dc43ceb0d390b96d909f0572563e52b587b626aff45938cb0b1b0137e2458a9e`）。paired画素/物理の同等性はまだ認定しない。
+
+各修正のIssue/PR、原commit・統合commit、実際の変更ファイル、検証結果の対応は[`fixes.json`](fixes.json)に記録する。件数は重なるためテスト数を合算しない。独立character QAのReady run2本は、step開始前にGitHub側でcancelledとなった（annotationは`@rhgrive3`による取消、理由不明）。当作業の旧head限定取消ledgerには含まれず、成功とも意図したskipとも数えない。修正バッチ反映後の新しいheadで受入を確認する。
