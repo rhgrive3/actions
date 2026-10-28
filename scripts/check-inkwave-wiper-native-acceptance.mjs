@@ -76,6 +76,26 @@ export function wrapWiperDrawCallback(mesh,observe) {
   };
 }
 
+// Bracket the existing composer passes without replacing or suppressing any
+// pass. A nonzero GL error is still fatal at the first observation boundary.
+export function wrapWiperComposerPasses(composer,observe) {
+  if(!Array.isArray(composer?.passes))throw Error('Native composer passes unavailable');
+  const restore=[];
+  try{
+    composer.passes.forEach((pass,index)=>{
+      const own=Object.getOwnPropertyDescriptor(pass,'render'),original=pass.render;
+      if(typeof original!=='function'||own&&(!Object.hasOwn(own,'value')||!own.writable))throw Error('Unsupported native composer pass');
+      const wrapper=function(...args){const result=original.apply(this,args);observe(index,pass);return result;};
+      Object.defineProperty(pass,'render',own?{...own,value:wrapper}:{value:wrapper,writable:true,enumerable:false,configurable:true});
+      restore.push(()=>{
+        if(pass.render!==wrapper)throw Error('Native composer pass replaced by unrelated owner');
+        if(own)Object.defineProperty(pass,'render',own);else delete pass.render;
+      });
+    });
+  }catch(error){for(const fn of restore.reverse())fn();throw error;}
+  return ()=>{for(const fn of restore.reverse())fn();};
+}
+
 // Read exactly once at the original fail-closed boundary. A pre-existing GL
 // error is intentionally not cleared: it remains a capture failure. The code
 // and context help diagnose it without claiming which earlier call caused it.
@@ -161,16 +181,19 @@ export async function installWiperProbe(testCase) {
       const matrices=Array.from(mesh.instanceMatrix.array.slice(0,mesh.count*16));
       const drawReceipts=[],restoreDraw=window.__wrapWiperDrawCallback(mesh,args=>drawReceipts.push({override:!!args[1].overrideMaterial,inspection:args[2]===camera}));
       const previousTarget=r.getRenderTarget(),previousAuto=r.autoClear,previousInfoAuto=r.info.autoReset;
-      let pixels,render;
+      let pixels,render,restorePasses=()=>{};
       try{
         r.info.autoReset=false;r.info.reset();
-        if(view==='native-postprocessed')g.R.render();
+        if(view==='native-postprocessed'){
+          restorePasses=window.__wrapWiperComposerPasses(g.R.composer,(index,pass)=>glBoundary('composer-pass-'+index+'-'+pass.constructor.name));
+          g.R.render();
+        }
         else if(view==='fixed-side-raw'){r.setRenderTarget(null);r.autoClear=true;r.render(G.scene,camera);}
         else throw Error('Unknown capture view');
         glBoundary('after-render');
         render={...r.info.render};pixels=readPixels();
         glBoundary('after-readback');
-      }finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}
+      }finally{try{restorePasses();}finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}}
       if(!drawReceipts.some(d=>!d.override))throw Error('Actual source-bound mesh did not draw in this view');
       if(before!==JSON.stringify(state()))throw Error('Render changed gameplay/native camera/visibility/clock/RNG');
       return {frame,tick:scheduler.tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,
@@ -255,7 +278,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
         }).catch(e=>result.errors.push('consumed artifact: '+e.message)));});
         await page.addInitScript(initializeWiperCapture,c);
         row.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:120000});
-        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';'});
+        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__wrapWiperComposerPasses='+wrapWiperComposerPasses.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';'});
         Object.assign(row,await page.evaluate(installWiperProbe,c));
         for(const frame of WIPER_CAPTURE_FRAMES[c.action]){
           let captured;
