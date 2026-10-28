@@ -6,6 +6,7 @@ on:
       - 'scripts/check-weapons-reference.mjs'
       - 'scripts/verify-completion-sources.mjs'
       - 'package.json'
+      - 'package-lock.json'
       - "scripts/ci/**"
       - 'tests/ink-flight/model.test.mjs'
       - 'tests/platform-lifecycle/platform-smoke.test.mjs'
@@ -42,6 +43,7 @@ on:
       - 'scripts/check-weapons-reference.mjs'
       - 'scripts/verify-completion-sources.mjs'
       - 'package.json'
+      - 'package-lock.json'
       - "scripts/ci/**"
       - 'tests/ink-flight/model.test.mjs'
       - 'tests/platform-lifecycle/platform-smoke.test.mjs'

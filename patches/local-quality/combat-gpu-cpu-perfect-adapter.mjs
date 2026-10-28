@@ -175,10 +175,16 @@ uniform int uWakeCount;`,
   if (rel === 'src/fx/fx.js') {
     // GPU-22: Track dirty slot bounds for shell static attributes (aColA and aAxis, 32B/shell)
     // so settled live shells cost zero CPU Float32Array writes and zero GPU buffer uploads per frame.
+    // The later ring optimization adds a second static-attribute slot before
+    // this terminal GPU-22 pass. Retain both ring skip slots and append the
+    // shell-only static guard instead of overwriting either owner.
+    const staticGuard = code.includes('staticAttribute2 = null')
+      ? '    if (a === staticAttribute || a === staticAttribute2) continue;'
+      : '    if (a === staticAttribute) continue;';
     code = applyIdempotent(
       code,
-      `    if (a === staticAttribute) continue;`,
-      `    if (a === staticAttribute || a._fxStatic) continue;`,
+      staticGuard,
+      staticGuard.replace(') continue;', ' || a._fxStatic) continue;'),
       replaceOnce,
       'GPU-22 skip _fxStatic attributes in markUpdated'
     );
