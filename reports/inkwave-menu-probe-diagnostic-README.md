@@ -1,0 +1,5 @@
+# Isolated INKWAVE native menu diagnostic
+
+This diagnostic builds the untouched game at `897bbaa4550aae24c1d710216127ff5e52a64ad6`, runs the ordinary production menu helper and records hit-test observations. It is not an acceptance test or a fix. The probe's commit and source/build hashes are bound into its JSON receipt. The workflow is limited to pushes on the dedicated diagnostic branch and its listed paths; it does not target main, PRs, or deployment. Failure remains a failed job, with evidence uploaded even on failure where available.
+
+The runner is Ubuntu 22.04 and Chromium is launched with `chromiumSandbox: true` and no explicit browser flags. This differs from the environment and browser configuration of the earlier failed 897 capture. The browser context is fresh and does not use that capture harness's settings or RNG bootstrap. Therefore **a failure to reproduce here cannot clear the previous failure**. If sandboxed Chromium or WebGL fails to boot, that failure is evidence; do not add security-disabling or unsafe renderer overrides to get past it. `menu-diagnostic.json` records this qualification and launch configuration before the browser launch.

@@ -1,0 +1,64 @@
+name: INKWAVE isolated native menu diagnostic
+
+on:
+  push:
+    branches: [diagnostic/inkwave-menu-probe-20261028]
+    paths:
+      - '.github/workflows/inkwave-menu-probe-diagnostic.yml'
+      - 'scripts/check-inkwave-turf-menu-probe.mjs'
+      - 'scripts/tests/inkwave-turf-menu-probe.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  menu-diagnostic:
+    name: Mobile Turf hit-test diagnostic (not acceptance)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify diagnostic checkout
+        run: |
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - uses: actions/checkout@v4
+        with:
+          ref: 897bbaa4550aae24c1d710216127ff5e52a64ad6
+          path: game
+          persist-credentials: false
+      - name: Verify untouched game checkout
+        run: test "$(git -C game rev-parse HEAD)" = 897bbaa4550aae24c1d710216127ff5e52a64ad6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify diagnostic contracts
+        run: node --test scripts/tests/inkwave-turf-menu-probe.test.mjs
+      - name: Install the existing capture's pinned tools
+        run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build untouched 897 production source
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/inkwave-menu-diagnostic"
+          node game/scripts/build-inkwave.mjs game/inkwave-public "$RUNNER_TEMP/inkwave-menu-site" 2>&1 | tee "$RUNNER_TEMP/inkwave-menu-diagnostic/build.log"
+      - name: Observe normal mobile menu tap without admission bypass
+        env:
+          GAME_SOURCE: ${{ github.workspace }}/game
+          MENU_SITE: ${{ runner.temp }}/inkwave-menu-site
+          MENU_EVIDENCE: ${{ runner.temp }}/inkwave-menu-diagnostic
+        run: node scripts/check-inkwave-turf-menu-probe.mjs
+      - name: Preserve diagnostic evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-menu-diagnostic-${{ github.sha }}
+          path: ${{ runner.temp }}/inkwave-menu-diagnostic/
+          if-no-files-found: warn
+          retention-days: 7
