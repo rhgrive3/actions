@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';
 import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
-import { mapResponsiveCases, spawnResponsiveCase } from './ci/inkwave-responsive-child-pool.mjs';
+import { mapResponsiveByEngine, spawnResponsiveCase } from './ci/inkwave-responsive-child-pool.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => {
@@ -101,9 +101,9 @@ async function runCase({engine,name}) {
   report.shards.push(row);
   write();
 }
-// One isolated browser process per viewport, at most two active on a 4-CPU runner.
+// One isolated browser process per viewport, two concurrent engines but at most one WebKit.
 // Retain every test, source-hash check, failure receipt and the complete 14-case gate.
-await mapResponsiveCases(cohort,workers,runCase);
+await mapResponsiveByEngine(cohort,workers,runCase);
 if (!write()) process.exitCode=1;
 console.log(JSON.stringify({status:report.status,cases:report.cases.length,shards:report.shards.length,
   errors:report.errors.slice(0,6),evidence:summaryFile}));
