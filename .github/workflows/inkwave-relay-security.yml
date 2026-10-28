@@ -3,7 +3,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - "scripts/ci/**"
+      - "scripts/ci/run-inkwave-test-suite.mjs"
+      - "scripts/ci/inkwave-test-suites.json"
       - "server/**"
       - "scripts/lib/inkwave-local-relay-fixture.mjs"
       - "patches/reliability/tests/relay-compatibility.test.mjs"
@@ -20,7 +21,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "scripts/ci/**"
+      - "scripts/ci/run-inkwave-test-suite.mjs"
+      - "scripts/ci/inkwave-test-suites.json"
       - "server/**"
       - "scripts/lib/inkwave-local-relay-fixture.mjs"
       - "patches/reliability/tests/relay-compatibility.test.mjs"
