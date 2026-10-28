@@ -142,3 +142,15 @@ root shard0の別失敗はKrakenの`attacker-life-change-keeps-committed-hit`。
 19:40 UTC時点ではrootの全8shardが完了し、0/5だけが同じKraken fixtureで失敗、ほか6shardは成功。catalog以外のbrowser6系統、resource、seven-claimsも成功した。catalogのWiperは実行中で、全体の成功を主張しない。[新規失敗のjob別対応表](new-ci-failures.json)は初回の過去1,002失敗jobと区別する。次の反映バッチはfixture・admission・記録のみで、製品入力と配布byteを変更しない。
 
 19:42 UTC追記: 固定headのcatalog/Wiperは両側とも成功（root job `123034976366`、最適化 job `123035443236`）。Wiper step48はそれぞれ19:41:26 / 19:41:24 UTCに完了した。最適化shard5 `123035443313`の唯一の失敗も同じKraken fixtureであり、同じ共有修正を再利用する。新headの正式CI受入とは区別する。
+
+## 後続core/sourceへ進んだ追加バッチ（20:29 UTC）
+
+`54465a5d` / `0706b35a`へ反映後、両admission・production buildと、両character QAが成功した。characterは各24scenario/10cycle（root9分45秒、最適化5分59秒）。現行最適化のbase/head projectileも両captureと比較job `123078063423`が成功。全体Validateはまだ成功していない。
+
+後続coreの共通pointer-lock成功系fixtureは、native `pointerlockerror`を発生させないままfallbackを期待して17/38失敗した。`d192a654`を共通`07e03c7d`へ取り込み、全38caseと期待値を維持し、正当nativeイベントと不在/前回/遅延イベントの対照を明示した。source、両actual emitted、両compactionで各38/38、7個のguard mutantは意図したassertionで失敗。Agent6が独立承認。vendorを持たないsparse admissionへ依存を追加せず、既存のfull-checkout focused pointerlock laneに同じcommandを追加した。
+
+最適化shard6のGPU22は、通常版の文字列call形に固定した古いassertionが原因。`a460cd46`を共通`0568bef8`へ取り込み、実composed ring方法・実THREE attributeの2静的slot、birth/current値、steady quietnessを実行して確認する。両側10/10、4種類のmutationは失敗し、既存shell条件を維持。Agent2が独立承認。runtimeは変更しない。
+
+CIのhurtbox stepは、fixtureが読む`INKWAVE_EDGECASE_SITE`を設定せずsourceを選んでいた。`7f7b2851`で本来のemitted siteを指定し、実emitted2case成功を確認した。期待値の緩和ではなく未実行だった経路の検証である。
+
+次のpush前に、[後続coreの関連する一度だけのローカル検証](emitted-core-sweep.md)、[通信のselector/command/hash](emitted-network-sweep.json)、[武器/物理のcommand/hash/skip境界](emitted-weapon-sweep.json)を確認した。新規失敗job・元source・対応commitは[`new-ci-failures.json`](new-ci-failures.json)に追記し、正式な次head CIとは区別する。最適化側のscratch名・broadphase後のcall-listについても隔離worktreeで修正・独立レビュー中。Issueは形式的にCloseせず、#1767も必要な全体CIまでOpenを維持する。

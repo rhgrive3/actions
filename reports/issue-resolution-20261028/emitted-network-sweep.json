@@ -1,0 +1,157 @@
+{
+  "sourceSha": "54465a5def087608ff4a19b23d57e05a3613033a",
+  "site": "/workspace/wt-integration/_site",
+  "inputHash": "bdb851a80a79a984f15dc002c4fb0b997a8931c4d7b51caefc24f64cbd34210e",
+  "contentHash": "fcec6e8db8e58c0ff5bd0c27da583e6a105b2949c27c1a8d0970152904c2429c",
+  "manifestSha256Before": "87aa57e47068b8b2af4f0247015b72f454fb5e683e00d72b87c2b5631e963121",
+  "nodeVersion": "v22.23.4",
+  "runtimeReadback": "/workspace/scratch/inkwave-validation/common544-runtime-readback.json",
+  "fixtureHashesBefore": {
+    ".github/workflows/validate-inkwave-update.yml": "f47d9b2bb053066ec1059b4b69a93e4557a9d15155ffe7ad787a0034ba0bc8b0",
+    "patches/local-quality/tests/ink-volume-recipes.test.mjs": "056212035d79160f70ca7300f16aa1b832c157d3b68979df22ff9845a9f1bd65",
+    "patches/local-quality/tests/view-settings.test.mjs": "4331c725c741fcbddd5ae9fe8263aef9f2b9f56a076047b695fd5e0ecbd2f2e7",
+    "patches/network-replication/tests/issue-queue-oct15-hardening.test.mjs": "0c1534eb3f77a889d73d1274da1042ab9d09bfcfdc107f2588256f244936ad23",
+    "patches/network-replication/tests/outbound-prefix.test.mjs": "ced9c303e2b732c21e2c247fafb68c1b5f043bfc9b7487c365b897309a6f142d",
+    "patches/network-replication/tests/paint-packet-codec-order.test.mjs": "f1a902f1612f760bbea6cc02e070903eb3aa014d665f3082ac7f11efc6c920d0",
+    "patches/network-replication/tests/robustness-fixture.mjs": "e00953c4372117d07fdbc60230e0d25d6b8e79fdf59539693ef72b421bd93e99",
+    "patches/reliability/tests/controls-fixture.mjs": "3ddf95fe83ad2d58e3de2d46079e4a4e2ba6421e13698326b18043bc8191a806",
+    "patches/reliability/tests/relay-compatibility.test.mjs": "f5ca34ec40d3b32bad645d71dee6c17c0883d2ca125b40155d17f4f339ad2255",
+    "patches/reliability/tests/session-wire-admission.test.mjs": "326ce249e6c96fdd53475cc16b33183b2997032706fbfb7c15b0f6f155f8fbd5",
+    "patches/splatoon3/tests/paint-packet-codec.test.mjs": "c05d705fe64701e3aa8f17e607e282dea69f9e9d66fe359b820d0f5e498d8ad1",
+    "patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs": "63b227fbae3c8f64589f06b983549bb129df30569079f6b044bf6db73e64244e",
+    "patches/splatoon3/tests/ranked-send-acceptance.test.mjs": "165fe73c716c924c1a57ed4324f000a102ccaf987260a0d9bf6be2c3242f4040",
+    "patches/splatoon3/tests/source-fixture.mjs": "a1955f6288dabac02c180ec623efeaebc3e2ad389e6acef54bf13c1a6970bd0e"
+  },
+  "existingSelectorEnv": {},
+  "groups": [
+    {
+      "name": "codec-auth-json",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site"
+      },
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/splatoon3/tests/paint-packet-codec.test.mjs",
+        "patches/network-replication/tests/paint-packet-codec-order.test.mjs",
+        "patches/network-replication/tests/outbound-prefix.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 113.807,
+      "log": "/workspace/scratch/agent1-core-network-544-codec-auth-json.log",
+      "summary": {
+        "tests": 118,
+        "suites": 0,
+        "pass": 118,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "firstFailure": null
+    },
+    {
+      "name": "ranked-controls",
+      "env": {
+        "INKWAVE_CONTROLS_SITE": "/workspace/wt-integration/_site"
+      },
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs",
+        "patches/splatoon3/tests/ranked-send-acceptance.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 35.236,
+      "log": "/workspace/scratch/agent1-core-network-544-ranked-controls.log",
+      "summary": {
+        "tests": 24,
+        "suites": 0,
+        "pass": 24,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "firstFailure": null
+    },
+    {
+      "name": "session-relay",
+      "env": {
+        "INKWAVE_CONTROLS_SITE": "/workspace/wt-integration/_site",
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site",
+        "INKWAVE_VIEW_SETTINGS_SITE": "/workspace/wt-integration/_site"
+      },
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/reliability/tests/session-wire-admission.test.mjs",
+        "patches/local-quality/tests/view-settings.test.mjs",
+        "patches/reliability/tests/relay-compatibility.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 17.459,
+      "log": "/workspace/scratch/agent1-core-network-544-session-relay.log",
+      "summary": {
+        "tests": 28,
+        "suites": 0,
+        "pass": 28,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "firstFailure": null
+    },
+    {
+      "name": "queue-hardening",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site"
+      },
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/network-replication/tests/issue-queue-oct15-hardening.test.mjs",
+        "patches/local-quality/tests/ink-volume-recipes.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 26.998,
+      "log": "/workspace/scratch/agent1-core-network-544-queue-hardening.log",
+      "summary": {
+        "tests": 18,
+        "suites": 0,
+        "pass": 18,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "firstFailure": null
+    }
+  ],
+  "manifestSha256After": "87aa57e47068b8b2af4f0247015b72f454fb5e683e00d72b87c2b5631e963121",
+  "fixtureHashesAfter": {
+    ".github/workflows/validate-inkwave-update.yml": "f47d9b2bb053066ec1059b4b69a93e4557a9d15155ffe7ad787a0034ba0bc8b0",
+    "patches/local-quality/tests/ink-volume-recipes.test.mjs": "056212035d79160f70ca7300f16aa1b832c157d3b68979df22ff9845a9f1bd65",
+    "patches/local-quality/tests/view-settings.test.mjs": "4331c725c741fcbddd5ae9fe8263aef9f2b9f56a076047b695fd5e0ecbd2f2e7",
+    "patches/network-replication/tests/issue-queue-oct15-hardening.test.mjs": "0c1534eb3f77a889d73d1274da1042ab9d09bfcfdc107f2588256f244936ad23",
+    "patches/network-replication/tests/outbound-prefix.test.mjs": "ced9c303e2b732c21e2c247fafb68c1b5f043bfc9b7487c365b897309a6f142d",
+    "patches/network-replication/tests/paint-packet-codec-order.test.mjs": "f1a902f1612f760bbea6cc02e070903eb3aa014d665f3082ac7f11efc6c920d0",
+    "patches/network-replication/tests/robustness-fixture.mjs": "e00953c4372117d07fdbc60230e0d25d6b8e79fdf59539693ef72b421bd93e99",
+    "patches/reliability/tests/controls-fixture.mjs": "3ddf95fe83ad2d58e3de2d46079e4a4e2ba6421e13698326b18043bc8191a806",
+    "patches/reliability/tests/relay-compatibility.test.mjs": "f5ca34ec40d3b32bad645d71dee6c17c0883d2ca125b40155d17f4f339ad2255",
+    "patches/reliability/tests/session-wire-admission.test.mjs": "326ce249e6c96fdd53475cc16b33183b2997032706fbfb7c15b0f6f155f8fbd5",
+    "patches/splatoon3/tests/paint-packet-codec.test.mjs": "c05d705fe64701e3aa8f17e607e282dea69f9e9d66fe359b820d0f5e498d8ad1",
+    "patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs": "63b227fbae3c8f64589f06b983549bb129df30569079f6b044bf6db73e64244e",
+    "patches/splatoon3/tests/ranked-send-acceptance.test.mjs": "165fe73c716c924c1a57ed4324f000a102ccaf987260a0d9bf6be2c3242f4040",
+    "patches/splatoon3/tests/source-fixture.mjs": "a1955f6288dabac02c180ec623efeaebc3e2ad389e6acef54bf13c1a6970bd0e"
+  },
+  "manifestUnchanged": true,
+  "fixturesUnchanged": true,
+  "headAfter": "54465a5def087608ff4a19b23d57e05a3613033a",
+  "gitStatusAfter": ""
+}

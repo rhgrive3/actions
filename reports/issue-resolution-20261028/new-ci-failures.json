@@ -1,6 +1,6 @@
 {
   "repository": "rhgrive3/actions",
-  "observed_at_utc": "2026-10-28T19:44:00Z",
+  "observed_at_utc": "2026-10-28T20:29:00Z",
   "scope": "new primary failures during this session, separate from initial1002historicalfailedjobarchive; secondary cancellation/evidence failures are not independent gameplay causes",
   "primary_failed_jobs": [
     {
@@ -72,9 +72,59 @@
       "fix": "3f855091782d734c48198a171fdc88849213d96f",
       "followup": "local source/emitted32/32 and independent review pass; original evidence uploaded12845008704; nextsource hosted pending",
       "job_url": "https://github.com/rhgrive3/actions/actions/runs/40747856613/job/123035443313"
+    },
+    {
+      "pr": 1907,
+      "source": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+      "run": 40756964070,
+      "job": 123065842669,
+      "cause": "pointer-lock successful-pair fixture omits required native pointerlockerror; source21pass17fail",
+      "fix": "d192a6549ba9d4d664960f008215b2864218b7cd",
+      "followup": "source/root-emitted/opt-emitted/root-compaction/opt-compaction each38/38;7mutants fail; independentAgent6 approval; nexthead hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065842669"
+    },
+    {
+      "pr": 1908,
+      "source": "54465a5def087608ff4a19b23d57e05a3613033a",
+      "run": 40756968234,
+      "job": 123071774519,
+      "cause": "same pointer-lock fixture native-event omission",
+      "fix": "d192a6549ba9d4d664960f008215b2864218b7cd",
+      "followup": "same shared repair; downstream missingTurf/launch artifacts secondary, not independent causes",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756968234/job/123071774519"
+    },
+    {
+      "pr": 1907,
+      "source": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+      "run": 40756964070,
+      "job": 123065843180,
+      "cause": "GPU22 ring assertion requires root call syntax instead of actual static-upload behavior",
+      "fix": "a460cd46b6ecda32a424dd9f71e0a5f921a34dfd",
+      "followup": "actual composed ring behavior root/opt10/10,4mutation families reject; independentAgent2 approval; nexthead hosted pending",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843180"
+    },
+    {
+      "pr": 1907,
+      "source": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+      "run": 40756964070,
+      "job": 123065843170,
+      "cause": "optimized-only charger scratch fixture expects removed module-global names instead of per-install per-depth scratch",
+      "fix": null,
+      "followup": "Agent3 implementing isolated behavioral ownership/reuse checks; pending local commit and independentAgent1 review",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843170"
+    },
+    {
+      "pr": 1907,
+      "source": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+      "run": 40756964070,
+      "job": 123065843380,
+      "cause": "Charger endpoint call-list fixture assumes full scan after new broadphase; surviving endpoints and culled capsule safety under review",
+      "fix": null,
+      "followup": "Agent2 isolated fixture/geometry audit; pending local commit and independentAgent4 review",
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40756964070/job/123065843380"
     }
   ],
-  "distinct_causes": 4,
+  "distinct_causes": 8,
   "main_merge_performed": false,
   "snapshot_all_hosted_failures_resolved": false
 }

@@ -58,6 +58,7 @@ jobs:
             pointerlock)
               node --experimental-vm-modules --test --test-concurrency=1 \
                 patches/reliability/tests/touch-pointerlock.test.mjs
+              env -u TEST_FROM -u TEST_TO -u TEST_EMITTED -u INKWAVE_TEST_ROOT -u INKWAVE_TEST_ADAPTER -u INKWAVE_UPSTREAM_SOURCE -u INKWAVE_BUILT_SITE -u INKWAVE_POINTER_LOCK_SITE -u INKWAVE_ESBUILD_MODULE node scripts/tests/lock-option-recovery.test.mjs
               ;;
             motion)
               node --experimental-vm-modules --test --test-concurrency=1 \
