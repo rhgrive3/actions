@@ -62,9 +62,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Strict runtime/UI preflight protocol contracts
         run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs scripts/tests/inkwave-explosher-geometry-lifetime.test.mjs scripts/tests/inkwave-ci-video-tools.test.mjs scripts/tests/inkwave-explosher-absolute-geometries.test.mjs
-      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
       - name: Install required PNG decoder
         run: node scripts/prepare-inkwave-ci-video-tools.mjs --receipt .ci-scratch/explosher/video-tool-provision.json

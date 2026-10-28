@@ -229,6 +229,28 @@ test('source binds the helper bytes and runs focused contracts without changing 
   assert.throws(()=>instrumentExplosherGeometryDriver(driver.replace('let browser;','')),/anchor/);
   assert.throws(()=>instrumentExplosherGeometryDriver(driver+'\nlet browser;'),/anchor/);
 });
+test('strict preflight runs after pinned JS dependencies, with browser provisioning still after it',()=>{
+  const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');
+  const install='      - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8\n';
+  const strict='      - name: Strict runtime/UI preflight protocol contracts\n';
+  const browser='      - run: npx playwright install --with-deps chromium\n';
+  function validate(text){
+    const job=text.slice(text.indexOf('  native-pair:'));
+    for(const line of [install,strict,browser])assert.equal(job.split(line).length,2,'exactly one required step: '+line.trim());
+    assert(job.indexOf(install)<job.indexOf(strict),'pinned JS dependencies must precede tests that import esbuild');
+    assert(job.indexOf(strict)<job.indexOf(browser),'browser provisioning remains after the strict preflight');
+    const strictStep=job.slice(job.indexOf(strict),job.indexOf(browser));
+    assert.match(strictStep,/inkwave-explosher-geometry-lifetime\.test\.mjs/);
+    assert.doesNotMatch(strictStep,/continue-on-error:|\n        if:/);
+  }
+  assert.doesNotThrow(()=>validate(workflow));
+  for(const mutant of [
+    workflow.replace(install,'').replace(browser,install+browser),
+    workflow.replace(install,''),
+    workflow.replace('esbuild@0.28.2','esbuild@0.27.0'),
+    workflow.replace(strict,strict+'        continue-on-error: true\n'),
+  ]){assert.notEqual(mutant,workflow);assert.throws(()=>validate(mutant));}
+});
 test('actual generated finally bounds a never-resolving diagnostic, clears timers and retains the original failure and browser close path',async()=>{
   const driver="let browser;\nconst page = await browser.newPage({});\n  await enterRangeFromMenu(page,base);\n      window.resetExplosherRandom('character-reset');\n      await resetCaptureCharacter(a);\n      window.resetExplosherRandom('shot-input');\n      window.markExplosherRandomBoundary('native-birth');\n          window.markExplosherRandomBoundary('after-draw-probe');\n  await browser?.close();";
   const output=instrumentExplosherGeometryDriver(driver),begin=output.indexOf('  let geometryDiagnosticTimer;');assert(begin>=0);
