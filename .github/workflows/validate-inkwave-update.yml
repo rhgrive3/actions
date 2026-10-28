@@ -39,6 +39,9 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
+      # Every PR workflow-only edit must still pass verified CI contracts;
+      # the exact-tree classifier avoids unrelated gameplay/browser reruns.
+      - '.github/workflows/*.yml'
       - 'scripts/check-weapons-reference.mjs'
       - 'scripts/verify-completion-sources.mjs'
       - 'package.json'
