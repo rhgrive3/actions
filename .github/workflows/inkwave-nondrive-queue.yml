@@ -5,8 +5,6 @@ on:
       - "inkwave-public/src/**"
       - "patches/native-stages/runtime/**"
       - "patches/splatoon3/runtime/**"
-      - ".github/workflows/zevant-account.yml"
-      - ".github/workflows/inkwave-weapon-lod-boundaries.yml"
       - ".github/workflows/inkwave-nondrive-queue.yml"
       - "scripts/tests/inkwave-queue-native-compact.test.mjs"
 permissions:
