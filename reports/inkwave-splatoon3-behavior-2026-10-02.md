@@ -6462,3 +6462,9 @@ Scorch→Tidewaterの通常RAF・後続ジョブGCで旧NativeLevel/data/physics
 公開ソース単独ではなく本番合成コードで、探索順／経路／時計端点／乱数選択、sourceとmovingの接触選択・UV・miss・出力所有、波／ジオメトリのバイト列、マップのターゲット・hover・入力寿命、HUDの動的値を比較した。原典balanced→highの材質channelは直接highのshader／cache keyへ一致させ、abort後のKTX2処理は実完了まで旧loaderを保持する。物理近似・フレーム間引き・画質低下による最適化は行わない。
 
 これらはINKWAVEの実装同値性と資源寿命のCPU／合成検証であり、Nintendoの非公開値を確定する根拠ではない。[任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)と既存の11.3.0参照・未確認事項を引き継ぐ。本家実機、同一ブキ・ギア・状態の動的映像、iPad／Safariの実機性能は未計測。統合ブラウザ／CIの結果も、本家実機比較とは別に扱う。
+
+## 2026-10-28: 接触・通信の統合回帰
+
+公開版の合成 `src/game/match.js` で、衝突判定コールバックが処理中にアクター配列や半径を変更すると、先読み最適化により後続ペアが旧値を使う差分を再現した。`patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs` の先読みを外し、ペアごとに値を読む既存の処理順へ戻した。配列・半径の変更と例外を伴う単体回帰は通過した。通常プレイやフレーム間隔別のブラウザ実行、本家との接触・押し出し比較は未確認。本家の参照条件は従来の Splatoon 3 Ver.11.3.0 とし、このテストを本家との一致証拠にはしない。
+
+スロッシャーの通信塗り証明でも `patches/splatoon3/runtime/weapons-fidelity.mjs` の有限値検査を従来の評価順に戻した。後続要素のゲッターを含む反例と通常入力の単体回帰が通過したが、実機間通信の確認は未実施。
