@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';
 import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
-import { shouldRetryResponsiveSessionLoss } from './lib/inkwave-responsive-session-retry.mjs';
+import { shouldRetryResponsiveSessionLoss, sameResponsiveRecoveryIdentity } from './lib/inkwave-responsive-session-retry.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => {
@@ -66,6 +66,8 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
     fs.mkdirSync(retryProfile,{recursive:true});
     fs.writeFileSync(path.join(shardDir,'initial-crash-stderr.txt'),boundedChildStderr(processResult.stderr).text);
     recovery={kind:'verified-webkit-session-loss',previousStatus:firstFragment.status,
+      initialExitCode:processResult.status,initialSignal:processResult.signal ?? null,
+      initialProcessError:processResult.error?.message ?? null,
       originalEvidence:'responsive-result.json',originalStderr:'initial-crash-stderr.txt'};
     console.log(JSON.stringify({event:'responsive-browser-session-retry',engine,name,reason:recovery.kind}));
     const retryArgs=[...args];
@@ -94,6 +96,7 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
     assert.equal(fragment.cases[0].status,'passed');
     assert.equal(fragment.status,'passed');
     assert.deepEqual(fragment.errors,[]);
+    if(recovery) assert.ok(sameResponsiveRecoveryIdentity(firstFragment,fragment), 'Recovered attempt source or runner identity differs from the initial attempt');
     if(expectedInputs===null){expectedInputs=fragment.sourceHashes;expectedRunners=fragment.runnerHashes;
       report.sourceHashes=expectedInputs;report.runnerHashes=expectedRunners;report.runtimeInstalled=fragment.runtimeInstalled;}
     else {

@@ -178,6 +178,7 @@
           "scripts/tests/inkwave-roller-blob-worker-binding.test.mjs",
           "scripts/tests/inkwave-exact-checkout-head.test.mjs",
           "scripts/tests/inkwave-responsive-progress-summary.test.mjs",
+          "scripts/tests/inkwave-responsive-session-retry.test.mjs",
           "scripts/tests/inkwave-frozen-hud-capture.test.mjs",
           "scripts/tests/inkwave-ui-visual-probe-errors.test.mjs"
         ]

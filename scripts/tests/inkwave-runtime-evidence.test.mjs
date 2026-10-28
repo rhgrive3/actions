@@ -1,3 +1,4 @@
+import {reliabilityIdentity} from '../../patches/reliability/adapter.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -156,4 +157,28 @@ test('all committed inputs remain verified above the old 64 MiB aggregate captur
   manifest.files['upstream/65.bin']=hash(bytes);manifest.build.script=hash('bad build script');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: scripts\/build-inkwave.mjs/);
   manifest.build.script=hash(bytes);manifest.files['upstream/missing.bin']=hash(bytes);save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Missing source input/);
  }
+});
+
+const adapter=new URL('../../patches/reliability/lock-option-recovery-adapter.mjs',import.meta.url);
+const key='lock-option-recovery-adapter.mjs';
+test('lock option build-only transformer is a declared source identity input',()=>{
+  const identity=reliabilityIdentity();
+  assert.ok(Object.hasOwn(identity,key),'build transformer must be included, not merely imported');
+  assert.equal(identity[key],hash(fs.readFileSync(adapter)));
+  if(process.env.INKWAVE_BUILT_SITE){
+    const manifest=JSON.parse(fs.readFileSync(path.join(process.env.INKWAVE_BUILT_SITE,'inkwave-build.json'),'utf8'));
+    assert.equal(manifest.files['reliability/'+key],identity[key],'emitted manifest must bind the same transformer bytes');
+  }
+});
+test('source verifier rejects tampered and missing registered transformer bytes',()=>{
+  const tmp=fs.mkdtempSync(path.join(root,'iw-lock-identity-'));
+  try{
+    const repo=path.join(tmp,'repo'),site=path.join(tmp,'site');fs.mkdirSync(path.join(repo,'patches/reliability'),{recursive:true});fs.mkdirSync(path.join(repo,'scripts'),{recursive:true});fs.mkdirSync(site,{recursive:true});
+    const bytes=fs.readFileSync(adapter);fs.writeFileSync(path.join(repo,'patches/reliability',key),bytes);fs.writeFileSync(path.join(repo,'scripts/build-inkwave.mjs'),'// fixture build');fs.writeFileSync(path.join(site,'asset.js'),'// fixture emitted');
+    const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();git('init','--quiet');git('add','.');git('-c','user.name=Fixture','-c','user.email=fixture@invalid','commit','--quiet','-m','present');const sha=git('rev-parse','HEAD');
+    const artifacts={'asset.js':hash('// fixture emitted')},files={['reliability/'+key]:hash(bytes)},manifest={artifacts,contentHash:hash(JSON.stringify(artifacts)),files,build:{script:hash('// fixture build')}};
+    const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));save();assert.doesNotThrow(()=>verifyRuntimeBuild(site,repo,sha));
+    manifest.files['reliability/'+key]=hash(Buffer.concat([bytes,Buffer.from('\n// modified transformer')]));save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: patches\/reliability\/lock-option-recovery-adapter\.mjs/);
+    manifest.files['reliability/'+key]=hash(bytes);save();git('rm','--quiet','patches/reliability/'+key);git('-c','user.name=Fixture','-c','user.email=fixture@invalid','commit','--quiet','-m','missing');const absent=git('rev-parse','HEAD');assert.throws(()=>verifyRuntimeBuild(site,repo,absent),/Missing source input: patches\/reliability\/lock-option-recovery-adapter\.mjs/);
+  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
