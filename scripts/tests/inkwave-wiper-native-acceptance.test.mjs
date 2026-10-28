@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import {WIPER_CAPTURE_CASES as CASES,WIPER_CAPTURE_FRAMES as FRAMES,assertWiperCaptureReceipt,wiperBuildReceiptBinding} from '../lib/inkwave-wiper-acceptance-contract.mjs';
 import {sandboxBrowserOptions,launchSandboxBrowser,closeWiperCaptureOwners} from '../lib/inkwave-sandbox-browser.mjs';
 import {verifyWiperCaptureFiles} from '../check-inkwave-wiper-native-receipt.mjs';
 import {hash} from '../lib/inkwave-runtime-evidence.mjs';
 import {parseBrowserLane} from '../ci/run-circleci-browser-lane.mjs';
-import {createWiperNativeShotSchedule,wrapWiperDrawCallback} from '../check-inkwave-wiper-native-acceptance.mjs';
+import {createWiperNativeShotSchedule,wrapWiperDrawCallback,assertWiperWebGLError,finishWiperContext} from '../check-inkwave-wiper-native-acceptance.mjs';
 
 const sourceSha='a'.repeat(40),digest='c'.repeat(64);
 const revision='e'.repeat(64),modules=Object.fromEntries(['s3-projectile-shapes.mjs','s3-ink-sheets.mjs'].map(n=>[`_versions/${revision}/patches/splatoon3/runtime/${n}`,digest]));
@@ -34,6 +35,39 @@ function fixture(){
   }
   return {receipt,files,read(filename){if(filename.endsWith('wiper-native-result.json'))return Buffer.from(JSON.stringify(receipt));const value=files.get(filename.split('/').at(-1));if(!value)throw Error('missing PNG');return value;}};
 }
+
+test('WebGL failure retains exact first queued enum and context without a pre-drain or retry',()=>{
+  // Exercise the exact function serialized into the page, not a lookalike.
+  const probe=vm.runInNewContext('('+assertWiperWebGLError.toString()+')');
+  for(const code of [0,0x0500,0x0502,0x0505,0x9242]){
+    let reads=0,lossChecks=0;const gl={drawingBufferWidth:960,drawingBufferHeight:720,
+      getError(){reads++;return code;},isContextLost(){lossChecks++;return code===0x9242;}};
+    if(code===0)assert.doesNotThrow(()=>probe(gl,1,'native-postprocessed'));
+    else assert.throws(()=>probe(gl,1,'native-postprocessed'),e=>e.message.includes('code=0x'+code.toString(16))&&e.message.includes('frame=1 view=native-postprocessed')&&e.message.includes('contextLost='+(code===0x9242))&&e.message.includes('drawingBuffer=960x720'));
+    assert.equal(reads,1);assert.equal(lossChecks,code===0?0:1);
+  }
+  let errorReads=0;
+  const broken={getError(){errorReads++;return 0x0502;},isContextLost(){throw Error('lost read');},
+    get drawingBufferWidth(){throw Error('width read');},get drawingBufferHeight(){throw Error('height read');}};
+  assert.throws(()=>probe(broken,8,'fixed-side-raw'),e=>e.message.includes('code=0x502')&&e.message.includes('frame=8 view=fixed-side-raw')&&e.message.includes('contextLost=unknown drawingBuffer=unknownxunknown'));
+  assert.equal(errorReads,1,'failed optional reads never drain or replace the original error');
+  const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
+  assert.match(driver,/window\.__assertWiperWebGLError\(gl,frame,view\)/);
+  assert.match(driver,/assertWiperWebGLError\.toString\(\)/);
+});
+
+test('context cleanup preserves the primary capture failure and records cleanup failure',async()=>{
+  for(const primary of [null,Error('primary code=0x502')])for(const closeError of [null,Error('close rejected')]){
+    const row={contextClosed:false},errors=[],snapshots=[];let closeCalls=0;
+    const context={close:async()=>{closeCalls++;if(closeError)throw closeError;}};
+    const execute=async()=>{let failure;try{if(primary)throw primary;}catch(e){failure=e;throw e;}
+      finally{await finishWiperContext(context,row,()=>snapshots.push({closed:row.contextClosed,errors:[...errors]}),errors,failure);}};
+    if(primary||closeError)await assert.rejects(execute,e=>e===(primary||closeError));else await assert.doesNotReject(execute);
+    assert.equal(closeCalls,1);assert.equal(row.contextClosed,!closeError);assert.equal(snapshots.length,1);
+    assert.equal(errors.length,closeError?1:0);assert.equal(snapshots[0].errors.length,closeError?1:0);
+    if(closeError)assert.match(errors[0],/context cleanup:.*close rejected/s);
+  }
+});
 
 test('exact mandatory six cases include Normal+Lite first active charged frame, taps and Heavy controls',()=>{
   assert.deepEqual(CASES.map(c=>c.key),['normal-charged','normal-tap','lite-charged','lite-tap','heavy-charged','heavy-tap']);
@@ -155,6 +189,6 @@ test('additive catalog workflow retains inherited Hissen/phase52 route and binds
   assert.match(driver,/verifyRuntimeBuild\(site,root,sourceSha\)/);assert.match(driver,/launchSandboxBrowser\(chromium\)/);
   assert.ok(!driver.includes('--no-sandbox'));assert.ok(!driver.includes('new Projectile'));
   assert.match(driver,/p\.descriptor!==testCase\.descriptor/);assert.match(driver,/p=>p\.owner===a&&p\.delay<=0&&!p\.catalog\?\.birthPending/);
-  assert.match(driver,/finally\{try\{restoreDraw\(\)/);assert.match(driver,/finally\{await context.close\(\)/);
+  assert.match(driver,/finally\{try\{restoreDraw\(\)/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
   assertWiperCaptureReceipt(fixture().receipt,{sourceSha,...buildBinding});
 });

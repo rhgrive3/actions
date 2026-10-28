@@ -53,21 +53,21 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
       const control=controls.length===1?controls[0]:null;
       const tracks=row?getComputedStyle(row).gridTemplateColumns.trim():'';
       const visualColumns=tracks&&tracks!=='none'&&!tracks.includes('(')?tracks.split(/\s+/).length:0;
-      // Match the composed native _scr_mode graph, which uses viewport width;
-      // CSS may present fewer columns than the focus graph at the same width.
-      const width=window.innerWidth,columns=width<=360?1:width<=900?2:3;
+      // The native focus graph can have been built before a viewport resize.
+      // Current visual columns and width are diagnostics, not graph topology.
+      const width=window.innerWidth;
       let opacity=1;
       if(control&&root)for(let e=control.closest('[data-nav]')||control;e&&e!==root.parentNode;e=e.parentElement){
         const value=Number(getComputedStyle(e).opacity);if(!Number.isFinite(value)){opacity=NaN;break;}
         opacity*=value;if(e===root)break;
       }
       return {screen:m?.current??null,screenName:m?._scr?.name??null,button:m?._focus?.dataset?.id??null,
-        focused:cards.indexOf(m?._focus),target:cards.indexOf(control),columns,visualColumns,width,
+        focused:cards.indexOf(m?._focus),target:cards.indexOf(control),visualColumns,width,
         focusReady:!!(cards.includes(m?._focus)&&m._focus.isConnected&&!m._focus.disabled&&!m._focus.closest('.is-leaving')),
         ready:!!(control&&control.isConnected&&root&&!root.inert&&root.contains(control)&&!control.disabled&&!control.closest('.is-leaving')&&opacity>0.6)};
     });
-    const valid=f=>f.screen==='mode'&&f.screenName==='mode'&&f.ready&&f.focusReady&&Number.isFinite(f.width)&&f.width>0&&Number.isInteger(f.visualColumns)&&f.visualColumns>=1&&Number.isInteger(f.focused)&&f.focused>=0&&Number.isInteger(f.target)&&f.target>=0&&Number.isInteger(f.columns)&&f.columns>=1;
-    let reached=false;
+    const valid=f=>f.screen==='mode'&&f.screenName==='mode'&&f.ready&&f.focusReady&&Number.isFinite(f.width)&&f.width>0&&Number.isInteger(f.visualColumns)&&f.visualColumns>=1&&Number.isInteger(f.focused)&&f.focused>=0&&Number.isInteger(f.target)&&f.target>=0;
+    let reached=false,tryLeft=false;
     for(let step=0;step<12;step++){
       budget();const focus=await bounded(readFocus,'read native focus');budget();
       if(!valid(focus))throw Error('Native Turf keyboard focus unavailable: '+JSON.stringify(focus));
@@ -77,11 +77,17 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
         note('keyboard-activate-on-touch',{selector:turfSelector,key:'Enter',steps:step});
         reached=true;break;
       }
-      const key=focus.button==='mode-range'?'ArrowLeft':focus.focused-focus.columns>=focus.target?'ArrowUp':'ArrowLeft';
+      // Range is attached to Boss by a native special edge. On the mode
+      // grid try Up first; a real no-movement bump means try Left at that
+      // same focus. The next move is based on observed focus, never width.
+      const key=focus.button==='mode-range'||tryLeft?'ArrowLeft':'ArrowUp';
       budget();note('native-action-attempt',{kind:'key',key});await bounded(()=>page.keyboard.press(key),'navigate '+key);budget();const after=await bounded(readFocus,'verify native focus');budget();
-      if(!valid(after)||after.target!==focus.target||after.columns!==focus.columns||after.width!==focus.width||after.focused===focus.focused)
+      if(!valid(after)||after.target!==focus.target||after.width!==focus.width)
         throw Error('Native Turf focus navigation stalled: '+JSON.stringify({key,before:focus,after}));
-      note('native-focus-step',{key,from:focus.button,to:after.button});
+      const moved=after.focused!==focus.focused;
+      note('native-focus-step',{key,from:focus.button,to:after.button,moved});
+      if(!moved&&key==='ArrowLeft')throw Error('Native Turf focus navigation stalled: '+JSON.stringify({key,before:focus,after}));
+      tryLeft=!moved;
     }
     if(!reached)throw Error('Native Turf keyboard route exhausted without verified focus');
   }else{

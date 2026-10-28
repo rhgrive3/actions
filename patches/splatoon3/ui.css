@@ -610,7 +610,7 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-modesel__row {
-    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(96px, 1fr);
     min-height: 0; align-content: stretch; gap: 10px; padding: 6px; overflow: auto; touch-action: pan-y;
   }
   :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-modesel .iw-mode { display: flex; flex-direction: column; min-height: 96px; height: 100%; padding: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 2px #ffffff80; }

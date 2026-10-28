@@ -76,6 +76,21 @@ export function wrapWiperDrawCallback(mesh,observe) {
   };
 }
 
+// Read exactly once at the original fail-closed boundary. A pre-existing GL
+// error is intentionally not cleared: it remains a capture failure. The code
+// and context help diagnose it without claiming which earlier call caused it.
+export function assertWiperWebGLError(gl, frame, view) {
+  const code=gl.getError();
+  if(code) {
+    // Optional context reads must never replace the original GL failure.
+    let lost='unknown',width='unknown',height='unknown';
+    try { if(typeof gl.isContextLost==='function')lost=gl.isContextLost(); } catch {}
+    try { width=gl.drawingBufferWidth; } catch {}
+    try { height=gl.drawingBufferHeight; } catch {}
+    throw Error(`Native render WebGL error: code=0x${Number(code).toString(16)} frame=${frame} view=${view} contextLost=${lost} drawingBuffer=${width}x${height}`);
+  }
+}
+
 export async function installWiperProbe(testCase) {
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local,P=G.projectiles,r=G.renderer,gl=r.getContext();
   if(!g.frozen||!G.match?.range||G.match.state!=='playing'||a.weaponId!==testCase.id)throw Error('Native controlled range admission mismatch');
@@ -149,7 +164,7 @@ export async function installWiperProbe(testCase) {
         render={...r.info.render};pixels=readPixels();
       }finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}
       if(!drawReceipts.some(d=>!d.override))throw Error('Actual source-bound mesh did not draw in this view');
-      if(gl.getError())throw Error('Native render WebGL error');
+      window.__assertWiperWebGLError(gl,frame,view);
       if(before!==JSON.stringify(state()))throw Error('Render changed gameplay/native camera/visibility/clock/RNG');
       return {frame,tick:scheduler.tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,
         attributeBytes:bytes,projectedVertices:vertices.count*mesh.count,visibleProjectedVertices,matrices,castShadow:mesh.castShadow},
@@ -170,6 +185,16 @@ export async function installWiperProbe(testCase) {
       return {retired,resources:{disposed,wetAllocated:!!wet,events},finalTick:scheduler.tick,quietTailTicks:tail};
     }};
   return {firstBirth,held,initial:window.__wiperProbe.initial};
+}
+
+// Always attempt context cleanup. Preserve a primary capture error if close
+// also fails, and record the cleanup failure rather than silently discarding it.
+export async function finishWiperContext(context,row,save,errors,primaryError) {
+  let cleanupError;
+  try { await context.close(); row.contextClosed=true; }
+  catch(error) { cleanupError=error; errors.push('context cleanup: '+String(error?.stack||error)); }
+  finally { save(); }
+  if(cleanupError&&!primaryError)throw cleanupError;
 }
 
 export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPath(new URL('../',import.meta.url))}={}) {
@@ -214,6 +239,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
     for(const c of WIPER_CAPTURE_CASES){
       const row={...c,frames:[],contextClosed:false};result.cases.push(row);save();
       const context=await browser.newContext({viewport:{width:960,height:720},deviceScaleFactor:1});
+      let primaryError;
       try{
         const page=await context.newPage();page.setDefaultTimeout(120000);
         page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
@@ -222,7 +248,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
         }).catch(e=>result.errors.push('consumed artifact: '+e.message)));});
         await page.addInitScript(initializeWiperCapture,c);
         row.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:120000});
-        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';'});
+        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';'});
         Object.assign(row,await page.evaluate(installWiperProbe,c));
         for(const frame of WIPER_CAPTURE_FRAMES[c.action]){
           let captured;
@@ -238,7 +264,8 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
           captured.screenshotStateStable=true;row.frames.push(captured);save();console.log('Wiper controlled frame',c.key,frame);
         }
         Object.assign(row,await page.evaluate(()=>window.__wiperProbe.finish()));
-      }finally{await context.close();row.contextClosed=true;save();}
+      }catch(error){primaryError=error;throw error;}
+      finally{await finishWiperContext(context,row,save,result.errors,primaryError);}
     }
     await Promise.all(pending);assert.deepEqual(result.errors,[]);result.status='passed';
   }catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}

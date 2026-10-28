@@ -5,21 +5,33 @@ import vm from 'node:vm';
 import {adaptBuildSource} from '../inkwave-source-composition.mjs';
 import {startProjectileThroughMenu} from '../lib/inkwave-projectile-menu-start.mjs';
 
-function fakePage(overrides={}, {touch=false,width=720,visualCols=2,initial=6,blockedFocus=false,keyReject=false,hangKey=false,hangFocus=false,hangMouse=false,hangConfig=false,hangCapability=false,hangClick=false,delayKey=false,delayStart=false,afterNavigate=()=>{}}={}){
-  const clicks=[],taps=[],keys=[],phases=[],events=[],cols=width<=360?1:width<=900?2:3;
+function fakePage(overrides={}, {touch=false,width=720,graphWidth=width,visualCols=2,initial=6,blockedFocus=false,keyReject=false,hangKey=false,hangFocus=false,hangMouse=false,hangConfig=false,hangCapability=false,hangClick=false,delayKey=false,delayStart=false,hangAt=0,useComposedGraph=false,afterNavigate=()=>{}}={}){
+  const clicks=[],taps=[],keys=[],phases=[],events=[],cols=graphWidth<=360?1:graphWidth<=900?2:3;
   const g={debug:{},bootMs:94000,match:{attract:true},profile:{weapon:'shooter'},menus:{current:'main',_scr:{name:'main'},_setup:{mode:'turf',mapId:'tidewater',difficulty:'normal',duration:180,...overrides},_stageTime:()=> 'day'}};
   const ids=['mode-turf','mode-zones','mode-tower','mode-rainmaker','mode-clams','mode-boss','mode-range'];
   const root={inert:false,parentNode:null},cards=ids.map(id=>({dataset:{id},isConnected:true,disabled:false,parentElement:root,closest:()=>null})),control=cards[0];
   const row={querySelectorAll:()=>cards};root.contains=el=>cards.includes(el);root.querySelector=()=>row;
+  let graph=null;if(useComposedGraph){
+    const raw=fs.readFileSync(new URL('../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8');
+    const source=adaptBuildSource('src/ui/menus.js',raw),mode=source.indexOf('_scr_mode('),start=source.indexOf('const graph = new Map();',mode),end=source.indexOf('    return {',start);
+    assert(mode>=0&&start>mode&&end>start);
+    graph=vm.runInNewContext('(function(cards){'+source.slice(start,end)+';return graph})(cards)',{cards:cards.slice(0,6),globalThis:{innerWidth:graphWidth}});
+  }
+
   g.menus._focus=cards[initial];g.menus._scr.el=root;
   const context={navigator:{maxTouchPoints:touch?1:0},matchMedia:()=>({matches:touch}),window:{__inkwave:g,__G:{mode:'menu'},innerWidth:width},document:{querySelectorAll:()=>[control]},getComputedStyle:e=>e===row?{gridTemplateColumns:Array(visualCols).fill('100px').join(' ')}:{opacity:e.opacity??'1'}};
   const evaluate=fn=>vm.runInNewContext('('+fn.toString()+')()',context);
   const pointerMoves=[];let closeCalls=0;
   const page={close:async()=>{closeCalls++;},mouse:{move:async(x,y)=>{pointerMoves.push([x,y]);if(hangMouse)return new Promise(()=>{});}},evaluate:async fn=>{const src=fn.toString();if((hangFocus&&src.includes('gridTemplateColumns'))||(hangConfig&&src.includes('g.menus?._setup'))||(hangCapability&&src.includes('navigator.maxTouchPoints')))return new Promise(()=>{});return evaluate(fn);},keyboard:{press:async key=>{
-    keys.push(key);if(delayKey)return new Promise(resolve=>setTimeout(resolve,70));if(hangKey)return new Promise(()=>{});if(keyReject)throw Error('keyboard blocked');
+    keys.push(key);if(delayKey)return new Promise(resolve=>setTimeout(resolve,70));if(hangKey||keys.length===hangAt)return new Promise(()=>{});if(keyReject)throw Error('keyboard blocked');
     if(key==='Enter'){if(g.menus._focus===control)g.menus.current='setup';return;}
     const i=cards.indexOf(g.menus._focus);let next=i;
-    if(!blockedFocus){if(key==='ArrowLeft')next=i===6?5:(i%cols===0?i:i-1);else if(key==='ArrowUp'&&i>=cols)next=i-cols;}
+    if(!blockedFocus){
+      if(i===6){if(key==='ArrowLeft')next=5;}
+      else if(graph){const target=graph.get(cards[i])?.[key==='ArrowLeft'?'left':'up'];if(target)next=cards.indexOf(target);}
+      else if(key==='ArrowLeft')next=i%cols===0?i:i-1;else if(key==='ArrowUp'&&i>=cols)next=i-cols;
+    }
+
     if(next>=0)g.menus._focus=cards[next];afterNavigate({g,root,control,context,cards,row});
   }},locator:selector=>({click:async options=>{assert(options.timeout>0);clicks.push(selector);if(delayStart&&selector.includes('\"start\"'))return new Promise(resolve=>setTimeout(resolve,70));if(hangClick)return new Promise(()=>{});if(selector.includes('"play"')){g.menus.current='mode';g.menus._scr.name='mode';}else if(selector.includes('mode-turf'))g.menus.current='setup';else if(selector.includes('"start"'))g.menus.current=null;},tap:async()=>{taps.push(selector);throw Error('touch tap is not a performance admission');},press:async()=>{throw Error('locator Enter is not used');}})};
   return {page,clicks,taps,keys,pointerMoves,phases,events,evaluate,context,g,root,control,get closeCalls(){return closeCalls;},options:{receipt:events,remainingMs:()=>1234,waitForPhase:async(fn,label)=>{phases.push(label);assert.equal(evaluate(fn),true);}}};
@@ -60,6 +72,29 @@ for(const [width,visualCols] of [[320,1],[480,1],[720,2],[1000,3]])test('touch-s
     assert.equal(h.events.filter(e=>e.event==='keyboard-activate-on-touch').length,1);
     assert.equal(h.events.filter(e=>e.event==='native-start-clicked').length,1);
   }
+});
+test('touch route follows observed focus when graph was built at another viewport',async()=>{
+  const h=fakePage({}, {touch:true,width:844,graphWidth:1000,visualCols:2,initial:6,useComposedGraph:true});
+  await startProjectileThroughMenu(h.page,h.options);
+  assert.deepEqual(h.keys.slice(0,4),['ArrowLeft','ArrowUp','ArrowUp','ArrowLeft']);
+  assert.equal(h.keys.at(-1),'Enter');assert.equal(h.events.find(e=>e.event==='native-turf-focused').focus.button,'mode-turf');
+});
+test('composed graph remains navigable after different viewport sizes from every initial owner',async()=>{
+  for(const [width,graphWidth,visualCols] of [[320,1000,1],[1000,320,3],[844,480,2]])for(let initial=0;initial<7;initial++){
+    const h=fakePage({}, {touch:true,width,graphWidth,visualCols,initial,useComposedGraph:true});
+    await startProjectileThroughMenu(h.page,h.options);
+    assert.equal(h.keys.at(-1),'Enter',`${width}/${graphWidth}/${initial}`);
+    assert.equal(h.events.find(e=>e.event==='native-turf-focused').focus.button,'mode-turf');
+    assert.equal(h.clicks.some(s=>s.includes('mode-turf')),false);
+  }
+});
+test('deadline closes the page if the post-bump native key hangs',async()=>{
+  const h=fakePage({}, {touch:true,width:844,graphWidth:1000,visualCols:2,initial:6,useComposedGraph:true,hangAt:4});h.options.remainingMs=()=>20;
+  await assert.rejects(startProjectileThroughMenu(h.page,h.options),/deadline exceeded/);
+  assert.deepEqual(h.keys,['ArrowLeft','ArrowUp','ArrowUp','ArrowLeft']);
+  assert.equal(h.closeCalls,1);assert.equal(h.keys.includes('Enter'),false);
+  assert.equal(h.clicks.some(s=>s.includes('mode-turf')||s.includes('"start"')),false);
+  assert.equal(h.events.filter(e=>e.event==='native-action-timeout'&&e.pageCloseRequested).length,1);
 });
 test('touch-sized route refuses Enter or START on blocked, spoofed, stale or no-longer-ready focus',async()=>{
   const cases=[{blockedFocus:true},{afterNavigate:({g})=>{g.menus._focus={dataset:{id:'mode-turf'}};}},{afterNavigate:({g})=>{g.menus._scr.name='stale';}},{afterNavigate:({root})=>{root.inert=true;}},{afterNavigate:({control})=>{control.isConnected=false;}},{afterNavigate:({control})=>{control.opacity='0.6';}},{afterNavigate:({context,control})=>{context.document.querySelectorAll=()=>[control,control];}}];
