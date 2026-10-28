@@ -99,7 +99,7 @@ test('Native command edits update the browser acceptance source hash', () => {
   assert(after.commands.some(s => s.command.includes('range-altered')));
 });
 
-test('CircleCI path selection is a superset of GitHub native PR trigger paths', () => {
+test('CircleCI covers native heavy inputs and INKWAVE workflow edits while GitHub owns unrelated workflow-only edits', () => {
   const lines = workflow.split(/\r?\n/);
   const start = lines.indexOf('  pull_request:');
   const end = lines.indexOf('  workflow_dispatch:');
@@ -115,6 +115,16 @@ test('CircleCI path selection is a superset of GitHub native PR trigger paths', 
   assert(mappings.length >= 10, 'Missing native CircleCI file-change selectors');
   const witness = p => p.replace(/\*\*/g, 'example/feature').replace(/\*/g, 'example').replace(/\?/g, 'x');
   for (const source of paths) {
+    if (source === '.github/workflows/*.yml') {
+      // GitHub runs its own workflow-contract gate for every workflow-only PR.
+      // CircleCI's heavy game suite must cover game-specific workflows while
+      // not launching for unrelated workflow edits.
+      for (const required of ['.github/workflows/inkwave-main-weapons.yml',
+                              '.github/workflows/inkwave-audio-v11.yml',
+                              '.github/workflows/validate-inkwave-update.yml'])
+        assert(mappings.some(x=>x.test(required)), 'CircleCI omits a game workflow: '+required);
+      continue;
+    }
     assert(mappings.some(x => x.test(witness(source))), 'CircleCI ignores a mandatory GitHub trigger: ' + source);
   }
   for (const irrelevant of ['README.md', 'docs/unrelated-note.md', '.github/workflows/hex-lane-quality.yml'])
