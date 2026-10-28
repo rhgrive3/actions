@@ -255,11 +255,12 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
 });
 
  test('a rejected resume request cannot retry Pointer Lock into a fresh pause or menu',async()=>{
-  for(const state of ['pause','menu','playing']){
+  for(const observed of [false,true])for(const state of ['pause','menu','playing']){
    const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
    if(state==='pause')h.G.match.paused=true;else if(state==='menu')h.G.game.menus.current='pause';
+   if(observed)h.lockError();
    h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
-   assert.equal(h.requests(),state==='playing'?2:1,state);assert.equal(h.unlocks(),1);
+   assert.equal(h.requests(),observed&&state==='playing'?2:1,state+' observed denial='+observed);assert.equal(h.unlocks(),1);
   }
  });
 
