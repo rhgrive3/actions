@@ -1,0 +1,58 @@
+name: INKWAVE fast PR preflight
+# Quick exact-head signal for draft and ready PRs. Ready PRs also run full Validate.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  fast-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact PR head (no synthetic merge)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/workflows/
+            /.circleci/config.yml
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /tests/
+            /server/
+            /account/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
+      - name: Verify immutable PR source SHA
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check upstream locks, source/numeric compatibility and staged-CI invariants
+        run: |
+          node scripts/check-inkwave-patches.mjs --quick
+          node --test scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-responsive-child-pool.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs scripts/tests/inkwave-full-scope.test.mjs
+          node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
+          node --test scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-source-coverage.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-test-suites.test.mjs

@@ -1,12 +1,25 @@
 name: INKWAVE reopened-six focused regressions
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - 'patches/loading-cache/tests/cargo-offline-precache.test.mjs'
       - 'patches/loading-cache/adapter.mjs'
       - 'inkwave-public/src/config.js'
       - 'patches/splatoon3/**'
+      - '!patches/splatoon3/tests/**'
+      - 'patches/splatoon3/tests/superjump-gameplay.test.mjs'
+      - 'patches/splatoon3/tests/support-kit-recon-cooler.test.mjs'
+      - 'patches/splatoon3/tests/support-kit-two-peer.test.mjs'
+      - 'patches/splatoon3/tests/issue-835-cooler-punisher.test.mjs'
+      - 'patches/splatoon3/tests/issue-514-sourced-partial-range.test.mjs'
+      - 'patches/splatoon3/tests/issue-1108-roller-wall-idle.test.mjs'
+      - 'patches/splatoon3/tests/map-reveal.test.mjs'
+      - 'patches/splatoon3/tests/turf-finish.test.mjs'
       - 'patches/local-quality/**'
+      - '!patches/local-quality/tests/**'
+      - 'patches/local-quality/tests/bot-paint-device-profile.test.mjs'
+      - 'patches/local-quality/tests/bot-paint-observation.test.mjs'
       - 'scripts/run-inkwave-turf-finish-isolated.mjs'
       - 'scripts/tests/run-inkwave-turf-finish-*.test.mjs'
       - '.github/workflows/inkwave-reopened-six.yml'
@@ -16,6 +29,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   reopened-six:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

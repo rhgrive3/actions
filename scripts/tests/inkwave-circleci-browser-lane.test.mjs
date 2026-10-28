@@ -99,7 +99,7 @@ test('Native command edits update the browser acceptance source hash', () => {
   assert(after.commands.some(s => s.command.includes('range-altered')));
 });
 
-test('CircleCI path selection is a superset of GitHub native PR trigger paths', () => {
+test('CircleCI covers native gameplay inputs without waking heavy lanes for unrelated workflow edits', () => {
   const lines = workflow.split(/\r?\n/);
   const start = lines.indexOf('  pull_request:');
   const end = lines.indexOf('  workflow_dispatch:');
@@ -117,7 +117,7 @@ test('CircleCI path selection is a superset of GitHub native PR trigger paths', 
   for (const source of paths) {
     assert(mappings.some(x => x.test(witness(source))), 'CircleCI ignores a mandatory GitHub trigger: ' + source);
   }
-  for (const irrelevant of ['README.md', 'docs/unrelated-note.md', '.github/workflows/hex-lane-quality.yml'])
+  for (const irrelevant of ['README.md', 'docs/unrelated-note.md', '.github/workflows/hex-lane-quality.yml', '.github/workflows/inkwave-main-weapons.yml'])
     assert(!mappings.some(x => x.test(irrelevant)), 'Unrelated change launches heavy INKWAVE CI: ' + irrelevant);
   assert(setup.includes('same-base-run: false'), 'Do not repeat heavy CI on same-main revision');
 });

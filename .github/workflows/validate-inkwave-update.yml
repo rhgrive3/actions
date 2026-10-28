@@ -37,6 +37,7 @@ on:
       - "scripts/fixtures/inkwave-murals-ba5a2d57.js.txt"
       - "tests/issue-queue/**"
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - 'scripts/check-weapons-reference.mjs'
       - 'scripts/verify-completion-sources.mjs'
@@ -106,7 +107,7 @@ on:
         type: boolean
         default: false
 concurrency:
-  group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}
+  group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}
   cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}
 permissions:
   contents: read
@@ -150,11 +151,12 @@ jobs:
 
   build_site:
     needs: admission_preflight
-    if: inputs.diagnostic_only != true
+    if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
       content_hash: ${{ steps.identity.outputs.content_hash }}
+      contracts_only: ${{ steps.scope.outputs.contracts_only }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -177,7 +179,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Classify immutable tree difference, not commit-message or historical SHA
+        id: scope
+        env:
+          CONTRACT_SCOPE_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node scripts/ci/inkwave-full-scope.mjs
+      - name: CI-only source contract acceptance (no browser or unnecessary rebuild)
+        if: steps.scope.outputs.contracts_only == 'true'
+        run: |
+          node scripts/check-inkwave-patches.mjs --quick
+          node scripts/ci/run-inkwave-test-suite.mjs runner-contracts
+          node scripts/ci/run-inkwave-test-suite.mjs verifier
+          node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-full-scope.test.mjs scripts/tests/inkwave-workflow-inputs.test.mjs scripts/tests/inkwave-ci-sparse-checkout.test.mjs
       - name: Build immutable production site once
+        if: steps.scope.outputs.contracts_only != 'true'
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           npm install --no-save --no-package-lock --silent esbuild@0.28.2
@@ -186,9 +203,11 @@ jobs:
           git rev-parse HEAD > _site-source-sha.txt
           tar -cf immutable-site.tar _site _site-source-sha.txt
       - name: Bind shared artifact identity
+        if: steps.scope.outputs.contracts_only != 'true'
         id: identity
         run: node --input-type=module -e "import fs from 'node:fs'; const b=JSON.parse(fs.readFileSync('_site/inkwave-build.json')); fs.appendFileSync(process.env.GITHUB_OUTPUT,'content_hash='+b.contentHash+'\n');"
       - uses: actions/upload-artifact@v4
+        if: steps.scope.outputs.contracts_only != 'true'
         with:
           retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
@@ -198,7 +217,7 @@ jobs:
 
   validate_core:
     needs: build_site
-    if: inputs.diagnostic_only != true
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     # CPU source regressions live in the eight patch shards; keep browser-backed source and emitted checks here.
     timeout-minutes: 90
@@ -241,6 +260,9 @@ jobs:
       - name: Install pinned source regression and build tool
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).
+          # Rewrite only the stalled mirror before Playwright's unchanged dependency installation.
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx --no-install playwright install --with-deps chromium
       - name: Prepare persistent worker regression fixtures
         run: |
@@ -564,9 +586,9 @@ jobs:
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
-    needs: admission_preflight
     # Default GitHub full-suite behavior unless explicitly offloaded.
-    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    needs: build_site
+    if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -633,7 +655,7 @@ jobs:
   # Required /validate passes only when core and all eight regression shards pass.
   circleci_offload_gate:
     # Refuse stale/partial/unrelated CircleCI results. Native perf branches stay on GitHub.
-    if: ${{ (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    if: ${{ inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     needs: validate_core
     runs-on: ubuntu-latest
     timeout-minutes: 85
@@ -669,37 +691,57 @@ jobs:
           node scripts/ci/check-circleci-offload.mjs
 
   validate:
-    if: ${{ always() && inputs.diagnostic_only != true }}
-    needs: [admission_preflight, validate_core, patch_tests, circleci_offload_gate]
+    if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
+    needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Require every source and patch regression to pass
         env:
           PREFLIGHT_RESULT: ${{ needs.admission_preflight.result }}
+          BUILD_RESULT: ${{ needs.build_site.result }}
+          CONTRACTS_ONLY: ${{ needs.build_site.outputs.contracts_only }}
           CORE_RESULT: ${{ needs.validate_core.result }}
           PATCH_RESULT: ${{ needs.patch_tests.result }}
           CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+          SEVEN_RESULT: ${{ needs.seven_claims.result }}
+          RESOURCE_RESULT: ${{ needs.resource_paint_continuation.result }}
           OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
         run: |
-          printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$OFFLOAD_ACTIVE"
+          printf 'build=%s scope=%s core=%s patch=%s circleci=%s browser=%s seven=%s resource=%s offload=%s\n' "$BUILD_RESULT" "$CONTRACTS_ONLY" "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$BROWSER_RESULT" "$SEVEN_RESULT" "$RESOURCE_RESULT" "$OFFLOAD_ACTIVE"
           test "$PREFLIGHT_RESULT" = success
+          test "$BUILD_RESULT" = success
+          if [ "$CONTRACTS_ONLY" = true ]; then
+            # Scope was proven by an exact commit/base tree diff in build_site;
+            # CI contracts were executed in that same mandatory job.
+            test "$CORE_RESULT" = skipped
+            test "$PATCH_RESULT" = skipped
+            test "$CIRCLECI_RESULT" = skipped
+            test "$BROWSER_RESULT" = skipped
+            test "$SEVEN_RESULT" = skipped
+            test "$RESOURCE_RESULT" = skipped
+            exit 0
+          fi
+          test "$CONTRACTS_ONLY" = false
           test "$CORE_RESULT" = success
+          test "$SEVEN_RESULT" = success
+          test "$RESOURCE_RESULT" = success
           if [ "$OFFLOAD_ACTIVE" = true ]; then
             test "$PATCH_RESULT" = skipped
             test "$CIRCLECI_RESULT" = success
+            test "$BROWSER_RESULT" = skipped
           else
             test "$PATCH_RESULT" = success
             test "$CIRCLECI_RESULT" = skipped
+            test "$BROWSER_RESULT" = success
           fi
 
   browser:
     needs: build_site
     # No offload until CircleCI is connected and enabled.
-    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    # Catalogue Wiper capture requires Chromium's real namespace sandbox.
-    # Ubuntu 24.04 AppArmor blocks unprofiled Playwright binaries; route only
-    # catalog to supported Ubuntu 22.04 rather than disabling browser sandbox.
+    if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    # Native catalog GL capture requires the supported 22.04 Chromium sandbox.
     runs-on: ${{ matrix.suite == 'catalog' && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 120
     strategy:
@@ -898,9 +940,6 @@ jobs:
       - name: Verify depth-only shadows and effective reflection budgets on WebGL
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-resource-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/resources" --profile-dir "$CI_STORAGE/cache/resources" --exact-source
-      - name: Verify idle music and paused/render-target resources
-        if: matrix.suite == 'active'
-        run: node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source
       - name: Profile runtime at immutable baseline
         if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
         run: |
@@ -984,13 +1023,25 @@ jobs:
         run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'responsive'
-        run: node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+        run: node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive" --workers 2
       - name: Verify mobile launch and result actions stay visible
         if: matrix.suite == 'responsive'
         run: |
-          node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine chromium --evidence-dir "$CI_STORAGE/evidence/mobile-menus/chromium" --profile-dir "$CI_STORAGE/cache/mobile-menus/chromium"
-          node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine webkit --evidence-dir "$CI_STORAGE/evidence/mobile-menus/webkit" --profile-dir "$CI_STORAGE/cache/mobile-menus/webkit"
-          node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine webkit --resizable-viewport --cases phone,landscape --evidence-dir "$CI_STORAGE/evidence/mobile-menus/webkit-resize" --profile-dir "$CI_STORAGE/cache/mobile-menus/webkit-resize"
+          set -euo pipefail
+          # Chromium and WebKit have disjoint profiles/evidence. Keep both WebKit
+          # variants in order while overlapping independent Chromium checks.
+          node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine chromium --evidence-dir "$CI_STORAGE/evidence/mobile-menus/chromium" --profile-dir "$CI_STORAGE/cache/mobile-menus/chromium" &
+          chromium_pid=$!
+          (
+            set -euo pipefail
+            node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine webkit --evidence-dir "$CI_STORAGE/evidence/mobile-menus/webkit" --profile-dir "$CI_STORAGE/cache/mobile-menus/webkit"
+            node scripts/check-inkwave-mobile-menus.mjs --source .built-site/_site --engine webkit --resizable-viewport --cases phone,landscape --evidence-dir "$CI_STORAGE/evidence/mobile-menus/webkit-resize" --profile-dir "$CI_STORAGE/cache/mobile-menus/webkit-resize"
+          ) &
+          webkit_pid=$!
+          result=0
+          wait "$chromium_pid" || result=1
+          wait "$webkit_pid" || result=1
+          exit "$result"
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
@@ -1004,7 +1055,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json','hissen-main/native-browser.json','wiper-native/wiper-native-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json','startup-clock/startup-clock-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
@@ -1290,8 +1341,8 @@ jobs:
           retention-days: 14
 
   seven_claims:
-    needs: admission_preflight
-    if: inputs.diagnostic_only != true
+    needs: build_site
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -1366,10 +1417,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   resource_paint_continuation:
-    needs: admission_preflight
-    if: inputs.diagnostic_only != true
+    needs: build_site
+    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The formerly 13-minute idle GPU probe now overlaps the active browser shard.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -1423,6 +1475,27 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/batch4-site
           node --experimental-vm-modules --test patches/splatoon3/tests/trizooka-enemy-ink.test.mjs patches/splatoon3/tests/slam-damage-state.test.mjs patches/splatoon3/tests/surge-wall-launch-armor.test.mjs patches/splatoon3/tests/charger-wall-drop.test.mjs patches/splatoon3/tests/disconnected-main-projectiles.test.mjs patches/splatoon3/tests/online-continuation.test.mjs patches/network-replication/tests/wipeout-owner-history.test.mjs patches/local-quality/tests/result-continuation.test.mjs
           node scripts/check-inkwave-batch4.mjs .ci-scratch/batch4-site --webkit | tee .ci-scratch/batch4-browser.json
+      # Same immutable production build; source verified; overlaps active browser.
+      - name: Verify published idle GPU, WebAudio and lifecycle on the source-bound site
+        run: |
+          mkdir -p .ci-scratch/idle-resources .ci-scratch/idle-profile
+          node scripts/check-inkwave-idle-resources.mjs --site .ci-scratch/batch4-site --evidence-dir .ci-scratch/idle-resources --profile-dir .ci-scratch/idle-profile --exact-source
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const report=JSON.parse(fs.readFileSync('.ci-scratch/idle-resources/idle-resources-result.json','utf8'));
+          const build=JSON.parse(fs.readFileSync('.ci-scratch/batch4-site/inkwave-build.json','utf8'));
+          assert.equal(report.status,'passed');
+          assert.equal(report.sourceSha,process.env.SOURCE_SHA);
+          assert.equal(report.contentHash,build.contentHash);
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('.ci-scratch/idle-resources/idle-resources-result.json') != ''
+        with:
+          name: inkwave-idle-resource-${{ env.SOURCE_SHA }}
+          path: .ci-scratch/idle-resources/
+          if-no-files-found: error
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: always()
         with:

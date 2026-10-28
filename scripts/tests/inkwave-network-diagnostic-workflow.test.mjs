@@ -5,6 +5,7 @@ const file=new URL('../../.github/workflows/validate-inkwave-update.yml',import.
 const workflow=readFileSync(file,'utf8');
 const guard='node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs';
 const helper='scripts/tests/inkwave-opening-peer-diagnostic.test.mjs';
+const ordinaryFull="inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
 const job=(text,name)=>{
  const marker=`  ${name}:\n`,i=text.indexOf(marker,text.indexOf('\njobs:\n'));
  assert.ok(i>=0,`missing job ${name}`);
@@ -16,18 +17,18 @@ function verify(text){
  assert.match(text,/      network_opening_diagnostic:\n        description: [^\n]+\n        type: boolean\n        default: false\n/);
  assert.equal(condition(text,'network-opening-diagnostic'),"github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
  assert.equal(condition(text,'render-diagnostic'),'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
- for(const name of ['validate_core','seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),'inputs.diagnostic_only != true',name);
+ for(const name of ['validate_core','seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),ordinaryFull,name);
  // Full GitHub coverage remains the default. Only exact-SHA-verified ordinary PRs may offload.
  for(const name of ['patch_tests','browser']) {
   const rule=condition(text,name);
-  assert(rule.startsWith('${{ inputs.diagnostic_only != true && !('),name+' must default to full native CI');
+  assert(rule.startsWith('${{ '+ordinaryFull+' && !('),name+' must default to full native CI');
   assert(rule.includes("vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled'"),name+' must require explicit opt-in');
   assert(rule.includes("github.event_name == 'pull_request'"),name+' must preserve push CI');
   assert(rule.includes('inkwave/runtime-performance-ui'),name+' must preserve special baseline CI');
  }
  assert(condition(text,'circleci_offload_gate').includes("vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled'"));
- assert.equal(condition(text,'validate'),'${{ always() && inputs.diagnostic_only != true }}');
- assert.match(text,/^  group: validate-inkwave-\$\{\{ github.event.pull_request.number \|\| inputs.source_sha \|\| github.ref \}\}\$\{\{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' \|\| inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' \|\| '' \}\}$/m);
+ assert.equal(condition(text,'validate'),'${{ always() && inputs.diagnostic_only != true && (github.event_name != \'pull_request\' || github.event.pull_request.draft == false) }}');
+ assert.ok(text.includes("  group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}"));
  assert.match(text,/^  cancel-in-progress: \$\{\{ !\(inputs.diagnostic_only == true && \(inputs.network_opening_diagnostic == true \|\| inputs.wall_render_diagnostic == true\)\) \}\}$/m);
  const native=job(text,'network-opening-diagnostic');
  assert.match(native,/WORKFLOW_SHA: \$\{\{ github.workflow_sha \}\}/);
@@ -47,6 +48,7 @@ function verify(text){
 }
 // Evaluate only this deliberately restricted, validated boolean grammar, never arbitrary source.
 function evaluate(expression,context){
+ if(expression===ordinaryFull)return context.diagnostic_only!==true&&context.ciOnly!==true&&(context.event!=='pull_request'||context.draft===false);
  assert.match(expression,/^(?:github\.event_name == 'workflow_dispatch' && )?inputs\.diagnostic_only (?:==|!=) true(?: && inputs\.(?:network_opening_diagnostic|wall_render_diagnostic) (?:==|!=) true)*$/);
  return expression.split(' && ').every(term=>{
   if(term==="github.event_name == 'workflow_dispatch'")return context.event==='workflow_dispatch';
@@ -57,14 +59,14 @@ function evaluate(expression,context){
 test('workflow pins default-false scoped route and exact head evidence',()=>assert.equal(verify(workflow),true));
 test('actual scoped predicates admit only explicit manual network diagnostic',()=>{
  for(const event of ['workflow_dispatch','push','pull_request'])for(const diagnostic_only of [false,true])for(const network_opening_diagnostic of [false,true]){
-  const c={event,diagnostic_only,network_opening_diagnostic};
+  const c={event,diagnostic_only,network_opening_diagnostic,draft:false};
   assert.equal(evaluate(condition(workflow,'network-opening-diagnostic'),c),event==='workflow_dispatch'&&diagnostic_only&&network_opening_diagnostic);
   assert.equal(evaluate(condition(workflow,'render-diagnostic'),c),diagnostic_only&&!network_opening_diagnostic);
   assert.equal(evaluate(condition(workflow,'validate_core'),c),!diagnostic_only);
  }
 });
 test('malformed routing and broad trigger mutations fail closed',()=>{
- for(const [before,after] of [["github.event_name == 'workflow_dispatch' && ",''],['type: boolean\n        default: false\n      wall_render_diagnostic:','type: string\n        default: true\n      wall_render_diagnostic:'],["&& inputs.network_opening_diagnostic == true\n    runs-on:","|| inputs.network_opening_diagnostic == true\n    runs-on:"],['inputs.diagnostic_only != true\n    runs-on:','inputs.network_opening_diagnostic != true\n    runs-on:']]){
+ for(const [before,after] of [["github.event_name == 'workflow_dispatch' && ",''],['type: boolean\n        default: false\n      wall_render_diagnostic:','type: string\n        default: true\n      wall_render_diagnostic:'],["&& inputs.network_opening_diagnostic == true\n    runs-on:","|| inputs.network_opening_diagnostic == true\n    runs-on:"],[ordinaryFull+'\n    runs-on:','inputs.network_opening_diagnostic != true\n    runs-on:']]){
   const changed=workflow.replaceAll(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verify(changed));
  }
 });

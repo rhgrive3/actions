@@ -31,9 +31,15 @@ test('every named suite preflights real inputs and npm selects the canonical sui
 });
 
 test('workflow suite changes route through each consumer on both push and PR', () => {
-  for (const file of ['validate-inkwave-update', 'zevant-account', 'inkwave-relay-security']) {
-    const workflow = read(`.github/workflows/${file}.yml`);
-    assert.equal(workflow.split('      - "scripts/ci/**"\n').length - 1, 2, file);
+  const validate=read('.github/workflows/validate-inkwave-update.yml');
+  assert.equal(validate.split('      - "scripts/ci/**"\n').length-1,2);
+  // Specialized account/relay workflows only consume the runner and suite manifest.
+  // All other scripts/ci edits retain the full Validate gate without redundant jobs.
+  for(const name of ['zevant-account','inkwave-relay-security']) {
+    const consumer=read('.github/workflows/'+name+'.yml');
+    assert(!consumer.includes('scripts/ci/**'));
+    for(const path of ['scripts/ci/run-inkwave-test-suite.mjs','scripts/ci/inkwave-test-suites.json'])
+      assert.equal(consumer.split('      - "'+path+'"\n').length-1,2,name+': '+path);
   }
   const workflow = read('.github/workflows/validate-inkwave-update.yml');
   for (const name of ['verifier', 'acceptance'])

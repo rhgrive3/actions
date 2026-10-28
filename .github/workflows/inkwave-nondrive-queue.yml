@@ -1,18 +1,21 @@
 name: Non-Drive queue regression
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
     paths:
       - "inkwave-public/src/**"
       - "patches/native-stages/runtime/**"
       - "patches/splatoon3/runtime/**"
-      - ".github/workflows/zevant-account.yml"
-      - ".github/workflows/inkwave-weapon-lod-boundaries.yml"
       - ".github/workflows/inkwave-nondrive-queue.yml"
       - "scripts/tests/inkwave-queue-native-compact.test.mjs"
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   nondrive-regression:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

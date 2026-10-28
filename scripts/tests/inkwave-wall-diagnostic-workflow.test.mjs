@@ -10,7 +10,8 @@ const job = (text, name) => {
   return end < 0 ? rest : rest.slice(0, end);
 };
 const condition = (text, name) => job(text, name).match(/^    if: (.+)$/m)?.[1];
-const nativeOffloadCondition = "${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}";
+const fullCondition = "inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
+const nativeOffloadCondition = "${{ "+fullCondition+" && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}";
 const guard = 'node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs';
 const source = 'node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs';
 const emitted = 'INKWAVE_BUILT_SITE=.built-site/_site node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-production-contract.test.mjs';
@@ -20,10 +21,11 @@ function verify(text) {
   assert.equal(condition(text, 'wall-render-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true");
   assert.equal(condition(text, 'render-diagnostic'), 'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
   assert.equal(condition(text, 'network-opening-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
-  for (const name of ['validate_core','seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), 'inputs.diagnostic_only != true');
+  for (const name of ['validate_core','seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), fullCondition);
   for (const name of ['patch_tests','browser']) assert.equal(condition(text,name), nativeOffloadCondition);
-  assert.equal(condition(text,'validate'), '${{ always() && inputs.diagnostic_only != true }}');
+  assert.equal(condition(text,'validate'), '${{ always() && inputs.diagnostic_only != true && (github.event_name != \'pull_request\' || github.event.pull_request.draft == false) }}');
   assert.ok(text.includes("inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || ''"));
+  assert.ok(text.includes("group: validate-inkwave-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}"));
   assert.ok(text.includes('cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}'));
   const native = job(text,'wall-render-diagnostic');
   assert.match(native, /^    timeout-minutes: 30$/m);
@@ -50,7 +52,8 @@ function verify(text) {
   return true;
 }
 function evaluate(expression, c) {
-  if (expression === nativeOffloadCondition) return c.diagnostic_only !== true && !(c.offload === true && c.event === 'pull_request' && !['inkwave/runtime-performance-ui','inkwave/final-nine-way-integration'].includes(c.head_ref));
+  if (expression === fullCondition) return c.diagnostic_only !== true && c.ciOnly !== true && (c.event !== 'pull_request' || c.draft === false);
+  if (expression === nativeOffloadCondition) return c.diagnostic_only !== true && c.ciOnly !== true && (c.event !== 'pull_request' || c.draft === false) && !(c.offload === true && c.event === 'pull_request' && !['inkwave/runtime-performance-ui','inkwave/final-nine-way-integration'].includes(c.head_ref));
   return expression.split(' && ').every(term=> {
     if(term === "github.event_name == 'workflow_dispatch'") return c.event === 'workflow_dispatch';
     const match = term.match(/^inputs\.(diagnostic_only|network_opening_diagnostic|wall_render_diagnostic) (==|!=) true$/);
@@ -61,7 +64,7 @@ function evaluate(expression, c) {
 test('wall-only route retains exact-head, real build, full verifier and always evidence', ()=>verify(workflow));
 test('all event and flag combinations isolate wall from full, network and broad render jobs', ()=> {
   for(const event of ['workflow_dispatch','push','pull_request']) for(const diagnostic_only of [false,true]) for(const network_opening_diagnostic of [false,true]) for(const wall_render_diagnostic of [false,true]) for(const offload of [false,true]) for(const head_ref of ['topic','inkwave/runtime-performance-ui','inkwave/final-nine-way-integration']) {
-    const c={event,diagnostic_only,network_opening_diagnostic,wall_render_diagnostic,offload,head_ref};
+    const c={event,diagnostic_only,network_opening_diagnostic,wall_render_diagnostic,offload,head_ref,draft:false};
     const wall=evaluate(condition(workflow,'wall-render-diagnostic'),c);
     assert.equal(wall,event==='workflow_dispatch' && diagnostic_only && !network_opening_diagnostic && wall_render_diagnostic);
     if(wall) for(const name of ['validate_core','patch_tests','browser','network-opening-diagnostic','render-diagnostic','seven_claims','resource_paint_continuation']) assert.equal(evaluate(condition(workflow,name),c),false,name);

@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';
 import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
 import { shouldRetryResponsiveSessionLoss, sameResponsiveRecoveryIdentity } from './lib/inkwave-responsive-session-retry.mjs';
+import { mapResponsiveByEngine, spawnResponsiveCase } from './ci/inkwave-responsive-child-pool.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => {
@@ -21,6 +22,9 @@ const source = arg('--source'), evidence = arg('--evidence-dir'), profiles = arg
 const section = process.argv.includes('--section')
   ? process.argv[process.argv.indexOf('--section') + 1] : 'all';
 assert(['core', 'expansion', 'all'].includes(section));
+const workersArg=process.argv.indexOf('--workers');
+const workers=workersArg<0?1:Number(process.argv[workersArg+1]);
+assert(Number.isSafeInteger(workers) && workers>=1 && workers<=2,'Responsive workers must be 1 or 2');
 const matrix = ['phone-portrait','phone-landscape','small-phone','tablet-portrait',
   'tablet-landscape','tablet-split','desktop'];
 fs.mkdirSync(evidence,{recursive:true});
@@ -31,7 +35,11 @@ const report = {
   source,section,realDeviceVerified:false,cases:[],errors:[],shards:[]
 };
 const summaryFile = path.join(evidence,'responsive-result.json');
+const cohort=['chromium','webkit'].flatMap(engine=>matrix.map(name=>({engine,name})));
+const caseOrder=new Map(cohort.map(({engine,name},i)=>[engine+'-'+name,i]));
 function write() {
+  report.cases.sort((a,b)=>caseOrder.get(a.engine+'-'+a.name)-caseOrder.get(b.engine+'-'+b.name));
+  report.shards.sort((a,b)=>caseOrder.get(a.engine+'-'+a.name)-caseOrder.get(b.engine+'-'+b.name));
   const complete = report.cases.length === 14 && report.shards.length === 14
     && report.shards.every(x => x.ok);
   report.status = complete ? 'passed' : 'failed';
@@ -40,7 +48,7 @@ function write() {
   return complete;
 }
 let expectedInputs=null, expectedRunners=null;
-for (const engine of ['chromium','webkit']) for (const name of matrix) {
+async function runCase({engine,name}) {
   const key=engine+'-'+name;
   const shardDir=path.join(evidence,'cases',key);
   const profileDir=path.join(profiles,key);
@@ -51,10 +59,10 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
     '--evidence-dir',shardDir,'--profile-dir',profileDir];
   const startedAt=Date.now();
   console.log(JSON.stringify({event:'responsive-child-start',engine,name}));
-  const launch=argv=>spawnSync(process.execPath,argv,{
-    cwd:root,encoding:'utf8',timeout:20*60*1000,maxBuffer:16*1024*1024
-  });
-  let processResult=launch(args), resultDir=shardDir, recovery=null;
+  const launch=argv=>workers===1
+    ? spawnSync(process.execPath,argv,{cwd:root,encoding:'utf8',timeout:20*60*1000,maxBuffer:16*1024*1024})
+    : spawnResponsiveCase(process.execPath,argv,{cwd:root,timeoutMs:20*60*1000,maxBuffer:16*1024*1024});
+  let processResult=await launch(args), resultDir=shardDir, recovery=null;
   let firstFragment=null;
   try { firstFragment=JSON.parse(fs.readFileSync(path.join(shardDir,'responsive-result.json'),'utf8')); } catch {}
   if(shouldRetryResponsiveSessionLoss({engine,name,processResult,fragment:firstFragment})){
@@ -73,7 +81,7 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
     const retryArgs=[...args];
     retryArgs[retryArgs.indexOf('--evidence-dir')+1]=retryEvidence;
     retryArgs[retryArgs.indexOf('--profile-dir')+1]=retryProfile;
-    processResult=launch(retryArgs);resultDir=retryEvidence;
+    processResult=await launch(retryArgs);resultDir=retryEvidence;
   }
   console.log(JSON.stringify({event:'responsive-child-end',engine,name,
     elapsedMs:Date.now()-startedAt,exitCode:processResult.status,signal:processResult.signal,
@@ -115,6 +123,8 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
   report.shards.push(row);
   write();
 }
+// Independent browser engines overlap, but WebKit cases remain strictly serial.
+await mapResponsiveByEngine(cohort,workers,runCase);
 if (!write()) process.exitCode=1;
 console.log(JSON.stringify({status:report.status,cases:report.cases.length,shards:report.shards.length,
   errors:report.errors.slice(0,6),evidence:summaryFile}));
