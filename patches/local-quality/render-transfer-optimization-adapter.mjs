@@ -28,8 +28,15 @@ export function adaptRenderTransfers(rel, code, once) {
   if (rel !== 'src/fx/fx.js') return code;
   const marker = '// INKWAVE persistent ring attribute transfers v1';
   if (code.includes(marker)) return code;
-  if (!code.includes('a === staticAttribute || a._fxStatic')) throw new Error('Ring transfers require static FX attribute ownership');
+  const hasExtendedOwner = code.includes('a === staticAttribute || a._fxStatic');
+  if (!hasExtendedOwner && !code.includes('    if (a === staticAttribute) continue;'))
+    throw new Error('Ring transfers require static FX attribute ownership');
   const patch = (before, after, label) => { code = once(code, before, after, 'ring transfers: ' + label); };
+  // The source stage still skips only its optional explicit staticAttribute.
+  // Teach it the two owned ring attributes BEFORE making their uploads sparse.
+  // Otherwise markUpdated() overwrites their partial update ranges every tick.
+  if (!hasExtendedOwner) patch('    if (a === staticAttribute) continue;',
+    '    if (a === staticAttribute || a._fxStatic) continue;', 'honour static FX attributes in markUpdated');
   patch('export class FX {', marker + '\n' + clearFxUploadRanges.toString() + '\n' + markFxStaticRange.toString() + '\n\nexport class FX {', 'helper');
   patch('    this.rings = { cap, n: 0, geo, mesh, P:',
     '    geo.attributes.aColA._fxStatic = true; geo.attributes.aMisc._fxStatic = true;\n    geo.attributes.aColA.onUpload(clearFxUploadRanges); geo.attributes.aMisc.onUpload(clearFxUploadRanges);\n    this.rings = { cap, n: 0, dirtyStart: cap, dirtyEnd: 0, geo, mesh, P:', 'static ring attributes');
