@@ -154,13 +154,15 @@ export function selectComposerTargetFormat(THREE, renderer, {
 }
 
 export function configureComposerColorTargets(THREE, composer, selection) {
-  if (!selection?.packed) return composer;
+  if (!selection?.packed && !selection?.canPack) return composer;
 
   // RenderPass must write the scene to target2; Grade writes to target1.
   // ScreenFX, when enabled, writes back to target2. Output can also write to
   // target1 before FXAA: the current Neutral/sRGB output stays nonnegative for
   // nonnegative inputs, and FXAA reads RGB only. Preserve scene RGB/alpha in
   // HalfFloat regardless of the preceding frame's enabled-pass swap count.
+  // Eligible HDR generations need the same roles even when an active effect
+  // or a negative grade requires full precision on their first frame.
   const sceneTarget = composer?.renderTarget2;
   if (!sceneTarget?.texture) throw new TypeError('composer read target is unavailable');
   // This target receives fullscreen color passes only; the forced scene role
@@ -195,10 +197,6 @@ export function configureComposerColorTargets(THREE, composer, selection) {
 function updateComposerTargetPrecision(THREE, composer, packed) {
   const target = composer?.renderTarget1;
   if (!target || !composer.renderTarget2) return; // a lazy generation selects on creation
-  if (!composer._iwPrecisionRoles) {
-    configureComposerColorTargets(THREE, composer, { packed: true });
-    composer._iwPrecisionRoles = true;
-  }
   const format = packed ? THREE.RGBFormat : THREE.RGBAFormat;
   const type = packed ? THREE.UnsignedInt101111Type : THREE.HalfFloatType;
   if (target.texture.format === format && target.texture.type === type) return;

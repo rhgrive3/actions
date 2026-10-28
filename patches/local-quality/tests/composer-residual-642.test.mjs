@@ -434,6 +434,20 @@ test('#642 active ScreenFX changes only target1 on state edges and preserves pas
   composer.dispose();passes.forEach(p=>p.dispose?.());
 });
 
+test('#642 eligible HDR generations retain color-only post and scene HDR roles before their first draw', async () => {
+  const ns=await frameRoleNamespace();
+  for(const selection of [{packed:false,canPack:true},{packed:true,canPack:true}]){
+    const fixture=frameRoleFixture(ns,false),c=fixture.composer;
+    configureComposerColorTargets(ns.THREE,c,selection);
+    assert.equal(c.renderTarget1.depthBuffer,false);
+    assert.equal(c.renderTarget2.depthBuffer,true);
+    c.render();assert.equal(fixture.observations[0].target,c.renderTarget2);
+    c.reset();assert.equal(c.renderTarget1.depthBuffer,false);assert.equal(c.renderTarget2.depthBuffer,true);
+    assert.equal(c.renderTarget2.texture.type,ns.THREE.HalfFloatType);
+    c.dispose();fixture.passes.forEach(p=>p.dispose?.());
+  }
+});
+
 // Actual vendored composer/pass classes; only GPU draw methods are replaced
 // with observations. These are control-flow tests, not pixel comparisons.
 async function frameRoleNamespace() {
