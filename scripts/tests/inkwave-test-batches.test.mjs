@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {batchSelectedTestFiles,selectTestShard} from '../lib/inkwave-test-shards.mjs';
 test('198-file unstable shard partitions without omission or reordering',()=>{
  const original=Array.from({length:1580},(_,i)=>'test-'+i);
- const selected=selectTestShard(original,2,8),chunks=batchSelectedTestFiles(selected,24);
- assert.equal(selected.length,198);assert.equal(chunks.length,9);
+ const selected=selectTestShard(original,2,8),chunks=batchSelectedTestFiles(selected,1);
+ assert.equal(selected.length,198);assert.equal(chunks.length,198);
  assert.deepEqual(chunks.flat(),selected);
- assert(chunks.every(x=>x.length>=1&&x.length<=24));
+ assert(chunks.every(x=>x.length===1));
  assert.equal(new Set(chunks.flat()).size,selected.length);
 });
 test('batch boundaries never mutate caller files and reject invalid counts',()=>{

@@ -76,11 +76,12 @@ try {
     if (turf.status !== 0) throw Error(`Isolated Turf failed (exit ${turf.status}); evidence: ${logDir}/turf-finish`);
   }
   // A complete shard may load hundreds of heavyweight VM/geometry files in
-  // one Node test coordinator. Break only the historically unstable shard 2
-  // into fresh Node processes, preserving exact test order and every file.
+  // one Node test coordinator. The 24-file pilot still lost its runner before
+  // the first TAP result (SIGTERM 143); isolate every file to leave the host
+  // a small, bounded per-process heap while preserving the full test matrix.
   // Each child must pass; batch boundaries are memory ownership, not skips.
   const batches=shardIndex===2 && shardCount===8
-    ? batchSelectedTestFiles(ordinaryFiles,24) : (ordinaryFiles.length?[ordinaryFiles]:[]);
+    ? batchSelectedTestFiles(ordinaryFiles,1) : (ordinaryFiles.length?[ordinaryFiles]:[]);
   const result={status:0,signal:null};
   fs.writeFileSync(log,'');
   for(let i=0;i<batches.length;i++){
