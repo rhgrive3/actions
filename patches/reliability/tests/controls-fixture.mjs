@@ -1,3 +1,5 @@
+import { adaptQueueNetwork20261027 } from '../../network-replication/queue-network-20261027-adapter.mjs';
+import { replaceOnce as queueReplaceOnce } from '../../local-quality/adapter.mjs';
 // Actual public modules plus the build adapter. No renderer, fake game model,
 // or second gameplay engine is used. Tests stub only display/audio/collisions.
 import fs from 'node:fs';
@@ -54,7 +56,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     const raw = fs.readFileSync(file, 'utf8');
     let source = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adaptQualitySource(relative, reliability(relative, adaptTouchLayout(relative, adaptSource(relative, raw)))) : raw;
     if (production && !BUILT && file.startsWith(UPSTREAM + path.sep)) source = adaptBuildSource(relative,raw);
-    if (!production && network && !BUILT && file.startsWith(UPSTREAM + path.sep)) source = adaptNetworkSource(relative, source);
+    if (!production && network && !BUILT && file.startsWith(UPSTREAM + path.sep)) source = adaptQueueNetwork20261027(relative, adaptNetworkSource(relative, source), queueReplaceOnce);
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`

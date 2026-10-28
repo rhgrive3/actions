@@ -1,10 +1,11 @@
+import { observeOwnerTick } from '../../../network-replication/owner-tick-receipt.mjs';
 import { validRainmakerShotOrigin } from './rainmaker-shot-origin.mjs';
 import { validRankedSnapshot } from './engine.mjs';
 import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
 import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
-import { recordTowerHostSnapshot, clearTowerPaintSupport } from '../../../network-replication/tower-paint-support.mjs';
+import { recordTowerHostSnapshot, clearTowerPaintSupport, flushTowerHostSnapshots } from '../../../network-replication/tower-paint-support.mjs';
 
 const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
 const HOST_SNAPSHOT_KINDS = Object.freeze(['st', 'res', 'end']);
@@ -42,7 +43,7 @@ function rankedTickBroadcast(nm, tr, broadcast, d) {
         nm.rankedTick = (nm.rankedTick || 0) + 1;
         if (nm.isHost && nm.rankedTick % 4 === 0) {
           d.rk = envelope(nm, { state: nm.match.ranked.snapshot(), gains: nm.match.rankedGains || [0, 0] });
-          recordTowerHostSnapshot(nm, d.rk.state);
+
         }
         const a = nm.match.local;
         if (a && !nm.isHost) {
@@ -53,7 +54,10 @@ function rankedTickBroadcast(nm, tr, broadcast, d) {
           throwActor = a;
         }
       }
+      const match = nm.match, session = nm.s, host = nm.s.hostId, epoch = nm.cfg.id;
       const accepted = broadcast.call(tr, d);
+      if (accepted === true && nm.match === match && nm.s === session && nm.s.hostId === host && nm.cfg.id === epoch && current(nm) && nm.isHost && d.rk)
+        recordTowerHostSnapshot(nm, d.rk.state);
       // A bounded transport can refuse this tick. Retain the one-shot edge
       // until a later ordinary tick is accepted, or input lifecycle cancels it.
       if (accepted === true && throwActor) throwActor._rankedThrowPending = false;
@@ -69,9 +73,15 @@ export function installRankedNetwork(api) {
       d = { ...d, rk: envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] }) };
       if (d.k === 'res') Object.assign(d, { rankedResult: this.match.ranked.result() });
     }
-    if (current(this) && this.isHost && d.rk?.match === this.cfg.id && d.rk.host === this.s.hostId)
+    const match = this.match, session = this.s, host = this.s.hostId, epoch = this.cfg.id;
+    let flushedPacket = false;
+    if (current(this) && this.isHost && !flushTowerHostSnapshots(this, packet => { const ok=send.call(this, packet); if(ok===true && packet===d)flushedPacket=true; return ok; })) return false;
+    if (flushedPacket) return true;
+    const accepted = send.call(this, d);
+    if (accepted === true && current(this) && this.match === match && this.s === session && this.s.hostId === host && this.cfg.id === epoch
+        && this.isHost && d.rk?.match === this.cfg.id && d.rk.host === host)
       recordTowerHostSnapshot(this, d.rk.state);
-    return send.call(this, d);
+    return accepted;
   };
   // Extend the existing 20Hz actor packet, with 5Hz objective snapshots. The
   // session already provides reliable ordered transport; revision checks also
@@ -80,6 +90,7 @@ export function installRankedNetwork(api) {
   const tick = P._sendTick;
   P._sendTick = function () {
     if (!current(this)) return tick.call(this);
+    if (this.isHost && !flushTowerHostSnapshots(this, packet => send.call(this, packet))) return false;
     const tr = this.s.tr, broadcast = tr?.broadcast;
     if (!broadcast) return tick.call(this);
     let slot = broadcastSlots.get(this);
@@ -100,13 +111,14 @@ export function installRankedNetwork(api) {
   const incoming = P.onMessage;
   P.onMessage = function (from, d) {
     if (!current(this) || !d || typeof d !== 'object') return incoming.call(this, from, d);
+    if (d.k === 't' && Array.isArray(d.a) && (d.a.length > 8 || d.a.length > this.byNid.size)) return;
     const m = this.match, inputSession = this.s, inputMatchId = this.cfg.id;
     let stagedInput = null;
-    if (d.rk && from === this.s.hostId && !this.isHost) {
+    if (d.rk && from === this.s.hostId && !this.isHost && (d.k==='st'||d.k==='res'||d.k==='end'||d.k==='rkstate')) {
       const accepted = acceptState(this, d.rk);
       if (!accepted && HOST_SNAPSHOT_KINDS.includes(d.k)) return;
     }
-    if (d.rki && this.isHost && m.state === 'playing' && m.ranked.winner == null) {
+    if (d.k === 't' && d.rki && this.isHost && m.state === 'playing' && m.ranked.winner == null) {
       const cmd = d.rki, a = m.actors.find(a => actorId(a) === cmd.id);
       if (cmd.match === this.cfg.id && a?.owner === from && a.alive && Number.isSafeInteger(cmd.seq) && cmd.seq > 0 && finiteVector(cmd.aim)) {
         this.rankedInputs ||= new Map();
@@ -155,7 +167,7 @@ export function installRankedNetwork(api) {
     }
     // Stage plausibility without publishing authority before the native packet,
     // owner-life and adoption-sequence checks have accepted the actual snapshot.
-    const stagedPoses = this.isHost ? [] : null, session = this.s;
+    const stagedPoses = d.k === 't' && this.isHost ? [] : null, session = this.s;
     if (d.k === 't' && this.isHost && Array.isArray(d.a)) {
       this.rankedPose ||= new Map();
       const accepted = [], poseContext = rankedPoseContext(this, m, api);
@@ -171,17 +183,20 @@ export function installRankedNetwork(api) {
       }
       if (accepted.length !== d.a.length) d = { ...d, a: accepted };
     }
-    const result = incoming.call(this, from, d);
+    const observed = d.k === 't' ? observeOwnerTick(this,from,d,()=>incoming.call(this,from,d)) : null;
+    const result = observed ? observed.result : incoming.call(this, from, d);
+    const receipt=observed?.receipt;
+    if(receipt && d.rk && from===this.s.hostId && !this.isHost)acceptState(this,d.rk);
     // Native processing may advance life or replace the actor/session. Publish
     // only into that same epoch; a valid first new-life edge is not discarded.
-    if (stagedInput && current(this) && this.match===m && this.s===inputSession && this.cfg.id===inputMatchId && this.isHost) {
+    if (receipt && stagedInput && current(this) && this.match===m && this.s===inputSession && this.cfg.id===inputMatchId && this.isHost) {
       const {id,actor,life,input}=stagedInput;
-      if (this.byNid.get(actor.nid)===actor && actor.owner===from && actor.net?.lastLife===life) {
+      if (receipt.actors?.includes(actor) && this.byNid.get(actor.nid)===actor && actor.owner===from && actor.net?.lastLife===life) {
         const bound=bindRankedInput(input,actor,m,this);
         if(bound)this.rankedInputs.set(id,bound);
       }
     }
-    if (stagedPoses && current(this) && this.match === m && this.s === session && this.isHost) {
+    if (receipt && stagedPoses && current(this) && this.match === m && this.s === session && this.isHost) {
       for (const { id, actor, row, state, tail } of stagedPoses) {
         const snap = actor.net?.buf?.at(-1);
         if (this.byNid.get(actor.nid) !== actor || actor.owner !== from || !actor.remote ||
@@ -193,8 +208,8 @@ export function installRankedNetwork(api) {
         this.rankedPose.set(id, state);
       }
     }
-    if (d.k === 't' && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
-      noteRankedBarrierShots(this, from, d, G.time);
+    if (receipt && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
+      noteRankedBarrierShots(this, from, receipt, G.time);
     if (d.k === 'res' && from === this.s.hostId && !this.isHost && m.ranked.winner !== null) m.result = { ...m.result, ...m.ranked.result() };
     return result;
   };

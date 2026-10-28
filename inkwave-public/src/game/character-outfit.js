@@ -319,10 +319,17 @@ function rayHitS(dx, dz, S) {
 }
 function rayHit(dx, dz, zc, y) { return rayHitS(dx, dz, secParams(y)); }
 /** Section ring at height y: m points uniformly spaced by arc length per quarter (front centre, +X side, back, -X). */
+const sectionRayTables = new Map();
+function sectionRayTable(N) {
+  if (N !== 72 && N !== 168) return null;
+  let table = sectionRayTables.get(N);
+  if (!table) { table = new Float64Array(N * 2); for (let i = 0; i < N; i++) { const a = (i / N) * TAU; table[i * 2] = Math.sin(a); table[i * 2 + 1] = Math.cos(a); } sectionRayTables.set(N, table); }
+  return table;
+}
 function teeRing(y, m, N = 168) {
-  const S = secParams(y), zc = S.zc, P = [];
+  const S = secParams(y), zc = S.zc, P = [], rays = sectionRayTable(N);
   for (let i = 0; i < N; i++) {
-    const al = (i / N) * TAU, dx = Math.sin(al), dz = Math.cos(al);
+    const al = (i / N) * TAU, dx = rays ? rays[i * 2] : Math.sin(al), dz = rays ? rays[i * 2 + 1] : Math.cos(al);
     const rr = rayHitS(dx, dz, S); P.push([dx * rr, zc + dz * rr]);
   }
   // quarter anchors: front centre (i=0), lateral-most on +X, back centre (N/2), lateral-most on -X
@@ -348,7 +355,8 @@ function teeRing(y, m, N = 168) {
 /** Tee surface normal (3D: the shoulder top faces up) from the section SDF gradient. */
 function teeNormal(x, z, y, out) {
   const h = 2e-4;
-  const gx = teeSD(x + h, z, y) - teeSD(x - h, z, y), gz = teeSD(x, z + h, y) - teeSD(x, z - h, y);
+  const section = secParams(y);
+  const gx = sdSec(x + h, z, section) - sdSec(x - h, z, section), gz = sdSec(x, z + h, section) - sdSec(x, z - h, section);
   const gy = teeSD(x, z, y + h) - teeSD(x, z, y - h);
   const l = Math.hypot(gx, gy, gz) || 1; return out.set(gx / l, gy / l, gz / l);
 }
@@ -404,8 +412,8 @@ function strapPaths() {
 function projectOnTee(p, out = p) {
   const q = out.copy(p), n = new V3();
   for (let it = 0; it < 3; it++) {
-    const h = 2e-4, sd = teeSD(q.x, q.z, q.y);
-    const gx = (teeSD(q.x + h, q.z, q.y) - teeSD(q.x - h, q.z, q.y)) / (2 * h), gz = (teeSD(q.x, q.z + h, q.y) - teeSD(q.x, q.z - h, q.y)) / (2 * h), gy = (teeSD(q.x, q.z, q.y + h) - teeSD(q.x, q.z, q.y - h)) / (2 * h);
+    const h = 2e-4, section = secParams(q.y), sd = sdSec(q.x, q.z, section);
+    const gx = (sdSec(q.x + h, q.z, section) - sdSec(q.x - h, q.z, section)) / (2 * h), gz = (sdSec(q.x, q.z + h, section) - sdSec(q.x, q.z - h, section)) / (2 * h), gy = (teeSD(q.x, q.z, q.y + h) - teeSD(q.x, q.z, q.y - h)) / (2 * h);
     const g2 = gx * gx + gy * gy + gz * gz; if (g2 < 1e-9) break;
     n.set(gx, gy, gz); q.addScaledVector(n, -sd / g2);
   }
@@ -629,8 +637,7 @@ function addSleeve(B, lv, s) {
   // nominal sleeve radius (around the arm, + a flatter inner side toward the torso)
   const rS = (x) => lerp(0.0478, 0.0468, sstep(0.0, L, x)) + 0.0012 * sstep(L - 0.02, L, x);
   const lvF = RES[lv].fold, micro = RES[lv].micro;
-  const fold = (phi, x) => {
-    const c = Math.cos(phi), sn = Math.sin(phi);
+  const fold = (phi, x, c) => {
     const inner = pos(-c);
     let D = 0;
     D += 0.0022 * gauss(x - 0.06, 0.03) * Math.pow(inner, 3) * Math.sin(x / 0.02 * TAU + 1.3);           // armpit bunching
@@ -641,10 +648,10 @@ function addSleeve(B, lv, s) {
     return D * lvF;
   };
   const ringPt = (x, phi, off) => {
-    const c = sh.clone().addScaledVector(d, x);
-    const r0 = rS(x) + off, r = r0 + fold(phi, x);
-    const base = c.clone().addScaledVector(lat, r0 * Math.cos(phi)).addScaledVector(fwd, r0 * 0.97 * Math.sin(phi));
-    const p = c.addScaledVector(lat, r * Math.cos(phi)).addScaledVector(fwd, r * 0.97 * Math.sin(phi));
+    const c = sh.clone().addScaledVector(d, x), cp = Math.cos(phi), sp = Math.sin(phi);
+    const r0 = rS(x) + off, r = r0 + fold(phi, x, cp);
+    const base = c.clone().addScaledVector(lat, r0 * cp).addScaledVector(fwd, r0 * 0.97 * sp);
+    const p = c.addScaledVector(lat, r * cp).addScaledVector(fwd, r * 0.97 * sp);
     // above the seam the sleeve hides just inside the shoulder lobe (folds included): wherever its base lies inside
     // the lobe, the final point is kept below the lobe's displaced surface
     const lr = LOBE_R(p.y);
@@ -680,11 +687,11 @@ function addSleeve(B, lv, s) {
     }
     const nR = 5, prow = [];
     for (let k = 0; k <= nR; k++) {
-      const a = (k / nR) * Math.PI;
+      const a = (k / nR) * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
       prow.push(loop.map((q, i) => {
-        const phi = (i / nS2) * TAU; const c = sh.clone().addScaledVector(d, xsSeam[i]);
+        const c = sh.clone().addScaledVector(d, xsSeam[i]);
         const out = q.clone().sub(c); out.addScaledVector(d, -out.dot(d)).normalize();
-        return q.clone().addScaledVector(d, -0.0012 * Math.cos(a)).addScaledVector(out, 0.0011 * Math.sin(a) - 0.0004);
+        return q.clone().addScaledVector(d, -0.0012 * ca).addScaledVector(out, 0.0011 * sa - 0.0004);
       }));
     }
     const sg = K.gridGeo(prow, { wrapU: true, outward: (p2, o) => { const k = p2.clone().sub(sh).dot(d); o.copy(sh).addScaledVector(d, k); }, uv: (i, j) => [i / nS2, 0.0] });
@@ -848,9 +855,9 @@ function shSD(x, z, S) {
   return d;
 }
 function shRing(y, m, N = 168) {
-  const S = shSec(y), P = [];
+  const S = shSec(y), P = [], rays = sectionRayTable(N);
   for (let i = 0; i < N; i++) {
-    const al = (i / N) * TAU, dx = Math.sin(al), dz = Math.cos(al);
+    const al = (i / N) * TAU, dx = rays ? rays[i * 2] : Math.sin(al), dz = rays ? rays[i * 2 + 1] : Math.cos(al);
     let hi = 0.2, lo = hi;
     while (lo > 0.0 && shSD(dx * lo, S.zc + dz * lo, S) > 0) { hi = lo; lo -= 0.006; }
     lo = Math.max(0, lo);
@@ -924,15 +931,18 @@ function shortsFold(p, lvF) {
   return D * lvF;
 }
 /** Leg tube displacement: psi 0 = inseam, pi/2 = front (+X leg; back for the -X leg), pi = outer seam. */
-function shortsLegFold(psi, y, sx, lvF) {
+function shortsLegBasis(psi, sx) {
+  const fr = sx > 0 ? psi : TAU - psi, c = Math.cos(psi);
+  return { c, sn: Math.sin(psi), front: Math.exp(-(((fr - 0.75) / 0.3) ** 2)), back: Math.exp(-(((fr - 5.4) / 0.32) ** 2)), ripple: Math.sin(psi * 5 + 1.7 + 0.9 * n1(psi * 1.6, 21 + sx)), drag: Math.sin(fr * 3.0 + 0.4), tuck: Math.pow(pos(c), 3) };
+}
+function shortsLegFold(psi, y, sx, lvF, basis = shortsLegBasis(psi, sx)) {
   const s = SHX.hipY - y, L = SHX.hipY - SHX.yHem;
-  const fr = sx > 0 ? psi : TAU - psi;                  // mirror so 'front' means +Z on both legs
   let D = 0;
-  D += 0.0026 * gauss(s - 0.06, 0.028) * Math.exp(-(((fr - 0.75) / 0.3) ** 2));   // crotch drag (front-inner)
-  D += 0.0022 * gauss(s - 0.065, 0.03) * Math.exp(-(((fr - 5.4) / 0.32) ** 2));   // seat drag (back-inner)
-  D += 0.0018 * sstep(L - 0.06, L, s) * Math.sin(psi * 5 + 1.7 + 0.9 * n1(psi * 1.6, 21 + sx)); // hem ripple
-  D += 0.0012 * gauss(s - 0.1, 0.04) * Math.sin(fr * 3.0 + 0.4);
-  D -= 0.002 * Math.pow(pos(Math.cos(psi)), 3) * sstep(0.075, 0.05, s);            // inseam tuck
+  D += 0.0026 * gauss(s - 0.06, 0.028) * basis.front;   // crotch drag (front-inner)
+  D += 0.0022 * gauss(s - 0.065, 0.03) * basis.back;   // seat drag (back-inner)
+  D += 0.0018 * sstep(L - 0.06, L, s) * basis.ripple; // hem ripple
+  D += 0.0012 * gauss(s - 0.1, 0.04) * basis.drag;
+  D -= 0.002 * basis.tuck * sstep(0.075, 0.05, s);            // inseam tuck
   return D * lvF;
 }
 
@@ -968,12 +978,13 @@ function addShorts(B, lv) {
     const yEnd = SHX.yHem + 0.019;
     const nL = R.sLeg[1];
     const lys = K.densitySamples(nL, yEnd, SHX.yc, (y) => 1 + 1.4 * gauss(y - SHX.yc, 0.02) + 1.0 * gauss(y - SHX.yHem, 0.03)).reverse();
+    const legBasis = Array.from({ length: half }, (_, k) => shortsLegBasis((k / half) * TAU, sx));
     const circ = (y, off) => {
       const C = shLegC(y, sx, new V3()), r = shLegR(y);
       return Array.from({ length: half }, (_, k) => {
-        const psi = (k / half) * TAU;
-        const rr = r + shortsLegFold(psi, y, sx, lvF) + off;
-        return sx > 0 ? new V3(C.x - rr * Math.cos(psi), y, C.z + rr * Math.sin(psi)) : new V3(C.x + rr * Math.cos(psi), y, C.z - rr * Math.sin(psi));
+        const psi = (k / half) * TAU, basis = legBasis[k];
+        const rr = r + shortsLegFold(psi, y, sx, lvF, basis) + off;
+        return sx > 0 ? new V3(C.x - rr * basis.c, y, C.z + rr * basis.sn) : new V3(C.x + rr * basis.c, y, C.z - rr * basis.sn);
       });
     };
     const lrows = [], lv2 = [];
@@ -1020,8 +1031,9 @@ function addShorts(B, lv) {
   if (lv >= 3) {
     const nW = Math.max(24, nTh), wr = [];
     const ring0 = shRing(SHX.top - 0.004, nW);
+    const ringRadius = ring0.map(([x, z]) => Math.hypot(x, z + 0.011)), ringWave = ring0.map((_, i) => Math.sin(((i / nW) * TAU) * 44));
     for (const [y, off] of [[0.742, -0.0004], [0.745, 0.0014], [0.766, 0.0019], [0.784, 0.0016], [0.787, 0.0002], [0.785, -0.0022], [0.776, -0.0026]]) {
-      wr.push(ring0.map(([x, z], i) => { const th = (i / nW) * TAU; const rr = Math.hypot(x, z + 0.011); const k = (rr + off + 0.0005 * Math.sin(th * 44) * (off > 0 ? 1 : 0)) / rr; return new V3(x * k, y, -0.011 + (z + 0.011) * k); }));
+      wr.push(ring0.map(([x, z], i) => { const rr = ringRadius[i]; const k = (rr + off + 0.0005 * ringWave[i] * (off > 0 ? 1 : 0)) / rr; return new V3(x * k, y, -0.011 + (z + 0.011) * k); }));
     }
     const wg = K.gridGeo(wr, { wrapU: true, outward: (p, out) => out.set(0, p.y, -0.011), uv: (i, j) => [i / nW, j / 6] });
     B.add(wg, { ex: CS.shorts, uv: true, v3: cl(PART.cuff, MC.rib, 0), weights: () => [['spine', 0.6], ['hips', 0.4]] });
@@ -1116,11 +1128,11 @@ function skUpper(phi, t, out) {
   const u = 1 - t;
   return out.set(u * u * b.x + 2 * u * t * m.x + t * t * c.x, u * u * b.y + 2 * u * t * m.y + t * t * c.y, u * u * b.z + 2 * u * t * m.z + t * t * c.z);
 }
-function skUpperN(phi, t, out) {
-  const p = skUpper(phi, t, new V3()), a = skUpper(phi + 0.003, t, new V3()), b = skUpper(phi, Math.min(1, t + 0.003), new V3());
+function skUpperN(phi, t, out, baseP) {
+  const p = baseP || skUpper(phi, t, new V3()), a = skUpper(phi + 0.003, t, new V3()), b = skUpper(phi, Math.min(1, t + 0.003), new V3());
   if (t + 0.003 > 1) b.subVectors(p, skUpper(phi, t - 0.003, new V3())).add(p);
   out.crossVectors(a.sub(p), b.sub(p)).normalize();
-  const ctr = new V3(0, 0.045, SK.cz); if (out.dot(p.sub(ctr)) < 0) out.negate();
+  if (out.x * (p.x - 0) + out.y * (p.y - 0.045) + out.z * (p.z - SK.cz) < 0) out.negate();
   return out;
 }
 // throat: the lace opening along the top of the vamp (phi ≈ 0), eyestays either side
@@ -1184,7 +1196,7 @@ function shoeParts(lv) {
   const nT = SR.nT;
   {
     const ts = K.densitySamples(nT, 0, 1, (t) => 1 + 0.8 * gauss(t, 0.1) + 1.2 * gauss(t - 1, 0.08) + 0.5 * gauss(t - 0.6, 0.1));
-    const rows = ts.map((t) => phis.map((ph) => { const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn); return p.addScaledVector(nn, skUpperD(ph, t, lvF)); }));
+    const rows = ts.map((t) => phis.map((ph) => { const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn, p); return p.addScaledVector(nn, skUpperD(ph, t, lvF)); }));
     const tv = ts.slice();
     // lining folding inside the collar
     for (const [dy, k] of [[-0.0024, 0.9], [-0.018, 0.84]]) { rows.push(phis.map((ph) => { const c = skCollar(ph, new V3()); return new V3(c.x * k, c.y + dy, -0.004 + (c.z + 0.004) * k); })); tv.push(1 + (1 - k)); }
@@ -1194,7 +1206,7 @@ function shoeParts(lv) {
   // ---- overlays with thickness: patch over (phi, t) given per-row phi range or per-column t range
   const patch = (nu, nv, map, h, ex, v3, opt = {}) => {
     const rows = [];
-    for (let j = 0; j <= nv; j++) rows.push(Array.from({ length: nu + 1 }, (_, i) => { const [ph, t] = map(i / nu, j / nv); const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn); return p.addScaledVector(nn, skUpperD(ph, t, lvF) + h); }));
+    for (let j = 0; j <= nv; j++) rows.push(Array.from({ length: nu + 1 }, (_, i) => { const [ph, t] = map(i / nu, j / nv); const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn, p); return p.addScaledVector(nn, skUpperD(ph, t, lvF) + h); }));
     const g = K.gridGeo(rows, { wrapU: false, outward: (p, out) => out.set(0, 0.03, SK.cz - 0.01), uv: (i, j) => [i / nu, j / nv] });
     parts.push({ geo: g, ex, v3, uv: true });
     // edge wall (the overlay's cut edge) around the boundary, from +h down into the base (hero)
@@ -1206,7 +1218,7 @@ function shoeParts(lv) {
     for (let j = nv - 1; j >= 1; j--) loop.push([0, j / nv]);
     const skipEdge = opt.skipEdge || (() => false);
     const top = [], bot = [];
-    for (const [u, v] of loop) { const [ph, t] = map(u, v); const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn); const d = skUpperD(ph, t, lvF); top.push(p.clone().addScaledVector(nn, d + h)); bot.push(p.clone().addScaledVector(nn, d - 0.0004)); }
+    for (const [u, v] of loop) { const [ph, t] = map(u, v); const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn, p); const d = skUpperD(ph, t, lvF); top.push(p.clone().addScaledVector(nn, d + h)); bot.push(p.clone().addScaledVector(nn, d - 0.0004)); }
     const wg = K.gridGeo([bot, top], { wrapU: true, outward: (p, out) => { out.set(0, 0.03, SK.cz); }, uv: (i, j) => [i / loop.length, 0.02 + j * 0.001] });
     parts.push({ geo: wg, ex, v3, uv: true });
   };
@@ -1249,7 +1261,7 @@ function shoeParts(lv) {
         const u = i / nu, w = lerp(-1, 1, u);
         // lower part follows the vamp inside the throat; top 30 % rises free above the collar and leans forward
         const t = lerp(T0, 1.0, Math.min(1, v / 0.72));
-        const p = skUpper(w * 0.16, t, new V3()); skUpperN(w * 0.16, t, nn);
+        const p = skUpper(w * 0.16, t, new V3()); skUpperN(w * 0.16, t, nn, p);
         const up = Math.max(0, v - 0.72) / 0.28;
         p.addScaledVector(nn, -0.0006 + 0.0048 * (1 - w * w) ** 0.5).add(new V3(0, 0.024 * up, 0.006 * up * up));
         row.push(p);
@@ -1269,7 +1281,7 @@ function shoeParts(lv) {
   }
   // ---- eyelets + laces
   const eyeT = [0.64, 0.72, 0.8, 0.88, 0.955];
-  const eyeAt = (sd, t) => { const ph = sd * (throatHalf(t) + 0.075); const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn); return { p: p.addScaledVector(nn, skUpperD(ph, t, lvF) + H * 1.1 + 0.0004), n: nn.clone() }; };
+  const eyeAt = (sd, t) => { const ph = sd * (throatHalf(t) + 0.075); const p = skUpper(ph, t, new V3()); skUpperN(ph, t, nn, p); return { p: p.addScaledVector(nn, skUpperD(ph, t, lvF) + H * 1.1 + 0.0004), n: nn.clone() }; };
   const laceFlat = (pts, nSeg) => {
     const sw = K.sweep(pts, { seg: Math.max(2, Math.round(nSeg * SR.pk * 0.8)), radial: lv >= 4 ? 5 : 4, capSteps: 1, radius: () => 0.0024, flat: 0.42, outward: (P, o) => { o.set(P.x * 0.3, 1, (P.z - SK.cz) * 0.2).normalize(); } });
     const len = sw.curve.getLength(); const tA = sw.t, cA = sw.cs;

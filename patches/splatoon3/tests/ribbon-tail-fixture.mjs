@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 
 const source = fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs', import.meta.url), 'utf8');
@@ -11,9 +12,10 @@ export const ribbonAttributes = ['pos', 'col', 'rib', 'side', 'face'];
 export function makeRibbonPool(body, trails = 3, points = 48, additive = false) {
   let seed = 31, rngCalls = 0;
   const random = () => { rngCalls++; return ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296); };
-  const Pool = new Function('THREE', 'RIBBON_VERT', 'RIBBON_FRAG', 'vfxRandom', body + '\nreturn RibbonPool;')
-    (THREE, '', '', random);
+  const Pool = new Function('THREE', 'RIBBON_VERT', 'RIBBON_FRAG', 'vfxRandom', 'markAttributeRange', body + '\nreturn RibbonPool;')
+    (THREE, '', '', random, markAttributeRange);
   const pool = new Pool(THREE, trails, points, additive, { value: 0 });
+  pool._testRib = { values: pool.rib.array.slice(), version: pool.rib.version };
   pool.rngCalls = () => rngCalls;
   return pool;
 }

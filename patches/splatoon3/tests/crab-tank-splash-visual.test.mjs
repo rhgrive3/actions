@@ -120,7 +120,9 @@ test('queue removal hides landed drops and empty frames retain the pool for reus
     assert.equal(meshOf(game), mesh); assert.equal(mesh.visible, true);
     assert.equal(mesh.count, 1);
     assert.deepEqual(mesh.instanceMatrix.updateRanges, [{ start: 0, count: 16 }]);
-    assert.deepEqual(mesh.instanceColor.updateRanges, [{ start: 0, count: 3 }]);
+    // The no-render mock never consumes GPU ranges: the earlier two-slot
+    // change remains pending even after an empty frame and one-slot reuse.
+    assert.deepEqual(mesh.instanceColor.updateRanges, [{ start: 0, count: 6 }]);
   } finally { clearCrabSplashVisuals(system, game); }
 });
 

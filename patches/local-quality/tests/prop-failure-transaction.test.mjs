@@ -10,7 +10,7 @@ const placements = [{ type: 'bench', pos: [0, 0, 0] }, { type: 'bench', pos: [4,
 // guard. Full world commit/lightmap ownership has its own reliability suite.
 const source = adaptBuildSource('src/main.js', fs.readFileSync(new URL('../../../inkwave-public/src/main.js', import.meta.url), 'utf8'));
 const start = source.indexOf('    const colliders = [];');
-const end = source.indexOf('    let level, lightmap, physics, nav;', start);
+const end = source.indexOf('    let level, lightmap, physics, nav, pendingLightmap;', start);
 assert.ok(start >= 0 && end > start, 'composed async prop transaction anchors');
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const prepare = new AsyncFunction('scene', 'dressingFor', 'layoutId', 'worldCurrent', source.slice(start, end) + '\nreturn { props, colliders };');

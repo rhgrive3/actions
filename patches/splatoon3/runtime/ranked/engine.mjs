@@ -163,7 +163,7 @@ export function validRankedSnapshot(s, mode = s?.mode, stage = s?.stage) {
 function validRuleState(mode, r) {
   const number = x => Number.isFinite(x);
   const vec = x => Array.isArray(x) && x.length === 3 && x.every(number);
-  const team = x => [-1, 0, 1, null].includes(x);
+  const team = x => x === -1 || x === 0 || x === 1 || x === null;
   const list = (x, fn) => Array.isArray(x) && x.every(fn);
   const matrix = (x, fn) => Array.isArray(x) && x.length === 2 && x.every(a => list(a, fn));
   const nums = keys => keys.every(k => number(r[k]));

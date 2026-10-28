@@ -54,7 +54,7 @@ jobs:
       - name: Install existing native QA tools
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --only-shell chromium
       - name: Verify normal input and native QA contracts
         run: node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/squid-heading-frame.test.mjs patches/local-quality/tests/squid-heading-boundary.test.mjs tools/squid-heading-qa/probe.test.mjs tools/squid-heading-qa/compare.test.mjs tools/squid-heading-qa/workflow.test.mjs tools/squid-heading-qa/three-contract.test.mjs tools/squid-heading-qa/reference.test.mjs tools/squid-heading-qa/bank-contract.test.mjs
       - name: Checkout same-source counterfactual without repository history

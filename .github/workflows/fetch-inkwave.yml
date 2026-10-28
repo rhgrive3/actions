@@ -21,11 +21,16 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /scripts/
-            /patches/
+            /patches/splatoon3/*.mjs
+            /patches/splatoon3/upstream-lock.json
+            /patches/splatoon3/runtime/paint-ownership.mjs
+            /patches/splatoon3/runtime/scoring.mjs
             /package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify sparse adapter dependencies
+        run: node --input-type=module -e "await import('./patches/splatoon3/adapter.mjs')"
       - name: Verify mirror origin, byte, count and deadline controls
         run: python3 -m unittest discover -s scripts/tests -p test_inkwave_source_mirror.py -v
       - name: Fetch public site assets

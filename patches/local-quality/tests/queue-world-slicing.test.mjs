@@ -34,7 +34,7 @@ const composed=adaptBuildSource('src/main.js',read('inkwave-public/src/main.js')
 const main=composed.includes('props.addAll')?composed:adaptQueueWorld20261024('src/main.js',composed);
 test('terminal connections await detached builders before publishing and preserve native/reused paint resets',()=>{
  const a=main.indexOf('  async _buildWorld('),b=main.indexOf('  _shadowRoots()',a),world=main.slice(a,b);
- assert(world.indexOf('await props.addAll')<world.indexOf('releaseNativeWorld(this)'));assert(world.indexOf('await props.buildAsync')<world.indexOf('releaseNativeWorld(this)'));assert(world.indexOf('await NavGraph.createLegacy')<world.indexOf('releaseNativeWorld(this)'));assert(world.includes('G.nav = nav;'));assert(world.includes('if (!worldCurrent()) return; throw e;'));
+ assert(world.indexOf('await props.addAll')<world.indexOf('releaseNativeWorld(this)'));assert(world.indexOf('await props.buildAsync')<world.indexOf('releaseNativeWorld(this)'));assert(world.indexOf('await NavGraph.createLegacy')<world.indexOf('releaseNativeWorld(this)'));assert(world.includes('G.nav = nav;'));assert.match(world,/if \(!worldCurrent\(\)\) return;\s*throw e;/);
  const line=main.split('\n').find(line=>line.includes('NATIVE_IDS.includes(map.layout || map.id))) G.paint.clear()'));assert(line);
  for(const enabled of [false,true])for(const current of ['a','b','native'])for(const chosen of ['a','b','native']){let calls=0;new Function('map','nativeStageEnabled','NATIVE_IDS','G',line).call({layoutId:current},{id:chosen},enabled,['native'],{paint:{clear(){calls++;}}});assert.equal(calls,+(chosen===current||enabled&&chosen==='native'));}
 });

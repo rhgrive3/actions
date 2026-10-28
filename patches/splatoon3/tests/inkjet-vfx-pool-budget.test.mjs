@@ -1,4 +1,5 @@
 import { consumeVfxPeriod } from '../runtime/nonwail-vfx-clock.mjs';
+import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -20,7 +21,7 @@ const compileBody=body=>process.env.SPECIAL_VFX_ESBUILD ? compactModuleStrings(c
 class V { set(x,y,z){Object.assign(this,{x,y,z});return this;} copy(p){return this.set(p.x,p.y,p.z);}setY(y){this.y=y;return this;}lerp(p,k){this.x+=(p.x-this.x)*k;this.y+=(p.y-this.y)*k;this.z+=(p.z-this.z)*k;return this;} }
 function runLoad(hz, actorCount, cap, seconds=2) {
  const random=()=>.2,rnd=(a=1,b=0)=>b+random()*(a-b);
- const Pool=new Function('vfxRandom','TAU',compileBody(spriteClass+';return SpritePool;'))(random,Math.PI*2);
+ const Pool=new Function('vfxRandom','TAU','markAttributeRange',compileBody(spriteClass+';return SpritePool;'))(random,Math.PI*2,markAttributeRange);
  let evictions=0;
  const pool=(capacity)=>{const p=new Pool(THREE,capacity,false,{value:0});
   p._evict=()=>{evictions++;throw Error('Inkjet caused eviction');};return p;};

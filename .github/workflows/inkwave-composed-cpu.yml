@@ -74,7 +74,7 @@ jobs:
       - name: Install Chromium for emitted CPU trace smoke
         run: |
           sudo python3 scripts/prepare-inkwave-ci-apt.py
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps --only-shell chromium
       - name: Actual browser CPU recorder, finite gameplay state and GC trace
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
