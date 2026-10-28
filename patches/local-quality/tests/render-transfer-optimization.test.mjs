@@ -5,10 +5,27 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { replaceOnce, qualityIdentity } from '../adapter.mjs';
 import { adaptRenderTransfers } from '../render-transfer-optimization-adapter.mjs';
+import * as renderTransferModule from '../render-transfer-optimization-adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 import { ringFixture, uploadTracker, randomStream } from './render-transfer-fixture.mjs';
 
 const attributes = ['aPosR', 'aNrmT', 'aColA', 'aMisc'];
+test('injected transfer helpers stay private without changing generated runtime bytes', async () => {
+  assert.deepEqual(Object.keys(renderTransferModule), ['adaptRenderTransfers']);
+  const source=fs.readFileSync(new URL('../render-transfer-optimization-adapter.mjs',import.meta.url),'utf8');
+  let previouslyExported=source;
+  for(const name of ['clearFxUploadRanges','markFxStaticRange']){
+    const declaration='function '+name+'(';
+    assert.equal(source.split(declaration).length-1,1,'one injected helper '+name);
+    previouslyExported=previouslyExported.replace(declaration,'export '+declaration);
+  }
+  const oldModule=await import('data:text/javascript,'+encodeURIComponent(previouslyExported));
+  assert.deepEqual(Object.keys(oldModule).sort(),['adaptRenderTransfers','clearFxUploadRanges','markFxStaticRange'].sort());
+  const raw=fs.readFileSync(new URL('../../../inkwave-public/src/fx/fx.js',import.meta.url),'utf8');
+  const current=adaptRenderTransfers('src/fx/fx.js',raw,replaceOnce);
+  assert.equal(current,oldModule.adaptRenderTransfers('src/fx/fx.js',raw,replaceOnce),'export visibility does not change injected runtime');
+  for(const name of ['clearFxUploadRanges','markFxStaticRange'])assert.equal(current.split('function '+name+'(').length-1,1,'one runtime helper '+name);
+});
 function same(a, b, ta, tb) {
   assert.equal(a.rings.n, b.rings.n);
   assert.equal(a.rings.geo.instanceCount, b.rings.geo.instanceCount);

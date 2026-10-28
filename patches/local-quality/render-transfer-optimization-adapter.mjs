@@ -1,9 +1,9 @@
 // Keep the existing FX geometry, shaders, draw order, and simulation. Ring
 // colour/style data changes only at birth, recycling, compaction, or the
 // immediate-mark tail; motion attributes continue updating every simulation.
-export function clearFxUploadRanges() { this.clearUpdateRanges(); }
+function clearFxUploadRanges() { this.clearUpdateRanges(); }
 
-export function markFxStaticRange(attribute, first, last, liveEnd) {
+function markFxStaticRange(attribute, first, last, liveEnd) {
   if (first >= last && attribute.updateRanges.length === 0) return;
   if (liveEnd <= 0) return; // an empty mesh cannot consume an upload
   if (first >= last) { first = liveEnd; last = 0; }
