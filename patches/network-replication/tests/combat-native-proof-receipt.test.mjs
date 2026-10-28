@@ -15,6 +15,7 @@ for(const [name,change] of [
   ['future event timestamp',x=>({e:[fire(x,1000.05)]})],
   ['rejected actor row',x=>({a:[[17,0,2,0]]})],
   ['rejected actor life',()=>({l:{17:-1}})],
+  ['malformed present actor roster',()=>({a:{}})],
 ])test(`${name} cannot authorize a hit after the enclosing owner timestamp advances`,async t=>{
   const x=await setup(t,{roller:false});tick(x,change(x));
   assert.equal(x.nm.peers.get('peer').lastTs,1000);

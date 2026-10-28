@@ -610,7 +610,7 @@ export function installCombatProvenance(NetMatch,context={}) {
       const t=now();
       sampleLocalHistory(this,t);
       recordContactSnapshots(this,from,receipt,t);
-      record(this,from,receipt,t,null,receipt.poses);
+      record(this,from,{...receipt,e:receipt.nativeEvents},t,null,receipt.poses);
       flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
     }
     return observed.result;
