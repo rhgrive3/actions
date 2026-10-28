@@ -20,7 +20,7 @@ function aliasScope(code,bindings){
  // source-level identifier survives the bundler; still exercise the real method.
  if ('beginMaterialHandoff' in bindings) {
   const source = attractMethod(code);
-  const uses = [...source.matchAll(/\b(?:const|let)\s+[\w$]+\s*=\s*([\w$]+)\s*\(\s*this\s*,\s*this\.match\s*,\s*G\.renderer\s*\)/g)];
+  const uses = [...source.matchAll(/\b(?:const|let)\s+[\w$]+\s*=\s*([\w$]+)\s*\(\s*this\s*,\s*this\.match\s*,\s*[\w$]+\.renderer\s*\)/g)];
   assert.equal(uses.length, 1, 'exactly one real attract material-handoff call');
   out[uses[0][1]] = bindings.beginMaterialHandoff;
  }

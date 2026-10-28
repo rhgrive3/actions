@@ -295,7 +295,7 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.equal(shards.split(shardRunner).length-1,1,'Exact runner routing required for shard 2');
   assert.equal((shards.match(/^    runs-on:/gm)||[]).length,2,'Only patch and offload jobs set a runner');
   assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
-  assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: '2'"));
+  assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}"),'Shard 2 serializes its complete suite after repeated 143 runner signals');
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assertShardEvidencePolicy(workflow);
