@@ -16,6 +16,7 @@ import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runti
 import {installOwnerClockDiagnostic,readOwnerClockDiagnostic} from './lib/inkwave-owner-clock-diagnostic.mjs';
 import {collectOpeningPeerDiagnostics} from './lib/inkwave-opening-peer-diagnostic.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
+import {partitionRequestFailures} from './lib/inkwave-browser-request-failure.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const site=path.resolve(option('--site','_site'));
@@ -25,13 +26,14 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-owner-clock-diagnostic.mjs','scripts/lib/inkwave-opening-peer-diagnostic.mjs','scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-owner-clock-diagnostic.mjs','scripts/lib/inkwave-opening-peer-diagnostic.mjs','scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','scripts/lib/inkwave-browser-request-failure.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
 }
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
 const errors=[],wire=[],loaded=new Set(),contexts=[],pages=[];
+const requestFailures=[],verifiedRequests=new WeakSet();
 const report={schema:1,status:'running',sourceSha,inputHash:build.inputHash,contentHash:build.contentHash,
  harnessHash:hash(fs.readFileSync(self)),scenario:'native-shooter-220-reject-36-accept',
  scope:'Full native Game/Actor/Projectiles/NetMatch; draw-suppressed native RAF startup then deterministic native component steps; separate warm-session combat QA, cold-start #1767 remains open; no Actor damage or receiver admission replacement',
@@ -67,12 +69,15 @@ try {
   report.clockReceipts ||= [[],[]];
   page.on('console',message=>{const receipt=readOwnerClockDiagnostic(message.text());if(receipt&&report.clockReceipts[i].length<96)report.clockReceipts[i].push(receipt);});
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
-  page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
+  page.on('requestfailed',r=>requestFailures.push({request:r,event:{player:i,url:r.url(),error:r.failure()?.errorText}}));
   await page.addInitScript(installCombatPlacementQA);
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,matchLength:180,lastStage:'tidewater',lastMode:'turf'})));
   await page.route(base+'/**',async route=>{
    const response=await route.fetch({maxRetries:2}),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';
-   if(build.artifacts[key])assert.equal(hash(body),build.artifacts[key],'served artifact '+key);
+   if(build.artifacts[key]){
+     assert.equal(hash(body),build.artifacts[key],'served artifact '+key);
+     verifiedRequests.add(route.request());
+   }
    loaded.add(key);await route.fulfill({response,body});
   });
   await page.goto(address,{waitUntil:'domcontentloaded',timeout:60000});
@@ -285,6 +290,9 @@ try {
  report.damageUnchanged=await Promise.all(pages.map(p=>p.evaluate(()=>[...__ceilingOriginalDamage].every(([a,fn])=>a.damage===fn))));
  assert(report.damageUnchanged.every(Boolean));
  assert.equal(errors.length,0,JSON.stringify(errors));
+ const requestsAtAcceptance=partitionRequestFailures(requestFailures,verifiedRequests);
+ report.verifiedAudioCancellations=requestsAtAcceptance.audioCancellations;
+ assert.deepEqual(requestsAtAcceptance.failures,[],'Unverified and non-audio network failures remain fatal');
  assert.equal(report.relayAdmissions?.length,2);assert(report.relayAdmissions.every(x=>x.status===101&&x.accepted===true),'Both browsers must enter the production relay');
  report.status='passed';report.phase='complete';
 } catch(error) {
@@ -314,6 +322,9 @@ try {
     spawnPhase:['aim','flight','landing'].includes(a.s3?.squidSpawn?.phase)?a.s3.squidSpawn.phase:null,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
  });}catch{}
 } finally {
+ const finalRequests=partitionRequestFailures(requestFailures,verifiedRequests);
+ report.verifiedAudioCancellations=finalRequests.audioCancellations;
+ for(const event of finalRequests.failures)errors.push('player'+event.player+': '+event.url+': '+event.error);
  report.errors=errors;report.loadedArtifacts=[...loaded];
  // Socket teardown may author a legitimate no-contest message. Keep that
  // traffic separate from the immutable scenario trace used for diagnosis.

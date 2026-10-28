@@ -4,7 +4,7 @@
 export function verifiedAudioCancellation({url,error},verified) {
  if(!verified||error!=='net::ERR_ABORTED')return false;
  const path=new URL(url).pathname;
- return /^\/_versions\/[a-f0-9]{64}\/assets\/audio\/[^/]+\.mp3$/.test(path);
+ return /^\/_versions\/[a-f0-9]{64}\/(?:assets\/audio|patches\/splatoon3\/runtime\/audio\/s3-real)\/[^/]+\.mp3$/.test(path);
 }
 // Inspect after in-flight response checks settle: requestfailed can precede
 // route.fetch().body(), even when that exact response subsequently verifies.
