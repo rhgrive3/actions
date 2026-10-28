@@ -2,9 +2,10 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {MUZZLE_SPLASH,INK_RING} from '../../splatoon3/runtime/s3-sweps-assets.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {setTrackedInstanceColor, uploadTrackedInstanceColors} from '../../splatoon3/runtime/instance-color-upload.mjs';
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 const before=read('./fixtures/added-assets/ink-sheets-before.mjs.txt'),after=read('../../splatoon3/runtime/s3-ink-sheets.mjs');
-const sheet=source=>new Function('MUZZLE_SPLASH','INK_RING',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+';return {splashCone,createInkSheets,FIRE_INK};')(MUZZLE_SPLASH,INK_RING);
+const sheet=source=>new Function('MUZZLE_SPLASH','INK_RING','setTrackedInstanceColor','uploadTrackedInstanceColors',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+';return {splashCone,createInkSheets,FIRE_INK};')(MUZZLE_SPLASH,INK_RING,setTrackedInstanceColor,uploadTrackedInstanceColors);
 const old=sheet(before),fresh=sheet(after);
 function snap(f){return [f.mesh,f.drillMesh].map(m=>({count:m.count,visible:m.visible,matrix:Buffer.from(m.instanceMatrix.array.buffer),color:Buffer.from(m.instanceColor.array.buffer),attrs:Object.fromEntries(Object.entries(m.geometry.attributes).map(([k,v])=>[k,{bytes:Buffer.from(v.array.buffer),ranges:v.updateRanges.map(r=>({...r}))}])),key:m.material.customProgramCacheKey()}));}
 // Only the deliberately versioned shader-program key differs for these legacy
