@@ -53,7 +53,6 @@ on:
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
-      - 'scripts/tests/inkwave-added-ci-contracts.test.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
       - 'patches/splatoon3/adapter.mjs'
       - 'patches/splatoon3/weapons-adapter.mjs'
@@ -116,7 +115,6 @@ on:
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
-      - 'scripts/tests/inkwave-added-ci-contracts.test.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
       - 'patches/splatoon3/adapter.mjs'
       - 'patches/splatoon3/weapons-adapter.mjs'
@@ -159,8 +157,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify checkout, concurrency and complete test routing contracts
-        run: node --test scripts/tests/inkwave-added-ci-contracts.test.mjs
+      # Shared CI admission contracts run in the required A+ and Validate suites;
+      # do not relaunch three expensive weapon jobs for CI-contract-only edits.
       - name: Verify actual main-weapon input, resources, cadence and Roller fan
         run: |
           git rev-parse HEAD
