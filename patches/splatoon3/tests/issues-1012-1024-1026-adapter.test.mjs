@@ -11,7 +11,7 @@ const adapt = rel => adaptSource(rel, read(rel));
 
 test('#1012 adapted PlayerController removes rim acceleration and caps steady yaw below 360deg/s', () => {
   const code = adapt('src/game/player.js');
-  assert.ok(code.includes('const yawRate = Math.min(3.6 * ps, Math.PI * 2 - 1e-6);'));
+  assert.ok(code.includes('const yawRate = boundedPadYawRate(ps);'));
   assert.ok(code.includes('rig.yaw -= this.padLook.x * yawRate * friction * dt;'));
   assert.ok(!code.includes('const boost = 1 + 0.55'));
   assert.ok(!code.includes('* ps * boost * friction * dt'));

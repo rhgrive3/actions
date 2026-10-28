@@ -990,7 +990,7 @@ export function adaptSource(rel, code) {
       const boost = 1 + 0.55 * clamp((this.edgeT - 0.16) / 0.3, 0, 1);
       const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
       `      this.edgeT = 0;
-      const yawRate = Math.min(3.6 * ps, Math.PI * 2 - 1e-6);
+      const yawRate = boundedPadYawRate(ps);
       const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
       'S3 right-stick steady yaw cap');
     code = replaceOnce(code,
