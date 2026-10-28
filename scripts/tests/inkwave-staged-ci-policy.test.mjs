@@ -161,4 +161,18 @@ test('specialized CI preserves relevant paths and skips unrelated test/CI-only e
     assert(routed(target,'scripts/ci/inkwave-test-suites.json'));
   }
   assert(!routed(weapons,'scripts/tests/inkwave-added-ci-contracts.test.mjs'));
+  const reopened=read('inkwave-reopened-six.yml'),paint=read('inkwave-paint-hotpath.yml');
+  const frame=read('inkwave-runtime-frame-parity.yml'),native=read('inkwave-nondrive-queue.yml');
+  for(const workflow of [reopened,paint,frame]) {
+    assert(!routed(workflow,'patches/local-quality/tests/drive-visual-audio.test.mjs'),'unrelated test must not run specialist workflow');
+    assert(routed(workflow,'patches/local-quality/tests/quality.test.mjs') || workflow===reopened,'owned gate must remain reachable');
+  }
+  assert(!routed(reopened,'patches/splatoon3/tests/catalog-stringer-other.test.mjs'));
+  assert(routed(reopened,'patches/splatoon3/tests/superjump-gameplay.test.mjs'));
+  assert(routed(reopened,'patches/splatoon3/runtime/roller.mjs'));
+  assert(routed(paint,'patches/local-quality/tests/paint-hotpath.test.mjs'));
+  assert(routed(frame,'patches/local-quality/tests/runtime-frame-scratch.test.mjs'));
+  assert(!routed(native,'.github/workflows/zevant-account.yml'));
+  assert(!routed(native,'.github/workflows/inkwave-weapon-lod-boundaries.yml'));
+  assert(routed(native,'patches/native-stages/runtime/native-world.mjs'));
 });
