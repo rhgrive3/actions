@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {Texture as TestTexture} from '../../../inkwave-public/vendor/three/build/three.module.js';
-import {FACE_KEYS, FACE_F64, FACE_I32, PREBUILT_SCHEMA, unpackFaces} from '../runtime/prebuilt-format.mjs';
+import {FACE_KEYS, FACE_F64, FACE_I32, PREBUILT_SCHEMA, unpackFaces, unpackFacesAsync} from '../runtime/prebuilt-format.mjs';
 import {admitPrebuiltStages, prebuiltConverterIdentity} from '../../../scripts/lib/inkwave-native-prebuilt.mjs';
 import {copyPrebuiltNativeAssets} from '../../../scripts/lib/inkwave-native-stages.mjs';
 
@@ -29,8 +29,9 @@ function pack(faces) {
 
 test('paint faces round-trip exactly, including key order', () => {
   const faces = [face(0), face(1), face(2)], p = pack(faces), out = unpackFaces(p.f64, p.i32, p.offsets, p.ids);
-  assert.deepEqual(out, faces);
-  assert.equal(JSON.stringify(out), JSON.stringify(faces));
+  assert.deepEqual(out.map(f=>({...f,triangles:Array.from(f.triangles)})), faces);
+  for(const f of out){assert.ok(f.triangles instanceof Uint32Array);assert.equal(f.triangles.buffer,p.ids.buffer);}
+  assert.equal(JSON.stringify(out,(_k,v)=>v instanceof Uint32Array?Array.from(v):v), JSON.stringify(faces));
   assert.equal(Object.keys(out[0]).join(), FACE_KEYS);
 });
 
@@ -90,7 +91,7 @@ if (!vm.SourceTextModule) {
 } else {
   async function loader(files) {
     const fetched = [];
-    const context = vm.createContext({URL, TextDecoder, ArrayBuffer, Uint8Array, Float32Array, Float64Array, Int32Array, Uint32Array, CustomEvent: class {constructor(t, o) { this.type = t; this.detail = o.detail; }},
+    const context = vm.createContext({URL, AbortController, DOMException, TextDecoder, ArrayBuffer, Uint8Array, Float32Array, Float64Array, Int32Array, Uint32Array, CustomEvent: class {constructor(t, o) { this.type = t; this.detail = o.detail; }},
       crypto: globalThis.crypto, Array, Object, JSON, Error, Promise, location: {href: 'https://game.test/_versions/r/index.html'}, dispatchEvent() {},
       fetch: async url => { fetched.push(url); const body = files[url]; return body ? {ok: true, status: 200, arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)} : {ok: false, status: 404}; }});
     const make = values => new vm.SyntheticModule(Object.keys(values), function () { for (const [k, v] of Object.entries(values)) this.setExport(k, v); }, {context});
@@ -121,7 +122,7 @@ if (!vm.SourceTextModule) {
     const site = siteFiles(), env = await loader(site.files), data = await load(env, site.entry, 's');
     assert.deepEqual(Array.from(data.triangles), [1.5, 2.5, 3.5]);
     assert.deepEqual(Array.from(data.mask), [1, 2, 3, 4, 5]);
-    assert.equal(JSON.stringify(data.manifest.faces), JSON.stringify(site.faces));
+    assert.equal(JSON.stringify(data.manifest.faces,(_k,v)=>v instanceof Uint32Array?Array.from(v):v), JSON.stringify(site.faces));
     assert.deepEqual(data.integrity, {x: 1});
     for (const k of ['faceF64', 'faceI32', 'faceTriangleOffsets', 'faceTriangles']) assert.equal(k in data, false);
     assert.equal(data.sourceMetrics.prebuilt, true);
@@ -300,3 +301,10 @@ test('builder input identity hashes every scripts/lib helper it runs', () => {
   const unhashed = [...reached].filter(file => !builder.includes(`'${file.split(path.sep).join('/')}'`));
   assert.deepEqual(unhashed, [], 'add these helpers to identity.files in build-inkwave.mjs');
 });
+
+ test('cooperative face unpack preserves exact values and aborts between batches',async()=>{
+ const faces=Array.from({length:300},(_,i)=>face(i%3)),p=pack(faces);let yields=0;
+ const out=await unpackFacesAsync(p.f64,p.i32,p.offsets,p.ids,{budgetMilliseconds:0,yieldTask:async()=>{yields++;}});
+ assert.equal(yields,2);assert.deepEqual(out.map(f=>({...f,triangles:Array.from(f.triangles)})),faces);
+ const controller=new AbortController();await assert.rejects(unpackFacesAsync(p.f64,p.i32,p.offsets,p.ids,{signal:controller.signal,budgetMilliseconds:0,yieldTask:async()=>controller.abort()}),{name:'AbortError'});
+ });
