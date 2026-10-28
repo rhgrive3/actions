@@ -4,6 +4,8 @@
 // regardless of the COMMIT SHA. Missing history/invalid refs always run FULL CI.
 import {spawnSync} from 'node:child_process';
 import {appendFileSync} from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const hash=/^[a-f0-9]{40}$/;
 const contractTests=/^scripts\/tests\/inkwave-(?:staged-ci-policy|added-ci-contracts|network-diagnostic-workflow|wall-diagnostic-workflow|test-suites|workflow-inputs|source-coverage|optimization-workflows|ci-source-admission|ci-sparse-checkout)\.test\.mjs$/;
@@ -34,7 +36,7 @@ export function classifyExactDiff({event,base,head,run=spawnSync}) {
     return {mode,reason:mode==='contracts-only'?'only isolated CI contracts/workflows/docs changed':'runtime or unknown source inputs changed',paths};
   }catch(error){return {...result,reason:'fail-open: '+String(error?.message||error)};}
 }
-if (process.argv[1] && import.meta.url === new URL('file://'+process.argv[1]).href) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const info=classifyExactDiff({event:process.env.GITHUB_EVENT_NAME,base:process.env.CONTRACT_SCOPE_BASE,head:process.env.SOURCE_SHA});
   if(process.env.GITHUB_OUTPUT)appendFileSync(process.env.GITHUB_OUTPUT,'contracts_only='+(info.mode==='contracts-only'?'true':'false')+'\n');
   console.log(JSON.stringify({mode:info.mode,reason:info.reason,pathCount:info.paths?.length||0}));
