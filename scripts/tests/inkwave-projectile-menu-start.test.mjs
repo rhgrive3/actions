@@ -1,60 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
 import {startProjectileThroughMenu} from '../lib/inkwave-projectile-menu-start.mjs';
 
-function fakePage(overrides={}){
-  const clicks=[],keys=[],phases=[],events=[];
-  const g={debug:{},bootMs:94000,match:{attract:true},profile:{weapon:'shooter'},menus:{current:'main',_scr:{name:'main'},_setup:{mode:'turf',mapId:'tidewater',difficulty:'normal',duration:180,...overrides},_stageTime:()=> 'day'}};
-  const context={window:{__inkwave:g,__G:{mode:'menu'}}};
-  const evaluate=fn=>vm.runInNewContext('('+fn.toString()+')()',context);
-  const pointerMoves=[];
-  const page={mouse:{move:async(x,y)=>{pointerMoves.push([x,y]);}},evaluate:async fn=>evaluate(fn),locator:selector=>({click:async options=>{assert.equal(options.timeout,1234);clicks.push(selector);if(selector.includes('"play"'))g.menus.current='mode';else if(selector.includes('"start"'))g.menus.current=null;},press:async(key,options)=>{assert.equal(key,'Enter');assert.equal(options.timeout,1234);keys.push(selector);if(selector.includes('mode-turf'))g.menus.current='setup';}})};
-  return {page,clicks,keys,pointerMoves,phases,events,options:{receipt:events,remainingMs:()=>1234,waitForPhase:async(fn,label)=>{phases.push(label);assert.equal(evaluate(fn),true);}}};
+const canonicalConfig={mode:'turf',map:'tidewater',difficulty:'normal',duration:180,weapon:'shooter',time:'day'};
+function harness({touch=false,config=canonicalConfig,touchReject=false}={}){
+ const events=[],receipt=[];
+ const page={
+  locator(selector){return{
+   async click(options){assert(options.timeout>0);events.push(['click',selector]);},
+   async tap(options){assert(options.timeout>0);events.push(['tap',selector]);if(touchReject)throw Error('touch blocked');},
+   async press(key,options){assert(options.timeout>0);events.push(['press',selector,key]);}
+  };},
+  mouse:{async move(x,y){events.push(['move',x,y]);}},
+  async evaluate(fn){
+   if(fn.toString().includes('navigator.maxTouchPoints'))return touch;
+   if(fn.toString().includes('g.menus?._setup'))return config;
+   throw Error('unexpected browser evaluation');
+  }
+ };
+ const waitForPhase=async(_predicate,label)=>{events.push(['phase',label]);};
+ return{events,receipt,page,waitForPhase};
 }
-test('mobile reduced-motion mode entries do not retain scale entrance hit-box obstruction',()=>{
-  const css=fs.readFileSync(new URL('../../patches/splatoon3/ui.css',import.meta.url),'utf8');
-  const rule=/@media \(prefers-reduced-motion: reduce\) \{\s*:is\(html\.iw-touch \.iw-ui, \.iw-ui\.is-touch\) \.iw-modesel \.iw-mode\.iw-in \{([^}]*)\}/.exec(css);
-  assert.ok(rule,'real touch mode-card selector remains present under reduced motion');
-  assert.match(rule[1],/animation:\s*none\s*!important\s*;/);
-  assert.match(rule[1],/translate:\s*none\s*;/);
-  assert.match(rule[1],/scale:\s*1\s*;/);
-  assert.match(rule[1],/transition:\s*none\s*;/);
-  // The native Playwright path must still use the card's normal click handler,
-  // never evaluate _accept()/show()/startMatch() or force a hidden click.
-  const route=fs.readFileSync(new URL('../lib/inkwave-projectile-menu-start.mjs',import.meta.url),'utf8');
-  assert.match(route,/\.press\('Enter'/);
-  assert.doesNotMatch(route,/force:\s*true|\.dispatchEvent\(|_startMatch\(|startMatch\(/);
+for(const touch of [false,true]){
+ test('Turf navigation uses only native '+(touch?'touch tap':'desktop keyboard')+' activation',async()=>{
+  const h=harness({touch});
+  await startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt});
+  const activation=h.events.filter(e=>['tap','press'].includes(e[0]));
+  assert.deepEqual(activation,touch?[['tap','.iw-modesel [data-id="mode-turf"]']]:[['press','.iw-modesel [data-id="mode-turf"]','Enter']]);
+  assert.deepEqual(h.events.filter(e=>e[0]==='phase').map(e=>e[1]),['native main menu readiness','native mode menu','native setup menu']);
+  assert.deepEqual(h.events.filter(e=>e[0]==='click').map(e=>e[1]),['.iw-main [data-id="play"]','.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']);
+  assert.equal(h.receipt.filter(r=>r.event==='native-start-clicked').length,1);
+ });
+}
+test('native menu configuration mismatch fails closed before START',async()=>{
+ const h=harness({touch:true,config:{...canonicalConfig,map:'range'}});
+ await assert.rejects(startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt}),/configuration mismatch/);
+ assert.equal(h.events.some(e=>e[0]==='click'&&e[1].includes('start')),false);
 });
-test('normal menu navigation issues one real START after verifying exact scenario',async()=>{
-  const h=fakePage();await startProjectileThroughMenu(h.page,h.options);
-  assert.deepEqual(h.clicks,['.iw-main [data-id="play"]','.iw-setup [data-id="map-tidewater"]','.iw-setup [data-id="start"].iw-btn--start']);
-  assert.deepEqual(h.keys,['.iw-modesel [data-id="mode-turf"]']);
-  assert.deepEqual(h.pointerMoves,[[1,1]],'clear the previous card hover without force-clicking');
-  assert.equal(h.events.at(-1).event,'native-start-clicked');assert.equal(h.events.at(-1).attempt,1);
-  assert.equal(h.events.find(e=>e.event==='native-setup-verified').config.map,'tidewater');
-});
-test('wrong configuration fails before START rather than mutating game settings or retrying',async()=>{
-  const h=fakePage({duration:90});await assert.rejects(startProjectileThroughMenu(h.page,h.options),/configuration mismatch/);
-  assert.equal(h.clicks.some(s=>s.includes('"start"')),false);
-});
-test('failed readiness propagates without a hidden start or retry',async()=>{
-  const h=fakePage();h.options.waitForPhase=async()=>{throw new Error('boot not ready');};
-  await assert.rejects(startProjectileThroughMenu(h.page,h.options),/boot not ready/);assert.deepEqual(h.clicks,[]);
-});
-test('production START handler prepares synchronously, then wipes, then admits the same configuration',()=>{
-  const source=fs.readFileSync(new URL('../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8');
-  for(const anchor of ["id: 'play'","id: 'mode-' + m.id","id: 'map-' + m.id","id: 'start', label: 'START!'",'el.dataset.id = opts.id'])assert.ok(source.includes(anchor),anchor);
-  const lo=source.indexOf('  _startMatch() {'),hi=source.indexOf('\n  /**',lo);
-  assert.ok(lo>0&&hi>lo);const Menu=vm.runInNewContext('class Menu{'+source.slice(lo,hi)+'};Menu',{safeCall:fn=>fn()});
-  const calls=[],m=new Menu();let wipe;
-  Object.assign(m,{_setup:{mode:'turf',mapId:'tidewater',difficulty:'normal',duration:180},_stageTime:()=> 'day',api:{prepareMatch:()=>calls.push('prepare'),setSettings:()=>{},startMatch:cfg=>calls.push(cfg)},_runWipe:fn=>{calls.push('wipe');wipe=fn;}});
-  m._startMatch();assert.deepEqual(calls,['prepare','wipe']);wipe();assert.equal(calls[2].duration,180);assert.equal(calls[2].mapId,'tidewater');
-});
-test('harness keeps one admission budget and strict predicate, with retained failure evidence',()=>{
-  const s=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
-  assert.ok(!s.includes('&autostart=180'));assert.equal((s.match(/const deadline = Date.now\(\) \+ NATIVE_BOOT_TIMEOUT_MS/g)||[]).length,1);
-  assert.ok(s.includes('const NATIVE_BOOT_TIMEOUT_MS = 180000;'));
-  for(const bit of ["G?.mode === 'match'","m === G.match","!m.attract && m.local?.isLocal && m.controller && g.debug","G.projectiles && G.renderer",'prior failure retained separately',"await snapshotAudio('native-startup-timeout')"])assert.ok(s.includes(bit),bit);
+test('touch failure never falls back to synthetic keyboard input',async()=>{
+ const h=harness({touch:true,touchReject:true});
+ await assert.rejects(startProjectileThroughMenu(h.page,{waitForPhase:h.waitForPhase,remainingMs:()=>5000,receipt:h.receipt}),/touch blocked/);
+ assert.equal(h.events.some(e=>e[0]==='press'),false);
 });

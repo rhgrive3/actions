@@ -12,10 +12,19 @@ export async function startProjectileThroughMenu(page,{waitForPhase,remainingMs,
   // before choosing Turf with the ordinary hit-tested pointer gesture.
   await page.mouse.move(1, 1);
   note('mode-pointer-hover-cleared');
-  // Keep the prior-screen hover cleared, then activate the focused native
-  // Turf button through the normal keyboard gesture if it is overlapped.
-  await page.locator('.iw-modesel [data-id="mode-turf"]').press('Enter',{timeout:Math.max(1,remainingMs())});
-  note('keyboard-activate',{selector:'.iw-modesel [data-id="mode-turf"]',key:'Enter'});
+  // A native touch page must select Turf with a genuine tap. Pressing
+  // Enter on touch-primary CI pages can also reach the training range instead
+  // of advancing the ordinary mode card, leaving the setup wait hung.
+  // Keep keyboard navigation for non-touch desktop sessions.
+  const turfSelector='.iw-modesel [data-id="mode-turf"]',turf=page.locator(turfSelector);
+  const touchPrimary=await page.evaluate(()=>navigator.maxTouchPoints>0&&matchMedia('(pointer:coarse)').matches);
+  if(touchPrimary){
+    await turf.tap({timeout:Math.max(1,remainingMs())});
+    note('touch-activate',{selector:turfSelector,gesture:'tap'});
+  }else{
+    await turf.press('Enter',{timeout:Math.max(1,remainingMs())});
+    note('keyboard-activate',{selector:turfSelector,key:'Enter'});
+  }
   await waitForPhase(()=>window.__inkwave?.menus?.current==='setup','native setup menu');
   await click('.iw-setup [data-id="map-tidewater"]');
   const config=await page.evaluate(()=>{const g=window.__inkwave,s=g.menus?._setup;return {mode:s?.mode,map:s?.mapId,difficulty:s?.difficulty,duration:s?.duration,weapon:g.profile?.weapon,time:g.menus?._stageTime?.(s?.mapId)};});
