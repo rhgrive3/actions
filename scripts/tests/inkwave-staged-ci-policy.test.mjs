@@ -201,3 +201,24 @@ test('CI-only exact-tree acceptance never substitutes success for unverified sou
     assert(gate.includes('test "$'+env+'" = skipped'),'unexecuted '+env+' must be skipped for CI-only gate');
   assert.match(gate,/test "\$CONTRACTS_ONLY" = false/);
 });
+
+test('expensive specialist workflows do not run repeatedly on Draft updates but activate on Ready',()=>{
+  const specialist=[
+    ['zevant-account.yml','account'],
+    ['inkwave-relay-security.yml','relay-regressions'],
+    ['inkwave-character-asset-qa.yml','neutral-loader-fixture'],
+    ['inkwave-touch-frame-pacing.yml','frame-pacing'],
+    ['inkwave-paint-hotpath.yml','paint-parity'],
+    ['inkwave-reopened-six.yml','reopened-six'],
+    ['inkwave-runtime-frame-parity.yml','frame-parity'],
+    ['inkwave-nondrive-queue.yml','nondrive-regression'],
+  ];
+  for(const [path,name] of specialist){
+    const src=read(path);
+    assert.match(src,/^  pull_request:\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]\n    paths:/m,path);
+    assert(!active(src,name,{draft:true}),path+' heavy job must skip Draft');
+    assert(active(src,name,{draft:false}),path+' must run Ready');
+    assert(active(src,name,{event:'workflow_dispatch'}),path+' manual diagnosis remains available when configured');
+    if(src.includes('  push:\n'))assert(active(src,name,{event:'push'}),path+' main push remains validated');
+  }
+});
