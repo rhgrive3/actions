@@ -120,6 +120,28 @@ jobs:
           INKWAVE_BUILT_SITE=.built-site/_site INKWAVE_CRAB_UPLOAD_BROWSER=1 INKWAVE_UPLOAD_EVIDENCE="$CI_STORAGE/evidence/crab-upload" node --test patches/splatoon3/tests/crab-splash-upload-browser.test.mjs || gpu_status=$?
           INKWAVE_BUILT_SITE=.built-site/_site INKWAVE_TORPEDO_UPLOAD_BROWSER=1 INKWAVE_UPLOAD_EVIDENCE="$CI_STORAGE/evidence/torpedo-upload" node --test patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs || gpu_status=$?
           exit "$gpu_status"
+      - name: Verify normal RAF gameplay and Crab retirement across two Turf stages
+        run: |
+          mkdir -p "$CI_STORAGE/evidence/gameplay"
+          CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; process.stdout.write(chromium.executablePath());")" || exit 1
+          test -n "$CHROMIUM_PATH"
+          test -x "$CHROMIUM_PATH"
+          export CHROMIUM_PATH
+          node scripts/check-inkwave-gameplay-resources.mjs \
+            --site .built-site/_site \
+            --source-sha "$SOURCE_SHA" \
+            --evidence-dir "$CI_STORAGE/evidence/gameplay" \
+            --maps tidewater,kelpline --cycles 2 --seconds 5 \
+            --crab-lifecycle --expect-lifecycle released
+      - name: Upload normal RAF gameplay lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameplay-lifecycle-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.CI_STORAGE }}/evidence/gameplay/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload Crab raw numeric evidence
         if: always()
         uses: actions/upload-artifact@v4
