@@ -87,8 +87,10 @@ Playwright Chromium/WebKitのblank-page起動は確認。WebKitの一部system l
 
 Agent1の追加ターンは自動審査が「サイバーセキュリティ上のリスクの可能性」で停止した。停止前に保存された再現試験と設計を統合担当が確認し、通常のゲーム受理処理の整合性修正を実装した。Agent3の独立レビュー・ranked実wrapper試験を実行し、Agent1が追加実装を完了したとは扱わない。
 
-全27PR/26branchの8,890runから、取消4,619runも全件照会し、失敗job1,002件の[ledger](ci-history.json.gz)と[履歴の確認範囲](ci-history.md)を保存した。過去の赤を消したり全件解消と数えたりしない。35件は初回のbounded抽出で未分類であり、追加調査中。1件の過去logはGitHub BlobNotFound、19件はjobのないinvalid workflow。成功single-attempt内のcontinue-on-errorは全件調査していない。
+全27PR/26branchの8,890runから、取消4,619runも全件照会し、失敗job1,002件の[ledger](ci-history.json.gz)と[履歴の確認範囲](ci-history.md)を保存した。過去の赤を消したり全件解消と数えたりしない。初回未分類35件を全logで再確認し、34件は観測された原因・signatureを追記した。残る1件はlog自体が取得不能。1件の過去logはGitHub BlobNotFound、19件はjobのないinvalid workflow。成功single-attempt内のcontinue-on-errorは全件調査していない。
 
 最終準備の5重点レーンはNode22.23.4でcontracts305/pointerlock34/motion38/world18/audio33の428件が成功、skipなし。修正後ソースの広域ローカル検証は945成功・観測失敗0の時点で未完走のまま停止し、重複するunsharded全件実行を最終8shard CIへ移す。これを全ソース成功とは報告しない。独立した関連ネットワーク全件と失敗caseの再検証は別記する。
 
 `ca30ae1f5ebcc1d56e6e1c4c636c5a1ef626bec4`でproduction buildとstartup budgetは成功したが、strict sandbox Chromium151/SwiftShaderのWiper受入は初期main menu待ち120秒でtimeoutし、frame capture前に終了した。pageerrorは未観測、browser/server cleanupは成功。CDP pauseではpaint-native-mip-guardの同期readPixelsとGPU stallを観測したが、全120秒の単独原因とは確定していない。pixel-equivalence guardやtimeout条件を弱めず、実画素受入は未確認とする。
+
+追加17case・既存event-only/metadata/FIFOを含む29件はNode22で全成功。通信全件の最初の実行で見つかった3失敗を原因別に修正した（metadataの新しい依存境界、native event-only正当packetの保持）。この実行中に修正を進めたため、最終headの不変な全件成功とは扱わず、最終8shard CIの結果を正とする。
