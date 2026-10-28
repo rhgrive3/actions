@@ -7,6 +7,54 @@ import {planSourceTests, assertSourceSuiteCoverage} from '../ci/inkwave-source-c
 
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
 
+const remainingEmittedFiles = [
+  'patches/network-replication/tests/combat-boss-proof-targets.test.mjs',
+  'patches/network-replication/tests/combat-native-proof-receipt.test.mjs',
+  'patches/splatoon3/tests/issue-1431-hit-pose-birth.test.mjs',
+  'patches/splatoon3/tests/issue-1607-zipcaster-success-minimum.test.mjs',
+  'patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs',
+  'patches/splatoon3/tests/charger-special-audio-cancel.test.mjs',
+  'patches/splatoon3/tests/catalog-charger-remote-audio.test.mjs',
+  'patches/splatoon3/tests/splatling-charge-reversal.test.mjs',
+  'patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs',
+  'patches/local-quality/tests/offscreen-hair-targets.test.mjs',
+  'patches/local-quality/tests/native-offscreen-ground-memo.test.mjs',
+];
+function assertRemainingEmittedCoverage(source) {
+  const core = source.match(/^  validate_core:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
+  assert.ok(core, 'mandatory core exists');
+  const steps = core.split(/^      - /m).filter(step => step.startsWith('name: Verify remaining emitted combat, weapon and visual regressions\n'));
+  assert.equal(steps.length, 1, 'one mandatory remaining-regression step');
+  const step = steps[0];
+  assert.ok(step.includes('        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n'));
+  assert.ok(step.includes('          node --experimental-vm-modules --test --test-concurrency=2 \\\n'));
+  assert.doesNotMatch(step, /^        (?:if|continue-on-error):|--test-name-pattern|--test-skip-pattern|\|\|\s*(?:true|echo)/m);
+  for (const file of remainingEmittedFiles) assert.equal(step.split(file).length - 1, 1, file);
+  assert.equal((step.match(/\.test\.mjs/g) || []).length, remainingEmittedFiles.length);
+}
+
+test('new remaining regressions execute once against the immutable emitted site in mandatory core', () => {
+  assertRemainingEmittedCoverage(workflow);
+});
+
+test('missing, duplicate, filtered, raw-source and optional remaining coverage is rejected', () => {
+  const name = 'name: Verify remaining emitted combat, weapon and visual regressions\n';
+  for (const change of [
+    ...remainingEmittedFiles.map(file => source => source.replace(file, 'missing.test.mjs')),
+    source => source.replace(name, name + '        if: false\n'),
+    source => source.replace(name, name + '        continue-on-error: true\n'),
+    source => source.replace(name, 'name: omitted remaining regressions\n'),
+    source => source.replace('          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: |\n          node --experimental-vm-modules --test --test-concurrency=2',
+      '          INKWAVE_BUILT_SITE: ${{ github.workspace }}/inkwave-public\n        run: |\n          node --experimental-vm-modules --test --test-concurrency=2'),
+    source => source.replace('node --experimental-vm-modules --test --test-concurrency=2 \\\n', 'node --experimental-vm-modules --test --test-name-pattern=only --test-concurrency=2 \\\n'),
+    source => source.replace(remainingEmittedFiles[0], remainingEmittedFiles[0] + ' ' + remainingEmittedFiles[0]),
+  ]) {
+    const mutant = change(workflow);
+    assert.notEqual(mutant, workflow, 'negative control changes the actual workflow');
+    assert.throws(() => assertRemainingEmittedCoverage(mutant));
+  }
+});
+
 test('network and quality run their entire discovered source inventory exactly once', () => {
   for (const suite of ['network', 'quality']) {
     const plan = assertSourceSuiteCoverage(workflow, suite);

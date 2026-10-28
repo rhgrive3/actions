@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 import {buildSourceBVH} from '../../native-stages/runtime/source-convert.mjs';
 
-test('native source-motion bots reuse only identical ground queries within one update at 30/60/120Hz', async () => {
+test('visible and hidden native source-motion actors reuse only identical ground queries within one update at 30/60/120Hz', async () => {
   const f = await sourceLoadedActorFixture({random:()=>.4, extraExports:`
     export {installQuality} from './patches/local-quality/install.mjs';
     export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs';
@@ -12,7 +12,7 @@ test('native source-motion bots reuse only identical ground queries within one u
   f.installQuality(JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json', import.meta.url))));
   const {G,THREE}=f;
   const counts=[];
-  for (const hz of [30,60,120]) {
+  for (const visible of [false,true]) for (const hz of [30,60,120]) {
     const triangles=new Float32Array([-20,0,-20,-20,0,20,20,0,-20]);
     // One half of the chart is empty. Keep a real dynamic box over its hole.
     G.level=new f.NativeLevel({triangles,...buildSourceBVH(triangles),
@@ -37,7 +37,7 @@ test('native source-motion bots reuse only identical ground queries within one u
     G.physics.raycast=function(...args){calls++;return ray.apply(this,args);};
     const totals=[0,0];
     for(const a of pair){a.isLocal=false;a.isBot=true;const c=a.character;
-      c.isLocal=false;c.lod.force=-1;c._camFrame=0;c.phys=G.physics;}
+      c.isLocal=visible;c.lod.force=-1;c._camFrame=visible?100:0;c.phys=G.physics;}
     const state={isBot:true,form:'kid',grounded:true,speed:1,vy:0,localMove:{x:0,z:1},ink:1,hp:1};
     for(let frame=0;frame<hz;frame++){
       G.time=(frame+1)/hz;
@@ -61,7 +61,7 @@ test('native source-motion bots reuse only identical ground queries within one u
     const hits=pair[0].character._oobGroundMemoHits;
     assert.ok(hits>0,'actual source contacts repeat queries');
     assert.equal(totals[1]-totals[0],hits,'each avoided native ray is accounted for');
-    counts.push({hz,candidate:totals[0],control:totals[1],memoHits:hits});
+    counts.push({visible,hz,candidate:totals[0],control:totals[1],memoHits:hits});
     for(const a of pair){G.scene.remove(a.character.root);a.character.dispose();}
     G.actors=[];
   }

@@ -5,13 +5,20 @@ export function adaptLockOptionRecovery(rel,code){
  if(rel!=='src/core/input.js')return code;
  code=once(code,"    if (v === 'touch') this._releaseMouseForTouch();", "    if (v === 'touch') { this._pointerLockPlainPreference = null; this._releaseMouseForTouch(); }",'touch retires preference');
  code=once(code,"  exitLock() {\n    this._pointerLockCancelled = true;", "  exitLock() {\n    if (this._pointerLockPending) this._pointerLockPlainPreference = null;\n    this._pointerLockCancelled = true;",'pending cancellation retires preference');
- code=once(code,'  requestLock() {',`  _preferPlainPointerLock() {
+ code=once(code, "    this._listenPlatform(document, 'pointerlockerror',", "    this._listenPlatform(window, 'blur', () => { this._pointerLockPlainPreference = null; this._pointerLockCancelled = true; if (this._pointerLockPending) this._pointerLockPending.cancelled = true; });\n    this._listenPlatform(document, 'visibilitychange', () => { if (document.hidden) { this._pointerLockPlainPreference = null; this._pointerLockCancelled = true; if (this._pointerLockPending) this._pointerLockPending.cancelled = true; } });\n    this._listenPlatform(document, 'pointerlockerror',", 'focus loss cancels lock request');
+ code=once(code,'  requestLock() {',`  _pointerLockHasActivation() {
+    try { return navigator.userActivation?.isActive === true && !document.hidden &&
+      (typeof document.hasFocus !== 'function' || document.hasFocus()); }
+    catch { return false; }
+  }
+
+  _preferPlainPointerLock() {
     const p = this._pointerLockPlainPreference;
     if (!p) return false;
     let same = false;
     try { same = this.enabled && p.document === document && this.canvas.ownerDocument === document && p.game === G.game && p.match === G.match && (p.flow ? p.flow === G.game?._matchFlow && !!p.flow.current?.() : !G.game?._matchFlow); } catch { /* unknown owner is stale */ }
     if (!same) { this._pointerLockPlainPreference = null; return false; }
-    return navigator.userActivation?.isActive === true && this.lastDevice !== 'touch' && !this._touchUnlockPending && !this._touchLockAdmissionBlocked && !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' && !G.match.paused && !G.match.attract && !G.game?.menus?.current;
+    return this._pointerLockHasActivation() && this.lastDevice !== 'touch' && !this._touchUnlockPending && !this._touchLockAdmissionBlocked && !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' && !G.match.paused && !G.match.attract && !G.game?.menus?.current;
   }
 
   requestLock() {`,'preference admission');
@@ -21,12 +28,14 @@ export function adaptLockOptionRecovery(rel,code){
  const after=`      if (p && p.catch) p.catch(error => {
         const current = this._pointerLockRequestCurrent(ticket);
         let unsupported = false;
-        try { unsupported = ticket.raw && ticket.errorObserved === true && error?.name === 'NotSupportedError'; } catch { /* unknown denial: no retry */ }
+        // The rejection belongs to this exact request; pointerlockerror is an
+        // unscoped document event and may arrive before or after this callback.
+        try { unsupported = ticket.raw && error?.name === 'NotSupportedError'; } catch { /* unknown denial: no retry */ }
         const sameDocument = () => ticket.document === document && this.canvas.ownerDocument === ticket.document;
         const sameOwner = () => { try { return ticket.game === G.game && ticket.match === G.match && (ticket.flow ? (ticket.flow === G.game?._matchFlow && !!ticket.flow.current?.()) : (ticket.playing && !G.game?._matchFlow)); } catch { return false; } };
         const mayAffectOwner = () => ticket.generation === this._pointerLockGeneration && (!this._pointerLockPending || this._pointerLockPending === ticket) && sameDocument() && sameOwner();
         if (!unsupported && current && mayAffectOwner()) this._pointerLockPlainPreference = null;
-        const ownerAllowed = current && sameDocument() && this.enabled && this.lastDevice !== 'touch' && !this._touchUnlockPending && !this._touchLockAdmissionBlocked && !this.mobile?.editing && !this.mobile?.mapOpen;
+        const ownerAllowed = current && sameDocument() && this._pointerLockHasActivation() && this.enabled && this.lastDevice !== 'touch' && !this._touchUnlockPending && !this._touchLockAdmissionBlocked && !this.mobile?.editing && !this.mobile?.mapOpen;
         if (!unsupported || !ownerAllowed || !sameOwner() || !ticket.playing || ticket.attract || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) { this._finishPointerLockRequest(ticket); return; }
         try {
           const q = this.canvas.requestPointerLock();

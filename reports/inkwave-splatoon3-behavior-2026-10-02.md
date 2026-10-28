@@ -6638,3 +6638,19 @@ Normal/Liteのcharged Wiperを実Actor/WeaponRunner/Projectilesで発射し自�
 touch gyroは既存の暫定public-bridge gainにadapter合成済みだったが、tooltipだけが旧132/110/278度を主張していた。既存の翻訳済profile説明を共有し、不正確な本家一致表現を解消した。−5…+5右stick UI・移行も既存実装を再利用。27件の限定input/composition試験は実センサーやNintendo turn-rate・中間曲線の証明ではなく、#725/#287の校正残件を維持する。
 
 追加で、native FIFOの拒否eventや拒否actor rowからraw入力のまま命中証拠を作る経路も修正した。受理時点のposeをコピーしてreentryでの上書きを防ぎ、ranked observerとの同一呼出scope共有、明示的な拒否rowと従来合法event-only packetの区別を保持する。本家値・wire・発射の物理挙動は変更しない。nativeにも受理されるowner自身のfresh action捏造は別の未完了authority課題。
+
+## 2026-10-28 継続修正と実機検証の除外
+
+ユーザーの追加指示「実機検証はいりません」に従い、今回の完了条件から実機検証を除外する。以下は公開版の本番合成ソース・生成物・ソフトウェアWebGLの検証であり、S3 Ver.11.3.0の非公開値や曲線を確認済みに読み替えない。未取得の原音・モーションselector・靴のmodel/sole transform、未解明のsource fieldの意味は別の不足情報として記録する。
+
+#1431では発射時のgameplay getterを維持し、同tickのFX/弾履歴の表示接続だけを、被弾ポーズで実際に描かれるmuzzleへ合わせる。最後の0.05 WUを除外するLOS近似を表示connectorのfull segmentへ置換し、grate透過を保持する。first/steady、左右手、−45/0/+40度、30/60/120 Hzのsource検証はbirth/velocity/ink/damage/paint/serializer/RNGを保つ。#1607は独立して、成功hookの20F最短間隔を適用する。失敗45F、flight/pull、到着後12F待機は維持。観測表はVer.5.0.0であり、11.3の同値timing fieldsと区別する。ShotFailedIntervalFrmのnative phase意味を解明したとはしない。
+
+#952ではチャージ開始の暫定比例減速が反転・横入力時にground solverの操舵を打ち消す不具合を修正した。整列入力の既存modelを保ち、逆/直交方向では既存ground solverを維持する。S3の減速式や開始frameの新しい推測は加えない。#287は旧感度gainの移行で失われた有効値をprofile別に保持し、slider編集/reset時だけ解除する。+4以下の既存yawを保ち、上位設定の重複を既存360度未満の境界内で解消する。stick/gyroの曲線は暫定のまま明示する。
+
+#1823の音声lifecycleでは、Actorがweapon更新を通らずSpecialへ入る実経路と、古いcharge snapshotが残るremote経路で、受理されたspecial:useによりphraseを停止する。再充電edgeのlatchを保ち、remote Charger rosterで選択済みphraseを事前準備する。準備はbest effortであり、未decodeの最初のone-shotを後から再生しない。Chromium/Linux WebKitの実音出力はS3原音・SLINKの証明ではない。新しい音声assetは追加しない。
+
+#845は画面外で不要なidle/specialのhair target評価を遅延し、状態遷移と最初の実draw前に現在clipから同じ入力を復元する。body/clip時計とgameplay muzzleを維持し、native sole probeの同一queryだけを同一同期update内で再利用する。#642は失敗したpass追加でnative composerと記述listが食い違う経路を解放し、ScreenFXがpacked HDRの量子化誤差を増幅する局面では必要な精度を保つ。画質・解像度を下げず、同一stateでは資源を再生成しない。具体的なソフトウェア画素・資源・frame条件は継続reportを参照し、FPS改善をcall countから推定しない。
+
+#1666では同一straight-fire証拠の同一Boss targetへの二重使用、main証拠がbomb/Specialのdamage上限を借用するcrablet claim、無敵/非表示Boss bodyが証拠とnonceを先に消費する経路を修正した。ownerが自作したfresh fireとhitの対は依然として作れる。relayは入力・weapon resource・接触のtrusted simulationを実行しておらず、これは実機検証の除外で解消する問題ではない。現状と残るauthority契約を `reports/issue-resolution-20261028/authority-remaining.md` に記録する。
+
+CIは追加11fileの回帰をimmutable emitted siteに接続し、既存source inventory・8shard・7browser family・fan-inを維持する。通常RAFの短い2stage lifecycle検証を追加する。個別テスト・旧head・既存の成功結果を、最終統合headのCI成功へ読み替えない。Character単独QAのscope保留とMOV-08bのマージ保留は維持し、実機検証の除外をその解除とみなさない。

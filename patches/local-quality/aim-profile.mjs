@@ -52,13 +52,17 @@ export function createDefaultAimProfiles() {
 }
 
 export function sanitizeAimProfile(profile, fallback = {}) {
-  return {
+  const result = {
     gyro: profile?.gyro != null ? Boolean(profile.gyro) : (fallback.gyro ?? false),
     gyroSens: Number.isFinite(Number(profile?.gyroSens)) ? Number(profile.gyroSens) : (fallback.gyroSens ?? 0),
     padSensitivity: Number.isFinite(Number(profile?.padSensitivity)) ? Number(profile.padSensitivity) : (fallback.padSensitivity ?? 0),
     invertY: profile?.invertY != null ? Boolean(profile.invertY) : (fallback.invertY ?? false),
     invertX: profile?.invertX != null ? Boolean(profile.invertX) : (fallback.invertX ?? false),
   };
+  const gain = profile?.padLegacyGain ?? (profile?.padSensitivity === undefined ? fallback.padLegacyGain : undefined);
+  if (Number.isFinite(gain) && ((gain >= .2 && gain < .5 && result.padSensitivity === -5) ||
+      (gain > 2 && gain <= 3 && result.padSensitivity === 5))) result.padLegacyGain = gain;
+  return result;
 }
 
 export function syncActiveAimValues(settings) {
@@ -69,6 +73,7 @@ export function syncActiveAimValues(settings) {
     settings.gyro = active.gyro;
     settings.gyroSens = active.gyroSens;
     settings.padSensitivity = active.padSensitivity;
+    settings.padLegacyGain = active.padLegacyGain;
     settings.invertY = active.invertY;
     settings.invertX = active.invertX;
   }
@@ -87,6 +92,7 @@ export function migrateAimProfiles(settings, defaults = {}) {
     gyro: settings.gyro,
     gyroSens: settings.gyroSens,
     padSensitivity: settings.padSensitivity,
+    padLegacyGain: settings.padLegacyGain,
     invertY: settings.invertY,
     invertX: settings.invertX,
   };
@@ -132,9 +138,11 @@ export function applyAimSettingsChange(settings, partial) {
   // 2. Direct per-profile updates if provided in partial.aimProfiles
   if (partial.aimProfiles && typeof partial.aimProfiles === 'object') {
     if (partial.aimProfiles.tv && typeof partial.aimProfiles.tv === 'object') {
+      if ('padSensitivity' in partial.aimProfiles.tv) delete settings.aimProfiles.tv.padLegacyGain;
       Object.assign(settings.aimProfiles.tv, sanitizeAimProfile(partial.aimProfiles.tv, settings.aimProfiles.tv));
     }
     if (partial.aimProfiles.handheld && typeof partial.aimProfiles.handheld === 'object') {
+      if ('padSensitivity' in partial.aimProfiles.handheld) delete settings.aimProfiles.handheld.padLegacyGain;
       Object.assign(settings.aimProfiles.handheld, sanitizeAimProfile(partial.aimProfiles.handheld, settings.aimProfiles.handheld));
     }
   }
@@ -143,13 +151,14 @@ export function applyAimSettingsChange(settings, partial) {
   const active = settings.aimProfiles[settings.aimProfile];
   for (const k of AIM_PROFILE_KEYS) {
     if (k in partial && !(partial.aimProfiles && partial.aimProfiles[settings.aimProfile] && k in partial.aimProfiles[settings.aimProfile])) {
+      if (k === 'padSensitivity') delete active.padLegacyGain;
       active[k] = partial[k];
     }
   }
 
   // 4. Non-aim settings apply globally to settings
   for (const [k, v] of Object.entries(partial)) {
-    if (k !== 'aimProfiles' && !AIM_PROFILE_KEYS.includes(k) && k !== 'aimProfile') {
+    if (k !== 'aimProfiles' && k !== 'padLegacyGain' && !AIM_PROFILE_KEYS.includes(k) && k !== 'aimProfile') {
       settings[k] = v;
     }
   }
