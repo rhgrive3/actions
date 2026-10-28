@@ -131,3 +131,15 @@ test('timed-out child is reaped before returning its failed receipt',async()=>{
  const r=await spawnResponsiveCase(process.execPath,['-e',"console.log(process.pid);setInterval(()=>{},1000)"],{timeoutMs:3000,maxBuffer:1024});
  const pid=Number(r.stdout.trim());assert.ok(Number.isSafeInteger(pid)&&pid>0);assert.equal(r.error?.code,'INKWAVE_RESPONSIVE_TIMEOUT');assert.notEqual(r.status,0);assert.throws(()=>process.kill(pid,0),e=>e.code==='ESRCH');
 });
+
+test('a fast failing engine waits for the slower engine to finish all its cases',async()=>{
+  const cases=['chromium','webkit'].flatMap(engine=>[0,1,2].map(name=>({engine,name})));
+  const visited=[];
+  await assert.rejects(()=>mapResponsiveByEngine(cases,2,async c=>{
+    if(c.engine==='webkit') await new Promise(resolve=>setTimeout(resolve,15));
+    visited.push(c.engine+c.name);
+    if(c.engine==='chromium' && c.name===0) throw Error('fast failure');
+    return c.name;
+  }),/fast failure/);
+  assert.deepEqual(visited.sort(),cases.map(c=>c.engine+c.name).sort());
+});
