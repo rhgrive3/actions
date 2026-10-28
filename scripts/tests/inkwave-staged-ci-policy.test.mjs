@@ -116,3 +116,14 @@ test('full CI critical-path optimizations retain fail-closed coverage',()=>{
   assert(activeChecks, 'active browser receipt remains mandatory');
   assert(!activeChecks.includes('idle-resources/'), 'idle work must not double-run');
 });
+
+test('CI-admission-only edits do not launch redundant three-job weapon validation',()=>{
+  const contract='scripts/tests/inkwave-added-ci-contracts.test.mjs';
+  // The full core and A+ gates already execute the exact contract.
+  assert(quality.includes(contract));
+  assert(full.includes(contract));
+  assert(!weapons.includes(contract),'specialized weapon workflow must not own a shared CI-only test');
+  assert.match(weapons,/node --experimental-vm-modules --test patches\/splatoon3\/tests\/main-weapon-catalog\.test\.mjs/);
+  for (const name of ['numerical-main','browser-origins','roller-grip-comparison'])
+    assert.match(weapons,new RegExp('  '+name+':\\n'));
+});
