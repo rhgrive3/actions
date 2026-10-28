@@ -92,8 +92,16 @@ export function wrapWiperComposerPasses(composer,observe) {
         if(own)Object.defineProperty(pass,'render',own);else delete pass.render;
       });
     });
-  }catch(error){for(const fn of restore.reverse())fn();throw error;}
-  return ()=>{for(const fn of restore.reverse())fn();};
+  }catch(error){
+    try { restoreAll(); } catch(cleanup) { throw Error(String(error?.stack??error)+'\nComposer installation cleanup: '+String(cleanup?.stack??cleanup)); }
+    throw error;
+  }
+  function restoreAll(){
+    const errors=[];
+    for(const fn of restore.slice().reverse())try{fn();}catch(error){errors.push(String(error?.stack??error));}
+    if(errors.length)throw Error('Composer cleanup: '+errors.join(' | '));
+  }
+  return restoreAll;
 }
 
 // Read exactly once at the original fail-closed boundary. A pre-existing GL
@@ -181,7 +189,7 @@ export async function installWiperProbe(testCase) {
       const matrices=Array.from(mesh.instanceMatrix.array.slice(0,mesh.count*16));
       const drawReceipts=[],restoreDraw=window.__wrapWiperDrawCallback(mesh,args=>drawReceipts.push({override:!!args[1].overrideMaterial,inspection:args[2]===camera}));
       const previousTarget=r.getRenderTarget(),previousAuto=r.autoClear,previousInfoAuto=r.info.autoReset;
-      let pixels,render,restorePasses=()=>{};
+      let pixels,render,restorePasses=()=>{},primaryRenderError,hadPrimaryRenderError=false;
       try{
         r.info.autoReset=false;r.info.reset();
         if(view==='native-postprocessed'){
@@ -193,7 +201,14 @@ export async function installWiperProbe(testCase) {
         glBoundary('after-render');
         render={...r.info.render};pixels=readPixels();
         glBoundary('after-readback');
-      }finally{try{restorePasses();}finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}}
+      }catch(error){primaryRenderError=error;hadPrimaryRenderError=true;throw error;}
+      finally{
+        const errors=[];
+        for(const action of [restorePasses,restoreDraw,()=>r.setRenderTarget(previousTarget),()=>{r.autoClear=previousAuto;},()=>{r.info.autoReset=previousInfoAuto;}])
+          try{action();}catch(error){errors.push(String(error?.stack??error));}
+        if(errors.length)throw Error((hadPrimaryRenderError?String(primaryRenderError?.stack??primaryRenderError)+'\n':'')+'Render cleanup: '+errors.join(' | '));
+      }
+      glBoundary('after-restore');
       if(!drawReceipts.some(d=>!d.override))throw Error('Actual source-bound mesh did not draw in this view');
       if(before!==JSON.stringify(state()))throw Error('Render changed gameplay/native camera/visibility/clock/RNG');
       return {frame,tick:scheduler.tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,

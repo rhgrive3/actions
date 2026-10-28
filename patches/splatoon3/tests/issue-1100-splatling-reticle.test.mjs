@@ -24,7 +24,7 @@ function buildReticle(kind) {
   const Hud = new Function(`return class {${method}\n};`)();
   const hud = new Hud();
   hud._L = {};
-  hud.ret = { className: '', innerHTML: '', style: { setProperty() {} }, querySelector: () => null };
+  hud.ret = { className: '', innerHTML: '', classList: { toggle() {} }, style: { setProperty() {} }, querySelector: () => null };
   hud._buildReticle(kind);
   return hud.ret;
 }

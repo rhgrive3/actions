@@ -207,6 +207,105 @@ test('additive catalog workflow retains inherited Hissen/phase52 route and binds
   assert.match(driver,/verifyRuntimeBuild\(site,root,sourceSha\)/);assert.match(driver,/launchSandboxBrowser\(chromium\)/);
   assert.ok(!driver.includes('--no-sandbox'));assert.ok(!driver.includes('new Projectile'));
   assert.match(driver,/p\.descriptor!==testCase\.descriptor/);assert.match(driver,/p=>p\.owner===a&&p\.delay<=0&&!p\.catalog\?\.birthPending/);
-  assert.match(driver,/finally\{try\{restoreDraw\(\)/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
+  assert.match(driver,/finally\s*\{[\s\S]*?\[restorePasses,restoreDraw,\(\)=>r\.setRenderTarget/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
   assertWiperCaptureReceipt(fixture().receipt,{sourceSha,...buildBinding});
+});
+
+
+test('composer cleanup restores all unaffected passes after an ownership conflict',()=>{
+  class Pass {render(){return 1;}}
+  const a=new Pass(), b=new Pass(), foreign=function(){return 2};
+  const restore=wrapWiperComposerPasses({passes:[a,b]},()=>{});
+  b.render=foreign;
+  assert.throws(()=>restore(),/replaced by unrelated owner/);
+  assert.equal(b.render,foreign,'never clobber the newer owner');
+  assert.equal(Object.hasOwn(a,'render'),false,'other wrapper must still be removed');
+});
+
+test('actual capture retains the primary pass GL error while restoring unaffected pass owners',()=>{
+  // Exact source-bound capture body, plain objects only; no browser or game.
+  const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
+  const begin=driver.indexOf('    capture(frame,view){'),end=driver.indexOf('\n    finish(){',begin);
+  assert.ok(begin>=0&&end>begin);const method=driver.slice(begin,end).trim().replace(/,$/,'');
+  let queued=0, observer,drawRestored=0,targetRestored=0;const gl={getError(){let value=queued;queued=0;return value;},isContextLost(){return false;},drawingBufferWidth:960,drawingBufferHeight:720};
+  class Pass {render(){}} const a=new Pass(), b=new Pass(),foreign=function(){};
+  b.render=function(){queued=0x502;b.render=foreign;};
+  const attr={count:0,array:new Float32Array(3)},mesh={count:2,geometry:{attributes:{position:attr},index:null,getAttribute:()=>attr},material:{},instanceMatrix:{array:new Float32Array(32)},instanceColor:{array:new Float32Array(6)},matrixWorld:{},getMatrixAt(){},updateMatrixWorld(){}};
+  const r={autoClear:true,info:{autoReset:true,render:{calls:1},reset(){}},getRenderTarget:()=>({old:true}),setRenderTarget(){targetRestored++;},render(){}};
+  const composer={passes:[a,b]},P={_s3Shapes:{slash:mesh},s3ShapeCounts:{},_draw(){}};
+  const context={window:{__assertWiperWebGLError:assertWiperWebGLError,__wrapWiperComposerPasses:wrapWiperComposerPasses,__wrapWiperDrawCallback(_mesh,fn){observer=fn;return ()=>{drawRestored++;};}},gl,scheduler:{tick:1,advanceTo(){}},P,testCase:{mesh:'slash'},refs:null,state:()=>({stable:true}),THREE:{Matrix4:class{premultiply(){}},Vector3:class{}},camera:{},r,g:{R:{composer,render(){b.render();observer([null,{overrideMaterial:false}]);}}},G:{camera:{}},readPixels:()=>({luminanceRange:100}),camState:()=>({})};
+  const capture=vm.runInNewContext('({'+method+'}).capture',context);
+  assert.throws(()=>capture(1,'native-postprocessed'),e=>e.message.includes('code=0x502')&&e.message.includes('composer-pass-1'));
+  assert.equal(b.render,foreign);assert.equal(Object.hasOwn(a,'render'),false);
+  assert.equal(drawRestored,1);assert.equal(targetRestored,1);
+  assert.equal(r.autoClear,true);assert.equal(r.info.autoReset,true);
+});
+
+test('actual Wiper capture fails closed on a WebGL error queued during renderer restoration',()=>{
+  // Evaluate the exact capture method from the checked-in driver with plain stubs;
+  // no game, browser, or renderer is launched. The injected error models an
+  // asynchronous WebGL error queued by setRenderTarget while restoring state.
+  const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
+  const begin=driver.indexOf('    capture(frame,view){');
+  const end=driver.indexOf('\n    finish(){',begin);
+  assert.ok(begin>=0&&end>begin,'capture source boundaries must exist');
+  const method=driver.slice(begin,end).trim().replace(/,$/,'');
+  for(const view of ['native-postprocessed','fixed-side-raw'])for(const restoreError of [0x0502,0]){
+    let queued=0,drawObserver,restored=0,reads=[];
+    const gl={drawingBufferWidth:960,drawingBufferHeight:720,getError(){const e=queued;queued=0;reads.push(e);return e;},isContextLost(){return false;}};
+    const attr={count:0,array:new Float32Array(3)};
+    const mesh={count:2,geometry:{attributes:{position:attr},index:null,getAttribute:()=>attr},material:{},instanceMatrix:{array:new Float32Array(32)},instanceColor:{array:new Float32Array(6)},matrixWorld:{},getMatrixAt(){},updateMatrixWorld(){}};
+    const r={autoClear:true,info:{autoReset:true,render:{calls:1},reset(){}},getRenderTarget:()=>({old:true}),setRenderTarget(target){if(target?.old){restored++;queued=restoreError;}},render(){drawObserver([null,{overrideMaterial:false}]);}};
+    const P={_s3Shapes:{slash:mesh},s3ShapeCounts:{},_draw(){}};
+    const G={renderer:r,camera:{}};
+    const context={window:{__assertWiperWebGLError:assertWiperWebGLError,__wrapWiperComposerPasses:wrapWiperComposerPasses,__wrapWiperDrawCallback(_mesh,fn){drawObserver=fn;return ()=>{};}},gl,scheduler:{tick:1,advanceTo(){}},P,testCase:{mesh:'slash'},refs:null,state:()=>({stable:true}),THREE:{Matrix4:class{premultiply(){}},Vector3:class{}},camera:{},r,g:{R:{composer:{passes:[]},render(){drawObserver([null,{overrideMaterial:false}]);}}},G,readPixels:()=>({luminanceRange:100}),camState:()=>({})};
+    const capture=vm.runInNewContext('({'+method+'}).capture',context);
+    if(restoreError)assert.throws(()=>capture(1,view),e=>e.message.includes('code=0x502')&&e.message.includes('after-restore'));
+    else assert.doesNotThrow(()=>capture(1,view));
+    assert.equal(restored,1);assert.equal(queued,0,'restore GL error must be observed, not left queued');
+    assert.equal(reads.length,6,'all five original boundaries and post-restore boundary must execute');
+  }
+});
+
+
+test('failed composer installation preserves primary error while cleaning every owned wrapper',()=>{
+  class Pass {render(){}} const a=new Pass(),b=new Pass(),foreign=function(){},unsupported={};
+  Object.defineProperty(unsupported,'render',{get(){b.render=foreign;return ()=>{};}});
+  assert.throws(()=>wrapWiperComposerPasses({passes:[a,b,unsupported]},()=>{}),e=>e.message.includes('Unsupported native composer pass')&&e.message.includes('replaced by unrelated owner'));
+  assert.equal(Object.hasOwn(a,'render'),false);assert.equal(b.render,foreign);
+});
+
+
+test('actual capture reports null primary before a cleanup conflict',()=>{
+  // Exact source-bound capture body, plain objects only; no browser or game.
+  const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
+  const begin=driver.indexOf('    capture(frame,view){'),end=driver.indexOf('\n    finish(){',begin);
+  assert.ok(begin>=0&&end>begin);const method=driver.slice(begin,end).trim().replace(/,$/,'');
+  let queued=0, observer,drawRestored=0,targetRestored=0;const gl={getError(){let value=queued;queued=0;return value;},isContextLost(){return false;},drawingBufferWidth:960,drawingBufferHeight:720};
+  class Pass {render(){}} const a=new Pass(), b=new Pass(),foreign=function(){};
+  b.render=function(){b.render=foreign;throw null;};
+  const attr={count:0,array:new Float32Array(3)},mesh={count:2,geometry:{attributes:{position:attr},index:null,getAttribute:()=>attr},material:{},instanceMatrix:{array:new Float32Array(32)},instanceColor:{array:new Float32Array(6)},matrixWorld:{},getMatrixAt(){},updateMatrixWorld(){}};
+  const r={autoClear:true,info:{autoReset:true,render:{calls:1},reset(){}},getRenderTarget:()=>({old:true}),setRenderTarget(){targetRestored++;},render(){}};
+  const composer={passes:[a,b]},P={_s3Shapes:{slash:mesh},s3ShapeCounts:{},_draw(){}};
+  const context={window:{__assertWiperWebGLError:assertWiperWebGLError,__wrapWiperComposerPasses:wrapWiperComposerPasses,__wrapWiperDrawCallback(_mesh,fn){observer=fn;return ()=>{drawRestored++;};}},gl,scheduler:{tick:1,advanceTo(){}},P,testCase:{mesh:'slash'},refs:null,state:()=>({stable:true}),THREE:{Matrix4:class{premultiply(){}},Vector3:class{}},camera:{},r,g:{R:{composer,render(){b.render();observer([null,{overrideMaterial:false}]);}}},G:{camera:{}},readPixels:()=>({luminanceRange:100}),camState:()=>({})};
+  const capture=vm.runInNewContext('({'+method+'}).capture',context);
+  assert.throws(()=>capture(1,'native-postprocessed'),e=>e.message.startsWith('null\nRender cleanup:')&&e.message.includes('replaced by unrelated owner'));
+  assert.equal(b.render,foreign);assert.equal(Object.hasOwn(a,'render'),false);
+  assert.equal(drawRestored,1);assert.equal(targetRestored,1);
+  assert.equal(r.autoClear,true);assert.equal(r.info.autoReset,true);
+});
+
+test('composer cleanup survives a null thrown value and continues restoration',()=>{
+  class Pass {render(){}} const a=new Pass(),b=new Pass();
+  const restore=wrapWiperComposerPasses({passes:[a,b]},()=>{});
+  Object.defineProperty(b,'render',{configurable:true,get(){throw null;}});
+  assert.throws(()=>restore(),e=>e.message.includes('Composer cleanup: null'));
+  assert.equal(Object.hasOwn(a,'render'),false);
+});
+
+test('null composer installation failure remains first when rollback also fails',()=>{
+  class Pass {render(){}} const a=new Pass(),foreign=()=>{},bad={};
+  Object.defineProperty(bad,'render',{get(){a.render=foreign;throw null;}});
+  assert.throws(()=>wrapWiperComposerPasses({passes:[a,bad]},()=>{}),e=>e.message.startsWith('null\nComposer installation cleanup:')&&e.message.includes('replaced by unrelated owner'));
+  assert.equal(a.render,foreign);
 });

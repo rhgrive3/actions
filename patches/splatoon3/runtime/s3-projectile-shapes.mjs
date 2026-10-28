@@ -398,9 +398,9 @@ function createWetSlash(THREE, scene) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvS3Local = position;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vS3Local;')
       .replace('#include <color_fragment>', `#include <color_fragment>
-        { float patch = sin(vS3Local.x * 3.7 + vS3Local.z * 4.1)
+        { float iwWetPatch = sin(vS3Local.x * 3.7 + vS3Local.z * 4.1)
             + 0.45 * sin(vS3Local.x * 7.3 - vS3Local.z * 5.2 + 1.1);
-          diffuseColor.rgb *= 0.94 + 0.09 * smoothstep(-0.3, 1.0, patch); }`);
+          diffuseColor.rgb *= 0.94 + 0.09 * smoothstep(-0.3, 1.0, iwWetPatch); }`);
   }, `
     { float iwRim = pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), 3.0);
       totalEmissiveRadiance += vColor.rgb * (0.02 + 0.08 * iwRim); }

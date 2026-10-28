@@ -605,7 +605,9 @@ export function adaptSource(rel, code) {
       'charger charge-reticle display delay');
     code = replaceOnce(code,
       '    this._L.spread = null; this._L.charge = null; this._L.full = null;',
-      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.chargeDelay = null;\n' +
+      '    this._L.spread = null; this._L.charge = null; this._L.full = null; this._L.charging = null; this._L.scope = null; this._L.chargeDelay = null;\n' +
+      '    this._L.streaming = null;\n' +
+      "    if (kind === 'splatling') r.classList.toggle('is-first-complete', this._L.splatFirstComplete === true);\n" +
       '    this._L.dualGuide = false; this._L.lock = null; this._L.roll = null;\n' +
       '    this._dualMerged = kind === \'dualies\' ? r.querySelector(\'.iw-ret__merged\') : null;\n' +
       '    if (kind !== \'dualies\') this._twin = null;\n' +
