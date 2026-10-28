@@ -25,7 +25,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
+  "patches/splatoon3/runtime/roller.mjs": "27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -55,6 +55,15 @@ function exactFault(source, needle, replacement, name) {
   assert.equal(source.split(needle).length-1,1,'counterfactual anchor '+name);
   return source.replace(needle,replacement);
 }
+const ROLLER_PERFORMANCE_REVERSE_EDITS = Object.freeze([
+  ["    if (runner.s3RollStop) {\n      const live = rollStopBlocks(now, runner.s3RollStop);\n      if (live.main || live.sub || live.squid) return false;\n    }\n    if (!rollWillStop(runner, fire)) return false;", "    const live = rollStopBlocks(now, runner.s3RollStop);\n    if ((live.main || live.sub || live.squid) || !rollWillStop(runner, fire)) return false;", "performance-owner-1"],
+  ["    const blockSquid = !!runner.s3RollStop && rollStopBlocks(now, runner.s3RollStop).squid;", "    const blockSquid = rollStopBlocks(now, runner.s3RollStop).squid;", "performance-owner-2"],
+  ["    const coldIdle = !inp.fire && !wasHeld && !this.rolling && !this.s3RollerSuspendedHold;\n    const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);", "    const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);", "performance-owner-3"],
+  ["    // Actor yaw and the fixed shaft angle are constant during this IK search.\n    const contactYaw = this.actor?.yaw || 0, contactCy = Math.cos(contactYaw), contactSy = Math.sin(contactYaw);\n    const shaftCy = Math.cos(ROLL_ROTATION[1]), shaftSy = Math.sin(ROLL_ROTATION[1]);\n", "", "performance-owner-4"],
+  ["        const n=this.actor?.groundN,cy=contactCy,sy=contactSy;", "        const n=this.actor?.groundN,yaw=this.actor?.yaw||0,cy=Math.cos(yaw),sy=Math.sin(yaw);", "performance-owner-5"],
+  ["        delta.set(shaftCy,0,-shaftSy);", "        delta.set(Math.cos(ROLL_ROTATION[1]),0,-Math.sin(ROLL_ROTATION[1]));", "performance-owner-6"],
+  ["      if (penetration > .00001 && Number.isFinite(scale.x) && Math.abs(scale.x) > 1e-4 && Number.isFinite(scale.y) && Math.abs(scale.y) > 1e-4 && Number.isFinite(scale.z) && Math.abs(scale.z) > 1e-4) {", "      if (penetration > .00001 && [scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)) {", "performance-owner-7"],
+]);
 function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8')) {
   // Fail before creating/linking any VM modules: an unreviewed input must not
   // strand dependent link promises and reject again after the test has ended.
@@ -64,10 +73,17 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
     assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
     if(rel==='patches/splatoon3/runtime/roller.mjs'){
+      // Reverse the exact later performance owner edits, then prove the entire
+      // former input remains byte-identical. All admission fault anchors below
+      // continue to apply to the unmodified current source.
+      let reviewed=raw;
+      for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) reviewed=exactFault(reviewed,before,after,name);
+      assert.equal(createHash('sha256').update(reviewed).digest('hex'),
+        'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39', 'previous #847 performance-owner input');
       // The downhill fix adds only a shared collision-floor import and this
       // admission fallback. Undo those exact reviewed edits and prove the
       // entire previous pinned source is byte-identical; no pin is relaxed.
-      const previous=exactFault(exactFault(raw,
+      const previous=exactFault(exactFault(reviewed,
         "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
         "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
       assert.equal(createHash('sha256').update(previous).digest('hex'),
@@ -87,7 +103,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
     let source = adaptProductionSource(rel, raw);
     if (rel === 'patches/splatoon3/runtime/roller.mjs') {
       source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
-      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+      source=exactFault(source,'const sup = onFlickPath || coldIdle ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath || coldIdle ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
     } else {
       source=exactFault(source,'    negligiblePlanarMotion(a.intent?.move?.x || 0, a.intent?.move?.z || 0) ||\n','','physical-paint-stick');
     }
@@ -311,6 +327,11 @@ test('847 rejects missing or modified fault inputs before VM linking and keeps e
   }
   assert.throws(() => exactFault('anchor anchor', 'anchor', '', 'duplicate'), /counterfactual anchor/);
   assert.throws(() => exactFault('other', 'anchor', '', 'missing'), /counterfactual anchor/);
+  const roller = inputs.get('patches/splatoon3/runtime/roller.mjs');
+  for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) {
+    assert.throws(() => exactFault(roller.replace(before,''), before, after, name), /counterfactual anchor/);
+    assert.throws(() => exactFault(roller+before, before, after, name), /counterfactual anchor/);
+  }
   const faults = counterfactualSources(p => inputs.get(p));
   assert.equal(faults.size, 2);
   for (const rel of inputs.keys()) assert.notEqual(faults.get(rel), adaptProductionSource(rel, inputs.get(rel)));

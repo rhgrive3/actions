@@ -94,12 +94,17 @@ function verifySettingsBrowserConsumers(p,u,s){
  const shards=u.slice(u.indexOf('  patch_tests:'),u.indexOf('\n  # Required /validate'));
  assert.equal(build.split(pagesBrowserSetup).length,2,'Pages installs exact dependencies and managed Chromium once');
  assert.equal(core.split(coreBrowserSetup).length,2,'core installs exact dependencies and managed Chromium once');
- assert.ok(build.indexOf(pagesBrowserSetup)<build.indexOf('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'));
+ assert.ok(build.indexOf(pagesBrowserSetup)<build.indexOf('node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs'));
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('      - name: Run requested focused source regressions'));
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('node scripts/ci/run-inkwave-test-suite.mjs source-browser'));
  // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
  assert.doesNotMatch(shards.replace(/^          key: .*\n/gm,''),/playwright|chromium/);
  verifyRequiredDag(u);
+ // Preserve the main-branch fan-in textual checks in addition to the stricter DAG and execution checks above.
+ const acceptance=u.slice(u.indexOf('  validate:\n'),u.indexOf('  browser:\n'));
+ assert.ok(acceptance.includes('    needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'));
+ for(const gate of ['PREFLIGHT_RESULT','BUILD_RESULT','CORE_RESULT','PATCH_RESULT','SEVEN_RESULT','RESOURCE_RESULT','BROWSER_RESULT'])
+   assert.ok(acceptance.includes('test "$'+gate+'" = success'),gate+' cannot be omitted from full acceptance');
  assert.doesNotMatch(p.slice(p.indexOf('      - name: Verify deployed ranked modes')),/npm install|npx .*playwright install/);
  assert.ok(p.includes('node scripts/check-inkwave-ranked-browser.mjs _site reports/ranked-public-browser'));
  assert.ok(s.includes("const executablePath=process.env.CI?chromium.executablePath():"));
