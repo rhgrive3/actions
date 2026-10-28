@@ -50,3 +50,4 @@ jobs:
         run: |
           node scripts/check-inkwave-patches.mjs --quick
           node --test scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-responsive-child-pool.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs
+          node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
