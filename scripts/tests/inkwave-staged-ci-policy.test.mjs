@@ -6,6 +6,7 @@ const read = name => fs.readFileSync(new URL('../../.github/workflows/' + name, 
 const full = read('validate-inkwave-update.yml');
 const quick = read('inkwave-fast-pr.yml');
 const quality = read('ci-quality-gate.yml');
+const weapons = read('inkwave-main-weapons.yml');
 const fullJobs = ['build_site', 'validate_core', 'patch_tests', 'circleci_offload_gate', 'validate', 'browser', 'seven_claims', 'resource_paint_continuation'];
 
 function job(source, name) {
@@ -80,4 +81,14 @@ test('A+ heavy game quality gate skips drafts and remains on ready PRs and main'
   assert(!active(quality, 'verify-aplus-suite', {draft: true}));
   assert(active(quality, 'verify-aplus-suite'));
   assert(active(quality, 'verify-aplus-suite', {event: 'push'}));
+});
+
+test('specialized main-weapon numerical and browser work waits until Ready but runs on main', () => {
+  assert.match(weapons, /^  pull_request:\n    types: \[opened, reopened, synchronize, ready_for_review, converted_to_draft\]\n    paths:/m);
+  assert.match(weapons, /^  group: inkwave-main-weapons-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/m);
+  for (const name of ['numerical-main', 'browser-origins', 'roller-grip-comparison']) {
+    assert(!active(weapons, name, {draft: true}), 'draft skips ' + name);
+    assert(active(weapons, name), 'ready runs ' + name);
+    assert(active(weapons, name, {event: 'push'}), 'main runs ' + name);
+  }
 });
