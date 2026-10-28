@@ -37,6 +37,7 @@ import { adaptReliability } from '../patches/reliability/adapter.mjs';
 import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapter.mjs';
 import { adaptCombatGpuCpuPerfect } from '../patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptPaintRenderRegions } from '../patches/local-quality/paint-render-regions-adapter.mjs';
+import { adaptRenderTransfers } from '../patches/local-quality/render-transfer-optimization-adapter.mjs';
 import { adaptStaticMenuArt } from '../patches/local-quality/static-menu-adapter.mjs';
 import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 import { adaptRange } from '../patches/practice-range/adapter.mjs';
@@ -118,6 +119,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptHistoricalSourceMotion20261026(rel, code);
   code = adaptHistoricalCharacter20261026(rel, code);
   code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
+  code = adaptRenderTransfers(rel, code, replaceOnce);
   return adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));
 }
 
