@@ -16,6 +16,7 @@ import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';
 import {adaptQualitySource} from '../../local-quality/adapter.mjs';
 import {adoptCanvasTouch as sourceAdopt,continueCanvasTouch as sourceContinue} from '../../local-quality/first-touch-adapter.mjs';
 import {adaptTouchPointerLock} from '../touch-pointerlock-adapter.mjs';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const RAW = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
@@ -42,7 +43,7 @@ async function boot({exit='async',request='immediate'}={}) {
  function load(file){if(modules.has(file))return modules.get(file);const rel=path.relative(UPSTREAM,file);let mod;
   if(['src/core/ctx.js','src/config.js','src/game/physics.js'].includes(rel))mod=synthetic(file,f);
   else if(file==='three')mod=synthetic(file,f.THREE);
-  else {const raw=fs.readFileSync(file,'utf8');const code=!SITE&&file.startsWith(UPSTREAM+path.sep)?adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,raw)))):raw;mod=new vm.SourceTextModule(code,{context,identifier:file});}
+  else {const raw=fs.readFileSync(file,'utf8');const code=!SITE&&file.startsWith(UPSTREAM+path.sep)?(rel==='src/core/input.js'?adaptBuildSource(rel,raw):adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,raw))))):raw;mod=new vm.SourceTextModule(code,{context,identifier:file});}
   modules.set(file,mod);return mod;}
  const entry=new vm.SourceTextModule("export {Input} from './src/core/input.js';",{context,identifier:path.join(UPSTREAM,'pointer-lock-fixture.js')});
  await entry.link((spec,from)=>{if(spec==='three')return load('three');let file=path.resolve(path.dirname(from.identifier),spec);if(!SITE&&file.startsWith(path.join(UPSTREAM,'patches')+path.sep))file=path.join(ROOT,path.relative(UPSTREAM,file));return load(file);});await entry.evaluate();
