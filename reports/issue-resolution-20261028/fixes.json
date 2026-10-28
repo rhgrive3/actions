@@ -445,6 +445,74 @@
       ],
       "validation": "Pristine failing branch reproduced. Wholefile32/32source+32/32emitted. Positive verifies acceptedlife2activation beforelife3 then same delayedhit1/finalHP=-20 (100 minus120damage); new preadmissionstalelife control0damage/100HP. No runtime changes.",
       "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
+    },
+    {
+      "id": "pointer-lock-native-event-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "d192a6549ba9d4d664960f008215b2864218b7cd",
+          "files": [
+            "scripts/tests/lock-option-recovery.test.mjs",
+            ".github/workflows/inkwave-ci-repair-focused.yml"
+          ]
+        },
+        {
+          "sha": "07e03c7d27daca0b8a7a731e343b003f11fb24d6",
+          "files": [
+            "scripts/tests/lock-option-recovery.test.mjs",
+            ".github/workflows/inkwave-ci-repair-focused.yml"
+          ]
+        }
+      ],
+      "validation": "Pristine source21/38pass17fail; alloriginal38cases retained; fixed38/38source,rootactualemitted,optactualemitted,rootcompaction,optcompaction. Seven native/error/owner/flow/document/cancel/attract mutants fail. IndependentAgent6 approved; existingnative34,CIcontracts50,YAML81 pass. Sparse probe excludedThree and failed as expected; existingfullcheckoutfocusedlane catches38 early. No runtime change.",
+      "hosted_exact_head_acceptance": "pending next combined published source"
+    },
+    {
+      "id": "gpu22-behavioral-static-upload-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "a460cd46b6ecda32a424dd9f71e0a5f921a34dfd",
+          "files": [
+            "patches/local-quality/tests/queue-root-rendering-20261027.test.mjs"
+          ]
+        },
+        {
+          "sha": "0568bef897648b1a473f245802b04e5c21193439",
+          "files": [
+            "patches/local-quality/tests/queue-root-rendering-20261027.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Root/optimized wholefile10/10; executesactualcomposedringmethods and realTHREE uploadversions/values/quietstate; fourmutationfamilies fail; originalshellassertions retained. Relatedroot18/opt23 andactualemittedshell1eachpass. IndependentAgent2 approvesonecommonfix. No runtime change.",
+      "hosted_exact_head_acceptance": "pending next combined published source"
+    },
+    {
+      "id": "actual-emitted-hurtbox-selector",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "7f7b2851b0beeb542506b7754f6f3f79531990eb",
+          "files": [
+            ".github/workflows/validate-inkwave-update.yml"
+          ]
+        }
+      ],
+      "validation": "player-collision-source-1130 importsweapon-edgecases-fixture, consumingINKWAVE_EDGECASE_SITE. ExistingBUILT_SITE alone selectedsource. Core nowsetsactualEDGECASE_SITE; actualemitted2/2passedwithsameartifact, no count/expectation change. Other10/27fixtureselectors audited; YAML81 andCIcontrols11 pass.",
+      "hosted_exact_head_acceptance": "pending next combined published source; this was a coverage gap, not an observed failed job"
     }
   ]
 }
