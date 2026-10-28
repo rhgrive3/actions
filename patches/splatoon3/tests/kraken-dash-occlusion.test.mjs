@@ -73,7 +73,7 @@ for(const guest of [false,true]){
  test(`${guest?'guest':'host'} owner routes visible contact to victim authority`,()=>sentHit({guest}));
  test(`${guest?'guest':'host'} owner sends no contact through wall`,()=>sentHit({guest,blocked:true}));
 }
-for(const mode of ['valid','duplicate','wrong-match','wrong-owner','future-victim-life','attacker-life-change-keeps-committed-hit','remote-recipient']){
+for(const mode of ['valid','duplicate','wrong-match','wrong-owner','future-victim-life','attacker-life-change-keeps-committed-hit','attacker-life-change-before-activation','remote-recipient']){
  test(`native receiver: ${mode}`,()=>{
   const packet=sentHit(),x=networkRoom('V');let from='S';
   x.a.weapon={...x.a.weapon,special:'krakenRoyale'};
@@ -81,12 +81,20 @@ for(const mode of ['valid','duplicate','wrong-match','wrong-owner','future-victi
     'native attacker Special activation travels in the preceding owner timeline');
   if(mode==='wrong-match')packet.m='old-match';if(mode==='wrong-owner')from='X';
   if(mode==='future-victim-life')x.v.netLife=6;
-  if(mode==='attacker-life-change-keeps-committed-hit'){x.a.netLife=3;x.a.net.lastLife=3;}
+  if(mode==='attacker-life-change-before-activation'){x.a.netLife=3;x.a.net.lastLife=3;}
   if(mode==='remote-recipient'){x.v.owner='S';x.v.remote=true;}
   let calls=0;const native=x.v.damage;x.v.damage=function(...args){calls++;return native.apply(this,args);};
+  if(mode==='attacker-life-change-before-activation')assert.equal((x.nm._combatProvenance?.proofs.get('S')||[]).length,0,'no earlier committed attack can authorize the stale activation control');
   // Ordered owner tick authenticates the observed Special; subsequent hit still
-  // independently passes sender, current life and duplicate admission.
+  // independently passes sender, victim life and duplicate admission.
   x.nm.onMessage('S',latestKrakenAttackTick);
+  const proofs=x.nm._combatProvenance?.proofs.get('S')||[];
+  if(mode==='attacker-life-change-keeps-committed-hit'){
+    assert.equal(x.nm._combatProvenance?.specialSnapshots.get(x.a)?.life,2,'native activation snapshot was admitted at life 2');
+    assert.ok(proofs.some(p=>p.actor===x.a.nid&&p.kind==='special'&&p.cause==='krakenRoyale'&&p.uses===0),'native activation committed unused Special proof before the life change');
+    x.a.netLife=3;x.a.net.lastLife=3;
+  }
+  if(mode==='attacker-life-change-before-activation')assert.equal(proofs.length,0,'a stale life-2 activation cannot commit proof after life advances to 3');
   x.nm.onMessage(from,packet);if(mode==='duplicate')x.nm.onMessage(from,packet);
   const admitted=['valid','duplicate','attacker-life-change-keeps-committed-hit'].includes(mode);
   assert.equal(calls,admitted?1:0);assert.equal(x.v.hp,admitted?-20:100);

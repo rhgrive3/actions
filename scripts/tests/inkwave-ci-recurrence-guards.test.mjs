@@ -84,6 +84,8 @@ function assertAdmissionDag(yaml) {
   assert.doesNotMatch(admission.match(/^    if: (.+)$/m)?.[1] ?? '', /\b(?:always|failure|cancelled|success)\s*\(/i);
   assert.match(admission, /^      - name: Reject invalid or duplicated YAML workflow definitions\n        run: ruby scripts\/ci\/check-workflow-yaml\.rb \.github\/workflows$/m);
   assert.match(admission, /^      - name: Reject production composition anchor drift before heavy lanes\n        run: node scripts\/ci\/check-composition-preflight\.mjs$/m);
+  assert.match(admission, /^      - name: Verify source combat receipt and Boss admission fixtures\n        run: node --test scripts\/tests\/inkwave-combat-provenance\.test\.mjs scripts\/tests\/inkwave-boss-positive-proof\.test\.mjs$/m);
+  assert.ok(admission.indexOf('run: node scripts/ci/check-composition-preflight.mjs') < admission.indexOf('run: node --test scripts/tests/inkwave-combat-provenance.test.mjs'), 'source admission follows production composition');
   const gate = jobBlock(yaml, 'validate');
   assert.ok(gate.includes("    if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}\n"), 'validate must run for failed prerequisites in admitted full CI');
   assert.doesNotMatch(gate, /^    defaults:|^        shell:/m, 'validate uses GitHub default fail-fast shell');
@@ -137,6 +139,8 @@ test('admission DAG and final shell gate reject dependency and status bypass mut
     ['admission_preflight', s => s.replace('      - name: Reject invalid or duplicated YAML workflow definitions', '      - if: false\n        name: Reject invalid or duplicated YAML workflow definitions')],
     ['admission_preflight', s => s.replace('run: node scripts/ci/check-composition-preflight.mjs', 'run: echo bypass')],
     ['admission_preflight', s => s.replace('run: node scripts/ci/check-composition-preflight.mjs', 'run: node scripts/ci/check-composition-preflight.mjs\n        if: false')],
+    ['admission_preflight', s => s.replace('run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs', 'run: echo bypass source admission')],
+    ['admission_preflight', s => s.replace('run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs', 'run: node --test scripts/tests/inkwave-combat-provenance.test.mjs')],
     ['admission_preflight', s => s.replace('      - name: Reject production composition', '      - continue-on-error: true\n        name: Reject production composition')],
     ['build_site', s => s.replace('    needs: admission_preflight', '    needs: admission_preflight\n    continue-on-error: true')],
     ['validate', s => s.replace('always() && ', '')],

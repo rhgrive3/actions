@@ -386,6 +386,65 @@
       ],
       "validation": "最終1906 head14beが祖先。13ファイル全比較、runtime配布byte不変。guards7、evidence/Pages32、CI-config36、composition119/74、YAML81成功。",
       "hosted_exact_head_acceptance": "pending"
+    },
+    {
+      "id": "modeled-native-provenance-fixtures",
+      "related_issues": [
+        1665,
+        1666
+      ],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "ab8863a88ab3b66ff66a0eecffc5f97e57b29e8f",
+          "files": [
+            "scripts/tests/inkwave-boss-positive-proof.test.mjs",
+            "scripts/tests/inkwave-combat-provenance.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Pristine core trio71:46pass25fail. Fixed74/74source and74/74actualemitted-runtime mode, including3new rejection controls; independent Agent3 samecounts no blocking findings. Modeled source-generated native policy, not native HP/browser.",
+      "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
+    },
+    {
+      "id": "early-receipt-admission-guard",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "1d8f90a9d8ab9c97d4355658179a727b840f28a4",
+          "files": [
+            ".github/workflows/validate-inkwave-update.yml",
+            "scripts/tests/inkwave-ci-recurrence-guards.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Pristine source-only preflight57:32pass25fail; fixed60/60 also passes exact sparse payload without vendor/node_modules/history. ExistingDAG/Pages/source31,CIconfig36,YAML81pass. Mandatoryfullcore retained.",
+      "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
+    },
+    {
+      "id": "kraken-committed-life-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "3f855091782d734c48198a171fdc88849213d96f",
+          "files": [
+            "patches/splatoon3/tests/kraken-dash-occlusion.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Pristine failing branch reproduced. Wholefile32/32source+32/32emitted. Positive verifies acceptedlife2activation beforelife3 then same delayedhit1/finalHP=-20 (100 minus120damage); new preadmissionstalelife control0damage/100HP. No runtime changes.",
+      "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
     }
   ]
 }

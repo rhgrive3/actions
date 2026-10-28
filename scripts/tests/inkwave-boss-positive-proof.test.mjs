@@ -12,7 +12,8 @@ const built = process.env.INKWAVE_BUILT_SITE;
 const runtimeRoot = built ? pathToFileURL(path.resolve(built) + path.sep) : sourceRoot;
 const runtimePaths = ['patches/network-replication/combat-provenance.mjs',
   'patches/splatoon3/runtime/sub-special-fidelity.mjs',
-  'patches/network-replication/owner-tick-receipt.mjs'];
+  'patches/network-replication/owner-tick-receipt.mjs',
+  'patches/network-replication/snapshot-guard.mjs'];
 if (built) {
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   const manifest = JSON.parse(fs.readFileSync(new URL('inkwave-build.json', runtimeRoot), 'utf8'));
@@ -25,6 +26,7 @@ if (built) {
     ['network-replication/combat-provenance.mjs', runtimePaths[0]],
     ['patch/runtime/sub-special-fidelity.mjs', runtimePaths[1]],
     ['network-replication/owner-tick-receipt.mjs', runtimePaths[2]],
+    ['network-replication/snapshot-guard.mjs', runtimePaths[3]],
     ['local-quality/boss-hit-adapter.mjs', 'patches/local-quality/boss-hit-adapter.mjs'],
     ['upstream/src/net/netmatch.js', 'inkwave-public/src/net/netmatch.js'],
   ]) assert.equal(hash(fs.readFileSync(new URL(rel, sourceRoot))), manifest.files[key], 'current source input ' + key);
@@ -32,6 +34,7 @@ if (built) {
 const { combatAdmission, installCombatProvenance } = await import(new URL(runtimePaths[0], runtimeRoot));
 const { applyBlasterKnockback } = await import(new URL(runtimePaths[1], runtimeRoot));
 const { commitOwnerTick } = await import(new URL(runtimePaths[2], runtimeRoot));
+const { validActorSnapshotRow } = await import(new URL(runtimePaths[3], runtimeRoot));
 // BUILT uses actual emitted admission/knockback modules, never source fallbacks.
 // The modeled Boss guard below remains generated from the matching source input.
 
@@ -82,9 +85,9 @@ function fixture(kind = 'shooter') {
       const admitted = [];
       for (const row of d.a || []) {
         const actor = this.byNid.get(row[0]);
-        if (!actor || actor.owner !== from || d.l?.[row[0]] !== actor.netLife) continue;
+        if (!validActorSnapshotRow(row,d.ts) || !actor || actor.owner !== from || d.l?.[row[0]] !== actor.netLife) continue;
         actor.net.buf = [{ t: d.ts, x: row[1], y: row[2], z: row[3],
-          f: actor.net.cur.f, life: actor.netLife }];
+          f: row[10], life: actor.netLife }];
         admitted.push({actor,nid:actor.nid,owner:actor.owner,x:row[1],y:row[2],z:row[3]});
       }
       commitOwnerTick(this, from, d, d.e || [], admitted);
@@ -102,14 +105,28 @@ const boss = (damage = 36, q = 1, w = 'shooter', c = -1) =>
   ({ k: 'bhit', m: 'boss-positive', a: 1, d: damage, q, w, c, weak: 0, l: 0 });
 const pending = nm => nm._combatProvenance?.pending.get('peer')?.length || 0;
 const contacts = nm => nm._combatProvenance?.contacts.size || 0;
+function snapshotRow(nm) {
+  const actor=nm.byNid.get(1),p=actor.pos;
+  const row=[1,p.x,p.y,p.z,0,0,0,0,0,0,actor.net.cur.f,100,100,0,0,0,0,0,0,1,0];
+  assert.equal(validActorSnapshotRow(row,100),true,'modeled positive uses a legal native row');
+  return row;
+}
 function fire(nm) {
-  nm._tick('peer', { k: 't', ts: 100.05, a: [[1, 0, 0, 0]], l: {1: 0},
+  nm._tick('peer', { k: 't', ts: 100.05, a: [snapshotRow(nm)], l: {1: 0},
     e: [[100, 'p', 1, 'shot', 'shooter', 0, 1, 0, 0, 0, 45]] });
   const proof = nm._combatProvenance.proofs.get('peer')?.[0];
   assert(proof, 'real ordered event must create a proof');
   proof.maxUses = 1; // Amplify proof loss without replacing admission.
   return proof;
 }
+test('modeled Boss fixture rejects a short native actor row without minting proof',()=>{
+  const nm=fixture();
+  nm._tick('peer',{k:'t',ts:100.05,a:[[1,0,0,0]],l:{1:0},
+    e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45]]});
+  assert.equal(nm.byNid.get(1).net.buf,undefined);
+  assert.equal(nm._combatProvenance.proofs.get('peer')?.length??0,0);
+  nm.onMessage('peer',boss());assert.equal(nm.calls.length,0);
+});
 
 for (const [label, value] of [['negative', -1], ['zero', 0], ['negative zero', -0], ['NaN', NaN], ['positive infinity', Infinity], ['negative infinity', -Infinity]]) {
   test('Boss ' + label + ' preserves proof and nonce, then the same nonce accepts positive damage', () => {
@@ -136,7 +153,7 @@ test('Boss nonpositive claim cannot reserve a pending nonce before its shot arri
 test('Boss nonpositive claim cannot consume Roller contact cooldown', () => {
   const nm = fixture('roller');
   nm.byNid.get(1).net.cur.f = 1 | 256;
-  nm._tick('peer', { k: 't', ts: 100, a: [[1, 0, 0, 0]], l: { 1: 0 } });
+  nm._tick('peer', { k: 't', ts: 100, a: [snapshotRow(nm)], l: { 1: 0 } });
   for (const d of [-1, 0]) nm.onMessage('peer', boss(d, 1, 'roller'));
   assert.equal(contacts(nm), 0); assert.equal(pending(nm), 0);
   nm.onMessage('peer', boss(140, 1, 'roller'));
@@ -145,7 +162,7 @@ test('Boss nonpositive claim cannot consume Roller contact cooldown', () => {
 test('Boss nonpositive claim cannot consume active Special contact cooldown', () => {
   const nm = fixture(); nm.byNid.get(1).specialActive = { id: 'storm' };
   nm.byNid.get(1).net.cur.f = 1 | 8192;
-  nm._tick('peer', { k: 't', ts: 100, a: [[1, 0, 0, 0]], l: { 1: 0 } });
+  nm._tick('peer', { k: 't', ts: 100, a: [snapshotRow(nm)], l: { 1: 0 } });
   for (const d of [-1, 0]) nm.onMessage('peer', boss(d, 1, 'storm'));
   assert.equal(contacts(nm), 0); assert.equal(pending(nm), 0);
   nm.onMessage('peer', boss(30, 1, 'storm'));
