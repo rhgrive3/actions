@@ -162,7 +162,7 @@ jobs:
           node scripts/check-inkwave-patches.mjs --quick
           node scripts/ci/run-inkwave-test-suite.mjs runner-contracts
           node scripts/ci/run-inkwave-test-suite.mjs verifier
-          node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-full-scope.test.mjs
+          node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-full-scope.test.mjs scripts/tests/inkwave-workflow-inputs.test.mjs scripts/tests/inkwave-ci-sparse-checkout.test.mjs
       - name: Build immutable production site once
         if: steps.scope.outputs.contracts_only != 'true'
         run: |
