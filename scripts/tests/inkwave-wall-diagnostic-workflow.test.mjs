@@ -10,7 +10,7 @@ const job = (text, name) => {
   return end < 0 ? rest : rest.slice(0, end);
 };
 const condition = (text, name) => job(text, name).match(/^    if: (.+)$/m)?.[1];
-const fullCondition = "inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
+const fullCondition = "inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
 const nativeOffloadCondition = "${{ "+fullCondition+" && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}";
 const guard = 'node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs';
 const source = 'node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs';
