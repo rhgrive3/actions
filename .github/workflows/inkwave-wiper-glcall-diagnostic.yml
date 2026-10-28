@@ -1,0 +1,87 @@
+name: INKWAVE isolated Wiper native GL call diagnostic
+# Diagnostic only. This workflow is not an acceptance/merge/deployment gate.
+on:
+  push:
+    branches: [diagnostic/wiper-glcall-126-20261028]
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-wiper-glcall-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/wiper-glcall-126-20261028'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    env:
+      SOURCE_SHA: 126231d4d7d039ddde26a67eead5a4f27c73a425
+      HARNESS_SHA: ${{ github.sha }}
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - name: Checkout exact diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify exact harness parent and allowed diagnostic paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$HARNESS_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$WORKFLOW_SHA" = "$HARNESS_SHA"
+          test "$(git rev-parse HEAD)" = "$HARNESS_SHA"
+          test "$(git rev-parse HEAD^)" = "$SOURCE_SHA"
+          test "$(git rev-parse "$SOURCE_SHA^{tree}")" = 34ab34c0890cebf9d638429d585cc6f2328072aa
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-wiper-glcall-diagnostic.yml' 'scripts/check-inkwave-wiper-glcall-diagnostic-capture.mjs' 'scripts/check-inkwave-wiper-glcall-diagnostic.mjs' 'scripts/lib/inkwave-wiper-scene-gl-probe.mjs' 'scripts/lib/inkwave-wiper-console-evidence.mjs' 'scripts/tests/inkwave-wiper-glcall-diagnostic-integration.test.mjs' 'scripts/tests/inkwave-wiper-scene-gl-probe.test.mjs' 'scripts/tests/inkwave-wiper-scene-gl-source.test.mjs' 'scripts/tests/inkwave-wiper-console-evidence.test.mjs' | sort)
+          actual=$(git diff --no-renames --name-only "$SOURCE_SHA" "$HARNESS_SHA" | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse "$HARNESS_SHA:.circleci/config.yml")" = 68ba0f5d817cea28c6a24d1d98ee8e1a3e6daa86
+          test "$(git rev-parse "$HARNESS_SHA:.github/workflows/bootstrap-hex-worker-repos.yml")" = b9b9e8a716d9bd63699db33b819a32eb4dfbd5fe
+          test "$(git rev-parse "$HARNESS_SHA:.github/workflows/hex-fast-tail-known.yml")" = 735894774cf44942fea08f86ece2c24d21411084
+          test "$(git rev-parse "$HARNESS_SHA:scripts/check-inkwave-wiper-glcall-diagnostic-capture.mjs")" = 1a88bf4f4034b2301d6d2cc1cb50755057277cc4
+          test "$(git rev-parse "$HARNESS_SHA:scripts/check-inkwave-wiper-glcall-diagnostic.mjs")" = beddf0b5a519c92438074c8e74b6302116e7226e
+          test "$(git rev-parse "$HARNESS_SHA:scripts/lib/inkwave-wiper-scene-gl-probe.mjs")" = 5a1264f76cfd090b904445ddf700bba9a515fd46
+          test "$(git rev-parse "$HARNESS_SHA:scripts/lib/inkwave-wiper-console-evidence.mjs")" = 15a05f8a26ea636e381f0e60cd19739e1a27df5c
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-glcall-diagnostic-integration.test.mjs")" = c218d81e177eeabfdbbddb1e930b2a29cc7b962a
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-scene-gl-probe.test.mjs")" = f86f9bb69e9691f392ef1d8aab67b7ee23a82647
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-scene-gl-source.test.mjs")" = 58e32cdce88d8ed46e72a00930454c9d23b856a0
+          test "$(git rev-parse "$HARNESS_SHA:scripts/tests/inkwave-wiper-console-evidence.test.mjs")" = 2a920f837331d3bb2c9c44178d542873c7605ffb
+      - name: Checkout independently pinned game source
+        uses: actions/checkout@v4
+        with:
+          ref: 126231d4d7d039ddde26a67eead5a4f27c73a425
+          path: .game-source
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Provision pinned JS tools and secure Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Verify diagnostic contracts without launching a browser
+        run: WIPER_SOURCE_ROOT="$GITHUB_WORKSPACE/.game-source" node --test scripts/tests/inkwave-wiper-scene-gl-probe.test.mjs scripts/tests/inkwave-wiper-scene-gl-source.test.mjs scripts/tests/inkwave-wiper-console-evidence.test.mjs scripts/tests/inkwave-wiper-glcall-diagnostic-integration.test.mjs
+      - name: Verify source checkout and build its exact game once
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .game-source rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .game-source rev-parse HEAD^{tree})" = 34ab34c0890cebf9d638429d585cc6f2328072aa
+          ln -s "$GITHUB_WORKSPACE/node_modules" .game-source/node_modules
+          mkdir -p diagnostic-evidence
+          printf '{"sourceSha":"%s","harnessSha":"%s","workflowSha":"%s","sandbox":true,"extraArgs":[],"actualBackend":"unverified","acceptance":false}\n' "$SOURCE_SHA" "$HARNESS_SHA" "$WORKFLOW_SHA" > diagnostic-evidence/run-identity.json
+          (cd .game-source && node scripts/build-inkwave.mjs inkwave-public "$GITHUB_WORKSPACE/.built-site/_site")
+      - name: Capture fail-closed phased GL diagnostic
+        run: node scripts/check-inkwave-wiper-glcall-diagnostic.mjs .built-site/_site diagnostic-evidence/evidence --source-sha "$SOURCE_SHA" --source-root "$GITHUB_WORKSPACE/.game-source" --harness-sha "$HARNESS_SHA"
+      - name: Preserve bounded diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiper-glcall-${{ github.sha }}
+          path: diagnostic-evidence/
+          if-no-files-found: error
+          retention-days: 7
