@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {mapResponsiveCases,spawnResponsiveCase} from '../ci/inkwave-responsive-child-pool.mjs';
+import {mapResponsiveCases,mapResponsiveByEngine,spawnResponsiveCase} from '../ci/inkwave-responsive-child-pool.mjs';
 
 test('two workers run every case once, never exceed two and retain canonical order', async () => {
   let active=0,maxActive=0;
@@ -61,8 +61,38 @@ test('live acceptance preserves all 14 isolated viewports with two bounded worke
   const script=fs.readFileSync(new URL('../check-inkwave-responsive-isolated.mjs',import.meta.url),'utf8');
   const workflow=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
   assert.match(script,/report\.cases\.length === 14 && report\.shards\.length === 14/);
-  assert.match(script,/await mapResponsiveCases\(cohort,workers,runCase\)/);
+  assert.match(script,/await mapResponsiveByEngine\(cohort,workers,runCase\)/);
   assert.match(script,/row\.ok=processResult\.status===0 && !processResult\.error && !row\.error/);
   assert.match(script,/spawnResponsiveCase\(process\.execPath,args,\{cwd:root,timeoutMs:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
   assert.match(workflow,/check-inkwave-responsive-isolated\.mjs --source \.built-site\/_site --section all[^\n]+--workers 2/);
+});
+
+test('engine-owned concurrency admits one WebKit and one Chromium, never two WebKit processes',async()=>{
+  const cases=['chromium','webkit'].flatMap(engine=>Array.from({length:7},(_,index)=>({engine,name:String(index)})));
+  const active={chromium:0,webkit:0};const peak={chromium:0,webkit:0};const seen=[];
+  const result=await mapResponsiveByEngine(cases,2,async c=>{
+    active[c.engine]++;peak[c.engine]=Math.max(peak[c.engine],active[c.engine]);
+    assert(active.chromium+active.webkit<=2);
+    await new Promise(r=>setTimeout(r,5));
+    seen.push(c.engine+'-'+c.name);
+    active[c.engine]--;
+    return c.engine+'-'+c.name;
+  });
+  assert.deepEqual(peak,{chromium:1,webkit:1});
+  assert.deepEqual(result,cases.map(c=>c.engine+'-'+c.name));
+  assert.equal(seen.length,14);
+  assert.equal(new Set(seen).size,14);
+});
+test('engine-owned queues keep fail-closed outcome even if one browser fails',async()=>{
+ const cases=['chromium','webkit'].flatMap(engine=>[0,1,2].map(name=>({engine,name})));
+ const finished=[];
+ await assert.rejects(()=>mapResponsiveByEngine(cases,2,async c=>{
+   finished.push(c.engine+c.name);
+   if(c.engine==='webkit'&&c.name===1)throw Error('webkit browser closed');
+   return true;
+ }),/webkit browser closed/);
+ assert.equal(finished.length,6);
+ assert.deepEqual(finished.sort(),cases.map(c=>c.engine+c.name).sort());
+ for(const invalid of [[{engine:'firefox'}],[{engine:'webkit'}],[{engine:'chromium'}]])
+  await assert.rejects(()=>mapResponsiveByEngine(invalid,2,async()=>{}),/Both browser engines/);
 });
