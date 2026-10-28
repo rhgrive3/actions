@@ -864,9 +864,6 @@ jobs:
       - name: Verify depth-only shadows and effective reflection budgets on WebGL
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-resource-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/resources" --profile-dir "$CI_STORAGE/cache/resources" --exact-source
-      - name: Verify idle music and paused/render-target resources
-        if: matrix.suite == 'active'
-        run: node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source
       - name: Profile runtime at immutable baseline
         if: matrix.suite == 'active' && env.RUNTIME_PERFORMANCE == 'true'
         run: |
@@ -959,7 +956,7 @@ jobs:
           root=pathlib.Path(os.environ['CI_STORAGE'])/'evidence'
           suite=os.environ['BROWSER_SUITE']
           checks={
-            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
+            'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json','startup-clock/startup-clock-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
@@ -1320,7 +1317,8 @@ jobs:
   resource_paint_continuation:
     if: inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The formerly 13-minute idle GPU probe now overlaps the active browser shard.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -1374,6 +1372,27 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/batch4-site
           node --experimental-vm-modules --test patches/splatoon3/tests/trizooka-enemy-ink.test.mjs patches/splatoon3/tests/slam-damage-state.test.mjs patches/splatoon3/tests/surge-wall-launch-armor.test.mjs patches/splatoon3/tests/charger-wall-drop.test.mjs patches/splatoon3/tests/disconnected-main-projectiles.test.mjs patches/splatoon3/tests/online-continuation.test.mjs patches/network-replication/tests/wipeout-owner-history.test.mjs patches/local-quality/tests/result-continuation.test.mjs
           node scripts/check-inkwave-batch4.mjs .ci-scratch/batch4-site --webkit | tee .ci-scratch/batch4-browser.json
+      # Same immutable production build; source verified; overlaps active browser.
+      - name: Verify published idle GPU, WebAudio and lifecycle on the source-bound site
+        run: |
+          mkdir -p .ci-scratch/idle-resources .ci-scratch/idle-profile
+          node scripts/check-inkwave-idle-resources.mjs --site .ci-scratch/batch4-site --evidence-dir .ci-scratch/idle-resources --profile-dir .ci-scratch/idle-profile --exact-source
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const report=JSON.parse(fs.readFileSync('.ci-scratch/idle-resources/idle-resources-result.json','utf8'));
+          const build=JSON.parse(fs.readFileSync('.ci-scratch/batch4-site/inkwave-build.json','utf8'));
+          assert.equal(report.status,'passed');
+          assert.equal(report.sourceSha,process.env.SOURCE_SHA);
+          assert.equal(report.contentHash,build.contentHash);
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always() && hashFiles('.ci-scratch/idle-resources/idle-resources-result.json') != ''
+        with:
+          name: inkwave-idle-resource-${{ env.SOURCE_SHA }}
+          path: .ci-scratch/idle-resources/
+          if-no-files-found: error
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: always()
         with:
