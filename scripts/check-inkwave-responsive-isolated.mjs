@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';
 import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
+import { shouldRetryResponsiveSessionLoss } from './lib/inkwave-responsive-session-retry.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => {
@@ -50,9 +51,28 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
     '--evidence-dir',shardDir,'--profile-dir',profileDir];
   const startedAt=Date.now();
   console.log(JSON.stringify({event:'responsive-child-start',engine,name}));
-  const processResult=spawnSync(process.execPath,args,{
+  const launch=argv=>spawnSync(process.execPath,argv,{
     cwd:root,encoding:'utf8',timeout:20*60*1000,maxBuffer:16*1024*1024
   });
+  let processResult=launch(args), resultDir=shardDir, recovery=null;
+  let firstFragment=null;
+  try { firstFragment=JSON.parse(fs.readFileSync(path.join(shardDir,'responsive-result.json'),'utf8')); } catch {}
+  if(shouldRetryResponsiveSessionLoss({engine,name,processResult,fragment:firstFragment})){
+    // Retain the failed original evidence under its own immutable directory.
+    // A fresh temporary browser profile is required for an independent retry.
+    const retryEvidence=path.join(shardDir,'browser-recovery-1'),
+          retryProfile=path.join(profileDir,'browser-recovery-1');
+    fs.mkdirSync(retryEvidence,{recursive:true});
+    fs.mkdirSync(retryProfile,{recursive:true});
+    fs.writeFileSync(path.join(shardDir,'initial-crash-stderr.txt'),boundedChildStderr(processResult.stderr).text);
+    recovery={kind:'verified-webkit-session-loss',previousStatus:firstFragment.status,
+      originalEvidence:'responsive-result.json',originalStderr:'initial-crash-stderr.txt'};
+    console.log(JSON.stringify({event:'responsive-browser-session-retry',engine,name,reason:recovery.kind}));
+    const retryArgs=[...args];
+    retryArgs[retryArgs.indexOf('--evidence-dir')+1]=retryEvidence;
+    retryArgs[retryArgs.indexOf('--profile-dir')+1]=retryProfile;
+    processResult=launch(retryArgs);resultDir=retryEvidence;
+  }
   console.log(JSON.stringify({event:'responsive-child-end',engine,name,
     elapsedMs:Date.now()-startedAt,exitCode:processResult.status,signal:processResult.signal,
     processError:processResult.error?.message||null}));
@@ -60,13 +80,13 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
   if(processResult.stderr)process.stderr.write(processResult.stderr);
   const stderr = boundedChildStderr(processResult.stderr);
   fs.writeFileSync(path.join(shardDir, 'child-stderr.txt'), stderr.text);
-  const row={engine,name,exitCode:processResult.status,signal:processResult.signal,
+  const row={engine,name,...(recovery?{recovery,fragmentFile:path.relative(shardDir,path.join(resultDir,'responsive-result.json'))}:{}),exitCode:processResult.status,signal:processResult.signal,
     processError:processResult.error?.message||null,
     stderr: { file: 'child-stderr.txt', totalChars: stderr.totalChars,
       retainedChars: stderr.retainedChars, truncated: stderr.truncated }};
   let fragment;
   try {
-    fragment=JSON.parse(fs.readFileSync(path.join(shardDir,'responsive-result.json'),'utf8'));
+    fragment=JSON.parse(fs.readFileSync(path.join(resultDir,'responsive-result.json'),'utf8'));
     row.fragmentStatus=fragment.status;
     assert.equal(fragment.cases.length,1,'Exactly one viewport case required');
     assert.equal(fragment.cases[0].engine,engine);
@@ -88,7 +108,7 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
   }
   row.ok=processResult.status===0 && !processResult.error && !row.error;
   if(!row.ok && !row.error)report.errors.push(key+': exit '+String(row.exitCode)+' / '+String(row.signal));
-  emitFailedResponsiveProgress(row.ok, { shardDir, engine, name, startedAt });
+  emitFailedResponsiveProgress(row.ok, { shardDir: resultDir, engine, name, startedAt });
   report.shards.push(row);
   write();
 }
