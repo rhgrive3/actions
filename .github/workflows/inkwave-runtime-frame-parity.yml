@@ -42,6 +42,10 @@ on:
       - 'scripts/inkwave-source-composition.mjs'
       - 'scripts/tests/inkwave-workflow-inputs.test.mjs'
       - "patches/local-quality/**"
+      - "!patches/local-quality/tests/**"
+      - "patches/local-quality/tests/hud-hotpath.test.mjs"
+      - "patches/local-quality/tests/quality.test.mjs"
+      - "patches/local-quality/tests/runtime-frame-scratch.test.mjs"
       - "scripts/lib/inkwave-build-only-modules.mjs"
       - ".github/workflows/inkwave-runtime-frame-parity.yml"
   workflow_dispatch:
