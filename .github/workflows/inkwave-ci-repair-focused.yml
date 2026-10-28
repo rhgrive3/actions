@@ -47,6 +47,7 @@ jobs:
               node scripts/ci/check-composition-preflight.mjs
               node --experimental-vm-modules --test --test-concurrency=1 \
                 scripts/tests/inkwave-owner-clock-diagnostic.test.mjs \
+                scripts/tests/inkwave-input-constructor-ownership.test.mjs \
                 scripts/tests/inkwave-responsive-progress-summary.test.mjs \
                 scripts/tests/inkwave-source-coverage.test.mjs \
                 scripts/tests/inkwave-ci-recurrence-guards.test.mjs \

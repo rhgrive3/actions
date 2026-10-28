@@ -939,11 +939,23 @@ export function adaptQueueNetworkUi(rel, input) {
       const listeners = [...before.matchAll(/\b(window|document)\.addEventListener\(/g)];
       if (listeners.length !== 10) throw new Error('INKWAVE network/UI queue conflict: input original listener inventory');
       const platform = before.replace(/\b(window|document)\.addEventListener\(/g, 'this._listenPlatform($1, ');
-      const original = code.split(before).length - 1, owned = code.split(platform).length - 1;
-      if (original + owned !== 1) throw new Error('INKWAVE network/UI queue conflict: input constructor listener owner');
-      if (owned) {
-        connection = platform;
-        replacement = platform.replace('    this.canvas = canvas;', '    this.canvas = canvas;\n    this._inputUnsubs = []; this._disposed = false;');
+      // #1396: the earlier pointer-lock owner now records explicit browser
+      // pointerlockerror evidence before permitting NotSupportedError fallback.
+      // Admit only that reviewed, exact handler in the already platform-owned
+      // constructor; reject all other changes to the ten listener identities.
+      const oldError = "    document.addEventListener('pointerlockerror', () => { if (!this._pointerLockPending?.modern) this._finishPointerLockRequest(this._pointerLockPending); });";
+      const observedError = "    document.addEventListener('pointerlockerror', () => { const ticket = this._pointerLockPending; if (ticket) { ticket.errorObserved = true; if (!ticket.modern) this._finishPointerLockRequest(ticket); } });";
+      if (before.split(oldError).length !== 2) throw Error('INKWAVE network/UI queue conflict: input pointerlockerror inventory');
+      const observedPlatform = before.replace(oldError, observedError)
+        .replace(/\b(window|document)\.addEventListener\(/g, 'this._listenPlatform($1, ');
+      const original = code.split(before).length - 1;
+      const owned = code.split(platform).length - 1;
+      const observed = code.split(observedPlatform).length - 1;
+      if (original + owned + observed !== 1)
+        throw new Error('INKWAVE network/UI queue conflict: input constructor listener owner');
+      if (owned || observed) {
+        connection = observed ? observedPlatform : platform;
+        replacement = connection.replace('    this.canvas = canvas;', '    this.canvas = canvas;\n    this._inputUnsubs = []; this._disposed = false;');
       }
     }
     const count = code.split(connection).length - 1;
