@@ -44,6 +44,7 @@
           "--experimental-global-webcrypto",
           "--test",
           "scripts/tests/inkwave-boss-processing.test.mjs",
+          "scripts/tests/inkwave-test-batches.test.mjs",
           "patches/local-quality/tests/nav-heuristic.test.mjs",
           "patches/local-quality/tests/pose-rotation.test.mjs",
           "patches/local-quality/tests/motion-fk-hotpath.test.mjs",
