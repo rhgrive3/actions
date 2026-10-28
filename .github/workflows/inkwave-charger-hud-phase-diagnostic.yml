@@ -1,0 +1,97 @@
+name: INKWAVE native Charger HUD recovery candidate diagnostic
+on:
+  push:
+    branches: [diagnostic/charger-hud-phase-20261028]
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/charger-hud-phase-20261028'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify diagnostic parent, exact tree, allowlisted paths and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.workflow_sha }}" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD^)" = 850a453e63cb9277ed116e696c3b70fd813cde65
+          test "$(git rev-parse HEAD^^{tree})" = e0896240795642f786264a9b60919b57bb8cd5e8
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-charger-hud-phase-diagnostic.yml' 'scripts/check-inkwave-lock-outcome-native.mjs' 'scripts/check-inkwave-lock-outcome-observer.mjs' 'scripts/check-inkwave-lock-resume-probe.mjs' 'scripts/check-inkwave-charge-observation-probe.mjs' 'scripts/check-inkwave-charger-selection-probe.mjs' 'scripts/check-inkwave-charger-flow.mjs' 'scripts/tests/inkwave-lock-outcome-native.test.mjs' 'scripts/tests/inkwave-lock-outcome-observer.test.mjs' 'scripts/tests/inkwave-lock-resume-probe.test.mjs' 'scripts/tests/inkwave-charge-observation-probe.test.mjs' 'scripts/tests/inkwave-charger-selection-probe.test.mjs' 'scripts/tests/inkwave-charger-flow.test.mjs' | sort)
+          actual=$(git diff --no-renames --name-only HEAD^ HEAD | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:.circleci/config.yml)" = e6f8578934141209d5ae9bb5e54724f92a3ddbdb
+          test "$(git rev-parse HEAD:.github/workflows/bootstrap-hex-worker-repos.yml)" = 487b376077d7364c8699350c0ccd5cbe8dd95a0f
+          test "$(git rev-parse HEAD:.github/workflows/hex-fast-tail-known.yml)" = d9cb9c04dbcd76cd5da362a0f2dc65f9d6c8fdb1
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-outcome-native.mjs)" = bfcce653817ec34c7462cf8eacff425a276a5d94
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-outcome-observer.mjs)" = fe2473487261e479d4f8b93e4193908aa643a350
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-resume-probe.mjs)" = 5900a8d6c0ccaa9260b550865f4220dda7b4a963
+          test "$(git rev-parse HEAD:scripts/check-inkwave-charge-observation-probe.mjs)" = 7773459b96fc67b983e27e27eeac7361e632c727
+          test "$(git rev-parse HEAD:scripts/check-inkwave-charger-selection-probe.mjs)" = a5ccd695248b8932beab6c565a783cd109cd25a3
+          test "$(git rev-parse HEAD:scripts/check-inkwave-charger-flow.mjs)" = 325c19d9e49987768f90cc62d7f1fa28e2b0004a
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-lock-outcome-native.test.mjs)" = 0d5cc1482eb56b3211a12720ae181bc42ea74d97
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-lock-outcome-observer.test.mjs)" = 0e0bbfd7a8433ca8e1f316e6cbca04883ddb2f89
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-lock-resume-probe.test.mjs)" = 9661fa7822b9075102af2559f563fe8e9b45399b
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-charge-observation-probe.test.mjs)" = aaefa3550205a83c28963d5a63d4e20a5166c5a5
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-charger-selection-probe.test.mjs)" = 723fc9b5054048f857f1dca1ed5fcfeb9b83a9f6
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-charger-flow.test.mjs)" = dc1b047839a8c1a1078ecdea7cc2d46fc85773a4
+      - name: Checkout exact source under test
+        uses: actions/checkout@v4
+        with:
+          ref: 850a453e63cb9277ed116e696c3b70fd813cde65
+          path: game-source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify clean exact source
+        run: |
+          set -euo pipefail
+          test "$(git -C game-source rev-parse HEAD)" = 850a453e63cb9277ed116e696c3b70fd813cde65
+          test "$(git -C game-source rev-parse HEAD^{tree})" = e0896240795642f786264a9b60919b57bb8cd5e8
+          test -z "$(git -C game-source status --porcelain)"
+      - name: Install pinned tools and secure Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Run observer and safety contracts
+        run: node --test scripts/tests/inkwave-lock-outcome-observer.test.mjs scripts/tests/inkwave-lock-outcome-native.test.mjs scripts/tests/inkwave-lock-resume-probe.test.mjs scripts/tests/inkwave-charge-observation-probe.test.mjs scripts/tests/inkwave-charger-selection-probe.test.mjs scripts/tests/inkwave-charger-flow.test.mjs
+      - name: Build exact source once
+        run: |
+          set -euo pipefail
+          ln -s "$GITHUB_WORKSPACE/node_modules" game-source/node_modules
+          (cd game-source && node scripts/build-inkwave.mjs inkwave-public _site)
+      - name: Native Range, one supported Pause Resume, normal and scoped HUD observations
+        shell: bash
+        run: |
+          set +e
+          mkdir -p evidence
+          timeout --signal=TERM --kill-after=10s 1140s node scripts/check-inkwave-lock-outcome-native.mjs --root "$GITHUB_WORKSPACE/game-source" --site "$GITHUB_WORKSPACE/game-source/_site" --out "$GITHUB_WORKSPACE/evidence/outcome"
+          code=$?
+          printf 'exit=%s\n' "$code" > evidence/exit-code.txt
+          if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+            CODE="$code" node --input-type=module - <<'MARK'
+          import fs from 'node:fs';
+          const dir='evidence/outcome',file=dir+'/lock-outcome-result.json';fs.mkdirSync(dir,{recursive:true});
+          const r=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):{schema:1};
+          r.status='failed';r.externalTimeout=process.env.CODE==='124';r.externalKill=process.env.CODE==='137';r.error ||= 'External timeout or kill; cleanup outcome unknown';
+          fs.writeFileSync(file,JSON.stringify(r,null,2)+'\n');
+          MARK
+          fi
+          exit "$code"
+      - name: Preserve diagnostic receipt and internal screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: charger-hud-phase-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 7
