@@ -1,0 +1,738 @@
+{
+  "baseline": "60bbe35d4c5176fd86cb1b65f8e66336982ef6ca",
+  "retrieved": "2026-10-28",
+  "scope": "Public code/source search; not a retail engine or hardware measurement",
+  "searches": [
+    {
+      "query": "UnitDamageRate",
+      "results": [
+        {
+          "url": "https://github.com/TinManTex/mgsv-lookup-strings/blob/0d50b08a0e348e270abfff1c97cebf4454ac2b83/Strings/ssd-json.txt",
+          "path": "Strings/ssd-json.txt",
+          "display_url": "https://github.com/TinManTex/mgsv-lookup-strings/blob/0d50b08a0e348e270abfff1c97cebf4454ac2b83/Strings/ssd-json.txt",
+          "display_title": "Strings/ssd-json.txt",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "uniq_plc\nuniq_seth\nunique_table\nUnitDamageRate_20\nUnitDamageRate_30\nUnitDamageRate_50\nunknown",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    32,
+                    46
+                  ]
+                },
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    50,
+                    64
+                  ]
+                },
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    68,
+                    82
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/800/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "path": "data/parameter/800/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/800/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_title": "data/parameter/800/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.05,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    48,
+                    62
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.1,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    47,
+                    61
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/910/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "path": "data/parameter/910/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/910/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_title": "data/parameter/910/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.05,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    48,
+                    62
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.1,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    47,
+                    61
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/930/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "path": "data/parameter/930/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/930/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_title": "data/parameter/930/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.05,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    48,
+                    62
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.1,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    47,
+                    61
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/810/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "path": "data/parameter/810/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/810/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "display_title": "data/parameter/810/weapon/WeaponRollerBear_Coop.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.05,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    48,
+                    62
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": "          \"SwerveRateBySpeed\": 0.1,\n          \"UnitDamageRate\": 1.0,\n          \"UnitParam\": {",
+              "matches": [
+                {
+                  "text": "UnitDamageRate",
+                  "indices": [
+                    47,
+                    61
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "BounceAfterMaxSpeed",
+      "results": [
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/comp-analyzer/core/WeaponRange.ts",
+          "path": "app/features/comp-analyzer/core/WeaponRange.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/comp-analyzer/core/WeaponRange.ts",
+          "display_title": "app/features/comp-analyzer/core/WeaponRange.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\tburstFrame?: number;\n\tbounceAfterMaxSpeed?: number;\n}",
+              "matches": [
+                {
+                  "text": "bounceAfterMaxSpeed",
+                  "indices": [
+                    23,
+                    42
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": " * The shot's position on every frame until it lands, bursts or stops. Bouncing shots\n * (`bounceAfterMaxSpeed` set) bounce `burstFrame` times instead of landing.\n */",
+              "matches": [
+                {
+                  "text": "bounceAfterMaxSpeed",
+                  "indices": [
+                    91,
+                    110
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/scripts/create-analyzer-json.ts",
+          "path": "scripts/create-analyzer-json.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/scripts/create-analyzer-json.ts",
+          "display_title": "scripts/create-analyzer-json.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t\t\tRange_BrakeGravity: moveParam?.BrakeGravity,\n\t\t\tRange_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,\n\t\t\tRange_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,\n\t\t\tRange_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,\n\t\t\tRange_BurstFrame: isBloblobber ? 3 : undefined,\n\t\t};\n\t}",
+              "matches": [
+                {
+                  "text": "BounceAfterMaxSpeed",
+                  "indices": [
+                    194,
+                    213
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/build-analyzer/analyzer-types.ts",
+          "path": "app/features/build-analyzer/analyzer-types.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/build-analyzer/analyzer-types.ts",
+          "display_title": "app/features/build-analyzer/analyzer-types.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t/** Max frames (Splatanas) or max bounces (Bloblobber) before projectile stops */\n\tRange_BurstFrame?: number;\n\t/** Speed multiplier after bouncing (Bloblobber only) */\n\tRange_BounceAfterMaxSpeed?: number;\n\n\t// Range parameters for chargers (direct distance values)\n\t/** Charger full charge range */",
+              "matches": [
+                {
+                  "text": "BounceAfterMaxSpeed",
+                  "indices": [
+                    176,
+                    195
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/build-analyzer/data/weapon-params.ts",
+          "path": "app/features/build-analyzer/data/weapon-params.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/build-analyzer/data/weapon-params.ts",
+          "display_title": "app/features/build-analyzer/data/weapon-params.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t\t\tRange_BrakeGravity: 0.01,\n\t\t\tRange_BrakeToFreeStateFrame: 1,\n\t\t\tRange_ZRate: 0.5,\n\t\t\tRange_BounceAfterMaxSpeed: 0.6,\n\t\t\tRange_BurstFrame: 3,\n\t\t\tMoveSpeed: 0.05,\n\t\t\tDamageParam_ValueDirect: 320,",
+              "matches": [
+                {
+                  "text": "BounceAfterMaxSpeed",
+                  "indices": [
+                    94,
+                    113
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/110/weapon/WeaponSlosherBathtub.game__GameParameterTable.json",
+          "path": "data/parameter/110/weapon/WeaponSlosherBathtub.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/110/weapon/WeaponSlosherBathtub.game__GameParameterTable.json",
+          "display_title": "data/parameter/110/weapon/WeaponSlosherBathtub.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "        },\n        {\n          \"AfterOffsetPaintRadiusFirstBnce\": -0.05,\n          \"BounceAfterMaxSpeed\": 0.35,\n          \"PaintRadiusFirstBounce\": 1.2,\n          \"UnitOrderNum\": 1\n        }",
+              "matches": [
+                {
+                  "text": "BounceAfterMaxSpeed",
+                  "indices": [
+                    84,
+                    103
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "ShotFailedIntervalFrm",
+      "results": [
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/core/param-explanations.ts",
+          "path": "app/features/params/core/param-explanations.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/core/param-explanations.ts",
+          "display_title": "app/features/params/core/param-explanations.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t\t\"Interval in frames between consecutive shots when firing continuously. Lower means a faster fire rate.\",\n\t// \"WeaponParam.RutPaintRadius\": \"\",\n\t// \"WeaponParam.ShotDirXZ_RotDegH\": \"\",\n\t// \"WeaponParam.ShotFailedIntervalFrm\": \"\",\n\t// \"WeaponParam.ShotGuide.BulletOrderNumInUnit\": \"\",\n\t// \"WeaponParam.ShotGuide.Frame\": \"\",\n\t// \"WeaponParam.ShotGuide.UnitOrderNum\": \"\",",
+              "matches": [
+                {
+                  "text": "ShotFailedIntervalFrm",
+                  "indices": [
+                    204,
+                    225
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/700/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "path": "data/parameter/700/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/700/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_title": "data/parameter/700/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"MinLengthHook_Wall\": 0.0,\n      \"MoveAccAttack\": 0.1,\n      \"MoveSpeedAttack_Init\": 0.06,\n      \"ShotFailedIntervalFrm\": 20,\n      \"SpecialTotalFrame\": 540,\n      \"WaitFrameShot2Attack\": 12\n    }",
+              "matches": [
+                {
+                  "text": "ShotFailedIntervalFrm",
+                  "indices": [
+                    104,
+                    125
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/100/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "path": "data/parameter/100/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/100/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_title": "data/parameter/100/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"MinLengthHook_Wall\": 0.0,\n      \"MoveAccAttack\": 0.1,\n      \"MoveSpeedAttack_Init\": 0.06,\n      \"ShotFailedIntervalFrm\": 20,\n      \"SpecialTotalFrame\": 540,\n      \"WaitFrameShot2Attack\": 12\n    }",
+              "matches": [
+                {
+                  "text": "ShotFailedIntervalFrm",
+                  "indices": [
+                    104,
+                    125
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/930/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "path": "data/parameter/930/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/930/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_title": "data/parameter/930/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"MinLengthHook_Wall\": 0.0,\n      \"MoveAccAttack\": 0.1,\n      \"MoveSpeedAttack_Init\": 0.06,\n      \"ShotFailedIntervalFrm\": 20,\n      \"SpecialTotalFrame\": 540,\n      \"WaitFrameShot2Attack\": 12\n    }",
+              "matches": [
+                {
+                  "text": "ShotFailedIntervalFrm",
+                  "indices": [
+                    104,
+                    125
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/200/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "path": "data/parameter/200/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/200/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "display_title": "data/parameter/200/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"MinLengthHook_Wall\": 0.0,\n      \"MoveAccAttack\": 0.1,\n      \"MoveSpeedAttack_Init\": 0.06,\n      \"ShotFailedIntervalFrm\": 20,\n      \"SpecialTotalFrame\": 540,\n      \"WaitFrameShot2Attack\": 12\n    }",
+              "matches": [
+                {
+                  "text": "ShotFailedIntervalFrm",
+                  "indices": [
+                    104,
+                    125
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "SlipMoveFrame",
+      "results": [
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/core/param-explanations.ts",
+          "path": "app/features/params/core/param-explanations.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/core/param-explanations.ts",
+          "display_title": "app/features/params/core/param-explanations.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t// \"SideStepParam.SlipMoveDistGnd\": \"\",\n\t// \"SideStepParam.SlipMoveFrame\": \"\",\n\t// \"SideStepParam.SplashSlideParam.MoveLength\": \"\",",
+              "matches": [
+                {
+                  "text": "SlipMoveFrame",
+                  "indices": [
+                    60,
+                    73
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": "\t// \"spl__WeaponSaberParam.SwingParam.SideStepParam.SlipMoveDistGnd\": \"\",\n\t// \"spl__WeaponSaberParam.SwingParam.SideStepParam.SlipMoveFrame\": \"\",\n\t// \"spl__WeaponSaberParam.SwingParam.SideStepParam.TimeScale\": \"\",",
+              "matches": [
+                {
+                  "text": "SlipMoveFrame",
+                  "indices": [
+                    126,
+                    139
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/400/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "path": "data/parameter/400/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/400/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_title": "data/parameter/400/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"InkRecoverStop\": 60,\n      \"MoveDist\": 3.5,\n      \"MoveFrame\": 12,\n      \"SlipMoveFrame\": 45,\n      \"SplashSlideParam\": {\n        \"MoveLength\": 4.5,\n        \"PaintWidthHalf\": 1.8",
+              "matches": [
+                {
+                  "text": "SlipMoveFrame",
+                  "indices": [
+                    81,
+                    94
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/610/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "path": "data/parameter/610/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/610/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_title": "data/parameter/610/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"InkRecoverStop\": 60,\n      \"MoveDist\": 3.5,\n      \"MoveFrame\": 12,\n      \"SlipMoveFrame\": 45,\n      \"SplashSlideParam\": {\n        \"MoveLength\": 4.5,\n        \"PaintWidthHalf\": 1.8",
+              "matches": [
+                {
+                  "text": "SlipMoveFrame",
+                  "indices": [
+                    81,
+                    94
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/099/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "path": "data/parameter/099/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/099/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_title": "data/parameter/099/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"InkRecoverStop\": 60,\n      \"MoveDist\": 3.5,\n      \"MoveFrame\": 12,\n      \"SlipMoveFrame\": 45,\n      \"SplashSlideParam\": {\n        \"MoveLength\": 4.5,\n        \"PaintWidthHalf\": 1.8",
+              "matches": [
+                {
+                  "text": "SlipMoveFrame",
+                  "indices": [
+                    81,
+                    94
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/100/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "path": "data/parameter/100/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/100/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "display_title": "data/parameter/100/weapon/WeaponManeuverDual.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "      \"InkRecoverStop\": 60,\n      \"MoveDist\": 3.5,\n      \"MoveFrame\": 12,\n      \"SlipMoveFrame\": 45,\n      \"SplashSlideParam\": {\n        \"MoveLength\": 4.5,\n        \"PaintWidthHalf\": 1.8",
+              "matches": [
+                {
+                  "text": "SlipMoveFrame",
+                  "indices": [
+                    81,
+                    94
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "spl__PlayerJumpParam",
+      "results": []
+    }
+  ],
+  "further": [
+    {
+      "source": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/comp-analyzer/core/WeaponRange.ts",
+      "modified": "2026-10-24T07:59:58Z",
+      "conclusion": "The simulator applies a generated .6 horizontal multiplier after floor bounce; this is a separate community approximation, not the pinned small-unit .35 source parameter or a decoded slope formula."
+    },
+    {
+      "query": "UnitDamageRate (sendou.ink)",
+      "results": []
+    },
+    {
+      "query": "JumpVel (Leanny/splat3)",
+      "results": [
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/ability.html",
+          "path": "ability.html",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/ability.html",
+          "display_title": "ability.html",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\n                        case \"OpInk_JumpVel\":\n                            return \"Opponent Ink - Jump Velocity\"",
+              "matches": [
+                {
+                  "text": "JumpVel",
+                  "indices": [
+                    37,
+                    44
+                  ]
+                }
+              ]
+            },
+            {
+              "property": "content",
+              "fragment": "                    create_table(\"OpInkEffect_Reduction\", \"OpInk_DamagePerFrame\")\n                    create_table(\"OpInkEffect_Reduction\", \"OpInk_JumpVel\")\n                    create_table(\"OpInkEffect_Reduction\", \"OpInk_MoveVel\")",
+              "matches": [
+                {
+                  "text": "JumpVel",
+                  "indices": [
+                    147,
+                    154
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/310/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "path": "data/parameter/310/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/310/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_title": "data/parameter/310/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "    },\n    \"WeaponParam\": {\n      \"$type\": \"spl__WeaponSpJetpackParam\",\n      \"Boost_JumpVel\": 0.3,\n      \"SpecialTotalFrame\": {\n        \"High\": 510.0,\n        \"Low\": 450.0,",
+              "matches": [
+                {
+                  "text": "JumpVel",
+                  "indices": [
+                    85,
+                    92
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/400/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "path": "data/parameter/400/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/400/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_title": "data/parameter/400/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "    },\n    \"WeaponParam\": {\n      \"$type\": \"spl__WeaponSpJetpackParam\",\n      \"Boost_JumpVel\": 0.3,\n      \"SpecialTotalFrame\": {\n        \"High\": 510.0,\n        \"Low\": 450.0,",
+              "matches": [
+                {
+                  "text": "JumpVel",
+                  "indices": [
+                    85,
+                    92
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/510/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "path": "data/parameter/510/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/510/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_title": "data/parameter/510/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "    },\n    \"WeaponParam\": {\n      \"$type\": \"spl__WeaponSpJetpackParam\",\n      \"Boost_JumpVel\": 0.3,\n      \"SpecialTotalFrame\": {\n        \"High\": 510.0,\n        \"Low\": 450.0,",
+              "matches": [
+                {
+                  "text": "JumpVel",
+                  "indices": [
+                    85,
+                    92
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/500/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "path": "data/parameter/500/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/500/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "display_title": "data/parameter/500/weapon/WeaponSpJetpack.game__GameParameterTable.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "    },\n    \"WeaponParam\": {\n      \"$type\": \"spl__WeaponSpJetpackParam\",\n      \"Boost_JumpVel\": 0.3,\n      \"SpecialTotalFrame\": {\n        \"High\": 510.0,\n        \"Low\": 450.0,",
+              "matches": [
+                {
+                  "text": "JumpVel",
+                  "indices": [
+                    85,
+                    92
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "RainNum (sendou.ink)",
+      "results": [
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/core/param-explanations.ts",
+          "path": "app/features/params/core/param-explanations.ts",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/core/param-explanations.ts",
+          "display_title": "app/features/params/core/param-explanations.ts",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t// CloudParam\n\t// \"CloudParam.DamageRadius\": \"\",\n\t// \"CloudParam.NoPaintRainNum\": \"\",\n\t// \"CloudParam.RainNum\": \"\",\n\t// \"CloudParam.RainyFrame.High\": \"\",\n\t// \"CloudParam.RainyFrame.Low\": \"\",\n\t// \"CloudParam.RainyFrame.Mid\": \"\",",
+              "matches": [
+                {
+                  "text": "RainNum",
+                  "indices": [
+                    73,
+                    80
+                  ]
+                },
+                {
+                  "text": "RainNum",
+                  "indices": [
+                    103,
+                    110
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/data/all-version-special-params.json",
+          "path": "app/features/params/data/all-version-special-params.json",
+          "display_url": "https://github.com/sendou-ink/sendou.ink/blob/ad8dda2476280e9a99a3c5a9e5fc031b83c319df/app/features/params/data/all-version-special-params.json",
+          "display_title": "app/features/params/data/all-version-special-params.json",
+          "text_matches": [
+            {
+              "property": "content",
+              "fragment": "\t\t\t\"CloudParam\": {\n\t\t\t\t\"DamageRadius\": 10,\n\t\t\t\t\"NoPaintRainNum\": 0,\n\t\t\t\t\"RainNum\": 72,\n\t\t\t\t\"RainyFrame\": {\n\t\t\t\t\t\"High\": 600,\n\t\t\t\t\t\"Low\": 480,",
+              "matches": [
+                {
+                  "text": "RainNum",
+                  "indices": [
+                    55,
+                    62
+                  ]
+                },
+                {
+                  "text": "RainNum",
+                  "indices": [
+                    73,
+                    80
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
