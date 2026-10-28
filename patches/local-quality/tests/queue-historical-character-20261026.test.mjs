@@ -6,6 +6,8 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
+import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
+import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const oracle=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-historical-character-before-20261026.json',import.meta.url),'utf8'));
 const raw=rel=>fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8');
@@ -77,8 +79,25 @@ test('eyeball ring reuse observes cornea mutation between eyes and preserves acc
  }
 });
 
+// Independently pin the later character weapon presentation extraction rather
+// than discarding historical parity when the compositor adds reviewed changes.
+const characterWeaponBefore="  _animWeapon(dt, s, w) {\n    let near = true;\n    if (this.inWorld && !this.isLocal && G.camera) near = G.camera.position.distanceToSquared(this.root.position) < 15 * 15;\n    // a far-tier kid holds the merged weapon, decimated like the body (a 4–6k-tri gun on a 60 px kid is all waste)\n    const farT = this.lod.tier === T_FAR && this.lod.to < 0;\n    if (farT) near = false;\n    for (let x = w; x; x = x.left) {\n      if (x.farDec === farT) continue;\n      x.farDec = farT;\n      x.bodyFar.geometry = farT ? farGeometry(x.def.body, 700) : x.def.body; x.inkFar.geometry = farT ? farGeometry(x.def.ink, 300) : x.def.ink;\n    }\n";
+const characterWeaponAfter="  // Weapon contact poses also need this frame's representation before anchor\n  // application. Keep the native selection and far geometry preparation here.\n  _weaponPresentationNear(w) {\n    let near = true;\n    if (this.inWorld && !this.isLocal && G.camera) near = G.camera.position.distanceToSquared(this.root.position) < 15 * 15;\n    // a far-tier kid holds the merged weapon, decimated like the body (a 4–6k-tri gun on a 60 px kid is all waste)\n    const farT = this.lod.tier === T_FAR && this.lod.to < 0;\n    if (farT) near = false;\n    for (let x = w; x; x = x.left) {\n      if (x.farDec === farT) continue;\n      x.farDec = farT;\n      x.bodyFar.geometry = farT ? farGeometry(x.def.body, 700) : x.def.body; x.inkFar.geometry = farT ? farGeometry(x.def.ink, 300) : x.def.ink;\n    }\n    return near;\n  }\n\n  _animWeapon(dt, s, w) {\n    const near = this._weaponPresentationNear(w);\n";
 test('historical character recovery uses independently pinned 5ca sources and preserves direct outfit ownership',()=>{
- for(const[rel,entry]of Object.entries(oracle.modules)){assert.equal(sha(entry.source),entry.sha256,rel);const next=candidate(rel,raw(rel));parse(next,{ecmaVersion:'latest',sourceType:'module'});if(rel==='src/game/character-outfit.js'){assert.equal(next,raw(rel));assert.equal(adaptHistoricalCharacter20261026(rel,next),next);}else{assert.equal(adaptHistoricalCharacter20261026(rel,entry.source),next);assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);}}
+ for(const[rel,entry]of Object.entries(oracle.modules)){assert.equal(sha(entry.source),entry.sha256,rel);const next=candidate(rel,raw(rel));parse(next,{ecmaVersion:'latest',sourceType:'module'});if(rel==='src/game/character-outfit.js'){assert.equal(next,raw(rel));assert.equal(adaptHistoricalCharacter20261026(rel,next),next);}else{
+   const historical=adaptHistoricalCharacter20261026(rel,entry.source);
+   // The production composer also runs GPU/CPU hotpath optimization after
+   // recovering archived character sources. Compare the completed output,
+   // not the intermediate historical stage.
+   let composed=adaptCombatGpuCpuPerfect(rel,historical,replaceOnce);
+   if(rel==='src/game/character.js'){
+     composed=replaceOnce(composed,characterWeaponBefore,characterWeaponAfter,
+       'native weapon near/far presentation extraction');
+   }
+   assert.equal(composed,next,'full post-historical character source must stay byte-exact: '+rel);
+   assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);
+   assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);
+  }}
  assert.equal(adaptHistoricalCharacter20261026('unrelated','same'),'same');
 });
 test('actual Three.js surfaces, tube attributes and suction geometry preserve exact bytes with half as many arc mappings',()=>{
