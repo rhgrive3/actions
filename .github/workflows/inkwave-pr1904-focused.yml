@@ -1,0 +1,45 @@
+name: INKWAVE PR1904 narrow patch regression check
+on:
+  push:
+    branches: ['ci/staged-fast-pr-full-ready-20261028']
+    paths:
+      - '.github/workflows/inkwave-pr1904-focused.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-pr1904-focused-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /tests/
+            /server/
+            /reports/
+            /tools/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable checkout
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Install pinned build dependency
+        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
+      - name: Test exact HUD RAF golden
+        run: node --experimental-vm-modules --test patches/local-quality/tests/drive-visual-audio.test.mjs
+      - name: Test historical character post-composition parity
+        run: node --experimental-vm-modules --test patches/local-quality/tests/queue-historical-character-20261026.test.mjs
+      - name: Test shader-observed world UV / reentry
+        run: node --experimental-vm-modules --test patches/local-quality/tests/world-cache-queue.test.mjs
