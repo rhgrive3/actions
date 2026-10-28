@@ -114,10 +114,11 @@ test('Turf workflow guard rejects list-only, source-only, wrong site, optional e
  ]) {assert(source.includes(from));assert.throws(()=>assertTurfWorkflowRoute(source.replace(from,to)));}
 });
 
-test('reopened-six replaces only monolithic Turf with bounded source execution and retains failure evidence',()=>{
- const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-reopened-six.yml',import.meta.url),'utf8');
- assert(!workflow.includes('patches/splatoon3/tests/turf-finish.test.mjs'));
- const steps=workflow.split(/^      - /m);
+function assertReopenedTurfWorkflow(workflow){
+ const job=workflow.match(/^  reopened-six:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
+ assert(job,'missing reopened-six job');
+ const steps=job.split(/^      - /m).slice(1);
+ assert(!steps.some(step=>step.includes('patches/splatoon3/tests/turf-finish.test.mjs')));
  assert(steps.includes('name: Verify all Turf finish cases on source\n        run: node scripts/run-inkwave-turf-finish-isolated.mjs . source .ci-scratch/turf-finish-source\n'));
  for(const file of ['superjump-gameplay','support-kit-recon-cooler','support-kit-two-peer','issue-835-cooler-punisher','issue-514-sourced-partial-range','issue-1108-roller-wall-idle','map-reveal']) assert(workflow.includes('patches/splatoon3/tests/'+file+'.test.mjs'));
  for(const file of ['bot-paint-device-profile','bot-paint-observation']) assert(workflow.includes('patches/local-quality/tests/'+file+'.test.mjs'));
@@ -126,6 +127,17 @@ test('reopened-six replaces only monolithic Turf with bounded source execution a
  assert(evidence.includes('        if: always()\n') && evidence.includes('        uses: actions/upload-artifact@v4\n'));
  assert(evidence.includes('          path: .ci-scratch/turf-finish-source/\n') && evidence.includes('          if-no-files-found: error\n'));
  assert(workflow.includes("      - 'scripts/run-inkwave-turf-finish-isolated.mjs'"));
+}
+test('reopened-six replaces only monolithic Turf with bounded source execution and retains failure evidence',()=>{
+ assertReopenedTurfWorkflow(fs.readFileSync(new URL('../../.github/workflows/inkwave-reopened-six.yml',import.meta.url),'utf8'));
+});
+test('reopened-six rejects monolithic Turf execution, missing bounded cases and lost evidence',()=>{
+ const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-reopened-six.yml',import.meta.url),'utf8');
+ for(const changed of [
+  workflow.replace('      - name: Verify all Turf finish cases on source\n','      - name: forbidden monolithic Turf\n        run: node --test patches/splatoon3/tests/turf-finish.test.mjs\n      - name: Verify all Turf finish cases on source\n'),
+  workflow.replace('node scripts/run-inkwave-turf-finish-isolated.mjs . source .ci-scratch/turf-finish-source','echo skip-bounded'),
+  workflow.replace('          if-no-files-found: error','          if-no-files-found: ignore'),
+ ]) {assert.notEqual(changed,workflow);assert.throws(()=>assertReopenedTurfWorkflow(changed));}
 });
 
 test('default patch shard retains Turf ownership but runs bounded cases instead of the monolithic file',()=>{

@@ -87,7 +87,6 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
   fs.mkdirSync(path.join(scripts, 'lib'), { recursive: true });
   fs.mkdirSync(path.join(scripts, 'ci'), { recursive: true });
   fs.copyFileSync(new URL('../ci/inkwave-responsive-child-pool.mjs', import.meta.url), path.join(scripts, 'ci/inkwave-responsive-child-pool.mjs'));
-
   fs.copyFileSync(new URL('../lib/inkwave-responsive-progress-summary.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-progress-summary.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-session-retry.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-session-retry.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-animation-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-animation-diagnostics.mjs'));
@@ -111,6 +110,8 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
     fs.writeFileSync(runner, source.replace("from 'node:child_process'", "from './fake-child.mjs'"));
     const output = spawnSync(process.execPath, [runner, '--source', dir, '--evidence-dir', path.join(dir, 'evidence'), '--profile-dir', path.join(dir, 'profiles')],
       { encoding: 'utf8', env: { ...process.env, PROBE_FAILURE: String(failed), NODE_NO_WARNINGS: '1' } });
+    assert.equal(output.error, undefined, `isolated runner launch failed: ${output.error}`);
+    assert.ok(fs.existsSync(path.join(dir, 'evidence/responsive-result.json')), `isolated runner produced no receipt: ${output.stderr}`);
     return { ...output, report: JSON.parse(fs.readFileSync(path.join(dir, 'evidence/responsive-result.json'))) };
   };
   const normalize = text => text.split('\n').filter(line => !line.includes('"event":"responsive-child-progress"'))

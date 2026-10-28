@@ -54,8 +54,8 @@ test('actual isolated runner preserves first attempt and rejects recovered ident
  const fs=await import('node:fs'),os=await import('node:os'),path=await import('node:path'),{spawnSync}=await import('node:child_process');
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'responsive-retry-'));
  try {
-  const scripts=path.join(root,'scripts'),lib=path.join(scripts,'lib');fs.mkdirSync(lib,{recursive:true});
-  for(const f of ['check-inkwave-responsive-isolated.mjs','lib/inkwave-responsive-session-retry.mjs','lib/inkwave-responsive-progress-summary.mjs','lib/inkwave-responsive-diagnostics.mjs','lib/inkwave-responsive-animation-diagnostics.mjs']) {
+  const scripts=path.join(root,'scripts'),lib=path.join(scripts,'lib');fs.mkdirSync(lib,{recursive:true});fs.mkdirSync(path.join(scripts,'ci'),{recursive:true});
+  for(const f of ['check-inkwave-responsive-isolated.mjs','ci/inkwave-responsive-child-pool.mjs','lib/inkwave-responsive-session-retry.mjs','lib/inkwave-responsive-progress-summary.mjs','lib/inkwave-responsive-diagnostics.mjs','lib/inkwave-responsive-animation-diagnostics.mjs']) {
    fs.copyFileSync(new URL('../'+f,import.meta.url),path.join(scripts,f));
   }
   const runner=path.join(scripts,'check-inkwave-responsive-isolated.mjs');const production=fs.readFileSync(runner,'utf8'),replaced=production.replace("import { spawnSync } from 'node:child_process';","import { spawnSync } from './fake-child.mjs';");assert.notEqual(production,replaced);fs.writeFileSync(runner,replaced);
