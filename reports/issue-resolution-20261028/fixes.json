@@ -513,6 +513,100 @@
       ],
       "validation": "player-collision-source-1130 importsweapon-edgecases-fixture, consumingINKWAVE_EDGECASE_SITE. ExistingBUILT_SITE alone selectedsource. Core nowsetsactualEDGECASE_SITE; actualemitted2/2passedwithsameartifact, no count/expectation change. Other10/27fixtureselectors audited; YAML81 andCIcontrols11 pass.",
       "hosted_exact_head_acceptance": "pending next combined published source; this was a coverage gap, not an observed failed job"
+    },
+    {
+      "id": "optimized-charger-scratch-ownership-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "c8ae9404645c5d706d03114495c52c3c4dead6b7",
+          "files": [
+            "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs"
+          ]
+        },
+        {
+          "sha": "87b289b0fc3c169956d56e780e44eecbc8cf74d1",
+          "files": [
+            "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Baseline whole file 5 pass / 1 fail. Fixed source 16/16 and actual optimized emitted 16/16, zero skips; four ownership/reuse mutations reject. Actual installer/dispatcher with explicit Projectiles API doubles; warm reuse, nested and exceptional calls, per-install isolation, remote/custom output ownership. Original six broadphase/performance checks retained. Agent1 independently reran both modes and approved. No runtime change.",
+      "receipt": "optimized-charger-scratch.json",
+      "hosted_exact_head_acceptance": "Pending the next optimized published head; original failed job remains recorded."
+    },
+    {
+      "id": "optimized-charger-broadphase-endpoint-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "606d6b148e7da3de86e234a8ee913e994e436a53",
+          "files": [
+            "patches/splatoon3/tests/queue-combat-358.test.mjs"
+          ]
+        },
+        {
+          "sha": "73a789978863953c625bf12b9bd6d1b08d1d6b64",
+          "files": [
+            "patches/splatoon3/tests/queue-combat-358.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Baseline whole file 7 pass / 1 fail. Fixed source 10/10 and mixed optimized emitted-suite 10/10, zero skips; the 936-case geometry matrix is source-only. Real capsule, form hurtbox and coherent-motion functions; exact survivor tuples, all omitted native-null, matching full/partial hit order, stopping, seen, impact and lease state. 21,816 full-scan calls versus 17,016 optimized, 4,800 proven misses culled, 3,766 identical reported hits. Five radius/margin/boundary/time/relative-endpoint mutants reject. Original eight cases and Math.min budgets retained, including zero/NaN behavior. Agent4 independently reran source and mixed emitted suite and approved. No runtime change.",
+      "receipt": "optimized-charger-broadphase.json",
+      "hosted_exact_head_acceptance": "Pending the next optimized published head; original failed job remains recorded."
+    },
+    {
+      "id": "emitted-guide-header-companion-contract",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "2edc12f037e0041455b9bd2be7388518536cb3d3",
+          "files": [
+            "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+          ]
+        },
+        {
+          "sha": "2e3c072b10e4f0c6c3b1180a6c283d0186303b0e",
+          "files": [
+            "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Root187corestep7 primary44/46pass2fail; requiredemitted EDGECASEenvwascorrectbutcompanionfixedheaderwasmissed. Exactheaderupdated, omitted/wrongselectornegativecontrols retainedandexpanded. Exact6-file46/46source Node22, independentAgent6 Node22/24; no runtimefailure.",
+      "receipt": "wall-edgecase-contract-repair.json",
+      "hosted_exact_head_acceptance": "pending next combined published head"
+    },
+    {
+      "id": "early-emitted-coverage-admission-contract",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "cc17d93dd13cd1f5d553a46f0fd6aee42bb35626",
+          "files": [
+            ".github/workflows/validate-inkwave-update.yml",
+            "scripts/tests/inkwave-ci-recurrence-guards.test.mjs",
+            "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Mandatoryearlycommand is onlywallcoverage6cases (~90ms); all6passonactualsparsepayload+only41467Bcommittedpackage-lockmetadata, no vendor/npm/history. Full6-file46/corecommandretained; othernetworkdiagnosticroutecountsunchanged. Exactmetadata profile rejects missing/wrong/duplicate file; command rejects omission/filter; mutation construction movedoutsideassertThrows so staleanchors failsetup. Combinedaffected106/106, fastother205/205 andquickpass, independentAgent6changed18/18; YAML81.",
+      "receipt": "wall-admission-lock-proof.json",
+      "hosted_exact_head_acceptance": "pending next combined published head"
     }
   ]
 }

@@ -154,3 +154,13 @@ root shard0の別失敗はKrakenの`attacker-life-change-keeps-committed-hit`。
 CIのhurtbox stepは、fixtureが読む`INKWAVE_EDGECASE_SITE`を設定せずsourceを選んでいた。`7f7b2851`で本来のemitted siteを指定し、実emitted2case成功を確認した。期待値の緩和ではなく未実行だった経路の検証である。
 
 次のpush前に、[後続coreの関連する一度だけのローカル検証](emitted-core-sweep.md)、[通信のselector/command/hash](emitted-network-sweep.json)、[武器/物理のcommand/hash/skip境界](emitted-weapon-sweep.json)を確認した。新規失敗job・元source・対応commitは[`new-ci-failures.json`](new-ci-failures.json)に追記し、正式な次head CIとは区別する。最適化側のscratch名・broadphase後のcall-listについても隔離worktreeで修正・独立レビュー中。Issueは形式的にCloseせず、#1767も必要な全体CIまでOpenを維持する。
+
+## 最適化固有の残りfixtureと契約の再発防止（20:53 UTC）
+
+最適化`0706b35a`の全8source shardが完走し、0/3/4/5/7は成功、1/2/6の失敗はそれぞれ古いbroadphase call-list、scratch名、GPU22文字列形に特定された。scratchの`c8ae9404`は実installer/dispatcherによる再利用・depth・例外unwind・installation別所有権と4mutationを確認し、source/actual emitted各16/16、Agent1が独立承認。[範囲とreceipt](optimized-charger-scratch.json)。broadphaseの`606d6b14`は、元の8caseとclip/Math.min条件を維持し、936のsource-kernel条件で全除外候補が実capsule solverでnull、命中順序等が同じことを検証。sourceとmixed emitted suite各10/10、Agent4が独立承認。[936caseがemitted全件ではないという境界を含むreceipt](optimized-charger-broadphase.json)。両方とも#1907固有のtest変更でruntimeを変更しない。
+
+通常版`187e4ddd`のcoreは、私が正しい`INKWAVE_EDGECASE_SITE`を追加した際に固定header契約の追随を漏らし、依存install前のstep7で44/46成功・2失敗となった。`2edc12f0`を`2e3c072b`へ適用し、厳密header equalityと既存の全条件を維持したまま欠落/誤siteの負の対照を追加、46/46成功。Agent6も独立承認。[再現と修正receipt](wall-edgecase-contract-repair.json)。Turf/launch artifact欠落はproducer step未実行の二次結果である。
+
+`cc17d93d`では、実際に失敗したemitted coverage契約6caseだけを必須admissionに追加した。既存のsparse payloadに必要だった追加は41,467byteのcommitted `package-lock.json`のみ。実payloadで6/6、vendor/npm/historyなし、約90ms。[依存関係の最小proof](wall-admission-lock-proof.json)の46case probeに加え、最終6case commandを別途確認した。全6ファイルを早期に重複実行すると既存の診断route契約に干渉したため採用せず、元のrouteとcoreの全commandを維持する。metadataの欠落/誤入力/重複とcommandの削除/filterを拒否し、mutation setupはassertThrowsの外で必ず実変更を確認する。関連106/106、fastの残る205/205とquick、YAML81、Agent6の独立18/18が成功。これらの数は重複し単純加算しない。
+
+現行29Open Issueと2Open PR、main `e67c636b`が変わっていないことを再取得した。`187e4ddd`のcharacter QAは20:40:36 UTCに`@rhgrive3`によって取り消され、成功・assertion失敗のどちらにも分類しない。当方はこのjobを再実行していない。過去の同一配布byteでの24/10成功とは区別する。新しい公開headの正式CIはPRチェックと本文へ反映する。#401は対象外、mainへのマージとIssueの形式的Closeは行わない。

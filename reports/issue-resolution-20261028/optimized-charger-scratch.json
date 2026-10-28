@@ -1,0 +1,77 @@
+{
+  "commit": "c8ae9404645c5d706d03114495c52c3c4dead6b7",
+  "base": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+  "file": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+  "node": "22.23.4",
+  "sourceCommand": "node --experimental-vm-modules --test patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+  "emittedEnv": {
+    "INKWAVE_BUILT_SITE": "/workspace/scratch/agent2-optimized-site"
+  },
+  "before": {
+    "pass": 5,
+    "fail": 1,
+    "skip": 0
+  },
+  "sourceAfter": {
+    "pass": 16,
+    "fail": 0,
+    "skip": 0
+  },
+  "emittedAfter": {
+    "pass": 16,
+    "fail": 0,
+    "skip": 0
+  },
+  "build": {
+    "inputHash": "930c0227c2d08bd3fcca6e691b117497766972f721dc185316c9f3c18d1c8879",
+    "contentHash": "c14fbb326bdef2888af600b72e982e10e26b8cc380e4c57d510656df84720dde",
+    "subjectSha256": "90965aea191d56d4783fcb54218d63ce3b8bfeeb0e4b563312d03e2bd7308455"
+  },
+  "logs": {
+    "before": {
+      "path": "/workspace/scratch/agent3-opt-charger-scratch-before.log",
+      "sha256": "e945862ee2a2c54242a479250fa6eaf1d1164d9395037fc097fce96cc6da5b5c"
+    },
+    "source-reviewed": {
+      "path": "/workspace/scratch/agent3-opt-charger-scratch-source-reviewed.log",
+      "sha256": "bb32edee123497b31017d7a694dab8ad2abd94ccf05e9e43dbae1ca598814ced"
+    },
+    "emitted-reviewed": {
+      "path": "/workspace/scratch/agent3-opt-charger-scratch-emitted-reviewed.log",
+      "sha256": "8967d3099ce6421da63cd01cb13ee72910449282659d26ea143ac258dfa1f717"
+    }
+  },
+  "controls": [
+    "Always-new scratch fails warming/reuse oracle.",
+    "One slot for all depths fails nested ownership oracle.",
+    "A module-global pool fails cross-install ownership oracle.",
+    "Unconditional remote/custom reuse fails callback ownership oracle."
+  ],
+  "scope": [
+    "Actual source or byte-verified emitted installChargerFlight and actual production emit/on dispatcher.",
+    "Projectiles callback/Hit/world query API doubles isolate installer ownership; no native Actor or flight-contact update, GPU, full-match or Nintendo retail claim.",
+    "All six pre-existing native-stage, broadphase and performance checks remain active.",
+    "Test-only correction; no runtime, packaging, tolerance, remote push, or CI rerun."
+  ],
+  "review": {
+    "status": "approved",
+    "reviewer": "Agent1",
+    "findings": "No blocking findings; no edits.",
+    "independentSource": {
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    "independentEmitted": {
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    "logs": [
+      "/workspace/scratch/agent1-charger-scratch-c8ae-source-review.log",
+      "/workspace/scratch/agent1-charger-scratch-c8ae-emitted-review.log"
+    ]
+  },
+  "integratedCommit": "87b289b0fc3c169956d56e780e44eecbc8cf74d1",
+  "pr": 1907
+}
