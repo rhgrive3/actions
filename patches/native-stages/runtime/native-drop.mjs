@@ -5,6 +5,14 @@ import {stepGroundVelocity} from '../../splatoon3/runtime/movement-physics.mjs';
 import {weightSpeedCurve} from '../../splatoon3/runtime/weapon-weight.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
 
+const _dropDown=new THREE.Vector3(0,-1,0),_dropTo=new THREE.Vector3(),_dropPrev=new THREE.Vector3(),_dropPoint=new THREE.Vector3(),_dropRayOrigin=new THREE.Vector3(),_dropLocal=new THREE.Vector3(),_dropStart=new THREE.Vector3(),_dropGoal=new THREE.Vector3();
+const _dropFoot=new Hit(),_dropProbe={pos:_dropPoint,grounded:true,form:'kid'},_dropNode={x:0,y:0,z:0};
+function findDropEdge(from,toId){
+ const nb=from?.nb;if(!nb)return undefined;
+ for(let i=0;i<nb.length;i++){const e=nb[i];if(e.to===toId&&e.drop)return e;}
+ return undefined;
+}
+
 const terrainRadius=squid=>{
  const raw=squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw;
  return Number.isFinite(raw)&&Number.isFinite(PLAYER.s3TerrainDistanceScale)?raw*PLAYER.s3TerrainDistanceScale:PLAYER.radius;
@@ -114,7 +122,7 @@ export function nativeDropTransition(graph,upper,lower){
 export function nativeDropTravelForm(brain,G){
  if(!G.level?.manifest?.sourceNavigation?.highDrops)return;
  const N=G.nav,from=N.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N.nodes[brain.path?.[brain.pi]];
- if(from?.nb.some(e=>e.to===to?.id&&e.drop)){
+ if(findDropEdge(from,to?.id)){
   const input=brain.a.intent;input.squid=input.fire=input.jump=input.sub=input.special=false;
  }
 }
@@ -122,22 +130,23 @@ export function nativeDropTravelForm(brain,G){
 /** A changed first contact needs its own physical walk to the source goal. */
 function supportedDropTouchdown(G,actor,node){
  if(!nativeSourceFootSupported(G,actor,node))return false;
- const from=actor.pos,to=from.clone().set(node.x,node.y,node.z),L=G.level,P=G.physics,down=new THREE.Vector3(0,-1,0),foot=new Hit();
+ const from=actor.pos,to=_dropTo.set(node.x,node.y,node.z),L=G.level,P=G.physics,down=_dropDown,foot=_dropFoot;
  const sweep=P._nativeLiveDropClearance||(P._nativeLiveDropClearance=nativeDropClearance(L));
- let previous=from.clone();
+ const previous=_dropPrev.copy(from),humanRadius=terrainRadius(false);
  const count=Math.max(1,Math.ceil(from.distanceTo(to)/.1));
  for(let i=0;i<=count;i++){
-  const p=from.clone().lerp(to,i/count),h=L.triangleWorld.ray(p.clone().setY(p.y+.25),down,.5,{minNormalY:.68});
+  const p=_dropPoint.copy(from).lerp(to,i/count),h=L.triangleWorld.ray(_dropRayOrigin.set(p.x,p.y+.25,p.z),down,.5,{minNormalY:.68});
   if(!h||!(h.flags&2)||L.data.triangleFace[h.triangle]<0)return false;
-  const face=L.faces[L.data.triangleFace[h.triangle]],local=h.point.clone().sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),x=Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),z=Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)));
+  const face=L.faces[L.data.triangleFace[h.triangle]],local=_dropLocal.copy(h.point).sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),x=Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),z=Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)));
   if(!face.turf||!L.containsOnFace(face,h.point)||!L.mask[face.grid+z*face.nu+x])return false;
   // The same installed ring that supports the real Actor predicts a short
   // ordinary walk. Its feet can sit above the source centre on a real slope.
   P.groundProbe(p.x,h.point.y,p.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,foot,false);
   if(!foot.hit||foot.block<0||foot.block>=L.staticBlockCount||foot.normal.y<=.68)return false;
   p.y=foot.y;
-  if(!nativeSourceFootSupported(G,{pos:p,grounded:true,form:'kid'},{x:p.x,y:h.point.y,z:p.z})||!P.bodyFits(p,terrainRadius(false),PLAYER.stepUp,PLAYER.height,false,.003)||!sweep.clear(previous,p,terrainRadius(false),PLAYER.stepUp,PLAYER.height))return false;
-  previous=p;
+  _dropNode.x=p.x;_dropNode.y=h.point.y;_dropNode.z=p.z;
+  if(!nativeSourceFootSupported(G,_dropProbe,_dropNode)||!P.bodyFits(p,humanRadius,PLAYER.stepUp,PLAYER.height,false,.003)||!sweep.clear(previous,p,humanRadius,PLAYER.stepUp,PLAYER.height))return false;
+  previous.copy(p);
  }
  return true;
 }
@@ -151,9 +160,9 @@ export function updateNativeDrop(brain,G,dt){
  if(old&&(old.level!==G.level||old.nav!==N||old.match!==G.match||old.mode!==G.match?.mode)){brain._nativeDrop=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  let index=brain.pi;
  if(index===0&&brain.path.length>1){const first=N.nodes[brain.path[0]];if(Math.hypot(a.pos.x-first.x,a.pos.z-first.z)<.8&&Math.abs(a.pos.y-first.y)<.3)index=1;}
- const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.drop);
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=findDropEdge(from,to?.id);
  if(!edge){brain._nativeDrop=null;return false;}
- const d=edge.drop,start=new a.pos.constructor(...d.upper),goal=new a.pos.constructor(...d.landing);
+ const d=edge.drop,start=_dropStart.fromArray(d.upper),goal=_dropGoal.fromArray(d.landing);
  const state=brain._nativeDrop?.edge===edge&&brain._nativeDrop.path===brain.path?brain._nativeDrop:(brain._nativeDrop={edge,path:brain.path,phase:'approach',seconds:0,level:G.level,nav:N,match:G.match,mode:G.match?.mode});state.seconds+=dt;
  if(state.seconds>8){brain._nativeDrop=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  brain.pi=index;brain.noProg=0;
