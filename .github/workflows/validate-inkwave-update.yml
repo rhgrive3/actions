@@ -939,7 +939,7 @@ jobs:
         run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'responsive'
-        run: node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+        run: node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive" --workers 2
       - name: Verify mobile launch and result actions stay visible
         if: matrix.suite == 'responsive'
         run: |
