@@ -1,0 +1,91 @@
+name: INKWAVE native lock resume diagnostic (exact 126)
+on:
+  push:
+    branches: [diagnostic/charger-lock-resume-126-20261028]
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/diagnostic/charger-lock-resume-126-20261028'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify diagnostic parent, exact tree, allowlisted paths and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.workflow_sha }}" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          test "$(git rev-parse HEAD^)" = 126231d4d7d039ddde26a67eead5a4f27c73a425
+          test "$(git rev-parse HEAD^^{tree})" = 34ab34c0890cebf9d638429d585cc6f2328072aa
+          expected=$(printf '%s\n' '.circleci/config.yml' '.github/workflows/bootstrap-hex-worker-repos.yml' '.github/workflows/hex-fast-tail-known.yml' '.github/workflows/inkwave-lock-outcome-126-diagnostic.yml' 'scripts/check-inkwave-lock-outcome-native.mjs' 'scripts/check-inkwave-lock-outcome-observer.mjs' 'scripts/check-inkwave-lock-resume-probe.mjs' 'scripts/tests/inkwave-lock-resume-probe.test.mjs' 'scripts/tests/inkwave-lock-outcome-native.test.mjs' 'scripts/tests/inkwave-lock-outcome-observer.test.mjs' | sort)
+          actual=$(git diff --no-renames --name-only HEAD^ HEAD | sort)
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:.circleci/config.yml)" = 8ce4c0fc5e95a15a582ee0aeded472a3381ebf64
+          test "$(git rev-parse HEAD:.github/workflows/bootstrap-hex-worker-repos.yml)" = 7e8ebec54ce8fbe9346a78510ccfa3e9960a3369
+          test "$(git rev-parse HEAD:.github/workflows/hex-fast-tail-known.yml)" = b45dc7bb86bc1b7ce34c013488e09de6f6ef8a43
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-outcome-native.mjs)" = ee47abae979537b2529d864733affa2ec9cf4130
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-resume-probe.mjs)" = 396fa6698b86bb7266e458ef6ddc74d13a16a915
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-lock-resume-probe.test.mjs)" = d52af41dfeeebfb003ec95cc96056b7148655207
+          test "$(git rev-parse HEAD:scripts/check-inkwave-lock-outcome-observer.mjs)" = fe2473487261e479d4f8b93e4193908aa643a350
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-lock-outcome-native.test.mjs)" = e10d9d6ca1841e4e9a0beef1cfa67b1c29e335b7
+          test "$(git rev-parse HEAD:scripts/tests/inkwave-lock-outcome-observer.test.mjs)" = 0e0bbfd7a8433ca8e1f316e6cbca04883ddb2f89
+      - name: Checkout exact source under test
+        uses: actions/checkout@v4
+        with:
+          ref: 126231d4d7d039ddde26a67eead5a4f27c73a425
+          path: game-source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify clean exact source
+        run: |
+          set -euo pipefail
+          test "$(git -C game-source rev-parse HEAD)" = 126231d4d7d039ddde26a67eead5a4f27c73a425
+          test "$(git -C game-source rev-parse HEAD^{tree})" = 34ab34c0890cebf9d638429d585cc6f2328072aa
+          test -z "$(git -C game-source status --porcelain)"
+      - name: Install pinned tools and secure Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Run observer and safety contracts
+        run: node --test scripts/tests/inkwave-lock-outcome-observer.test.mjs scripts/tests/inkwave-lock-outcome-native.test.mjs scripts/tests/inkwave-lock-resume-probe.test.mjs
+      - name: Build exact source once
+        run: |
+          set -euo pipefail
+          ln -s "$GITHUB_WORKSPACE/node_modules" game-source/node_modules
+          (cd game-source && node scripts/build-inkwave.mjs inkwave-public _site)
+      - name: One native Range entry and at most one supported Pause Resume
+        shell: bash
+        run: |
+          set +e
+          mkdir -p evidence
+          timeout --signal=TERM --kill-after=10s 450s node scripts/check-inkwave-lock-outcome-native.mjs --root "$GITHUB_WORKSPACE/game-source" --site "$GITHUB_WORKSPACE/game-source/_site" --out "$GITHUB_WORKSPACE/evidence/outcome"
+          code=$?
+          printf 'exit=%s\n' "$code" > evidence/exit-code.txt
+          if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+            CODE="$code" node --input-type=module - <<'MARK'
+          import fs from 'node:fs';
+          const dir='evidence/outcome',file=dir+'/lock-outcome-result.json';fs.mkdirSync(dir,{recursive:true});
+          const r=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):{schema:1};
+          r.status='failed';r.externalTimeout=process.env.CODE==='124';r.externalKill=process.env.CODE==='137';r.error ||= 'External timeout or kill; cleanup outcome unknown';
+          fs.writeFileSync(file,JSON.stringify(r,null,2)+'\n');
+          MARK
+          fi
+          exit "$code"
+      - name: Preserve diagnostic receipt and internal screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: charger-lock-resume-126-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 7
