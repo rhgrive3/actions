@@ -158,3 +158,13 @@ test('wet and legacy vertical meshes share the original 16-instance list-order b
   assert.equal(s.s3ShapeCounts.slashV,16,'never 16+16 after splitting mesh resources');
   assert.equal(s.list.length,10,'presentation cap never deletes physical projectiles');
 });
+
+test('actual wet Wiper material hook avoids GLSL ES reserved patch identifier without changing its math',async()=>{
+  const f=await setup(),{s}=fire(f,'s3-saber-normal');s._draw();
+  const mat=s._s3Shapes.wetSlashV.material,shader=compile(f,mat);
+  assert.equal(mat.customProgramCacheKey(),'s3-wet-slash-1');
+  assert.match(shader.fragmentShader,/float iwWetPatch\s*=\s*sin\(vS3Local\.x \* 3\.7 \+ vS3Local\.z \* 4\.1\)/);
+  assert.match(shader.fragmentShader,/0\.45 \* sin\(vS3Local\.x \* 7\.3 - vS3Local\.z \* 5\.2 \+ 1\.1\)/);
+  assert.match(shader.fragmentShader,/diffuseColor\.rgb \*= 0\.94 \+ 0\.09 \* smoothstep\(-0\.3, 1\.0, iwWetPatch\)/);
+  assert.doesNotMatch(shader.fragmentShader,/\bfloat\s+patch\b/,'GLSL ES 3 reserves patch');
+});
