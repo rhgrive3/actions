@@ -37,7 +37,7 @@ async function boot({exit='async',request='immediate'}={}) {
  doc.exitPointerLock=()=>{exits++;if(exit==='throw')throw Error('fixture exit unavailable');if(exit==='sync'){doc.pointerLockElement=null;fireDoc();}};
  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,
   screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
-  localStorage:{getItem:()=>null},navigator:{userAgent:'hybrid pointer fixture',maxTouchPoints:0,getGamepads:()=>[]},
+  localStorage:{getItem:()=>null},navigator:{userAgent:'hybrid pointer fixture',maxTouchPoints:0,getGamepads:()=>[],userActivation:{isActive:true}},
   window:{addEventListener:(n,fn)=>add(listeners,n,fn)},document:doc});
  function synthetic(file,values){return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context,identifier:file});}
  function load(file){if(modules.has(file))return modules.get(file);const rel=path.relative(UPSTREAM,file);let mod;
@@ -260,7 +260,7 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
    if(state==='pause')h.G.match.paused=true;else if(state==='menu')h.G.game.menus.current='pause';
    if(observed)h.lockError();
    h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
-   assert.equal(h.requests(),observed&&state==='playing'?2:1,state+' observed denial='+observed);assert.equal(h.unlocks(),1);
+   assert.equal(h.requests(),state==='playing'?2:1,state+' observed denial='+observed);assert.equal(h.unlocks(),1);
   }
  });
 

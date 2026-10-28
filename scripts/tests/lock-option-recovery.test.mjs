@@ -72,9 +72,10 @@ async function boot({exit='async',request='immediate'}={}) {
   async completePromiseBeforeEvent(){assert.equal(typeof resolvePendingLock,'function');doc.pointerLockElement=canvas;resolvePendingLock();await Promise.resolve();await Promise.resolve();fireDoc();},
   rejectPendingLock(e=Error('unadjusted movement unavailable')){assert.equal(typeof rejectPendingLock,'function');rejectPendingLock(e);},
   // Model the native error event separately from the Promise rejection. The
-  // retry gate must observe both for the same still-pending request.
+  // error event must not itself authorize a retry.
   rejectWithLockError(e){this.lockError();this.rejectPendingLock(e);},
   lockError(){const ticket=input._pointerLockPending;for(const fn of docListeners.get('pointerlockerror')||[])fn();if(ticket)assert.equal(ticket.errorObserved,true,'native error event observed by pending ticket');},
+  visibility(){for(const fn of docListeners.get('visibilitychange')||[])fn();},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
 
@@ -93,16 +94,13 @@ function startupSource(x){vm.runInNewContext('(function(flow){'+startup+'})',{G:
 const results=[];let ordinal=0;const from=Number(process.env.TEST_FROM||0),to=Number(process.env.TEST_TO||10000);async function check(name,fn){const n=ordinal++;if(n<from||n>=to)return;try{await fn();results.push({ordinal:n,name,passed:true})}catch(e){results.push({ordinal:n,name,passed:false,error:String(e)});}finally{global.gc?.();}}
 await check('startup unsupported alone does not establish preference',async()=>{const x=await setup();startupSource(x);x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.equal(x.h.requests(),1);x.G.match.paused=false;x.menus.current=null;x.game.pause();x.menus._resume();assert.deepEqual(x.h.requestOptions().map(a=>a.length),[1,1]);});
 await check('eligible raw unsupported does exactly one automatic plain fallback',async()=>{
- // A rejection alone, an event before a request, and a late event after the
- // rejected ticket retired must never authorize retry or a cached preference.
- for(const timing of ['absent','before-request','after-rejection']){
+ // Document errors alone have no request identity and cannot authorize retry.
+ for(const timing of ['before-request','during-request']){
   const y=await setup();y.menus.current=null;
   if(timing==='before-request')y.h.lockError();
-  y.h.input.requestLock();assert.equal(y.h.input._pointerLockPending.errorObserved,false);
-  y.h.rejectPendingLock(error('NotSupportedError'));await settle();
-  if(timing==='after-rejection'){y.h.lockError();await settle();}
-  assert.equal(y.h.requests(),1,timing);assert.equal(y.h.input._pointerLockPending,null,timing);assert.ok(!y.h.input._pointerLockPlainPreference,timing);
-  y.h.input.requestLock();assert.deepEqual(y.h.requestOptions().map(a=>a.length),[1,1],timing);
+  y.h.input.requestLock();
+  if(timing==='during-request')y.h.lockError();
+  await settle();assert.equal(y.h.requests(),1,timing);
  }
  const x=await setup();x.menus.current=null;x.h.input.requestLock();x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.deepEqual(x.h.requestOptions().map(a=>a.length),[1,0]);x.h.rejectWithLockError(error('NotAllowedError'));await settle();assert.equal(x.h.requests(),2);assert.equal(x.h.input._pointerLockPending,null);});
 for(const name of ['NotAllowedError','SecurityError','UnknownError'])await check(name+' never auto-fallback or records unsupported',async()=>{const x=await setup();x.menus.current=null;x.h.input.requestLock();x.h.rejectWithLockError(error(name));await settle();assert.equal(x.h.requests(),1);x.h.input.requestLock();assert.deepEqual(x.h.requestOptions().map(a=>a.length),[1,1]);});
@@ -151,6 +149,29 @@ await check('unsupported plain fallback rejection never causes a third request',
 await check('same startup flow with new playing match cannot fallback from old nonplaying ticket',async()=>{const x=await setup();x.G.mode='menu';x.G.match.attract=true;const flow={current:()=>true};x.game._matchFlow=flow;vm.runInNewContext('(function(flow){'+startup+'})',{G:x.G}).call(x.game,flow);x.G.mode='match';x.G.match=x.game.match={state:'playing',paused:false,attract:false,actors:[]};x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.equal(x.h.requests(),1);});
 await check('stale old plain rejection cannot clear new generation preference',async()=>{const x=await setup();x.menus.current=null;x.h.input.requestLock();x.h.rejectWithLockError(error('NotSupportedError'));await settle();x.h.simulateLockChange();x.h.input.exitLock();await successfulPair(x);const preferred=x.h.input._pointerLockPlainPreference;assert.ok(preferred);x.h.rejectAt(1,error('NotAllowedError'));await settle();assert.equal(x.h.input._pointerLockPlainPreference,preferred);});
 await check('stale old raw rejection cannot clear new generation preference',async()=>{const x=await setup();x.menus.current=null;x.h.input.requestLock();x.h.simulateLockChange();x.h.input.exitLock();x.h.input.requestLock();x.h.rejectWithLockError(error('NotSupportedError'));await settle();x.h.completePendingLock();await settle();const preferred=x.h.input._pointerLockPlainPreference;assert.ok(preferred);x.h.rejectAt(0,error('NotAllowedError'));await settle();assert.equal(x.h.input._pointerLockPlainPreference,preferred);});
-await check('synchronous plain fallback throw clears current preference',async()=>{const x=await setup();await successfulPair(x);x.game.pause();x.h.activation.isActive=false;const fn=x.h.canvas.requestPointerLock;x.h.canvas.requestPointerLock=function(...args){if(!args.length)throw Error('synchronous native failure');return fn.apply(this,args);};x.menus._resume();x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.ok(!x.h.input._pointerLockPlainPreference);assert.equal(x.h.input._pointerLockPending,null);});
+await check('synchronous plain fallback throw clears current preference',async()=>{const x=await setup();await successfulPair(x);x.game.pause();x.h.activation.isActive=false;const fn=x.h.canvas.requestPointerLock;x.h.canvas.requestPointerLock=function(...args){if(!args.length)throw Error('synchronous native failure');return fn.apply(this,args);};x.menus._resume();x.h.activation.isActive=true;x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.ok(!x.h.input._pointerLockPlainPreference);assert.equal(x.h.input._pointerLockPending,null);});
 await check('attract-started ticket never falls back after attract is retired',async()=>{const x=await setup();x.menus.current=null;x.G.match.attract=true;x.h.input.requestLock();x.G.match.attract=false;x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.equal(x.h.requests(),1);});
+await check('native rejection-first or error-first uses the current promise once only',async()=>{
+ for(const order of ['before','after','absent']){
+  const x=await setup();x.menus.current=null;x.h.input.requestLock();
+  if(order==='before') x.h.lockError();
+  assert.equal(x.h.requests(),1);
+  x.h.rejectPendingLock(error('NotSupportedError'));await settle();
+  assert.deepEqual(x.h.requestOptions().map(a=>a.length),[1,0],order);
+  if(order==='after') x.h.lockError();
+  await settle();assert.equal(x.h.requests(),2);
+  x.h.completePendingLock();await settle();assert.equal(x.h.input.locked,true);
+ }
+});
+await check('lost activation or document focus rejects fallback',async()=>{
+ for(const loss of ['activation','hidden','blur','blur-restored','hidden-restored']){
+  const x=await setup();x.menus.current=null;x.h.input.requestLock();
+  if(loss==='activation')x.h.activation.isActive=false;
+  if(loss==='hidden')x.h.doc.hidden=true;
+  if(loss==='blur')x.h.doc.hasFocus=()=>false;
+  if(loss==='blur-restored')x.h.event('blur',{});
+  if(loss==='hidden-restored'){x.h.doc.hidden=true;x.h.visibility();x.h.doc.hidden=false;}
+  x.h.rejectWithLockError(error('NotSupportedError'));await settle();assert.equal(x.h.requests(),1,loss);
+ }
+});
 console.log(JSON.stringify({candidateOverride:!!recoveryOverride,emitted:!!esbuild,sourceRoot:ROOT,site:SITE||null,ordinalCount:ordinal,results}));if(results.some(x=>!x.passed))process.exitCode=1;
