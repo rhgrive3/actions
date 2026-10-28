@@ -100,6 +100,11 @@ function verifySettingsBrowserConsumers(p,u,s){
  // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
  assert.doesNotMatch(shards.replace(/^          key: .*\n/gm,''),/playwright|chromium/);
  verifyRequiredDag(u);
+ // Preserve the main-branch fan-in textual checks in addition to the stricter DAG and execution checks above.
+ const acceptance=u.slice(u.indexOf('  validate:\n'),u.indexOf('  browser:\n'));
+ assert.ok(acceptance.includes('    needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'));
+ for(const gate of ['PREFLIGHT_RESULT','BUILD_RESULT','CORE_RESULT','PATCH_RESULT','SEVEN_RESULT','RESOURCE_RESULT','BROWSER_RESULT'])
+   assert.ok(acceptance.includes('test "$'+gate+'" = success'),gate+' cannot be omitted from full acceptance');
  assert.doesNotMatch(p.slice(p.indexOf('      - name: Verify deployed ranked modes')),/npm install|npx .*playwright install/);
  assert.ok(p.includes('node scripts/check-inkwave-ranked-browser.mjs _site reports/ranked-public-browser'));
  assert.ok(s.includes("const executablePath=process.env.CI?chromium.executablePath():"));
