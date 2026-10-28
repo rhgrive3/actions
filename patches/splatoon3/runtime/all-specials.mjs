@@ -45,6 +45,12 @@ const WAIL_TRACK_DELAY = .5;
 // after its equipped Ink Saver (Main) modifiers have already been applied.
 // https://support.nintendo.com/jp/switch/software_support/av5ja/200.html
 const ZIPCASTER_MAIN_INK_RATE = .67;
+// j1%'s independently observed successful-hook minimum is 20F, distinct from
+// its 45F miss interval (Ver.5.0.0 table). The 11.3.0 extract still contains
+// ShotFailedIntervalFrm=20, but that field's native phase meaning is unresolved.
+// Do not shorten failed-hook recovery or skip flight/pull/arrival wait.
+// https://note.com/j1per/n/ne7085d9350ef
+const ZIPCASTER_MIN_HOOK_INTERVAL = 20 / FPS;
 // S3 verification Wiki, Splattercolor Screen (11.2.0 table): 40 contact HP,
 // one hit per 60F. WallDepth=.25 is from the pinned 11.3.0 Chimney table.
 // https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/スミナガシート#spec
@@ -2038,6 +2044,7 @@ function activeStep(rt,actor,dt) {
       if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6||closeFloor){
         state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
       }else {
+        state.nextHookAt=elapsed+ZIPCASTER_MIN_HOOK_INTERVAL;
         const target=contact.point.clone();state.inkFuel=Math.max(0,state.inkFuel-hookInk);
         state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target,contact.normal);
       }

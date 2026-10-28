@@ -1,0 +1,53 @@
+[
+  {
+    "key": "wiki-main",
+    "url": "https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF%E6%83%85%E5%A0%B1/%E3%83%A1%E3%82%A4%E3%83%B3",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "key": "wiki-zip",
+    "url": "https://wikiwiki.jp/splatoon3mix/%E3%83%96%E3%82%AD/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3/%E3%82%B7%E3%83%A7%E3%82%AF%E3%83%AF%E3%83%B3%E3%83%80%E3%83%BC",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "key": "wiki-jump",
+    "url": "https://splatoonwiki.org/wiki/Movement",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "key": "wiki-storm",
+    "url": "https://splatoonwiki.org/wiki/Ink_Storm",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "key": "source-hook",
+    "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+    "status": 200,
+    "bytes": 1919,
+    "sha256": "d01db186f0aaf53ad527a18413d9d210bf3c4877d0346f2d3fe4a227ec82b704"
+  },
+  {
+    "key": "source-storm",
+    "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpInkStorm.game__GameParameterTable.json",
+    "status": 200,
+    "bytes": 1397,
+    "sha256": "86be8a104a6194523223a976c8dd91506bb02e6526465e48ecce6f189001ea0b"
+  },
+  {
+    "key": "source-player",
+    "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
+    "status": 200,
+    "bytes": 13701,
+    "sha256": "afece0e3e2016a895ba79483bfa63489b334c372293417b3b0ef072993bcb660"
+  },
+  {
+    "key": "note-zip",
+    "url": "https://note.com/j1per/n/ne7085d9350ef",
+    "status": 200,
+    "bytes": 278541,
+    "sha256": "ffd2c85c0bc258ecdb23694d526cf2871a5c27296f3eadf22f94bdec83549b06",
+    "sourceVersion": "Ver.5.0.0 explicitly printed on the timing table",
+    "excerpt": "ー  Ver.5.0.0現在    インク消費量(毎秒)10.0％/秒 メインブキのインク消費量補正 *1 (消費量)×67%       触腕     インク消費量4％   射程0.6~7.0   触腕連射間隔(最短)20F(0.333秒) 触腕連射間隔(空振り)45F(0.75秒) 移動中の体当たりダメージ60 移動中のアーマー100 到達時の爆風ダメージ(近距離)32.1~45.0   到達時の爆風半径(近距離",
+    "conclusion": "20F minimum and 45F miss are independent listed timings; not current-version engine phase mapping"
+  }
+]
