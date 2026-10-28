@@ -435,6 +435,22 @@ jobs:
         run: INKWAVE_BUILT_SITE=_site INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/spawn-exclusion.test.mjs patches/splatoon3/tests/spawn-exclusion-fallback.test.mjs patches/reliability/tests/special-spawn-barrier.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs
       - name: Verify emitted Boss positive-proof admission and PvP zero knockback
         run: INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-boss-positive-proof.test.mjs
+      - name: Verify remaining emitted combat, weapon and visual regressions
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/network-replication/tests/combat-boss-proof-targets.test.mjs \
+            patches/network-replication/tests/combat-native-proof-receipt.test.mjs \
+            patches/splatoon3/tests/issue-1431-hit-pose-birth.test.mjs \
+            patches/splatoon3/tests/issue-1607-zipcaster-success-minimum.test.mjs \
+            patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs \
+            patches/splatoon3/tests/charger-special-audio-cancel.test.mjs \
+            patches/splatoon3/tests/catalog-charger-remote-audio.test.mjs \
+            patches/splatoon3/tests/splatling-charge-reversal.test.mjs \
+            patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs \
+            patches/local-quality/tests/offscreen-hair-targets.test.mjs \
+            patches/local-quality/tests/native-offscreen-ground-memo.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
