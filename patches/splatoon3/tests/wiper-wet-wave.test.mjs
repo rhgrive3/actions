@@ -107,6 +107,21 @@ for(const hz of [30,60,120])test(`wet draw/repeat/clear at ${hz} Hz consumes no 
   fire(f,'s3-saber-heavy');s._draw();assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.slashV.count,2);
 });
 
+test('natural wet projectile and sheet retirement clears the lazy mesh without disposing it',async()=>{
+  const f=await setup(),{s}=fire(f,'s3-saber-normal');s._draw();
+  const wet=s._s3Shapes.wetSlashV;assert.equal(wet.count,2);assert.equal(wet.visible,true);
+  // Run the real simulation and presentation through its normal expiry path,
+  // rather than manufacturing an empty list or relying only on clear().
+  for(let i=0;i<240&&(s.list.length||s._s3Shapes.sheets.bursts.length||s._s3Shapes.sheets.drills.length);i++){
+    s.update(1/60);f.G.time+=1/60;s._draw();
+  }
+  assert.equal(s.list.length,0);assert.equal(s._s3Shapes.sheets.bursts.length,0);assert.equal(s._s3Shapes.sheets.drills.length,0);
+  s._draw();s._draw();assert.equal(wet.count,0);assert.equal(wet.visible,false);
+  assert.equal(s._s3Shapes.wetSlashV,wet,'lazy resource remains reusable after retirement');
+  fire(f,'s3-saber-heavy');s._draw();assert.equal(wet.count,0);assert.equal(wet.visible,false);assert.equal(s._s3Shapes.slashV.count,2);
+  fire(f,'s3-saber-normal');s._draw();assert.equal(s._s3Shapes.wetSlashV,wet);assert.equal(wet.count,2);assert.equal(wet.visible,true);
+});
+
 
 test('wet mesh is lazy, reused, capacity-bounded, and disposed once with its renderer',async()=>{
   const f=await setup();let x=fire(f,'s3-saber-heavy');x.s._draw();const R=x.s._s3Shapes;

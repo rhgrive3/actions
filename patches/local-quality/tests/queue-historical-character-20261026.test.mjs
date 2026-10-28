@@ -105,14 +105,59 @@ test('historical character source retains independently pinned input and both la
      assert.throws(()=>replaceOnce(historical+anchor,anchor,'','duplicate owner anchor'),/expected exactly one/);
     }
    }
-   expected=adaptCombatGpuCpuPerfect(rel,adaptRemainingVisualQueue20261027(rel,expected),replaceOnce);
-   // Independently reconstruct the incoming side's complete extraction after
-   // the GPU/CPU pass, and require the two owner-order paths to agree.
+   expected=adaptCombatGpuCpuPerfect(rel,expected,replaceOnce);
+   // The expected side below replays pinned visual edits. Independently use
+   // the production visual adapter here, then require both full sources to agree.
    let incoming=adaptCombatGpuCpuPerfect(rel,adaptRemainingVisualQueue20261027(rel,historical),replaceOnce);
    if(rel==='src/game/character.js'){
     assert.throws(()=>replaceOnce(incoming.replace(characterWeaponBefore,''),characterWeaponBefore,characterWeaponAfter,'missing full presentation owner'),/expected exactly one/);
     assert.throws(()=>replaceOnce(incoming+characterWeaponBefore,characterWeaponBefore,characterWeaponAfter,'duplicate full presentation owner'),/expected exactly one/);
     incoming=replaceOnce(incoming,characterWeaponBefore,characterWeaponAfter,'native weapon near/far presentation extraction');
+   }
+   if(rel==='src/game/character-hair.js'){
+    // The later visual owner caches repeated frame times in the winding scan.
+    // Independently replay that exact edit on the expected side; the incoming
+    // side already uses the visual adapter. Full-source equality detects drift.
+    const before="    for (let i = 0; i < Pp.count; i += 7) { S.frame(tt[i], sp, _b, _c, _d); tmp.fromBufferAttribute(Pp, i).sub(sp); nn.fromBufferAttribute(N, i); acc += nn.dot(tmp); }",after="    let previousT;\n    for (let i = 0; i < Pp.count; i += 7) { const t = tt[i]; if (i === 0 || !Number.isFinite(t) || !Object.is(t, previousT)) { S.frame(t, sp, _b, _c, _d); previousT = t; } tmp.fromBufferAttribute(Pp, i).sub(sp); nn.fromBufferAttribute(N, i); acc += nn.dot(tmp); }";
+    assert.throws(()=>replaceOnce(expected.replace(before,''),before,after,'missing visual owner'),/expected exactly one/);
+    assert.throws(()=>replaceOnce(expected+before,before,after,'duplicate visual owner'),/expected exactly one/);
+    expected=replaceOnce(expected,before,after,'visual winding owner');
+    assert.equal(replaceOnce(next,after,before,'reverse visual winding owner'),adaptCombatGpuCpuPerfect(rel,historical,replaceOnce),'later owner reverses to full prior composition');
+   }
+   if(rel==='src/game/character-face.js') {
+    // The later visual owner computes the carrier/quad census once.
+    // Guard both exact anchors and preserve both full-source comparisons.
+    const edits=[
+     ["    for (const [a, b] of [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]]) need[b * nAz + (a % nAz)] = 1;","    const a = j * nAz + i, b = j * nAz + (i + 1 === nAz ? 0 : i + 1);\n    need[a] |= 3; need[b] |= 1; need[a + nAz] |= 1; need[b + nAz] |= 1;"],
+     ["    if (skipQ(i, j)) continue;","    if (!(need[j * nAz + i] & 2)) continue;"],
+    ];
+    const prior=expected;
+    for(const [before,after] of edits){
+     assert.throws(()=>replaceOnce(expected.replace(before,''),before,after,'missing visual face owner'),/expected exactly one/);
+     assert.throws(()=>replaceOnce(expected+before,before,after,'duplicate visual face owner'),/expected exactly one/);
+     expected=replaceOnce(expected,before,after,'visual face owner');
+    }
+    let reversed=next;
+    for(const [before,after] of [...edits].reverse())reversed=replaceOnce(reversed,after,before,'reverse visual face owner');
+    assert.equal(reversed,prior,'later visual face owner reverses to full prior composition');
+   }
+   if(rel==='src/game/character.js') {
+    // Later visual owner: paired collision cache and far-tier source reuse.
+    // Replay the exact production anchors without executing or modifying the model.
+    const edits=[
+     ["    // optional bones (docs/RIG.md) \u2014 animated when present","    this.hairCollision = new Float64Array(HAIR_MAX * 4);\n    for (let s = 0; s < this.hairMeta.length; s++) {\n      const d = this.hairMeta[s].dir, ix = this.hairIn[s * 3], iy = this.hairIn[s * 3 + 1], iz = this.hairIn[s * 3 + 2];\n      const wx = d.y * iz - d.z * iy, wy = d.z * ix - d.x * iz, wz = d.x * iy - d.y * ix, j = s * 4;\n      this.hairCollision[j] = wx; this.hairCollision[j + 1] = wy; this.hairCollision[j + 2] = wz; this.hairCollision[j + 3] = wx * wx + wy * wy + wz * wz;\n    }\n    // optional bones (docs/RIG.md) \u2014 animated when present"],
+     ["      const gp = this._tierParts(T_GAME), byKey = {};\n      for (const p of gp) byKey[p.key] = p.geo;","      const built = this.lodSets[T_GAME], byKey = {};\n      if (built) { for (const key in built.meshes) byKey[key] = built.meshes[key].geometry; }\n      else for (const p of this._tierParts(T_GAME)) byKey[p.key] = p.geo;"],
+     ["      const ix = hin[si * 3], iy = hin[si * 3 + 1], iz = hin[si * 3 + 2];\n      const wx = uy * iz - uz * iy, wy = uz * ix - ux * iz, wz = ux * iy - uy * ix;\n      const ww = wx * wx + wy * wy + wz * wz;","      const collision = this.hairCollision, ci = si * 4;\n      const wx = collision[ci], wy = collision[ci + 1], wz = collision[ci + 2], ww = collision[ci + 3];"],
+    ];
+    const prior=expected;
+    for(const [before,after] of edits){
+     assert.throws(()=>replaceOnce(expected.replace(before,''),before,after,'missing later character owner'),/expected exactly one/);
+     assert.throws(()=>replaceOnce(expected+before,before,after,'duplicate later character owner'),/expected exactly one/);
+     expected=replaceOnce(expected,before,after,'later character owner');
+    }
+    let reversed=next;
+    for(const [before,after] of [...edits].reverse())reversed=replaceOnce(reversed,after,before,'reverse later character owner');
+    assert.equal(reversed,prior,'later character owner reverses to full prior composition');
    }
    assert.equal(expected,incoming,rel+' independent owner reconstructions agree');
    assert.equal(next,expected,rel+' exact owner composition');

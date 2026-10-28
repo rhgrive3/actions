@@ -359,6 +359,33 @@
       ],
       "validation": "旧packaging失敗を再現。private API/ring5成功、正常minified production packaging10成功、注入runtime byte同一。",
       "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "final-1906-history-reconciliation",
+      "related_issues": [],
+      "pull_requests": [
+        1906,
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "a4164ffebb9ab9a8e0f3dcd303ab849d554f0e66",
+          "files": [
+            "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+            "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+            "patches/splatoon3/tests/added-audio-sharing.test.mjs",
+            "patches/splatoon3/tests/explosher-stage-admission.test.mjs",
+            "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs",
+            "patches/splatoon3/tests/wiper-wet-wave.test.mjs",
+            "scripts/ci/package-inkwave-evidence.mjs",
+            "scripts/tests/inkwave-evidence-packaging.test.mjs",
+            "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs"
+          ]
+        }
+      ],
+      "validation": "最終1906 head14beが祖先。13ファイル全比較、runtime配布byte不変。guards7、evidence/Pages32、CI-config36、composition119/74、YAML81成功。",
+      "hosted_exact_head_acceptance": "pending"
     }
   ]
 }

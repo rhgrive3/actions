@@ -43,7 +43,7 @@
 | [#1814](https://github.com/rhgrive3/actions/issues/1814) | Agent3 | 10項目の既存修正を再利用。65武器すべての原典動作・発射位置・地形・実機比較は未完了。 |
 | [#1813](https://github.com/rhgrive3/actions/issues/1813) | Agent3 | UnitDamageRateの既存権限処理と実弾テスト3件を確認。Nintendoのzero/sentinel意味と孤立した副弾の実機ダメージ検証が不足。 |
 | [#1789](https://github.com/rhgrive3/actions/issues/1789) | Agent3 | 反射の既存修正を維持。速度制限の法線/総速度、疎な既定値、坂判定・係数順序は原典トレースが必要。 |
-| [#1767](https://github.com/rhgrive3/actions/issues/1767) | Agent1 | mainにnonce/fixed-origin/startup queue/catalog admission実装あり。現行ソース27件成功。元PR単体は未マージで後続統合由来。現行headでのcold/rematch/reconnectブラウザ・CI・配備確認が残る。 |
+| [#1767](https://github.com/rhgrive3/actions/issues/1767) | Agent1 | mainにnonce/fixed-origin/startup queue/catalog admission実装あり。source27件、現行buildの実native cold/rematch/socket再接続の3局面・全6方向が成功。元PR単体は未マージで後続統合由来。必要なCIの成功確認が残る。Issue本文にない配備要件を追加しない。 |
 | [#1757](https://github.com/rhgrive3/actions/issues/1757) | Agent4 | iPad mini 6の通常Turfで一致条件のCPU/GPU/GC計測と複数回A/Bが未取得。過去の最適化をFPS解決の証明にしない。 |
 | [#1708](https://github.com/rhgrive3/actions/issues/1708) | Agent5 | 2022年以降11武器の正しい11.3.0原音・イベント・利用権の証拠が不足。既存の借用対応表は暫定。 |
 | [#1671](https://github.com/rhgrive3/actions/issues/1671) | Agent4 | 既存paint/CPU最適化と#1907を保持。物理iPad Safariの8人対戦p50/p95/p99、安定性、60FPS達成は未確認。 |
@@ -106,3 +106,13 @@ Agent1の追加ターンは自動審査が「サイバーセキュリティ上�
 同じhosted候補でCrab/Torpedoの実WebGL buffer/pixel比較、Explosher飛沫、squid heading/input、lobby CSSOM、audio integrationは成功した。native stage contractsは648成功・128skipで、23個のnative prebuilt実体が不在と明示されるため、synthetic/fallbackの成功として扱う。paired projectileのafter側はbuild-only export分類で停止した。Agent2の`ae3fb305`は、adapter内部の`.toString()`注入だけが使う2個のhelperをprivateにし、唯一の外部APIを`adaptRenderTransfers`へ戻した。strictなbuild-only一覧・export whitelistは変えていない。private API/ring5件と、正常minified buildの全packaging10件が成功。注入されたruntimeは変更前とbyte単位で同一（SHA-256 `dc43ceb0d390b96d909f0572563e52b587b626aff45938cb0b1b0137e2458a9e`）。paired画素/物理の同等性はまだ認定しない。
 
 各修正のIssue/PR、原commit・統合commit、実際の変更ファイル、検証結果の対応は[`fixes.json`](fixes.json)に記録する。件数は重なるためテスト数を合算しない。独立character QAのReady run2本は、step開始前にGitHub側でcancelledとなった（annotationは`@rhgrive3`による取消、理由不明）。当作業の旧head限定取消ledgerには含まれず、成功とも意図したskipとも数えない。修正バッチ反映後の新しいheadで受入を確認する。
+
+## #1906最終headの再照合とclock受入の継続
+
+最初の統合は#1906の`90bf9ad4`を含んでいたが、その後の最終merge commit `14be5645`は祖先でなかった。再照合でこの不足を確認し、Agent2の`a4164ffe`で最終headの両履歴を取り込んだ。13ファイルを全比較し、4ファイルは現行と同じ、4ファイルは最終PRの厳しい実装/試験をそのまま再利用、5ファイルは両方の独立対照・強い回帰を保持して合成した。実際の差分は9個のCI/testファイルのみ。Wiperの6action・21tick quiet tail・30/60/120Hz試験を保持し、最終PRの追加240tick自然終了試験も成功。証拠保存ではsymlinkを追わず、容量超過時も失敗Wiper receiptとリンクされたPNGを優先して残し、失敗を成功へ変えない。
+
+限定検証: 競合部の独立guard7/7、evidence/Pages/source32/32、CI-config36/36、composition preflight119/74、YAML81本成功。統合後も1,521入力ファイル＋build scriptと2,229artifactをGitから再読出しし、`8c7f27a2`の検証済みゲーム配布物と完全に一致した。元PRの古い失敗や中止を消したり、新headのCI成功に読み替えたりしない。
+
+#1767は、保存済みと同じ`check-inkwave-native-online.mjs --owner-clock`を現行`8c7f27a2`の実production buildに実行した。ゲームやclock/peer状態を変えず、起動用scratch preloadで既存のsandbox browser policyを適用し、Chromium151を選択した。2隔離context、実Game/Match/Actor/Character・実WebSocket・production Worker relayでcold/rematch/socket reconnectの3局面・6方向すべて成功。実際の各timestamp対は旧guardでは拒否され、新guardではfreshness originが不変のままsnapshot/buffer/playingが進む。page/console errorは0、終了後に当該browser/server processが残らないことも確認した。必要なhosted CIの結果待ちであり、まだIssueをCloseしていない。
+
+[現行clock受入の6方向・条件・実timestamp](owner-clock-current.md)と[機械可読receipt](owner-clock-current.json)、実行時launcherを保存した。raw/PNG archiveのhashも同資料に記録する。

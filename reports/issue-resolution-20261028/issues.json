@@ -36,8 +36,8 @@
       "number": 1767,
       "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
       "agent": 1,
-      "status": "open: partial implementation or evidence blocked",
-      "remaining": "mainにnonce/fixed-origin/startup queue/catalog admission実装あり。現行ソース27件成功。元PR単体は未マージで後続統合由来。現行headでのcold/rematch/reconnectブラウザ・CI・配備確認が残る。"
+      "status": "open: fresh native acceptance passed; required hosted CI pending",
+      "remaining": "mainにnonce/fixed-origin/startup queue/catalog admission実装あり。source27件と現行8c7f27a2の実native cold/rematch/socket再接続3局面・全6方向が成功。必要なCIの成功確認が残る。Issue本文にない配備要件は追加しない。"
     },
     {
       "number": 1757,
