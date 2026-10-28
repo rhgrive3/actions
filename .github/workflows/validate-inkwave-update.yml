@@ -356,7 +356,7 @@ jobs:
           test "$(cat _site-source-sha.txt)" = "$SOURCE_SHA"
           EXPECTED_CONTENT_HASH='${{ needs.build_site.outputs.content_hash }}' node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('_site/inkwave-build.json')).contentHash,process.env.EXPECTED_CONTENT_HASH);"
           node scripts/check-inkwave-startup-budget.mjs _site
-          INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs scripts/tests/inkwave-three-composition.test.mjs
+          INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs scripts/tests/inkwave-three-composition.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
       - name: Verify all Turf finish cases on emitted site
         run: node scripts/run-inkwave-turf-finish-isolated.mjs . emitted .ci-scratch/turf-finish _site
