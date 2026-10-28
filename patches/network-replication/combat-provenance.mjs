@@ -8,6 +8,7 @@ import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSpr
 import { bindSubBirthCommit, closeSubBirthCommit } from './sub-birth-commit.mjs';
 import { COMBAT_HIT_CEILINGS } from './combat-hit-ceilings-data.mjs';
 import { damageLeafMax } from './damage-leaves.mjs';
+import { observeOwnerTick } from './owner-tick-receipt.mjs';
 const MAX_PROOFS = 160, MAX_PENDING = 48;
 const EXPLOSIVE_SUBS = new Set(['bomb','suction','burst','curling','autobomb','fizzy','torpedo','inkMine']);
 const PROOF_AGE = 3.5, SPECIAL_PROOF_AGE = 10, PENDING_AGE = 0.95;
@@ -50,7 +51,7 @@ function ownerActor(nm,from,id) {
 function nearActor(origin,pose) {
   return v3(origin) && v3(pose) && dist(origin,pose)<=7.5;
 }
-function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null) {
+function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false) {
   if(!Array.isArray(e) || !finite(e[0]) || e[0]>ts+.075 || ts-e[0]>1.4)return null;
   let id,source,origin,direction,cause,kind,maxUses;
   if(e[1]==='p') {
@@ -111,7 +112,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null) {
     origin=ev.pos || poses.get(id) || point(source);direction=ev.dir || [0,1,0];
     cause=source.weapon.special;kind='special';maxUses=e[2]==='special:slam'?8:24;
   } else return null;
-  const pose=poses.get(id) || point(source);
+  const pose=poses.get(id) || (requirePose ? null : point(source));
   if(!v3(origin) || !v3(direction) || !nearActor(origin,pose))return null;
   const length=magnitude(direction);
   if(length<.0001 || length>700)return null;
@@ -122,7 +123,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null) {
     : [id,e[0],e[1],kind,cause,...origin.map(n=>Math.round(n*10))].join(':');
   return {actor:id,at:t,ts:e[0],origin,unit,reach,cause,kind,maxUses,uses:0,key,src:e[1],los:null};
 }
-function record(nm,from,packet,t,acceptedSub=null) {
+function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
   if(!Array.isArray(packet?.e) || packet.e.length>512 || !finite(packet.ts) || packet.ts<0 || packet.ts>1e9)return;
   const s=state(nm);prune(s,t);
   const poses=nm._combatPoseScratch||(nm._combatPoseScratch=new Map());poses.clear();
@@ -132,7 +133,9 @@ function record(nm,from,packet,t,acceptedSub=null) {
   let paintOnly=eventLimit>0;
   for(let i=0;paintOnly&&i<eventLimit;i++)if(!Array.isArray(packet.e[i])||packet.e[i][1]!=='s')paintOnly=false;
   if(paintOnly){const store=s.proofs.get(from);if(store?.length)s.proofs.set(from,store.slice(-MAX_PROOFS));return null;}
-  if(Array.isArray(packet.a))for(const r of packet.a) {
+  if(acceptedPoses){
+    for(const [id,pose] of acceptedPoses)if(v3(pose)&&ownerActor(nm,from,id))poses.set(id,pose);
+  }else if(Array.isArray(packet.a))for(const r of packet.a) {
     if(!Array.isArray(r)||r.length<4)continue;
     if(Object.hasOwn(r,1)&&Object.hasOwn(r,2)&&Object.hasOwn(r,3)){
       const x=r[1],y=r[2],z=r[3];
@@ -150,7 +153,7 @@ function record(nm,from,packet,t,acceptedSub=null) {
   // allocation-free walk. Only accepted proofs extend either index.
   let proofKeys=null,recentByActor=null;
   for(let i=0;i<eventLimit;i++) {
-    const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub);
+    const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub,acceptedPoses!==null);
     if(!candidate)continue;
     if(!proofKeys&&packet.e.length>=32){
       proofKeys=new Set();recentByActor=new Map();
@@ -539,7 +542,7 @@ export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allow
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
   return take(nm,from,d,type,t,sprinklerScope,allowPoseFallback);
 }
-function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
+function flush(nm,from,t,oldHit,oldBoss,receiptAllowed,bossReceiptAllowed) {
   const s=state(nm);
   // Admission prunes pending arrays in place. Iterate a detached batch so
   // pruning and synchronous native callbacks cannot skip later live claims.
@@ -562,7 +565,10 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
     // it before consuming another proof; native exact-ID history is authoritative.
     if(item.type==='pvp' && nm.peers?.get(from)?.hitSequences?.has(item.d.h))continue;
     if(item.type==='boss' && item.d.q<=(nm.peers?.get(from)?.lastBossHit??0))continue;
-    if(item.type==='pvp'&&(item.d.w==='sprinkler'||item.d.w==='torpedo-splash')&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
+    // Deferred claims can outlive their victim/attacker life or a replay-window
+    // advance. Recheck the native read-only policy before consuming any proof.
+    const allowed=item.type==='pvp'?receiptAllowed:bossReceiptAllowed;
+    if(typeof allowed!=='function'||!allowed.call(nm,item.d,from))continue;
     if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope,!item.proofOnly)) {still.push(item);continue;}
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
@@ -586,27 +592,28 @@ export function installCombatProvenance(NetMatch,context={}) {
   const oldTick=P._tick,oldHit=P._hit,oldMessage=P.onMessage;
   const oldBoss=P._acceptBossHit,oldLeave=P.onLeave,oldDispose=P.dispose;
   // One callback per installed prototype, not per owner packet.
-  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed);};
+  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);};
   const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
     const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
     if(accepted&&receipt.subId==='torpedo'&&registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler))accepted.nativeTorpedoContact=true;
     if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
-    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed);
+    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
   };
   P._tick=function(from,d) {
     bindSubBirthCommit(this,commitSubBirth);
-    const before=this.peers?.get(from)?.lastTs??-Infinity;
-    const result=oldTick.call(this,from,d);
-    if(this.peers?.get(from)?.lastTs===d?.ts && finite(d.ts) && d.ts>before) {
+    const observed=observeOwnerTick(this,from,d,()=>oldTick.call(this,from,d));
+    const receipt=observed.receipt;
+    if(receipt && receipt.ownerSession===this.s && receipt.ownerMatch===this.match &&
+      receipt.ownerMatchId===this.cfg?.id && !this._disposed) {
       const t=now();
       sampleLocalHistory(this,t);
-      recordContactSnapshots(this,from,d,t);
-      record(this,from,d,t);
-      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed);
+      recordContactSnapshots(this,from,receipt,t);
+      record(this,from,{...receipt,e:receipt.nativeEvents},t,null,receipt.poses);
+      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
     }
-    return result;
+    return observed.result;
   };
   P._hit=function(d,from) {
     // Locally delivered pending receipts after host handoff are not remote
@@ -616,8 +623,8 @@ export function installCombatProvenance(NetMatch,context={}) {
     // before proof consumption or pending hit-ID reservation. Missing context
     // is fail-closed, never permission to bypass that policy.
     if(typeof context.hitPayloadAllowed!=='function' || !context.hitPayloadAllowed(d))return;
-    if(d.w==='torpedo-splash'&&(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
-    if(d.w==='sprinkler'&&(d.d!==SPRINKLER.dropletDamage||typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
+    if(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from))return;
+    if(d.w==='sprinkler'&&d.d!==SPRINKLER.dropletDamage)return;
     const t=now();
     sampleLocalHistory(this,t);
     // Only incoming remote owner claims are deferred; internally retried
@@ -627,6 +634,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   };
   P.onMessage=function(from,d) {
     if(d?.k==='bhit' && this.isHost) {
+      if(typeof context.bossReceiptAllowed!=='function'||!context.bossReceiptAllowed.call(this,d,from))return;
       const t=now();
       if(combatAdmission(this,from,d,'boss',t)) {
         if(oldBoss?.call(this,from,d))this.match.boss.remoteHit(d);

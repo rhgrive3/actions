@@ -6625,3 +6625,16 @@ The production build contains 2,223 declared artifacts. Their independently rech
 Revalidated focused evidence includes source wet lifecycle 8/8, emitted Charger/wet 10/10, CPU-13 source mutation tests 4/4, source wall tests 4/4, emitted collision/wall tests 4/4, capture helper tests 38/38, and deterministic startup budget gates. Broader reconstructed test and verifier results are recorded separately at the frozen candidate. Test-only fixtures were restored by their public Git blob identities rather than weakening checks to ignore missing data.
 
 Still unverified: live final-head mandatory CI, actual Hissen/Wiper screenshots, full mobile three-lane acceptance, original-game comparison and hardware performance. The native Explosher absolute geometry increase 281→295 remains a failed gate, not waived or offset. Native prebuilt stage payloads are not hydrated; runtime fallback may fetch external stage data, and offline stage availability is not guaranteed. No character or hair model was edited. Character provenance acceptance is source-text-only, not character visual verification.
+
+
+## 2026-10-28 Issue・CI統合修正と確認範囲
+
+比較対象は引き続きSplatoon 3 Ver.11.3.0。今回、本家の未公開フレーム値・物理係数・原音イベント曲線を追加で確定していない。武器・ギア・状態ごとの原典不足と全29Issueの残条件を[全件記録](issue-resolution-20261028/README.md)に残した。
+
+Normal/Liteのcharged Wiperを実Actor/WeaponRunner/Projectilesで発射し自然終了させると、弾とsheetが消えた後もlazy wetSlashVだけがcount2/visibleのまま残る。空の描画経路でこのmeshもcount0/非表示にする。Heavy/tapを対照に全6action、30/60/120Hz、21tick静穏期間と同一mesh再利用を確認した。弾数・発射時間・軌道・塗り・damage・RNG・wireは変更しない。source-loaded scheduler18試験が成功したが、本家の外形一致、実画素・実機性能の受入は別条件。
+
+通信では、rolling接触等のbounded証拠がnative victim/attacker life・replay/nonce拒否の前に消費され、後続正当hitまで拒否される順序問題を再現した。nativeから生成する読み取り専用policyを直接/保留FIFOの両経路で先に適用し、初回owner tick以前の正当hitは空peer viewで確認する。nonce/receipt commitとpacket tupleは維持。新回帰9件は旧main8失敗/正当対照1成功→修正後9成功、関連133件・独立35件成功。owner自身のfreshな発射/命中捏造を検出する完全なauthorityは完成せず、#1665/#1666を閉じない。
+
+touch gyroは既存の暫定public-bridge gainにadapter合成済みだったが、tooltipだけが旧132/110/278度を主張していた。既存の翻訳済profile説明を共有し、不正確な本家一致表現を解消した。−5…+5右stick UI・移行も既存実装を再利用。27件の限定input/composition試験は実センサーやNintendo turn-rate・中間曲線の証明ではなく、#725/#287の校正残件を維持する。
+
+追加で、native FIFOの拒否eventや拒否actor rowからraw入力のまま命中証拠を作る経路も修正した。受理時点のposeをコピーしてreentryでの上書きを防ぎ、ranked observerとの同一呼出scope共有、明示的な拒否rowと従来合法event-only packetの区別を保持する。本家値・wire・発射の物理挙動は変更しない。nativeにも受理されるowner自身のfresh action捏造は別の未完了authority課題。

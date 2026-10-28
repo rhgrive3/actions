@@ -5,6 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { adaptBossHit } from '../../patches/local-quality/boss-hit-adapter.mjs';
+import { adaptBuildSource } from '../inkwave-source-composition.mjs';
 
 const sourceRoot = new URL('../../', import.meta.url);
 const built = process.env.INKWAVE_BUILT_SITE;
@@ -39,6 +40,11 @@ const marker = '\n  _acceptBossHit(from, d) {', endMarker = '\n  sendBossHit(';
 const start = composed.indexOf(marker), end = composed.indexOf(endMarker, start);
 assert(start >= 0 && end > start && composed.indexOf(marker, start + 1) < 0, 'unique real Boss admission method');
 const method = composed.slice(start, end);
+const production = adaptBuildSource('src/net/netmatch.js', native);
+const receiptMarker = '\nfunction iwRemoteBossHitReceiptAllowed(d,from) {';
+const receiptStart = production.indexOf(receiptMarker), receiptEnd = production.indexOf('\n}', receiptStart);
+assert(receiptStart >= 0 && receiptEnd > receiptStart, 'actual production read-only Boss policy');
+const receipt = production.slice(receiptStart, receiptEnd + 2);
 
 function fixture(kind = 'shooter') {
   const G = {};
@@ -83,7 +89,7 @@ function fixture(kind = 'shooter') {
     dispose() {}
     bind() {}
   }
-  installCombatProvenance(Match);
+  installCombatProvenance(Match, { bossReceiptAllowed: new Function('G', 'return (' + receipt + ')')(G) });
   return new Match();
 }
 const boss = (damage = 36, q = 1, w = 'shooter', c = -1) =>

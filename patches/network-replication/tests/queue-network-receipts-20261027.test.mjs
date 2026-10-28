@@ -12,6 +12,17 @@ test('owner receipt is synchronous, nested, epoch-bound and admits only native a
  assert.throws(()=>observeOwnerTick(nm,'p',d,()=>{throw Error('stop');}));
  commitOwnerTick(nm,'p',d,[],[]);assert.equal(observeOwnerTick(nm,'p',d,()=>{}).receipt,null);
 });
+test('independent wrappers share the same native invocation and copied admitted pose',()=>{
+ const actor={nid:1,owner:'p'},nm={s:{},match:{},cfg:{id:'m'}},packet={ts:1};
+ let inner;
+ const outer=observeOwnerTick(nm,'p',packet,()=>{
+  inner=observeOwnerTick(nm,'p',packet,()=>commitOwnerTick(nm,'p',packet,[[1,'p',1]],
+   [{actor,nid:1,owner:'p',x:50,y:2,z:3}]));
+ });
+ assert.equal(inner.receipt,outer.receipt);
+ assert.equal(outer.receipt.actors[0],actor,'ranked actor identity remains unchanged');
+ assert.deepEqual(outer.receipt.poses.get(1),[50,2,3]);
+});
 test('final composed native tick commits only after clock and event admission; wipeout is no longer before tick',()=>{
  const code=adaptBuildSource('src/net/netmatch.js',fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
  const start=code.indexOf('  _tick(from, d) {'),end=code.indexOf('\n  _advance(',start),tick=code.slice(start,end);
@@ -30,7 +41,9 @@ test('actual pending flush preserves all live FIFO claims when prune removes exp
   const nm={_combatProvenance:state,peers:new Map([['p',peer]])};
   const context=vm.createContext({Map,Set,state:()=>state,PENDING_AGE:.95,PROOF_AGE:3.5,SPECIAL_PROOF_AGE:10,
    combatAdmission(nm,from,d){context.prune(state,100);seen.push(d.h);if(seen.length===1)state.pending.set('p',[{at:99.9,type,d:{h:9,q:9}}]);return false;}});
-  vm.runInContext(prune+'\n'+flush,context);context.flush(nm,'p',100,()=>{},()=>{});
+  // This test isolates FIFO reentrancy/pruning; native admission is covered by
+  // the production-composed receipt-order tests, so both policies admit here.
+  vm.runInContext(prune+'\n'+flush,context);context.flush(nm,'p',100,()=>{},()=>{},()=>true,()=>true);
   assert.deepEqual(seen,times.flatMap((t,i)=>t>=99.05?[i+1]:[]));
   assert.deepEqual([...state.pending.get('p')].map(x=>x.d.h),[...seen,9]);
  }

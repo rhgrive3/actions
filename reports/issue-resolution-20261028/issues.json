@@ -1,0 +1,211 @@
+{
+  "baseline": "031426fcb9373d91e74e933e1507e9af395aa1c9",
+  "excluded": [
+    401
+  ],
+  "issues": [
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] 本家の持続チャージ上昇音が未実装、HoldNoise誤ループとは別イベント",
+      "agent": 5,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "持続チャージ音のS3原音・SLINKイベント・上昇曲線が未取得。開始クリックの既存修正は別機能。原音・権利・実音比較なしに合成音を本家相当として追加しない。"
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "10項目の既存修正を再利用。65武器すべての原典動作・発射位置・地形・実機比較は未完了。"
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "UnitDamageRateの既存権限処理と実弾テスト3件を確認。Nintendoのzero/sentinel意味と孤立した副弾の実機ダメージ検証が不足。"
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "反射の既存修正を維持。速度制限の法線/総速度、疎な既定値、坂判定・係数順序は原典トレースが必要。"
+    },
+    {
+      "number": 1767,
+      "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
+      "agent": 1,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "mainにnonce/fixed-origin/startup queue/catalog admission実装あり。現行ソース27件成功。元PR単体は未マージで後続統合由来。現行headでのcold/rematch/reconnectブラウザ・CI・配備確認が残る。"
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "agent": 4,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "iPad mini 6の通常Turfで一致条件のCPU/GPU/GC計測と複数回A/Bが未取得。過去の最適化をFPS解決の証明にしない。"
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "agent": 5,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "2022年以降11武器の正しい11.3.0原音・イベント・利用権の証拠が不足。既存の借用対応表は暫定。"
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "agent": 4,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "既存paint/CPU最適化と#1907を保持。物理iPad Safariの8人対戦p50/p95/p99、安定性、60FPS達成は未確認。"
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "agent": 1,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "Boss不正life/nonceが攻撃証拠を消費する順序不具合を修正。正当owner自体による入力・命中捏造を防ぐ信頼された全武器/Boss再構築は未実装。"
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "agent": 1,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "PvP不正life/replayが証拠・接触枠を消費し後続正当命中を落とす不具合を修正。owner作成の発射・命中ペアを完全に検証する権限設計と多端末実リレー受入が残る。"
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "45Fとsource20Fの差は維持し、実Actor境界試験成功。失敗travel/retreat/recoveryのどの区間か原典で確定するまで20Fへ置換しない。"
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] 軽量Pose Search・歩行品質・インク視認性の性能非劣化実装計画",
+      "agent": 4,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "段階導入計画。既存gait/IK/inkを保持。全体性能と物理端末の非劣化、原典歩行比較が必要。"
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "agent": 4,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "反復した校正済みABBA/BAAB、8人の等価負荷、GPU readback/pixel一致・分布が不足。SwiftShaderを実GPU計測に読み替えない。"
+    },
+    {
+      "number": 1431,
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "同tick姿勢/発射位置・Explosher lip等の既存修正を保持。Quadの最初の左手/原典開口と全aim方向の校正が不足。"
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "agent": 5,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "source bank所有時に多くの武器がgeneric Jump_Nrml。fallbackの家族別設定は原典の武器別通常ジャンプを完成しない。S3 track/selector比較が必要。"
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "agent": 5,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "source-loaded被弾ownerの既存修正あり。実際のS3武器別selector/joint曲線・実機比較は未取得。"
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "agent": 5,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "弱入力斜め歩行のcadence/stride/pelvis/feetを一致条件で撮影した原典基準が不足。現在の局所調整をparity認定しない。"
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "live native Dualiesの独立droplet/CPU turfテスト4件成功。7phase、foot paint、疎な既定値、高さ合成、DU/WU校正は原典確認が必要。"
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "物理的な靴item/sole入力がない。少なくとも2足のsource model/foot transformと被覆境界比較が必要。ability gearから高さを捏造しない。"
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "agent": 5,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "DownRtの比例減速は既存。Biasの意味とS3 ground-deceleration速度曲線が未確定。"
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "B離しで低くなる既存近似とterrain/cadence6試験成功。暫定5F/0.7はNintendoのhold境界や全状態での頂点比較ではない。"
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "agent": 4,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "offscreen visual予算は既存。gameplay所有のmuzzle/pelvis処理、再表示の正確さ、実端末での時間差確認が残る。"
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "無限高さは既にbounded。3試験成功。既存12WU trace/14WU足位置境界は原典の垂直到達距離ではなく、実機・座標校正が必要。"
+    },
+    {
+      "number": 725,
+      "title": "[INKWAVE][Aim] DeviceMotion gyro sensitivity spans ~1.30x-3.27x instead of Splatoon 3 measured ~1x-3x range",
+      "agent": 6,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "既存1/1.8/3の暫定bridgeを再確認し、古い132/110/278度の説明を修正。中間曲線と実センサー/本家比較は未測定。"
+    },
+    {
+      "number": 642,
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "agent": 4,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "inactive composer解放・条件付きpacked targetは既存。効果/resize/context復帰の同等画素・物理GPU memory/安定性が未確認。"
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "既存4+1WU/12+4Fとterrain/cadence8試験成功。DU/WU、core/glide easing、疎な既定値と空中校正が残る。"
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "agent": 6,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "既存−5…+5 UI、暫定写像、移行・resetを確認。実S3 turn-rate未測定、旧0.5未満/2超のclamp、上位yaw設定の飽和が残る。"
+    },
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "RainNum72は172paint呼出と1対1とは未確認。ledger/cadence4試験成功。生成/再利用/地面接触/塗りの原典ライフサイクルが必要。"
+    },
+    {
+      "number": 79,
+      "title": "[INKWAVE][Shooter] Splattershot impact paint still ignores floor-wall size and impact-angle rules",
+      "agent": 3,
+      "status": "open: partial implementation or evidence blocked",
+      "remaining": "live Splattershotのnear/far/angle/wall実装と3試験成功。原典selector、疎な既定値、面積/形状、DU/WU・画素比較が残る。"
+    }
+  ]
+}

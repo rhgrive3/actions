@@ -30,11 +30,11 @@ const kinds=Object.fromEntries(weapons.init.properties.map(p=>{
   const k=p.value.properties.find(p=>p.key.name==='kind');
   assert.equal(k.value.type,'Literal');return[p.key.name||p.key.value,{kind:k.value.value}];
 }));
-const names=['unpackActor','readHitAuthorityState','HIT_SEQUENCE_WINDOW','IW_HIT_MAX_DAMAGE','IW_HIT_CAUSES','IW_ANGLE_SHOOTER_HIT_MAX','IW_CATALOGUE_SUB_HIT_MAX','hitSafe','hitAuthorityRow','iwRemoteHitPayloadAllowed','iwRemoteHitReceiptAllowed'];
+const names=['unpackActor','readHitAuthorityState','HIT_SEQUENCE_WINDOW','IW_HIT_MAX_DAMAGE','IW_HIT_CAUSES','IW_ANGLE_SHOOTER_HIT_MAX','IW_CATALOGUE_SUB_HIT_MAX','hitSafe','hitAuthorityRow','iwRemoteHitPayloadAllowed','iwRemoteHitReceiptAllowed','iwRemoteBossHitReceiptAllowed'];
 const policySource=names.map(n=>declaration(native,n)).join('\n')+'\n'+
   ['BLASTER_KNOCKBACK','validBlasterKnockback'].map(n=>declaration(fidelity,n)).join('\n')+'\n'+
   declaration(finalDamage,'validDamageGroup')+'\nconst WEAPONS='+JSON.stringify(kinds)+';\n'+
-  '({unpack:unpackActor,payload:iwRemoteHitPayloadAllowed,receipt:iwRemoteHitReceiptAllowed,caps:IW_CATALOGUE_SUB_HIT_MAX})';
+  'const G={};\n({unpack:unpackActor,payload:iwRemoteHitPayloadAllowed,receipt:iwRemoteHitReceiptAllowed,bossReceipt(d,from){G.netm=this;return iwRemoteBossHitReceiptAllowed.call(this,d,from)},caps:IW_CATALOGUE_SUB_HIT_MAX})';
 const policy=new vm.Script(policySource).runInNewContext(Object.create(null),{timeout:1000,contextCodeGeneration:{strings:false,wasm:false}});
 
 const actor=(kind='shooter',special='storm')=>({
@@ -91,7 +91,7 @@ class Stub {
   }
   onLeave(){} dispose(){} bind(){}
 }
-installCombatProvenance(Stub,{hitPayloadAllowed:policy.payload,hitReceiptAllowed:policy.receipt});
+installCombatProvenance(Stub,{hitPayloadAllowed:policy.payload,hitReceiptAllowed:policy.receipt,bossReceiptAllowed:policy.bossReceipt});
 function fire(nm,{id=1,at=100,origin=[0,1,0],dir=[0,0,45],kind='shooter'}={}) {
   nm._tick('peerA',{k:'t',ts:at+.05,a:[[id,0,0,0]],
     e:[[at,'p',id,'shot',kind,...origin,...dir]]});
