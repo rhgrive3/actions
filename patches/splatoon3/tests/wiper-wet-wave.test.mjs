@@ -168,3 +168,38 @@ test('actual wet Wiper material hook avoids GLSL ES reserved patch identifier wi
   assert.match(shader.fragmentShader,/diffuseColor\.rgb \*= 0\.94 \+ 0\.09 \* smoothstep\(-0\.3, 1\.0, iwWetPatch\)/);
   assert.doesNotMatch(shader.fragmentShader,/\bfloat\s+patch\b/,'GLSL ES 3 reserves patch');
 });
+
+test('all six native Wiper actions naturally retire identically at 30/60/120 Hz with a 21-tick quiet tail',async()=>{
+  let reference;
+  for(const hz of [30,60,120]){
+  const f=await setup(),rows=[];
+  // Legacy Heavy and tap controls precede the two lazy wet-mesh owners.
+  for(const [id,charged] of [['s3-saber-heavy',false],['s3-saber-heavy',true],
+    ['s3-saber-normal',false],['s3-saber-lite',false],['s3-saber-normal',true],['s3-saber-lite',true]]){
+    const {s,a,p}=fire(f,id,charged);s._draw();
+    const R=s._s3Shapes,wet=R.wetSlashV,mesh=charged?(id==='s3-saber-heavy'?R.slashV:wet):R.slashH;
+    assert.equal(mesh.count,2,'observe the actual active native shot before its natural expiry');
+    let accumulator=0,tick=0,tail=0;
+    while(tick<240&&tail<21){
+      accumulator+=1/hz;
+      while(accumulator+1e-10>=1/60&&tick<240&&tail<21){
+        accumulator-=1/60;f.tick(a);s.update(1/60);tick++;
+        const retired=!s.list.length&&!R.sheets.bursts.length&&
+          ![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh,R.sheets.drillMesh].some(m=>m?.count>0);
+        tail=retired?tail+1:0;
+      }
+      s._draw();
+    }
+    assert.equal(s.list.length,0,'native projectile expires without clear, retagging or lifetime changes');
+    assert.equal(R.sheets.bursts.length,0,'native launch sheets expire on the advancing game clock');
+    assert.equal(tail,21,`${hz} Hz ${id} ${charged?'charged':'tap'} retained a mesh after natural projectile/sheet expiry`);
+    assert.equal(R.wetSlashV,wet,'retirement preserves lazy reusable geometry');
+    assert.equal(mesh.count,0);assert.equal(mesh.visible,false);
+    assert.equal(s.s3ShapeCounts.slashV,0);
+    rows.push({id,charged,life:p.life,quietTailTicks:tail,finalTick:tick});
+  }
+  assert.equal(rows.length,6);
+  if(reference)assert.deepEqual(rows,reference,'fixed-step retirement tick and quiet tail agree across render schedules');
+  else reference=rows;
+  }
+});
