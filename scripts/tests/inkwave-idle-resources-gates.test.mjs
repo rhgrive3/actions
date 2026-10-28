@@ -29,9 +29,17 @@ for(const [name,mutate] of [
  ['unallocated cube',r=>r.far[0].deleted=false],['stale sampler',r=>r.far[2].cleared=false],['duplicate dispose',r=>r.far[1].disposes=2],
  ['paused CPU work',r=>r.pause.environment=1],['paused rendering',r=>r.pause.renders=120],['frozen online',r=>r.pause.onlineRenders=0],['music wakeup',r=>r.audio.mutedTicks=1],['muted voices',r=>r.audio.mutedNodes=1],['silent SFX',r=>r.audio.sfxPlayed=false]
 ])test('rejects '+name,()=>{const r=sample();mutate(r);assert.throws(()=>validateIdleResult(r));});
-test('active suite invokes exact-source probe and binds its successful evidence, preserving other families',()=>{
+test('idle GPU and WebAudio retain exact-source mandatory evidence in parallel resource lane',()=>{
  const w=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
- assert.match(w,/node scripts\/check-inkwave-idle-resources\.mjs[^\n]+--exact-source/);
- assert.match(w,/'active':\[[^\n]+'idle-resources\/idle-resources-result.json'/);
+ const resource=w.slice(w.indexOf('  resource_paint_continuation:'));
+ const active=w.slice(w.indexOf('  browser:'),w.indexOf('  render-diagnostic:'));
+ assert.match(resource,/node scripts\/check-inkwave-idle-resources\.mjs[^\n]+--exact-source/);
+ assert.match(resource,/assert\.equal\(report\.status,'passed'\)/);
+ assert.match(resource,/assert\.equal\(report\.sourceSha,process\.env\.SOURCE_SHA\)/);
+ assert.match(resource,/assert\.equal\(report\.contentHash,build\.contentHash\)/);
+ assert.match(resource,/name: inkwave-idle-resource-\$\{\{ env\.SOURCE_SHA \}\}/);
+ assert.doesNotMatch(active,/idle-resources\/idle-resources-result.json/);
+ assert.match(w,/needs: \[validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
+ assert.match(w,/test "\$RESOURCE_RESULT" = success/);
  for(const name of ['motion-detail','wall','flow','responsive','identity-touch'])assert.ok(w.includes(name));
 });
