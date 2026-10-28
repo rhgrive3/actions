@@ -368,6 +368,13 @@ export function claimCeiling(actor,d,type,table=COMBAT_HIT_CEILINGS) {
 function withinCeiling(nm,actor,d,type) {
   return finite(d?.d)&&d.d<=claimCeiling(actor,d,type,nm._combatHitCeilings)+CEILING_SLACK;
 }
+function withinProofCeiling(nm,actor,d,type,p) {
+  // A crablet's wire marker omits its damage source. The broad preflight can
+  // only bound it by the largest equipped slot; the matched attack narrows
+  // that bound to the slot that actually supplied this proof.
+  return type!=='boss'||d.c<0||d.w!=='crab'||
+    d.d<=claimCeiling(actor,{c:d.c,w:p.cause},type,nm._combatHitCeilings)+CEILING_SLACK;
+}
 // Contact authority comes only from a row actually installed by native _tick,
 // not peer arrival timestamps (which advance before row validation).
 function recordContactSnapshots(nm,from,packet,t) {
@@ -419,6 +426,8 @@ function contactProof(nm,from,d,type,t,target) {
   // Roller contact has no projectile or fire-event packet. Require the
   // owner snapshot's currently observed rolling flag and a realistic target.
   if(w.kind!=='roller' || (d.w!=='roller' && !(type==='boss' && d.c>=0 && d.w==='crab')))return false;
+  if(type==='boss'&&d.w==='crab'&&
+    d.d>mainCeiling(w,nm._combatHitCeilings)+CEILING_SLACK)return false;
   const receipt=state(nm).contactSnapshots.get(a);
   if(!receipt || receipt.owner!==from || !receipt.rolling || receipt.life!==Math.max(a.netLife??0,a.net?.lastLife??0) || !v3(receipt.origin) || dist(receipt.origin,target)>4.0 ||
     !finite(t-receipt.at) || t<receipt.at || t-receipt.at>PROOF_AGE)return false;
@@ -451,6 +460,10 @@ function oversizedPvpSpecial(d,type) {
   return type==='pvp' && ((d?.w==='storm' && d.d>160) ||
     (d?.w==='krakenRoyale' && d.d>120));
 }
+function bossBodyBlocked(nm,d) {
+  const boss=nm.match?.boss;
+  return d.c<0&&(boss?.invuln||boss?.visible===false);
+}
 function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
   if(oversizedPvpSpecial(d,type))return false;
   const actor=ownerActor(nm,from,d.a),target=actualTarget(nm,type,d);
@@ -461,6 +474,10 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
   } else {
     if(!nm.isHost || !nm.match?.boss?.sim || !nm.match?.state ||
       nm.match.state!=='playing'||nm.match.boss.dead)return false;
+    // Native Boss.remoteHit blocks body damage during these phases. Reject
+    // before spending a proof or nonce. Crablets are independent. A blocked
+    // body claim is also excluded from the deferred queue below.
+    if(bossBodyBlocked(nm,d))return false;
     if(d.weak===1 && d.c>=0)return false;
     // Normal boss hits are strengthened by weak/stunned multipliers, but a
     // single network claim can never supply the old arbitrary 2000 HP.
@@ -481,6 +498,7 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
       !(d.w==='bomb'&&EXPLOSIVE_SUBS.has(p.cause)) &&
       !(d.w==='torpedo-splash'&&p.cause==='torpedo'))continue;
     if(p.kind==='special' && d.w!==p.cause)continue;
+    if(!withinProofCeiling(nm,actor,d,type,p))continue;
     if(!rayNear(p,target,type==='boss'?6:5.5))continue;
     if(type==='pvp') {
       if(!hitSegmentOk(p,d.bg,target))continue;
@@ -502,6 +520,14 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
     } else {
       if(d.weak===1 && !weakPointOk(nm,p))continue;
       if(d.c<0&&p.kind==='main'&&directFire(actor)&&!bossVisible(nm,p))continue;
+      if(p.kind==='main'&&directFire(actor)) {
+        // A native straight round/beam connects with each Boss body or
+        // crablet once. A fresh transport nonce is not another collision.
+        // Keep separate targets for penetrating beams and existing budgets.
+        const target=d.c<0?nm.match.boss:nm.match.boss.crabs.get(d.c);
+        if(p.bossTargets?.has(target))continue;
+        (p.bossTargets||=new Set()).add(target);
+      }
     }
     p.uses++;
     return true;
@@ -513,6 +539,7 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
 }
 function enqueue(nm,from,d,type,t) {
   if(oversizedPvpSpecial(d,type))return;
+  if(type==='boss'&&bossBodyBlocked(nm,d))return;
   if(!matchIdOk(nm,d) || !safe(d.a) || !ownerActor(nm,from,d.a) ||
     !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1 ||
     !finite(d.d) || d.d<0 || (type==='boss'&&d.d===0) || d.d>2000 ||
@@ -565,6 +592,7 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed,bossReceiptAllowed) {
     // it before consuming another proof; native exact-ID history is authoritative.
     if(item.type==='pvp' && nm.peers?.get(from)?.hitSequences?.has(item.d.h))continue;
     if(item.type==='boss' && item.d.q<=(nm.peers?.get(from)?.lastBossHit??0))continue;
+    if(item.type==='boss'&&bossBodyBlocked(nm,item.d))continue;
     // Deferred claims can outlive their victim/attacker life or a replay-window
     // advance. Recheck the native read-only policy before consuming any proof.
     const allowed=item.type==='pvp'?receiptAllowed:bossReceiptAllowed;

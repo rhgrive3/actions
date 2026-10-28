@@ -1,6 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setup} from './contact-provenance-fixture.mjs';
+import {parse} from '../../loading-cache/vendor/acorn.mjs';
+
+// Instrument the actual semantic call, including esbuild's renamed imports
+// and merged expression statements. A source-text replace silently omitted
+// these hooks in emitted mode, leaving the original assertions unexercised.
+function withReceiptHook(code,phase) {
+  const ast=parse(code,{ecmaVersion:'latest',sourceType:'module'}),nodes=[];
+  const walk=node=>{
+    if(!node||typeof node!=='object')return;
+    if(typeof node.type==='string')nodes.push(node);
+    for(const value of Object.values(node)) {
+      if(Array.isArray(value))for(const item of value)walk(item);
+      else if(value&&typeof value==='object')walk(value);
+    }
+  };
+  walk(ast);
+  const bindings=ast.body.filter(n=>n.type==='ImportDeclaration')
+    .flatMap(n=>n.specifiers).filter(n=>n.imported?.name==='commitOwnerTick');
+  assert.equal(bindings.length,1,'unique actual native receipt import');
+  const commits=nodes.filter(n=>n.type==='CallExpression'&&
+    n.callee.type==='Identifier'&&n.callee.name===bindings[0].local.name);
+  assert.equal(commits.length,1,'unique actual native receipt commit');
+  let call=commits[0],hook='_proofCommitHook';
+  if(phase==='snapshot') {
+    const list=call.arguments.at(-1);
+    assert.equal(list.type,'Identifier','actual admitted-actor receipt list');
+    const pushes=nodes.filter(n=>n.type==='CallExpression'&&
+      n.callee.type==='MemberExpression'&&n.callee.object.type==='Identifier'&&
+      n.callee.object.name===list.name&&n.callee.property.name==='push');
+    assert.equal(pushes.length,1,'unique actual native actor receipt capture');
+    call=pushes[0];hook='_proofSnapshotHook';
+  }
+  // Preserve the original call result even if the minifier uses it inside a
+  // larger expression. The hook executes only after native capture/commit.
+  const replacement=`((iwReceiptResult)=>{this.${hook}?.();return iwReceiptResult;})(${code.slice(call.start,call.end)})`;
+  return code.slice(0,call.start)+replacement+code.slice(call.end);
+}
 
 const proofs=x=>x.state()?.proofs.get('peer')||[];
 const row=(x,extra={})=>x.f.packActor(x.remote,{f:1,...extra});
@@ -83,8 +120,7 @@ test('a different accepted actor cannot lend its admission to a rejected actor e
 
 test('post-commit epoch replacement cannot transfer old native proof to the new match',async t=>{
   const x=await setup(t,{roller:false,transformSource(rel,code){
-    return rel==='src/net/netmatch.js'?code.replace('    commitOwnerTick(this, from, d, acceptedOwnerEvents, acceptedOwnerActors);',
-      '    commitOwnerTick(this, from, d, acceptedOwnerEvents, acceptedOwnerActors);\n    this._proofCommitHook?.();'):code;
+    return rel==='src/net/netmatch.js'?withReceiptHook(code,'commit'):code;
   }});
   x.nm._proofCommitHook=()=>{x.nm.cfg={...x.nm.cfg,id:'replacement-match'};};
   tick(x);assert.equal(x.nm.cfg.id,'replacement-match');rejected(x);
@@ -92,8 +128,7 @@ test('post-commit epoch replacement cannot transfer old native proof to the new 
 
 test('nested newer native snapshot cannot erase the already admitted outer shot pose',async t=>{
   const x=await setup(t,{roller:false,transformSource(rel,code){
-    return rel==='src/net/netmatch.js'?code.replace(/(      acceptedOwnerActors\.push\([^\n]+\);)/,
-      '$1\n      this._proofSnapshotHook?.(a,snap);'):code;
+    return rel==='src/net/netmatch.js'?withReceiptHook(code,'snapshot'):code;
   }});
   x.local.pos.set(50,2,7);
   x.nm._proofSnapshotHook=()=>{
