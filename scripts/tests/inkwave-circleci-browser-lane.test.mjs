@@ -114,8 +114,14 @@ test('CircleCI covers native gameplay inputs without waking heavy lanes for unre
     .map(x => new RegExp('^' + x.trim().split(' ')[0] + '$'));
   assert(mappings.length >= 10, 'Missing native CircleCI file-change selectors');
   const witness = p => p.replace(/\*\*/g, 'example/feature').replace(/\*/g, 'example').replace(/\?/g, 'x');
+  // GitHub owns the complete workflow-only CI contract gate itself. CircleCI
+  // must cover gameplay/build inputs, not every unrelated workflow edit.
+  assert(paths.includes('.github/workflows/*.yml'),'GitHub must cover every workflow-only PR');
+  assert(mappings.some(x=>x.test('.github/workflows/validate-inkwave-update.yml')),
+    'CircleCI must include changes to its own native acceptance workflow');
   for (const source of paths) {
-    assert(mappings.some(x => x.test(witness(source))), 'CircleCI ignores a mandatory GitHub trigger: ' + source);
+    if(source==='.github/workflows/*.yml') continue;
+    assert(mappings.some(x => x.test(witness(source))), 'CircleCI ignores a mandatory game trigger: ' + source);
   }
   for (const irrelevant of ['README.md', 'docs/unrelated-note.md', '.github/workflows/hex-lane-quality.yml', '.github/workflows/inkwave-main-weapons.yml'])
     assert(!mappings.some(x => x.test(irrelevant)), 'Unrelated change launches heavy INKWAVE CI: ' + irrelevant);
