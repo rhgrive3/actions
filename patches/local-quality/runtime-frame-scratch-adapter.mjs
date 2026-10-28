@@ -246,8 +246,16 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
       'reuse matrix for foot projection');
   }
   if (rel === 'src/game/motion/source-controller.js') {
-    patch("import * as THREE from 'three';", "import {initMotionDiagnostics,motionDebug,manualMotionDebug,motionDebugScalar,motionDebugBody,motionDebugSquid} from '../../../patches/local-quality/motion-diagnostics.mjs';\nimport * as THREE from 'three';", "lazy detached motion diagnostics 0");
+    patch("import * as THREE from 'three';", "import {initMotionDiagnostics,beginMotionClips,appendMotionClip,motionDebug,manualMotionDebug,motionDebugScalar,motionDebugBody,motionDebugSquid} from '../../../patches/local-quality/motion-diagnostics.mjs';\nimport * as THREE from 'three';", "lazy detached motion diagnostics 0");
     patch("this.fallbacks=new Set();", "this.fallbacks=initMotionDiagnostics(this);", "lazy detached motion diagnostics 1");
+    patch('this.currentClips=[];this.contact.fill(0);','beginMotionClips(this);this.contact.fill(0);','pooled clip frame');
+    patch('this.currentClips.push({name:special.name,frame:special.frame,weight:1});','appendMotionClip(this,special.name,special.frame,1);','pooled special clip');
+    patch('this.currentClips.push({name:item.name,frame,weight:item.weight});','appendMotionClip(this,item.name,frame,item.weight);','pooled locomotion clip');
+    patch('this.currentClips.push({name,frame,weight:1});','appendMotionClip(this,name,frame,1);','pooled idle clip');
+    // Earlier composition owns the action upperOnly calculation; accept its
+    // final spelling and the raw source used by isolated adapter fixtures.
+    const action=code.includes('this.currentClips.push({name:action,frame:f,weight,upperOnly});')?'upperOnly':'moving';
+    patch('this.currentClips.push({name:action,frame:f,weight,upperOnly'+(action==='moving'?':moving':'')+'});','appendMotionClip(this,action,f,weight,'+action+');','pooled action clip');
     patch("this.manual=null;this.debug={};this.loadToken=0;", "this.manual=null;this.loadToken=0;", "lazy detached motion diagnostics 2");
     patch("  this.debug={status:this.status,variant:this.variant,state,family,speed:this.speed,pivoting:this.pivoting,pivotTurnRate:this.turnRate,phase:this.phase,stride,stepAmplitude,cadenceHz,authoredCadenceHz:nominalCadence,run,shootBlend:this.shootBlend,sourceUpper:this.sourceUpper,clips:this.currentClips,contact:[...this.contact],fallbacks:[...this.fallbacks]};", "  motionDebug(this,state,family,stride,stepAmplitude,cadenceHz,nominalCadence,run);", "lazy detached motion diagnostics 3");
     patch("this.debug={status:this.status,state:this.state,variant:this.variant,clips:this.currentClips};", "manualMotionDebug(this);", "lazy detached motion diagnostics 4");
