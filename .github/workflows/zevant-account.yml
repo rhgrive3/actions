@@ -2,7 +2,8 @@ name: ZEVANT account and Workers build
 on:
   pull_request:
     paths:
-      - "scripts/ci/**"
+      - "scripts/ci/run-inkwave-test-suite.mjs"
+      - "scripts/ci/inkwave-test-suites.json"
       - "account/**"
       - "vite.config.mjs"
       - "package.json"
@@ -18,7 +19,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "scripts/ci/**"
+      - "scripts/ci/run-inkwave-test-suite.mjs"
+      - "scripts/ci/inkwave-test-suites.json"
       - "account/**"
       - "vite.config.mjs"
       - "package.json"
