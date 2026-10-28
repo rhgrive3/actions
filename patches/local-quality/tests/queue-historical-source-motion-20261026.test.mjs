@@ -20,6 +20,18 @@ const names=['iwMotionResponse24Exp','iwMotionResponse12Exp','iwMotionResponse10
 const rates=[24,12,10,12,7,8],modes=['exp','exp','expm1','expm1','exp','expm1'];
 const kernels=math=>new Function('Math',helper+'\nreturn ['+names.join(',')+'];')(math);
 const original=(math,index,dt)=>modes[index]==='exp'?1-math.exp(-rates[index]*dt):-math.expm1(-rates[index]*dt);
+// The immutable historical fixture predates the separately reviewed clip pool.
+// Reconstruct its six precise ownership changes without changing fixture bytes.
+const clipPoolChanges=[
+ ['{initMotionDiagnostics,motionDebug,manualMotionDebug,motionDebugScalar,motionDebugBody,motionDebugSquid}',
+  '{initMotionDiagnostics,beginMotionClips,appendMotionClip,motionDebug,manualMotionDebug,motionDebugScalar,motionDebugBody,motionDebugSquid}'],
+ ['this.currentClips=[];this.contact.fill(0);','beginMotionClips(this);this.contact.fill(0);'],
+ ['this.currentClips.push({name:special.name,frame:special.frame,weight:1});','appendMotionClip(this,special.name,special.frame,1);'],
+ ['this.currentClips.push({name:item.name,frame,weight:item.weight});','appendMotionClip(this,item.name,frame,item.weight);'],
+ ['this.currentClips.push({name,frame,weight:1});','appendMotionClip(this,name,frame,1);'],
+ ['this.currentClips.push({name:action,frame:f,weight,upperOnly});','appendMotionClip(this,action,f,weight,upperOnly);'],
+];
+const adoptCurrentClipPool=source=>clipPoolChanges.reduce((code,[from,to])=>replaceOnce(code,from,to,'pinned motion clip pool owner'),source);
 
 test('pinned source-controller reconstructs the walk owner and historical queue (text only)',()=>{
  assert.equal(sha(fixtureBytes),'92b24e5c1ff331c66623e73988d176561c8b47875fc6bdeffc85c799870c598a','frozen fixture bytes');
@@ -37,15 +49,16 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
- assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composed)),'pinned walk, historical owner and subsequent visual queue compose exactly');
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,adoptCurrentClipPool(composed))),'pinned walk, clip pool, historical owner and subsequent visual queue compose exactly');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
  let expected=adaptWalkPresentation(REL,before,replaceOnce);
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
- assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,expected)),'walk adapter and later visual owner retain the pinned source composition');
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,adoptCurrentClipPool(expected))),'walk adapter, clip pool and later visual owner retain the pinned source composition');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');
+ for(const [anchor] of clipPoolChanges)for(const replacement of ['',anchor+'\n'+anchor])assert.throws(()=>adoptCurrentClipPool(composed.replace(anchor,replacement)),/expected exactly one connection/,'missing or repeated clip pool anchor');
  const speedAnchor='  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;';
  assert.throws(()=>adaptWalkPresentation(REL,before.replace(speedAnchor,''),replaceOnce),/expected exactly one/);
  assert.throws(()=>adaptWalkPresentation(REL,before+speedAnchor,replaceOnce),/expected exactly one/);
