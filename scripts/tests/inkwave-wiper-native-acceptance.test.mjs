@@ -2,12 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import os from 'node:os';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
 import {WIPER_CAPTURE_CASES as CASES,WIPER_CAPTURE_FRAMES as FRAMES,assertWiperCaptureReceipt,wiperBuildReceiptBinding} from '../lib/inkwave-wiper-acceptance-contract.mjs';
 import {sandboxBrowserOptions,launchSandboxBrowser,closeWiperCaptureOwners} from '../lib/inkwave-sandbox-browser.mjs';
 import {verifyWiperCaptureFiles} from '../check-inkwave-wiper-native-receipt.mjs';
 import {hash} from '../lib/inkwave-runtime-evidence.mjs';
 import {parseBrowserLane} from '../ci/run-circleci-browser-lane.mjs';
-import {createWiperNativeShotSchedule,wrapWiperDrawCallback,assertWiperWebGLError,finishWiperContext} from '../check-inkwave-wiper-native-acceptance.mjs';
+import {createWiperNativeShotSchedule,wrapWiperDrawCallback,assertWiperWebGLError,finishWiperContext,readWiperPixels,restoreWiperRenderState,wiperDiagnosticBrowserOptions,saveWiperFailureEvidence,validateWiperDiagnosticIdentity,settleWiperModuleObservations} from '../check-inkwave-wiper-native-acceptance.mjs';
 
 const sourceSha='a'.repeat(40),digest='c'.repeat(64);
 const revision='e'.repeat(64),modules=Object.fromEntries(['s3-projectile-shapes.mjs','s3-ink-sheets.mjs'].map(n=>[`_versions/${revision}/patches/splatoon3/runtime/${n}`,digest]));
@@ -52,7 +55,7 @@ test('WebGL failure retains exact first queued enum and context without a pre-dr
   assert.throws(()=>probe(broken,8,'fixed-side-raw'),e=>e.message.includes('code=0x502')&&e.message.includes('frame=8 view=fixed-side-raw')&&e.message.includes('contextLost=unknown drawingBuffer=unknownxunknown'));
   assert.equal(errorReads,1,'failed optional reads never drain or replace the original error');
   const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
-  assert.match(driver,/window\.__assertWiperWebGLError\(gl,frame,view\)/);
+  assert.match(driver,/window\.__assertWiperWebGLError\(gl,frame,view,'final'\)/);
   assert.match(driver,/assertWiperWebGLError\.toString\(\)/);
 });
 
@@ -67,6 +70,132 @@ test('context cleanup preserves the primary capture failure and records cleanup 
     assert.equal(errors.length,closeError?1:0);assert.equal(snapshots[0].errors.length,closeError?1:0);
     if(closeError)assert.match(errors[0],/context cleanup:.*close rejected/s);
   }
+});
+
+test('phased GL checks fail immediately and report readPixels enum before flat image',()=>{
+  const check=vm.runInNewContext('('+assertWiperWebGLError.toString()+')');
+  const read=vm.runInNewContext('('+readWiperPixels.toString()+')');
+  for(const code of [0x0502,0]){
+    let errorCalls=0,reads=0;const gl={drawingBufferWidth:2,drawingBufferHeight:2,RGBA:1,UNSIGNED_BYTE:2,
+      readPixels(_x,_y,_w,_h,_fmt,_type,bytes){reads++;bytes.fill(0);},getError(){errorCalls++;return code;},isContextLost(){return false;}};
+    assert.throws(()=>read(gl,1,'native-postprocessed',check),e=>code?e.message.includes('code=0x502')&&e.message.includes('phase=post-readPixels'):e.message.includes('Flat rendered image'));
+    assert.equal(reads,1);assert.equal(errorCalls,1,'one getError at read boundary, never silently drained');
+  }
+  const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
+  for(const phase of ['initial-entry','post-warm','pre-advance','post-advance','pre-draw','post-draw-1','post-draw-2','pre-render','post-render','post-readPixels','post-restore','final'])assert.ok(driver.includes("'"+phase+"'"),phase);
+  const pixel=readWiperPixels.toString();assert(pixel.indexOf('gl.readPixels(')<pixel.indexOf("'post-readPixels'"));assert(pixel.indexOf("'post-readPixels'")<pixel.indexOf('Flat rendered image'));
+});
+
+test('phased checker stops at first queued GL error without consuming later errors',()=>{
+  const check=vm.runInNewContext('('+assertWiperWebGLError.toString()+')');
+  for(const row of [
+    {queue:[0x0502,0x0500],expectedReads:1,phase:'pre-draw',remaining:[0x0500]},
+    {queue:[0,0x0502],expectedReads:2,phase:'post-draw',remaining:[]},
+  ]){
+    const queue=[...row.queue],called=[];const gl={drawingBufferWidth:1,drawingBufferHeight:1,isContextLost:()=>false,getError(){called.push('getError');return queue.shift();}};
+    assert.throws(()=>{for(const phase of ['pre-draw','post-draw'])check(gl,1,'native-postprocessed',phase);},e=>e.message.includes('code=0x502')&&e.message.includes('phase='+row.phase));
+    assert.equal(called.length,row.expectedReads);assert.deepEqual(queue,row.remaining);
+  }
+});
+
+test('render restoration attempts every owner and preserves primary phase error',()=>{
+  const restore=vm.runInNewContext('('+restoreWiperRenderState.toString()+')');
+  for(const primary of [null,Error('code=0x502 phase=post-render')])for(const fail of [false,true]){
+    let calls=[];const renderer={setRenderTarget(){calls.push('target');if(fail)throw Error('target restore');},set autoClear(v){calls.push('auto:'+v);},info:{set autoReset(v){calls.push('info:'+v);}}};
+    const execute=()=>restore(()=>{calls.push('draw');if(fail)throw Error('draw restore')},renderer,null,true,true,primary);
+    if(fail)assert.throws(execute,e=>(!primary||e.message.includes('code=0x502 phase=post-render'))&&e.message.includes('draw restore')&&e.message.includes('target restore'));
+    else assert.doesNotThrow(execute);
+    assert.deepEqual(calls,['draw','target','auto:true','info:true']);
+  }
+});
+
+test('diagnostic launcher remains sandboxed, contains no unsafe flags and cannot be acceptance',()=>{
+  const opts=wiperDiagnosticBrowserOptions();assert.equal(opts.chromiumSandbox,true);assert.deepEqual(opts.args,[]);
+  const runner=fs.readFileSync(new URL('../check-inkwave-wiper-gl-phase-diagnostic.mjs',import.meta.url),'utf8');
+  assert.match(runner,/diagnosticBackend:true/);assert.doesNotMatch(runner,/--no-sandbox|--enable-unsafe-swiftshader/);
+  const f=fixture();f.receipt.kind='controlled-native-wiper-gl-diagnostic';f.receipt.status='diagnostic-complete';assert.throws(()=>assertWiperCaptureReceipt(f.receipt,{sourceSha,...buildBinding}));
+});
+
+test('diagnostic harness and game source identities are independently pinned',()=>{
+  const source='a'.repeat(40),harness='b'.repeat(40),identity={checkoutIdentityStatus:'verified-git-head',checkoutSha:harness};
+  assert.doesNotThrow(()=>validateWiperDiagnosticIdentity('/immutable/game',source,harness,identity));
+  for(const [root,src,hs,id] of [['relative',source,harness,identity],['/game','bad',harness,identity],['/game',source,'bad',identity],['/game',source,harness,{...identity,checkoutSha:source}],['/game',source,harness,{...identity,checkoutIdentityStatus:'unavailable'}]])
+    assert.throws(()=>validateWiperDiagnosticIdentity(root,src,hs,id));
+  const runner=fs.readFileSync(new URL('../check-inkwave-wiper-gl-phase-diagnostic.mjs',import.meta.url),'utf8');
+  assert.match(runner,/--source-root/);assert.match(runner,/--harness-sha/);assert.match(runner,/root:sourceRoot/);
+});
+
+test('failed capture records bounded actual-module observation or explicitly incomplete',async()=>{
+  const modules={one:'a',two:'b'};
+  const complete=await settleWiperModuleObservations([Promise.resolve(),Promise.resolve()],modules,{one:'a',two:'b'});assert.equal(complete.status,'verified');
+  const missing=await settleWiperModuleObservations([Promise.resolve()],modules,{one:'a'});assert.equal(missing.status,'incomplete');assert.equal(missing.reason,'missing-or-rejected');
+  const rejected=await settleWiperModuleObservations([Promise.reject(Error('body failed')),Promise.resolve()],modules,{one:'a',two:'b'});assert.equal(rejected.status,'incomplete');
+  const bodyError=await settleWiperModuleObservations([Promise.resolve(),Promise.resolve()],modules,{one:'a',two:'b'},{errors:['consumed artifact: body failed']});assert.equal(bodyError.status,'incomplete');
+  const timed=await settleWiperModuleObservations([new Promise(()=>{})],modules,{},{timeoutMs:10});assert.equal(timed.status,'incomplete');assert.equal(timed.reason,'timeout');
+});
+
+test('actual shallow Git checkouts retain required parent, path diff and source blobs',()=>{
+  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'wiper-shallow-contract-'));
+  const repo=path.join(tmp,'repo'),harness=path.join(tmp,'harness'),source=path.join(tmp,'game');fs.mkdirSync(repo);
+  const git=(cwd,...args)=>execFileSync('git',args,{cwd,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+  const put=(name,data)=>{const p=path.join(repo,name);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,data);};
+  const commit=message=>git(repo,'-c','user.name=Test','-c','user.email=test@example.invalid','commit','-qm',message);
+  try{
+    git(repo,'init','-q','--initial-branch=main');put('game/input.txt','initial');git(repo,'add','.');commit('initial');
+    put('game/input.txt','source bytes');git(repo,'add','.');commit('source');const sourceSha=git(repo,'rev-parse','HEAD');git(repo,'branch','source',sourceSha);
+    const paths=['.circleci/config.yml','.github/workflows/bootstrap-hex-worker-repos.yml','.github/workflows/hex-fast-tail-known.yml','.github/workflows/inkwave-wiper-gl-phase-diagnostic.yml','scripts/check-inkwave-wiper-gl-phase-diagnostic.mjs','scripts/check-inkwave-wiper-native-acceptance.mjs','scripts/tests/inkwave-wiper-native-acceptance.test.mjs'];
+    for(const p of paths)put(p,'diagnostic '+p);git(repo,'add','.');commit('harness');const harnessSha=git(repo,'rev-parse','HEAD');
+    git(tmp,'clone','-q','--depth=2','file://'+repo,harness);git(tmp,'clone','-q','--depth=1','--branch','source','file://'+repo,source);
+    assert.equal(git(harness,'rev-parse','--is-shallow-repository'),'true');assert.equal(git(source,'rev-parse','--is-shallow-repository'),'true');
+    assert.equal(git(harness,'rev-parse','HEAD'),harnessSha);assert.equal(git(harness,'rev-parse','HEAD^'),sourceSha);assert.equal(git(harness,'rev-list','--count','HEAD'),'2');
+    assert.deepEqual(git(harness,'diff','--no-renames','--name-only',sourceSha,harnessSha).split('\n').sort(),paths.sort());
+    assert.equal(git(source,'rev-parse','HEAD'),sourceSha);assert.equal(git(source,'rev-list','--count','HEAD'),'1');
+    const blob=git(source,'rev-parse','HEAD:game/input.txt');assert.match(git(source,'cat-file','-t',blob),/^blob$/);assert.equal(git(source,'cat-file','blob',blob),'source bytes');assert.match(git(source,'rev-parse','HEAD^{tree}'),/^[0-9a-f]{40}$/);
+  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
+});
+
+test('failure screenshot is bounded, diagnostic-only and never replaces the primary error',async()=>{
+  for(const mode of ['success','reject','hang','write-fail']){
+    let calls=0,options,writes=[];const page={screenshot:o=>{calls++;options=o;if(mode==='reject')return Promise.reject(Error('capture failed'));if(mode==='hang')return new Promise(()=>{});return Promise.resolve(Buffer.from('png'));}};
+    const write=(name,data)=>{if(mode==='write-fail')throw Error('write failed');writes.push([name,data]);};
+    const primary=Error('code=0x502 phase=post-render');const start=Date.now();const info=await saveWiperFailureEvidence(page,'/evidence',primary,{timeoutMs:20,write});
+    assert(Date.now()-start<1000);assert.equal(calls,1);assert(options.timeout<=20);assert.equal(Object.hasOwn(options,'path'),false);
+    assert.equal(info.acceptance,false);assert.match(info.primaryError,/code=0x502 phase=post-render/);
+    assert.equal(info.screenshot.status,mode==='success'?'captured':'unavailable');
+    if(mode==='success'){assert.equal(writes.length,2);assert.equal(info.screenshot.file,'wiper-gl-failure-current.png');}
+    if(mode==='write-fail')assert.match(info.receiptWriteError,/write failed/);
+  }
+  const driver=fs.readFileSync(new URL('../check-inkwave-wiper-native-acceptance.mjs',import.meta.url),'utf8');
+  assert.match(driver,/diagnosticBackend&&page&&frozenVerified/);assert.match(driver,/window\.__inkwave\?\.frozen===true/);
+});
+
+test('isolated Wiper diagnostic push route pins separate harness and source without unsafe flags',()=>{
+  const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-wiper-gl-phase-diagnostic.yml',import.meta.url),'utf8');
+  for(const token of ['diagnostic/wiper-gl-phase-a887-20261028','a8877a086cc377074a07de60eba5f17c7b1213a1','5ae30f11763b952df917d7b272a884e4fbc8a98e','ubuntu-22.04','contents: read','--source-root','--harness-sha','github.workflow_sha'])assert.ok(workflow.includes(token),token);
+  assert.match(workflow,/if: always\(\)/);assert.match(workflow,/actions\/upload-artifact@v4/);
+  assert.doesNotMatch(workflow.split('permissions:')[0],/\bpaths:/); // New-branch path filtering can omit the diagnostic in a large diff.
+
+  const harness=workflow.split('      - name: Checkout exact diagnostic harness\n')[1].split('      - name: Verify exact harness parent')[0];
+  const source=workflow.split('      - name: Checkout independently pinned game source\n')[1].split('      - uses: actions/setup-node@v4')[0];
+  assert.match(harness,/fetch-depth: 2/);assert.match(source,/fetch-depth: 1/);assert.doesNotMatch(workflow,/fetch-depth: 0/);
+  assert.doesNotMatch(workflow,/--no-sandbox|--enable-unsafe-swiftshader|continue-on-error:/);
+  const runner=fs.readFileSync(new URL('../check-inkwave-wiper-gl-phase-diagnostic.mjs',import.meta.url),'utf8');assert.match(runner,/expectedDiagnosticSha:harnessSha/);
+});
+
+test('diagnostic branch alone excludes unrelated CircleCI and side-effect workflows',()=>{
+  const ref='refs/heads/diagnostic/wiper-gl-phase-a887-20261028';
+  const root=new URL('../../',import.meta.url);
+  const read=p=>fs.readFileSync(new URL(p,root),'utf8');
+  const parent=p=>execFileSync('git',['show',`HEAD^:${p}`],{cwd:root,encoding:'utf8'});
+  const bootstrap='.github/workflows/bootstrap-hex-worker-repos.yml';
+  const hex='.github/workflows/hex-fast-tail-known.yml';
+  const circle='.circleci/config.yml';
+  const guard=`    if: github.ref != '${ref}'\n`;
+  assert.equal(read(bootstrap).replace(guard,''),parent(bootstrap));
+  assert.equal(read(hex).replace(guard,'').replace(`    if: \${{ always() && github.ref != '${ref}' }}\n`,'    if: always()\n'),parent(hex));
+  const filter='          filters:\n            branches:\n              ignore:\n                - diagnostic/wiper-gl-phase-a887-20261028\n';
+  assert.equal(read(circle).replace(filter,''),parent(circle));
+  for(const other of ['refs/heads/main','refs/pull/1895/merge','refs/heads/diagnostic/other'])assert.notEqual(other,ref);
 });
 
 test('exact mandatory six cases include Normal+Lite first active charged frame, taps and Heavy controls',()=>{
@@ -189,6 +318,6 @@ test('additive catalog workflow retains inherited Hissen/phase52 route and binds
   assert.match(driver,/verifyRuntimeBuild\(site,root,sourceSha\)/);assert.match(driver,/launchSandboxBrowser\(chromium\)/);
   assert.ok(!driver.includes('--no-sandbox'));assert.ok(!driver.includes('new Projectile'));
   assert.match(driver,/p\.descriptor!==testCase\.descriptor/);assert.match(driver,/p=>p\.owner===a&&p\.delay<=0&&!p\.catalog\?\.birthPending/);
-  assert.match(driver,/finally\{try\{restoreDraw\(\)/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
+  assert.match(driver,/finally\{window\.__restoreWiperRenderState\(restoreDraw,r,previousTarget,previousAuto,previousInfoAuto,primaryRenderError\)/);assert.match(driver,/finally\{await finishWiperContext\(context,row,save,result.errors,primaryError\)/);assert.match(finishWiperContext.toString(),/await context.close\(\)/);
   assertWiperCaptureReceipt(fixture().receipt,{sourceSha,...buildBinding});
 });

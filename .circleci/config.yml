@@ -12,6 +12,10 @@ workflows:
     jobs:
       - path-filtering/filter:
           name: detect-native-changes
+          filters:
+            branches:
+              ignore:
+                - diagnostic/wiper-gl-phase-a887-20261028
           base-revision: main
           same-base-run: false
           config-path: .circleci/continue.yml

@@ -79,7 +79,7 @@ export function wrapWiperDrawCallback(mesh,observe) {
 // Read exactly once at the original fail-closed boundary. A pre-existing GL
 // error is intentionally not cleared: it remains a capture failure. The code
 // and context help diagnose it without claiming which earlier call caused it.
-export function assertWiperWebGLError(gl, frame, view) {
+export function assertWiperWebGLError(gl, frame, view, phase='final') {
   const code=gl.getError();
   if(code) {
     // Optional context reads must never replace the original GL failure.
@@ -87,15 +87,47 @@ export function assertWiperWebGLError(gl, frame, view) {
     try { if(typeof gl.isContextLost==='function')lost=gl.isContextLost(); } catch {}
     try { width=gl.drawingBufferWidth; } catch {}
     try { height=gl.drawingBufferHeight; } catch {}
-    throw Error(`Native render WebGL error: code=0x${Number(code).toString(16)} frame=${frame} view=${view} contextLost=${lost} drawingBuffer=${width}x${height}`);
+    throw Error(`Native render WebGL error: code=0x${Number(code).toString(16)} frame=${frame} view=${view} phase=${phase} contextLost=${lost} drawingBuffer=${width}x${height}`);
   }
+}
+
+// Inspect the queued GL error immediately after readPixels, before a flat
+// image assertion can replace it. The checker fails immediately on nonzero.
+export function readWiperPixels(gl,frame,view,check) {
+  const bytes=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);
+  gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
+  check(gl,frame,view,'post-readPixels');
+  let lo=255,hi=0;for(let i=0;i<bytes.length;i+=4){const n=(bytes[i]+bytes[i+1]+bytes[i+2])/3;lo=Math.min(lo,n);hi=Math.max(hi,n);}
+  if(hi-lo<8)throw Error('Flat rendered image');
+  return {luminanceRange:hi-lo,drawingBuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight]};
+}
+
+// Restore each independent renderer owner; preserve a primary phase error if
+// any restoration also fails. No GL error is consumed by this helper.
+export function restoreWiperRenderState(restoreDraw, renderer, target, autoClear, infoAuto, primaryError) {
+  const errors=[];
+  for(const action of [()=>restoreDraw(),()=>renderer.setRenderTarget(target),()=>{renderer.autoClear=autoClear;},()=>{renderer.info.autoReset=infoAuto;}]) {
+    try { action(); } catch(error) { errors.push(String(error?.stack||error)); }
+  }
+  if(errors.length) {
+    const detail='Wiper render restoration failed: '+errors.join(' | ');
+    throw Error(primaryError ? String(primaryError.stack||primaryError)+'\n'+detail : detail);
+  }
+}
+
+// Diagnostic backend deliberately differs from production CI: sandbox remains
+// enabled, no unsafe flags are added, and actual backend is not inferred.
+export function wiperDiagnosticBrowserOptions() {
+  return {headless:true,chromiumSandbox:true,args:[]};
 }
 
 export async function installWiperProbe(testCase) {
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local,P=G.projectiles,r=G.renderer,gl=r.getContext();
+  window.__assertWiperWebGLError(gl,'setup','probe','initial-entry');
   if(!g.frozen||!G.match?.range||G.match.state!=='playing'||a.weaponId!==testCase.id)throw Error('Native controlled range admission mismatch');
   await a.character.sourceMotion.ready;
   if(a.character._warmed)await a.character._warmed;
+  window.__assertWiperWebGLError(gl,'setup','probe','post-warm');
   if(a.character.sourceMotion.status!=='ready')throw Error('Local source motion not ready');
   g.debug.freezeBots();g.input.keys.clear();g.input.pressed.clear();g.debug.fire(false);
   // Explicit controlled fixture: existing range travel, actor pose/ink reset,
@@ -120,13 +152,7 @@ export async function installWiperProbe(testCase) {
   const owned=()=>P.list.filter(p=>p.owner===a&&p.delay<=0&&!p.catalog?.birthPending);
   const camera=new THREE.PerspectiveCamera(50,960/720,.05,250),focus=a.pos.clone().add(new THREE.Vector3(0,1.1,6));
   camera.position.copy(focus).add(new THREE.Vector3(-16,3,2));camera.lookAt(focus);camera.updateMatrixWorld(true);
-  const readPixels=()=>{
-    const bytes=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);
-    gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
-    let lo=255,hi=0;for(let i=0;i<bytes.length;i+=4){const n=(bytes[i]+bytes[i+1]+bytes[i+2])/3;lo=Math.min(lo,n);hi=Math.max(hi,n);}
-    if(hi-lo<8)throw Error('Flat rendered image');
-    return {luminanceRange:hi-lo,drawingBuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight]};
-  };
+  const readPixels=(frame,view)=>window.__readWiperPixels(gl,frame,view,window.__assertWiperWebGLError);
   let refs=null;
   const scheduler=window.__createWiperNativeShotSchedule(testCase,{setFire:on=>g.debug.fire(on),step,
     readActive:()=>owned().map(p=>({id:p.wid,sourceActor:p.catalog?.r?.sourceActor,descriptor:p.catalog?.descriptor?.key,age:p.age,seed:p.seed,pos:p.pos.toArray()})),
@@ -137,13 +163,17 @@ export async function installWiperProbe(testCase) {
       gear:JSON.parse(localStorage.getItem('inkwave.splatoon3.gear.v1')),teams:G.teamColors.map(c=>c.getHexString()),camera:camState(G.camera),inspectionCamera:camState(camera),
       environment:{time:G.env?.time,theme:G.env?.theme,grade:G.env?.grade},pipeline:{ao:!!g.R.gtao,shadows:r.shadowMap.enabled,bloom:!!g.R.bloom?.enabled},bootSeed:'0x515e7021',shotSeed:'0x515e7080'},
     capture(frame,view){
+      window.__assertWiperWebGLError(gl,frame,view,'pre-advance');
       scheduler.advanceTo(frame);
+      window.__assertWiperWebGLError(gl,frame,view,'post-advance');
       const R=P._s3Shapes,mesh=R?.[testCase.mesh];
       if(!mesh||mesh.count!==2)throw Error('Missing actual two-instance native slash');
       const currentRefs=[R,mesh,mesh.geometry,mesh.material,mesh.instanceMatrix.array,mesh.instanceColor.array];
       if(refs&&refs.some((x,i)=>x!==currentRefs[i]))throw Error('Native mesh/geometry/buffers replaced during flight');refs=currentRefs;
       const before=JSON.stringify(state()),counts=JSON.stringify(P.s3ShapeCounts);
-      P._draw();P._draw();
+      window.__assertWiperWebGLError(gl,frame,view,'pre-draw');
+      P._draw();window.__assertWiperWebGLError(gl,frame,view,'post-draw-1');
+      P._draw();window.__assertWiperWebGLError(gl,frame,view,'post-draw-2');
       if(before!==JSON.stringify(state())||counts!==JSON.stringify(P.s3ShapeCounts))throw Error('Repeated shape draw mutated gameplay/RNG/counts');
       const vertices=mesh.geometry.getAttribute('position'),index=mesh.geometry.index;
       let bytes=0;for(const attribute of Object.values(mesh.geometry.attributes))bytes+=attribute.array.byteLength;if(index)bytes+=index.array.byteLength;
@@ -155,16 +185,20 @@ export async function installWiperProbe(testCase) {
       const matrices=Array.from(mesh.instanceMatrix.array.slice(0,mesh.count*16));
       const drawReceipts=[],restoreDraw=window.__wrapWiperDrawCallback(mesh,args=>drawReceipts.push({override:!!args[1].overrideMaterial,inspection:args[2]===camera}));
       const previousTarget=r.getRenderTarget(),previousAuto=r.autoClear,previousInfoAuto=r.info.autoReset;
-      let pixels,render;
+      let pixels,render,primaryRenderError;
       try{
         r.info.autoReset=false;r.info.reset();
+        window.__assertWiperWebGLError(gl,frame,view,'pre-render');
         if(view==='native-postprocessed')g.R.render();
         else if(view==='fixed-side-raw'){r.setRenderTarget(null);r.autoClear=true;r.render(G.scene,camera);}
         else throw Error('Unknown capture view');
-        render={...r.info.render};pixels=readPixels();
-      }finally{try{restoreDraw();}finally{r.setRenderTarget(previousTarget);r.autoClear=previousAuto;r.info.autoReset=previousInfoAuto;}}
+        window.__assertWiperWebGLError(gl,frame,view,'post-render');
+        render={...r.info.render};pixels=readPixels(frame,view);
+      }catch(error){primaryRenderError=error;throw error;}
+      finally{window.__restoreWiperRenderState(restoreDraw,r,previousTarget,previousAuto,previousInfoAuto,primaryRenderError);}
+      window.__assertWiperWebGLError(gl,frame,view,'post-restore');
       if(!drawReceipts.some(d=>!d.override))throw Error('Actual source-bound mesh did not draw in this view');
-      window.__assertWiperWebGLError(gl,frame,view);
+      window.__assertWiperWebGLError(gl,frame,view,'final');
       if(before!==JSON.stringify(state()))throw Error('Render changed gameplay/native camera/visibility/clock/RNG');
       return {frame,tick:scheduler.tick,state:state(),drawPure:true,mesh:{name:testCase.mesh,instances:mesh.count,trianglesPerInstance:(index?.count??vertices.count)/3,
         attributeBytes:bytes,projectedVertices:vertices.count*mesh.count,visibleProjectedVertices,matrices,castShadow:mesh.castShadow},
@@ -197,8 +231,49 @@ export async function finishWiperContext(context,row,save,errors,primaryError) {
   if(cleanupError&&!primaryError)throw cleanupError;
 }
 
-export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPath(new URL('../',import.meta.url))}={}) {
+// Diagnostic harness and immutable game source are separate checkouts.
+// Neither identity can be inferred from the other or from a mutable ref.
+export function validateWiperDiagnosticIdentity(sourceRoot,sourceSha,harnessSha,harnessIdentity) {
+  assert.ok(path.isAbsolute(sourceRoot),'Diagnostic source root must be absolute');
+  assert.match(sourceSha||'',/^[a-f0-9]{40}$/,'Full source SHA required');
+  assert.match(harnessSha||'',/^[a-f0-9]{40}$/,'Full harness SHA required');
+  assert.equal(harnessIdentity?.checkoutIdentityStatus,'verified-git-head');
+  assert.equal(harnessIdentity.checkoutSha,harnessSha,'Diagnostic harness checkout mismatch');
+}
+
+// Preserve source-module observation status even on an early capture error.
+// Wait only a bounded interval; missing or rejected observations never certify.
+export async function settleWiperModuleObservations(pending,modules,consumed,{timeoutMs=2000,errors=[]}={}) {
+  let timer,settled;
+  try { settled=await Promise.race([Promise.allSettled(pending),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),Math.max(1,Math.min(2000,timeoutMs)));})]); }
+  finally { clearTimeout(timer); }
+  const expected=Object.keys(modules),matches=expected.filter(k=>consumed[k]===modules[k]);
+  const complete=!!settled&&settled.every(r=>r.status==='fulfilled')&&!errors.some(e=>String(e).startsWith('consumed artifact:'))&&pending.length>=expected.length&&matches.length===expected.length;
+  return {status:complete?'verified':'incomplete',reason:!settled?'timeout':complete?'all-matched':'missing-or-rejected',pendingCount:pending.length,expectedCount:expected.length,matchedCount:matches.length};
+}
+
+// Diagnostic-only snapshot of the existing frozen page, never a completed
+// frame or input action. Timeout bounds the screenshot and errors are returned,
+// never thrown over the primary capture failure.
+export async function saveWiperFailureEvidence(page,out,primaryError,{timeoutMs=3000,write=fs.writeFileSync}={}) {
+  const ms=Math.max(1,Math.min(3000,timeoutMs)),info={kind:'diagnostic-failure-evidence',acceptance:false,
+    primaryError:String(primaryError?.stack||primaryError),screenshot:{status:'not-started'}};
+  let timer;
+  try {
+    const pending=Promise.resolve().then(()=>page.screenshot({timeout:Math.min(ms,2500)}));
+    const bytes=await Promise.race([pending,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('diagnostic screenshot deadline exceeded')),ms);})]);
+    const file='wiper-gl-failure-current.png';write(path.join(out,file),bytes);
+    info.screenshot={status:'captured',file,sha256:hash(bytes),bytes:bytes.length};
+  } catch(error) { info.screenshot={status:'unavailable',error:String(error?.message||error)}; }
+  finally { clearTimeout(timer); }
+  try { write(path.join(out,'wiper-gl-failure.json'),JSON.stringify(info,null,2)+'\n'); }
+  catch(error) { info.receiptWriteError=String(error?.message||error); }
+  return info;
+}
+
+export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPath(new URL('../',import.meta.url)),diagnosticBackend=false,expectedDiagnosticSha=null}={}) {
   assert.match(sourceSha||'',/^[a-f0-9]{40}$/,'Full exact --source-sha required');
+  assert.equal(typeof diagnosticBackend,'boolean');
   const site=path.resolve(siteArg),out=path.resolve(outArg);
   assert.ok(!fs.existsSync(out),'Fresh evidence directory required');fs.mkdirSync(out,{recursive:true});
   const result={schema:1,status:'running',kind:'controlled-native-wiper-visual-acceptance',sourceSha,
@@ -213,6 +288,7 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
       'Draw/projection/non-flat-pixel receipts do not certify an unoccluded silhouette. Original full-frame PNG visual review required; no retail timing/fidelity claim.'],
     harnessSha256:hash(fs.readFileSync(new URL(import.meta.url))),contractSha256:hash(fs.readFileSync(new URL('./lib/inkwave-wiper-acceptance-contract.mjs',import.meta.url))),
     launcherSha256:hash(fs.readFileSync(new URL('./lib/inkwave-sandbox-browser.mjs',import.meta.url)))};
+  if(diagnosticBackend){const diagnosticIdentity=captureSourceIdentity({cwd:fileURLToPath(new URL('../',import.meta.url))});validateWiperDiagnosticIdentity(root,sourceSha,expectedDiagnosticSha,diagnosticIdentity);Object.assign(result,{kind:'controlled-native-wiper-gl-diagnostic',diagnosticOnly:true,diagnosticIdentity,backend:{requested:'Chromium default; no forced SwiftShader',actual:'unverified',sandbox:true,extraArgs:[]},diagnosticRunnerSha256:hash(fs.readFileSync(new URL('./check-inkwave-wiper-gl-phase-diagnostic.mjs',import.meta.url)))});}
   let browser,server,failure,expectedBuild;const pending=[];
   const save=()=>fs.writeFileSync(path.join(out,'wiper-native-result.json'),JSON.stringify(result,null,2)+'\n');
   try {
@@ -235,20 +311,21 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
       res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(bytes);
     }catch{res.writeHead(404);res.end();}});
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-    const {chromium}=await import('playwright');browser=await launchSandboxBrowser(chromium);result.browser=browser.version();save();
+    const {chromium}=await import('playwright');browser=diagnosticBackend?await chromium.launch(wiperDiagnosticBrowserOptions()):await launchSandboxBrowser(chromium);result.browser=browser.version();save();
     for(const c of WIPER_CAPTURE_CASES){
       const row={...c,frames:[],contextClosed:false};result.cases.push(row);save();
       const context=await browser.newContext({viewport:{width:960,height:720},deviceScaleFactor:1});
-      let primaryError;
+      let primaryError,page,frozenVerified=false;
       try{
-        const page=await context.newPage();page.setDefaultTimeout(120000);
+        page=await context.newPage();page.setDefaultTimeout(120000);
         page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
         page.on('response',response=>{const key=new URL(response.url()).pathname.slice(1);if(Object.hasOwn(result.modules,key))pending.push(response.body().then(bytes=>{
           const digest=hash(bytes);assert.equal(digest,result.modules[key],'Actually consumed current emitted module');result.consumed[key]=digest;
         }).catch(e=>result.errors.push('consumed artifact: '+e.message)));});
         await page.addInitScript(initializeWiperCapture,c);
         row.entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:120000});
-        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';'});
+        await page.addScriptTag({content:'window.__createWiperNativeShotSchedule='+createWiperNativeShotSchedule.toString()+';window.__wrapWiperDrawCallback='+wrapWiperDrawCallback.toString()+';window.__assertWiperWebGLError='+assertWiperWebGLError.toString()+';window.__restoreWiperRenderState='+restoreWiperRenderState.toString()+';window.__readWiperPixels='+readWiperPixels.toString()+';'});
+        if(diagnosticBackend){frozenVerified=await page.evaluate(()=>window.__inkwave?.frozen===true);assert.equal(frozenVerified,true,'Diagnostic screenshot requires frozen game clock');}
         Object.assign(row,await page.evaluate(installWiperProbe,c));
         for(const frame of WIPER_CAPTURE_FRAMES[c.action]){
           let captured;
@@ -264,18 +341,19 @@ export async function runWiperCapture(siteArg,outArg,sourceSha,{root=fileURLToPa
           captured.screenshotStateStable=true;row.frames.push(captured);save();console.log('Wiper controlled frame',c.key,frame);
         }
         Object.assign(row,await page.evaluate(()=>window.__wiperProbe.finish()));
-      }catch(error){primaryError=error;throw error;}
+      }catch(error){primaryError=error;if(diagnosticBackend&&page&&frozenVerified){try{result.diagnosticFailure=await saveWiperFailureEvidence(page,out,error);}catch(e){result.diagnosticFailure={kind:'diagnostic-failure-evidence',acceptance:false,primaryError:String(error?.stack||error),screenshot:{status:'unavailable',error:String(e)}};}}else if(diagnosticBackend){result.diagnosticFailure={kind:'diagnostic-failure-evidence',acceptance:false,primaryError:String(error?.stack||error),screenshot:{status:'not-captured',reason:'frozen game clock not verified'}};}throw error;}
       finally{await finishWiperContext(context,row,save,result.errors,primaryError);}
     }
-    await Promise.all(pending);assert.deepEqual(result.errors,[]);result.status='passed';
+    await Promise.all(pending);assert.deepEqual(result.errors,[]);result.status=diagnosticBackend?'diagnostic-complete':'passed';
   }catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}
   finally{
+    if(diagnosticBackend){try{result.moduleObservations=await settleWiperModuleObservations(pending,result.modules,result.consumed,{errors:result.errors});}catch(error){result.moduleObservations={status:'incomplete',reason:'settle-error',error:String(error?.message||error)};}}
     result.cleanup=await closeWiperCaptureOwners({browser,server},result.errors);
     if(result.errors.length)result.status='failed';
     if(result.status==='passed')try{assertWiperCaptureReceipt(result,{sourceSha,...expectedBuild});}catch(error){failure=error;result.status='failed';result.error=String(error.stack||error);}
     save();
   }
-  if(failure||result.status!=='passed')throw failure||Error('Wiper capture failed: '+result.errors.join('; '));
+  if(failure||result.status!==(diagnosticBackend?'diagnostic-complete':'passed'))throw failure||Error('Wiper capture failed: '+result.errors.join('; '));
   return result;
 }
 
