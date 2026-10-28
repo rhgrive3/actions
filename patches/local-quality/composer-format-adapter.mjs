@@ -133,6 +133,11 @@ export function selectComposerTargetFormat(THREE, renderer, {
 
   if (!framebufferComplete) return fallback('packed-framebuffer-incomplete');
   if (!composerGradeKeepsPackedTargetNonnegative(grade)) return fallback('grade-can-output-negative-rgb', true);
+  // RGB-only is necessary but not sufficient: ScreenFX's distortion, damage
+  // and color transforms amplify packed HDR rounding beyond the existing
+  // image tolerance. Keep full precision only while that pass contributes.
+  // canPack stays true so an idle frame restores the smaller target pair.
+  if (screenFx?.enabled) return fallback('active-screenfx-keeps-rgba16f', true);
 
   return {
     options: {
@@ -192,7 +197,7 @@ const RENDER_GRADE_ANCHOR =
   '    const gr = G.env && G.env.grade;\n    if (gr && gr !== this._gradeSrc && this.grade) {';
 const RENDER_GRADE_GUARD =
   '    const gr = G.env && G.env.grade;\n' +
-  '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr);\n' +
+  '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr) && !this.extraPass?.enabled;\n' +
   '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) this._buildComposer();\n' +
   '    if (gr && gr !== this._gradeSrc && this.grade) {';
 

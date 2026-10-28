@@ -393,6 +393,36 @@ test('#642 adapter composes with the existing renderer and the latest PR #1175 l
   assert.doesNotThrow(() => new vm.SourceTextModule(lazyComposed, { identifier: `${REL}#pr1175` }));
 });
 
+test('#642 active ScreenFX uses HDR only on state edges and idle restores the packed target', async () => {
+  const ns=await linkEntry(`export * as THREE from 'three';`);
+  const {renderer}=fboRenderer();
+  const effect={...SCREENFX_PASS,enabled:false};
+  const choose=grade=>selectComposerTargetFormat(ns.THREE,renderer,{
+    touch:true,quality:MOBILE_QUALITY,samples:0,grade,screenFx:effect,
+  });
+  assert.equal(choose(null).packed,true);
+  effect.enabled=true;
+  assert.equal(choose(null).reason,'active-screenfx-keeps-rgba16f');
+  assert.equal(choose(null).canPack,true);
+  assert.equal(choose(null).options.type,ns.THREE.HalfFloatType);
+  assert.ok(SCREENFX_SOURCE.includes('this.pass.enabled = any;'),'native ScreenFX enables only visible effects');
+  const source=compose(REL),start=source.lastIndexOf('  render() {'),end=source.indexOf('\n  }\n}',start);
+  assert.ok(start>=0&&end>start);
+  const G={env:null};
+  const render=vm.runInNewContext('('+source.slice(start,end+4).trim().replace(/^render\(/,'function(')+')',
+    {G,composerGradeKeepsPackedTargetNonnegative,cropBattleCanvas(){}});
+  let builds=0,draws=0;
+  const owner={extraPass:effect,grade:null,_composerPackedCapable:true,_composerUsesPackedTarget:true,
+    renderer:{domElement:{}},resize(){},composer:{render(){draws++;}},_buildComposer(){builds++;this._composerUsesPackedTarget=choose(G.env?.grade).packed;}};
+  const frames=()=>{for(let i=0;i<30;i++)render.call(owner);};
+  frames();assert.equal(builds,1,'one allocation transition while active');
+  effect.enabled=false;frames();assert.equal(builds,2,'one transition back to idle');
+  G.env={grade:{uLift:-.01}};frames();assert.equal(builds,3,'negative grade keeps existing HDR guard');
+  effect.enabled=true;frames();assert.equal(builds,3,'another HDR reason never rebuilds an HDR pair');
+  effect.enabled=false;G.env.grade.uLift=0;frames();assert.equal(builds,4,'both precision requirements clear once');
+  assert.equal(draws,150);
+});
+
 // Actual vendored composer/pass classes; only GPU draw methods are replaced
 // with observations. These are control-flow tests, not pixel comparisons.
 async function frameRoleNamespace() {

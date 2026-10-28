@@ -7,7 +7,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { persistentDirectory, persistentBrowserTemp } from './lib/inkwave-runtime-evidence.mjs';
+import { sandboxBrowserOptions } from './lib/inkwave-sandbox-browser.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_EVIDENCE = process.argv[2];
@@ -18,16 +21,22 @@ const CSS_WIDTH = 320;
 const CSS_HEIGHT = 180;
 const INITIAL_PIXEL_RATIO = 1.2;
 const RGB_TOLERANCE = { meanAbsoluteCode: 1.25, p99AbsoluteCode: 3, alphaMismatchPixels: 0 };
+const lazyRefIndex=process.argv.indexOf('--lazy-ref');
+const lazyRef=lazyRefIndex<0?null:process.argv[lazyRefIndex+1];
+if(lazyRef&&!/^[a-f0-9]{40}$/.test(lazyRef))throw Error('Full immutable --lazy-ref required');
+const lazySource=lazyRef?execFileSync('git',['show',lazyRef+':patches/local-quality/composer-target-adapter.mjs'],{cwd:ROOT,encoding:'utf8'}):null;
+const formatRefIndex=process.argv.indexOf('--format-ref');
+const formatRef=formatRefIndex<0?null:process.argv[formatRefIndex+1];
+if(formatRef&&!/^[a-f0-9]{40}$/.test(formatRef))throw Error('Full immutable --format-ref required');
+const formatSource=formatRef?execFileSync('git',['show',formatRef+':patches/local-quality/composer-format-adapter.mjs'],{cwd:ROOT,encoding:'utf8'}):null;
+const formatOnly=process.argv.includes('--format-only');
 
 if (!DEFAULT_EVIDENCE) throw new Error('Usage: INKWAVE_CHROMIUM=<path> PLAYWRIGHT_MODULE=<path> node scripts/check-inkwave-composer-webgl.mjs <persistent-evidence-dir>');
 if (!CHROMIUM || !PLAYWRIGHT || !BROWSER_PROFILE) throw new Error('Set INKWAVE_CHROMIUM, PLAYWRIGHT_MODULE and persistent INKWAVE_BROWSER_PROFILE paths.');
 
-const evidenceDir = path.resolve(DEFAULT_EVIDENCE);
-await fs.mkdir(evidenceDir, { recursive: true });
-const resolvedEvidence = await fs.realpath(evidenceDir);
-if (!resolvedEvidence.startsWith('/mnt/workspace/.dev-state/agent-work/evidence/')) {
-  throw new Error(`Evidence path is outside persistent agent-work/evidence: ${resolvedEvidence}`);
-}
+const resolvedEvidence = persistentDirectory(DEFAULT_EVIDENCE);
+const browserTemp = persistentBrowserTemp(process.env.INKWAVE_BROWSER_TEMP || path.join(ROOT, '.composer-browser-tmp'));
+for (const name of ['TMPDIR', 'TMP', 'TEMP']) process.env[name] = browserTemp;
 
 const rendererPath = path.join(ROOT, 'inkwave-public/src/core/renderer.js');
 const screenFxPath = path.join(ROOT, 'inkwave-public/src/fx/screenfx.js');
@@ -60,7 +69,7 @@ const sourceHashes = {
   lazyAdapter: crypto.createHash('sha256').update(await fs.readFile(path.join(ROOT, 'patches/local-quality/composer-target-adapter.mjs'))).digest('hex'),
 };
 
-const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><script type="importmap">${JSON.stringify({ imports: {
+const html = `<!doctype html><html><head><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><script type="importmap">${JSON.stringify({ imports: {
   three: '/inkwave-public/vendor/three/build/three.module.js',
   'three/addons/': '/inkwave-public/vendor/three/jsm/',
 } })}</script></head><body style="margin:0"><canvas id="gl"></canvas><script type="module">
@@ -186,7 +195,9 @@ globalThis.runComposerWebGLProbe = (payload) => {
     const proxy = createLazyComposerTarget((size) => {
       life.created++;
       const actualRatio = size.pixelRatio;
-      const selected = packed ? mobileSelection : {
+      const selected = packed ? selectComposerTargetFormat(THREE,renderer,{
+        touch:true,quality:qMobile,samples:0,grade:gradeUniformValues,screenFx:sfx.pass,
+      }) : {
         options: { format: THREE.RGBAFormat, type: THREE.HalfFloatType, samples: 0, depthBuffer: true },
         packed: false, mode: 'rgba16f-reference', reason: 'reference-format',
       };
@@ -210,6 +221,16 @@ globalThis.runComposerWebGLProbe = (payload) => {
       composer.addPass(fxaa);
       return composer;
     }, { width: WIDTH, height: HEIGHT, pixelRatio: INITIAL_PR, ownerDocument: document });
+    // Mirror the production renderer's state-edge precision guard. Stable
+    // effect frames reuse the same native targets, and idle returns to packed.
+    const nativeRender=proxy.render;
+    proxy.render=function(...args){
+      const expected=packed?selectComposerTargetFormat(THREE,renderer,{
+        touch:true,quality:qMobile,samples:0,grade:gradeUniformValues,screenFx:sfx.pass,
+      }).options.type:THREE.HalfFloatType;
+      if(this.renderTarget1&&this.renderTarget1.texture.type!==expected)this.releaseInactiveTargets();
+      return nativeRender.apply(this,args);
+    };
     return { proxy, life, grade, fxaa, packed };
   };
 
@@ -324,12 +345,15 @@ globalThis.runComposerWebGLProbe = (payload) => {
   for (const scenario of scenarios) {
     const effectState = prepareScenario(scenario);
     const before = capturePipeline(reference);
+    const referenceRepeat=capturePipeline(reference);
     const after = capturePipeline(packed);
+    const packedRepeat=capturePipeline(packed);
     comparisons.push({
       name: scenario.name, effectState,
       outputDimensions: before.drawingBuffer,
       referenceTargets: before.targets, packedTargets: after.targets,
       metrics: pixelMetrics(before.pixels, after.pixels),
+      repeatControls:{reference:pixelMetrics(before.pixels,referenceRepeat.pixels),packed:pixelMetrics(after.pixels,packedRepeat.pixels)},
       referencePngBase64: before.pngBase64,
       packedPngBase64: after.pngBase64,
     });
@@ -368,6 +392,29 @@ globalThis.runComposerWebGLProbe = (payload) => {
   const beforeFinalDispose = packed.life.targetDisposals;
   packed.proxy.dispose();
   const finalDisposals = packed.life.targetDisposals - beforeFinalDispose;
+
+  // A native add/insert mutates its pass list before calling pass.setSize.
+  // Fault controls must prove that a later frame cannot render that stale
+  // pass and that each rejected target generation is actually released.
+  renderer.setPixelRatio(INITIAL_PR);renderer.setSize(WIDTH,HEIGHT);
+  const recovery = makePipeline(true), failureRecovery = [];
+  const recoveryReference = capturePipeline(recovery);
+  for(let cycle=0;payload.checkFailureRecovery&&cycle<10;cycle++){
+    const before=recovery.life.targetDisposals;
+    const rejected={setSize(){throw Error('injected composer resize');},render(){throw Error('rejected pass rendered');}};
+    let caught=false;
+    try{if(cycle%2)recovery.proxy.insertPass(rejected,cycle%3?-1:100);else recovery.proxy.addPass(rejected);}
+    catch(error){caught=error.message==='injected composer resize';}
+    const released=recovery.proxy.renderTarget1===null&&recovery.proxy.renderTarget2===null;
+    const next=capturePipeline(recovery);
+    failureRecovery.push({cycle,caught,released,disposals:recovery.life.targetDisposals-before,
+      changedPixels:pixelMetrics(recoveryReference.pixels,next.pixels).changedPixels,
+      alphaMismatchPixels:pixelMetrics(recoveryReference.pixels,next.pixels).alphaMismatchPixels,
+      approvedPasses:recovery.proxy.passes.length,glError:gl.getError()});
+  }
+  const recoveryGenerations=recovery.life.created;
+  recovery.proxy.dispose();
+  const recoveryFinalDisposals=recovery.life.targetDisposals;
 
   const negativeFallback = {
     mode: negativeGradeSelection.mode, packed: negativeGradeSelection.packed,
@@ -408,6 +455,7 @@ globalThis.runComposerWebGLProbe = (payload) => {
     },
     allocation,
     negativeGradeFallback: negativeFallback,
+    failureRecovery: {executed:payload.checkFailureRecovery,cycles:failureRecovery,generations:recoveryGenerations,totalDisposals:recoveryFinalDisposals},
     comparisons,
     tolerance: payload.tolerance,
     lifecycle: {
@@ -430,6 +478,12 @@ globalThis.__composerWebGLReady = true;
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
+    if(lazySource&&url.pathname==='/patches/local-quality/composer-target-adapter.mjs'){
+      res.writeHead(200,{'content-type':'text/javascript'});res.end(lazySource);return;
+    }
+    if(formatSource&&url.pathname==='/patches/local-quality/composer-format-adapter.mjs'){
+      res.writeHead(200,{'content-type':'text/javascript'});res.end(formatSource);return;
+    }
     if (url.pathname === '/__composer-webgl-harness.html') {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       res.end(html); return;
@@ -451,17 +505,11 @@ await new Promise((resolve, reject) => {
 });
 const address = server.address();
 const playwright = await import(pathToFileURL(path.resolve(PLAYWRIGHT)).href);
-const contextDir = path.resolve(BROWSER_PROFILE);
-await fs.mkdir(contextDir, { recursive: true });
-const resolvedProfile = await fs.realpath(contextDir);
-if (!resolvedProfile.startsWith('/mnt/workspace/.dev-state/agent-work/cache/')) {
-  throw new Error(`Browser profile is outside persistent agent-work/cache: ${resolvedProfile}`);
-}
+const contextDir = persistentDirectory(BROWSER_PROFILE);
 const context = await playwright.chromium.launchPersistentContext(contextDir, {
-  headless: true, executablePath: CHROMIUM,
+  ...sandboxBrowserOptions({CHROMIUM_EXECUTABLE_PATH:CHROMIUM}),
   viewport: { width: CSS_WIDTH, height: CSS_HEIGHT }, deviceScaleFactor: INITIAL_PIXEL_RATIO,
   isMobile: true, hasTouch: true,
-  args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 const browserVersion = context.browser()?.version?.() || null;
 const page = context.pages()[0] || await context.newPage();
@@ -474,7 +522,7 @@ try {
   await page.goto(`http://127.0.0.1:${address.port}/__composer-webgl-harness.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => globalThis.__composerWebGLReady === true, null, { timeout: 20000 });
   report = await page.evaluate((payload) => globalThis.runComposerWebGLProbe(payload), {
-    gradeInitializer, fxaaInitializer, screenFxVertex, screenFxFragment, tolerance: RGB_TOLERANCE,
+    gradeInitializer, fxaaInitializer, screenFxVertex, screenFxFragment, tolerance: RGB_TOLERANCE, checkFailureRecovery:!formatOnly,
   });
 } finally {
   await context.close();
@@ -501,6 +549,8 @@ report.toolchain = {
   postStack: ['RenderPass', 'shipped GradeShader', 'shipped ScreenFX', 'shipped OutputPass', 'shipped FXAAShader'],
   scenarios: report.comparisons.map((item) => item.name), imageEvidence: imagePaths,
   sourceSha256: sourceHashes, pageErrors,
+  lazyRef,lazySourceSha256:lazySource?crypto.createHash('sha256').update(lazySource).digest('hex'):sourceHashes.lazyAdapter,
+  formatRef,formatSourceSha256:formatSource?crypto.createHash('sha256').update(formatSource).digest('hex'):sourceHashes.packedAdapter,
 };
 report.failures = [];
 if (!report.gpu.isWebGL2 || !report.gpu.extColorBufferFloat) report.failures.push('WebGL2/EXT_color_buffer_float unavailable');
@@ -509,7 +559,13 @@ if (report.negativeGradeFallback.packed) report.failures.push('negative Grade un
 if (report.profiles.desktopHigh.hdr.packed || report.profiles.desktopHigh.hdr.type !== 1016) report.failures.push('desktop selection did not retain HalfFloat HDR');
 if (report.contextErrors !== 0 || report.contextLost) report.failures.push(`WebGL context error/loss: ${report.contextErrors}/${report.contextLost}`);
 if (pageErrors.length) report.failures.push(`browser console/page errors: ${pageErrors.join(' | ')}`);
+if(report.failureRecovery.executed&&(report.failureRecovery.cycles.length!==10||report.failureRecovery.cycles.some(row=>
+  !row.caught||!row.released||row.disposals!==2||row.changedPixels||row.alphaMismatchPixels||row.approvedPasses||row.glError)||
+  report.failureRecovery.generations!==11||report.failureRecovery.totalDisposals!==22))
+  report.failures.push('Native failed-pass cleanup or exact recovery pixels failed');
 for (const item of report.comparisons) {
+  if(Object.values(item.repeatControls).some(row=>row.changedPixels||row.alphaMismatchPixels))
+    report.failures.push(item.name+' same-format repeat calibration failed');
   const m = item.metrics;
   if (m.meanAbsoluteCode > RGB_TOLERANCE.meanAbsoluteCode || m.p99AbsoluteCode > RGB_TOLERANCE.p99AbsoluteCode
     || m.alphaMismatchPixels > RGB_TOLERANCE.alphaMismatchPixels) {
