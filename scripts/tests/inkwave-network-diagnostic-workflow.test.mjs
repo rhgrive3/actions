@@ -5,7 +5,7 @@ const file=new URL('../../.github/workflows/validate-inkwave-update.yml',import.
 const workflow=readFileSync(file,'utf8');
 const guard='node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs';
 const helper='scripts/tests/inkwave-opening-peer-diagnostic.test.mjs';
-const ordinaryFull="inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
+const ordinaryFull="inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)";
 const job=(text,name)=>{
  const marker=`  ${name}:\n`,i=text.indexOf(marker,text.indexOf('\njobs:\n'));
  assert.ok(i>=0,`missing job ${name}`);
