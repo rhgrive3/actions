@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {mapResponsiveCases,spawnResponsiveCase} from '../lib/inkwave-responsive-child-pool.mjs';
+import {mapResponsiveCases,spawnResponsiveCase} from '../ci/inkwave-responsive-child-pool.mjs';
 
 test('two workers run every case once, never exceed two and retain canonical order', async () => {
   let active=0,maxActive=0;
