@@ -52,8 +52,8 @@ function verify(text) {
   return true;
 }
 function evaluate(expression, c) {
-  if (expression === fullCondition) return c.diagnostic_only !== true && (c.event !== 'pull_request' || c.draft === false);
-  if (expression === nativeOffloadCondition) return c.diagnostic_only !== true && (c.event !== 'pull_request' || c.draft === false) && !(c.offload === true && c.event === 'pull_request' && !['inkwave/runtime-performance-ui','inkwave/final-nine-way-integration'].includes(c.head_ref));
+  if (expression === fullCondition) return c.diagnostic_only !== true && c.ciOnly !== true && (c.event !== 'pull_request' || c.draft === false);
+  if (expression === nativeOffloadCondition) return c.diagnostic_only !== true && c.ciOnly !== true && (c.event !== 'pull_request' || c.draft === false) && !(c.offload === true && c.event === 'pull_request' && !['inkwave/runtime-performance-ui','inkwave/final-nine-way-integration'].includes(c.head_ref));
   return expression.split(' && ').every(term=> {
     if(term === "github.event_name == 'workflow_dispatch'") return c.event === 'workflow_dispatch';
     const match = term.match(/^inputs\.(diagnostic_only|network_opening_diagnostic|wall_render_diagnostic) (==|!=) true$/);
