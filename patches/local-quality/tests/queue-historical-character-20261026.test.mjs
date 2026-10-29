@@ -6,6 +6,9 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20261026-adapter.mjs';
+import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
+import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
+import {adaptQueueVisualContinuation20261029} from '../queue-visual-continuation-20261029-adapter.mjs';
 import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
@@ -91,7 +94,7 @@ test('historical character source retains independently pinned input and both la
   if(rel==='src/game/character-outfit.js'){
    assert.equal(next,raw(rel),'current direct outfit source remains authoritative');assert.equal(adaptHistoricalCharacter20261026(rel,next),next);
   }else{
-   const historical=adaptHistoricalCharacter20261026(rel,entry.source);
+   const historical=adaptRemainingVisualQueue20261027(rel,adaptHistoricalCharacter20261026(rel,entry.source));
    let expected=historical;
    if(rel==='src/game/character.js'){
     // Exact two-anchor movement owned by the later weapon-presentation pass;
@@ -114,7 +117,15 @@ test('historical character source retains independently pinned input and both la
     incoming=replaceOnce(incoming,characterWeaponBefore,characterWeaponAfter,'native weapon near/far presentation extraction');
    }
    assert.equal(expected,incoming,rel+' independent owner reconstructions agree');
-   assert.equal(next,expected,rel+' exact owner composition');
+   // Later reviewed face kernels are checked against the frozen oracle by the
+   // real geometry tests below; this assertion checks composition ordering only.
+   const worldNative = adaptWorldNative20261029(rel,expected);
+   const terminal = adaptQueueVisualContinuation20261029(rel,worldNative);
+   if (rel === 'src/game/character-face.js') {
+    assert.notEqual(terminal,worldNative,'teeth/tongue continuation owner is exercised');
+    assert.throws(()=>adaptQueueVisualContinuation20261029(rel,terminal),/Visual continuation anchor/);
+   }
+   assert.equal(next,terminal,rel+' exact owner composition including visual continuation');
    assert.throws(()=>adaptHistoricalCharacter20261026(rel,next),/anchor/);assert.throws(()=>adaptHistoricalCharacter20261026(rel,''),/anchor/);
   }
  }

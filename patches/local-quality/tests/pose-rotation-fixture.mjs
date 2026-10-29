@@ -13,10 +13,10 @@ const assets=path.join(ROOT,'inkwave-public/assets/source-motion');
 const manifest=JSON.parse(fs.readFileSync(path.join(assets,'manifest.json')));
 const inflate=names=>gunzipSync(Buffer.concat(names.map(n=>fs.readFileSync(path.join(assets,n)))));
 const catalog=JSON.parse(inflate(manifest.catalog.parts));
-export async function poseRotationFixture(old=false){
+export async function poseRotationFixture(old=false,{source}={}){
  const site=process.env.INKWAVE_BUILT_SITE||path.join(ROOT,'inkwave-public'),context=vm.createContext({console,URL,Map}),modules=new Map();
  const live=fs.readFileSync(path.join(ROOT,'inkwave-public',REL),'utf8');
- const code=old?composedBefore:process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(site,REL),'utf8'):adaptBuildSource(REL,live);
+ const code=source??(old?composedBefore:process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(site,REL),'utf8'):adaptBuildSource(REL,live));
  const three=path.join(site,'vendor/three/build/three.module.js');
  function load(file){if(modules.has(file))return modules.get(file);const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file});modules.set(file,m);return m;}
  const entry=new vm.SourceTextModule(code+"\nexport * as THREE from 'three'; export const VM_MATH=Math;",{context});
