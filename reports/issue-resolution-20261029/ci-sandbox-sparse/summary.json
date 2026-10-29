@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "snapshotUtc": "2026-10-29T05:08:41.911754+00:00",
+  "codeCommit": "0c486d2e6296a723bdbe305c5d24f61e1bc5b438",
+  "integratedRootCodeCommit": "a043cb1daa0627bdcd915da71db2313e308fe0c3",
+  "base": "1a9cf2c5ed000bf162d345404378525a3c6348aa",
+  "changedCodeFiles": [
+    ".github/workflows/ci-quality-gate.yml",
+    ".github/workflows/inkwave-composed-cpu.yml",
+    ".github/workflows/validate-inkwave-update.yml",
+    "scripts/tests/inkwave-ci-sparse-checkout.test.mjs",
+    "scripts/tests/inkwave-sandbox-runner-route.test.mjs"
+  ],
+  "productionInputsChanged": false,
+  "nodeVersion": "22.23.4",
+  "tests": {
+    "pass": 111,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "raw": "contracts-node22.tap.gz",
+    "command": "node --test scripts/tests/inkwave-ci-sparse-checkout.test.mjs scripts/tests/inkwave-sandbox-runner-route.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-ci-recurrence-guards.test.mjs scripts/tests/inkwave-source-coverage.test.mjs scripts/tests/inkwave-staged-ci-policy.test.mjs scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-wiper-capture-isolation.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+  },
+  "yaml": {
+    "files": 81,
+    "duplicateKeys": 0,
+    "command": "ruby scripts/ci/check-workflow-yaml.rb .github/workflows"
+  },
+  "inventory": {
+    "trackedJavaScriptFilesAtCodeCommit": 3911,
+    "globalLiteralGitTreeCalls": 18,
+    "actualLargeTreeCallerExpressions": 16,
+    "inventorySelection": "git ls-files, dynamically derived at each test execution; no frozen file count"
+  },
+  "hostedFailures": [
+    {
+      "pr": 1909,
+      "head": "99036023f4ee40a0584aec0b7ed29f18191a6bd2",
+      "run": 40819723966,
+      "job": 123269103894,
+      "cause": "Chromium explicit sandbox launch failed on ubuntu-latest: no usable sandbox (AppArmor user namespaces), SIGTRAP before recorder trace."
+    },
+    {
+      "pr": 1908,
+      "head": "1a9cf2c5ed000bf162d345404378525a3c6348aa",
+      "run": 40819709783,
+      "job": 123269060674,
+      "cause": "A+ sparse checkout omitted tracked report/tool JavaScript required by unchanged global metadata AST audit and real-large-tree callers."
+    },
+    {
+      "pr": 1909,
+      "head": "99036023f4ee40a0584aec0b7ed29f18191a6bd2",
+      "run": 40819723766,
+      "job": 123269103303,
+      "cause": "Same sparse-checkout omission, independently confirmed from this job log."
+    }
+  ],
+  "setupAttempt": {
+    "raw": "setup-incomplete-node22.tap.gz",
+    "pass": 104,
+    "fail": 2,
+    "cause": "Local isolated sparse checkout lacked scripts/prepare-inkwave-ci-apt.py and package-lock.json. Materialized existing committed dependencies; no code/assertion edit between attempts."
+  },
+  "claims": "Local contract acceptance only; corrected-head hosted CI remains required. No browser rerun, workflow dispatch, physical device claim, main merge or issue closure. Historical unrelated WebKit crashes and runner shutdowns remain unproven.",
+  "receipts": {
+    "contracts-node22.tap.gz": {
+      "uncompressedSha256": "76ed4bc42ce58349cfc1e0f41fadb7d157970f1ae50f0ac24b18ddf9d9a4b020",
+      "uncompressedBytes": 28750,
+      "gzipSha256": "b82552b45acc8e5d32a045811a5231591e1540b712f58dc63c36fc9c7b7e7cdf",
+      "gzipBytes": 6188
+    },
+    "setup-incomplete-node22.tap.gz": {
+      "uncompressedSha256": "07bbb31650367a98371824f4cdd00298c6b5fc43c9e61996a2fa067e396fe3b4",
+      "uncompressedBytes": 29400,
+      "gzipSha256": "138e8c413e95c05183b14a3ea10938dcdeb24581a608d32ee1cfe542788b687a",
+      "gzipBytes": 6662
+    },
+    "hosted-failure-excerpts.log.gz": {
+      "uncompressedSha256": "befca77c140afbe8948fef27888665000b7be9e74530291e9fefec3f9eb23737",
+      "uncompressedBytes": 14565,
+      "gzipSha256": "dbcebaae9b21881af3f69b4c83cfad1fc1903bf2fe623e9d111770b10c0a6f75",
+      "gzipBytes": 3520
+    },
+    "yaml-integrity.txt": {
+      "sha256": "111b265d74ff0971cb5ea93ed4fa07f1d1cde9b0d6b3d7978f1f7cb2f434b2ba",
+      "bytes": 61
+    }
+  }
+}

@@ -47,6 +47,10 @@ jobs:
             tools/backup
             tools/squid-heading-qa
             reports/ink-volume/source
+            # Audit every tracked JS file without checking out unrelated binaries.
+            *.js
+            *.mjs
+            *.cjs
       - name: Verify immutable checkout identity
         env:
           EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
