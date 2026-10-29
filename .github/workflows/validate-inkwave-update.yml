@@ -474,7 +474,8 @@ jobs:
             patches/splatoon3/tests/native-action-trace.test.mjs \
             patches/splatoon3/tests/native-action-representatives.test.mjs \
             patches/splatoon3/tests/native-action-trace-binding.test.mjs \
-            patches/splatoon3/tests/roller-paint-world-update.test.mjs
+            patches/splatoon3/tests/roller-paint-world-update.test.mjs \
+            patches/network-replication/tests/combat-single-round-targets.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
