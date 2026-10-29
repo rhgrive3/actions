@@ -1,0 +1,4 @@
+fc0d5ae1a47727cb48ce460f55f7e31c91f6f868658bce1df5dfdbaebf2ada57  reports/issue-resolution-20261029/issue79-live-turf/source.tap
+896c44025002fe30de17602c0a9f8ea2798e6be516bac09c8f36b4dd05254358  reports/issue-resolution-20261029/issue79-live-turf/emitted.tap
+a07538135b90c542579c9807c151e8b925d11c5921852bacf26cfa4242fdeeb5  reports/issue-resolution-20261029/issue79-live-turf/negative-control.tap.gz
+d6a5bf3e2e162dd2516faa1927cf6d1cf496c0add4f28f930ff4c145a7c52cab  reports/issue-resolution-20261029/issue79-live-turf/build-identity.json

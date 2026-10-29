@@ -115,9 +115,50 @@ test('#79 live wall contact paints the sourced 1.56 shock radius once, determini
     near(wall[0].radius, 1.56, 'PaintRadiusShock');
     assert.equal(wall[0].kind, SOURCE_SPLASH_PAINT_KIND);
     assert.ok(!s.records.some(r => r.kind === SOURCE_SHOT_PAINT_KIND && Math.abs(r.center[2] - 6) < .1), 'no floor body footprint on the wall');
+    // This low wall splat also overlaps the floor: only those floor cells score.
+    const face = s.f.G.level.faces[0], counts = s.f.G.paint.counts;
+    assert.ok(counts[a.team] > 0, 'the low wall splash reaches the floor');
+    near(s.turf(), counts[a.team] * face.cu * face.cv, 'wall-adjacent turf comes from owned floor cells');
+    near(s.turf(), s.records.reduce((sum, r) => sum + r.area, 0), 'returned floor area equals shooter turf credit');
     shocks.push(wall[0].radius);
   }
   assert.ok(shocks.every(r => r === shocks[0]), 'no cosmetic radius jitter');
+});
+
+test('#79 elevated live wall impact paints wall cells without awarding floor turf', async () => {
+  const s = await liveWorld({ wall: true }), { actor: a, ps } = s, paint = s.f.G.paint;
+  a.pos.y = 2; a.character.root.position.copy(a.pos);
+  a.aimDir.set(0, 0, 1); a.aimPoint.set(0, 3.05, 6);
+  s.f.setRandom(() => .5);
+  const before = Array.from(paint.grid);
+  ps.fireShooter(a, a.weapon, 0); advance(s, 60, 3 / 60);
+  assert.equal(s.generic(), 0, 'the live InkFlight path owns the wall impact');
+  const wall = s.records.filter(r => Math.abs(r.center[2] - 6) < .1 && r.center[1] > 2);
+  assert.equal(wall.length, 1, 'the elevated shot actually splats the wall');
+  near(wall[0].radius, 1.56, 'dedicated wall shock radius');
+  assert.equal(wall[0].kind, SOURCE_SPLASH_PAINT_KIND);
+  assert.equal(wall[0].area, 0, 'wall-only paint returns no scored floor area');
+  const [floorFace, wallFace] = s.f.G.level.faces;
+  const changed = face => Array.from(paint.grid.slice(face.grid, face.grid + face.nu * face.nv))
+    .filter((value, i) => value !== before[face.grid + i]).length;
+  assert.ok(changed(wallFace) > 0, 'the impact changes real wall ownership cells');
+  assert.equal(changed(floorFace), 0, 'no floor cells are affected');
+  assert.equal(paint.counts[a.team], 0, 'wall ownership is excluded from the floor count');
+  assert.equal(s.turf(), 0, 'the shooter earns no turf for wall-only paint');
+});
+
+test('#79 live long-fall impact reaches the far width anchor and credits actual floor area', async () => {
+  const s = await liveWorld();
+  // A naturally fired horizontal round from an elevated position reaches the
+  // 20-unit distance anchor without changing projectile speed or lifetime.
+  fire(s, { angle: 0, height: 10 }); advance(s);
+  assert.equal(s.generic(), 0);
+  assert.equal(s.contacts.length, 1);
+  assert.ok(s.contacts[0].distance >= 20, 'actual contact reaches DistanceFar');
+  const body = s.records.find(r => r.kind === SOURCE_SHOT_PAINT_KIND);
+  assert.ok(body?.area > 0, 'actual far impact claims floor turf');
+  near(body.radius, 1.71, 'sourced WidthHalfFar');
+  near(s.turf(), s.records.reduce((sum, r) => sum + r.area, 0), 'impact and independent drops credit actual floor area');
 });
 
 test('#79 live floor paint and turf agree across 30/60/120 render schedules', async () => {
