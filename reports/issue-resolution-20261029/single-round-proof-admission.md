@@ -84,3 +84,12 @@ Nintendo's private authority design or new retail weapon/gear/frame values.
 Root owns sealed emitted integration, hosted CI and the shared behavior-report
 append. No remote push, server deployment, main merge, issue close or hardware
 test was performed by this workstream.
+
+Root review found a malformed-local-state edge in the new helper: unlike its
+previous optional kind lookup, it dereferenced a missing weapon. The follow-up
+returns a zero-use budget when the local definition is absent. An actual
+composed receiver regression clears that definition, admits a native owner birth
+row, and verifies no exception, no usable proof and unchanged victim HP. That
+focused source regression passed1/1 with no skips. The153/153 and54-case hashes
+above deliberately retain the exact original code-commit receipt rather than
+claiming that they cover this later guard.

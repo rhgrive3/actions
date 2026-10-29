@@ -52,7 +52,9 @@ function nearActor(origin,pose) {
   return v3(origin) && v3(pose) && dist(origin,pose)<=7.5;
 }
 function mainProofUses(actor) {
-  const w=actor.weapon,family=w.catalogRecord?.family||w.behaviorKind||w.kind;
+  const w=actor.weapon;
+  if(!w)return 0;
+  const family=w.catalogRecord?.family||w.behaviorKind||w.kind;
   // Both native InkFlightRuntime and catalogue collision retire these rounds
   // at their first body contact. A second victim/object is not penetration.
   // Charger and area/multi-unit owners retain their separate native policies.

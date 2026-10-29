@@ -55,6 +55,16 @@ async function setup(t,{family='shooter',catalog=false}={}) {
   return {f,nm,attacker,victims,boss,weapon,fire,hit,bossHit};
 }
 
+test('missing local weapon definition cannot throw or grant a usable birth proof',async t=>{
+  const x=await setup(t),row=x.f.packActor(x.attacker,{f:1});
+  x.attacker.weapon=null;
+  assert.doesNotThrow(()=>x.nm.onMessage('peer',{
+    k:'t',ts:1000,u:60000,a:[row],l:{17:0},e:[[1000,'p',17,'shot',0,0,1.05,.3,0,0,50]],
+  }));
+  assert.ok((x.nm._combatProvenance.proofs.get('peer')||[]).every(p=>p.maxUses===0));
+  assert.doesNotThrow(()=>x.hit());assert.equal(x.victims[0].hp,100);
+});
+
 for(const family of ['shooter','dualies','splatling'])for(const catalog of [false,true]) {
   const label=(catalog?'catalogue ':'legacy ')+family;
   test(`${label} native round retires after the first actual body contact`,async t=>{
