@@ -809,10 +809,10 @@ export class HUD {
     const r = this.ret;
     r.className = `iw-ret iw-ret--${kind}`;
     if (kind === 'charger') {
-      const C = 2 * Math.PI * 25;
+      const C = 2 * Math.PI * 15;
       r.innerHTML = `<i class="iw-ret__dot"></i><i class="iw-ret__line l"></i><i class="iw-ret__line r"></i><i class="iw-ret__line d"></i>
-        <svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="25" class="iw-ret__track"/><circle r="25" class="iw-ret__charge" style="stroke-dasharray:${C.toFixed(2)};stroke-dashoffset:${C.toFixed(2)}"/>
-        <g class="iw-ret__notch"><path d="M0 -31 L0 -36"/><path d="M31 0 L36 0"/><path d="M0 31 L0 36"/><path d="M-31 0 L-36 0"/></g></svg>`;
+        <svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="15" class="iw-ret__track"/><circle r="15" class="iw-ret__charge" style="stroke-dasharray:${C.toFixed(2)};stroke-dashoffset:${C.toFixed(2)}"/>
+        <g class="iw-ret__notch"><path d="M0 -19 L0 -22"/><path d="M19 0 L22 0"/><path d="M0 19 L0 22"/><path d="M-19 0 L-22 0"/></g></svg>`;
       this._chargeC = C;
       this._chargeEl = r.querySelector('.iw-ret__charge');
     } else if (kind === 'blaster') {
@@ -837,9 +837,9 @@ export class HUD {
         <path class="iw-ret__ring thin" d="M-24 6 L-27 1 M24 6 L27 1"/></svg>`;
     } else if (kind === 'splatling') {
       // spin-up meter (8 segments) that fills while charging and drains while the stream runs + spread ticks
-      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="21" class="iw-ret__track"/>
-        <circle r="21" class="iw-ret__charge" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
-        <g class="iw-ret__segs">${Array.from({ length: 8 }, (_, i) => `<path d="M0 -17 L0 -25" transform="rotate(${i * 45})"/>`).join('')}</g></svg>
+      r.innerHTML = `<i class="iw-ret__dot"></i><svg class="iw-ret__svg" viewBox="-40 -40 80 80" aria-hidden="true"><circle r="12" class="iw-ret__track"/>
+        <circle r="12" class="iw-ret__charge" pathLength="100" style="stroke-dasharray:100;stroke-dashoffset:100"/>
+        <g class="iw-ret__segs">${Array.from({ length: 8 }, (_, i) => `<path d="M0 -10 L0 -14" transform="rotate(${i * 45})"/>`).join('')}</g></svg>
         <i class="iw-ret__tick" style="--a:45deg"></i><i class="iw-ret__tick" style="--a:135deg"></i><i class="iw-ret__tick" style="--a:225deg"></i><i class="iw-ret__tick" style="--a:315deg"></i>`;
       this._chargeEl = r.querySelector('.iw-ret__charge'); this._chargeC = 100;
     } else {
