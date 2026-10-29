@@ -1118,59 +1118,30 @@ export class SwimWake {`,
     }
 
     if (rel === 'src/game/inkFlightRuntime.js') {
-      // CMB-04: Add finite XZ segment AABB broadphase precheck before capsuleEntry in InkFlightRuntime.stepHead.
-      code = applyIdempotent(
-        code,
-        `      for (const actor of G.actors) {
+      // CMB-04: capsuleEntry already bounds the segment with the actual hurtbox
+      // and projectile radii. A terrain-radius + .25 prefilter rejects the
+      // installed .675 squid hurtbox and caller-supplied larger hurtboxes.
+      // Keep the native actor scan and its exact unique source guard.
+      const nativeActorScan = `      for (const actor of G.actors) {
         if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
         const friendly = actor.team === p.team;
         if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
         this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);
-        const motion = coherentMotionStart(actor);`,
-        `      let segBoundsReady = false, segMinX = 0, segMaxX = 0, segMinZ = 0, segMaxZ = 0;
-      for (const actor of G.actors) {
-        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
-        const friendly = actor.team === p.team;
-        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
-        const motion = coherentMotionStart(actor);
-        if (!motion) {
-          if (!segBoundsReady) {
-            const pr = p.inkPlayerRadius;
-            if (Number.isFinite(p.prev.x) && Number.isFinite(p.prev.z) && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.z) && Number.isFinite(pr) && pr >= 0) {
-              segMinX = Math.min(p.prev.x, p.pos.x) - pr; segMaxX = Math.max(p.prev.x, p.pos.x) + pr;
-              segMinZ = Math.min(p.prev.z, p.pos.z) - pr; segMaxZ = Math.max(p.prev.z, p.pos.z) + pr;
-              segBoundsReady = true;
-            } else segBoundsReady = null;
-          }
-          if (segBoundsReady && Number.isFinite(actor.pos?.x) && Number.isFinite(actor.pos?.z)) {
-            const reach = (Number.isFinite(PLAYER?.radius) && PLAYER.radius > 0 ? PLAYER.radius : 0.38) + 0.25;
-            if (actor.pos.x < segMinX - reach || actor.pos.x > segMaxX + reach || actor.pos.z < segMinZ - reach || actor.pos.z > segMaxZ + reach) continue;
-          }
-        }
-        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);`,
-        replaceOnce,
-        'CMB-04 add finite XZ segment AABB broadphase precheck in InkFlightRuntime.stepHead'
-      );
+        const motion = coherentMotionStart(actor);`;
+      code = replaceOnce(code, nativeActorScan, nativeActorScan,
+        'CMB-04 preserve native shape-aware capsule scan');
     }
 
     if (rel === 'src/game/bots.js') {
-      // CMB-06: Squared-distance pre-rejection before Math.sqrt in BotMind._perceive.
-      code = applyIdempotent(
-        code,
-        `    for (const e of G.actors) {
+      // CMB-06: dSq > awareness*awareness is not equivalent to native
+      // distanceTo > awareness at IEEE-754 rounding boundaries. It also skips
+      // custom distanceTo behavior. Keep the native distance and scan policy.
+      const nativePerceptionScan = `    for (const e of G.actors) {
       if (e.team === a.team || !e.alive) continue;
       const d = e.pos.distanceTo(a.pos);
-      if (d > aw) continue;`,
-        `    const awSq = aw * aw;
-    for (const e of G.actors) {
-      if (e.team === a.team || !e.alive) continue;
-      const dSq = e.pos.distanceToSquared(a.pos);
-      if (dSq > awSq) continue;
-      const d = Math.sqrt(dSq);
-      if (d > aw) continue;`,
-        replaceOnce,
-        'CMB-06 squared-distance pre-rejection in BotMind._perceive'
-      );
+      if (d > aw) continue;`;
+      code = replaceOnce(code, nativePerceptionScan, nativePerceptionScan,
+        'CMB-06 preserve native perception distance semantics');
     }
     return code;
 }

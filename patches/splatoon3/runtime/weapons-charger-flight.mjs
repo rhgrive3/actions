@@ -273,14 +273,7 @@ export function installChargerFlight(api,completion) {
         job.moved.set(job.pos.x-(actor.pos.x-motion.x0)*fraction,job.pos.y-(actor.pos.y-motion.y0)*fraction,job.pos.z-(actor.pos.z-motion.z0)*fraction);
         end=job.moved;
       }else job.base.copy(actor.pos);
-      const bodyRadius=hurtboxRadius(actor,PLAYER);
-      const reach=bodyRadius+(collision.InitRadiusForPlayer>collision.EndRadiusForPlayer?collision.InitRadiusForPlayer:collision.EndRadiusForPlayer)+1e-4;
-      const px0=job.prev.x,pz0=job.prev.z,px1=end.x,pz1=end.z;
-      const segMinX=(px0<px1?px0:px1)-reach,segMaxX=(px0>px1?px0:px1)+reach;
-      const segMinZ=(pz0<pz1?pz0:pz1)-reach,segMaxZ=(pz0>pz1?pz0:pz1)+reach;
-      const bx=job.base.x,bz=job.base.z;
-      if(bx<segMinX||bx>segMaxX||bz<segMinZ||bz>segMaxZ)continue;
-      const t=capsuleEntry(job.prev,end,job.base,bodyRadius,hurtboxHeight(actor,PLAYER),
+      const t=capsuleEntry(job.prev,end,job.base,hurtboxRadius(actor,PLAYER),hurtboxHeight(actor,PLAYER),
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(chargerActorBeforeStop(t,length,distance)){
         const row=lease.rows[actors.length]||=( {actor:null,d:0} );row.actor=actor;row.d=t*length;actors.push(row);

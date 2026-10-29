@@ -127,7 +127,7 @@ root shard0の別失敗はKrakenの`attacker-life-change-keeps-committed-hit`。
 
 同じruntimeの実native network browser job `123034976276`は成功。2player軌道/FX、100ms ordered delay、Chromium/WebKit paint masks、fixed owner clock、実Actorの命中上限/証拠/hit-IDを含む。root UIとresponsive viewport/mobile遷移も成功。これらをmodeled fixtureの成功と混同せず、次のsource headの正式CI成功へも読み替えない。新しい修正バッチのhosted CIは別途確認する。
 
-中止されたcharacter QAと同じ受入を、元の20分上限のまま両候補でローカル実行した。各24scenario・10解放cycleが成功し、前後の全入力/artifact hashを確認した。[条件と限界](character-local.md)、圧縮済み[root](character-local-root.json.gz)/[最適化側](character-local-opt.json.gz)receiptを保存する。isolated expanded Three coreのsynthetic fixtureであり、実character・production-core GLTFLoader・retail/実端末parityの証明ではない。rootの中止jobだけは原因確認とローカル成功後に1回再実行した。取消の過去履歴は残し、繰返しretryしない。
+中止されたcharacter QAと同じ検査構成を、元の20分上限のまま両候補でローカル実行した。isolated Character QAはこの作業の許可されたscope外であり、synthetic fixtureの結果をCharacter modelの受入成功には扱わない。各24scenario・10解放cycleが成功し、前後の全入力/artifact hashを確認した。[条件と限界](character-local.md)、圧縮済み[root](character-local-root.json.gz)/[最適化側](character-local-opt.json.gz)receiptを保存する。isolated expanded Three coreのsynthetic fixtureであり、実character・production-core GLTFLoader・retail/実端末parityの証明ではない。rootの中止jobだけは原因確認とローカル成功後に1回再実行した。取消の過去履歴は残し、繰返しretryしない。
 
 そのroot character再実行は`472c85fa`のrun `40747849317` attempt2 / job `123035846433`で成功した。所要12分37秒、browser24scenario・10cycle合格、既存20分上限を変更していない。成功artifactは`12844621418`（旧cancelled attemptの小さなartifactとは区別する）。Kraken修正もAgent3が独立にsource32/32・emitted32/32、skip0で確認し、blocking指摘はなかった。
 
@@ -145,7 +145,7 @@ root shard0の別失敗はKrakenの`attacker-life-change-keeps-committed-hit`。
 
 ## 後続core/sourceへ進んだ追加バッチ（20:29 UTC）
 
-`54465a5d` / `0706b35a`へ反映後、両admission・production buildと、両character QAが成功した。characterは各24scenario/10cycle（root9分45秒、最適化5分59秒）。現行最適化のbase/head projectileも両captureと比較job `123078063423`が成功。全体Validateはまだ成功していない。
+`54465a5d` / `0706b35a`へ反映後、両admission・production buildと、両synthetic character検査が成功した。各24scenario/10cycle（root9分45秒、最適化5分59秒）であり、isolated Character QAは許可されたscope外、Character modelの受入成功ではない。現行最適化のbase/head projectileも両captureと比較job `123078063423`が成功。全体Validateはまだ成功していない。
 
 後続coreの共通pointer-lock成功系fixtureは、native `pointerlockerror`を発生させないままfallbackを期待して17/38失敗した。`d192a654`を共通`07e03c7d`へ取り込み、全38caseと期待値を維持し、正当nativeイベントと不在/前回/遅延イベントの対照を明示した。source、両actual emitted、両compactionで各38/38、7個のguard mutantは意図したassertionで失敗。Agent6が独立承認。vendorを持たないsparse admissionへ依存を追加せず、既存のfull-checkout focused pointerlock laneに同じcommandを追加した。
 
