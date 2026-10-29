@@ -201,6 +201,8 @@ test('boss and crablet cannot be damaged without nearby matching owner shot',()=
   nm.onMessage('peerA',boss(2,7));
   assert.equal(nm.bossCalls.length,0);
   fire(nm);
+  assert.equal(nm.bossCalls.length,1,'the first nonpenetrating round cannot reach both objects');
+  fire(nm,{at:100.1});
   assert.equal(nm.bossCalls.length,2);
 });
 test('fake weak point away from projectile trajectory fails, real weak shot passes',()=>{
@@ -592,14 +594,19 @@ test('Boss body behind cover rejects straight fire; crablets keep the ray gate',
   fire(crab);
   assert.equal(crab.bossCalls.length,1);
 });
-test('a straight-fire proof lands once per victim, still once on each separate local victim',()=>{
+test('nonpenetrating proof lands once; Charger and area retain their separate target capacity',()=>{
   const nm=new Stub();fire(nm);
   nm.onMessage('peerA',hit(2,1));nm.onMessage('peerA',hit(2,2));
   assert.equal(nm.hitCalls.length,1,'second claim from the same round on the same victim is rejected');
   const bots=new Stub();bots.byNid.set(3,{...victim(),nid:3,pos:{x:.5,y:0,z:7}});
   fire(bots);
   bots.onMessage('peerA',hit(2,1));bots.onMessage('peerA',hit(3,2));
-  assert.equal(bots.hitCalls.length,2,'a host owning two victims keeps the existing two uses');
+  assert.equal(bots.hitCalls.length,1,'a nonpenetrating round retires at its first local victim');
+  const charger=new Stub();charger.byNid.get(1).weapon={...charger.byNid.get(1).weapon,id:'charger',kind:'charger',damage:160};
+  charger.byNid.set(3,{...victim(),nid:3,pos:{x:.5,y:0,z:7}});
+  fire(charger,{kind:'charger'});
+  charger.onMessage('peerA',hit(2,1,'charger'));charger.onMessage('peerA',hit(3,2,'charger'));
+  assert.equal(charger.hitCalls.length,2,'a penetrating Charger keeps separate local victims');
   const area=new Stub(),a=area.byNid.get(1);a.weapon={...a.weapon,id:'blaster',kind:'blaster',damage:125};
   fire(area,{kind:'blaster'});
   area.onMessage('peerA',{...hit(2,1,'blaster'),d:30});area.onMessage('peerA',{...hit(2,2,'blaster'),d:30});
