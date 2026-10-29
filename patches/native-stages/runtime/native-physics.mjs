@@ -39,7 +39,7 @@ export class NativePhysics extends Physics {
  _nativeContacts(pos,radius,lift,height,c,horizontal,skipGrates,iterations){
   const w=this.world,s0=w._s0,s1=w._s1,dir=w._d,pad=radius+.002;
   for(let pass=0;pass<iterations;pass++){
-   const sy0=pos.y+lift+radius,sy1=sy0>pos.y+height-radius?sy0:pos.y+height-radius;
+   const sy0=pos.y+lift+radius,sy1=pos.y+Math.max(lift+radius,height-radius);
    s0.set(pos.x,sy0,pos.z);s1.set(pos.x,sy1,pos.z);
    let x0=pos.x-pad,y0=sy0-pad,z0=pos.z-pad,x1=pos.x+pad,y1=sy1+pad,z1=pos.z+pad,moved=false;
    min.set(x0,y0,z0);max.set(x1,y1,z1);
@@ -91,7 +91,7 @@ export class NativePhysics extends Physics {
   return this._sourceBodyFits(pos,radius,lift,height,skipGrates,margin);
  }
  _sourceBodyFits(pos,radius,lift,height,skipGrates,margin){
-  const sy0=pos.y+lift+radius,sy1=sy0>pos.y+height-radius?sy0:pos.y+height-radius;
+  const sy0=pos.y+lift+radius,sy1=pos.y+Math.max(lift+radius,height-radius);
   const w=this.world,s0=w._s0.set(pos.x,sy0,pos.z),s1=w._s1.set(pos.x,sy1,pos.z);
   min.set(pos.x-radius,sy0-radius,pos.z-radius);max.set(pos.x+radius,sy1+radius,pos.z+radius);let fits=true;
   // A fit query never moves its capsule. Keep the exact precheck bounds once,

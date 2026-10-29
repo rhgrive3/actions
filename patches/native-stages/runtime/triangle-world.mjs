@@ -235,7 +235,7 @@ export class TriangleWorld {
   let ground=false,wall=false,maxPush=0;const velocityNormal=new THREE.Vector3();
   const s0=this._s0,s1=this._s1,box=this._box,tri=this._triangle,pad=radius+.002;
   for(let pass=0;pass<4;pass++){
-   const sy0=feet.y+radius,sy1=sy0>feet.y+height-radius?sy0:feet.y+height-radius;
+   const sy0=feet.y+radius,sy1=feet.y+Math.max(radius,height-radius);
    s0.set(feet.x,sy0,feet.z);s1.set(feet.x,sy1,feet.z);
    let x0=feet.x-pad,y0=sy0-pad,z0=feet.z-pad,x1=feet.x+pad,y1=sy1+pad,z1=feet.z+pad;
    box.min.set(x0,y0,z0);box.max.set(x1,y1,z1);
@@ -257,7 +257,7 @@ export class TriangleWorld {
   return {ground,wall,maxPush,normal:velocityNormal.normalize()};
  }
  capsulePenetration(feet,height=1.45,radius=.38){
-  const sy0=feet.y+radius,sy1=sy0>feet.y+height-radius?sy0:feet.y+height-radius;
+  const sy0=feet.y+radius,sy1=feet.y+Math.max(radius,height-radius);
   const s0=this._s0.set(feet.x,sy0,feet.z),s1=this._s1.set(feet.x,sy1,feet.z),box=this._box;
   const x0=feet.x-radius,y0=sy0-radius,z0=feet.z-radius,x1=feet.x+radius,y1=sy1+radius,z1=feet.z+radius;
   box.min.set(x0,y0,z0);box.max.set(x1,y1,z1);let depth=0;
