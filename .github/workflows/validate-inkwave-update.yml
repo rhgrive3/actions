@@ -1336,7 +1336,7 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs
       - name: Install pinned build and browser dependencies
         run: |
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npm ci --no-audit --no-fund
           sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium
       - name: Build the exact source without production overrides
