@@ -28,6 +28,8 @@ test('every named suite preflights real inputs and npm selects the canonical sui
     assert.ok(quality.includes('run: npm run test:' + name + '\n'), name);
   assert.ok(planTestSuite('quality').flatMap(x => x.args).includes('patches/local-quality/tests/squid-rapid-idle-regression.test.mjs'));
   assert.ok(planTestSuite('relay').flatMap(x => x.args).includes('server/tests/relay-clock-receipts.test.mjs'));
+  for(const file of ['inkwave-circleci-browser-lane.test.mjs','inkwave-sandbox-runner-route.test.mjs'])
+    assert.ok(planTestSuite('verifier').flatMap(x=>x.args).includes('scripts/tests/'+file),'canonical verifier must retain required browser CI contracts');
 });
 
 test('workflow suite changes route through each consumer on both push and PR', () => {

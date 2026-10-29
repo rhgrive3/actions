@@ -131,7 +131,7 @@ try {
  const attacker=report.roles[1].local,victim=report.roles[0].local,attackerOwner=owners[1];
  const placement=await host.evaluate(()=>__ceilingPlacement.select());
  report.placement=placement;
- await Promise.all(pages.map(p=>p.evaluate(({attacker,placement})=>{
+ report.placementOwners=await Promise.all(pages.map(p=>p.evaluate(({attacker,placement})=>{
   const G=__G,V=G.camera.position.constructor;G.projectiles.clear();
   for(const a of G.match.actors){
    // Only relocate the owning Actor. The other browser must receive and apply
@@ -146,7 +146,12 @@ try {
    a.character.root.position.copy(a.pos);a.character.root.rotation.y=a.yaw;a.character.root.updateMatrixWorld(true);
   }
   G.scene.updateMatrixWorld(true);
+  const local=G.match.local;return {nid:local.nid,owner:local.owner,life:local.netLife};
  },{attacker,placement})));
+ const epochs=Object.fromEntries(report.placementOwners.map(({nid,owner,life})=>[nid,{owner,life}]));
+ assert.equal(report.placementOwners.length,2);
+ for(const nid of [attacker,victim])assert(epochs[nid]&&Number.isSafeInteger(epochs[nid].life)&&epochs[nid].life>=0,'Native placement owner life required');
+ await Promise.all(pages.map(p=>p.evaluate(epochs=>{window.__ceilingPlacementEpochs=epochs;},epochs)));
  const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
   const G=__G,dt=1/60;G.net.update(dt);G.time+=dt;
   // Match the native fixed clock: every sweep owns this tick's actor origins.
@@ -156,7 +161,7 @@ try {
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
-    if(window.__ceilingFirePending&&a.nid===attacker)window.__ceilingShot.preShotAim=__ceilingPlacement.aim({attacker,victim,requested:placement});
+    if(window.__ceilingFirePending&&a.nid===attacker)window.__ceilingShot.preShotAim=__ceilingPlacement.aim({attacker,victim,requested:placement,epochs:window.__ceilingPlacementEpochs});
     const ink=a.ink;
     a.update(dt);
     // Advance the real first-shot delay, pose and firing owner. Stop holding
@@ -183,14 +188,14 @@ try {
  report.placementAdvance=await advanceUntilNativePlacement({
   step:async()=>{await step();await new Promise(resolve=>setTimeout(resolve,1000/60));},
   hasPlacement:async()=>(await Promise.all(pages.map(p=>p.evaluate(args=>
-   __ceilingPlacement.placementReady(args),{attacker,victim,requested:placement})))).every(Boolean),
+   __ceilingPlacement.placementReady(args),{attacker,victim,requested:placement,epochs})))).every(Boolean),
  });
  assert(report.placementAdvance.ready,'Native owner relocation did not reach both peers');
  for(let i=0;i<12;i++)await step();
  report.settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>
   __ceilingPlacement.inspect({attacker,victim,requested:placement}),{attacker,victim,placement})));
  for(let i=0;i<2;i++)assert(Math.hypot(...report.settled[0].points[i].map((v,k)=>v-report.settled[1].points[i][k]))<=.05,'Both peers must agree on the settled native positions');
- report.aim=await guest.evaluate(({attacker,victim,placement})=>__ceilingPlacement.aim({attacker,victim,requested:placement}),{attacker,victim,placement});
+ report.aim=await guest.evaluate(({attacker,victim,placement})=>__ceilingPlacement.aim({attacker,victim,requested:placement,epochs:window.__ceilingPlacementEpochs}),{attacker,victim,placement});
  report.phase='arm-packet-observers';
  await guest.evaluate(({attacker,victim})=>{
   const G=__G,n=G.netm,tr=n.s.tr,send=tr.sendTo;
