@@ -138,6 +138,8 @@ export async function measureStormRainAtRenderHz(renderHz, {
   if (!Number.isInteger(renderHz) || renderHz <= 0 || renderHz > 240) throw new RangeError('renderHz must be an integer from 1 to 240');
   if (!Number.isInteger(durationSeconds) || durationSeconds <= 0) throw new RangeError('durationSeconds must be a positive integer');
   if (!STORM_CALIBRATION_SCOPES.includes(scope)) throw new RangeError(`scope must be one of ${STORM_CALIBRATION_SCOPES.join(', ')}`);
+  if (scope === 'public-source' && process.env.INKWAVE_BUILT_SITE)
+    throw new Error('public-source scope requires raw source; unset INKWAVE_BUILT_SITE');
   const production = scope === 'production';
 
   const f = await fixture({
