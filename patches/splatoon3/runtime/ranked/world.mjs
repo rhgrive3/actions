@@ -3,6 +3,7 @@ import { createSmallClamResources, createSmallClamInventory, updateSmallClamInve
 import { createPowerClamResources } from './power-clam-model.mjs';
 import { createClamBarrier } from './clam-presentation.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
+import { createRainmakerBarrier, createRainmakerChargeAura } from './rainmaker-visuals.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
 const NEUTRAL = 0x9ceff2;
@@ -229,16 +230,14 @@ export class RankedWorld {
       core.position.y = 1;
       core.name = 'rainmaker-core';
       this.rainmaker.add(core);
-      const shield = new THREE.Mesh(new THREE.SphereGeometry(1.45, 20, 12), new THREE.MeshStandardMaterial({
-        color: 0xffdc5c, transparent: true, opacity: 0.16, wireframe: true,
-        metalness: 0.05, roughness: 0.4,
-      }));
-      shield.position.y = 1;
-      shield.name = 'rainmaker-barrier';
+      this.rainmakerBarrier = createRainmakerBarrier(THREE);
+      const shield = this.rainmakerBarrier.mesh;
       this.rainmaker.add(shield);
       this.rainmakerCore = core;
       this.rainmakerShield = shield;
       this.rainmakerGroup.add(this.rainmaker);
+      this.rainmakerAura = createRainmakerChargeAura(THREE);
+      this.rainmakerGroup.add(this.rainmakerAura.group);
       this.rainmakerCarrier = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.07, 8, 20),
         new THREE.MeshStandardMaterial({ color: 0xffe77a, transparent: true, opacity: 0.9 }));
       this.rainmakerCarrier.rotation.x = Math.PI / 2;
@@ -680,7 +679,7 @@ export class RankedWorld {
     if (this.disposed) return;
     if (this.mode === 'tower') this._syncTower(engine, true);
     if (this.mode === 'zones') this._updateZoneColors(engine);
-    if (this.mode === 'rainmaker') this._updateRainmaker(engine);
+    if (this.mode === 'rainmaker') this._updateRainmaker(engine, dt);
     if (this.mode === 'clams') {
       this._updateBaskets(engine, dt);
       this._updateClams(engine);
@@ -706,7 +705,7 @@ export class RankedWorld {
     return null;
   }
 
-  _updateRainmaker(engine) {
+  _updateRainmaker(engine, dt = 0) {
     const rainmaker = engine?.rule?.state;
     if (this.mode !== 'rainmaker' || !this.rainmaker) return;
     let position = vec(rainmaker?.pos) || this.stage?.rainmaker?.center || [0, 0, 0];
@@ -716,23 +715,14 @@ export class RankedWorld {
     if (carrier) this.rainmaker.rotation.y = 0;
     else this.rainmaker.rotation.y += 0.018;
     const barrier = rainmaker?.barrier || {};
-    const shield = barrier.active !== false;
-    const max = Math.max(1, finite(barrier.max) ? barrier.max : 1000);
-    const health = Math.max(0, Math.min(max, finite(barrier.health) ? barrier.health : max));
-    const pressure = 1 - health / max;
-    const radius = 1.5 + 1.2 * pressure;
-    if(this.rainmakerShield.visible!==shield)this.rainmakerShield.visible = shield;
-    const scalar=radius/1.45, scale=this.rainmakerShield.scale;
-    if(!Object.is(scale.x,scalar)||!Object.is(scale.y,scalar)||!Object.is(scale.z,scalar))scale.setScalar(scalar);
     const shieldColor = validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c;
-    if (this._shieldColor !== shieldColor) { this.rainmakerShield.material.color.setHex(shieldColor); this._shieldColor = shieldColor; }
-    const opacity=0.12+0.14*pressure;
-    if(!Object.is(this.rainmakerShield.material.opacity,opacity))this.rainmakerShield.material.opacity=opacity;
+    this.rainmakerBarrier.update(barrier, shieldColor, dt);
     this.rainmakerCarrier.visible = !!carrier;
     if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
     else { this.rainmakerCarrier.position.copy(this.rainmaker.position); this.rainmakerCarrier.position.y += 2.2; }
-    const charge = rainmaker?.charge?.value || 0;
+    const charge = rainmaker?.charge?.pending?.charge ?? rainmaker?.charge?.value ?? 0;
     this.rainmakerPresentation.update(carrier, charge);
+    this.rainmakerAura.update(carrier, charge, this.rainmakerCore, dt, rainmaker?.shotSequence ?? 0);
     const checkpoints = rainmaker?.checkpoint?.passed;
     if (!this._rainmakerCoreWhite) { this.rainmakerCore.material.color.setHex(0xffffff); this._rainmakerCoreWhite = true; }
     const shown = this.rainmaker.userData.checkpointsPassed;

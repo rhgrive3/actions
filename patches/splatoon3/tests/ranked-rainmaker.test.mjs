@@ -130,18 +130,49 @@ test('partial shot keeps actor identity, sequence ID, and distinct direct, blast
   assert.ok(Math.abs(Math.hypot(...shot.aim) - 1) < 1e-12);
 });
 
-test('Rainmaker shot release below twenty frames is rejected; twenty frames fires a minimum partial shot', () => {
+test('a short Rainmaker release completes its minimum charge instead of discarding the shot', () => {
   const { engine, rule, carrier } = popAndPickup(0);
   rule.update(20 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
   rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
   assert.equal(engine.events.filter(item => item.kind === 'rainmaker-shot').length, 0);
-
-  rule.update(21 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  assert.ok(rule.state.charge.pending, 'release is retained through the one-frame pre-shot delay');
   rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
   const shot = event(engine, 'rainmaker-shot');
   assert.equal(shot.charge, 20 / 60);
   assert.equal(shot.damage, 30);
   assert.equal(shot.effectiveRange, 2);
+});
+
+for (const hz of [30, 60, 120]) test(`one-tick Rainmaker tap fires once after minimum charge at ${hz}Hz`, () => {
+  const { engine, rule, carrier } = popAndPickup(0), dt = 1 / hz;
+  const tick = fire => rule.update(dt, { actors: [carrier], inputs: { [carrier.id]: { fire, aim: [0, 0, 1] } } });
+  tick(true);
+  tick(false);
+  assert.equal(rule.state.charge.released, true);
+  // Re-press before the minimum completes cannot turn the accepted weak shot
+  // into a full charge or discard it. It may start the next charge after recovery.
+  let elapsed = 2 * dt;
+  while (!event(engine, 'rainmaker-shot') && elapsed < 1) { tick(true); elapsed += dt; }
+  assert.ok(elapsed >= 22 / 60 - 1e-9);
+  assert.ok(elapsed < 22 / 60 + dt + 1e-9);
+  const shot = event(engine, 'rainmaker-shot');
+  assert.equal(shot.damage, 30); assert.equal(shot.blastDamage, 0);
+  assert.equal(shot.charge, 20 / 60);
+  for (let i = 0; i < Math.ceil(.5 / dt); i++) tick(false);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 1);
+});
+
+for (const interruption of ['swim', 'death', 'drop']) test(`a minimum-charge Rainmaker tap cancels on ${interruption}`, () => {
+  const { engine, rule, carrier } = popAndPickup(0);
+  const frame = { actors: [carrier], inputs: { [carrier.id]: { fire: true } } };
+  rule.update(1 / 60, frame); frame.inputs[carrier.id].fire = false;
+  rule.update(1 / 60, frame); assert.equal(rule.state.charge.released, true);
+  if (interruption === 'swim') carrier.swimming = true;
+  if (interruption === 'death') carrier.alive = false;
+  if (interruption === 'drop') rule.removeActor(carrier.id);
+  rule.update(.5, frame);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 0);
+  assert.equal(rule.state.charge.released, false);
 });
 
 test('carrier clock counts seconds and runs four times faster beyond the configured retreat line', () => {

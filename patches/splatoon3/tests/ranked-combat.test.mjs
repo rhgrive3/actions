@@ -209,6 +209,21 @@ test('water removes a charged projectile without explosion, paint, or damage', a
   h.effects.dispose();
 });
 
+for (const hz of [30, 60, 120]) test(`an overhead floor cannot turn a Rainmaker water entry into a blast at ${hz}Hz`, async () => {
+  const h = await makeHarness(), shooter = h.actor('under-bridge', 0, [0, 0, 0]); h.match.actors = [shooter];
+  const heights = [];
+  h.match.rankedWorld = { floorAt: (_x, _z, yMax) => {
+    heights.push(yMax);
+    return yMax === undefined || yMax >= 5 ? 5 : null;
+  } };
+  h.effects.event({ ...fullShot(shooter.nid), aim: [0, -1, 0] });
+  for (let i = 0; i < hz / 2; i++) h.effects.update(1 / hz);
+  assert.equal(h.calls.sceneRemoves.length, 1);
+  assert.ok(heights.length > 0 && heights.every(Number.isFinite));
+  assert.deepEqual(h.calls.rings, []); assert.deepEqual(h.calls.paints, []); assert.deepEqual(h.calls.damage, []);
+  h.effects.dispose();
+});
+
 test('a follower replays recoil for its local carrier and never creates authoritative ink or damage', async () => {
   const h = await makeHarness(), shooter = h.actor('follower', 0, [0, 0, 0], { vel: new h.THREE.Vector3() }), target = h.actor('enemy', 1, [0, .3, 2]);
   h.match.actors = [shooter, target]; h.effects.event({ ...fullShot(shooter.nid), recoil: 1.44 }, true); h.effects.update(.2); h.effects.update(.2);
