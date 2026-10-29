@@ -46,7 +46,11 @@ async function liveWorld({ wall = false } = {}) {
   };
   const actor = f.make('shooter'); actor.pos.set(0, 0, 0); actor.character.root.position.copy(actor.pos);
   actor.nid = 7; actor.owner = 'local'; actor._nearCamera = () => false;
-  let turf = 0; actor.addTurf = area => { turf += area; };
+  const nativeAddTurf = actor.addTurf, initialTurf = actor.stats.turf, initialSpecial = actor.special;
+  assert.ok(Number.isFinite(initialTurf) && Number.isFinite(initialSpecial));
+  assert.ok(Number.isFinite(actor.specialCost()) && !actor.specialActive);
+  let turf = 0;
+  actor.addTurf = function (area) { turf += area; return nativeAddTurf.call(this, area); };
   let generic = 0; const impact = ps._impact;
   ps._impact = function (...args) { generic++; return impact.apply(this, args); };
   const contacts = [], native = ps.inkFlight.impact;
@@ -55,7 +59,13 @@ async function liveWorld({ wall = false } = {}) {
       angle: Math.asin(Math.min(1, Math.abs(p.vel.dot(hit.normal)) / p.vel.length())) * 180 / Math.PI });
     return native.call(this, p, hit);
   };
-  return { f, actor, ps, records, contacts, turf: () => turf, generic: () => generic };
+  return { f, actor, ps, records, contacts, turf: () => turf, initialTurf, initialSpecial, generic: () => generic };
+}
+function checkCredit(s) {
+  const actor = s.actor, total = s.records.reduce((sum, r) => sum + r.area, 0);
+  near(s.turf(), total, 'recorded paint areas reach the actual actor');
+  near(actor.stats.turf, s.initialTurf + total, 'native Actor.addTurf updates shooter stats');
+  near(actor.special, Math.min(actor.specialCost(), s.initialSpecial + total), 'native Actor.addTurf applies the special gauge cap');
 }
 function fire(s, { angle = 20, height = 0 } = {}) {
   const { actor: a, ps } = s, rad = angle * Math.PI / 180;
@@ -88,7 +98,7 @@ test('#79 live floor impacts: near/far width and shallow/mid/steep straight-phas
     assert.ok(hit.normalY > .99 && body?.area > 0, 'floor body paint');
     near(body.radius, width(hit.distance), 'sourced near/far width at ' + angle);
     if (hit.phase === 0) near(body.stretch / 1.6, straightDepth(hit.angle) - 1, 'straight-phase depth at ' + angle);
-    near(s.turf(), s.records.reduce((sum, r) => sum + r.area, 0), 'turf credit equals painted area');
+    checkCredit(s);
     seen.push({ angle: hit.angle, distance: hit.distance, phase: hit.phase, radius: body.radius, stretch: body.stretch });
   }
   // Coverage of the sourced bands, measured from the actual contacts.
@@ -119,7 +129,7 @@ test('#79 live wall contact paints the sourced 1.56 shock radius once, determini
     const face = s.f.G.level.faces[0], counts = s.f.G.paint.counts;
     assert.ok(counts[a.team] > 0, 'the low wall splash reaches the floor');
     near(s.turf(), counts[a.team] * face.cu * face.cv, 'wall-adjacent turf comes from owned floor cells');
-    near(s.turf(), s.records.reduce((sum, r) => sum + r.area, 0), 'returned floor area equals shooter turf credit');
+    checkCredit(s);
     shocks.push(wall[0].radius);
   }
   assert.ok(shocks.every(r => r === shocks[0]), 'no cosmetic radius jitter');
@@ -145,6 +155,7 @@ test('#79 elevated live wall impact paints wall cells without awarding floor tur
   assert.equal(changed(floorFace), 0, 'no floor cells are affected');
   assert.equal(paint.counts[a.team], 0, 'wall ownership is excluded from the floor count');
   assert.equal(s.turf(), 0, 'the shooter earns no turf for wall-only paint');
+  checkCredit(s);
 });
 
 test('#79 live long-fall impact reaches the far width anchor and credits actual floor area', async () => {
@@ -158,7 +169,9 @@ test('#79 live long-fall impact reaches the far width anchor and credits actual 
   const body = s.records.find(r => r.kind === SOURCE_SHOT_PAINT_KIND);
   assert.ok(body?.area > 0, 'actual far impact claims floor turf');
   near(body.radius, 1.71, 'sourced WidthHalfFar');
-  near(s.turf(), s.records.reduce((sum, r) => sum + r.area, 0), 'impact and independent drops credit actual floor area');
+  const floorFace = s.f.G.level.faces[0];
+  near(s.turf(), s.f.G.paint.counts[s.actor.team] * floorFace.cu * floorFace.cv, 'far impact and drops credit owned floor cells');
+  checkCredit(s);
 });
 
 test('#79 live floor paint and turf agree across 30/60/120 render schedules', async () => {
@@ -166,7 +179,9 @@ test('#79 live floor paint and turf agree across 30/60/120 render schedules', as
   for (const rate of [30, 60, 120]) {
     const s = await liveWorld(); fire(s, { angle: 22.5 }); advance(s, rate);
     assert.equal(s.contacts.length, 1);
-    outcomes.push(JSON.parse(JSON.stringify({ paint: s.records, turf: s.turf(), counts: Array.from(s.f.G.paint.counts) })));
+    checkCredit(s);
+    outcomes.push(JSON.parse(JSON.stringify({ paint: s.records, turf: s.turf(), statsTurf: s.actor.stats.turf,
+      special: s.actor.special, counts: Array.from(s.f.G.paint.counts) })));
   }
   assert.deepEqual(outcomes[1], outcomes[0]);
   assert.deepEqual(outcomes[2], outcomes[0]);

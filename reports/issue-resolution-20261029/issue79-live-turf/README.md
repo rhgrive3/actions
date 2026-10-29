@@ -12,3 +12,7 @@ The first expanded run failed because the test incorrectly assumed a wall hit ca
 node --experimental-vm-modules --test patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs
 INKWAVE_BUILT_SITE=/path/to/verified/site node --experimental-vm-modules --test patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs
 ```
+
+## Native Actor credit follow-up
+
+The initial test recorded a fixture accumulator in place of `Actor.addTurf`, so its historical logs prove returned paint area and delivery to the test observer, not native Actor stats or special-gauge mutation. The follow-up wraps and forwards the original production `Actor.addTurf` and verifies finite initial state, actual `stats.turf`, and the special gauge's existing cap. The far shot also independently checks owned floor-cell count × cell area. Source and emitted tests each passed 5/5 against the same `2b01cd7e` inputs and build above (`native-credit-source.tap`, `native-credit-emitted.tap`). A separate mutant that removes native forwarding fails at the new stats assertion (`native-credit-negative.tap.gz`); the mutant was never committed. An initial attempt to build that mutant had a test-file syntax error and is not counted as the negative-control result.
