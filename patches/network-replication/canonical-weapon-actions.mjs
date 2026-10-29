@@ -140,13 +140,23 @@ export function createCanonicalWeaponActions(nativeApi) {
   const resolved = actor => !!weaponRecord(actor.weapon,WEAPONS) &&
     own(SUB,actor.weapon.sub) && !!SUB[actor.weapon.sub] &&
     own(SPECIALS,actor.weapon.special) && !!SPECIALS[actor.weapon.special];
+  function nativeIdentity(entry) {
+    const actor=entry.actor;
+    if(actor.nid!==entry.nid)return 'native-nid-changed';
+    if(actor.owner!==entry.owner)return 'native-owner-changed';
+    if(actor.netLife!==entry.life)return 'native-life-changed';
+    return null;
+  }
 
   function register(actor,{owner,life,epoch,firstTick=0}={}) {
     if(!(actor instanceof Actor)||!id(actor.nid)||!principal(owner)||!id(life)||!epochId(epoch)||!id(firstTick))
       throw new TypeError('Trusted native actor, owner, life, epoch and first tick are required');
+    if(actor.owner!==owner||actor.netLife!==life)
+      throw new TypeError('Registration must match the trusted Actor owner and native life');
     if(!resolved(actor))throw new Error('Unresolved equipped native weapon/kit');
     const prior=byNid.get(actor.nid),old=byActor.get(actor);
-    if(prior)prior.active=false;if(old)old.active=false;
+    if(prior)prior.active=false;
+    if(old){old.active=false;if(byNid.get(old.nid)===old)byNid.delete(old.nid);}
     const entry={actor,nid:actor.nid,owner,life,epoch,lastTick:firstTick-1,active:true};
     byNid.set(entry.nid,entry);byActor.set(actor,entry);
     return freeze({nid:entry.nid,owner,life,epoch,nextTick:firstTick});
@@ -159,6 +169,7 @@ export function createCanonicalWeaponActions(nativeApi) {
     if(!id(tick)||!principal(from)||!id(raw.nid)||!id(raw.life)||!principal(raw.owner))return rejected('invalid-envelope');
     const entry=byNid.get(raw.nid);
     if(!entry?.active)return rejected('unregistered-actor');
+    const changed=nativeIdentity(entry);if(changed)return rejected(changed);
     if(entry.owner!==from||raw.owner!==from)return rejected('owner-mismatch');
     if(entry.life!==raw.life)return rejected('life-mismatch');
     if(tick!==entry.lastTick+1)return rejected('nonconsecutive-tick');
@@ -197,6 +208,7 @@ export function createCanonicalWeaponActions(nativeApi) {
     const {entry,tick,request}=ticket;
     if(!entry.active||byNid.get(entry.nid)!==entry||byActor.get(entry.actor)!==entry)
       return rejected('retired-epoch');
+    const changed=nativeIdentity(entry);if(changed)return rejected(changed);
     if(tick!==entry.lastTick+1)return rejected('nonconsecutive-tick');
     const actor=entry.actor;
     // Resource/charge/cooldown fields are deliberately absent. Even empty-ink

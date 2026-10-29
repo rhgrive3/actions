@@ -18,9 +18,10 @@ function command(extra={}){return {nid:1,owner:'A',life:0,input:{fire:false,sub:
   squid:false,special:false,move:[0,0]},aim:[0,0],aimPoint:[0,1.05,70],...extra};}
 function setup(f,id='shooter',options={}){
   f.G.actors.length=0;f.G.projectiles.clear();f.G.time=0;f.G.netm=null;
-  const actor=f.make(id);actor.nid=1;
+  const actor=f.make(id),metadata={owner:'A',life:0,epoch:'match-1',firstTick:0,...options};
+  actor.nid=1;actor.owner=metadata.owner;actor.netLife=metadata.life;
   const actions=f.createCanonicalWeaponActions(f.installedRuntime);
-  actions.register(actor,{owner:'A',life:0,epoch:'match-1',firstTick:0,...options});
+  actions.register(actor,metadata);
   return{actor,actions};
 }
 
@@ -75,6 +76,7 @@ test('tokens bind the actor life/owner/epoch, copy inputs and preserve prepare-a
   assert.equal(actor.intent.move.x,0);assert.equal(actor.aimPitch,0);assert.equal(actor.aimPoint.y,1.05);
   assert.equal(actions.apply(b.token).reason,'nonconsecutive-tick');
   const old=actions.prepare(command(),{tick:1,from:'A'});assert.equal(old.ok,true);
+  actor.owner='B';actor.netLife=1;
   actions.register(actor,{owner:'B',life:1,epoch:'match-2',firstTick:1});
   assert.equal(actions.apply(old.token).reason,'retired-epoch');
   assert.equal(actions.prepare(command(),{tick:1,from:'A'}).ok,false);
@@ -82,6 +84,34 @@ test('tokens bind the actor life/owner/epoch, copy inputs and preserve prepare-a
   assert.equal(fresh.ok,true);assert.equal(actions.apply(fresh.token).ok,true);
   assert.equal(actions.forget(actor),true);assert.equal(actions.forget(actor),false);
   assert.equal(actions.prepare(command({owner:'B',life:1}),{tick:2,from:'B'}).reason,'unregistered-actor');
+});
+
+test('registration and pending commands fail closed across native spawn, owner and actor-identity changes',async()=>{
+  const f=await world();
+  for(const kind of ['life','owner','nid']){
+    const {actor,actions}=setup(f),prepared=actions.prepare(command({input:{...command().input,fire:true}}),{tick:0,from:'A'});
+    assert.equal(prepared.ok,true);
+    if(kind==='life'){
+      actor.spawnAt(new f.THREE.Vector3(0,0,0),0);
+      assert.equal(actor.netLife,1,'actual production native spawn increments the life');
+    }else if(kind==='owner')actor.owner='B';else actor.nid=2;
+    const before=plain(actions.inspect(actor));
+    assert.equal(actions.prepare(command(),{tick:0,from:'A'}).reason,'native-'+kind+'-changed');
+    assert.equal(actions.apply(prepared.token).reason,'native-'+kind+'-changed');
+    assert.equal(actor.intent.fire,false,'old command cannot enter the changed native actor');
+    assert.deepEqual(plain(actions.inspect(actor)),before,'rejection changes neither resources nor native clocks');
+    if(kind!=='nid')assert.throws(()=>actions.register(actor,{owner:'A',life:0,epoch:'stale',firstTick:0}),
+      /match the trusted Actor|native actor/,'caller metadata cannot hide a changed owner/life');
+    const metadata={owner:actor.owner,life:actor.netLife,epoch:'new-'+kind,firstTick:0};
+    actions.register(actor,metadata);
+    const raw=command({nid:actor.nid,owner:actor.owner,life:actor.netLife});
+    const fresh=actions.prepare(raw,{tick:0,from:actor.owner});assert.equal(fresh.ok,true);
+    assert.equal(actions.apply(fresh.token).ok,true,'trusted re-enrollment admits the new native lifecycle');
+    assert.equal(actions.apply(prepared.token).reason,'retired-epoch');
+  }
+  const {actor,actions}=setup(f);actor.owner=undefined;actor.netLife=undefined;
+  assert.throws(()=>actions.register(actor,{owner:'A',life:0,epoch:'default',firstTick:0}),/match the trusted Actor/,
+    'registration never hydrates owner or default life0 from caller metadata');
 });
 
 test('commands require complete holds and finite native input vectors, while absent aimPoint preserves trusted target',async()=>{
