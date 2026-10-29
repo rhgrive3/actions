@@ -6947,3 +6947,10 @@ The active-browser gate compared current emitted transient FX against the histor
 ### 2026-10-29: イカロールの発光・光跡とヒッセンの空中表示1.5倍
 
 ユーザー指定でイカ本体のアニメーションを維持し、公式映像で見える離水の飛沫・白金色の発光・回転光跡を既存ロール状態へ接続する。通常離水だけだったFXへ、非塗りの開始飛沫と、防御状態に従って失効する光を追加する。Character・移動・防御判定・ゲーム乱数は変更しない。ヒッセン全キットの主飛沫と空中の床塗り用子滴は、通常volume・contour・history代替描画を含め表示寸法だけ1.5倍。弾道・当たり・威力・塗り・元の抽出値・wireを保持する。倍率はユーザー調整であり、本家サイズの一致認定ではない。公式素材の版・ギア・数値曲線とSwitch実機比較は未確認のまま。[比較条件・実装・ローカル回帰とブラウザ比較](roll-hissen-effects-20261029/README.md)。CIはユーザー指定でスキップする。
+
+
+### 2026-10-29: final ScreenFX cache composition and first zero-size initialization
+
+The incoming 0dd lossless ScreenFX cache is reconciled with the current submitted-pass color owner by two explicit complete source epochs and strict one-site admission. Native exported ScreenFX API controls reproduce incoming first-0×0 aspect 16/9 versus uncached 0; the repaired cache initializes aspect 0 once while preserving native uRes 1600×900 and lens 64×36. Five Node 22 CPU/API groups pass, including 30/60/120 mutable/replaced palette, live alpha, dormant/reentry/reset and stable cache reuse. Full 119-source composition preflight passes with 74 adapted files. These are CPU/API controls, not normal-play pixels, FPS, hardware or Splatoon 3 Ver.11.3.0 parity. Earlier 550 performance calibration does not accept the newly merged app. The user waived physical-device verification; no retail values were invented.
+
+The main changes through 0904 (icons, transfer caches, Squid Roll effects and Hissen presentation) are preserved. Their historical report's CI-skip sentence describes that earlier submission; this remediation retains its required CI gates. The menu QA independently seals historical, icon-only and Squid Roll installer epochs without replacing original pins. The source-only incoming Squid Roll/Hissen/motion group passes 34/34; emitted integration remains a separate gate.

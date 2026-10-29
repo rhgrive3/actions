@@ -1792,12 +1792,23 @@ export function adaptCombatWave345(rel, code, replaceOnce) {
     // skip repeated work while the drawing-buffer dimensions are unchanged.
     code = applyIdempotent(
       code,
+      `    this._aspect = 16 / 9;`,
+      `    this._aspect = 16 / 9;
+    this._iwAspectValid = false;`,
+      replaceOnce, 'GPU-07c initialize aspect independently of the size cache'
+    );
+    code = applyIdempotent(
+      code,
       `    if (W !== this._w || H !== this._h) { this._w = W; this._h = H; U.uRes.value.set(W, H); }
     this._aspect = W / Math.max(1, H);
     U.uAspect.value = this._aspect;`,
       `    if (W !== this._w || H !== this._h) {
       this._w = W; this._h = H; U.uRes.value.set(W, H);
       this._aspect = W / Math.max(1, H); U.uAspect.value = this._aspect;
+      this._iwAspectValid = true;
+    } else if (!this._iwAspectValid) {
+      this._aspect = W / Math.max(1, H); U.uAspect.value = this._aspect;
+      this._iwAspectValid = true;
     }`,
       replaceOnce, 'GPU-07c cache aspect only while drawing-buffer size is stable'
     );
@@ -1821,9 +1832,7 @@ export function adaptCombatWave345(rel, code, replaceOnce) {
     const s = this.s;`,
       replaceOnce, 'GPU-07d invalidate cache on reset'
     );
-    code = applyIdempotent(
-      code,
-      `    if (local) {
+    const teamRgbBefore = `    if (local) {
       const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);
       U.uLensColA.value.copy(enemy); U.uLensColB.value.copy(own);
       U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, s.edgeInk);
@@ -1836,8 +1845,8 @@ export function adaptCombatWave345(rel, code, replaceOnce) {
       U.uShimmer.value.set(own.r + 0.3, own.g + 0.3, own.b + 0.3, s.shimmer);
       U.uCharge.value.set(own.r + 0.5, own.g + 0.5, own.b + 0.5, U.uCharge.value.w);
     }
-    void alive;`,
-      `    if (local) {
+    void alive;`;
+    const teamRgbAfter = `    if (local) {
       const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);
       const rgb = this._iwTeamRgb;
       if (!this._iwTeamRgbValid ||
@@ -1858,9 +1867,24 @@ export function adaptCombatWave345(rel, code, replaceOnce) {
         this._iwTeamRgbValid = true;
       }
     } else this._iwTeamRgbValid = false;
-    void alive;`,
-      replaceOnce, 'GPU-07d skip unchanged team RGB while retaining live alpha'
-    );
+    void alive;`;
+    // The final pass follows the submitted-pass owner in current builds.
+    // Keep both exact source epochs, and reject mixed/duplicate sites rather
+    // than accidentally restoring color work for a dormant pass.
+    const teamRgbEpochs = [
+      { before: teamRgbBefore, after: teamRgbAfter },
+      { before: teamRgbBefore.replace('if (local)', 'if (local && any)'),
+        after: teamRgbAfter.replace('if (local)', 'if (local && any)') },
+    ];
+    let teamRgbEpoch = null, teamRgbSites = 0;
+    for (const epoch of teamRgbEpochs) {
+      const sites = code.split(epoch.before).length - 1 + code.split(epoch.after).length - 1;
+      if (sites) teamRgbEpoch = epoch;
+      teamRgbSites += sites;
+    }
+    if (teamRgbSites !== 1) throw new Error('INKWAVE GPU-07d team RGB source epoch: expected exactly one complete site');
+    code = applyIdempotent(code, teamRgbEpoch.before, teamRgbEpoch.after,
+      replaceOnce, 'GPU-07d skip unchanged team RGB while retaining live alpha');
     code = applyIdempotent(
       code,
       `    if (!a) { this.U.uLensColA.value.copy(enemy); this.U.uLensColB.value.copy(own); this.U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, 0); }`,

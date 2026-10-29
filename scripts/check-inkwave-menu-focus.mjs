@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
-import { verifyMenuLayoutSourceIdentity } from './lib/inkwave-menu-focus-source-identity.mjs';
+import { ICON_MENU_INSTALLER_SHA256, SQUIDROLL_MENU_INSTALLER_SHA256, MENU_ICON_INPUT_SHA256, SQUIDROLL_MENU_INPUT_SHA256, verifyMenuInstallerSourceIdentity, verifyMenuLayoutSourceIdentity } from './lib/inkwave-menu-focus-source-identity.mjs';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
 const source = path.resolve(arg('--source') || path.join(repo, '.built-site/_site'));
@@ -20,8 +20,19 @@ assert.equal(manifest.build.optimization, 'esbuild-minify', 'Requires production
 assert.equal(hash(JSON.stringify(manifest.files)), manifest.inputHash, 'Manifest input hash');
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash, 'Manifest artifact hash');
 const menuLayoutEpoch=verifyMenuLayoutSourceIdentity(fs.readFileSync(path.join(repo,'patches/splatoon3/runtime/menu-layout.mjs'),'utf8'),manifest.files['patch/runtime/menu-layout.mjs'],pins.inputs['patch/runtime/menu-layout.mjs']);
-for (const [key, digest] of Object.entries(pins.inputs)) assert.equal(manifest.files[key],key==='patch/runtime/menu-layout.mjs'?menuLayoutEpoch.sourceSha256:digest, `Pinned composed UI input: ${key}`);
+const installerSource=fs.readFileSync(path.join(repo,'patches/splatoon3/runtime/install.mjs'),'utf8');
+const frozenInstaller=fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-icons-1915.mjs.txt',import.meta.url),'utf8');
+const installerHash=hash(installerSource),iconInputs={};
+const frozenIconInstaller=installerHash===SQUIDROLL_MENU_INSTALLER_SHA256?fs.readFileSync(new URL('./fixtures/inkwave-menu-installer-before-squidroll-20261029.mjs.txt',import.meta.url),'utf8'):undefined;
+const requiredInputs=installerHash===SQUIDROLL_MENU_INSTALLER_SHA256?{...MENU_ICON_INPUT_SHA256,...SQUIDROLL_MENU_INPUT_SHA256}:installerHash===ICON_MENU_INSTALLER_SHA256?MENU_ICON_INPUT_SHA256:{};
+for(const key of Object.keys(requiredInputs)){
+ const file=key.replace(/^patch\//,'patches/splatoon3/');
+ iconInputs[key]={source:fs.readFileSync(path.join(repo,file),'utf8'),manifestDigest:manifest.files[key]};
+}
+const menuInstallerEpoch=verifyMenuInstallerSourceIdentity(installerSource,manifest.files['patch/runtime/install.mjs'],pins.inputs['patch/runtime/install.mjs'],frozenInstaller,iconInputs,frozenIconInstaller);
+for (const [key, digest] of Object.entries(pins.inputs)) assert.equal(manifest.files[key],key==='patch/runtime/menu-layout.mjs'?menuLayoutEpoch.sourceSha256:key==='patch/runtime/install.mjs'?menuInstallerEpoch.sourceSha256:digest, `Pinned composed UI input: ${key}`);
 const files = ['src/ui/menus.js', 'patches/splatoon3/runtime/menu-layout.mjs', 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/profile.json'];
+for(const key of [...Object.keys(menuInstallerEpoch.iconInputs),...Object.keys(menuInstallerEpoch.effectInputs)])files.push(key.replace(/^patch\//,'patches/splatoon3/'));
 const emitted = Object.fromEntries(files.map(file => {
   const digest = hash(fs.readFileSync(path.join(source, file)));
   assert.equal(manifest.artifacts[file], digest, `Emitted artifact: ${file}`);
@@ -90,7 +101,7 @@ window.G=G;window.menuState=()=>({settings,profile,loadout});window.menus=new Me
 window.addEventListener('keydown',e=>{if(menus.handleKey(e)&&document.activeElement?.tagName!=='INPUT')e.preventDefault()});
 window.menuReady=true;
 </script></html>`;
-const result = { status: 'pending', baseCommit: pins.baseCommit, sourceSha: process.env.SOURCE_SHA || null, contentHash: manifest.contentHash, source, manifestSha256: hash(manifestBytes), inputHash: manifest.inputHash, revision: manifest.build.revision, menuLayoutEpoch, emitted, errors: [], checks: [] };
+const result = { status: 'pending', baseCommit: pins.baseCommit, sourceSha: process.env.SOURCE_SHA || null, contentHash: manifest.contentHash, source, manifestSha256: hash(manifestBytes), inputHash: manifest.inputHash, revision: manifest.build.revision, menuLayoutEpoch, menuInstallerEpoch, emitted, errors: [], checks: [] };
 fs.mkdirSync(evidence, { recursive: true });
 const server = createResponsiveAssetServer({ source, html });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
