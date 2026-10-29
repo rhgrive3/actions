@@ -8,9 +8,10 @@ const source=fs.readFileSync(url,'utf8');
 // Execute the actual admission prefix, before the expensive historical loops.
 const prefix=source.slice(source.indexOf('function benchmarkComposedProductionBuildParity()'),source.indexOf('  // Reconstruct exact pre-migration'));
 assert.ok(prefix.includes('combinedBodySha')&&prefix.includes('Immutable historical BodyBalance'));
-const run=(changeCurrent=x=>x,changeFixture=x=>x,changeLodFixture=x=>x)=>new Function('fs','createHash','replaceOnce','assert',prefix.replaceAll('import.meta.url',JSON.stringify(url.href))+'return true;} return benchmarkComposedProductionBuildParity();')({readFileSync(path,...args){
+const run=(changeCurrent=x=>x,changeFixture=x=>x,changeLodFixture=x=>x,changeLiveLod=x=>x)=>new Function('fs','createHash','replaceOnce','assert',prefix.replaceAll('import.meta.url',JSON.stringify(url.href))+'return true;} return benchmarkComposedProductionBuildParity();')({readFileSync(path,...args){
  const value=fs.readFileSync(path,...args);
- return path.pathname.endsWith('/inkwave-public/src/game/motion/body-balance.js')?changeCurrent(value)
+ return path.pathname.endsWith('/inkwave-public/src/game/character-lod.js')?changeLiveLod(value)
+   :path.pathname.endsWith('/inkwave-public/src/game/motion/body-balance.js')?changeCurrent(value)
    :path.pathname.endsWith('/body-balance-26a4db41.js.txt')?changeFixture(value)
    :path.pathname.endsWith('/inkwave-cpu-lod-1861.js.txt')?changeLodFixture(value):value;
 }},createHash,replaceOnce,assert);
@@ -25,4 +26,9 @@ test('the immutable historical reference is checked independently of the current
 
 test('the pinned LOD oracle is independent of the newer optimized runtime',()=>{
  assert.throws(()=>run(x=>x,x=>x,b=>Buffer.concat([Buffer.from(b),Buffer.from('\n')])) ,/immutable reviewed pre-queue Lod source/);
+});
+
+test('current LOD fast-path mutation cannot bypass immutable reviewed oracle',()=>{
+ for(const mutate of [s=>s+'\n',s=>s.replace('if (!SI && !SW && !EX && !CL && !TI)','if (!SI && !SW && !EX && !CL)'),s=>s.replace('cornerMemo[original] = index + 1','cornerMemo[original] = index')])
+  assert.throws(()=>run(x=>x,x=>x,x=>x,mutate),/queue LOD|exact reviewed closure/);
 });

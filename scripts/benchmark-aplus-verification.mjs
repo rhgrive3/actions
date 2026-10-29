@@ -44,7 +44,18 @@ function benchmarkComposedProductionBuildParity() {
   // per member. Invert ONLY these two reviewed, algebraically identical
   // optimization hunks before checking the immutable pre-queue Lod identity.
   // The final historical SHA still rejects every unrelated source mutation.
-  const priorLodSrc = replaceOnce(replaceOnce(lodCurrentSrc,
+  // The queued character LOD work adds two independently tested, semantic-preserving
+  // fast paths: empty attribute signatures and repeated indexed corner reuse.
+  // Strip ONLY their five exact source hunks before the unchanged historical
+  // oracle. Unrelated runtime edits still fail the pinned source hash.
+  const reviewedLodSrc = [
+    ["  if (!SI && !SW && !EX && !CL && !TI) {\n    sigs = new Int32Array(n);\n    _vtxSigCache.set(src, sigs);\n    return sigs;\n  }\n", "", "queue LOD empty descriptor fast-path"],
+    ["    // Repeated indexed corners have the same immutable source attributes and\n    // cluster. Keep first-visit ordering, and retain accessor/custom fallbacks.\n    const cornerMemo = src.index && tris.length > 2*n && n < 0xffffffff &&\n      sm && sc && cm && cc && [sourceMat,sourceColor,clusterMat,clusterColor].every(a =>\n        a.getComponent === THREE.BufferAttribute.prototype.getComponent && ArrayBuffer.isView(a.array))\n      ? new Uint32Array(n) : null;\n", "", "queue LOD repeated-index memo guard"],
+    ["      const remembered = cornerMemo ? cornerMemo[original] : 0;\n      if (remembered) { remapped.push(remembered - 1); continue; }\n", "", "queue LOD repeated corner lookup"],
+    ["      if (same) { remapped.push(cluster); if (cornerMemo) cornerMemo[original] = cluster + 1; continue; }", "      if (same) { remapped.push(cluster); continue; }", "queue LOD first-visit cluster memo"],
+    ["      if (cornerMemo) cornerMemo[original] = index + 1;\n", "", "queue LOD split-vertex memo"]
+  ].reduce((code, [from, to, label]) => replaceOnce(code, from, to, label), lodCurrentSrc);
+  const priorLodSrc = replaceOnce(replaceOnce(reviewedLodSrc,
     "  for (let c = 0; c < nc; c++) { const k = 1 / cn[c]; sx[c] *= k; sy[c] *= k; sz[c] *= k; }\n", "", 'queue Lod centroid precompute'),
     "    const c = vc[i], i3 = i * 3;\n    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c], dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c], dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c], d = dx * dx + dy * dy + dz * dz;", "    const c = vc[i], k = 1 / cn[c], i3 = i * 3;\n    const dx = (pArr ? pArr[i3] : P.getX(i)) - sx[c] * k, dy = (pArr ? pArr[i3 + 1] : P.getY(i)) - sy[c] * k, dz = (pArr ? pArr[i3 + 2] : P.getZ(i)) - sz[c] * k, d = dx * dx + dy * dy + dz * dz;", 'queue Lod normalized representative');
   let lodAfterSrc = replaceOnce(priorLodSrc,
