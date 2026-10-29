@@ -50,7 +50,11 @@ export function applyRainmakerPose(ch, input, C, match, dt = 0) {
   // frame. It never admits/releases a shot and has no independent phase clock.
   const ready = wasActive ? ch._rainmakerReady + (target - ch._rainmakerReady) *
     -Math.expm1(-18 * Math.max(0, Math.min(.1, dt || 0))) : target;
-  const pitch = .22 * (1 - ready) - .08 * kick;
+  // Nintendo's normal-shot illustration and Famitsu's carried Rainmaker view
+  // put the fish beside the face, supported close to the shoulder. The former
+  // low, downward hold pushed its mouth out in front of the carrier's waist.
+  // These offsets fit this rig; they are not extracted retail joint values.
+  const pitch = .04 * (1 - ready) - .08 * kick;
   // Match the player camera range so the wrist and objective share one aim.
   const aim = Math.max(-1.05, Math.min(1.15, Number.isFinite(input?.aimPitch) ? input.aimPitch : 0));
   const angle = pitch - aim;
@@ -58,9 +62,22 @@ export function applyRainmakerPose(ch, input, C, match, dt = 0) {
   // At steep upward aim the fish tail sweeps behind the grip. Reach forward
   // as a single arm/weapon anchor so it clears the head without rotating aim.
   const steepAim = smooth((aim - .4) / .75), forwardReach = .154 * steepAim;
-  const x = -.09 + .128 * steepAim, y = .83 + .06 * ready + .01 * kick, z = .22 - .015 * kick + forwardReach;
-  P[C.ANC] = x; P[C.ANC + 1] = y; P[C.ANC + 2] = z;
-  P[C.ANCR] = angle; P[C.ANCR + 1] = 0; P[C.ANCR + 2] = 0;
+  // Draw the charged hold slightly closer; the source idle-to-charge blend
+  // otherwise leaves the supporting wrist short of its unchanged socket.
+  const x = -.09 + .04 * steepAim, y = .91 + .06 * ready + .01 * kick, z = .22 - .02 * ready * (1 - steepAim) - .015 * kick + forwardReach - .06 * steepAim;
+  // The body can keep turning while the camera aims elsewhere. The held fish
+  // already uses world aim; keep its hand anchor and wrist in that same frame
+  // instead of swinging the shoulder-side tail through the carrier's face.
+  const dir = owner.aimDir;
+  const heading = dir && Math.hypot(dir.x, dir.z) > 1e-8 ? Math.atan2(dir.x, dir.z) : owner.yaw || 0;
+  const yaw = heading - (ch.root?.rotation?.y ?? owner.yaw ?? 0), cs = Math.cos(yaw), sn = Math.sin(yaw);
+  P[C.ANC] = x * cs + z * sn; P[C.ANC + 1] = y; P[C.ANC + 2] = z * cs - x * sn;
+  const turn = Math.atan2(sn, cs);
+  P[C.ANCR] = angle; P[C.ANCR + 1] = turn; P[C.ANCR + 2] = 0;
+  // Bring both shoulders with the heavy weapon. Turning only the hand target
+  // across a body-facing torso leaves the far wrist beyond the native reach.
+  // Keep the existing hips, source legs and single solve for each arm.
+  P[C.SPINE + 1] += turn * .45; P[C.CHEST + 1] += turn * .55;
   P[C.AFOLT] = 1; P[C.AFOLR] = 0;
   // Protract the primary shoulder slightly at steep aim, retaining reach even
   // when an inherited dualies idle pose has its right shoulder drawn back.

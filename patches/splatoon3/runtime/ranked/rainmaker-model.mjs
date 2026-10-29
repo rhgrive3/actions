@@ -48,16 +48,18 @@ export function createRainmakerModel(THREE) {
   oval([0, .39, -.49], [.12, .20, .14], gold, 6, 4);
   fin([[0, .40, -.46], [0, .82, -.72], [0, 0.87, -.97], [0, .63, -.85], [0, .52, -1.00], [0, .32, -.62]], .045);
   fin([[0, .49, -.34], [0, .68, -.28], [0, .62, .05], [0, .50, .16]], .04);
-  // Keep the broad fish outline ahead of the native fist. This also keeps its
-  // raised tail clear of the proportioned carrier while preserving one immutable mesh.
-  // The larger/lower head needs4cm more clearance; the native grip stays fixed.
+  // Carry the fish above and outside the primary hand, beside the shoulder.
+  // The original forward/below-grip mount made it hang in front of the waist.
+  // Keep the hand socket fixed; the raised tail clears the head on its side.
   for (let i = 0; i < position.length; i += 3) {
-    position[i] *= .6; position[i + 1] = position[i + 1] * .6 - .20;
-    position[i + 2] = position[i + 2] * .6 + .59;
+    position[i] = position[i] * .6 - .30; position[i + 1] = position[i + 1] * .6 - .02;
+    position[i + 2] = position[i + 2] * .6 + .44;
   }
-  // The same twelve-triangle support reaches from the existing fist to the fish.
-  // Its 18 mm square contact section fits inside the native 28 mm grip hole.
-  const grip = new THREE.BoxGeometry(.018, .018, .32); grip.translate(0, 0, .145); append(grip, gold);
+  // Both native fists retain the same straight contact section. A short brace
+  // joins it to the shoulder-side fish instead of leaving either hand floating.
+  const grip = new THREE.BoxGeometry(.018, .018, .14); grip.translate(0, 0, .055); append(grip, gold);
+  const brace = new THREE.BoxGeometry(.018, .018, Math.hypot(.30, .25));
+  brace.rotateY(Math.atan2(-.30, .25)); brace.translate(-.15, 0, .235); append(brace, gold);
   // Merge the primitives once and index identical vertices. No per-frame geometry.
   const unique = new Map(), indices = [], p = [], n = [], c = [];
   for (let i = 0; i < position.length; i += 3) {
@@ -80,7 +82,7 @@ export function createRainmakerModel(THREE) {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: .65, roughness: .34 });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'rainmaker-core'; mesh.castShadow = true;
-  mesh.userData.rainmakerModel = { revision: 3, grip: [0, 0, 0], muzzle: [0, -.056, .899] };
+  mesh.userData.rainmakerModel = { revision: 4, grip: [0, 0, 0], muzzle: [-.30, .124, .749] };
   return mesh;
 }
 

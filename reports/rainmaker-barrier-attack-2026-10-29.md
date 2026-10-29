@@ -2,11 +2,40 @@
 
 比較元は `main` の `e67c636b81762df56b346a09ef570964d43084df`。対象は公開版の `patches/splatoon3/runtime/ranked/`。原作画像は実際に表示して確認し、ゲーム本体や配信物へ転載していない。
 
+## ホコの持ち位置を肩付近へ修正
+
+この追補の変更前は、統合済みの `ab0d403f7f82a47ab13663fd1332002fcc611f35`。[任天堂の通常ホコショット図](https://www.nintendo.com/jp/bankara-king/assets_final/img/rule_step02_img_hoko.png)と[ファミ通掲載の所持画像](https://www.famitsu.com/images/000/277/040/y_632f91767b594.jpg)を実際に表示して確認した。本家では魚体を肩・顔付近に担ぐが、旧表示は魚体が拳より下・前へ離れ、腰前へ突き出していた。
+
+`rainmaker-motion.mjs` で手の位置を少し上・体寄りにし、下向きの保持角を弱めた。胴体と照準の向きがずれた時も手元・手首・両肩を魚体と同じ照準基準へそろえ、尾の頭部貫通と反対側の腕の到達不足を防ぐ。Actorの向き・移動・腰・sourceの脚は変更しない。`rainmaker-model.mjs` では魚体を握りに対して上・外側・後方へ配置し、肩の横に持つ。既存の両手接触部は残し、魚体への短い支持部を接続した。表示は単一Mesh・単一drawのまま、456三角形・16,884bytes（支持部追加で12三角形・936bytes増）。毎frameのgeometry生成は加えていない。
+
+見た目の銃口と `rainmaker-shot-origin.mjs` の採取socketを `[-.30,.124,.749]` へ同時に更新した。発射時は新しい生きた銃口から出る。ダメージ・チャージ時間・弾速などの値は変更していない。腕だけを大きく上げた途中候補は上下限照準で頭部と交差したため不採用とし、最終候補とは区別した。
+
+これは既存のVer.11.3.0参照方針と原作画像によるINKWAVEリグの較正であり、本家の骨格・寸法・全関節軌跡の抽出ではない。公式画像の撮影版・ギアは未特定。正確なSwitch実機一致や全髪型の非干渉は未確認。
+
+旧姿勢で「補正が必ず必要になる」ことを前提にしたair/formの履歴検査は、`rainmaker-legacy-anchor-fixture.mjs` の明示的な旧アンカー較正へ分離した。接点誤差`.001`、補正上限、負対照の拒否、source履歴・RNG・通常ブキの実発射起点の一致は維持する。このストレス較正はsource専用と明記し、現姿勢の実ジャンプ・銃口・生成物の検証として数えない。現姿勢には、旋回時の両手の接点・両腕の到達性を実Actorで確認する回帰も追加した。
+
+最終候補の検証とコマンド・ソースハッシュは[carrier-hold-checks.json](rainmaker-barrier-attack-2026-10-29/carrier-hold-checks.json)、実ゲームの画像・銃口・両手接点・生成物ハッシュは[carrier-hold-result.json](rainmaker-barrier-attack-2026-10-29/carrier-hold-result.json)に保存した。
+
+- sourceの姿勢・モデル・表示25件、実銃口14件が成功。30/60/120Hzの36姿勢・変身復帰中の9銃口採取と移動中の短押しを含む。体と照準を分離した実Actorの756条件・3,024frameでも両腕の到達不足は0。チャージへ移る途中のマニューバーで発見した支持手の不足は、充填時に少し手元を引くことで解消した。
+- ジャンプは現姿勢2件と明示した旧ストレス較正2件、補正境界6件が成功。旧較正の履歴7件・フォーム8件も、負対照・source/RNG・通常ブキの実発射を保持して成功。これらを現姿勢の生成物検証と合算しない。
+- 最終の頭・胸の重点検証8件は成功。通常のnative/source各3ブキ・両チームの全90tickで内部頂点0、12時点で全456面との交差0。sourceの上下限2ブキ・両チームは6状態で内部・面交差0。計168時点の面検査で交差は0。この重点実行では重い最短距離走査を除外しており、途中版の距離の最小値を最終候補の検証へ流用していない。追跡対象の完全版テストの内部・面交差の閾値は緩めていない。
+- 生成物を指定した実銃口14件・現姿勢のジャンプ2件、quick checks・通常ビルド・起動予算が成功。実ゲームでは取得・所持・充填・発射・回復・歩行・体と照準の分離を進め、横・正面・背面の10画面で両手の接点とGPUプログラムのリンクを確認した。Chromium / SwiftShader、1280×800、低画質・bloom無効、固定60Hz。位置とバリア被弾入力のセットアップ後は実Actor/Matchを使う。Pointer入力・Switch実機の比較ではない。
+
+生成物のcontentHashは `d0e73b2f952372fba77e400b6153f5749b77194ff745b5e494625bad48b01d5b`、inputHashは `09287e0f999c6f7eaa49d530d5f894215931f1d1b946af3b50906febc0b65bfc`。再実行は `node scripts/check-inkwave-rainmaker-visuals.mjs --site .built-site/rainmaker-carry-review --hold-only --evidence-dir .browser-evidence/rainmaker/carry-camera-review --profile-dir .browser-evidence/rainmaker/profile-carry-camera-review`。
+
+| 持ち位置の修正前 | 肩付近へ寄せた修正後 |
+| --- | --- |
+| ![腰前へ下がる変更前の持ち位置](rainmaker-barrier-attack-2026-10-29/before-hold.png) | ![肩の横へ寄せた持ち位置](rainmaker-barrier-attack-2026-10-29/carrier-hold.png) |
+
+チーム色・装備外見はランダムのため、画像の画素差を本家への一致率や改善量として扱わない。[充填時の正面](rainmaker-barrier-attack-2026-10-29/carrier-hold-charge.png)と[体の旋回中](rainmaker-barrier-attack-2026-10-29/carrier-hold-turn.png)も確認した。
+
 ## 頭上の所持マークの再調整
 
 従来の水平な金色のTorusを削除した。[任天堂掲載の実機画像](https://assets.nintendo.eu/video/private/f_auto%2Cq_auto/uvumuwlrx4ohvy2bftbv.jpg)と[ファミ通の画像](https://www.famitsu.com/images/000/277/040/y_632f91767b594.jpg)を拡大して実見し、白いイカリの入った金色の盾形バッジと、その上の所持残り秒数へ置き換えた。常にカメラへ正面を向け、頭のすぐ上に表示する。原作画像をテクスチャとして配信せず、形と数字は手続き的な近似で描く。寸法・フォント・精密な表示位置は実機からの抽出値ではない。
 
 残り秒数は既存の `holderRemaining` を切り上げて読み、独自の時計を追加しない。未取得・死亡・所持解除では消える。sourceのworld/queue 14件と追補した所持・秒数・追従・解除の限定2件が成功。通常ビルド・quick checks・起動予算も成功。Chromiumの実ゲームで取得→60/58/57表示→フルチャージ→解除を進め、GPUリンク、マーク単独の画素寄与、解除後の画素寄与0を確認した。結果とハッシュは[carrier-marker-result.json](rainmaker-barrier-attack-2026-10-29/carrier-marker-result.json)。コマンドは `node scripts/check-inkwave-rainmaker-visuals.mjs --site .built-site/rainmaker-carrier-final --carrier-only --evidence-dir .browser-evidence/rainmaker/carrier-final --profile-dir .browser-evidence/rainmaker/profile-carrier-final`。
+
+所持マーク修正時の記録（持ち位置の修正前）：
 
 ![白いイカリの盾形マークと所持残り秒数](rainmaker-barrier-attack-2026-10-29/carrier-marker.png)
 
@@ -62,7 +91,7 @@
 | 表示 | 変更前 | 最新表示（発射行のみ初回版） |
 | --- | --- | --- |
 | 膨張したバリア | ![変更前のワイヤーバリア](rainmaker-barrier-attack-2026-10-29/before-barrier.png) | ![斑模様を除いた滑らかなバリア](rainmaker-barrier-attack-2026-10-29/smooth-barrier.png) |
-| フルチャージ | ![変更前のチャージ](rainmaker-barrier-attack-2026-10-29/before-charge.png) | ![体と銃口の発光・盾形の所持マーク](rainmaker-barrier-attack-2026-10-29/carrier-marker.png) |
+| フルチャージ | ![変更前のチャージ](rainmaker-barrier-attack-2026-10-29/before-charge.png) | ![肩付近の持ち位置・体と銃口の発光・盾形の所持マーク](rainmaker-barrier-attack-2026-10-29/carrier-hold-charge.png) |
 | 発射中 | ![変更前の単色球](rainmaker-barrier-attack-2026-10-29/before-shot.png) | ![弾頭と液状の尾・飛沫](rainmaker-barrier-attack-2026-10-29/after-shot.png) |
 
 着弾後の遅延爆発：

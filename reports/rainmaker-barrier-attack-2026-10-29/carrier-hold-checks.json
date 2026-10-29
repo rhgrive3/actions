@@ -1,0 +1,833 @@
+{
+  "status": "passed",
+  "scope": "Current source, emitted artifact and focused geometry checks. Historical calibration is source-only; no overall CI or Switch equivalence claim. Geometry probe excludes nearest-distance measurements.",
+  "source": {
+    "status": "passed",
+    "sourceHead": "ab0d403f7f82a47ab13663fd1332002fcc611f35",
+    "candidateHasUncommittedChanges": true,
+    "runtime": {
+      "patches/splatoon3/runtime/ranked/rainmaker-motion.mjs": "8a3d384acdc987464a5ac4a2931a4ac49ed7dd95489fa680413a3b3ad5e799fb",
+      "patches/splatoon3/runtime/ranked/rainmaker-model.mjs": "5c56273d9b488206233ab7f1939443b34d477db1a722b3a8e6d606c2d5f25fbe",
+      "patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs": "2bd767f494cb9492072e242a6cffc1743bc0eb8781c751311fae60df4c369851",
+      "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916"
+    },
+    "scope": "Focused current-source motion/model/visual/origin production tests plus explicitly source-only historical anchor calibration tests; not browser/Switch equivalence.",
+    "groups": [
+      {
+        "name": "hold-final-air-history",
+        "command": "node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs",
+        "environment": {},
+        "exitCode": 0,
+        "log": ".browser-evidence/rainmaker/hold-checks/hold-final-air-history-rerun.log",
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "logSha256": "733d56f4a45dfc653d952b4623ad55cc84c8d2fea5298a9cbf5e81944b76f6f4"
+      },
+      {
+        "name": "hold-final-air-jump",
+        "command": "node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs",
+        "environment": {},
+        "exitCode": 0,
+        "signal": null,
+        "elapsedMs": 30252,
+        "log": ".browser-evidence/rainmaker/hold-checks/hold-final-air-jump.log",
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "logSha256": "58937913fc6130995c0936ebfa3fe54c7e8655260594191689a3de70b43b3ac5"
+      },
+      {
+        "name": "hold-final-air-support",
+        "command": "node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs",
+        "environment": {},
+        "exitCode": 0,
+        "signal": null,
+        "elapsedMs": 2569,
+        "log": ".browser-evidence/rainmaker/hold-checks/hold-final-air-support.log",
+        "tests": 6,
+        "pass": 6,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "logSha256": "4b4120319b3d572c80f855f36e2c56f08eb3821ea2cb0871ce3f5b7934549410"
+      },
+      {
+        "name": "hold-final-core",
+        "command": "node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/rainmaker-model.test.mjs patches/splatoon3/tests/rainmaker-visuals.test.mjs",
+        "environment": {},
+        "exitCode": 0,
+        "signal": null,
+        "elapsedMs": 126411,
+        "log": ".browser-evidence/rainmaker/hold-checks/hold-final-core.log",
+        "tests": 25,
+        "pass": 25,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "logSha256": "eef74cf2ce8ddb874a07dda8a3c590825b64e230d9271d5842b07f73eceb6ce0"
+      },
+      {
+        "name": "hold-final-form-owner",
+        "command": "node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs",
+        "environment": {},
+        "exitCode": 0,
+        "signal": null,
+        "elapsedMs": 235315,
+        "log": ".browser-evidence/rainmaker/hold-checks/hold-final-form-owner.log",
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "logSha256": "cc05e5b7f84ec19afdc1fe9be822981cbb07c26d79b9a4a32a9539cf9d537a76"
+      },
+      {
+        "name": "hold-final-origin",
+        "command": "node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-rainmaker-shot-origin.test.mjs",
+        "environment": {},
+        "exitCode": 0,
+        "signal": null,
+        "elapsedMs": 23211,
+        "log": ".browser-evidence/rainmaker/hold-checks/hold-final-origin.log",
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "logSha256": "16d2a4ebdfaf0723b5968f8ac2a0de62f5a0fbc0bb639551befb0dac5f25e205"
+      }
+    ],
+    "currentProductionAirTests": 2,
+    "historicalAirStressTests": 2,
+    "historicalCalibration": "pre-shoulder pitch.22 x-steep.128 y.83 z.22",
+    "historicalBoundaryGuard": {
+      "exactCurrentAccepted": true,
+      "changedCurrentRejected": true,
+      "unrelatedModuleUntouched": true
+    },
+    "wideActualCurrentYaw": {
+      "conditions": 756,
+      "frames": 3024,
+      "maxGrip": 8.778180738338287e-16,
+      "maxLeftReach": 0,
+      "maxRightReach": 0,
+      "badCount": 0,
+      "receipt": ".browser-evidence/rainmaker/hold-checks/final-yaw-reach.json"
+    },
+    "commentOnlyRuntimeUpdate": {
+      "proof": ".browser-evidence/rainmaker/hold-checks/hold-final-comment-proof.json",
+      "beforeSha": "83061ad232c9efe99864782c99fb95205c1e1d5943bac26acff230e9be1b31bc",
+      "currentSha": "8a3d384acdc987464a5ac4a2931a4ac49ed7dd95489fa680413a3b3ad5e799fb",
+      "verified": true
+    },
+    "supersededBootstrap": {
+      "log": ".browser-evidence/rainmaker/hold-checks/hold-final-air-history.log",
+      "reason": "Audited current expression order was corrected; strict guard rejected bootstrap before runtime scenario execution.",
+      "successfulRerun": ".browser-evidence/rainmaker/hold-checks/hold-final-air-history-rerun.log"
+    }
+  },
+  "geometry": {
+    "scope": "FINAL 2cm charge-tuck candidate; evidence-only focused geometry probes. All90normal ticks retain exact selected head/chest vertex-inside checks, plus12fixed exact selected-skin-face/all456fish-face snapshots perteam. Extreme has6settled inside/face states perteam with original45settle ticks. Nearest-surface-distance search/assertions/results are explicitly absent; do not reuse pre-tuck distance minima as final-tuck proof. Tracked runtime and test were not edited by these probes.",
+    "sourceHeadAtCompletion": "ab0d403f7f82a47ab13663fd1332002fcc611f35",
+    "runtimeAndTrackedFixtureUnchanged": true,
+    "runtimeHashesBefore": {
+      "patches/splatoon3/runtime/ranked/rainmaker-motion.mjs": "8a3d384acdc987464a5ac4a2931a4ac49ed7dd95489fa680413a3b3ad5e799fb",
+      "patches/splatoon3/runtime/ranked/rainmaker-model.mjs": "5c56273d9b488206233ab7f1939443b34d477db1a722b3a8e6d606c2d5f25fbe",
+      "patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs": "2bd767f494cb9492072e242a6cffc1743bc0eb8781c751311fae60df4c369851",
+      "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916",
+      "patches/splatoon3/tests/rainmaker-model-actor.test.mjs": "d2608f93673d008ae4646cdf87237084b47cd365531da34e194a302f685279fc"
+    },
+    "runtimeHashesAfter": {
+      "patches/splatoon3/runtime/ranked/rainmaker-motion.mjs": "8a3d384acdc987464a5ac4a2931a4ac49ed7dd95489fa680413a3b3ad5e799fb",
+      "patches/splatoon3/runtime/ranked/rainmaker-model.mjs": "5c56273d9b488206233ab7f1939443b34d477db1a722b3a8e6d606c2d5f25fbe",
+      "patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs": "2bd767f494cb9492072e242a6cffc1743bc0eb8781c751311fae60df4c369851",
+      "patches/splatoon3/runtime/weapon-handoff-motion.mjs": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916",
+      "patches/splatoon3/tests/rainmaker-model-actor.test.mjs": "d2608f93673d008ae4646cdf87237084b47cd365531da34e194a302f685279fc"
+    },
+    "trackedFixture": "patches/splatoon3/tests/rainmaker-model-actor.test.mjs",
+    "normalTransform": "focused-clearance-transform.json",
+    "normalDerivedDiff": "focused-clearance-probe.diff",
+    "results": [
+      {
+        "label": "native-normal",
+        "command": "node --experimental-vm-modules --test .browser-evidence/rainmaker/hold-checks/focused-hold-clearance.test.mjs",
+        "log": "focused-clearance-native-normal.log",
+        "probe": "focused-hold-clearance.test.mjs",
+        "probeSha256": "4c4918bc10be8509bc9c4bd6cd9177ba212da3795e03c84a1ad0b6d8b26c261d",
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "teamReceipts": [
+          {
+            "weapon": "shooter",
+            "team": 0,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": false,
+              "status": "loading",
+              "activeAfterFrame": false
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "shooter",
+            "team": 1,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": false,
+              "status": "loading",
+              "activeAfterFrame": false
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "roller",
+            "team": 0,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": false,
+              "status": "loading",
+              "activeAfterFrame": false
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "roller",
+            "team": 1,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": false,
+              "status": "loading",
+              "activeAfterFrame": false
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "dualies",
+            "team": 0,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": false,
+              "status": "loading",
+              "activeAfterFrame": false
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "dualies",
+            "team": 1,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": false,
+              "status": "loading",
+              "activeAfterFrame": false
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          }
+        ]
+      },
+      {
+        "label": "source-normal",
+        "command": "INKWAVE_RAINMAKER_SOURCE=1 node --experimental-vm-modules --test .browser-evidence/rainmaker/hold-checks/focused-hold-clearance.test.mjs",
+        "log": "focused-clearance-source-normal.log",
+        "probe": "focused-hold-clearance.test.mjs",
+        "probeSha256": "4c4918bc10be8509bc9c4bd6cd9177ba212da3795e03c84a1ad0b6d8b26c261d",
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "teamReceipts": [
+          {
+            "weapon": "shooter",
+            "team": 0,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "shooter",
+            "team": 1,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "roller",
+            "team": 0,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "roller",
+            "team": 1,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "dualies",
+            "team": 0,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "dualies",
+            "team": 1,
+            "probeScope": "focused90tick-inside+12snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              24,
+              28,
+              30,
+              31,
+              32,
+              60,
+              73,
+              77,
+              82,
+              84,
+              89
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          }
+        ]
+      },
+      {
+        "label": "source-extreme",
+        "command": "INKWAVE_RAINMAKER_SOURCE=1 INKWAVE_RAINMAKER_AIM_EXTREMES=1 node --experimental-vm-modules --test .browser-evidence/rainmaker/hold-checks/focused-hold-extreme-clearance.test.mjs",
+        "log": "focused-clearance-source-extreme.log",
+        "probe": "focused-hold-extreme-clearance.test.mjs",
+        "probeSha256": "df5af25b983cbc10d9da195b33d3b7e559f47253a770d0e5d61582b5945f996e",
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "teamReceipts": [
+          {
+            "weapon": "shooter",
+            "team": 0,
+            "probeScope": "focused6settled-extreme-inside+6snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "shooter",
+            "team": 1,
+            "probeScope": "focused6settled-extreme-inside+6snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "roller",
+            "team": 0,
+            "probeScope": "focused6settled-extreme-inside+6snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          },
+          {
+            "weapon": "roller",
+            "team": 1,
+            "probeScope": "focused6settled-extreme-inside+6snapshots-exact-face geometry probe",
+            "sourceReceipt": {
+              "requested": true,
+              "status": "ready",
+              "activeAfterFrame": true
+            },
+            "nearestSurfaceDistance": {
+              "measured": false,
+              "reason": "Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available"
+            },
+            "headChestVerticesInside": {
+              "head": 0,
+              "chest": 0
+            },
+            "faceSnapshotTicks": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "skinFacesPerSnapshot": 12462,
+            "fishFaces": 456,
+            "selectedFaceIntersections": 0
+          }
+        ]
+      }
+    ],
+    "preTuckFullStrict": {
+      "summary": "clearance-final-summary.json",
+      "scope": "Historical pre-tuck fullstrict5/5 with nearest-distance measurement; different motion hash, not final-tuck equivalence."
+    }
+  },
+  "geometryProbeDiff": "--- /workspace/actions-current/patches/splatoon3/tests/rainmaker-model-actor.test.mjs\n+++ /workspace/actions-current/.browser-evidence/rainmaker/hold-checks/focused-hold-clearance.test.mjs\n@@ -1,9 +1,11 @@\n+// EVIDENCE-ONLY derived probe. No nearest-surface-distance measurement. Tracked test/source are unchanged.\n import test from 'node:test';import assert from 'node:assert/strict';\n-import {fixture} from './source-fixture.mjs';\n-import {createTriangleAabbIndex} from './triangle-aabb-index.mjs';\n+import {fixture} from 'file:///workspace/actions-current/patches/splatoon3/tests/source-fixture.mjs';\n+import {createTriangleAabbIndex} from 'file:///workspace/actions-current/patches/splatoon3/tests/triangle-aabb-index.mjs';\n+const FOCUSED_FACE_TICKS=Object.freeze([0,24,28,30,31,32,60,73,77,82,84,89]);\n const extremeAim=process.env.INKWAVE_RAINMAKER_AIM_EXTREMES==='1';\n const sourceEnabled=process.env.INKWAVE_RAINMAKER_SOURCE==='1';\n-const f=sourceEnabled?await (await import('./source-loaded-actor-fixture.mjs')).sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}):await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`});\n+const f=sourceEnabled?await (await import('file:///workspace/actions-current/patches/splatoon3/tests/source-loaded-actor-fixture.mjs')).sourceLoadedActorFixture({random:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`}):await fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.5,extraExports:`export {RankedWorld} from './patches/splatoon3/runtime/ranked/world.mjs';`});\n if(sourceEnabled)f.installedRuntime=f;\n \n const {G,THREE}=f;\n@@ -18,7 +20,7 @@\n \n const floor={id:0,solid:true,grate:false,faces:[-1,-1,-1,-1,-1,-1],center:new THREE.Vector3(0,-1,0),half:new THREE.Vector3(100,1,100),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],aabbMin:new THREE.Vector3(-100,-2,-100),aabbMax:new THREE.Vector3(100,0,100)};\n G.level={...G.level,blocks:[floor],groundHeight:()=>0,queryBlocks(_x,_z,_xx,_zz,out){out.length=0;out.push(0);return out;}};G.physics=new f.installedRuntime.Physics(G.level);\n-for(const weapon of (extremeAim?['shooter','roller']:['shooter','roller','dualies']))test(weapon+' actual Actor hand anchor and primary/left visibility ownership',async()=>{\n+for(const weapon of (extremeAim?['shooter','roller']:['shooter','roller','dualies']))test(weapon+' focused90tick-inside/12snapshot-face geometry and hand ownership',async()=>{\n  for(const team of [0,1]){\n   G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera(60,1,.1,100);G.camera.position.set(0,2,5);G.camera.updateMatrixWorld();G.actors=[];G.time=0;\n   const a=new f.Actor({team,weapon,isLocal:true,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;a.nid='carrier';ch.actor=a;ch.onEvent=null;G.actors=[a];G.scene.add(ch.root);a.form='kid';a.kidT=10;a.grounded=a.ground.hit=true;a.pos.set(0,0,0);a.vel.set(0,0,0);\n@@ -35,8 +37,7 @@\n   function inTail(p){const x=(p.x+.30)/.6,y=(p.y+.02)/.6,z=(p.z-.44)/.6;if(Math.abs(x)>=.0225||y<=.32||y>=.87||z<=-1||z>=-.46)return false;let inside=false;for(let i=0,j=tail.length-1;i<tail.length;j=i++){const[a,b]=tail[i],[c,d]=tail[j];if((a>y)!==(c>y)&&z<(d-b)*(y-a)/(c-a)+b)inside=!inside;}return inside;}\n   const regions={head:[],chest:[]};ch.root.traverseVisible(mesh=>{if(!mesh.isSkinnedMesh||!['skin','cloth'].includes(mesh.userData.iwMat))return;const attrs=mesh.geometry.attributes;for(let i=0;i<attrs.position.count;i++){const w={head:0,chest:0};for(let j=0;j<4;j++){const n=ch.skeleton.bones[attrs.skinIndex.getComponent(i,j)].name,v=attrs.skinWeight.getComponent(i,j);if(/^(head|eye|brow|mouth|jaw|cheek|ear)/.test(n))w.head+=v;if(['chest','spine','neck'].includes(n))w.chest+=v;}for(const k of['head','chest'])if(w[k]>=.5)regions[k].push([mesh,i]);}});\n   const fishBoxes=triangles.map(t=>new THREE.Box3().setFromPoints([t.a,t.b,t.c]));const candidateFishFaces=createTriangleAabbIndex(fishBoxes);const regionMaps=new Map();for(const points of Object.values(regions))for(const[mesh,i]of points){if(!regionMaps.has(mesh))regionMaps.set(mesh,new Set());regionMaps.get(mesh).add(i);}\n-  const fishBounds=new THREE.Box3().setFromBufferAttribute(attr),nearest=new THREE.Vector3(),worstSnapshots={};\n-  const result={extremeAim,faceChecks:[],vertexSurfaceMinimum:{head:{distance:Infinity,tick:-1},chest:{distance:Infinity,tick:-1}},weapon,team,sourceReceipt:{requested:sourceEnabled,status:ch.sourceMotion?.status??null,activeAfterFrame:false},counts:Object.fromEntries(Object.entries(regions).map(([k,p])=>[k,p.length])),minConvexPlaneValue:{head:Infinity,chest:Infinity},maxInside:{head:0,chest:0},samples:[]};\n+  const result={extremeAim,faceChecks:[],probeScope:'focused90tick-inside+12snapshots-exact-face geometry probe',nearestSurfaceDistance:{measured:false,reason:'Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available'},requestedFaceTicks:FOCUSED_FACE_TICKS,weapon,team,sourceReceipt:{requested:sourceEnabled,status:ch.sourceMotion?.status??null,activeAfterFrame:false},counts:Object.fromEntries(Object.entries(regions).map(([k,p])=>[k,p.length])),minConvexPlaneValue:{head:Infinity,chest:Infinity},maxInside:{head:0,chest:0},samples:[]};\n   assert.ok(regions.head.length>0&&regions.chest.length>0);const vertex=new THREE.Vector3();\n   function checkSnapshot({tick,data}){let skinFaces=0,pairs=0,intersections=0;const examples=[],t=new THREE.Triangle(),box=new THREE.Box3();for(let i=0;i<data.length;i+=9){t.a.fromArray(data,i);t.b.fromArray(data,i+3);t.c.fromArray(data,i+6);skinFaces++;box.setFromPoints([t.a,t.b,t.c]);for(const fi of candidateFishFaces(box)){if(!box.intersectsBox(fishBoxes[fi]))continue;pairs++;if(triangleIntersects(t,triangles[fi],THREE)){intersections++;if(examples.length<5)examples.push({skinFace:i/9,fishFace:fi});}}}assert.ok(skinFaces>0);return{tick,skinFaces,fishFaces:triangles.length,pairs,intersections,examples};}\n   try{\n@@ -53,21 +54,18 @@\n     assert.deepEqual(Array.from(ch.P),pose,'objective never overwrites native pose');assert.deepEqual(a.pos.toArray(),position,'objective does not move Actor');assert.deepEqual(a.aimDir.toArray(),aimBefore,'aim unchanged');assert.deepEqual(['handR','handL'].map(k=>ch.bones[k].matrixWorld.elements.slice()),handsBefore,'both hand matrices unchanged');\n     const grip=world.rainmakerCore.getWorldPosition(new THREE.Vector3());assert.ok(grip.distanceTo(hand)<1e-6,'actual hand attachment');assert.ok(world.rainmakerCore.matrixWorld.elements.every(Number.isFinite));\n     for(const[p]of pivots)assert.equal(p.visible,false);assert.equal(world.rainmakerShield.visible,false);\n-    ch.skeleton.update();const core=world.rainmakerCore;const surfaceChanged=new Set();\n+    ch.skeleton.update();const core=world.rainmakerCore;\n     for(const[k,points]of Object.entries(regions)){let inside=0,min=Infinity;for(const[mesh,i]of points){mesh.getVertexPosition(i,vertex);mesh.localToWorld(vertex);core.worldToLocal(vertex);let union=Infinity;for(const{planes}of solids){let d=-Infinity;for(const pl of planes)d=Math.max(d,pl.distanceToPoint(vertex));union=Math.min(union,d);}min=Math.min(min,union);if(union< -1e-6||inTail(vertex))inside++;\n-      let distance=result.vertexSurfaceMinimum[k].distance;if(fishBounds.distanceToPoint(vertex)<distance){for(let fi=0;fi<triangles.length;fi++){if(fishBoxes[fi].distanceToPoint(vertex)>=distance)continue;triangles[fi].closestPointToPoint(vertex,nearest);const d=nearest.distanceTo(vertex);if(d<distance){distance=d;result.vertexSurfaceMinimum[k]={distance,tick};surfaceChanged.add(k);}}}\n }result.minConvexPlaneValue[k]=Math.min(result.minConvexPlaneValue[k],min);result.maxInside[k]=Math.max(result.maxInside[k],inside);if(inside)result.samples.push({tick,region:k,inside,min});}\n-    if(extremeAim||[0,30,60,89].includes(tick)||surfaceChanged.size){\n+    if(extremeAim||FOCUSED_FACE_TICKS.includes(tick)){\n      const data=[];for(const[mesh,selected]of regionMaps){const attr=mesh.geometry.attributes.position,index=mesh.geometry.index,n=index?index.count:attr.count,cache=new Map();const get=i=>{if(!cache.has(i)){const v=new THREE.Vector3();mesh.getVertexPosition(i,v);mesh.localToWorld(v);core.worldToLocal(v);cache.set(i,v);}return cache.get(i);};\n       for(let j=0;j<n;j+=3){const ids=[0,1,2].map(k=>index?index.getX(j+k):j+k);if(!ids.some(i=>selected.has(i)))continue;for(const i of ids)data.push(...get(i).toArray());}\n      }\n      const snapshot={tick,data:new Float64Array(data)};\n-     for(const k of surfaceChanged)worstSnapshots[k]=snapshot;\n-     if(extremeAim||[0,30,60,89].includes(tick))result.faceChecks.push(checkSnapshot(snapshot));\n+     result.faceChecks.push(checkSnapshot(snapshot));\n     }\n    }\n-   for(const[k,snapshot]of Object.entries(worstSnapshots)){assert.equal(snapshot.tick,result.vertexSurfaceMinimum[k].tick);if(!result.faceChecks.some(x=>x.tick===snapshot.tick))result.faceChecks.push(checkSnapshot(snapshot));assert.ok(result.vertexSurfaceMinimum[k].distance>1e-6,'strict positive actual skin-vertex to all-fish-surface distance');}\n-   console.log(JSON.stringify(result));assert.deepEqual(result.maxInside,{head:0,chest:0},'no actual head/chest vertices inside fish solids');assert.ok(result.faceChecks.length>=(extremeAim?6:4)&&result.faceChecks.length<=6);assert.ok(result.faceChecks.every(r=>r.intersections===0),'no selected skin face intersects any fish/support face');\n+   console.log(JSON.stringify(result));assert.deepEqual(result.maxInside,{head:0,chest:0},'no actual head/chest vertices inside fish solids');assert.deepEqual(result.faceChecks.map(r=>r.tick),extremeAim?[0,1,2,3,4,5]:FOCUSED_FACE_TICKS);assert.ok(result.faceChecks.every(r=>r.intersections===0),'no selected skin face intersects any fish/support face');\n    state.carrier=null;state.pos=[2,0,-3];world.update(match.ranked,1/60);for(const[p,v]of pivots)assert.equal(p.visible,v);assert.deepEqual(Array.from(world.rainmakerCore.position.toArray()),[0,1,0]);\n    state.carrier='carrier';world.update(match.ranked,1/60);world.dispose();world.dispose();for(const[p,v]of pivots)assert.equal(p.visible,v);assert.equal(g,1);assert.equal(m,1);assert.equal(world.group.parent,null);\n    console.log(JSON.stringify({weapon,team,ticks:extremeAim?6:90,handAttachment:true,restored:true,geometryDispose:g,materialDispose:m}));\n",
+  "geometryTransform": {
+    "sourceTest": "/workspace/actions-current/patches/splatoon3/tests/rainmaker-model-actor.test.mjs",
+    "sourceTestSha256": "d2608f93673d008ae4646cdf87237084b47cd365531da34e194a302f685279fc",
+    "derivedProbe": "/workspace/actions-current/.browser-evidence/rainmaker/hold-checks/focused-hold-clearance.test.mjs",
+    "probeSha256": "4c4918bc10be8509bc9c4bd6cd9177ba212da3795e03c84a1ad0b6d8b26c261d",
+    "scope": "focused90tick-inside+12snapshots-exact-face geometry probe; nearest-surface-distance search/assertion/results unavailable",
+    "changes": [
+      {
+        "before": "'./source-fixture.mjs'",
+        "after": "'file:///workspace/actions-current/patches/splatoon3/tests/source-fixture.mjs'"
+      },
+      {
+        "before": "'./triangle-aabb-index.mjs'",
+        "after": "'file:///workspace/actions-current/patches/splatoon3/tests/triangle-aabb-index.mjs'"
+      },
+      {
+        "before": "'./source-loaded-actor-fixture.mjs'",
+        "after": "'file:///workspace/actions-current/patches/splatoon3/tests/source-loaded-actor-fixture.mjs'"
+      },
+      {
+        "before": "const extremeAim=process.env.INKWAVE_RAINMAKER_AIM_EXTREMES==='1';",
+        "after": "const FOCUSED_FACE_TICKS=Object.freeze([0,24,28,30,31,32,60,73,77,82,84,89]);\nconst extremeAim=process.env.INKWAVE_RAINMAKER_AIM_EXTREMES==='1';"
+      },
+      {
+        "before": "test(weapon+' actual Actor hand anchor and primary/left visibility ownership'",
+        "after": "test(weapon+' focused90tick-inside/12snapshot-face geometry and hand ownership'"
+      },
+      {
+        "before": "  const fishBounds=new THREE.Box3().setFromBufferAttribute(attr),nearest=new THREE.Vector3(),worstSnapshots={};\n",
+        "after": ""
+      },
+      {
+        "before": "vertexSurfaceMinimum:{head:{distance:Infinity,tick:-1},chest:{distance:Infinity,tick:-1}},",
+        "after": "probeScope:'focused90tick-inside+12snapshots-exact-face geometry probe',nearestSurfaceDistance:{measured:false,reason:'Disabled costly per-vertex nearest-surface search; no nearest-distance assertion or result is available'},requestedFaceTicks:FOCUSED_FACE_TICKS,"
+      },
+      {
+        "before": "ch.skeleton.update();const core=world.rainmakerCore;const surfaceChanged=new Set();",
+        "after": "ch.skeleton.update();const core=world.rainmakerCore;"
+      },
+      {
+        "before": "      let distance=result.vertexSurfaceMinimum[k].distance;if(fishBounds.distanceToPoint(vertex)<distance){for(let fi=0;fi<triangles.length;fi++){if(fishBoxes[fi].distanceToPoint(vertex)>=distance)continue;triangles[fi].closestPointToPoint(vertex,nearest);const d=nearest.distanceTo(vertex);if(d<distance){distance=d;result.vertexSurfaceMinimum[k]={distance,tick};surfaceChanged.add(k);}}}\n",
+        "after": ""
+      },
+      {
+        "before": "    if(extremeAim||[0,30,60,89].includes(tick)||surfaceChanged.size){",
+        "after": "    if(extremeAim||FOCUSED_FACE_TICKS.includes(tick)){"
+      },
+      {
+        "before": "     for(const k of surfaceChanged)worstSnapshots[k]=snapshot;\n     if(extremeAim||[0,30,60,89].includes(tick))result.faceChecks.push(checkSnapshot(snapshot));",
+        "after": "     result.faceChecks.push(checkSnapshot(snapshot));"
+      },
+      {
+        "before": "   for(const[k,snapshot]of Object.entries(worstSnapshots)){assert.equal(snapshot.tick,result.vertexSurfaceMinimum[k].tick);if(!result.faceChecks.some(x=>x.tick===snapshot.tick))result.faceChecks.push(checkSnapshot(snapshot));assert.ok(result.vertexSurfaceMinimum[k].distance>1e-6,'strict positive actual skin-vertex to all-fish-surface distance');}\n",
+        "after": ""
+      },
+      {
+        "before": "assert.ok(result.faceChecks.length>=(extremeAim?6:4)&&result.faceChecks.length<=6);",
+        "after": "assert.deepEqual(result.faceChecks.map(r=>r.tick),extremeAim?[0,1,2,3,4,5]:FOCUSED_FACE_TICKS);"
+      }
+    ]
+  },
+  "emitted": [
+    {
+      "name": "origin",
+      "command": "INKWAVE_BUILT_SITE=.built-site/rainmaker-carry-review node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-shot-origin.test.mjs",
+      "tests": 14,
+      "pass": 14,
+      "fail": 0,
+      "logSha256": "5e8391e5926a71359157ab46b45d43a19c347fb59df140a21b2ff0ef49e9732b",
+      "build": {
+        "revision": "cc453b87ae1f7db0500b6f01c17a5d6ddb8cea71cb6982be33c1d12d52e83014",
+        "inputHash": "09287e0f999c6f7eaa49d530d5f894215931f1d1b946af3b50906febc0b65bfc",
+        "contentHash": "d0e73b2f952372fba77e400b6153f5749b77194ff745b5e494625bad48b01d5b"
+      }
+    },
+    {
+      "name": "current jumps",
+      "command": "INKWAVE_BUILT_SITE=.built-site/rainmaker-carry-review node --experimental-vm-modules --test --test-name-pattern='actual source Dualies3 jumps' patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "logSha256": "5b3a456adb5fb9b3595a9f7237302089b4a73d2ff350f59ad2524480b40736a6",
+      "build": {
+        "revision": "cc453b87ae1f7db0500b6f01c17a5d6ddb8cea71cb6982be33c1d12d52e83014",
+        "inputHash": "09287e0f999c6f7eaa49d530d5f894215931f1d1b946af3b50906febc0b65bfc",
+        "contentHash": "d0e73b2f952372fba77e400b6153f5749b77194ff745b5e494625bad48b01d5b"
+      }
+    }
+  ],
+  "native": "carrier-hold-result.json",
+  "quick": {
+    "passed": true,
+    "logSha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b"
+  },
+  "startupBudget": {
+    "passed": true,
+    "logSha256": "255a2cbcc9142074234955848133ab2b15abe1123ba0dfbc72f1cde0a26c62c8"
+  }
+}

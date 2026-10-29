@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
+import {sourceLoadedLegacyRainmakerAnchorFixture,LEGACY_RAINMAKER_ANCHOR} from './rainmaker-legacy-anchor-fixture.mjs';
 const dt=1/60,clean=x=>JSON.parse(JSON.stringify(x));
-const f=await sourceLoadedActorFixture({random:()=>.5,extraExports: `export {RainmakerRule} from './patches/splatoon3/runtime/ranked/rainmaker.mjs';`}),{G,THREE,RainmakerRule}=f;
+const f=await sourceLoadedLegacyRainmakerAnchorFixture({random:()=>.5,extraExports: `export {RainmakerRule} from './patches/splatoon3/runtime/ranked/rainmaker.mjs';`}),{G,THREE,RainmakerRule}=f;
 const environment={physics:G.physics,level:G.level,projectiles:G.projectiles};
-for(const weapon of ['shooter','roller','dualies'])test(weapon+' source-air overlay restores legacy source history before real ordinary bomb release',async t=>{
+for(const weapon of ['shooter','roller','dualies'])test('legacy anchor calibration: '+weapon+' source-air overlay restores legacy source history before real ordinary bomb release',async t=>{
  for(const boundary of ['quick-return','same-frame-release','hidden-reset','source-off']){
   const pair=[];
   for(let lane=0;lane<2;lane++){
@@ -56,7 +56,7 @@ for(const weapon of ['shooter','roller','dualies'])test(weapon+' source-air over
   const by=a=>born.filter(b=>b.actor===a).map(({actor,...b})=>b);
   assert.equal(by(pair[1].a).length,1);assert.deepEqual(by(pair[0].a),by(pair[1].a),'actual Projectiles.throwBomb origin/velocity exact');
   if(boundary==='quick-return')assert.ok(sawDive&&sawReturn);
-  t.diagnostic(JSON.stringify({weapon,boundary,source:'ready',emitted:!!process.env.INKWAVE_BUILT_SITE,corrected:pair[1].corrected,restores:pair[1].restores,maxFinal:pair[1].maxFinal,bomb:by(pair[1].a),solves:pair.map(p=>p.solves)}));
+  t.diagnostic(JSON.stringify({weapon,boundary,source:'ready',calibration:LEGACY_RAINMAKER_ANCHOR,emitted:false,corrected:pair[1].corrected,restores:pair[1].restores,maxFinal:pair[1].maxFinal,bomb:by(pair[1].a),solves:pair.map(p=>p.solves)}));
   G.projectiles.throwBomb=previous;for(const p of pair){G.scene.remove(p.ch.root);p.ch.dispose();}G.actors=[];G.projectiles.clear();
  }
 });
@@ -72,10 +72,10 @@ await landingModule.link(spec=>{
 });await landingModule.evaluate();
 let landingSeed=1234,landingRngIndex=0,landingRandomValues=[];
 const landingRandom=()=>{landingRngIndex++;landingSeed=(Math.imul(landingSeed,1664525)+1013904223)>>>0;const value=landingSeed/4294967296;landingRandomValues.push(value);return value;};
-const landingFixture=await sourceLoadedActorFixture({random:landingRandom,extraExports:`export {createRankedEffects} from './patches/splatoon3/runtime/ranked/combat.mjs';export {createRainmakerModel,createRainmakerPresentation} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`});
+const landingFixture=await sourceLoadedLegacyRainmakerAnchorFixture({random:landingRandom,extraExports:`export {createRankedEffects} from './patches/splatoon3/runtime/ranked/combat.mjs';export {createRainmakerModel,createRainmakerPresentation} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`});
 const landingHash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const landingTrs=b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray()];
-for(const scenario of ['carry-jump','charge-jump'])for(const boundary of ['quick-return','same-frame-release'])test(scenario+' land support restores source history and real bomb at '+boundary,async t=>{
+for(const scenario of ['carry-jump','charge-jump'])for(const boundary of ['quick-return','same-frame-release'])test('legacy anchor calibration: '+scenario+' land support restores source history and real bomb at '+boundary,async t=>{
  const {G,THREE}=landingFixture,lanes=[];
  // Warm the same construction/held-prop/projectile path first. Three UUID
  // allocation shares Math.random with real bomb spin; cold-vs-warm lanes
@@ -113,5 +113,5 @@ for(const scenario of ['carry-jump','charge-jump'])for(const boundary of ['quick
  assert.equal(lanes[0].globalCalls,lanes[1].globalCalls,'warmed global Math.random call count');
  assert.equal(lanes[0].globalValues,lanes[1].globalValues,'warmed global Math.random value sequence');
  for(const key of ['entries','after','born'])assert.deepEqual(clean(lanes[0][key]),clean(lanes[1][key]),key+' must match the old land path exactly');
- t.diagnostic(JSON.stringify({scenario,boundary,emitted:!!process.env.INKWAVE_BUILT_SITE,globalCalls:lanes.map(x=>x.globalCalls),globalValues:lanes.map(x=>x.globalValues),sourceEntryFrames:lanes[1].entries.length,afterDropFrames:45,bomb:lanes[1].born,beforeDrop:lanes.map(x=>x.beforeDrop)}));
+ t.diagnostic(JSON.stringify({scenario,boundary,calibration:LEGACY_RAINMAKER_ANCHOR,emitted:false,globalCalls:lanes.map(x=>x.globalCalls),globalValues:lanes.map(x=>x.globalValues),sourceEntryFrames:lanes[1].entries.length,afterDropFrames:45,bomb:lanes[1].born,beforeDrop:lanes.map(x=>x.beforeDrop)}));
 });
