@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {beginActorMotionTick,coherentMotionStart,actorMotionTick} from '../../patches/splatoon3/runtime/actor-motion.mjs';
 import {adaptSource} from '../../patches/splatoon3/adapter.mjs';
+import {adaptBuildSource} from '../inkwave-source-composition.mjs';
+import {interpolateSplashdownSnapshot} from '../../patches/splatoon3/runtime/splashdown-network.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from '../lib/inkwave-combat-ceiling-placement.mjs';
 
 // These are bounded helper contracts plus the real Actor barrier method,
@@ -33,7 +35,7 @@ function fixture(fn) {
  },projectiles:{_muzzle(a,out){return out.copy(a.pos).add(new V(0,1.1,.3));}}};
  const barrier=new Function('G','return new (class {'+method[0]+'})()._spawnBarrier;')(G);
  globalThis.__G=G;installCombatPlacementQA();
- const add=(id,p,enemyTeam=0)=>{const a={pos:new V(...p),vel:new V(),enemyTeam,alive:true,grounded:true,form:'kid',smoothY:0,aimPoint:new V(),aimDir:new V()};G.netm.byNid.set(id,a);return a;};
+ const add=(id,p,enemyTeam=0)=>{const a={nid:id,owner:'owner-'+id,netLife:1,pos:new V(...p),vel:new V(),enemyTeam,alive:true,grounded:true,form:'kid',smoothY:0,aimPoint:new V(),aimDir:new V()};G.netm.byNid.set(id,a);return a;};
  try{return fn({G,q:globalThis.__ceilingPlacement,barrier,add,calls});}
  finally{if(savedG===undefined)delete globalThis.__G;else globalThis.__G=savedG;if(savedQA===undefined)delete globalThis.__ceilingPlacement;else globalThis.__ceilingPlacement=savedQA;}
 }
@@ -65,13 +67,14 @@ test('blocked or absent native ground cannot produce a placement',()=>fixture(({
 }));
 test('aim rereads actual settled target and real muzzle and rejects a blocked shot',()=>fixture(({q,G,add})=>{
  const points=q.select(),a=add('a',points[0]),v=add('v',points[1]);v.smoothY=.02;
- const result=q.aim({attacker:'a',victim:'v',requested:points});
+ const args={attacker:'a',victim:'v',requested:points,epochs:{a:{owner:a.owner,life:1},v:{owner:v.owner,life:1}}};
+ const result=q.aim(args);
  assert.deepEqual(result.target,[v.pos.x,v.pos.y+1.07,v.pos.z]);
  assert.deepEqual(result.muzzle,[a.pos.x,a.pos.y+1.1,a.pos.z+.3]);
  assert.deepEqual(a.aimPoint.toArray(),result.target);
  const expected=new V(...result.target).sub(new V(...result.muzzle)).normalize();
  assert.deepEqual(a.aimDir.toArray(),expected.toArray());
- G.physics.los=()=>false;assert.throws(()=>q.aim({attacker:'a',victim:'v',requested:points}),/muzzle path blocked/);
+ G.physics.los=()=>false;assert.throws(()=>q.aim(args),/muzzle path blocked/);
 }));
 test('airborne or dead targets fail rather than weakening native contact requirements',()=>fixture(({q,add})=>{
  const points=q.select();add('a',points[0]);const v=add('v',points[1]);v.grounded=false;
@@ -93,9 +96,9 @@ test('failure stdout limits shot diagnostics to fixed labels and finite numbers'
 });
 
 test('pitch-dependent muzzle changes are exposed by the actual emitted-origin diagnostic',()=>fixture(({q,G,add})=>{
- const points=q.select(),a=add('a',points[0]);add('v',points[1]);
+ const points=q.select(),a=add('a',points[0]),v=add('v',points[1]);
  G.projectiles._muzzle=(actor,out)=>out.copy(actor.pos).add(new V(0,1.1+.5*actor.aimPitch,.3));
- const pre=q.aim({attacker:'a',victim:'v',requested:points});
+ const pre=q.aim({attacker:'a',victim:'v',requested:points,epochs:{a:{owner:a.owner,life:1},v:{owner:v.owner,life:1}}});
  // fireShooter recomputes _muzzle after aimPitch changed. Do not change the
  // native Actor update order or pretend that the earlier LOS was this origin.
  const actual=G.projectiles._muzzle(a,new V()).toArray();
@@ -142,15 +145,16 @@ test('opening readiness waits for both real lifecycle phases without editing eit
  const points=q.select(),a=add('a',points[0]),v=add('v',points[1]);
  G.match={state:'playing',actors:[a,v]};
  a.s3={squidSpawn:{phase:'aim',initial:true}};
- v.remote=true;v.net={ready:true};v.s3={squidSpawn:{phase:'aim',ownerReplicated:true}};
+ v.remote=true;v.net={ready:true,cur:{life:1},lastLife:1,buf:[{life:1}]};v.s3={squidSpawn:{phase:'aim',ownerReplicated:true}};
+ const epochs={a:{owner:a.owner,life:1},v:{owner:v.owner,life:1}},args={attacker:'a',victim:'v',requested:points,epochs};
  const before=JSON.stringify([a,v]);
- assert.equal(q.spawnReady(),false);assert.equal(q.placementReady({attacker:'a',victim:'v',requested:points}),false);
+ assert.equal(q.spawnReady(),false);assert.equal(q.placementReady(args),false);
  assert.equal(JSON.stringify([a,v]),before,'readiness must not clear spawn ownership');
  delete a.s3.squidSpawn;assert.equal(q.spawnReady(),false,'owner landing alone is insufficient');
  delete v.s3.squidSpawn;v.net.ready=false;assert.equal(q.spawnReady(),false);
  v.net.ready=true;assert.equal(q.spawnReady(),true);
- v.pos.set(.91,6.7,-38.58);assert.equal(q.placementReady({attacker:'a',victim:'v',requested:points}),false);
- v.pos.set(...points[1]);assert.equal(q.placementReady({attacker:'a',victim:'v',requested:points}),true);
+ v.pos.set(.91,6.7,-38.58);assert.equal(q.placementReady(args),false);
+ v.pos.set(...points[1]);assert.equal(q.placementReady(args),true);
 }));
 
 test('native teleport timeline holds stale spawn sample until the real owner relocation timestamp',()=>{
@@ -165,6 +169,58 @@ test('native teleport timeline holds stale spawn sample until the real owner rel
  assert.equal(sample.x,old.x);assert.equal(sample.z,old.z,'actual native timeline reproduces stale spawner position');
  new Native()._pathAt([old,placed],10.2,sample);
  assert.equal(sample.x,placed.x);assert.equal(sample.z,placed.z);
+});
+
+function nativeLifePath() {
+ const source=adaptBuildSource('src/net/netmatch.js',fs.readFileSync(new URL('../../inkwave-public/src/net/netmatch.js',import.meta.url),'utf8'));
+ const extract=(prefix,end='\n}')=>{
+  assert.equal(source.split(prefix).length,2,'unique native '+prefix);
+  const start=source.indexOf(prefix),last=source.indexOf(end,start);assert(last>start);return source.slice(start,last+end.length);
+ };
+ const line=prefix=>extract(prefix,'\n');
+ const F=new Function(extract('const F = {','\n};')+'return F;')();
+ const copySample=new Function(line('function copySample(')+'return copySample;')();
+ const blankSample=new Function(line('function blankSample(')+'return blankSample;')();
+ const angDiff=new Function(line('const TAU =')+line('const angDiff =')+'return angDiff;')();
+ const hermite=new Function('copySample','angDiff','F','interpolateSplashdownSnapshot',extract('function hermite(')+'return hermite;')(copySample,angDiff,F,interpolateSplashdownSnapshot);
+ const Native=new Function('copySample','hermite','F','PLAYER','return class {'+extract('  _pathAt(','\n  }')+'}')(copySample,hermite,F,
+  {get gravity(){throw Error('this interpolation control must not extrapolate');}});
+ assert(source.includes('a.netLife = S.life;'),'native remote application reads the sampled life');
+ assert(source.includes('l: victim.netLife'),'native hit authors the observed target life');
+ return {path:new Native(),blankSample,F};
+}
+function lifeReadinessOracle(install=installCombatPlacementQA) {
+ fixture(({G,add})=>{
+  install();const q=globalThis.__ceilingPlacement,points=q.select(),a=add('a',points[0]),v=add('v',points[1]);
+  G.match={state:'playing',actors:[a,v]};v.remote=true;
+  const epochs={a:{owner:a.owner,life:1},v:{owner:v.owner,life:2}},args={attacker:'a',victim:'v',requested:points,epochs};
+  const {path,blankSample,F}=nativeLifePath();
+  const old={...blankSample(),t:10,tp:1,life:1,x:points[1][0]-2.5,y:points[1][1],z:points[1][2],f:F.alive|F.grounded};
+  const placed={...old,t:11,life:2,x:points[1][0]},sample={};
+  path._pathAt([old,placed],10.99,sample);
+  v.net={ready:true,cur:sample,lastLife:2,buf:[old,placed]};v.netLife=sample.life;v.pos.set(sample.x,sample.y,sample.z);
+  assert(Math.hypot(...v.pos.toArray().map((x,i)=>x-points[1][i]))<.05,'actual native Hermite already passes the old position tolerance');
+  assert.equal(sample.life,1,'the actual discrete life still belongs to the previous owner sample');
+  const before=JSON.stringify([a,v]);
+  assert.equal(q.placementReady(args),false,'matching coordinates must not admit the previous life');
+  assert.equal(JSON.stringify([a,v]),before,'readiness observes native state without advancing or overriding it');
+  assert.throws(()=>q.inspect(args),/owner life has not settled/);assert.throws(()=>q.aim(args),/owner life has not settled/);
+  path._pathAt([old,placed],11,sample);v.netLife=sample.life;v.pos.set(sample.x,sample.y,sample.z);
+  assert.equal(q.placementReady(args),true,'the exact same gate admits the actual completed owner sample');
+  for(const [object,key,value]of [[v,'netLife',1],[v.net,'cur',{life:1}],[v.net,'lastLife',1],[v.net,'buf',[old]],[epochs.v,'owner','different-owner'],[epochs.v,'life',NaN]]){
+   const saved=object[key];object[key]=value;assert.equal(q.placementReady(args),false,key+' must match the recorded native owner');object[key]=saved;
+  }
+  assert.equal(q.placementReady({...args,epochs:undefined}),false,'missing owner epochs fail closed');
+  assert.throws(()=>q.aim({...args,epochs:undefined}),/Native owner epochs required/);
+  assert.equal(q.placementReady(args),true);
+ });
+}
+test('actual native Hermite position can settle before life and placement waits for the owner epoch',()=>lifeReadinessOracle());
+test('removing only the life prerequisite fails the same native interpolation control',()=>{
+ const source=installCombatPlacementQA.toString(),anchor='sameLife(a,epochs?.[a.nid]) && ';
+ assert.equal(source.split(anchor).length,2);
+ const withoutLife=new Function('return ('+source.replace(anchor,'')+')')();
+ assert.throws(()=>lifeReadinessOracle(withoutLife),/matching coordinates must not admit the previous life/);
 });
 
 test('placement handshake waits for delayed actual peer readiness and is bounded',async()=>{
@@ -192,6 +248,11 @@ test('browser keeps native RAF through opening, relocates owners only and preser
  assert(!/\.ready\s*=|delete .*squidSpawn|net\.cur\s*=/.test(placement));
  assert(source.indexOf('assert(report.placementAdvance.ready')<source.indexOf('report.settled='));
  assert(source.includes('setTimeout(resolve,1000/60)'));
+ assert(source.includes('return {nid:local.nid,owner:local.owner,life:local.netLife};'));
+ assert(source.includes('{attacker,victim,requested:placement,epochs}'));
+ assert.equal(source.split('epochs:window.__ceilingPlacementEpochs').length,3,'settled and pre-emission aim both verify the recorded owner epochs');
+ assert(source.includes('assert.equal(rejected.before.life,rejected.packet.l)'));
+ assert(source.includes('assert.equal(accepted.before.life,accepted.packet.l)'));
  const step=source.slice(source.indexOf('const step=async'),source.indexOf('report.placementAdvance='));
  const order=['G.net.update(dt)','G.time+=dt','window.__ceilingBeginActorMotionTick(G.actors)',
   'for(const a of G.match.actors)','G.projectiles.update(dt)'].map(anchor=>step.indexOf(anchor));

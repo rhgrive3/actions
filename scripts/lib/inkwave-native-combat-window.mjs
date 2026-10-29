@@ -1,7 +1,7 @@
 import {randomUUID} from 'node:crypto';
 
 // Only observe the production RAF. A slow software renderer still needs three
-// real frames; elapsed wall time alone is not a sufficient gameplay sample.
+// real frames and native paint; elapsed wall time alone is not a sufficient sample.
 export function beginNativeCombatWindow({mapId,minimumMs,leaseId}) {
  const G=globalThis.__G,g=globalThis.__inkwave,p=globalThis.__gameplayProbe;
  if(!Number.isFinite(minimumMs)||minimumMs<=0)throw Error('Positive combat duration required');
@@ -15,7 +15,10 @@ export function beginNativeCombatWindow({mapId,minimumMs,leaseId}) {
   const elapsedMs=performance.now()-w.startedAt,frames=p.totalFrames-w.startFrames;
   if(!Number.isFinite(elapsedMs)||elapsedMs<0||!Number.isInteger(frames)||frames<0)throw Error('Invalid native combat observation');
   if(elapsedMs<w.minimumMs||frames<3||!(G.time>w.startTime))return false;
-  return {leaseId:w.leaseId,elapsedMs,frames,startTime:w.startTime,endTime:G.time,minimumMs:w.minimumMs};
+  const coverage=G.paint?.coverage?.();
+  if(!Array.isArray(coverage)||coverage.length!==2||!Number.isFinite(coverage[0])||!Number.isFinite(coverage[1])||coverage.some(v=>v<0))throw Error('Invalid native combat paint coverage');
+  if(!coverage.some(v=>v>0))return false;
+  return {leaseId:w.leaseId,elapsedMs,frames,startTime:w.startTime,endTime:G.time,minimumMs:w.minimumMs,coverage:coverage.slice()};
  };
  p.combatWindow=w;
  return w.leaseId;

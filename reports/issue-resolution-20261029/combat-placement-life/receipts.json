@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "base": "6ae360f1f4696b9f71c515c2c4bab0af1320c52c",
+  "codeCommit": "f4e9fd0d8c713d97b211d31fe00f99dd989229ce",
+  "changedPaths": [
+    "scripts/check-inkwave-combat-ceiling-browser.mjs",
+    "scripts/lib/inkwave-combat-ceiling-placement.mjs",
+    "scripts/tests/inkwave-combat-ceiling-placement.test.mjs"
+  ],
+  "productionDiff": "none; all changes are QA harness/helper/regression tests",
+  "hostedFailure": {
+    "job": 123318672348,
+    "run": 40830119479,
+    "phase": "reject-220",
+    "capturedNativeHitLife": 1,
+    "receiverOwnerLife": 2,
+    "hpBefore": 100,
+    "hpAfter": 100,
+    "proofUsesBefore": [
+      0
+    ],
+    "proofUsesAfter": [
+      0
+    ],
+    "dedupeUnchanged": true,
+    "pendingUnchanged": true,
+    "status": "invalid same-life scenario; no production ceiling defect or browser success established"
+  },
+  "before": {
+    "node": "22.23.4",
+    "tests": 22,
+    "pass": 20,
+    "fail": 2,
+    "skip": 0,
+    "exit": 1,
+    "command": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node --test --test-reporter=tap scripts/tests/inkwave-combat-ceiling-placement.test.mjs",
+    "subject": "unchanged6ae placement helper with final regression file; one native interpolation readiness assertion and one new guard-anchor counterfactual fail"
+  },
+  "after": {
+    "node": "22.23.4",
+    "tests": 30,
+    "pass": 30,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "command": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node --experimental-vm-modules --test --test-reporter=tap scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-combat-ceiling-motion-epoch.test.mjs scripts/tests/inkwave-network-diagnostic-workflow.test.mjs",
+    "syntax": "node --check scripts/check-inkwave-combat-ceiling-browser.mjs passes"
+  },
+  "nativeCounterexample": {
+    "source": "actual full adaptBuildSource NetMatch _pathAt/hermite/copySample/blankSample/TAU/angDiff/F plus real interpolateSplashdownSnapshot",
+    "inputs": "same teleport token, ownerlife1\u21922 between t10 andt11; x10\u219212.5, grounded y0,z2",
+    "observationAt10_99": {
+      "sampledX": 12.499255000000002,
+      "positionError": 0.0007449999999984414,
+      "oldPositionGate": true,
+      "sampleLife": 1,
+      "ownerLife": 2
+    },
+    "observationAt11": {
+      "sampledX": 12.5,
+      "sampleLife": 2
+    },
+    "scope": "bounded native-source counterexample, not a replay of the browser trace; interpolation test throws if gravity/extrapolation is accessed"
+  },
+  "logs": {
+    "before.tap.gz": {
+      "sha256": "cfd4d5f2410c7f740f78c50dad1e94e22e6d98e84f95d92a9ac20aacc3f05d42",
+      "uncompressedSha256": "6512d45bc020b05447896d81405899d1810a213ec3fbd902605208597554530f",
+      "uncompressedBytes": 7245
+    },
+    "focused.tap.gz": {
+      "sha256": "b3ac882d7b71b6ce2fa195dfb3e0a111b4c6bb01e2227c64e4f57eced48f376a",
+      "uncompressedSha256": "81dd69335de960f6a366963304f6d5833666ef2d4093cc47078fcd12dfa49378",
+      "uncompressedBytes": 7027
+    },
+    "hosted-combat-ceiling.json.gz": {
+      "sha256": "b5c199e1e561b0d3b6d0c717054233951a37948124b59f9d7b328efee6190598",
+      "uncompressedSha256": "d9ee2b64188807fd8069005981f67b66af96df209077f72cbca0d2fd996771a6",
+      "uncompressedBytes": 246217
+    },
+    "hosted-network-failure.log.gz": {
+      "sha256": "c1fea407515cc4d48a06050083bc6c017d197cf02b81b7da361adfcec299963e",
+      "uncompressedSha256": "007ac7b067d512061680ad52cbb78582989f642fa50b45ca415ac87b5908366a",
+      "source": "original downloaded hosted raw job123318672348/run40830119479, gzip retained byte-identically"
+    }
+  },
+  "limits": [
+    "No browser/GPU was run for this source-only repair. The actual two-browser hosted network ceiling gate remains pending.",
+    "Original native captured packet and all same-life, HP, proof, pending, dedupe, geometry and ACK assertions remain unchanged.",
+    "Native Actor life, network buffers, sample state and packet.l are observed without overrides; only existing owner spawnAt relocation remains.",
+    "The existing180step paced placement bound remains.",
+    "Fresh-fire/contact forgery #1665/#1666 remains open; this repairs QA readiness only.",
+    "MOV-08b and Character release holds remain unchanged."
+  ]
+}
