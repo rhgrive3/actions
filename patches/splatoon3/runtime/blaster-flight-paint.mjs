@@ -294,8 +294,13 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
   const physics = game?.physics;
   const start = Math.max(0, Math.min(queue.length, Number.isFinite(startIndex) ? Math.trunc(startIndex) : 0));
   let landed = 0, write = start;
-  let landings=null;
-  let retired=null;const epoch=system._s3SplashDropEpoch||0;
+  const depth = system._s3SplashAdvanceDepth || 0;
+  system._s3SplashAdvanceDepth = depth + 1;
+  const landings = depth === 0 ? (system._s3SplashLandingsScratch || (system._s3SplashLandingsScratch = [])) : [];
+  const landingPool = depth === 0 ? (system._s3SplashLandingPool || (system._s3SplashLandingPool = [])) : null;
+  const retired = depth === 0 ? (system._s3SplashRetiredScratch || (system._s3SplashRetiredScratch = [])) : [];
+  landings.length = 0; retired.length = 0;
+  const epoch = system._s3SplashDropEpoch || 0;
   for (let i = start; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
@@ -312,12 +317,21 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
         ?sweptWorldHit(physics,d.pos,d.next,radius,radius,record,true)
         :physics.segment(d.pos, d.next, record, true);
       d.frames++;
-      if (hit?.hit) { (landings ||= []).push({drop:d,hit,time:stepTime});landed++;done=true;break; }
+      if (hit?.hit) {
+        let entry = landingPool ? landingPool[landings.length] : null;
+        if (!entry) {
+          entry = { drop: d, hit, time: stepTime };
+          if (landingPool) landingPool[landings.length] = entry;
+        } else {
+          entry.drop = d; entry.hit = hit; entry.time = stepTime;
+        }
+        landings.push(entry); landed++; done = true; break;
+      }
       d.pos.copy(d.next);
       stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
     }
-    if (!done) queue[write++] = d;else (retired ||= []).push(d);
+    if (!done) queue[write++] = d; else retired.push(d);
   }
   // Stable linear compaction: landing a large volley no longer repeatedly
   // shifts all later drops. Survivors retain their deterministic order.
@@ -325,9 +339,18 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
   // Two opposite-team drops may land on different reference ticks inside one
   // 30Hz update. Apply them by collision time, not by queue iteration order;
   // otherwise the earlier landing can incorrectly overwrite the later one.
-  if(landings?.length>1)landings.sort((a,b)=>a.time-b.time);
-  try{if(landings)for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);}
-  finally{if(retired)for(const drop of retired)recycleSplashDrop(system,drop,epoch);}
+  if (landings.length > 1) landings.sort((a, b) => a.time - b.time);
+  try {
+    for (let i = 0; i < landings.length; i++) {
+      const landing = landings[i];
+      landSplashDrop(game, landing.drop, landing.hit);
+      landing.drop = null; landing.hit = null;
+    }
+  } finally {
+    for (let i = 0; i < retired.length; i++) recycleSplashDrop(system, retired[i], epoch);
+    landings.length = 0; retired.length = 0;
+    system._s3SplashAdvanceDepth = depth;
+  }
   return landed;
 }
 
