@@ -5,6 +5,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
 import {hash,verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,invalidWindows,sampleStats,primeRuntimeMenuRows} from '../lib/inkwave-runtime-evidence.mjs';
 const root=persistentDirectory(path.join(process.env.INKWAVE_TEST_SCRATCH||path.resolve(import.meta.dirname,'../../.ci-scratch'),'inkwave-runtime-evidence-tests',String(process.pid)));
 // Use an actual committed runtime module in each synthetic Git tree and site.
@@ -19,6 +21,56 @@ function bindNetwork(manifest,digest){
  manifest.files['network-replication/'+networkName]=digest;
  manifest.build.network={[networkName]:digest};manifest.contentHash=hash(JSON.stringify(manifest.artifacts));
 }
+const TREE_CAPTURE_BYTES=8*1024*1024;
+const treeCaptureCallers=[
+ 'scripts/check-five-shooter-network.mjs','scripts/check-inkwave-network-browser.mjs',
+ 'scripts/lib/inkwave-public-boot-evidence.mjs','scripts/check-inkwave-wall-render.mjs',
+ 'scripts/check-inkwave-browser.mjs','scripts/check-inkwave-context-recovery-browser.mjs',
+ 'scripts/check-inkwave-flow-render.mjs','scripts/check-inkwave-paint-mask.mjs',
+ 'scripts/tests/inkwave-build-packaging.test.mjs',
+ 'patches/native-stages/tests/manta-source.test.mjs',
+ 'patches/native-stages/tests/shipshape-source.test.mjs',
+ 'patches/native-stages/tests/wahoo-source.test.mjs',
+ 'tools/squid-heading-qa/reference.mjs','tools/swim-entry-qa/reference.mjs',
+ 'reports/brush-downhill-contact-20261027/audit-build.mjs',
+ 'reports/locomotion-surface-20261026/audit-build-identity.mjs',
+];
+function literalGitTreeCalls(source){
+ const ast=parse(source,{ecmaVersion:'latest',sourceType:'module',allowHashBang:true,locations:true});
+ const methods=new Set(['execFileSync','execFile','spawnSync']),names=new Set(methods),calls=[];
+ for(const n of ast.body)if(n.type==='ImportDeclaration'&&['node:child_process','child_process'].includes(n.source.value))
+  for(const s of n.specifiers)if(methods.has(s.imported?.name))names.add(s.local.name);
+ const walk=n=>{
+  if(!n||typeof n!=='object')return;
+  const c=n.callee,method=c?.type==='Identifier'?names.has(c.name):c?.type==='MemberExpression'&&methods.has(c.property?.name||c.property?.value);
+  if(n.type==='CallExpression'&&method&&n.arguments[0]?.value==='git'&&n.arguments[1]?.type==='ArrayExpression'&&n.arguments[1].elements.some(e=>e?.value==='ls-tree'))calls.push(n);
+  for(const value of Object.values(n))if(Array.isArray(value))value.forEach(walk);else if(value&&typeof value==='object')walk(value);
+ };
+ walk(ast);return calls;
+}
+function assertTreeCapture(call,source,label){
+ const options=call.arguments[2],property=options?.type==='ObjectExpression'&&options.properties.find(p=>(p.key?.name||p.key?.value)==='maxBuffer');
+ assert.ok(property?.value,label+': git ls-tree requires an explicit 8 MiB capture');
+ const cap=vm.runInNewContext('('+source.slice(property.value.start,property.value.end)+')',Object.create(null),{timeout:1000});
+ assert.equal(cap,TREE_CAPTURE_BYTES,label+': git ls-tree capture must stay explicitly bounded at 8 MiB');
+}
+test('every literal Git tree metadata caller declares its 8 MiB cap, including imported aliases',()=>{
+ const repository=fileURLToPath(new URL('../../',import.meta.url));
+ const files=execFileSync('git',['ls-files','-z'],{cwd:repository,encoding:'utf8',maxBuffer:TREE_CAPTURE_BYTES}).split('\0').filter(f=>/\.(?:mjs|cjs|js)$/.test(f));
+ const audited=[];
+ for(const file of files){
+  const source=fs.readFileSync(path.join(repository,file),'utf8');if(!source.includes('ls-tree'))continue;
+  for(const call of literalGitTreeCalls(source)){assertTreeCapture(call,source,file+':'+call.loc.start.line);audited.push(file+':'+call.loc.start.line);}
+ }
+ for(const file of treeCaptureCallers)assert.ok(audited.some(row=>row.startsWith(file+':')),file+' is included in the global metadata audit');
+ for(const source of [
+  "execFileSync('git',['ls-tree','HEAD']);",
+  "import {execFileSync as run} from 'node:child_process';run('git',['ls-tree','HEAD'],{encoding:'utf8'});",
+  "execFileSync('git',['ls-tree','HEAD'],{maxBuffer:1024*1024});",
+  "execFileSync('git',['ls-tree','HEAD'],{maxBuffer:Infinity});",
+ ])assert.throws(()=>literalGitTreeCalls(source).forEach(call=>assertTreeCapture(call,source,'removed-cap control')),/8 MiB/);
+ console.log(JSON.stringify({literalGitTreeCaptureAudit:audited}));
+});
 test('benchmark rejects empty/undersampled live windows and incomplete fixed transactions',()=>{
  const scenarios=[{scenario:'battle',runs:[{repeat:0,frames:{n:0},counts:{frame:0}},{repeat:1,frames:{n:1},counts:{frame:29}},{repeat:2,frames:{n:30},counts:{frame:30}}]}];
  assert.equal(invalidWindows(scenarios,false).length,2);assert.equal(invalidWindows(scenarios,true).length,2);
@@ -184,7 +236,7 @@ test('source verification ignores a repository tree above 1 MiB while checking e
  const networkDigest=stageNetwork(repo,site),networkBlob=git(['hash-object','-w','--stdin'],{input:networkSource});
  const files={};let index='';
  // Real Git metadata, without creating thousands of unrelated working files.
- for(let i=0;i<10000;i++)index+='100644 '+blob+'\tunrelated/'+String(i).padStart(5,'0')+'-'+('x'.repeat(70))+'.js\n';
+ for(let i=0;i<10000;i++)index+='100644 '+blob+'\tstages/Vss_Pillar03/'+String(i).padStart(5,'0')+'-'+('x'.repeat(70))+'.js\n';
  for(let i=0;i<300;i++){
   const name=String(i).padStart(3,'0')+'.js';files['upstream/'+name]=hash(bytes);
   index+='100644 '+blob+'\tinkwave-public/'+name+'\n';
@@ -195,6 +247,7 @@ test('source verification ignores a repository tree above 1 MiB while checking e
  index+='100644 '+blob+'\tscripts/build-inkwave.mjs\n';
  git(['update-index','--index-info'],{input:index});
  const tree=git(['write-tree']),sha=git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit-tree',tree,'-m','wide fixture']);
+ git(['update-ref','HEAD',sha]);
  const fullTree=execFileSync('git',['ls-tree','-r','-z',sha],{cwd:repo,maxBuffer:8*1024*1024});
  assert.ok(fullTree.length>1024*1024,'the real repository tree exceeds the former default capture cap');
  const manifest={artifacts:{},contentHash:hash('{}'),files,build:{script:hash(bytes)}};bindNetwork(manifest,networkDigest);
@@ -205,6 +258,27 @@ test('source verification ignores a repository tree above 1 MiB while checking e
  manifest.files['upstream/299.js']=hash(bytes);delete manifest.files['upstream/'+literal];
  manifest.files['upstream/missing-final.js']=hash(bytes);save();
  assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Missing source input: inkwave-public\/missing-final\.js/);
+ // Evaluate the real callers' argument/options expressions without loading
+ // their browser entry points. All retain their exact flags/CWD/encoding.
+ // The large native subtree also exercises Buffer-returning -C/-rz/-lr calls.
+ const captures=[],lastName='09999-'+('x'.repeat(70))+'.js';
+ for(const file of treeCaptureCallers){
+  const source=fs.readFileSync(new URL('../../'+file,import.meta.url),'utf8'),calls=literalGitTreeCalls(source);
+  assert.equal(calls.length,1,file+' has one reviewed literal metadata call');assertTreeCapture(calls[0],source,file);
+  const context={ROOT:repo,root:file==='scripts/tests/inkwave-build-packaging.test.mjs'?pathToFileURL(repo+'/'):repo,
+   repository:repo,REPOSITORY:repo,sourceSha:sha,revision:sha,REV:sha,SOURCE_COMMIT:sha,
+   prefix:'stages/Vss_Pillar03/',spec:{internal:'Vss_Pillar03'},fileURLToPath};
+  const [command,args,rawOptions]=vm.runInNewContext('['+calls[0].arguments.map(n=>source.slice(n.start,n.end)).join(',')+']',context,{timeout:1000});
+  const options={...rawOptions},output=execFileSync(command,args,options),text=output.toString();
+  assert.ok(Buffer.byteLength(text)>1024*1024,file+' captures more than the old default');
+  assert.ok(text.split('\0').filter(Boolean).length>=10000,file+' preserves every metadata row');
+  assert.ok(text.includes('/'+lastName+'\0')||text.includes('\t'+lastName+'\0'),file+' retains the final source row');
+  assert.equal(Buffer.isBuffer(output),options.encoding===undefined,file+' preserves UTF8 versus Buffer result');
+  const legacy={...options};delete legacy.maxBuffer;
+  assert.throws(()=>execFileSync(command,args,legacy),e=>e.code==='ENOBUFS',file+' old default fails on this same metadata');
+  captures.push({file,bytes:Buffer.byteLength(text),buffer:Buffer.isBuffer(output)});
+ }
+ console.log(JSON.stringify({completeGitTreeCapture:captures}));
 });
 
 const adapter=new URL('../../patches/reliability/lock-option-recovery-adapter.mjs',import.meta.url);

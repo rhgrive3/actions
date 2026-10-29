@@ -2,8 +2,8 @@
 
 The clock implementation is already in main `e67c636b81762df56b346a09ef570964d43084df`.
 Its clock-specific source equals the native-tested candidate source
-`472c85fa85e91f6e8b316f7d466c2c51209e3759` (the six-phase native receipt ran source
-`8c7f27a2`; its runtime/build inputs were verified identical to 472).
+`472c85fa85e91f6e8b316f7d466c2c51209e3759` (the native receipt ran source
+`8c7f27a2`; the [receipt](owner-clock-current.json) records three phases with two receivers each, and its runtime/build inputs were verified identical to 472).
 This concretely resolves the **main integration** condition. Keep #1767 open until
 full required CI passes; no deployment condition is added.
 
@@ -38,7 +38,7 @@ native pre-bind/fixed-origin/relay admission, NetMatch bind/update/dispose/leave
 send/onMessage, Session construction/begin, complete nonce ACK handling, fixed
 origin guards and all Transport methods. Entire generated Session and Transport
 modules are identical. Exact part hashes and all 12 file-blob comparisons are in
-`agent1-1767-main-inclusion.json`; the reproducible comparison script and generated
+[owner-clock-main-inclusion.json](owner-clock-main-inclusion.json); the reproducible comparison script and generated
 source snapshots are retained under `/workspace/scratch`.
 
 Whole generated NetMatch differs only in actor pose capture for combat receipts,

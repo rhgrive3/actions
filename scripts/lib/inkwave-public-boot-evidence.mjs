@@ -27,7 +27,7 @@ export function publicBuildIdentity(manifest) {
 export function verifyPublishedSource(manifest, root, sourceSha) {
   publicBuildIdentity(manifest);
   if (!/^[a-f0-9]{40}$/.test(sourceSha)) throw new Error('Full published source SHA required');
-  const tree = new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:root,encoding:'utf8'})
+  const tree = new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024})
     .split('\0').filter(Boolean).map(row => {
       const [meta,file]=row.split('\t');return [file,meta.split(' ')[2]];
     }));
