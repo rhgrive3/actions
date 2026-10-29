@@ -47,6 +47,7 @@ import { installBotPaintDeviceProfile } from '../../local-quality/bot-paint-devi
 import { registerSupportKit, installSupportGameplay } from './kit-support.mjs';
 import { installKitTrizooka } from './kit-trizooka.mjs';
 import { composeKits, registerKitMetadata } from './kit-composition.mjs';
+import { installCatalogueKitIcons } from './ui-kit-icons.mjs';
 import { installGear } from './gear.mjs';
 import { installHealthBarHud } from './health-bars.mjs';
 import { installFlow } from './flow.mjs';
@@ -229,6 +230,7 @@ export function install(profile) {
   registerAlternateWeaponKits(api);
   for (const [id, name] of Object.entries(SUB_NAMES)) if (SUB[id]) { Object.assign(SUB[id], {id, name}); SUB_ICONS[id] ||= SUB_ICONS.bomb; }
   for (const [id, name] of Object.entries(SPECIAL_NAMES)) if (SPECIALS[id]) { SPECIALS[id].name = name; SPECIAL_ICONS[id] ||= SPECIAL_ICONS.slam; }
+  installCatalogueKitIcons(api);
   installCatalogueLoadout(api);
   // after the gear and catalogue panels: menu layout for 26 stages / 160 weapons
   installMenuLayout(api);

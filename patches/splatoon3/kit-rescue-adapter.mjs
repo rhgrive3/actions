@@ -9,6 +9,11 @@ export function adaptKitRescue(rel, code, replaceOnce) {
     patch("h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS.bomb }), sub.name)",
       "h('span', { class: 'iw-chip' }, h('i', { html: SUB_ICONS[sub.id] || SUB_ICONS.bomb }), sub.name)",'lobby sub icon');
   } else if(rel==='src/ui/hud.js'){
+    patch("  _specialId() { const a = this._local(); const w = a && WEAPONS[a.weaponId]; return w ? w.special : 'slam'; }",
+      "  _specialId() { const a = this._local(); return a?.weapon?.special || (a && WEAPONS[a.weaponId]?.special) || 'slam'; }", 'HUD actor-local special');
+    patch("    const w = f.weapon || 'shooter';",
+      "    const w = f.weapon || 'shooter';\n    const kitSpecial = this._local()?.weapon?.special || WEAPONS[w]?.special || 'slam';\n    if (L.kitSpecial !== kitSpecial) { L.kitSpecial = kitSpecial; this.spIcon.innerHTML = specialIcon(kitSpecial); }", 'HUD special identity');
+    patch("      this.spIcon.innerHTML = specialIcon(W ? W.special : 'slam');\n", '', 'HUD remove weapon-only special write');
     patch('    // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)\n    const a = this._local();',
       "    // spawn shield + bomb aim (read straight off the local actor; absent in the lab unless mocked)\n    const a = this._local();\n    if (a) { const sub = selectedSub(a, SUB), cost = Math.round(selectedSubCost(a, SUB)); if (L.kitSub !== sub.id || L.kitSubCost !== cost) { L.kitSub = sub.id; L.kitSubCost = cost; this.subChip.querySelector('i').innerHTML = SUB_ICONS[sub.id] || SUB_ICONS.bomb; this.subChip.querySelector('b').textContent = cost + '%'; this.subChip.title = sub.name; } }",
       'HUD sub identity');
