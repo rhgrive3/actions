@@ -78,7 +78,9 @@ function trace(f, id, hz) {
       duringStep = true; try { step(1 / hz); } finally { duringStep = false; }
       const models = [];
       ch.root.traverse(o => { if (o.name?.startsWith('special:')) models.push([o.name, o.visible, ...o.position.toArray(), ...o.quaternion.toArray(), ...o.scale.toArray()]); });
-      for (const d of ch.s3SpecialDevices?.() || []) models.push([d.model.id, d.holder.visible, ...d.holder.position.toArray(), ...d.holder.quaternion.toArray(), ...d.holder.scale.toArray()]);
+      const devices = ch.s3SpecialDevices?.() || [];
+      if (id === 'killerWail') for (const [index, device] of devices.entries()) assert.equal(device.speakerIndex, index, 'real installer publishes the speaker ordinal used by the isolated fixture');
+      for (const d of devices) models.push([d.model.id, d.holder.visible, ...d.holder.position.toArray(), ...d.holder.quaternion.toArray(), ...d.holder.scale.toArray()]);
       rows.push({ models, pose: Array.from(ch.P), hands: [Array.from(ch.bones.handR.matrixWorld.elements), Array.from(ch.bones.handL.matrixWorld.elements)],
         snapshot: f.specialPresentationSnapshot(ch), muzzle: ch.getMuzzle(new f.THREE.Vector3()).toArray(),
         hp: a.hp, ink: a.ink, special: a.special, token: a.specialActive && { ...a.specialActive }, weapon: ch.weapon.pivot.visible });

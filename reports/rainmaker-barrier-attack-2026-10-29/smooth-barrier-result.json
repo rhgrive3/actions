@@ -1,0 +1,82 @@
+{
+  "status": "passed",
+  "phase": "candidate",
+  "scope": "Four native shield states: neutral, pressure, near pop, reversed team. Chromium SwiftShader, low quality, bloom disabled. GPU links and framebuffer coverage; not retail equivalence.",
+  "build": {
+    "revision": "0d2726c48db54d25909a5e585018895f17402b8154151bf86402509107ca1295",
+    "inputHash": "0009c0535a821dc00c03603c8c5ef48f8d06b0a118e63b8241bd2a2f20163656",
+    "contentHash": "e99044cff47b6233bc21cd7ee496fa1857979f35730c1f55e29ac900124ac415"
+  },
+  "renderSettings": {
+    "quality": "low",
+    "bloom": false,
+    "shadows": false,
+    "teamInk": [
+      "10d2e6",
+      "ff4150"
+    ]
+  },
+  "captures": [
+    {
+      "name": "01-barrier-neutral",
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 1000,
+        "balance": 0,
+        "team": null
+      },
+      "effectPixels": {
+        "changedPixels": 22085,
+        "maxDelta": 264
+      },
+      "gpuPrograms": 173
+    },
+    {
+      "name": "02-barrier-pressured",
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 350,
+        "balance": 650,
+        "team": 0
+      },
+      "effectPixels": {
+        "changedPixels": 49846,
+        "maxDelta": 400
+      },
+      "gpuPrograms": 173
+    },
+    {
+      "name": "03-barrier-near-burst",
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 50,
+        "balance": 950,
+        "team": 0
+      },
+      "effectPixels": {
+        "changedPixels": 66666,
+        "maxDelta": 343
+      },
+      "gpuPrograms": 173
+    },
+    {
+      "name": "04-barrier-counter-color",
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 700,
+        "balance": -300,
+        "team": 1
+      },
+      "effectPixels": {
+        "changedPixels": 33528,
+        "maxDelta": 366
+      },
+      "gpuPrograms": 173
+    }
+  ],
+  "errors": []
+}

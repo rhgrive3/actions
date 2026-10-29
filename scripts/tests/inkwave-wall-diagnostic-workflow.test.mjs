@@ -37,7 +37,7 @@ function verify(text) {
     'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
     'node scripts/build-inkwave.mjs inkwave-public .built-site/_site',
     'test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"',
-    'npm ci --no-audit --no-fund', 'npx playwright install --with-deps chromium',
+    'npm ci --no-audit --no-fund', 'sudo python3 scripts/prepare-inkwave-ci-apt.py', 'npx playwright install --with-deps chromium',
     guard, source, emitted, verifier,
     'uses: actions/upload-artifact@v4\n        if: always()',
     'path: ${{ env.CI_STORAGE }}/evidence/wall/',

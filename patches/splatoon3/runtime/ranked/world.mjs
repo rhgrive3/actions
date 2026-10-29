@@ -1,13 +1,17 @@
 import { createRankedStage } from './stages.mjs';
+import { createZoneCoveragePair } from './zone-coverage-samples.mjs';
 import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
 import { createPowerClamResources } from './power-clam-model.mjs';
 import { createClamBarrier } from './clam-presentation.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
+import { createRainmakerBarrier, createRainmakerChargeAura } from './rainmaker-visuals.mjs';
+import { createRainmakerCarrierMarker } from './rainmaker-carrier-marker.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
 const NEUTRAL = 0x9ceff2;
 const EPSILON = 1e-6;
 const INVALID_BEARING = [0, 0, 1];
+const TOWER_NATIVE_TRIG = [Math.atan2, Math.cos, Math.sin];
 
 const finite = Number.isFinite;
 const validTeam = team => team === 0 || team === 1;
@@ -229,20 +233,16 @@ export class RankedWorld {
       core.position.y = 1;
       core.name = 'rainmaker-core';
       this.rainmaker.add(core);
-      const shield = new THREE.Mesh(new THREE.SphereGeometry(1.45, 20, 12), new THREE.MeshStandardMaterial({
-        color: 0xffdc5c, transparent: true, opacity: 0.16, wireframe: true,
-        metalness: 0.05, roughness: 0.4,
-      }));
-      shield.position.y = 1;
-      shield.name = 'rainmaker-barrier';
+      this.rainmakerBarrier = createRainmakerBarrier(THREE);
+      const shield = this.rainmakerBarrier.mesh;
       this.rainmaker.add(shield);
       this.rainmakerCore = core;
       this.rainmakerShield = shield;
       this.rainmakerGroup.add(this.rainmaker);
-      this.rainmakerCarrier = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.07, 8, 20),
-        new THREE.MeshStandardMaterial({ color: 0xffe77a, transparent: true, opacity: 0.9 }));
-      this.rainmakerCarrier.rotation.x = Math.PI / 2;
-      this.rainmakerCarrier.name = 'rainmaker-carrier-marker';
+      this.rainmakerAura = createRainmakerChargeAura(THREE);
+      this.rainmakerGroup.add(this.rainmakerAura.group);
+      this.rainmakerCarrierIndicator = createRainmakerCarrierMarker(THREE);
+      this.rainmakerCarrier = this.rainmakerCarrierIndicator.mesh;
       this.rainmakerGroup.add(this.rainmakerCarrier);
       this.rainmakerMarkers = { checkpoints: [], goals: [] };
       const makeObjectiveMarker = ({ pos, team, kind, index = 0, radius }) => {
@@ -630,8 +630,14 @@ export class RankedWorld {
     const [dx, dz] = bearing;
     this._forward.set(dx, 0, dz).normalize();
     this._side.set(this._forward.z, 0, -this._forward.x).normalize();
-    const yaw = Math.atan2(dx, dz);
-    const cosYaw = Math.cos(yaw), sinYaw = Math.sin(yaw);
+    const nativeTrig = Math.atan2 === TOWER_NATIVE_TRIG[0] && Math.cos === TOWER_NATIVE_TRIG[1] && Math.sin === TOWER_NATIVE_TRIG[2];
+    let angles = this._towerBearingAngles;
+    if (!nativeTrig || !angles || !Object.is(angles.dx, dx) || !Object.is(angles.dz, dz)) {
+      const yaw = Math.atan2(dx, dz), cosYaw = Math.cos(yaw), sinYaw = Math.sin(yaw);
+      angles = {dx, dz, yaw, cosYaw, sinYaw};
+      if (nativeTrig) this._towerBearingAngles = angles;
+    }
+    const {yaw, cosYaw, sinYaw} = angles;
     const transformChanged = !this._towerTransformReady || !this._position.equals(this._lastPosition) || yaw !== this._towerYaw;
     this.towerBlock.center.set(this._position.x, this._position.y - 0.12, this._position.z);
     this.towerBlock.axes[0].set(cosYaw, 0, -sinYaw);
@@ -680,7 +686,7 @@ export class RankedWorld {
     if (this.disposed) return;
     if (this.mode === 'tower') this._syncTower(engine, true);
     if (this.mode === 'zones') this._updateZoneColors(engine);
-    if (this.mode === 'rainmaker') this._updateRainmaker(engine);
+    if (this.mode === 'rainmaker') this._updateRainmaker(engine, dt);
     if (this.mode === 'clams') {
       this._updateBaskets(engine, dt);
       this._updateClams(engine);
@@ -706,7 +712,7 @@ export class RankedWorld {
     return null;
   }
 
-  _updateRainmaker(engine) {
+  _updateRainmaker(engine, dt = 0) {
     const rainmaker = engine?.rule?.state;
     if (this.mode !== 'rainmaker' || !this.rainmaker) return;
     let position = vec(rainmaker?.pos) || this.stage?.rainmaker?.center || [0, 0, 0];
@@ -714,25 +720,16 @@ export class RankedWorld {
     if (carrier?.pos && validTeam(carrier.team)) this.rainmaker.position.copy(carrier.pos);
     else this.rainmaker.position.set(position[0], position[1], position[2]);
     if (carrier) this.rainmaker.rotation.y = 0;
-    else this.rainmaker.rotation.y += 0.018;
+    else if (Number.isFinite(dt) && dt > 0) this.rainmaker.rotation.y += dt === 1 / 60 ? 0.018 : 0.018 * dt * 60;
     const barrier = rainmaker?.barrier || {};
-    const shield = barrier.active !== false;
-    const max = Math.max(1, finite(barrier.max) ? barrier.max : 1000);
-    const health = Math.max(0, Math.min(max, finite(barrier.health) ? barrier.health : max));
-    const pressure = 1 - health / max;
-    const radius = 1.5 + 1.2 * pressure;
-    if(this.rainmakerShield.visible!==shield)this.rainmakerShield.visible = shield;
-    const scalar=radius/1.45, scale=this.rainmakerShield.scale;
-    if(!Object.is(scale.x,scalar)||!Object.is(scale.y,scalar)||!Object.is(scale.z,scalar))scale.setScalar(scalar);
     const shieldColor = validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c;
-    if (this._shieldColor !== shieldColor) { this.rainmakerShield.material.color.setHex(shieldColor); this._shieldColor = shieldColor; }
-    const opacity=0.12+0.14*pressure;
-    if(!Object.is(this.rainmakerShield.material.opacity,opacity))this.rainmakerShield.material.opacity=opacity;
-    this.rainmakerCarrier.visible = !!carrier;
-    if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
+    this.rainmakerBarrier.update(barrier, shieldColor, dt);
+    this.rainmakerCarrierIndicator.update(carrier, rainmaker?.holderRemaining);
+    if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 1.6, carrier.pos.z);
     else { this.rainmakerCarrier.position.copy(this.rainmaker.position); this.rainmakerCarrier.position.y += 2.2; }
-    const charge = rainmaker?.charge?.value || 0;
+    const charge = rainmaker?.charge?.pending?.charge ?? rainmaker?.charge?.value ?? 0;
     this.rainmakerPresentation.update(carrier, charge);
+    this.rainmakerAura.update(carrier, charge, this.rainmakerCore, dt, rainmaker?.shotSequence ?? 0);
     const checkpoints = rainmaker?.checkpoint?.passed;
     if (!this._rainmakerCoreWhite) { this.rainmakerCore.material.color.setHex(0xffffff); this._rainmakerCoreWhite = true; }
     const shown = this.rainmaker.userData.checkpointsPassed;
@@ -931,15 +928,16 @@ export class RankedWorld {
       && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
     const value = zones.map((_, index) => {
       const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
-      const area = [total === undefined ? 0 : total, 0, 0];
+      let totalArea=total === undefined ? 0 : total, teamOneArea=0, teamTwoArea=0;
       for (const entry of cells || []) {
-        if (total === undefined) area[0] += entry.area;
+        if (total === undefined) totalArea += entry.area;
         const team = this.paint.grid[entry.cell];
-        if (team === 1) area[1] += entry.area;
-        else if (team === 2) area[2] += entry.area;
+        if (team === 1) teamOneArea += entry.area;
+        else if (team === 2) teamTwoArea += entry.area;
       }
-      if (area[0] <= 0) return [0, 0];
-      return [area[1] / area[0], area[2] / area[0]];
+      const a = totalArea <= 0 ? 0 : teamOneArea / totalArea;
+      const b = totalArea <= 0 ? 0 : teamTwoArea / totalArea;
+      return grid && finite(version) ? createZoneCoveragePair(a, b) : [a, b];
     });
     if (grid && finite(version)) {
       // Production clear, stamped paint and owner replay all advance version.

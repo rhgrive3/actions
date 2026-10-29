@@ -1,0 +1,6 @@
+{
+  "description": "Prior local source composition after Drive e67c636b integration, before 20261029 continuation adapters. Fixed independent before oracle.",
+  "source_sha256": "201b01d1c53b0b6af845a0a92ba1413df26103d7b77ece3f3a80a6cb313933fd",
+  "gzip_sha256": "cff25377a81748c44e51b259a9f16935caff2bd91772c93afd99b95a726c3f69",
+  "bytes": 133066
+}

@@ -10,8 +10,8 @@
 //
 // For bots and network replicas this defers Character.update on ticks that are
 // not the clock's final tick before a draw and runs it once on the final tick with
-// the summed dt (native update clamps dt to 0.1 s; the clock's 1/24 s frame clamp
-// keeps the sum far below that). At 60 fps every tick is final: nothing changes.
+// the summed dt. Long catch-up debt is drained in native-safe 0.1 s steps,
+// with bounded work and retained remainder. Ordinary 60 fps calls stay unchanged.
 //
 // Accepted, measured trade-off (user decision 2026-10-13): on a deferred tick an
 // offline bot's rig-bone muzzle still reflects its arm pose from the last drawn
@@ -50,7 +50,17 @@ export function installIntermediateTickBudget(api, G) {
       return undefined;
     }
     const owed = this._itbDeferredDt;
-    if (owed > 0) { this._itbDeferredDt = 0; dt = (Number.isFinite(dt) && dt > 0 ? dt : 0) + owed; }
+    if (owed > 0) {
+      this._itbDeferredDt = 0; dt = (Number.isFinite(dt) && dt > 0 ? dt : 0) + owed;
+      // Character's 0.1 s stability clamp must not erase accumulated fixed
+      // ticks after a long foreground frame. Ordinary frames remain one call.
+      // Bound exceptional debt work; any remainder stays owned by this actor.
+      if (Number.isFinite(dt)) {
+        let slices = 0;
+        while (dt > 0.1 && slices < 31) { nativeUpdate.call(this, 0.1, s); dt -= 0.1; slices++; }
+        if (dt > 0.1) { this._itbDeferredDt = dt - 0.1; dt = 0.1; }
+      }
+    }
     return nativeUpdate.call(this, dt, s);
   };
   return true;

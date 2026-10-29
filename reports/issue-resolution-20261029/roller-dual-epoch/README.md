@@ -1,0 +1,7 @@
+# Both reviewed Roller source epochs on the latest owner head
+
+The original1b9815d5 Roller workflow failed two of twelve tests because its merged source-history check compared performance-reversed/downhill-removed bytes against the owner raw/downhill-removed hash. The original failed logs remain unchanged here.
+
+The owner subsequently pushed658cc4f4, restoring the historical121d assertion. This candidate is based directly on658 and preserves that latest owner commit and its assertion/label. It additionally retains the independently valid dc67 owner-performance epoch proof. Current source27ff, exact seven-edit reversal f80, raw-minus-downhill dc67, and performance-reversed-minus-downhill121d are all checked; complete digests are in [summary.json](summary.json). No frozen fixture, input map, fault mutation or production byte changed. Both source epochs reject missing/duplicate downhill imports.
+
+The entire source Roller suite passes **12/12**, zero failures/skips/cancellations on Node22.23.4. It explicitly reads ROOT/SRC source and has no emitted mode; setting BUILT would not prove emitted acceptance. This does not claim that658 reproduced the original1b failure. The prior local348/90candidate is superseded by this clean latest-owner continuation. Corrected-head hosted acceptance is pending. No push, workflow rerun, main merge, hold release or #401 work was performed by this lane.

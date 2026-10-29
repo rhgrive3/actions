@@ -40,8 +40,13 @@ export function brellaSplashPlan(source) {
 // are collected from every surviving pellet, even if the centre pellet hit a
 // wall. Wait for all members to cross/terminate so iteration order and host
 // frame rate cannot change the active fraction, centroid or number of drops.
-export function collectBrellaSplashes(node, projectile, end, ended, release) {
+// The optional borrowed-centre mode is for synchronous-copy releases only.
+// Default callers retain fresh Vector3 ownership, including diagnostic hooks.
+export function collectBrellaSplashes(node, projectile, end, ended, release, synchronousCopy = false) {
   const volley=node.volley,plan=volley.plan, before=node.distance;
+  const centreDepth=synchronousCopy?(volley._centreDepth||0):0;
+  if(synchronousCopy)volley._centreDepth=centreDepth+1;
+  try {
   const distance=projectile.prev.distanceTo(end), limit=before+distance;
   for(let i=volley.next;i<plan.count;i++) {
     const at=plan.first+i*plan.spacing;
@@ -66,7 +71,13 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
     for(const n of volley.nodes){
       const sample=n.samples.get(i);
       birthFrame=Math.max(birthFrame,sample?.frame??n.endFrame??0);
-      if(sample){centre||=sample.point.clone().set(0,0,0);centre.add(sample.point);count++;}
+      if(sample){
+        if(!centre){
+          centre=synchronousCopy?(volley._centres?.[centreDepth]||((volley._centres||=[])[centreDepth]=sample.point.clone())):sample.point.clone();
+          centre.set(0,0,0);
+        }
+        centre.add(sample.point);count++;
+      }
     }
     // Projectiles consume all their substeps before the next pellet. A ready
     // volley may therefore depend on a later substep of an earlier member.
@@ -83,4 +94,5 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
     for(const n of volley.nodes)n.samples.delete(i);
     volley.next++;
   }
+  } finally {if(synchronousCopy)volley._centreDepth=centreDepth;}
 }

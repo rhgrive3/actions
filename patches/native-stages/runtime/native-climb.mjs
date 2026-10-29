@@ -1,6 +1,23 @@
+function findStraightClimbEdge(list, toId) {
+ if(!list)return null;
+ for(let i=0;i<list.length;i++){
+  const e=list[i];
+  if(e&&e.to===toId&&e.type==='climb'&&(!e.climb?.kind||e.climb.kind==='straight'))return e;
+ }
+ return null;
+}
+function findMissingClimbSample(samples, paint, team, actorY) {
+ if(!samples)return null;
+ for(let i=0;i<samples.length;i++){
+  const s=samples[i];
+  if(s&&s.point[1]>=actorY+.15&&paint.sample(s.face,s.u,s.v)!==team+1)return s;
+ }
+ return null;
+}
 import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
 const terrainRadius=squid=>{const raw=squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw;return Number.isFinite(raw)&&Number.isFinite(PLAYER.s3TerrainDistanceScale)?raw*PLAYER.s3TerrainDistanceScale:PLAYER.radius;};
+const _v0=new THREE.Vector3(),_v1=new THREE.Vector3(),_v2=new THREE.Vector3();
 
 /** Opt-in display-derived wall transitions. No collision or paint is changed.
  * Every rise needs an uninterrupted paintable wall, capsule corridor, supported
@@ -57,7 +74,7 @@ export function nativeClimbTravelForm(brain,G){
  if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.a.intent.squid||brain.a.climbing)return;
  const a=brain.a,N=G.nav,from=N.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N.nodes[brain.path?.[brain.pi]];
  if(!to)return;
- const edge=from?.nb.find(e=>e.to===to.id),p=a.pos.clone(),radius=terrainRadius(true);
+ const edge=from?.nb.find(e=>e.to===to.id),p=_v0.copy(a.pos),radius=terrainRadius(true);
  const clear=point=>G.physics.bodyFits(point,radius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015);
  p.set(to.x,to.y+.01,to.z);
  if(edge?.type!=='walk'||!clear(a.pos)||!clear(p))a.intent.squid=false;
@@ -69,14 +86,14 @@ export function nativeClimbTravelForm(brain,G){
 export function updateNativeClimb(brain,G,dt){
  const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive)return false;
  let index=brain.pi;
- if(index===0&&brain.path.length>1&&a.pos.distanceTo(new THREE.Vector3(...[N.nodes[brain.path[0]].x,N.nodes[brain.path[0]].y,N.nodes[brain.path[0]].z]))<.8)index=1;
- const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.type==='climb'&&(!e.climb?.kind||e.climb.kind==='straight'));
+ if(index===0&&brain.path.length>1){const n0=N.nodes[brain.path[0]];if(a.pos.distanceTo(_v0.set(n0.x,n0.y,n0.z))<.8)index=1;}
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=findStraightClimbEdge(from?.nb,to?.id);
  if(!edge){brain._nativeClimb=null;return false;}
  let c=edge.climb;
  const scratch=brain._nativeClimbVectors||(brain._nativeClimbVectors={upper:new THREE.Vector3(),lower:new THREE.Vector3(),normal:new THREE.Vector3(),spine:new THREE.Vector3()});
  const upper=scratch.upper.fromArray(c.upper),lower=scratch.lower.fromArray(c.lower),normal=scratch.normal.fromArray(c.normal),spine=scratch.spine.fromArray(c.spine);
  if(Math.hypot(a.pos.x-upper.x,a.pos.z-upper.z)<.65&&Math.abs(a.pos.y-upper.y)<.16&&a.grounded){brain.pi=index+1;brain._nativeClimb=null;brain.noProg=0;return false;}
- if(Math.hypot(a.pos.x-lower.x,a.pos.z-lower.z)>Math.hypot(...[c.paintStance[0]-lower.x,c.paintStance[2]-lower.z])+2.5&&!a.climbing)return false;
+ if(Math.hypot(a.pos.x-lower.x,a.pos.z-lower.z)>Math.hypot(c.paintStance[0]-lower.x,c.paintStance[2]-lower.z)+2.5&&!a.climbing)return false;
  brain.pi=index;
  const state=brain._nativeClimb?.edge===edge&&brain._nativeClimb.path===brain.path?brain._nativeClimb:(brain._nativeClimb={edge,path:brain.path,seconds:0,lastY:a.pos.y,stalled:0});state.seconds+=dt;
  if(!state.contactScreened){
@@ -95,26 +112,26 @@ export function updateNativeClimb(brain,G,dt){
  if(a.pos.y>state.lastY+.12){state.lastY=a.pos.y;state.stalled=0;}else state.stalled+=dt;
  const it=a.intent;it.fire=it.squid=it.jump=it.sub=it.special=false;it.move.set(0,0,0);brain.noProg=0;
  if(state.stalled>12||state.seconds>30){brain.path=null;brain.repath=0;brain.goalTimer=0;brain._nativeClimb=null;it.move.copy(normal);return true;}
- let missing=c.samples.find(s=>s.point[1]>=a.pos.y+.15&&G.paint.sample(s.face,s.u,s.v)!==a.team+1);
+ let missing=findMissingClimbSample(c.samples,G.paint,a.team,a.pos.y);
  // Sample the exact live attachment and cap probes too. Weapon blot edges can
  // own every coarse route sample while leaving a gap at the Actor's ink line.
  // Pop out through ordinary input to repaint that contact, then reattach.
  if(!missing)for(const lift of [.3,.85]){
-  const hit=G.physics.raycast(a.pos.clone().add(new THREE.Vector3(0,lift,0)),normal.clone().negate(),PLAYER.radius+.45);
+  const hit=G.physics.raycast(_v0.copy(a.pos).add(_v1.set(0,lift,0)),_v2.copy(normal).negate(),PLAYER.radius+.45);
   if(hit.hit&&hit.face>=0&&Math.abs(hit.normal.y)<.15&&hit.point.y<=upper.y+.05&&G.paint.sample(hit.face,hit.u,hit.v)!==a.team+1){missing={point:hit.point.toArray(),face:hit.face,u:hit.u,v:hit.v};break;}
  }
  if(missing){
   // Use a normal firing stance on the source lower support; replenish through
   // ordinary squid input when necessary, without mutating ink or ownership.
-  const delta=new THREE.Vector3(...c.paintStance).sub(a.pos);delta.y=0;if(delta.length()>.2)it.move.copy(delta).normalize();
-  const point=new THREE.Vector3(...missing.point),aim=point.clone().sub(a.pos).add(new THREE.Vector3(0,-1.1,0));
+  const delta=_v0.fromArray(c.paintStance).sub(a.pos);delta.y=0;if(delta.length()>.2)it.move.copy(delta).normalize();
+  const point=_v1.fromArray(missing.point),aim=_v2.copy(point).sub(a.pos).add(_v1.set(0,-1.1,0));
   const yaw=Math.atan2(aim.x,aim.z),pitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));
   const turn=(target,current)=>{let d=target-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;return current+Math.max(-6*dt,Math.min(6*dt,d));};
   brain.aimYaw=turn(yaw,brain.aimYaw);brain.aimPitch=turn(pitch,brain.aimPitch);a.aimYaw=brain.aimYaw;a.aimPitch=brain.aimPitch;
   // Retain the ordinary aim turn rate, but converge on the actual wall point.
   // A fixed six-unit eye ray can end below/behind a nearby low wall target;
   // the lower production muzzle then aims into the foreground source floor.
-  const cp=Math.cos(a.aimPitch),distance=aim.length();a.aimPoint.copy(a.pos).add(new THREE.Vector3(Math.sin(a.aimYaw)*cp*distance,1.1+Math.sin(a.aimPitch)*distance,Math.cos(a.aimYaw)*cp*distance));
+  const cp=Math.cos(a.aimPitch),distance=aim.length();a.aimPoint.copy(a.pos).add(_v1.set(Math.sin(a.aimYaw)*cp*distance,1.1+Math.sin(a.aimPitch)*distance,Math.cos(a.aimYaw)*cp*distance));
   // An interrupted shooter stream can require a released trigger frame before
   // it admits another shot. Supply that normal input without changing the
   // weapon runner's cancellation state or the actor's ink.
@@ -133,10 +150,10 @@ export function updateNativeClimb(brain,G,dt){
  }else{
   // The painted route is a source wall line, not the whole facade. Keep
   // ordinary sideways swim input aimed at that line after attachment too.
-  const side=spine.clone().sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));
+  const side=_v0.copy(spine).sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));
   it.squid=true;it.move.copy(normal).negate().addScaledVector(side,3).normalize();
   if(!a.climbing&&(a.pos.y>=upper.y-.3||(a.climbExit>0&&a.pos.y>lower.y+.5)))it.move.copy(upper).sub(a.pos).setY(0).normalize();
-  else if(!a.climbing&&a.pos.y<upper.y-.3){const delta=spine.clone().sub(a.pos).setY(0);if(delta.length()>.15)it.move.copy(delta).normalize();}
+  else if(!a.climbing&&a.pos.y<upper.y-.3){const delta=_v1.copy(spine).sub(a.pos).setY(0);if(delta.length()>.15)it.move.copy(delta).normalize();}
   state.phase='swim';
  }
  return true;

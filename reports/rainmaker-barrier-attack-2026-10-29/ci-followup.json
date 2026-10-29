@@ -1,0 +1,55 @@
+{
+  "sourceHead": "d5f48a115fe2eb797a461cdfe7271d204614e35d",
+  "candidateHasUncommittedChanges": true,
+  "scope": "Focused source tests of final runtime. Rendering is checked separately. All listed cases include the position-before-add API; stationary/headless were rerun together after that cleanup.",
+  "results": [
+    {
+      "command": "node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker.test.mjs patches/splatoon3/tests/ranked-combat.test.mjs patches/splatoon3/tests/ranked-queue-equivalence.test.mjs",
+      "log": "final-gameplay-queue.log",
+      "tests": 60,
+      "pass": 60,
+      "fail": 0
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-name-pattern='stationary proof resets' patches/splatoon3/tests/ranked-browser-target-setup.test.mjs",
+      "log": "stationary-proofs.log",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "rerunCommand": "node --experimental-vm-modules --test --test-name-pattern='stationary proof resets|ranked runtime suppresses carrier' patches/splatoon3/tests/ranked-browser-target-setup.test.mjs patches/splatoon3/tests/ranked-integration.test.mjs",
+      "rerunLog": "final-stationary-headless.log"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-name-pattern='ranked runtime suppresses carrier' patches/splatoon3/tests/ranked-integration.test.mjs",
+      "log": "integration-late-scene.log",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "rerunCommand": "node --experimental-vm-modules --test --test-name-pattern='stationary proof resets|ranked runtime suppresses carrier' patches/splatoon3/tests/ranked-browser-target-setup.test.mjs patches/splatoon3/tests/ranked-integration.test.mjs",
+      "rerunLog": "final-stationary-headless.log"
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-name-pattern='event actual driver' patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs",
+      "log": "final-form-events.log",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0
+    },
+    {
+      "command": "node --experimental-vm-modules --test --test-name-pattern='current/current native host' patches/splatoon3/tests/ranked-rainmaker-peer-compat.qa.mjs",
+      "log": "final-native-peer.log",
+      "tests": 7,
+      "pass": 7,
+      "fail": 0
+    }
+  ],
+  "finalRuntimeBuild": {
+    "revision": "0d2726c48db54d25909a5e585018895f17402b8154151bf86402509107ca1295",
+    "inputHash": "0009c0535a821dc00c03603c8c5ef48f8d06b0a118e63b8241bd2a2f20163656",
+    "contentHash": "e99044cff47b6233bc21cd7ee496fa1857979f35730c1f55e29ac900124ac415"
+  },
+  "artifacts": {
+    "smooth-barrier.png": "c9e4d7706fa04b1da0e3c077eb123491d16ea36ff1e6fd480c4dfc3062db3a6f",
+    "smooth-barrier-result.json": "00cff18446b48eca0fc7f52936b15704d31ec3610bad807a8f3451407cc1de1e"
+  }
+}

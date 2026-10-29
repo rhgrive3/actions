@@ -1,0 +1,33 @@
+{
+  "sourceSha": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "scope": "CPU source-loaded fixture, not live rendered or hardware",
+  "receipts": [
+    {
+      "path": "845-cadence-latest.log.gz",
+      "sha256": "38eef8f8591849fc99df5326ece4d51c8f582184f64deda6da74f9de3a9822b2",
+      "rawSha256": "df8a5b6fef3ce555233d28b26174569bf3103e4d64735761a0560242e3050de8"
+    },
+    {
+      "path": "845-throttle-mutation.log.gz",
+      "sha256": "df5ea29a5050091ed0f9c56312467d3bd311f7cf31a39abff24b6dc6bb65d23e",
+      "rawSha256": "c37b40608ff3b99e4877381c21fe3cabc6b9ce979711dc612413a82f8af62580"
+    },
+    {
+      "path": "845-cacheability.log.gz",
+      "sha256": "e3fb372b268b5053a1401eb387f75e19629d321253a34cd505f6e581593cf7ae",
+      "rawSha256": "a36221bdbcd1a34d9bcbd8464330f18cac7b46791dec4ff61959db9263e51873"
+    },
+    {
+      "path": "../845-cadence.mjs",
+      "sha256": "44ddb41eeff6871f5d4385b51661942c91d0e1d60a8f2637605be32bc8ababdf"
+    },
+    {
+      "path": "../845-throttle-control.mjs",
+      "sha256": "55b6c7510683bcd3c184a74bdb874b46c915b76b733f6025162805801e3e9edd"
+    },
+    {
+      "path": "../845-cacheability.mjs",
+      "sha256": "cdf160334de476d45771c7d177b4df98d75ec235b14c79fd90345862dcfb0b80"
+    }
+  ]
+}

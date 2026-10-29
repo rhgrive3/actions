@@ -14,7 +14,7 @@
 //
 // Every helper returns without touching anything unless the projectile belongs
 // to this kit, so an un-composed build stays byte-identical to native.
-import { selectTrizookaFlight, selectTrizookaCollision, perpendicularBasis, VOLLEY_CONFIG, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
+import { selectTrizookaFlight, selectTrizookaCollision, VOLLEY_CONFIG, TRIZOOKA_PROJECTILE_FIELDS, TRIZOOKA_ORBIT } from './kit-trizooka.mjs';
 import { damageGroupId } from './final-damage.mjs';
 
 export const TRIZOOKA_WID = 'trizooka';
@@ -154,10 +154,6 @@ export function kitTrizookaFlight(system, p, dt) {
 // An offset DIFFERENCE around the native centreline, applied after the native
 // integration moved p.pos. Adding an absolute circle each frame would teleport
 // the projectile and destroy the swept segment.
-function orbitBasis(x, y, z) {
-  const len = Math.hypot(x, y, z) || 1;
-  return perpendicularBasis({ x: x / len, y: y / len, z: z / len });
-}
 export function kitTrizookaOrbitDelta(system, p, dt) {
   if (!isKitProjectile(p)) return false;
   const step = dt > 0 ? dt : 0;
@@ -171,9 +167,17 @@ export function kitTrizookaOrbitDelta(system, p, dt) {
   let x, y, z;
   if (p?.vel && p.vel.lengthSq() > 1e-9) { x = p.vel.x; y = p.vel.y; z = p.vel.z; }
   else { x = Math.sin(p?.s3Yaw ?? 0); y = 0; z = Math.cos(p?.s3Yaw ?? 0); }
-  const basis = orbitBasis(x, y, z), { u, v } = basis;
+  const axisLength = Math.hypot(x,y,z) || 1;
+  const nx=x/axisLength,ny=y/axisLength,nz=z/axisLength;
+  const ax=Math.abs(nx),ay=Math.abs(ny),az=Math.abs(nz);
+  const helperX=ax<=ay&&ax<=az,helperY=!helperX&&ay<=az;
+  const hx=helperX?1:0,hy=helperY?1:0,hz=helperX||helperY?0:1;
+  let ux=hy*nz-hz*ny,uy=hz*nx-hx*nz,uz=hx*ny-hy*nx;
+  const uLength=Math.hypot(ux,uy,uz)||1;
+  ux/=uLength;uy/=uLength;uz/=uLength;
+  const vx=ny*uz-nz*uy,vy=nz*ux-nx*uz,vz=nx*uy-ny*ux;
   const c = Math.cos(phase) * radius, s = Math.sin(phase) * radius;
-  const nowX = u.x * c + v.x * s, nowY = u.y * c + v.y * s, nowZ = u.z * c + v.z * s;
+  const nowX = ux * c + vx * s, nowY = uy * c + vy * s, nowZ = uz * c + vz * s;
 
   // Capture the same previous-step inputs after the current evaluation. Native
   // velocity normally stays unchanged between these two pure orbit queries.
@@ -188,14 +192,25 @@ export function kitTrizookaOrbitDelta(system, p, dt) {
   let oldX, oldY, oldZ;
   if (previousVelocity && previousVelocity.lengthSq() > 1e-9) { oldX = previousVelocity.x; oldY = previousVelocity.y; oldZ = previousVelocity.z; }
   else { oldX = Math.sin(previousYaw ?? 0); oldY = 0; oldZ = Math.cos(previousYaw ?? 0); }
-  const oldBasis = typeof x === 'number' && typeof y === 'number' && typeof z === 'number'
-    && Object.is(x, oldX) && Object.is(y, oldY) && Object.is(z, oldZ) ? basis : orbitBasis(oldX, oldY, oldZ);
+  let oldUx=ux,oldUy=uy,oldUz=uz,oldVx=vx,oldVy=vy,oldVz=vz;
+  if (!(typeof x === 'number' && typeof y === 'number' && typeof z === 'number'
+    && Object.is(x,oldX) && Object.is(y,oldY) && Object.is(z,oldZ))) {
+    const length=Math.hypot(oldX,oldY,oldZ)||1;
+    const nx=oldX/length,ny=oldY/length,nz=oldZ/length;
+    const ax=Math.abs(nx),ay=Math.abs(ny),az=Math.abs(nz);
+    const helperX=ax<=ay&&ax<=az,helperY=!helperX&&ay<=az;
+    const hx=helperX?1:0,hy=helperY?1:0,hz=helperX||helperY?0:1;
+    oldUx=hy*nz-hz*ny;oldUy=hz*nx-hx*nz;oldUz=hx*ny-hy*nx;
+    const uLength=Math.hypot(oldUx,oldUy,oldUz)||1;
+    oldUx/=uLength;oldUy/=uLength;oldUz/=uLength;
+    oldVx=ny*oldUz-nz*oldUy;oldVy=nz*oldUx-nx*oldUz;oldVz=nx*oldUy-ny*oldUx;
+  }
   const oldC = Math.cos(oldPhase) * oldRadius, oldS = Math.sin(oldPhase) * oldRadius;
   // Keep the original two dot products and then subtract; factoring the delta
   // through u/v changes rounding and can move a native collision boundary.
-  const beforeX = oldBasis.u.x * oldC + oldBasis.v.x * oldS;
-  const beforeY = oldBasis.u.y * oldC + oldBasis.v.y * oldS;
-  const beforeZ = oldBasis.u.z * oldC + oldBasis.v.z * oldS;
+  const beforeX = oldUx * oldC + oldVx * oldS;
+  const beforeY = oldUy * oldC + oldVy * oldS;
+  const beforeZ = oldUz * oldC + oldVz * oldS;
   p.pos.x += nowX - beforeX;
   p.pos.y += nowY - beforeY;
   p.pos.z += nowZ - beforeZ;

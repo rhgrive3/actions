@@ -64,7 +64,9 @@ export class RankedEngine {
     this.event('tie-adjust', { team, count: this.counts[team] });
   }
   event(kind, data = {}) {
-    this.events.push({ kind, ...data, at: this.elapsed });
+    const event = { kind, ...data, at: this.elapsed };
+    if (kind === 'overtime') { this._lastOvertimeEvent = event; this._lastOvertimeEventRule = this.rule; }
+    this.events.push(event);
     if (this.events.length > 256) this.events.shift();
   }
   special(team, points) { if (teamOk(team) && points > 0 && Number.isFinite(points)) this.event('special-gain', { team, points }); }
@@ -94,9 +96,16 @@ export class RankedEngine {
         this.time = 0;
         this.overtimeTeam = 1 - this.leadingTeam();
         // Each rule selects its own opportunity and its own end conditions.
+        const previousOvertimeEvent = this._lastOvertimeEvent;
+        const alreadyStarted = this.rule.state?.overtime?.active === true;
         if (this.rule.beginOvertime()) {
           this.overtime = true; this.overtimeElapsed = 0;
-          this.event('overtime', { team: this.overtimeTeam });
+          const started = this._lastOvertimeEvent;
+          if (started && ((started !== previousOvertimeEvent && started.at === this.elapsed)
+            || (alreadyStarted && this._lastOvertimeEventRule === this.rule))) {
+            // Keep the rule's mode/grace data and the generic team contract.
+            if (started.team === undefined) started.team = this.overtimeTeam;
+          } else this.event('overtime', { team: this.overtimeTeam });
         } else this.finish(this.leadingTeam(), 'time');
       }
       this.revision++; left -= step;
@@ -113,6 +122,9 @@ export class RankedEngine {
   }
   restore(s, { allowOlder = false } = {}) {
     if (!validRankedSnapshot(s, this.mode, this.stage.id) || (!allowOlder && s.revision < this.revision)) return false;
+    if (!allowOlder && (s.elapsed > 900 || s.overtimeElapsed > 300.1)
+      && (s.elapsed + rankedClockTolerance(s.elapsed) < this.elapsed
+        || s.elapsed - this.elapsed > (s.revision - this.revision) / 60 + rankedClockTolerance(s.elapsed))) return false;
     if (this.mode === 'tower' && ['checkpointProgress', 'checkpointCleared', 'checkpointLossSeconds'].some(k =>
       s.rule[k].some((list, team) => list.length !== this.rule.checkpointData[team].length))) return false;
     if (this.mode === 'zones' && s.rule.zones.length !== this.stage.zones.length) return false;
@@ -134,14 +146,31 @@ export class RankedEngine {
   }
 }
 
+// Long-lived overtime is bounded by actual fixed-step work, not a second
+// conflicting match deadline. Existing short snapshot compatibility is retained.
+function rankedClockTolerance(elapsed) { return Math.max(1e-7, elapsed * 1e-10); }
+function validExtendedRankedClock(s) {
+  const epsilon = rankedClockTolerance(s.elapsed);
+  if (!s.overtime || s.time !== 0 || s.mode === 'zones'
+    || Math.abs(s.elapsed - 300 - s.overtimeElapsed) > epsilon
+    || s.elapsed > s.revision / 60 + epsilon) return false;
+  if (s.mode === 'tower') return Number.isFinite(s.rule?.overtimeElapsed)
+    && Math.abs(s.rule.overtimeElapsed - s.overtimeElapsed) <= epsilon;
+  if (s.mode === 'clams') return s.rule?.overtime?.mode !== 'scoreless'
+    && Number.isFinite(s.rule?.overtime?.elapsed)
+    && Math.abs(s.rule.overtime.elapsed - s.overtimeElapsed) <= epsilon;
+  return s.mode === 'rainmaker';
+}
+
 // Bound recursive network data before touching authoritative state. Mode-specific
 // validation is delegated to each rule's restore; malformed packets never throw.
 export function validRankedSnapshot(s, mode = s?.mode, stage = s?.stage) {
   if (!s || s.schema !== 1 || !isRankedMode(mode) || s.mode !== mode || s.stage !== stage || typeof stage !== 'string') return false;
   if (!Number.isSafeInteger(s.revision) || s.revision < 0 || !pair(s.counts) || !pair(s.penalties, 1000)) return false;
-  if (!Number.isFinite(s.time) || s.time < 0 || s.time > 300 || !Number.isFinite(s.elapsed) || s.elapsed < 0 || s.elapsed > 900) return false;
+  if (!Number.isFinite(s.time) || s.time < 0 || s.time > 300 || !Number.isFinite(s.elapsed) || s.elapsed < 0 || s.elapsed > Number.MAX_SAFE_INTEGER / 60) return false;
   if (![-1, 0, 1].includes(s.leader) || ![-1, 0, 1].includes(s.overtimeTeam) || ![null, 0, 1].includes(s.winner)) return false;
-  if (typeof s.overtime !== 'boolean' || typeof s.knockout !== 'boolean' || !Number.isFinite(s.overtimeElapsed) || s.overtimeElapsed < 0 || s.overtimeElapsed > 300.1) return false;
+  if (typeof s.overtime !== 'boolean' || typeof s.knockout !== 'boolean' || !Number.isFinite(s.overtimeElapsed) || s.overtimeElapsed < 0 || s.overtimeElapsed > Number.MAX_SAFE_INTEGER / 60) return false;
+  if ((s.elapsed > 900 || s.overtimeElapsed > 300.1) && !validExtendedRankedClock(s)) return false;
   if (s.reason !== null && (typeof s.reason !== 'string' || s.reason.length > 80)) return false;
   let nodes = 0;
   const visit = (v, depth) => {
@@ -184,6 +213,7 @@ function validRuleState(mode, r) {
     && r.barrier && typeof r.barrier.active === 'boolean' && number(r.barrier.max) && number(r.barrier.balance)
     && r.charge && number(r.charge.value) && r.charge.value >= 0 && r.charge.value <= 1
     && number(r.charge.seconds) && r.charge.seconds >= 0 && r.charge.seconds <= 1 && typeof r.charge.firing === 'boolean'
+    && (r.charge.released === undefined || typeof r.charge.released === 'boolean')
     && number(r.charge.delay) && r.charge.delay >= 0 && r.charge.delay <= .1
     && number(r.charge.recovery) && r.charge.recovery >= 0 && r.charge.recovery <= 20 / 60
     && typeof r.charge.wasSwimming === 'boolean'

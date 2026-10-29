@@ -1,8 +1,8 @@
 import { rainmakerAimQuaternion } from './rainmaker-motion.mjs';
 
-// The adopted model's immutable muzzle socket, not a new weapon shape. The
+// The shoulder-carried model's immutable muzzle socket. The
 // model-identity regression checks this against rainmakerModel.muzzle.
-export const RAINMAKER_MUZZLE = Object.freeze([0, -.056, .899]);
+export const RAINMAKER_MUZZLE = Object.freeze([-.30, .124, .749]);
 const vector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
 export const rainmakerActorLife = a => a.remote ? a.net?.lastLife ?? a.netLife ?? 0 : a.netLife ?? 0;
 export const rainmakerActorOwner = a => a.owner == null ? null : String(a.owner);

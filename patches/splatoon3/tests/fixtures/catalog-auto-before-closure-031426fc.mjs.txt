@@ -1,0 +1,21 @@
+  function auto(runner,r,input,s,dt) {
+    const a=runner.a,p=r.parameters,t=weaponParam(r);
+    if(!input.fire&&!s.burst)return;
+    if(s.burst>0){s.burstWait-=dt;if(s.burstWait>EPS)return;}
+    else if(runner.cooldown>EPS||s.pending)return;
+    const variable=r.sourceActor==='WeaponShooterFlash'&&!input.firePressed&&s.pressed&&s.frame>=finite(t.VariableShotRepeatStartFrame,10);
+    const param=variable?p.VariableWeaponParam||t:t;
+    const burst=param.TripleShotSpanFrame!=null;
+    const fire=()=> {
+      if(!pay(runner,finite(param.InkConsume,.0092)*100*inkMod(a))){s.burst=0;runner.cooldown=finite(param.RepeatFrame,6)/HZ;return;}
+      const key = r.sourceActor==='WeaponBlasterPrecision'&&!a.grounded?'blaster-jump':r.family==='dualies'&&catalogDualiesTurret(s)?'turret':variable?'variable':'normal';
+      emitSingle(runner,r,key);runner.firingT=.35;
+      if(burst){if(!s.burst)s.burst=3;s.burst--;s.burstWait=finite(param.RepeatFrame,4)/HZ;
+        if(!s.burst)runner.cooldown=(finite(param.TripleShotSpanFrame,8)+finite(param.PostDelayFrame,2))/HZ;}
+      else if(r.family!=='blaster') runner.cooldown=finite(param.RepeatFrame,6)/HZ;
+    };
+    if(r.family==='blaster'){
+      runner.cooldown=finite(param.RepeatFrame,50)/HZ;
+      beginPending(s,finite(param.PreDelayFrame_HumanShot,10),fire);
+    }else fire();
+  }

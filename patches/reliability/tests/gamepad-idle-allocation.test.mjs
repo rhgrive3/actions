@@ -7,7 +7,12 @@ vm.runInContext('globalThis.__filters=0;globalThis.__filterItems=0;const oldFilt
 return{input,ctx,setPads(p){pads=p},fail(v){fail=v},apiMissing(v){if(v){this.savedAPI=ctx.navigator.getGamepads;delete ctx.navigator.getGamepads;}else ctx.navigator.getGamepads=this.savedAPI;},event(n,e={}){for(const f of listeners.get(n)||[])f(e)},poll(){input.pollPad()},counts(){return {filters:ctx.__filters,items:ctx.__filterItems}},snapshot(){return JSON.parse(JSON.stringify({pad:input.pad,prev:input.padPrev,pressed:[...input.padPressed],menu:[...input.padMenuPressed],blocked:[...input.padMenuBlocked],takeover:[...input._padTakeoverBlocked],axes:input._padTakeoverAxes,identity:input._padIdentity,epoch:input._padEpoch,navigationAxisZones:input._navigationAxisZones,navigationPadIndex:input._navigationPadIndex,navigationPadId:input._navigationPadId,platformFocusRebase:input._platformPadFocusRebase,holdCancelled:[...(input._holdCancelled||[])],lost:input._padIdentityLost,disconnected:input._padDisconnected,canceled:input._s3PadCanceled,device:input.lastDevice,keys:[...input.keys],keyPressed:[...input.pressed],mouse:input.mouse,outputs:{buttons:Array.from({length:24},(_,i)=>input.padButton(i)),values:Array.from({length:24},(_,i)=>input.padValue(i)),axes:Array.from({length:6},(_,i)=>input.padAxis(i)),sticks:[[0,1],[2,3]].map(([x,y])=>input.padStick(x,y,{})),keys:['KeyW','Tab','Space'].map(k=>[input.down(k),input.wasPressed(k)])}}));}};}
 test('empty gamepad polling skips two filter allocations without changing composed input behavior',async()=>{
 const actual=adaptBuildSource('src/core/input.js',fs.readFileSync(root+'inkwave-public/src/core/input.js','utf8'));
-let baseline=actual;
+const oldSelection=JSON.parse(fs.readFileSync(root+'patches/local-quality/tests/fixtures/queue-ui-input-20261029-before.json','utf8')).methods.selection;
+const begin=actual.indexOf('    let firstPad = null, firstStandard = null, standardPad = null;');
+const ending=': firstStandard || firstPad);';
+const end=actual.indexOf(ending,begin)+ending.length;
+assert.ok(begin>=0&&end>begin,'current single-pass selection has an exact independent old fixture');
+let baseline=actual.slice(0,begin)+oldSelection+actual.slice(end);
 for(const [name,side] of [['left','L'],['right','R']]){
  const old=`const ${name}Pads = connectedPads.filter(p => inkwaveIsJoyCon(p, '${side}'));`;
  const optimized=`const ${name}Pads = connectedPads.length ? connectedPads.filter(p => inkwaveIsJoyCon(p, '${side}')) : connectedPads;`;

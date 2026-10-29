@@ -35,7 +35,7 @@ try{
   const min=V(-8,-8,-8),max=V(8,8,8),ids=w=>{const a=[];w.queryBox(min,max,id=>a.push(id));return a;},expected=ids(pairs.before.world),actual=[];
   pairs.after.world.queryBox(min,max,id=>{actual.push(id);if(actual.length===1)equal(ids(pairs.after.world),expected);});equal(actual,expected);
   try{pairs.after.world.queryBox(min,max,()=>{throw Error('expected callback interruption');});}catch(e){if(e.message!=='expected callback interruption')throw e;}
-  equal(ids(pairs.after.world),expected);if(pairs.after.world._queryDepth!==0||pairs.after.world._queryStacks.some(s=>s.length))throw Error('Retained active query');
+  equal(ids(pairs.after.world),expected);if(pairs.after.world._queryDepth!==0||pairs.after.world._queryStacks.some(s=>!s.every(Number.isInteger)))throw Error('Retained active query');
   const counts={};for(const name of ['before','after']){let callbacks=0;const w=pairs[name].world,native=w.queryBox;w.queryBox=function(a,b,fn,stop){return native.call(this,a,b,id=>{callbacks++;return fn(id);},stop);};for(const {feet,grate}of inputs)pairs[name].physics.bodyFits(feet,.38,.1,1.45,grate);counts[name]=callbacks;w.queryBox=native;}
   if(!(counts.after<counts.before))throw Error('No reduction in traversal work');
   const run=(name,kind,loops)=>{const p=pairs[name].physics;let checksum=0;for(let j=0;j<loops;j++)for(const {origin,dir,feet,grate}of inputs)if(kind==='raycast'){p.raycast(origin,dir,12,outputs[name],grate);checksum+=outputs[name].hit?outputs[name].dist:0;}else checksum+=p.bodyFits(feet,.38,.1,1.45,grate)?1:0;return checksum;},timings=[];

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {actualModule} from '../../network-replication/tests/added-actual-module.mjs';
+import {createPresentationClock} from '../presentation-clock.mjs';
 
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-remaining-ui-network-before.json',import.meta.url)));
 const read=p=>fs.readFileSync(new URL('../../../'+p,import.meta.url),'utf8');
@@ -102,7 +103,7 @@ test('real bounded boss validator matches Set implementation including duplicate
 test('news image wait has one deadline, responds to load/error, retains modal retry and disposes every callback',()=>{
   const source=composed('src/ui/news.js');
   const methods=between(source,'  maybeShow() {','  _render(i, first) {');
-  const dispose=between(source,'  dispose() {','\n}',);
+  const dispose=between(source,'  _releaseTweenClock() {','  _tween(')+between(source,'  dispose() {','\n}',);
   function scenario(mode){
     let now=0,next=0,seen=0;const timers=new Map(),images=[];
     class Image {constructor(){this.complete=false;this.events=new Map();images.push(this);}addEventListener(k,f){this.events.set(k,f);}removeEventListener(k,f){if(this.events.get(k)===f)this.events.delete(k);}fire(k){this.complete=true;this.events.get(k)?.();}}
@@ -160,6 +161,7 @@ test('HUD paused effects park RAF and resume once, including pause/resume during
   const methods=between(source,'  _addFx(name, fn) {','  _restart(');
   let now=0,id=0;const pending=new Map();
   const env={performance:{now:()=>now},requestAnimationFrame:f=>{pending.set(++id,f);return id;},cancelAnimationFrame:i=>pending.delete(i),console};
+  env.createPresentationClock=()=>createPresentationClock(env);
   const o=vm.runInNewContext('new (class {'+methods+'})()',env);Object.assign(o,{_fxTime:0,timeScale:1});o._fxLoop=o._fxLoop.bind(o);
   vm.runInNewContext('(function(){'+setup+'})',env).call(o);
   const deltas=[];o.paused=true;o._addFx('x',dt=>{deltas.push(dt);return true;});assert.equal(pending.size,0);

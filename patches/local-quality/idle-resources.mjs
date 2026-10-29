@@ -70,11 +70,17 @@ export function pausedWorldFrame(game, G, viewport = globalThis) {
   if (game._pausedWorldCanvas?.canvas !== canvas) {
     const previous = game._pausedWorldCanvas;
     for (const event of ['webglcontextlost', 'webglcontextrestored']) previous?.canvas?.removeEventListener?.(event, previous.invalidate);
+    previous?.document?.removeEventListener?.('visibilitychange', previous.invalidate);
     game._pausedWorldCanvas = null;
     if (canvas?.addEventListener) {
       const invalidate = () => { game._pausedWorld = null; game.R?.releasePausedFrame?.(); };
       for (const event of ['webglcontextlost', 'webglcontextrestored']) canvas.addEventListener(event, invalidate);
-      game._pausedWorldCanvas = { canvas, invalidate };
+      // RAF may be stopped for the whole hidden-page lifetime. Retire the
+      // fullscreen snapshot on the visibility event, and invalidate its receipt
+      // so returning to the paused page captures real pixels again.
+      const document = canvas.ownerDocument;
+      document?.addEventListener?.('visibilitychange', invalidate);
+      game._pausedWorldCanvas = { canvas, document, invalidate };
     }
     game._pausedWorld = null;
   }

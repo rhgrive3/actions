@@ -75,3 +75,17 @@ test('the real-only audio bank is still strict unless deployed local-main fallba
   assert.equal(patched.stats().audibleShotFallback,true);
   strict.dispose();patched.dispose();
 });
+
+test('pending pointer, touch and mouse resumes cannot suppress the later trusted click that unlocks Safari',async()=>{
+ const document=Object.assign(target(),{hidden:false,hasFocus:()=>true});
+ const env=Object.assign(target(),{document,navigator:{},screen:{orientation:target()}});
+ class Audio {constructor(ctx){this.ctx=ctx;this.offline=false;}}
+ installAudioPlatform(Audio,env);
+ let currentEvent='initial';const attempts=[];
+ const ctx={state:'suspended',resume(){attempts.push(currentEvent);if(currentEvent==='click'){this.state='running';return Promise.resolve();}return new Promise(()=>{});}};
+ const audio=new Audio(ctx);audio.resume();
+ for(const name of ['pointerdown','touchend','mousedown','click']){currentEvent=name;env.send(name);}
+ assert.deepEqual(attempts,['initial','pointerdown','touchend','mousedown','click']);assert.equal(ctx.state,'running');
+ for(const name of ['pointerdown','touchend','mousedown','click'])env.send(name);assert.equal(attempts.length,5);
+ audio.disposePlatform();for(const name of ['pointerdown','touchend','mousedown','click'])assert.equal(env.count(name),0);
+});

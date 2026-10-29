@@ -411,21 +411,21 @@ let G_REF = null, PLAYER_REF = null, PHYSICS_REF = null;
 export function kitSubRelease(SUB, runner, dt, inp) {
   if (inp?.sub) runner.s3SubHold = (runner.s3SubHold || 0) + dt;
   else if (!inp?.subReleased) runner.s3SubHold = 0;
-  const sub = actorSubSpec(runner.a, kitSubFor(runner.a?.weapon, SUB));
   const hold = runner.s3SubHold || 0;
-  const charge = sub.chargeable ? curlingChargeFraction(hold, sub) : 0;
-  const tpl = kitTemplate(sub);
-  const inkCost = Number.isFinite(sub.inkCost) ? sub.inkCost
-    : Number.isFinite(sub.inkCostFallback) ? sub.inkCostFallback
+  const a = runner.a, baseSub = kitSubFor(a?.weapon, SUB);
+  const release = actorSubSpec(a, baseSub);
+  const charge = release.chargeable ? curlingChargeFraction(hold, release) : 0;
+  const tpl = kitTemplate(release);
+  const inkCost = Number.isFinite(release.inkCost) ? release.inkCost
+    : Number.isFinite(release.inkCostFallback) ? release.inkCostFallback
     : SUB.bomb.inkCost;
-  const release = sub.chargeable
-    ? { ...sub, ...curlingBlastParams(charge, sub), inkCost }
-    : { ...sub, inkCost };
+  if (release.chargeable) Object.assign(release, curlingBlastParams(charge, release));
+  release.inkCost = inkCost;
   release.__charge = charge;
   release.__hold = hold;
   // Provenance comes from the template, so the ink-saver swap `installGear` makes on
   // the live registry for this frame cannot relabel the number's origin.
-  release.__inkCostStatus = tpl?.inkCost != null ? sub.inkCostStatus : 'calibrated';
+  release.__inkCostStatus = tpl?.inkCost != null ? release.inkCostStatus : 'calibrated';
   runner.s3Release = release;
   return release;
 }

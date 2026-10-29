@@ -71,6 +71,21 @@ test('canonical string and numeric IDs match without allocating state for a nonc
  f.ch.actor.nid=18;f.state.carrier='18';assert.equal(applyRainmakerPose(f.ch,{},C,f.match,1/60),true);assert.equal(f.ch._rainmakerId,'18');
 });
 
+test('turning the body independently of aim keeps the shoulder anchor and primary wrist in the same world aiming frame',()=>{
+ for(const value of [0,1])for(const heading of [-Math.PI,-.8,0,1.3,Math.PI]){
+  let reference=null;
+  for(const body of [-Math.PI,-1.3,0,.8,Math.PI]){
+   const {ch,state,match}=fixture();ch.root={rotation:{y:body}};ch.actor.yaw=body;
+   ch.actor.aimDir=new THREE.Vector3(Math.sin(heading),0,Math.cos(heading));state.charge={value};
+   applyRainmakerPose(ch,{aimPitch:0},C,match,1/60);
+   const anchor=new THREE.Vector3(ch.P[C.ANC],ch.P[C.ANC+1],ch.P[C.ANC+2]).applyAxisAngle(new THREE.Vector3(0,1,0),body);
+   if(reference)assert(anchor.distanceTo(reference)<1e-10,'body turn must not sweep the held fish across the head');else reference=anchor;
+   const wristHeading=body+ch.P[C.ANCR+1];
+   assert(new THREE.Vector3(Math.sin(wristHeading),0,Math.cos(wristHeading)).distanceTo(ch.actor.aimDir)<1e-10);
+  }
+ }
+});
+
 // Direction inputs to the upright frame are finite, as supplied by Actor aim.
 // Character's visual stream is a private seeded closure, not gameplay Math.random.
 test('visual RNG is per-character and does not consume the gameplay random stream',()=>{

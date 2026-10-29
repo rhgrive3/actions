@@ -37,7 +37,7 @@ const ownFieldCount = value => {
   for (const key in value) if (Object.hasOwn(value, key)) count++;
   return count;
 };
-const emptyCharge = () => ({ seconds: 0, value: 0, firing: false, delay: 0, recovery: 0, pending: null, wasSwimming: false });
+const emptyCharge = () => ({ seconds: 0, value: 0, firing: false, released: false, delay: 0, recovery: 0, pending: null, wasSwimming: false });
 
 // Leanny 11.3.0 DamageRateInfo rows for `Gachihoko_Barrier`. `damage` in a
 // barrier hit is ordinary weapon damage before this object multiplier; callers
@@ -221,11 +221,8 @@ export class RainmakerRule {
     this.checkpointCountFloors = this.goals.map((goal, team) => goal && this.countBaselines[team] > 0 && this.checkpoints[team].length
       ? Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / this.countBaselines[team]), 1, 100))) : 1);
     // Derived solely from the immutable stage geometry, not the carrier position.
-    this.checkpointMinimumCount = [0, 1].map(team => {
-      const goal = this.goals[team], baseline = goal && distance(this.center, goal);
-      if (!(baseline > 0) || !this.checkpoints[team].length) return null;
-      return Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / baseline), 1, 100)));
-    });
+    this.checkpointMinimumCount = this.checkpointCountFloors.map((floor, team) =>
+      this.goals[team] && this.countBaselines[team] > 0 && this.checkpoints[team].length ? floor : null);
     this.state = initialState(this.stage);
   }
 
@@ -528,8 +525,12 @@ export class RainmakerRule {
       const used = Math.min(remaining, c.recovery); c.recovery -= used; remaining -= used;
       if (c.recovery > 1e-9) return;
       c.recovery = 0;
+      // A hold spent entirely in recovery is not another charge attempt.
+      // Starting its windup with no elapsed time would manufacture a tap if
+      // the player releases before the next eligible charging tick.
+      if (remaining <= 1e-9) return;
     }
-    const firing = input?.fire === true && !(actor.swimming && c.firing);
+    const firing = input?.fire === true && !c.released && !(actor.swimming && c.firing);
     if (firing) {
       if (!c.firing) c.delay = (c.wasSwimming || actor.swimming ? 6 : 1) / 60;
       c.wasSwimming = false; c.firing = true;
@@ -543,12 +544,22 @@ export class RainmakerRule {
       if (previousCharge < 1 && c.value >= 1) this._event('rainmaker-charged', { id: actor.id, team: actor.team, pos: positionOf(actor) });
       return;
     }
-    if (!actor.swimming && this.state.charge.firing && this.state.charge.seconds > 0) {
-      const charge = clamp(this.state.charge.value, 0, 1);
-      if (this.state.charge.seconds < RAINMAKER_MIN_CHARGE_SECONDS - 1e-9) {
-        this.state.charge = emptyCharge();
+    if (!actor.swimming && c.firing) {
+      // A tap is the normal no-charge shot, not a cancelled attack. Complete
+      // the existing 20F minimum and retain the release across a re-press.
+      // Keep firing until this completes so the host captures the live muzzle
+      // at the shot transition, rather than freezing a moving carrier early.
+      c.released = true;
+      const windup = Math.min(remaining, c.delay); c.delay -= windup; remaining -= windup;
+      const minimum = Math.min(remaining, Math.max(0, RAINMAKER_MIN_CHARGE_SECONDS - c.seconds));
+      c.seconds += minimum; remaining -= minimum;
+      if (c.seconds < RAINMAKER_MIN_CHARGE_SECONDS - 1e-9) {
+        c.value = c.seconds / RAINMAKER_FULL_CHARGE_SECONDS;
         return;
       }
+      c.seconds = Math.max(c.seconds, RAINMAKER_MIN_CHARGE_SECONDS);
+      c.value = c.seconds / RAINMAKER_FULL_CHARGE_SECONDS;
+      const charge = clamp(c.value, 0, 1);
       const fullCharge = charge >= 1;
       const partialCharge = clamp(
         (charge - RAINMAKER_MIN_CHARGE_SECONDS / RAINMAKER_FULL_CHARGE_SECONDS)
@@ -591,12 +602,12 @@ export class RainmakerRule {
         recoil: nativeSpeedToWorldPerSecond(fullCharge ? .12 : .06 + .03 * partialCharge),
         trailRadius: fullCharge ? .48 : paintRadius,
       };
-      c.seconds = c.value = 0; c.firing = false; c.delay = 1 / 60;
+      c.seconds = c.value = 0; c.firing = c.released = false; c.delay = 1 / 60;
       this._updateShot(remaining, actor, input);
       return;
     }
-    if (!(c.seconds === 0 && c.value === 0 && c.firing === false && c.delay === 0 && c.recovery === 0 && c.pending === null
-      && typeof c.wasSwimming === 'boolean' && ownFieldCount(c) === 7)) this.state.charge = emptyCharge();
+    if (!(c.seconds === 0 && c.value === 0 && c.firing === false && c.released === false && c.delay === 0 && c.recovery === 0 && c.pending === null
+      && typeof c.wasSwimming === 'boolean' && ownFieldCount(c) === 8)) this.state.charge = emptyCharge();
     this.state.charge.wasSwimming = !!actor.swimming;
   }
 

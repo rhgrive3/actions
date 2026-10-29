@@ -10,25 +10,25 @@ export function constrainSpawnPosition(actor, level, player, from = null, physic
   const pad = level?.spawnPads?.[1 - actor.team], radius = level?.spawnBarrier;
   if (!pad || !(radius > 0) || !Number.isFinite(radius)) return false;
   const p = actor.pos, bottom = pad.y - 1, r = radius + player.radius + SKIN;
-  if (![p.x,p.y,p.z,pad.x,pad.y,pad.z,r].every(Number.isFinite)) return false;
+  if (!Number.isFinite(p.x + p.y + p.z + pad.x + pad.y + pad.z + r)) return false;
   const endX = p.x, endY = p.y, endZ = p.z;
   let nx, nz, x, z;
   // Intersect the movement segment with the horizontal circle only during
   // the part above its lower height. This catches an entire high-speed crossing
   // even if both endpoints lie outside. Vertical launch velocity is untouched.
-  if (from && [from.x,from.y,from.z].every(Number.isFinite)) {
+  if (from && Number.isFinite(from.x + from.y + from.z)) {
     const dx = p.x - from.x, dz = p.z - from.z, dy = p.y - from.y;
     let lo = 0, hi = 1;
-    if (dy > 0) lo = Math.max(0, (bottom - from.y) / dy);
-    else if (dy < 0) hi = Math.min(1, (bottom - from.y) / dy);
+    if (dy > 0) { const t0 = (bottom - from.y) / dy; if (t0 > 0) lo = t0; }
+    else if (dy < 0) { const t1 = (bottom - from.y) / dy; if (t1 < 1) hi = t1; }
     else if (p.y <= bottom) return false;
     const ox = from.x-pad.x, oz = from.z-pad.z, a = dx*dx+dz*dz;
     if (a > EPS && hi >= lo && hi >= 0 && lo <= 1) {
       const b = ox*dx+oz*dz, c = ox*ox+oz*oz-r*r, disc = b*b-a*c;
       if (disc > 0) {
         const enter = (-b-Math.sqrt(disc))/a, exit = (-b+Math.sqrt(disc))/a;
-        const t = Math.max(lo, enter);
-        if ((enter >= lo-EPS || lo > EPS) && t >= -EPS && t < Math.min(hi,exit)-EPS) {
+        const t = lo > enter ? lo : enter;
+        if ((enter >= lo-EPS || lo > EPS) && t >= -EPS && t < (hi < exit ? hi : exit)-EPS) {
           // If the actor rises into the column midway through a fast lateral
           // crossing, retain the approach side instead of ejecting it through
           // the far side. A route entirely below the pad remains unrestricted.
@@ -38,7 +38,7 @@ export function constrainSpawnPosition(actor, level, player, from = null, physic
           else { const length=Math.sqrt(a); nx=-dx/length; nz=-dz/length; }
           // Slide along the contact tangent, never reflect velocity. A tangent
           // half-plane cannot re-enter the circle, even with a large dt.
-          const inward = Math.min(0, (p.x-pad.x)*nx+(p.z-pad.z)*nz-r);
+          const rawIn = (p.x-pad.x)*nx+(p.z-pad.z)*nz-r, inward = rawIn < 0 ? rawIn : 0;
           x = p.x-inward*nx; z = p.z-inward*nz;
         }
       }
@@ -46,7 +46,9 @@ export function constrainSpawnPosition(actor, level, player, from = null, physic
   }
   if (x === undefined) {
     if (p.y <= bottom) return false;
-    const dx = p.x-pad.x, dz = p.z-pad.z, d = Math.hypot(dx,dz);
+    const dx = p.x-pad.x, dz = p.z-pad.z;
+    if (dx*dx+dz*dz >= r*r) return false;
+    const d = Math.hypot(dx,dz);
     if (d >= r-EPS) return false;
     // Recovery/adoption may start exactly at the centre. Prefer the direction
     // toward the arena/own pad; never divide by zero or leave a centred enemy.
@@ -119,12 +121,12 @@ export function installSpawnExclusion(Actor, G, player) {
   const constrain = a => {
     const from=origins.get(a);
     constrainSpawnPosition(a,G.level,player,a.remote ? null : from,G.physics);
-    if (from) Object.assign(from,a.pos);
+    if (from) { const p=a.pos; from.x=p.x; from.y=p.y; from.z=p.z; }
   };
   const remember = a => {
     let from=origins.get(a);
     if (!from) origins.set(a,from={x:0,y:0,z:0});
-    Object.assign(from,a.pos);
+    const p=a.pos; from.x=p.x; from.y=p.y; from.z=p.z;
   };
   A.update=function(...args) { remember(this); return update.apply(this,args); };
   A._integrate=function(...args) { remember(this); const result=integrate.apply(this,args); constrain(this); return result; };

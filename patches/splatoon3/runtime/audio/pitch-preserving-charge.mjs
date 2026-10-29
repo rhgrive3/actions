@@ -9,6 +9,7 @@
  * unmodified, authorized recording continues to play without frame-time DSP.
  */
 
+import { audioWorkerDeadline } from './worker-deadline.mjs';
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 export const CHARGE_REFERENCE_SECONDS = 1; // legacy/base Splat Charger gameplay clock
 export const CHARGE_SPEED_LIMITS = Object.freeze({ minRatio: .30, maxRatio: 1.65 });
@@ -104,11 +105,16 @@ export function stretchChargerPCM(channels, sampleRate, ratio) {
 
 /** Bounded, optional, off-thread source-buffer conversions for selected Charger. */
 export class PitchPreservingChargeCache {
-  constructor(ctx, { workerFactory = null, maxBytes = 2 * 1024 * 1024 } = {}) {
+  constructor(ctx, { workerFactory = null, maxBytes = 2 * 1024 * 1024, workerIdleMs = 10000, workerTimeoutMs = 20000 } = {}) {
     this.ctx = ctx;
     this.workerFactory = workerFactory;
     this.maxBytes = maxBytes;
     this.worker = null;
+    this.workerIdle = null;
+    this.workerIdleMs = Number.isFinite(workerIdleMs) && workerIdleMs >= 0 ? workerIdleMs : 10000;
+    this.workerTimeoutMs = Number.isFinite(workerTimeoutMs) && workerTimeoutMs > 0 ? workerTimeoutMs : 20000;
+    this.retryAfter = 0;
+    this.workerTimeouts = 0;
     this.unavailable = false;
     this.entries = new Map();
     this.pending = new Map();
@@ -141,7 +147,7 @@ export class PitchPreservingChargeCache {
     const old = this.entries.get(spec.key);
     if (old?.source === source) return true;
     if (this.pending.get(spec.key)?.source === source) return true;
-    if (this.pending.size >= 4 || this.unavailable) return false;
+    if (this.pending.size >= 4 || this.unavailable || Date.now() < this.retryAfter) return false;
     if (!this.worker) {
       try {
         if (!this.workerFactory && typeof Worker === 'undefined') return false;
@@ -151,23 +157,37 @@ export class PitchPreservingChargeCache {
         worker.onmessage = ({ data }) => this._complete(data, worker);
         worker.onerror = () => {
           if (this.worker !== worker) return;
-          this.unavailable = true; this.pending.clear(); worker.terminate(); this.worker = null;
+          this.unavailable = true; this._clearPending(); this._releaseWorker(worker);
         };
       } catch { this.unavailable = true; return false; }
     }
+    clearTimeout(this.workerIdle); this.workerIdle = null;
     try {
       // A transferred AudioBuffer channel would detach the game's decoded
       // source. Transfer independent copies only; the original remains live.
       const samples = Array.from({ length: source.numberOfChannels }, (_, c) =>
         source.getChannelData(c).slice());
       const job = { serial: ++this.serial, source, ratio: spec.ratio, key: spec.key };
+      this.pending.get(spec.key)?.cancelDeadline?.();
       this.pending.set(spec.key, job);
-      this.worker.postMessage({ serial: job.serial, key: job.key,
+      const worker = this.worker;
+      worker.postMessage({ serial: job.serial, key: job.key,
         sampleRate: source.sampleRate, ratio: spec.ratio, samples },
         samples.map(channel => channel.buffer));
+      if (this.worker === worker && this.pending.get(spec.key) === job) {
+        job.cancelDeadline = audioWorkerDeadline(() => !this.disposed && this.worker === worker && this.pending.get(spec.key) === job, () => {
+          this.workerTimeouts++;
+          this._clearPending(); this._releaseWorker(worker);
+          // Retry only on a later explicit prepare; do not resurrect jobs or
+          // run WSOLA on the frame thread. Ready buffers remain usable.
+          this.retryAfter = Date.now() + 4000;
+        }, { timeoutMs: this.workerTimeoutMs });
+      }
       return true;
     } catch {
+      this.pending.get(spec.key)?.cancelDeadline?.();
       this.pending.delete(spec.key);
+      this._retireIdleWorker();
       return false;
     }
   }
@@ -175,7 +195,9 @@ export class PitchPreservingChargeCache {
     if (this.disposed || worker !== this.worker || !data) return;
     const job = this.pending.get(data.key);
     if (!job || job.serial !== data.serial) return;
+    job.cancelDeadline?.();
     this.pending.delete(data.key);
+    this._retireIdleWorker();
     const samples = data.samples;
     if (!Array.isArray(samples) || samples.length !== job.source.numberOfChannels ||
         samples.some(ch => !(ch instanceof Float32Array) || ch.length < 1 || ch.length > this.ctx.sampleRate * 5) ||
@@ -196,11 +218,30 @@ export class PitchPreservingChargeCache {
       this.bytes += bytes;
     } catch { /* Retain original recorded sound if context was lost. */ }
   }
+  _clearPending() {
+    for (const job of this.pending.values()) job.cancelDeadline?.();
+    this.pending.clear();
+  }
+  _releaseWorker(worker = this.worker) {
+    if (worker !== this.worker) return;
+    clearTimeout(this.workerIdle); this.workerIdle = null; this.worker = null;
+    if (worker) { worker.onmessage = worker.onerror = null; worker.terminate(); }
+  }
+  _retireIdleWorker() {
+    if (this.disposed || !this.worker || this.pending.size || this.workerIdle !== null) return;
+    const worker = this.worker;
+    this.workerIdle = setTimeout(() => {
+      if (this.worker !== worker || this.disposed) return;
+      this.workerIdle = null;
+      if (!this.pending.size) this._releaseWorker(worker);
+    }, this.workerIdleMs);
+    this.workerIdle.unref?.();
+  }
   stats() { return { ready: this.entries.size, pending: this.pending.size,
-    bytes: this.bytes, budget: this.maxBytes, worker: !!this.worker, unavailable: this.unavailable }; }
+    bytes: this.bytes, budget: this.maxBytes, worker: !!this.worker, unavailable: this.unavailable, workerTimeouts: this.workerTimeouts }; }
   dispose() {
     this.disposed = true;
-    this.worker?.terminate(); this.worker = null;
-    this.pending.clear(); this.entries.clear(); this.bytes = 0;
+    this._releaseWorker();
+    this._clearPending(); this.entries.clear(); this.bytes = 0;
   }
 }

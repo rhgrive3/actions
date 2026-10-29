@@ -39,7 +39,7 @@ function checkedStaticMenuCss(code) {
 
 function framePrefix(code) {
   const from = code.indexOf('  _frame(dt) {');
-  const to = code.indexOf('    const tA = performance.now();', from);
+  const to = code.indexOf('    const measureCPU =', from);
   assert.ok(from >= 0 && to > from, 'game preserves original frame entry');
   return code.slice(from + '  _frame(dt) {'.length, to);
 }

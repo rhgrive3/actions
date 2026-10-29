@@ -71,15 +71,15 @@ function sensorVisual(owner, pos, THREE, G) {
 function poseSensorVisual(sensor, dt) {
   const m = sensor.mesh;
   if (!m) return;
-  m.position.copy(sensor.pos);
+  if(!Object.is(m.position.x,sensor.pos.x)||!Object.is(m.position.y,sensor.pos.y)||!Object.is(m.position.z,sensor.pos.z))m.position.copy(sensor.pos);
   // Tumbles in flight; settles upright where it lands.
   const model = m.userData?.s3SubModel;
   if (sensor.activeAt === null) { m.rotation.x += dt * 8; m.rotation.z += dt * 3; }
   else {
-    m.rotation.set(0, m.rotation.y, 0);
+    if(!Object.is(m.rotation.x,0)||!Object.is(m.rotation.z,0))m.rotation.set(0, m.rotation.y, 0);
     if (model) model.root.position.y = 0.07;   // box bottom on the surface (pos is 0.03 off it)
   }
-  poseSubModel(model, { dt });
+  const pose=sensor._poseArgs ||= {dt:0};pose.dt=dt;poseSubModel(model,pose);
 }
 function coolerVisual(owner, pos, THREE, G) {
   if (!G.scene?.add) return null;
@@ -183,10 +183,11 @@ function throwCooler(owner,projectile,G,THREE,Hit) {
   (projectile._s3SupportCoolerThrows ||= []).push(device);
   startPendingSpecialGauge(owner,G,'tacticooler',device,projectile._s3SupportCoolerThrows);
 }
+const SUPPORT_EMPTY_ROSTER = Object.freeze([]);
 function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   if (!(dt>0) || !Number.isFinite(G.time)) return;
   const playing = aliveInMatch(G);
-  for(const sensor of projectile._s3SupportSensors || []) {
+  for(const sensor of projectile._s3SupportSensors || SUPPORT_EMPTY_ROSTER) {
     if(sensor.activeAt===null) {
       sensor.age+=dt;
       sensor.prev.copy(sensor.pos);
@@ -199,7 +200,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
       let body=null,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
       const reach=PLAYER.radius+.2, minX=Math.min(sensor.prev.x,sensor.pos.x)-reach, maxX=Math.max(sensor.prev.x,sensor.pos.x)+reach,
         minZ=Math.min(sensor.prev.z,sensor.pos.z)-reach, maxZ=Math.max(sensor.prev.z,sensor.pos.z)+reach;
-      for(const actor of G.actors||[]){
+      for(const actor of G.actors||SUPPORT_EMPTY_ROSTER){
         if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
         if(actor.pos.x<minX||actor.pos.x>maxX||actor.pos.z<minZ||actor.pos.z>maxZ)continue;
         const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
@@ -215,7 +216,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     }
     poseSensorVisual(sensor, dt);
     if(sensor.activeAt!==null && playing && G.time+TINY<sensor.expires) {
-      if(!sensor.ghost) for(const actor of G.actors || []) {
+      if(!sensor.ghost) for(const actor of G.actors || SUPPORT_EMPTY_ROSTER) {
         if(sensor.seen.get(actor)===life(actor) || actor.team===sensor.team ||
            !pointSensorContact(actor,sensor.pos)) continue;
         sensor.seen.set(actor,life(actor));
@@ -231,12 +232,12 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
       }
     }
   }
-  const sensors=projectile._s3SupportSensors || [];
+  const sensors=projectile._s3SupportSensors || SUPPORT_EMPTY_ROSTER;
   for(let i=sensors.length-1;i>=0;i--)if(G.time>=sensors[i].expires ||
     sensors[i].age>POINT_SENSOR.maxFlightSeconds+POINT_SENSOR.areaSeconds+.25) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
-  const throws=projectile._s3SupportCoolerThrows||[];
+  const throws=projectile._s3SupportCoolerThrows||SUPPORT_EMPTY_ROSTER;
   for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);
     // EnergyStand.MoveParam, 11.3.0: source frames -> seconds. Preserve
     // native gravity-then-drag order; exponentiate retention for subframes.
@@ -251,21 +252,21 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     else if(d.age>5||!playing){releaseVisual(d,G);throws.splice(i,1);}
     else d.mesh?.position.copy(d.pos);
   }
-  const coolers=projectile._s3SupportCoolers || [];
+  const coolers=projectile._s3SupportCoolers || SUPPORT_EMPTY_ROSTER;
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
     advanceTowerStand(stand,G);
     if(G.time+TINY>=stand.expires||!playing) {endTacticoolerGauge(stand);releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
-    for(const a of G.actors || [])if(drinkEligible(a,stand,G.time,PLAYER)) {
+    for(const a of G.actors || SUPPORT_EMPTY_ROSTER)if(drinkEligible(a,stand,G.time,PLAYER)) {
       stand.taken.add(a); giveDrink(a,G.time,stand.drinkSeconds);
       G.fx?.burst?.(a.pos,new THREE.Vector3(0,1,0),G.teamColors?.[a.team],{count:6,speed:2,size:.08});
     }
     const drinks=stand.mesh?.userData?.drinks;
-    if(drinks)for(let j=0;j<drinks.length;j++)drinks[j].visible=j>=Math.min(4,stand.taken.size);
+    if(drinks)for(let j=0;j<drinks.length;j++){const visible=j>=Math.min(4,stand.taken.size);if(drinks[j].visible!==visible)drinks[j].visible=visible;}
   }
-  for(const a of G.actors || []) if(!a.remote) retireDrink(a,G.time);
+  for(const a of G.actors || SUPPORT_EMPTY_ROSTER) if(!a.remote) retireDrink(a,G.time);
 }
 export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER }) {
   if (Actor.prototype[INSTALL]) return;

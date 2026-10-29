@@ -1,3 +1,4 @@
+import { readEncodedAudioResponse, EncodedAudioResponseError } from './encoded-response.mjs';
 import { mainAudioSourceId, WEAPON_AUDIO } from './weapon-recipes.mjs';
 import { PitchPreservingChargeCache, chargerOnsetRatio } from './pitch-preserving-charge.mjs';
 import { audioLoadScope } from './load-deadline.mjs';
@@ -81,8 +82,8 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
       throw new ChargerLoadError('recorded Charger asset unavailable ('+(status??'network')+')',status===408||status===429||(status>=500&&status<=599));
     }
     let bytes;
-    try{bytes=await response.arrayBuffer();}
-    catch(error){throw new ChargerLoadError('recorded Charger response failure: '+String(error?.message||error),true);}
+    try{bytes=await readEncodedAudioResponse(response,512*1024,{minBytes:10000,scope,label:'invalid recorded Charger audio payload'});}
+    catch(error){throw new ChargerLoadError(error instanceof EncodedAudioResponseError?error.message:'recorded Charger response failure: '+String(error?.message||error),!(error instanceof EncodedAudioResponseError));}
     scope.check();
     if(state.generation!==generation||slots.get(ctx)!==state||ctx.state==='closed')return null;
     if(!(bytes instanceof ArrayBuffer)||bytes.byteLength<10000||bytes.byteLength>512*1024)

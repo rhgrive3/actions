@@ -39,11 +39,26 @@ for (const phase of ['intro', 'playing', 'finish']) for (const id of ['beakon', 
         replica = G.projectiles._s3SubObjects.find(o => o.owner === w.owner); assert.ok(replica?.ghost);
       } else if (id !== 'inkVac') {
         w.owner.weapon = { ...w.owner.weapon, special: id };
-        w.n._play('A', [1, 'ac', 'special', 7, 0, { id, kind: id === 'waveBreaker' ? 'wave' : 'screen',
+        const payload = { id, kind: id === 'waveBreaker' ? 'wave' : 'screen',
           action: 'deploy', activation: 1, object: 1, seed: 1, pos: [12, 0, 0], target: [12, 0, 1],
           phase: 'active', age: 0, landedAt: 0,
           duration: id === 'waveBreaker' ? 6 : 10, radius: id === 'waveBreaker' ? 20 : 15,
-          specialPowerAP: 0, hp: id === 'waveBreaker' ? 480 : 0 }]);
+          specialPowerAP: 0, hp: id === 'waveBreaker' ? 480 : 0 };
+        // This retirement fixture supplies the native-use prerequisite through
+        // the production recorder. _tick normally attaches these sidecars.
+        const sender = new f.NetMatch({ myId: 'A', hostId: 'me', isHost: false }, {});
+        sender._rec(['ev', 'special:use', { actor: { n: 7 }, id }]);
+        sender._rec(['ac', 'special', 7, 0, payload]);
+        const [use, deploy] = JSON.parse(JSON.stringify(sender.out));
+        sender.dispose();
+        for (const event of [use, deploy]) {
+          event._netSeq = event.at(-1); event._netTick = event.at(-2);
+        }
+        w.n._peer('A');
+        w.n._play('A', deploy);
+        assert.equal(G.projectiles._s3AllSpecialObjects.some(o => o.owner === w.owner), false,
+          'a catalogue action alone cannot create an equipped special replica');
+        w.n._play('A', use);
         replica = G.projectiles._s3AllSpecialObjects.find(o => o.owner === w.owner); assert.ok(replica?.remote);
       } else {
         w.owner.weapon = { ...w.owner.weapon, special: 'inkVac' };

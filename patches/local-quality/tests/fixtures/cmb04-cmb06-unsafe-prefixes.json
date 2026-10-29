@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "e3f19ab9913824b15dfc56330ec731408890d6a3",
+  "sourcePath": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+  "CMB04": {
+    "native": "      for (const actor of G.actors) {\n        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head\n        const friendly = actor.team === p.team;\n        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;\n        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);\n        const motion = coherentMotionStart(actor);",
+    "unsafe": "      let segBoundsReady = false, segMinX = 0, segMaxX = 0, segMinZ = 0, segMaxZ = 0;\n      for (const actor of G.actors) {\n        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head\n        const friendly = actor.team === p.team;\n        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;\n        const motion = coherentMotionStart(actor);\n        if (!motion) {\n          if (!segBoundsReady) {\n            const pr = p.inkPlayerRadius;\n            if (Number.isFinite(p.prev.x) && Number.isFinite(p.prev.z) && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.z) && Number.isFinite(pr) && pr >= 0) {\n              segMinX = Math.min(p.prev.x, p.pos.x) - pr; segMaxX = Math.max(p.prev.x, p.pos.x) + pr;\n              segMinZ = Math.min(p.prev.z, p.pos.z) - pr; segMaxZ = Math.max(p.prev.z, p.pos.z) + pr;\n              segBoundsReady = true;\n            } else segBoundsReady = null;\n          }\n          if (segBoundsReady && Number.isFinite(actor.pos?.x) && Number.isFinite(actor.pos?.z)) {\n            const reach = (Number.isFinite(PLAYER?.radius) && PLAYER.radius > 0 ? PLAYER.radius : 0.38) + 0.25;\n            if (actor.pos.x < segMinX - reach || actor.pos.x > segMaxX + reach || actor.pos.z < segMinZ - reach || actor.pos.z > segMaxZ + reach) continue;\n          }\n        }\n        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);"
+  },
+  "CMB06": {
+    "native": "    for (const e of G.actors) {\n      if (e.team === a.team || !e.alive) continue;\n      const d = e.pos.distanceTo(a.pos);\n      if (d > aw) continue;",
+    "unsafe": "    const awSq = aw * aw;\n    for (const e of G.actors) {\n      if (e.team === a.team || !e.alive) continue;\n      const dSq = e.pos.distanceToSquared(a.pos);\n      if (dSq > awSq) continue;\n      const d = Math.sqrt(dSq);\n      if (d > aw) continue;"
+  }
+}

@@ -51,11 +51,19 @@ export function installRanked(context) {
     if (!this.follower) {
       this.ranked.update(dt, frame); this.time = this.ranked.time;
       if (this.ranked.events.length) {
-        const events = this.ranked.events.splice(0);
-        this.playRankedEvents(events);
-        const singleInternal = nm?.isHost && events.length === 1 && (events[0].kind === 'special-gain' || events[0].kind === 'zone-capture');
-        const wire = nm?.isHost && events.length && !singleInternal ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
-        if (wire?.length) nm._sendNow({ k: 'rkevent', match: nm.cfg.id, seq: nm.rankedEventNext = (nm.rankedEventNext || 0) + 1, events: wire });
+        if (this.playRankedEvents === playRankedEvents && this.ranked.events.length === 1 && this.ranked.events[0].kind === 'special-gain') {
+          const event = this.ranked.events[0];
+          // Detach before callbacks, just like splice: reentrant events belong
+          // to the next tick and must not be erased by this drain.
+          this.ranked.events.length = 0;
+          playRankedEvent.call(this, event, false);
+        } else {
+          const events = this.ranked.events.splice(0);
+          this.playRankedEvents(events);
+          const singleInternal = nm?.isHost && events.length === 1 && (events[0].kind === 'special-gain' || events[0].kind === 'zone-capture');
+          const wire = nm?.isHost && events.length && !singleInternal ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
+          if (wire?.length) nm._sendNow({ k: 'rkevent', match: nm.cfg.id, seq: nm.rankedEventNext = (nm.rankedEventNext || 0) + 1, events: wire });
+        }
       }
       if (this.ranked.winner !== null) {
         this.local?.weaponRunner?.cancelPendingInput?.();
@@ -66,31 +74,33 @@ export function installRanked(context) {
     this.rankedWorld.update(this.ranked, dt);
     this.rankedEffects.update(dt);
   };
-  Match.prototype.playRankedEvents = function (events, visualOnly = false) {
-    if (!this.ranked) return;
-    for (const e of events) {
-      if (!e || typeof e.kind !== 'string') continue;
-      if (e.kind === 'zone-capture' && !visualOnly) this.rankedWorld.captureZone(e.zone, e.team);
-      if (e.kind === 'rainmaker-pickup') {
-        const a = this.actors.find(a => actorId(a) === String(e.id));
-        if (a?.specialActive) interruptSpecialForObjective(api, a);
-        if (a && !a.remote) prepareCarrier(api, a);
-      }
-      if (e.kind === 'special-gain' && !visualOnly) {
-        // The replicated total stays in baseline points. SCU discounts the
-        // actor gauge cost, so only paint may keep the indirect multiplier.
-        this.rankedGains[e.team] += e.points;
-        for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points / (a.s3?.modifiers?.specialCharge || 1));
-      }
-      this.rankedEffects.event(e, visualOnly);
-      const kind = e.kind;
-      if (kind === 'lead' || kind === 'checkpoint' || kind === 'tower-capture'
-        || kind === 'zone-capture' || kind === 'clam-score' || kind === 'overtime') {
-        api.emit('ranked:event', { match: this, ...e });
-        if (e.kind !== 'clam-score') G.audio?.play?.(e.kind === 'overtime' ? 'ui_confirm' : 'splat_small', { volume: .6 });
-      }
+  function playRankedEvent(e, visualOnly) {
+    if (!e || typeof e.kind !== 'string') return;
+    if (e.kind === 'zone-capture' && !visualOnly) this.rankedWorld.captureZone(e.zone, e.team);
+    if (e.kind === 'rainmaker-pickup') {
+      const a = this.actors.find(a => actorId(a) === String(e.id));
+      if (a?.specialActive) interruptSpecialForObjective(api, a);
+      if (a && !a.remote) prepareCarrier(api, a);
     }
-  };
+    if (e.kind === 'special-gain' && !visualOnly) {
+      // The replicated total stays in baseline points. SCU discounts the
+      // actor gauge cost, so only paint may keep the indirect multiplier.
+      this.rankedGains[e.team] += e.points;
+      for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points / (a.s3?.modifiers?.specialCharge || 1));
+    }
+    this.rankedEffects.event(e, visualOnly);
+    const kind = e.kind;
+    if (kind === 'lead' || kind === 'checkpoint' || kind === 'tower-capture'
+      || kind === 'zone-capture' || kind === 'clam-score' || kind === 'overtime') {
+      api.emit('ranked:event', { match: this, ...e });
+      if (e.kind !== 'clam-score') G.audio?.play?.(e.kind === 'overtime' ? 'ui_confirm' : 'splat_small', { volume: .6 });
+    }
+  }
+  function playRankedEvents(events, visualOnly = false) {
+    if (!this.ranked) return;
+    for (const e of events) playRankedEvent.call(this, e, visualOnly);
+  }
+  Match.prototype.playRankedEvents = playRankedEvents;
   const judge = Match.prototype._judge;
   Match.prototype._judge = function () {
     if (!this.ranked) return judge.call(this);
@@ -212,7 +222,7 @@ export function buildFrame(match, api) {
     const swimming = hostRemote && admitted ? pose.last.squid === true : a.form === 'squid';
     const shotRequired = match.mode === 'rainmaker' && match.ranked.rule.state.carrier === id;
     const charge = shotRequired ? match.ranked.rule.state.charge : null;
-    const shotOrigin = shotRequired && charge?.firing && !cmd?.fire && !swimming && (!hostRemote || admitted)
+    const shotOrigin = shotRequired && charge?.firing && (!cmd?.fire || charge.released) && !swimming && (!hostRemote || admitted)
       ? captureRainmakerShotOrigin(api.THREE, a, id, objectivePos, cmd?.aim || a.aimDir?.toArray()) : null;
     const row = owned.row;
     row.life = rainmakerActorLife(a); row.owner = rainmakerActorOwner(a); row.rainmakerShotRequired = shotRequired; row.rainmakerShotOrigin = shotOrigin;

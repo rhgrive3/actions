@@ -138,5 +138,23 @@
   ],
   "distinct_causes": 9,
   "main_merge_performed": false,
-  "snapshot_all_hosted_failures_resolved": false
+  "snapshot_all_hosted_failures_resolved": false,
+  "optimized_0706_patch_snapshot": {
+    "source": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+    "run": 40756964070,
+    "passed_shards": [
+      0,
+      3,
+      4,
+      5,
+      7
+    ],
+    "failed_shards": {
+      "1": 123065843380,
+      "2": 123065843170,
+      "6": 123065843180
+    },
+    "all_eight_terminal": true,
+    "interpretation": "Each failed patch job has one confirmed primary test failure; all three are locally repaired and reviewed. This is not acceptance of the next published head."
+  }
 }

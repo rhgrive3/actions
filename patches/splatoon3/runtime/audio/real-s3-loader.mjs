@@ -136,6 +136,13 @@ export class RealS3SampleLoader {
     const combined=Promise.all(waits).then(results=>({loaded:results.reduce((n,r)=>n+(r?.loaded||0),0),errors:results.flatMap(r=>r?.errors||[]),results}));
     this.queue=combined.catch(()=>{});return combined;
   }
+  isEventResident(id,event){
+    const clips=this.clipsByEvent?.get(id+':'+event);
+    if(!clips?.length)return false;
+    const bank=this.bank.authorized;
+    for(const clip of clips)if(!bank.loaded.has(bank.key(clip.id,clip.event,clip.variant)))return false;
+    return true;
+  }
   // Event-aware demand paging. A previous v10 `loaded` bit stayed true even
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.

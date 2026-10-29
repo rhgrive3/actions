@@ -87,17 +87,25 @@ test('real owner snapshot bit27 is independent from RP and special ready and rej
 for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2]])test(`${id}: real catalogue JSON proposals bind sender and target life and apply multiplier only once`,async()=>{
  const receiver=await setup(),owner=receiver.make(),remote=receiver.make();Object.assign(owner,{nid:101,owner:'defender',netLife:3});Object.assign(remote,{nid:102,owner:'attacker',netLife:7,team:1});
  const rx=new receiver.NetMatch({myId:'defender',hostId:'defender',isHost:true,tr:{broadcast(){}}},{id:'objects'});rx.bind({actors:[owner,remote],state:'playing',time:180});receiver.G.netm=rx;receiver.G.match=rx.match;
- const outbound=[];rx._rec=e=>outbound.push(JSON.parse(JSON.stringify(e)));equip(owner,id);readySpecialEvidence(owner, {placeAtFixtureOrigin:true});useSpecialEvidence(receiver,owner);
+ const outbound=[],record=rx._rec;rx._rec=function(e){const row=record.call(this,e);outbound.push(JSON.parse(JSON.stringify(this.out.at(-1))));return row;};equip(owner,id);readySpecialEvidence(owner, {placeAtFixtureOrigin:true});useSpecialEvidence(receiver,owner);
  const object=receiver.G.projectiles._s3AllSpecialObjects.find(o=>o.kind===kind);assert.ok(object);object.hp=1000;
  const sender=await setup(),remoteOwner=sender.make(),attacker=sender.make();Object.assign(remoteOwner,{nid:101,owner:'defender',netLife:3});Object.assign(attacker,{nid:102,owner:'attacker',netLife:7,team:1});attacker.s3.loadout[2].main='objectShredder';
  const tx=new sender.NetMatch({myId:'attacker',hostId:'defender',isHost:false,tr:{broadcast(){},sendTo(){}}},{id:'objects'});tx.bind({actors:[remoteOwner,attacker],state:'playing',time:180});sender.G.netm=tx;sender.G.match=tx.match;
- for(const e of outbound)tx._play('defender',[0,...e]);
+ // Replay the sender's actual native use + ac sequence envelope. The accepted
+ // kit sidecar equips this proxy before its ordered activation is presented.
+ remoteOwner.weapon={...remoteOwner.weapon,sub:owner.weapon.sub,special:owner.weapon.special};tx._peer('defender');
+ for(const e of outbound){e._netSeq=e.at(-1);e._netTick=e.at(-2);tx._play('defender',e);}
  const ghost=sender.G.projectiles._s3AllSpecialObjects.find(o=>o.kind===kind);assert.ok(ghost);const proposals=[];tx._rec=e=>proposals.push(JSON.parse(JSON.stringify(e)));
  const p={owner:attacker,team:1,damage:10,prev:ghost.pos.clone().add(new sender.THREE.Vector3(0,0,-2)),pos:ghost.pos.clone().add(new sender.THREE.Vector3(0,0,2))};sender.G.projectiles.kitDefenseCandidate(p,p.prev,p.pos).onHit();
  const e=proposals.find(e=>e[4].action==='objectHit');assert.ok(e);assert.equal(e[4].objectShredder,true);assert.equal(e[4].damage,10,'sender sends raw damage, never a requested multiplier');
  rx._play('wrong',[0,...e]);assert.equal(object.hp,1000);rx._play('attacker',[0,...e]);assert.equal(object.hp,1000-10*rate);rx._play('attacker',[0,...e]);assert.equal(object.hp,1000-10*rate);
  const stale=JSON.parse(JSON.stringify(e));stale[4].tick+=1;stale[4].attackerLife=6;rx._play('attacker',[1,...stale]);assert.equal(object.hp,1000-10*rate);
- const numeric=JSON.parse(JSON.stringify(e));numeric[4].tick+=2;numeric[4].objectShredder=100;rx._play('attacker',[2,...numeric]);assert.equal(object.hp,1000-10*rate-10,'numeric multiplier cannot grant gear');
+ const numeric=JSON.parse(JSON.stringify(e));numeric[4].tick+=2;numeric[4].objectShredder=100;
+ const beforeMalformed={hp:object.hp,dead:object.dead};rx._play('attacker',[2,...numeric]);
+ assert.deepEqual({hp:object.hp,dead:object.dead},beforeMalformed,'nonboolean gear rejects the whole proposal before HP mutation');
+ const corrected=JSON.parse(JSON.stringify(numeric));corrected[4].objectShredder=false;
+ rx._play('attacker',[2,...corrected]);assert.equal(object.hp,1000-10*rate-10,'rejected gear cannot reserve this proposal identity; corrected raw damage applies without gear');
+ rx._play('attacker',[2,...corrected]);assert.equal(object.hp,1000-10*rate-10,'corrected accepted proposal remains single use');
 });
 
 import fs from 'node:fs';

@@ -111,6 +111,40 @@ function runCase(hz, options = {}, seconds = 1) {
   return result;
 }
 
+test('only terminal offline native failures stop the real frame driver at 30/60/120Hz',()=>{
+  for(const hz of [30,60,120])for(const frameRate of ['display',60])for(const state of ['offline','absent','connecting','room','match','netmatch','recoverable']){
+    const env=makeEnv(),{game,G,calls}=makeGame(env,{touch:false,frameRate});
+    if(state==='absent')G.net=null;else G.net.state=state==='netmatch'?'offline':state;
+    if(state==='netmatch')G.netm={};
+    game._loop();for(let i=0;i<hz;i++)env.step(i*1000/hz);
+    const before=calls.frame.length;
+    game.frozen=true;if(state!=='recoverable')game._nativeWorldRecoveryFatal={error:new Error('injected terminal rollback failure'),recoveryErrors:[new Error('old-world restore')]};
+    for(let i=hz;i<3*hz;i++)env.step(i*1000/hz);
+    const stopped=state==='offline'||state==='absent';
+    assert.equal(calls.frame.length,before,'frozen games do not simulate');
+    assert.equal(game.platform.driver.running,!stopped,`${hz}/${frameRate}/${state}`);
+    if(stopped){
+      const frozen=game.platform.driver.snapshot();assert.deepEqual(env.queues(),{rafs:0,timers:0});
+      env.document.hidden=true;env.document.fire('visibilitychange');env.document.hidden=false;env.document.fire('visibilitychange');env.fire('pageshow');env.fire('focus');
+      for(let i=3*hz;i<4*hz;i++)env.step(i*1000/hz);
+      assert.equal(game.platform.driver.snapshot().frames,frozen.frames,'lifecycle resume cannot revive a stopped terminal owner');
+      assert.deepEqual(env.queues(),{rafs:0,timers:0});
+    }else if(state==='recoverable'){
+      game.frozen=false;for(let i=3*hz;i<4*hz;i++)env.step(i*1000/hz);assert(calls.frame.length>before,'ordinary loading resumes');
+    }
+    game.disposePlatform();
+  }
+});
+
+test('a frozen online guest still executes the real host-end timeout and transport close',()=>{
+  const env=makeEnv(),{game,G}=makeGame(env,{touch:false,frameRate:'display'});let closes=0,ended=0;
+  Object.assign(game.match,{mode:'turf',follower:true,paused:false,state:'finish',time:0,result:null,finishDelay:()=>0});
+  G.netm={isHost:false,match:game.match};Object.assign(G.net,{state:'match',isHost:false,hostId:'host',match:G.netm,tr:{close(){closes++;}},_closed(){ended++;this.state='offline';}});
+  game._nativeWorldRecoveryFatal={error:new Error('terminal')};game.frozen=true;game._loop();
+  for(let i=0;i<1200;i++)env.step(i*1000/60);
+  assert.equal(closes,1);assert.equal(ended,1);assert.equal(game.platform.driver.running,true,'the still-owned NetMatch prevents an offline stop');game.disposePlatform();
+});
+
 test('mobile 60 cap aligns production driver wakeups to an absolute 60 Hz deadline at 90/120/144 Hz', t => {
   for (const hz of [90, 120, 144]) {
     const result = runCase(hz, { touch: true, frameRate: 'auto' });

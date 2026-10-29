@@ -50,19 +50,19 @@ test('loaded source motion, both teams: grip, reach, form boundary and source ow
   const a=await sf.make(team),ch=a.character;a.setWeapon(weapon);ch.onEvent=null;
   const state={carrier:null,charge:{value:0}},match={mode:'rainmaker',ranked:{rule:{state}},playing:()=>true,canRespawn:()=>false};G.match=match;
   const mesh=createRainmakerModel(THREE);G.scene.add(mesh);const display=createRainmakerPresentation(THREE,mesh);
-  const original=ch._solveLimb;let solves=0,maxReach=0,maxError=0;ch._solveLimb=function(limb,...args){if(limb===this.limbs.armL)solves++;const r=original.call(this,limb,...args);if(limb===this.limbs.armL&&this._rainmakerPose)maxReach=Math.max(maxReach,this.ikErr[0]);return r;};
+  const original=ch._solveLimb;let solves=0,maxReach=0,maxError=0,phase='warmup',frame=0;ch._solveLimb=function(limb,...args){if(limb===this.limbs.armL)solves++;const r=original.call(this,limb,...args);if(limb===this.limbs.armL&&this._rainmakerPose)maxReach=Math.max(maxReach,this.ikErr[0]);return r;};
   const left=new THREE.Vector3(),target=new THREE.Vector3();
-  const step=()=>{solves=0;G.time+=1/60;a._finishFrame(1/60);display.update(state.carrier?a:null,state.charge.value);G.scene.updateMatrixWorld(true);
-   if(ch._rainmakerPose){left.copy(ch.weapon.pivot.position);left.x=-left.x;ch.bones.handL.localToWorld(left);target.set(0,0,.07);mesh.localToWorld(target);if(left.distanceTo(target)>maxError){maxError=left.distanceTo(target);if(maxError>.01)console.log(JSON.stringify({sourceDiagnostic:true,weapon,team,error:maxError,reach:maxReach,kidScale:ch.kidScale,aim:a.aimPitch,phase:ch.sourceMotion?.state}));}assert.equal(solves,1);}
+  const step=()=>{solves=0;frame++;G.time+=1/60;a._finishFrame(1/60);display.update(state.carrier?a:null,state.charge.value);G.scene.updateMatrixWorld(true);
+   if(ch._rainmakerPose){left.copy(ch.weapon.pivot.position);left.x=-left.x;ch.bones.handL.localToWorld(left);target.set(0,0,.07);mesh.localToWorld(target);if(left.distanceTo(target)>maxError){maxError=left.distanceTo(target);if(maxError>.001)console.log(JSON.stringify({sourceDiagnostic:true,weapon,team,error:maxError,reach:maxReach,kidScale:ch.kidScale,aim:a.aimPitch,phase,frame,sourceState:ch.sourceMotion?.state,form:a.form,returnInterrupted:ch.sourceMotion?.returnInterrupted,formPending:!!ch.s3RainmakerFormPending,supportPending:!!ch.s3RainmakerSupportPending,target:target.toArray(),left:left.toArray()}));}assert.equal(solves,1);}
   };
   try{
    for(let i=0;i<60;i++)step();const upper=ch.sourceMotion.sourceUpper,keep=ch.sourceMotion.keepSourceArms,constrain=ch.sourceMotion.constrainLeft;
-   state.carrier=String(a.nid);
+   state.carrier=String(a.nid);phase='charge-recovery';
    for(let i=0;i<90;i++){state.charge={value:i<60?i/60:0,recovery:i>=60?Math.max(0,(80-i)/60):0};step();}
    assert.equal(ch._rainmakerPose,true);if(ch.sourceMotion.active)assert.equal(ch.sourceMotion.sourceUpper,false);
-   for(const pitch of [-1.05,1.15]){a.aimPitch=pitch;a.aimDir.set(0,Math.sin(pitch),Math.cos(pitch));for(let i=0;i<8;i++)step();}
-   a.aimPitch=0;a.aimDir.set(0,0,1);a.form='squid';for(let i=0;i<12;i++)step();a.form='kid';for(let i=0;i<30;i++)step();
-   ch.sourceMotion.setEnabled(false);for(let i=0;i<12;i++)step();ch.sourceMotion.setEnabled(true);for(let i=0;i<30;i++)step();
+   phase='aim-endpoint';for(const pitch of [-1.05,1.15]){a.aimPitch=pitch;a.aimDir.set(0,Math.sin(pitch),Math.cos(pitch));for(let i=0;i<8;i++)step();}
+   a.aimPitch=0;a.aimDir.set(0,0,1);phase='squid';a.form='squid';for(let i=0;i<12;i++)step();phase='emerge';a.form='kid';for(let i=0;i<30;i++)step();
+   phase='source-disabled';ch.sourceMotion.setEnabled(false);for(let i=0;i<12;i++)step();phase='source-enabled';ch.sourceMotion.setEnabled(true);for(let i=0;i<30;i++)step();
    state.carrier=null;for(let i=0;i<60;i++)step();assert.equal(ch._rainmakerPose,false);assert.equal(ch.sourceMotion.sourceUpper,upper);assert.equal(ch.sourceMotion.keepSourceArms,keep);assert.equal(ch.sourceMotion.constrainLeft,constrain);assert.equal(ch.weapon.pivot.visible,true);assert.equal(mesh.scale.x,1);
    rows.push({weapon,team,sourceActive:ch.sourceMotion.active,weaponKind:ch.weaponKind,maxError,maxReach});
    assert(maxError<.001,`${weapon}/${team} source support ${maxError}`);assert(maxReach<.001,`${weapon}/${team} source overreach ${maxReach}`);
@@ -100,4 +100,32 @@ test('one catalogue representative of every family: native/source carry, charge,
   }finally{display.release();G.scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();sf.reset();}
  }
  assert.equal(rows.length,22);assert(rows.every(r=>r.maxGrip<.001&&r.maxReach<.001&&r.maxRightReach<.001&&r.minElbowPlane>=-1e-8),JSON.stringify(rows.filter(r=>r.maxGrip>=.001||r.maxReach>=.001||r.maxRightReach>=.001||r.minElbowPlane< -1e-8)));
+});
+
+test('actual native/source shoulder carry keeps both wrists reachable while body and aim headings separate',async()=>{
+ const {sourceLoadedActorFixture}=await import('./source-loaded-actor-fixture.mjs');
+ const sf=await sourceLoadedActorFixture({random:()=>.5,extraExports:`export {createRainmakerModel,createRainmakerPresentation} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`}),{G,THREE}=sf,rows=[];
+ for(const weapon of ['shooter','dualies']){
+  const a=await sf.make(),ch=a.character;a.setWeapon(weapon);ch.onEvent=null;a.form='kid';a.kidT=10;a.vel.set(0,0,0);
+  const state={carrier:String(a.nid),charge:{value:0}};G.match={mode:'rainmaker',ranked:{rule:{state}},playing:()=>true,canRespawn:()=>false};
+  const mesh=sf.createRainmakerModel(THREE);G.scene.add(mesh);const display=sf.createRainmakerPresentation(THREE,mesh);
+  const left=new THREE.Vector3(),target=new THREE.Vector3(),right=new THREE.Vector3();
+  const solve=ch._solveLimb;let leftReach=0;ch._solveLimb=function(limb,...args){const result=solve.call(this,limb,...args);if(limb===this.limbs.armL&&this._rainmakerPose)leftReach=Math.max(leftReach,this.ikErr[0]);return result;};
+  try{for(const source of [false,true]){
+   ch.sourceMotion.setEnabled(source);
+   for(const bodyYaw of [-1.335,1.335])for(const pitch of [-1.05,0,1.15])for(const phase of ['carry','charge']){
+    state.charge={value:phase==='charge'?1:0};leftReach=0;
+    const row={weapon,source,bodyYaw,pitch,phase,maxGrip:0,maxRightGrip:0,maxLeftReach:0,maxRightReach:0,finite:true,sourceOwner:true};
+    for(let i=0;i<8;i++){
+     a.yaw=bodyYaw;a.aimYaw=0;a.aimPitch=pitch;a.aimDir.set(0,Math.sin(pitch),Math.cos(pitch));G.time+=1/60;a._finishFrame(1/60);display.update(a,state.charge.value);G.scene.updateMatrixWorld(true);
+     assert.equal(ch._rainmakerPose,true);left.copy(ch.weapon.pivot.position);left.x=-left.x;ch.bones.handL.localToWorld(left);target.set(0,0,.07);mesh.localToWorld(target);row.maxGrip=Math.max(row.maxGrip,left.distanceTo(target));
+     ch.weapon.pivot.getWorldPosition(right);mesh.getWorldPosition(target);row.maxRightGrip=Math.max(row.maxRightGrip,right.distanceTo(target));row.maxRightReach=Math.max(row.maxRightReach,ch.ikErr[1]);
+     row.finite&&=ch.P.every(Number.isFinite)&&ch.boneList.every(b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray()].every(Number.isFinite));row.sourceOwner&&=!!ch.sourceMotion.active===source;
+    }
+    row.maxLeftReach=leftReach;rows.push(row);
+   }
+  }}finally{display.release();G.scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();sf.reset();}
+ }
+ console.log(JSON.stringify({bodyAimSeparation:rows}));assert.equal(rows.length,48);
+ assert(rows.every(r=>r.finite&&r.sourceOwner&&r.maxGrip<.001&&r.maxRightGrip<.001&&r.maxLeftReach<.001&&r.maxRightReach<.001),JSON.stringify(rows.filter(r=>!r.finite||!r.sourceOwner||r.maxGrip>=.001||r.maxRightGrip>=.001||r.maxLeftReach>=.001||r.maxRightReach>=.001)));
 });

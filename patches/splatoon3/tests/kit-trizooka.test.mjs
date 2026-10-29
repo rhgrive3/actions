@@ -939,3 +939,49 @@ test('#977 continuous AP curves and ghost descriptors preserve activation perfor
   trizookaClearProjectile(p);assert.equal(p.s3TrizookaAP,undefined);
  }
 });
+
+test('replay rejects malformed action indices without changing bounded state', () => {
+  for (const hz of [30, 60, 120]) {
+    const s = trizookaReplayActivate(newTrizookaReplayState());
+    for (const index of [...Array.from({length:50}, (_, i) => -i - 1), 0, .5, 1.25, 4, 100, Number.MAX_SAFE_INTEGER + 1, Infinity, NaN, null, '1']) {
+      const before = structuredClone(s);
+      trizookaReplayFire(s, {actionIndex:index, t:1/hz});
+      assert.deepEqual(s, before, `invalid ${index} has no side effects`);
+    }
+    for (const index of [1, 1, 2, 2, 3, 3]) trizookaReplayFire(s, {actionIndex:index, t:index/hz});
+    assert.deepEqual(s.seenActions, [1, 2, 3]);
+    assert.equal(s.t, 3/hz);
+  }
+});
+
+test('replay activation epochs isolate reactivation from stale fire/end and duplicate activate', () => {
+  for (const hz of [30, 60, 120]) {
+    const s = newTrizookaReplayState();
+    for (const activation of [11, 12]) {
+      trizookaReplayActivate(s, {activation});
+      assert.deepEqual(s.seenActions, []);
+      for (const actionIndex of [1, 2, 3]) {
+        trizookaReplayFire(s, {activation, actionIndex, t:actionIndex/hz});
+        const before = structuredClone(s);
+        trizookaReplayActivate(s, {activation});
+        trizookaReplayFire(s, {activation, actionIndex});
+        trizookaReplayFire(s, {activation:activation-1, actionIndex});
+        trizookaReplayFire(s, {actionIndex});
+        trizookaReplayEnd(s, {activation:activation-1});
+        assert.deepEqual(s, before);
+      }
+      trizookaReplayEnd(s, {activation});
+      const ended = structuredClone(s);
+      trizookaReplayActivate(s, {activation});
+      trizookaReplayActivate(s);
+      assert.deepEqual(s, ended);
+    }
+    assert.deepEqual(s.seenActions, [1,2,3]);
+    const legacy = trizookaReplayActivate(newTrizookaReplayState());
+    trizookaReplayFire(legacy, {actionIndex:1});
+    trizookaReplayEnd(legacy);
+    const ended = structuredClone(legacy);
+    trizookaReplayActivate(legacy);
+    assert.deepEqual(legacy, ended, 'legacy replays require a new per-activation state');
+  }
+});

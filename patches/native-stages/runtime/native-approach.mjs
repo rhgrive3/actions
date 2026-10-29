@@ -133,7 +133,8 @@ export function updateNativeApproach(brain,G,dt){
  if(!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive||nativeTowerRider(G,a)||brain._nativeTowerBoarding){brain._nativeApproach=null;return false;}
  const prior=brain._nativeApproach;if(prior&&(prior.actor!==a||prior.life!==(a.netLife||0)||prior.level!==G.level||prior.nav!==N||prior.match!==G.match||prior.mode!==brain.mode)){brain._nativeApproach=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  let index=brain.pi;if(index===0&&brain.path.length>1){const n=N.nodes[brain.path[0]];if(n&&Math.hypot(a.pos.x-n.x,a.pos.z-n.z)<.8&&Math.abs(a.pos.y-n.y)<.3)index=1;}
- const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&(e.climb?.kind==='approach'||e.climb?.kind==='gap-jump'));
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],nb=from?.nb;
+ let edge;if(nb)for(let i=0;i<nb.length;i++){const e=nb[i];if(e.to===to?.id&&(e.climb?.kind==='approach'||e.climb?.kind==='gap-jump')){edge=e;break;}}
  if(!edge){brain._nativeApproach=null;return false;}
  if(!nativeApproachEdgeAllowed(a,edge)){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return false;}
  const scratch=brain._nativeApproachVectors||(brain._nativeApproachVectors={goal:new THREE.Vector3(),start:new THREE.Vector3(),delta:new THREE.Vector3(),normal:new THREE.Vector3(),direction:new THREE.Vector3(),stance:new THREE.Vector3(),takeoff:new THREE.Vector3()});
