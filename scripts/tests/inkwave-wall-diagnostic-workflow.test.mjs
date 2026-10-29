@@ -37,7 +37,7 @@ function verify(text) {
     'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
     'node scripts/build-inkwave.mjs inkwave-public .built-site/_site',
     'test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"',
-    'npm ci --no-audit --no-fund', 'npx playwright install --with-deps chromium',
+    'npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8', 'sudo python3 scripts/prepare-inkwave-ci-apt.py', 'npx playwright install --with-deps chromium',
     guard, source, emitted, verifier,
     'uses: actions/upload-artifact@v4\n        if: always()',
     'path: ${{ env.CI_STORAGE }}/evidence/wall/',
@@ -76,7 +76,7 @@ test('all event and flag combinations isolate wall from full, network and broad 
   }
 });
 test('missing identity, real build, source/emitted contracts or full verifier fail closed', ()=> {
-  for(const literal of ['test "$WORKFLOW_SHA" = "$SOURCE_SHA"','test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"','npm ci --no-audit --no-fund','node scripts/build-inkwave.mjs inkwave-public .built-site/_site',source,emitted,verifier,guard]) {
+  for(const literal of ['test "$WORKFLOW_SHA" = "$SOURCE_SHA"','test "$(git rev-parse HEAD)" = "$SOURCE_SHA"','test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"','npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8','node scripts/build-inkwave.mjs inkwave-public .built-site/_site',source,emitted,verifier,guard]) {
     const changed=workflow.replaceAll(literal,'true # removed'); assert.notEqual(changed,workflow); assert.throws(()=>verify(changed));
   }
 });

@@ -1,4 +1,6 @@
 // 847: Roller-body terrain contact through the canonical current composition.
+// The current-tree and reviewed undo hashes below were recomputed against
+// main e67c636b, retaining the same negative-control anchors and frozen history.
 // The pinned source fixture runs native Actor/Physics/Projectiles/PaintSystem/NetMatch.
 // Fault controls below are counterfactual current-source mutations, not old main.
 import test from 'node:test';
@@ -25,7 +27,7 @@ const adaptProductionSource = adaptBuildSource;
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39",
+  "patches/splatoon3/runtime/roller.mjs": "27ff1b15e10c10e7d969dde7d35915dd04d890aa26aa0a7e59aae74cbcc0467a",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e108b807923cb68da28673afad22e633cb1aa6345b7832b26cf29cd8d9c0cdf3"
 });
 const headlessPaintRenderer = () => ({
@@ -71,7 +73,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
         "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
         "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
       assert.equal(createHash('sha256').update(previous).digest('hex'),
-        '121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3', 'previous reviewed #847 roller input');
+        'dc67c95c5e99e398f994fa5c621c56739ee0b73b7686ba1b3395f31bffba0f96', 'previous reviewed #847 roller input');
     } else {
       // Incoming main only replaces the two numeric no-motion predicates.
       // Undo those exact edits and retain the entire pre-merge contact pin.
