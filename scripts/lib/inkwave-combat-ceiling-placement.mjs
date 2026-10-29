@@ -29,16 +29,25 @@ export function installCombatPlacementQA() {
     if(!openingDraw)return;
     openingDraw.game._skipRender=openingDraw.previous;openingDraw=null;
   };
-  const placementReady = ({attacker,victim,requested}) => {
+  const sameLife = (actor, epoch) => {
+    // Hermite position can already be within tolerance while its discrete
+    // life still belongs to the older sample. Observe the real owner epoch.
+    if (!epoch || typeof epoch.owner !== 'string' || actor.owner !== epoch.owner ||
+      !Number.isSafeInteger(epoch.life) || epoch.life < 0 || actor.netLife !== epoch.life) return false;
+    return !actor.remote || (actor.net?.cur?.life === epoch.life &&
+      actor.net.lastLife === epoch.life && actor.net.buf?.at(-1)?.life === epoch.life);
+  };
+  const placementReady = ({attacker,victim,requested,epochs}) => {
     if (!spawnReady()) return false;
     const G = globalThis.__G, actors = [attacker,victim].map(id => G.netm.byNid.get(id));
-    return actors.every((a,i) => a && finite(requested?.[i]) &&
+    return actors.every((a,i) => a && sameLife(a,epochs?.[a.nid]) && finite(requested?.[i]) &&
       distance([a.pos.x,a.pos.y,a.pos.z],requested[i]) <= .05);
   };
-  const inspect = ({attacker, victim, requested}) => {
+  const inspect = ({attacker, victim, requested, epochs}) => {
     const G = globalThis.__G, ids = [attacker, victim];
     const actors = ids.map(id => G.netm.byNid.get(id));
     if (actors.some(a => !a?.alive || !a.grounded || a.form !== 'kid')) fail('Actors must be alive grounded kids');
+    if (epochs && actors.some(a => !sameLife(a,epochs[a.nid]))) fail('Actor owner life has not settled');
     const points = actors.map(a => [a.pos.x, a.pos.y, a.pos.z]);
     return {points, separation: validate(points, requested, G.level),
       barrierClearance: points.map(p => Math.min(...G.level.spawnPads.map(s =>
@@ -68,8 +77,9 @@ export function installCombatPlacementQA() {
     }
     fail('no neutral playable pair with a clear stage path');
   };
-  const aim = ({attacker,victim,requested}) => {
-    const G = globalThis.__G, checked = inspect({attacker,victim,requested});
+  const aim = ({attacker,victim,requested,epochs}) => {
+    if (!epochs) fail('Native owner epochs required for aim');
+    const G = globalThis.__G, checked = inspect({attacker,victim,requested,epochs});
     const a = G.netm.byNid.get(attacker), v = G.netm.byNid.get(victim), V = G.camera.position.constructor;
     const target = new V(v.pos.x,v.pos.y+(v.smoothY||0)+1.05,v.pos.z);
     a.aimPoint.copy(target);

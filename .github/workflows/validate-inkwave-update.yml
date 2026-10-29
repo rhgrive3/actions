@@ -857,11 +857,15 @@ jobs:
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
           EXPECTED_CONTENT_HASH='${{ needs.build_site.outputs.content_hash }}' node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('.built-site/_site/inkwave-build.json')).contentHash,process.env.EXPECTED_CONTENT_HASH);"
           node scripts/check-inkwave-startup-budget.mjs .built-site/_site
+          . /etc/os-release
+          test -n "$ID"
+          test -n "$VERSION_ID"
+          printf 'release=%s-%s\n' "$ID" "$VERSION_ID" >> "$GITHUB_OUTPUT"
       - name: Cache pinned browser executables
         uses: actions/cache@v4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
-          key: ${{ runner.os }}-${{ runner.arch }}-playwright-1.62.1-${{ matrix.browsers }}-${{ hashFiles('node_modules/playwright-core/browsers.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ steps.verified-site.outputs.release }}-playwright-1.62.1-${{ matrix.browsers }}-${{ hashFiles('node_modules/playwright-core/browsers.json') }}
       - name: Prepare workspace storage and browser
         id: browser-prepare
         run: |

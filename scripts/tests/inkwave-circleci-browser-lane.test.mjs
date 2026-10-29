@@ -15,12 +15,13 @@ test('core sparse checkout materializes every CircleCI parity gate input', () =>
   const required = ['.github/workflows/validate-inkwave-update.yml', '.circleci/config.yml',
     'scripts/tests/inkwave-circleci-browser-lane.test.mjs', 'scripts/tests/inkwave-circleci-offload-gate.test.mjs',
     'scripts/ci/run-circleci-browser-lane.mjs', 'scripts/ci/check-circleci-offload.mjs'];
-  const excluded = ['.circleci/unused.yml', 'account/tests/example.test.mjs'];
+  const globalJavaScript = ['account/tests/example.test.mjs','account/runtime/example.js','account/audit/example.cjs'];
+  const excluded = ['.circleci/unused.yml','account/tests/example.py','account/data/unrelated.json','unrelated-audit/source.blend','unrelated-audit/reference.png'];
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-core-sparse-'));
   const git = args => execFileSync('git', args, {cwd:root, stdio:['pipe','pipe','pipe']});
   try {
     git(['init', '-q']);
-    for (const file of [...required, ...excluded]) {
+    for (const file of [...required, ...globalJavaScript, ...excluded]) {
       fs.mkdirSync(path.dirname(path.join(root,file)), {recursive:true});
       fs.writeFileSync(path.join(root,file), file);
     }
@@ -32,8 +33,19 @@ test('core sparse checkout materializes every CircleCI parity gate input', () =>
     select(patterns.filter(line => line !== '/.circleci/config.yml'));
     assert.equal(fs.existsSync(path.join(root,'.circleci/config.yml')), false);
     assert.ok(fs.existsSync(path.join(root,'scripts/ci/run-circleci-browser-lane.mjs')));
+    // Preserve the former narrow profile independently. JavaScript outside
+    // those directories was previously unrelated; the global AST audit now
+    // reads every tracked JS/MJS/CJS file, so the current profile must retain it.
+    const codePatterns=['*.mjs','*.js','*.cjs'];
+    for (const pattern of codePatterns) assert.ok(patterns.includes(pattern),'global metadata input: '+pattern);
+    select(patterns.filter(line => !codePatterns.includes(line)));
+    for (const file of globalJavaScript) assert.equal(fs.existsSync(path.join(root,file)),false,'historical narrow profile: '+file);
+    for (let index=0;index<codePatterns.length;index++) {
+      select(patterns.filter(line => line!==codePatterns[index]));
+      assert.equal(fs.existsSync(path.join(root,globalJavaScript[index])),false,'dropping one code extension loses its metadata input');
+    }
     select(patterns);
-    for (const file of required) assert.ok(fs.existsSync(path.join(root,file)), 'required gate input: '+file);
+    for (const file of [...required,...globalJavaScript]) assert.ok(fs.existsSync(path.join(root,file)), 'required gate or metadata input: '+file);
     for (const file of excluded) assert.equal(fs.existsSync(path.join(root,file)), false, 'unrelated input: '+file);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
