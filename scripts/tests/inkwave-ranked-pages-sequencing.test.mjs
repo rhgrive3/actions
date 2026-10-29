@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
+import {assertValidateWorkflowContract,parseValidateWorkflow} from '../ci/inkwave-validate-contract.mjs';
 import {spawnSync} from 'node:child_process';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const pages=read('.github/workflows/pages-inkwave.yml'),ranked=read('.github/workflows/validate-inkwave-ranked.yml'),runner=read('scripts/check-inkwave-ranked-browser.mjs');
@@ -33,7 +34,7 @@ test('push and PR local ranked coverage, strict gate and existing permissions re
  assert.match(ranked,/RANKED_RELAY_DELAY_MS: 200/);
  assert.doesNotMatch(ranked,/RANKED_PUBLIC_URL/);
  assert.match(ranked,/permissions:\n  contents: read\njobs:/);
- assert.match(pages,/permissions:\n  contents: read\n  pages: write\n  id-token: write\n/);
+ assert.match(pages,/permissions:\n  contents: read\n  actions: read\n  pages: write\n  id-token: write\n/);
  assert.doesNotMatch(pages,/actions: write|contents: write|workflow_run:/);
  assert.match(runner,/attempt<30/);assert.match(runner,/AbortSignal.timeout\(15000\)/);assert.match(runner,/setTimeout\(r,10000\)/);
 });
@@ -51,7 +52,7 @@ test('actual public identity gate accepts exact artifact and rejects stale or ch
 const updateWorkflow=read('.github/workflows/validate-inkwave-update.yml');
 const settingsHudTest=read('patches/local-quality/tests/settings-hud-queue.test.mjs');
 const pagesBrowserSetup='          npm ci --no-audit --no-fund\n          npx --no-install playwright install --with-deps --no-shell chromium\n';
-const coreBrowserSetup='      - name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).\n          # Rewrite only the stalled mirror before Playwright\'s unchanged dependency installation.\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx --no-install playwright install --with-deps chromium\n';
+const coreBrowserSetup='      - name: Install pinned source regression and build tool\n        run: |\n          npm ci --no-audit --no-fund\n          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).\n          # Rewrite only the stalled mirror before Playwright\'s unchanged dependency installation.\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx --no-install playwright install --with-deps chromium\n';
 // Inspect only the named job, not a coincidental dependency string elsewhere.
 function jobBlock(u,name){
  const matches=[...u.matchAll(/^  ([a-zA-Z0-9_-]+):[ \t]*$/gm)],hits=matches.filter(x=>x[1]===name);
@@ -99,6 +100,7 @@ function verifySettingsBrowserConsumers(p,u,s){
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('node scripts/ci/run-inkwave-test-suite.mjs source-browser'));
  // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
  assert.doesNotMatch(shards.replace(/^          key: .*\n/gm,''),/playwright|chromium/);
+ assertValidateWorkflowContract(u);
  verifyRequiredDag(u);
  // Preserve the main-branch fan-in textual checks in addition to the stricter DAG and execution checks above.
  const acceptance=u.slice(u.indexOf('  validate:\n'),u.indexOf('  browser:\n'));
@@ -181,4 +183,33 @@ test('ranked QA provisions full Chromium used by the runner without unused headl
  assert.match(ranked,/playwright install --with-deps --no-shell chromium/);
  assert.match(runner,/launchOptions.channel='chromium'/);
  for(const name of readdirSync(new URL('../../patches/splatoon3/tests',import.meta.url)).filter(n=>/^ranked-.*\.test\.mjs$/.test(n)))assert.doesNotMatch(read('patches/splatoon3/tests/'+name),/from ['"]playwright|import\(['"]playwright/);
+});
+
+// Pages requires a successful Validate run for the same main SHA. Every Pages
+// push input must therefore also create Validate; accepting an older SHA is not a fallback.
+function assertPagesValidationTriggers(pagesSource,validateSource){
+ const pagesYaml=parseValidateWorkflow(pagesSource),validateYaml=parseValidateWorkflow(validateSource);
+ const pagesPaths=(pagesYaml.on??pagesYaml.true).push.paths;
+ assert.ok(Array.isArray(pagesPaths)&&pagesPaths.length>0);
+ const covers=(pattern,input)=>{
+  if(pattern===input)return true;
+  if(pattern.endsWith('/**')&&input.startsWith(pattern.slice(0,-2)))return true;
+  if(input.includes('*')||input.includes('?'))return false;
+  const escaped=pattern.split('**').map(part=>part.split('*').map(piece=>piece.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('[^/]*')).join('.*');
+  return new RegExp('^'+escaped+'$').test(input);
+ };
+ for(const event of ['push','pull_request']){
+  const validatePaths=(validateYaml.on??validateYaml.true)[event].paths;
+  for(const input of pagesPaths)assert.ok(validatePaths.some(pattern=>covers(pattern,input)),event+' must validate Pages input '+input);
+ }
+}
+test('every Pages push input creates the exact-SHA Validate prerequisite',()=>{
+ const update=read('.github/workflows/validate-inkwave-update.yml');
+ assertPagesValidationTriggers(pages,update);
+ for(const entry of ['      - .github/workflows/pages-inkwave.yml\n','      - "scripts/lib/**"\n','      - "server/src/**"\n']){
+  assert.equal(update.split(entry).length,3,'same explicit push and PR trigger');
+  const changed=update.replace(entry,'');
+  assert.notEqual(changed,update);
+  assert.throws(()=>assertPagesValidationTriggers(pages,changed));
+ }
 });

@@ -27,12 +27,12 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
   assert.match(nativeLevelSrc, /const px=projected\.x,py=projected\.y,pz=projected\.z,verts=this\.triangleWorld\.triangles,tris=face\.triangles;/);
 
   const count = 64;
-  const vertices = new Float32Array(count * 3 * 8);
-  const indices = new Uint32Array(count * 3);
-  const flags = new Uint8Array(count);
+  const triangles = new Float32Array(count * 9);
+  const order = new Uint32Array(count);
+  const flags = new Uint32Array(count);
   const normals = new Float32Array(count * 3);
-  const objectIds = new Int32Array(count);
-  const bvhNodes = new Float32Array(8);
+  const objectIds = new Uint32Array(count);
+  const nodes = new Float32Array(8);
   let seed = 0x13579bdf;
   const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 
@@ -43,28 +43,18 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
       [cx + 1.5 + rnd() * 0.8, 0, cz + rnd() * 0.5],
       [cx + 0.5 + rnd() * 0.8, 0, cz + 1.5 + rnd() * 0.8],
     ];
+    order[t] = t;
     for (let k = 0; k < 3; k++) {
-      const vi = t * 3 + k;
-      indices[vi] = vi;
-      vertices[vi * 8] = pts[k][0];
-      vertices[vi * 8 + 1] = pts[k][1];
-      vertices[vi * 8 + 2] = pts[k][2];
+      const o = t * 9 + k * 3;
+      triangles[o] = pts[k][0];
+      triangles[o + 1] = pts[k][1];
+      triangles[o + 2] = pts[k][2];
     }
     normals[t * 3 + 1] = 1;
+    flags[t] = 3;
   }
-  bvhNodes.set([-10, -5, -10, 40, 5, 40, 0, count]);
-  // Production BVH consumes packed source triangles + [left,right]/leaf order,
-  // not the legacy vertices/indices/bvhNodes constructor contract.
-  const triangles = new Float32Array(count * 9);
-  for (let t = 0; t < count; t++) for (let k = 0; k < 3; k++) {
-    const off = (t * 3 + k) * 8;
-    triangles[t * 9 + k * 3] = vertices[off];
-    triangles[t * 9 + k * 3 + 1] = vertices[off + 1];
-    triangles[t * 9 + k * 3 + 2] = vertices[off + 2];
-  }
-  const nodes = new Float32Array([-10, -5, -10, 40, 5, 40, -1, count]);
-  const order = Uint32Array.from({ length: count }, (_, i) => i);
-  const tw = new TriangleWorld({ triangles, flags, normals, objectIds, nodes, order });
+  nodes.set([-10, -5, -10, 40, 5, 40, -1, count]);
+  const tw = new TriangleWorld({ triangles, order, flags, normals, objectIds, nodes });
   const face = {
     origin: new THREE.Vector3(0, 0, 0),
     u: new THREE.Vector3(1, 0, 0),
@@ -116,33 +106,31 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
   assert.ok(triCallsOpt < triCallsRef * 0.1, `expected >90% reduction in triangle containsPoint calls, got ${triCallsOpt} vs ${triCallsRef}`);
 });
 
-test('NAT-02 TriangleWorld.resolveCapsule returns independently owned contact normals', () => {
-  const vertices = new Float32Array([
-    -5, 0, -5, 0, 1, 0, 0, 0,
-     5, 0, -5, 0, 1, 0, 0, 0,
-     0, 0,  5, 0, 1, 0, 0, 0,
+test('NAT-02 TriangleWorld.resolveCapsule returns a stable independently owned normal', () => {
+  const triangles = new Float32Array([
+    -5, 0, -5,
+     5, 0, -5,
+     0, 0,  5,
   ]);
-  const indices = new Uint32Array([0, 1, 2]);
-  const flags = new Uint8Array([2]);
-  const normals = new Float32Array([0, 1, 0]);
-  const objectIds = new Int32Array([-1]);
-  const bvhNodes = new Float32Array([-5, -0.1, -5, 5, 0.1, 5, 0, 1]);
-  const triangles = new Float32Array([-5,0,-5, 5,0,-5, 0,0,5]);
-  const nodes = new Float32Array([-5, -0.1, -5, 5, 0.1, 5, -1, 1]);
   const order = new Uint32Array([0]);
-  const tw = new TriangleWorld({ triangles, flags, normals, objectIds, nodes, order });
+  const flags = new Uint32Array([2]);
+  const normals = new Float32Array([0, 1, 0]);
+  const objectIds = new Uint32Array([0]);
+  const nodes = new Float32Array([-5, -0.1, -5, 5, 0.1, 5, -1, 1]);
+  const tw = new TriangleWorld({ triangles, order, flags, normals, objectIds, nodes });
 
   const feet1 = new THREE.Vector3(0, -0.05, 0);
   const r1 = tw.resolveCapsule(feet1, 1.45, 0.38, false);
-  const nRef = r1.normal, savedNormal = nRef.toArray();
+  const nRef = r1.normal, originalNormal = nRef.toArray();
   assert.equal(r1.ground, true);
   assert.ok(feet1.y >= 0);
 
   const feet2 = new THREE.Vector3(0.2, -0.03, 0.2);
   const r2 = tw.resolveCapsule(feet2, 1.45, 0.38, false);
-  assert.notEqual(r2.normal, nRef, 'returned capsule results own their normal');
+  assert.notEqual(r2.normal, nRef, 'distinct capsule resolutions must return independently owned normals');
+  assert.deepEqual(nRef.toArray(), originalNormal, 'later capsule resolutions must not mutate previous results');
   tw.resolveCapsule(new THREE.Vector3(0, 3, 0), 1.45, 0.38, false);
-  assert.deepEqual(nRef.toArray(), savedNormal, 'later resolutions cannot clear a retained result');
+  assert.deepEqual(nRef.toArray(), originalNormal, 'a later miss cannot clear a retained result');
 });
 
 test('NAT-03 through NAT-06 native runtime modules use preallocated scratch vectors and closure-free edge helpers', () => {
@@ -239,8 +227,8 @@ test('CMB-01 through CMB-06 firefight paint, splash drop, graze, and native scan
   assert.equal(p.s3GrazePaint.at, firstAt, 'accepted graze reuses existing s3GrazePaint.at Vector3');
 });
 test('NAT-07 through NAT-10 native runtime modules hoist sort closure, scratch vectors, and closure-free climb/surge/jump helpers', () => {
-  assert.match(readRepo('patches/native-stages/runtime/native-physics.mjs'), /SORT_CONTACTS_ASCENDING\s*=\s*\(a,\s*b\)\s*=>\s*a\s*-\s*b/);
-  assert.match(readRepo('patches/native-stages/runtime/native-physics.mjs'), /candidates\.sort\(SORT_CONTACTS_ASCENDING\)/);
+  assert.match(readRepo('patches/native-stages/runtime/native-physics.mjs'), /_sortAsc\s*=\s*\(a,\s*b\)\s*=>\s*a\s*-\s*b/);
+  assert.match(readRepo('patches/native-stages/runtime/native-physics.mjs'), /candidates\.sort\(_sortAsc\)/);
 
   assert.match(readRepo('patches/native-stages/runtime/native-jump-attach.mjs'), /function findJumpAttachEdge/);
   assert.match(readRepo('patches/native-stages/runtime/native-jump-attach.mjs'), /const _down=new THREE\.Vector3\(0,-1,0\),_probe=new THREE\.Vector3\(\);/);
@@ -252,9 +240,10 @@ test('NAT-07 through NAT-10 native runtime modules hoist sort closure, scratch v
   assert.match(readRepo('patches/native-stages/runtime/native-surge.mjs'), /function findMissingSurgeSample/);
 });
 
-test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and exact charger flight scan with owned scratch', () => {
+test('CMB-08 through CMB-10 ranked combat, catalogue cover, and exact Charger scan with owned scratch', () => {
   const rankedCombat = readRepo('patches/splatoon3/runtime/ranked/combat.mjs');
   assert.match(rankedCombat, /const scratch = _blastFrames\[depth\]/);
+  assert.match(rankedCombat, /Math\.sqrt\(d2\) <= radius/);
   assert.match(rankedCombat, /Math\.sqrt\(body\.distanceToSquared\(p\)\) <= radius/);
 
   const catalog = readRepo('patches/splatoon3/runtime/main-weapon-catalog.mjs');
@@ -267,6 +256,41 @@ test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and exact charg
   // existing depth-guarded local shot scratch.
   assert.doesNotMatch(chargerFlight, /const reach=bodyRadius\+\(collision\.InitRadiusForPlayer>collision\.EndRadiusForPlayer/);
   assert.match(chargerFlight, /const t=capsuleEntry\(job\.prev,end,job\.base,hurtboxRadius\(actor,PLAYER\),hurtboxHeight\(actor,PLAYER\),/);
+});
+
+test('NAT-11 through NAT-17 and CMB-11/MOV-09 Wave-2 scalar clamp, segment/point-triangle distance, quadraticEntry, drop clearance, and regionStats/edgeGuard parity', () => {
+  const twSrc = readRepo('patches/native-stages/runtime/triangle-world.mjs');
+  assert.match(twSrc, /const clamp=\(x,a,b\)=>x<=a\?\+a:x>=b\?\+b:x;/);
+  assert.match(twSrc, /const ux=b\.x-a\.x,uy=b\.y-a\.y,uz=b\.z-a\.z/);
+  assert.match(twSrc, /const v0x=c\.x-b\.x,v0y=c\.y-b\.y,v0z=c\.z-b\.z/);
+
+  const steSrc = readRepo('patches/native-stages/runtime/sphere-triangle-entry.mjs');
+  assert.match(steSrc, /2\*A\*hi\+B<=0&&\(A\*hi\+B\)\*hi\+C>1e-6/);
+  assert.match(steSrc, /tLo=t0<t1\?t0:t1,tHi=t0>t1\?t0:t1/);
+
+  const ndSrc = readRepo('patches/native-stages/runtime/native-drop.mjs');
+  assert.match(ndSrc, /if\(distance>=thresh\)\{const d=w\._capsuleDistance\(ta,tb,t1\);if\(d<distance\)distance=d;\}/);
+
+  const composedPaint = adaptBuildSource('src/world/paint.js', readPublic('src/world/paint.js'));
+  assert.match(composedPaint, /const dv = \(j \+ 0\.5\) \* cv - lv, dv2 = dv \* dv;/);
+
+  const composedBots = adaptBuildSource('src/game/bots.js', readPublic('src/game/bots.js'));
+  assert.match(composedBots, /const _egCos0 = Math\.cos\(0\.8\), _egSin0 = Math\.sin\(0\.8\)/);
+});
+
+test('sub release recomputes gear-sensitive cost without stale descriptor reuse', async () => {
+  const { kitSubRelease } = await import('../../splatoon3/runtime/kit-subs.mjs');
+  const SUB = { bomb: { id: 'bomb', mode: 'bomb', chargeable: false, inkCost: 70, inkCostStatus: 'calibrated' } };
+  const runner = { a: { weapon: { sub: 'bomb' }, s3: { modifiers: { subPower: 1, inkSaverSub: 1 } } }, s3SubHold: 0 };
+  const first = kitSubRelease(SUB, runner, 1/60, {});
+  runner.a.s3.modifiers.inkSaverSub = .5;
+  const second = kitSubRelease(SUB, runner, 1/60, {});
+  assert.notEqual(first, second);
+  assert.equal(first.inkCost, 70);
+  assert.equal(second.inkCost, 35);
+  const sparse = { ...SUB, sparse: { id: 'sparse', mode: 'bomb', chargeable: false } };
+  runner.a.weapon.sub = 'sparse';
+  assert.equal(kitSubRelease(sparse, runner, 1/60, {}).inkCost, SUB.bomb.inkCost, 'missing authored cost retains native bomb fallback');
 });
 
 const CHARGER_REL = 'patches/splatoon3/runtime/weapons-charger-flight.mjs';

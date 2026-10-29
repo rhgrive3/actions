@@ -58,7 +58,7 @@ function fixture() {
 const SCREENS = new Set(['main', 'mode', 'setup', 'loadout', 'locker', 'settings', 'howto', 'credits', 'online']);
 function frameGate(showcase, { baseline = false, screen = 'loadout', current = screen, attract = true, mode = 'menu' } = {}) {
   const begin = gameSource.indexOf('  _frame(dt) {') + '  _frame(dt) {'.length;
-  const end = gameSource.indexOf('    const tA = performance.now();', begin);
+  const end = gameSource.indexOf('    const measureCPU =', begin);
   assert.ok(begin > 0 && end > begin);
   const body = gameSource.slice(begin, end);
   const native = baseline ? body.replace("      if (artScreen !== 'locker') this.showcase?.retireHiddenStudio?.(dt);\n", '') : body;

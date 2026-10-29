@@ -195,7 +195,11 @@ class SwimSurface {
     this.time=fx._time;
     for(const s of this.slots){
       const a=s.actor,wall=!!a?.climbing,sp=swimSurfaceSpeed(a);
-      const alive=a&&a.alive!==false&&a.form==='squid'&&(wall&&a.wallHit?.hit||a.submerged&&a.grounded)&&sp>1e-4&&swimSurfaceVisible(a)&&this.time-s.last<.08&&(!G.actors||G.actors.includes(a));
+      // A touch made before this outer frame's native FX substeps still owns
+      // the surface on that render. Do not expire it merely because a visible
+      // frame took more than 80 ms; an untouched subsequent frame still expires.
+      const touchedThisFrame=Number.isFinite(fx._fxFrameStart)&&s.last>=fx._fxFrameStart&&s.last<=this.time;
+      const alive=a&&a.alive!==false&&a.form==='squid'&&(wall&&a.wallHit?.hit||a.submerged&&a.grounded)&&sp>1e-4&&swimSurfaceVisible(a)&&(this.time-s.last<.08||touchedThisFrame)&&(!G.actors||G.actors.includes(a));
       s.mesh.visible=!!alive;
       if(!alive){s.actor=null;s.pending=false;continue;}
       const yaw=Math.atan2(a.vel.x,a.vel.z),delta=Math.atan2(Math.sin(yaw-s.yaw),Math.cos(yaw-s.yaw));s.yaw=yaw;

@@ -22,7 +22,7 @@ function fixture(source) {
   const env = { clearTimeout: id => timers.delete(id), cancelAnimationFrame: id => frames.delete(id),
     performance: { now: () => 100 }, clamp: (n, lo, hi) => Math.min(hi, Math.max(lo, n)),
     safeCall: fn => fn(), clearContinuation() {}, window: { removeEventListener() {} }, document: { fonts: { removeEventListener() {} } } };
-  const News = methods(adaptBuildSource('src/ui/news.js', newsRaw), 'WhatsNew', ['constructor', '_cancelHeroWait', 'dispose'], env);
+  const News = methods(adaptBuildSource('src/ui/news.js', newsRaw), 'WhatsNew', ['constructor', '_cancelHeroWait', '_releaseTweenClock', 'dispose'], env);
   const Menu = methods(source, 'Menus', ['update', 'dispose'], env);
   const menu = new Menu();
   // Keep constructor-owned tween state and the real menu owner: dispose now

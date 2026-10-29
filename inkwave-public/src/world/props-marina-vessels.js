@@ -338,10 +338,11 @@ export function registerMarinaVessels(D, H) {
       const P = p.g.attributes.position, N = p.g.attributes.normal, CC = p.g.attributes.color, c = col(p.c);
       nm.getNormalMatrix(p.m);
       for (let i = 0; i < P.count; i++) {
-        v.fromBufferAttribute(P, i).applyMatrix4(p.m); pos.set([v.x, v.y, v.z], (vo + i) * 3);
-        v.fromBufferAttribute(N, i).applyMatrix3(nm).normalize(); nor.set([v.x, v.y, v.z], (vo + i) * 3);
+        const o=(vo+i)*3;
+        v.fromBufferAttribute(P, i).applyMatrix4(p.m); pos[o]=v.x;pos[o+1]=v.y;pos[o+2]=v.z;
+        v.fromBufferAttribute(N, i).applyMatrix3(nm).normalize(); nor[o]=v.x;nor[o+1]=v.y;nor[o+2]=v.z;
         const k = CC ? CC.getX(i) : 1;
-        cl.set([c.r * k, c.g * k, c.b * k], (vo + i) * 3);
+        cl[o]=c.r*k;cl[o+1]=c.g*k;cl[o+2]=c.b*k;
       }
       const I = p.g.index.array;
       for (let j = 0; j < I.length; j++) idx[io++] = I[j] + vo;

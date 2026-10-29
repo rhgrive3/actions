@@ -82,7 +82,7 @@ export function installInputPlatform(Input, env = globalThis) {
       this._platformPadFocusRebase = true;
     }
     if (!owner.focused) {
-      this.pad = null; this.padPrev = [];
+      this.pad = null; if (!this.padPrev) this.padPrev = []; else this.padPrev.length = 0;
       this.padPressed.clear(); this.padMenuPressed?.clear(); this.padMenuBlocked?.clear();
       this._platformPadRebase = this._platformPadAxes = true;
       return;

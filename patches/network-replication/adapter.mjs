@@ -568,7 +568,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       // or consume sender event identity. Owner admission stays authoritative.
       if (e[1] === 'ev' && !validForwardedEventPayload(e[2], e[3])) continue;
       if (e[1] === 'b' && !validNetworkBombBirth(e, G.level?.bounds)) continue;
-      if (e[1] === 'p' && !validNetworkProjectileCosmetics(e)) continue;
+      if (e[1] === 'p' && (!validNetworkProjectileBirth(e) || !validFidelityRollerUnitPacket(e))) continue;
       if (e[1] === 'ev' && e[2] === 'special:slam') {
         const slamActor = this.byNid.get(e[3].actor.n);
         if (!slamActor?.remote || slamActor.owner !== from) continue;
@@ -918,8 +918,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     const eventKind = e[1], eventPeer = this.peers.get(from);
     if (eventKind !== 's' && eventKind !== 'p' && eventKind !== 'pe' && eventKind !== 'b'
       && eventKind !== 'tr' && eventKind !== 'ev' && eventKind !== 'bm' && eventKind !== 'bc') return;
-    if (eventKind === 'p' && (!validNetworkProjectileTiming(e[11], e[12])
-      || !validNetworkProjectileCosmetics(e))) return;
+    if (eventKind === 'p' && !validNetworkProjectileBirth(e)) return;
     if (eventKind === 'b' && !validNetworkBombBirth(e, G.level?.bounds)) return;
     if (eventKind === 'pe' && e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
     if (eventKind === 'tr' && typeof e[3] !== 'string') return;
@@ -1018,8 +1017,6 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       a.net._hitAuthority = null;
     }`, 'respawn invalidates storm and hit authority state');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
-        for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
-        if (!validNetworkProjectileTiming(e[11], e[12])) return;
         const prepareProjectile = G.projectiles?.prepareFidelityProjectilePacket;
         const packet = typeof prepareProjectile === 'function' ? prepareProjectile.call(G.projectiles, e) : e;
         if (typeof prepareProjectile === 'function' && !packet) return;
@@ -2554,7 +2551,7 @@ ${bombHit}`;
       }`, 'bounded guest crablet lifetime and visual admission');
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, validNetworkBombBirth, validNetworkProjectileCosmetics, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileBirth, validForwardedEventPayload, allowGhostBombBirth, validNetworkBombBirth, validNetworkProjectileCosmetics, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     // #1311: count only active ghost rounds; do not keep lifecycle counters.
     // The native 700-blob render budget reserves 60 for local effects.
     patch('const TICK = 1 / 20;', `const TICK = 1 / 20;

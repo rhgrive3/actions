@@ -24,3 +24,35 @@ test('explicit BVH reduction mode keeps exact A/A and gameplay/render gates',()=
  const changedRepeat=structuredClone(b);changedRepeat.scenarios[0].bvh.triangleTests--;
  assert.throws(()=>compareComposedCpu(a,changedRepeat,c,options));
 });
+
+for(const [label,mutate] of [
+ ['lost context',r=>r.scenarios[0].contextLost=true],
+ ['page error',r=>r.scenarios[0].errors.push('baseline page failed')],
+])test(`comparison rejects baseline ${label}`,()=>{
+ const a=report(),b=report(),c=report();mutate(a);
+ assert.throws(()=>compareComposedCpu(a,b,c),'invalid baseline must not support parity');
+});
+test('comparison rejects an empty workload',()=>{
+ const a=report(),b=report(),c=report();
+ for(const r of [a,b,c])r.scenarios=[];
+ assert.throws(()=>compareComposedCpu(a,b,c),'empty comparison is not measured work');
+});
+
+for(const [label,change] of [
+ ['zero work',r=>{r.frames=0;r.ticks=0;}],
+ ['below capture minimum',r=>{r.frames=29;r.ticks=29;}],
+ ['above capture maximum',r=>{r.frames=18001;r.ticks=18001;}],
+ ['unsupported cadence',r=>{r.hz=90;r.ticks=40;}],
+ ['incorrect fixed ticks',r=>{r.ticks=59;}],
+])test(`comparison rejects identical invalid ${label} scenarios`,()=>{
+ const a=report(),b=report(),c=report();
+ for(const r of [a,b,c])change(r.scenarios[0]);
+ assert.throws(()=>compareComposedCpu(a,b,c));
+});
+test('comparison accepts the capture cadence and fixed-tick boundaries',()=>{
+ for(const hz of [30,60,120])for(const frames of [30,18000]){
+  const a=report(),b=report(),c=report();
+  for(const r of [a,b,c])Object.assign(r.scenarios[0],{frames,hz,ticks:Math.round(frames*60/hz)});
+  assert.equal(compareComposedCpu(a,b,c)[0].status,'exact-recorded-state-parity');
+ }
+});

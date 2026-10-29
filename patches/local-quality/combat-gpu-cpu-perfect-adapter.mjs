@@ -2,8 +2,8 @@
 // Respects all 18 Direct-Source owned modules (including src/game/nav.js, src/world/props-core.js, src/game/character-lod.js)
 // and composes cleanly with all upstream queue adapters on main @ dd93aac2c408f746adb0c9aa572ea2f06f3bed43 (Step 145, and d88aa683, e781229b).
 
-function applyIdempotent(code, before, after, replaceOnce, label) {
-  if (code.includes(after)) return code;
+function applyIdempotent(code, before, after, replaceOnce, label, composedAfter = null) {
+  if (code.includes(after) || (composedAfter !== null && code.includes(composedAfter))) return code;
   return replaceOnce(code, before, after, label);
 }
 
@@ -445,7 +445,13 @@ export class SwimWake {`,
     this.sailInst.instanceMatrix.addUpdateRange(0, this.sailboats.length * 16);
     this.sailInst.instanceMatrix.needsUpdate = true;`,
       replaceOnce,
-      'GPU-15b bound sailInst instanceMatrix updateRange'
+      'GPU-15b bound sailInst instanceMatrix updateRange',
+      // Exact completed form emitted by the downstream world full-upload adapter.
+      `      this.sailInst.setMatrixAt(i, _m4);
+    }
+    this.sailInst.instanceMatrix.clearUpdateRanges();
+    if(this.sailInst.instanceMatrix.array.length!==this.sailboats.length*16) this.sailInst.instanceMatrix.addUpdateRange(0, this.sailboats.length * 16);
+    this.sailInst.instanceMatrix.needsUpdate = true;`
     );
     code = applyIdempotent(
       code,
@@ -458,7 +464,13 @@ export class SwimWake {`,
     this.buoyInst.instanceMatrix.addUpdateRange(0, this.buoys.length * 16);
     this.buoyInst.instanceMatrix.needsUpdate = true;`,
       replaceOnce,
-      'GPU-15b bound buoyInst instanceMatrix updateRange'
+      'GPU-15b bound buoyInst instanceMatrix updateRange',
+      // Exact completed form emitted by the downstream world full-upload adapter.
+      `      this.buoyInst.setMatrixAt(i, _m4);
+    }
+    this.buoyInst.instanceMatrix.clearUpdateRanges();
+    if(this.buoyInst.instanceMatrix.array.length!==this.buoys.length*16) this.buoyInst.instanceMatrix.addUpdateRange(0, this.buoys.length * 16);
+    this.buoyInst.instanceMatrix.needsUpdate = true;`
     );
     code = applyIdempotent(
       code,
@@ -471,7 +483,13 @@ export class SwimWake {`,
     this.gullInst.instanceMatrix.addUpdateRange(0, this.gulls.length * 16);
     this.gullInst.instanceMatrix.needsUpdate = true;`,
       replaceOnce,
-      'GPU-15b bound gullInst instanceMatrix updateRange'
+      'GPU-15b bound gullInst instanceMatrix updateRange',
+      // Exact completed form emitted by the downstream world full-upload adapter.
+      `      this.gullInst.setMatrixAt(i, _m4);
+    }
+    this.gullInst.instanceMatrix.clearUpdateRanges();
+    if(this.gullInst.instanceMatrix.array.length!==this.gulls.length*16) this.gullInst.instanceMatrix.addUpdateRange(0, this.gulls.length * 16);
+    this.gullInst.instanceMatrix.needsUpdate = true;`
     );
   }
 
@@ -573,24 +591,46 @@ export class SwimWake {`,
   }
 
   if (rel === 'src/world/paint.js') {
-    // CPU-01: Early bounds rejection and r2 hoist in PaintSystem.regionStats.
+    // CPU-01 / CMB-11: Early bounds rejection, row-hoisted dv2 check, and array reference hoist in PaintSystem.regionStats.
     code = applyIdempotent(
       code,
       `        const i0 = Math.max(0, Math.floor((lu - radius) / f.cu)), i1 = Math.min(f.nu - 1, Math.floor((lu + radius) / f.cu));
         const j0 = Math.max(0, Math.floor((lv - radius) / f.cv)), j1 = Math.min(f.nv - 1, Math.floor((lv + radius) / f.cv));
         for (let j = j0; j <= j1; j += 2) for (let i = i0; i <= i1; i += 2) {
           const du = (i + 0.5) * f.cu - lu, dv = (j + 0.5) * f.cv - lv;
-          if (du * du + dv * dv > radius * radius) continue;`,
+          if (du * du + dv * dv > radius * radius) continue;
+          const k = f.grid + j * f.nu + i;
+          if (this.dead[k]) continue;
+          const g = this.grid[k];`,
       `        const i0 = Math.max(0, Math.floor((lu - radius) / f.cu)), i1 = Math.min(f.nu - 1, Math.floor((lu + radius) / f.cu));
         if (i0 > i1) continue;
         const j0 = Math.max(0, Math.floor((lv - radius) / f.cv)), j1 = Math.min(f.nv - 1, Math.floor((lv + radius) / f.cv));
         if (j0 > j1) continue;
-        const r2 = radius * radius;
-        for (let j = j0; j <= j1; j += 2) for (let i = i0; i <= i1; i += 2) {
-          const du = (i + 0.5) * f.cu - lu, dv = (j + 0.5) * f.cv - lv;
-          if (du * du + dv * dv > r2) continue;`,
+        const r2 = radius * radius, cu = f.cu, cv = f.cv, nu = f.nu, fGrid = f.grid, dead = this.dead, grid = this.grid;
+        for (let j = j0; j <= j1; j += 2) {
+          const dv = (j + 0.5) * cv - lv, dv2 = dv * dv;
+          if (dv2 > r2) continue;
+          const row = fGrid + j * nu;
+          for (let i = i0; i <= i1; i += 2) {
+            const du = (i + 0.5) * cu - lu;
+            if (du * du + dv2 > r2) continue;
+            const k = row + i;
+            if (dead[k]) continue;
+            const g = grid[k];`,
       replaceOnce,
       'CPU-01 early bounds rejection and r2 hoist in PaintSystem.regionStats'
+    );
+    code = applyIdempotent(
+      code,
+      `          if (g === own) out.own++; else if (g) out.enemy++; else out.empty++;
+        }
+      }`,
+      `          if (g === own) out.own++; else if (g) out.enemy++; else out.empty++;
+          }
+        }
+      }`,
+      replaceOnce,
+      'CPU-01 close outer j loop in PaintSystem.regionStats'
     );
   }
 
@@ -683,6 +723,22 @@ export class SwimWake {`,
       if (!onOwnInk && remaining < 1.5 && (inkFrac > 0.03 || (_wk1 === 'charger' || _wk1 === 'splatling' || _wk1 === 'stringer' || _wk1 === 'splatana') && (a.weaponRunner.charging || a.weaponRunner.s3ReleaseHold))) { it.squid = false; it.fire = this._puddleFire(dt); wantPitch = -1.0; }`,
       replaceOnce,
       'CPU-10 replace boss refill array literal in bots.js'
+    );
+    // MOV-09: Precompute fixed trigonometric table for [0.8, -0.8, 1.45, -1.45] in _edgeGuardUncached.
+    code = applyIdempotent(
+      code,
+      `    for (const ang of [0.8, -0.8, 1.45, -1.45]) {
+      const c = Math.cos(ang), s = Math.sin(ang), nx = dx * c + dz * s, nz = -dx * s + dz * c;
+      if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
+    }`,
+      `    const _egCos0 = Math.cos(0.8), _egSin0 = Math.sin(0.8), _egCos1 = Math.cos(1.45), _egSin1 = Math.sin(1.45);
+    for (let _egi = 0; _egi < 4; _egi++) {
+      const c = _egi < 2 ? _egCos0 : _egCos1, s = _egi === 0 ? _egSin0 : _egi === 1 ? -_egSin0 : _egi === 2 ? _egSin1 : -_egSin1;
+      const nx = dx * c + dz * s, nz = -dx * s + dz * c;
+      if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
+    }`,
+      replaceOnce,
+      'MOV-09 precompute trigonometric values in _edgeGuardUncached'
     );
   }
 
@@ -801,6 +857,9 @@ export class SwimWake {`,
       const exactAfterDD = "    const a = [], sjEpochs = Object.create(null), sc = {}, l = {}, rl = {};\n    let sq = null, dr = null, wp = null, bw = null, rf = null, pg = null;\n    const simulationTick = Math.max(0, Math.round((G.time || 0) * 60));\n    for (const x of this.byNid.values()) {\n      if (x.remote) continue;\n      if (publishActors) {\n        a.push(packActor(x));\n        if (Number.isSafeInteger(x.nid)) { const epoch = x._s3SuperJumpEpoch; sjEpochs[x.nid] = Number.isSafeInteger(epoch) && epoch >= 0 ? epoch : 0; }\n        const splashdown = packSplashdownSnapshot(x); if (splashdown) (pg || (pg = Object.create(null)))[x.nid] = splashdown;\n        const flick = packRollerPresentation(x, this, simulationTick);\n        if (flick) (rf || (rf = Object.create(null)))[x.nid] = flick;\n        const visual = packSquidrollSnapshot(x);\n        if (visual) (sq || (sq = Object.create(null)))[x.nid] = visual;\n        const dropRoll = packDropRollSnapshot(x);\n        if (dropRoll) (dr || (dr = Object.create(null)))[x.nid] = dropRoll;\n        const wr = x.weaponRunner, slosh = x.weapon?.kind === 'slosher' && Number.isFinite(wr?.slosh) && wr.slosh >= 0 ? Math.min(2, wr.slosh) : -1;\n        const sp = x.specialActive, phase = sp?.id === 'slam' ? ({ rise:1, hang:2, fall:3 }[sp.phase] || 0) : 0;\n        const slamT = phase && Number.isFinite(sp.t) ? Math.max(0, Math.min(4, sp.t)) : 0;\n        if (slosh >= 0 || phase) (wp || (wp = Object.create(null)))[x.nid] = [slosh, phase, slamT];\n        const windup = x.weapon?.kind === 'blaster' ? x.weaponRunner?.s3BlasterWindup : 0;\n        if (Number.isFinite(windup) && windup > 0) (bw || (bw = Object.create(null)))[x.nid] = Math.min(1, windup);\n      }\n      sc[x.nid] = x.specialCost();\n      l[x.nid] = x.netLife ?? 0;\n      const action = dualiesNetworkAction(x);\n      if (action) {\n        const nid = x.nid;\n        const startup = action.startup > 1e-10 || action.startupDur > 0 && action.t <= 1e-10;\n        const row = {\n          token: action.token || 1,\n          phase: startup ? 'startup' : 'roll',\n          time: r3(startup ? Math.max(0, (action.startupDur || (4 / 60)) - action.startup) : action.t),\n          dur: r3(action.dur || 0.2),\n          ...(x.net?._remoteDodge && x.net._remoteDodge.token === action.token\n            && x.net._remoteDodge.life === (x.netLife ?? 0) && x.net._remoteDodge.tp === (x.netTp ?? 0)\n            ? { start: x.net._remoteDodge.start, life: x.net._remoteDodge.life, tp: x.net._remoteDodge.tp,\n              startupDur: x.net._remoteDodge.startupDur, lockDur: x.net._remoteDodge.lockDur }\n            : {})\n        };\n        const direction = dualiesNetworkDirection(x);\n        if (direction && Number.isFinite(direction.x) && Number.isFinite(direction.z)) row.dir = [r2(direction.x), r2(direction.z)];\n        rl[nid] = row;\n      }\n    }\n    const msg = { k: 't', ts: r3(now()), a, gg: (publishActors ? packOwnerGear(this) : {}), gc: (publishActors ? packConditionalGear(this) : {}), gb: (publishActors ? packTransientGear(this, G.time) : {}), u: Math.round((G.time || 0)*60), sc, l };\n    const wf = packWipeoutTimeline(this); if (wf) msg.wf = wf;\n    replayWipeoutConfirmations(this);\n    if (sq) msg.sq = sq;\n    if (dr) msg.dr = dr;\n    if (wp) msg.wp = wp;\n    if (pg) msg.pg = pg;\n    if (bw) msg.bw = bw;\n    if (rf) msg.rf = rf;\n    if (this.out.length) msg.r = 2;\n    const boss = this.match?.boss;\n    if (this.isHost && boss && boss.sim) { this.bossN = (this.bossN || 0) + 1; msg.B = boss.pack(this.bossN % 10 === 0); }\n    if (this.isHost && this.match) {\n      this.clockT -= TICK;\n      if (this.clockT <= 0) { this.clockT = 0.5; msg.c = [this.match.state, r2(this.match.time)]; }\n    }\n    msg.rl = rl;\n    if (this.s.ownerClockVersion === 1) { msg.oc = 1; msg.ocm = this.cfg.id; }\n    msg.sjEpochs = sjEpochs;";
       if (code.includes(exactBeforeDD)) {
         code = replaceOnce(code, exactBeforeDD, exactAfterDD, 'CPU-17b single-pass sc, l, and rl packing in NetMatch._sendTick (dd93aac2)');
+      } else if (code.includes(exactAfterDD.replace('      this.clockT -= TICK;\n', ''))) {
+        // The terminal elapsed-heartbeat adapter owns this one removed line.
+        // Require the entire remaining packing body for idempotence.
       } else {
         const beforeBlockD8 = `    const a = [], sjEpochs = Object.create(null);
     let sq = null, dr = null, wp = null, bw = null, rf = null, pg = null;

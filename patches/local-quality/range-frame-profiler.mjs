@@ -77,9 +77,9 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
       return JSON.stringify({...raw, shooterAB:ab?.comparison() || {status:'unavailable'},
         debugModePrivacy:'Device-local only; no automatic upload or retained log.'},null,2);
     },
-    dispose() { disposed = true; ab?.dispose(); ab=null; tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
+    dispose() { disposed = true; copyEpoch++; dump?.remove?.(); dump=null; ab?.dispose(); ab=null; tracer?.dispose(); label?.remove?.(); copyButton?.remove?.(); if (env?.__inkwaveRangePerf===probe) delete env.__inkwaveRangePerf; },
   };
-  let label=null, copyButton=null;
+  let label=null, copyButton=null, dump=null, copyEpoch=0;
   const doc=env?.document;
   if (doc?.body && typeof doc.createElement==='function') {
     label=doc.createElement('pre');
@@ -120,17 +120,21 @@ export function createFrameTimingProbe({ now = () => performance.now(), env = gl
     copyButton.textContent = 'Copy trace / A-B';
     copyButton.style.cssText = 'position:fixed;top:6px;right:6px;z-index:10001;padding:7px 10px;border:1px solid #aaa;border-radius:5px;background:#181818;color:#fff;font:12px sans-serif;cursor:pointer';
     copyButton.addEventListener?.('click', async () => {
-      const report = probe.report();
+      if (disposed) return;
+      const request = ++copyEpoch, report = probe.report();
       try {
         if (!env.navigator?.clipboard?.writeText) throw Error('clipboard unavailable');
         await env.navigator.clipboard.writeText(report);
+        if (disposed || request !== copyEpoch) return;
+        dump?.remove?.(); dump=null;
         copyButton.textContent = 'Trace copied';
       } catch {
         // Plain text fallback for WebViews that deny clipboard permission.
-        const dump = doc.createElement('textarea');
+        if (disposed || request !== copyEpoch) return;
+        if (!dump) dump = doc.createElement('textarea');
         dump.value = report;
         dump.style.cssText = 'position:fixed;inset:40px 5px 5px 5px;z-index:10002;width:calc(100vw - 10px);height:70vh';
-        doc.body.appendChild(dump);
+        if (!dump.parentNode) doc.body.appendChild(dump);
         dump.focus?.(); dump.select?.();
         copyButton.textContent = 'Select text to copy';
       }

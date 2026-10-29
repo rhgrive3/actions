@@ -1,3 +1,4 @@
+import { readEncodedAudioResponse } from './encoded-response.mjs';
 import { audioLoadScope } from './load-deadline.mjs';
 /**
  * Optional operator-provided sound library. No Nintendo or reference WAVs are bundled.
@@ -218,9 +219,7 @@ export class AuthorizedSamplePack {
         scope.check();
         if(!current())throw cancelled;
         if(!res?.ok)throw new Error('HTTP '+(res?.status??'unknown'));
-        const reported=Number(res.headers?.get?.('content-length'));
-        if(Number.isFinite(reported)&&reported>MAX_FILE_BYTES)throw new Error('Clip exceeds 8 MiB');
-        const bytes=await res.arrayBuffer();
+        const bytes=await readEncodedAudioResponse(res,MAX_FILE_BYTES,{scope,label:'Clip is empty or exceeds 8 MiB'});
         scope.check();
         if(!current())throw cancelled;
         if(!(bytes instanceof ArrayBuffer)||bytes.byteLength>MAX_FILE_BYTES||!bytes.byteLength)throw new Error('Clip is empty or exceeds 8 MiB');

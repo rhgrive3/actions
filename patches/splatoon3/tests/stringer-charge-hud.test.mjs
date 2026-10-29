@@ -80,7 +80,10 @@ test('actual composed or emitted HUD packs marker coordinates and heading while 
     h._updMap({canvas,players:[p],expanded:false},1/60);
     const width=parseFloat(h.map.style.width),height=parseFloat(h.map.style.height);
     const x=(p.x*width).toFixed(1),y=(p.y*height).toFixed(1),yaw=p.isSelf?p.yaw:0;
-    assert.equal(h._L.md0,`${x}|${y}|${yaw.toFixed(2)}|${p.alive?1:0}|${p.isSelf?1:0}|${p.team}`);
+    // Palette and viewer-team changes invalidate stationary markers; the
+    // dedicated queue-ui-input test covers both gates and the stale-color control.
+    const enemy=p.team!==h._myTeam(),color=enemy?(h._L.cb||'#2f5bff'):(h._L.ca||'#ff8a14');
+    assert.equal(h._L.md0,`${x}|${y}|${yaw.toFixed(2)}|${p.alive?1:0}|${p.isSelf?1:0}|${p.team}|${color}|${enemy?1:0}`);
     assert.equal(dot.style.transform,`translate3d(${x}px,${y}px,0) rotate(${p.isSelf?p.yaw.toFixed(3):0}rad)`);
     const key=h._L.md0,transform=dot.style.transform;
     h._updMap({canvas,players:[p],expanded:false},1/60);

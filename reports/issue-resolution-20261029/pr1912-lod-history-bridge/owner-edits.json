@@ -1,0 +1,27 @@
+[
+  {
+    "before": "  const SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;\n",
+    "after": "  const SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;\n  if (!SI && !SW && !EX && !CL && !TI) {\n    sigs = new Int32Array(n);\n    _vtxSigCache.set(src, sigs);\n    return sigs;\n  }\n",
+    "label": "signature-free vertex fast path"
+  },
+  {
+    "before": "    const cc=!clusterColor.normalized&&!clusterColor.isInterleavedBufferAttribute?clusterColor.array:null;\n",
+    "after": "    const cc=!clusterColor.normalized&&!clusterColor.isInterleavedBufferAttribute?clusterColor.array:null;\n    // Repeated indexed corners have the same immutable source attributes and\n    // cluster. Keep first-visit ordering, and retain accessor/custom fallbacks.\n    const cornerMemo = src.index && tris.length > 2*n && n < 0xffffffff &&\n      sm && sc && cm && cc && [sourceMat,sourceColor,clusterMat,clusterColor].every(a =>\n        a.getComponent === THREE.BufferAttribute.prototype.getComponent && ArrayBuffer.isView(a.array))\n      ? new Uint32Array(n) : null;\n",
+    "label": "indexed corner memo allocation"
+  },
+  {
+    "before": "      const cluster = tris[i], original = sourceCorners[i];\n",
+    "after": "      const cluster = tris[i], original = sourceCorners[i];\n      const remembered = cornerMemo ? cornerMemo[original] : 0;\n      if (remembered) { remapped.push(remembered - 1); continue; }\n",
+    "label": "indexed corner memo reuse"
+  },
+  {
+    "before": "      if (same) { remapped.push(cluster); continue; }",
+    "after": "      if (same) { remapped.push(cluster); if (cornerMemo) cornerMemo[original] = cluster + 1; continue; }",
+    "label": "unsplit corner memo write"
+  },
+  {
+    "before": "      remapped.push(index);\n",
+    "after": "      remapped.push(index);\n      if (cornerMemo) cornerMemo[original] = index + 1;\n",
+    "label": "split corner memo write"
+  }
+]

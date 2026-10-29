@@ -80,15 +80,20 @@ const SPEAKER_RING = WAIL_SPEAKER_POSITIONS;
 
 function disposeModel(group) {
   group?.removeFromParent?.();
-  const geometries = new Set(), materials = new Set(), textures = new Set();
-  group?.traverse?.(o => {
-    if (o.geometry && !o.userData?.s3BorrowedGeometry && !isSharedGeometry(o.geometry)) geometries.add(o.geometry);
-    const mats = Array.isArray(o.material) ? o.material : [o.material];
-    for (const m of mats) { if (!m || m.userData?.s3SharedInk) continue; if (m.map) textures.add(m.map); materials.add(m); }
-  });
-  for (const g of geometries) g.dispose?.();
-  for (const t of textures) t.dispose?.();
-  for (const m of materials) m.dispose?.();
+  const state=disposeModel._scratch ||= {depth:0,slots:[]};
+  const slot=state.depth++,work=state.slots[slot] ||= {geometries:new Set(),materials:new Set(),textures:new Set()};
+  const {geometries,materials,textures}=work;
+  try {
+    group?.traverse?.(o => {
+      if (o.geometry && !o.userData?.s3BorrowedGeometry && !isSharedGeometry(o.geometry)) geometries.add(o.geometry);
+      if(Array.isArray(o.material)) {
+        for(const m of o.material){if(!m||m.userData?.s3SharedInk)continue;if(m.map)textures.add(m.map);materials.add(m);}
+      } else {const m=o.material;if(m&&!m.userData?.s3SharedInk){if(m.map)textures.add(m.map);materials.add(m);}}
+    });
+    for (const g of geometries) g.dispose?.();
+    for (const t of textures) t.dispose?.();
+    for (const m of materials) m.dispose?.();
+  } finally {geometries.clear();materials.clear();textures.clear();state.depth--;}
 }
 
 // Ultra Stamp: hold → wind up overhead → slam to the source swing frame → recover for the next
@@ -523,7 +528,7 @@ export function installSpecialModels(api) {
         for (const [x, y, z] of SPEAKER_RING) {
           const m = buildSubModel(THREE, spec.model, inkMat(color)), holder = new THREE.Group();
           holder.add(m.root); holder.position.set(x, y, z); G.scene?.add?.(holder);
-          s.devices.push({ spec, holder, model: m, base: [x, y, z] });
+          s.devices.push({ spec, holder, model: m, base: [x, y, z], speakerIndex: s.devices.length });
         }
         s.wailBatch = createWailSpeakerBatch(THREE, G.scene, s.devices);
         continue;
@@ -619,7 +624,7 @@ export function installSpecialModels(api) {
       if (spec.speakers) {
         // Deploy: the six speakers fly out of the kid's back and pop to size, then bob;
         // each laser tick kicks the cone back (S3 footage, Killer Wail 5.1 activation).
-        const M = SPECIAL_DEVICE_MOTION.speakers, age = t - s.startedAt, i = s.devices.indexOf(d);
+        const M = SPECIAL_DEVICE_MOTION.speakers, age = t - s.startedAt, i = d.speakerIndex;
         const deployAge = age / M.deploy;
         if (deployAge !== speakerDeployAge) { speakerDeployAge = deployAge; speakerDeploy = easeOutBack(deployAge); }
         const k = speakerDeploy;

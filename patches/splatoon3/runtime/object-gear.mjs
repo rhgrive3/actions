@@ -8,8 +8,21 @@ export const OBJECT_SHREDDER_RATES = Object.freeze({
   splashWall: 1.5, sprinkler: 10, beakon: 10, torpedo: 1.3,
 });
 const life = actor => Math.max(Number.isSafeInteger(actor?.netLife) ? actor.netLife : 0, Number.isSafeInteger(actor?.net?.lastLife) ? actor.net.lastLife : 0);
+// Only the accepted gear identity is independent of the sender's objectHit
+// event. Legacy bit27 is shared with turret state and is not such a proof.
+function acceptedObjectGear(actor) {
+  const proof = actor?.s3?.objectGearSnapshot;
+  return actor?.remote === true && proof?.source === 'accepted-gear'
+    && proof.owner === actor.owner && proof.life === life(actor)
+    && (proof.sequence === undefined || proof.sequence === actor.net?._adoptionSeq)
+    ? proof : null;
+}
 export function objectShredderEquipped(actor) {
   if (!actor) return false;
+  const accepted = acceptedObjectGear(actor);
+  // Never let an attacker override an independently accepted loadout with the
+  // objectShredder boolean embedded in a damage proposal.
+  if (accepted) return accepted.equipped === true;
   if (typeof actor.s3?.objectHitGear === 'boolean') return actor.s3.objectHitGear;
   if (!actor.remote) return actor.s3?.loadout?.[2]?.main === 'objectShredder';
   const proof = actor.s3?.objectGearSnapshot;
@@ -30,7 +43,7 @@ export function receiveObjectGearSnapshot(actor, owner, flags, adoption) {
 // Called only inside existing accepted-owner/life admission. A packet contains
 // one equipment identity, not an arbitrary damage multiplier. Old peers omit it.
 export function withObjectHitGear(actor, value, run) {
-  if (!actor) return run();
+  if (!actor || acceptedObjectGear(actor)) return run();
   actor.s3 ||= {};
   const previous = actor.s3.objectHitGear;
   actor.s3.objectHitGear = value === true;

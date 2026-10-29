@@ -1,0 +1,64 @@
+{
+  "utc": "2026-10-29T13:08:30.868803+00:00",
+  "head": "f3f171cb178f5be87946b86f7a3ef9b9d34dad71",
+  "trackedTreeCleanBefore": true,
+  "trackedTreeCleanAfter": true,
+  "node": "v22.23.4",
+  "canonical": {
+    "files": 41,
+    "total": 687,
+    "pass": 686,
+    "fail": 0,
+    "skip": 1,
+    "existingConditionalOptionalPackSkip": true
+  },
+  "cpuHistory": {
+    "total": 9,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0
+  },
+  "actualFullAplusProgram": {
+    "exitCode": 0,
+    "validJSON": true,
+    "stderrBytes": 0,
+    "historicalMigrationThreePairsByteIdentical": true,
+    "noRuntimeFPSGainClaim": true
+  },
+  "logs": [
+    {
+      "name": "agent2-pr1912-f3f171-canonical-verifier.tap",
+      "bytes": 154020,
+      "sha256": "17c0cc368145e8e9faaa35c0c1a5261980cc9a2c19dfa26c1e11b327b9e87372",
+      "gzipSha256": "cd61210c3c53e08c0fb71dafd085356375530bfbce0f8d1b2543942b53c229b1"
+    },
+    {
+      "name": "agent2-pr1912-f3f171-cpu-history.tap",
+      "bytes": 2339,
+      "sha256": "a413b39269f56f330d0bedd557c8f7f37f515738c0b5636f53f73c1ed51d0fbb",
+      "gzipSha256": "9b5f53f922e84c49e8aa059a16f831cd83199226dfb6afb4cc6d8dea3a5edc92"
+    },
+    {
+      "name": "agent2-pr1912-f3f171-aplus-benchmark.json",
+      "bytes": 6019,
+      "sha256": "0cae51177c5ebf4f9c1a47ddc6eb520e1b55fb632b771a2288b7550898f749cb",
+      "gzipSha256": "28ead12080f749351fa7aa27009c410e135593a7f27261efca5349639a1dc182"
+    },
+    {
+      "name": "agent2-pr1912-f3f171-aplus-benchmark.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    }
+  ],
+  "trackedFileSHA256": {
+    "scripts/ci/inkwave-test-suites.json": "c6ff04593b02669fee1f1d24d441319f7bb1c7aa1f7ccad12c8312e2d010e813",
+    "scripts/ci/inkwave-source-coverage.mjs": "22cbd84c1f973b73b1a32a641b1e97309944123ff2b8e3ed5a99cb6e8ce5cede",
+    "scripts/ci/inkwave-validate-contract.mjs": "d39a84bea161028723304c3c6280dffc5021643af90a94e20141b36796d5030a",
+    "scripts/benchmark-aplus-verification.mjs": "3bd7338fa85ea888c510174788276e960be22f357f926e350dd69ba56b8be2e2",
+    "scripts/tests/inkwave-cpu-history.test.mjs": "0f75f693cecc0354912f62b97c916b1a85b3af257246b84a52e86675edc7e020",
+    ".github/workflows/validate-inkwave-update.yml": "c7573d721523d5d5d4b985cc49a1b7cac3633723b74bdddd7028288a92cc4f05",
+    ".circleci/config.yml": "e0ef7cf14fc7cba1d95ae15828956706adae468bfe91ce1b50111c8275f47fab"
+  },
+  "limits": "Local source/CI/history verification only. Root owns the fresh production build, exact31 emitted and10sourceguard acceptance. These source results are not hosted CI or hardware proof. Prior suites overlap; do not sum counts. #1665/#1666 remain open: valid forged projectile births remain an authority limitation."
+}

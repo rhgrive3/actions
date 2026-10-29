@@ -203,6 +203,14 @@ export function validNetworkProjectileTiming(delay, life) {
   return bounded(delay, 0, NETWORK_PROJECTILE_DELAY_MAX)
     && bounded(life, Number.EPSILON, NETWORK_PROJECTILE_LIFE_MAX);
 }
+// Shared stateless native birth checks. Apply before FIFO/proof admission and
+// again at playback, so a row the native constructor rejects grants no proof.
+export function validNetworkProjectileBirth(e) {
+  if (!Array.isArray(e) || e[1] !== 'p' || !validNetworkProjectileTiming(e[11], e[12])
+    || !validNetworkProjectileCosmetics(e)) return false;
+  for (let index = 5; index <= 18; index++) if (!finite(e[index])) return false;
+  return true;
+}
 // BossBrain starts a 3- or 5-crablet wave only when fewer than 3 are alive:
 // at most 2 survivors + 5 new crablets. Reserve 16 wire slots for host
 // migration and future legitimate variants; none can demand thousands of meshes.

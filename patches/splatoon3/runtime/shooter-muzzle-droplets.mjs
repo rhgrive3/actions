@@ -14,18 +14,18 @@ export function muzzleDropletFamily(p){
 export function isOrdinaryShooter(p){return muzzleDropletFamily(p)==='shooter';}
 export class ShooterMuzzleDroplets{
  constructor(THREE){
-  this.next=0;this.count=0;this.drawn=0;this.emitted=0;
+  this.next=0;this.count=0;this.drawn=0;this.emitted=0;this._mayHaveLive=false;
   this.pool=Array.from({length:SHOOTER_MUZZLE_COSMETICS.bursts},()=>({owner:null,wid:null,t:0,seed:0,phaseMask:0,phases:new Float64Array(3),phaseCos:new Float64Array(3),phaseSin:new Float64Array(3),pos:new THREE.Vector3(),dir:new THREE.Vector3(),right:new THREE.Vector3(),up:new THREE.Vector3()}));
   this.origin=new THREE.Vector3();
  }
- clear(){for(const b of this.pool)b.owner=null;this.next=this.count=this.drawn=this.emitted=0;}
+ clear(){for(const b of this.pool)b.owner=null;this.next=this.count=this.drawn=this.emitted=0;this._mayHaveLive=false;}
  observe(p,time,system,camera){
   const family=muzzleDropletFamily(p);
   if(!family||p.delay>0||p._iwShooterMuzzleSeen||!p.owner?.color||!(p.age>=0&&p.age<4/60)||!p.start)return;
   p._iwShooterMuzzleSeen=true;
   if(camera&&camera.distanceToSquared(p.start)>900)return;
   const b=this.pool[this.next];this.next=(this.next+1)%this.pool.length;
-  b.owner=p.owner;b.wid=p.owner.weapon?.id;b.family=family;
+  this._mayHaveLive=true;b.owner=p.owner;b.wid=p.owner.weapon?.id;b.family=family;
   b.t=time-p.age;b.seed=p.seed||0;b.phaseMask=0;b.pos.copy(p.start);
   // Dualies must retain the fired hand's actual physical nozzle. Calling the
   // single getMuzzle() socket here would pull BOTH hands onto the right pistol.
@@ -47,6 +47,7 @@ export class ShooterMuzzleDroplets{
  }
  append(time,mesh,shape,look,petals,n,cap,m,q,s,pos,dir,axis,camera=null){
   this.count=this.drawn=0;
+  if(!this._mayHaveLive)return n;
   for(const b of this.pool){
    if(!b.owner)continue;
    const age=time-b.t;
@@ -67,6 +68,7 @@ export class ShooterMuzzleDroplets{
     look[o]=.01;look[o+1]=4;look[o+2]=1;look[o+3]=phase;petals[n*2]=petals[n*2+1]=0;n++;this.drawn++;
    }
   }
+  this._mayHaveLive=this.count>0;
   return n;
  }
 }

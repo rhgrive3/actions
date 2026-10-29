@@ -280,3 +280,19 @@ test('Rainmaker shot geometry sharing preserves exact palette colors and dispose
  effects.event(event);observe(scene.children[0]);effects.dispose();effects.dispose();
  assert.equal(retired,instanced.length);assert.ok(geometries.every(g=>g.disposals===1));assert.ok(materials.every(m=>m.disposals===1));assert.equal(scene.children.length,0);
 });
+
+test('Rainmaker shared constructor floors preserve null and extreme geometry through restore candidates',async()=>{
+ const raw=fs.readFileSync(new URL('./fixtures/rainmaker-before-constructor-share-031426fc.mjs.txt',import.meta.url),'utf8').replace(/from '(\.\/[^']+)'/g,(_all,path)=>'from '+JSON.stringify(new URL('../runtime/ranked/'+path,import.meta.url).href));
+ const {RainmakerRule:PriorRule}=await import(dataUrl(raw));
+ const {RainmakerRule:CurrentRule}=await import('../runtime/ranked/rainmaker.mjs');
+ const r=random(20261029);
+ const cases=[{}, {center:[0,0,0],goals:[[0,0,0],null],checkpoints:[[],[[1,2,3]]]},
+  {center:[-1e308,0,0],goals:[[1e308,0,0],[0,0,0]],checkpoints:[[[0,0,0]],[[1e308,1e308,1e308]]]}];
+ for(let i=0;i<500;i++)cases.push({center:[r()*100,0,r()*100],goals:[[r()*100,0,r()*100],[r()*100,0,r()*100]],checkpoints:[Array.from({length:i%5},()=>[r()*100,0,r()*100]),Array.from({length:i%7},()=>[r()*100,0,r()*100])]});
+ for(const rainmaker of cases){
+  const engines=[new PriorRule(null,{rainmaker}),new CurrentRule(null,{rainmaker})].map(rule=>({rule}));
+  for(const key of ['countBaselines','checkpointCountFloors','checkpointMinimumCount'])assert.deepEqual(engines[1].rule[key],engines[0].rule[key]);
+  for(let i=0;i<2;i++)engines[i].rule.restore(engines[i].rule.snapshot());
+  for(const key of ['countBaselines','checkpointCountFloors','checkpointMinimumCount'])assert.deepEqual(engines[1].rule[key],engines[0].rule[key]);
+ }
+});

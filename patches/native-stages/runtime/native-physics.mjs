@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { Physics, Hit, GroundHit, WALKABLE } from '../../../src/game/physics.js';
 import { PLAYER } from '../../../src/config.js';
-const min = new THREE.Vector3(), max = new THREE.Vector3();
+const min = new THREE.Vector3(), max = new THREE.Vector3(), _sortAsc = (a, b) => a - b;
 const SOURCE_CONTACT_EPSILON=1e-4;
-const SORT_CONTACTS_ASCENDING = (a,b) => a-b;
 const FOOT_RING=Array.from({length:8},(_,i)=>[Math.cos(i/8*Math.PI*2),Math.sin(i/8*Math.PI*2)]);
 const DOWN=new THREE.Vector3(0,-1,0);
 const FOOT_SUPPORT_KEYS=Object.freeze(['block','face','u','v','center','grate']);
@@ -28,7 +27,7 @@ export class NativePhysics extends Physics {
    out.block=this.level.blockForTriangle(h.triangle);out.face=this.level.data.triangleFace[h.triangle];out.triangle=h.triangle;
    if(out.face>=0){const f=this.level.faces[out.face],p=this.world._p.copy(h.point).sub(f.origin);out.u=p.dot(f.u);out.v=p.dot(f.v);}else out.u=out.v=0;
   }
-  const movingLimit=out.hit&&out.dist>0&&Number.isFinite(out.dist)?Math.min(maxDist,out.dist):maxDist;
+  const movingLimit=out.hit&&out.dist>0&&Number.isFinite(out.dist)?(maxDist<out.dist?maxDist:out.dist):maxDist;
   const d=this.level.blocks.length>this.level.staticBlockCount||this.dynamic.raycast!==Physics.prototype.raycast?this.dynamic.raycast(origin,dir,movingLimit,this.dynamicHit,skipGrates):null;
   if(d?.hit&&(!out.hit||d.dist<out.dist)){
    out.hit=true;out.dist=d.dist;out.point.copy(d.point);out.normal.copy(d.normal);out.block=d.block;out.face=d.face;out.u=d.u;out.v=d.v;out.triangle=-1;
@@ -87,36 +86,39 @@ export class NativePhysics extends Physics {
   c.groundNormal.set(0,1,0);c.wallNormal.set(0,0,0);c.groundBlock=c.wallBlock=c.ceilingBlock=-1;
  }
  _nativeContacts(pos,radius,lift,height,c,horizontal,skipGrates,iterations){
-  const w=this.world,s0=w._s0,s1=w._s1,dir=w._d;
+  const w=this.world,s0=w._s0,s1=w._s1,dir=w._d,pad=radius+.002;
   for(let pass=0;pass<iterations;pass++){
-   s0.set(pos.x,pos.y+lift+radius,pos.z);s1.set(pos.x,pos.y+Math.max(lift+radius,height-radius),pos.z);
-   min.copy(s0).min(s1).addScalar(-radius-.002);max.copy(s0).max(s1).addScalar(radius+.002);let moved=false;
+   const sy0=pos.y+lift+radius,sy1=pos.y+Math.max(lift+radius,height-radius);
+   s0.set(pos.x,sy0,pos.z);s1.set(pos.x,sy1,pos.z);
+   let x0=pos.x-pad,y0=sy0-pad,z0=pos.z-pad,x1=pos.x+pad,y1=sy1+pad,z1=pos.z+pad,moved=false;
+   min.set(x0,y0,z0);max.set(x1,y1,z1);
    // BVH builders partition equal-centre triangles differently. Collision
    // corrections are sequential, so broad-phase traversal must not choose the
    // controller result. Preserve canonical source triangle order in both the
    // worker conversion and the prepared conversion.
    const candidates=this._contactCandidates||(this._contactCandidates=[]);candidates.length=0;
    const pushCandidate=this._pushCandidate||(this._pushCandidate=id=>this._contactCandidates.push(id));
-   w.queryBox(min,max,pushCandidate);if(candidates.length>1)candidates.sort(SORT_CONTACTS_ASCENDING);
+   w.queryBox(min,max,pushCandidate);if(candidates.length>1)candidates.sort(_sortAsc);
    for(const id of candidates){
     if(skipGrates&&(w.flags[id]&4))continue;
-    // Earlier contacts move s0/s1: compute this candidate's bounds now.
-    const pad=radius+.002;
-    if(w.triangleOverlapsBounds?.(id,Math.min(s0.x,s1.x)-pad,Math.min(s0.y,s1.y)-pad,Math.min(s0.z,s1.z)-pad,Math.max(s0.x,s1.x)+pad,Math.max(s0.y,s1.y)+pad,Math.max(s0.z,s1.z)+pad)===false)continue;
+    // Earlier contacts move s0/s1: use the latest pushed capsule bounds.
+    if(w.triangleOverlapsBounds?.(id,x0,y0,z0,x1,y1,z1)===false)continue;
     const t=w.triangle(id),dist=w._capsuleDistance(s0,s1,t);if(dist>=radius-SOURCE_CONTACT_EPSILON)continue;
     dir.subVectors(w._bests,w._bestp);
     if(dist<1e-8){dir.fromArray(w.normals,id*3);w._center.copy(s0).add(s1).multiplyScalar(.5).sub(t.a);if(dir.dot(w._center)<0)dir.negate();}else dir.multiplyScalar(1/dist);
     const depth=radius-dist+SOURCE_CONTACT_EPSILON,hl=Math.hypot(dir.x,dir.z),block=this.level.blockForTriangle(id);
     if(horizontal&&hl>.3&&dir.y>-.6){
-     const push=Math.min(.45,depth/hl);dir.set(dir.x/hl,0,dir.z/hl);
+     const push=depth/hl<.45?depth/hl:.45;dir.set(dir.x/hl,0,dir.z/hl);
      s0.addScaledVector(dir,push);s1.addScaledVector(dir,push);pos.addScaledVector(dir,push);
      c.wall=true;c.wallNormal.copy(dir);c.wallBlock=block;
     }else{
      s0.addScaledVector(dir,depth);s1.addScaledVector(dir,depth);pos.addScaledVector(dir,depth);
      if(dir.y>.6){c.ground=true;c.groundNormal.copy(dir);c.groundBlock=block;}
      else if(dir.y<-.6){c.ceiling=true;c.ceilingBlock=block;}
-     else if(Math.abs(dir.y)<.6){c.wall=true;c.wallNormal.copy(dir);c.wallBlock=block;}
+     else if(dir.y>-.6&&dir.y<.6){c.wall=true;c.wallNormal.copy(dir);c.wallBlock=block;}
     }
+    x0=(s0.x<s1.x?s0.x:s1.x)-pad;y0=(s0.y<s1.y?s0.y:s1.y)-pad;z0=(s0.z<s1.z?s0.z:s1.z)-pad;
+    x1=(s0.x>s1.x?s0.x:s1.x)+pad;y1=(s0.y>s1.y?s0.y:s1.y)+pad;z1=(s0.z>s1.z?s0.z:s1.z)+pad;
     moved=true;
    }
    if(!moved)break;
@@ -138,17 +140,18 @@ export class NativePhysics extends Physics {
   return this._sourceBodyFits(pos,radius,lift,height,skipGrates,margin);
  }
  _sourceBodyFits(pos,radius,lift,height,skipGrates,margin){
-  const w=this.world,s0=w._s0.set(pos.x,pos.y+lift+radius,pos.z),s1=w._s1.set(pos.x,pos.y+Math.max(lift+radius,height-radius),pos.z);
-  min.copy(s0).min(s1).addScalar(-radius);max.copy(s0).max(s1).addScalar(radius);let fits=true;
+  const sy0=pos.y+lift+radius,sy1=pos.y+Math.max(lift+radius,height-radius);
+  const w=this.world,s0=w._s0.set(pos.x,sy0,pos.z),s1=w._s1.set(pos.x,sy1,pos.z);
+  min.set(pos.x-radius,sy0-radius,pos.z-radius);max.set(pos.x+radius,sy1+radius,pos.z+radius);let fits=true;
   // A fit query never moves its capsule. Keep the exact precheck bounds once,
   // but leave empty/grate-only queries free of the extra bounds calculation.
   let boundsReady=false,x0,y0,z0,x1,y1,z1;
   w.queryBox(min,max,id=>{
    if(!fits||(skipGrates&&(w.flags[id]&4)))return;
    if(!boundsReady){
-    const pad=Math.max(radius,radius-margin);
-    x0=Math.min(s0.x,s1.x)-pad;y0=Math.min(s0.y,s1.y)-pad;z0=Math.min(s0.z,s1.z)-pad;
-    x1=Math.max(s0.x,s1.x)+pad;y1=Math.max(s0.y,s1.y)+pad;z1=Math.max(s0.z,s1.z)+pad;boundsReady=true;
+    const pad=margin<0?radius-margin:radius;
+    x0=(s0.x<s1.x?s0.x:s1.x)-pad;y0=(s0.y<s1.y?s0.y:s1.y)-pad;z0=(s0.z<s1.z?s0.z:s1.z)-pad;
+    x1=(s0.x>s1.x?s0.x:s1.x)+pad;y1=(s0.y>s1.y?s0.y:s1.y)+pad;z1=(s0.z>s1.z?s0.z:s1.z)+pad;boundsReady=true;
    }
    if(w.triangleOverlapsBounds?.(id,x0,y0,z0,x1,y1,z1)===false)return;
    if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}

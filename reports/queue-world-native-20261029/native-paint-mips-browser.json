@@ -1,0 +1,20 @@
+{
+  "rows": [
+    {
+      "variant": "before",
+      "initialMipCalls": 1,
+      "resetMipCalls": 1,
+      "filter": 1006,
+      "glError": 0
+    },
+    {
+      "variant": "after",
+      "initialMipCalls": 0,
+      "resetMipCalls": 0,
+      "filter": 1006,
+      "glError": 0
+    }
+  ],
+  "differentChannels": 0,
+  "errors": []
+}

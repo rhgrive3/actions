@@ -90,7 +90,11 @@ function canvasRecorder() {
   return {c,commands};
 }
 test('composed minimap keeps exact paint commands, dynamic pads, jump expiry and no-Path2D fallback',()=>{
-  const body=between(composed('src/game/minimap.js'),'  _compose(dt) {','  _cross(');
+  const composedMap=composed('src/game/minimap.js');
+  const body=between(composedMap,'  _compose(dt) {','  _cross(');
+  const mapUpdate=between(composedMap,'  update(dt', '  _compose(dt) {');
+  const updateAge=between(mapUpdate,'    for (let i = fxList.length - 1; i >= 0; i--) {','    this.time += dt;');
+  const age=new Function('fxList','dt',updateAge);
   for(const paths of [false,true]) {
     let built=0; class Path {constructor(){this.commands=[];built++;}arc(...a){this.commands.push(['arc',...a]);}}
     const make=code=>{
@@ -107,7 +111,7 @@ test('composed minimap keeps exact paint commands, dynamic pads, jump expiry and
       if(i===90)for(const o of [a,b])o.owner.level.spawnBarrier=5;
       if(i===110)for(const o of [a,b])o.G.teamHex=['#b00','#abc'];
       if(i===130)for(const o of [a,b])o.owner.level.spawnPads[1]=null;
-      for(const o of [a,b]){o.commands.length=0;o.owner.time=i/60;o.draw.call(o.owner,1/60);}
+      for(const o of [a,b]){o.commands.length=0;o.owner.time=i/60;if(o===b)age(o.fxList,1/60);o.draw.call(o.owner,1/60);}
       assert.deepEqual(b.commands,a.commands);assert.deepEqual(b.fxList,a.fxList);
     }
     if(paths)assert.equal(built,14,'initial pads and only the changed geometry rebuild paths');
@@ -199,7 +203,8 @@ test('news disposal cancels page/close/open timers, RAF, tween closures and moda
   const dispose=fn(between(code,'  dispose() {','\n}'),'dispose',{clearTimeout:x=>timers.push(x),cancelAnimationFrame:x=>cancelled.push(x)});
   const el={remove(){this.removed=true;}},M={_modal:el};
   let heroWaits=0;
-  const o={M,el,_pre:[{}],_t:1,_nextTimer:2,_closeTimer:3,_raf:4,_tweens:[()=>{}],card:{},inkHost:{},confetti:{},_busy:true,
+  const releaseClock=fn(between(code,'  _releaseTweenClock() {','  _tween('),'_releaseTweenClock',{});
+  const o={_releaseTweenClock:releaseClock,M,el,_pre:[{}],_t:1,_nextTimer:2,_closeTimer:3,_raf:4,_tweens:[()=>{}],card:{},inkHost:{},confetti:{},_busy:true,
     _heroWait:()=>heroWaits++, _cancelHeroWait(){const cancel=this._heroWait;this._heroWait=null;cancel?.();}};
   dispose.call(o);dispose.call(o);
   assert.equal(heroWaits,1,'dispose also releases the registered image load waiter exactly once');

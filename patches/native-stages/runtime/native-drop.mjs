@@ -7,6 +7,7 @@ import {nativeSourceFootSupported} from './native-bot-support.mjs';
 
 const _dropDown=new THREE.Vector3(0,-1,0),_dropTo=new THREE.Vector3(),_dropPrev=new THREE.Vector3(),_dropPoint=new THREE.Vector3(),_dropRayOrigin=new THREE.Vector3(),_dropLocal=new THREE.Vector3(),_dropStart=new THREE.Vector3(),_dropGoal=new THREE.Vector3();
 const _dropFoot=new Hit(),_dropProbe={pos:_dropPoint,grounded:true,form:'kid'},_dropNode={x:0,y:0,z:0};
+const _transEdgeGround=new Hit(),_transDir=new THREE.Vector3(),_transPos=new THREE.Vector3(),_transPrev=new THREE.Vector3(),_transVel=new THREE.Vector3(),_transNormal=new THREE.Vector3(),_transHit=new Hit(),_transRayOrigin=new THREE.Vector3(),_transRayOut={point:new THREE.Vector3(),normal:new THREE.Vector3()},_transWalkOpts={minNormalY:.68},_transEnd=new THREE.Vector3(),_transPoint=new THREE.Vector3(),_transRel=new THREE.Vector3();
 function findDropEdge(from,toId){
  const nb=from?.nb;if(!nb)return undefined;
  for(let i=0;i<nb.length;i++){const e=nb[i];if(e.to===toId&&e.drop)return e;}
@@ -25,33 +26,47 @@ export function nativeDropClearance(level){
  const w=level.triangleWorld,q=Array.from({length:4},()=>new THREE.Vector3()),t0=new THREE.Triangle(),t1=new THREE.Triangle(),box=new THREE.Box3();
  const metrics={queries:0,triangleTests:0,distanceTests:0};
  const clear=(from,to,radius,lift,height,skipGrates=false)=>{
-  const low=lift+radius,high=Math.max(low,height-radius);
-  q[0].copy(from).setY(from.y+low);q[1].copy(from).setY(from.y+high);
-  q[2].copy(to).setY(to.y+low);q[3].copy(to).setY(to.y+high);
-  box.min.copy(q[0]).min(q[1]).min(q[2]).min(q[3]).addScalar(-radius);
-  box.max.copy(q[0]).max(q[1]).max(q[2]).max(q[3]).addScalar(radius);
-  const vertical=Math.hypot(to.x-from.x,to.z-from.z)<1e-10,segment=vertical||high-low<1e-10;
-  if(vertical){q[0].setY(Math.min(from.y,to.y)+low);q[3].setY(Math.max(from.y,to.y)+high);}
+  const low=lift+radius,high=low>height-radius?low:height-radius;
+  const fx=from.x,fy=from.y,fz=from.z,tx=to.x,ty=to.y,tz=to.z;
+  q[0].set(fx,fy+low,fz);q[1].set(fx,fy+high,fz);
+  q[2].set(tx,ty+low,tz);q[3].set(tx,ty+high,tz);
+  const bMinX=(fx<tx?fx:tx)-radius,bMaxX=(fx>tx?fx:tx)+radius;
+  const bMinY=(fy<ty?fy:ty)+low-radius,bMaxY=(fy>ty?fy:ty)+high+radius;
+  const bMinZ=(fz<tz?fz:tz)-radius,bMaxZ=(fz>tz?fz:tz)+radius;
+  box.min.set(bMinX,bMinY,bMinZ);box.max.set(bMaxX,bMaxY,bMaxZ);
+  const dx=tx-fx,dz=tz-fz,vertical=dx*dx+dz*dz<1e-20,segment=vertical||high-low<1e-10;
+  if(vertical){q[0].y=(fy<ty?fy:ty)+low;q[3].y=(fy>ty?fy:ty)+high;}
   else if(segment)q[3].copy(q[2]);
   else {t0.set(q[0],q[1],q[2]);t1.set(q[1],q[3],q[2]);}
   let fits=true;metrics.queries++;
+  const thresh=radius-.003;
   w.queryBox(box.min,box.max,id=>{
    if(!fits||skipGrates&&(w.flags[id]&4))return;
    const offset=id*9,vertices=w.triangles;
-   for(let axis=0;axis<3;axis++){
-    const v0=vertices[offset+axis],v1=vertices[offset+3+axis],v2=vertices[offset+6+axis];
-    if(Math.max(v0,v1,v2)<box.min.getComponent(axis)||Math.min(v0,v1,v2)>box.max.getComponent(axis))return;
-   }
+   const x0=vertices[offset],x1=vertices[offset+3],x2=vertices[offset+6];
+   if((x0<bMinX&&x1<bMinX&&x2<bMinX)||(x0>bMaxX&&x1>bMaxX&&x2>bMaxX))return;
+   const y0=vertices[offset+1],y1=vertices[offset+4],y2=vertices[offset+7];
+   if((y0<bMinY&&y1<bMinY&&y2<bMinY)||(y0>bMaxY&&y1>bMaxY&&y2>bMaxY))return;
+   const z0=vertices[offset+2],z1=vertices[offset+5],z2=vertices[offset+8];
+   if((z0<bMinZ&&z1<bMinZ&&z2<bMinZ)||(z0>bMaxZ&&z1>bMaxZ&&z2>bMaxZ))return;
    const tri=w.triangle(id);metrics.triangleTests++;if(!box.intersectsTriangle(tri))return;
    let distance;
    if(segment)distance=w._capsuleDistance(q[0],q[3],tri);
    else{
-    distance=Infinity;
-    for(const [a,b]of [[tri.a,tri.b],[tri.b,tri.c],[tri.c,tri.a]])distance=Math.min(distance,w._capsuleDistance(a,b,t0),w._capsuleDistance(a,b,t1));
-    for(const [a,b]of [[q[0],q[1]],[q[1],q[3]],[q[3],q[2]],[q[2],q[0]]])distance=Math.min(distance,w._capsuleDistance(a,b,tri));
+    const ta=tri.a,tb=tri.b,tc=tri.c,q0=q[0],q1=q[1],q2=q[2],q3=q[3];
+    distance=w._capsuleDistance(ta,tb,t0);
+    if(distance>=thresh){const d=w._capsuleDistance(ta,tb,t1);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(tb,tc,t0);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(tb,tc,t1);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(tc,ta,t0);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(tc,ta,t1);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(q0,q1,tri);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(q1,q3,tri);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(q3,q2,tri);if(d<distance)distance=d;}
+    if(distance>=thresh){const d=w._capsuleDistance(q2,q0,tri);if(d<distance)distance=d;}
    }
-   metrics.distanceTests++;if(distance<radius-.003)fits=false;
-  });
+   metrics.distanceTests++;if(distance<thresh){fits=false;return false;}
+  },true);
   return fits;
  };
  return {clear,metrics};
@@ -70,13 +85,13 @@ export function nativeDropTransition(graph,upper,lower){
  // Ordinary walking edges already carry the actor toward that floor's real
  // boundary. Screen only its supported edge instead of simulating every roof
  // point over a distant lower layer for several seconds.
- const edgeGround=new Hit();
+ const edgeGround=_transEdgeGround;
  P.groundProbe(lower.x,upper.y,lower.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,edgeGround,false);
  if(edgeGround.hit&&Math.abs(edgeGround.y-upper.y)<=.5)return null;
  const key=upper.id+':'+dx/length+':'+dz/length,cache=graph._nativeDropCache||(graph._nativeDropCache=new Map());
  if(cache.has(key))return cache.get(key);
  cache.set(key,null);
- const sweep=graph._nativeDropClearance||(graph._nativeDropClearance=nativeDropClearance(L)),direction=new THREE.Vector3(dx/length,0,dz/length),pos=new THREE.Vector3(upper.x,upper.y,upper.z),previous=pos.clone(),velocity=new THREE.Vector3(),normal=new THREE.Vector3(0,1,0),hit=new Hit();
+ const sweep=graph._nativeDropClearance||(graph._nativeDropClearance=nativeDropClearance(L)),direction=_transDir.set(dx/length,0,dz/length),pos=_transPos.set(upper.x,upper.y,upper.z),previous=_transPrev.copy(pos),velocity=_transVel.set(0,0,0),normal=_transNormal.set(0,1,0),hit=_transHit;
  const human=terrainRadius(false),squid=terrainRadius(true),step=1/60,groundSpeed=weightSpeedCurve('shooter','run')[0]*60;
  if(!P.bodyFits(pos,human,PLAYER.stepUp,PLAYER.height,false,.003))return null;
  let squidClearance=P.bodyFits(pos,squid,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.003);
@@ -96,20 +111,20 @@ export function nativeDropTransition(graph,upper,lower){
   if(pos.y<=PLAYER.fallDeathY+.5||!sweep.clear(previous,pos,human,PLAYER.stepUp,PLAYER.height))return null;
   if(squidClearance&&!sweep.clear(previous,pos,squid,PLAYER.squidBodyLift,PLAYER.squidHeight,true))squidClearance=false;
   if(dropped&&grounded){
-   const source=L.triangleWorld.ray(pos.clone().setY(pos.y+.1),new THREE.Vector3(0,-1,0),.3,{minNormalY:.68});
+   const source=L.triangleWorld.ray(_transRayOrigin.set(pos.x,pos.y+.1,pos.z),_dropDown,.3,_transWalkOpts,_transRayOut);
    if(source&&Math.abs(source.point.y-pos.y)<.12)landed={point:pos.clone(),face:L.data.triangleFace[source.triangle],triangle:source.triangle};
    break;
   }
  }
  if(!landed||landed.face<0)return null;
- const face=L.faces[landed.face],rel=landed.point.clone().sub(face.origin),u=rel.dot(face.u),v=rel.dot(face.v),iu=Math.min(face.nu-1,Math.max(0,Math.floor(u/face.cu))),iv=Math.min(face.nv-1,Math.max(0,Math.floor(v/face.cv)));
+ const face=L.faces[landed.face],rel=_transRel.copy(landed.point).sub(face.origin),u=rel.dot(face.u),v=rel.dot(face.v),iu=Math.min(face.nu-1,Math.max(0,Math.floor(u/face.cu))),iv=Math.min(face.nv-1,Math.max(0,Math.floor(v/face.cv)));
  if(!face.turf||!L.mask[face.grid+iv*face.nu+iu])return null;
  let target=null,score=Infinity;
  for(const n of graph.nodes){if(!n.nativePaintable||Math.abs(n.y-landed.point.y)>.3)continue;const d=Math.hypot(n.x-landed.point.x,n.z-landed.point.z);if(d<=graph.step*.85&&d<score){target=n;score=d;}}
  if(!target||target.id===upper.id)return null;
- const end=new THREE.Vector3(target.x,target.y,target.z);
+ const end=_transEnd.set(target.x,target.y,target.z);
  for(let i=0,count=Math.max(1,Math.ceil(score/.1));i<=count;i++){
-  const point=landed.point.clone().lerp(end,i/count),h=L.triangleWorld.ray(point.clone().setY(point.y+.2),new THREE.Vector3(0,-1,0),.4,{minNormalY:.68});
+  const point=_transPoint.copy(landed.point).lerp(end,i/count),h=L.triangleWorld.ray(_transRayOrigin.set(point.x,point.y+.2,point.z),_dropDown,.4,_transWalkOpts,_transRayOut);
   if(!h||!(h.flags&2)||Math.abs(h.point.y-point.y)>.15)return null;
  }
  if(!P.bodyFits(end,human,PLAYER.stepUp,PLAYER.height,false,.003)||!sweep.clear(landed.point,end,human,PLAYER.stepUp,PLAYER.height))return null;
@@ -135,7 +150,7 @@ function supportedDropTouchdown(G,actor,node){
  const previous=_dropPrev.copy(from),humanRadius=terrainRadius(false);
  const count=Math.max(1,Math.ceil(from.distanceTo(to)/.1));
  for(let i=0;i<=count;i++){
-  const p=_dropPoint.copy(from).lerp(to,i/count),h=L.triangleWorld.ray(_dropRayOrigin.set(p.x,p.y+.25,p.z),down,.5,{minNormalY:.68});
+  const p=_dropPoint.copy(from).lerp(to,i/count),h=L.triangleWorld.ray(_dropRayOrigin.set(p.x,p.y+.25,p.z),down,.5,_transWalkOpts,_transRayOut);
   if(!h||!(h.flags&2)||L.data.triangleFace[h.triangle]<0)return false;
   const face=L.faces[L.data.triangleFace[h.triangle]],local=_dropLocal.copy(h.point).sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),x=Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),z=Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)));
   if(!face.turf||!L.containsOnFace(face,h.point)||!L.mask[face.grid+z*face.nu+x])return false;

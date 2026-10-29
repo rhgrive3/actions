@@ -32,8 +32,12 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/native-action-representatives.test.mjs',
   'patches/splatoon3/tests/native-action-trace-binding.test.mjs',
   'patches/splatoon3/tests/roller-paint-world-update.test.mjs',
-  'patches/splatoon3/tests/catalog-paint-reentry.test.mjs',
+  'patches/network-replication/tests/combat-native-birth-timing.test.mjs',
   'patches/network-replication/tests/combat-single-round-targets.test.mjs',
+  'patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs',
+  'patches/splatoon3/tests/ranked-rainmaker-current-lifecycle.test.mjs',
+  'patches/splatoon3/tests/special-legacy-native-receiver.test.mjs',
+  'patches/splatoon3/tests/catalog-paint-reentry.test.mjs',
   'patches/local-quality/tests/native-ground-event-memo.test.mjs',
 ];
 function assertRemainingEmittedCoverage(source) {
@@ -50,11 +54,17 @@ function assertRemainingEmittedCoverage(source) {
   assert.doesNotMatch(step, /^        (?:if|continue-on-error):|--test-name-pattern|--test-skip-pattern|\|\|\s*(?:true|echo)/m);
   for (const file of remainingEmittedFiles) assert.equal(step.split(file).length - 1, 1, file);
   assert.equal((step.match(/\.test\.mjs/g) || []).length, remainingEmittedFiles.length);
+  const command = '          node --experimental-vm-modules --test --test-concurrency=2 \\\n';
+  const files = remainingEmittedFiles.map((file,i) => '            ' + file +
+    (i < remainingEmittedFiles.length - 1 ? ' \\\n' : '\n')).join('');
+  assert.equal(step.slice(step.indexOf(command)), command + files,
+    'exact mandatory file order and unfiltered command tail; no conditional missing-file fallback');
 }
 
 test('new remaining regressions execute once against the immutable emitted site in mandatory core', () => {
-  assert.equal(remainingEmittedFiles.length,27,'23 original emitted regressions plus four native policy and ownership regressions');
-  assert.ok(fs.statSync(new URL('../../patches/splatoon3/tests/catalog-paint-reentry.test.mjs',import.meta.url)).isFile(),'mandatory paint test exists');
+  assert.equal(remainingEmittedFiles.length,31,'all28 original entries plus native paint reentry and two ground ownership regressions');
+  for(const file of remainingEmittedFiles)
+    assert.ok(fs.statSync(new URL('../../'+file,import.meta.url)).isFile(),'mandatory file exists: '+file);
   assertRemainingEmittedCoverage(workflow);
 });
 
@@ -71,7 +81,13 @@ test('missing, duplicate, filtered, raw-source and optional remaining coverage i
     source => source.replace('          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n',
       '          INKWAVE_BUILT_SITE: ${{ github.workspace }}/inkwave-public\n'),
     source => source.replace('node --experimental-vm-modules --test --test-concurrency=2 \\\n', 'node --experimental-vm-modules --test --test-name-pattern=only --test-concurrency=2 \\\n'),
-    source => source.replace(remainingEmittedFiles[0], remainingEmittedFiles[0] + ' ' + remainingEmittedFiles[0]),
+    ...remainingEmittedFiles.map(file => source => source.replace(file, file + ' ' + file)),
+    source => source.replace('patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs',
+      'patches/splatoon3/tests/catalog-horizontal-sector-aim.test.mjs'),
+    source => source.replace('          node --experimental-vm-modules --test --test-concurrency=2 \\\n',
+      '          if test -d _site; then\n          node --experimental-vm-modules --test --test-concurrency=2 \\\n')
+      .replace('            ' + remainingEmittedFiles.at(-1) + '\n',
+        '            ' + remainingEmittedFiles.at(-1) + '\n          fi\n'),
   ]) {
     const mutant = change(workflow);
     assert.notEqual(mutant, workflow, 'negative control changes the actual workflow');
@@ -101,6 +117,7 @@ test('disabled, filtered, duplicated and non-source invocations cannot certify s
     workflow.replace(marker, marker + '\n        if: false'),
     workflow.replace(marker, marker + '\n        continue-on-error: true'),
     workflow.replace("INKWAVE_TEST_SHARD_COUNT: '8'", "INKWAVE_TEST_SHARD_COUNT: '1'"),
+    workflow.replace('needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]', 'needs: [validate_core, patch_tests, circleci_offload_gate]'),
     workflow.replace('shard: [0, 1, 2, 3, 4, 5, 6, 7]', 'shard: [0, 1, 2, 3, 4, 5, 6]'),
     workflow.replace('shard: [0, 1, 2, 3, 4, 5, 6, 7]', 'shard: [0, 1, 2, 3, 4, 5, 6, 6]'),
     workflow.replace('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}', 'INKWAVE_TEST_SHARD_INDEX: 0'),

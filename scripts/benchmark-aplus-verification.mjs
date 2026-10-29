@@ -35,7 +35,51 @@ import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapte
 import { adaptMotionFkHotpath } from '../patches/local-quality/motion-fk-hotpath-adapter.mjs';
 
 function benchmarkComposedProductionBuildParity() {
+  // Exact 2026-10-29 owner: no-attribute vertex signatures and indexed-corner
+  // memoization. These five literal hunks authenticate a distinct source epoch;
+  // they never alter the immutable historical A+ oracle or the live runtime.
+  const lodMemoOwnerEdits = Object.freeze([
+    {
+        "before": "  const SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;\n",
+        "after": "  const SI = A.skinIndex, SW = A.skinWeight, EX = A.aEx, CL = A.aCloth, TI = A.aTint;\n  if (!SI && !SW && !EX && !CL && !TI) {\n    sigs = new Int32Array(n);\n    _vtxSigCache.set(src, sigs);\n    return sigs;\n  }\n",
+        "label": "signature-free vertex fast path"
+    },
+    {
+        "before": "    const cc=!clusterColor.normalized&&!clusterColor.isInterleavedBufferAttribute?clusterColor.array:null;\n",
+        "after": "    const cc=!clusterColor.normalized&&!clusterColor.isInterleavedBufferAttribute?clusterColor.array:null;\n    // Repeated indexed corners have the same immutable source attributes and\n    // cluster. Keep first-visit ordering, and retain accessor/custom fallbacks.\n    const cornerMemo = src.index && tris.length > 2*n && n < 0xffffffff &&\n      sm && sc && cm && cc && [sourceMat,sourceColor,clusterMat,clusterColor].every(a =>\n        a.getComponent === THREE.BufferAttribute.prototype.getComponent && ArrayBuffer.isView(a.array))\n      ? new Uint32Array(n) : null;\n",
+        "label": "indexed corner memo allocation"
+    },
+    {
+        "before": "      const cluster = tris[i], original = sourceCorners[i];\n",
+        "after": "      const cluster = tris[i], original = sourceCorners[i];\n      const remembered = cornerMemo ? cornerMemo[original] : 0;\n      if (remembered) { remapped.push(remembered - 1); continue; }\n",
+        "label": "indexed corner memo reuse"
+    },
+    {
+        "before": "      if (same) { remapped.push(cluster); continue; }",
+        "after": "      if (same) { remapped.push(cluster); if (cornerMemo) cornerMemo[original] = cluster + 1; continue; }",
+        "label": "unsplit corner memo write"
+    },
+    {
+        "before": "      remapped.push(index);\n",
+        "after": "      remapped.push(index);\n      if (cornerMemo) cornerMemo[original] = index + 1;\n",
+        "label": "split corner memo write"
+    }
+]);
+  const lodBlob = value => createHash('sha1').update('blob '+Buffer.byteLength(value)+'\0').update(value).digest('hex');
+  function restoreReviewedLodMemoOwner(value) {
+    assert.equal(createHash('sha256').update(JSON.stringify(lodMemoOwnerEdits)).digest('hex'),
+      'cd0388cd9468fb6d43b64422c65f6d58e19e155bad5756f29e5409d1f7f4bd83','exact reviewed Lod memo owner descriptors');
+    if(lodBlob(value)==='4df1943b2d598d012eaa7fa09fe96af4900821bd')return value;
+    let prior=value;
+    for(const {before,after,label} of [...lodMemoOwnerEdits].reverse())
+      prior=replaceOnce(prior,after,before,'queue Lod memo owner '+label);
+    assert.equal(lodBlob(value),'54344ec75dbfff00176a83d0d557bad7bac5ec69','exact reviewed current Lod memo closure');
+    assert.equal(lodBlob(prior),'4df1943b2d598d012eaa7fa09fe96af4900821bd','exact reviewed predecessor Lod closure');
+    return prior;
+  }
   const lodCurrentSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-lod.js', import.meta.url), 'utf8');
+  assert.ok(['1ecceff38aa579aa2b25f00416a9cacd4f3ff4a8','7fcf28f91da1d9813b12cf33908ce62fc4856c8a'].includes(lodBlob(lodCurrentSrc)),
+    'exact reviewed predecessor or current Lod raw source');
   // Keep this historical A+ migration identity pinned to the reviewed parent.
   // Later #1861 queue work avoids intermediate draw-index buffers and keeps
   // every live runtime improvement. The benchmark must not mislabel that
@@ -70,6 +114,7 @@ function benchmarkComposedProductionBuildParity() {
   // The independently approved queue revision is a different source epoch.
   // Fail closed on any unreviewed current runtime drift, without losing the
   // preserved historical comparison above.
+  lodAfterSrc=restoreReviewedLodMemoOwner(lodAfterSrc);
   const currentLodBytes=Buffer.from(lodAfterSrc);
   assert.equal(createHash('sha1').update('blob '+currentLodBytes.length+'\0').update(currentLodBytes).digest('hex'),
     '4df1943b2d598d012eaa7fa09fe96af4900821bd',

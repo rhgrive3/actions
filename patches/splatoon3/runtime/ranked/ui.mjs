@@ -1,5 +1,7 @@
+import { towerCheckpointPosition } from './tower.mjs';
 import { strokeTowerRoute, objectiveOverlayChanged } from './minimap-cache.mjs';
 import { rankedText } from './strings.mjs';
+import { isOwnedZoneCoveragePair } from './zone-coverage-samples.mjs';
 const RULE_LABELS = Object.freeze({ zones: 'SPLAT ZONES', tower: 'TOWER CONTROL', rainmaker: 'RAINMAKER', clams: 'CLAM BLITZ' });
 const clamp01 = n => Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
@@ -56,6 +58,7 @@ function addStyle() {
 }
 
 const zonesTextCache = new WeakMap();
+const towerTextCache = new WeakMap();
 function zoneTextEntry(engine, coverage, captured, names, lang) {
   // Only the frozen production samples are eligible. Mutable/custom arrays
   // keep the original formatter, including sparse/accessor semantics.
@@ -67,11 +70,17 @@ function zoneTextEntry(engine, coverage, captured, names, lang) {
   let same=cache.text!==null && cache.lang===lang && cache.name0===name0 && cache.name1===name1 && cache.rows.length===coverage.length;
   for(let i=0;i<coverage.length;i++) {
     const pair=coverage[i];
-    if(!Array.isArray(pair)||pair.length!==2||!Object.isFrozen(pair)){cache.text=null;return null;}
-    const d0=Object.getOwnPropertyDescriptor(pair,'0'),d1=Object.getOwnPropertyDescriptor(pair,'1');
-    if(!d0||!d1||!('value' in d0)||!('value' in d1)){cache.text=null;return null;}
-    const a=Math.round(clamp01(d0.value)*100),b=Math.round(clamp01(d1.value)*100),owner=captured[i]?.team;
     const row=cache.rows[i]||(cache.rows[i]={});
+    let a,b;
+    if(row.pair===pair&&isOwnedZoneCoveragePair(pair)){a=row.a;b=row.b;}
+    else {
+      if(!Array.isArray(pair)||pair.length!==2||!Object.isFrozen(pair)){cache.text=null;return null;}
+      const d0=Object.getOwnPropertyDescriptor(pair,'0'),d1=Object.getOwnPropertyDescriptor(pair,'1');
+      if(!d0||!d1||!('value' in d0)||!('value' in d1)){cache.text=null;return null;}
+      a=Math.round(clamp01(d0.value)*100);b=Math.round(clamp01(d1.value)*100);
+      row.pair=isOwnedZoneCoveragePair(pair)?pair:null;
+    }
+    const owner=captured[i]?.team;
     if(row.a!==a||row.b!==b||row.owner!==owner)same=false;
     row.a=a;row.b=b;row.owner=owner;
   }
@@ -104,7 +113,22 @@ export function objectiveText(engine, G, api = {}) {
     const team = state.controllingTeam;
     const index = (state.checkpointIndex?.[team] || 0) + 1;
     const total = engine.stage?.tower?.checkpoints?.[team]?.length || 0;
-    return t('{team} TOWER · {progress}%', { team: t(teamName(team, G.palette?.names || G.match?.palette?.names)), progress: p }) + (total ? ' · ' + t('CP {index}/{total}', { index: Math.min(index, total), total }) : '');
+    const name = teamName(team, G.palette?.names || G.match?.palette?.names);
+    // Cache only scalar formatting inputs. An accessor locale or a custom
+    // coercible name keeps the original translation/read semantics.
+    const language = Object.getOwnPropertyDescriptor(api, 'LANG');
+    const ordinaryLanguage = language ? Object.hasOwn(language, 'value') : !('LANG' in api);
+    const lang = ordinaryLanguage ? language?.value : null;
+    const cacheable = ordinaryLanguage && (lang == null || typeof lang === 'string')
+      && typeof name === 'string' && typeof team === 'number' && typeof index === 'number' && typeof total === 'number';
+    const saved = cacheable ? towerTextCache.get(engine) : null;
+    if (saved && Object.is(saved.p, p) && Object.is(saved.team, team) && Object.is(saved.index, index)
+        && Object.is(saved.total, total) && saved.name === name && saved.lang === lang) return saved.text;
+    const text = t('{team} TOWER · {progress}%', { team: t(name), progress: p })
+      + (total ? ' · ' + t('CP {index}/{total}', { index: Math.min(index, total), total }) : '');
+    if (cacheable) towerTextCache.set(engine, { p, team, index, total, name, lang, text });
+    else towerTextCache.delete(engine);
+    return text;
   }
   if (engine.mode === 'rainmaker') {
     if (state.goalHold) return t('DUNKING · PROTECT THE CARRIER!');
@@ -209,7 +233,16 @@ function updateHud(hud, G, api) {
 
 function rankedJudge(hud, engine, data = {}, G = {}, api = {}) {
   const t = (text, vars) => rankedText(api.LANG, text, vars);
+  const match = G.match, netm = G.netm, net = G.net, transport = net?.tr;
+  const current = () => {
+    try {
+      return !hud?._judgeDisposed && G.match === match && G.netm === netm && G.net === net && net?.tr === transport
+        && (!match || match.ranked === engine) && (typeof data.isCurrent !== 'function' || !!data.isCurrent());
+    } catch { return false; }
+  };
+  if (!current()) return Promise.resolve({ cancelled: true });
   if (!hud?.overLayer || typeof document === 'undefined') return Promise.resolve({ winner: engine.winner });
+  hud._judgeOwner?.cancel();
   addStyle();
   hud.overLayer.querySelectorAll('.iw-ranked-judge').forEach(node => node.remove());
   const winner = engine.winner ?? data.winner ?? -1;
@@ -238,23 +271,51 @@ function rankedJudge(hud, engine, data = {}, G = {}, api = {}) {
     : engine.overtime || data.overtime ? t('OVERTIME · RANKED OBJECTIVE DECIDED THE MATCH')
       : engine.reason === 'time' || data.reason === 'time' ? t('TIME · LOWEST COUNT WINS') : t('RANKED OBJECTIVE RESULT');
   hud.overLayer.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('is-on'));
   return new Promise(resolve => {
-    let elapsed = 0, done = false;
+    let elapsed = 0, done = false, settled = false, removed = false;
+    const startFxTime = Number.isFinite(hud._fxTime) ? hud._fxTime : null;
+    let showFrame = 0, removeTimer = null, fallbackTimer = null, tick;
+    const settle = result => { if (!settled) { settled = true; resolve(result); } };
+    const cleanup = () => {
+      clearTimeout(removeTimer); clearTimeout(fallbackTimer); removeTimer = fallbackTimer = null;
+      cancelAnimationFrame(showFrame); showFrame = 0;
+      el.remove();
+      if (hud._fxMap?.get('ranked-judge') === tick) hud._fxMap.delete('ranked-judge');
+      if (hud._judgeOwner === owner) hud._judgeOwner = null;
+      if (hud._fxMap && !hud._fxMap.size) { cancelAnimationFrame(hud._rafId); hud._rafId = 0; hud._fxClock?.dispose(); hud._fxClock = null; }
+    };
+    const owner = { kind:'ranked', current, cancel: () => {
+      if (removed) return;
+      removed = true; done = true; cleanup(); settle({ cancelled: true });
+    } };
+    hud._judgeOwner = owner;
+    const live = () => !removed && hud._judgeOwner === owner && current();
+    showFrame = requestAnimationFrame(() => {
+      showFrame = 0;
+      if (!live()) { owner.cancel(); return; }
+      el.classList.add('is-on');
+    });
     const finish = () => {
       if (done) return;
+      if (!live()) { owner.cancel(); return; }
       done = true;
       el.classList.add('is-out');
-      resolve({ winner });
-      setTimeout(() => el.remove(), 550);
+      settle({ winner });
+      removeTimer = setTimeout(() => { removed = true; cleanup(); }, 550);
     };
-    if (typeof hud._addFx === 'function') hud._addFx('ranked-judge', dt => {
-      elapsed += dt;
+    tick = (dt, clock) => {
+      if (!live()) { owner.cancel(); return false; }
+      if (done) return true; // Retain ownership during the unchanged 550 ms outgoing transition.
+      // Native HUD's presentation clock preserves foreground stalls while
+      // its physical dt stays bounded. Custom HUDs retain the one-arg API.
+      const presentationTime = hud._fxClock ? hud._fxTime : clock;
+      elapsed = startFxTime !== null && Number.isFinite(presentationTime) ? presentationTime - startFxTime : elapsed + dt;
       if (elapsed < 3.25) return true;
       finish();
-      return false;
-    });
-    else setTimeout(finish, 3250);
+      return !removed;
+    };
+    if (typeof hud._addFx === 'function') hud._addFx('ranked-judge', tick);
+    else fallbackTimer = setTimeout(() => { fallbackTimer = null; finish(); }, 3250);
   });
 }
 
@@ -305,7 +366,7 @@ function drawObjectives(minimap, engine, G) {
     const position = state.position || path[Math.round(finite(stage.tower?.centerIndex, Math.floor(path.length / 2)))];
     marker(ctx, minimap, position, state.controllingTeam === 0 || state.controllingTeam === 1 ? colors[state.controllingTeam] : '#ffe28a', 'T', 6);
     (stage.tower?.checkpoints || []).forEach((team, t) => (team || []).forEach((cp, i) => {
-      const p = path[Math.round(clamp01(cp.progress) * Math.max(0, path.length - 1))];
+      const p = towerCheckpointPosition(stage, t, cp?.progress, engine.rule?.metrics);
       if (p) marker(ctx, minimap, p, colors[t], String(i + 1), 3);
     }));
   } else if (engine.mode === 'rainmaker') {
@@ -360,6 +421,7 @@ export function installRankedUi(api = {}) {
       Object.defineProperty(proto, '_rankedUiWrapped', { value: true });
       const originalUpdate = proto.update;
       proto.update = function (dt, frame) {
+        if (this._judgeOwner?.kind === 'ranked' && !this._judgeOwner.current()) this._judgeOwner.cancel();
         const result = originalUpdate?.call(this, dt, frame);
         updateHud(this, G, api);
         return result;
@@ -368,6 +430,16 @@ export function installRankedUi(api = {}) {
       proto.judge = function (data = {}) {
         const engine = rankedOf(G);
         return engine ? rankedJudge(this, engine, data, G, api) : originalJudge.call(this, data);
+      };
+      const originalSetVisible = proto.setVisible;
+      if (typeof originalSetVisible === 'function') proto.setVisible = function (visible, ...args) {
+        if (!visible && this._judgeOwner?.kind === 'ranked' && !this._judgeOwner.current()) this._judgeOwner.cancel();
+        return originalSetVisible.call(this, visible, ...args);
+      };
+      const originalDispose = proto.dispose;
+      if (typeof originalDispose === 'function') proto.dispose = function (...args) {
+        if (this._judgeOwner?.kind === 'ranked') this._judgeOwner.cancel();
+        return originalDispose.apply(this, args);
       };
     }
   }

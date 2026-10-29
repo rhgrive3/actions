@@ -1,0 +1,15 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "recordCount": 65,
+  "occurrences": [
+    {
+      "name": "Dynamo Roller",
+      "sourceActor": "WeaponRollerHeavy",
+      "path": "/parameters/WideSwingUnitGroupParam/Unit/1/UnitDamageRate",
+      "value": 0,
+      "sourceSha256": "7206012122ec2faf48713f313ed58002bd77fe4f7e9923aee667bc518102a37a"
+    }
+  ],
+  "limit": "Curated numerical65base records only. Field names/values do not establish a native consumer or zero/sentinel interpretation."
+}

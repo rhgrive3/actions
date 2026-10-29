@@ -6,6 +6,7 @@ import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptDriveVisualAudio} from '../drive-visual-audio-adapter.mjs';
 import {mulberry32} from '../../splatoon3/runtime/audio/reverb-impulse.mjs';
+import {createPresentationClock} from '../presentation-clock.mjs';
 import {nonWailVfxTicks} from '../../splatoon3/runtime/nonwail-vfx-clock.mjs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 const old=JSON.parse(fs.readFileSync(new URL('./fixtures/drive-visual-before-7f863ea2.json',import.meta.url),'utf8'));
@@ -143,7 +144,7 @@ test('game-owned ambience and movement loops recover into a free slot without fu
  const damp=(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt)),binding={G:{audio},damp};
  for(const name of ['_updateAmbience','_updateLocalLoops']){
   audio.loops.clear();audio.created=0;const update=method('src/main.js','Game',name,binding);
-  const self={_audioOn:true,showcase:{fullFrame:true},match:{local:{alive:true,anim:{form:'swim'},vel:{x:2,y:0,z:0},grounded:false}},_wantLocalLoop:method('src/main.js','Game','_wantLocalLoop',binding)};
+  const self={_audioOn:true,showcase:{fullFrame:true},match:{local:{alive:true,anim:{form:'swim'},vel:{x:2,y:0,z:0},grounded:false}},_wantLocalLoop:method('src/main.js','Game','_wantLocalLoop',binding),_recoverMainLoop:method('src/main.js','Game','_recoverMainLoop',binding)};
   update.call(self,1/60);assert.equal(audio.created,1);const initial=name==='_updateAmbience'?self._amb:self._loops.swim;initial.stop();
   for(let i=0;i<24;i++)audio.loops.add({playing:true});for(let i=0;i<100;i++)update.call(self,1/60);assert.equal(audio.created,1);
   audio.loops.delete(audio.loops.values().next().value);update.call(self,1/60);assert.equal(audio.created,2);const replacement=name==='_updateAmbience'?self._amb:self._loops.swim;assert.notEqual(replacement,initial);assert.equal(replacement.playing,true);assert.equal(audio.loops.size,24);
@@ -166,9 +167,20 @@ const hudNow={...scheduling.hud,
  .replace('    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;',
           '    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }'),
  _addFx:scheduling.hud._addFx.replace('if (!this._rafId && !this._worldPaused) {','if (!this._rafId && !this._worldPaused && !this.paused) {')};
+// Explicit continuation contract: visible elapsed drives deadlines; callback
+// integration retains its .25 s cap. The frozen reviewed fixture stays unchanged.
+hudNow._fxLoop=hudNow._fxLoop
+ .replace('    const raw = Math.min(0.25, Math.max(0, (t - this._lastFx) / 1000));',
+          '    const elapsed = this._fxClock ? this._fxClock.elapsed(t) : Math.max(0, (t - this._lastFx) / 1000);\n    const raw = Math.min(0.25, elapsed);')
+ .replace('    this._fxTime += dt;', '    this._fxTime += elapsed * this.timeScale;')
+ .replace('    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }',
+          '    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }\n    if (!this._fxMap.size) { this._fxClock?.dispose(); this._fxClock = null; }');
+hudNow._addFx=hudNow._addFx
+ .replace('_addFx(name, fn) {', '_addFx(name, fn) {\n    this._fxClock ||= createPresentationClock();')
+ .replace('this._lastFx = performance.now();', 'this._lastFx = performance.now(); this._fxClock?.rebase(this._lastFx);');
 assert.notEqual(hudNow._fxLoop,scheduling.hud._fxLoop,'later pause optimization is actually represented');
 assert.notEqual(hudNow._addFx,scheduling.hud._addFx,'paused scheduling guard is actually represented');
-test('HUD preserves the reviewed pre-aggregate RAF methods byte-for-byte',()=>{
+test('HUD preserves reviewed RAF methods plus explicit pause/presentation contract deltas byte-for-byte',()=>{
  assert.equal(crypto.createHash('sha256').update(schedulingBytes).digest('hex'),'a177a9c1435cddbba40e32ab303736151040f5b3db629adcfe07e786ddd3b177');
  assert.equal(scheduling.provenance.publicRef,'e3a8c3b');
  for(const key of ['_fxLoop','_addFx'])assert.equal(member('src/ui/hud.js','HUD',key),hudNow[key],key);
@@ -177,6 +189,7 @@ test('reviewed HUD scheduling retains world pause, paused RAF, judge cancellatio
  function run(texts){
   let now=1000,id=0;const requests=[],errors=[],events=[],snapshots=[];
   const binding={performance:{now:()=>now},requestAnimationFrame(fn){requests.push(fn);return ++id;},cancelAnimationFrame(){},console:{error(...args){errors.push(args[0]);}}};
+  const clockEnvironment={performance:binding.performance};binding.createPresentationClock=()=>createPresentationClock(clockEnvironment);
   const self={_fxMap:new Map(),_rafId:0,_lastFx:0,_fxTime:0,timeScale:.5,paused:false,_worldPaused:false};
   for(const key of ['_fxLoop','_addFx'])self[key]=compile(texts[key],key,binding).bind(self);
   const record=()=>snapshots.push({requests:requests.length,raf:self._rafId,last:self._lastFx,time:self._fxTime,keys:[...self._fxMap.keys()],events:[...events]});
@@ -212,7 +225,7 @@ test('stable ally markers preserve rounded thresholds, fallback metadata and hid
  const a=compile(old['HUD._updMarkers'],'_updMarkers',bind),b=method('src/ui/hud.js','HUD','_updMarkers',bind);
  function state(){const el=element();el.lastChild={style:{}};const children={};el.querySelector=s=>children[s]||(children[s]={});return{_L:{},markers:[el],_actors:()=>[{name:'A',weaponId:'shooter',specialReady:()=>false}]};}
  const x=state(),y=state(),rows=[{x:10.1,y:20.1,onScreen:true,name:'A',color:'#fff',dist:16,weapon:'shooter',specialReady:false},{x:10.1,y:20.1,onScreen:true,name:'A',color:'#fff',dist:16,weapon:'shooter',specialReady:false},{x:10.12,y:20.12,onScreen:true,name:'A',color:'#fff',dist:16.01,weapon:'shooter',specialReady:false},null,{x:10.12,y:20.12,onScreen:true,name:'A',color:'#fff',dist:16.01,weapon:'shooter',specialReady:false},{x:-0,y:NaN,onScreen:false,angle:.02,name:'A',color:'#ddd',dist:40}];
- for(const row of rows){a.call(x,row?[row]:[]);b.call(y,row?[row]:[]);assert.deepEqual(y._L,x._L);assert.deepEqual(y.markers[0].writes,x.markers[0].writes);assert.equal(y.markers[0].style.transform,x.markers[0].style.transform);assert.equal(y.markers[0].lastChild.style.transform,x.markers[0].lastChild.style.transform);}
+ for(const row of rows){a.call(x,row?[row]:[]);b.call(y,row?[row]:[]);assert.deepEqual(y._L,x._L);assert.deepEqual(y.markers[0].writes.filter(([k])=>k!=='--far'),x.markers[0].writes.filter(([k])=>k!=='--far'));assert.equal(y.markers[0].style.getPropertyValue('--far'),x.markers[0].style.getPropertyValue('--far'));assert.ok(y.markers[0].writes.filter(([k])=>k==='--far').length<=x.markers[0].writes.filter(([k])=>k==='--far').length);assert.equal(y.markers[0].style.transform,x.markers[0].style.transform);assert.equal(y.markers[0].lastChild.style.transform,x.markers[0].lastChild.style.transform);}
  y._L={};b.call(y,[rows[0]]);assert.ok(y._L.mk0);
 });
 test('bounded HUD ally selection retains exactly the first three allies plus independent base and Bubbler targets',()=>{
@@ -229,4 +242,4 @@ test('SetBuilder consumes only merged scratch geometries and preserves singleton
  const consumed=build.call(self,{consume:true});assert.deepEqual(consumed.merged.combined,['a','b']);assert.equal(consumed.single,c);assert.equal(self.buckets.size,0);assert.deepEqual(disposed,['a','b']);
 });
 
-test('paused _addFx records the task without requesting RAF until unpaused',()=>{let requests=0;const self={paused:true,_worldPaused:false,_rafId:0,_fxLoop(){}};const add=compile(member('src/ui/hud.js','HUD','_addFx'),'_addFx',{performance:{now:()=>123},requestAnimationFrame(){requests++;return 1;}});const fn=()=>false;add.call(self,'pending',fn);assert.equal(self._fxMap.get('pending'),fn);assert.equal(requests,0);self.paused=false;add.call(self,'pending',fn);assert.equal(requests,1);assert.equal(self._rafId,1);});
+test('paused _addFx records the task without requesting RAF until unpaused',()=>{let requests=0;const self={paused:true,_worldPaused:false,_rafId:0,_fxLoop(){}};const add=compile(member('src/ui/hud.js','HUD','_addFx'),'_addFx',{performance:{now:()=>123},createPresentationClock:()=>createPresentationClock({performance:{now:()=>123}}),requestAnimationFrame(){requests++;return 1;}});const fn=()=>false;add.call(self,'pending',fn);assert.equal(self._fxMap.get('pending'),fn);assert.equal(requests,0);self.paused=false;add.call(self,'pending',fn);assert.equal(requests,1);assert.equal(self._rafId,1);});

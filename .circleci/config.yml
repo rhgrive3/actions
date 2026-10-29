@@ -27,8 +27,10 @@ workflows:
             scripts/check-weapons-reference.mjs run-inkwave true
             scripts/run-logged-test-process.mjs run-inkwave true
             scripts/lib/minimap-.* run-inkwave true
+            scripts/lib/.* run-inkwave true
             scripts/tests/test_fetch_inkwave_pinned_references.py run-inkwave true
             package.json run-inkwave true
             package-lock.json run-inkwave true
             .github/workflows/validate-inkwave-update.yml run-inkwave true
+            \.github/workflows/pages-inkwave\.yml run-inkwave true
             .circleci/.* run-inkwave true

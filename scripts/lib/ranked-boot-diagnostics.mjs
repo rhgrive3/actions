@@ -15,14 +15,37 @@ export function rankedHttpFailureDetails(response, documentUrl, artifacts = {}) 
   const relative = decodeURIComponent(url.pathname.slice(new URL('.', base).pathname.length));
   const responseHeaders = {};
   // Deliberately omit cookies/authorization and retain only distribution provenance.
-  const allowed = new Set(['content-type','content-length','cache-control','etag','last-modified','age','date','server','via','x-cache','x-cache-hits','x-github-request-id','x-github-edge-region','x-served-by','x-fastly-request-id']);
+  const allowed = new Set(['content-type','content-length','cache-control','etag','last-modified','age','date','server','via','x-cache','x-cache-hits','x-github-request-id','x-github-edge-region','retry-after','x-served-by','x-fastly-request-id']);
   try { for (const [name,value] of Object.entries(response.headers?.() || {})) if (allowed.has(name.toLowerCase())) responseHeaders[name.toLowerCase()] = value; } catch {}
   let requestTiming = null;
   try { requestTiming = request.timing?.() || null; } catch {}
   return { kind:'critical-http', status:response.status(), url:response.url(), responseHeaders, requestTiming,
     expectedArtifact: Object.hasOwn(artifacts, relative) ? { file:relative, sha256:artifacts[relative] } : null };
 }
-export async function observeRankedBoot(page, url, receipt, start, { artifacts } = {}) {
+// A single Edge Varnish cache miss/503 is a candidate for a fresh-context
+// retry, never evidence of a successful public deployment. Require a known,
+// immutable and locally hashed build asset; all other failures stay fatal.
+export function recoverableRankedEdge503(receipt, identity, artifacts) {
+  if(receipt?.status!=='failed'||receipt.failures?.length!==1||!identity||!artifacts)return false;
+  const fail=receipt.failures[0];
+  if(fail.kind!=='critical-http'||fail.status!==503||
+     fail.responseHeaders?.server?.toLowerCase()!=='varnish'||
+     fail.responseHeaders?.['x-cache']?.toUpperCase()!=='MISS'||
+     !fail.expectedArtifact||!Number.isSafeInteger(receipt.context))return false;
+  try {
+    const url=new URL(fail.url),base=new URL(identity.url),prefix=new URL('.',base).pathname;
+    if(url.origin!==base.origin||!url.pathname.startsWith(prefix))return false;
+    const file=decodeURIComponent(url.pathname.slice(prefix.length));
+    return file.startsWith(`_versions/${identity.revision}/`) &&
+      file===fail.expectedArtifact.file &&
+      typeof artifacts[file]==='string' && /^[0-9a-f]{64}$/i.test(artifacts[file]) &&
+      fail.expectedArtifact.sha256===artifacts[file] &&
+      receipt.revision===identity.revision && receipt.contentHash===identity.contentHash &&
+      receipt.inputHash===identity.inputHash;
+  }catch{return false;}
+}
+
+export async function observeRankedBoot(page, url, receipt, start, { artifacts, observePhase } = {}) {
   receipt.url=url; receipt.startedAt=new Date().toISOString(); receipt.status='starting'; receipt.failures=[];
   let rejectFailure, finished=false;
   const failure = new Promise((_, reject) => { rejectFailure=reject; });
@@ -39,6 +62,8 @@ export async function observeRankedBoot(page, url, receipt, start, { artifacts }
     await Promise.race([failure, (async()=>{
       await start();
       if(finished)return; // A failed navigation must not enqueue a later readiness poll.
+      // Observation runs beside readiness, never postpones its 180s deadline.
+      if(observePhase)Promise.resolve().then(()=>observePhase('dom-ready')).catch(()=>{});
       // The renderer may run at 1-5 FPS under SwiftShader or mobile overload.
       // Playwright's default waitForFunction polling uses requestAnimationFrame,
       // so a ready startup could be mistaken for a boot hang. Poll by elapsed

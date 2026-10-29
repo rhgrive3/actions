@@ -1,0 +1,53 @@
+(node:508391) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source payment: full, partially funded depleted and truly empty attacks (1.985588ms)
+✔ all 7 additional Roller/Brush source reductions affect projectile count, speed and hit radius (1.429308ms)
+✔ depleted source damage uses the selected inner/outer damage multiplier (0.546465ms)
+✔ real catalog low-ink Roller/Brush shot retains reduced source unit identities and speed (1381.538324ms)
+✔ Flingza side 12 paint-only droplets and Dynamo zero-rate side unit have no hit authority (1.270217ms)
+✔ four Roller horizontal inside/outside damage profiles follow hit sector from individual launch origin (0.701358ms)
+✔ seven added Roller/Brush sources lose late-flight damage only in their own reject window (0.534266ms)
+(node:508393) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-launcher falling splash releases are clipped before free (1470.011347ms)
+✔ s3-slosher-launcher falling splash releases are clipped before wall (1044.70488ms)
+✔ s3-slosher-launcher falling splash releases are clipped before range (946.472214ms)
+✔ s3-slosher-launcher falling splash releases are clipped before life (900.989336ms)
+✔ s3-slosher-launcher falling splash releases are clipped before ghost (1133.613856ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before free (895.347267ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before wall (1080.787231ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before range (1001.494941ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before life (1020.316882ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before ghost (890.752171ms)
+✔ Sloshing Machine already has an airborne 38-damage outer attack beyond its direct core (914.883415ms)
+✔ all four airborne Bloblobber bubbles own independent 32-damage attacks (945.327698ms)
+(node:508412) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ four added Rollers retain per-pellet up/down pitch offsets and Flingza side +/-18 yaw (1.42417ms)
+✔ Pablo/Octobrush/Painbrush left and right strokes use separate pinned source yaw (0.476509ms)
+✔ Tri-Slosher/Dread Wringer use bias, exemption and pitch-sweep source without inventing random draws (0.396429ms)
+✔ source paint-only nearest for all five added Sloshers including sparse Machine (0.243978ms)
+✔ Brush source-specific 6/4 flick nearest slot and cycle reset (0.473986ms)
+✔ real catalog Roller and Brush shots follow down-45 camera pitch despite horizontal aimPoint (1342.754669ms)
+✔ #1812 all seven added Roller/Brush Actors preserve source pitch/yaw and both Brush hands at 30/60/120 render Hz (2192.38087ms)
+✔ #1812 real near-wall OBB clamps every Roller/Brush birth without flattening camera velocity (1172.355403ms)
+✔ #1812 Actor matrix detects the original Roller/Brush reticle-convergence regression (1074.07457ms)
+✔ #1812 native Splat Roller and seven added owners preserve camera pitch through actual flight/contact at 30/60/120 render Hz (10666.035105ms)
+✔ #1812 actual terrain impact detects the previous horizontal-reticle launch owner (2202.015994ms)
+{"dynamoAuthority":[{"kind":"player","unit":0,"before":1000,"after":820,"damage":180,"resolvedDamage":0},{"kind":"player","unit":1,"before":1000,"after":1000,"damage":0,"resolvedDamage":0},{"kind":"player","unit":"native","before":1000,"after":850,"damage":150,"resolvedDamage":150},{"kind":"beakon","unit":0,"before":1000,"after":481.6,"damage":518.4,"resolvedDamage":180},{"kind":"beakon","unit":1,"before":1000,"after":1000,"damage":0,"resolvedDamage":0},{"kind":"beakon","unit":"native","before":1000,"after":568,"damage":432,"resolvedDamage":150},{"kind":"canopy","unit":0,"before":200,"after":20,"damage":180,"resolvedDamage":180},{"kind":"canopy","unit":1,"before":200,"after":200,"damage":0,"resolvedDamage":0},{"kind":"canopy","unit":"native","before":200,"after":50,"damage":150,"resolvedDamage":150}]}
+{"dynamoSecondaryPaint":{"index":0,"paintCalls":2,"claimed":10.125,"turf":10.125}}
+{"dynamoSecondaryPaint":{"index":1,"paintCalls":2,"claimed":10.1875,"turf":10.1875}}
+{"dynamoBubblerAuthority":[{"unit":0,"damage":1164.9142459443065,"contacts":[{"cachedAtQuery":0,"settledDamage":1164.9142459443062,"resolvedProjectileDamage":101.12102829377659,"applied":1164.9142459443062,"hpDamage":1164.9142459443065,"fieldDamage":0}]},{"unit":1,"damage":0,"contacts":[]},{"unit":"native","damage":1020.7038939505983,"contacts":[{"cachedAtQuery":1020.7038939505991,"settledDamage":1020.7038939505991,"resolvedProjectileDamage":150,"applied":1020.7038939505991,"hpDamage":1020.7038939505983,"fieldDamage":0}]}]}
+(node:508419) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1813 real Dynamo unit1 traverses player/device/canopy without phantom authority; source unit0 and native Splat hit all (1302.408288ms)
+✔ #1813 both zero-rate secondary globs still reach real floor collision and authoritative turf paint (1253.114237ms)
+✔ #1813 actual Dynamo/native dome contacts settle source band damage after the pure Big Bubbler query (1171.332003ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19423.760191

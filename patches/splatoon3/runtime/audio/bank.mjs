@@ -5,14 +5,17 @@ import { COMBAT_AUDIO } from './combat-recipes.mjs';
 import { SOURCE_EXTRA_AUDIO } from './source-cue-registry.mjs';
 export const AUDIO_RECIPES=Object.freeze({...WEAPON_AUDIO,...KIT_AUDIO,...COMBAT_AUDIO,...SOURCE_EXTRA_AUDIO});
 import { renderSound } from './render.mjs';
+import { audioWorkerDeadline } from './worker-deadline.mjs';
 export const MAIN_AUDIO_PREFIX='main:';
 // Source-recorded MP3s always win. Only MAIN-weapon attack one-shots may use
 // an explicitly authored INKWAVE fallback when the real sample is not resident.
 export const mainAttackFallbackEligible=(id,event)=>typeof id==='string'&&!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event)&&!!WEAPON_AUDIO[mainAudioSourceId(id)]?.events.includes(event);
 import { AuthorizedSamplePack } from './authorized-samples.mjs';
 const MAX_BYTES=12*1024*1024;
+// Recovery/retirement bounds, not audio timing or a measured device budget.
+const WORKER_TIMEOUT_MS=20000, WORKER_IDLE_MS=10000;
 export class WeaponSoundBank {
-  constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false,audibleShotFallback=false}={}){this.realOnly=realOnly;this.audibleShotFallback=!!audibleShotFallback;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.authorized=new AuthorizedSamplePack(ctx);}
+  constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false,audibleShotFallback=false,workerTimeoutMs=WORKER_TIMEOUT_MS,workerIdleMs=WORKER_IDLE_MS}={}){this.realOnly=realOnly;this.audibleShotFallback=!!audibleShotFallback;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this._proceduralMruKey=null;this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.workerDeadline=null;this.workerIdle=null;this.workerTimeoutMs=Number.isFinite(workerTimeoutMs)&&workerTimeoutMs>0?workerTimeoutMs:WORKER_TIMEOUT_MS;this.workerIdleMs=Number.isFinite(workerIdleMs)&&workerIdleMs>=0?workerIdleMs:WORKER_IDLE_MS;this.authorized=new AuthorizedSamplePack(ctx);}
   has(id,event='fire'){return !!AUDIO_RECIPES[mainAudioSourceId(id)]?.events.includes(event);}
   name(id,event='fire'){id=mainAudioSourceId(id);return this.has(id,event)?`${MAIN_AUDIO_PREFIX}${id}:${event}`:null;}
   get(id,event,variant=0){
@@ -21,40 +24,70 @@ export class WeaponSoundBank {
     if(Object.hasOwn(COMBAT_AUDIO,id)||Object.hasOwn(SOURCE_EXTRA_AUDIO,id))throw new Error('Recorded-only cue cannot generate PCM: '+id+'/'+event);
     if(this.realOnly&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Procedural weapon audio disabled for non-main-shot events');
     const key=`${id}:${event}:${variant}`;let item=this.cache.get(key);
-    if(item){this.cache.delete(key);this.cache.set(key,item);this.hits++;return item.buffer;}
+    if(item){if(this._proceduralMruKey!==key){this.cache.delete(key);this.cache.set(key,item);this._proceduralMruKey=key;}this.hits++;return item.buffer;}
     const recipe=AUDIO_RECIPES[id];if(!recipe||!this.has(id,event))throw new RangeError('Unknown main audio '+key);
     const pcm=renderSound(recipe,event,variant,this.ctx.sampleRate);this.misses++;return this._store(key,pcm);
   }
   _store(key,pcm){
     const found=this.cache.get(key);if(found)return found.buffer;
     const buffer=this.ctx.createBuffer(1,pcm.length,this.ctx.sampleRate);buffer.getChannelData(0).set(pcm);
-    const bytes=pcm.byteLength;while(this.bytes+bytes>this.maxBytes&&this.cache.size){const first=this.cache.keys().next().value;this.bytes-=this.cache.get(first).bytes;this.cache.delete(first);this.evicted++;}
-    if(bytes<=this.maxBytes){this.cache.set(key,{buffer,bytes});this.bytes+=bytes;}return buffer;
+    const bytes=pcm.byteLength;while(this.bytes+bytes>this.maxBytes&&this.cache.size){const first=this.cache.keys().next().value;this.bytes-=this.cache.get(first).bytes;this.cache.delete(first);if(this._proceduralMruKey===first)this._proceduralMruKey=null;this.evicted++;}
+    if(bytes<=this.maxBytes){this.cache.set(key,{buffer,bytes});this._proceduralMruKey=key;this.bytes+=bytes;}return buffer;
   }
   _ensureWorker(){
     if(this.worker||this.workerFailed||typeof this.ctx.startRendering==='function')return this.worker;
     if(typeof Worker==='undefined'&&!this.workerFactory){this.workerFailed=true;return null;}
     try{
-      this.worker=this.workerFactory?this.workerFactory():new Worker(new URL('./render-worker.js',import.meta.url),{name:'inkwave-audio-render'});
-      this.worker.onmessage=({data})=>{
-        const job=this.inFlight;if(this.disposed||!job||data?.key!==job[3])return;
-        this.inFlight=null;this.pending.delete(job[3]);
-        if(data.pcm instanceof Float32Array){if(!this.cache.has(job[3])){this._store(job[3],data.pcm);this.generatedOffThread++;}}
-        else {this.workerError=data.error||'Invalid worker PCM';this.workerFailed=true;this.worker.terminate();this.worker=null;this.jobs.unshift(job);}
-        this._pump();
+      const worker=this.worker=this.workerFactory?this.workerFactory():new Worker(new URL('./render-worker.js',import.meta.url),{name:'inkwave-audio-render'});
+      worker.onmessage=({data})=>{
+        const job=this.inFlight;if(this.disposed||this.worker!==worker||!job||data?.key!==job[3])return;
+        if(!(data.pcm instanceof Float32Array)){this._failWorker(worker,data.error||'Invalid worker PCM');return;}
+        try{if(!this.cache.has(job[3])){this._store(job[3],data.pcm);this.generatedOffThread++;}}
+        catch(error){this._failWorker(worker,error);return;}
+        this.workerDeadline?.();this.workerDeadline=null;
+        this.inFlight=null;this.pending.delete(job[3]);this._pump();
       };
-      this.worker.onerror=(error)=>{if(this.disposed)return;this.workerError=error?.message||'Worker initialization failed';this.workerFailed=true;this.worker?.terminate();this.worker=null;
-        if(this.inFlight){this.jobs.unshift(this.inFlight);this.inFlight=null;}this._pump();};
+      worker.onerror=error=>this._failWorker(worker,error?.message||'Worker initialization failed');
     }catch(error){this.worker=null;this.workerFailed=true;this.workerError=String(error?.message||error);}
     return this.worker;
   }
+  _releaseWorker(worker=this.worker){
+    if(worker!==this.worker)return;
+    this.workerDeadline?.();clearTimeout(this.workerIdle);
+    this.workerDeadline=this.workerIdle=null;this.worker=null;
+    if(worker){worker.onmessage=worker.onerror=null;worker.terminate();}
+  }
+  _failWorker(worker,error){
+    if(this.disposed||this.worker!==worker)return;
+    this.workerError=String(error?.message||error);this.workerFailed=true;
+    const job=this.inFlight;this.inFlight=null;this._releaseWorker(worker);
+    if(job)this.jobs.unshift(job);
+    this._pump();
+  }
+  _retireIdleWorker(){
+    if(!this.worker||this.inFlight||this.jobs.length||this.workerIdle!==null)return;
+    const worker=this.worker;
+    this.workerIdle=setTimeout(()=>{
+      if(this.worker!==worker||this.disposed)return;
+      this.workerIdle=null;
+      if(!this.inFlight&&!this.jobs.length)this._releaseWorker(worker);
+    },this.workerIdleMs);this.workerIdle.unref?.();
+  }
   _pump(){
     if(this.disposed||this.inFlight||this.timer)return;
-    const job=this.jobs.shift();if(!job)return;
+    const job=this.jobs.shift();if(!job){this._retireIdleWorker();return;}
     if(this.cache.has(job[3])){this.pending.delete(job[3]);this._pump();return;}
+    clearTimeout(this.workerIdle);this.workerIdle=null;
     const worker=this._ensureWorker();
     if(worker){this.inFlight=job;try{worker.postMessage({id:job[0],event:job[1],variant:job[2],key:job[3],sampleRate:this.ctx.sampleRate});}
-      catch{this.inFlight=null;this.workerFailed=true;worker.terminate();this.worker=null;this.jobs.unshift(job);this._pump();}return;}
+      catch(error){this._failWorker(worker,error);return;}
+      // A late old-worker reply cannot complete a replacement owner's job.
+      // A synchronous test Worker may already have finished during postMessage.
+      if(this.worker===worker&&this.inFlight===job){
+        this.workerDeadline=audioWorkerDeadline(()=>!this.disposed&&this.worker===worker&&this.inFlight===job,
+          ()=>this._failWorker(worker,'Authored audio render worker timed out'),{timeoutMs:this.workerTimeoutMs});
+      }
+      return;}
     // Offline tests / unsupported worker environments retain a bounded fallback, never a frame loop.
     this.timer=setTimeout(()=>{
       this.timer=null;if(this.disposed)return;
@@ -139,7 +172,7 @@ export class WeaponSoundBank {
   }
 
   stats(){return{realOnly:this.realOnly,audibleShotFallback:this.audibleShotFallback,bytes:this.bytes,budget:this.maxBytes,entries:this.cache.size,hits:this.hits,misses:this.misses,evicted:this.evicted,pending:this.pending.size,generatedOffThread:this.generatedOffThread,worker:!!this.worker,workerFallback:this.workerFailed,workerError:this.workerError,authorized:this.authorized.stats()};}
-  dispose(){this.disposed=true;this.worker?.terminate();this.worker=null;this.inFlight=null;if(this.timer)clearTimeout(this.timer);this.timer=null;this.jobs.length=0;this.pending.clear();this.cache.clear();this.defs.clear();this.roundRobin.clear();this.bytes=0;this.authorized.clear();}
+  dispose(){this.disposed=true;this._releaseWorker();this.inFlight=null;if(this.timer)clearTimeout(this.timer);this.timer=null;this.jobs.length=0;this.pending.clear();this.cache.clear();this._proceduralMruKey=null;this.defs.clear();this.roundRobin.clear();this.bytes=0;this.authorized.clear();}
 }
 // A weak actor key prevents one player's firing/landing from suppressing another's.
 const actors=new WeakMap();let nextActor=1;

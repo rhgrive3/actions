@@ -10,6 +10,7 @@ import { adaptRemainingPaint20261026 } from '../queue-remaining-paint-20261026-a
 import { adaptCombatWorldQueue20261027 } from '../queue-combat-world-20261027-adapter.mjs';
 import { adaptCombatGpuCpuPerfect } from '../combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptPaintRenderRegions } from '../paint-render-regions-adapter.mjs';
+import { adaptWorldNative20261029 } from '../queue-world-native-20261029-adapter.mjs';
 import { replaceOnce } from '../adapter.mjs';
 import { geometryFixture } from './geometry-build-fixture.mjs';
 
@@ -203,17 +204,20 @@ test('shelf retries preserve stable face ordering and atomic atlas commits for f
 });
 
 test('paint source adapter is isolated and fail-closed', () => {
-  // Remaining-paint owns this intermediate. Two later production owners alter
+  // Remaining-paint owns this intermediate. Later production owners alter
   // the terminal bytes; verify their exact ordered composition rather than
   // falsely asserting that the intermediate is the final source.
   const world = adaptCombatWorldQueue20261027('src/world/paint.js', candidate);
   const cpu = adaptCombatGpuCpuPerfect('src/world/paint.js', world, replaceOnce);
-  const terminal = adaptPaintRenderRegions('src/world/paint.js', cpu, replaceOnce);
+  const regional = adaptPaintRenderRegions('src/world/paint.js', cpu, replaceOnce);
+  const terminal = adaptWorldNative20261029('src/world/paint.js', regional);
   assert.notEqual(cpu, candidate, 'CPU owner is actually exercised');
-  assert.notEqual(terminal, cpu, 'regional rendering owner is actually exercised');
+  assert.notEqual(regional, cpu, 'regional rendering owner is actually exercised');
+  assert.notEqual(terminal, regional, 'native mip and stretch-factor owner is actually exercised');
   assert.equal(adaptBuildSource('src/world/paint.js', fs.readFileSync(path.join(SRC, 'src/world/paint.js'), 'utf8')), terminal,
-    'production composition is remaining-paint → combat-world → CPU → regional rendering');
+    'production composition is remaining-paint → combat-world → CPU → regional rendering → world-native');
   assert.throws(() => adaptPaintRenderRegions('src/world/paint.js', terminal, replaceOnce), /already composed/);
+  assert.throws(() => adaptWorldNative20261029('src/world/paint.js', terminal), /anchor/);
   assert.equal(adaptRemainingPaint20261026('src/config.js', baseline.paint.source), baseline.paint.source);
   assert.throws(() => adaptRemainingPaint20261026('src/world/paint.js', candidate), /source anchor/);
   assert.doesNotThrow(() => new vm.SourceTextModule(candidate));

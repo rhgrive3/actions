@@ -8,6 +8,7 @@ import { sourceEventRoute } from './extra-source-routes.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
 const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
+const RECORDED_COMBAT_CUES=Object.freeze(['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']);
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
 export function installWeaponAudioEngine(Engine){
@@ -71,12 +72,14 @@ export function installWeaponAudioEngine(Engine){
       // Small original impact/hit/splat MP3s are shared by ALL weapons.
       // Preload only for the active local weapon, behind its main shot.
       // This never warms unrelated remote gunshots or authors fallback PCM.
-      // Combat sounds belong to the AudioContext's shared bank, not each
-      // weapon. Warm exactly once per bank and refresh on context replacement.
-      if(this._warmCombatCueBank!==bank){
-        this._warmCombatCueBank=bank;
-        for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'])
-          loader?.ensure(cue,'fire')?.catch(()=>{});
+      // Re-check only these five shared residents on explicit preparation.
+      // LRU eviction or a failed first load must not leave a permanent "warm"
+      // marker. Resident/in-flight/backoff/absent cues create no new requests.
+      this._warmCombatCueBank=bank;
+      for(const cue of RECORDED_COMBAT_CUES){
+        if(bank.authorized.byEvent.has(cue+':fire') || loader?.inFlight?.has(cue+':fire') ||
+           loader?.retryPending?.(cue,'fire') || loader?.declares(cue,'fire')===false)continue;
+        loader?.ensure(cue,'fire')?.catch(()=>{});
       }
       if(AUDIO_RECIPES[id].family==='splatling'){
         // 2022 Spinner sources have distinct Motor (charge) and MotorFire
@@ -160,7 +163,7 @@ export function installWeaponAudioEngine(Engine){
     // Keep a distinct source decode receipt per cue. Bundled loading can
     // leave individual combat events unresident after a partial decode error;
     // never admit a hit unless that exact recorded event is authorized.
-    for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
+    for(const cue of RECORDED_COMBAT_CUES){
       if(loader.declares(cue,'fire')!==true)continue;
       const row=await audioLoadDeadline(loader.ensure(cue,'fire',{priority:true}),12000);
       if(!bank.authorized.byEvent.has(cue+':fire')){

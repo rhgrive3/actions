@@ -1,0 +1,9 @@
+前コメント https://github.com/rhgrive3/actions/issues/1431#issuecomment-6489904468 の訂正です。私の要約で、旧受入記録に残っていた「初回右手の予測弾が表示接続されない」という過去の状態と、本家Quad apertureの未取得根拠を、そのまま現在の未完条件として繰り返してしまいました。これは新しい人間の追加要求ではありません。旧記録は当時のHEADの履歴として変更せず保持します。
+
+元の受入条件は実Actorのfirst/steady・30/60/120Hz・上下照準/壁前OBB、aimReady/full-aim/LOSの回帰防止、damage/speed/ink/cadence/networkの維持、およびmain/完成済み#1277geometryの比較です。元の診断コメントも、物理birthと自然に離れるtrailを保持した表示接続とnative画像での検証を求めています。本家aperture認証や実機検証を新たな完了条件にはしません。
+
+現在のコードは初回右手のnative full-aim予測を認識し、物理birth/velocityを変えず、実際に描かれる銃口へFX/表示端点を接続します。immutable HEAD `2b01cd7efbca260a611165b1e3887ff48062ccd5` のsource/build全体を前後で照合し、実Actor/Character/Runner/Projectiles/Physics/FXとTidewaterを使ったソフトウェアWebGL36条件が成功しました。288birth、72first/steady画像、3初回予測画像を記録し、30/60/120Hzの初回右手予測は表示端点誤差0、実native volumeのback/rodも可視で検査しています。原点からpost-pose socketへの物理差約0.02915WUはnative予測として保持しています。
+
+212/212生成物gateはhit-pose/全cover segmentとauthority不変の回帰、今回の画像は現在の実表示をそれぞれ検証します。別のwarm二者ブラウザShooter検証をQuad/Explosher画像の代用にはしません。ソフトウェア診断であり、実機/FPS/本家geometryの同一性は主張しません。最初のdown45追加visibility要求が実地面で弾の退役後となり失敗したログも、そのまま残しています。
+
+証拠レポート: `reports/issue-resolution-20261029/issue1431-current2b/README.md`（公開時のcommitリンクへ差し替え）。現在の必須CIが成功したことを確認してから、このIssueの完了処理を行います。MOV08b/Character QAの保留やmain未merge方針は変更しません。

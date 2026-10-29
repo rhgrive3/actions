@@ -1,7 +1,7 @@
 // BVH and segment/triangle distance adapted from the user-supplied R6 handoff.
 import * as THREE from 'three';
 import {sphereTriangleEntry} from './sphere-triangle-entry.mjs';
-const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const clamp=(x,a,b)=>x<=a?+a:x>=b?+b:x;
 const V=()=>new THREE.Vector3();
 const _groundOrigin=V(),_groundDown=new THREE.Vector3(0,-1,0);
 
@@ -47,8 +47,11 @@ export class TriangleWorld {
    }else{
    for(let k=0;k<3;k++){
     const o=k===0?origin.x:k===1?origin.y:origin.z,d=k===0?dir.x:k===1?dir.y:dir.z;
-    if(Math.abs(d)<1e-12){if(o<nodes[ni+k]||o>nodes[ni+3+k]){miss=true;break;}continue;}
-    const a=(nodes[ni+k]-o)/d,b=(nodes[ni+3+k]-o)/d;low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low){miss=true;break;}
+    if(d>-1e-12&&d<1e-12){if(o<nodes[ni+k]||o>nodes[ni+3+k]){miss=true;break;}continue;}
+    const a=(nodes[ni+k]-o)/d,b=(nodes[ni+3+k]-o)/d;
+    if(a<=b&&typeof high==='number'&&high===high){if(a>low)low=a;if(b<high)high=b;if(high<low){miss=true;break;}}
+    else if(b<=a&&typeof high==='number'&&high===high){if(b>low)low=b;if(a<high)high=a;if(high<low){miss=true;break;}}
+    else{low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low){miss=true;break;}}
    }
    }
    if(miss)continue;
@@ -59,7 +62,7 @@ export class TriangleWorld {
     const t=this.order[q];if((ignoreGrates&&(this.flags[t]&4))||norm[t*3+1]<minNormalY)continue;
     const n=t*9,ax=verts[n],ay=verts[n+1],az=verts[n+2],ex=verts[n+3]-ax,ey=verts[n+4]-ay,ez=verts[n+5]-az,fx=verts[n+6]-ax,fy=verts[n+7]-ay,fz=verts[n+8]-az;
     const hx=dir.y*fz-dir.z*fy,hy=dir.z*fx-dir.x*fz,hz=dir.x*fy-dir.y*fx,det=ex*hx+ey*hy+ez*hz;
-    this.triangleTests++;if(Math.abs(det)<1e-10)continue;
+    this.triangleTests++;if(det>-1e-10&&det<1e-10)continue;
     const inv=1/det,sx=origin.x-ax,sy=origin.y-ay,sz=origin.z-az,u=(sx*hx+sy*hy+sz*hz)*inv;
     if(u<-.000001||u>1.000001)continue;
     const qx=sy*ez-sz*ey,qy=sz*ex-sx*ez,qz=sx*ey-sy*ex,v=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;
@@ -147,9 +150,12 @@ export class TriangleWorld {
  triangleOverlapsBounds(id,x0,y0,z0,x1,y1,z1){
   if(!Number.isFinite(x0+y0+z0+x1+y1+z1))return true;
   const a=this.triangles,i=id*9;
-  return !(Math.min(a[i],a[i+3],a[i+6])>x1||Math.max(a[i],a[i+3],a[i+6])<x0||
-   Math.min(a[i+1],a[i+4],a[i+7])>y1||Math.max(a[i+1],a[i+4],a[i+7])<y0||
-   Math.min(a[i+2],a[i+5],a[i+8])>z1||Math.max(a[i+2],a[i+5],a[i+8])<z0);
+  const ax=a[i],bx=a[i+3],cx=a[i+6];
+  if((ax>x1&&bx>x1&&cx>x1)||(ax<x0&&bx<x0&&cx<x0))return false;
+  const ay=a[i+1],by=a[i+4],cy=a[i+7];
+  if((ay>y1&&by>y1&&cy>y1)||(ay<y0&&by<y0&&cy<y0))return false;
+  const az=a[i+2],bz=a[i+5],cz=a[i+8];
+  return !((az>z1&&bz>z1&&cz>z1)||(az<z0&&bz<z0&&cz<z0));
  }
  /** Continuous sphere contact with unchanged source faces, edges and vertices.
   * Each feature yields a linear/quadratic earliest entry, including a linearly
@@ -160,14 +166,20 @@ export class TriangleWorld {
   if(!(radius>=0)||!(endRadius>=0)||!Number.isFinite(radius+endRadius)||!Number.isFinite(from.x+from.y+from.z+to.x+to.y+to.z)||this.nodes.length<8)return null;
   const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{box,delta,probe,normal}=scratch;
   delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
-  const maxRadius=Math.max(radius,endRadius),change=endRadius-radius;
-  box.min.copy(from).min(to).addScalar(-maxRadius-1e-9);box.max.copy(from).max(to).addScalar(maxRadius+1e-9);
+  const maxRadius=radius>endRadius?radius:endRadius,change=endRadius-radius,bPad=maxRadius+1e-9;
+  let curMinX=(from.x<to.x?from.x:to.x)-bPad,curMinY=(from.y<to.y?from.y:to.y)-bPad,curMinZ=(from.z<to.z?from.z:to.z)-bPad;
+  let curMaxX=(from.x>to.x?from.x:to.x)+bPad,curMaxY=(from.y>to.y?from.y:to.y)+bPad,curMaxZ=(from.z>to.z?from.z:to.z)+bPad;
+  box.min.set(curMinX,curMinY,curMinZ);box.max.set(curMaxX,curMaxY,curMaxZ);
   let best=Infinity,bestReference=null,bestTriangle=-1,bestTime=0,px=0,py=0,pz=0,nx=0,ny=0,nz=0;this.queryCount++;
+  const pad=maxRadius+1e-6;
+  const bMinX=curMinX,bMinY=curMinY,bMinZ=curMinZ,bMaxX=curMaxX,bMaxY=curMaxY,bMaxZ=curMaxZ;
   this.queryBox(box.min,box.max,id=>{
    if(ignoreGrates&&(this.flags[id]&4))return;
-   if(!this.triangleOverlapsBounds(id,box.min.x,box.min.y,box.min.z,box.max.x,box.max.y,box.max.z))return;
-   const tri=this.triangle(id);this.triangleTests++;
-   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal,lengthSquared);
+   if(!this.triangleOverlapsBounds(id,bMinX,bMinY,bMinZ,bMaxX,bMaxY,bMaxZ))return;
+   this.triangleTests++;
+   if(best<1&&!this.triangleOverlapsBounds(id,curMinX,curMinY,curMinZ,curMaxX,curMaxY,curMaxZ))return;
+   const tri=this.triangle(id);
+   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal,lengthSquared,best<1?best+1e-7:1);
    if(time===Infinity)return;
    const analyticTime=time;
    if(bestTriangle>=0&&Math.abs(time-best)<=1e-9){
@@ -184,6 +196,12 @@ export class TriangleWorld {
    if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
    else normal.normalize();
    best=analyticTime;bestTriangle=id;bestTime=time;px=this._bestp.x;py=this._bestp.y;pz=this._bestp.z;nx=normal.x;ny=normal.y;nz=normal.z;
+   if(best<1){
+    const tb=best+1e-6<1?best+1e-6:1,tx=from.x+delta.x*tb,ty=from.y+delta.y*tb,tz=from.z+delta.z*tb;
+    curMinX=(from.x<tx?from.x:tx)-pad;curMaxX=(from.x>tx?from.x:tx)+pad;
+    curMinY=(from.y<ty?from.y:ty)-pad;curMaxY=(from.y>ty?from.y:ty)+pad;
+    curMinZ=(from.z<tz?from.z:tz)-pad;curMaxZ=(from.z>tz?from.z:tz)+pad;
+   }
   });
   if(bestTriangle<0)return null;
   if(!out)return {triangle:bestTriangle,time:bestTime,distance:bestTime*length,point:new THREE.Vector3(px,py,pz),normal:new THREE.Vector3(nx,ny,nz),flags:this.flags[bestTriangle],object:this.objectIds[bestTriangle]};
@@ -217,67 +235,93 @@ export class TriangleWorld {
   }
   return hi;
  }
- triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.fromArray(a,i);out.b.fromArray(a,i+3);out.c.fromArray(a,i+6);return out;}
+ triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.x=a[i];out.a.y=a[i+1];out.a.z=a[i+2];out.b.x=a[i+3];out.b.y=a[i+4];out.b.z=a[i+5];out.c.x=a[i+6];out.c.y=a[i+7];out.c.z=a[i+8];return out;}
  ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(_groundOrigin.set(x,y+up,z),_groundDown,up+down,{ignoreGrates:squid,minNormalY:.62});}
  // Closest pair of points on two finite segments (degenerates included).
  _segments(a,b,c,d,outP,outQ){
-  const u=this._u.subVectors(b,a),v=this._v.subVectors(d,c),w=this._w.subVectors(a,c),A=u.dot(u),B=u.dot(v),C=v.dot(v),D=u.dot(w),E=v.dot(w);let s=0,t=0;
+  const ux=b.x-a.x,uy=b.y-a.y,uz=b.z-a.z,vx=d.x-c.x,vy=d.y-c.y,vz=d.z-c.z,wx=a.x-c.x,wy=a.y-c.y,wz=a.z-c.z;
+  const A=ux*ux+uy*uy+uz*uz,B=ux*vx+uy*vy+uz*vz,C=vx*vx+vy*vy+vz*vz,D=ux*wx+uy*wy+uz*wz,E=vx*wx+vy*wy+vz*wz;let s=0,t=0;
   if(A<1e-14){t=clamp(E/(C||1),0,1);}else if(C<1e-14){s=clamp(-D/A,0,1);}else{
    const den=A*C-B*B;s=den>1e-14?clamp((B*E-C*D)/den,0,1):0;t=(B*s+E)/C;
    if(t<0){t=0;s=clamp(-D/A,0,1);}else if(t>1){t=1;s=clamp((B-D)/A,0,1);}
   }
-  outP.copy(a).addScaledVector(u,s);outQ.copy(c).addScaledVector(v,t);return outP.distanceToSquared(outQ);
+  const px=outP.x=a.x+ux*s,py=outP.y=a.y+uy*s,pz=outP.z=a.z+uz*s;
+  const qx=outQ.x=c.x+vx*t,qy=outQ.y=c.y+vy*t,qz=outQ.z=c.z+vz*t;
+  const dx=px-qx,dy=py-qy,dz=pz-qz;return dx*dx+dy*dy+dz*dz;
  }
  _pointTriangleDistance(point,tri){
-  const bp=this._bestp,bs=this._bests,cp=this._cp,sp=this._sp,v=this._v,w=this._w;
-  tri.closestPointToPoint(point,cp);let best=cp.distanceToSquared(point);bp.copy(cp);bs.copy(point);
+  const bp=this._bestp,bs=this._bests,cp=this._cp,sp=this._sp;
+  tri.closestPointToPoint(point,cp);
+  const px=point.x,py=point.y,pz=point.z,spx=px+0,spy=py+0,spz=pz+0;
+  let dx=cp.x-px,dy=cp.y-py,dz=cp.z-pz,best=dx*dx+dy*dy+dz*dz;
+  bp.x=cp.x;bp.y=cp.y;bp.z=cp.z;bs.x=px;bs.y=py;bs.z=pz;
   // Match the original degenerate-segment edge formula and its rounding,
   // rather than replacing it with the Triangle helper's different tie path.
   for(let i=0;i<3;i++){
    const a=i===0?tri.a:i===1?tri.b:tri.c,b=i===0?tri.b:i===1?tri.c:tri.a;
-   v.subVectors(b,a);w.subVectors(point,a);const C=v.dot(v),E=v.dot(w),t=clamp(E/(C||1),0,1);
-   sp.set(point.x+0,point.y+0,point.z+0);cp.copy(a).addScaledVector(v,t);
-   const ds=sp.distanceToSquared(cp);if(ds<best){best=ds;bp.copy(cp);bs.copy(sp);}
+   const vx=b.x-a.x,vy=b.y-a.y,vz=b.z-a.z,wx=px-a.x,wy=py-a.y,wz=pz-a.z;
+   const C=vx*vx+vy*vy+vz*vz,E=vx*wx+vy*wy+vz*wz,t=clamp(E/(C||1),0,1);
+   const cpx=cp.x=a.x+vx*t,cpy=cp.y=a.y+vy*t,cpz=cp.z=a.z+vz*t;
+   sp.x=spx;sp.y=spy;sp.z=spz;
+   const ex=spx-cpx,ey=spy-cpy,ez=spz-cpz,ds=ex*ex+ey*ey+ez*ez;
+   if(ds<best){best=ds;bp.x=cpx;bp.y=cpy;bp.z=cpz;bs.x=spx;bs.y=spy;bs.z=spz;}
   }
   return Math.sqrt(best);
  }
  _capsuleDistance(s0,s1,tri){
   if(s0===s1)return this._pointTriangleDistance(s0,tri);
   const bp=this._bestp,bs=this._bests,cp=this._cp,sp=this._sp;
-  tri.closestPointToPoint(s0,cp);let best=cp.distanceToSquared(s0);bp.copy(cp);bs.copy(s0);
-  tri.closestPointToPoint(s1,cp);let ds=cp.distanceToSquared(s1);if(ds<best){best=ds;bp.copy(cp);bs.copy(s1);}
+  tri.closestPointToPoint(s0,cp);
+  let dx=cp.x-s0.x,dy=cp.y-s0.y,dz=cp.z-s0.z,best=dx*dx+dy*dy+dz*dz;
+  bp.x=cp.x;bp.y=cp.y;bp.z=cp.z;bs.x=s0.x;bs.y=s0.y;bs.z=s0.z;
+  tri.closestPointToPoint(s1,cp);
+  dx=cp.x-s1.x;dy=cp.y-s1.y;dz=cp.z-s1.z;let ds=dx*dx+dy*dy+dz*dz;
+  if(ds<best){best=ds;bp.x=cp.x;bp.y=cp.y;bp.z=cp.z;bs.x=s1.x;bs.y=s1.y;bs.z=s1.z;}
   const a=tri.a,b=tri.b,c=tri.c;
-  ds=this._segments(s0,s1,a,b,sp,cp);if(ds<best){best=ds;bp.copy(cp);bs.copy(sp);}
-  ds=this._segments(s0,s1,b,c,sp,cp);if(ds<best){best=ds;bp.copy(cp);bs.copy(sp);}
-  ds=this._segments(s0,s1,c,a,sp,cp);if(ds<best){best=ds;bp.copy(cp);bs.copy(sp);}
-  tri.getNormal(this._normal);const d0=this._normal.dot(this._d.subVectors(s0,a)),d1=this._normal.dot(this._d.subVectors(s1,a));
-  if(d0*d1<=0&&Math.abs(d0-d1)>1e-12){sp.copy(s0).lerp(s1,d0/(d0-d1));if(tri.containsPoint(sp)){best=0;bp.copy(sp);bs.copy(sp);}}
+  ds=this._segments(s0,s1,a,b,sp,cp);if(ds<best){best=ds;bp.x=cp.x;bp.y=cp.y;bp.z=cp.z;bs.x=sp.x;bs.y=sp.y;bs.z=sp.z;}
+  ds=this._segments(s0,s1,b,c,sp,cp);if(ds<best){best=ds;bp.x=cp.x;bp.y=cp.y;bp.z=cp.z;bs.x=sp.x;bs.y=sp.y;bs.z=sp.z;}
+  ds=this._segments(s0,s1,c,a,sp,cp);if(ds<best){best=ds;bp.x=cp.x;bp.y=cp.y;bp.z=cp.z;bs.x=sp.x;bs.y=sp.y;bs.z=sp.z;}
+  const v0x=c.x-b.x,v0y=c.y-b.y,v0z=c.z-b.z,v1x=a.x-b.x,v1y=a.y-b.y,v1z=a.z-b.z;
+  const nx=v0y*v1z-v0z*v1y,ny=v0z*v1x-v0x*v1z,nz=v0x*v1y-v0y*v1x;
+  const r0=nx*(s0.x-a.x)+ny*(s0.y-a.y)+nz*(s0.z-a.z),r1=nx*(s1.x-a.x)+ny*(s1.y-a.y)+nz*(s1.z-a.z);
+  const scale=(nx<0?-nx:nx)+(ny<0?-ny:ny)+(nz<0?-nz:nz);
+  if(!((r0>1e-7*scale&&r1>1e-7*scale)||(r0<-1e-7*scale&&r1<-1e-7*scale))){
+   tri.getNormal(this._normal);const d0=this._normal.dot(this._d.subVectors(s0,a)),d1=this._normal.dot(this._d.subVectors(s1,a));
+   if(d0*d1<=0&&Math.abs(d0-d1)>1e-12){sp.copy(s0).lerp(s1,d0/(d0-d1));if(tri.containsPoint(sp)){best=0;bp.x=sp.x;bp.y=sp.y;bp.z=sp.z;bs.x=sp.x;bs.y=sp.y;bs.z=sp.z;}}
+  }
   return Math.sqrt(best);
  }
  resolveCapsule(feet,height=1.45,radius=.38,ignoreGrates=false){
   let ground=false,wall=false,maxPush=0;const velocityNormal=new THREE.Vector3();
-  const s0=this._s0,s1=this._s1,box=this._box,tri=this._triangle;
+  const s0=this._s0,s1=this._s1,box=this._box,tri=this._triangle,pad=radius+.002;
   for(let pass=0;pass<4;pass++){
-   s0.set(feet.x,feet.y+radius,feet.z);s1.set(feet.x,feet.y+Math.max(radius,height-radius),feet.z);
-   box.min.copy(s0).min(s1).addScalar(-radius-.002);box.max.copy(s0).max(s1).addScalar(radius+.002);
+   const sy0=feet.y+radius,sy1=feet.y+Math.max(radius,height-radius);
+   s0.set(feet.x,sy0,feet.z);s1.set(feet.x,sy1,feet.z);
+   let x0=feet.x-pad,y0=sy0-pad,z0=feet.z-pad,x1=feet.x+pad,y1=sy1+pad,z1=feet.z+pad;
+   box.min.set(x0,y0,z0);box.max.set(x1,y1,z1);
    let pushed=false;
    this.queryBox(box.min,box.max,id=>{
     if(ignoreGrates&&(this.flags[id]&4))return;
+    if(!this.triangleOverlapsBounds(id,x0,y0,z0,x1,y1,z1))return;
     this.triangle(id,tri);const distance=this._capsuleDistance(s0,s1,tri);if(distance>=radius-.0001)return;
     const dir=this._d.subVectors(this._bests,this._bestp);
     if(distance<1e-8){tri.getNormal(dir);this._center.copy(s0).add(s1).multiplyScalar(.5).sub(tri.a);if(dir.dot(this._center)<0)dir.negate();}else dir.multiplyScalar(1/distance);
     const depth=radius-distance+.0003;if(depth>radius+height)return;
-    s0.addScaledVector(dir,depth);s1.addScaledVector(dir,depth);feet.addScaledVector(dir,depth);maxPush=Math.max(maxPush,depth);pushed=true;
-    if(dir.y>.6)ground=true;if(Math.abs(dir.y)<.5)wall=true;velocityNormal.add(dir);
+    s0.addScaledVector(dir,depth);s1.addScaledVector(dir,depth);feet.addScaledVector(dir,depth);if(depth>maxPush)maxPush=depth;pushed=true;
+    x0=(s0.x<s1.x?s0.x:s1.x)-pad;y0=(s0.y<s1.y?s0.y:s1.y)-pad;z0=(s0.z<s1.z?s0.z:s1.z)-pad;
+    x1=(s0.x>s1.x?s0.x:s1.x)+pad;y1=(s0.y>s1.y?s0.y:s1.y)+pad;z1=(s0.z>s1.z?s0.z:s1.z)+pad;
+    if(dir.y>.6)ground=true;if(dir.y>-.5&&dir.y<.5)wall=true;velocityNormal.add(dir);
    });
    if(!pushed)break;
   }
   return {ground,wall,maxPush,normal:velocityNormal.normalize()};
  }
  capsulePenetration(feet,height=1.45,radius=.38){
-  const s0=this._s0.set(feet.x,feet.y+radius,feet.z),s1=this._s1.set(feet.x,feet.y+Math.max(radius,height-radius),feet.z),box=this._box;
-  box.min.copy(s0).min(s1).addScalar(-radius);box.max.copy(s0).max(s1).addScalar(radius);let depth=0;
-  this.queryBox(box.min,box.max,id=>{this.triangle(id);depth=Math.max(depth,radius-this._capsuleDistance(s0,s1,this._triangle));});return depth;
+  const sy0=feet.y+radius,sy1=feet.y+Math.max(radius,height-radius);
+  const s0=this._s0.set(feet.x,sy0,feet.z),s1=this._s1.set(feet.x,sy1,feet.z),box=this._box;
+  const x0=feet.x-radius,y0=sy0-radius,z0=feet.z-radius,x1=feet.x+radius,y1=sy1+radius,z1=feet.z+radius;
+  box.min.set(x0,y0,z0);box.max.set(x1,y1,z1);let depth=0;
+  this.queryBox(box.min,box.max,id=>{if(!this.triangleOverlapsBounds(id,x0,y0,z0,x1,y1,z1))return;this.triangle(id);const pen=radius-this._capsuleDistance(s0,s1,this._triangle);if(pen>depth)depth=pen;});return depth;
  }
 }
 

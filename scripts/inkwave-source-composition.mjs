@@ -52,6 +52,13 @@ import { adaptQueueNetwork20261027 } from '../patches/network-replication/queue-
 import { adaptQueueAudioBuild20261027 } from '../patches/local-quality/queue-audio-build-20261027-adapter.mjs';
 import { adaptCombatWorldQueue20261027 } from '../patches/local-quality/queue-combat-world-20261027-adapter.mjs';
 import { adaptStringerChargeHud } from '../patches/splatoon3/stringer-charge-hud-adapter.mjs';
+import { adaptQueueUiInput20261029 } from '../patches/local-quality/queue-ui-input-20261029-adapter.mjs';
+import { adaptQueueUiContinuation20261029 } from '../patches/local-quality/queue-ui-continuation-20261029-adapter.mjs';
+import { adaptQueueVisualContinuation20261029 } from '../patches/local-quality/queue-visual-continuation-20261029-adapter.mjs';
+import { adaptWorldNative20261029 } from '../patches/local-quality/queue-world-native-20261029-adapter.mjs';
+import { adaptQueueCombatNetwork20261029 } from '../patches/local-quality/queue-combat-network-20261029-adapter.mjs';
+import { adaptQueueAudio20261029 } from '../patches/local-quality/queue-audio-20261029-adapter.mjs';
+import { adaptLateRoot20261029 } from '../patches/local-quality/queue-late-root-20261029-adapter.mjs';
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
 // grid. Apply at build time so the upstream game snapshot remains immutable.
@@ -128,7 +135,14 @@ export function adaptBuildSource(rel, code) {
   code = adaptQueueNetwork20261027(rel, code, replaceOnce);
   code = adaptCombatGpuCpuPerfect(rel, code, replaceOnce);
   code = adaptRenderTransfers(rel, code, replaceOnce);
-  return adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));
+  code = adaptQueueUiInput20261029(rel, code);
+  code = adaptWorldNative20261029(rel, code);
+  code = adaptQueueCombatNetwork20261029(rel, code);
+  code = adaptQueueAudio20261029(rel, code);
+  code = adaptLockOptionRecovery(rel, adaptPaintRenderRegions(rel, code, replaceOnce));
+  code = adaptQueueUiContinuation20261029(rel, code);
+  code = adaptQueueVisualContinuation20261029(rel, code);
+  return adaptLateRoot20261029(rel, code);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream
