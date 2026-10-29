@@ -18,7 +18,9 @@ const TAU = Math.PI * 2;
 const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 function registry(ch) {
-  for (let p = ch && Object.getPrototypeOf(ch); p; p = Object.getPrototypeOf(p))
+  const p0 = ch && Object.getPrototypeOf(ch);
+  if (p0 && Object.hasOwn(p0, INSTALLED)) return p0[INSTALLED];
+  for (let p = p0 && Object.getPrototypeOf(p0); p; p = Object.getPrototypeOf(p))
     if (Object.hasOwn(p, INSTALLED)) return p[INSTALLED];
 }
 const trackMap = ch => registry(ch)?.tracks ?? tracks;
