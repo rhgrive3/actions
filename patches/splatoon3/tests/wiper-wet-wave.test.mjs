@@ -95,15 +95,18 @@ test('charged shader removes dense stripes and emissive blade rim only on select
   assert.doesNotMatch(drill.fragmentShader,/wetBody|vS3A/,'no launch-only varying may leak into drill shader');
 });
 
-for(const hz of [30,60,120])test(`wet draw/repeat/clear at ${hz} Hz consumes no RNG and cannot alter gameplay`,async()=>{
+for(const hz of [30,60,120])test(`wet presentation draw/repeat/clear at ${hz} Hz consumes no RNG and cannot alter gameplay`,async()=>{
   const f=await setup(),{s,a}=fire(f,'s3-saber-lite');let calls=0;f.setRandom(()=>{calls++;return .37;});
-  const calls0=calls;
   for(let i=0;i<Math.ceil(hz/12);i++) {
-    s.update(1/hz);f.G.time+=1/hz;const before=physical(s,a);s._draw();s._draw();
+    // Simulation may use game RNG for a legitimate projectile event.
+    // Snapshot after the native tick, then prove both presentation draws are pure.
+    s.update(1/hz);f.G.time+=1/hz;const before=physical(s,a),drawRng=calls;
+    s._draw();s._draw();
+    assert.equal(calls,drawRng,'both repeated presentation draws consume zero gameplay RNG');
     assert.equal(physical(s,a),before,'repeat draw cannot move/paint/damage/retime a projectile');
   }
-  assert.equal(calls,calls0,'presentation consumes zero gameplay random calls');
-  s.clear();assert.equal(s._s3Shapes.slashV.count,0);assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.sheets.mesh.count,0);
+  const beforeClearRng=calls;
+  s.clear();assert.equal(calls,beforeClearRng,'renderer teardown cannot consume gameplay RNG');assert.equal(s._s3Shapes.slashV.count,0);assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.sheets.mesh.count,0);
   fire(f,'s3-saber-heavy');s._draw();assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.slashV.count,2);
 });
 

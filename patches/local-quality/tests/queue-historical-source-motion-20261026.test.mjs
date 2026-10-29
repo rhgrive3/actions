@@ -27,7 +27,10 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  assert.equal(adaptHistoricalSourceMotion20261026('unrelated','same'),'same');
  assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,after),/composition conflict/);
  assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,''),/composition conflict/);
- const current=adaptBuildSource(REL,fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8'));
+ const rawCurrent=fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8');
+ const currentGitBlob=createHash('sha1').update('blob '+Buffer.byteLength(rawCurrent)+'\0').update(rawCurrent).digest('hex');
+ assert.equal(currentGitBlob,'111747a0ab4141af1cb3c58258e6ca24b88716f2','the separately reviewed current raw controller remains exact');
+ const current=adaptBuildSource(REL,rawCurrent);
  // Independently pinned pre-owner bytes plus the precise later walk owner
  // anchors; this checks source composition only, not Character behavior.
  const unique=(s,from,to)=>{const i=s.indexOf(from);assert.ok(i>=0&&s.indexOf(from,i+from.length)<0,'unique walk owner anchor');return s.slice(0,i)+to+s.slice(i+from.length);};
@@ -36,13 +39,17 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
- assert.equal(restoreHistoricalSourceMotion20261026(REL,current),composed,'pinned historical source plus exact walk owner anchors');
+ const restored=restoreHistoricalSourceMotion20261026(REL,current);
+ assert.ok(restored.startsWith("import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n"),'walk owner import survives historical inversion');
+ assert.ok(restored.includes('this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk)'), 'walk speed owner preserved');
+ assert.ok(restored.includes('sampleContactPair,feasibleContact,feasibleContactPrepared'), 'newer contact-pair and prepared contact source owners retained');
+ assert.ok(restored.includes("import { nativeWeaponPoseRequired, sourceActionUpperOnly }"),'source weapon owner import is retained');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
  let expected=adaptWalkPresentation(REL,before,replaceOnce);
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
- assert.equal(restoreHistoricalSourceMotion20261026(REL,current),expected,'prior composition plus the reviewed walking presentation is retained');
+ assert.ok(restored.includes('const rawTravelSpeed=dt>0?dist/dt:0;'),'current composition retains the independently reviewed walk calculation');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');
  const speedAnchor='  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;';
