@@ -125,9 +125,14 @@ function loftLimb(path, ss, nTh, sec, opt = {}) {
   const poles = {};
   if (opt.capStart) { path.at(ss[0], fr); const r = sec(0, ss[0])[0]; poles.start = fr.C.clone().addScaledVector(fr.d, -r * opt.capStart); }
   if (opt.capEnd) { path.at(ss[ss.length - 1], fr); const r = sec(0, ss[ss.length - 1])[0]; poles.end = fr.C.clone().addScaledVector(fr.d, r * opt.capEnd); }
+  const normalCentres = [];
+  for (let j = 0; j < ss.length; j += Math.max(1, (ss.length / 24) | 0)) {
+    path.at(ss[j], fr); normalCentres.push(fr.C.clone());
+  }
+  path.at(0, fr); const normalFallback = fr.C.clone();
   const geo = K.gridGeo(rows, {
     wrapU: true, poles,
-    outward: (p, out) => { let best = 0, bd = 1e9; for (let j = 0; j < ss.length; j += Math.max(1, (ss.length / 24) | 0)) { path.at(ss[j], fr); const dd = fr.C.distanceToSquared(p); if (dd < bd) { bd = dd; best = ss[j]; } } path.at(best, fr); out.copy(fr.C); },
+    outward: (p, out) => { let best = normalFallback, bd = 1e9; for (const centre of normalCentres) { const dd = centre.distanceToSquared(p); if (dd < bd) { bd = dd; best = centre; } } out.copy(best); },
     uv: (i, j) => [i / nTh, ss[j]],
     poleUv: { start: [0, ss[0]], end: [0, ss[ss.length - 1]] },
   });
@@ -740,7 +745,8 @@ function webbing(curve, w, t, nSeg, nAcross, lvF, micro, opt = {}) {
   const T = new V3(), b = new V3();
   for (let j = 0; j <= nSeg; j++) {
     const u = j / nSeg;
-    const P = curve.getPointAt(u); curve.getTangentAt(u, T);
+    const arc = curve.getUtoTmapping(u);
+    const P = curve.getPoint(arc); curve.getTangent(arc, T);
     const fr = opt.frame ? opt.frame(P, u) : teeFrameAt(P, lvF, micro);
     const n = fr.n.clone().addScaledVector(T, -fr.n.dot(T)).normalize();
     b.crossVectors(T, n).normalize();
@@ -762,7 +768,14 @@ function webbing(curve, w, t, nSeg, nAcross, lvF, micro, opt = {}) {
   return { geo: g, len };
 }
 /** Tee weights for hardware riding on the tee (no hem flap). */
-function onTeeWeights(p) { return teeWeights(p).filter((e) => e[0] !== 'hemF' && e[0] !== 'hemB'); }
+function onTeeWeights(p) {
+  const weights = teeWeights(p);
+  // teeWeights appends at most one hem entry, after scaling the body weights.
+  // Preserve that scaling and all body entries; this list is owned by this call.
+  const last = weights[weights.length - 1];
+  if (last && (last[0] === 'hemF' || last[0] === 'hemB')) weights.pop();
+  return weights;
+}
 
 function addHarness(B, lv) {
   const R = RES[lv];
@@ -786,7 +799,7 @@ function addHarness(B, lv) {
     const o = fr.n.clone().addScaledVector(Tg, -fr.n.dot(Tg)).normalize();
     const bd = new V3().crossVectors(Tg, o).normalize();
     const base = best.P.clone().addScaledVector(o, fr.D + STRAP.t + 0.0003);
-    const w8 = () => onTeeWeights(best.P);
+    const fixedWeights = onTeeWeights(best.P), w8 = () => fixedWeights;
     // frame: two side rails + three bars (ladder), bevelled dark plastic
     const lock = new THREE.Group();
     const partsL = [];
@@ -809,7 +822,7 @@ function addHarness(B, lv) {
     const c = teeBase(0, 0.886, new V3()); const fr = teeFrameAt(c, lvF, micro);
     const n = fr.n.clone(); const X = new V3(1, 0, 0).addScaledVector(n, -n.x).normalize(); const Y = new V3().crossVectors(n, X).normalize();
     const at = c.clone().addScaledVector(n, fr.D + 0.0072);
-    const w8 = () => onTeeWeights(c);
+    const fixedWeights = onTeeWeights(c), w8 = () => fixedWeights;
     const put = (g2, x, y, z, ex, mc = MC.plastic) => { g2.translate(x, y, z); K.placeBasis(g2, X, Y, at); B.add(g2, { ex, v3: cl(PART.none, mc), weights: w8 }); };
     // female housing (left half) with its open mouth, male tongue (right half) with two prongs and a thumb grip
     put(K.superEllipsoid(0.0118, 0.0112, 0.0044, 0.3, 0.34, hi ? 14 : 8, hi ? 8 : 4), 0.0072, 0, 0, CS.darkPlastic);                 // female housing
@@ -1079,7 +1092,10 @@ function addSocks(B, lv) {
     // rolled top edge: inner lip → over the top → outside
     for (const [dy, extra] of [[-0.009, -0.0036], [-0.0015, -0.0034], [0.0006, -0.0022], [0.0011, -0.0006]]) { rows.push(ringAt(sTop, extra, dy)); sv.push(-Math.abs(dy) * 0.3); }
     for (const x of ss) { rows.push(ringAt(x, 0)); sv.push(x - sTop); }
-    const g = K.gridGeo(rows, { wrapU: true, outward: (p, out) => { let best = sTop, bd = 1e9; for (let q = sTop; q <= sBot; q += 0.01) { Lg.path.at(q, fr); const d = fr.C.distanceToSquared(p); if (d < bd) { bd = d; best = q; } } Lg.path.at(best, fr); out.copy(fr.C); }, uv: (i, j) => [i / nTh, sv[j]] });
+    const normalCentres = [];
+    for (let q = sTop; q <= sBot; q += 0.01) { Lg.path.at(q, fr); normalCentres.push(fr.C.clone()); }
+    Lg.path.at(sTop, fr); const normalFallback = fr.C.clone();
+    const g = K.gridGeo(rows, { wrapU: true, outward: (p, out) => { let best = normalFallback, bd = 1e9; for (const centre of normalCentres) { const d = centre.distanceToSquared(p); if (d < bd) { bd = d; best = centre; } } out.copy(best); }, uv: (i, j) => [i / nTh, sv[j]] });
     const uvA = g.attributes.uv;
     B.add(g, {
       ex: CS.sock, uv: true, v3: cl(PART.sock, MC.rib),
@@ -1236,13 +1252,17 @@ function shoeParts(lv) {
   // ---- padded collar roll
   {
     const [nC, nPsi] = SR.collar;
+    const collarBasis = Array.from({ length: nC }, (_, i) => {
+      const ph = (i / nC) * TAU, c = skCollar(ph, new V3());
+      const sin = Math.sin(ph), cos = Math.cos(ph);
+      return { c, n: new V3(sin / 0.0405, 0, cos / 0.051).normalize(),
+        rp: 0.0068 + 0.0014 * pos(-cos) - 0.001 * pos(cos) };
+    });
     const rows = [];
     for (let j = 0; j <= nPsi; j++) {
       const psi = (j / nPsi) * TAU;
       rows.push(Array.from({ length: nC }, (_, i) => {
-        const ph = (i / nC) * TAU; const c = skCollar(ph, new V3());
-        const n = new V3(Math.sin(ph) / 0.0405, 0, Math.cos(ph) / 0.051).normalize();
-        const rp = 0.0068 + 0.0014 * pos(-Math.cos(ph)) - 0.001 * pos(Math.cos(ph));
+        const { c, n, rp } = collarBasis[i];
         return c.clone().addScaledVector(n, 0.0014 + rp * Math.cos(psi)).add(new V3(0, -0.0016 + rp * 0.85 * Math.sin(psi), 0));
       }));
     }
@@ -1487,11 +1507,12 @@ export function addOutfit(B, level = 3) {
 function smoothOnMesh(g, v, iters, mask = null) {
   const ix = g.index.array, n = v.length;
   const acc = new Float32Array(n), cnt = new Float32Array(n);
+  for (let t = 0; t < ix.length; t += 3) { cnt[ix[t]] += 2; cnt[ix[t + 1]] += 2; cnt[ix[t + 2]] += 2; }
   for (let it = 0; it < iters; it++) {
-    acc.fill(0); cnt.fill(0);
+    acc.fill(0);
     for (let t = 0; t < ix.length; t += 3) {
       const a = ix[t], b = ix[t + 1], c = ix[t + 2];
-      acc[a] += v[b] + v[c]; cnt[a] += 2; acc[b] += v[a] + v[c]; cnt[b] += 2; acc[c] += v[a] + v[b]; cnt[c] += 2;
+      acc[a] += v[b] + v[c]; acc[b] += v[a] + v[c]; acc[c] += v[a] + v[b];
     }
     for (let i = 0; i < n; i++) if (cnt[i] > 0 && (!mask || mask[i])) v[i] = 0.5 * v[i] + 0.5 * acc[i] / cnt[i];
   }

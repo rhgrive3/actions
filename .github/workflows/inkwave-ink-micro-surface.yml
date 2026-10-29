@@ -43,7 +43,7 @@ jobs:
       - name: Verify direct QA input trigger coverage
         run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs scripts/tests/inkwave-ci-video-tools.test.mjs
       - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps --only-shell chromium
       - name: Source regressions
         run: node --experimental-vm-modules --test patches/local-quality/tests/ink-micro-surface.test.mjs patches/local-quality/tests/grate-normal.test.mjs patches/local-quality/tests/paint-hotpath.test.mjs
       - name: Build final-head production composition

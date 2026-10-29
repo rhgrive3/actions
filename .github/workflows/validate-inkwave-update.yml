@@ -27,6 +27,7 @@ on:
       - "patches/practice-range/**"
       - "patches/native-stages/**"
       - "scripts/*inkwave*.mjs"
+      - 'scripts/inkwave-menu-focus-pins.json'
       - "scripts/run-logged-test-process.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/tests/run-inkwave-turf-finish-*.test.mjs"
@@ -64,6 +65,7 @@ on:
       - "patches/practice-range/**"
       - "patches/native-stages/**"
       - "scripts/*inkwave*.mjs"
+      - 'scripts/inkwave-menu-focus-pins.json'
       - "scripts/run-logged-test-process.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/tests/run-inkwave-turf-finish-*.test.mjs"
@@ -177,6 +179,10 @@ jobs:
             /tools/
             !/tools/inkwave-modeler/
             /reports/
+            !/reports/*
+            /reports/ink-volume/
+            !/reports/ink-volume/*
+            /reports/ink-volume/source/
             /docs/
       - uses: actions/setup-node@v4
         with:
@@ -261,7 +267,7 @@ jobs:
         run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-sandbox-runner-route.test.mjs
       - name: Install pinned source regression and build tool
         run: |
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npm ci --no-audit --no-fund
           # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).
           # Rewrite only the stalled mirror before Playwright's unchanged dependency installation.
           sudo python3 scripts/prepare-inkwave-ci-apt.py
@@ -1061,7 +1067,7 @@ jobs:
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json','hissen-main/native-browser.json','wiper-native/wiper-native-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json','startup-clock/startup-clock-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
-            'responsive':['responsive/responsive-result.json'],
+            'responsive':['responsive/responsive-result.json','mobile-menus/chromium/result.json','mobile-menus/webkit/result.json','mobile-menus/webkit-resize/result.json'],
             'range':['range/range-result.json'],
             'startup':['startup/startup-browser-result.json'],
           }[suite]
@@ -1079,6 +1085,15 @@ jobs:
             if name=='motion/motion-result.json': assert not report['errors'] and report['fixture']['scenarios']==10
             else: assert report['status']=='passed', name
             if 'contentHash' in report and name!='runtime-before/runtime-result.json': assert report['contentHash']==build['contentHash'], name
+          if suite=='responsive':
+            all_cases=['small-phone','phone','android','standard','landscape','browser-bars','notched','tablet','desktop']
+            for lane,engine,model,names in [('chromium','chromium','mobile-emulation',all_cases),('webkit','webkit','mobile-emulation',all_cases),('webkit-resize','webkit','resizable-touch',['phone','landscape'])]:
+              name='mobile-menus/'+lane+'/result.json'; report=reports[name]
+              assert report['contentHash']==build['contentHash'] and report['inputHash']==build['inputHash'] and report['revision']==build['build']['revision'], name
+              assert report['engine']==engine and report['viewportModel']==model and report['audit'] is False and report['errors']==[], name
+              cases=report['cases']; actual=[row['name'] for row in cases]
+              assert len(actual)==len(names) and set(actual)==set(names), name
+              assert all(row['checks'] and all(check['ok'] is True for check in row['checks']) for row in cases), name
           if suite=='ui': assert reports['menu-focus/menu-focus-result.json']['sourceSha']==os.environ['SOURCE_SHA']
           if suite=='catalog': assert reports['hissen-main/native-browser.json']['sourceIdentity']['checkoutSha']==os.environ['SOURCE_SHA']
           if suite=='catalog': assert reports['wiper-native/wiper-native-result.json']['sourceSha']==reports['wiper-native/wiper-native-result.json']['sourceIdentity']['checkoutSha']==os.environ['SOURCE_SHA']
