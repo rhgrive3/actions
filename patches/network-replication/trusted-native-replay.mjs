@@ -79,11 +79,13 @@ function validCommand(c,a) {
   if(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).some(k=>!['nid','owner','life','input','aim','aimPoint'].includes(k)))return false;
   if(c.nid!==a.nid||c.owner!==a.owner||c.life!==a.netLife||!Array.isArray(c.aim)||c.aim.length!==2||!c.aim.every(finite)||c.aimPoint!==undefined&&!triple(c.aimPoint))return false;
   const i=c.input;
-  return !!i&&typeof i==='object'&&!Array.isArray(i)&&!Object.keys(i).some(k=>!['fire','squid','sub','jump','special','move'].includes(k))&&
+  return !!i&&typeof i==='object'&&!Array.isArray(i)&&!Object.keys(i).some(k=>!['fire','squid','sub','jump','special','booyah','move'].includes(k))&&
+    (i.booyah===undefined||typeof i.booyah==='boolean')&&
     ['fire','squid','sub','jump','special'].every(k=>typeof i[k]==='boolean')&&Array.isArray(i.move)&&i.move.length===2&&i.move.every(finite)&&Math.hypot(...i.move)<=1+1e-12;
 }
 function applyCommand(c,a) {
   for(const k of ['fire','squid','sub','jump','special'])a.intent[k]=c.input[k];
+  a.intent.booyah=!!c.input.booyah;
   a.intent.move.set(c.input.move[0],0,c.input.move[1]);
   [a.aimYaw,a.aimPitch]=c.aim;
   if(c.aimPoint)a.aimPoint.set(...c.aimPoint);
@@ -184,7 +186,10 @@ export function inspectTrustedNativeReplay(token) {
   const s=sessions.get(token);if(!s)return null;
   return clone({epoch:s.epoch,tick:s.tick,time:s.context.time,closed:s.closed,error:s.error,contacts:s.pending.size,effects:[...s.pending].map(t=>contacts.get(t).record),launches:s.launches,
     boss:s.context.boss?{hp:s.context.boss.hp,dead:s.context.boss.dead,crablets:[...s.context.boss.crabs.values()].map(c=>({id:c.id,hp:c.hp,dead:c.dead}))}:null,
-    actors:[...s.actors.values()].map(a=>({nid:a.nid,owner:a.owner,life:a.netLife,weapon:a.weapon.id,ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,position:a.pos.toArray(),velocity:a.vel.toArray(),charge:a.weaponRunner.charge,chargeT:a.weaponRunner.chargeT,cooldown:a.weaponRunner.cooldown,lastFire:a.lastFire,special:a.special}))});
+    actors:[...s.actors.values()].map(a=>{const spawn=a.s3?.squidSpawn;return {nid:a.nid,owner:a.owner,life:a.netLife,weapon:a.weapon.id,ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,grounded:a.grounded,aimPoint:a.aimPoint.toArray(),charge:a.weaponRunner.charge,chargeT:a.weaponRunner.chargeT,cooldown:a.weaponRunner.cooldown,lastFire:a.lastFire,special:a.special,
+      squidSpawn:spawn?{phase:spawn.phase,wait:spawn.wait??0,t:spawn.t??0,playWait:spawn.playWait??0,target:spawn.target,from:spawn.from,to:spawn.to}:null,
+      pose:Object.fromEntries(['hips','spine','chest','head','footL','footR'].flatMap(k=>{const b=a.character.bones?.[k];return b?[[k,{position:b.position.toArray(),quaternion:b.quaternion.toArray(),scale:b.scale.toArray()}]]:[])),
+    };})});
 }
 export function disposeTrustedNativeReplay(token) {
   const s=sessions.get(token);if(!s||s.closed)return;
