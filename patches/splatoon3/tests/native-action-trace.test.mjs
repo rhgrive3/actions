@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {gzipSync} from 'node:zlib';
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {gzipSync,gunzipSync} from 'node:zlib';
 import {nativeTraceFixture} from './native-action-trace-fixture.mjs';
 const f=await nativeTraceFixture();
 test.after(()=>f.close());
@@ -20,7 +20,9 @@ test('all 65 production main actors emit native action traces with full tick inp
  }
  assert.deepEqual(missed,[],'all non-hitscan records produce a native projectile in the ordinary input trace');
  assert.ok(hitFamilies.size>0,'native projectile contact causes a real hit');
- if(process.env.INKWAVE_NATIVE_TRACE_OUTPUT)fs.writeFileSync(process.env.INKWAVE_NATIVE_TRACE_OUTPUT,gzipSync(JSON.stringify({schema:1,source:'035233299348e5c3527f6106b98e721ed2dfd011',records:f.records,traces:trace}),{level:9}));
+ const serialized=JSON.stringify({schema:1,source:'035233299348e5c3527f6106b98e721ed2dfd011',records:f.records,traces:trace});
+ if(process.env.INKWAVE_NATIVE_TRACE_COMPARE)assert.equal(serialized,gunzipSync(fs.readFileSync(process.env.INKWAVE_NATIVE_TRACE_COMPARE)).toString(),'selected immutable trace baseline');
+ if(process.env.INKWAVE_NATIVE_TRACE_OUTPUT)fs.writeFileSync(process.env.INKWAVE_NATIVE_TRACE_OUTPUT,gzipSync(serialized,{level:9}));
 });
 test('two legal Charger inputs yield an identical received packet before distinct native births',()=>{
  const a=f.run('s3-charger-quick',{hold:0,tail:18,inputAt:t=>t===1});
