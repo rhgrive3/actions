@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
 import {beginNativeCombatWindow,inspectNativeCombatWindow,waitForNativeCombatWindow} from '../lib/inkwave-native-combat-window.mjs';
 
 function fixture(){
@@ -56,4 +57,44 @@ test('invalid duration and observer corruption cannot disable the sampling gate'
  for(const minimumMs of [0,-1,NaN,Infinity]){const f=fixture();assert.throws(()=>beginNativeCombatWindow.call(null,{mapId:'kelpline',minimumMs}),/duration/);}
  const f=fixture();f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000});f.at(6000);f.probe.totalFrames=0;assert.throws(()=>f.run(inspectNativeCombatWindow),/observation/);
  await assert.rejects(waitForNativeCombatWindow({}, {mapId:'kelpline',minimumMs:5000,extraTimeoutMs:0}),/timeout/);
+});
+
+test('same-map match or level replacement between wait and capture is rejected in the capture task',async()=>{
+ // Verify the harness actually invokes the lease guard inside its capture evaluate.
+ const source=readFileSync(new URL('../check-inkwave-gameplay-resources.mjs',import.meta.url),'utf8');
+ assert.match(source,/page\.evaluate\(leaseId=>\{const G=__G,g=__inkwave,p=__gameplayProbe;if\(leaseId!==null&&\(!p\.combatWindow\?\.inspect\|\|!p\.combatWindow\.inspect\(leaseId\)\)\)throw/);
+ assert.match(source,/await capture\('combat-'\+cycle,false,receipt\.leaseId\)/);
+ for(const replace of [f=>f.G.match={state:'playing'},f=>f.G.level={}]){
+  const f=fixture();let captured=false,profileStopped=false;
+  const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(fn,arg){f.at(6000,3);const result=f.run(fn,arg);return {jsonValue:async()=>result,dispose:async()=>{}};}};
+  await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},async receipt=>{
+   profileStopped=true;replace(f);
+   await page.evaluate(id=>{const p=globalThis.__gameplayProbe;if(!p.combatWindow?.inspect||!p.combatWindow.inspect(id))throw Error('Native combat window invalid at capture');return globalThis.__G.time;},receipt.leaseId);
+   captured=true;
+  }),/scene changed/);
+  assert.equal(profileStopped,true);assert.equal(captured,false);assert.equal(f.probe.combatWindow,undefined);
+ }
+});
+
+test('an older parallel wait cannot delete the newer lease',async()=>{
+ const f=fixture();let releaseOld,oldReady;
+ const oldStarted=new Promise(resolve=>{oldReady=resolve;});
+ const oldGate=new Promise(resolve=>{releaseOld=resolve;});
+ const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(fn,arg){f.at(6000,3);const result=f.run(fn,arg);return {jsonValue:async()=>result,dispose:async()=>{}};}};
+ const old=waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},async()=>{oldReady();await oldGate;});
+ await oldStarted;
+ let releaseNew,newReady;const newStarted=new Promise(resolve=>{newReady=resolve;});const newGate=new Promise(resolve=>{releaseNew=resolve;});
+ const newer=waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},async()=>{newReady();await newGate;});
+ await newStarted;const lease=f.probe.combatWindow.leaseId;
+ releaseOld();await old;assert.equal(f.probe.combatWindow.leaseId,lease);
+ releaseNew();await newer;assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('cleanup attempts both operations and preserves the primary failure',async()=>{
+ const f=fixture();const primary=Error('capture failed');let cleanup=0;
+ const page={async evaluate(fn,arg){if(fn!==beginNativeCombatWindow)cleanup++;return f.run(fn,arg);},async waitForFunction(fn,arg){f.at(6000,3);const result=f.run(fn,arg);return {jsonValue:async()=>result,dispose:async()=>{throw Error('dispose failed');}};}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},async()=>{throw primary;}),error=>error===primary);
+ assert.equal(cleanup,1);assert.equal(f.probe.combatWindow,undefined);
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000}),/dispose failed/);
+ assert.equal(f.probe.combatWindow,undefined);
 });
