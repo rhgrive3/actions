@@ -102,6 +102,17 @@ export function adaptIdleSource(rel, code, replace) {
     patch(init, '    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n' + init, 'initial mute state before music initialization');
     patch("    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", "    if (this.opts.music !== false) this.music?.setMusicEnabled?.(this.vol.master > 0 && this.vol.music > 0);\n    if (!this.ctx) return;\n    const t = this.ctx.currentTime;\n    this.master.gain.setTargetAtTime", 'live and pre-init mute');
   }
+  if (rel === 'src/ui/menu-art.js') {
+    patch('    this.ctx.clearRect(0, 0, r.W + 2, r.H + 2);',
+      '    if (!this.r) this.ctx.clearRect(0, 0, r.W + 2, r.H + 2);', 'completed wipe cannot clear a reentrant replacement');
+    patch("    if (!this.r) { this.host.classList.remove('is-run'); this.mark.classList.remove('is-on'); }", `    if (!this.r) {
+      this.host.classList.remove('is-run'); this.mark.classList.remove('is-on');
+      // clearRect only clears pixels; it retains the full iPad-sized backing
+      // store. Completed/cancelled wipes own no visible pixels or pending swap.
+      this.cv.width = this.cv.height = 1;
+      this._pat = null;
+    }`, 'release completed wipe backing store without retiring a reentrant wipe');
+  }
   if (rel === 'src/core/renderer.js') {
     // Install the GPU framebuffer presentation on the real Renderer class.
     code = "import { installPausedFrameRetention } from '../../patches/local-quality/pause-frame-retention.mjs';\n" + code;
@@ -157,6 +168,9 @@ export function adaptIdleSource(rel, code, replace) {
           }
         } else {
           if (pausedFrame.paused && sm.enabled) sm.needsUpdate = true;
+          // A resize/settings invalidation supersedes the old frozen image.
+          // Drop it before the real draw recreates the compositor attachments.
+          if (pausedFrame.paused) this.R.releasePausedFrame?.();
           this.R.render();
           if (pausedFrame.paused) {
             sm.needsUpdate = false;
