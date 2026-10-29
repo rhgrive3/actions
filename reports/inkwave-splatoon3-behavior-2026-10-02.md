@@ -6692,3 +6692,8 @@ Git treeの出力上限、prebuilt digest試験の無期限待機、報告書の
 ### 2026-10-29: Ink Storm object cover consistency (#735)
 
 The composed runtime previously performed a cloud-center-to-device visibility test before the vertical rain test. A side barrier blocking only the diagonal could incorrectly shield a Splash Wall or Wave Breaker even with unobstructed rain above it. Storm object damage now uses its existing vertical contact ray; the shared radial damage path retains its normal visibility check by default. A production-composed source fixture reproduces the diagonal-only obstruction, verifies both device classes take damage, verifies a blocked vertical ray stops damage, and preserves the default radial LOS. The negative control without the change fails on the exposed wall. Existing 30/60/120 Hz damage and finite-reach controls pass. This establishes internal consistency, not the 11.3.0 vertical cutoff or cover formula; #735 remains open.
+
+
+### 2026-10-29: guest deadline input neutralization
+
+期限切れguestのcontrollerが入力の再取得を止めた後も、直前のActor更新後にqueueされた `jumpPressed` がintentに残り、次のActor更新で追加jumpを起こせた。既存のneutralize処理でjump level/bufferに加えてこのedgeも消す。実Actor・同期jump listener・guest期限gate・次の接地stepを使う対照で旧実装の追加jumpを再現し、通常/Storm所持と期限前の正当jumpを区別する。これはINKWAVEの入力寿命の修正であり、Splatoon 3 Ver.11.3.0の新しい数値・動作を推測した変更ではない。source回帰は成功、最終生成物での確認は別途実行する。
