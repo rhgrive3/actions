@@ -1048,6 +1048,20 @@
       "evidence": "../final73-scoped-validation/README.md",
       "nextHeadCI": "pending; no successful acceptance inferred",
       "issueClosures": "none added"
+    },
+    {
+      "baseHead": "98ccd1c6ea143ea402319c6637cd1bca5d075a6e",
+      "runtimeInputsUnchanged": true,
+      "followup": "../inherited-visual-fixture-followup/README.md",
+      "source": "37/37 pass; original focused14/17 with3 real fixture failures",
+      "emittedHissen": "8/8 pass",
+      "controlledStringer": "Original15!=25 failure; exact two expected radii corrected to15;15 cases pass",
+      "contactFK": "2/2 pass actualbank108poses,13 motion files SHA-bound; not hosted acceptance",
+      "resourceCapture": "../642-native-webgl-resource-capture-98/README.md",
+      "nativeGL": "385 calls/192 attachments/64 native textures, original48 andobserved48 identical; allocations anddeletes observed, notphysicalVRAM",
+      "budget": "Existing mean<=1.25,p99<=3 accepted byengineeringreview, no assertednumericaluseragreement",
+      "CI": "NewheadrequiredCI pending; prior98 stillhad3 sourcefixturefailures",
+      "issueClosures": "none added"
     }
   ]
 }

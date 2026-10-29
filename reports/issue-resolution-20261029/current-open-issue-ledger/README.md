@@ -300,3 +300,10 @@ All 11 original review threads were verified against public39c and resolved. At 
 
 
 [Later scoped validation at 73bfea73](../final73-scoped-validation/README.md) passes emitted native 131/131, exact HUD 2/2 and the complete focused UI + Minimap browser checks. Full hosted acceptance remains separate; the previous full-active failure is retained.
+
+
+### Later source-fixture diagnosis and driver capture
+
+[The inherited visual-fixture follow-up](../inherited-visual-fixture-followup/README.md) reproduces and repairs three additional source-test failures that remained at98, without changing application behavior. The related source selection passes37/37, the emitted Hissen selection8/8 and the controlled15-row Stringer checker passes after updating the two owner-requested radius expectations. Historical failures stay separate; required hosted CI must still succeed on the new head.
+
+[Native WebGL resource capture at98](../642-native-webgl-resource-capture-98/README.md) supplements #642: original and observed48-case outcomes are identical. It records385 actual software-driver calls,192 attachment observations and64 native textures with matched allocation/attachment/deletion. Idle reference pairs use RGBA16F+RGBA16F; candidate pairs use packed RGB+RGBA16F. This is not physical VRAM. The existing image budget was accepted in engineering review, not claimed as numerical user consent. #642 and #1431 remain closure candidates only after required final CI.

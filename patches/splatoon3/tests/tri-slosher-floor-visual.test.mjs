@@ -18,7 +18,7 @@ test('Tri-Slosher floor drops use the Bucket visual scale and captured paint hea
     const before=JSON.stringify(d);let paintCalls=0;G.paint.splat=()=>{paintCalls++;return 1;};
     system._draw();assert.equal(system.blobs.count,1,'one existing drop remains one instance');
     system.blobs.getMatrixAt(0,matrix);matrix.decompose(position,rotation,scale);
-    assert.ok(Math.abs(scale.x-drawRadius*.5)<1e-7,'floor bead must use the same calibrated half width as the shared Bucket sheet');
+    assert.ok(Math.abs(scale.x-drawRadius*.5*1.5)<1e-7,'Hissen floor bead uses the 1.5x display calibration over the shared Bucket width');
     assert.ok(position.distanceTo(d.pos)<1e-6,'draw stays at the actual physical drop');
     const forward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
     assert.ok(forward.dot(new THREE.Vector3(x,0,z))>.999999,'floor bead follows captured forward heading, not its vertical fall velocity');
@@ -74,7 +74,7 @@ test('all three Hissen kits reuse the existing non-spherical Slosher shader prof
       assert.equal(state(),before,'physical/source state and actor ink/transform/weapon/color are read-only');assert.equal(drop.owner,owner);
       mesh.getMatrixAt(0,matrix);
       const position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();matrix.decompose(position,rotation,scale);
-      assert.ok(position.distanceTo(drop.pos)<1e-6);for(const axis of ['x','y','z'])assert.ok(Math.abs(scale[axis]-radius*.5)<1e-7,'source draw radius and uniform instance scale remain unchanged');
+      assert.ok(position.distanceTo(drop.pos)<1e-6);for(const axis of ['x','y','z'])assert.ok(Math.abs(scale[axis]-radius*.5*1.5)<1e-7,'Hissen instance uses 1.5x display calibration while the source radius remains unchanged');
       assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).dot(new THREE.Vector3(.6,0,.8))>.999999,'same horizontal paint heading');
       assert.deepEqual(Array.from(system.blobInkLook.array.slice(0,3)).map(v=>+v.toFixed(6)),INK_LOOK.slosh.slice(0,3));
       assert.ok(Math.abs(system.blobShape.array[0]-(1.05+Math.min(.6,drop.vel.length()*.006)))<1e-6,'short tail remains unchanged');
