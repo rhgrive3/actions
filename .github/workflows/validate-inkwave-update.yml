@@ -490,7 +490,8 @@ jobs:
             patches/network-replication/tests/combat-single-round-targets.test.mjs \
             patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs \
             patches/splatoon3/tests/ranked-rainmaker-current-lifecycle.test.mjs \
-            patches/splatoon3/tests/special-legacy-native-receiver.test.mjs
+            patches/splatoon3/tests/special-legacy-native-receiver.test.mjs \
+            patches/splatoon3/tests/catalog-paint-reentry.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)

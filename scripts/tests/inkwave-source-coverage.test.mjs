@@ -36,6 +36,7 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs',
   'patches/splatoon3/tests/ranked-rainmaker-current-lifecycle.test.mjs',
   'patches/splatoon3/tests/special-legacy-native-receiver.test.mjs',
+  'patches/splatoon3/tests/catalog-paint-reentry.test.mjs',
 ];
 function assertRemainingEmittedCoverage(source) {
   const core = source.match(/^  validate_core:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
@@ -59,7 +60,7 @@ function assertRemainingEmittedCoverage(source) {
 }
 
 test('new remaining regressions execute once against the immutable emitted site in mandatory core', () => {
-  assert.equal(remainingEmittedFiles.length,28,'all27 current entries plus the legacy native receiver regression');
+  assert.equal(remainingEmittedFiles.length,29,'all28 existing emitted regressions plus native paint reentry');
   for(const file of remainingEmittedFiles)
     assert.ok(fs.statSync(new URL('../../'+file,import.meta.url)).isFile(),'mandatory file exists: '+file);
   assertRemainingEmittedCoverage(workflow);
