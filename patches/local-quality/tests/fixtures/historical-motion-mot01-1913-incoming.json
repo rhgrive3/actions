@@ -1,0 +1,22 @@
+[
+  [
+    "   const item=(j?runClips:walkClips)[mode][i],p=locomotionProfile(this.bank,item.name);",
+    "   const item=(j?runClips:walkClips)[mode][i],p=item._prof||(item._prof=locomotionProfile(this.bank,item.name));",
+    "MOT-01a cache locomotionProfile on directionClips item"
+  ],
+  [
+    "   let entry=locoPool[locoIdx];if(!entry)entry=locoPool[locoIdx]={name:'',weight:0,profile:null};locoIdx++;\n   entry.name=item.name;entry.weight=weight;entry.profile=p;list.push(entry);",
+    "   let entry=locoPool[locoIdx];if(!entry)entry=locoPool[locoIdx]={name:'',clip:null,weight:0,profile:null};locoIdx++;\n   entry.name=item.name;entry.clip=item._clip||(item._clip=this.bank.clips.get(item.name));entry.weight=weight;entry.profile=p;list.push(entry);",
+    "MOT-01b cache clip reference on pooled locomotion list entry"
+  ],
+  [
+    "  let nominalCadence=0;for(let i=0;i<list.length;i++){const item=list[i];nominalCadence+=item.weight*HOST_MOTION.fps/this.bank.clips.get(item.name).frames;}",
+    "  let nominalCadence=0;for(let i=0;i<list.length;i++){const item=list[i];nominalCadence+=item.weight*HOST_MOTION.fps/item.clip.frames;}",
+    "MOT-01c use cached clip.frames in nominalCadence loop"
+  ],
+  [
+    "    const clip=this.bank.clips.get(item.name),p=item.profile;",
+    "    const clip=item.clip,p=item.profile;",
+    "MOT-01d use cached clip reference in locomotion sample loop"
+  ]
+]
