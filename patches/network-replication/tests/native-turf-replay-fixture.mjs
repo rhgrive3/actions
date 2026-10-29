@@ -58,7 +58,8 @@ export async function nativeTurfProbe(weapon='charger', {historic=false,generic=
  const step=()=>{
   const state=actor.s3?.squidSpawn?.phase||'landed',raw=actor.intent, bits=(raw.fire?1:0)|(raw.squid?2:0)|(raw.sub?4:0)|(raw.jump?8:0)|(raw.special?16:0);
   const aim=[actor.aimYaw,actor.aimPitch],aimPoint=actor.aimPoint.toArray(),move=[raw.move.x,raw.move.z],seq=net._eventSeq||0;
-  effective=null;resources=0;resourceBody=null;G.time+=1/60;match.update(1/60);
+  // main.js advances native projectiles immediately after Match.update.
+  effective=null;resources=0;resourceBody=null;G.time+=1/60;match.update(1/60);if(!match.paused)G.projectiles.update(1/60);
   const c=actor.character,pose={};
   for(const name of ['hips','spine','chest','head','footL','footR']){const b=c.bones[name];if(b)pose[name]=[...b.position.toArray(),...b.quaternion.toArray()];}
   const spawn=actor.s3?.squidSpawn;
