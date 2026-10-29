@@ -191,3 +191,13 @@ test('GPU-22 FX shells upload static aColA and aAxis only on birth, recycle, or 
   assert.equal(consume(), 0);
   fx.dispose();
 });
+
+test('GPU-15b accepts exact downstream guarded full-upload form and rejects corrupted guards', () => {
+  const rel='src/world/environment.js', built=adaptBuildSource(rel,read(rel));
+  assert.equal(adaptCombatGpuCpuPerfect(rel,built,replaceOnce),built);
+  for(const [inst,items] of [['sailInst','sailboats'],['buoyInst','buoys'],['gullInst','gulls']]) {
+    const guard=`if(this.${inst}.instanceMatrix.array.length!==this.${items}.length*16)`;
+    assert.ok(built.includes(guard));
+    assert.throws(()=>adaptCombatGpuCpuPerfect(rel,built.replace(guard,guard.replace('!==','===')),replaceOnce),/expected exactly one connection/);
+  }
+});

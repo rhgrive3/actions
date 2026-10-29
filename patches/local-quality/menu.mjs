@@ -23,7 +23,20 @@ export function installMenuQuality(Menus, env=globalThis){
   const place=(m,dt)=>{
     if(!m._focus?.isConnected)m._cur.targetEl=null;
     m._cur.snapNext=true;
-    const result=cursor.call(m,dt);syncRingVisibility(m);fadeRing(m);anchorRing(m);return result;
+    let result;
+    m._queueDeferRingGeometry=true;
+    try { result=cursor.call(m,dt); } finally { m._queueDeferRingGeometry=false; }
+    syncRingVisibility(m);fadeRing(m);
+    if(!anchorRing(m)&&m._cur.on){
+      const C=m._cur,st=m.cursorEl.style;
+      const transform=`translate3d(${C.x.x.toFixed(1)}px,${C.y.x.toFixed(1)}px,0)`;
+      const width=Math.max(0,C.w.x).toFixed(1)+'px',height=Math.max(0,C.h.x).toFixed(1)+'px';
+      if(st.transform!==transform)st.transform=transform;
+      if(st.width!==width)st.width=width;
+      if(st.height!==height)st.height=height;
+      if(st.clipPath!==(C.clip||''))st.clipPath=C.clip||'';
+    }
+    return result;
   };
   // The ring's 180 ms entrance fade is owned by the same tick that places it,
   // not by a CSS opacity transition. A composited CSS transition only gets a
@@ -116,7 +129,10 @@ export function installMenuQuality(Menus, env=globalThis){
     const transform=`translate3d(${x.toFixed(1)}px,${(C.y.x-oy).toFixed(1)}px,0)`,width=w.toFixed(1)+'px';
     if(st.transform!==transform)st.transform=transform;
     if(st.width!==width)st.width=width;
-    if(C.clip){C.clip='';st.clipPath='';}
+    const height=Math.max(0,C.h.x).toFixed(1)+'px';
+    if(st.height!==height)st.height=height;
+    C.clip='';if(st.clipPath!=='')st.clipPath='';
+    return true;
   }
   if(cursor)P._updateCursor=function(dt){frameTick(this);return place(this,dt);};
   // Logical selection, geometric target and the painted ring all commit in

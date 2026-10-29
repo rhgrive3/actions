@@ -161,6 +161,11 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
   function ensure(game) {
     if (game.platform) return game.platform;
     const r = game.platform = { owner, driver: null, off: null, canvas: null, disposers: [], rendererLost: false };
+    r.releaseMatch = match => {
+      if (r.hiddenHostClock?.match === match) r.hiddenHostClock = null;
+      if (r.hiddenHostDeadline?.match === match) clearHiddenHostDeadline(r, env);
+      if (r.hiddenHostResult?.match === match) clearHiddenHostResult(r, env);
+    };
     // #878: a follower can become the authoritative host while its tab was
     // already hidden. There is no new visibility/suspend edge at migration,
     // so the ordinary visibility listener cannot arm a host deadline.
@@ -296,6 +301,13 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
       r.disposers.push(() => { canvas.removeEventListener('webglcontextlost', lost); canvas.removeEventListener('webglcontextrestored', restored); });
     }
     r.driver = new PlatformFrameDriver(owner, dt => {
+      // A terminal offline native-world failure has only a static reload UI.
+      // Stop its owned scheduler; temporary freezes and every live/connecting
+      // network session still need the existing recovery/guest-timeout path.
+      if (game._nativeWorldRecoveryFatal && !G.netm && (!G.net || G.net.state === 'offline')) {
+        r.driver.stop();
+        return;
+      }
       const probe = r.syncProfiler();
       probe?.callback(dt);
       if (watchGuestMatchEnd(game, G, env, r) || game.frozen) return;
@@ -340,6 +352,7 @@ export function installPlatformGame(Game, G, env = globalThis, { importProfiler 
   };
   P.disposePlatform = function () {
     const r = this.platform; if (!r || r.disposed) return;
+    clearTimeout(this._resultsMusicTimer); this._resultsMusicTimer = null;
     r.disposed = true;
     r.guestEndWait = null;
     r.hiddenHostClock = null;

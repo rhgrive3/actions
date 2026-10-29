@@ -201,6 +201,7 @@ export class PlatformFrameDriver {
     const limit = now + lead;
     while (this.nextDeadline <= limit) {
       const current = this.nextDeadline, next = current + interval;
+      if (next > limit) { this.nextDeadline = next; break; }
       // Within one floating-point exponent bin, repeated additions advance
       // by the same representable increment. Skip whole runs of that exact
       // increment, leaving the exponent boundary to ordinary addition. This
