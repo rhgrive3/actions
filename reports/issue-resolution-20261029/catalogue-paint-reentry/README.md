@@ -89,3 +89,46 @@ receipts.
 | [presentation-15.tap.gz](presentation-15.tap.gz) | `3f6ba15fe5dba9c74db72c0eaf22e68854989205a5f5ec1ff8f2c3f3362c6252` | `7a6f1a6ed2ce1b949c7113e288d58163605e7dca060d653ad5144effeb1f2fea` |
 | [emitted-29.tap.gz](emitted-29.tap.gz) | `ed0b1178d6ba9b4056ec5cd2edba4c00f48d6e538699e1698e0d6a38efa7cda5` | `0e75b87af5e93051501076eb1b96c751b08da5093f25cbef29bed8d9ef335dc9` |
 | [emitted-summary.json.gz](emitted-summary.json.gz) | `e97f3ccde72ab9b23e9428631a46f981cef198627b1a8878d7c239984b4cc0b6` | `3dc558a0d73913cb835c42e9e2cb053878e355224986a300aaaea0b1d14b34fa` |
+
+## Grounded Stringer nearest-paint follow-up
+
+A further real-source probe found that the first lease alone did not protect a
+no-direction nearest stamp: two grounded catalogue Stringers release at x=0
+and x=15, and the nested release reuses the `floorHit.point` still being read
+by the first native paint call. Before this follow-up, the outer center changes
+from `[0,8.326672684688674e-17,0]` to `[15,8.326672684688674e-17,0]`.
+The follow-up copies an incoming center into the already leased vector when
+the ellipse path has not already selected one. This also covers the compressed
+ink-contact early return; the ellipse calculation and per-depth capacity do not
+change. The probe uses controlled source-component positions and inputs, not a
+whole-match or retail measurement.
+
+The vector-body candidate `e330f0651995af70ca5671564919120c51f29a10`, based on
+`4e4ba4b7ffa96a0377ebc3ede16ded22f1169f7a`, passed **16/16** source tests
+without skips. This includes the previous Shooter controls, actual grounded
+Stringer positives through online `recSplat` and offline `queryBlocks`, and
+the separately guarded source-only negative which removes exactly both center
+copy sites. At both boundaries the negative reproduces the changed center,
+while the current path preserves both packet snapshots. This evidence does not
+claim a wall-stretch failure or a freshly built emitted result for this change.
+The following source hashes identify the committed candidate independently of
+this later documentation commit.
+
+| File | SHA-256 |
+| --- | --- |
+| `patches/splatoon3/runtime/main-weapon-catalog.mjs` | `7e456ea13a3c1326637f2b7aeeddd4e11fa5efa43397143a0372d9df3447a943` |
+| `patches/splatoon3/tests/catalog-paint-reentry-fixture.mjs` | `3b04f30f54df94058f96e496dfb2a0f59bf4dd135843c329e6d3810ceb9d156f` |
+| `patches/splatoon3/tests/catalog-paint-reentry.test.mjs` | `6fa496a1968c50a4c0c62ad237818a6ff809054c3fc677acdc1b7160eac8d854` |
+| `patches/splatoon3/tests/catalog-paint-reentry-source.test.mjs` | `90dfadbf7f890219cfde6f997b9ae27c8762565bf0229302238dc551ad7dcf85` |
+| `patches/splatoon3/tests/catalog-paint-lease-source.test.mjs` | `45c3b2a6087055f5777fa7f3b1540f4a87301cf2d6d2caec0c6becef26530017` |
+
+The committed source run was:
+
+```sh
+node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/catalog-paint-reentry.test.mjs patches/splatoon3/tests/catalog-paint-reentry-source.test.mjs patches/splatoon3/tests/catalog-paint-lease-source.test.mjs patches/splatoon3/tests/catalog-paint-ellipse.test.mjs
+```
+
+| Raw receipt | Raw SHA-256 | Gzip SHA-256 |
+| --- | --- | --- |
+| [stringer-source-16.tap.gz](stringer-source-16.tap.gz) | `345b0469133733c2407c5b8f78cdf8fcee203ff1d93cfb7fc4ed3e88f9af3e26` | `87f9126e516e61feb91feb0223f740a750a087762aea630d231c0da7c95121df` |
+| [stringer-pre-fix-probe.log.gz](stringer-pre-fix-probe.log.gz) | `06e2d8af0579573e7da3d9e468f9a5f2a6e7977978334f87e10b60721612367b` | `938c1df21107409978d4cf7f546ed8a2372ca917b9bf588bf69237cedc19c5c2` |
