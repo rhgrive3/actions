@@ -195,10 +195,27 @@ export function installOfflineOffscreenBudget(api, G) {
       return tierSet;
     };
   }
+  proto._oobInvalidateGroundMemo = function _oobInvalidateGroundMemo() {
+    const memo = this._oobGroundMemo;
+    if (!memo) return;
+    for (let i = 0; i < memo.length; i++) memo[i].phys = null;
+    memo.length = 0;
+  };
+  proto._oobPauseGroundMemo = function _oobPauseGroundMemo() {
+    const active = this._oobGroundMemoActive;
+    this._oobGroundMemoActive = false;
+    this._oobInvalidateGroundMemo();
+    return active;
+  };
+  proto._oobResumeGroundMemo = function _oobResumeGroundMemo(active) {
+    this._oobInvalidateGroundMemo();
+    this._oobGroundMemoActive = active;
+  };
   proto._ground = function _oobGround(x, z, n) {
     // The source contact solver can ask for the same sole/anchor more than
-    // once in one synchronous Character.update. Cache exact queries only for
-    // that call; never carry support across ticks or into render catch-up.
+    // once in one synchronous Character.update. Actor's event boundary clears
+    // this lease before and after synchronous bus listeners, which can move
+    // support or reenter the solver. Never carry results into another tick.
     // Native triangle holes and moving support still use nativeGround.
     const memo = this._oobGroundMemoActive && this._oobGroundMemo;
     const y = this.root.position.y;
@@ -267,8 +284,9 @@ export function installOfflineOffscreenBudget(api, G) {
       !!(this.sourceMotion?.active && this.sourceMotion.grounded && this.sourceMotion.activationTime >= 0.12);
     this._oobGroundBudget = budget && s?.grounded !== false && feetReady;
     // Source contacts can repeat the same sole/anchor query in the visible
-    // path as well. Physics cannot advance during this synchronous visual
-    // update; the exact key still observes root height and physics ownership.
+    // path as well. Exact results are reused only between synchronous Actor
+    // event boundaries; those callbacks may mutate support during this update.
+    // The key also observes root height and physics ownership.
     this._oobGroundMemoActive = G.level?.native === true &&
       !!(this.sourceMotion?.active || this._oobGroundBudget);
     if (this._oobGroundMemoActive) (this._oobGroundMemo ||= []).length = 0;
@@ -288,10 +306,7 @@ export function installOfflineOffscreenBudget(api, G) {
       this._oobBudget = false;
       this._oobGroundBudget = false;
       this._oobGroundMemoActive = false;
-      if (this._oobGroundMemo) {
-        for (const hit of this._oobGroundMemo) hit.phys = null;
-        this._oobGroundMemo.length = 0;
-      }
+      this._oobInvalidateGroundMemo();
       this._oobPoseTailSkip = false;
     }
   };

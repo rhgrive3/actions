@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './robustness-fixture.mjs';
+import {nativeMainBirth} from './native-main-birth-fixture.mjs';
 
 // Real composed NetMatch -> native Boss.remoteHit/applyDamage/_hitCrab.
 // Display, flat world and Boss placement are controlled component inputs;
@@ -12,7 +13,8 @@ async function setup(t,{kind='shooter'}={}) {
   const nm=f.makeNetMatch(f.makeSession('me','me',[['me','Me'],['peer','Peer']]));
   const actor=f.makeActor({nid:17,owner:'peer',remote:true,team:0,roller:false});
   actor.weapon=f.WEAPONS[kind];actor.netLife=0;actor.pos.set(0,0,0);
-  f.bind(nm,[actor]);nm.bind(nm.match);f.G.match=nm.match;f.G.actors=[actor];
+  actor.character.getMuzzle=out=>out.copy(actor.pos).add(new f.THREE.Vector3(0,1,0));
+  const match=f.bind(nm,[actor]);nm.match=null;nm.bind(match);f.G.match=nm.match;f.G.actors=[actor];
   const boss=Object.assign(Object.create(f.Boss.prototype),{
     sim:true,dead:false,visible:true,invuln:false,pos:new f.THREE.Vector3(0,0,7),
     hp:1000,maxHp:1000,match:nm.match,flashN:0,weakN:0,log:{recv:0,recvDmg:0},
@@ -24,7 +26,7 @@ async function setup(t,{kind='shooter'}={}) {
   const claim=(extra={})=>({k:'bhit',m:nm.cfg.id,a:17,l:0,q:1,d:36,w:kind,c:-1,weak:0,...extra});
   const send=(extra={})=>nm.onMessage('peer',claim(extra));
   function fire(ts=1000,{slot='main'}={}) {
-    const event=slot==='main'?[ts,'ev','weapon:fire',{
+    const event=slot==='main'&&kind==='shooter'?nativeMainBirth(f,nm,actor,actor.weapon,ts):slot==='main'?[ts,'ev','weapon:fire',{
       actor:{n:17},weapon:actor.weapon.id,muzzle:[0,1,0],dir:[0,0,1],
     }]:[ts,'b',17,'bomb',0,1,0,0,0,10];
     nm.onMessage('peer',{k:'t',ts,u:60000+Math.round((ts-1000)*60),
