@@ -7,6 +7,18 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {hash,verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,invalidWindows,sampleStats,primeRuntimeMenuRows} from '../lib/inkwave-runtime-evidence.mjs';
 const root=persistentDirectory(path.join(process.env.INKWAVE_TEST_SCRATCH||path.resolve(import.meta.dirname,'../../.ci-scratch'),'inkwave-runtime-evidence-tests',String(process.pid)));
+// Use an actual committed runtime module in each synthetic Git tree and site.
+const networkName='owner-clock.mjs',networkSource=fs.readFileSync(new URL('../../patches/network-replication/'+networkName,import.meta.url));
+function stageNetwork(repo,site){
+ const source=path.join(repo,'patches/network-replication',networkName),artifact=path.join(site,'patches/network-replication',networkName);
+ fs.mkdirSync(path.dirname(source),{recursive:true});fs.mkdirSync(path.dirname(artifact),{recursive:true});fs.writeFileSync(source,networkSource);fs.writeFileSync(artifact,networkSource);
+ return hash(networkSource);
+}
+function bindNetwork(manifest,digest){
+ manifest.artifacts['patches/network-replication/'+networkName]=digest;
+ manifest.files['network-replication/'+networkName]=digest;
+ manifest.build.network={[networkName]:digest};manifest.contentHash=hash(JSON.stringify(manifest.artifacts));
+}
 test('benchmark rejects empty/undersampled live windows and incomplete fixed transactions',()=>{
  const scenarios=[{scenario:'battle',runs:[{repeat:0,frames:{n:0},counts:{frame:0}},{repeat:1,frames:{n:1},counts:{frame:29}},{repeat:2,frames:{n:30},counts:{frame:30}}]}];
  assert.equal(invalidWindows(scenarios,false).length,2);assert.equal(invalidWindows(scenarios,true).length,2);
@@ -26,14 +38,16 @@ test('valid artifacts cannot forge their source SHA by changing a build input',(
  for(const file of helpers){const target=path.join(repo,'scripts',file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'// committed helper '+file);}
  const native='patches/native-stages/runtime/native-ink-chunks.mjs';fs.mkdirSync(path.dirname(path.join(repo,native)),{recursive:true});fs.writeFileSync(path.join(repo,native),'// committed source ink partition');
  fs.writeFileSync(path.join(repo,'inkwave-public/source.js'),'export const source=1;');fs.writeFileSync(path.join(repo,'scripts/build-inkwave.mjs'),'// builder');
+ const networkDigest=stageNetwork(repo,site);
  const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();git('init','--quiet');git('add','.');git('-c','user.name=Runtime test','-c','user.email=runtime-test@example.invalid','commit','--quiet','-m','fixture');const sha=git('rev-parse','HEAD');
  fs.writeFileSync(path.join(site,'source.js'),'export const source=1;');
  const artifacts={'source.js':hash(fs.readFileSync(path.join(site,'source.js')))};
  const m={artifacts,contentHash:hash(JSON.stringify(artifacts)),files:{'upstream/source.js':artifacts['source.js']},build:{script:hash('// builder')}};
  for(const file of helpers)m.files['build-script/'+file]=hash(fs.readFileSync(path.join(repo,'scripts',file)));
  m.files['native-stages/runtime/native-ink-chunks.mjs']=hash(fs.readFileSync(path.join(repo,native)));
- const good=structuredClone(m.files);
- const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(m));save();assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,m.contentHash);
+ const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(m));
+ m.build.network={};save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Network source coverage found no emitted modules/);
+ bindNetwork(m,networkDigest);const good=structuredClone(m.files);save();assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,m.contentHash);
  m.files['upstream/source.js']=hash('forged source');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA/);
  fs.appendFileSync(path.join(repo,native),'\n// forged source geometry');m.files={...good,'native-stages/runtime/native-ink-chunks.mjs':hash(fs.readFileSync(path.join(repo,native)))};save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),error=>error.message==='Build differs from source SHA: '+native);
  for(const file of helpers){const target=path.join(repo,'scripts',file);fs.appendFileSync(target,'\n// uncommitted helper change');m.files={...good,['build-script/'+file]:hash(fs.readFileSync(target))};save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),error=>error.message==='Build differs from source SHA: scripts/'+file);}
@@ -147,10 +161,12 @@ test('all committed inputs remain verified above the old 64 MiB aggregate captur
  {
   fs.mkdirSync(site);const git=(args,opts={})=>execFileSync('git',args,{cwd:repo,encoding:'utf8',...opts}).trim();git(['init','--quiet']);
   const bytes=Buffer.alloc(1024*1024,37),blob=git(['hash-object','-w','--stdin'],{input:bytes});
+  const networkDigest=stageNetwork(repo,site),networkBlob=git(['hash-object','-w','--stdin'],{input:networkSource});
   const files={};let index='';for(let i=0;i<66;i++){files['upstream/'+i+'.bin']=hash(bytes);index+='100644 '+blob+'\tinkwave-public/'+i+'.bin\n';}
+  index+='100644 '+networkBlob+'\tpatches/network-replication/'+networkName+'\n';
   index+='100644 '+blob+'\tscripts/build-inkwave.mjs\n';git(['update-index','--index-info'],{input:index});const tree=git(['write-tree']);
   const sha=git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit-tree',tree,'-m','fixture']);
-  const manifest={artifacts:{},contentHash:hash('{}'),files,build:{script:hash(bytes)}};
+  const manifest={artifacts:{},contentHash:hash('{}'),files,build:{script:hash(bytes)}};bindNetwork(manifest,networkDigest);
   const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));save();
   assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,manifest.contentHash);
   manifest.files['upstream/65.bin']=hash('bad final input');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: inkwave-public\/65.bin/);
@@ -175,9 +191,10 @@ test('source verifier rejects tampered and missing registered transformer bytes'
   try{
     const repo=path.join(tmp,'repo'),site=path.join(tmp,'site');fs.mkdirSync(path.join(repo,'patches/reliability'),{recursive:true});fs.mkdirSync(path.join(repo,'scripts'),{recursive:true});fs.mkdirSync(site,{recursive:true});
     const bytes=fs.readFileSync(adapter);fs.writeFileSync(path.join(repo,'patches/reliability',key),bytes);fs.writeFileSync(path.join(repo,'scripts/build-inkwave.mjs'),'// fixture build');fs.writeFileSync(path.join(site,'asset.js'),'// fixture emitted');
+    const networkDigest=stageNetwork(repo,site);
     const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();git('init','--quiet');git('add','.');git('-c','user.name=Fixture','-c','user.email=fixture@invalid','commit','--quiet','-m','present');const sha=git('rev-parse','HEAD');
     const artifacts={'asset.js':hash('// fixture emitted')},files={['reliability/'+key]:hash(bytes)},manifest={artifacts,contentHash:hash(JSON.stringify(artifacts)),files,build:{script:hash('// fixture build')}};
-    const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));save();assert.doesNotThrow(()=>verifyRuntimeBuild(site,repo,sha));
+    bindNetwork(manifest,networkDigest);const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));save();assert.doesNotThrow(()=>verifyRuntimeBuild(site,repo,sha));
     manifest.files['reliability/'+key]=hash(Buffer.concat([bytes,Buffer.from('\n// modified transformer')]));save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: patches\/reliability\/lock-option-recovery-adapter\.mjs/);
     manifest.files['reliability/'+key]=hash(bytes);save();git('rm','--quiet','patches/reliability/'+key);git('-c','user.name=Fixture','-c','user.email=fixture@invalid','commit','--quiet','-m','missing');const absent=git('rev-parse','HEAD');assert.throws(()=>verifyRuntimeBuild(site,repo,absent),/Missing source input: patches\/reliability\/lock-option-recovery-adapter\.mjs/);
   }finally{fs.rmSync(tmp,{recursive:true,force:true});}
