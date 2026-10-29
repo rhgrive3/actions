@@ -33,6 +33,7 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/native-action-trace-binding.test.mjs',
   'patches/splatoon3/tests/roller-paint-world-update.test.mjs',
   'patches/network-replication/tests/combat-single-round-targets.test.mjs',
+  'patches/local-quality/tests/native-ground-event-memo.test.mjs',
 ];
 function assertRemainingEmittedCoverage(source) {
   const core = source.match(/^  validate_core:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
