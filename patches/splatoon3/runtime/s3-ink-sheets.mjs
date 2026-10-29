@@ -343,7 +343,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
           size, cfg.hang ? 0.7 : 0.35, cfg.hang ? 0.25 : 1, cfg.hang ? 1 : 1.5, 0);
       }
     },
-    draw(time, cam) {
+    draw(time, cam, out = null) {
       const A = a.array, B = b.array;
       let n = 0;
       for (let i = bursts.length - 1; i >= 0; i--) {
@@ -406,6 +406,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
       for (const d of drills) { d.at = null; d.color = null; }
       drills.length = 0;
       upload(drillMesh, nd, drillAttrs, 4);
+      if (out) { out.sheets = n; out.drills = nd; return out; }
       return { sheets: n, drills: nd };
     },
     clear() { for (const burst of bursts) releaseBurst(burst); bursts.length = 0; for (const d of drillSlots) { d.at = null; d.color = null; } drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },

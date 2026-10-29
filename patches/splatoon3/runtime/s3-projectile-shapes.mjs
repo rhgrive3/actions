@@ -439,7 +439,7 @@ export function bodyParams(p, kind, sp, out = {}) {
   const travel = p.start ? p.start.distanceTo(p.pos) : Infinity;
   const grow = clamp(p.age * 20, 0.15, 1);
   if (kind === 'shot') {
-    const R = shotRadius(p) * S3_SHAPE.shot.width * grow * (1 + 0.3 * Math.sin(grow * Math.PI));
+    const R = shotRadius(p) * S3_SHAPE.shot.width * grow * (grow === 1 ? 1 : 1 + 0.3 * Math.sin(grow * Math.PI));
     const length = Math.max(0, Math.min(travel, sp * shotTailFrames(p) / 60) - R);
     const frames = p.age * 60;
     const rag = clamp(1 - (frames - 1) / S3_SHAPE.shot.raggedFrames, 0, 1);
@@ -536,6 +536,7 @@ export function drawS3Shapes(system, THREE, G) {
   if (!R) R = system._s3Shapes = createRenderer(THREE, system.scene);
   if (!system.list.length && !R.sheets.bursts.length && !R.sheets.drills.length) {
     for (const mesh of [R.body, R.slashH, R.slashV, R.shell, R.core]) { mesh.count = 0; mesh.visible = false; }
+    if (R.wetSlashV) { R.wetSlashV.count = 0; R.wetSlashV.visible = false; }
     R.sparks.visible = false; R.sparks.userData.count = 0; R.sparks.geometry.setDrawRange(0, 0);
     R.sheets.mesh.count = R.sheets.drillMesh.count = 0;
     R.sheets.mesh.visible = R.sheets.drillMesh.visible = false;
@@ -629,13 +630,21 @@ export function drawS3Shapes(system, THREE, G) {
       const normalizedSeed = p.seed || 0;
       let coefficients = R.sparkleCoefficients.get(p);
       if (!coefficients || !Object.is(coefficients.seed, normalizedSeed)) {
-        const rows = [];
+        if (!coefficients) {
+          coefficients = { seed: normalizedSeed, rows: [], harmonicFrames: 0 };
+          R.sparkleCoefficients.set(p, coefficients);
+        }
+        const rows = coefficients.rows;
         for (let i = 0; i < n; i++) {
           const seed = normalizedSeed * 91.7 + i * 3.17;
           const a = hash(seed, 1) * 6.2832, y = 2 * hash(seed, 2) - 1, ring = Math.sqrt(Math.max(0, 1 - y * y));
-          rows.push({ seed, x: ring * Math.cos(a), y, z: ring * Math.sin(a), rate: 1.8 + hash(seed, 5), phase: hash(seed, 6), d: rad * (0.9 + 0.8 * hash(seed, 3)), fall: 0.35 + 0.3 * hash(seed, 7), size: hash(seed, 8) });
+          const row = rows[i] || (rows[i] = {});
+          row.seed = seed; row.x = ring * Math.cos(a); row.y = y; row.z = ring * Math.sin(a);
+          row.rate = 1.8 + hash(seed, 5); row.phase = hash(seed, 6); row.d = rad * (0.9 + 0.8 * hash(seed, 3));
+          row.fall = 0.35 + 0.3 * hash(seed, 7); row.size = hash(seed, 8);
+          row.phaseSin = undefined; row.phaseCos = undefined;
         }
-        coefficients = { seed: normalizedSeed, rows, harmonicFrames: 0 }; R.sparkleCoefficients.set(p, coefficients);
+        coefficients.seed = normalizedSeed; coefficients.harmonicFrames = 0;
       }
       // Short-lived/capacity-clipped rounds keep the original expression. For
       // ordinary seed/age ranges, share its age phase after two visible frames.
@@ -681,13 +690,15 @@ export function drawS3Shapes(system, THREE, G) {
     if (R.v2.distanceToSquared(b.at) < 4) b.at.copy(R.v2);
     if (b.owner.aimDir?.lengthSq?.() > 1e-6) b.dir.copy(b.owner.aimDir).normalize();
   }
-  const ink = R.sheets.draw(Number.isFinite(G?.time) ? G.time : 0, cam);
+  const ink = R.sheets.draw(Number.isFinite(G?.time) ? G.time : 0, cam, R.inkStats || (R.inkStats = {}));
+  // Consume the internal result before any later upload hook can reenter draw.
+  const sheets = ink.sheets, drills = ink.drills;
   R.sparks.visible = nk > 0; R.sparks.userData.count = nk; R.sparks.geometry.setDrawRange(0, nk);
   if (nk) {
     sparkPos.clearUpdateRanges(); sparkPos.addUpdateRange(0, nk * 3); sparkPos.needsUpdate = true;
     sparkSize.clearUpdateRanges(); sparkSize.addUpdateRange(0, nk); sparkSize.needsUpdate = true;
   }
-  return { body: nb, slashH: nh, slashV: nv + nw, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, drills: ink.drills };
+  return { body: nb, slashH: nh, slashV: nv + nw, shell: ns, core: nc, sparkles: nk, sheets, drills };
 }
 
 // Classify every live projectile before the native pass (which skips

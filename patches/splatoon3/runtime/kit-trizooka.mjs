@@ -696,7 +696,16 @@ export function newTrizookaReplayState() {
 
 export function trizookaReplayActivate(state, payload = {}) {
   const s = state ?? newTrizookaReplayState();
+  // Reusing a state requires an authenticated, monotonically increasing epoch.
+  // Anonymous legacy calls remain valid for one activation; their caller must
+  // create a fresh state to avoid accepting a delayed fire from an older one.
+  const activation = payload.activation;
+  if (activation !== undefined && (!Number.isSafeInteger(activation) || activation < 0)) return s;
+  if (s.activation !== undefined && (activation === undefined || activation <= s.activation)) return s;
+  if (s.ended && activation === undefined) return s;
   if (s.active) return s;                       // idempotent
+  if (activation !== undefined) s.activation = activation;
+  s.seenActions.length = 0;
   s.active = true;
   s.ended = false;
   s.reason = null;
@@ -710,9 +719,11 @@ export function trizookaReplayActivate(state, payload = {}) {
 export function trizookaReplayFire(state, payload = {}) {
   const s = state ?? newTrizookaReplayState();
   if (!s.active || s.ended) return s;
-  const index = Number.isFinite(payload.actionIndex) ? payload.actionIndex : s.actionIndex + 1;
+  if (s.activation !== undefined && payload.activation !== s.activation) return s;
+  const index = payload.actionIndex === undefined ? s.actionIndex + 1 : payload.actionIndex;
+  if (!Number.isSafeInteger(index) || index < 1 || index > TRIZOOKA.maxFireActions) return s;
   if (s.seenActions.includes(index)) return s;  // duplicate packet, no second volley
-  if (s.actionIndex >= TRIZOOKA.maxFireActions) return s;
+  if (s.actionIndex >= TRIZOOKA.maxFireActions || s.seenActions.length >= TRIZOOKA.maxFireActions) return s;
   s.actionIndex = index;
   s.t = Number.isFinite(payload.t) ? payload.t : s.t;
   s.seenActions.push(index);
@@ -721,6 +732,7 @@ export function trizookaReplayFire(state, payload = {}) {
 
 export function trizookaReplayEnd(state, payload = {}) {
   const s = state ?? newTrizookaReplayState();
+  if (s.activation !== undefined && payload.activation !== s.activation) return s;
   if (s.ended) return s;
   s.active = false;
   s.ended = true;

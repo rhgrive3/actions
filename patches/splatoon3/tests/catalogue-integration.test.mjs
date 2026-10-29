@@ -100,9 +100,17 @@ test('real JSON event packing validates sender, life and ordered deduplication b
  const sender=new f.NetMatch(session('A'),{}),receiver=new f.NetMatch(session('B'),{}),match={actors:[owner],playing:()=>true};
  sender.bind(match);f.G.match=match;owner._startSpecial();const event=JSON.parse(JSON.stringify(sender.out.find(e=>e[1]==='ac')));assert.ok(event);
  receiver.byNid.set(1,proxy);f.G.netm=receiver;f.G.projectiles._catalogueFists=[];
+ event._netSeq=event.at(-1);event._netTick=event.at(-2);
  receiver._play('foreign',event);assert.equal(f.G.projectiles._catalogueFists.length,0);
  const stale=JSON.parse(JSON.stringify(event));stale[4]++;receiver._play('A',stale);assert.equal(f.G.projectiles._catalogueFists.length,0);
- receiver._play('A',event);assert.equal(f.G.projectiles._catalogueFists.length,2);assert.ok(f.G.projectiles._catalogueFists.every(x=>x.ghost));
+ // An ac row alone is no longer proof of an equipped special activation.
+ receiver._play('A',event);assert.equal(f.G.projectiles._catalogueFists.length,0);
+ // Supply the real native special:use receipt after the receiver's accepted
+ // loadout choice; production _tick attaches these sequence/tick sidecars.
+ equip(f,proxy,'bomb','tripleSplashdown');receiver._peer('A');
+ const use=JSON.parse(JSON.stringify(sender.out.find(e=>e[1]==='ev'&&e[2]==='special:use')));assert.ok(use);
+ use._netSeq=use.at(-1);use._netTick=use.at(-2);receiver._play('A',use);
+ assert.equal(f.G.projectiles._catalogueFists.length,2);assert.ok(f.G.projectiles._catalogueFists.every(x=>x.ghost));
  receiver._play('A',JSON.parse(JSON.stringify(event)));assert.equal(f.G.projectiles._catalogueFists.length,2);
  sender.dispose();
 });
