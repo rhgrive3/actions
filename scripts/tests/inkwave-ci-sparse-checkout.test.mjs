@@ -24,3 +24,31 @@ test('the sparse audio collector parses and imports only Python standard-library
  const script=new URL('../../tools/audio/collect-public-reference-recordings.py',import.meta.url).pathname;
  execFileSync('python3',['-c',"import ast,pathlib,sys; tree=ast.parse(pathlib.Path(sys.argv[1]).read_text()); names={a.name.split('.')[0] for n in ast.walk(tree) if isinstance(n,ast.Import) for a in n.names}|{n.module.split('.')[0] for n in ast.walk(tree) if isinstance(n,ast.ImportFrom)}; assert names <= sys.stdlib_module_names, names-sys.stdlib_module_names",script]);
 });
+
+// The metadata guard deliberately audits every tracked JavaScript module, not
+// only its current literal callers. Sparse consumers must materialize that same
+// inventory, including future code outside the runtime's normal directories.
+for(const [workflow,job]of [['ci-quality-gate.yml','verify-aplus-suite'],['validate-inkwave-update.yml','build_site'],['validate-inkwave-update.yml','validate_core']])test(workflow+' '+job+' retains the complete global JavaScript audit inventory',()=>{
+ const source=read('.github/workflows/'+workflow);
+ const block=source.match(new RegExp('^  '+job+':\\n(?:(?!^  [A-Za-z0-9_-]+:)[^\\n]*\\n)*','m'))?.[0];
+ assert.ok(block,'global metadata guard owner '+job);
+ const patterns=block.match(/          sparse-checkout: \|\n((?:            [^\n]+\n)+)/)?.[1].trim().split('\n').map(line=>line.trim());
+ assert.ok(patterns?.length,'explicit non-cone checkout patterns');
+ const repository=new URL('../../',import.meta.url).pathname;
+ const inventory=command(repository,['ls-files','-z'],{encoding:'utf8',maxBuffer:8*1024*1024}).split('\0').filter(file=>/\.(?:js|mjs|cjs)$/.test(file));
+ const auditExamples=['unrelated-audit/source.js','unrelated-audit/source.mjs','unrelated-audit/source.cjs'];
+ const expected=[...new Set([...inventory,...auditExamples])];
+ const binaries=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png'];
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-global-audit-sparse-'));
+ try{
+  command(root,['init','-b','fixture']);
+  for(const file of [...expected,...binaries]){fs.mkdirSync(path.dirname(path.join(root,file)),{recursive:true});fs.writeFileSync(path.join(root,file),'// fixture\n');}
+  command(root,['add','.']);command(root,['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-m','complete audit inventory']);
+  const configure=rules=>command(root,['sparse-checkout','set','--no-cone','--stdin'],{input:rules.join('\n')+'\n'});
+  configure(patterns.filter(rule=>!['*.js','*.mjs','*.cjs'].includes(rule)));
+  assert.ok(expected.some(file=>!fs.existsSync(path.join(root,file))),'old sparse selection omits code required by the global audit');
+  configure(patterns);
+  assert.deepEqual(expected.filter(file=>!fs.existsSync(path.join(root,file))),[],'every tracked JavaScript input is available to the unchanged AST audit');
+  for(const file of binaries)assert.equal(fs.existsSync(path.join(root,file)),false,'large authoring inputs remain excluded: '+file);
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});

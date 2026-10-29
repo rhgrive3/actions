@@ -35,7 +35,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   source-and-emitted:
-    runs-on: ubuntu-latest
+    # This job opts Chromium into its sandbox; newer Ubuntu AppArmor blocks it.
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
