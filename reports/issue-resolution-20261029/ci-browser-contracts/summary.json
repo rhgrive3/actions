@@ -1,0 +1,210 @@
+{
+  "schema": 1,
+  "base": "a8909c890d01439998263ffad3dd33d480e44ca5",
+  "codeCommit": "b178b98de682a8a963ec92a51092535bb8a0fe1c",
+  "scope": "Browser-cache ABI identity, strict sparse-profile contract alignment, and canonical CI-contract registration only",
+  "hostedFailures": {
+    "webKitAbi": [
+      {
+        "pr": 1908,
+        "head": "a8909c890d01439998263ffad3dd33d480e44ca5",
+        "run": 40830118038,
+        "job": 123305266041
+      },
+      {
+        "pr": 1911,
+        "head": "1b9815d5dd255faa195437fff8520c9ad1bfbbd1",
+        "run": 40830115237,
+        "job": 123310718635
+      }
+    ],
+    "sparseContract": [
+      {
+        "pr": 1908,
+        "head": "a8909c890d01439998263ffad3dd33d480e44ca5",
+        "run": 40830118038,
+        "job": 123305265906
+      },
+      {
+        "pr": 1909,
+        "head": "649000b51654748112a4ba090fbc7dfb868f7a3e",
+        "run": 40830119733,
+        "job": 123317585388
+      },
+      {
+        "pr": 1907,
+        "head": "6ae360f1f4696b9f71c515c2c4bab0af1320c52c",
+        "run": 40830119479,
+        "job": 123318672225
+      }
+    ]
+  },
+  "causes": {
+    "webKitAbi": "Ubuntu22 runner restored Linux/X64 cache lacking distribution-release identity; apt installed correctlibicu70, cachedwebkit2336 requiredlibicudata.so.74 and exited127 before page load. Exact producer release is not proven. Playwright1.62.1 uses distinct22/24 archives with the same revision directory and skips download when an installation marker exists.",
+    "sparseContract": "CircleCI parity test still expected unrelated account MJS excluded after reviewed all-JS/MJS/CJS sparse expansion was required by the unchanged global metadata AST audit. First test failed; missing Turf/launch artifacts are downstream consequences.",
+    "registrationGap": "Required CircleCI and sandbox contracts were absent from the canonical verifier. An initial local16test cache draft missed the CircleCI fail-closed rejection of a new unconditional setup step; that draft was not published."
+  },
+  "repair": {
+    "cache": "Emit trusted runner ID+VERSION_ID through existing reviewed verified-site setup, key browser executable cache by that release, retain prior OS/arch/version/browserlist/revision identity and no restore fallback; npm tarballs unchanged.",
+    "sparse": "Prove historical narrow exclusion independently, current reviewed global code inclusion, loss of each omitted code extension, and continued nonJS/binary exclusions. All original required gate inputs remain.",
+    "canonical": "Register both existing required CircleCI/sandbox test files and guard ownership; parser unchanged, new unconditional native steps still rejected.",
+    "preserved": [
+      "sandboxtrue andUbuntu22 active/catalog routes",
+      "all7browser suite families",
+      "8CPU shards",
+      "mandatory23file emitted suite",
+      "finalValidate fan-in",
+      "all original source/fault/historical pins and negative assertions"
+    ]
+  },
+  "validation": {
+    "node": "22.23.4",
+    "canonicalCommand": "node scripts/ci/run-inkwave-test-suite.mjs verifier",
+    "canonical": {
+      "tests": 674,
+      "pass": 673,
+      "fail": 0,
+      "skip": 1,
+      "cancelled": 0,
+      "exit": 0
+    },
+    "skip": "Existing optional emitted-prop-pack case: no emitted BUILT context was supplied. No new emitted acceptance is claimed.",
+    "allSparseConsumersAndRegistry": {
+      "tests": 71,
+      "pass": 71,
+      "fail": 0,
+      "skip": 0
+    },
+    "memoryBoundedVideo": {
+      "tests": 76,
+      "pass": 76,
+      "fail": 0,
+      "skip": 0
+    },
+    "focused": {
+      "tests": 24,
+      "pass": 24,
+      "fail": 0,
+      "skip": 0
+    },
+    "overlap": "Focused71/76/24 overlap canonical and each other; never sum them.",
+    "canonicalYaml": {
+      "workflows": 81,
+      "duplicateKeys": 0
+    },
+    "oldKeyControl": "Original key fails the new cross-release identity contract.",
+    "rejectedDraft": "Former unconditional setup-step draft fails5/8 CircleCI controls; final implementation uses existing setup and leaves parser exemptions unchanged. Local draft33fbbd7a/b65bed52 is superseded, unpushed and excluded from acceptance.",
+    "setupOnlyFailures": "Separate retained attempts lacked local profile/Rubychecker files or four public assets/esbuild0.28.2. Exact tracked data and read-only pinned dependency were materialized before final whole674/71pass runs. No test/assertion was weakened.",
+    "diffCheck": "pass"
+  },
+  "cacheConsumerAudit": "Only Validate has a browser executable cache. Other matching keys are npm tarball caches and remain unchanged.",
+  "independentReview": "Agent3 independently confirmed incompatible cache ABI and Playwright registry/installation-marker semantics.",
+  "receipts": [
+    {
+      "file": "canonical-verifier-674.tap.gz",
+      "rawBytes": 150518,
+      "rawSha256": "ca5aed1e5d295f078e2f831a7cd8fbdcc34a7544f16ff009cc650bf17196064c",
+      "storedBytes": 25435,
+      "storedSha256": "7d59058ea96ce174f94c331e32235d83d21109edaf55583507be5e276f4e9a3d"
+    },
+    {
+      "file": "sparse-consumers-71.tap.gz",
+      "rawBytes": 16885,
+      "rawSha256": "c55d0bbe138f2a8c620d44667288f25fe513046aa5e37506c30b7536550c5492",
+      "storedBytes": 3717,
+      "storedSha256": "b9c4681f9f65b5a962ddd641398115b68bcd9933f1cc359a556f843373ecc6e7"
+    },
+    {
+      "file": "video-76.tap.gz",
+      "rawBytes": 14156,
+      "rawSha256": "ba26ed39ca7ad05c661b7d761641df8226bce964ebdc85da87580280573da050",
+      "storedBytes": 2428,
+      "storedSha256": "d89e366dca24585da2c5776c20505f40ab2a40d7b3a6bd30123676a45db73f27"
+    },
+    {
+      "file": "focused-24.tap.gz",
+      "rawBytes": 5745,
+      "rawSha256": "e7406ca5633eb87e613c9d3982b015175dca5e0d95254a0617503e1ca3309080",
+      "storedBytes": 1524,
+      "storedSha256": "d6c01e480e387cb289fb2920399f96a38732eca5096198dfd52e4240ae991b4e"
+    },
+    {
+      "file": "old-cache-key-negative.tap.gz",
+      "rawBytes": 2236,
+      "rawSha256": "87ce52e51efa821bf87f5cd43aa2252acdaab68afa938028f74eeffe29fe9505",
+      "storedBytes": 800,
+      "storedSha256": "3bedf4ae79395bed09185bb99978156c8d33de3926d21cc65d21d92dd26724ba"
+    },
+    {
+      "file": "rejected-new-prep-step.tap.gz",
+      "rawBytes": 9150,
+      "rawSha256": "7f125c27ff12022ef829d63542c20f2172d7735fe8d995a36f35c309f6fc50b9",
+      "storedBytes": 1284,
+      "storedSha256": "30e852e99bde50445b9744f2583fb00778af3c96437bc002e15f5ff72bccb34c"
+    },
+    {
+      "file": "verifier-setup-incomplete.tap.gz",
+      "rawBytes": 155520,
+      "rawSha256": "aa51402aeeac4b480f5774103688aab1a9a84d0fafba3d9834b08e225d1aaea2",
+      "storedBytes": 26519,
+      "storedSha256": "324661ead08acc3eb5c69d4485e63ab7c593888e63c41d1b4c1a200a8ee20873"
+    },
+    {
+      "file": "profile-setup-incomplete.tap.gz",
+      "rawBytes": 16225,
+      "rawSha256": "f1a70385e144672c10f6c4208d39761e19442220c252faabbfa1bbca5ae4b7f5",
+      "storedBytes": 3816,
+      "storedSha256": "ebeb694e69576e65ea7d428fa869538315df1c09e624689a55ed57d788633bbb"
+    },
+    {
+      "file": "ruby-script-setup-incomplete.tap.gz",
+      "rawBytes": 18906,
+      "rawSha256": "0cd968cd0650fe748f246b880ef2d4c203ddcb9c10530c994e1ff7a06890751d",
+      "storedBytes": 4240,
+      "storedSha256": "b495fa6159ebe1002366755ee8698dfd1e42ce23edafb29e6d5e153c5ab6d58b"
+    },
+    {
+      "file": "yaml-integrity.txt",
+      "rawBytes": 61,
+      "rawSha256": "111b265d74ff0971cb5ea93ed4fa07f1d1cde9b0d6b3d7978f1f7cb2f434b2ba",
+      "storedBytes": 61,
+      "storedSha256": "111b265d74ff0971cb5ea93ed4fa07f1d1cde9b0d6b3d7978f1f7cb2f434b2ba"
+    },
+    {
+      "file": "hosted-job-123305266041.log.gz",
+      "rawBytes": 211029,
+      "rawSha256": "e5214f9c191276a4c94fc52b2374f9cbfe9e21e72362b01d2fe47bab7e350130",
+      "storedBytes": 33300,
+      "storedSha256": "00c630c94a3ab390fbffbfb1e35f13c103f1318dba71f757b3b810035b8efba3"
+    },
+    {
+      "file": "hosted-job-123310718635.log.gz",
+      "rawBytes": 210814,
+      "rawSha256": "33c22f34f417ec878077fcfaf0b5765846bdb6e9f25d6608aae056efc03f9457",
+      "storedBytes": 33305,
+      "storedSha256": "8f659966f9d15fe8d97b20deb1060442809588b14d5bc2ff660c569f103cc55b"
+    },
+    {
+      "file": "hosted-job-123305265906.log.gz",
+      "rawBytes": 40176,
+      "rawSha256": "684716f64c34e458040922555bae86c4026b503d05aee3c9986f97b82690ccfd",
+      "storedBytes": 9582,
+      "storedSha256": "56dfdbbfdaa8993b109e51aeb246fe64cb8d0109ca93026d94302991ee24a23b"
+    },
+    {
+      "file": "hosted-job-123317585388.log.gz",
+      "rawBytes": 40198,
+      "rawSha256": "ab92225012c977956bb0e21a844bedd89a2ed7b71208a13c6fc278730445dd51",
+      "storedBytes": 9609,
+      "storedSha256": "36990c278080bf2b0ede76ee07b25092370a59d16591d4d1210a96a7a88bb076"
+    },
+    {
+      "file": "hosted-job-123318672225.log.gz",
+      "rawBytes": 40246,
+      "rawSha256": "2fd06e8bd7265bcc0b7c617b9654204fd0ed4a7dc12ee84ce01daf144b46a0c8",
+      "storedBytes": 9753,
+      "storedSha256": "b82d4d9e6027731db38999cbd2881986062d3e549d86a1bcc8c3c2acc69ddaba"
+    }
+  ],
+  "limits": "Corrected-head hosted acceptance remains pending. No cause is asserted for unrelated historical WebKit page crashes or runner shutdowns. No runtime behavior, workflow rerun, push, main merge, hold release or #401 work by this lane."
+}
