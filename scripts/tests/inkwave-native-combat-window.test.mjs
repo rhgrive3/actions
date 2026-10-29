@@ -98,3 +98,11 @@ test('cleanup attempts both operations and preserves the primary failure',async(
  await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000}),/dispose failed/);
  assert.equal(f.probe.combatWindow,undefined);
 });
+
+test('a lost begin response still attempts lease cleanup and preserves the original thrown value',async()=>{
+ const f=fixture();let evaluations=0,caught=false;
+ const page={async evaluate(fn,arg){evaluations++;const value=f.run(fn,arg);if(evaluations===1)throw undefined;return value;}};
+ try{await waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000});assert.fail('expected failure');}
+ catch(error){caught=true;assert.equal(error,undefined);}
+ assert.equal(caught,true);assert.equal(evaluations,2);assert.equal(f.probe.combatWindow,undefined);
+});

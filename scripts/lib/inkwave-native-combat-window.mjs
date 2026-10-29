@@ -30,17 +30,17 @@ export function inspectNativeCombatWindow({leaseId}={}) {
 // Keep the lease through the caller's profile stop and atomic capture.
 export async function waitForNativeCombatWindow(page,{mapId,minimumMs,extraTimeoutMs=120000},onReady) {
  if(!Number.isFinite(extraTimeoutMs)||extraTimeoutMs<=0)throw Error('Positive native combat timeout required');
- const leaseId=randomUUID();let handle,value,failure,started=false;
+ const leaseId=randomUUID();let handle,value,failure,failed=false;
  try{
-  await page.evaluate(beginNativeCombatWindow,{mapId,minimumMs,leaseId});started=true;
+  await page.evaluate(beginNativeCombatWindow,{mapId,minimumMs,leaseId});
   handle=await page.waitForFunction(inspectNativeCombatWindow,{leaseId},{polling:100,timeout:minimumMs+extraTimeoutMs});
   value=await handle.jsonValue();
   if(onReady)await onReady(value);
- }catch(error){failure=error;}
+ }catch(error){failure=error;failed=true;}
  finally{
-  try{await handle?.dispose();}catch(error){failure??=error;}
-  try{if(started)await page.evaluate(id=>{const p=globalThis.__gameplayProbe;if(p?.combatWindow?.leaseId===id)delete p.combatWindow;},leaseId);}catch(error){failure??=error;}
+  try{await handle?.dispose();}catch(error){if(!failed){failure=error;failed=true;}}
+  try{await page.evaluate(id=>{const p=globalThis.__gameplayProbe;if(p?.combatWindow?.leaseId===id)delete p.combatWindow;},leaseId);}catch(error){if(!failed){failure=error;failed=true;}}
  }
- if(failure)throw failure;
+ if(failed)throw failure;
  return value;
 }
