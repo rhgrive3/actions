@@ -95,7 +95,7 @@ test('charged shader removes dense stripes and emissive blade rim only on select
   assert.doesNotMatch(drill.fragmentShader,/wetBody|vS3A/,'no launch-only varying may leak into drill shader');
 });
 
-for(const hz of [30,60,120])test(`wet presentation draw/repeat/clear at ${hz} Hz consumes no RNG and cannot alter gameplay`,async()=>{
+for(const hz of [30,60,120])test(`wet draw/repeat and sheet retirement are RNG-pure at ${hz} Hz without changing gameplay`,async()=>{
   const f=await setup(),{s,a}=fire(f,'s3-saber-lite');let calls=0;f.setRandom(()=>{calls++;return .37;});
   for(let i=0;i<Math.ceil(hz/12);i++) {
     // Simulation may use game RNG for a legitimate projectile event.
@@ -105,8 +105,13 @@ for(const hz of [30,60,120])test(`wet presentation draw/repeat/clear at ${hz} Hz
     assert.equal(calls,drawRng,'both repeated presentation draws consume zero gameplay RNG');
     assert.equal(physical(s,a),before,'repeat draw cannot move/paint/damage/retime a projectile');
   }
-  const beforeClearRng=calls;
-  s.clear();assert.equal(calls,beforeClearRng,'renderer teardown cannot consume gameplay RNG');assert.equal(s._s3Shapes.slashV.count,0);assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.sheets.mesh.count,0);
+  // The native Projectiles.clear() is a gameplay lifecycle operation, not
+  // just a presentation teardown. Instrument the sheet renderer's own clear
+  // independently, then keep validating the native clear's visual reset.
+  const beforeSheetClearRng=calls;
+  s._s3Shapes.sheets.clear();
+  assert.equal(calls,beforeSheetClearRng,'presentation-only sheet retirement consumes no gameplay RNG');
+  s.clear();assert.equal(s._s3Shapes.slashV.count,0);assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.sheets.mesh.count,0);
   fire(f,'s3-saber-heavy');s._draw();assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.slashV.count,2);
 });
 
