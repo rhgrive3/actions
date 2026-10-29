@@ -9,7 +9,8 @@ import {adaptHistoricalCharacter20261026} from '../queue-historical-character-20
 import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
 import {adaptWorldNative20261029} from '../queue-world-native-20261029-adapter.mjs';
 import {adaptQueueVisualContinuation20261029} from '../queue-visual-continuation-20261029-adapter.mjs';
-import {adaptCombatGpuCpuPerfect} from '../combat-gpu-cpu-perfect-adapter.mjs';
+import {adaptCombatGpuCpuPerfect,adaptCombatWave345} from '../combat-gpu-cpu-perfect-adapter.mjs';
+import {adaptLateRoot20261029} from '../queue-late-root-20261029-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const oracleBytes=fs.readFileSync(new URL('./fixtures/queue-historical-character-before-20261026.json',import.meta.url));
@@ -193,6 +194,17 @@ test('historical character source retains independently pinned input and both la
     assert.throws(()=>replayFinalCharacterOwner(terminal,Buffer.from(finalCharacterOwnerBytes.toString().replace('quat._onChangeCallback();','quat._onChangeCallback?.();'))),/sealed final Character owner tuple/,'changed final owner cannot acquire the frozen tuple identity');
    }
    assert.equal(next,currentTerminal,rel+' exact owner composition including visual continuation and reviewed final owner');
+   // Wave 3–5 is a separate final owner, after all frozen historical and
+   // 2026-10-29 continuations. Preserve the earlier byte-for-byte equality.
+   const preWave=adaptLateRoot20261029(rel,terminal);
+   assert.equal(preWave,terminal,rel+' late-root owner leaves character files unchanged');
+   const currentEpoch=adaptCombatWave345(rel,preWave,replaceOnce);
+   if(rel==='src/game/character.js'){
+    assert.notEqual(currentEpoch,preWave,'final Wave 3–5 Character owner is exercised');
+    assert.equal(adaptCombatWave345(rel,currentEpoch,replaceOnce),currentEpoch,'Wave 3–5 Character owner remains idempotent');
+   }
+   assert.equal(next,currentEpoch,rel+' exact owner composition including visual continuation and terminal Wave 3–5');
+   assert.equal(currentTerminal,currentEpoch,rel+' independently sealed final tuple matches the actual final owner');
    // Retain the separately reviewed raw source identities from the current
    // owner epoch as additional guards, rather than substituting them for the
    // complete historical + current owner composition equality.

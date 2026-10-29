@@ -32,3 +32,10 @@ Note: these were observed on the previous main, not yet confirmed failed on the 
 - The source/contract tests can establish syntax, intended ownership, and guard behavior, not real-browser success without new exact-head hosted results.
 - Full 8-way Validate, seven-browser matrix, and native device testing are not claimed green; no weakening of original fail-closed acceptance or source identity.
 - Do not merge draft automatically. Do not touch main/Pages. #401 excluded. MOV-08b and isolated Character QA hold preserved.
+
+## Focused run after the first repair commit
+
+- Workflow 40894460986: CI contracts PASS and Wiper/audio/roller PASS.
+- Historical Character source test still FAILS because the exact frozen pre-Wave character owner was compared directly to the final composed source. The production compositor now applies `adaptCombatWave345` after the visual continuation owner. The new strict test must reproduce that terminal stage while retaining the earlier exact independent-owner equality and pinned data.
+- Repair group had 33/34 tests succeed. The remaining swim emitted fallback test needs the pre-existing Node VM modules flag in the scoped runner; update only the test invocation rather than weakening that native negative test.
+- Required full browser and PR Ready acceptance remains unverified by these Draft-focused results.

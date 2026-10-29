@@ -3,3 +3,12 @@ const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-terminal
 test('both independent native lanes consume one exact-head production build',()=>{assert.equal((workflow.match(/node scripts\/build-inkwave\.mjs /g)||[]).length,1);assert.match(workflow,/ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/);for(const lane of['context','native'])assert.match(workflow,new RegExp('node scripts/check-inkwave-'+lane+'-recovery-browser\\.mjs _site-recovery'));assert.match(workflow,/persist-credentials: false/);});
 test('emitted fault/UI lane never includes source method-extraction tests',()=>{const section=workflow.split('- name: Exact emitted publication and UI faults')[1].split('- name: Real app context loss')[0];assert.match(section,/INKWAVE_BUILT_SITE: _site-recovery/);assert.match(section,/bundle-recovery\.mjs/);assert.doesNotMatch(section,/native-world-recovery(?:-ui)?\.test\.mjs/);assert(workflow.indexOf('- name: Install CI browser')<workflow.indexOf('- name: Exact emitted publication'),'installer precedes independently failing emitted tests');assert.doesNotMatch(section,/(recovery-start|recovery-clock)\.test/);});
 test('failure evidence is bounded; PR heads supersede and manual provenance remains independent',()=>{assert.match(workflow,/cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);assert.match(workflow,/format\('pr-\{0\}', github\.event\.pull_request\.number\)/);assert.match(workflow,/format\('run-\{0\}', github\.run_id\)/);assert.match(workflow,/128\*1024\*1024/);assert.match(workflow,/id: evidence_budget/);assert.match(workflow,/actions\/upload-artifact@v4\n\s+if: \$\{\{ always\(\) && steps\.evidence_budget\.outputs\.eligible == 'true' \}\}/);assert(workflow.indexOf('if(bytes>128*1024*1024)throw')<workflow.indexOf('fs.appendFileSync(process.env.GITHUB_OUTPUT,\"eligible=true'),'budget refusal precedes upload eligibility');assert.match(workflow,/if-no-files-found: error/);});
+
+test('native recovery pins npm installation to the exact lockfile',()=>{
+ const verify=source=>{
+  assert.match(source,/- name: Install exact committed dependency graph\n        run: npm ci --no-audit --no-fund/);
+  assert.doesNotMatch(source,/npm install --no-save/);
+ };
+ verify(workflow);
+ assert.throws(()=>verify(workflow.replace('npm ci --no-audit --no-fund','npm install --no-save esbuild@0.28.2')));
+});
