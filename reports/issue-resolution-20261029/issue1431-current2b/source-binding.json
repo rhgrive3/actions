@@ -1,0 +1,16 @@
+{
+  "status": "verified",
+  "sourceSha": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "sourceHead": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "sourceStatus": "",
+  "contentHash": "381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f",
+  "inputHash": "d9778b1754ebdade71298935f2707e3ad8b8d47c0c3d9336e9ef275d6901036e",
+  "revision": "74ea0467d88175d9dea544803864c00c0077828d8b6578366a626a9c0063606c",
+  "sourceInputs": 1530,
+  "artifacts": 2241,
+  "manifestSha256": "a622318edd030c944bb12aa16d1b93945378063402a26122b3a0bcdb6c0c7a97",
+  "harnessSha256": "662a4aad55d83a38c911318dbb95c0c18c9add3722a622b375e44727920fbcb0",
+  "verifiedBeforeAndAfterBrowser": true,
+  "preflightContentHash": "381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f",
+  "preflightInputHash": "d9778b1754ebdade71298935f2707e3ad8b8d47c0c3d9336e9ef275d6901036e"
+}

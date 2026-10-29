@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "status": "original_software_criteria_implemented_and_current_software_images_pass_pending_required_CI",
+  "sourceSha": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "sourceBinding": "source-binding.json",
+  "buildContentHash": "381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f",
+  "buildInputHash": "d9778b1754ebdade71298935f2707e3ad8b8d47c0c3d9336e9ef275d6901036e",
+  "unchangedHarnessSha256": "662a4aad55d83a38c911318dbb95c0c18c9add3722a622b375e44727920fbcb0",
+  "changes": "evidence only; no production, QA harness, source model, collision world or test changes",
+  "browserResults": {
+    "cases": 36,
+    "births": 288,
+    "fixedTicks": 4320,
+    "actualWebGLDraws": 147,
+    "firstSteadyImages": 72,
+    "predictionImages": 3,
+    "totalPngs": 75,
+    "nativeVolumeConnectionsChecked": 120,
+    "maximumCheckedFxError": 0,
+    "maximumCheckedNativeBackError": 9.377400807776415e-07,
+    "maximumCheckedNativeRodError": 9.841099068192098e-07,
+    "pageErrors": 0,
+    "requestFailures": 0,
+    "acceptedDrawGlErrors": 0
+  },
+  "firstPredictedRight": [
+    {
+      "hz": 30,
+      "birthTick": 36,
+      "drawTick": 37,
+      "preAimReady": 0.8891968416376661,
+      "physicalSocketGap": 0.029154853920746234,
+      "displayedSocketError": 0,
+      "nativeSubmissionBirthBindingError": 0.0,
+      "nativeSubmissionAge": 0.016666666666666666,
+      "visibility": [
+        true,
+        true,
+        true
+      ],
+      "nativeHeadError": 6.608598956309412e-07,
+      "nativeBackError": 3.7498711565711293e-07,
+      "nativeRodError": 1.0398599810589444e-07,
+      "glError": 0
+    },
+    {
+      "hz": 60,
+      "birthTick": 36,
+      "drawTick": 37,
+      "preAimReady": 0.8891968416376661,
+      "physicalSocketGap": 0.029154853920746234,
+      "displayedSocketError": 0,
+      "nativeSubmissionBirthBindingError": 0.0,
+      "nativeSubmissionAge": 0.016666666666666666,
+      "visibility": [
+        true,
+        true,
+        true
+      ],
+      "nativeHeadError": 6.608598956309412e-07,
+      "nativeBackError": 3.7498711565711293e-07,
+      "nativeRodError": 1.0398599810589444e-07,
+      "glError": 0
+    },
+    {
+      "hz": 120,
+      "birthTick": 36,
+      "drawTick": 37,
+      "preAimReady": 0.8891968416376661,
+      "physicalSocketGap": 0.029154853920746234,
+      "displayedSocketError": 0,
+      "nativeSubmissionBirthBindingError": 0.0,
+      "nativeSubmissionAge": 0.016666666666666666,
+      "visibility": [
+        true,
+        true,
+        true
+      ],
+      "nativeHeadError": 6.608598956309412e-07,
+      "nativeBackError": 3.7498711565711293e-07,
+      "nativeRodError": 1.0398599810589444e-07,
+      "glError": 0
+    }
+  ],
+  "rawFiles": {
+    "primary-discussion.json.gz": {
+      "sha256": "33a54f26fc524dd40d8171aebec4c6e55a3b8b9562c44540c916786157949469",
+      "uncompressedSha256": "e61b683751f81826d5b209b88e3f4b59bd260b7eb19892184c316fdda5a0a499",
+      "uncompressedBytes": 7607
+    },
+    "build-manifest.json.gz": {
+      "sha256": "8d8c82afc03b09a4ba154b2db6b8909b8d1239002383d9d393470eedb3332310",
+      "uncompressedSha256": "a622318edd030c944bb12aa16d1b93945378063402a26122b3a0bcdb6c0c7a97",
+      "uncompressedBytes": 619000
+    },
+    "horizontal.json.gz": {
+      "sha256": "a965f6f448f726ef7678ec9ac3135d23c9439d59745a522e26ddfe92dc1b99ad",
+      "uncompressedSha256": "81bed0076381b3db2f43fc9861411b4a12dee5bb8946836dfca01924ebd60fff",
+      "uncompressedBytes": 333724
+    },
+    "horizontal.log.gz": {
+      "sha256": "f08f1d5cebe2d40cb9de7db536c0f0741b5c07971156dce0bc7b74e5197ad03d",
+      "uncompressedSha256": "755fae245d359e901dbb6fe009e7dec74546bbafc8b30a3fd47330420631a99d",
+      "uncompressedBytes": 4284
+    },
+    "angles.json.gz": {
+      "sha256": "486717096f57a9ee69b5dcc0d0615cf4878c62511986eddacf45518fe1d4bc72",
+      "uncompressedSha256": "9d3ddf9d6b97a67936cb7f70c2850fa136f90375a306653ce477ddf1be99c410",
+      "uncompressedBytes": 587743
+    },
+    "angles.log.gz": {
+      "sha256": "25e82aca44caa7a7f90d0af95ef21d99c2f5d62876264a216c1fd8f7f582e214",
+      "uncompressedSha256": "b9a49e92c899f61889b04e5f9924f8a9054df2cb38d0f13d510382bb008a8086",
+      "uncompressedBytes": 8494
+    },
+    "failed-prediction-request.json.gz": {
+      "sha256": "4b694ddd31c7a03df3208a54bfe4c8bda4916921ea7ddc6debab4e3c91eea39e",
+      "uncompressedSha256": "2431b97bfb9f7cb0731de4be0bde9e2e2439386defd98df02a4a36eced52e9e0",
+      "uncompressedBytes": 56536
+    },
+    "failed-prediction-request.log.gz": {
+      "sha256": "c65a8010b21b6b6e93e3992a8d5dfced88f710d213c78bb74f6684664b4bd956",
+      "uncompressedSha256": "bcc635d72ea0f8570328671ede4e753cd5914be5ee912e14ee0919ef29fdb2e5",
+      "uncompressedBytes": 1834
+    }
+  },
+  "commands": [
+    "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node scripts/check-inkwave-catalog-pose-birth-browser.mjs --site /workspace/wt-agent6/_site --evidence-dir /workspace/scratch/issue1431-current2b-horizontal --ids s3-maneuver-stepper,s3-slosher-washtub --rates 30,60,120 --pitches 0 --walls open,wall --render-policy diagnostic --stage tidewater --camera wide --capture-prediction",
+    "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node scripts/check-inkwave-catalog-pose-birth-browser.mjs --site /workspace/wt-agent6/_site --evidence-dir /workspace/scratch/issue1431-current2b-angles --ids s3-maneuver-stepper,s3-slosher-washtub --rates 30,60,120 --pitches -45,40 --walls open,wall --render-policy diagnostic --stage tidewater --camera wide"
+  ],
+  "provenanceCorrection": "Issue comment6489904468 was root AI summary in this session, explicitly confirmed by root, not a new human requirement. Historical prediction limitation describes older931e4c/public8783eb8, not current code. Original reports retained untouched.",
+  "geometryLineage": {
+    "existingReport": "reports/issue-resolution-20261022/continuation/model-1277-lineage.json",
+    "historicalPublicEquivalent": "8783eb8d9110e78fb28325e9d970bd5ecea44a87",
+    "currentBuilderDiffAgainstHistoricalPublicEquivalent": [],
+    "interpretation": "existing main/merged1277 standard-variant geometry/grip/channel contract comparison remains applicable; authored Explosher lip correction is explicit, no authentic Nintendo aperture certification"
+  },
+  "limits": [
+    "Software Chromium/SwiftShader diagnostic draws, not hardware or FPS testing.",
+    "Real source-loaded Actor/Character/Runner/Projectiles/FX/Physics and published Tidewater layout; controlled plain lighting/material and paint sinks, not full production Game or Nintendo stage/material validation.",
+    "30/60/120 are render schedules over the native fixed clock; diagnostic draws are sparse, not every-frame GPU cadence acceptance.",
+    "The current software image run has no artificial hit reactions; the separate emitted212 includes the hit-pose matrix and full-segment source/authority regressions.",
+    "Warm two-browser Shooter ceiling QA is transport/HP evidence, not Quad/Explosher aperture or image proof.",
+    "Physical birth and native full-aim/fallback remain authoritative; no demand for late-pose physical relocation or authentic retail aperture is added.",
+    "The first all-angle prediction-visibility request failed when a down45deg round retired on real floor before its first volume submission; retained unchanged as an inapplicable extra visibility request, not a production-origin failure.",
+    "No issue was closed or comment posted; root reviews correction and waits for current required CI.",
+    "MOV08b/isolated Character QA holds remain; this issue-specific image probe does not release them;401excluded."
+  ],
+  "localImageArchive": {
+    "path": "/workspace/scratch/issue1431-current2b-all-images.tar.gz",
+    "sha256": "39074dd4cd56c26aff20dcabcc65bfee059df24e02f54c60459badd41edb0518",
+    "publication": "Retained locally; full75image archive is not duplicated into the repository. Three visually inspected representative PNGs are published."
+  }
+}
