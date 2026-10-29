@@ -28,6 +28,7 @@ test('the sparse audio collector parses and imports only Python standard-library
 // The metadata guard deliberately audits every tracked JavaScript module, not
 // only its current literal callers. Sparse consumers must materialize that same
 // inventory, including future code outside the runtime's normal directories.
+{
 for(const [workflow,job]of [['ci-quality-gate.yml','verify-aplus-suite'],['validate-inkwave-update.yml','build_site'],['validate-inkwave-update.yml','validate_core']])test(workflow+' '+job+' retains the complete global JavaScript audit inventory',()=>{
  const source=read('.github/workflows/'+workflow);
  const block=source.match(new RegExp('^  '+job+':\\n(?:(?!^  [A-Za-z0-9_-]+:)[^\\n]*\\n)*','m'))?.[0];
@@ -38,7 +39,7 @@ for(const [workflow,job]of [['ci-quality-gate.yml','verify-aplus-suite'],['valid
  const inventory=command(repository,['ls-files','-z'],{encoding:'utf8',maxBuffer:8*1024*1024}).split('\0').filter(file=>/\.(?:js|mjs|cjs)$/.test(file));
  const auditExamples=['unrelated-audit/source.js','unrelated-audit/source.mjs','unrelated-audit/source.cjs'];
  const expected=[...new Set([...inventory,...auditExamples])];
- const binaries=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png'];
+ const binaries=['unrelated-audit/source.blend','unrelated-audit/reference.png'];
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-global-audit-sparse-'));
  try{
   command(root,['init','-b','fixture']);
@@ -52,3 +53,4 @@ for(const [workflow,job]of [['ci-quality-gate.yml','verify-aplus-suite'],['valid
   for(const file of binaries)assert.equal(fs.existsSync(path.join(root,file)),false,'large authoring inputs remain excluded: '+file);
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+}

@@ -1,0 +1,45 @@
+{
+  "sourceCommit": "afca10b6ea1640717fc06345e94b86ecd6e22f67",
+  "fixCommit": "afca10b6ea1640717fc06345e94b86ecd6e22f67",
+  "reviewedSparseFixtureSha256": "788a50eee7f93cd50c301fe45c96f62942295f2c75948c89b1bf247190bef272",
+  "node": "22.23.4",
+  "verifier": {
+    "exitCode": 0,
+    "tests": 661,
+    "passed": 660,
+    "failed": 0,
+    "skipped": 1,
+    "skip": "existing optional emitted pack needs INKWAVE_BUILT_SITE"
+  },
+  "emittedOptionalPackFile": {
+    "exitCode": 0,
+    "tests": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "overlapsVerifier": true,
+    "siteContentHash": "236528e1e15d593fb5b3d5586f84ecd930083e8bdbb54a003d1a64f5cf7ed1c3"
+  },
+  "newSkips": 0,
+  "hostedAcceptance": "pending",
+  "initialHostedFailure": {
+    "job": 123276128714,
+    "failedCases": 5,
+    "cause": "exact old sparse profiles and fixture pin were not updated with the new complete JavaScript audit checkout",
+    "url": "https://github.com/rhgrive3/actions/actions/runs/40821926130/job/123276128714"
+  },
+  "receipts": [
+    {
+      "file": "contact-batch-full-verifier.tap.gz",
+      "rawBytes": 147524,
+      "rawSha256": "5efb31384ea1d3eaa825877844ea8d10985fc2d5f1f22d6f02f619d9deacec40",
+      "gzipSha256": "8459579e2630f47c00f48821c60ead4f93d78882dff67fb45ec6fada1c95e51d"
+    },
+    {
+      "file": "contact-batch-verifier-emitted-props.tap.gz",
+      "rawBytes": 1233,
+      "rawSha256": "867eeaa141b4b9140b5d62736e1b17054f7ef4d61cca38ea512f45b0c5919963",
+      "gzipSha256": "5a423eccd5b730741eac8d5ba7226e349bfc7a724322227cc44baffeeda42ea9"
+    }
+  ]
+}
