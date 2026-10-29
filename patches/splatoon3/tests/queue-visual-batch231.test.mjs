@@ -71,11 +71,13 @@ test('unsupported special kinds allocate no Group or team color work',()=>{
 });
 test('idle local movement audio skips only absent handles and still fades existing loops after death',()=>{
  const raw=read('../../../inkwave-public/src/main.js'),source=adaptBuildSource('src/main.js',raw),calls=[];
- const update=method(source,'Game','_updateLocalLoops',{G:{audio:{loop:()=>{throw Error('must stay dormant');}}},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)});
- const want=method(source,'Game','_wantLocalLoop',{G:{audio:{loop:()=>{throw Error('must stay dormant');}}},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)});
- const dormant={match:null,_wantLocalLoop:want};for(let i=0;i<100;i++)update.call(dormant,1/60);assert.equal(dormant._loops,undefined);
- const active={match:null,_wantLocalLoop:want,_loops:{swim:{_v:.5,set(p){calls.push(['set',p.volume]);},stop(){calls.push(['stop']);}}}};
- for(let i=0;i<100;i++)update.call(active,1/60);assert.ok(calls.some(c=>c[0]==='set'));assert.equal(calls.filter(c=>c[0]==='stop').length,1);assert.equal(active._loops.swim,null);
+ let attemptedLoops=0;const audio={ctx:{state:'running'},loop(){attemptedLoops++;return null;}};
+ const bindings={G:{audio},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)};
+ const update=method(source,'Game','_updateLocalLoops',bindings),want=method(source,'Game','_wantLocalLoop',bindings),recover=method(source,'Game','_recoverMainLoop',bindings);
+ let recoveries=0;const recoverTracked=function(...args){recoveries++;return recover.apply(this,args);};
+ const dormant={match:null,_wantLocalLoop:want,_recoverMainLoop:recoverTracked};for(let i=0;i<100;i++)update.call(dormant,1/60);assert.equal(dormant._loops,undefined);assert.equal(recoveries,0,'idle frames do not visit recovery');
+ const active={match:null,_wantLocalLoop:want,_recoverMainLoop:recoverTracked,_loops:{swim:{playing:true,_v:.5,set(p){calls.push(['set',p.volume]);},stop(){this.playing=false;calls.push(['stop']);}}}};
+ for(let i=0;i<100;i++)update.call(active,1/60);assert.ok(calls.some(c=>c[0]==='set'));assert.equal(calls.filter(c=>c[0]==='stop').length,1);assert.equal(active._loops.swim,null);assert.ok(recoveries>0,'existing loop visits the real recovery owner');assert.equal(active._mainLoopRecovery.swim.context,audio.ctx);assert.equal(attemptedLoops,0,'fading cannot start an unwanted loop');
 });
 test('ranked objective projection scratch retains every Canvas command for all four ranked rules',()=>{
  const source=read('../runtime/ranked/ui.mjs'),ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
