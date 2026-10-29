@@ -14,7 +14,7 @@ export async function nativeProbe({oldPolicy=false,hz=60}={}) {
   if(!oldPolicy||rel!=='src/game/motion/retarget.js')return source;
   assert.equal(source.split(current).length,2,'exact counterfactual helper');return source.replace(current,old);
  };
- const f=await sourceLoadedActorFixture({moduleTransform:oldPolicy?moduleTransform:null,random:()=>.5,extraExports:"export {installQuality}from './patches/local-quality/install.mjs'; export {NativeLevel}from './patches/native-stages/runtime/native-level.mjs';export {NativePhysics}from './patches/native-stages/runtime/native-physics.mjs';"});
+ const f=await sourceLoadedActorFixture({moduleTransform:oldPolicy?moduleTransform:null,random:()=>.5,extraExports:"export {installQuality}from './patches/local-quality/install.mjs'; export {NativeLevel,NativePhysics}from './patches/native-stages/runtime/engine.mjs';"});
  f.installQuality(f.profile);const {G,THREE}=f;
  G.mode='match';G.match={state:'playing',attract:false,opts:{range:false},playing:()=>true};G.renderer={info:{render:{frame:100}},getRenderTarget:()=>null,getPixelRatio:()=>1,getSize:t=>{t.x=1280;t.y=720;return t;}};
  G.camera=new THREE.PerspectiveCamera(60,16/9,.15,6500);G.camera.position.set(0,1.5,8);G.camera.lookAt(0,1.5,100);G.camera.updateMatrixWorld(true);
