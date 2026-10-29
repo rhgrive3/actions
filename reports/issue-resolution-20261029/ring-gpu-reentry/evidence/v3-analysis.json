@@ -1,0 +1,396 @@
+{
+  "rows": 99,
+  "groups": 33,
+  "rgbaAllExact": true,
+  "liveVboAllMatchOwnSource": true,
+  "cpuFullSourcesAcrossProducersExact": true,
+  "shaderDifferenceGroups": {
+    "current": 33
+  },
+  "gpuFullDifferences": [
+    {
+      "case": "30Hz/undrawn-mark-tail-reentry",
+      "variant": "B",
+      "attribute": "aColA",
+      "liveByteLength": 32,
+      "differentBytes": 4,
+      "firstDifferentByte": 34,
+      "lastDifferentByte": 43,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "30Hz/undrawn-mark-tail-reentry",
+      "variant": "B",
+      "attribute": "aMisc",
+      "liveByteLength": 32,
+      "differentBytes": 2,
+      "firstDifferentByte": 38,
+      "lastDifferentByte": 39,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "30Hz/undrawn-mark-tail-reentry",
+      "variant": "current",
+      "attribute": "aColA",
+      "liveByteLength": 32,
+      "differentBytes": 4,
+      "firstDifferentByte": 34,
+      "lastDifferentByte": 43,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "30Hz/undrawn-mark-tail-reentry",
+      "variant": "current",
+      "attribute": "aMisc",
+      "liveByteLength": 32,
+      "differentBytes": 2,
+      "firstDifferentByte": 38,
+      "lastDifferentByte": 39,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "60Hz/undrawn-mark-tail-reentry",
+      "variant": "B",
+      "attribute": "aColA",
+      "liveByteLength": 32,
+      "differentBytes": 4,
+      "firstDifferentByte": 34,
+      "lastDifferentByte": 43,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "60Hz/undrawn-mark-tail-reentry",
+      "variant": "B",
+      "attribute": "aMisc",
+      "liveByteLength": 32,
+      "differentBytes": 2,
+      "firstDifferentByte": 38,
+      "lastDifferentByte": 39,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "60Hz/undrawn-mark-tail-reentry",
+      "variant": "current",
+      "attribute": "aColA",
+      "liveByteLength": 32,
+      "differentBytes": 4,
+      "firstDifferentByte": 34,
+      "lastDifferentByte": 43,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "60Hz/undrawn-mark-tail-reentry",
+      "variant": "current",
+      "attribute": "aMisc",
+      "liveByteLength": 32,
+      "differentBytes": 2,
+      "firstDifferentByte": 38,
+      "lastDifferentByte": 39,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "120Hz/undrawn-mark-tail-reentry",
+      "variant": "B",
+      "attribute": "aColA",
+      "liveByteLength": 32,
+      "differentBytes": 4,
+      "firstDifferentByte": 34,
+      "lastDifferentByte": 43,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "120Hz/undrawn-mark-tail-reentry",
+      "variant": "B",
+      "attribute": "aMisc",
+      "liveByteLength": 32,
+      "differentBytes": 2,
+      "firstDifferentByte": 38,
+      "lastDifferentByte": 39,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "120Hz/undrawn-mark-tail-reentry",
+      "variant": "current",
+      "attribute": "aColA",
+      "liveByteLength": 32,
+      "differentBytes": 4,
+      "firstDifferentByte": 34,
+      "lastDifferentByte": 43,
+      "entirelyOutsideLiveRange": true
+    },
+    {
+      "case": "120Hz/undrawn-mark-tail-reentry",
+      "variant": "current",
+      "attribute": "aMisc",
+      "liveByteLength": 32,
+      "differentBytes": 2,
+      "firstDifferentByte": 38,
+      "lastDifferentByte": 39,
+      "entirelyOutsideLiveRange": true
+    }
+  ],
+  "tailControls": [
+    {
+      "hz": 30,
+      "staticSubUploads": {
+        "C": 2,
+        "B": 0,
+        "current": 0
+      },
+      "versions": [
+        {
+          "variant": "C",
+          "values": [
+            2,
+            2
+          ]
+        },
+        {
+          "variant": "B",
+          "values": [
+            1,
+            1
+          ]
+        },
+        {
+          "variant": "current",
+          "values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "hz": 60,
+      "staticSubUploads": {
+        "C": 2,
+        "B": 0,
+        "current": 0
+      },
+      "versions": [
+        {
+          "variant": "C",
+          "values": [
+            2,
+            2
+          ]
+        },
+        {
+          "variant": "B",
+          "values": [
+            1,
+            1
+          ]
+        },
+        {
+          "variant": "current",
+          "values": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "hz": 120,
+      "staticSubUploads": {
+        "C": 2,
+        "B": 0,
+        "current": 0
+      },
+      "versions": [
+        {
+          "variant": "C",
+          "values": [
+            2,
+            2
+          ]
+        },
+        {
+          "variant": "B",
+          "values": [
+            1,
+            1
+          ]
+        },
+        {
+          "variant": "current",
+          "values": [
+            1,
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "recreations": [
+    {
+      "hz": 30,
+      "variant": "C",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ]
+    },
+    {
+      "hz": 30,
+      "variant": "B",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29
+      ]
+    },
+    {
+      "hz": 30,
+      "variant": "current",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "hz": 60,
+      "variant": "C",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ]
+    },
+    {
+      "hz": 60,
+      "variant": "B",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        60,
+        61,
+        62,
+        63,
+        64,
+        65
+      ]
+    },
+    {
+      "hz": 60,
+      "variant": "current",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        66,
+        67,
+        68,
+        69,
+        70,
+        71
+      ]
+    },
+    {
+      "hz": 120,
+      "variant": "C",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        90,
+        91,
+        92,
+        93,
+        94,
+        95
+      ]
+    },
+    {
+      "hz": 120,
+      "variant": "B",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        96,
+        97,
+        98,
+        99,
+        100,
+        101
+      ]
+    },
+    {
+      "hz": 120,
+      "variant": "current",
+      "priorBuffersDeleted": true,
+      "newBufferIds": [
+        102,
+        103,
+        104,
+        105,
+        106,
+        107
+      ]
+    }
+  ],
+  "deletions": 108,
+  "errors": [],
+  "all108NativeDeleteChecksFalse": true,
+  "actualReentryBufferObjects": [
+    {
+      "hz": 30,
+      "variant": "C",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 30,
+      "variant": "B",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 30,
+      "variant": "current",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 60,
+      "variant": "C",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 60,
+      "variant": "B",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 60,
+      "variant": "current",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 120,
+      "variant": "C",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 120,
+      "variant": "B",
+      "allActualBufferObjectsRecreated": true
+    },
+    {
+      "hz": 120,
+      "variant": "current",
+      "allActualBufferObjectsRecreated": true
+    }
+  ]
+}

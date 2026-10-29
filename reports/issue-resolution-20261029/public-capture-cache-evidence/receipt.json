@@ -1,0 +1,223 @@
+{
+  "schema": 1,
+  "sourceSha": "8cb5dec72c3d8cf9fde8eb703873aacf16c428ee",
+  "immutableSite": "/workspace/scratch/main-wave345-repaired-site",
+  "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+  "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+  "fullActivePassed": true,
+  "exit": 0,
+  "startedAt": "2026-10-29T17:18:43.458Z",
+  "finishedAt": "2026-10-29T17:22:30.587Z",
+  "kits": 65,
+  "gears": 12,
+  "gameplay": {
+    "state": "playing",
+    "elapsedAt20Hz": 3.0000000000023874,
+    "movement": 2.7603360000000166,
+    "movementProbe": {
+      "state": "playing",
+      "paused": false,
+      "alive": true,
+      "form": "kid",
+      "grounded": true,
+      "controller": true,
+      "enabled": true,
+      "menuBlocked": false,
+      "samples": [
+        {
+          "key": "KeyW",
+          "keyPresent": true,
+          "enabled": true,
+          "menuBlocked": false,
+          "intent": [
+            0,
+            0,
+            1
+          ],
+          "vel": [
+            0,
+            0,
+            0.6
+          ],
+          "deltaAfterFirstTick": 0.010000000000001563
+        }
+      ]
+    },
+    "hp": 100,
+    "gear": [
+      {
+        "main": "runSpeed",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "velocityFinite": true,
+    "clockTicks": 785,
+    "paintedFloorArea": 0.625,
+    "coverage": [
+      0.00014398802830541628,
+      0
+    ]
+  },
+  "minimapCases": 7,
+  "minimapFrames": 710,
+  "minimapNegativeControls": {
+    "blankRejected": true,
+    "corruptionRejected": true,
+    "clockRejected": true,
+    "stalePrebirthRejected": true,
+    "forceCreditRejected": true,
+    "slowTickCreditRejected": true
+  },
+  "verifiedResponses": 782,
+  "formerlyFailedAssetVerified": true,
+  "errors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "verifiedAudioCancellations": [],
+  "artifactsBeforeAndAfterVerified": 2259,
+  "inputsBeforeAndAfterVerified": 1546,
+  "sourceAndQaUnchanged": true,
+  "actualExecutable": {
+    "actualExecutable": "/home/agent/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+    "sha256": "e11fc9ce65c96313476f7ee9844b6fb6a9220fb048693cfe9eee00acf4170a9f"
+  },
+  "processesClosed": true,
+  "remainingOwnedProcesses": [],
+  "sourceTests": {
+    "tests": 80,
+    "pass": 80,
+    "fail": 0,
+    "skip": 0
+  },
+  "independentPeerTests": {
+    "tests": 24,
+    "pass": 24,
+    "fail": 0,
+    "skip": 0
+  },
+  "scope": "Only public local-QA successful GET200 non-HTML cache headers changed; no audio/game production changes. HTML, HEAD, media206/416,404, bytes/MIME/length and existing network admission retained.",
+  "limitations": [
+    "One full-active candidate run on retained6013 build; no result for later external main icon update.",
+    "Active requestfailed admission remains wholly strict. Projectile pre-existing verified-audio cancellation exception was neither removed nor extended.",
+    "No new projectile capture was run after the helper header change; the full515 pre-change capture is separate evidence.",
+    "No retail/device measurement or general browser-audio performance claim."
+  ],
+  "files": [
+    {
+      "path": "active-8cb5-receipt.json.gz",
+      "originalPath": "/workspace/scratch/agent1-full-active-8cb5/receipt.json",
+      "bytes": 6548,
+      "sha256": "4f1be7e96f01b05ca862236cba389b494043157622d8d41d3df9780e41bc7ade",
+      "gzipBytes": 2576,
+      "gzipSha256": "77f05247e0993fd42d878496a17a32347148063ccd77b433c10ae316e1efedf3"
+    },
+    {
+      "path": "active-8cb5-browser-result.json.gz",
+      "originalPath": "/workspace/scratch/agent1-full-active-8cb5/evidence/browser-result.json",
+      "bytes": 335411,
+      "sha256": "64f1c841f7a5949afa49169c4da4f7b051d34a964f7acd9c2403d35275d840fe",
+      "gzipBytes": 31839,
+      "gzipSha256": "cc1cf54b857fb05ef4b9a2f209a36d40577460b4093117cba331af7283f6e09f"
+    },
+    {
+      "path": "active-8cb5-streamed-music-diagnostics.json.gz",
+      "originalPath": "/workspace/scratch/agent1-full-active-8cb5/evidence/streamed-music-diagnostics.json",
+      "bytes": 12718,
+      "sha256": "fe1328a05201532b2b5e086d6e41a06e132807dd2e2e18166fc17bf7735c9b05",
+      "gzipBytes": 2492,
+      "gzipSha256": "8f74e445e7d6af032fbdbdbf01c8871dcc973f1faaea168a673505e60ece6fbf"
+    },
+    {
+      "path": "active-8cb5-actual-browser-executable.json.gz",
+      "originalPath": "/workspace/scratch/agent1-full-active-8cb5/actual-browser-executable.json",
+      "bytes": 2694,
+      "sha256": "1fb20d872ffcbf782cb977d559f6a2e7bc9b290c6529815f62293cfd69c058af",
+      "gzipBytes": 1195,
+      "gzipSha256": "0cf907fe84d73d11116d147f5f0c943b019297b6d9c7c35dd5d277a114863543"
+    },
+    {
+      "path": "active-8cb5-driver.log.gz",
+      "originalPath": "/workspace/scratch/agent1-full-active-8cb5/driver.log",
+      "bytes": 1352,
+      "sha256": "a5cb53fccf799d67228f8fd62d1adeb79eb9568111ddc98789d5f9550b315e63",
+      "gzipBytes": 655,
+      "gzipSha256": "a21fb289fd464493900522d251db9bf5e08206ce753626b85535d27ab20920c9"
+    },
+    {
+      "path": "active-8cb5-wrapper.log.gz",
+      "originalPath": "/workspace/scratch/agent1-full-active-8cb5-launch.log",
+      "bytes": 2837,
+      "sha256": "701a6af79c71b95434018c44cbdb90ace8ce0162b0062de915598d3c8ba4f576",
+      "gzipBytes": 1367,
+      "gzipSha256": "dfd000b625dccebf1fe2882a382529556f403c76a5fa8a5722acc56b9f55553c"
+    },
+    {
+      "path": "active-8cb5-wrapper.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-run-active-8cb5.mjs",
+      "bytes": 5442,
+      "sha256": "575ea08df63aec5afa82409dfd9099fdae16744320ff653af267be7c149408fe",
+      "gzipBytes": 2187,
+      "gzipSha256": "c3403100a677aeaaef90a68dc5766476b4f33886f11e381ca8c2f5a78e01b953"
+    },
+    {
+      "path": "source-80.tap.gz",
+      "originalPath": "/workspace/scratch/agent1-public-capture-cache/source-tests.tap",
+      "bytes": 17182,
+      "sha256": "1e9e24334d464a3382e91eea88920070cc4e83cd7b4fcdf5ab4454d5b974f8be",
+      "gzipBytes": 3231,
+      "gzipSha256": "636ba5c273b928df28839f1aff40d18479699b8b3f42c744e60c9cb3465379f3"
+    },
+    {
+      "path": "source-inverse-receipt.json.gz",
+      "originalPath": "/workspace/scratch/agent1-public-capture-cache/source-receipt.json",
+      "bytes": 1942,
+      "sha256": "ae7c87760a5aee6753c74b7b33997ebbda9f46ad106cce310ed08036fc8ed138",
+      "gzipBytes": 871,
+      "gzipSha256": "7041d82d835e3199757034e5fc24602479516b9dc587d900808d388ba980942e"
+    },
+    {
+      "path": "peer-24.tap.gz",
+      "originalPath": "/workspace/scratch/agent5-public-cache-peer-node22.tap",
+      "bytes": 4517,
+      "sha256": "7dea16c6ddb8a11fe4b9c2b139c885b80f217c7a6b4a667a571c5198a9d64336",
+      "gzipBytes": 990,
+      "gzipSha256": "1fa56f63dfa3058a9b33b7c083351c24d72e7b110856ec22c1978174a452ba3c"
+    },
+    {
+      "path": "prior-515-receipt.json.gz",
+      "originalPath": "/workspace/scratch/agent2-full-active-515/receipt.json",
+      "bytes": 9145,
+      "sha256": "bbfce8326e026ae44eed3f9439734f3052be52e99d4f45b82d8c70fe6efa1afe",
+      "gzipBytes": 3585,
+      "gzipSha256": "df913a1abe772dadd2d12170f75ce01b58f5377eb7db34def31e0714d43b6c4f"
+    },
+    {
+      "path": "prior-515-browser-result.json.gz",
+      "originalPath": "/workspace/scratch/agent2-full-active-515/evidence/browser-result.json",
+      "bytes": 335868,
+      "sha256": "2f726a7d97f7ffb5e169416f4d45bde778fa4bfe6392d5b7823ce3d468a4d79e",
+      "gzipBytes": 31997,
+      "gzipSha256": "ba2ad7f18cd3541383d2ac212a53c5c265016761fcf9a74e48b1230e58adad43"
+    }
+  ]
+}

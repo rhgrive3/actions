@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "kind": "DO_NOT_MERGE-current-current-native-self-control",
+  "mode": "calibrate",
+  "trials": 2,
+  "order": [
+    "C",
+    "B"
+  ],
+  "condition": {
+    "backend": "ANGLE gl-egl / Mesa llvmpipe surfaceless",
+    "sandbox": true,
+    "playwright": "1.62.1",
+    "browser": "151.0.7922.34",
+    "stage": "tidewater",
+    "scenario": "normal",
+    "viewport": [
+      480,
+      300
+    ],
+    "quality": "medium",
+    "shadows": true,
+    "bloom": true,
+    "cameraOffsetX": 0,
+    "warmup": 30,
+    "calibrationSamples": 6,
+    "measurementSamples": 60,
+    "inputCounts": {
+      "buffers": 3022,
+      "textures": 48,
+      "meshStates": 488,
+      "lightStates": 2,
+      "materialStates": 174,
+      "shaderSources": 179,
+      "gpuColorTargets": 15
+    },
+    "frameWork": {
+      "alive": 8,
+      "botCalls": 7,
+      "playerCalls": 1,
+      "scale": 1
+    },
+    "pixelBytes": 576000,
+    "allowedPixelChanges": 0,
+    "allowedInputChanges": 0,
+    "allowedProgramChanges": 0
+  },
+  "settings": {
+    "quality": "medium",
+    "shadows": true,
+    "bloom": true,
+    "frameRate": "display",
+    "music": 0.6,
+    "sfx": 0.85,
+    "master": 0.8
+  },
+  "sources": {
+    "C": {
+      "sourceSha": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+      "sourceTree": "64d444cd70e88d8490672c6c6051d0aae1e32622",
+      "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+      "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+      "inputMapSha256": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+      "manifestSha256": "69e45e6a54293d951b44b03c01dcf57ccb4d2c8ae80a31d0d80d270be1856cc4",
+      "buildRevision": "2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd",
+      "builderSha256": "4ec7a154eeaa1b7f65beb7fd26ccb33f231596eeb0b56579e10733868639e2f9",
+      "inputCount": 1546,
+      "artifactCount": 2259
+    },
+    "B": {
+      "sourceSha": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+      "sourceTree": "64d444cd70e88d8490672c6c6051d0aae1e32622",
+      "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+      "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+      "inputMapSha256": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+      "manifestSha256": "69e45e6a54293d951b44b03c01dcf57ccb4d2c8ae80a31d0d80d270be1856cc4",
+      "buildRevision": "2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd",
+      "builderSha256": "4ec7a154eeaa1b7f65beb7fd26ccb33f231596eeb0b56579e10733868639e2f9",
+      "inputCount": 1546,
+      "artifactCount": 2259
+    }
+  },
+  "producer": {
+    "C": {
+      "fxArtifact": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+      "swimHelperArtifact": "1882df57f169f183b02435eb0c181b32d94e98ab804aa42861c186c0646a96a2",
+      "threeArtifact": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3",
+      "servedFxPath": "_versions/2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd/src/fx/fx.js",
+      "declaredInputs": {
+        "upstream/src/fx/fx.js": "af7a19f37e3cc141a6c3463f4767c0913754c122c7e3d79f0030e0780a67e4d2",
+        "local-quality/render-transfer-optimization-adapter.mjs": "77542972da20bca66c910a7b367e57c9a9f00f620391b03243a7c899d857db7d",
+        "local-quality/queue-visual-continuation-20261029-adapter.mjs": "4dd3dbf5c6bdba0316b56730e9aa53e6bea80abe0aadbca13a0e62d53d83555e",
+        "local-quality/swim-surface.mjs": "88fc45b3696683d085b4a1eb08d82e031db35010dd5e1e4ecd56f07faf16d525",
+        "build-script/inkwave-source-composition.mjs": "17cae099d697e9767be5fe07fb3807c8325d9e989e82b9577d725f65720b6725",
+        "local-quality/combat-gpu-cpu-perfect-adapter.mjs": "a4ae781e4ba9021504dcdb6bb623fe7ce73b6e4befc4f6c512b11041eba0f3b8"
+      }
+    },
+    "B": {
+      "fxArtifact": "3313965ae600ff56d02e655c1dd9f0c976b431f20d6b71563e7b5b185a36e9b2",
+      "swimHelperArtifact": "1882df57f169f183b02435eb0c181b32d94e98ab804aa42861c186c0646a96a2",
+      "threeArtifact": "2ec0fd8870cce8ae91e3b1ecd402c6223d9fdc4e361ad84590d30d64f8252fd3",
+      "servedFxPath": "_versions/2ff677c5554eaa5d23ce38e3b635adb64de245c4ce644ab690dee8a2db0f3cbd/src/fx/fx.js",
+      "declaredInputs": {
+        "upstream/src/fx/fx.js": "af7a19f37e3cc141a6c3463f4767c0913754c122c7e3d79f0030e0780a67e4d2",
+        "local-quality/render-transfer-optimization-adapter.mjs": "77542972da20bca66c910a7b367e57c9a9f00f620391b03243a7c899d857db7d",
+        "local-quality/queue-visual-continuation-20261029-adapter.mjs": "4dd3dbf5c6bdba0316b56730e9aa53e6bea80abe0aadbca13a0e62d53d83555e",
+        "local-quality/swim-surface.mjs": "88fc45b3696683d085b4a1eb08d82e031db35010dd5e1e4ecd56f07faf16d525",
+        "build-script/inkwave-source-composition.mjs": "17cae099d697e9767be5fe07fb3807c8325d9e989e82b9577d725f65720b6725",
+        "local-quality/combat-gpu-cpu-perfect-adapter.mjs": "a4ae781e4ba9021504dcdb6bb623fe7ce73b6e4befc4f6c512b11041eba0f3b8"
+      }
+    }
+  },
+  "helpers": {
+    "run-native-self-control.mjs": "4c6e5e722f76bec455fd13bfb155082bd45dae9fbfb24ce60fa7575d403b666d",
+    "native-self-control-contract.mjs": "ec689c2347100cb1544808ad6677d4d1677458dd94fc8164acbcf4197416bcb6",
+    "measure-mesa-native-control.mjs": "ade794913c49387d15d866822083f68a5d3f2fe158665904cef081558976c6e7",
+    "mesa-native-condition.mjs": "5ca1e817cecc3e4ee0a646aa4dbe88cb4c238c29aca2516f1920d27bcc948e8d",
+    "current-pair-contract.mjs": "0661c3bb572d30755d6cc40468d3390392aab885dba76812df810020fbfa45fb",
+    "music-owner-receipts.mjs": "f59785c11f1212e85fdb5fd350afd27c3bf3b6f51b1b711e87c047217c0fa4b4",
+    "render-target-neighborhood.mjs": "19afa1ccbecbbf33358d330e1024df7d807da3338f5656a9f4fa47b048e798fe",
+    "../../lib/inkwave-mesa-runtime-evidence.mjs": "6232a60aa0569af413d3f40e58a27abdc2ed3fbe5a4576e4b7633e2064ceb77c",
+    "../../lib/inkwave-render-input-receipts.mjs": "feaf3a450fd059c86cdb3eaa341a50a360db8504e21d312c60d35895ddf4b950",
+    "../../../reports/issue-resolution-20261029/current-pair-ring-upload-rejection/evidence/frozen-verifier.py.gz": "bdcb902ca572159e057169ebcf7310cb01d167d36aafea0b15001e34047891d8"
+  },
+  "preflight": null,
+  "performanceClaimAllowed": false,
+  "oldPairAccepted": false,
+  "site": "/workspace/scratch/main-wave345-repaired-site",
+  "sourceRoot": "/workspace/wt-agent6",
+  "playwright": "/workspace/wt-optimized/node_modules/playwright/index.mjs",
+  "executable": "/home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+  "executableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
+}

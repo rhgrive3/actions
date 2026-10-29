@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "sameBuildCalibrationAccepted": true,
+  "oldPairAccepted": false,
+  "performanceClaimAllowed": false,
+  "measurementEightTrialRun": false,
+  "sourceSha": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+  "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+  "twoRawSha256": "bac3b4c47a1f28b4dd4e3ba2ac291e4e18cf279e628326d99d54208c701bf2b1",
+  "fourRawSha256": "ec40850ee3ca47f5219312572f605288dd9de8efb4fa164149a3bb509b6f619a",
+  "inputCounts": {
+    "buffers": 3022,
+    "textures": 48,
+    "meshStates": 488,
+    "lightStates": 2,
+    "materialStates": 174,
+    "shaderSources": 179,
+    "gpuColorTargets": 15,
+    "limits": 3
+  },
+  "allSixImages": [
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    },
+    {
+      "bytes": 576000,
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72"
+    }
+  ],
+  "crossTwoAndFour": {
+    "completeInputReceiptsExact": true,
+    "completeStartStateExact": true,
+    "completeEndStateExact": true,
+    "everyOriginalWorkFieldExact": true
+  },
+  "ringVersions": [
+    {
+      "group": "two",
+      "ordinal": 0,
+      "variant": "C",
+      "versions": {
+        "aColA": 134,
+        "aMisc": 134
+      }
+    },
+    {
+      "group": "two",
+      "ordinal": 1,
+      "variant": "B",
+      "versions": {
+        "aColA": 134,
+        "aMisc": 134
+      }
+    },
+    {
+      "group": "four",
+      "ordinal": 0,
+      "variant": "C",
+      "versions": {
+        "aColA": 134,
+        "aMisc": 134
+      }
+    },
+    {
+      "group": "four",
+      "ordinal": 1,
+      "variant": "B",
+      "versions": {
+        "aColA": 134,
+        "aMisc": 134
+      }
+    },
+    {
+      "group": "four",
+      "ordinal": 2,
+      "variant": "B",
+      "versions": {
+        "aColA": 134,
+        "aMisc": 134
+      }
+    },
+    {
+      "group": "four",
+      "ordinal": 3,
+      "variant": "C",
+      "versions": {
+        "aColA": 134,
+        "aMisc": 134
+      }
+    }
+  ],
+  "allRemainingOwnedProcessesEmpty": true,
+  "originalFrozenVerifiedBeforeAndAfterBothScopes": true
+}
