@@ -157,7 +157,16 @@ function adaptFxElapsed(code) {
   once('    updateSwimSurface(this, camera);', '    if (!this._fxDeferUpload) updateSwimSurface(this, camera);', 'one surface geometry stage');
   once('    for (const m of this._iwPoolMeshes ||', '    if (!this._fxDeferUpload) for (const m of this._iwPoolMeshes ||', 'one pool visibility commit');
   once('    // --- write instance attributes ---', '    if (this._fxDeferUpload) return;\n    // --- write instance attributes ---', 'drop staging');
-  once('      X[x + 5] += X[x + 6] * dt;\n      const i4 = i * 4;', '      X[x + 5] += X[x + 6] * dt;\n      if (this._fxDeferUpload) continue;\n      const i4 = i * 4;', 'fused sprite staging');
+  const fusedSprite = '      X[x + 5] += X[x + 6] * dt;\n      const i4 = i * 4;';
+  const separateSprite = '    const netSrc = pool._netSource, netGen = pool._netGeneration;\n    for (let i = 0; i < pool.n; i++) {';
+  if (code.includes(fusedSprite)) {
+    once(fusedSprite, '      X[x + 5] += X[x + 6] * dt;\n      if (this._fxDeferUpload) continue;\n      const i4 = i * 4;', 'fused sprite staging');
+  } else {
+    // Wave 3-5 retains two loops, so complete every physics substep and
+    // return before the separate render staging pass on deferred substeps.
+    // Keep exactly one occurrence or fail closed on future layout changes.
+    once(separateSprite, '    if (this._fxDeferUpload) return;\n' + separateSprite, 'separate sprite staging');
+  }
   once('    pool.geo.instanceCount = pool.n;\n    markUpdated(pool.geo, pool.n);', '    if (this._fxDeferUpload) return;\n    pool.geo.instanceCount = pool.n;\n    markUpdated(pool.geo, pool.n);', 'sprite upload');
   once('    for (let i = 0; i < R.n; i++) {\n      const x = i * 8, i3 = i * 3, i4 = i * 4;', '    if (this._fxDeferUpload) return;\n    for (let i = 0; i < R.n; i++) {\n      const x = i * 8, i3 = i * 3, i4 = i * 4;', 'ring staging');
   once('    for (let i = 0; i < S.n; i++) {\n      const x = i * 9, i3 = i * 3, i4 = i * 4;', '    if (this._fxDeferUpload) return;\n    for (let i = 0; i < S.n; i++) {\n      const x = i * 9, i3 = i * 3, i4 = i * 4;', 'shell staging');

@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source_sha=eedfc857cfc0b3369d868ef336920c83033685ed
+          source_sha=085dc852fbed282204b84b63a47ee56a7d95a7f1
           git merge-base --is-ancestor "$source_sha" HEAD
           test "$(git diff --name-only "$source_sha" HEAD)" = ".github/workflows/inkwave-pages-snapshot-20261029.yml"
           test "$(git ls-remote https://github.com/rhgrive3/actions.git refs/heads/main | cut -f1)" = "$source_sha"
@@ -56,7 +56,7 @@ jobs:
           set -euo pipefail
           for attempt in $(seq 1 20); do
             published="$(curl -fsSL --max-time 8 "https://rhgrive3.github.io/actions/inkwave-deployed-sha.txt?nocache=$GITHUB_RUN_ID-$attempt" || true)"
-            if [ "$published" = "eedfc857cfc0b3369d868ef336920c83033685ed" ]; then
+            if [ "$published" = "085dc852fbed282204b84b63a47ee56a7d95a7f1" ]; then
               exit 0
             fi
             sleep 5
