@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "purpose": "Public data-only evidence of the retained exact-current methodology rejection",
+  "copiedFromDiagnosticCommit": "9e13a3d5d8e378793101a341aa18931047282aa6",
+  "copyPolicy": "Exact gzip bytes from the diagnostic receipt; JSON data only. No harness, execution source, original frozen files, private assets or PNG/RGBA payloads.",
+  "immutablePairContractSha256": "8a1c754ace6cbf9f72c2f6f28ece87b0c71fbf1c19c30cf084ea2e1697953bed",
+  "sources": {
+    "C": {
+      "sourceSha": "4f5f7acc15e43016985d8b782bf3ba83551a9443",
+      "sourceTree": "1160450441aa2a224578a417ce01fc4fb0d3fa91",
+      "manifestSha256": "0d675cb76ff6ae879cb9afda0f37e2717145b536fb33a87fa50c88de9ba38c13",
+      "contentHash": "67e78b1a51080907c534e2df392b640b6124a6a494c1069705064453279bea1b",
+      "buildRevision": "31ba5aeff5aa919dea351a7d46bb28f81b71c0502a57a44b623b3ed74933bcae",
+      "builderSha256": "4ec7a154eeaa1b7f65beb7fd26ccb33f231596eeb0b56579e10733868639e2f9",
+      "inputCount": 1529,
+      "inputMapSha256": "12550154a027cf79878eeaa8bcfe29e560fdd4a497bf38768cc8914c8d2d482f",
+      "artifactCount": 2241
+    },
+    "B": {
+      "sourceSha": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+      "sourceTree": "dd1a4f15e030426f14bfcd72cd4327dba4e70c2c",
+      "manifestSha256": "f3d208554e3da6504768453f59311767cd11647d27dc8b29dd3a39108e8d8a77",
+      "contentHash": "27d49de07e8864caac45045f840a65055e4976d8b930ca8bb93366698f7a64fb",
+      "buildRevision": "2620eaa1f1b6b6d26df223e9b016eed432d4472a50b370f47c9ba097b1df16aa",
+      "builderSha256": "4ec7a154eeaa1b7f65beb7fd26ccb33f231596eeb0b56579e10733868639e2f9",
+      "inputCount": 1530,
+      "inputMapSha256": "ced465820a4a710dc654c47d7e77ec750e7bd6040809f53048f7540068857e5a",
+      "artifactCount": 2241
+    }
+  },
+  "result": {
+    "strictStatus": "rejected-bounded-current-pair-repeat",
+    "endpointDifferences": [
+      {
+        "path": "/buffers/154/version",
+        "C": 135,
+        "B": 134
+      },
+      {
+        "path": "/buffers/155/version",
+        "C": 135,
+        "B": 134
+      }
+    ],
+    "fourTrialCalibrationPerformed": false,
+    "eightTrialMeasurementPerformed": false,
+    "timingOrFPSImprovementClaimed": false,
+    "acceptanceOrVersionCounterChanged": false
+  },
+  "frozenOriginalEvidenceVerification": {
+    "sourceFreezeVerified": 38,
+    "archiveMembersVerified": 104,
+    "archiveSha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d",
+    "tarSha256": "02d6e0cf9dbc5e7e3f325c9ee1248c6b924bc3ec3e9dc817030ccb6125aab7e5",
+    "changed": false
+  },
+  "processClosureVerification": {
+    "capturedAfterRunUTC": "2026-10-29T05:07:52.093521+00:00",
+    "recordedIdentitiesChecked": 34,
+    "browserScopesClosed": true,
+    "nonZombieRecordedIdentitiesRemaining": [],
+    "GPUReservationReleased": true
+  },
+  "earlierOverlap": {
+    "intervalUTC": [
+      "2026-10-29T04:51:29Z",
+      "2026-10-29T04:51:50Z"
+    ],
+    "status": "Invalid failed partial attempt, retained in the separate diagnostic history and excluded from acceptance and timing conclusions",
+    "latestCleanPairOverlapped": false
+  },
+  "tailControlLimit": "Actual composed methods and actual bundled Three uploader against a recording GL driver. Targeted tail-removal proof, not a unique full-match event trace of135/134 or physical GPU measurement.",
+  "noPrivateLinkPatternsFoundInPublishedJSON": true,
+  "evidence": {
+    "summary.json.gz": {
+      "rawBytes": 3178,
+      "rawSha256": "6f6f63f33ce3b318a87bac0e80b06a7dda6d98fb281b0b3f61cfb43c10f460ab",
+      "gzipBytes": 1393,
+      "gzipSha256": "05609bec52384ce95a137fd87fc9ecbae51e554c858cfb78bd7c8e98da2555bb"
+    },
+    "bounded.json.gz": {
+      "rawBytes": 13354687,
+      "rawSha256": "e76ba0408966a9c192b46ca4cba5b1a76b5e9fa5c9081aa5eea0d9ebf8dadca8",
+      "gzipBytes": 1203056,
+      "gzipSha256": "fdf1527308351d15d18da94258e4f498992bc880eab1f59120541911a1568070"
+    },
+    "endpoint-differences.json.gz": {
+      "rawBytes": 267,
+      "rawSha256": "e34609456518856e19cbf0f9d49d203c0bcf58df267d31d72a9cd46bcb075a34",
+      "gzipBytes": 164,
+      "gzipSha256": "222ae4f1c312d8a92c2604b45dcd4499bba1f93cb17e04b58c15d20b10e43f31"
+    },
+    "ring-tail-removal-control.json.gz": {
+      "rawBytes": 4340,
+      "rawSha256": "bf56c7ce56152e036c25a44362d32fcfab14429b74490132536cf1743b8f6502",
+      "gzipBytes": 1000,
+      "gzipSha256": "bbc25629469ec8401ce835eb294d322c3f33d18249184771ce84cd6039650fa4"
+    },
+    "C-build-manifest.json.gz": {
+      "rawBytes": 618752,
+      "rawSha256": "0d675cb76ff6ae879cb9afda0f37e2717145b536fb33a87fa50c88de9ba38c13",
+      "gzipBytes": 209821,
+      "gzipSha256": "a28d1b70c70d3259f9b607ab9c254ce65a4617860d6c1dbb431e3b9539d1e60e"
+    },
+    "B-build-manifest.json.gz": {
+      "rawBytes": 619000,
+      "rawSha256": "f3d208554e3da6504768453f59311767cd11647d27dc8b29dd3a39108e8d8a77",
+      "gzipBytes": 209890,
+      "gzipSha256": "606acb4a87e507b4642d2554107994da15ba5a71337fc3a70e93c5662f135069"
+    },
+    "source-contract-and-proof-inputs-after.json.gz": {
+      "rawBytes": 347,
+      "rawSha256": "08a6a570b2451c5ab5af184887f78859e9bcae2edc3dfbd6ab318cdbcbfed194",
+      "gzipBytes": 210,
+      "gzipSha256": "f97ac4b97e83d108e7243767665bc7c4891e242fd4be9a3ede565098d8a50ca8"
+    },
+    "frozen-after.json.gz": {
+      "rawBytes": 256,
+      "rawSha256": "ce5a334f0a29d914281ce14092a17bac12b32703dd4ce8dc2fde4868eae04210",
+      "gzipBytes": 198,
+      "gzipSha256": "6458604fc52d44c02b7443dbd9c23fc7fc1b918efa8d36c567051d619e1aab68"
+    },
+    "owned-processes-final.json.gz": {
+      "rawBytes": 210,
+      "rawSha256": "9700a09cb5dab30604783950bfbf413625e115ac29ef951d72b25f9027a65a6a",
+      "gzipBytes": 176,
+      "gzipSha256": "679bfc94dcec733e4fdf1afbfb7389b7fa35606f61d9b302e7ab49a5008b05d3"
+    }
+  }
+}
