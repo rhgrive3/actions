@@ -222,3 +222,19 @@ test('expensive specialist workflows do not run repeatedly on Draft updates but 
     if(src.includes('  push:\n'))assert(active(src,name,{event:'push'}),path+' main push remains validated');
   }
 });
+
+
+// Early, tree-only contract: this test also runs in the 8-minute PR preflight.
+// A sparse, blobless checkout is sufficient. Changes to JS file executable
+// bits must not create spurious diffs or weaken pinned source identity tests.
+test('runtime ESM sources remain non-executable in Git HEAD', async () => {
+  const {execFileSync} = await import('node:child_process');
+  const rows = execFileSync('git', [
+    'ls-tree', '-r', 'HEAD', '--',
+    'patches/native-stages/runtime', 'patches/splatoon3/runtime',
+  ], {encoding:'utf8', maxBuffer:2*1024*1024})
+    .split('\n').filter(row => row.endsWith('.mjs'));
+  assert.ok(rows.length > 0, 'runtime source tree must not be missing');
+  const wrong = rows.filter(row => !row.startsWith('100644 blob '));
+  assert.deepEqual(wrong, [], 'runtime .mjs files must retain the regular 100644 Git mode');
+});
