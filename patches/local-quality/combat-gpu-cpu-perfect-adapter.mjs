@@ -261,7 +261,8 @@ uniform int uWakeCount;`,
     S.geo.instanceCount = S.n;
     markUpdated(S.geo, S.n);`,
       replaceOnce,
-      'GPU-22 upload only dirty shell aColA and aAxis ranges'
+      'GPU-22 upload only dirty shell aColA and aAxis ranges',
+      '    const sStart = S.dirtyStart, sEnd = Math.min(S.dirtyEnd, S.n);'
     );
     code = applyIdempotent(
       code,
@@ -1784,6 +1785,156 @@ export class SwimWake {`,
         'MAP-01b hoist row index and byte offset in Minimap._drawInk'
       );
     }
+
+
+  // Lossless GPU upload/Uniform audit, 2026-10-29. Apply after the existing
+  // GPU-22/07b adapters without changing any target-module ownership.
+
+  if (rel === 'src/fx/screenfx.js') {
+    // GPU-07c: Keep the aspect uniform and its CPU mirror exactly current, but
+    // skip repeated work while the drawing-buffer dimensions are unchanged.
+    code = applyIdempotent(
+      code,
+      `    if (W !== this._w || H !== this._h) { this._w = W; this._h = H; U.uRes.value.set(W, H); }
+    this._aspect = W / Math.max(1, H);
+    U.uAspect.value = this._aspect;`,
+      `    if (W !== this._w || H !== this._h) {
+      this._w = W; this._h = H; U.uRes.value.set(W, H);
+      this._aspect = W / Math.max(1, H); U.uAspect.value = this._aspect;
+    }`,
+      replaceOnce, 'GPU-07c cache aspect only while drawing-buffer size is stable'
+    );
+
+    // GPU-07d: A fixed local team palette cannot change its 9 uniform RGB
+    // values. Preserve all alpha-channel updates on every frame.
+    code = applyIdempotent(
+      code,
+      `    this._w = 0; this._h = 0;`,
+      `    this._w = 0; this._h = 0;
+    this._iwTeamRgb = new Float64Array(6);
+    this._iwTeamRgbValid = false;`,
+      replaceOnce, 'GPU-07d initialize team RGB cache'
+    );
+    code = applyIdempotent(
+      code,
+      `  reset() {
+    const s = this.s;`,
+      `  reset() {
+    this._iwTeamRgbValid = false;
+    const s = this.s;`,
+      replaceOnce, 'GPU-07d invalidate cache on reset'
+    );
+    code = applyIdempotent(
+      code,
+      `    if (local) {
+      const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);
+      U.uLensColA.value.copy(enemy); U.uLensColB.value.copy(own);
+      U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, s.edgeInk);
+      _c.copy(enemy).lerp(_cc.setRGB(0.55, 0.0, 0.04), 0.55);
+      U.uHeart.value.set(_c.r, _c.g, _c.b, s.heart);
+      U.uAura.value.set(own.r * 1.6, own.g * 1.6, own.b * 1.6, U.uAura.value.w);
+      U.uSwim.value.set(own.r, own.g, own.b, s.swim);
+      U.uSpeedTint.value.copy(own).lerp(WHITE, 0.6);
+      U.uKill.value.set(own.r * 1.3, own.g * 1.3, own.b * 1.3, U.uKill.value.w);
+      U.uShimmer.value.set(own.r + 0.3, own.g + 0.3, own.b + 0.3, s.shimmer);
+      U.uCharge.value.set(own.r + 0.5, own.g + 0.5, own.b + 0.5, U.uCharge.value.w);
+    }
+    void alive;`,
+      `    if (local) {
+      const own = this._teamColor(local.team), enemy = this._teamColor(local.enemyTeam);
+      const rgb = this._iwTeamRgb;
+      if (!this._iwTeamRgbValid ||
+          !Object.is(rgb[0], own.r) || !Object.is(rgb[1], own.g) || !Object.is(rgb[2], own.b) ||
+          !Object.is(rgb[3], enemy.r) || !Object.is(rgb[4], enemy.g) || !Object.is(rgb[5], enemy.b)) {
+        U.uLensColA.value.copy(enemy); U.uLensColB.value.copy(own);
+        U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, s.edgeInk);
+        _c.copy(enemy).lerp(_cc.setRGB(0.55, 0.0, 0.04), 0.55);
+        U.uHeart.value.set(_c.r, _c.g, _c.b, s.heart);
+        U.uAura.value.set(own.r * 1.6, own.g * 1.6, own.b * 1.6, U.uAura.value.w);
+        U.uSwim.value.set(own.r, own.g, own.b, s.swim);
+        U.uSpeedTint.value.copy(own).lerp(WHITE, 0.6);
+        U.uKill.value.set(own.r * 1.3, own.g * 1.3, own.b * 1.3, U.uKill.value.w);
+        U.uShimmer.value.set(own.r + 0.3, own.g + 0.3, own.b + 0.3, s.shimmer);
+        U.uCharge.value.set(own.r + 0.5, own.g + 0.5, own.b + 0.5, U.uCharge.value.w);
+        rgb[0] = own.r; rgb[1] = own.g; rgb[2] = own.b;
+        rgb[3] = enemy.r; rgb[4] = enemy.g; rgb[5] = enemy.b;
+        this._iwTeamRgbValid = true;
+      }
+    } else this._iwTeamRgbValid = false;
+    void alive;`,
+      replaceOnce, 'GPU-07d skip unchanged team RGB while retaining live alpha'
+    );
+    code = applyIdempotent(
+      code,
+      `    if (!a) { this.U.uLensColA.value.copy(enemy); this.U.uLensColB.value.copy(own); this.U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, 0); }`,
+      `    if (!a) { this._iwTeamRgbValid = false; this.U.uLensColA.value.copy(enemy); this.U.uLensColB.value.copy(own); this.U.uEdgeInk.value.set(enemy.r, enemy.g, enemy.b, 0); }`,
+      replaceOnce, 'GPU-07d invalidate cache on standalone visual test'
+    );
+  }
+
+  if (rel === 'src/world/decor.js') {
+    // GPU-12c: Non-pulsing pads have a mathematically zero wave. Keep the
+    // signed nonzero case unchanged if a mod injects an unusual pulse value.
+    code = applyIdempotent(
+      code,
+      `  float wave = uPulse * smoothstep(0.09, 0.0, abs(r - uPulseT * 1.35)) * (1.0 - smoothstep(0.7, 1.35, uPulseT * 1.35));`,
+      `  float wave = uPulse != 0.0 ? uPulse * smoothstep(0.09, 0.0, abs(r - uPulseT * 1.35)) * (1.0 - smoothstep(0.7, 1.35, uPulseT * 1.35)) : 0.0;`,
+      replaceOnce, 'GPU-12c bypass inactive spawn-pad pulse wave ALU'
+    );
+    code = applyIdempotent(
+      code,
+      `      u.uTime.value = this.time; u.uPulse.value = p.pulse; u.uPulseT.value = p.pulseT;
+      b.uTime.value = this.time; b.uPulse.value = p.pulse;`,
+      `      u.uTime.value = this.time;
+      if(u.uPulse.value !== p.pulse) u.uPulse.value = p.pulse;
+      if(u.uPulseT.value !== p.pulseT) u.uPulseT.value = p.pulseT;
+      b.uTime.value = this.time;
+      if(b.uPulse.value !== p.pulse) b.uPulse.value = p.pulse;`,
+      replaceOnce, 'GPU-12c skip identical pulse uniform writes without stale CPU state'
+    );
+  }
+
+  if (rel === 'src/fx/fx.js') {
+    // GPU-22b: Three.js clears update ranges after bufferSubData, but not
+    // after first bufferData; clear the latter via a shared onUpload callback.
+    code = applyIdempotent(
+      code,
+      `export class FX {`,
+      `function clearGpu22UploadRanges() { this.clearUpdateRanges(); }
+export class FX {`,
+      replaceOnce, 'GPU-22b first buffer upload range cleanup helper'
+    );
+    code = applyIdempotent(
+      code,
+      `    const geo = makeQuadGeo(cap, [['aPosR', 4], ['aVelS', 4], ['aColA', 4]]);`,
+      `    const geo = makeQuadGeo(cap, [['aPosR', 4], ['aVelS', 4], ['aColA', 4]]);
+    geo.attributes.aColA.onUpload(clearGpu22UploadRanges);`,
+      replaceOnce, 'GPU-22b clean initial drop static attribute upload ranges'
+    );
+    code = applyIdempotent(
+      code,
+      `    const geo = withInstanceAttrs(base, cap, [['aPosR', 4], ['aColA', 4], ['aMisc', 4], ['aAxis', 4]]);`,
+      `    const geo = withInstanceAttrs(base, cap, [['aPosR', 4], ['aColA', 4], ['aMisc', 4], ['aAxis', 4]]);
+    geo.attributes.aColA.onUpload(clearGpu22UploadRanges);
+    geo.attributes.aAxis.onUpload(clearGpu22UploadRanges);`,
+      replaceOnce, 'GPU-22b clean initial shell static attribute upload ranges'
+    );
+    code = applyIdempotent(
+      code,
+      `        for (const pending of attr.updateRanges) {
+          first = Math.min(first, pending.start);
+          last = Math.max(last, pending.start + pending.count);
+        }`,
+      `        // A removed shell tail must not force uploads beyond the live end.
+        // Any later newly visible tail is marked dirty by the spawn path.
+        for (const pending of attr.updateRanges) {
+          if (pending.start >= S.n * 4) continue;
+          first = Math.min(first, pending.start);
+          last = Math.max(last, Math.min(S.n * 4, pending.start + pending.count));
+        }`,
+      replaceOnce, 'GPU-22b clamp pending shell transfers to live end'
+    );
+  }
 
     return code;
 }
