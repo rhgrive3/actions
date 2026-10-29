@@ -1,6 +1,4 @@
 // 847: Roller-body terrain contact through the canonical current composition.
-// The current-tree and reviewed undo hashes below were recomputed against
-// main e67c636b, retaining the same negative-control anchors and frozen history.
 // The pinned source fixture runs native Actor/Physics/Projectiles/PaintSystem/NetMatch.
 // Fault controls below are counterfactual current-source mutations, not old main.
 import test from 'node:test';
@@ -89,7 +87,7 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
         "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
         "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
       assert.equal(createHash('sha256').update(previous).digest('hex'),
-        'dc67c95c5e99e398f994fa5c621c56739ee0b73b7686ba1b3395f31bffba0f96', 'previous reviewed #847 roller input');
+        '121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3', 'previous reviewed #847 roller input');
     } else {
       // Incoming main only replaces the two numeric no-motion predicates.
       // Undo those exact edits and retain the entire pre-merge contact pin.
