@@ -6633,7 +6633,7 @@ Still unverified: live final-head mandatory CI, actual Hissen/Wiper screenshots,
 
 Normal/Liteのcharged Wiperを実Actor/WeaponRunner/Projectilesで発射し自然終了させると、弾とsheetが消えた後もlazy wetSlashVだけがcount2/visibleのまま残る。空の描画経路でこのmeshもcount0/非表示にする。Heavy/tapを対照に全6action、30/60/120Hz、21tick静穏期間と同一mesh再利用を確認した。弾数・発射時間・軌道・塗り・damage・RNG・wireは変更しない。source-loaded scheduler18試験が成功したが、本家の外形一致、実画素・実機性能の受入は別条件。
 
-通信では、rolling接触等のbounded証拠がnative victim/attacker life・replay/nonce拒否の前に消費され、後続正当hitまで拒否される順序問題を再現した。nativeから生成する読み取り専用policyを直接/保留FIFOの両経路で先に適用し、初回owner tick以前の正当hitは空peer viewで確認する。nonce/receipt commitとpacket tupleは維持。新回帰9件は旧main8失敗/正当対照1成功→修正後9成功、関連133件・独立35件成功。owner自身のfreshな発射/命中捏造を検出する完全なauthorityは完成せず、#1665/#1666を閉じない。
+通信では、rolling接触等のbounded証拠がnative victim/attacker life・replay/nonce拒否の前に消費され、後続正当hitまで拒否される順序問題を再現した。nativeから生成する読み取り専用policyを直接/保留FIFOの両経路で先に適用し、初回owner tick以前の正当hitは空peer viewで確認する。nonce/receipt commitとpacket tupleは維持。新回帰9件は旧main8失敗/正当対照1成功→修正後9成功、関連133件とresponsive suite 35件が成功。別記の通信29件やmodeled provenance 74件を含む各集計には重複があるため、独立件数として加算しない。owner自身のfreshな発射/命中捏造を検出する完全なauthorityは完成せず、#1665/#1666を閉じない。
 
 touch gyroは既存の暫定public-bridge gainにadapter合成済みだったが、tooltipだけが旧132/110/278度を主張していた。既存の翻訳済profile説明を共有し、不正確な本家一致表現を解消した。−5…+5右stick UI・移行も既存実装を再利用。27件の限定input/composition試験は実センサーやNintendo turn-rate・中間曲線の証明ではなく、#725/#287の校正残件を維持する。
 
