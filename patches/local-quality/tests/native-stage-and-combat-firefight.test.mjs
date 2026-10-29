@@ -237,7 +237,7 @@ test('NAT-07 through NAT-10 native runtime modules hoist sort closure, scratch v
   assert.match(readRepo('patches/native-stages/runtime/native-surge.mjs'), /function findMissingSurgeSample/);
 });
 
-test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and charger flight broadphase and scratch allocations', () => {
+test('CMB-08 through CMB-10 ranked combat, catalogue cover, and exact Charger scan with owned scratch', () => {
   const rankedCombat = readRepo('patches/splatoon3/runtime/ranked/combat.mjs');
   assert.match(rankedCombat, /const scratch = _blastFrames\[depth\]/);
   assert.match(rankedCombat, /Math\.sqrt\(d2\) <= radius/);
@@ -248,7 +248,11 @@ test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and charger fli
 
   const chargerFlight = readRepo('patches/splatoon3/runtime/weapons-charger-flight.mjs');
   assert.match(chargerFlight, /const localShotScratch = \[\]; let localShotDepth = 0;/);
-  assert.match(chargerFlight, /const reach=bodyRadius\+\(collision\.InitRadiusForPlayer>collision\.EndRadiusForPlayer/);
+  // Do not reintroduce the rejected broadphase: it dropped candidate scans.
+  // Preserve the exact swept capsule for every actor and reuse only the
+  // existing depth-guarded local shot scratch.
+  assert.doesNotMatch(chargerFlight, /const reach=bodyRadius\+\(collision\.InitRadiusForPlayer>collision\.EndRadiusForPlayer/);
+  assert.match(chargerFlight, /const t=capsuleEntry\(job\.prev,end,job\.base,hurtboxRadius\(actor,PLAYER\),hurtboxHeight\(actor,PLAYER\),/);
 });
 
 test('NAT-11 through NAT-17 and CMB-11/MOV-09 Wave-2 scalar clamp, segment/point-triangle distance, quadraticEntry, drop clearance, and regionStats/edgeGuard parity', () => {
