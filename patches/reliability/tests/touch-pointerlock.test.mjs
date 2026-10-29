@@ -37,7 +37,7 @@ async function boot({exit='async',request='immediate'}={}) {
  doc.exitPointerLock=()=>{exits++;if(exit==='throw')throw Error('fixture exit unavailable');if(exit==='sync'){doc.pointerLockElement=null;fireDoc();}};
  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,
   screen:{width:1000,height:700,orientation:{angle:0}},innerWidth:1000,innerHeight:700,
-  localStorage:{getItem:()=>null},navigator:{userAgent:'hybrid pointer fixture',maxTouchPoints:0,getGamepads:()=>[]},
+  localStorage:{getItem:()=>null},navigator:{userAgent:'hybrid pointer fixture',maxTouchPoints:0,getGamepads:()=>[],userActivation:{isActive:true}},
   window:{addEventListener:(n,fn)=>add(listeners,n,fn)},document:doc});
  function synthetic(file,values){return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context,identifier:file});}
  function load(file){if(modules.has(file))return modules.get(file);const rel=path.relative(UPSTREAM,file);let mod;
@@ -111,6 +111,12 @@ for(const name of ['Error','NotAllowedError','SecurityError'])test(`#1396 ${name
  await Promise.resolve();await Promise.resolve();await Promise.resolve();
  assert.equal(h.requests(),1,name+' must not trigger automatic plain request');
  assert.equal(h.input._pointerLockPlainPreference??null,null,name+' must not establish a preference');
+});
+for(const name of ['NotAllowedError','SecurityError'])test(`#1396 ${name} rejection with pointerlockerror never causes an automatic plain request`,async()=>{
+  const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();h.lockError();h.rejectPendingLock(name);
+  await Promise.resolve();await Promise.resolve();await Promise.resolve();
+  assert.equal(h.requests(),1,'permission rejection cannot be retried without a fresh user gesture');
+  assert.equal(h.input._pointerLockPlainPreference??null,null);
 });
 test('#1396 legacy event-only error retires a failed request for a new user gesture',async()=>{
  const h=await boot();h.unlocked();h.input.requestLock();h.lockError();h.input.requestLock();
@@ -249,11 +255,12 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
 });
 
  test('a rejected resume request cannot retry Pointer Lock into a fresh pause or menu',async()=>{
-  for(const state of ['pause','menu','playing']){
+  for(const observed of [false,true])for(const state of ['pause','menu','playing']){
    const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
    if(state==='pause')h.G.match.paused=true;else if(state==='menu')h.G.game.menus.current='pause';
+   if(observed)h.lockError();
    h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
-   assert.equal(h.requests(),state==='playing'?2:1,state);assert.equal(h.unlocks(),1);
+   assert.equal(h.requests(),state==='playing'?2:1,state+' observed denial='+observed);assert.equal(h.unlocks(),1);
   }
  });
 

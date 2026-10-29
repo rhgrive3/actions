@@ -193,3 +193,34 @@ test('#642 quality rebuild disposes the old native pair and preserves the new sa
   touch.dispose();
   assert.equal(state.disposed, 4);
 });
+
+test('#642 failed native pass resize releases divergent targets and recovers the exact approved chain', () => {
+  for (const index of [null, -100, -1, 100, Infinity, NaN]) {
+    const state = { builds: 0, disposals: 0 };
+    const native = [];
+    const proxy = createLazyComposerTarget(() => {
+      state.builds++;
+      const composer = new EffectComposer(nativeRenderer(), new THREE.WebGLRenderTarget(8, 8));
+      for (const target of [composer.renderTarget1, composer.renderTarget2]) {
+        target.addEventListener('dispose', () => state.disposals++);
+      }
+      composer.render = () => composer.passes.slice();
+      native.push(composer);
+      return composer;
+    });
+    const a = { setSize() {} }, b = { setSize() {} };
+    proxy.addPass(a);proxy.addPass(b);
+    assert.deepEqual(proxy.render(), [a, b]);
+    const rejected = { setSize() { throw new Error('injected resize failure'); } };
+    if (index === null) assert.throws(() => proxy.addPass(rejected), /injected resize failure/);
+    else assert.throws(() => proxy.insertPass(rejected, index), /injected resize failure/);
+    assert.deepEqual(proxy.passes, [a, b], 'normalize splice indices before rollback');
+    assert.equal(proxy.renderTarget1, null, 'failed native chain cannot render or retain its target pair');
+    assert.equal(state.disposals, 2);
+    assert.ok(native[0].passes.includes(rejected), 'the real native implementation mutated before throwing');
+    assert.deepEqual(proxy.render(), [a, b], 'next render rebuilds only the approved passes');
+    assert.equal(state.builds, 2);
+    proxy.dispose();
+    assert.equal(state.disposals, 4, 'both generations are released exactly once');
+  }
+});

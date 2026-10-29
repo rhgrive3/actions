@@ -1,0 +1,67 @@
+{
+  "baseline-new-cases": {
+    "tests": 13,
+    "pass": 5,
+    "fail": 8,
+    "skipped": 0,
+    "logSHA256": "579995a5b9f6def66066f2a77ae2903f01fadcde29f44165484fbd2d9de48585",
+    "failingTests": [
+      "one straight-fire proof cannot damage Boss target -1 twice with fresh nonces",
+      "one straight-fire proof cannot damage Boss target 3 twice with fresh nonces",
+      "main shot cannot borrow the equipped bomb damage ceiling through the crab marker",
+      "queued crab inflation stays rejected when the weaker main proof later arrives",
+      "Boss invuln rejection does not consume proof before body becomes vulnerable",
+      "Boss hidden rejection does not consume proof before body becomes vulnerable",
+      "deferred body damage retires if the host becomes invulnerable before proof arrives",
+      "Roller contact cannot borrow an equipped bomb ceiling under the crab marker"
+    ]
+  },
+  "source-five-files": {
+    "tests": 99,
+    "pass": 99,
+    "fail": 0,
+    "skipped": 0,
+    "logSHA256": "db49060158b6619bfac3bab58be608dfad915edefdef036c1e42cc2480fb7823"
+  },
+  "emitted-five-files-before-hook-repair": {
+    "tests": 99,
+    "pass": 97,
+    "fail": 2,
+    "skipped": 0,
+    "logSHA256": "85cac75404c3ee4155bbe9b1dc52ec44d8d6d6d02a0f75cbe317cf0ceb01d407"
+  },
+  "source-repaired-receipts": {
+    "tests": 17,
+    "pass": 17,
+    "fail": 0,
+    "skipped": 0,
+    "logSHA256": "b542379a80f459e7ea2e6b74762190bb5e0ebe30e3001f62d9dce38db2aef2e9"
+  },
+  "emitted-repaired-receipts": {
+    "tests": 17,
+    "pass": 17,
+    "fail": 0,
+    "skipped": 0,
+    "logSHA256": "a92b4d82ad5c50194722b0c3540026efde0f1489b79dbe3eb67cad74b453e02d"
+  },
+  "emitted-five-files-final": {
+    "tests": 99,
+    "pass": 99,
+    "fail": 0,
+    "skipped": 0,
+    "logSHA256": "d9a5efcf1ce2f9672e196bdfcac6457a3e3d64865423cd254bbedf5f49a7afaf"
+  },
+  "baselineCommit": "60bbe35d4c5176fd86cb1b65f8e66336982ef6ca",
+  "nodeVersion": "22.23.4",
+  "issuesRemainOpen": [
+    1665,
+    1666
+  ],
+  "build": {
+    "contentHash": "1d86791e1a35f5f4b84ba5b084737186942ef7ebbf9179545585b788dc104b72",
+    "verifiedArtifacts": 2229,
+    "declaredInputs": 1521,
+    "runtimeSourceSHA256": "7a68fa0156b5b1cf59d2423e57f9b6f391f96f3b807d0b5f12b3f8960927a4a4"
+  },
+  "scope": "Source/component and actual emitted modules. No browser, socket, full-match, physical-device or Nintendo retail acceptance."
+}

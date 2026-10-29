@@ -1,8 +1,9 @@
 import { adaptVisualAudioQueue } from '../visual-audio-queue-adapter.mjs';
+import { adaptOffscreenHairTargets } from '../offscreen-hair-target-adapter.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 const adapter=fs.readFileSync(new URL('../adapter.mjs',import.meta.url).pathname,'utf8');
 const start=adapter.indexOf('function adaptEnginePerformanceHotpaths('),end=adapter.indexOf('\nexport function qualityIdentity()',start);
-const hot=vm.runInNewContext(adapter.slice(start,end)+'\nadaptEnginePerformanceHotpaths',{ adaptVisualAudioQueue });
+const hot=vm.runInNewContext(adapter.slice(start,end)+'\nadaptEnginePerformanceHotpaths',{ adaptVisualAudioQueue, adaptOffscreenHairTargets });
 const edits=[];
 hot('src/game/character-lod.js','',(c,old,updated,label)=>{edits.push({old,updated,label});return c});
 assert.equal(edits.length,3);

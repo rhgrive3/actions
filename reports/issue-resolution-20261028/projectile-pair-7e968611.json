@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "dateUtc": "2026-10-28",
+  "kind": "original-hosted-projectile-pair-plus-independent-local-analysis",
+  "pair": {
+    "mode": "ordinary immutable PR base/head production pair; no baseline alignment step executed",
+    "baseSource": "e67c636b81762df56b346a09ef570964d43084df",
+    "headSource": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+    "baseTree": "62e444a05530658933db17a4bea2a22b06ed56eb",
+    "headTree": "4a914a0f6c0d3c690b3da82a15f497c15a4712cd",
+    "baseIsAncestorOfHead": true,
+    "captureHarnessCheckout": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+    "candidateCheckoutGuardPassed": true,
+    "baselineCheckoutGuardPassed": true,
+    "baselineBuildCommand": "node \"$INKWAVE_REFERENCE_ROOT/scripts/build-inkwave.mjs\" \"$INKWAVE_REFERENCE_ROOT/inkwave-public\" .built-site/baseline",
+    "baselineAlignmentStepsExecuted": [],
+    "scope": "Full production delta of fixed main e67c636b to optimized/reconciled head7e968611 for the declared captures; not an optimizer-only on/off counterfactual.",
+    "sharedBaselineLayers": [
+      {
+        "pr": 1897,
+        "merge": "031426fcb9373d91e74e933e1507e9af395aa1c9",
+        "description": "already-merged Library queue hotpaths and fixes"
+      },
+      {
+        "pr": 1903,
+        "merge": "e75135c05e6ef28b3a808a734c1629289836cf1e",
+        "description": "already-merged normal-play FK and audio optimizations"
+      }
+    ],
+    "sharedLayerLimit": "Both source histories include baseline optimization layers; individual modules can receive further candidate changes. This is not a comparison against an unoptimized game."
+  },
+  "hosted": {
+    "runId": 40747856762,
+    "beforeJob": 123027341952,
+    "afterJob": 123027341898,
+    "comparisonJob": 123043229422,
+    "beforeStatus": "success",
+    "afterStatus": "success",
+    "comparisonStatus": "success",
+    "workflowUrl": "https://github.com/rhgrive3/actions/actions/runs/40747856762",
+    "comparisonJobUrl": "https://github.com/rhgrive3/actions/actions/runs/40747856762/job/123043229422"
+  },
+  "captures": {
+    "before": {
+      "artifactId": 12844601571,
+      "artifactZipBytes": 77803322,
+      "artifactZipSha256": "021475c80de2ea2d95e0c18aadf761bc363e720986daa6141bbe2e46c48f96dc",
+      "artifactUrl": "https://api.github.com/repos/rhgrive3/actions/actions/artifacts/12844601571",
+      "captureResultSha256": "e24264e31ed2d2a4fe9fb9f8dd60d05ced59672fee3fa9caa0106744446505a7",
+      "captureIdentity": {
+        "checkoutSha": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+        "eventSha": "1d6e6810a8b47812e63d05cdf74d7208472519b4",
+        "checkoutIdentityStatus": "verified-git-head"
+      },
+      "build": {
+        "revision": "70d1c83be6a2baf8d4a606bc9e12bd4091b425d39e45e0d30828cee94581d26a",
+        "contentHash": "6e633396004b30383fcadba05bdc9ea83e3b84ff823110ecad90ba7da6455c34",
+        "inputHash": "f0a8e4371c43bf72000bcb18252856e8c7ec41d9d1a301f7e65b668ccaf92340"
+      },
+      "captureStatus": "passed",
+      "screenshots": 52,
+      "mediaFilesHashVerified": 94,
+      "localArchive": "/workspace/scratch/agent3-projectile-pair-7e968611/before.zip",
+      "localResult": "/workspace/scratch/agent3-projectile-pair-7e968611/before/projectile-visuals-result.json"
+    },
+    "after": {
+      "artifactId": 12843004025,
+      "artifactZipBytes": 77726697,
+      "artifactZipSha256": "232a91ae39afe783dabf87cba034d26b6b23101ced11fe307765348a63808243",
+      "artifactUrl": "https://api.github.com/repos/rhgrive3/actions/actions/artifacts/12843004025",
+      "captureResultSha256": "fea86416568e2aa7a16215ee3ff4c5ac6fbd3e774c734b0148ae3146dabd9de4",
+      "captureIdentity": {
+        "checkoutSha": "7e9686118e2137e6c4c0b8bc5786bc0aad65c1fb",
+        "eventSha": "1d6e6810a8b47812e63d05cdf74d7208472519b4",
+        "checkoutIdentityStatus": "verified-git-head"
+      },
+      "build": {
+        "revision": "9bf9ed490ce8022ffc1176b43ec46374efb95198c8e51aae49f5ebb22de22dcc",
+        "contentHash": "c14fbb326bdef2888af600b72e982e10e26b8cc380e4c57d510656df84720dde",
+        "inputHash": "930c0227c2d08bd3fcca6e691b117497766972f721dc185316c9f3c18d1c8879"
+      },
+      "captureStatus": "passed",
+      "screenshots": 52,
+      "mediaFilesHashVerified": 94,
+      "localArchive": "/workspace/scratch/agent3-projectile-pair-7e968611/after.zip",
+      "localResult": "/workspace/scratch/agent3-projectile-pair-7e968611/after/projectile-visuals-result.json"
+    }
+  },
+  "analysis": {
+    "comparator": "scripts/compare-inkwave-projectile-captures.py",
+    "comparatorSha256": "98cbde37607cdfde958991f4b218d04d0fae17e1c956ff67a17e55ec943e1cd7",
+    "comparatorUnchangedFromHead": true,
+    "command": "python3 scripts/compare-inkwave-projectile-captures.py --before <original-before-artifact> --after <original-after-artifact> --output <new-verification.json> --require-complete",
+    "localCommand": [
+      "python3",
+      "scripts/compare-inkwave-projectile-captures.py",
+      "--before",
+      "/workspace/scratch/agent3-projectile-pair-7e968611/before",
+      "--after",
+      "/workspace/scratch/agent3-projectile-pair-7e968611/after",
+      "--output",
+      "/workspace/scratch/agent3-projectile-pair-7e968611/paired-verification.json",
+      "--require-complete"
+    ],
+    "localResult": "/workspace/scratch/agent3-projectile-pair-7e968611/paired-verification.json",
+    "localResultSha256": "12c01564b3190077141720eeefeabbe7d62e2e4550028ae740f50af5b15f2b4f",
+    "expectedPairs": 52,
+    "matchedPairs": 52,
+    "pairedStatus": "pass",
+    "physicalStatus": "pass",
+    "postNativeFireRngStatus": "matched",
+    "completeVerification": {
+      "before": {
+        "status": "pass",
+        "errors": []
+      },
+      "after": {
+        "status": "pass",
+        "errors": []
+      },
+      "mediaBefore": {
+        "status": "pass",
+        "verifiedFiles": 94,
+        "errors": []
+      },
+      "mediaAfter": {
+        "status": "pass",
+        "verifiedFiles": 94,
+        "errors": []
+      }
+    },
+    "glErrorsBefore": 0,
+    "glErrorsAfter": 0,
+    "physicalMismatches": [],
+    "washtubResourceVerification": {
+      "before": {
+        "status": "pass",
+        "errors": [],
+        "scope": "fixed existing Explosher sparkle buffers and owners; not whole-scene GPU timing or speed"
+      },
+      "after": {
+        "status": "pass",
+        "errors": [],
+        "scope": "fixed existing Explosher sparkle buffers and owners; not whole-scene GPU timing or speed"
+      }
+    },
+    "visualHashRule": "Verify every referenced original media file against its recorded hash; before/after image pixel hashes are recorded but are not required to match by the unchanged comparator."
+  },
+  "scope": {
+    "scenarioNames": [
+      "wall-shooter",
+      "floor-slosher9",
+      "floor-washtub",
+      "shooter",
+      "roller-horizontal",
+      "roller-vertical",
+      "slosher9"
+    ],
+    "workloads": [
+      "desktop-long-fire",
+      "mobile-emulated-long-fire"
+    ],
+    "wiper": "Separate catalog browser capture; not one of this pair's seven projectile scenarios.",
+    "limits": [
+      "No recapture, CI rerun, input edits, expectation or tolerance changes.",
+      "Not all65main weapons, every stage, WAN, hardware performance or Nintendo retail certification.",
+      "The baseline already contains merged optimizations; independent common reliability/gameplay corrections are also in the compared head.",
+      "Full Validate CI remained separately gated by known test-fixture failures; capture/comparison success does not certify the whole PR."
+    ]
+  },
+  "krakenFixtureReview": {
+    "commit": "3f855091782d734c48198a171fdc88849213d96f",
+    "review": "kraken-fixture-review.md",
+    "test": "patches/splatoon3/tests/kraken-dash-occlusion.test.mjs",
+    "sourcePassed": 32,
+    "sourceSkipped": 0,
+    "emittedPassed": 32,
+    "emittedSkipped": 0,
+    "runtimeChanged": false,
+    "sourceLog": "/workspace/scratch/agent3-kraken-source-review.log",
+    "emittedLog": "/workspace/scratch/agent3-kraken-emitted-review.log"
+  }
+}

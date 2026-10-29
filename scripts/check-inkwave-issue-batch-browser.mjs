@@ -5,14 +5,23 @@ import http from 'node:http';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from 'playwright';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
 const site=path.resolve(process.argv[2] || '_site');
 const evidence=path.resolve(process.argv[3] || '.browser-evidence/issue-batch.json');
-const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+const root=fileURLToPath(new URL('../',import.meta.url)),argIndex=process.argv.indexOf('--source-sha');
+const sourceSha=argIndex>=0?process.argv[argIndex+1]:(process.env.SOURCE_SHA||execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim());
+const manifest=verifyRuntimeBuild(site,root,sourceSha);
+const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const helperBytes=fs.readFileSync(new URL('./lib/inkwave-input-listener-audit.mjs',import.meta.url));
+const harnessSha=hash(fs.readFileSync(fileURLToPath(import.meta.url))),helperSha=hash(helperBytes),manifestSha=hash(fs.readFileSync(path.join(site,'inkwave-build.json')));
 for(const [file,expected] of Object.entries(manifest.artifacts)){
  const actual=createHash('sha256').update(fs.readFileSync(path.join(site,file))).digest('hex');
  if(actual!==expected)throw Error('Artifact mismatch: '+file);
 }
 const server=http.createServer((req,res)=>{
+ if(req.url==='/__input-listener-audit.mjs'){res.setHeader('content-type','text/javascript');res.end(helperBytes);return;}
  if(req.url==='/favicon.ico'){res.writeHead(204);res.end();return;}
  if(new URL(req.url,'http://localhost').pathname==='/probe'){res.setHeader('content-type','text/html');res.end('<!doctype html><script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>');return;}
  const file=path.resolve(site,'.'+new URL(req.url,'http://localhost').pathname);
@@ -66,29 +75,29 @@ try{
   }
   h.setQuality('low');
   const {Input}=await import('/src/core/input.js');
-  const targets=[window,document],native=targets.map(t=>({add:t.addEventListener,remove:t.removeEventListener}));
-  const live=new Set();let adds=0,removes=0;
-  targets.forEach((target,i)=>{
-   target.addEventListener=function(type,cb,options){adds++;live.add(cb);return native[i].add.call(this,type,cb,options);};
-   target.removeEventListener=function(type,cb,options){if(live.delete(cb))removes++;return native[i].remove.call(this,type,cb,options);};
-  });
-  try{
-   for(let i=0;i<10;i++){
-    const input=new Input(r.domElement),before=adds;
-    const event=new KeyboardEvent('keydown',{code:'KeyW',bubbles:true});window.dispatchEvent(event);
-    check(input.down('KeyW'),'live Input lost keyboard event');
-    input.disposePlatform();input.disposePlatform();
-    const old=input.down('KeyW');window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyW',bubbles:true}));
-    check(input.down('KeyW')===old,'retired Input still receives events');
-    check(before===adds,'dispose unexpectedly adds listeners');
-   }
-  }finally{targets.forEach((t,i)=>{t.addEventListener=native[i].add;t.removeEventListener=native[i].remove;});}
-  check(adds===100&&removes===100&&live.size===0,'Input listener imbalance '+JSON.stringify({adds,removes,live:live.size}));
+  const {auditInputListeners}=await import('/__input-listener-audit.mjs');
+  const listenerAudit=auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas:r.domElement,orientationTarget:screen.orientation,viewportTarget:window.visualViewport,fontsTarget:document.fonts,eventTargetPrototype:EventTarget.prototype,
+   event:type=>new Event(type),keyEvent:(type,code)=>new KeyboardEvent(type,{code,bubbles:true})});
   owner._disposeComposer();r.dispose();
-  return {shadowToggles:20,reflectionCycles:20,baseTextures,maxTextures,inputReplacements:10,listenerAdds:adds,listenerRemoves:removes};
+  return {shadowToggles:20,reflectionCycles:20,baseTextures,maxTextures,inputReplacements:listenerAudit.cycles,
+   listenerAdds:listenerAudit.adds,listenerRemoves:listenerAudit.removeCalls,listenerAudit};
  });
+ const touchPage=await browser.newPage({viewport:{width:320,height:240},hasTouch:true,isMobile:true});
+ try{
+  touchPage.on('pageerror',e=>errors.push(e.message));
+  touchPage.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+  await touchPage.goto(`http://127.0.0.1:${server.address().port}/probe?touch-audit`);
+  result.touchInput=await touchPage.evaluate(async()=>{
+   const {G}=await import('/src/core/ctx.js');G.mobile={touch:true,ios:false};
+   const {Input}=await import('/src/core/input.js');
+   const {auditInputListeners}=await import('/__input-listener-audit.mjs');
+   const canvas=document.createElement('canvas');document.body.append(canvas);
+   return auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas,orientationTarget:screen.orientation,viewportTarget:window.visualViewport,fontsTarget:document.fonts,eventTargetPrototype:EventTarget.prototype,requireCanvas:true,
+    event:type=>new Event(type),keyEvent:(type,code)=>new KeyboardEvent(type,{code,bubbles:true})});
+  });
+ }finally{await touchPage.close();}
  if(errors.length)throw Error(errors.join('\n'));
  fs.mkdirSync(path.dirname(evidence),{recursive:true});
- fs.writeFileSync(evidence,JSON.stringify({browser:browser.version(),contentHash:manifest.contentHash,result,errors},null,2)+'\n');
+ fs.writeFileSync(evidence,JSON.stringify({browser:browser.version(),sourceSha,contentHash:manifest.contentHash,manifestSha,harnessSha,helperSha,result,errors},null,2)+'\n');
  console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

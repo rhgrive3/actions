@@ -7,7 +7,7 @@ const f=await setup(),{V}=f;
 const reference=()=>canonicalizeContactReference(f.make(true),f.OldWorld);
 const bounds=[V(-8,-8,-8),V(8,8,8)];
 const ids=w=>{const a=[];w.queryBox(...bounds,id=>a.push(id));return a;};
-const released=w=>{assert.equal(w._queryDepth,0);for(const s of w._queryStacks)assert.equal(s.length,0);};
+const released=w=>{assert.equal(w._queryDepth,0);for(const s of w._queryStacks)assert.ok(s.every(Number.isInteger),'released backing storage retains only numeric node IDs/masks');};
 test('frozen before implementations retain their hashes',()=>{
  assert.equal(createHash('sha256').update(oldWorld).digest('hex'),'8ddfa80124c6d6f47c56ba0d9325f2faf9fca4688894b34e336769b3c43f921a');
  assert.equal(createHash('sha256').update(oldPhysics).digest('hex'),'d140048c3ad37db47580ce3d1e1459e1bd148a81a16379882866fe322903843c');
@@ -37,8 +37,8 @@ test('pooled stacks preserve traversal order during nested box and ray queries, 
  // A property read can throw during ray traversal too.
  const nodes=b.nodes;b.nodes=new Proxy(nodes,{get(target,key){if(key==='0')throw Error('ray failure');return target[key];}});
  assert.throws(()=>b.ray(V(0,6,0),V(0,-1,0)),/ray failure/);b.nodes=nodes;released(b);assert.deepEqual(ids(b),expected);
- const stacks=[...b._queryStacks];for(let i=0;i<200;i++){ids(b);b.ray(V(0,6,0),V(0,-1,0),10,{anyHit:true});}
- assert.equal(b._queryStacks.length,stacks.length);for(let i=0;i<stacks.length;i++)assert.equal(b._queryStacks[i],stacks[i]);released(b);
+ const stacks=[...b._queryStacks],capacity=stacks.map(s=>s.length);for(let i=0;i<200;i++){ids(b);b.ray(V(0,6,0),V(0,-1,0),10,{anyHit:true});}
+ assert.equal(b._queryStacks.length,stacks.length);for(let i=0;i<stacks.length;i++)assert.equal(b._queryStacks[i],stacks[i]);assert.deepEqual(stacks.map(s=>s.length),capacity,'warm traversal backing capacity remains available');released(b);
 });
 test('NativePhysics copies pooled hits into independent caller results and retains dynamic precedence',()=>{
  const a=reference(),b=f.make();

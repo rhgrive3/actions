@@ -418,7 +418,7 @@ export function kitSubRelease(SUB, runner, dt, inp) {
   const tpl = kitTemplate(release);
   const inkCost = Number.isFinite(release.inkCost) ? release.inkCost
     : Number.isFinite(release.inkCostFallback) ? release.inkCostFallback
-    : bombCost;
+    : SUB.bomb.inkCost;
   if (release.chargeable) Object.assign(release, curlingBlastParams(charge, release));
   release.inkCost = inkCost;
   release.__charge = charge;

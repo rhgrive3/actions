@@ -6,6 +6,21 @@ function writeIdentityRange(target, out, start, end) {
  return out;
 }
 
+// Keep every queued write until WebGL consumes it, even if a later selection
+// temporarily removes that tail. It can become visible again without another
+// CPU value change, so dropping pending ranges would expose stale GPU indices.
+function publishIndexRange(attribute, dirty, count) {
+ if(!count||dirty.start>=dirty.end)return;
+ let start=dirty.start,end=dirty.end;
+ for(const range of attribute.updateRanges){
+  start=Math.min(start,range.start);end=Math.max(end,range.start+range.count);
+ }
+ const range=attribute._nativeUploadRange||(attribute._nativeUploadRange={start:0,count:0});
+ range.start=start;range.count=end-start;
+ attribute.updateRanges.length=0;attribute.updateRanges.push(range);
+ attribute.needsUpdate=true;
+}
+
 /** Rendering partition only: each original triangle appears once, with shared
  * source attributes and no clipped, simplified or regenerated positions. A
  * triangle crossing a tile boundary stays whole; its actual bounds control
@@ -125,6 +140,7 @@ export class NativeInkMesh extends THREE.Mesh {
     // No retained full-size identity index: avoid doubling this GPU buffer.
     this._drawIndex = new THREE.BufferAttribute(new Uint32Array(triCount * 3), 1)
       .setUsage(THREE.DynamicDrawUsage);
+    this._indexDirty={start:Infinity,end:0};
     next.setIndex(this._drawIndex);
     this._lastView = new Float64Array(16);
     this._lastViewValid = false;
@@ -377,6 +393,7 @@ export class NativeInkMesh extends THREE.Mesh {
     }
     this._lastVisibleCount = visibleCount;
     const faces = this._faceCulling ? this._facePainted : null;
+    const paintOnly = !changed && this._faceDirty;
     if (this._faceDirty) changed = true;
     this._faceDirty = false;
     // Moving a camera without changing the visible set never re-uploads
@@ -388,10 +405,15 @@ export class NativeInkMesh extends THREE.Mesh {
       return 0;
     }
     const index = this._drawIndex.array;
+    const dirty=this._indexDirty;dirty.start=Infinity;dirty.end=0;
     if (faces) {
       // Painted charts in visible tiles, still in source triangle order.
       const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible;
       let count = 0;
+      // Most paint stamps append source-ordered charts without changing tile
+      // visibility. Compare only that path; moving-camera rebuilds retain the
+      // original loop and its cost even when the whole index list changes.
+      if(paintOnly){
       for(let wordIndex=0;wordIndex<this._paintedFaceWords.length;wordIndex++){
         let word=this._paintedFaceWords[wordIndex];
         while(word){
@@ -400,25 +422,40 @@ export class NativeInkMesh extends THREE.Mesh {
         for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
           if (!visible[tileOf[tri]]) continue;
           const i = tri * 3;
-          index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+          if(dirty.start===Infinity){
+            if(index[count]===i&&index[count+1]===i+1&&index[count+2]===i+2){count+=3;continue;}
+            dirty.start=count;
+          }
+          index[count++]=i;index[count++]=i+1;index[count++]=i+2;
         }
         }
+      }
+      }else{
+        dirty.start=0;
+      for(let wordIndex=0;wordIndex<this._paintedFaceWords.length;wordIndex++){
+        let word=this._paintedFaceWords[wordIndex];
+        while(word){
+        const bit=31-Math.clz32(word&-word),face=wordIndex*32+bit;word=(word&(word-1))>>>0;
+        if(face>=faces.length)continue;
+        for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
+          if (!visible[tileOf[tri]]) continue;
+          const i = tri * 3;
+          index[count++]=i;index[count++]=i+1;index[count++]=i+2;
+        }
+        }
+      }
       }
       this.geometry.setDrawRange(0, count);
-      if (count) {
-        this._drawIndex.clearUpdateRanges();
-        this._drawIndex.addUpdateRange(0, count);
-        this._drawIndex.needsUpdate = true;
-      }
+      if(dirty.start!==Infinity)dirty.end=count;
+      publishIndexRange(this._drawIndex,dirty,count);
       this._fullDraw = false;
       return visibleCount;
     }
     if (visibleCount === this.chunks.length) {
       if (!this._fullDraw) {
         writeIdentityRange(index,0,0,index.length);
-        this._drawIndex.clearUpdateRanges();
-        this._drawIndex.addUpdateRange(0, index.length);
-        this._drawIndex.needsUpdate = true;
+        dirty.start=0;dirty.end=index.length;
+        publishIndexRange(this._drawIndex,dirty,index.length);
       }
       this.geometry.setDrawRange(0, index.length);
       this._fullDraw = true;
@@ -436,7 +473,7 @@ export class NativeInkMesh extends THREE.Mesh {
       for (let tri = 0; tri < this._triangleTile.length; tri++) {
         if (!this._visible[this._triangleTile[tri]]) continue;
         const i = tri * 3;
-        index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+        index[count++]=i;index[count++]=i+1;index[count++]=i+2;
       }
     } else {
       let first = -1, last = 0;
@@ -459,9 +496,8 @@ export class NativeInkMesh extends THREE.Mesh {
       }
     }
     this.geometry.setDrawRange(0, count);
-    this._drawIndex.clearUpdateRanges();
-    this._drawIndex.addUpdateRange(0, count);
-    this._drawIndex.needsUpdate = true;
+    dirty.start=0;dirty.end=count;
+    publishIndexRange(this._drawIndex,dirty,count);
     this._fullDraw = false;
     return visibleCount;
   }
@@ -474,6 +510,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._geometry = null;
     this._triangleTile = this._runTiles = this._runStarts = this._runEnds = null;
     this._drawIndex = this._visible = this._painted = null;
+    this._indexDirty = null;
     this._paintedCount = 0;
   }
 }

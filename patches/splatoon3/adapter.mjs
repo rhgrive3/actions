@@ -293,6 +293,12 @@ export function adaptSource(rel, code) {
       '  minimap: true,', '  minimap: false,', 'optional corner map default');
   }
   if (rel === 'src/ui/menus.js') {
+    // The native touch tooltip describes the pre-adapter gyro table. Keep the
+    // shared, translated profile description in both settings views.
+    code = replaceOnce(code,
+      'Same scale as the Switch game: 0 = 132° of device turn per 360°, +5 = 110°, −5 = 278°.',
+      'Motion-control aiming sensitivity for the selected profile.',
+      'gyro touch tooltip');
     code = replaceOnce(code,
       'const fnv = (str) => { let x = 2166136261;',
       'export const fnv = (str) => { let x = 2166136261;',
@@ -984,7 +990,7 @@ export function adaptSource(rel, code) {
       const boost = 1 + 0.55 * clamp((this.edgeT - 0.16) / 0.3, 0, 1);
       const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
       `      this.edgeT = 0;
-      const yawRate = Math.min(3.6 * ps, Math.PI * 2 - 1e-6);
+      const yawRate = boundedPadYawRate(ps);
       const c = _stick.mag > 0 ? lookCurve(_stick.mag) / _stick.mag : 0;`,
       'S3 right-stick steady yaw cap');
     code = replaceOnce(code,

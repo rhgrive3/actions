@@ -7,7 +7,7 @@ for(const [file,expected] of Object.entries(manifest.artifacts)) if(hash(fs.read
 const sourceSha=process.argv.includes('--exact-source') ? execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim() : null;
 // Bind every build input to the actual checkout commit when --exact-source is used.
 if(process.argv.includes('--exact-source')) {
-  const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(row=>{ const [meta,file]=row.split('\t'); return [file,meta.split(' ')[2]]; }));
+  const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8',maxBuffer:8*1024*1024}).split('\0').filter(Boolean).map(row=>{ const [meta,file]=row.split('\t'); return [file,meta.split(' ')[2]]; }));
   const files=Object.keys(manifest.files).map(key=>{
     if(key.startsWith('upstream/')) return 'inkwave-public/'+key.slice(9);
     if(key.startsWith('patch/')) return 'patches/splatoon3/'+key.slice(6);

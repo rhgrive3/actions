@@ -1,8 +1,10 @@
 import * as THREE from 'three';
-import { Physics, Hit, GroundHit } from '../../../src/game/physics.js';
+import { Physics, Hit, GroundHit, WALKABLE } from '../../../src/game/physics.js';
 import { PLAYER } from '../../../src/config.js';
 const min = new THREE.Vector3(), max = new THREE.Vector3(), _sortAsc = (a, b) => a - b;
 const SOURCE_CONTACT_EPSILON=1e-4;
+const FOOT_RING=Array.from({length:8},(_,i)=>[Math.cos(i/8*Math.PI*2),Math.sin(i/8*Math.PI*2)]);
+const DOWN=new THREE.Vector3(0,-1,0);
 const FOOT_SUPPORT_KEYS=Object.freeze(['block','face','u','v','center','grate']);
 /** Preserve the live controller's ground, lifted-body, step and camera APIs. */
 export class NativePhysics extends Physics {
@@ -31,6 +33,53 @@ export class NativePhysics extends Physics {
    out.hit=true;out.dist=d.dist;out.point.copy(d.point);out.normal.copy(d.normal);out.block=d.block;out.face=d.face;out.u=d.u;out.v=d.v;out.triangle=-1;
   }
   return out;
+ }
+ // LOS asks only whether an occluder exists. The inherited helper passes
+ // anyHit to raycast(), but the native nearest-hit adapter cannot honor that
+ // output contract. Query the source BVH and moving OBBs in Boolean mode.
+ los(a,b){
+  if(this.raycast!==CANONICAL_NATIVE_RAYCAST||this.dynamic.raycast!==Physics.prototype.raycast||!this.world.hasCanonicalRay?.())return super.los(a,b);
+  const dir=this._nativeLosDir||(this._nativeLosDir=new THREE.Vector3());dir.copy(b).sub(a);
+  const length=dir.length();if(length<1e-4)return true;
+  const far=length-.05;if(!(far>0)||!Number.isFinite(far))return true;
+  dir.multiplyScalar(1/length);
+  const options=this._nativeLosOptions||(this._nativeLosOptions={ignoreGrates:true,anyHit:true});
+  if(this.world.ray(a,dir,far,options))return false;
+  if(this.level.blocks.length===this.level.staticBlockCount)return true;
+  return !this.dynamic.raycast(a,dir,far,this._nativeLosHit||(this._nativeLosHit=new Hit()),true,null,true).hit;
+ }
+ // Ground support uses parallel rays with independent exact hit records.
+ // The source BVH can visit their common nodes once. Custom raycast owners
+ // retain the inherited sequential contract, including callbacks/side effects.
+ groundProbe(x,y,z,up,down,foot,out,skipGrates=false,stepMin=.12){
+  const far=up+down;
+  if(this.raycast!==CANONICAL_NATIVE_RAYCAST||this.dynamic.raycast!==Physics.prototype.raycast||!this.world.rayDownBatch||!this.world.hasCanonicalRay?.()||!(far>0)||!Number.isFinite(far))
+   return super.groundProbe(x,y,z,up,down,foot,out,skipGrates,stepMin);
+  const state=this._groundBatch||(this._groundBatch={origins:Array.from({length:9},()=>new THREE.Vector3()),hits:Array.from({length:9},()=>new Hit()),options:{ignoreGrates:false}});
+  const {origins,hits,options}=state;options.ignoreGrates=skipGrates;
+  origins[0].set(x,y+up,z);
+  for(let i=0;i<8;i++)origins[i+1].set(x+FOOT_RING[i][0]*foot,y+up,z+FOOT_RING[i][1]*foot);
+  this.world.rayDownBatch(origins,far,options,hits);
+  out.hit=false;out.center=false;let have=false,by=-Infinity;
+  const moving=this.level.blocks.length>this.level.staticBlockCount;
+  for(let i=0;i<9;i++){
+   const h=hits[i];h.dist=h.hit?h.distance:far;h.block=h.face=-1;
+   if(h.hit){
+    h.block=this.level.blockForTriangle(h.triangle);h.face=this.level.data.triangleFace[h.triangle];
+    if(h.face>=0){const f=this.level.faces[h.face],p=this.world._p.copy(h.point).sub(f.origin);h.u=p.dot(f.u);h.v=p.dot(f.v);}else h.u=h.v=0;
+   }
+   if(moving){
+    const limit=h.hit&&h.dist>0&&Number.isFinite(h.dist)?Math.min(far,h.dist):far;
+    const d=this.dynamic.raycast(origins[i],DOWN,limit,this.dynamicHit,skipGrates);
+    if(d.hit&&(!h.hit||d.dist<h.dist)){
+     h.hit=true;h.dist=d.dist;h.point.copy(d.point);h.normal.copy(d.normal);h.block=d.block;h.face=d.face;h.u=d.u;h.v=d.v;h.triangle=-1;
+    }
+   }
+   if(!h.hit||(i===0?!(h.normal.y>=WALKABLE):h.normal.y<WALKABLE))continue;
+   if(i===0){have=true;by=h.point.y+stepMin;this._fillGround(out,h,true);}
+   else if(h.point.y>by){have=true;by=h.point.y;this._fillGround(out,h,false);}
+  }
+  out.hit=have;return out;
  }
  _emptyDynamicContacts(c){
   c.ground=false;c.wall=false;c.ceiling=false;
@@ -134,3 +183,5 @@ export class NativePhysics extends Physics {
   return true;
  }
 }
+
+const CANONICAL_NATIVE_RAYCAST=NativePhysics.prototype.raycast;

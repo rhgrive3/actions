@@ -537,6 +537,7 @@ export function drawS3Shapes(system, THREE, G) {
   if (!system.list.length && !R.sheets.bursts.length && !R.sheets.drills.length) {
     for (const mesh of [R.body, R.slashH, R.slashV, R.shell, R.core]) { mesh.count = 0; mesh.visible = false; }
     // Preserve a zero-instance wet mesh until the final owned renderer disposes it.
+    // The lazy Normal/Lite charged mesh shares the same retirement boundary.
     if (R.wetSlashV) { R.wetSlashV.count = 0; R.wetSlashV.visible = false; }
     R.sparks.visible = false; R.sparks.userData.count = 0; R.sparks.geometry.setDrawRange(0, 0);
     R.sheets.mesh.count = R.sheets.drillMesh.count = 0;

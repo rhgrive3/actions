@@ -540,6 +540,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const sinYaw=Math.sin(y),cosPitch=Math.cos(p);
     return (out||new THREE.Vector3()).set(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
   }
+  const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();
   function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
@@ -547,7 +548,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||paintFallbackUp;
-      const tangent=direction.clone().addScaledVector(normal,-direction.dot(normal));
+      const tangent=_paintTangent.copy(direction).addScaledVector(normal,-direction.dot(normal));
       // This source depth envelope is interpreted on floor-like contacts only.
       // Wall projection remains unchanged until its separate source law is verified.
       if(Math.abs(normal.y)<.4){options.stretch=direction;options.stretchAmt=Math.max(0,depth-1);}
@@ -560,8 +561,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));return;
         }
         const shape=catalogPaintEllipse(radius,depth);
-        if(shape.rotate)tangent.crossVectors(normal,tangent.clone()).normalize();
-        paintRadius=shape.radius;centre=at.clone().addScaledVector(tangent,-shape.centreBack);
+        if(shape.rotate)tangent.crossVectors(normal,_paintCross.copy(tangent)).normalize();
+        paintRadius=shape.radius;centre=_paintCentre.copy(at).addScaledVector(tangent,-shape.centreBack);
         options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
       }
     }
@@ -1291,7 +1292,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if(p.ghost)return true;
     const footprint=impactPaint(p);
-    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
+    paint(p.owner,at,footprint.width,footprint.depth,_impactHorizDir.copy(p.vel).setY(0).normalize(),h.face,mainInkFootprint(r));
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
        (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
       G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
@@ -1397,6 +1398,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(pierced)pierced.length=0;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
+      let segBoundsReady=false,segMinX=0,segMaxX=0,segMinZ=0,segMaxZ=0;
       if(unitCanDamage)for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
         q.playerRadius0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale);
@@ -1408,6 +1410,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         const motion=coherentTick?coherentMotionStart(a):null;
+        if(!motion&&shapes.length===1){
+          if(!segBoundsReady){
+            const q0=shapes[0],prMax=Math.max(q0.playerRadius0,q0.playerRadius1);
+            if(Number.isFinite(q0.from.x)&&Number.isFinite(q0.from.z)&&Number.isFinite(q0.to.x)&&Number.isFinite(q0.to.z)&&Number.isFinite(prMax)&&prMax>=0){
+              segMinX=Math.min(q0.from.x,q0.to.x)-prMax;segMaxX=Math.max(q0.from.x,q0.to.x)+prMax;
+              segMinZ=Math.min(q0.from.z,q0.to.z)-prMax;segMaxZ=Math.max(q0.from.z,q0.to.z)+prMax;
+              segBoundsReady=true;
+            }else segBoundsReady=null;
+          }
+          if(segBoundsReady&&Number.isFinite(a.pos?.x)&&Number.isFinite(a.pos?.z)){
+            // Pre-reject only if the shot cannot reach the actual weapon hurtbox.
+            // Terrain radius + 0.25 is too small for the squid bullet radius
+            // (0.675 in the current profile) and can suppress a genuine hit.
+            const reach=hurtboxRadius(a,PLAYER)+1e-4;
+            if(a.pos.x<segMinX-reach||a.pos.x>segMaxX+reach||a.pos.z<segMinZ-reach||a.pos.z>segMaxZ+reach)continue;
+          }
+        }
         const scratch=s.collisionScratch;
         const base=motion?scratch.motionBase.set(motion.x0,motion.y0,motion.z0):a.pos;
         let entry=null;
@@ -1621,7 +1640,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
       if(!geo.boundingBox)geo.computeBoundingBox();
       const bounds=geo.boundingBox;
-      drum.updateWorldMatrix(true,false);
+      // localToWorld below updates the same ancestor path immediately before use.
       // The mesh locates the contact only. PaintParam owns the ink width;
       // changing a display model must never change scored/swimmable turf.
       to.copy(bounds.min).add(bounds.max).multiplyScalar(.5);

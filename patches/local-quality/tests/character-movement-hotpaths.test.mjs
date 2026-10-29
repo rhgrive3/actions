@@ -85,16 +85,25 @@ test('MOV-02 rollerContactClear reuses scratch vectors and hit instance across c
   assert.equal(seenHits.size, 1, 'hit scratch object should be reused across calls');
 });
 
-test('MOV-03 camera, MOV-04b map navigation, and MOV-08a bot plans compose cleanly', () => {
+test('MOV-03..05 and MOV-08a..b compose cleanly in cameraRig.js, player.js, actor.js, bots.js, and character.js', () => {
   const builtCam = adaptBuildSource('src/game/cameraRig.js', read('src/game/cameraRig.js'));
   assert.match(builtCam, /if \(projectionDirty\) gc\.updateProjectionMatrix\(\);\s*gc\.updateMatrixWorld\(\);/);
+
   const builtPlayer = adaptBuildSource('src/game/player.js', read('src/game/player.js'));
+  assert.match(builtPlayer, /const ew = this\._effWeapon \|\| \(this\._effWeapon = \{\}\);/);
   assert.match(builtPlayer, /const allies = this\._padMapAllies \|\| \(this\._padMapAllies = \[\]\);/);
+
+  const builtActor = adaptBuildSource('src/game/actor.js', read('src/game/actor.js'));
+  assert.match(builtActor, /const si = this\._stormIntent \|\| \(this\._stormIntent =/);
+  assert.match(builtActor, /if \(intent\.jumpPressed !== undefined\) intent\.jumpPressed = false;/);
+
   const builtBots = adaptBuildSource('src/game/bots.js', read('src/game/bots.js'));
   assert.match(builtBots, /const choices = this\._paintChoices \|\| \(this\._paintChoices = \[\]\);/);
   assert.match(builtBots, /const tried = this\._triedGoals \|\| \(this\._triedGoals = new Set\(\)\); tried\.clear\(\);/);
+
   const builtChar = adaptBuildSource('src/game/character.js', read('src/game/character.js'));
-  assert.match(builtChar, /this\.model\.matrixWorld\.decompose\(_v3, _q3, _v4\);/);
+  assert.match(builtChar, /_q3\.setFromRotationMatrix\(this\.model\.matrixWorld\);/);
+  assert.match(builtChar, /this\.root\.getWorldPosition\(_v5\)\.addScaledVector\(UP, 0\.26/);
 });
 
 test('MOV-06a..c and MOV-07a..b native movement and triangle-world modules reuse module-scoped scratch structures', () => {

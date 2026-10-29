@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "2edc12f037e0041455b9bd2be7388518536cb3d3",
+  "node": "v22.23.4",
+  "command": "node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-sandbox-runner-route.test.mjs",
+  "cwd": "/workspace/scratch/agent1-wall-admission-sparse",
+  "stats": {
+    "tests": 46,
+    "pass": 46,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "durationMs": 3911.560859,
+  "log": "/workspace/scratch/agent1-wall-admission-lock-six.log",
+  "logSha256": "dcdd3c1d07843b8f80778c7711bd8814663d6304398dad8529df106495eac6c4",
+  "layout": "/workspace/scratch/agent1-wall-admission-lock-layout.json",
+  "layoutSha256": "b0e8f56512506cbd0fec0c7a68ebb7d3f58bb977186b1aea274f5d22359e26ce",
+  "npmInstalled": false,
+  "vendorAdded": false,
+  "historyAdded": false,
+  "additionalMetadataOnly": "package-lock.json",
+  "finalAdmissionCommand": [
+    "node",
+    "--test",
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+  ],
+  "finalAdmissionResult": {
+    "sourceCodeCommit": "cc17d93dd13cd1f5d553a46f0fd6aee42bb35626",
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 89.556728,
+    "additionalRootFile": "package-lock.json",
+    "additionalRootBytes": 41467,
+    "vendorPresent": false,
+    "nodeModulesPresent": false,
+    "gitHistoryPresent": false,
+    "workflowSha256": "6d71b3acf5b5702dbf98c876962c108d1689383b7a8b1dd3598b2897ef1a54f7",
+    "logSha256": "ddee93fac701afaa5d5567d9c0a1170efcc8925960d6debaf9d7ad0230855a23"
+  }
+}

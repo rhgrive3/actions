@@ -212,7 +212,7 @@ export function buildFrame(match, api) {
     const swimming = hostRemote && admitted ? pose.last.squid === true : a.form === 'squid';
     const shotRequired = match.mode === 'rainmaker' && match.ranked.rule.state.carrier === id;
     const charge = shotRequired ? match.ranked.rule.state.charge : null;
-    const shotOrigin = shotRequired && charge?.firing && !cmd?.fire && !swimming && (!hostRemote || admitted)
+    const shotOrigin = shotRequired && charge?.firing && (!cmd?.fire || charge.released) && !swimming && (!hostRemote || admitted)
       ? captureRainmakerShotOrigin(api.THREE, a, id, objectivePos, cmd?.aim || a.aimDir?.toArray()) : null;
     const row = owned.row;
     row.life = rainmakerActorLife(a); row.owner = rainmakerActorOwner(a); row.rainmakerShotRequired = shotRequired; row.rainmakerShotOrigin = shotOrigin;

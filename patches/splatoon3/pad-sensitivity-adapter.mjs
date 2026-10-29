@@ -14,8 +14,8 @@ export function adaptPadSensitivity(rel, code, replaceOnce) {
     return "import { legacyPadToS3 } from '../../patches/splatoon3/runtime/pad-sensitivity.mjs';\n" + code;
   }
   if (rel === 'src/game/player.js') {
-    code = replaceOnce(code, '      const ps = s.padSensitivity ?? 1;', '      const ps = s3PadMultiplier(s.padSensitivity);', 'S3 pad look multiplier');
-    return "import { s3PadMultiplier } from '../../patches/splatoon3/runtime/pad-sensitivity.mjs';\n" + code;
+    code = replaceOnce(code, '      const ps = s.padSensitivity ?? 1;', '      const ps = s3PadMultiplier(s.padSensitivity, s.padLegacyGain);', 'S3 pad look multiplier');
+    return "import { s3PadMultiplier, boundedPadYawRate } from '../../patches/splatoon3/runtime/pad-sensitivity.mjs';\n" + code;
   }
   if (rel === 'src/main.js') {
     code = replaceOnce(code,
@@ -25,10 +25,15 @@ export function adaptPadSensitivity(rel, code, replaceOnce) {
       "      if (this.settings.aimProfiles) {\n" +
       "        for (const key of ['tv', 'handheld']) {\n" +
       "          const active = this.settings.aimProfiles[key];\n" +
-      "          if (active) active.padSensitivity = legacyPadToS3(active.padSensitivity);\n" +
+      "          if (active) {\n" +
+      "            const gain = active.padSensitivity;\n" +
+      "            if ((gain >= .2 && gain < .5) || (gain > 2 && gain <= 3)) active.padLegacyGain = gain;\n" +
+      "            active.padSensitivity = legacyPadToS3(gain);\n" +
+      "          }\n" +
       "        }\n" +
       "      }\n" +
       "      this.settings.padSensitivity = this.settings.aimProfiles?.[this.settings.aimProfile]?.padSensitivity ?? legacyPadToS3(this.settings.padSensitivity);\n" +
+      "      this.settings.padLegacyGain = this.settings.aimProfiles?.[this.settings.aimProfile]?.padLegacyGain;\n" +
       "      this.settings.padSensitivityScale = 's3';\n" +
       "      saveJSON('inkwave.settings', this.settings);\n" +
       "    }\n    this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);",

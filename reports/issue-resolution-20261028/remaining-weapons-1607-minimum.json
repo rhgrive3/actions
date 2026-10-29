@@ -1,0 +1,356 @@
+{
+  "successfulHookMinimum": [
+    {
+      "distance": 0.01,
+      "retry": 19,
+      "hz": 20,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.01,
+      "retry": 19,
+      "hz": 30,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.01,
+      "retry": 19,
+      "hz": 60,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.01,
+      "retry": 19,
+      "hz": 120,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.01,
+      "retry": 20,
+      "hz": 20,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 20,
+      "hz": 30,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 20,
+      "hz": 60,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 20,
+      "hz": 120,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 21,
+      "hz": 20,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 21,
+      "hz": 30,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 21,
+      "hz": 60,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.01,
+      "retry": 21,
+      "hz": 120,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 19,
+      "hz": 20,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.2,
+      "retry": 19,
+      "hz": 30,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.2,
+      "retry": 19,
+      "hz": 60,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.2,
+      "retry": 19,
+      "hz": 120,
+      "ready": 15,
+      "accepted": false
+    },
+    {
+      "distance": 0.2,
+      "retry": 20,
+      "hz": 20,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 20,
+      "hz": 30,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 20,
+      "hz": 60,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 20,
+      "hz": 120,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 21,
+      "hz": 20,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 21,
+      "hz": 30,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 21,
+      "hz": 60,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 0.2,
+      "retry": 21,
+      "hz": 120,
+      "ready": 15,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 19,
+      "hz": 20,
+      "ready": 16,
+      "accepted": false
+    },
+    {
+      "distance": 1,
+      "retry": 19,
+      "hz": 30,
+      "ready": 16,
+      "accepted": false
+    },
+    {
+      "distance": 1,
+      "retry": 19,
+      "hz": 60,
+      "ready": 16,
+      "accepted": false
+    },
+    {
+      "distance": 1,
+      "retry": 19,
+      "hz": 120,
+      "ready": 16,
+      "accepted": false
+    },
+    {
+      "distance": 1,
+      "retry": 20,
+      "hz": 20,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 20,
+      "hz": 30,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 20,
+      "hz": 60,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 20,
+      "hz": 120,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 21,
+      "hz": 20,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 21,
+      "hz": 30,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 21,
+      "hz": 60,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 1,
+      "retry": 21,
+      "hz": 120,
+      "ready": 16,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 19,
+      "hz": 20,
+      "ready": 19,
+      "accepted": false
+    },
+    {
+      "distance": 2,
+      "retry": 19,
+      "hz": 30,
+      "ready": 19,
+      "accepted": false
+    },
+    {
+      "distance": 2,
+      "retry": 19,
+      "hz": 60,
+      "ready": 19,
+      "accepted": false
+    },
+    {
+      "distance": 2,
+      "retry": 19,
+      "hz": 120,
+      "ready": 19,
+      "accepted": false
+    },
+    {
+      "distance": 2,
+      "retry": 20,
+      "hz": 20,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 20,
+      "hz": 30,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 20,
+      "hz": 60,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 20,
+      "hz": 120,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 21,
+      "hz": 20,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 21,
+      "hz": 30,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 21,
+      "hz": 60,
+      "ready": 19,
+      "accepted": true
+    },
+    {
+      "distance": 2,
+      "retry": 21,
+      "hz": 120,
+      "ready": 19,
+      "accepted": true
+    }
+  ],
+  "baseline": "60bbe35d4c5176fd86cb1b65f8e66336982ef6ca",
+  "scope": "Actual production-composed Actor/Physics/FixedClock; cosmetic Character stub; native special event/replay tested; no full Game/device or current retail phase trace",
+  "verification": {
+    "boundarySuite": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "fullSpecialSuitePriorRangeTestAddition": {
+      "tests": 91,
+      "passed": 91,
+      "failed": 0,
+      "skipped": 0
+    }
+  }
+}

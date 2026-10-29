@@ -22,6 +22,7 @@ export const adaptCombatGpuCpuPerfectTargets = Object.freeze([
   'src/game/character-weapons.js',
   'src/world/paint.js',
   'src/game/actor.js',
+  'src/game/inkFlightRuntime.js',
   'src/game/weapons.js',
   'src/game/bots.js',
   'src/boss/boss.js',
@@ -655,6 +656,7 @@ export class SwimWake {`,
       replaceOnce,
       'CPU-07a fast-path empty clouds and reuse _rainHits Map in _updateClouds'
     );
+
   }
 
   if (rel === 'src/game/bots.js') {
@@ -906,6 +908,59 @@ export class SwimWake {`,
     }
 
     if (rel === 'src/game/player.js') {
+      // MOV-04a: Reuse cached effective weapon descriptor in _assistTarget and computeAim instead of per-frame object spread.
+      code = applyIdempotent(
+        code,
+        `    const fwd = cam.getWorldDirection(_fwd);
+    const w = (a.weapon?.behaviorKind || a.weapon?.kind === 'catalog') ? {
+      ...a.weapon,
+      kind: ({
+        stringer: 'charger',
+        splatana: 'charger',
+        brush: 'roller',
+        brella: 'shooter',
+      }[a.weapon.behaviorKind || a.weapon.modelKind] || a.weapon.behaviorKind || a.weapon.modelKind),
+    } : a.weapon;`,
+        `    const fwd = cam.getWorldDirection(_fwd);
+    let w = a.weapon;
+    if (w?.behaviorKind || w?.kind === 'catalog') {
+      const bk = w.behaviorKind || w.modelKind;
+      const rk = bk === 'stringer' || bk === 'splatana' ? 'charger' : bk === 'brush' ? 'roller' : bk === 'brella' ? 'shooter' : bk;
+      const ew = this._effWeapon || (this._effWeapon = {});
+      if (this._effWeaponSrc !== w) { this._effWeaponSrc = w; Object.assign(ew, w); }
+      else { ew.range = w.range; ew.rangeMin = w.rangeMin; ew.rangeMax = w.rangeMax; ew.reticleRange = w.reticleRange; ew.combatRange = w.combatRange; }
+      ew.kind = rk;
+      w = ew;
+    }`,
+        replaceOnce,
+        'MOV-04a reuse _effWeapon in PlayerController._assistTarget'
+      );
+      code = applyIdempotent(
+        code,
+        `    // is the crosshair point inside the weapon's effective range? (HUD reticle state)
+    const w = (a.weapon?.behaviorKind || a.weapon?.kind === 'catalog') ? {
+      ...a.weapon,
+      kind: ({
+        stringer: 'charger',
+        splatana: 'charger',
+        brush: 'roller',
+        brella: 'shooter',
+      }[a.weapon.behaviorKind || a.weapon.modelKind] || a.weapon.behaviorKind || a.weapon.modelKind),
+    } : a.weapon;`,
+        `    // is the crosshair point inside the weapon's effective range? (HUD reticle state)
+    let w = a.weapon;
+    if (w?.behaviorKind || w?.kind === 'catalog') {
+      const bk = w.behaviorKind || w.modelKind;
+      const rk = bk === 'stringer' || bk === 'splatana' ? 'charger' : bk === 'brush' ? 'roller' : bk === 'brella' ? 'shooter' : bk;
+      const ew = this._effWeapon || (this._effWeapon = {});
+      if (this._effWeaponSrc !== w) { this._effWeaponSrc = w; Object.assign(ew, w); }
+      else { ew.range = w.range; ew.rangeMin = w.rangeMin; ew.rangeMax = w.rangeMax; ew.reticleRange = w.reticleRange; ew.combatRange = w.combatRange; }
+      ew.kind = rk;
+      w = ew;
+    }`,
+        replaceOnce,
+        'MOV-04a reuse _effWeapon in PlayerController.computeAim'
+      );
       // MOV-04b: Reuse _padMapAllies and eliminate per-tick direction/shoulder array allocations in respawn & pad map navigation.
       code = applyIdempotent(
         code,
@@ -979,6 +1034,26 @@ export class SwimWake {`,
       );
     }
 
+    if (rel === 'src/game/actor.js') {
+      // MOV-05: Reuse _stormIntent and preserve jumpPressed consumption on this.intent during Ink Storm hold.
+      code = applyIdempotent(
+        code,
+        `    const stormHolding = isStormHolding(this);
+    const intent = stormHolding ? { ...this.intent, fire: false, sub: false, special: false } : this.intent;`,
+        `    const stormHolding = isStormHolding(this);
+    let intent = this.intent;
+    if (stormHolding) {
+      const si = this._stormIntent || (this._stormIntent = { move: intent.move, squid: false, jump: false, jumpPressed: undefined, fire: false, sub: false, special: false });
+      si.move = intent.move; si.squid = intent.squid; si.jump = intent.jump; si.jumpPressed = intent.jumpPressed;
+      si.fire = false; si.sub = false; si.special = false;
+      if (intent.jumpPressed !== undefined) intent.jumpPressed = false;
+      intent = si;
+    }`,
+        replaceOnce,
+        'MOV-05 reuse _stormIntent and clear this.intent.jumpPressed during Ink Storm hold'
+      );
+    }
+
     if (rel === 'src/game/bots.js') {
       // MOV-08a: Reuse _paintChoices, _paintChoicePool, _mates, and _triedGoals in BotMind._pickPaintGoal.
       code = applyIdempotent(
@@ -1022,6 +1097,81 @@ export class SwimWake {`,
       );
     }
 
+    if (rel === 'src/game/character.js') {
+      // MOV-08b: Fast-path unit-scale world quaternion in Character._updateSquid climb orientation and avoid redundant _v5.copy.
+      code = applyIdempotent(
+        code,
+        `      this.model.matrixWorld.decompose(_v3, _q3, _v4);
+      q.copy(_q3).invert().multiply(_q2);
+      _v5.copy(this.root.getWorldPosition(_v5)).addScaledVector(UP, 0.26 + 0.025 * climbPulse * climbV).addScaledVector(n, -this.climbInset - 0.07);`,
+        `      const _cms = this.model.scale, _crs = this.root?.scale;
+      if (_cms.x === 1 && _cms.y === 1 && _cms.z === 1 && (!_crs || (_crs.x === 1 && _crs.y === 1 && _crs.z === 1))) {
+        _q3.setFromRotationMatrix(this.model.matrixWorld);
+      } else {
+        this.model.matrixWorld.decompose(_v3, _q3, _v4);
+      }
+      q.copy(_q3).invert().multiply(_q2);
+      this.root.getWorldPosition(_v5).addScaledVector(UP, 0.26 + 0.025 * climbPulse * climbV).addScaledVector(n, -this.climbInset - 0.07);`,
+        replaceOnce,
+        'MOV-08b fast-path unit-scale world quaternion in Character._updateSquid climb'
+      );
+    }
+
+    if (rel === 'src/game/inkFlightRuntime.js') {
+      // CMB-04: Add finite XZ segment AABB broadphase precheck before capsuleEntry in InkFlightRuntime.stepHead.
+      code = applyIdempotent(
+        code,
+        `      for (const actor of G.actors) {
+        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
+        const friendly = actor.team === p.team;
+        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
+        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);
+        const motion = coherentMotionStart(actor);`,
+        `      let segBoundsReady = false, segMinX = 0, segMaxX = 0, segMinZ = 0, segMaxZ = 0;
+      for (const actor of G.actors) {
+        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
+        const friendly = actor.team === p.team;
+        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
+        const motion = coherentMotionStart(actor);
+        if (!motion) {
+          if (!segBoundsReady) {
+            const pr = p.inkPlayerRadius;
+            if (Number.isFinite(p.prev.x) && Number.isFinite(p.prev.z) && Number.isFinite(p.pos.x) && Number.isFinite(p.pos.z) && Number.isFinite(pr) && pr >= 0) {
+              segMinX = Math.min(p.prev.x, p.pos.x) - pr; segMaxX = Math.max(p.prev.x, p.pos.x) + pr;
+              segMinZ = Math.min(p.prev.z, p.pos.z) - pr; segMaxZ = Math.max(p.prev.z, p.pos.z) + pr;
+              segBoundsReady = true;
+            } else segBoundsReady = null;
+          }
+          if (segBoundsReady && Number.isFinite(actor.pos?.x) && Number.isFinite(actor.pos?.z)) {
+            const reach = (Number.isFinite(PLAYER?.radius) && PLAYER.radius > 0 ? PLAYER.radius : 0.38) + 0.25;
+            if (actor.pos.x < segMinX - reach || actor.pos.x > segMaxX + reach || actor.pos.z < segMinZ - reach || actor.pos.z > segMaxZ + reach) continue;
+          }
+        }
+        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);`,
+        replaceOnce,
+        'CMB-04 add finite XZ segment AABB broadphase precheck in InkFlightRuntime.stepHead'
+      );
+    }
+
+    if (rel === 'src/game/bots.js') {
+      // CMB-06: Squared-distance pre-rejection before Math.sqrt in BotMind._perceive.
+      code = applyIdempotent(
+        code,
+        `    for (const e of G.actors) {
+      if (e.team === a.team || !e.alive) continue;
+      const d = e.pos.distanceTo(a.pos);
+      if (d > aw) continue;`,
+        `    const awSq = aw * aw;
+    for (const e of G.actors) {
+      if (e.team === a.team || !e.alive) continue;
+      const dSq = e.pos.distanceToSquared(a.pos);
+      if (dSq > awSq) continue;
+      const d = Math.sqrt(dSq);
+      if (d > aw) continue;`,
+        replaceOnce,
+        'CMB-06 squared-distance pre-rejection in BotMind._perceive'
+      );
+    }
     return code;
 }
 }

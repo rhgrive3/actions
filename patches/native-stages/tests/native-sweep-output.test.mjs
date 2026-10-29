@@ -26,10 +26,10 @@ function level() {
 
 for (const kind of ['level', 'catalogue']) test(kind + ' sweeps reuse distinct source/moving outputs and preserve nearest ties, UVs and misses', () => {
   const stage = level(), from = V(-2, .5, .5), to = V(2, .5, .5);
-  const out = { point: V(), normal: V() }, sourceOuts = [], movingOuts = [];
+  const out = { point: V(), normal: V() }, sourceOuts = [], sourceOptions = [], movingOuts = [];
   const original = stage.triangleWorld.sweepSphere;
   stage.triangleWorld.sweepSphere = function (...args) {
-    sourceOuts.push(args[4]);
+    sourceOuts.push(args[4]);sourceOptions.push(args[3]);
     assert(args[4], 'native wrapper supplies an output');
     return original.apply(this, args);
   };
@@ -70,6 +70,7 @@ for (const kind of ['level', 'catalogue']) test(kind + ' sweeps reuse distinct s
     const growing = sweep(from, to, .1, .8, false);
     assert.equal(growing.hit, true); assert(Math.abs(growing.dist - 4 * 1.9 / 4.7) < 1e-10);
   }
+  assert(sourceOptions.every(value => value === sourceOptions[0]), 'one options object is retained per wrapper and level');
   assert(sourceOuts.every(value => value === sourceOuts[0]), 'one source result is retained by this level');
   assert(movingOuts.every(value => value === movingOuts[0]), 'moving result identity stays stable');
   assert.deepEqual(flat(owned), savedOwned, 'public owned hit survives wrapper reuse');

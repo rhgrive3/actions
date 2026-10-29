@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "codeCommit": "08aa60ca5ac97bff071c8ba9172a4c555d6920ad",
+  "node": "v24.19.0",
+  "source": {
+    "tests": 153,
+    "pass": 153,
+    "fail": 0,
+    "skipped": 0
+  },
+  "unchangedRuntimeControl": {
+    "commit": "e44cc218",
+    "runtimeSha256": "7a68fa0156b5b1cf59d2423e57f9b6f391f96f3b807d0b5f12b3f8960927a4a4",
+    "tests": 54,
+    "pass": 6,
+    "fail": 48,
+    "skipped": 0,
+    "detail": "The six actual native flight controls remain green; all forty-eight receiver admission regressions fail."
+  },
+  "runtimeSha256": "55c3fb63f6a5f0d9096516221b0ce387383e8f0cc7e23e62e032f2e009087ceb",
+  "testSha256": "650dcecaf2ba429425ae55e65b2f05338481453ed8b18b46ea778ea76082d0ed",
+  "productionAuthorityClosed": false,
+  "productionGap": [
+    {
+      "target": "pvp",
+      "unauthorizedDamage": 36,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0
+    },
+    {
+      "target": "boss",
+      "unauthorizedDamage": 36,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0
+    },
+    {
+      "target": "crablet",
+      "unauthorizedDamage": 36,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0
+    }
+  ],
+  "receipts": [
+    {
+      "path": "source-final.tap.gz",
+      "sha256": "c960ee1e48e133e5266f6e7989f679b11f9e45a42b477c168cd04d078bb9e8e1",
+      "uncompressedSha256": "765e32bbb0a08ede9d16f84b33abc1379ad5d502339e303ec281cf6991cbc768",
+      "bytes": 5551
+    },
+    {
+      "path": "before-source.tap.gz",
+      "sha256": "6b1c7b3fa0a1ff72989659626891b368465bfe67346bdc70d28fed9442ae3830",
+      "uncompressedSha256": "aaeb224cc97e682807a5da6488d3fb2b309eb0934345da861ece3599417db1b7",
+      "bytes": 2019
+    },
+    {
+      "path": "initial-combined.tap.gz",
+      "sha256": "6247b7b7eaa9e9d52676e4e6d461d4c526651bc2ad6fa6742f6f2fba51392dd5",
+      "uncompressedSha256": "8044911a1f55db5c56de50607ec2c319e7c4c439228f143731729c4f14e6b4f9",
+      "bytes": 5942
+    },
+    {
+      "path": "production-gap.json.gz",
+      "sha256": "4f51ace87d4d69cb3f3c6c246ce8033b90eee1bf26037f38e5e42d6fbdb1fe70",
+      "uncompressedSha256": "a06d1c1fdc78c8e2581e46d90d289e60aee0ecf0bd764520dbd53700587f188c",
+      "bytes": 498
+    }
+  ],
+  "limits": [
+    "Source CPU component evidence; Character/muzzle, dry paint, flat terrain and stationary Boss state are explicit inputs.",
+    "No deployed relay or mandatory native production authority was installed; #1665 and #1666 remain open.",
+    "Root owns sealed emitted integration, hosted CI and public behavior-report append."
+  ]
+}

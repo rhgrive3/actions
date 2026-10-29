@@ -63,14 +63,24 @@ export function createLazyComposerTarget(createNative, {
         native?.addPass(pass);
       } catch (error) {
         passes.pop();
+        // EffectComposer appends before pass.setSize(). A failed resize may
+        // already have mutated its list; discard that native pair and rebuild
+        // from the authoritative descriptions before another frame.
+        releaseNative();
         throw error;
       }
     },
     insertPass(pass, index) {
       assertLive();
-      passes.splice(index, 0, pass);
-      try { native?.insertPass(pass, index); }
-      catch (error) { passes.splice(index, 1); throw error; }
+      const offset = Math.trunc(index) || 0;
+      const insertion = offset < 0 ? Math.max(0, passes.length + offset) : Math.min(offset, passes.length);
+      passes.splice(insertion, 0, pass);
+      try { native?.insertPass(pass, insertion); }
+      catch (error) {
+        passes.splice(insertion, 1);
+        releaseNative();
+        throw error;
+      }
     },
     removePass(pass) {
       assertLive();

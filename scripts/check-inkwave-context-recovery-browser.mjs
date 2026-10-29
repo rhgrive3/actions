@@ -230,7 +230,7 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   for (const [file, digest] of Object.entries(build.artifacts)) assert.equal(hash(fs.readFileSync(path.join(site, file))), digest, file);
   const root = fileURLToPath(new URL('../', import.meta.url));
   const sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-  const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
+  const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const sourceInputs = Object.entries(build.files).map(([key, digest]) => { const file = recoveryInputPath(key); assert.equal(hash(fs.readFileSync(path.join(root, file))), digest, key); return file; });
   assert.equal(hash(fs.readFileSync(path.join(root, 'scripts/build-inkwave.mjs'))), build.build.script, 'Build pipeline mismatch');
   sourceInputs.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-context-recovery-browser.mjs',

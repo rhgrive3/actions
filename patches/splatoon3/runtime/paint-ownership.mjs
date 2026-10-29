@@ -80,7 +80,7 @@ function allocPiece(idx) {
     p = { type: 0, ax: 0, ay: 0, bx: 0, by: 0, ra: 0, rb: 0, x: 0, y: 0, radius: 0, ux: 0, uy: 0, el: 0, x0: 0, yTop: 0, len: 0, w: 0, h2: 0, k: 0, r: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
     _ancillaryPiecePool[idx] = p;
   }
-  _ancillaryPieces.push(p);
+  _ancillaryPieces[idx] = p;
   return p;
 }
 
@@ -130,7 +130,6 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const r = Math.sqrt(r2), fall = clamp(r / Math.max(R, 1e-3), 0, 1);
   const kind = g.kind, [rayCount, satelliteCount, spatterCount, dripCount] = counts(kind, contract.shapes);
   if (rayCount + satelliteCount + spatterCount + dripCount === 0) return null;
-  _ancillaryPieces.length = 0;
   let pIdx = 0;
   const seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
   const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
@@ -199,7 +198,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
       p3.minX = x0 - w * 2; p3.maxX = x0 + w * 2; p3.minY = yTop - len - w * 2; p3.maxY = yTop + w * 2;
     }
   }
-  if (!_ancillaryPieces.length) return null;
+  // Retain V8 elements capacity while exposing only the current live prefix.
+  _ancillaryPieces.length = pIdx;
+  if (!pIdx) return null;
   _ancillaryMask.sa = sa; _ancillaryMask.sdu = sdu; _ancillaryMask.sdv = sdv;
   _ancillaryMask.margin = pixel * 1.5; _ancillaryMask.seed = seed; _ancillaryMask.dT = dT;
   return _ancillaryMask;
@@ -304,7 +305,8 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
   // absolute slack far above the rounding of the exact path) stays clear of
   // the closed cell rectangle, no sample is inside and no witness exists.
   // NaN or infinite inputs never reject and keep the exact path.
-  if ((piece.type === 1 || piece.type === 2) && !(mask.sa > 0)) {
+  if ((piece.type === 1 || piece.type === 2) && !(mask.sa > 0) &&
+      face.cu > 0 && face.cv > 0 && Number.isFinite(x + y + face.cu + face.cv + piece.x + piece.y)) {
     const hx = face.cu * 0.5, hy = face.cv * 0.5;
     const ex0 = x - hx - piece.x, ex1 = piece.x - (x + hx), ex = ex0 > 0 ? ex0 : ex1 > 0 ? ex1 : 0;
     const ey0 = y - hy - piece.y, ey1 = piece.y - (y + hy), ey = ey0 > 0 ? ey0 : ey1 > 0 ? ey1 : 0;

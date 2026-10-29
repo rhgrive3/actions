@@ -57,15 +57,44 @@ test('timeout and oversized stderr cannot yield a passing child',async()=>{
   assert.ok(overflow.error);
 });
 
+function verifyLiveComposition(script,workflow){
+  assert.match(script,/assert\(Number\.isSafeInteger\(workers\) && workers>=1 && workers<=2,'Responsive workers must be 1 or 2'\)/);
+  assert.match(script,/const matrix = \['phone-portrait','phone-landscape','small-phone','tablet-portrait',\s*'tablet-landscape','tablet-split','desktop'\]/);
+  assert.match(script,/const cohort=\['chromium','webkit'\]\.flatMap\(engine=>matrix\.map\(name=>\(\{engine,name\}\)\)\)/);
+  assert.match(script,/report\.cases\.length === 14 && report\.shards\.length === 14/);
+  assert.match(script,/report\.shards\.every\(x => x\.ok\)/);
+  assert.match(script,/await mapResponsiveByEngine\(cohort,workers,runCase\)/);
+  assert.match(script,/row\.ok=processResult\.status===0 && !processResult\.error && !row\.error/);
+  assert.match(script,/const launch=argv=>workers===1\s*\? spawnSync\(process\.execPath,argv,\{cwd:root,encoding:'utf8',timeout:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)\s*: spawnResponsiveCase\(process\.execPath,argv,\{cwd:root,timeoutMs:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
+  assert.match(script,/let processResult=await launch\(args\), resultDir=shardDir, recovery=null/);
+  assert.match(script,/if\(shouldRetryResponsiveSessionLoss\(\{engine,name,processResult,fragment:firstFragment\}\)\)/);
+  assert.match(script,/processResult=await launch\(retryArgs\);resultDir=retryEvidence/);
+  assert.equal([...script.matchAll(/await launch\(/g)].length,2,'one initial call and at most one admitted recovery call');
+  assert.match(script,/retryArgs\[retryArgs\.indexOf\('--evidence-dir'\)\+1\]=retryEvidence/);
+  assert.match(script,/retryArgs\[retryArgs\.indexOf\('--profile-dir'\)\+1\]=retryProfile/);
+  assert.match(script,/if\(recovery\) assert\.ok\(sameResponsiveRecoveryIdentity\(firstFragment,fragment\)/);
+  assert.match(workflow,/check-inkwave-responsive-isolated\.mjs --source \.built-site\/_site --section all[^\n]+--workers 2/);
+}
 test('live acceptance preserves all 14 isolated viewports with two bounded workers',()=>{
   const script=fs.readFileSync(new URL('../check-inkwave-responsive-isolated.mjs',import.meta.url),'utf8');
   const workflow=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
-  assert.match(script,/report\.cases\.length === 14 && report\.shards\.length === 14/);
-  assert.match(script,/await mapResponsiveByEngine\(cohort,workers,runCase\)/);
-  assert.match(script,/row\.ok=processResult\.status===0 && !processResult\.error && !row\.error/);
-  assert.match(script,/workers===1\s*\? spawnSync\(process\.execPath,argv,\{cwd:root,encoding:'utf8',timeout:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
-  assert.match(script,/spawnResponsiveCase\(process\.execPath,argv,\{cwd:root,timeoutMs:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
-  assert.match(workflow,/check-inkwave-responsive-isolated\.mjs --source \.built-site\/_site --section all[^\n]+--workers 2/);
+  verifyLiveComposition(script,workflow);
+});
+test('live composition rejects weakened workers, child bounds, retry admission or identity checks',()=>{
+ const s=fs.readFileSync(new URL('../check-inkwave-responsive-isolated.mjs',import.meta.url),'utf8'),w=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
+ for(const bad of [
+  s.replace("'phone-portrait','phone-landscape','small-phone'","'phone-portrait','phone-landscape','phone-portrait'"),
+  s.replace('workers>=1 && workers<=2','workers>=1 && workers<=3'),
+  s.replace("['chromium','webkit'].flatMap","['chromium','chromium'].flatMap"),
+  s.replace('spawnResponsiveCase(process.execPath,argv,','spawnResponsiveCase(process.execPath,args,'),
+  s.replace('timeoutMs:20*60*1000','timeoutMs:40*60*1000'),
+  s.replace('maxBuffer:16*1024*1024','maxBuffer:64*1024*1024'),
+  s.replace('if(shouldRetryResponsiveSessionLoss({engine,name,processResult,fragment:firstFragment}))','if(true)'),
+  s.replace('processResult=await launch(retryArgs);resultDir=retryEvidence','processResult=await launch(args);resultDir=shardDir'),
+  s.replace('if(recovery) assert.ok(sameResponsiveRecoveryIdentity(firstFragment,fragment)', 'if(recovery) assert.ok(true'),
+  s.replace('row.ok=processResult.status===0 && !processResult.error && !row.error','row.ok=true'),
+ ]){assert.notEqual(bad,s);assert.throws(()=>verifyLiveComposition(bad,w));}
+ assert.throws(()=>verifyLiveComposition(s,w.replace('--workers 2','--workers 1')));
 });
 
 test('engine-owned concurrency admits one WebKit and one Chromium, never two WebKit processes',async()=>{
@@ -96,4 +125,21 @@ test('engine-owned queues keep fail-closed outcome even if one browser fails',as
  assert.deepEqual(finished.sort(),cases.map(c=>c.engine+c.name).sort());
  for(const invalid of [[{engine:'firefox'}],[{engine:'webkit'}],[{engine:'chromium'}]])
   await assert.rejects(()=>mapResponsiveByEngine(invalid,2,async()=>{}),/Both browser engines/);
+});
+
+test('timed-out child is reaped before returning its failed receipt',async()=>{
+ const r=await spawnResponsiveCase(process.execPath,['-e',"console.log(process.pid);setInterval(()=>{},1000)"],{timeoutMs:3000,maxBuffer:1024});
+ const pid=Number(r.stdout.trim());assert.ok(Number.isSafeInteger(pid)&&pid>0);assert.equal(r.error?.code,'INKWAVE_RESPONSIVE_TIMEOUT');assert.notEqual(r.status,0);assert.throws(()=>process.kill(pid,0),e=>e.code==='ESRCH');
+});
+
+test('a fast failing engine waits for the slower engine to finish all its cases',async()=>{
+  const cases=['chromium','webkit'].flatMap(engine=>[0,1,2].map(name=>({engine,name})));
+  const visited=[];
+  await assert.rejects(()=>mapResponsiveByEngine(cases,2,async c=>{
+    if(c.engine==='webkit') await new Promise(resolve=>setTimeout(resolve,15));
+    visited.push(c.engine+c.name);
+    if(c.engine==='chromium' && c.name===0) throw Error('fast failure');
+    return c.name;
+  }),/fast failure/);
+  assert.deepEqual(visited.sort(),cases.map(c=>c.engine+c.name).sort());
 });

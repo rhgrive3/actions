@@ -1,0 +1,86 @@
+{
+  "referenceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "scope": "Pinned sparse parameter comparison; equality does not decode the native phase or certify current hardware timing",
+  "rows": [
+    {
+      "version": 500,
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/500/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+      "result": "fulfilled",
+      "isError": false,
+      "weapon": {
+        "$type": "spl__WeaponSpSuperHookParam",
+        "InkCapacityRt": 1.5,
+        "InkConsume_Hook": {
+          "High": 0.0225,
+          "Low": 0.06,
+          "Mid": 0.0375
+        },
+        "InkConsume_PerSec": {
+          "High": 0.12,
+          "Low": 0.15,
+          "Mid": 0.1305
+        },
+        "MaxLengthHook": 35,
+        "MinLengthHook_Floor": 3,
+        "MinLengthHook_Wall": 0,
+        "MoveAccAttack": 0.1,
+        "MoveSpeedAttack_Init": 0.06,
+        "ShotFailedIntervalFrm": 20,
+        "SpecialTotalFrame": 540,
+        "WaitFrameShot2Attack": 12
+      },
+      "move": {
+        "$type": "spl__BulletBombMoveParam",
+        "FlyGravity": 0,
+        "FlyPositionAirResist": 0,
+        "GuideHitCollisionType": "SuperHook",
+        "SpawnSpeedZSpecUp": {
+          "High": 3.36,
+          "Low": 3.36,
+          "Mid": 3.36
+        }
+      },
+      "parseSuccess": true
+    },
+    {
+      "version": 1130,
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpSuperHook.game__GameParameterTable.json",
+      "result": "fulfilled",
+      "isError": false,
+      "weapon": {
+        "$type": "spl__WeaponSpSuperHookParam",
+        "InkCapacityRt": 1.5,
+        "InkConsume_Hook": {
+          "High": 0.015,
+          "Low": 0.04,
+          "Mid": 0.025
+        },
+        "InkConsume_PerSec": {
+          "High": 0.12,
+          "Low": 0.15,
+          "Mid": 0.1305
+        },
+        "MaxLengthHook": 35,
+        "MinLengthHook_Floor": 3,
+        "MinLengthHook_Wall": 0,
+        "MoveAccAttack": 0.1,
+        "MoveSpeedAttack_Init": 0.06,
+        "ShotFailedIntervalFrm": 20,
+        "SpecialTotalFrame": 540,
+        "WaitFrameShot2Attack": 12
+      },
+      "move": {
+        "$type": "spl__BulletBombMoveParam",
+        "FlyGravity": 0,
+        "FlyPositionAirResist": 0,
+        "GuideHitCollisionType": "SuperHook",
+        "SpawnSpeedZSpecUp": {
+          "High": 3.36,
+          "Low": 3.36,
+          "Mid": 3.36
+        }
+      },
+      "parseSuccess": true
+    }
+  ]
+}

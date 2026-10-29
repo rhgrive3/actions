@@ -18,6 +18,22 @@ const fields = (actual, expected) => actual && expected
   ? { ...actual, pieces: actual.pieces.map((p, i) => expected.pieces[i] ? Object.fromEntries(Object.keys(expected.pieces[i]).map(k => [k, p[k]])) : p) }
   : actual;
 
+test('unstretched bounds preserve exact sample and witness behavior for nonfinite and degenerate inputs', () => {
+  for (const type of [1, 2]) for (const key of ['x', 'y', 'cu', 'cv', 'pieceX', 'pieceY'])
+    for (const value of [NaN, Infinity, -Infinity, 0, -.1]) {
+      const face = { cu: .1, cv: .1 }, mask = { sa: 0, sdu: .6, sdv: .8, margin: .01, seed: .53, dT: 1 };
+      const piece = { type, x: 0, y: 0, radius: .1, ux: 1, uy: 0, el: 1, minX: -.2, maxX: .2, minY: -.2, maxY: .2 };
+      let x = 100, y = 100;
+      if (key === 'x') x = value;
+      else if (key === 'y') y = value;
+      else if (key === 'pieceX') piece.x = value;
+      else if (key === 'pieceY') piece.y = value;
+      else face[key] = value;
+      assert.equal(current.cellIsSolidlyVisible(mask, face, x, y, piece),
+        unrejected.cellIsSolidlyVisible(mask, face, x, y, piece), `${type}/${key}/${String(value)}`);
+    }
+});
+
 test('one growth record reuses its template without changing any piece', () => {
   const full = Array.from({ length: 8 }, () => [4, 3, 3, 3]);
   const drips = full.map(s => [0, 0, 0, s[3]]);

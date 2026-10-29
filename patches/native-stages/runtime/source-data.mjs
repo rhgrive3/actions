@@ -4,9 +4,10 @@ import {SOURCE_RECIPE,SOURCE_STAGES} from './source-catalog.mjs';
 // No caller-supplied option or returned geometry exposes these cache entries.
 const verifiedInventories=new Map();
 export async function loadBrowserSource(id,signal,options={}){
+ if(signal?.aborted)throw new DOMException('Aborted','AbortError');
  // Prebuilt records are the same conversion; a failed fetch falls back to it.
  if(nativeStageBuild?.prebuilt?.stages?.[id]){
-  try{const {loadPrebuiltSource}=await import('./prebuilt-load.mjs');return await loadPrebuiltSource(id,signal);}
+  try{const {loadPrebuiltSource}=await import('./prebuilt-load.mjs');if(signal?.aborted)throw new DOMException('Aborted','AbortError');return await loadPrebuiltSource(id,signal);}
   catch(error){if(error?.name==='AbortError'||signal?.aborted)throw error;console.warn('[native] prebuilt stage unavailable, converting source: '+error.message);}
  }
  return convertBrowserSource(id,signal,options);
@@ -18,11 +19,12 @@ function convertBrowserSource(id,signal,{constrained=false}={}){
   let pendingInventory=null;
   const worker=new Worker(new URL('./source-worker.mjs',import.meta.url),{type:'module'});
   let ended=false;
-  function finish(error,data){if(ended)return;ended=true;worker.terminate();signal?.removeEventListener('abort',abort);globalThis.dispatchEvent?.(new CustomEvent('inkwave:native-source-progress',{detail:{id,phase:error?'failed':'ready'}}));error?reject(error):resolve(data);}
+  function finish(error,data){if(ended)return;ended=true;worker.onmessage=worker.onerror=worker.onmessageerror=null;worker.terminate();pendingInventory=null;signal?.removeEventListener('abort',abort);globalThis.dispatchEvent?.(new CustomEvent('inkwave:native-source-progress',{detail:{id,phase:error?'failed':'ready'}}));error?reject(error):resolve(data);}
   const abort=()=>finish(new DOMException('Aborted','AbortError'));
   if(signal?.aborted){abort();return;}
   signal?.addEventListener('abort',abort,{once:true});
   worker.onerror=e=>finish(new Error('Source conversion failed: '+e.message));
+  worker.onmessageerror=()=>finish(new Error('Source conversion response could not be decoded'));
   worker.onmessage=({data})=>{
    if(ended)return;
    if(data.error)finish(new Error(data.error));else if(data.result){
@@ -35,6 +37,7 @@ function convertBrowserSource(id,signal,{constrained=false}={}){
    }
    else globalThis.dispatchEvent?.(new CustomEvent('inkwave:native-source-progress',{detail:{id,phase:data.progress,bytes:data.bytes,total:data.total}}));
   };
-  worker.postMessage({id,runtimeSha256,constrainedClient:constrained===true,verifiedInventory:key?verifiedInventories.get(key):undefined});
+  try{worker.postMessage({id,runtimeSha256,constrainedClient:constrained===true,verifiedInventory:key?verifiedInventories.get(key):undefined});}
+  catch(error){finish(error);}
  });
 }
