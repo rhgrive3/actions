@@ -287,6 +287,20 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
     page.on('requestfailed', r => { pendingAudio.delete(r); if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
     page.on('console', m => { if (consoleMessages.length < 32) consoleMessages.push({ type: m.type(), text: m.text().slice(0, 1500) }); });
+    // Diagnostic only. Observe the actual owner that calls AbortController,
+    // without delaying, replacing or suppressing any native audio/network call.
+    await page.addInitScript(() => {
+      const original = AbortController.prototype.abort;
+      globalThis.__inkwaveAudioAbortTrace = [];
+      AbortController.prototype.abort = function(...args) {
+        const stack = new Error('AbortController source').stack || '';
+        if (stack.includes('load-deadline.mjs') || stack.includes('authorized-samples.mjs')) {
+          const trace = globalThis.__inkwaveAudioAbortTrace;
+          if (trace.length < 80) trace.push({ at: performance.now(), reason: String(args[0]?.message || args[0] || ''), stack: stack.slice(0, 2400) });
+        }
+        return Reflect.apply(original, this, args);
+      };
+    });
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';
     await page.evaluate(async () => {
@@ -335,6 +349,16 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     let partial = null, diagnosticError = null;
     if (page && !page.isClosed() && !events.includes('crash')) try { partial = await page.evaluate(() => ({ proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [] })); } catch (e) { diagnosticError = e.message; }
     result = { ok: false, error: error.stack || String(error), partial, diagnosticError };
+    if (page && !page.isClosed() && !events.includes('crash')) try {
+      result.audioCancellation = await page.evaluate(() => ({
+        aborts: (globalThis.__inkwaveAudioAbortTrace || []).slice(-80),
+        authorized: globalThis.RG?.audio?._weaponBank?.authorized?.stats?.() ?? null,
+        realS3: globalThis.RG?.audio?._realS3Loader?.stats?.() ?? null,
+      }));
+      console.error('Context recovery audio cancellation provenance:', JSON.stringify(result.audioCancellation));
+    } catch (diagnosticFailure) {
+      result.audioCancellationError = String(diagnosticFailure?.message || diagnosticFailure);
+    }
   } finally {
     result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
