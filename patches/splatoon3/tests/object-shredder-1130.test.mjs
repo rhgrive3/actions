@@ -100,7 +100,12 @@ for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2
  const e=proposals.find(e=>e[4].action==='objectHit');assert.ok(e);assert.equal(e[4].objectShredder,true);assert.equal(e[4].damage,10,'sender sends raw damage, never a requested multiplier');
  rx._play('wrong',[0,...e]);assert.equal(object.hp,1000);rx._play('attacker',[0,...e]);assert.equal(object.hp,1000-10*rate);rx._play('attacker',[0,...e]);assert.equal(object.hp,1000-10*rate);
  const stale=JSON.parse(JSON.stringify(e));stale[4].tick+=1;stale[4].attackerLife=6;rx._play('attacker',[1,...stale]);assert.equal(object.hp,1000-10*rate);
- const numeric=JSON.parse(JSON.stringify(e));numeric[4].tick+=2;numeric[4].objectShredder=100;rx._play('attacker',[2,...numeric]);assert.equal(object.hp,1000-10*rate-10,'numeric multiplier cannot grant gear');
+ const numeric=JSON.parse(JSON.stringify(e));numeric[4].tick+=2;numeric[4].objectShredder=100;
+ const beforeMalformed={hp:object.hp,dead:object.dead};rx._play('attacker',[2,...numeric]);
+ assert.deepEqual({hp:object.hp,dead:object.dead},beforeMalformed,'nonboolean gear rejects the whole proposal before HP mutation');
+ const corrected=JSON.parse(JSON.stringify(numeric));corrected[4].objectShredder=false;
+ rx._play('attacker',[2,...corrected]);assert.equal(object.hp,1000-10*rate-10,'rejected gear cannot reserve this proposal identity; corrected raw damage applies without gear');
+ rx._play('attacker',[2,...corrected]);assert.equal(object.hp,1000-10*rate-10,'corrected accepted proposal remains single use');
 });
 
 import fs from 'node:fs';
