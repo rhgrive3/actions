@@ -133,6 +133,11 @@ export function selectComposerTargetFormat(THREE, renderer, {
 
   if (!framebufferComplete) return fallback('packed-framebuffer-incomplete');
   if (!composerGradeKeepsPackedTargetNonnegative(grade)) return fallback('grade-can-output-negative-rgb', true);
+  // RGB-only is necessary but not sufficient: ScreenFX's distortion, damage
+  // and color transforms amplify packed HDR rounding beyond the existing
+  // image tolerance. Keep full precision only while that pass contributes.
+  // canPack stays true so an idle frame restores the smaller target pair.
+  if (screenFx?.enabled) return fallback('active-screenfx-keeps-rgba16f', true);
 
   return {
     options: {
@@ -149,13 +154,15 @@ export function selectComposerTargetFormat(THREE, renderer, {
 }
 
 export function configureComposerColorTargets(THREE, composer, selection) {
-  if (!selection?.packed) return composer;
+  if (!selection?.packed && !selection?.canPack) return composer;
 
   // RenderPass must write the scene to target2; Grade writes to target1.
   // ScreenFX, when enabled, writes back to target2. Output can also write to
   // target1 before FXAA: the current Neutral/sRGB output stays nonnegative for
   // nonnegative inputs, and FXAA reads RGB only. Preserve scene RGB/alpha in
   // HalfFloat regardless of the preceding frame's enabled-pass swap count.
+  // Eligible HDR generations need the same roles even when an active effect
+  // or a negative grade requires full precision on their first frame.
   const sceneTarget = composer?.renderTarget2;
   if (!sceneTarget?.texture) throw new TypeError('composer read target is unavailable');
   // This target receives fullscreen color passes only; the forced scene role
@@ -185,6 +192,19 @@ export function configureComposerColorTargets(THREE, composer, selection) {
   return composer;
 }
 
+// Private build-time helper, injected into the renderer with the other format
+// controls. Reuse all passes/programs and the scene target on a precision edge.
+function updateComposerTargetPrecision(THREE, composer, packed) {
+  const target = composer?.renderTarget1;
+  if (!target || !composer.renderTarget2) return; // a lazy generation selects on creation
+  const format = packed ? THREE.RGBFormat : THREE.RGBAFormat;
+  const type = packed ? THREE.UnsignedInt101111Type : THREE.HalfFloatType;
+  if (target.texture.format === format && target.texture.type === type) return;
+  target.dispose();
+  target.texture.format = format;
+  target.texture.type = type;
+}
+
 const BASELINE_TARGET =
   '    const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples });';
 const LAZY_TARGET_OPTIONS = '        { type: THREE.HalfFloatType, samples });';
@@ -192,12 +212,15 @@ const RENDER_GRADE_ANCHOR =
   '    const gr = G.env && G.env.grade;\n    if (gr && gr !== this._gradeSrc && this.grade) {';
 const RENDER_GRADE_GUARD =
   '    const gr = G.env && G.env.grade;\n' +
-  '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr);\n' +
-  '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) this._buildComposer();\n' +
+  '    const gradeCanUsePackedTarget = composerGradeKeepsPackedTargetNonnegative(gr) && !this.extraPass?.enabled;\n' +
+  '    if (this._composerPackedCapable && this._composerUsesPackedTarget !== gradeCanUsePackedTarget) {\n' +
+  '      updateComposerTargetPrecision(THREE, this.composer, gradeCanUsePackedTarget);\n' +
+  '      this._composerUsesPackedTarget = gradeCanUsePackedTarget;\n' +
+  '    }\n' +
   '    if (gr && gr !== this._gradeSrc && this.grade) {';
 
 const HELPER_ANCHOR = 'const BLOOM = [0.28, 0.45, 2.4];';
-const HELPER_SOURCE = `${composerGradeKeepsPackedTargetNonnegative.toString()}\n\n${selectComposerTargetFormat.toString()}\n\n${configureComposerColorTargets.toString()}\n\n`;
+const HELPER_SOURCE = `${composerGradeKeepsPackedTargetNonnegative.toString()}\n\n${selectComposerTargetFormat.toString()}\n\n${configureComposerColorTargets.toString()}\n\n${updateComposerTargetPrecision.toString()}\n\n`;
 
 const DIRECT_TARGET =
   '    const composerColorTarget = selectComposerTargetFormat(THREE, r, {\n' +

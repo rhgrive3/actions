@@ -1,0 +1,2701 @@
+{
+  "base": "035233299348e5c3527f6106b98e721ed2dfd011",
+  "dt": 0.016666666666666666,
+  "random": 0.5,
+  "note": "Native source Actor, Runner, Projectiles and NetMatch on a real floor; constrained locomotion/rendering and deterministic paint sink, not hardware or retail evidence.",
+  "traces": {
+    "curlingShort": {
+      "scenario": "curling-hold",
+      "initial": {
+        "id": "dualies-01",
+        "sub": "curling",
+        "ink": 100,
+        "special": 0,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "life": 0,
+        "owner": "p5",
+        "nid": 37,
+        "pos": [
+          0,
+          12,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aim": [
+          0,
+          0.9
+        ],
+        "victim": null
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 55,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 61,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        }
+      ],
+      "beforeRelease": [
+        37,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        4196369,
+        100,
+        100,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        [
+          "inkwave-adoption-v1",
+          0,
+          1,
+          60,
+          [
+            "inkwave-protection-v1",
+            60,
+            0,
+            false,
+            null
+          ],
+          null,
+          null,
+          null,
+          0,
+          null
+        ],
+        null,
+        [
+          "inkwave-hit-authority-v1",
+          0,
+          0
+        ]
+      ],
+      "hold": 0.09999999999999999,
+      "events": [
+        {
+          "tick": 62,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        },
+        {
+          "tick": 257,
+          "kind": "bomb:explode",
+          "id": "curling",
+          "damage": null,
+          "position": [
+            0,
+            0.2084,
+            19.72228559372206
+          ],
+          "victim": null
+        }
+      ],
+      "birth": {
+        "tick": 62,
+        "kind": "bomb",
+        "sub": "curling",
+        "charge": 0.11666666666666665,
+        "position": [
+          0,
+          13.35,
+          0
+        ],
+        "velocity": [
+          0,
+          22.17877992912991,
+          8.408431533599135
+        ],
+        "fuse": 3.2666666666666666,
+        "ink": 35,
+        "recoveryStop": 0
+      },
+      "afterBirth": {
+        "tick": 62,
+        "ink": 35,
+        "recoveryStop": 1.088888888888889
+      },
+      "wireBirth": [
+        1001.033,
+        "b",
+        37,
+        "bomb",
+        0,
+        13.35,
+        0,
+        0,
+        22.18,
+        8.41,
+        null,
+        "curling",
+        0.11666666666666665,
+        [
+          "inkwave-kit-birth-v1",
+          "trace",
+          0
+        ],
+        62,
+        2
+      ],
+      "nextEligibleTick": 308,
+      "nextEligibleInk": 65.16666666666629
+    },
+    "curlingLong": {
+      "scenario": "curling-hold",
+      "initial": {
+        "id": "dualies-01",
+        "sub": "curling",
+        "ink": 100,
+        "special": 0,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "life": 0,
+        "owner": "p5",
+        "nid": 37,
+        "pos": [
+          0,
+          12,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aim": [
+          0,
+          0.9
+        ],
+        "victim": null
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 31,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 61,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        }
+      ],
+      "beforeRelease": [
+        37,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        4196369,
+        100,
+        100,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        [
+          "inkwave-adoption-v1",
+          0,
+          1,
+          60,
+          [
+            "inkwave-protection-v1",
+            60,
+            0,
+            false,
+            null
+          ],
+          null,
+          null,
+          null,
+          0,
+          null
+        ],
+        null,
+        [
+          "inkwave-hit-authority-v1",
+          0,
+          0
+        ]
+      ],
+      "hold": 0.49999999999999994,
+      "events": [
+        {
+          "tick": 62,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        },
+        {
+          "tick": 209,
+          "kind": "bomb:explode",
+          "id": "curling",
+          "damage": null,
+          "position": [
+            0,
+            0.2084,
+            8.602941826594021
+          ],
+          "victim": null
+        }
+      ],
+      "birth": {
+        "tick": 62,
+        "kind": "bomb",
+        "sub": "curling",
+        "charge": 0.5166666666666666,
+        "position": [
+          0,
+          13.35,
+          0
+        ],
+        "velocity": [
+          0,
+          18.41881076291799,
+          5.424703685899947
+        ],
+        "fuse": 2.466666666666667,
+        "ink": 35,
+        "recoveryStop": 0
+      },
+      "afterBirth": {
+        "tick": 62,
+        "ink": 35,
+        "recoveryStop": 0.8222222222222223
+      },
+      "wireBirth": [
+        1001.033,
+        "b",
+        37,
+        "bomb",
+        0,
+        13.35,
+        0,
+        0,
+        18.42,
+        5.42,
+        null,
+        "curling",
+        0.5166666666666666,
+        [
+          "inkwave-kit-birth-v1",
+          "trace",
+          0
+        ],
+        62,
+        2
+      ],
+      "nextEligibleTick": 292,
+      "nextEligibleInk": 65.16666666666629
+    },
+    "curlingContactBlast": {
+      "scenario": "curling-hold",
+      "initial": {
+        "id": "dualies-01",
+        "sub": "curling",
+        "ink": 100,
+        "special": 0,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "life": 0,
+        "owner": "p5",
+        "nid": 37,
+        "pos": [
+          0,
+          12,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aim": [
+          0,
+          0.9
+        ],
+        "victim": {
+          "nid": 2,
+          "hp": 100,
+          "team": 1,
+          "pos": [
+            0,
+            0,
+            8.6
+          ]
+        }
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 31,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 61,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        }
+      ],
+      "beforeRelease": [
+        37,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        4196369,
+        100,
+        100,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        [
+          "inkwave-adoption-v1",
+          0,
+          1,
+          60,
+          [
+            "inkwave-protection-v1",
+            60,
+            0,
+            false,
+            null
+          ],
+          null,
+          null,
+          null,
+          0,
+          null
+        ],
+        null,
+        [
+          "inkwave-hit-authority-v1",
+          0,
+          0
+        ]
+      ],
+      "hold": 0.49999999999999994,
+      "events": [
+        {
+          "tick": 62,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        },
+        {
+          "tick": 202,
+          "kind": "hit",
+          "id": "curling",
+          "damage": 20,
+          "position": null,
+          "victim": 2
+        },
+        {
+          "tick": 209,
+          "kind": "bomb:explode",
+          "id": "curling",
+          "damage": null,
+          "position": [
+            0,
+            0.2084,
+            8.602941826594021
+          ],
+          "victim": null
+        },
+        {
+          "tick": 209,
+          "kind": "hit",
+          "id": "bomb",
+          "damage": 180,
+          "position": null,
+          "victim": 2
+        }
+      ],
+      "birth": {
+        "tick": 62,
+        "kind": "bomb",
+        "sub": "curling",
+        "charge": 0.5166666666666666,
+        "position": [
+          0,
+          13.35,
+          0
+        ],
+        "velocity": [
+          0,
+          18.41881076291799,
+          5.424703685899947
+        ],
+        "fuse": 2.466666666666667,
+        "ink": 35,
+        "recoveryStop": 0
+      },
+      "afterBirth": {
+        "tick": 62,
+        "ink": 35,
+        "recoveryStop": 0.8222222222222223
+      },
+      "wireBirth": [
+        1001.033,
+        "b",
+        37,
+        "bomb",
+        0,
+        13.35,
+        0,
+        0,
+        18.42,
+        5.42,
+        null,
+        "curling",
+        0.5166666666666666,
+        [
+          "inkwave-kit-birth-v1",
+          "trace",
+          0
+        ],
+        62,
+        2
+      ],
+      "victim": {
+        "tick": 210,
+        "hp": 0,
+        "alive": false
+      }
+    },
+    "curlingMiss": {
+      "scenario": "curling-hold",
+      "initial": {
+        "id": "dualies-01",
+        "sub": "curling",
+        "ink": 100,
+        "special": 0,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "life": 0,
+        "owner": "p5",
+        "nid": 37,
+        "pos": [
+          0,
+          12,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aim": [
+          0,
+          0.9
+        ],
+        "victim": {
+          "nid": 2,
+          "hp": 100,
+          "team": 1,
+          "pos": [
+            20,
+            0,
+            8.6
+          ]
+        }
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 31,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 61,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        }
+      ],
+      "beforeRelease": [
+        37,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        4196369,
+        100,
+        100,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        [
+          "inkwave-adoption-v1",
+          0,
+          1,
+          60,
+          [
+            "inkwave-protection-v1",
+            60,
+            0,
+            false,
+            null
+          ],
+          null,
+          null,
+          null,
+          0,
+          null
+        ],
+        null,
+        [
+          "inkwave-hit-authority-v1",
+          0,
+          0
+        ]
+      ],
+      "hold": 0.49999999999999994,
+      "events": [
+        {
+          "tick": 62,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        },
+        {
+          "tick": 209,
+          "kind": "bomb:explode",
+          "id": "curling",
+          "damage": null,
+          "position": [
+            0,
+            0.2084,
+            8.602941826594021
+          ],
+          "victim": null
+        }
+      ],
+      "birth": {
+        "tick": 62,
+        "kind": "bomb",
+        "sub": "curling",
+        "charge": 0.5166666666666666,
+        "position": [
+          0,
+          13.35,
+          0
+        ],
+        "velocity": [
+          0,
+          18.41881076291799,
+          5.424703685899947
+        ],
+        "fuse": 2.466666666666667,
+        "ink": 35,
+        "recoveryStop": 0
+      },
+      "afterBirth": {
+        "tick": 62,
+        "ink": 35,
+        "recoveryStop": 0.8222222222222223
+      },
+      "wireBirth": [
+        1001.033,
+        "b",
+        37,
+        "bomb",
+        0,
+        13.35,
+        0,
+        0,
+        18.42,
+        5.42,
+        null,
+        "curling",
+        0.5166666666666666,
+        [
+          "inkwave-kit-birth-v1",
+          "trace",
+          0
+        ],
+        62,
+        2
+      ],
+      "victim": {
+        "tick": 209,
+        "hp": 100,
+        "alive": true
+      }
+    },
+    "curlingLow": {
+      "scenario": "curling-hold",
+      "initial": {
+        "id": "dualies-01",
+        "sub": "curling",
+        "ink": 64.51,
+        "special": 0,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "life": 0,
+        "owner": "p5",
+        "nid": 37,
+        "pos": [
+          0,
+          12,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aim": [
+          0,
+          0.9
+        ],
+        "victim": null
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 61,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 420,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 421,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        }
+      ],
+      "beforeRelease": [
+        37,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        4196369,
+        100,
+        75,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        [
+          "inkwave-adoption-v1",
+          0,
+          1,
+          60,
+          [
+            "inkwave-protection-v1",
+            60,
+            0,
+            false,
+            null
+          ],
+          null,
+          null,
+          null,
+          0,
+          null
+        ],
+        null,
+        [
+          "inkwave-hit-authority-v1",
+          0,
+          0
+        ]
+      ],
+      "hold": 1.0000000000000013,
+      "events": [
+        {
+          "tick": 62,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        },
+        {
+          "tick": 151,
+          "kind": "bomb:explode",
+          "id": "curling",
+          "damage": null,
+          "position": [
+            0,
+            0.2084,
+            1.2569501293288472
+          ],
+          "victim": null
+        }
+      ],
+      "birth": {
+        "tick": 62,
+        "kind": "bomb",
+        "sub": "curling",
+        "charge": 1,
+        "position": [
+          0,
+          13.35,
+          0
+        ],
+        "velocity": [
+          0,
+          13.875514687078585,
+          1.8193658699300927
+        ],
+        "fuse": 1.5,
+        "ink": 9.51000000000029,
+        "recoveryStop": 0
+      },
+      "afterBirth": {
+        "tick": 62,
+        "ink": 9.51000000000029,
+        "recoveryStop": 0.5
+      },
+      "wireBirth": [
+        1001.033,
+        "b",
+        37,
+        "bomb",
+        0,
+        13.35,
+        0,
+        0,
+        13.88,
+        1.82,
+        null,
+        "curling",
+        1,
+        [
+          "inkwave-kit-birth-v1",
+          "trace",
+          0
+        ],
+        62,
+        2
+      ],
+      "probe": {
+        "inputTick": 420,
+        "before": {
+          "tick": 419,
+          "ink": 64.1766666666666,
+          "count": 0
+        },
+        "after": {
+          "tick": 432,
+          "ink": 66.17666666666666,
+          "count": 0
+        },
+        "newBirth": false
+      }
+    },
+    "curlingHigh": {
+      "scenario": "curling-hold",
+      "initial": {
+        "id": "dualies-01",
+        "sub": "curling",
+        "ink": 65.49,
+        "special": 0,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "life": 0,
+        "owner": "p5",
+        "nid": 37,
+        "pos": [
+          0,
+          12,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "aim": [
+          0,
+          0.9
+        ],
+        "victim": null
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 61,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 420,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        },
+        {
+          "tick": 421,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0.9
+          ]
+        }
+      ],
+      "beforeRelease": [
+        37,
+        0,
+        12,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        4196369,
+        100,
+        75,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        [
+          "inkwave-adoption-v1",
+          0,
+          1,
+          60,
+          [
+            "inkwave-protection-v1",
+            60,
+            0,
+            false,
+            null
+          ],
+          null,
+          null,
+          null,
+          0,
+          null
+        ],
+        null,
+        [
+          "inkwave-hit-authority-v1",
+          0,
+          0
+        ]
+      ],
+      "hold": 1.0000000000000013,
+      "events": [
+        {
+          "tick": 62,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        },
+        {
+          "tick": 151,
+          "kind": "bomb:explode",
+          "id": "curling",
+          "damage": null,
+          "position": [
+            0,
+            0.2084,
+            1.2569501293288472
+          ],
+          "victim": null
+        },
+        {
+          "tick": 426,
+          "kind": "bomb:throw",
+          "id": null,
+          "damage": null,
+          "position": [
+            0,
+            13.35,
+            0
+          ],
+          "victim": null
+        }
+      ],
+      "birth": {
+        "tick": 62,
+        "kind": "bomb",
+        "sub": "curling",
+        "charge": 1,
+        "position": [
+          0,
+          13.35,
+          0
+        ],
+        "velocity": [
+          0,
+          13.875514687078585,
+          1.8193658699300927
+        ],
+        "fuse": 1.5,
+        "ink": 10.490000000000279,
+        "recoveryStop": 0
+      },
+      "afterBirth": {
+        "tick": 62,
+        "ink": 10.490000000000279,
+        "recoveryStop": 0.5
+      },
+      "wireBirth": [
+        1001.033,
+        "b",
+        37,
+        "bomb",
+        0,
+        13.35,
+        0,
+        0,
+        13.88,
+        1.82,
+        null,
+        "curling",
+        1,
+        [
+          "inkwave-kit-birth-v1",
+          "trace",
+          0
+        ],
+        62,
+        2
+      ],
+      "probe": {
+        "inputTick": 420,
+        "before": {
+          "tick": 419,
+          "ink": 65.15666666666661,
+          "count": 0
+        },
+        "after": {
+          "tick": 432,
+          "ink": 0.32333333333328085,
+          "count": 1
+        },
+        "newBirth": true
+      }
+    },
+    "blasterDirect": {
+      "scenario": "blaster",
+      "initial": {
+        "weapon": "blaster",
+        "ink": 100,
+        "special": 0,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "victims": [
+          {
+            "nid": 2,
+            "hp": 100,
+            "team": 1,
+            "pos": [
+              0,
+              0,
+              8
+            ]
+          }
+        ]
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": true,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 2,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "births": [
+        {
+          "tick": 15,
+          "type": "blast",
+          "weapon": "blaster",
+          "position": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            56.699999999999996
+          ],
+          "damage": 125
+        }
+      ],
+      "events": [
+        {
+          "tick": 15,
+          "kind": "weapon:fire",
+          "weapon": "blaster",
+          "victim": null,
+          "damage": null,
+          "position": null
+        },
+        {
+          "tick": 22,
+          "kind": "damage",
+          "weapon": "blaster",
+          "victim": 2,
+          "damage": 125,
+          "position": null
+        },
+        {
+          "tick": 22,
+          "kind": "hit",
+          "weapon": "blaster",
+          "victim": 2,
+          "damage": 125,
+          "position": null
+        },
+        {
+          "tick": 22,
+          "kind": "weapon:impact",
+          "weapon": "blaster",
+          "victim": null,
+          "damage": null,
+          "position": [
+            0,
+            1.05,
+            7.365
+          ]
+        }
+      ],
+      "final": {
+        "tick": 23,
+        "victims": [
+          {
+            "nid": 2,
+            "hp": 0,
+            "alive": false
+          }
+        ],
+        "ink": 90,
+        "cooldown": 0.533333333333333
+      }
+    },
+    "blasterMultiSplash": {
+      "scenario": "blaster",
+      "initial": {
+        "weapon": "blaster",
+        "ink": 100,
+        "special": 0,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "victims": [
+          {
+            "nid": 2,
+            "hp": 100,
+            "team": 1,
+            "pos": [
+              2,
+              0,
+              8
+            ]
+          },
+          {
+            "nid": 3,
+            "hp": 100,
+            "team": 1,
+            "pos": [
+              -2,
+              0,
+              8
+            ]
+          }
+        ]
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": true,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 2,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "births": [
+        {
+          "tick": 15,
+          "type": "blast",
+          "weapon": "blaster",
+          "position": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            56.699999999999996
+          ],
+          "damage": 125
+        }
+      ],
+      "events": [
+        {
+          "tick": 15,
+          "kind": "weapon:fire",
+          "weapon": "blaster",
+          "victim": null,
+          "damage": null,
+          "position": null
+        },
+        {
+          "tick": 27,
+          "kind": "weapon:impact",
+          "weapon": "blaster",
+          "victim": null,
+          "damage": null,
+          "position": [
+            0,
+            0.55990592,
+            10.155946205696
+          ]
+        },
+        {
+          "tick": 27,
+          "kind": "damage",
+          "weapon": "blaster",
+          "victim": 2,
+          "damage": 53.7,
+          "position": null
+        },
+        {
+          "tick": 27,
+          "kind": "hit",
+          "weapon": "blaster",
+          "victim": 2,
+          "damage": 53.73643264249681,
+          "position": null
+        },
+        {
+          "tick": 27,
+          "kind": "damage",
+          "weapon": "blaster",
+          "victim": 3,
+          "damage": 53.7,
+          "position": null
+        },
+        {
+          "tick": 27,
+          "kind": "hit",
+          "weapon": "blaster",
+          "victim": 3,
+          "damage": 53.73643264249681,
+          "position": null
+        }
+      ],
+      "final": {
+        "tick": 27,
+        "victims": [
+          {
+            "nid": 2,
+            "hp": 46.3,
+            "alive": true
+          },
+          {
+            "nid": 3,
+            "hp": 46.3,
+            "alive": true
+          }
+        ],
+        "ink": 90,
+        "cooldown": 0.4666666666666663
+      }
+    },
+    "blasterMiss": {
+      "scenario": "blaster",
+      "initial": {
+        "weapon": "blaster",
+        "ink": 100,
+        "special": 0,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "victims": [
+          {
+            "nid": 2,
+            "hp": 100,
+            "team": 1,
+            "pos": [
+              12,
+              0,
+              8
+            ]
+          }
+        ]
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": true,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 2,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "births": [
+        {
+          "tick": 15,
+          "type": "blast",
+          "weapon": "blaster",
+          "position": [
+            0,
+            1.05,
+            0.3
+          ],
+          "velocity": [
+            0,
+            0,
+            56.699999999999996
+          ],
+          "damage": 125
+        }
+      ],
+      "events": [
+        {
+          "tick": 15,
+          "kind": "weapon:fire",
+          "weapon": "blaster",
+          "victim": null,
+          "damage": null,
+          "position": null
+        },
+        {
+          "tick": 27,
+          "kind": "weapon:impact",
+          "weapon": "blaster",
+          "victim": null,
+          "damage": null,
+          "position": [
+            0,
+            0.55990592,
+            10.155946205696
+          ]
+        }
+      ],
+      "final": {
+        "tick": 90,
+        "victims": [
+          {
+            "nid": 2,
+            "hp": 100,
+            "alive": true
+          }
+        ],
+        "ink": 93.16666666666676,
+        "cooldown": 0
+      }
+    },
+    "wave": {
+      "scenario": "wave-breaker",
+      "initial": {
+        "weapon": "s3-slosher-double-01",
+        "sub": "beakon",
+        "specialId": "waveBreaker",
+        "ink": 100,
+        "special": 190,
+        "specialCost": 190,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "victim": {
+          "hp": 100,
+          "team": 1,
+          "pos": [
+            0,
+            0,
+            5
+          ]
+        }
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": true,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 2,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 4,
+          "input": {
+            "fire": false,
+            "sub": true,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 5,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "devices": [
+        {
+          "tick": 10,
+          "kind": "wave",
+          "position": [
+            0,
+            1.1609390000000002,
+            0.29969999999999997
+          ],
+          "hp": 480,
+          "phase": "flight"
+        },
+        {
+          "tick": 124,
+          "kind": "waveFront",
+          "position": [
+            0,
+            0.08,
+            7.267465890519531
+          ],
+          "hp": 0,
+          "phase": "armed"
+        },
+        {
+          "tick": 274,
+          "kind": "waveFront",
+          "position": [
+            0,
+            0.08,
+            7.267465890519531
+          ],
+          "hp": 0,
+          "phase": "armed"
+        }
+      ],
+      "events": [
+        {
+          "tick": 1,
+          "kind": "special:use",
+          "id": "waveBreaker",
+          "action": null,
+          "damage": null,
+          "position": null
+        },
+        {
+          "tick": 1,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "activate",
+          "damage": null,
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 10,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "deploy",
+          "damage": null,
+          "position": [
+            0,
+            1.1,
+            0
+          ]
+        },
+        {
+          "tick": 10,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "device",
+          "damage": null,
+          "position": [
+            0,
+            1.1,
+            0
+          ]
+        },
+        {
+          "tick": 10,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "end",
+          "damage": null,
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 34,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "land",
+          "damage": null,
+          "position": [
+            0,
+            0.08,
+            7.27
+          ]
+        },
+        {
+          "tick": 124,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "pulse",
+          "damage": null,
+          "position": [
+            0,
+            0.08,
+            7.27
+          ]
+        },
+        {
+          "tick": 124,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "deploy",
+          "damage": null,
+          "position": [
+            0,
+            0.08,
+            7.27
+          ]
+        },
+        {
+          "tick": 137,
+          "kind": "damage",
+          "id": "waveBreaker",
+          "action": null,
+          "damage": 45,
+          "position": null
+        },
+        {
+          "tick": 137,
+          "kind": "hit",
+          "id": "waveBreaker",
+          "action": null,
+          "damage": 45,
+          "position": null
+        },
+        {
+          "tick": 274,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "pulse",
+          "damage": null,
+          "position": [
+            0,
+            0.08,
+            7.27
+          ]
+        },
+        {
+          "tick": 274,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "deploy",
+          "damage": null,
+          "position": [
+            0,
+            0.08,
+            7.27
+          ]
+        },
+        {
+          "tick": 284,
+          "kind": "all:special",
+          "id": "waveBreaker",
+          "action": "expire",
+          "damage": null,
+          "position": [
+            0,
+            0.08,
+            7.27
+          ]
+        },
+        {
+          "tick": 287,
+          "kind": "damage",
+          "id": "waveBreaker",
+          "action": null,
+          "damage": 45,
+          "position": null
+        },
+        {
+          "tick": 287,
+          "kind": "hit",
+          "id": "waveBreaker",
+          "action": null,
+          "damage": 45,
+          "position": null
+        }
+      ],
+      "final": {
+        "tick": 330,
+        "hp": 29.10999999999973,
+        "alive": true,
+        "ink": 100,
+        "special": 0
+      }
+    },
+    "waveNoGauge": {
+      "scenario": "wave-breaker",
+      "initial": {
+        "weapon": "s3-slosher-double-01",
+        "sub": "beakon",
+        "specialId": "waveBreaker",
+        "ink": 100,
+        "special": 0,
+        "specialCost": 190,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "victim": {
+          "hp": 100,
+          "team": 1,
+          "pos": [
+            0,
+            0,
+            5
+          ]
+        }
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": true,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        },
+        {
+          "tick": 2,
+          "input": {
+            "fire": false,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              0
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "devices": [],
+      "events": [],
+      "final": {
+        "tick": 330,
+        "hp": 100,
+        "alive": true,
+        "ink": 100,
+        "special": 0
+      }
+    },
+    "roller": {
+      "scenario": "roller-contact",
+      "initial": {
+        "weapon": "roller",
+        "ink": 100,
+        "special": 0,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "velocity": [
+          0,
+          0,
+          2
+        ],
+        "victim": {
+          "nid": 2,
+          "hp": 100,
+          "team": 1,
+          "pos": [
+            1,
+            0,
+            0
+          ]
+        }
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": true,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              1
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "events": [
+        {
+          "tick": 29,
+          "kind": "damage",
+          "id": "roller",
+          "victim": 2,
+          "damage": 125,
+          "rolling": true
+        },
+        {
+          "tick": 29,
+          "kind": "hit",
+          "id": "roller",
+          "victim": 2,
+          "damage": 125,
+          "rolling": true
+        }
+      ],
+      "final": {
+        "tick": 30,
+        "hp": 0,
+        "alive": false,
+        "ink": 91.46000000000001
+      }
+    },
+    "rollerMiss": {
+      "scenario": "roller-contact",
+      "initial": {
+        "weapon": "roller",
+        "ink": 100,
+        "special": 0,
+        "life": 0,
+        "owner": "p1",
+        "nid": 1,
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "velocity": [
+          0,
+          0,
+          2
+        ],
+        "victim": {
+          "nid": 2,
+          "hp": 100,
+          "team": 1,
+          "pos": [
+            10,
+            0,
+            0
+          ]
+        }
+      },
+      "commands": [
+        {
+          "tick": 1,
+          "input": {
+            "fire": true,
+            "sub": false,
+            "jump": false,
+            "squid": false,
+            "special": false,
+            "move": [
+              0,
+              1
+            ]
+          },
+          "aim": [
+            0,
+            0
+          ]
+        }
+      ],
+      "events": [
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        },
+        {
+          "tick": 36,
+          "kind": "weapon:impact",
+          "id": "roller",
+          "victim": null,
+          "damage": null,
+          "rolling": true
+        }
+      ],
+      "final": {
+        "tick": 50,
+        "hp": 85.00000000000014,
+        "alive": true,
+        "ink": 91.06000000000009
+      }
+    }
+  }
+}

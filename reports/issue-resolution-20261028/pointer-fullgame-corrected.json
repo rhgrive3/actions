@@ -1,0 +1,592 @@
+{
+  "kind": "full-game-pointer-ownership",
+  "status": "passed",
+  "scope": "Trusted UI clicks and keyboard Escape; actual DOM pointer lock and Input owner. No frame stepping, input API replacement, weapon charge, all-weapons or performance claim.",
+  "inputHash": "f88d5a9afef1bf96e2bf47b22999e783331b30299af9e5e51c5f1dfc7f9d6bbd",
+  "contentHash": "25dbfa63c60ece97f89d96147b4e9653eec95fc70e761e5638a200ea170e44fd",
+  "viewport": {
+    "width": 960,
+    "height": 600
+  },
+  "settings": {
+    "quality": "low",
+    "lang": "en"
+  },
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  },
+  "cycles": [
+    {
+      "number": 1,
+      "weapon": "s3-charger-light",
+      "resume": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "shooter",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "play",
+            "trusted": true
+          },
+          {
+            "id": "mode-range",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          }
+        ]
+      },
+      "selected": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-charger-light",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "play",
+            "trusted": true
+          },
+          {
+            "id": "mode-range",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-light",
+            "trusted": true
+          }
+        ]
+      }
+    },
+    {
+      "number": 2,
+      "weapon": "s3-charger-long",
+      "resume": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-charger-light",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "mode-range",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-light",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          }
+        ]
+      },
+      "selected": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-charger-long",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-light",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-long",
+            "trusted": true
+          }
+        ]
+      }
+    },
+    {
+      "number": 3,
+      "weapon": "s3-charger-pencil",
+      "resume": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-charger-long",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "w-s3-charger-light",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-long",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          }
+        ]
+      },
+      "selected": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-charger-pencil",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-long",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-pencil",
+            "trusted": true
+          }
+        ]
+      }
+    },
+    {
+      "number": 4,
+      "weapon": "s3-stringer-normal",
+      "resume": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-charger-pencil",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "w-s3-charger-long",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-pencil",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          }
+        ]
+      },
+      "selected": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-stringer-normal",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-charger-pencil",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-normal",
+            "trusted": true
+          }
+        ]
+      }
+    },
+    {
+      "number": 5,
+      "weapon": "s3-stringer-short",
+      "resume": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-stringer-normal",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "w-s3-charger-pencil",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-normal",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          }
+        ]
+      },
+      "selected": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-stringer-short",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-normal",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-short",
+            "trusted": true
+          }
+        ]
+      }
+    },
+    {
+      "number": 6,
+      "weapon": "s3-stringer-explosion",
+      "resume": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-stringer-short",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "w-s3-stringer-normal",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-short",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          }
+        ]
+      },
+      "selected": {
+        "sameMatch": true,
+        "playing": true,
+        "paused": false,
+        "menu": null,
+        "domLocked": true,
+        "inputLocked": true,
+        "weapon": "s3-stringer-explosion",
+        "pointerErrors": 2,
+        "gestures": [
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-short",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "resume",
+            "trusted": true
+          },
+          {
+            "id": "key:Escape",
+            "trusted": true
+          },
+          {
+            "id": "r-tab-weapon",
+            "trusted": true
+          },
+          {
+            "id": "w-s3-stringer-explosion",
+            "trusted": true
+          }
+        ]
+      }
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "pointerErrors": 2,
+  "browser": "154.0.8037.57",
+  "initial": {
+    "sameMatch": true,
+    "playing": true,
+    "paused": false,
+    "menu": null,
+    "domLocked": false,
+    "inputLocked": false,
+    "weapon": "shooter",
+    "pointerErrors": 1,
+    "gestures": [
+      {
+        "id": "play",
+        "trusted": true
+      },
+      {
+        "id": "mode-range",
+        "trusted": true
+      }
+    ]
+  }
+}

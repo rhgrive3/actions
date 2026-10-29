@@ -570,11 +570,29 @@ const changes = [
     "count": 1
   }
 ];
+const sharedRetargetSlug = 'source-retarget-share-kid-quaternion-forward-across-feet';
+const sharedRetargetChanges = changes.filter(change => change.slug === sharedRetargetSlug);
+const sharedRetargetInitializer = 'this.groundForwardQ=new THREE.Quaternion();';
 export function adaptRemainingVisualQueue20261027(rel, code) {
+  let reuseSharedRetarget = false;
+  if (rel === 'src/game/motion/retarget.js'
+      && (code.includes(sharedRetargetInitializer) || sharedRetargetChanges.some(change => code.includes(change.new)))) {
+    // Reuse only the complete, exact reviewed optimization. The initializer's
+    // old anchor is a prefix of its replacement, so checking old counts first
+    // would allocate it twice. Partial or repeated shared state is ambiguous.
+    reuseSharedRetarget = code.split(sharedRetargetInitializer).length - 1 === 1
+      && sharedRetargetChanges.every(change => code.split(change.new).length - 1 === change.count
+        && code.split(change.old).length - 1 === (change.new.includes(change.old) ? change.count : 0));
+    if (!reuseSharedRetarget)
+      throw new Error(`Remaining visual queue ${sharedRetargetSlug}: expected 1 anchors for each exact shared quaternion change in ${rel}`);
+  }
   for (const change of changes) {
     if (change.rel !== rel) continue;
+    if (reuseSharedRetarget && change.slug === sharedRetargetSlug) continue;
     const count = code.split(change.old).length - 1;
-    if (count !== change.count) throw new Error(`Remaining visual queue ${change.slug}: expected ${change.count} anchors in ${rel}, found ${count}`);
+    if (count !== change.count) {
+      throw new Error(`Remaining visual queue ${change.slug}: expected ${change.count} anchors in ${rel}, found ${count} (anchor ${JSON.stringify(change.old.slice(0,110))})`);
+    }
     code = code.split(change.old).join(change.new);
   }
   return code;

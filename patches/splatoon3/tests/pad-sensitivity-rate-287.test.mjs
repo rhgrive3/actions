@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { s3PadMultiplier, legacyPadToS3 } from '../runtime/pad-sensitivity.mjs';
+import { s3PadMultiplier, legacyPadToS3, boundedPadYawRate } from '../runtime/pad-sensitivity.mjs';
 
 const f = await fixture({ productionComposition: true,
   extraExports: "export { Input } from './inkwave-public/src/core/input.js';" });
@@ -15,10 +15,10 @@ const YAW_BASE = 3.6, PITCH_BASE = 2.4, YAW_BOUND = Math.PI * 2; // INKWAVE rad/
 
 // Hold the right stick at (x, y) for `hold` seconds, then release and let the look filter settle.
 // `pitch0` keeps vertical traces inside the camera's [-1.05, 1.15] rad pitch clamp.
-function run(setting, hz, { x = 1, y = 0, hold = 1, settle = 0.5, pitch0 = 0 } = {}) {
+function run(setting, hz, { x = 1, y = 0, hold = 1, settle = 0.5, pitch0 = 0, legacyGain } = {}) {
   const a = f.make();
   f.G.actors = [a];
-  f.G.settings = { ...f.DEFAULT_SETTINGS, padSensitivity: setting, padSensitivityScale: 's3', aimAssist: 0 };
+  f.G.settings = { ...f.DEFAULT_SETTINGS, padSensitivity: setting, padSensitivityScale: 's3', padLegacyGain: legacyGain, aimAssist: 0 };
   const cam = new f.THREE.PerspectiveCamera(60, 16 / 9, .1, 1000);
   cam.position.set(0, .95, -3); cam.lookAt(0, .95, 20); cam.updateMatrixWorld(); f.G.camera = cam;
   const rig = { yaw: 0, pitch: pitch0, mapK: 0 }; f.G.rig = rig;
@@ -38,15 +38,13 @@ function run(setting, hz, { x = 1, y = 0, hold = 1, settle = 0.5, pitch0 = 0 } =
   return { yaw: -rig.yaw, pitch: pitch0 - rig.pitch, rows, held };
 }
 
-// Recorded, not endorsed: with the provisional curve, +4 (359.1 deg/s) is just under the bound and
-// +4.5 / +5 both sit on it, so the top yaw steps are not distinguishable while pitch still scales.
-// Choosing a different curve needs the unpublished Nintendo response; see the behaviour report.
+// The bounded upper interval is provisional, with all speeds through +4 unchanged.
 test('#287 full-stick steady yaw follows the provisional S3 gain and stays below the #1012 bound', () => {
   let previous = 0;
   for (const s of STEPS) {
     const { rows, held } = run(s, 60);
     const steady = rows[held - 1].yaw;
-    const want = Math.min(YAW_BASE * s3PadMultiplier(s), YAW_BOUND - 1e-6);
+    const want = boundedPadYawRate(s3PadMultiplier(s));
     assert.ok(Math.abs(steady - want) < 1e-6 * want, `setting ${s}: ${steady} vs ${want}`);
     assert.ok(steady < YAW_BOUND, `setting ${s}: ${steady * 180 / Math.PI} deg/s must stay below 360`);
     assert.ok(steady >= previous - 1e-12, `setting ${s}: yaw rate must not decrease`);
@@ -87,4 +85,36 @@ test('#287 legacy multipliers migrate to the S3 scale with the same turn respons
     assert.ok(Math.abs(rows[held - 1].yaw - want) < 1e-6 * want, `legacy ${legacy}x -> ${migrated}`);
   }
   assert.equal(legacyPadToS3(1), 0, 'legacy default 1x is S3 setting 0');
+});
+
+test('#287 all positive and negative high yaw settings are distinct and remain below one revolution per second', () => {
+  for (const hz of [30, 60, 120]) for (const sign of [-1, 1]) {
+    let previous = 0;
+    for (const s of [4, 4.5, 5]) {
+      const { rows, held } = run(s, hz, {x:sign});
+      const rate = Math.abs(rows[held - 1].yaw);
+      assert.ok(rate > previous, `${hz}Hz direction ${sign} setting ${s}`);
+      assert.ok(rate < YAW_BOUND, `setting ${s} reaches 360 deg/s`);
+      previous = rate;
+    }
+  }
+});
+
+
+test('#287 original gains drive actual controller pitch and bounded yaw after migration', () => {
+  for (const gain of [.2, .3, .499, 2.001, 2.5, 3]) {
+    const setting = legacyPadToS3(gain);
+    const yaw = run(setting, 60, {legacyGain:gain});
+    const pitch = run(setting, 60, {x:0, y:1, hold:.25, pitch0:1.1, legacyGain:gain});
+    const expectedYaw = gain < .5 ? YAW_BASE * gain : YAW_BOUND - 1e-6;
+    assert.ok(Math.abs(yaw.rows[yaw.held - 1].yaw - expectedYaw) < 1e-6);
+    assert.ok(Math.abs(pitch.rows[pitch.held - 1].pitch - PITCH_BASE * gain) < .001);
+  }
+});
+
+test('#287 yaw is unchanged through +4, including intermediate settings', () => {
+  for (let s = -5; s <= 4; s += .125) {
+    const gain = s3PadMultiplier(s);
+    assert.equal(boundedPadYawRate(gain), 3.6 * gain);
+  }
 });

@@ -20,6 +20,19 @@ const ENDPOINT_GAIN = { '-5': 1, '0': 1.8, '5': 3 };
 // INKWAVE smoothing constants from inkwave-public/src/core/gyro.js (not Nintendo values).
 const TAU = 0.06, DIRECT_FROM = 3, DIRECT_SPAN = 7;
 
+test('#725 composed touch and controls help describe the active profile without obsolete gain claims', () => {
+  const rel = 'src/ui/menus.js';
+  const source = adaptBuildSource(rel, read(path.join(ROOT, 'inkwave-public', rel)));
+  const rows = source.split('\n').filter(line => line.includes("key: 'gyroSens'"));
+  assert.equal(rows.length, 2);
+  for (const row of rows) {
+    assert.match(row, /Motion-control aiming sensitivity for the selected profile\./);
+    assert.doesNotMatch(row, /132°|110°|278°/);
+  }
+  const strings = read(path.join(ROOT, 'patches/splatoon3/runtime/ui-strings.mjs'));
+  assert.ok(strings.includes("'Motion-control aiming sensitivity for the selected profile.':'選択中のモードのジャイロ感度です。'"));
+});
+
 async function composedGyro() {
   const context = vm.createContext({ console, performance: { now: () => 1 }, setTimeout: () => 1, clearTimeout() {},
     DeviceOrientationEvent: function () {}, DeviceMotionEvent: function () {}, navigator: { userAgent: 'iPad Safari' },

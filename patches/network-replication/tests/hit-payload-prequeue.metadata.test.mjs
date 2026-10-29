@@ -22,8 +22,10 @@ const nativeSource=adaptBuildSource('src/net/netmatch.js',readFileSync(new URL('
 const hitStart='  _hit(d, from) {',hitEnd='    this._applyingHit = true;';
 assert.equal(nativeSource.split(hitStart).length,2);assert.equal(nativeSource.split(hitEnd).length,2);
 const receiptPrefix=nativeSource.slice(nativeSource.indexOf(hitStart),nativeSource.indexOf(hitEnd));
+const bossStart=nativeSource.indexOf('  _acceptBossHit(from, d) {');
+const bossReceipt=nativeSource.slice(bossStart,nativeSource.indexOf('\n  sendBossHit(',bossStart));
 const constants=payloadTemplate.slice(0,payloadTemplate.indexOf('function nativeGuard')).replace('NetMatch={}','unusedNetMatch={}');
-const template=constants+'class NetMatch {\n'+receiptPrefix+hitEnd+'\n}\n}';
+const template=constants+'class NetMatch {\n'+receiptPrefix+hitEnd+'\n}\n'+bossReceipt+'\n  sendBossHit() {}\n}';
 const nativeGuard=payloadTemplate.slice(payloadTemplate.indexOf('function nativeGuard'));
 const generator=vm.createContext({template});new vm.Script(source+'\noutput=adaptCombatProvenance("src/net/netmatch.js",template);').runInContext(generator,{timeout:100});
 const compiled=vm.createContext({installCombatProvenance:()=>{}});new vm.Script(generator.output.replace(/^import .*\n/,'')+'\n'+nativeGuard+'\npolicy=iwRemoteHitPayloadAllowed;guard=nativeGuard;').runInContext(compiled,{timeout:100});

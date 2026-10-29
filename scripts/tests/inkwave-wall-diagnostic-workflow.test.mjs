@@ -91,7 +91,7 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
 // obsolete pins or accepting omitted, duplicated or relocated regressions.
 const guidePhaseMarker = '      - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior\n';
 const guidePhaseNext = '      - name: Verify built weapons fidelity measurements and packet parity\n';
-const guidePhaseCommand = guidePhaseMarker + '        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: >-\n          node --experimental-vm-modules --test\n';
+const guidePhaseCommand = guidePhaseMarker + '        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n          INKWAVE_EDGECASE_SITE: ${{ github.workspace }}/_site\n        run: >-\n          node --experimental-vm-modules --test\n';
 const existingEmittedSourceTests = [
   'patches/splatoon3/tests/catalog-player-inertia-native.test.mjs',
   'patches/splatoon3/tests/catalog-slosher-birth-speed.test.mjs',
@@ -135,6 +135,8 @@ test('reviewed emitted guide and phase coverage rejects omission, duplication, r
     [guidePhaseCommand, guidePhaseCommand.replace('        run: >-', '        continue-on-error: true\n        run: >-')],
     [guidePhaseCommand, guidePhaseCommand.replace('node --experimental-vm-modules --test', 'echo')],
     [guidePhaseCommand, guidePhaseCommand.replace('github.workspace }}/_site', 'github.workspace }}/unverified')],
+    [guidePhaseCommand, guidePhaseCommand.replace('          INKWAVE_EDGECASE_SITE: ${{ github.workspace }}/_site\n', '')],
+    [guidePhaseCommand, guidePhaseCommand.replace('INKWAVE_EDGECASE_SITE: ${{ github.workspace }}/_site', 'INKWAVE_EDGECASE_SITE: ${{ github.workspace }}/unverified')],
     [approvedEmittedGuidePhaseLines + guidePhaseNext, guidePhaseNext + approvedEmittedGuidePhaseLines],
   ];
   for (const [before, after] of edits) {

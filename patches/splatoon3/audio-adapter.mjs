@@ -87,6 +87,14 @@ export function adaptWeaponAudio(rel,code){
   }
   if(rel==='src/net/netmatch.js'){
     code="import { usesChargerRise } from '../../patches/splatoon3/runtime/audio/charger-charge-rise.mjs';\n"+code;
+    // A first remote charge is an edge-triggered one-shot. Starting the fetch
+    // at that edge is too late for a cold AudioContext, and the edge cannot be
+    // replayed without inventing a second onset. Prepare only actual remote
+    // Charger roster members as soon as their weapon identity is available.
+    code=once(code,
+      '    a.remote = a.owner !== this.myId;',
+      '    a.remote = a.owner !== this.myId;\n    if (a.remote && usesChargerRise(a.weapon?.id)) G.audio?.prewarmChargerChargeRise?.(a.weapon.id,a.weapon.chargeTime);',
+      'prewarm remote Charger rise when roster actor is set up');
     code=code.replace(/G\.audio\?\.play\('dualies_roll'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     // Network-owned Charger begins at the observed charge edge. Do not create
     // a repeating remote HoldNoise. Preserve Splatling/Roller loop handling.

@@ -1,3 +1,4 @@
+import { adaptOffscreenHairTargets } from './offscreen-hair-target-adapter.mjs';
 import { adaptVisualAudioQueue } from './visual-audio-queue-adapter.mjs';
 import { adaptCombatGpuCpuPerfect } from './combat-gpu-cpu-perfect-adapter.mjs';
 import { adaptInkMicroSurface } from './ink-micro-surface-adapter.mjs';
@@ -97,6 +98,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'offscreen-hair-target-adapter.mjs',
   'queue-extra-world-adapter.mjs',
   'queue-extra-decor-adapter.mjs',
   'queue-ui-20261025-adapter.mjs', 'queue-extra-weapons-fx-adapter.mjs',
@@ -1493,7 +1495,7 @@ function clusterTopology(src, cell, sigs) {
     }
   }
 
-  return adaptVisualAudioQueue(rel, code);
+  return adaptVisualAudioQueue(rel, adaptOffscreenHairTargets(rel, code, replaceOnce));
 }
 
 export function qualityIdentity() {

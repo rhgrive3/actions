@@ -393,6 +393,61 @@ test('#642 adapter composes with the existing renderer and the latest PR #1175 l
   assert.doesNotThrow(() => new vm.SourceTextModule(lazyComposed, { identifier: `${REL}#pr1175` }));
 });
 
+test('#642 active ScreenFX changes only target1 on state edges and preserves passes and scene HDR', async () => {
+  const ns=await frameRoleNamespace();
+  const {renderer}=fboRenderer();
+  const effect={...SCREENFX_PASS,enabled:false};
+  const choose=grade=>selectComposerTargetFormat(ns.THREE,renderer,{
+    touch:true,quality:MOBILE_QUALITY,samples:0,grade,screenFx:effect,
+  });
+  assert.equal(choose(null).packed,true);
+  effect.enabled=true;
+  assert.equal(choose(null).reason,'active-screenfx-keeps-rgba16f');
+  assert.equal(choose(null).canPack,true);
+  assert.equal(choose(null).options.type,ns.THREE.HalfFloatType);
+  assert.ok(SCREENFX_SOURCE.includes('this.pass.enabled = any;'),'native ScreenFX enables only visible effects');
+  const source=compose(REL),start=source.lastIndexOf('  render() {'),end=source.indexOf('\n  }\n}',start);
+  assert.ok(start>=0&&end>start);
+  const G={env:null};
+  const helperStart=source.indexOf('function updateComposerTargetPrecision('),helperEnd=source.indexOf('\n\nconst BLOOM',helperStart);
+  const updateComposerTargetPrecision=vm.runInNewContext('('+source.slice(helperStart,helperEnd)+')',{configureComposerColorTargets});
+  const render=vm.runInNewContext('('+source.slice(start,end+4).trim().replace(/^render\(/,'function(')+')',
+    {G,THREE:ns.THREE,composerGradeKeepsPackedTargetNonnegative,updateComposerTargetPrecision,cropBattleCanvas(){}});
+  let builds=0,draws=0;
+  const fixture=frameRoleFixture(ns),composer=fixture.composer,passes=composer.passes.slice(),pair=[composer.renderTarget1,composer.renderTarget2];
+  const disposals=[0,0];pair.forEach((target,i)=>target.addEventListener('dispose',()=>disposals[i]++));
+  const nativeRender=composer.render;composer.render=function(...args){draws++;return nativeRender.apply(this,args);};
+  const owner={extraPass:effect,grade:null,_composerPackedCapable:true,_composerUsesPackedTarget:true,
+    renderer:{domElement:{}},resize(){},composer,_buildComposer(){builds++;}};
+  const frames=()=>{for(let i=0;i<30;i++)render.call(owner);};
+  frames();assert.deepEqual(disposals,[1,0],'one attachment transition while active');
+  effect.enabled=false;frames();assert.deepEqual(disposals,[2,0],'one transition back to idle');
+  G.env={grade:{uLift:-.01}};frames();assert.deepEqual(disposals,[3,0],'negative grade keeps existing HDR guard');
+  effect.enabled=true;frames();assert.deepEqual(disposals,[3,0],'another HDR reason never touches an HDR pair');
+  effect.enabled=false;G.env.grade.uLift=0;frames();assert.deepEqual(disposals,[4,0],'both precision requirements clear once');
+  assert.equal(builds,0,'passes and shader programs never rebuild on precision edges');
+  assert.deepEqual(composer.passes,passes);assert.equal(composer.renderTarget1,pair[0]);assert.equal(composer.renderTarget2,pair[1]);
+  assert.equal(pair[1].texture.type,ns.THREE.HalfFloatType);
+  assert.equal(draws,150);
+  composer.reset();assert.equal(composer.renderTarget1.texture.type,ns.THREE.UnsignedInt101111Type);
+  assert.equal(composer.renderTarget2.texture.type,ns.THREE.HalfFloatType,'reset retains scene precision');
+  composer.dispose();passes.forEach(p=>p.dispose?.());
+});
+
+test('#642 eligible HDR generations retain color-only post and scene HDR roles before their first draw', async () => {
+  const ns=await frameRoleNamespace();
+  for(const selection of [{packed:false,canPack:true},{packed:true,canPack:true}]){
+    const fixture=frameRoleFixture(ns,false),c=fixture.composer;
+    configureComposerColorTargets(ns.THREE,c,selection);
+    assert.equal(c.renderTarget1.depthBuffer,false);
+    assert.equal(c.renderTarget2.depthBuffer,true);
+    c.render();assert.equal(fixture.observations[0].target,c.renderTarget2);
+    c.reset();assert.equal(c.renderTarget1.depthBuffer,false);assert.equal(c.renderTarget2.depthBuffer,true);
+    assert.equal(c.renderTarget2.texture.type,ns.THREE.HalfFloatType);
+    c.dispose();fixture.passes.forEach(p=>p.dispose?.());
+  }
+});
+
 // Actual vendored composer/pass classes; only GPU draw methods are replaced
 // with observations. These are control-flow tests, not pixel comparisons.
 async function frameRoleNamespace() {

@@ -122,3 +122,46 @@ test('composed settings hardening retains signed S3 profiles through switch, liv
   assert.equal(r.game.settings.padSensitivity,5);assert.equal(r.game.settings.gyroSens,5);
   assert.equal(r.game.settings.touchSens,5);assert.equal(r.game.settings.quality,'high');
 });
+
+test('#287 out-of-range legacy gains persist per profile until that profile is edited or reset', async () => {
+  const r = await settingsRig({aimProfile:'tv', aimProfiles:{tv:{padSensitivity:.2},handheld:{padSensitivity:3}}});
+  const verify = (game, mode, gain, slider) => {
+    game._setSettings({aimProfile:mode});
+    assert.equal(game.settings.padSensitivity, slider);
+    assert.equal(s3PadMultiplier(game.settings.padSensitivity, game.settings.padLegacyGain), gain);
+  };
+  verify(r.game, 'tv', .2, -5);
+  verify(r.game, 'handheld', 3, 5);
+  verify(r.reload(), 'tv', .2, -5);
+  verify(r.reload(), 'handheld', 3, 5);
+  r.game._setSettings({padSensitivity:5});
+  assert.equal(s3PadMultiplier(r.game.settings.padSensitivity, r.game.settings.padLegacyGain), 2);
+  verify(r.reload(), 'tv', .2, -5);
+  verify(r.reload(), 'handheld', 2, 5);
+  r.accept(); r.accept();
+  verify(r.reload(), 'tv', 1, 0);
+  verify(r.reload(), 'handheld', 1, 0);
+});
+
+
+test('#287 flat legacy values migrate to both profiles and unrelated edits keep the override', async () => {
+  for (const gain of [.2, .49, 2.01, 3]) {
+    const r = await settingsRig({padSensitivity:gain});
+    for (const mode of ['tv','handheld']) {
+      r.game._setSettings({aimProfile:mode, gyroSens:2});
+      assert.equal(s3PadMultiplier(r.game.settings.padSensitivity, r.game.settings.padLegacyGain), gain);
+      assert.equal(s3PadMultiplier(r.reload().settings.padSensitivity, r.reload().settings.padLegacyGain), gain);
+    }
+    r.game._setSettings({aimProfiles:{tv:{padSensitivity:0}}});
+    assert.equal(r.game.settings.aimProfiles.tv.padLegacyGain, undefined);
+    assert.equal(r.game.settings.aimProfiles.handheld.padLegacyGain, gain);
+  }
+});
+
+test('#287 invalid or mismatched override cannot alter a modern profile', async () => {
+  for (const [setting, gain] of [[0,.2],[-5,3],[5,.2],[-5,.1],[5,4]]) {
+    const r = await settingsRig({padSensitivityScale:'s3',aimProfiles:{tv:{padSensitivity:setting,padLegacyGain:gain}}});
+    assert.equal(r.game.settings.padLegacyGain, undefined);
+    assert.equal(s3PadMultiplier(r.game.settings.padSensitivity, r.game.settings.padLegacyGain), s3PadMultiplier(setting));
+  }
+});

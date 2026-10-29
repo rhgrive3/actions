@@ -38,27 +38,41 @@ function fixture(source=composed) {
   return {window,document,env,G,Input:context.Input,shared,count:()=>window.live.length+document.live.length};
 }
 function dispose(input) { if(input.disposePlatform)input.disposePlatform();else input.mobile.destroy(); }
+function assertOwned(f,input) {
+  const owners=input._platformInputListeners;
+  assert.ok(owners.length>0);
+  for(const o of owners) {
+    assert.ok([f.window,f.document].includes(o.target));
+    assert.ok(o.target.live.some(x=>x.type===o.type&&x.callback===o.callback&&x.capture===!!o.capture),`missing owned ${o.type}`);
+  }
+  return owners.map(o=>({...o}));
+}
+function assertRetired(owners) {
+  for(const o of owners) assert.ok(!o.target.live.some(x=>x.type===o.type&&x.callback===o.callback&&x.capture===!!o.capture),`still rooted: ${o.type}`);
+}
 
 test('complete production-composed Input retires every owned listener across repeated replacement',()=>{
   const f=fixture();
   for(let i=0;i<20;i++){
-    const input=new f.Input({});assert.equal(f.count()-f.shared,10);
+    const input=new f.Input({}),owned=assertOwned(f,input);
+    assert.equal(f.count()-f.shared,owned.length);
     let calls=0;input.onKey=()=>{calls++;return true;};
     f.window.fire('keydown',{code:'KeyA',repeat:false});assert.equal(calls,1);
     dispose(input);dispose(input);
+    assertRetired(owned);
     assert.equal(f.count(),f.shared,'disposed Input must not remain rooted by window/document');
     assert.equal(input.mobile.destroyCalls,1);
     f.window.fire('keydown',{code:'KeyA',repeat:false});assert.equal(calls,1,'retired menu callback must not fire');
   }
 });
 test('capture/passive options and unrelated or newer instance listeners keep their ownership',()=>{
-  const f=fixture(),a=new f.Input({}),b=new f.Input({});
+  const f=fixture(),a=new f.Input({}),b=new f.Input({}),aOwned=assertOwned(f,a),bOwned=assertOwned(f,b);
   let foreign=0;const callback=()=>foreign++;f.window.addEventListener('keydown',callback,true);
   const pointer=f.window.added.filter(x=>x.type==='pointerdown');assert.equal(pointer.length,2);
   for(const p of pointer){assert.equal(p.options.capture,true);assert.equal(p.options.passive,true);}
-  dispose(a);assert.equal(f.count(),f.shared+11);
+  dispose(a);assertRetired(aOwned);assertOwned(f,b);assert.equal(f.count(),f.shared+bOwned.length+1);
   f.window.fire('keydown',{code:'KeyZ',repeat:false});assert.equal(b.down('KeyZ'),true);assert.equal(foreign,1);
-  dispose(b);assert.equal(f.count(),f.shared+1);
+  dispose(b);assertRetired(bOwned);assert.equal(f.count(),f.shared+1);
   for(const p of pointer)assert.ok(f.window.removed.some(r=>r.callback===p.callback&&r.capture===true));
 });
 test('active keyboard and mouse event behavior remains unchanged',()=>{
@@ -102,9 +116,10 @@ test('retired Input cannot issue a fallback from its already pending pointer-loc
 test('explicit Input and Game platform disposal share one listener/mobile lifetime in either order',()=>{
   for(const platformFirst of [false,true]){
     const f=fixture(),input=new f.Input({});
-    assert.equal(f.count()-f.shared,10);
+    const owned=assertOwned(f,input);assert.equal(f.count()-f.shared,owned.length);
     if(platformFirst)input.disposePlatform();
     input.dispose();input.disposePlatform();input.dispose();
+    assertRetired(owned);
     assert.equal(f.count(),f.shared);
     assert.equal(input.mobile.destroyCalls,1);
     assert.equal(input._inputUnsubs.length,0);

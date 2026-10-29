@@ -1,0 +1,67 @@
+{
+  "kind": "full-game-pointer-ownership",
+  "status": "failed",
+  "scope": "Trusted UI clicks and keyboard Escape; actual DOM pointer lock and Input owner. No frame stepping, input API replacement, weapon charge, all-weapons or performance claim.",
+  "inputHash": "f88d5a9afef1bf96e2bf47b22999e783331b30299af9e5e51c5f1dfc7f9d6bbd",
+  "contentHash": "25dbfa63c60ece97f89d96147b4e9653eec95fc70e761e5638a200ea170e44fd",
+  "viewport": {
+    "width": 960,
+    "height": 600
+  },
+  "settings": {
+    "quality": "low",
+    "lang": "en"
+  },
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  },
+  "cycles": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "pointerErrors": 0,
+  "browser": "154.0.8037.57",
+  "failure": {
+    "step": "initial ownership",
+    "error": "page.waitForFunction: Timeout 45000ms exceeded.\n    at lock (/workspace/wt-remaining-input/scripts/check-inkwave-pointer-ownership-browser.mjs:40:14)\n    at /workspace/wt-remaining-input/scripts/check-inkwave-pointer-ownership-browser.mjs:56:50",
+    "state": {
+      "sameMatch": true,
+      "playing": true,
+      "paused": false,
+      "menu": null,
+      "domLocked": false,
+      "inputLocked": false,
+      "weapon": "shooter",
+      "pointerErrors": 1,
+      "gestures": [
+        {
+          "id": "play",
+          "trusted": true
+        },
+        {
+          "id": "mode-range",
+          "trusted": true
+        },
+        {
+          "id": null,
+          "trusted": true
+        }
+      ]
+    }
+  }
+}

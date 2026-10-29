@@ -5,6 +5,7 @@ import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.
 import {setTrackedInstanceColor,uploadTrackedInstanceColors,markAttributeRange} from '../../splatoon3/runtime/instance-color-upload.mjs';
 import {waitForFontBudget,repaintAfterFonts} from '../../../inkwave-public/src/core/font-ready-budget.js';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {parse} from '../../loading-cache/vendor/acorn.mjs';
 const rgb=(r,g,b)=>new THREE.Color().setRGB(r,g,b);
 const ranges=a=>a.updateRanges.map(({start,count})=>({start,count}));
 test('instance color dirty ranges survive unrendered frames, unchanged values and renderer consumption',()=>{
@@ -63,16 +64,67 @@ test('Cargo omitted template constants merge to identical final painted attribut
  }
 });
 
+// Execute the composed ring owner itself. Main publishes both static streams
+// when dirty; the transfer optimization publishes only dirty ranges. Both
+// must keep steady rings quiet and publish new values for each stream.
+function assertRingStaticContract(code) {
+  const ast=parse(code,{ecmaVersion:'latest',sourceType:'module'});
+  const functions=new Set(['makeQuadGeo','markUpdated','markFxStaticRange','clearFxUploadRanges']);
+  const constants=new Set(['UP','easeOut','R_WAVE','GLSL_HASH','OUT_CHUNKS','RING_VERT','RING_FRAG']);
+  const methods=new Set(['_initRings','_ringRaw','mark','_updateRings']);
+  let prefix='',body='';
+  for(let node of ast.body){node=node.declaration||node;
+    if(node.type==='FunctionDeclaration'&&functions.has(node.id.name))prefix+=code.slice(node.start,node.end)+'\n';
+    if(node.type==='VariableDeclaration'&&node.declarations.some(d=>constants.has(d.id.name)))prefix+=code.slice(node.start,node.end)+'\n';
+    if(node.type==='ClassDeclaration'&&node.id.name==='FX')for(const method of node.body.body)if(methods.has(method.key.name))body+=code.slice(method.start,method.end)+'\n';
+  }
+  const {Ring,markUpdated}=new Function('THREE','rand',prefix+`\nreturn {markUpdated,Ring:class {
+    constructor(){this.root=new THREE.Group();this._colB=new THREE.Color();this._initRings(8);}
+    _color(c){return c;}
+    ${body}
+  }};`)(THREE,()=>.5);
+  const probe=new THREE.BufferGeometry(),a=new THREE.BufferAttribute(new Float32Array(4),4),b=new THREE.BufferAttribute(new Float32Array(4),4),dynamic=new THREE.BufferAttribute(new Float32Array(4),4);
+  probe.userData.dyn=[a,b,dynamic];markUpdated(probe,1,a,b);
+  assert.equal(a.version,0,'first explicit static slot must be skipped');assert.equal(b.version,0,'second explicit static slot must be skipped');assert.equal(dynamic.version,1);
+  const fx=new Ring(),attrs=fx.rings.geo.attributes;
+  const consume=()=>{for(const attr of Object.values(attrs)){attr.clearUpdateRanges();attr.onUploadCallback();}};
+  const versions=()=>[attrs.aColA.version,attrs.aMisc.version];
+  const birth=(color,style)=>fx._ringRaw(new THREE.Vector3(1,2,3),new THREE.Vector3(0,1,0),color,1,10,style,.7,.8,.1,0,.2);
+  const changed=(before,after)=>{assert(after[0]>before[0],'color birth must upload');assert(after[1]>before[1],'style birth must upload');};
+  birth(new THREE.Color(.2,.4,.7),1);let before=versions();fx._updateRings(0);changed(before,versions());
+  assert.deepEqual(Array.from(attrs.aColA.array.slice(0,3)),Array.from(fx.rings.C.slice(0,3)));
+  assert.equal(attrs.aMisc.array[0],fx.rings.X[6]);consume();before=versions();fx._updateRings(1/60);assert.deepEqual(versions(),before,'steady rings must not upload either static stream');
+  birth(new THREE.Color(.8,.3,.1),2);before=versions();fx._updateRings(0);changed(before,versions());
+  assert.deepEqual(Array.from(attrs.aColA.array.slice(4,7)),Array.from(fx.rings.C.slice(3,6)));assert.equal(attrs.aMisc.array[4],fx.rings.X[14]);
+  fx.rings.geo.dispose();fx.rings.mesh.material.dispose();probe.dispose();
+}
+
 test('GPU-22 retains the two ring static slots and shell-only dirty uploads in composed FX', () => {
   const rel = 'src/fx/fx.js';
   const source = fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
   const output = adaptBuildSource(rel, source);
   assert.match(output, /function markUpdated\(geo, count, staticAttribute = null, staticAttribute2 = null\)/);
   assert.match(output, /if \(a === staticAttribute \|\| a === staticAttribute2 \|\| a\._fxStatic\) continue;/);
-  assert.match(output, /markUpdated\(R\.geo, n, R\.staticDirty \? null : R\.geo\.attributes\.aColA/);
+  assertRingStaticContract(output);
   assert.match(output, /geo\.attributes\.aColA\._fxStatic = true; geo\.attributes\.aAxis\._fxStatic = true;/);
   assert.match(output, /const sStart = S\.dirtyStart, sEnd = Math\.min\(S\.dirtyEnd, S\.n\);/);
   assert.doesNotMatch(output, /S\.axisDirty/);
+});
+
+test('GPU-22 behavioral guard rejects missing dirty publication and a lost second static slot',()=>{
+  const rel='src/fx/fx.js',raw=fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8'),output=adaptBuildSource(rel,raw);
+  const skip='if (a === staticAttribute || a === staticAttribute2 || a._fxStatic) continue;';
+  assert.equal(output.split(skip).length,2);assert.throws(()=>assertRingStaticContract(output.replace(skip,'if (a === staticAttribute || a._fxStatic) continue;')),/second explicit static slot/);
+  const optimized=output.includes('markFxStaticRange(R.geo.attributes.aColA,');
+  for(const [name,label] of [['aColA','color'],['aMisc','style']]){
+    const anchor=optimized?`    markFxStaticRange(R.geo.attributes.${name}, first * 4, last * 4, n * 4);`:`R.staticDirty ? null : R.geo.attributes.${name}`;
+    assert.equal(output.split(anchor).length,2,'known '+name+' publication owner');
+    const broken=output.replace(anchor,optimized?'    /* deliberately drop publication */':`R.geo.attributes.${name}`);
+    assert.throws(()=>assertRingStaticContract(broken),new RegExp(label+' birth must upload'));
+  }
+  const dirty=optimized?'i >= R.dirtyStart && i < R.dirtyEnd':'R.staticDirty = true;\n    let i;';
+  assert.equal(output.split(dirty).length,2,'known birth dirty owner');
+  assert.throws(()=>assertRingStaticContract(output.replace(dirty,optimized?'false':'R.staticDirty = false;\n    let i;')),optimized?/Expected values to be strictly deep-equal/:/color birth must upload/);
 });
 
 test('GPU-08b composes one wake-point pool with the active wake slot uniform', () => {

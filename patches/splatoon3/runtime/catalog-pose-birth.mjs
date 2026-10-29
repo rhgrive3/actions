@@ -20,11 +20,12 @@ export const POSE_BIRTH_TAG = Symbol.for('inkwave.s3.catalog-pose-birth.v1');
 export const POSE_BIRTH_MAX_CONNECT = 0.5;
 const RAW_SOCKET_EPS2 = 1e-10;
 
-export function installCatalogPoseBirth({ Actor, THREE, G }) {
+export function installCatalogPoseBirth({ Actor, THREE, G, Hit }) {
   const proto = Actor?.prototype;
   if (!proto || !THREE) throw new TypeError('Actor and THREE are required for the catalogue pose-birth connection');
   if (Object.hasOwn(proto, POSE_BIRTH_TAG)) return proto[POSE_BIRTH_TAG];
   const raw = new THREE.Vector3(), live = new THREE.Vector3(), at = new THREE.Vector3();
+  const coverHit = typeof Hit === 'function' ? new Hit() : undefined;
   const pool = [];
   let open = null; // the emission between origin() and notify() of one action
 
@@ -32,6 +33,22 @@ export function installCatalogPoseBirth({ Actor, THREE, G }) {
     if (!ch) return null;
     if (hand === null) return typeof ch.getMuzzle === 'function' ? ch.getMuzzle(out) : null;
     return typeof ch.getMuzzleHand === 'function' ? ch.getMuzzleHand(out, hand) : null;
+  }
+  function displayedSocket(ch, hand, out) {
+    // Gameplay getters intentionally remove display-only hit/handoff poses.
+    // Validate emission against those getters, but connect presentation to
+    // the mesh that is actually drawn after this tick's pose has finished.
+    const muzzle = hand === 1 ? ch?.weapon?.left?.muzzle : ch?.weapon?.muzzle;
+    return typeof muzzle?.getWorldPosition === 'function'
+      ? muzzle.getWorldPosition(out) : socket(ch, hand, out);
+  }
+  function obstructed(from, to) {
+    // Physics.los intentionally omits the last .05 WU. A displayed muzzle
+    // can sit inside that margin, so its connection needs the full segment
+    // just as authoritative muzzle admission does. Grates remain transparent.
+    const physics = G.physics;
+    if (typeof physics?.segment === 'function') return physics.segment(from, to, coverHit, true).hit;
+    return typeof physics?.los === 'function' && !physics.los(from, to);
   }
   const finite = v => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
   function entry() {
@@ -101,13 +118,13 @@ export function installCatalogPoseBirth({ Actor, THREE, G }) {
       const e = queue[i];
       let dx = 0, dy = 0, dz = 0;
       if (posed && e.time === G.time && actor.alive !== false) {
-        const s = socket(actor.character, e.hand, live);
+        const s = displayedSocket(actor.character, e.hand, live);
         if (s && finite(s)) {
           dx = s.x - e.sx; dy = s.y - e.sy; dz = s.z - e.sz;
           const d2 = dx * dx + dy * dy + dz * dz;
           at.set(e.ox, e.oy, e.oz);
           if (!(d2 <= POSE_BIRTH_MAX_CONNECT * POSE_BIRTH_MAX_CONNECT) ||
-              (d2 > 0 && typeof G.physics?.los === 'function' && !G.physics.los(at, s))) dx = dy = dz = 0;
+              (d2 > 0 && obstructed(at, s))) dx = dy = dz = 0;
         }
       }
       if (dx !== 0 || dy !== 0 || dz !== 0) for (let j = 0; j < e.rounds.length; j++) {

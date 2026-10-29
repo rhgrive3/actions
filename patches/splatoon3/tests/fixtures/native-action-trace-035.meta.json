@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "sourceHead": "035233299348e5c3527f6106b98e721ed2dfd011",
+  "canonicalSourceCommit": "0c8480d09174706d299f344454ecb3ebce6585ae",
+  "canonicalSourceSha256": "e5c1cdab4c050f94e33a7493724d11ddb68ce8f0988e04ad8f2798a9f9bc5bff",
+  "emittedContentHash": "8e284cc59756add4989355f94b3a72f57a63d9b958951f4139b026843c5e8daf",
+  "emittedManifestSha256": "b8f7a364b8054811cfbb86a925cb137827883c13083db254be903ebfc8d4197a",
+  "emittedCanonicalSha256": "c2a45e38a695e7bd8f0d149bc0eda966a59cd54d407216b3fbce107590e4fa81",
+  "traceGzipSha256": "941c7c20adc49911e2a50a9bd9ed89734ede67762536174585911f725239b976",
+  "counts": {"baseMains":65,"ticks":10725,"senderPackets":3575,"admittedReceiverSnapshots":3575,"projectileAllocations":847,"projectilePublications":847,"chargerFlightBirths":1,"weaponFireEvents":538,"actualHits":177},
+  "initialization": "Native Actor.spawnAt; fixture explicitly selects grounded/kid-ready/full-ink initial state, default installed gear; fixed LCG seed 0x066f1035 per main.",
+  "scope": "Actual 60Hz Actor, Character/socket, Level, Physics, WeaponRunner, Projectiles, and 20Hz NetMatch with native v1 challenge over in-memory transport. Renderer, audio and paint raster are stubs; receiver/target display Character are fixture stubs. No actual socket, authoritative server, full spawn admission, physical-device or retail parity claim.",
+  "inputIdentityLimitation": "The sealed site's existing manifest source inventory omits the new canonical leaf; its source commit/hash and emitted artifact hash are verified separately. All 1,522 inventoried inputs match sourceHead.",
+  "comparison": "Both unminified source and actual emitted Actor/physics plus emitted canonical leaf produced the same compressed trace bytes. The optional INKWAVE_NATIVE_TRACE_COMPARE selects an explicit immutable trace baseline."
+}
