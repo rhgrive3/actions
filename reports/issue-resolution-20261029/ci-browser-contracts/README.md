@@ -1,0 +1,11 @@
+# Browser CI contracts: cache ABI and complete sparse input policy
+
+Two final-head CI causes are retained here. Ubuntu22 active lanes restored an incompatible cached WebKit binary, which exited127 for missing ICU74 before page load. Core CircleCI parity checks still expected account JavaScript excluded after the reviewed global JS/MJS/CJS audit expansion. Missing Turf/launch uploads followed that early core failure. Exact jobs and all complete raw logs are in [summary.json](summary.json).
+
+The browser executable key now includes actual trusted runner distribution ID/version emitted by the **existing reviewed verified-site setup**. Prior OS/architecture, pinned Playwright version, browser list and revision hash remain, with no restore fallback. Sandbox routing and npm tarball caches are unchanged. Playwright uses distinct distribution downloads under the same revision directory; a restored installation marker explains why `install --with-deps` did not replace the foreign ABI. The exact producer release is not proven.
+
+The CircleCI contract independently proves the historical narrow profile, the current global-code input closure, each omitted-extension failure, and unchanged nonJS/binary exclusions. All original parity inputs remain. Both required CircleCI and sandbox test files are now in the canonical verifier, with an ownership guard. The CircleCI parser is unchanged and continues rejecting unaudited native steps. An initial unpushed setup-step draft is retained as a rejected control rather than exempted from the parser.
+
+**Whole canonical verifier:674 total,673 passed,0 failed,1 existing conditional emitted-prop skip**, exit0 on Node22.23.4. All sparse-consumer/registry checks passed71/71; memory-bounded video76/76 and focused24/24 also passed. These overlap and are not summed. The canonical Ruby checker parsed81 workflows without duplicate keys. Initial incomplete local fixture/dependency attempts remain separate from acceptance.
+
+Code changes are five CI/test files only. The existing8CPU shards,7browser families,23file emitted gate, finalValidate, sandbox, historical pins, faults and holds remain. Corrected-head hosted acceptance is pending. This does not establish causes for unrelated historical WebKit page crashes or runner shutdowns. No workflow rerun, push, main merge, hold release or #401 work was performed by this lane.

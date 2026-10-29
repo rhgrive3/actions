@@ -6,13 +6,48 @@ import {beginNativeCombatWindow,inspectNativeCombatWindow,waitForNativeCombatWin
 
 function fixture(){
  let now=0;
- const G={match:{state:'playing'},level:{},mode:'match',actors:Array.from({length:8},()=>({})),time:12};
+ const coverage=[0.01,0];
+ const G={match:{state:'playing'},level:{},mode:'match',actors:Array.from({length:8},()=>({})),time:12,paint:{coverage:()=>coverage}};
  const probe={totalFrames:47,windowFrames:0,contextLost:false};
  const game={mapDef:{id:'kelpline'},frozen:false,_skipRender:false};
  const context=vm.createContext({__G:G,__inkwave:game,__gameplayProbe:probe,performance:{now:()=>now}});
  const run=(fn,arg)=>vm.runInContext(`(${fn.toString()})(${JSON.stringify(arg)??''})`,context);
- return {G,probe,game,run,at(ms,frames=0){now=ms;probe.totalFrames+=frames;probe.windowFrames+=frames;G.time+=frames/60;}};
+ return {G,probe,game,coverage,run,at(ms,frames=0){now=ms;probe.totalFrames+=frames;probe.windowFrames+=frames;G.time+=frames/60;}};
 }
+
+test('the hosted three-frame window waits for actual native paint without advancing the scene',()=>{
+ const f=fixture();f.coverage[0]=0;f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000});
+ f.at(5051.1,3);assert.equal(f.run(inspectNativeCombatWindow),false,'elapsed time and three frames do not prove paint');
+ const before={time:f.G.time,frames:f.probe.totalFrames,match:f.G.match,level:f.G.level,actors:[...f.G.actors]};
+ f.at(7000);assert.equal(f.run(inspectNativeCombatWindow),false);
+ assert.deepEqual({time:f.G.time,frames:f.probe.totalFrames,match:f.G.match,level:f.G.level,actors:[...f.G.actors]},before,'observation cannot paint, simulate or replace native owners');
+ f.coverage[1]=Number.MIN_VALUE;
+ const receipt=f.run(inspectNativeCombatWindow);assert.equal(receipt.frames,3);assert.deepEqual(Array.from(receipt.coverage),[0,Number.MIN_VALUE]);
+ f.coverage[1]=0;assert.deepEqual(Array.from(receipt.coverage),[0,Number.MIN_VALUE],'receipt retains an independent coverage snapshot');
+});
+
+test('missing or corrupt native paint observations fail closed',()=>{
+ const changes=[f=>delete f.G.paint,f=>f.G.paint={},f=>f.G.paint.coverage=()=>undefined,f=>f.G.paint.coverage=()=>[],f=>f.G.paint.coverage=()=>[0.1],f=>f.G.paint.coverage=()=>[0.1,NaN],f=>f.G.paint.coverage=()=>[Infinity,0],f=>f.G.paint.coverage=()=>[-1,0.1],f=>f.G.paint.coverage=()=>[0.1,,]];
+ for(const change of changes){const f=fixture();f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000});f.at(6000,3);change(f);assert.throws(()=>f.run(inspectNativeCombatWindow),/paint coverage/);}
+});
+
+test('a zero-paint window uses the existing bounded timeout and releases its lease',async()=>{
+ const f=fixture();f.coverage[0]=0;let captured=false;
+ const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(fn,arg,options){assert.deepEqual(options,{polling:100,timeout:125000});f.at(125000,30);assert.equal(f.run(fn,arg),false);throw Error('Timeout waiting for native paint');}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},()=>{captured=true;}),/Timeout/);
+ assert.equal(captured,false);assert.equal(f.probe.combatWindow,undefined);
+});
+
+test('paint clearing between readiness and atomic capture invalidates the retained lease',async()=>{
+ const f=fixture();let captured=false;
+ const page={async evaluate(fn,arg){return f.run(fn,arg);},async waitForFunction(fn,arg){f.at(6000,3);return {jsonValue:async()=>f.run(fn,arg),dispose:async()=>{}};}};
+ await assert.rejects(waitForNativeCombatWindow(page,{mapId:'kelpline',minimumMs:5000},async receipt=>{
+  f.coverage[0]=0;
+  await page.evaluate(id=>{const p=globalThis.__gameplayProbe;if(!p.combatWindow?.inspect||!p.combatWindow.inspect(id))throw Error('Native combat window invalid at capture');},receipt.leaseId);
+  captured=true;
+ }),/invalid at capture/);
+ assert.equal(captured,false);assert.equal(f.probe.combatWindow,undefined);
+});
 
 test('the hosted two-frame/5-second failure waits for a third actual frame without changing the native scene',()=>{
  const f=fixture();f.run(beginNativeCombatWindow,{mapId:'kelpline',minimumMs:5000});

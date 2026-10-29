@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "actualPublishedBase": "6443e33098d53742863ec2ca5dde3b3d4e1ce6e1",
+  "validatedCodeTree": "07eb520476442a8289f1a4b55656e5a91b6794dc",
+  "localBranch": "agent2/common-ci-review-6443-20261029",
+  "productRuntimeDiff": "none; exact allowed changes areQA/test/CIconfiguration anddata-onlyreceipts",
+  "changedCodeFiles": {
+    ".github/workflows/validate-inkwave-update.yml": "42bb48eb321432dc0390e41e4a98faa7c61e396dd5b08d4bf6ecebe1813ef6da",
+    "patches/network-replication/tests/added-combat-scans.test.mjs": "29ea52cb51129b904fd463127df1f1f4c0db2485a91e1de3d72b2da800c6a0b7",
+    "scripts/check-inkwave-combat-ceiling-browser.mjs": "a3f6d1ea8594fd7c7178fb2ae6be7f00832bfdf600c2fd28f1ecb3c1957b873b",
+    "scripts/ci/inkwave-test-suites.json": "0e4ce752c313533b24597d89fea0e56398becdf07944b4adbbf16adc34641df6",
+    "scripts/lib/inkwave-combat-ceiling-placement.mjs": "06e5684a4cb2d12abb73a9aa7d4ccb26223b103e34877d136c640eb560698e2b",
+    "scripts/lib/inkwave-native-combat-window.mjs": "10a787239b8b043a0fc98b6ce6b38b8d526c19fecb2fa461935c0743960a42a7",
+    "scripts/tests/inkwave-circleci-browser-lane.test.mjs": "5db2db9b890db7859dd388d1b43f0e3f1aa98a9d108a780677d64adf3a517340",
+    "scripts/tests/inkwave-combat-ceiling-placement.test.mjs": "bf8b1dfc9e788592ae45ddd33de5715562f55e4a7edef8fb2644b09708609ea7",
+    "scripts/tests/inkwave-native-combat-window.test.mjs": "9251160c0eeee19d2b8e97a80d3cf2871832f64b2dce70a0b128130d15e0b6ea",
+    "scripts/tests/inkwave-sandbox-runner-route.test.mjs": "2e950d5e347e20569e3e85e3528388abf0fc551f0309fc8845c37f2a453ffd62",
+    "scripts/tests/inkwave-test-suites.test.mjs": "98002d259bd71eba7d280ade3e47dbeaad0bc3cf887b8b0526b63159856e39f2"
+  },
+  "originalReviewCommits": [
+    [
+      "cf55295ffa176a60ff420811f196643dc1b81e17",
+      "83aadc4376e050c0ba22f60b020ff2d77d35d87e"
+    ],
+    [
+      "b178b98de682a8a963ec92a51092535bb8a0fe1c",
+      "311fdcf6b8ef6d20958f6069486304366ddb339a"
+    ],
+    [
+      "dfd8e99a2a4cfbfe611d78fc734b1c54e2b6acf7",
+      "25424956227d9ae59e34bd8b843afc7a790d5323"
+    ],
+    [
+      "f4e9fd0d8c713d97b211d31fe00f99dd989229ce",
+      "4a9a122a62b723dcfa11f6803f207d61d6705a7b"
+    ]
+  ],
+  "validation": {
+    "node": "22.23.4",
+    "verifier": {
+      "tests": 674,
+      "pass": 673,
+      "fail": 0,
+      "skip": 1,
+      "exit": 0
+    },
+    "runnerContracts": {
+      "tests": 83,
+      "pass": 83,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0
+    },
+    "focusedNative": {
+      "tests": 37,
+      "pass": 37,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0
+    },
+    "overlap": "Namedruns overlap; counts are not summed. Existing optional emitted-prop context skip remains, no newemitted acceptance claimed.",
+    "commands": [
+      {
+        "command": "node scripts/ci/run-inkwave-test-suite.mjs verifier"
+      },
+      {
+        "command": "node scripts/ci/run-inkwave-test-suite.mjs runner-contracts"
+      },
+      {
+        "command": "node --experimental-vm-modules --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-combat-ceiling-motion-epoch.test.mjs scripts/tests/inkwave-network-diagnostic-workflow.test.mjs patches/network-replication/tests/added-combat-scans.test.mjs"
+      }
+    ]
+  },
+  "sourceScopes": [
+    "Latestowner644 native prepaint readiness preserved, plus exactpositivepaint inside retainedlease/atomiccapture.",
+    "Actualdistribution/release cacheABI bound through existingverified-site setup; CircleCI parser/trustset untouched.",
+    "Historical/current sparseclosures andnonJSexclusions independentlychecked; requiredsourcecontracts registeredcanonical.",
+    "Oldscan retainedindependently underreviewed single-use policy, completefields/900streams/caps/retention controls retained.",
+    "Actual nativeowner generations observedwithoutrewrite beforeceilingcapture; same180pacedsteps+allpacket/HP/proof/ACK guards retained."
+  ],
+  "logs": [
+    {
+      "file": "verifier.tap.gz",
+      "rawSha256": "39ae7c2addbe330a3fdd30a8707facd3b306da4669f8598b091e9598eda018a0",
+      "rawBytes": 150532,
+      "gzipSha256": "6bbf93096ed91cb5d5064e8a3f43549aa3c7d959613a811d0b0ffb58bb2c4944",
+      "gzipBytes": 25458
+    },
+    {
+      "file": "runner-contracts.tap.gz",
+      "rawSha256": "0cee1538d6779f0059fdb49940c39bdb1c6ab0d9c1de81fa4759e0d03300d858",
+      "rawBytes": 21231,
+      "gzipSha256": "30c5012f39d1e213fbb5be0030625d66caae9f47d528c9e63fbbb3781efc47d5",
+      "gzipBytes": 4921
+    },
+    {
+      "file": "focused-native.tap.gz",
+      "rawSha256": "637c244fe00ca646dc685203058dd3d72d0477f65405116863e72070f46b4db4",
+      "rawBytes": 9053,
+      "gzipSha256": "ed985691531dccfb90bceb2aaf91e44fbebcfee9847d52e055828feeff31674a",
+      "gzipBytes": 2332
+    }
+  ],
+  "nextSteps": "Parent review, exactsource/artifactreadback, normalpropagationthroughalllatestPRancestors, separatelylatestownerdual-epochaddition, thennonforcepublish. Thislane hasnot pushed orrunworkflows.",
+  "limits": [
+    "Corrected-head hosted acceptance remainspending; noGPU/browser/hardware performanceclaim.",
+    "1665/1666 freshfire/contactforgeryremainunresolved. Sourcegenerationprerequisiterepairdoesnotcloseproductionauthoritygap.",
+    "No mainmerge,holdrelease,401workorweakenedoriginalgate.",
+    "Unrelatedhistorical3WebKitcrashes/4exit143shutdowns/1menutimeout underlyingcausesremainunproven."
+  ]
+}

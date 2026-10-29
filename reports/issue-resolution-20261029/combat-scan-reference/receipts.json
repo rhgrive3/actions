@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "base": "a8909c890d01439998263ffad3dd33d480e44ca5",
+  "codeCommit": "dfd8e99a2a4cfbfe611d78fc734b1c54e2b6acf7",
+  "changedCodePaths": [
+    "patches/network-replication/tests/added-combat-scans.test.mjs"
+  ],
+  "unchangedProductionRuntimeSha256": "64da9a703cff5e03f48605c8e2f394dc5937e223160557caf0c749e5084ab72a",
+  "unchangedFrozenFixtureSha256": "d4654efb2bed72cfc7f0ddbb5a978e6c691ac5056a5b907be87e9f0392d3bd7b",
+  "unchangedFrozenCombatModuleSha256": "ef7f13fb4c6b5b9af7a721ff4f189b2e6476954a9139f21814735eb6cb9bf0f4",
+  "hostedBefore": {
+    "job": 123305266006,
+    "run": 40830118038,
+    "tests": 1607,
+    "pass": 1605,
+    "fail": 1,
+    "skip": 1,
+    "failure": "stale pre-security reference maxUses2 versus intended current maxUses1"
+  },
+  "localBefore": {
+    "node": "24.19.0",
+    "tests": 4,
+    "pass": 3,
+    "fail": 1,
+    "skip": 0,
+    "exit": 1,
+    "command": "node --experimental-vm-modules --test --test-reporter=tap patches/network-replication/tests/added-combat-scans.test.mjs"
+  },
+  "changedFileAfter": {
+    "node": "22.23.4",
+    "tests": 7,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "command": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node --experimental-vm-modules --test --test-reporter=tap patches/network-replication/tests/added-combat-scans.test.mjs"
+  },
+  "focusedAfter": {
+    "node": "24.19.0",
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "command": "node --experimental-vm-modules --test --test-reporter=tap patches/network-replication/tests/added-combat-scans.test.mjs scripts/tests/inkwave-combat-provenance.test.mjs patches/network-replication/tests/combat-single-round-targets.test.mjs",
+    "overlap": "includes the same seven changed-file tests; do not add 7 and108 as distinct tests"
+  },
+  "logs": {
+    "before.tap.gz": {
+      "sha256": "37dad4c11f6d63628acf4626f0f3564cfd58cdfe9797aaad95a7667360a6c055",
+      "uncompressedSha256": "c5cfa5c3a7df99334c2aa48d46f9c5885e40fb108b16b1f42eab17c6665df9f5",
+      "uncompressedBytes": 14687
+    },
+    "node22.tap.gz": {
+      "sha256": "2b29d074b7f2cdf1f0ec2be65de74be87c3712eb037767f1f5760ad35edd7944",
+      "uncompressedSha256": "a08b71370f7969a3be77f0f8fa2ffab3924250c68f5bb2614982f64c8b1dc40e",
+      "uncompressedBytes": 2130
+    },
+    "focused.tap.gz": {
+      "sha256": "57fe846eb8cc75f0fd88aa912739b7fcb8675deca30d2accef164fd2799c9730",
+      "uncompressedSha256": "40e97d69ca33d7223442d01ce8348e0f6b02d5a609fb405d8de65d1ec176e816",
+      "uncompressedBytes": 23658
+    },
+    "hosted-shard2-failure.log.gz": {
+      "sha256": "919d793a7093cde6217c0bffe7ba528a90cf372aa6c448e9acaef44857d22074",
+      "uncompressedSha256": "fb62c08781313f64db596d2cb0b5e76015409696ec1d378a4e285365113a4b21",
+      "source": "original downloaded hosted raw job123305266006/run40830118038, retained unchanged"
+    }
+  },
+  "limits": [
+    "This is a strict test-reference policy alignment; production code and frozen historical fixture are byte-identical to base.",
+    "Modeled proof/admission tests and component-native flight/HP controls are source-only, not browser/socket/emitted/hardware validation.",
+    "Fresh-fire/contact forgery in production #1665/#1666 remains unresolved; the implemented security repair bounds second-body reuse only.",
+    "MOV-08b and Character holds remain unchanged."
+  ]
+}
