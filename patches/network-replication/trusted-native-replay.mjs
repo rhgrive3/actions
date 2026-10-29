@@ -3,6 +3,7 @@
 // gameplay owners must belong to that realm. Commands are requests, never
 // witnesses that can assign HP, ink, charge, grounded state or projectile data.
 import {createCanonicalWeaponActions} from './canonical-weapon-actions.mjs';
+import {finalDamageCredit} from '../splatoon3/runtime/final-damage.mjs';
 const sessions = new WeakMap(), contacts = new WeakMap(), realms = new WeakMap();
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 const integer = n => Number.isSafeInteger(n) && n >= 0;
@@ -45,11 +46,18 @@ function bindDamage(s, actor) {
   const native=actor.damage;
   actor.damage=function(amount,attacker,source,...args){
     if(!s.executing)throw Error('Private native actor outside authority scope');
-    const before=this.hp,alive=this.alive,life=this.netLife;
-    const result=native.call(this,amount,attacker,source,...args);
-    if(alive&&finite(before)&&this.hp<before&&s.actorSet.has(attacker))append(s,{
+    const before=this.hp,alive=this.alive,life=this.netLife,previous=s.damageScopes.get(this),armor=[],group=this.s3PendingHitGroup;
+    const creditBefore=s.actorSet.has(attacker)?finalDamageCredit(this,attacker,group):0;
+    s.damageScopes.set(this,{attacker,armor});
+    let result;
+    try{result=native.call(this,amount,attacker,source,...args);}
+    finally{if(previous)s.damageScopes.set(this,previous);else s.damageScopes.delete(this);}
+    const roundingCredit=s.actorSet.has(attacker)?Math.max(0,finalDamageCredit(this,attacker,group)-creditBefore):0;
+    const rawHpDelta=Math.max(0,before-this.hp),hpDelta=Math.min(Math.max(0,before),rawHpDelta),absorbed=armor.some(e=>e.absorbed>0||e.broken);
+    if(alive&&finite(before)&&(hpDelta>0||absorbed||roundingCredit>0)&&s.actorSet.has(attacker))append(s,{
       kind:'pvp',attacker:attacker.nid,attackerLife:attacker.netLife,
-      victim:this.nid,victimLife:life,source,damage:amount,hpBefore:before,hpAfter:this.hp,killed:!this.alive,
+      victim:this.nid,victimLife:life,source,damage:amount,requestedDamage:amount,hpDelta,rawHpDelta,roundingCredit,armor,
+      outcome:hpDelta>0?(absorbed?'armor-and-hp':'hp'):absorbed?'armor':'rounding-credit',hpBefore:before,hpAfter:this.hp,hpAfterClamped:Math.max(0,this.hp),lethal:this.hp<=0,killed:!this.alive,
     });
     return result;
   };
@@ -70,26 +78,29 @@ function bindBoss(s,boss) {
       const result=native.apply(this,args);
       if(finite(before)&&object.hp<before&&s.actorSet.has(attacker))append(s,{
         kind:object===this?'boss':'crablet',attacker:attacker.nid,attackerLife:attacker.netLife,
-        victim:object===this?-1:object.id,victimLife:0,source:source??'boss-native',damage:amount,hpBefore:before,hpAfter:object.hp,killed:!!object.dead,
+        victim:object===this?-1:object.id,victimLife:0,source:source??'boss-native',damage:amount,requestedDamage:amount,hpDelta:Math.min(Math.max(0,before),before-object.hp),rawHpDelta:before-object.hp,armor:[],outcome:'hp',hpBefore:before,hpAfter:object.hp,hpAfterClamped:Math.max(0,object.hp),lethal:object.hp<=0,killed:!!object.dead,
       });
       return result;
     };
   }
 }
 function validCommand(c,a) {
-  if(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).some(k=>!['nid','owner','life','input','aim','aimPoint'].includes(k)))return false;
+  if(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).some(k=>!['nid','owner','life','input','aim','aimPoint','cancel'].includes(k)))return false;
   if(c.nid!==a.nid||c.owner!==a.owner||c.life!==a.netLife||!Array.isArray(c.aim)||c.aim.length!==2||!c.aim.every(finite)||c.aimPoint!==undefined&&!triple(c.aimPoint))return false;
   const i=c.input;
-  return !!i&&typeof i==='object'&&!Array.isArray(i)&&!Object.keys(i).some(k=>!['fire','squid','sub','jump','special','booyah','move'].includes(k))&&
-    (i.booyah===undefined||typeof i.booyah==='boolean')&&
+  if(c.cancel!==undefined&&(!c.cancel||typeof c.cancel!=='object'||Array.isArray(c.cancel)||Object.keys(c.cancel).some(k=>!['fire','sub'].includes(k))||['fire','sub'].some(k=>typeof c.cancel[k]!=='boolean'||c.cancel[k]&&i?.[k]!==false)))return false;
+  return !!i&&typeof i==='object'&&!Array.isArray(i)&&!Object.keys(i).some(k=>!['fire','squid','sub','jump','special','booyah','throw','move'].includes(k))&&
+    ['booyah','throw'].every(k=>i[k]===undefined||typeof i[k]==='boolean')&&
     ['fire','squid','sub','jump','special'].every(k=>typeof i[k]==='boolean')&&Array.isArray(i.move)&&i.move.length===2&&i.move.every(finite)&&Math.hypot(...i.move)<=1+1e-12;
 }
 function applyCommand(c,a) {
   for(const k of ['fire','squid','sub','jump','special'])a.intent[k]=c.input[k];
   a.intent.booyah=!!c.input.booyah;
+  a.intent.throw=!!c.input.throw;
   a.intent.move.set(c.input.move[0],0,c.input.move[1]);
   [a.aimYaw,a.aimPitch]=c.aim;
   if(c.aimPoint)a.aimPoint.set(...c.aimPoint);
+  if(c.cancel)a.weaponRunner.cancelHold(c.cancel.fire,c.cancel.sub);
 }
 
 export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,time=0,world,roster,CharacterClass=api?.Character,commands=null}={}) {
@@ -100,14 +111,16 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
   const ids=new Set();
   for(const r of roster){
     if(!r||!integer(r.nid)||ids.has(r.nid)||typeof r.owner!=='string'||!r.owner||!integer(r.life)||![0,1].includes(r.team)||!integer(r.slot)||typeof r.weapon!=='string'||!api.WEAPONS?.[r.weapon]||!triple(r.position)||!finite(r.yaw))throw Error('Invalid trusted native spawn');
-    if(Object.keys(r).some(k=>!['nid','owner','life','team','slot','weapon','position','yaw','loadout','style'].includes(k)))throw Error('Owner result state cannot initialize native replay');
+    if(Object.keys(r).some(k=>!['nid','owner','life','team','slot','weapon','position','yaw','loadout','style','name','isLocal','isBot'].includes(k)))throw Error('Owner result state cannot initialize native replay');
+    if(r.name!==undefined&&typeof r.name!=='string'||r.isLocal!==undefined&&typeof r.isLocal!=='boolean'||r.isBot!==undefined&&typeof r.isBot!=='boolean')throw Error('Invalid trusted native identity/controller');
     ids.add(r.nid);
   }
   commands??=createCanonicalWeaponActions(api);
+  if(!commands||['register','prepare','apply','forget'].some(k=>typeof commands[k]!=='function'))throw Error('Native canonical command owner required');
   const token=Object.freeze({}),scene=new api.THREE.Scene(),camera=new api.THREE.PerspectiveCamera();
   camera.position.set(0,10000,0);
-  const s={api,epoch,random:random(seed),tick:0,serial:0,actors:new Map(),actorSet:new Set(),pending:new Set(),launches:[],closed:false,error:null,executing:false,commands,offs:[],context:{
-    scene,camera,renderer:null,fx:null,audio:null,input:null,local:null,netm:null,mode:'match',time,actors:[],projectiles:null,
+  const s={api,epoch,random:random(seed),tick:0,serial:0,actors:new Map(),actorSet:new Set(),pending:new Set(),launches:[],damageScopes:new Map(),closed:false,error:null,executing:false,commands,offs:[],context:{
+    scene,camera:Object.hasOwn(world,'camera')?world.camera:camera,renderer:null,fx:null,audio:null,input:null,local:null,netm:null,mode:'match',time,actors:[],projectiles:null,
     level:world.level,physics:world.physics,paint:world.paint,match:world.match,boss:null,
   },world};
   sessions.set(token,s);realms.set(api.G,s);
@@ -115,11 +128,12 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
     scope(s,()=>{
       s.context.projectiles=api.G.projectiles=new api.Projectiles(scene);
       for(const r of roster){
-        const a=new api.Actor({team:r.team,name:'trusted-native-'+r.nid,weapon:r.weapon,slot:r.slot,isLocal:false,isBot:false,CharacterClass,style:r.style});
+        const a=new api.Actor({team:r.team,name:r.name??'trusted-native-'+r.nid,weapon:r.weapon,slot:r.slot,isLocal:r.isLocal??false,isBot:r.isBot??false,CharacterClass,style:r.style});
         Object.assign(a,{nid:r.nid,owner:r.owner,remote:false});
         if(a.character)a.character.actor=a;
         if(r.loadout){a.s3||={};a.s3.loadout=clone(r.loadout);a.s3RefreshGear?.();}
         s.actors.set(r.nid,a);s.actorSet.add(a);s.context.actors.push(a);scene.add(a.character.root);
+        if(a.isLocal&&!s.context.local)s.context.local=api.G.local=a;
         bindDamage(s,a);
         // This trusted callback runs native lifecycle setup, e.g. initial Turf
         // Squid Spawn. It is not supplied by a wire event or owner snapshot.
@@ -135,6 +149,10 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
           if(s.launches.length>=256)s.launches.shift(); // bounded observation, never a gameplay quota
           s.launches.push(Object.freeze({tick:s.tick,time:api.G.time,nid:e.actor.nid,weapon:e.weapon,charge:e.charge??null,full:e.full??null,muzzle:e.muzzle?.toArray(),dir:e.dir?.toArray()}));
         }
+      }));
+      if(typeof api.on==='function')s.offs.push(api.on('actor:armorhit',e=>{
+        const damage=s.damageScopes.get(e.actor);
+        if(s.executing&&damage&&s.actorSet.has(damage.attacker))damage.armor.push({absorbed:finite(e.absorbed)?e.absorbed:0,broken:!!e.broken,kind:e.kind??'movement',core:!!e.core});
       }));
     });
   } catch(error) { s.error=String(error?.message||error);disposeTrustedNativeReplay(token);throw error; }
@@ -179,9 +197,9 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
 // effect from fire metadata, proximity, reported resources or a damage ceiling.
 export function peekTrustedNativeContact(token,claim) {
   const s=sessions.get(token);
-  if(!live(s)||!claim||Object.keys(claim).some(k=>!['epoch','tick','kind','attacker','attackerLife','victim','victimLife','source','damage'].includes(k)))return null;
+  if(!live(s)||!claim||Object.keys(claim).some(k=>!['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].includes(k)))return null;
   for(const t of s.pending){const c=contacts.get(t),r=c.record;
-    if(!c.used&&liveContact(s,r)&&['epoch','tick','kind','attacker','attackerLife','victim','victimLife','source','damage'].every(k=>Object.is(claim[k],r[k])))return t;
+    if(!c.used&&liveContact(s,r)&&['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].every(k=>Object.is(claim[k],r[k])))return t;
   }
   return null;
 }
@@ -194,7 +212,7 @@ export function inspectTrustedNativeReplay(token) {
   const s=sessions.get(token);if(!s)return null;
   return clone({epoch:s.epoch,tick:s.tick,time:s.context.time,closed:s.closed,error:s.error,contacts:s.pending.size,effects:[...s.pending].map(t=>contacts.get(t).record),launches:s.launches,
     boss:s.context.boss?{hp:s.context.boss.hp,dead:s.context.boss.dead,crablets:[...s.context.boss.crabs.values()].map(c=>({id:c.id,hp:c.hp,dead:c.dead}))}:null,
-    actors:[...s.actors.values()].map(a=>{const spawn=a.s3?.squidSpawn;return {nid:a.nid,owner:a.owner,life:a.netLife,weapon:a.weapon.id,ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,grounded:a.grounded,aimPoint:a.aimPoint.toArray(),charge:a.weaponRunner.charge,chargeT:a.weaponRunner.chargeT,cooldown:a.weaponRunner.cooldown,lastFire:a.lastFire,special:a.special,
+    actors:[...s.actors.values()].map(a=>{const spawn=a.s3?.squidSpawn;return {nid:a.nid,owner:a.owner,name:a.name,isLocal:a.isLocal,isBot:a.isBot,life:a.netLife,weapon:a.weapon.id,ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,grounded:a.grounded,aimPoint:a.aimPoint.toArray(),charge:a.weaponRunner.charge,chargeT:a.weaponRunner.chargeT,cooldown:a.weaponRunner.cooldown,lastFire:a.lastFire,special:a.special,
       squidSpawn:spawn?{phase:spawn.phase,wait:spawn.wait??0,t:spawn.t??0,playWait:spawn.playWait??0,target:spawn.target,from:spawn.from,to:spawn.to}:null,
       pose:Object.fromEntries(['hips','spine','chest','head','footL','footR'].flatMap(k=>{const b=a.character.bones?.[k];return b?[[k,{position:b.position.toArray(),quaternion:b.quaternion.toArray(),scale:b.scale.toArray()}]]:[];})),
     };})});
@@ -203,6 +221,14 @@ export function disposeTrustedNativeReplay(token) {
   const s=sessions.get(token);if(!s||s.closed)return;
   s.pending.clear();s.closed=true;
   for(const off of s.offs)off();s.offs.length=0;
-  try{scope(s,()=>{s.context.projectiles?.clear();for(const a of s.actors.values())a.character?.dispose?.();});}
+  const errors=[];
+  const release=fn=>{try{fn();}catch(error){errors.push(error);}};
+  try{scope(s,()=>{
+    release(()=>s.context.projectiles?.clear());
+    release(()=>s.context.boss?.dispose?.());
+    for(const a of s.actors.values())release(()=>a.character?.dispose?.());
+    release(()=>s.world.dispose?.());
+  });}
   finally{if(realms.get(s.api.G)===s)realms.delete(s.api.G);}
+  if(errors.length)throw new AggregateError(errors,'Native replay cleanup failed');
 }

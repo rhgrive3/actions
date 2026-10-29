@@ -1,0 +1,187 @@
+{
+  "runtimeSourceSHA256": "7a68fa0156b5b1cf59d2423e57f9b6f391f96f3b807d0b5f12b3f8960927a4a4",
+  "emittedSite": null,
+  "securityAcceptancePassed": false,
+  "rows": [
+    {
+      "target": "pvp",
+      "event": "absent",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 0,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "pvp",
+      "event": "foreign",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 0,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "pvp",
+      "event": "owner-authored",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 64,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 36,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "boss",
+      "event": "absent",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 0,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "boss",
+      "event": "foreign",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 0,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "boss",
+      "event": "owner-authored",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 964,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 36,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "crablet",
+      "event": "absent",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 0,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "crablet",
+      "event": "foreign",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 0,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    },
+    {
+      "target": "crablet",
+      "event": "owner-authored",
+      "before": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 100,
+        "projectiles": 0
+      },
+      "after": {
+        "hp": 100,
+        "bossHp": 1000,
+        "crabHp": 64,
+        "projectiles": 0
+      },
+      "unauthorizedDamage": 36,
+      "actualSenderWeaponInvocations": 0,
+      "actualReceiverProjectileContacts": 0,
+      "boundary": "real composed NetMatch and native Actor/Boss damage; display/flat world and Boss state stubbed; no socket/browser"
+    }
+  ]
+}

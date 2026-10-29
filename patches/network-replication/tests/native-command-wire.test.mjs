@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const wireModule=process.env.INKWAVE_BUILT_SITE?pathToFileURL(path.join(path.resolve(process.env.INKWAVE_BUILT_SITE),'patches/network-replication/native-command-wire.mjs')):new URL('../native-command-wire.mjs',import.meta.url);
+const {
  createNativeCommandRoomPolicy,nativeCommandCapability,admitNativeCommandPeer,
  attachNativeCommandEnvelope,prepareNativeCommandEnvelope,commitNativeCommandEnvelope,retireNativeCommandPeer,
  advanceNativeCommandLife,
-} from '../native-command-wire.mjs';
+}=await import(wireModule.href);
 const room=()=>createNativeCommandRoomPolicy({epoch:'match',build:'03523329',seed:123,roster:[{nid:1,owner:'A',life:1},{nid:2,owner:'B',life:1}]});
 function setup(){const p=room(),r=admitNativeCommandPeer(p,{from:'A',capability:nativeCommandCapability(p),at:100});assert.equal(r.ok,true);return {p,peer:r.peer};}
-const command=()=>({nid:1,owner:'A',life:1,input:{fire:true,squid:false,sub:false,jump:false,special:false,booyah:false,move:[.2,.3]},aim:[.1,.2],aimPoint:[3,2,8]});
+const command=()=>({nid:1,owner:'A',life:1,input:{fire:true,squid:false,sub:false,jump:false,special:false,booyah:false,throw:false,move:[.2,.3]},aim:[.1,.2],aimPoint:[3,2,8]});
 const frames=(n=1,start=1,time=1000)=>Array.from({length:n},(_,i)=>({tick:start+i,dt:1/60,sourceTime:time+(i+1)/60,commands:[command()]}));
 const encode=(p,fs=frames(),sequence=1)=>attachNativeCommandEnvelope({k:'t',a:[[1,2,3]],e:[[1,'ev','weapon:fire',{a:1}]]},p,{from:'A',sequence,frames:fs});
 const plain=x=>JSON.parse(JSON.stringify(x));
@@ -84,4 +87,10 @@ test('rejoining cannot mint another elapsed budget or reset native input chronol
  const {p,peer}=setup(),request={from:'A',capability:nativeCommandCapability(p),at:100};
  assert.equal(admitNativeCommandPeer(p,request).reason,'native-command-owner-already-enrolled');
  retireNativeCommandPeer(peer);assert.equal(admitNativeCommandPeer(p,{...request,at:200}).reason,'native-command-owner-already-enrolled');
+});
+test('native hold cancellation survives sidecar coding and cannot be paired with held fire',()=>{
+ const {p,peer}=setup(),fs=frames();fs[0].commands[0].input.fire=false;fs[0].commands[0].cancel={fire:true,sub:false};
+ const q=encode(p,fs),prepared=prepareNativeCommandEnvelope(peer,q,{from:'A',at:101});assert.equal(prepared.ok,true);assert.deepEqual(prepared.frames,fs);
+ fs[0].commands[0].input.fire=true;assert.throws(()=>encode(p,fs),/cancellation/);
+ const forged=plain(q);forged.nc.frames[0][3][0][2]|=1;assert.equal(prepareNativeCommandEnvelope(peer,forged,{from:'A',at:101}).ok,false);
 });

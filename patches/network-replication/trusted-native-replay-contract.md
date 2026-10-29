@@ -24,9 +24,10 @@ adapter must preserve world/match/soft-push/Boss order. They are not network
 callbacks. Native early-return action owners, resource updates, cooldown,
 multi-projectile output and collisions are retained.
 
-Native positive HP changes produce private contact capabilities. A claim can
+Native HP, observed armor absorption/break and actual fractional rounding credit
+produce private effect capabilities. A claim can
 only select an already executed effect with the same epoch, frame, attacker,
-attacker life, victim/life, source and native requested amount. Copying a token
+attacker life, victim/life, source, authority effect serial and native requested amount. Copying a token
 or a record cannot commit it. Commit is one-use and validates current lives;
 fault/disposal revoke all outstanding contacts. Separate victim/phase contacts
 are separate effects: a blast is not globally consumed by its first victim.
@@ -34,6 +35,19 @@ Requested amount and final HP change are both recorded because native armor,
 rounding and overkill can differ. This selector is not yet a wire hit decoder:
 wire cumulative groups, Boss/crablet aliases, delayed claims and generation
 handoff need a complete authenticated adapter before mandatory admission.
+
+`damage` is an alias of `requestedDamage`, the amount passed to the native
+damage owner, not an instruction to apply that amount to HP again. `hpDelta`
+counts removed available HP; `rawHpDelta` and `hpAfter` preserve the actual
+native values, which can briefly include negative HP before native delayed
+death runs. `hpAfterClamped`, `lethal` and the actual current `killed` flag are
+separate. Armor entries are observed native armor events scoped to the exact
+private Actor.damage invocation; native object multipliers can make absorbed
+armor differ from requested damage. Fractional `roundingCredit` comes from the
+actual final-damage ledger. Zero-HP armor absorption/break and admitted credit
+therefore remain effects. Pure invulnerability creates no HP/armor/credit effect;
+native flight/seen/contact behavior still executes unchanged. This is not a
+complete device, canopy, shield, kill-credit or other world-object effect model.
 
 The authority owns the native mulberry32 stream. Owner-reported spread, birth
 velocity or seed cannot initialize it. Current public clients do not share a
@@ -81,5 +95,17 @@ backward compatibility merely because its unchanged tuples round-trip.
 Independent first-spawn work confirms 398 source/native replay frames and the
 first full-charge event with equal body/life/resources. It also records a
 0.0006324268558987452-world-unit source/private Character muzzle difference.
-The cause has not been established. Neither full socket equivalence nor a
-1e-7 muzzle match is established by the fixed display tests or 65 emissions.
+Later independent controls match the trusted native name and camera context and
+remove this fixture's difference bit-for-bit, while preserving the old differing
+condition. That Node/Charger result does not establish every public camera/LOD
+condition or socket equivalence for all65 native owners. The API preserves
+trusted name/isLocal/isBot and explicitly supplied world.camera (including null);
+camera values are not accepted from a hit claim.
+
+Optional `command.cancel:{fire,sub}` preserves native cancelHold behavior before
+Actor.update; it is not an ordinary button release. Both flags must be boolean
+and a cancelled button must be false in that frame. The draft v2 sidecar keeps
+these two flags alongside the seven held-input bits, without changing any old
+tuple. A source negative control substitutes the earlier 310eb4b1 replay leaf
+while retaining the same current test/native fixture: the legitimate cancellation
+regression fails, whereas the current leaf passes without firing a release shot.

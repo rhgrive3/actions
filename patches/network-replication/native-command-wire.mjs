@@ -11,7 +11,7 @@ const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const keys=(o,names)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).every(k=>names.includes(k));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const bytes=x=>new TextEncoder().encode(JSON.stringify(x)).byteLength;
-const buttons=['fire','squid','sub','jump','special','booyah'];
+const buttons=['fire','squid','sub','jump','special','booyah','throw'];
 const fail=reason=>({ok:false,reason});
 function policy(p){const s=policies.get(p);if(!s)throw Error('Trusted native command room policy required');return s;}
 export function createNativeCommandRoomPolicy({epoch,build,seed,roster}={}){
@@ -40,10 +40,12 @@ export function advanceNativeCommandLife(p,{nid,owner,previousLife,life}={}){
   return true;
 }
 function encodeCommand(c,room,from){
-  if(!keys(c,['nid','owner','life','input','aim','aimPoint']))throw Error('Invalid native command fields');
+  if(!keys(c,['nid','owner','life','input','aim','aimPoint','cancel']))throw Error('Invalid native command fields');
   const actor=room.actors.get(c.nid),i=c.input;
-  if(!actor||actor.owner!==from||c.owner!==from||c.life!==actor.life||!keys(i,[...buttons,'move'])||buttons.slice(0,5).some(k=>typeof i[k]!=='boolean')||i.booyah!==undefined&&typeof i.booyah!=='boolean'||!Array.isArray(i.move)||i.move.length!==2||!i.move.every(finite)||Math.hypot(...i.move)>1+1e-12||!Array.isArray(c.aim)||c.aim.length!==2||!c.aim.every(finite)||!Array.isArray(c.aimPoint)||c.aimPoint.length!==3||!c.aimPoint.every(finite))throw Error('Invalid native command request');
-  return [c.nid,c.life,buttons.reduce((n,k,index)=>n|(i[k]?1<<index:0),0),...i.move,...c.aim,...c.aimPoint];
+  if(!actor||actor.owner!==from||c.owner!==from||c.life!==actor.life||!keys(i,[...buttons,'move'])||buttons.slice(0,5).some(k=>typeof i[k]!=='boolean')||['booyah','throw'].some(k=>i[k]!==undefined&&typeof i[k]!=='boolean')||!Array.isArray(i.move)||i.move.length!==2||!i.move.every(finite)||Math.hypot(...i.move)>1+1e-12||!Array.isArray(c.aim)||c.aim.length!==2||!c.aim.every(finite)||!Array.isArray(c.aimPoint)||c.aimPoint.length!==3||!c.aimPoint.every(finite))throw Error('Invalid native command request');
+  if(c.cancel!==undefined&&(!keys(c.cancel,['fire','sub'])||['fire','sub'].some(k=>typeof c.cancel[k]!=='boolean'||c.cancel[k]&&i[k])))throw Error('Invalid native input cancellation');
+  const bits=buttons.reduce((n,k,index)=>n|(i[k]?1<<index:0),0)|(c.cancel?.fire?128:0)|(c.cancel?.sub?256:0);
+  return [c.nid,c.life,bits,...i.move,...c.aim,...c.aimPoint];
 }
 function decodeEnvelope(p,from,nc){
   const room=policy(p);
@@ -53,9 +55,9 @@ function decodeEnvelope(p,from,nc){
     if(!Array.isArray(row)||row.length!==4||!safe(row[0])||!finite(row[1])||row[1]<=0||row[1]>NATIVE_COMMAND_LIMITS.dt||!finite(row[2])||!Array.isArray(row[3])||!row[3].length||row[3].length>32)throw Error('Invalid command frame');
     const seen=new Set(),commands=[];
     for(const c of row[3]){
-      if(!Array.isArray(c)||c.length!==10||!c.every(finite)||!safe(c[0])||!safe(c[1])||!safe(c[2])||c[2]>63||seen.has(c[0]))throw Error('Invalid native command row');
+      if(!Array.isArray(c)||c.length!==10||!c.every(finite)||!safe(c[0])||!safe(c[1])||!safe(c[2])||c[2]>511||(c[2]&128)&&(c[2]&1)||(c[2]&256)&&(c[2]&4)||seen.has(c[0]))throw Error('Invalid native command row');
       const a=room.actors.get(c[0]);if(!a||a.owner!==from||a.life!==c[1]||Math.hypot(c[3],c[4])>1+1e-12)throw Error('Foreign actor or invalid command');
-      seen.add(c[0]);commands.push({nid:c[0],owner:from,life:c[1],input:{...Object.fromEntries(buttons.map((k,i)=>[k,!!(c[2]&(1<<i))])),move:[c[3],c[4]]},aim:[c[5],c[6]],aimPoint:[c[7],c[8],c[9]]});
+      seen.add(c[0]);commands.push({nid:c[0],owner:from,life:c[1],input:{...Object.fromEntries(buttons.map((k,i)=>[k,!!(c[2]&(1<<i))])),move:[c[3],c[4]]},aim:[c[5],c[6]],aimPoint:[c[7],c[8],c[9]],...(c[2]&384?{cancel:{fire:!!(c[2]&128),sub:!!(c[2]&256)}}:{})});
     }
     // No omitted actor can be silently treated as holding its previous input.
     if([...room.actors.values()].some(a=>a.owner===from&&!seen.has(a.nid)))throw Error('Incomplete owned frame');
