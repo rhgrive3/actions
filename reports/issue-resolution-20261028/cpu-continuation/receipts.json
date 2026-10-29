@@ -1,0 +1,703 @@
+{
+  "schema": 1,
+  "scope": "Software output/work-count evidence. Timing calibration is inconclusive; no whole-frame/FPS speedup or nondegradation claim.",
+  "commits": {
+    "rollerRuntimeAndTests": "4e95f49607057f40dc520a5277d380c7ae8746e9",
+    "commonHairAllocationFix": "be1c4b71bbe24830fcaeb981a54652d15a86e7d6",
+    "optimizedPrivateMotionHelper": "7a4ab4aee3323c0212b2f68cd815e32e740725b6"
+  },
+  "trials": [
+    {
+      "label": "a1",
+      "sourceSha": "035233299348e5c3527f6106b98e721ed2dfd011",
+      "contentHash": "d731f060585d5a942d07d3675d5f55e32afdafedc04da5f48c0cf936a7a4fa08",
+      "harness": {
+        "benchmark-inkwave-composed-cpu.mjs": "0d159e2260bcccabe1c5c29372f06625f476c47e9c1aad9d587f3a6d378bed78",
+        "lib/inkwave-cpu-gameplay-digest.mjs": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f",
+        "lib/inkwave-cpu-counters.mjs": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672",
+        "lib/inkwave-cpu-trace.mjs": "dd811d9bc69d13cfb2bd9d5c571085108549e84fd303a153e6a1d29ba5462a28",
+        "lib/inkwave-runtime-evidence.mjs": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+        "lib/inkwave-sandbox-browser.mjs": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+      },
+      "environment": {
+        "node": "v22.23.4",
+        "cpu": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "high",
+        "weapon": "s3-roller-compact",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": true,
+        "browser": "151.0.7922.34"
+      },
+      "stage": "tidewater",
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "s3-roller-compact",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 4096,
+        "ppm": 27.6,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "high",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1530,
+          "meshes": 491,
+          "visibleMeshes": 156,
+          "vertices": 3238060,
+          "visibleVertices": 684567,
+          "indices": 15897876,
+          "bones": 8904,
+          "geometries": 331,
+          "materials": 159,
+          "textures": 12
+        }
+      },
+      "frames": 300,
+      "hz": 60,
+      "ticks": 300,
+      "minActors": 8,
+      "minLiving": 8,
+      "drumWork": {
+        "updates": 380,
+        "localToWorld": 190
+      },
+      "digest": 3421516292,
+      "counts": [
+        5367,
+        5205
+      ],
+      "cpuFrameMs": {
+        "mean": 11.080666666589677,
+        "p50": 9.599999997764826,
+        "p95": 25.599999997764826,
+        "p99": 31.899999998509884,
+        "max": 39.900000002235174
+      },
+      "threadCpuMs": {
+        "TaskDuration": 2719.245,
+        "ScriptDuration": 5.6979999999999995,
+        "ThreadTime": 2733.638
+      },
+      "gc": {
+        "status": "observed",
+        "events": 10,
+        "pauses": 5,
+        "pauseMs": 13.113999999999999,
+        "maxPauseMs": 5.983,
+        "windowMs": 3332.879
+      },
+      "bvh": {
+        "queries": 0,
+        "triangleTests": 0
+      },
+      "draw": {
+        "frame": 300,
+        "calls": 2,
+        "triangles": 136,
+        "points": 0,
+        "lines": 0
+      },
+      "resources": {
+        "geometries": 0,
+        "textures": 0
+      },
+      "scene": {
+        "objects": 1476,
+        "meshes": 451,
+        "visibleMeshes": 104,
+        "vertices": 3162738,
+        "visibleVertices": 566190,
+        "indices": 15786600,
+        "bones": 8904,
+        "geometries": 333,
+        "materials": 158,
+        "textures": 12
+      },
+      "heap": {
+        "before": {
+          "Documents": 2,
+          "Nodes": 2175,
+          "JSHeapUsedSize": 93689356,
+          "JSHeapTotalSize": 156430336
+        },
+        "after": {
+          "Documents": 2,
+          "Nodes": 2015,
+          "JSHeapUsedSize": 57258924,
+          "JSHeapTotalSize": 161419264
+        }
+      }
+    },
+    {
+      "label": "b1",
+      "sourceSha": "4e95f49607057f40dc520a5277d380c7ae8746e9",
+      "contentHash": "c20f6b85c751af3f3c91a34246f6b85e82b66cc46bdd2e0f24f065dfa8710190",
+      "harness": {
+        "benchmark-inkwave-composed-cpu.mjs": "0d159e2260bcccabe1c5c29372f06625f476c47e9c1aad9d587f3a6d378bed78",
+        "lib/inkwave-cpu-gameplay-digest.mjs": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f",
+        "lib/inkwave-cpu-counters.mjs": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672",
+        "lib/inkwave-cpu-trace.mjs": "dd811d9bc69d13cfb2bd9d5c571085108549e84fd303a153e6a1d29ba5462a28",
+        "lib/inkwave-runtime-evidence.mjs": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+        "lib/inkwave-sandbox-browser.mjs": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+      },
+      "environment": {
+        "node": "v22.23.4",
+        "cpu": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "high",
+        "weapon": "s3-roller-compact",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": true,
+        "browser": "151.0.7922.34"
+      },
+      "stage": "tidewater",
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "s3-roller-compact",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 4096,
+        "ppm": 27.6,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "high",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1530,
+          "meshes": 491,
+          "visibleMeshes": 156,
+          "vertices": 3238060,
+          "visibleVertices": 684567,
+          "indices": 15897876,
+          "bones": 8904,
+          "geometries": 331,
+          "materials": 159,
+          "textures": 12
+        }
+      },
+      "frames": 300,
+      "hz": 60,
+      "ticks": 300,
+      "minActors": 8,
+      "minLiving": 8,
+      "drumWork": {
+        "updates": 190,
+        "localToWorld": 190
+      },
+      "digest": 3421516292,
+      "counts": [
+        5367,
+        5205
+      ],
+      "cpuFrameMs": {
+        "mean": 20.356666666616995,
+        "p50": 16.599999997764826,
+        "p95": 45.80000000074506,
+        "p99": 55.79999999701977,
+        "max": 72.69999999925494
+      },
+      "threadCpuMs": {
+        "TaskDuration": 3211.37,
+        "ScriptDuration": 2.3280000000000003,
+        "ThreadTime": 3216.975
+      },
+      "gc": {
+        "status": "observed",
+        "events": 10,
+        "pauses": 5,
+        "pauseMs": 13.843,
+        "maxPauseMs": 4.799,
+        "windowMs": 6137.94
+      },
+      "bvh": {
+        "queries": 0,
+        "triangleTests": 0
+      },
+      "draw": {
+        "frame": 300,
+        "calls": 2,
+        "triangles": 136,
+        "points": 0,
+        "lines": 0
+      },
+      "resources": {
+        "geometries": 0,
+        "textures": 0
+      },
+      "scene": {
+        "objects": 1476,
+        "meshes": 451,
+        "visibleMeshes": 104,
+        "vertices": 3162738,
+        "visibleVertices": 566190,
+        "indices": 15786600,
+        "bones": 8904,
+        "geometries": 333,
+        "materials": 158,
+        "textures": 12
+      },
+      "heap": {
+        "before": {
+          "Documents": 2,
+          "Nodes": 2050,
+          "JSHeapUsedSize": 75425252,
+          "JSHeapTotalSize": 149360640
+        },
+        "after": {
+          "Documents": 2,
+          "Nodes": 2231,
+          "JSHeapUsedSize": 78995612,
+          "JSHeapTotalSize": 155525120
+        }
+      }
+    },
+    {
+      "label": "a2",
+      "sourceSha": "035233299348e5c3527f6106b98e721ed2dfd011",
+      "contentHash": "d731f060585d5a942d07d3675d5f55e32afdafedc04da5f48c0cf936a7a4fa08",
+      "harness": {
+        "benchmark-inkwave-composed-cpu.mjs": "0d159e2260bcccabe1c5c29372f06625f476c47e9c1aad9d587f3a6d378bed78",
+        "lib/inkwave-cpu-gameplay-digest.mjs": "a953bd74e9c81227b081621b8f7795fb401bfa8f9422cf4e10be04d3c4f9555f",
+        "lib/inkwave-cpu-counters.mjs": "daa35f74cc2e74fcf9896d46d247a74f4ae9cef6f89b376b7cd31af152293672",
+        "lib/inkwave-cpu-trace.mjs": "dd811d9bc69d13cfb2bd9d5c571085108549e84fd303a153e6a1d29ba5462a28",
+        "lib/inkwave-runtime-evidence.mjs": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db",
+        "lib/inkwave-sandbox-browser.mjs": "33620135dd551f8179568c12c697e3468782eb45e5ac09acf899603157fc5109"
+      },
+      "environment": {
+        "node": "v22.23.4",
+        "cpu": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 5,
+        "cpuQuota": "400000 100000",
+        "quality": "high",
+        "weapon": "s3-roller-compact",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": true,
+        "browser": "151.0.7922.34"
+      },
+      "stage": "tidewater",
+      "initial": {
+        "actors": 8,
+        "bots": 7,
+        "roster": [
+          "s3-roller-compact",
+          "s3-saber-lite-02",
+          "s3-charger-keeper",
+          "s3-shooter-blaze-01",
+          "blaster",
+          "s3-shooter-triplemiddle-02",
+          "s3-blaster-lightlong",
+          "s3-stringer-normal-02"
+        ],
+        "native": false,
+        "sourceCharacters": 8,
+        "triangles": 0,
+        "paintFaces": 285,
+        "atlas": 4096,
+        "ppm": 27.6,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "high",
+          "frameRate": "auto",
+          "shadows": true,
+          "bloom": true,
+          "cameraShake": 1,
+          "showFps": false,
+          "debugMode": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "musicVolume": 0,
+          "audioVolume": 0,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "scene": {
+          "objects": 1530,
+          "meshes": 491,
+          "visibleMeshes": 156,
+          "vertices": 3238060,
+          "visibleVertices": 684567,
+          "indices": 15897876,
+          "bones": 8904,
+          "geometries": 331,
+          "materials": 159,
+          "textures": 12
+        }
+      },
+      "frames": 300,
+      "hz": 60,
+      "ticks": 300,
+      "minActors": 8,
+      "minLiving": 8,
+      "drumWork": {
+        "updates": 380,
+        "localToWorld": 190
+      },
+      "digest": 3421516292,
+      "counts": [
+        5367,
+        5205
+      ],
+      "cpuFrameMs": {
+        "mean": 17.73533333328863,
+        "p50": 12.700000002980232,
+        "p95": 44.599999997764826,
+        "p99": 61.19999999925494,
+        "max": 65.80000000074506
+      },
+      "threadCpuMs": {
+        "TaskDuration": 3212.2230000000004,
+        "ScriptDuration": 2.437,
+        "ThreadTime": 3215.629
+      },
+      "gc": {
+        "status": "observed",
+        "events": 10,
+        "pauses": 5,
+        "pauseMs": 13.719,
+        "maxPauseMs": 6.729,
+        "windowMs": 5333.243
+      },
+      "bvh": {
+        "queries": 0,
+        "triangleTests": 0
+      },
+      "draw": {
+        "frame": 300,
+        "calls": 2,
+        "triangles": 136,
+        "points": 0,
+        "lines": 0
+      },
+      "resources": {
+        "geometries": 0,
+        "textures": 0
+      },
+      "scene": {
+        "objects": 1476,
+        "meshes": 451,
+        "visibleMeshes": 104,
+        "vertices": 3162738,
+        "visibleVertices": 566190,
+        "indices": 15786600,
+        "bones": 8904,
+        "geometries": 333,
+        "materials": 158,
+        "textures": 12
+      },
+      "heap": {
+        "before": {
+          "Documents": 2,
+          "Nodes": 2054,
+          "JSHeapUsedSize": 71237576,
+          "JSHeapTotalSize": 151093248
+        },
+        "after": {
+          "Documents": 2,
+          "Nodes": 2233,
+          "JSHeapUsedSize": 78800028,
+          "JSHeapTotalSize": 158470144
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "a1-result.json.gz": {
+      "rawSha256": "7e7f7979b6eeaca202239db7dbef609edc6ae148ab19e174980ec84cd58c9d7c",
+      "rawBytes": 101693,
+      "gzipSha256": "11d689e11d66a96079cb1ffdbeb84928859dfc1fafc475884aa3a2bb953fa647",
+      "gzipBytes": 11501
+    },
+    "a1-tidewater-trace.json.gz": {
+      "rawSha256": "2cf1d3563abb13ba825ba5dbc9e99ca52df1a5092b6eabae04d6b825c952baf0",
+      "rawBytes": 388348,
+      "gzipSha256": "61c48aa7ca8df41dbbe1967e71ea09b60d0bd2e527ec36323b00f3453624a666",
+      "gzipBytes": 42144
+    },
+    "b1-result.json.gz": {
+      "rawSha256": "e37154adfbe46a7f83411afb81795d528d8693c3f8c7eefaf201e1e51325690f",
+      "rawBytes": 98957,
+      "gzipSha256": "0a13f20bbed174b391f18afab29245a3266f1f9b811b42f2a0c00aaa869e01b2",
+      "gzipBytes": 11418
+    },
+    "b1-tidewater-trace.json.gz": {
+      "rawSha256": "acacbea8cd279386c6f87687ae706b67ae8c665f0c52b9a671febbaabe5d2a85",
+      "rawBytes": 424570,
+      "gzipSha256": "1ff44abb8d10b915a3d614f8465e2f9acc91c5e00584a8236557c54799c5fe52",
+      "gzipBytes": 47507
+    },
+    "a2-result.json.gz": {
+      "rawSha256": "aab9b9fc3fcc077abbf8019953d820f1682271517215c75cd7aa1eb83e78ce22",
+      "rawBytes": 98921,
+      "gzipSha256": "0c4fce3211a4e796cb062ab17445c4ae85c7ae355c565203de0b417bca8089fe",
+      "gzipBytes": 11416
+    },
+    "a2-tidewater-trace.json.gz": {
+      "rawSha256": "04dba92b732ec6858a3001d1207faa6d489f26ca80f397f085b90280b9ff4f8e",
+      "rawBytes": 385064,
+      "gzipSha256": "c9039641b99006efed242c86ed7fdf011d645001aaa9bbb2240febc15c19d913",
+      "gzipBytes": 44522
+    },
+    "comparison.json.gz": {
+      "rawSha256": "c526cbd961023a0b124f9093fd3ecb1c9baba6af6f8cbd8217715f99f97a00f9",
+      "rawBytes": 1427,
+      "gzipSha256": "9c81fc2600e827b02baae77420cc727aca29e19c20649b127f3320329787e1f9",
+      "gzipBytes": 556
+    },
+    "comparison.log.gz": {
+      "rawSha256": "a7855efdde9d4f6a7e5c1f5c550d328893a330df92501088a751cda5da9f6ce1",
+      "rawBytes": 1016,
+      "gzipSha256": "8d7c14f24034d3ec0d2e915b8ff1e14fbb02434c6216708f4678bc7e77d899ef",
+      "gzipBytes": 520
+    },
+    "diagnostics.tap.gz": {
+      "rawSha256": "88fa81567b9a7446c726ea099e0f8e75d11135f82574c38c2362bb2562a52bd8",
+      "rawBytes": 1382,
+      "gzipSha256": "466138a1bc5eb4f08660252ecdec1fd1b36c18cfe78e059d72dece820c50477b",
+      "gzipBytes": 491
+    },
+    "normal-raf-analysis.json.gz": {
+      "rawSha256": "6dea580cc5d9aaf5813c651ca8b4091bf779d152fc20adb11fcf38a83f349998",
+      "rawBytes": 319162,
+      "gzipSha256": "115400d96a48d0a8800dd6a2370a49f597840fdfe235553b50fba942226154bf",
+      "gzipBytes": 12768
+    },
+    "normal-raf-analysis.log.gz": {
+      "rawSha256": "a7a1f7b8db10135177814e02d5b1389b2240cb4e64b04b8051f4f5d8e8ab1842",
+      "rawBytes": 6743,
+      "gzipSha256": "e944c336d8891306883f32a0285c335ea0825a9bb7e4e80a6fe835de72209d6d",
+      "gzipBytes": 1158
+    },
+    "roller-world-integration.tap.gz": {
+      "rawSha256": "44c23109dd7ff8d9b4d3c351670443083a627d9acd2e4fb2299873600f37e4fa",
+      "rawBytes": 7705,
+      "gzipSha256": "11f2467900840f3a3a43f04974201b75de11a9496a2b021fd05e3e3a3600799c",
+      "gzipBytes": 1486
+    },
+    "roller-world-emitted.tap.gz": {
+      "rawSha256": "2337bce25d77b00532e54714561535b0dc6e5524cf75ad0f238c43d8a369c58d",
+      "rawBytes": 1198,
+      "gzipSha256": "5317e77102541d24565434c4fcc91994aa56001d712218cf53bf79c4e9ddad33",
+      "gzipBytes": 446
+    },
+    "roller-world-source-final.tap.gz": {
+      "rawSha256": "046fc19c0a626d51605b14b01499c71590fb60021c57d134a53d2e29417aac4d",
+      "rawBytes": 1197,
+      "gzipSha256": "8ead7768cbe5dab7cd2764df79c25dce06b5537be00fd8faf0fd80e80087ea49",
+      "gzipBytes": 445
+    },
+    "hair-allocation-root.tap.gz": {
+      "rawSha256": "0d8e42032af534fda0a3a892e36260f6d5c967d6dcf5b68b963287465018a4b5",
+      "rawBytes": 1119,
+      "gzipSha256": "03da5457a37cbf646ae22490f0ab05451fdf004dd5c3cb9ee50b2f91ec6f31eb",
+      "gzipBytes": 557
+    },
+    "hair-allocation-opt.tap.gz": {
+      "rawSha256": "517b792123f28a904e8397e959e4c2b5951704b93451205036de0134193d6288",
+      "rawBytes": 2095,
+      "gzipSha256": "1901a72f348fb773a16f3a62433542b3c18614872d2620bff177237cf2889124",
+      "gzipBytes": 827
+    },
+    "normal-raf-result.json.gz": {
+      "rawSha256": "de13b8427b013114155344447fc2ad783ade0f109a2e3e8588eb5c0574a92be7",
+      "rawBytes": 201621,
+      "gzipSha256": "bf7dc82ca6ebc023ac17bcf897f11d7f28e610ce19c3dc8fcf5a4fc7fc196146",
+      "gzipBytes": 12306
+    },
+    "normal-raf-combat-0.cpuprofile.gz": {
+      "rawSha256": "b0963d431d194a5bc9992c4769fa421b513973c00ac9d523464242bc80ed87c5",
+      "rawBytes": 221908,
+      "gzipSha256": "94955a91b1c8ec70cb521dcd59ee293ba39f3034fbb68528aec1c47e49b6fa20",
+      "gzipBytes": 21323
+    },
+    "normal-raf-combat-1.cpuprofile.gz": {
+      "rawSha256": "a526e3bdeb01b606b2a19f228817207ffb52c3fc6674c30359f3e3df151fd55b",
+      "rawBytes": 186454,
+      "gzipSha256": "e4c3de3d66a5f6dde89cd0da42898d832b442ae805f09f23478dbcef77f26f35",
+      "gzipBytes": 18730
+    }
+  }
+}

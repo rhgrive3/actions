@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 export function compareComposedCpu(before,repeat,after){
- const harnessFiles=['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'];
+ const harnessFiles=['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-sandbox-browser.mjs'];
  for(const report of [before,repeat,after]){
   assert.equal(report.schema,2,'measured-window counter schema');assert.equal(report.status,'passed');assert.match(report.sourceSha,/^[a-f0-9]{40}$/);
   assert.deepEqual(Object.keys(report.harness||{}).sort(),[...harnessFiles].sort(),'complete benchmark implementation receipt');
@@ -24,7 +24,7 @@ export function compareComposedCpu(before,repeat,after){
  return before.scenarios.map((base,i)=>{
   for(const row of [repeat.scenarios[i],after.scenarios[i]]){
    assert.deepEqual(row.initial,base.initial,'same loaded geometry, roster, source readiness and settings');
-   for(const key of ['frames','hz','ticks','digest','digests','counts','state','bvh','draw','resources','scene'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
+   for(const key of ['frames','hz','ticks','minActors','minLiving','digest','digests','counts','state','bvh','draw','resources','scene'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
    assert.equal(row.contextLost,false);assert.deepEqual(row.errors,[]);
   }
   return {stage:base.stage,status:'exact-recorded-state-parity',beforeMs:base.cpuFrameMs,repeatMs:repeat.scenarios[i].cpuFrameMs,afterMs:after.scenarios[i].cpuFrameMs,
