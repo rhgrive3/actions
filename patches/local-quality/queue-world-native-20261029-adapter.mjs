@@ -109,7 +109,27 @@ function carrierSkinWeights(p) {
     patch("      const x = EYEB.xh * Math.cos(c.phi), [tu, tl] = lidTravel(x);\n      const up = Math.sin(c.phi) >= 0;", "      const [tu, tl] = marginKernel[k].travel;\n      const up = marginKernel[k].up;");
     patch("  const bagRing = (sgn, dy, dz, sx) => cols.map((c, k) => {\n    const x0 = contact[k].clone().sub(MF.C).dot(X);\n    const a = x0 / MF.hw;\n    const y = (c.up ? 1 : -1) * dy * Math.sqrt(Math.max(0, 1 - Math.min(1, a * a) ** 2) * 0.85 + 0.15);", "  const bagKernel = contact.map(p => { const x0=p.clone().sub(MF.C).dot(X), a=x0/MF.hw; return {x0,a,width:Math.sqrt(Math.max(0,1-Math.min(1,a*a)**2)*0.85+0.15)}; });\n  const bagRing = (sgn, dy, dz, sx) => cols.map((c, k) => {\n    const {x0,a,width} = bagKernel[k];\n    const y = (c.up ? 1 : -1) * dy * width;");
   }
-  if (rel === "src/fx/fx.js") patch("      X[x + 5] += X[x + 6] * dt;\n    }\n    for (let i = 0; i < pool.n; i++) {\n      const x = i * 14, i3 = i * 3, i4 = i * 4;","      X[x + 5] += X[x + 6] * dt;\n      const i4 = i * 4;");
+  if (rel === "src/fx/fx.js") {
+    const original = "      X[x + 5] += X[x + 6] * dt;\n    }\n    for (let i = 0; i < pool.n; i++) {\n      const x = i * 14, i3 = i * 3, i4 = i * 4;";
+    const combined = "      X[x + 5] += X[x + 6] * dt;\n      const i4 = i * 4;";
+    if (code.includes(original)) {
+      patch(original, combined);
+    } else {
+      // Wave 3-5 hoists _netSource/_netGeneration before the render loop.
+      // Do not fuse that loop into simulation: its netSrc/netGen bindings
+      // must stay in scope. Preserve both original loops and reject other drift.
+      const head = code.indexOf('  _updateSprites(pool, dt, additive) {');
+      const end = code.indexOf('  // ------------------------------------------------------------------ rings', head);
+      const slice = head < 0 || end <= head ? '' : code.slice(head, end);
+      const hoist = '    const netSrc = pool._netSource, netGen = pool._netGeneration;';
+      const spin = '      X[x + 5] += X[x + 6] * dt;';
+      const loop = '    for (let i = 0; i < pool.n; i++) {';
+      if (slice.split(hoist).length !== 2 || slice.split(spin).length !== 2 ||
+          slice.split(loop).length !== 3) {
+        throw Error('World/native 20261029 FX sprite-loop contract changed');
+      }
+    }
+  }
   if (rel === "src/world/paint.js") {
     patch("      minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,\n      generateMipmaps: false, depthBuffer: false, stencilBuffer: false,","      minFilter: this.level.native ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,\n      generateMipmaps: false, depthBuffer: false, stencilBuffer: false,");
     patch("  _regenerateMipmaps() {\n    if (globalThis.document?.hidden) return;","  _regenerateMipmaps() {\n    if (this.level.native || globalThis.document?.hidden) return;");
