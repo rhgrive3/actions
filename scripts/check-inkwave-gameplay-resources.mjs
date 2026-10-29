@@ -59,7 +59,19 @@ try{
   // Flow APIs resolve to a Match instance; never serialize its scene/rig graph.
   await page.evaluate(async({mapId})=>{await __inkwave.startMatch({mapId,difficulty:'normal',duration:180});},{mapId});
   await page.waitForFunction(()=>__G.match?.state==='playing',null,{timeout:180000});
-  await page.waitForTimeout(5000);await capture('warm-'+cycle);phase='combat-'+cycle;
+  await page.waitForTimeout(5000);
+  // On software WebGL a newly loaded second map may have simulated under one
+  // match-second after five wall seconds. Do not report "no live paint" before
+  // the unmodified bots actually get their first native paint frame.
+  // This is fail-closed: no scene/RAF/time mutation, exact map and eight actors,
+  // a finite readiness bound, then the original five-second combat lease.
+  await page.waitForFunction(expectedMap=>{
+    const G=globalThis.__G, game=globalThis.__inkwave;
+    return game?.mapDef?.id===expectedMap && G?.mode==='match'
+      && G.match?.state==='playing' && G.actors?.length===8
+      && G.paint?.coverage().some(value=>value>0);
+  },mapId,{polling:1000,timeout:180000});
+  await capture('warm-'+cycle);phase='combat-'+cycle;
   await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
   const combatWait=await waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000},async receipt=>{
    const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(out,'combat-'+cycle+'.cpuprofile'),JSON.stringify(profile));
