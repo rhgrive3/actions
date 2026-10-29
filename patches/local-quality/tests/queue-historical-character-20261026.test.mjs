@@ -125,7 +125,7 @@ test('historical character source retains independently pinned input and both la
        'src/game/character-face.js':'202d0b52b33d7df8b8df425e17e752416890f729',
        'src/game/character.js':'d9979a6c4b98614a91ad79fc9f55096812c5ae70',
      };
-     const source=raw(rel),blob=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\\0').update(source).digest('hex');
+     const source=raw(rel),blob=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
      assert.equal(blob,currentRawSha[rel],rel+' reviewed current Git blob');
      const reviewedOwners={
        'src/game/character-hair.js':['getUtoTmapping(i / N)','getPoint(t)'],
