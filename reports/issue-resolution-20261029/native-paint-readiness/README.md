@@ -1,0 +1,9 @@
+# Native paint readiness for resource capture
+
+The final common resource workflow rejected kelpline combat1 because native paint coverage was `[0,0]`. The sample satisfied the other original postconditions: five seconds elapsed, three actual frames, eight actors, actual draw calls, a stable playing Match/Level and no GL/context/render suppression error. Only0.75 simulation seconds had advanced. The original positive-coverage assertion correctly failed.
+
+The retained observation lease now waits for fresh native `PaintSystem.coverage()` to satisfy that same exact `some(v => v > 0)` predicate after the original time, frame and simulation checks. It validates the two numeric team values and copies them into the receipt. Polling never paints, drives input or synthesizes frames. Atomic capture re-inspects the same lease, and the original final absolute assertion and bounded timeout remain unchanged. A scene that never paints still fails.
+
+All original ten source tests remain. Four added controls fail with the old helper; the complete corrected suite passes **14/14**, with no failures or skips on Node22.23.4. An independent review confirmed that production coverage is a pure counts/turf-total read and independently reproduced14/14 passes. These are source contracts; corrected-head hosted browser acceptance is pending. No production paint bug or hardware performance improvement is claimed.
+
+[summary.json](summary.json) retains the exact code/base SHAs, hosted job/artifact identity, failed window, commands and SHA256 receipts. The original failed hosted log/result and both local TAP outcomes are included as gzip data. No existing CI gate, scene identity guard, resource assertion, timeout, workload, frozen fixture or hold was relaxed. No manual workflow rerun, push, main merge, hold release or #401 work was performed by this lane.

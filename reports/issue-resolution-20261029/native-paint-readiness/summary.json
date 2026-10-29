@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "base": "a8909c890d01439998263ffad3dd33d480e44ca5",
+  "codeCommit": "cf55295ffa176a60ff420811f196643dc1b81e17",
+  "scope": "QA observation readiness only; no production runtime or workload changes",
+  "hostedFailure": {
+    "pr": 1908,
+    "head": "a8909c890d01439998263ffad3dd33d480e44ca5",
+    "run": 40830117951,
+    "job": 123302140653,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/40830117951/job/123302140653",
+    "failedStep": "Verify normal RAF gameplay and Crab retirement across two Turf stages",
+    "soleFailedPostcondition": "combat.coverage.some(v=>v>0) was false",
+    "window": {
+      "label": "combat-1",
+      "map": "kelpline",
+      "actors": 8,
+      "coverage": [
+        0,
+        0
+      ],
+      "state": "playing",
+      "mode": "match",
+      "windowFrames": 3,
+      "calls": {
+        "n": 3,
+        "mean": 343,
+        "median": 324,
+        "p95": 386,
+        "max": 386
+      },
+      "contextLost": false,
+      "frozen": false,
+      "skipRender": false,
+      "glError": 0,
+      "time": 17.066833333333495,
+      "matchTime": 178.9999999999992,
+      "wait": {
+        "leaseId": "cb4eb02d-eee0-40e4-aeac-6922c9cac316",
+        "elapsedMs": 5051.100000000035,
+        "frames": 3,
+        "startTime": 16.316833333333538,
+        "endTime": 17.066833333333495,
+        "minimumMs": 5000
+      }
+    },
+    "artifactId": 12878661936,
+    "artifactDigest": "sha256:97d89e8fb7ad75bdc337887f670ddc107b108fbeeb1ac72ce9cd3173881124ce"
+  },
+  "repair": "Fresh valid native PaintSystem.coverage() must satisfy the exact original >0 predicate inside the retained lease after the original elapsed/frame/simulation checks; copied coverage receipt and capture re-inspection retain the proof.",
+  "preserved": [
+    "minimumMs",
+    "three actual frames",
+    "simulation advances",
+    "same game/app/observer/Match/Level/map",
+    "playing/match/eight actors",
+    "no frozen/suppressed/contextlost render",
+    "original final capture absolute postguard",
+    "existing120000ms extra timeout",
+    "all original10 source tests"
+  ],
+  "validation": {
+    "node": "22.23.4",
+    "command": "node --test scripts/tests/inkwave-native-combat-window.test.mjs",
+    "oldHelperNewTests": {
+      "total": 14,
+      "pass": 10,
+      "fail": 4,
+      "skip": 0
+    },
+    "correctedHelper": {
+      "total": 14,
+      "pass": 14,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0
+    },
+    "independentReview": "Agent3 checked production-composed coverage() pure two-number return and independently ran14/14 passing tests; no blocker.",
+    "diffCheck": "pass"
+  },
+  "newControls": [
+    "hosted5051ms/three-frame zero-paint sample remains unready without modifying clocks/actors/scene; smallest positive number is accepted with an independent receipt copy",
+    "missing/malformed/nonfinite/negative native coverage fails closed",
+    "zero-paint uses unchanged bounded timeout and releases lease without capture",
+    "paint clearing between readiness and atomic capture rejects capture and releases lease"
+  ],
+  "receipts": [
+    {
+      "file": "old-helper-negative-control.tap.gz",
+      "rawBytes": 7552,
+      "rawSha256": "d9f3e55d75c0445def2f6f45bde37696771c7b258d807f9ad03c9caace8002ab",
+      "gzipBytes": 1783,
+      "gzipSha256": "1ea43ddfde205b2c51c396bd7ab996cfd6fbefb79072bf330916f850a8358934"
+    },
+    {
+      "file": "source-14-tests.tap.gz",
+      "rawBytes": 3306,
+      "rawSha256": "7cb1d0d36a584144fa68a3f32ee8eb5aa55cc07ff072a491055e9065f1ffc395",
+      "gzipBytes": 905,
+      "gzipSha256": "383f817a78b302484772589544f89860ea82647f7772b4850516c18bca31da23"
+    },
+    {
+      "file": "hosted-job-123302140653.log.gz",
+      "rawBytes": 110054,
+      "rawSha256": "5ea50386242a970c1ded7dccc8dfd38d2368e3f8d869a017d29f9e217acc9798",
+      "gzipBytes": 23121,
+      "gzipSha256": "9b4ee4110c09d0303354296cd6141242520feded3eee5cf16fa1a396cfb698af"
+    },
+    {
+      "file": "hosted-result.json.gz",
+      "rawBytes": 177226,
+      "rawSha256": "c9d8775326bbdcdd3953fa522cc1d2d5a74222b7b8b26a70ed495bb527f1142e",
+      "gzipBytes": 11204,
+      "gzipSha256": "1303e41bbe7942f74bf718493602fce919d0dbcb09c2833b5d25aed0d8495e60"
+    }
+  ],
+  "limits": "Source contracts only; corrected-head hosted browser acceptance remains pending. The old log proves premature readiness, not an underlying production paint regression or hardware performance result. No workflow rerun, push, main merge, hold release or #401 work by this lane."
+}
