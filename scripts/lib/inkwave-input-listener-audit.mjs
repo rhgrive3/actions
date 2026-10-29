@@ -30,12 +30,16 @@ export function auditInputListeners({Input,windowTarget,documentTarget,canvas,ev
    const begin=records.length,input=new Input(canvas),created=records.slice(begin),owners=input._platformInputListeners;
    check(Array.isArray(owners),'Input does not expose its platform listener owners');
    for(const o of owners){if(!targets.includes(o.target))continue;check(created.some(r=>r.target===o.target&&r.type===o.type&&r.callback===o.callback&&r.capture===!!o.capture&&active(r)),'missing platform listener '+o.type);}
-   for(const r of created)check(owners.some(o=>o.target===r.target&&o.type===r.type&&o.callback===r.callback&&!!o.capture===r.capture)||r.signal,'listener lacks an instance owner: '+r.type);
+   // Mobile geometry observation owns explicit unsubs rather than an AbortSignal.
+   const sampler=input.mobile?._queueSafeLayout;
+   const samplerOwnsListeners=Array.isArray(sampler?.unsubs)&&sampler.unsubs.length>0;
+   for(const r of created)check(owners.some(o=>o.target===r.target&&o.type===r.type&&o.callback===r.callback&&!!o.capture===r.capture)||r.signal||samplerOwnsListeners,'listener lacks an instance owner: '+r.type);
    if(requireCanvas)check(created.some(r=>r.target===canvas),'touch Input did not register canvas listeners');
    for(const old of retired)check(!old.down('KeyA'),'retired Input received a later key');
    windowTarget.dispatchEvent(keyEvent('keydown','KeyW'));check(input.down('KeyW'),'live Input lost keydown');
    const addsBeforeDispose=addCalls;input.disposePlatform();const removesAfterFirst=removeCalls;
    check(addCalls===addsBeforeDispose,'dispose unexpectedly added listeners');
+   if(samplerOwnsListeners)check(sampler.unsubs.length===0,'mobile layout sampler retained its unsubs');
    check(created.every(r=>!active(r)),'instance listener remains active: '+created.filter(active).map(r=>names[targets.indexOf(r.target)]+':'+r.type+':'+r.capture).join(','));
    input.disposePlatform();check(addCalls===addsBeforeDispose&&removeCalls===removesAfterFirst,'second dispose is not idempotent');
    windowTarget.dispatchEvent(keyEvent('keyup','KeyW'));windowTarget.dispatchEvent(keyEvent('keydown','KeyA'));

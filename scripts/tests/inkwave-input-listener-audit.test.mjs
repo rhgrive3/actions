@@ -18,6 +18,8 @@ function setup(fault='') {
    listen(windowTarget,'custom',shared,false);listen(windowTarget,'custom',shared,true);
    listen(documentTarget,'custom',shared,false);listen(canvas,'custom',shared,false);
    canvas.addEventListener('pointerdown',()=>canvasCalls++,{signal:this.abort.signal});
+   const resize=()=>{};windowTarget.addEventListener('resize',resize,true);
+   this.mobile={_queueSafeLayout:{unsubs:[()=>windowTarget.removeEventListener('resize',resize,{capture:true})]}};
   }
   down(key){return this.keys.has(key);}
   disposePlatform(){
@@ -29,6 +31,8 @@ function setup(fault='') {
     o.target.removeEventListener(o.type,o.callback,{capture:fault==='wrong-capture'?!o.capture:o.capture});
    }
    if(fault!=='forget-abort')this.abort.abort();
+   const sampler=this.mobile._queueSafeLayout;
+   if(fault!=='leak-sampler'){for(const off of sampler.unsubs)off();sampler.unsubs.length=0;}
    if(fault==='remove-sentinel')sentinels[0].target.removeEventListener('iw-audit-sentinel',sentinels[0].callback,{capture:true});
   }
  }
@@ -49,6 +53,6 @@ test('capture propagation from canvas does not count as a window or document sen
 });
 for(const [fault,pattern] of [
  ['leak-target',/instance listener remains active/],['wrong-capture',/instance listener remains active/],
- ['forget-abort',/instance listener remains active/],['leak-key',/instance listener remains active/],
+ ['forget-abort',/instance listener remains active/],['leak-sampler',/mobile layout sampler retained its unsubs/],['leak-key',/instance listener remains active/],
  ['second-dispose',/second dispose is not idempotent/],['remove-sentinel',/unrelated preexisting sentinel/],
 ]) test(`observer rejects ${fault}`,()=>{const f=setup(fault);assert.throws(()=>auditInputListeners(f.args),pattern);});
