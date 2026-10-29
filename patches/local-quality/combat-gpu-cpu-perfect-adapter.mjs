@@ -1097,25 +1097,8 @@ export class SwimWake {`,
       );
     }
 
-    if (rel === 'src/game/character.js') {
-      // MOV-08b: Fast-path unit-scale world quaternion in Character._updateSquid climb orientation and avoid redundant _v5.copy.
-      code = applyIdempotent(
-        code,
-        `      this.model.matrixWorld.decompose(_v3, _q3, _v4);
-      q.copy(_q3).invert().multiply(_q2);
-      _v5.copy(this.root.getWorldPosition(_v5)).addScaledVector(UP, 0.26 + 0.025 * climbPulse * climbV).addScaledVector(n, -this.climbInset - 0.07);`,
-        `      const _cms = this.model.scale, _crs = this.root?.scale;
-      if (_cms.x === 1 && _cms.y === 1 && _cms.z === 1 && (!_crs || (_crs.x === 1 && _crs.y === 1 && _crs.z === 1))) {
-        _q3.setFromRotationMatrix(this.model.matrixWorld);
-      } else {
-        this.model.matrixWorld.decompose(_v3, _q3, _v4);
-      }
-      q.copy(_q3).invert().multiply(_q2);
-      this.root.getWorldPosition(_v5).addScaledVector(UP, 0.26 + 0.025 * climbPulse * climbV).addScaledVector(n, -this.climbInset - 0.07);`,
-        replaceOnce,
-        'MOV-08b fast-path unit-scale world quaternion in Character._updateSquid climb'
-      );
-    }
+    // MOV-08b Character._updateSquid optimization remains excluded:
+    // character-model work is paused pending explicit scope review.
 
     if (rel === 'src/game/inkFlightRuntime.js') {
       // CMB-04: capsuleEntry already bounds the segment with the actual hurtbox
