@@ -52,3 +52,30 @@ test('all other real sandbox entry points stay in their supported active or cata
   for(const owner of owners)assert.ok(owner.includes("matrix.suite == '"+suite+"'"),script+' stays in '+suite);
  }
 });
+
+test('browser executable caches separate Linux distribution releases without falling back to foreign ABIs',()=>{
+ function inspect(text){
+  const browser=text.slice(text.indexOf('\n  browser:'));
+  const platform=browser.split(/^      - /m).find(step=>step.includes('id: verified-site'));
+  assert.ok(platform,'Actual browser platform probe required');
+  assert.match(platform,/\. \/etc\/os-release/);
+  for(const name of ['ID','VERSION_ID'])assert.ok(platform.includes('test -n "$'+name+'"'),'Missing platform value must fail closed');
+  assert.ok(platform.includes("printf 'release=%s-%s\\n' \"$ID\" \"$VERSION_ID\" >> \"$GITHUB_OUTPUT\""));
+  const cache=browser.split(/^      - /m).find(step=>step.startsWith('name: Cache pinned browser executables\n'));
+  assert.ok(cache);assert.match(cache,/path: \$\{\{ env\.PLAYWRIGHT_BROWSERS_PATH \}\}/);
+  assert.doesNotMatch(cache,/restore-keys:/,'No fallback may restore a different Linux ABI');
+  const key=/^          key: (.+)$/m.exec(cache)?.[1];assert.ok(key);
+  for(const token of ['runner.os','runner.arch','steps.verified-site.outputs.release','matrix.browsers',"hashFiles('node_modules/playwright-core/browsers.json')"])assert.ok(key.includes('${{ '+token+' }}'),'Cache identity must retain '+token);
+  assert.ok(key.includes('playwright-1.62.1-'));
+  const resolve=release=>key.replace(/\$\{\{ ([^}]+) \}\}/g,(_,name)=>({'runner.os':'Linux','runner.arch':'X64','steps.verified-site.outputs.release':release,'matrix.browsers':'chromium webkit',"hashFiles('node_modules/playwright-core/browsers.json')":'same-browser-revision'}[name]));
+  const keys=['ubuntu-22.04','ubuntu-24.04','ubuntu-26.04','debian-12'].map(resolve);
+  assert.equal(new Set(keys).size,keys.length,'Same revision directory can contain incompatible distribution builds');
+ }
+ inspect(workflow);
+ for(const changed of [
+  workflow.replace('${{ steps.verified-site.outputs.release }}-',''),
+  workflow.replace('          . /etc/os-release\n',''),
+  workflow.replace('          test -n "$VERSION_ID"\n',''),
+  workflow.replace('      - name: Cache pinned browser executables\n','      - name: Cache pinned browser executables\n        restore-keys: Linux-X64-playwright\n'),
+ ])assert.throws(()=>inspect(changed));
+});
