@@ -1,0 +1,37 @@
+[
+  {
+    "file": "identity.json.gz",
+    "raw_sha256": "686fac5f5fb62a2007234041fc83e2876c0bf9f5dbf336de9fac2aa8d24c21ee",
+    "stored_sha256": "8e8d17c189d5a12ff6198e8b5ea14c79efec613d8ad1d5fa0458e704dd5cb2e6",
+    "raw_bytes": 580588,
+    "stored_bytes": 208241
+  },
+  {
+    "file": "gpu-lifecycle.json",
+    "raw_sha256": "fb423c0f52a0e41fc6027a6cfb605ad7f59483c315bef013673c627eb85cc971",
+    "stored_sha256": "fb423c0f52a0e41fc6027a6cfb605ad7f59483c315bef013673c627eb85cc971",
+    "raw_bytes": 6241,
+    "stored_bytes": 6241
+  },
+  {
+    "file": "game-lifecycle.json",
+    "raw_sha256": "4ed1b5f97de0b1422a0f7c247f75e94703d0c1d9491560197826fbbd0809c1ff",
+    "stored_sha256": "4ed1b5f97de0b1422a0f7c247f75e94703d0c1d9491560197826fbbd0809c1ff",
+    "raw_bytes": 1052,
+    "stored_bytes": 1052
+  },
+  {
+    "file": "gpu-lifecycle.log",
+    "raw_sha256": "5ce69b779bd0ac558a637ae2a13ed3ef17cdf714aabf8b22429c7e249b666a31",
+    "stored_sha256": "5ce69b779bd0ac558a637ae2a13ed3ef17cdf714aabf8b22429c7e249b666a31",
+    "raw_bytes": 135,
+    "stored_bytes": 135
+  },
+  {
+    "file": "game-lifecycle.log",
+    "raw_sha256": "f94cfaf49425cdf9f1efc3d820395f9bc6e19770eda1c04e750ba06466def186",
+    "stored_sha256": "f94cfaf49425cdf9f1efc3d820395f9bc6e19770eda1c04e750ba06466def186",
+    "raw_bytes": 521,
+    "stored_bytes": 521
+  }
+]

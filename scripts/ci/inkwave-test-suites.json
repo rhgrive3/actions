@@ -117,6 +117,8 @@
           "patches/local-quality/tests/music-lazy-fx.test.mjs",
           "patches/local-quality/tests/idle-resources.test.mjs",
           "patches/local-quality/tests/pause-gpu.test.mjs",
+          "patches/local-quality/tests/gpu-transition-lifecycle.test.mjs",
+          "patches/local-quality/tests/ios-paused-menu-gpu-guard.test.mjs",
           "patches/local-quality/tests/static-menu-art.test.mjs",
           "patches/local-quality/tests/composer-target-adapter.test.mjs",
           "scripts/tests/inkwave-static-menu-gpu-budget.test.mjs"

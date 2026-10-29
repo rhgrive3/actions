@@ -1,0 +1,29 @@
+{
+  "base": "e67c636b81762df56b346a09ef570964d43084df",
+  "runtimeFiles": {
+    "patches/local-quality/idle-adapter.mjs": "903eeb7223a17b875a6f84a8e5f97e88eba6c6d89483dd46b07e71f2020a9afd",
+    "patches/local-quality/idle-resources.mjs": "7f52870fe40e67a98471ddd886c56e4dd0c5bdd2eba11e269f033bf59408db78",
+    "patches/local-quality/ios-paused-menu-gpu-guard.mjs": "bcc6fbc0c74fec7bcc726f0a13c7d02687e97c0c16d9f9f9973be3a8556cbd5c",
+    "patches/local-quality/pause-frame-retention.mjs": "3650290b151eb29521da1bb281e63598171fed9ca0ed8a6d311b3eb49e7c3f6d"
+  },
+  "tests": {
+    "memory": 98,
+    "quality": 43,
+    "runnerContracts": 24,
+    "related": 51,
+    "suiteContracts": 7,
+    "newRegression": 21,
+    "baseline": {
+      "passed": 5,
+      "failed": 16
+    }
+  },
+  "overlappingTests": true,
+  "physicalDeviceVerified": false,
+  "codeCommit": "46d3792c3077029ca029b13224e001eed9a0d54d",
+  "sourceMigrationAudit": "passed",
+  "startupBudget": "passed",
+  "committedRebuildMatchesTestedArtifacts": true,
+  "gameCycles": 6,
+  "gamePausedQuit": "passed"
+}
