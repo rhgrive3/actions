@@ -1,0 +1,8 @@
+range booted
+gpu-check-cycle 0
+gpu-check-cycle 1
+gpu-check-cycle 2
+gpu-check-cycle 3
+gpu-check-cycle 4
+gpu-check-cycle 5
+{"cycles":[{"cycle":0,"snapshot":true,"quality":"high","liveTextures":30},{"cycle":1,"snapshot":true,"quality":"low","liveTextures":29},{"cycle":2,"snapshot":true,"quality":"high","liveTextures":29},{"cycle":3,"snapshot":true,"quality":"low","liveTextures":29},{"cycle":4,"snapshot":true,"quality":"high","liveTextures":29},{"cycle":5,"snapshot":true,"quality":"low","liveTextures":29}],"quit":true}

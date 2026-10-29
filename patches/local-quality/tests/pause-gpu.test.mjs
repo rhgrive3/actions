@@ -145,12 +145,12 @@ test('composed Renderer retains a finished WebGL pause frame and releases it aft
   assert.equal(owner.composer.passes[0], pass);
   copyFails = true;
   assert.equal(owner.capturePausedFrame(), false);
-  assert.equal(record.released, 1, 'failed capture retains the full-render fallback targets');
+  assert.equal(record.released, 2, 'failed capture releases targets; the full-render fallback recreates them lazily');
   assert.equal(owner._pauseSnapshot, null);
   copyFails = false;
   owner.composer.renderToScreen = false;
   assert.equal(owner.capturePausedFrame(), true);
-  assert.equal(record.released, 1, 'an explicitly offscreen composer keeps its attachments');
+  assert.equal(record.released, 2, 'an explicitly offscreen composer keeps its attachments');
   owner.releasePausedFrame();
   owner.composer.dispose();
 });
