@@ -1,0 +1,820 @@
+{
+  "status": "passed",
+  "scope": "Native pickup, carry, full charge, release, recovery, walking and a turn with separate body/aim headings; three camera views with both live grips. Chromium SwiftShader, not retail measurement.",
+  "build": {
+    "revision": "cc453b87ae1f7db0500b6f01c17a5d6ddb8cea71cb6982be33c1d12d52e83014",
+    "inputHash": "09287e0f999c6f7eaa49d530d5f894215931f1d1b946af3b50906febc0b65bfc",
+    "contentHash": "d0e73b2f952372fba77e400b6153f5749b77194ff745b5e494625bad48b01d5b"
+  },
+  "renderSettings": {
+    "quality": "low",
+    "bloom": false,
+    "shadows": false,
+    "teamInk": [
+      "f2e312",
+      "8a3cff"
+    ]
+  },
+  "captures": [
+    {
+      "name": "hold-idle-side",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          0
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.413491765438266,
+          0.7996707357787933,
+          0.23745413673660212
+        ],
+        "gripInKid": [
+          -0.08650823456173384,
+          0.7996707357787933,
+          0.23745413673660212
+        ],
+        "muzzle": [
+          6.113491765438266,
+          0.9683606435838626,
+          0.977670804344619
+        ],
+        "head": [
+          6.531034670432969,
+          0.8960449433194565,
+          0.03505197773283433
+        ],
+        "shoulder": [
+          6.377665588654321,
+          0.8500237199961004,
+          0.036025852355003156
+        ],
+        "leftGripError": 9.155133597044475e-16,
+        "rightGripError": 0,
+        "pitch": 0.04,
+        "ready": 0
+      },
+      "effectPixels": {
+        "changedPixels": 47089,
+        "maxDelta": 502
+      }
+    },
+    {
+      "name": "hold-idle-front",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          0
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.413491765438266,
+          0.7996707357787933,
+          0.23745413673660212
+        ],
+        "gripInKid": [
+          -0.08650823456173384,
+          0.7996707357787933,
+          0.23745413673660212
+        ],
+        "muzzle": [
+          6.113491765438266,
+          0.9683606435838626,
+          0.977670804344619
+        ],
+        "head": [
+          6.531034670432969,
+          0.8960449433194565,
+          0.03505197773283433
+        ],
+        "shoulder": [
+          6.377665588654321,
+          0.8500237199961004,
+          0.036025852355003156
+        ],
+        "leftGripError": 9.155133597044475e-16,
+        "rightGripError": 0,
+        "pitch": 0.04,
+        "ready": 0
+      },
+      "effectPixels": {
+        "changedPixels": 36071,
+        "maxDelta": 602
+      }
+    },
+    {
+      "name": "hold-idle-back",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          0
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.413491765438266,
+          0.7996707357787933,
+          0.23745413673660212
+        ],
+        "gripInKid": [
+          -0.08650823456173384,
+          0.7996707357787933,
+          0.23745413673660212
+        ],
+        "muzzle": [
+          6.113491765438266,
+          0.9683606435838626,
+          0.977670804344619
+        ],
+        "head": [
+          6.531034670432969,
+          0.8960449433194565,
+          0.03505197773283433
+        ],
+        "shoulder": [
+          6.377665588654321,
+          0.8500237199961004,
+          0.036025852355003156
+        ],
+        "leftGripError": 9.155133597044475e-16,
+        "rightGripError": 0,
+        "pitch": 0.04,
+        "ready": 0
+      },
+      "effectPixels": {
+        "changedPixels": 26763,
+        "maxDelta": 505
+      }
+    },
+    {
+      "name": "hold-charge-side",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          0
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 1,
+        "value": 1,
+        "firing": true,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.4130787036507275,
+          0.8656792437921802,
+          0.21743747207745942
+        ],
+        "gripInKid": [
+          -0.08692129634927248,
+          0.8656792437921801,
+          0.21743747207745942
+        ],
+        "muzzle": [
+          6.113078703650728,
+          1.0638349869976969,
+          0.9503162488438966
+        ],
+        "head": [
+          6.546037163970986,
+          0.901024286057042,
+          0.01407045528722855
+        ],
+        "shoulder": [
+          6.390414314173402,
+          0.8712535834157399,
+          0.018163379627678868
+        ],
+        "leftGripError": 5.578801654593729e-16,
+        "rightGripError": 1.1102230246251565e-16,
+        "pitch": 3.21667478431209e-09,
+        "ready": 0.9999999195831304
+      },
+      "effectPixels": {
+        "changedPixels": 76190,
+        "maxDelta": 669
+      }
+    },
+    {
+      "name": "hold-charge-front",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          0
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 1,
+        "value": 1,
+        "firing": true,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.4130787036507275,
+          0.8656792437921802,
+          0.21743747207745942
+        ],
+        "gripInKid": [
+          -0.08692129634927248,
+          0.8656792437921801,
+          0.21743747207745942
+        ],
+        "muzzle": [
+          6.113078703650728,
+          1.0638349869976969,
+          0.9503162488438966
+        ],
+        "head": [
+          6.546037163970986,
+          0.901024286057042,
+          0.01407045528722855
+        ],
+        "shoulder": [
+          6.390414314173402,
+          0.8712535834157399,
+          0.018163379627678868
+        ],
+        "leftGripError": 5.578801654593729e-16,
+        "rightGripError": 1.1102230246251565e-16,
+        "pitch": 3.21667478431209e-09,
+        "ready": 0.9999999195831304
+      },
+      "effectPixels": {
+        "changedPixels": 56385,
+        "maxDelta": 599
+      }
+    },
+    {
+      "name": "hold-charge-back",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          0
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 1,
+        "value": 1,
+        "firing": true,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.4130787036507275,
+          0.8656792437921802,
+          0.21743747207745942
+        ],
+        "gripInKid": [
+          -0.08692129634927248,
+          0.8656792437921801,
+          0.21743747207745942
+        ],
+        "muzzle": [
+          6.113078703650728,
+          1.0638349869976969,
+          0.9503162488438966
+        ],
+        "head": [
+          6.546037163970986,
+          0.901024286057042,
+          0.01407045528722855
+        ],
+        "shoulder": [
+          6.390414314173402,
+          0.8712535834157399,
+          0.018163379627678868
+        ],
+        "leftGripError": 5.578801654593729e-16,
+        "rightGripError": 1.1102230246251565e-16,
+        "pitch": 3.21667478431209e-09,
+        "ready": 0.9999999195831304
+      },
+      "effectPixels": {
+        "changedPixels": 44737,
+        "maxDelta": 505
+      }
+    },
+    {
+      "name": "hold-release-side",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          -0.013880099966672615
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0.006827595469717433,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0.31666666666666665,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.413184174388898,
+          0.8833070455096471,
+          0.1897180552717509
+        ],
+        "gripInKid": [
+          -0.08820387715541944,
+          0.883307045509647,
+          0.20300067105253186
+        ],
+        "muzzle": [
+          6.113184174388898,
+          1.139396812649623,
+          0.9044173145173393
+        ],
+        "head": [
+          6.546818927985534,
+          0.908519058019503,
+          -0.010658468726205503
+        ],
+        "shoulder": [
+          6.39122223229909,
+          0.8799781231566299,
+          -0.0026392306021042165
+        ],
+        "leftGripError": 1.0605390551611693e-15,
+        "rightGripError": 1.1102230246251565e-16,
+        "pitch": -0.07999999823465145,
+        "ready": 0.9999999558662862
+      },
+      "effectPixels": {
+        "changedPixels": 67663,
+        "maxDelta": 594
+      }
+    },
+    {
+      "name": "hold-recovered-side",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          -0.017760199933345232
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 0.010241219765682945,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.404385174043342,
+          0.7940031752881889,
+          0.21861862592143227
+        ],
+        "gripInKid": [
+          -0.09803057702255469,
+          0.7940031752881889,
+          0.2353872346237795
+        ],
+        "muzzle": [
+          6.104385174043342,
+          0.9637849605232648,
+          0.958585615321899
+        ],
+        "head": [
+          6.484576771129358,
+          0.8900319641063248,
+          0.015605392363464188
+        ],
+        "shoulder": [
+          6.342843891184351,
+          0.8184707430295983,
+          -0.00022778441467778384
+        ],
+        "leftGripError": 9.019494489765868e-16,
+        "rightGripError": 0,
+        "pitch": 0.03852467330416826,
+        "ready": 0.03688316739579347
+      },
+      "effectPixels": {
+        "changedPixels": 47100,
+        "maxDelta": 492
+      }
+    },
+    {
+      "name": "hold-moving-side",
+      "actor": {
+        "pos": [
+          6.5,
+          5.551115123125783e-17,
+          2.0286398000666543
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": 2.3146864505570488e-05,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          6.42164181258836,
+          0.8090525582824795,
+          2.3241984957418564
+        ],
+        "gripInKid": [
+          -0.0783650286477311,
+          0.8090525582824795,
+          0.29555688184967854
+        ],
+        "muzzle": [
+          6.1216418125883605,
+          0.9777426008586307,
+          3.064415132636527
+        ],
+        "head": [
+          6.509932848027236,
+          0.900046032769046,
+          2.1545806213615966
+        ],
+        "shoulder": [
+          6.365996480053753,
+          0.8393261962230432,
+          2.1207257951933354
+        ],
+        "leftGripError": 1.8343894894033213e-15,
+        "rightGripError": 0,
+        "pitch": 0.039999817930221504,
+        "ready": 4.551744462411079e-06
+      },
+      "effectPixels": {
+        "changedPixels": 45651,
+        "maxDelta": 598
+      }
+    },
+    {
+      "name": "hold-turning-side",
+      "actor": {
+        "pos": [
+          5.3501,
+          5.551115123125783e-17,
+          2.4077310704140533
+        ],
+        "form": "kid",
+        "alive": true,
+        "yaw": -1.5657551887282763,
+        "aimYaw": 0,
+        "aim": [
+          0,
+          0.09983341664682815,
+          0.9950041652780258
+        ]
+      },
+      "charge": {
+        "seconds": 0,
+        "value": 0,
+        "firing": false,
+        "released": false,
+        "delay": 0,
+        "recovery": 0,
+        "pending": null,
+        "wasSwimming": false
+      },
+      "hold": {
+        "grip": [
+          5.270755555081434,
+          0.7937098160756133,
+          2.6180637132581226
+        ],
+        "gripInKid": [
+          0.20992998564281562,
+          0.7937098160756133,
+          0.08040374812913509
+        ],
+        "muzzle": [
+          4.970755555081434,
+          0.9623997238973148,
+          3.358280380862349
+        ],
+        "head": [
+          5.384214732323087,
+          0.8923401408982049,
+          2.413657220977469
+        ],
+        "shoulder": [
+          5.246204695402191,
+          0.8102998644631055,
+          2.4126792405678024
+        ],
+        "leftGripError": 9.485749680535094e-16,
+        "rightGripError": 0,
+        "pitch": 0.03999999997753081,
+        "ready": 5.617298923587802e-10
+      },
+      "effectPixels": {
+        "changedPixels": 39173,
+        "maxDelta": 430
+      }
+    }
+  ],
+  "shots": [
+    {
+      "kind": "rainmaker-shot",
+      "id": 0,
+      "actorId": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        5.551115123125783e-17,
+        0
+      ],
+      "aim": [
+        0,
+        0.09983341664682813,
+        0.9950041652780256
+      ],
+      "charge": 1,
+      "shotOrigin": {
+        "actorId": "0:0",
+        "owner": null,
+        "life": 1,
+        "team": 0,
+        "body": [
+          6.5,
+          0.7,
+          0
+        ],
+        "muzzle": [
+          6.1131303411254505,
+          1.0676307473374143,
+          0.9502939059055084
+        ]
+      },
+      "damage": 60,
+      "blastDamage": 180,
+      "outerDamage": 40,
+      "radius": 1.4,
+      "nearRadius": 0.92,
+      "directRange": 4.4,
+      "nearRange": 5.3,
+      "effectiveRange": 5.8,
+      "paintRadius": 1,
+      "speed": 18,
+      "launchY": 3.3600000000000008,
+      "recoil": 1.44,
+      "trailRadius": 0.48,
+      "at": 5.166666666666654
+    }
+  ],
+  "errors": [],
+  "evidence": {
+    "baseCommit": "ab0d403f7f82a47ab13663fd1332002fcc611f35",
+    "rawResultSha256": "17020f84f8dd1df8d007a388d877a28b4868a485e5d7c239bb792611101c2a11",
+    "pngSha256": {
+      "before-hold.png": "bb02e254d387de73b6e43bd0f5b5769f2868a8bf6f33c50d28ce7fb0c99b0917",
+      "carrier-hold.png": "56cbad05adeb5fcf07f31c25feb0118f078e277f431d67b064f509ed5564d007",
+      "carrier-hold-charge.png": "1fee76a2cf5c7991eb1bfb277f160c79276a58934705840cf4d0fb724759aab3",
+      "carrier-hold-turn.png": "fe921c349db6ae7aa81417a258ce2e08c1fb954ba77741d31523aef08308a8c1"
+    },
+    "snapshots": [
+      {
+        "name": "hold-idle-side",
+        "rawSnapshotSha256": "7944dc96759325a049cff10c34f9f20f1ab4d2e26ad198946bcf052dd08ca1e7",
+        "pngSha256": "56cbad05adeb5fcf07f31c25feb0118f078e277f431d67b064f509ed5564d007",
+        "gpuPrograms": 173,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-idle-front",
+        "rawSnapshotSha256": "cf62580731daea44cceb0d31c3004c23e53067dc12398fd1526cb5de0759ddac",
+        "pngSha256": "386143e40a87fadcc49177a6aaa09782fd5d0e1388a6beee16fb573762f63917",
+        "gpuPrograms": 173,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-idle-back",
+        "rawSnapshotSha256": "9c948c43a66bc9113d15b1b198f7eb2efe23ead3a6edef6d70c059b206e66bcf",
+        "pngSha256": "cb7c541701e91602f2162a35ec80d16f0d899cd25c7a54efc81f21c0fe59ccdb",
+        "gpuPrograms": 173,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-charge-side",
+        "rawSnapshotSha256": "6f6d760c29fa238d9b417e6b2366078ea84000e1fb3e81869eb0d3b92075774e",
+        "pngSha256": "d00adbd98254cc94c945d974826caf7a346a5161d1022b8b6eb6dff845cc4344",
+        "gpuPrograms": 173,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-charge-front",
+        "rawSnapshotSha256": "26805d838f4cd8f8e7567cbb9ea4f1599efa5dabbcbce5996bac8fa268dd819c",
+        "pngSha256": "1fee76a2cf5c7991eb1bfb277f160c79276a58934705840cf4d0fb724759aab3",
+        "gpuPrograms": 173,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-charge-back",
+        "rawSnapshotSha256": "82580c9e653a308b4b98306e5e311d104c3cb1c0c43534beca5bfe92f9725b43",
+        "pngSha256": "dc7361bc0096497dbc9e54a803c80813646ee222d651d4ff5bdb8039917abf72",
+        "gpuPrograms": 173,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-release-side",
+        "rawSnapshotSha256": "a22ff88598a8d6ea27124271084635e221a2de7f120c23799e177590fbbc1a25",
+        "pngSha256": "66a666ec344728b36c9d22fd082e5fe4482dee6c3287c65b0a68ec3fd7834cae",
+        "gpuPrograms": 175,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-recovered-side",
+        "rawSnapshotSha256": "7eb55797b9da42c3cfbef5f49f5f09d9bbeaa8c123571448bca82771d949d051",
+        "pngSha256": "5cee03fa7a678bb238fac0aa09af7f04c8b3ad110a475cb79f1f88461e7a5f10",
+        "gpuPrograms": 175,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-moving-side",
+        "rawSnapshotSha256": "3f085590e311f5cfcb8456311a36be95f8cc2095eb734ed045889755265020dc",
+        "pngSha256": "587de89e88611fabb39446b9de7a0a4b42d0284aaf942f284a18252c31a716b4",
+        "gpuPrograms": 175,
+        "allProgramsLinked": true,
+        "contextLost": false
+      },
+      {
+        "name": "hold-turning-side",
+        "rawSnapshotSha256": "ec3b2ca1e8c0983e6e097a985da11e43c48ffba72687627602977bae2987ecfb",
+        "pngSha256": "fe921c349db6ae7aa81417a258ce2e08c1fb954ba77741d31523aef08308a8c1",
+        "gpuPrograms": 175,
+        "allProgramsLinked": true,
+        "contextLost": false
+      }
+    ],
+    "baselineBuild": {
+      "revision": "5633eb61a0d4cecefc5514cf5a8c68f09a1c9cdb4f121527b0408a599b778237",
+      "inputHash": "31f25ae816db02139bf238e097edef5d86bcf68406bef444fee5ac1cf200cf4c",
+      "contentHash": "f038952be41c3e324be8a66ea1694890b0af34d49240cfea0f8c7ccc7aff306b"
+    },
+    "muzzleMinusHeadBone": {
+      "before": [
+        -0.12406548919694327,
+        -0.33859695581119487,
+        1.0886560963482275
+      ],
+      "after": [
+        -0.41754290499470237,
+        0.07231570026440615,
+        0.9426188266117846
+      ]
+    },
+    "comparisonLimits": "Same native map, fixed ticks and camera; random team palette/style differ. INKWAVE head-bone coordinates, not retail measurements or image similarity scores."
+  }
+}
