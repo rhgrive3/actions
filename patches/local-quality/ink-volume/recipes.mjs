@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { INK_LOOK, shotTailFrames, fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { captureRollerVolume, ROLLER_VOLUME } from './roller.mjs';
-import { usesBucketSlosherSheet, sharedBucketDraw, hissenVolumeFallback, sharedBucketTailLength, projectileDrawRadius } from '../../splatoon3/runtime/projectile-visuals.mjs';
+import { usesBucketSlosherSheet, sharedBucketDraw, hissenVolumeFallback, sharedBucketTailLength, projectileDrawRadius, projectilePresentationScale } from '../../splatoon3/runtime/projectile-visuals.mjs';
 import { poseBirthOffset } from '../../splatoon3/runtime/catalog-pose-birth.mjs';
 
 const states = new WeakMap();
@@ -92,7 +92,8 @@ export function submitInkVolume(engine,p) {
     if(fallback&&!(radius>0))return true;
     const tail=shared?sharedBucketTailLength(p,p.vel.length()):p.fidelitySloshDraw?(fidelitySlosherDrawTail(p,p.vel.length())-1)*radius:Math.max(min,Math.min(max,p.vel.length()*Math.min(p.age,solid)));
     part.name=name;part.pattern=pattern;part.size=1;part.rotation.copy(s.rotation);
-    part.stretch.set(width,width+tail,width*INK_LOOK.slosh[2]);part.position.addScaledVector(s.dir,-tail*.5);
+    const visualScale=projectilePresentationScale(p);
+    part.stretch.set(width,width+tail,width*INK_LOOK.slosh[2]).multiplyScalar(visualScale);part.position.addScaledVector(s.dir,-tail*.5*visualScale);
     // Retry only the derived contour LOD, through the SAME capacity/triangle reservation.
     const activeBefore=engine.metrics?.active||0;
     let ok=engine.submitComposite(p,s.single);

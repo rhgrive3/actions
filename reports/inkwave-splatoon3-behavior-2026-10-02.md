@@ -6926,3 +6926,7 @@ The production receiver no longer creates a standalone main proof from Shooter, 
 ### 2026-10-29: native Actor events invalidate the ground memo (#845)
 
 Native Character→Actor event emission now pauses and invalidates the exact ground memo around synchronous listeners and restores the prior lease in finally. A real Actor footstep subscriber can move native dynamic support between otherwise identical queries; the old memo then returns 0 instead of the fresh 0.1 WU support height and changes contact state at tick 11. Listener queries/moving support, nested events and throws preserve native results after the repair, while unchanged stretches retain duplicate reuse. Source controls pass 5/5; emitted verification follows after integration. #845's original hidden-tick ground-cadence criterion remains open. This bounded fixture observes no muzzle change and establishes no FPS, global custom callback/raycast-owner certificate or new Splatoon 3 Ver.11.3.0 geometry value; physical-device tests were waived. [Native bus counterfactual and exact source receipts](issue-resolution-20261029/845-actor-event-ground-memo/README.md).
+
+### 2026-10-29: イカロールの発光・光跡とヒッセンの空中表示1.5倍
+
+ユーザー指定でイカ本体のアニメーションを維持し、公式映像で見える離水の飛沫・白金色の発光・回転光跡を既存ロール状態へ接続する。通常離水だけだったFXへ、非塗りの開始飛沫と、防御状態に従って失効する光を追加する。Character・移動・防御判定・ゲーム乱数は変更しない。ヒッセン全キットの主飛沫と空中の床塗り用子滴は、通常volume・contour・history代替描画を含め表示寸法だけ1.5倍。弾道・当たり・威力・塗り・元の抽出値・wireを保持する。倍率はユーザー調整であり、本家サイズの一致認定ではない。公式素材の版・ギア・数値曲線とSwitch実機比較は未確認のまま。[比較条件・実装・ローカル回帰とブラウザ比較](roll-hissen-effects-20261029/README.md)。CIはユーザー指定でスキップする。

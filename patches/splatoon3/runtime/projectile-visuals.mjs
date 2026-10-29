@@ -238,7 +238,13 @@ export function projectileVisualWidth(p, age=finite(p?.age)) {
   const kind=p?._iwVisualKind || projectileVisualKind(p);
   const calibration=kind==='shooter'?VISUAL_WIDTH_CALIBRATION.shooter:
     kind==='bucket-front'||kind==='bucket-rear'?VISUAL_WIDTH_CALIBRATION.bucket:1;
-  return projectileDrawRadius(p,age)*calibration;
+  return projectileDrawRadius(p,age)*calibration*projectilePresentationScale(p);
+}
+// Owner-requested enlargement of flying Hissen ink, including alternate kits.
+// Source draw records and all simulation/paint/packet sizes stay untouched.
+export const HISSEN_PRESENTATION_SCALE = 1.5;
+export function projectilePresentationScale(p) {
+  return p && actorOf(p)==='WeaponSlosherDiffusion' ? HISSEN_PRESENTATION_SCALE : 1;
 }
 function tailLimits(p) {
   const d=drawRecord(p);
@@ -466,10 +472,11 @@ export class ProjectileVisualRuntime {
     a[3]=dy*rz-dz*ry;a[4]=dz*rx-dx*rz;a[5]=dx*ry-dy*rx;
     a[6]=dx;a[7]=dy;a[8]=dz;
   }
-  _body(h,start,end,radius,kind,r,g,b,seed=0,petalCenter=0,petalRate=0) {
+  _body(h,start,end,radius,kind,r,g,b,seed=0,petalCenter=0,petalRate=0,lengthScale=1) {
     if(!(radius>0)||this.bodies>=this.capacity)return false;
     start=max(h.oldestAge,min(start,end));end=min(h.latestAge,end);
     const c=this.centers,w=this.widths,t=this.thicknesses,profile=SHAPE_PROFILES[kind]||SHAPE_PROFILES.shooter;
+    if(lengthScale!==1)h.sample(end,this.sample2);
     if(profile.sphere)h.sample(end,this.sample);
     for(let ring=0;ring<RINGS;ring++) {
       const o=ring*6;
@@ -478,6 +485,7 @@ export class ProjectileVisualRuntime {
         c[o+3]=this.sample[3];c[o+4]=this.sample[4];c[o+5]=this.sample[5];
       }
       else h.sample(start+(end-start)*HISTORY_FRACTION[ring],c,o);
+      if(lengthScale!==1)for(let j=0;j<3;j++)c[o+j]=this.sample2[j]+(c[o+j]-this.sample2[j])*lengthScale;
       const axial=radius*profile.axial[ring];
       if(axial!==0) {
         const vx=c[o+3],vy=c[o+4],vz=c[o+5],scale=axial/(sqrt(vx*vx+vy*vy+vz*vz)||1);
@@ -586,7 +594,7 @@ export class ProjectileVisualRuntime {
     const color=p.owner?.color, unit=p.fidelityRollerUnit||sourceOf(p)?.vertical?.[p.catalog?.descriptor?.unit];
     p._iwVisualRenderStart=start;p._iwVisualRenderAge=age;
     this._body(h,start,age,radius,kind,finite(color?.r,1),finite(color?.g,1),finite(color?.b,1),finite(p.seed),
-      finite(unit?.FourPetalsCenterRadiusRate),finite(unit?.FourPetalsPetalRadiusRate));
+      finite(unit?.FourPetalsCenterRadiusRate),finite(unit?.FourPetalsPetalRadiusRate),projectilePresentationScale(p));
     if(kind==='roller-horizontal'&&this.renderRecordCount<this.capacity&&p._iwVisualGroup) {
       const i=this.renderRecordCount++;this.renderRecords[i]=p;
       let slot=p._iwVisualGroup%this.capacity;

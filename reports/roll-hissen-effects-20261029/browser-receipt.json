@@ -1,0 +1,53 @@
+{
+  "rows": [
+    {
+      "frame": 0,
+      "glows": 21,
+      "drops": 7,
+      "poseUnchanged": true
+    },
+    {
+      "frame": 3,
+      "glows": 23,
+      "drops": 7,
+      "poseUnchanged": true
+    },
+    {
+      "frame": 6,
+      "glows": 22,
+      "drops": 7,
+      "poseUnchanged": true
+    },
+    {
+      "frame": 10,
+      "glows": 22,
+      "drops": 7,
+      "poseUnchanged": true
+    }
+  ],
+  "hissen": [
+    {
+      "factor": 1,
+      "active": 5,
+      "triangles": 170460
+    },
+    {
+      "factor": 1.5,
+      "active": 5,
+      "triangles": 170460
+    }
+  ],
+  "renderer": {
+    "frame": 10,
+    "calls": 8,
+    "triangles": 171062,
+    "points": 0,
+    "lines": 0
+  },
+  "build": {
+    "contentHash": "36316a89d20888ac1f63b125d14d3b4c1a7ff467d3c6d751a3aa086a3de06a0e"
+  },
+  "note": "Driven native Character pose and native admitted Hissen volley, controlled render comparison; not a full live match or Switch comparison.",
+  "seed": "0x1029",
+  "errors": []
+}
