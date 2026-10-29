@@ -183,6 +183,10 @@ jobs:
             !/tools/inkwave-modeler/
             /reports/
             /docs/
+            # The global metadata AST guard reads every tracked JavaScript file.
+            *.js
+            *.mjs
+            *.cjs
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -248,6 +252,10 @@ jobs:
             !/tools/inkwave-modeler/
             /reports/
             /docs/
+            # Include audit code while keeping excluded authoring binaries absent.
+            *.js
+            *.mjs
+            *.cjs
       - name: Verify immutable checkout identity
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
@@ -780,8 +788,8 @@ jobs:
     needs: build_site
     # No offload until CircleCI is connected and enabled.
     if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    # Native catalog GL capture requires the supported 22.04 Chromium sandbox.
-    runs-on: ${{ matrix.suite == 'catalog' && 'ubuntu-22.04' || 'ubuntu-latest' }}
+    # Active compositor and catalog GL captures use the supported Chromium sandbox.
+    runs-on: ${{ (matrix.suite == 'active' || matrix.suite == 'catalog') && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
