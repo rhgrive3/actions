@@ -6697,3 +6697,7 @@ The composed runtime previously performed a cloud-center-to-device visibility te
 ### 2026-10-29: guest deadline input neutralization
 
 期限切れguestのcontrollerが入力の再取得を止めた後も、直前のActor更新後にqueueされた `jumpPressed` がintentに残り、次のActor更新で追加jumpを起こせた。既存のneutralize処理でjump level/bufferに加えてこのedgeも消す。実Actor・同期jump listener・guest期限gate・次の接地stepを使う対照で旧実装の追加jumpを再現し、通常/Storm所持と期限前の正当jumpを区別する。これはINKWAVEの入力寿命の修正であり、Splatoon 3 Ver.11.3.0の新しい数値・動作を推測した変更ではない。source回帰は成功、最終生成物での確認は別途実行する。
+
+### 2026-10-29: native combat scan parity (CMB04 / CMB06)
+
+The optimized InkFlight prefilter used terrain radius plus .25, smaller than the installed .675 squid bullet hurtbox. A standard shooter head at lateral offset .94 loses a native 36-damage contact. The bot squared-distance prefilter also rejects a normal-difficulty candidate whose native distance rounds to the awareness boundary of 21, changing LOS, target and RNG state. Both unsafe adapter rewrites now preserve their exact native scans; the capsule's existing actual-shape AABB remains. Composed-source negative controls reproduce both failures, and fixed 30/60/120 Hz, boundary/custom/nonfinite, coherent-motion and live-callback controls pass. These CPU checks preserve the existing INKWAVE rules; Splatoon3 11.3.0 geometry/calibration and device/FPS parity remain unverified. [Proof, scope and validation](issue-resolution-20261029/cmb04-cmb06-parity/README.md).

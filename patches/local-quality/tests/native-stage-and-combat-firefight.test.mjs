@@ -152,7 +152,7 @@ test('NAT-03 through NAT-06 native runtime modules use preallocated scratch vect
   assert.match(readRepo('patches/native-stages/runtime/native-bot-support.mjs'), /function hasJumpEdgeTo\(node,toId\)/);
 });
 
-test('CMB-01 through CMB-06 firefight paint, splash drop, graze, and XZ broadphase preserve exact combat behavior', () => {
+test('CMB-01 through CMB-06 firefight paint, splash drop, graze, and native scans preserve exact combat behavior', () => {
   // CMB-01: _paintOwnerPool reuse in PaintSystem.prototype.splat
   const calls = [];
   class MockPaint {
@@ -217,11 +217,14 @@ test('CMB-01 through CMB-06 firefight paint, splash drop, graze, and XZ broadpha
   assert.equal(system._s3SplashLandingsScratch.length, 0);
   assert.equal(system._s3SplashRetiredScratch.length, 0);
 
-  // CMB-04 & CMB-06: composed inkFlightRuntime.js and bots.js contain broadphase prechecks
+  // CMB-04 & CMB-06: retain native scans; executable parity and unsafe negative
+  // controls live in combat-native-scan-parity.test.mjs.
   const composedFlight = adaptBuildSource('src/game/inkFlightRuntime.js', readPublic('src/game/inkFlightRuntime.js'));
-  assert.match(composedFlight, /let segBoundsReady = false, segMinX = 0, segMaxX = 0, segMinZ = 0, segMaxZ = 0;/);
+  assert.doesNotMatch(composedFlight, /segBoundsReady/);
+  assert.match(composedFlight, /const bodyRadius = hurtboxRadius\(actor, PLAYER\)/);
   const composedBots = adaptBuildSource('src/game/bots.js', readPublic('src/game/bots.js'));
-  assert.match(composedBots, /const dSq = e\.pos\.distanceToSquared\(a\.pos\);/);
+  assert.match(composedBots, /const d = e\.pos\.distanceTo\(a\.pos\);/);
+  assert.doesNotMatch(composedBots, /const awSq = aw \* aw/);
 
   // CMB-05: globGrazePaint reuses p.s3GrazePaint.at on subsequent accepted grazes
   const p = { owner, team: 0, pos: new THREE.Vector3(0, 0.2, 0), seed: 0.4, s3Weapon: { kind: 'slosher' } };
