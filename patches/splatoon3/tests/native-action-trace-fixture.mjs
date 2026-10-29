@@ -3,17 +3,8 @@
 // A THREE.Scene is retained without a renderer; paint raster/audio are stubs.
 import { fixture } from './source-fixture.mjs';
 import {pathToFileURL} from 'node:url';
-import crypto from 'node:crypto';import fs from 'node:fs';import path from 'node:path';
-// An explicit built module selects the sealed emitted canonical owner; with
-// no override the new leaf is exercised from the source checkout.
-const emittedCanonical=process.env.INKWAVE_CANONICAL_TRACE_MODULE;
-if(emittedCanonical){
- const site=process.env.INKWAVE_BUILT_SITE;if(!site)throw Error('emitted canonical module requires a built site');
- const rel='patches/network-replication/canonical-weapon-actions.mjs',file=path.resolve(site,rel);
- if(path.resolve(emittedCanonical)!==file)throw Error('canonical module is not the selected site artifact');
- const m=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))),hash=b=>crypto.createHash('sha256').update(b).digest('hex');
- if(hash(JSON.stringify(m.artifacts))!==m.contentHash||hash(fs.readFileSync(file))!==m.artifacts[rel])throw Error('canonical emitted artifact identity mismatch');
-}
+import {selectCanonicalTraceModule} from './native-action-trace-binding.mjs';
+const emittedCanonical=selectCanonicalTraceModule(process.env.INKWAVE_BUILT_SITE,process.env.INKWAVE_CANONICAL_TRACE_MODULE);
 const canonicalModule=emittedCanonical?await import(pathToFileURL(emittedCanonical)):await import('../../network-replication/canonical-weapon-actions.mjs');
 const {createCanonicalWeaponActions}=canonicalModule;
 const DT=1/60, vec=v=>v?.toArray?.()??null;
