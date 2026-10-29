@@ -1000,6 +1000,39 @@
         }
       },
       "otherStatus": "Native Chromium audio request failures and required current-hosted CI unresolved; minimap clock and sub-mark investigations not adjudicated. MOV-08b and isolated Character QA holds retained."
+    },
+    {
+      "atUtc": "2026-10-29T18:35:17Z",
+      "historicalSnapshotPreserved": true,
+      "publishedPR1914Head": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+      "mainPreservedThrough": "91c1aa89061ddeec0685a7b32899b3b711995c60",
+      "externalPR1916": "Closed/merged by a separate operation after owner dafba0a2; all eight final owner paths retained. The root abandoned its obsolete unpublished integration and did not push the closed PR.",
+      "historical39cBuild": {
+        "contentHash": "f27791906bcf7a0a1c7e6c6520dbfc513157b6ca1c98b89f5de3029915375308",
+        "inputHash": "427e1471ed7225bd6cd7508b2b9960b9893857dcf7a4b4adb3bf91ab3cee5cf0",
+        "inputs": 1550,
+        "artifacts": 2267,
+        "mandatoryEmitted": "369/369 pass; no skips",
+        "context": "Strict real loss/restore,120 RAF and retained state/paint/terminal refusal pass; not automatic gameplay recovery",
+        "menu": "121/121 pass;8 exact responses include4 new modules",
+        "volumeAndEffectsCPU": "13/13 pass; emitted volume uses source Three and simulated GL",
+        "rollHissenBrowser": "Controlled scene passes with no request/page/HTTP/GL errors; not full match",
+        "composer": "48 cases pass",
+        "postDepth": "78 Chromium and78 configured WPE WebKit cases pass",
+        "nativeTouch": "LOW/MED/HIGH bounded samples all pass; eligible estimated color allocation25% lower, no hardware memory/FPS claim",
+        "fullActive": "NONPASS after65 kits/12 gear: synthetic HUD omitted constructor-owned spIcon; Minimap not reached",
+        "packet": "../main39-followup-evidence/README.md"
+      },
+      "followupSourceCorrections": {
+        "hud": "Detached private spIcon clone before first native update; exact old full-body seal preserved by one-field inverse; regression registered in existing VM suite",
+        "menu": "Historical menu behavior regression now registered in the same VM suite",
+        "nativeReplay": "Five synchronous world hooks reject thenables, retire pending contacts or reject initialization. Peer-approved131/131; unchanged implementation fails6 of7 added controls. Does not cancel Promise continuations, roll back arbitrary callbacks or connect production authority."
+      },
+      "issue1813": "Public11.2 analysis identifies two paint-only secondary bullets, immutable11.2/11.3 parameter rows match17556 bytes; existing3 native-source cases and non-vacuous separate-owner crossfire control pass. Conditional software candidate, not per-target retail collision measurement. See1813-source-corroboration.",
+      "securityStillOpen": "Fresh f277 emitted diagnostic still accepts complete forged native projectile rows for36 HP each on PvP/Boss/crablet without sender launch/contact; authenticating an owner row does not derive trusted actions. #1665/#1666 remain open.",
+      "review": "All11 original inline threads resolved after verifying public39c code; no new findings at18:28:32.",
+      "CI": "At18:29:19,39c had36 workflows:27success,5active,3queued,1skip,0fail; this is progress, not final acceptance. Final next head needs its own CI.",
+      "issueClosure": "No additional issue closed by this addendum; original26 excluding401 retained. Device testing waived; main merge not performed by root."
     }
   ]
 }

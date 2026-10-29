@@ -1,0 +1,212 @@
+{
+  "schema": 2,
+  "baseSourceCommit": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+  "productionPaths": [
+    "patches/network-replication/trusted-native-replay.mjs"
+  ],
+  "testPaths": [
+    "patches/network-replication/tests/trusted-native-replay.test.mjs"
+  ],
+  "guardHooks": [
+    "initializeActor",
+    "beforeActors",
+    "afterActors",
+    "afterProjectiles",
+    "createBoss"
+  ],
+  "baseRuntimeSha256": "95f11ea022a0ee7d2e87361d7a6208a9b77117e3fcf121ce451895e1f192b7cc",
+  "candidateRuntimeSha256": "37139f088600712c533212d17cf03be9abd48be633f52f936c939ec37f491902",
+  "candidateTestSha256": "2abc3c63c28fddb7a346326ff20a276734d3b3c3b27d83a416223be8454bf6c2",
+  "patchSha256": "a0f116b97b0779809475b9b209455b7926b93c864da213d6711123eb4ab26e75",
+  "validation": {
+    "node": "22.23.4",
+    "finalCombined": {
+      "tests": 131,
+      "pass": 131,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0,
+      "scope": "all65 ordinary native main owners; native resources/contact/armor/rounding; canonical commands/wire; full banked initialTurf SquidSpawn+Charger;7new regressions"
+    },
+    "sameSevenOnFrozenOriginal": {
+      "tests": 7,
+      "pass": 1,
+      "fail": 6,
+      "skip": 0,
+      "exit": 1,
+      "failures": "three pendingframe accepted completions; pending initializer accepted; callablethenable accepted; native-shaped actual Boss Promise accepted",
+      "ordinarySyncPositivePasses": true
+    }
+  },
+  "independentPeer": "Agent6 read-only independently APPROVED exact applied v2 source/test hashes37139/2abc3, five-hook this/args/fallback/retirement semantics, additional real pending native-shaped Boss Promise counterfactual and cleanup/lease test, final131/131 and old1/7 logs; no peer rerun.",
+  "behavior": "Reject asynchronous return values within existing synchronous trusted-native construction/frame contract; preserve this/argument count/ordinary returns and existing native fault/enrollment cleanup.",
+  "limitations": [
+    "Does not cancel pending continuations or suppress future rejections; does not isolate callback code or roll back native side effects.",
+    "world.dispose remains outside this correction. Ordinary undecorated Boss Promise already failed the old method-shape check; new counterexample carries actual native method surface on a real pending Promise.",
+    "API remains uninstalled on mandatory production NetMatch/relay. #1665/#1666 stay open. No new wire fields, protocol gates or native gameplay formulas.",
+    "CPU native fixtures retain documented display/dry-paint seams for65 ordinary main controls. Full banked firstspawn test covers Charger. No deployed room/lag/migration/device/GPU proof.",
+    "Fresh production-forgery evidence retains source39c/contentf277/input427 labels; it is not relabeled as the future guard build."
+  ],
+  "productionGap": {
+    "source": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+    "contentHash": "f27791906bcf7a0a1c7e6c6520dbfc513157b6ca1c98b89f5de3029915375308",
+    "inputHash": "427e1471ed7225bd6cd7508b2b9960b9893857dcf7a4b4adb3bf91ab3cee5cf0",
+    "securityAcceptancePassed": false,
+    "forgedBirthDamage": {
+      "pvp": 36,
+      "boss": 36,
+      "crablet": 36
+    },
+    "actualSenderWeaponInvocations": 0,
+    "actualReceiverContacts": 0,
+    "actualEmittedCombatArtifact": "patches/network-replication/combat-provenance.mjs",
+    "actualEmittedCombatSha256": "12d077c913dc865d0f56e2249b73d112633d47a6795f2ce33ac52655f28b59f2",
+    "buildManifestSha256": "a7ae27e9911639bc1f8d4df55b4113c95aef7a4cca173136ca46446f9aace2fd",
+    "artifactMatchesManifest": true
+  },
+  "files": [
+    {
+      "path": "native-replay-before95f.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/original.mjs",
+      "bytes": 16701,
+      "sha256": "95f11ea022a0ee7d2e87361d7a6208a9b77117e3fcf121ce451895e1f192b7cc",
+      "gzipBytes": 5835,
+      "gzipSha256": "db2bde5c9d9d134a80bcb287a91fd9ed52de64e401bd8df669e8e64512f94040"
+    },
+    {
+      "path": "native-replay-candidate37139.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/candidate.mjs",
+      "bytes": 17176,
+      "sha256": "37139f088600712c533212d17cf03be9abd48be633f52f936c939ec37f491902",
+      "gzipBytes": 5995,
+      "gzipSha256": "6cc5fc00e9482d56912ebfa1d4f2d3af752872fe89569cfbb646b58c650ef1e4"
+    },
+    {
+      "path": "native-tests-before6e88.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/trusted-native-replay.test.before.mjs",
+      "bytes": 23163,
+      "sha256": "6e886a628de3b2c6c0ac65bc1c841a95f7a6f353784aba48c4eacb8ccf59d798",
+      "gzipBytes": 6978,
+      "gzipSha256": "e7e096912f682eb2458f9a90b9d298a3ccbe6352302f3cd93a1ca04920bc3bdd"
+    },
+    {
+      "path": "native-tests-candidate2abc3.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/trusted-native-replay.test.candidate.mjs",
+      "bytes": 28270,
+      "sha256": "2abc3c63c28fddb7a346326ff20a276734d3b3c3b27d83a416223be8454bf6c2",
+      "gzipBytes": 8227,
+      "gzipSha256": "70b4d9644f6ca31039472df8a4874a25f0cfd1a2d9929b37e6b4394afbddd765"
+    },
+    {
+      "path": "repo-shaped.patch.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/repo-shaped.patch",
+      "bytes": 10774,
+      "sha256": "a0f116b97b0779809475b9b209455b7926b93c864da213d6711123eb4ab26e75",
+      "gzipBytes": 3769,
+      "gzipSha256": "42669f611e19e358e825444f507e6d4f399c8d1827554cf196fc885bf5db6cc9"
+    },
+    {
+      "path": "old-seven-controls.tap.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/old-seven-controls.tap",
+      "bytes": 7965,
+      "sha256": "5b9b0b5af010f539262b20878ad28749067274aaff524e2029f54970fb969e2d",
+      "gzipBytes": 1246,
+      "gzipSha256": "f2b8ef99c014a9be912066ed2bee7a625983158ffd58de4449cdfc6a58f203da"
+    },
+    {
+      "path": "old-seven-controls.exit.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/old-seven-controls.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "gzipBytes": 22,
+      "gzipSha256": "d381e5a9b7c1c71b5fb3fef202103bf4b6098ce288f148735de1ecf61d4e3b75"
+    },
+    {
+      "path": "final-native-controls131.tap.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/final-native-controls.tap",
+      "bytes": 30822,
+      "sha256": "49c00c880d8708f93cf0e7c26332870494f7bd0905fc2453005c6041a1871299",
+      "gzipBytes": 6898,
+      "gzipSha256": "3009af6eeac4ab3853af69ef04811ba305044b13dc9837f18127b7b64e0680db"
+    },
+    {
+      "path": "final-native-controls131.exit.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/final-native-controls.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gzipBytes": 22,
+      "gzipSha256": "cabc3a30b39528db601f65ca3ced008dd775595c901102d08ac8ae8976b29bcf"
+    },
+    {
+      "path": "prototype-fixture.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/prototype-fixture.mjs",
+      "bytes": 837,
+      "sha256": "67cb78bf77a197d243d54ee0f91e944f0e7111613d426a1892bd6c466d2478d9",
+      "gzipBytes": 358,
+      "gzipSha256": "210f5b08a9a663e6e693af94e456eeb32ff2174ca2b81fe8eace35f647336732"
+    },
+    {
+      "path": "old-control-fixture.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/prototype-fixture-old.mjs",
+      "bytes": 836,
+      "sha256": "1b5a1b9c214891abe9bd96a470c3be3e76d7b1efdcaefb3f19c3a4bb802eb561",
+      "gzipBytes": 361,
+      "gzipSha256": "2dbac0446282ec27e22dc0b03a00ca107f2dfeed0fd62e9ba18bba1c08f460a1"
+    },
+    {
+      "path": "39c-f277-production-gap.json.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase/current-production-gap.json",
+      "bytes": 6942,
+      "sha256": "f0342477302a07d80666580c00c40e422aa92ec5d0ee6d0a57d51d1f8b6a1b5c",
+      "gzipBytes": 584,
+      "gzipSha256": "392a69c0b4f48952bfbe71ae155f8020e96d9f3f3468a20d82cdf8c9312e399a"
+    },
+    {
+      "path": "39c-f277-production-gap.log.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase/current-production-gap.log",
+      "bytes": 1986,
+      "sha256": "e288391ac115bdabc83f138819fc74a0c5d822d7692baab952307bb0a8eb3056",
+      "gzipBytes": 282,
+      "gzipSha256": "c07f3b6ad1a5bc2efec73ca9d8df6b053d5da7cd1f3f842918e74e64f165cd19"
+    },
+    {
+      "path": "initial-four-hook-phase-probe.mjs.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase/phase-probe.mjs",
+      "bytes": 4626,
+      "sha256": "98fdb8fd6987dbd07864ad8ca07030f7f8004749f61ea78366e53493637913ee",
+      "gzipBytes": 2044,
+      "gzipSha256": "3e19042c5ccf46d1f36373af31b7f02f9933d951886dfa35294e63b8b5d86880"
+    },
+    {
+      "path": "initial-four-hook-eight-rows.json.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase/result.json",
+      "bytes": 2673,
+      "sha256": "cb54ad4aca8e38bc2c9b8858645f607741b398e9496669d81112bce1023f6206",
+      "gzipBytes": 473,
+      "gzipSha256": "1743b4471375cba3a1b95c00eaf6c47eefe2959bc3faa203c305f7c7e8ee87c5"
+    },
+    {
+      "path": "initial-four-hook-probe.log.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase/run.log",
+      "bytes": 2430,
+      "sha256": "e134c2e239a5531eb754f7635f9f304eec53fef10c924ef84dccc97f6c368145",
+      "gzipBytes": 457,
+      "gzipSha256": "f77caca746bfd8441bd5935f01e25140b317cc04fd68d08818d3fe24145e15a8"
+    },
+    {
+      "path": "initial-display-seam-setup-failure.log.gz",
+      "originalPath": "/workspace/scratch/agent1-authority-phase/fixture-initial-failure.log",
+      "bytes": 1129,
+      "sha256": "84861adcd7514cb6b01653a07d604e2282938a450ab45ac75a5ad841665bf14b",
+      "gzipBytes": 320,
+      "gzipSha256": "6e11577bf17fc47cff541f6ead1d2e88c0ff67a0d1fa5d06fb6f8d1f2348f82c"
+    },
+    {
+      "path": "repo-shaped.patch",
+      "originalPath": "/workspace/scratch/agent1-authority-phase-v2/repo-shaped.patch",
+      "bytes": 10774,
+      "sha256": "a0f116b97b0779809475b9b209455b7926b93c864da213d6711123eb4ab26e75"
+    }
+  ],
+  "initialProbeNote": "The retained phase-probe is the initial four-hook diagnostic, before the additional createBoss guard; the v2 seven regressions and131 TAP bind the final five-hook patch."
+}

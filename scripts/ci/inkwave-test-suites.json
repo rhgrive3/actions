@@ -255,7 +255,9 @@
           "--test",
           "patches/splatoon3/tests/menu-layout-cache-1915.test.mjs",
           "scripts/tests/inkwave-minimap-transient-clock.test.mjs",
-          "scripts/tests/inkwave-minimap-source-epochs.test.mjs"
+          "scripts/tests/inkwave-minimap-source-epochs.test.mjs",
+          "scripts/tests/inkwave-hud-spicon-fixture.test.mjs",
+          "scripts/tests/inkwave-menu-focus-epoch-behavior.test.mjs"
         ]
       }
     ]
