@@ -1,0 +1,21 @@
+{
+  "baseline": "035233299348e5c3527f6106b98e721ed2dfd011",
+  "codeCommit": "c53eada7",
+  "identityCommit": "f54c857e",
+  "equivalentRootIdentityCommit": "e404a0b1aa3d3c4fec0d744b5c78d222811ef315",
+  "site": "/workspace/scratch/canonical-weapon-actions-final-site",
+  "node": "22.23.4",
+  "esbuild": "0.28.2",
+  "optimization": "esbuild-minify",
+  "revision": "7d96aa0700ed4c3db5b04333d557213ae38aa98d7f867a0762f7dc59986e8935",
+  "contentHash": "abc48a42e77cc42c7594bb798492ffade9a0079c666e4b74ddf69015e328dfdf",
+  "inputHash": "4dd4571304dc9342dbc92e0869fc5ea1c9daf760366c1b38f24ea9efc75a9418",
+  "manifestSha256": "67fb920499292d417d614c1a6d70538af0276848a58f0abbbe65b8310feee968",
+  "declaredInputCount": 1523,
+  "artifactCount": 2231,
+  "artifactMismatch": [],
+  "canonicalSourceSha256": "3594c4a8db71bd3e80280dcfb6faf8c416e4dbfcf6ca4dc615cec53a3e040348",
+  "declaredCanonicalSourceSha256": "3594c4a8db71bd3e80280dcfb6faf8c416e4dbfcf6ca4dc615cec53a3e040348",
+  "canonicalSourceMatches": true,
+  "canonicalArtifactSha256": "897b424e88685d2b0b073eba23ad4d23ec5491fe7cb478577ab101b6e7b3a0e7"
+}

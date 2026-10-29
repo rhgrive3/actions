@@ -1,0 +1,91 @@
+{
+  "base": "035233299348e5c3527f6106b98e721ed2dfd011",
+  "runtimeCommits": [
+    "0c8480d0",
+    "da1e3ed9",
+    "c53eada7"
+  ],
+  "source": {
+    "core": {
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    "modes": {
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "emitted": {
+    "core": {
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    "modes": {
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "before": {
+    "code": "0c8480d0",
+    "site": "/workspace/scratch/canonical-weapon-actions-site",
+    "cancelPositive": {
+      "pass": 0,
+      "fail": 1,
+      "skip": 0
+    },
+    "lifePositive": {
+      "pass": 0,
+      "fail": 1,
+      "skip": 0
+    }
+  },
+  "inventory": {
+    "bytes": 204844,
+    "sha256": "7e0e1dd2b045c95cb7fe75d34150a7b1f65c0ae0365686c9a319a8c629e518d7",
+    "sourceEmittedEqual": true,
+    "mains": 65,
+    "families": [
+      "blaster",
+      "brella",
+      "brush",
+      "charger",
+      "dualies",
+      "roller",
+      "shooter",
+      "slosher",
+      "splatana",
+      "splatling",
+      "stringer"
+    ],
+    "subs": 14,
+    "specials": 20,
+    "sourceBudgetFields": 714
+  },
+  "commands": {
+    "source": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node --experimental-vm-modules --test patches/network-replication/tests/canonical-weapon-actions.test.mjs patches/network-replication/tests/canonical-weapon-modes.test.mjs",
+    "emitted": "INKWAVE_BUILT_SITE=/workspace/scratch/canonical-weapon-actions-final-site /home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node --experimental-vm-modules --test patches/network-replication/tests/canonical-weapon-actions.test.mjs patches/network-replication/tests/canonical-weapon-modes.test.mjs"
+  },
+  "scope": {
+    "nativeRuntime": true,
+    "actualEmittedModules": true,
+    "gpu": false,
+    "hardware": false,
+    "liveLegacyWireMandatoryIntegration": false
+  },
+  "archives": {
+    "before-cancel-emitted.log.gz": "591596e1096c8266d77ef0b8bec3a3bcd0abc576be5a16d58bc4d0a99e5bab73",
+    "before-life-emitted.log.gz": "485cad3e0cf11c72c0b1d7546839d0c301ce369a1a95e041f72e68422af77732",
+    "build.log.gz": "876bad5a023579e419575831434b29399e78a6170c999df5df214bba3db03823",
+    "core-emitted.log.gz": "bdaad66f9840c2359734b90fba15272d8fc560f126c947487f3ffaa6611b49ee",
+    "core-source.log.gz": "1396489e99f7cdfe7713d3337807c836a270d63ef790bc2d7569e24ab4ec771b",
+    "inventory-emitted.log.gz": "5e0fab91c44f03e2293dd98632c40256fa57af783682eaef1ad1b2b9c43672b3",
+    "inventory-source.log.gz": "8421918e439911ab4fa4add5229f2fed9e088d10b1840af9b0914fe925b6d336",
+    "inventory.json.gz": "f6f75281a0086bccd40e754fa17b1b553a960239aee2c87bb4b0dbad65c2b364",
+    "modes-emitted.log.gz": "0617d10f3410a3dc4728397b84a3deaf18c683d68262a7a9a9643eeb8d3aa970",
+    "modes-source.log.gz": "1dec9823f9abdd9c9dbf29cb35b9bf6b6a6022829b390fb357317939bcb314a2"
+  }
+}
