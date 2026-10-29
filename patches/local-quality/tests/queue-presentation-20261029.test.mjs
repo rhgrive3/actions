@@ -72,12 +72,26 @@ test('muzzle occupancy gate preserves matrices/colors and revives after expiry, 
   assert.deepEqual(append(b,i/hz,i%5?60:0),append(a,i/hz,i%5?60:0));
  }}
 });
+// Recreate the actual nested paint owner, including any scratch declaration
+// immediately before it. A detached function alone is not its lexical scope.
+function cataloguePaintClosure(source,G,ellipse){
+ const start=source.indexOf('  function paint('),end=source.indexOf('  function floorPaint(',start);
+ assert.ok(start>=0&&end>start,'actual catalogue paint/floorPaint boundary');
+ assert.equal(source.indexOf('  function paint(',start+1),-1,'unique catalogue paint owner');
+ const anchor='  const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();\n';
+ const usesScratch=source.slice(start,end).includes('_paintTangent');
+ const prelude=usesScratch?anchor:'';
+ if(usesScratch)assert.equal(source.slice(start-anchor.length,start),anchor,'actual same-scope scratch declaration');
+ else assert.equal(source.includes('_paintTangent'),false,'historical paint owns no scratch');
+ return new Function('THREE','G','paintFallbackUp','EPS','SOURCE_SHOT_PAINT_KIND','catalogPaintEllipse',prelude+'return ('+source.slice(start,end)+')')(T,G,new T.Vector3(0,1,0),1e-9,3,ellipse);
+}
 test('catalogue inline ellipse retains actual paint packet scalars and vectors for boundary depths and footprints',async()=>{
  const ellipse=(await load('catalog-splash-paint')).catalogPaintEllipse;
  const old=before['main-weapon-catalog'],next=fs.readFileSync(new URL('main-weapon-catalog.mjs',runtime),'utf8');
- const extract=s=>s.slice(s.indexOf('  function paint('),s.indexOf('  function floorPaint('));
+ const broken=next.replace('  const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();\n','');
+ assert.throws(()=>cataloguePaintClosure(broken,{},ellipse),/actual same-scope scratch declaration/,'missing production owner is rejected');
  function run(s,depth,footprint,normal){const rows=[],G={level:{faces:[{n:normal}]},paint:{splat(...args){rows.push(args.map(v=>v?.isVector3?v.toArray():v&&typeof v==='object'?{...v,claimOwner:null,stretch:v.stretch?.toArray()}:v));return 7;}}};let turf=0;const owner={remote:false,team:1,addTurf(v){turf+=v;}};
- const f=new Function('G','paintFallbackUp','EPS','SOURCE_SHOT_PAINT_KIND','catalogPaintEllipse','return ('+extract(s)+')')(G,new T.Vector3(0,1,0),1e-9,3,ellipse);
+ const f=cataloguePaintClosure(s,G,ellipse);
  f(owner,new T.Vector3(2,1,4),.7,depth,new T.Vector3(.4,.2,.9),0,footprint,.37);return {rows,turf};}
  for(const d of [undefined,NaN,Infinity,-Infinity,-1,0,Number.MIN_VALUE,.2,.999999999,1,1.00000001,3])for(const fp of [null,'ink-contact','shot'])for(const n of [new T.Vector3(0,1,0),new T.Vector3(1,0,0)])assert.deepEqual(run(next,d,fp,n),run(old,d,fp,n));
 });
