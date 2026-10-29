@@ -1,0 +1,53 @@
+{
+  "source": "11ea9f273bc315257699e4436d08c273145bee05",
+  "repairCommit": "fc9d6004f7b878469f35180edd6aab9243689c94",
+  "node": "v22.23.4",
+  "sourceEpochs": {
+    "currentRawGitBlob": "7fcf28f91da1d9813b12cf33908ce62fc4856c8a",
+    "currentRawSha256": "3e7565e0fc6fb0ea86f60ef91833e3f75c997b8f3036249b55c13b18f051ed0e",
+    "previousRawGitBlob": "1ecceff38aa579aa2b25f00416a9cacd4f3ff4a8",
+    "previousRawSha256": "91ddb72879f10b0d819403901f9185cbbe9b3ea72e47f4ef3df086cc3e89b2c2",
+    "currentNormalizedClosureGitBlob": "54344ec75dbfff00176a83d0d557bad7bac5ec69",
+    "previousNormalizedClosureGitBlob": "4df1943b2d598d012eaa7fa09fe96af4900821bd",
+    "immutableHistoricalOracleGitBlob": "ac2bbba478608abc5ce626a0372958528a096c00"
+  },
+  "ownerDescriptorJsonSha256": "cd0388cd9468fb6d43b64422c65f6d58e19e155bad5756f29e5409d1f7f4bd83",
+  "receipts": [
+    {
+      "file": "agent2-current-failure-job-123403938943.log.gz",
+      "sha256": "685de081f0e7364b918d99c3f993a4cf96a6a9903b33fddc8865a01ae4288154",
+      "uncompressedBytes": 183443,
+      "uncompressedSha256": "690851885127cc08388b79be64c21c8f6eeddc3b9f29f8ec794fd1577ce726e1"
+    },
+    {
+      "file": "agent2-current-failure-job-123403939257.log.gz",
+      "sha256": "9521d17543b80c4da39c76bf58423f1d6118334b1bdeb95428b10f182143c11d",
+      "uncompressedBytes": 33779,
+      "uncompressedSha256": "15cbaa71cea296f9c66bd0b7f5ca66b33ac68ad23b9050e6197bb2665fcb1f98"
+    },
+    {
+      "file": "lod-history-before-node22.tap.gz",
+      "sha256": "f92cabe21223bc61541c4f9c9ae386e78a8e981df48bfef5a1bc1b1cf9854d3b",
+      "uncompressedBytes": 4579,
+      "uncompressedSha256": "e4bed27e9275d4a4c2327d84593501221a21affbbba38a528ac68cfba9afc28c"
+    },
+    {
+      "file": "lod-history-helper-node22.tap.gz",
+      "sha256": "71e62ceca23ba6645f91d316613414568f690b68f394a2a672397827e3af4129",
+      "uncompressedBytes": 1027,
+      "uncompressedSha256": "8f9a352fa096bb36fe56ab504ef3b2cfb35f67220af6104ce963298418c524bc"
+    },
+    {
+      "file": "lod-history-after-node22.tap.gz",
+      "sha256": "f7aa0ce5076c9e6e4f75c371519b5341697d8eef9ca3aa26f622efba2392ae62",
+      "uncompressedBytes": 2128,
+      "uncompressedSha256": "22f6bf1635e4a97ef9bc187e0e0ce6939e7d262c760bf09184f12eadeeaaf2e0"
+    },
+    {
+      "file": "lod-history-full-aplus-node22.json.gz",
+      "sha256": "2fd069ba807d0347d9a1a44a3bf174833d14458cef6ab5a52ef2a8073d3523f0",
+      "uncompressedBytes": 6018,
+      "uncompressedSha256": "34aa167ee9bce497e04fd40ce38096da2bbe10d66cdd3af13f73768ac403ea7b"
+    }
+  ]
+}
