@@ -63,7 +63,8 @@ test('live acceptance preserves all 14 isolated viewports with two bounded worke
   assert.match(script,/report\.cases\.length === 14 && report\.shards\.length === 14/);
   assert.match(script,/await mapResponsiveByEngine\(cohort,workers,runCase\)/);
   assert.match(script,/row\.ok=processResult\.status===0 && !processResult\.error && !row\.error/);
-  assert.match(script,/spawnResponsiveCase\(process\.execPath,args,\{cwd:root,timeoutMs:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
+  assert.match(script,/workers===1\s*\? spawnSync\(process\.execPath,argv,\{cwd:root,encoding:'utf8',timeout:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
+  assert.match(script,/spawnResponsiveCase\(process\.execPath,argv,\{cwd:root,timeoutMs:20\*60\*1000,maxBuffer:16\*1024\*1024\}\)/);
   assert.match(workflow,/check-inkwave-responsive-isolated\.mjs --source \.built-site\/_site --section all[^\n]+--workers 2/);
 });
 

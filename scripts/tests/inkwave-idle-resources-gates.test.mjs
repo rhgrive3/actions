@@ -39,7 +39,7 @@ test('idle GPU and WebAudio retain exact-source mandatory evidence in parallel r
  assert.match(resource,/assert\.equal\(report\.contentHash,build\.contentHash\)/);
  assert.match(resource,/name: inkwave-idle-resource-\$\{\{ env\.SOURCE_SHA \}\}/);
  assert.doesNotMatch(active,/idle-resources\/idle-resources-result.json/);
- assert.match(w,/needs: \[build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
+ assert.match(w,/needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
  assert.match(w,/test "\$RESOURCE_RESULT" = success/);
  for(const name of ['motion-detail','wall','flow','responsive','identity-touch'])assert.ok(w.includes(name));
 });

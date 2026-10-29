@@ -62,10 +62,11 @@ test('missing production source fails rather than producing a false green', () =
 test('heavy full-CI lanes require successful admission preflight and final gate refuses failure', () => {
   const yaml = fs.readFileSync(path.join(ROOT, '.github/workflows/validate-inkwave-update.yml'), 'utf8');
   assert.match(yaml, /^  admission_preflight:\n/m);
-  for (const name of ['build_site', 'patch_tests', 'seven_claims', 'resource_paint_continuation']) {
-    assert.match(yaml, new RegExp('^  ' + name + ':\\n    needs: admission_preflight\\n', 'm'), name);
+  assert.match(yaml, /^  build_site:\n    needs: admission_preflight\n/m);
+  for (const name of ['validate_core', 'patch_tests', 'seven_claims', 'resource_paint_continuation']) {
+    assert.match(yaml, new RegExp('^  ' + name + ':\\n(?:    [^\\n]*\\n){0,3}    needs: build_site\\n', 'm'), name);
   }
-  assert.match(yaml, /needs: \[admission_preflight, validate_core, patch_tests, circleci_offload_gate\]/);
+  assert.match(yaml, /needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
   assert.match(yaml, /test "\$PREFLIGHT_RESULT" = success/);
 });
 
