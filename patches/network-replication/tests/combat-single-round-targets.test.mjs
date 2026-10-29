@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fixture} from './robustness-fixture.mjs';
+import {nativeMainBirth} from './native-main-birth-fixture.mjs';
 
 const control=process.env.INKWAVE_COMBAT_RUNTIME_CONTROL;
 if(control&&process.env.INKWAVE_BUILT_SITE)throw Error('Source negative control cannot replace an emitted runtime');
@@ -47,7 +48,7 @@ async function setup(t,{family='shooter',catalog=false}={}) {
   function fire(source='event',ts=1000) {
     const event=source==='event'?[ts,'ev','weapon:fire',{
       actor:{n:17},weapon:weapon.id,muzzle:[0,1.05,.3],dir:[0,0,1],
-    }]:[ts,'p',17,'shot',weapon.id,0,1.05,.3,0,0,50];
+    }]:nativeMainBirth(f,nm,attacker,weapon,ts);
     f.clock.set(100+ts-1000);
     nm.onMessage('peer',{k:'t',ts,u:60000+Math.round((ts-1000)*60),a:[f.packActor(attacker,{f:1})],l:{17:0},e:[event]});
     return nm._combatProvenance.proofs.get('peer').at(-1);
@@ -57,11 +58,14 @@ async function setup(t,{family='shooter',catalog=false}={}) {
 
 test('missing local weapon definition cannot throw or grant a usable birth proof',async t=>{
   const x=await setup(t),row=x.f.packActor(x.attacker,{f:1});
+  const event=nativeMainBirth(x.f,x.nm,x.attacker,x.weapon,1000);event.length=27;event[4]=0;
   x.attacker.weapon=null;
   assert.doesNotThrow(()=>x.nm.onMessage('peer',{
-    k:'t',ts:1000,u:60000,a:[row],l:{17:0},e:[[1000,'p',17,'shot',0,0,1.05,.3,0,0,50]],
+    k:'t',ts:1000,u:60000,a:[row],l:{17:0},e:[event],
   }));
-  assert.ok((x.nm._combatProvenance.proofs.get('peer')||[]).every(p=>p.maxUses===0));
+  const proofs=x.nm._combatProvenance.proofs.get('peer')||[];
+  assert.equal(proofs.length,1,'valid native timing reaches the missing-weapon proof policy');
+  assert.ok(proofs.every(p=>p.maxUses===0));
   assert.doesNotThrow(()=>x.hit());assert.equal(x.victims[0].hp,100);
 });
 
