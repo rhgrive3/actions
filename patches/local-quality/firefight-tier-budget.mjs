@@ -46,11 +46,10 @@ export function shouldDeferCosmeticDrop(flags, size, remainingLife, yBefore, yAf
 }
 
 
-/** A sampled flat foot patch is reusable only inside its very small observed envelope. */
+/** Three point samples cannot certify nearby triangle holes or dynamic support.
+ * Keep native ground queries until an exact geometry/invalidation certificate exists. */
 export function flatFootHeightAt(f, x, z) {
-  return f._iwFlatY !== null && f._iwFlatY !== undefined &&
-    x >= f._iwFlatMinX && x <= f._iwFlatMaxX &&
-    z >= f._iwFlatMinZ && z <= f._iwFlatMaxZ ? f._iwFlatY : null;
+  return null;
 }
 
 /** Only copy source substrings when a unique upstream anchor is present. */

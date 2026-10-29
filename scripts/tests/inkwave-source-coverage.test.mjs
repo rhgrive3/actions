@@ -19,6 +19,7 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs',
   'patches/local-quality/tests/offscreen-hair-targets.test.mjs',
   'patches/local-quality/tests/native-offscreen-ground-memo.test.mjs',
+  'patches/local-quality/tests/issue-845-ground-certificate.test.mjs',
   'patches/network-replication/tests/canonical-weapon-actions.test.mjs',
   'patches/network-replication/tests/canonical-weapon-modes.test.mjs',
   'patches/network-replication/tests/canonical-sub-special-traces.test.mjs',

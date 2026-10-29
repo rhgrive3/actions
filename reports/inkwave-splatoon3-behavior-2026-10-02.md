@@ -6699,3 +6699,8 @@ The composed runtime previously performed a cloud-center-to-device visibility te
 ### 2026-10-29: guest deadline input neutralization
 
 期限切れguestのcontrollerが入力の再取得を止めた後も、直前のActor更新後にqueueされた `jumpPressed` がintentに残り、次のActor更新で追加jumpを起こせた。既存のneutralize処理でjump level/bufferに加えてこのedgeも消す。実Actor・同期jump listener・guest期限gate・次の接地stepを使う対照で旧実装の追加jumpを再現し、通常/Storm所持と期限前の正当jumpを区別する。これはINKWAVEの入力寿命の修正であり、Splatoon 3 Ver.11.3.0の新しい数値・動作を推測した変更ではない。source回帰は成功、最終生成物での確認は別途実行する。
+
+
+### 2026-10-29: native ground queries between sampled foot points (#845)
+
+Three matching ankle/heel/ball heights do not prove the terrain between them is flat. A source-loaded Actor with native triangle physics and a small, stationary dynamic block exposes an actual 0 versus 0.1 WU ground-height discrepancy at a skipped interior support point; the old-policy counterfactual changes contact state at tick 5. The fallback now performs native ground queries and retains the exact within-update memo. The 120-tick fixture observes 753→1002 ground calls, unchanged sampled Actor position/velocity/HP/ink and zero measured muzzle delta; this is a correctness fix, not a performance improvement. 30/60/120 render-schedule source controls pass; emitted verification is tracked separately. These fixture sizes are INKWAVE values, not Splatoon 3 Ver. 11.3.0 terrain data. #845 remains open: the previously measured 600/600 hidden-tick query cadence is not resolved. Physical-device verification was waived. [Scope and source receipts](issue-resolution-20261029/845-ground-certificate/README.md).
