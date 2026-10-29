@@ -14,7 +14,9 @@ function actorState(a){return {form:a.form,alive:a.alive,grounded:a.grounded,ink
  pos:vec(a.pos),vel:vec(a.vel),prevIntent:{...a._prevIntent},runner:runner(a)};}
 function birth(p){const c=p.catalog,d=c?.descriptor;return {wid:p.wid??null,owner:p.owner?.nid??null,type:p.type,ghost:!!p.ghost,delay:p.delay,life:p.life,
  age:p.age,pos:vec(p.pos),velocity:vec(p.vel),damage:p.damage,radius:p.radius,size:p.size,
- inkMeta:clone(p.inkMeta),unit:d?.unit??null,index:c?.index??null,key:d?.key??null};}
+ inkMeta:clone(p.inkMeta),unit:d?.unit??null,index:c?.index??null,key:d?.key??null,seed:numeric(p.seed),
+ volleyIndex:numeric(p.s3VolleyIndex),actionIndex:numeric(p.s3ActionIndex),
+ slosherIndex:numeric(p.fidelitySloshPacketIndex),rollerIndex:numeric(p.fidelityRollerUnitIndex)};}
 function flight(j){return {owner:j.owner?.nid??null,weapon:j.weapon?.id??null,ghost:!!j.ghost,
  charge:numeric(j.charge),chargeT:numeric(j.chargeT),speed:numeric(j.speed),range:numeric(j.range),travel:numeric(j.travel),
  origin:vec(j.origin),position:vec(j.pos),direction:vec(j.dir),seen:j.seen?.size??null,damage:numeric(j.damage)};}
@@ -25,7 +27,7 @@ export async function nativeTraceFixture(){
  const {G,THREE}=f;G.scene=new THREE.Scene();G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[-18,0,0],[18,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-20,-.5,-20],max:[20,0,20]}]});
  G.physics=new f.Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.projectiles=new f.Projectiles(G.scene);G.camera=new THREE.PerspectiveCamera();G.camera.position.set(0,3,-3);G.camera.updateMatrixWorld();G.settings={};G.time=0;G.mode='match';G.actors=[];G.netm=null;
  const scene=G.scene,ps=G.projectiles;let current=null;
- const push=ps._push;ps._push=function(p,...args){if(current)current.births.push(birth(p));return push.call(this,p,...args);};
+ const push=ps._push;ps._push=function(p,...args){const row=current?birth(p):null;const result=push.call(this,p,...args);if(row){row.netId=numeric(p._netId);current.births.push(row);}return result;};
  const offHit=f.on('hit',e=>{if(current&&e.attacker===current.actor)current.hits.push({weaponId:e.weaponId,damage:e.damage,victim:e.victim?.nid??null,killed:!!e.killed});});
  const unsubscribe=f.on('weapon:fire',e=>{if(current&&e.actor===current.actor)current.fires.push({weapon:e.weapon,muzzle:vec(e.muzzle),dir:vec(e.dir),charge:numeric(e.charge),hand:numeric(e.hand)});});
  function seed(seed){let x=seed>>>0;f.setRandom(()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/2**32;});}

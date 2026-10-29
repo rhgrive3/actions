@@ -12,7 +12,7 @@ test('all 65 production main actors emit native action traces with full tick inp
   assert.equal(t.frames.length,165);assert.equal(t.packets.length,55);assert.equal(t.accepted.length,55);
   assert.ok(t.accepted.every(x=>x.accepted&&x.snapshot),r.id+' received native snapshot');
   assert.ok(t.frames.every(x=>x.input.fire===(x.tick<=120)&&Number.isFinite(x.after.ink)),r.id+' complete input/resources');
-  assert.ok(births.every(p=>p.owner===1&&p.ghost===false&&p.pos?.every(Number.isFinite)&&p.velocity?.every(Number.isFinite)),r.id+' native birth');
+  assert.ok(births.every(p=>p.owner===1&&Number.isSafeInteger(p.netId)&&p.netId>0&&p.ghost===false&&p.pos?.every(Number.isFinite)&&p.velocity?.every(Number.isFinite)),r.id+' native birth');
   assert.ok(fires.every(e=>e.weapon===r.id),r.id+' native fire identity');
   trace.push(t);console.log('NATIVE_ACTION_TRACE',r.id,r.family,'births',births.length,'fires',fires.length,'contacts',hits.length,'packets',t.packets.length);
  }
