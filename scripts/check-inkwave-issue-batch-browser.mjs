@@ -13,6 +13,7 @@ for(const [file,expected] of Object.entries(manifest.artifacts)){
  if(actual!==expected)throw Error('Artifact mismatch: '+file);
 }
 const server=http.createServer((req,res)=>{
+ if(req.url==='/__input-listener-audit.mjs'){res.setHeader('content-type','text/javascript');fs.createReadStream(new URL('./lib/inkwave-input-listener-audit.mjs',import.meta.url)).pipe(res);return;}
  if(req.url==='/favicon.ico'){res.writeHead(204);res.end();return;}
  if(new URL(req.url,'http://localhost').pathname==='/probe'){res.setHeader('content-type','text/html');res.end('<!doctype html><script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/jsm/"}}</script>');return;}
  const file=path.resolve(site,'.'+new URL(req.url,'http://localhost').pathname);
@@ -66,27 +67,27 @@ try{
   }
   h.setQuality('low');
   const {Input}=await import('/src/core/input.js');
-  const targets=[window,document],native=targets.map(t=>({add:t.addEventListener,remove:t.removeEventListener}));
-  const live=new Set();let adds=0,removes=0;
-  targets.forEach((target,i)=>{
-   target.addEventListener=function(type,cb,options){adds++;live.add(cb);return native[i].add.call(this,type,cb,options);};
-   target.removeEventListener=function(type,cb,options){if(live.delete(cb))removes++;return native[i].remove.call(this,type,cb,options);};
-  });
-  try{
-   for(let i=0;i<10;i++){
-    const input=new Input(r.domElement),before=adds;
-    const event=new KeyboardEvent('keydown',{code:'KeyW',bubbles:true});window.dispatchEvent(event);
-    check(input.down('KeyW'),'live Input lost keyboard event');
-    input.disposePlatform();input.disposePlatform();
-    const old=input.down('KeyW');window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyW',bubbles:true}));
-    check(input.down('KeyW')===old,'retired Input still receives events');
-    check(before===adds,'dispose unexpectedly adds listeners');
-   }
-  }finally{targets.forEach((t,i)=>{t.addEventListener=native[i].add;t.removeEventListener=native[i].remove;});}
-  check(adds===100&&removes===100&&live.size===0,'Input listener imbalance '+JSON.stringify({adds,removes,live:live.size}));
+  const {auditInputListeners}=await import('/__input-listener-audit.mjs');
+  const listenerAudit=auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas:r.domElement,
+   event:type=>new Event(type),keyEvent:(type,code)=>new KeyboardEvent(type,{code,bubbles:true})});
   owner._disposeComposer();r.dispose();
-  return {shadowToggles:20,reflectionCycles:20,baseTextures,maxTextures,inputReplacements:10,listenerAdds:adds,listenerRemoves:removes};
+  return {shadowToggles:20,reflectionCycles:20,baseTextures,maxTextures,inputReplacements:listenerAudit.cycles,
+   listenerAdds:listenerAudit.adds,listenerRemoves:listenerAudit.removeCalls,listenerAudit};
  });
+ const touchPage=await browser.newPage({viewport:{width:320,height:240},hasTouch:true,isMobile:true});
+ try{
+  touchPage.on('pageerror',e=>errors.push(e.message));
+  touchPage.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+  await touchPage.goto(`http://127.0.0.1:${server.address().port}/probe?touch-audit`);
+  result.touchInput=await touchPage.evaluate(async()=>{
+   const {G}=await import('/src/core/ctx.js');G.mobile={touch:true,ios:false};
+   const {Input}=await import('/src/core/input.js');
+   const {auditInputListeners}=await import('/__input-listener-audit.mjs');
+   const canvas=document.createElement('canvas');document.body.append(canvas);
+   return auditInputListeners({Input,windowTarget:window,documentTarget:document,canvas,requireCanvas:true,
+    event:type=>new Event(type),keyEvent:(type,code)=>new KeyboardEvent(type,{code,bubbles:true})});
+  });
+ }finally{await touchPage.close();}
  if(errors.length)throw Error(errors.join('\n'));
  fs.mkdirSync(path.dirname(evidence),{recursive:true});
  fs.writeFileSync(evidence,JSON.stringify({browser:browser.version(),contentHash:manifest.contentHash,result,errors},null,2)+'\n');
