@@ -244,7 +244,8 @@
           "scripts/tests/inkwave-network-source-coverage.test.mjs",
           "scripts/tests/inkwave-runtime-evidence.test.mjs",
           "scripts/tests/inkwave-validate-install-evidence-20261029.test.mjs",
-          "scripts/tests/inkwave-menu-focus-source-identity.test.mjs"
+          "scripts/tests/inkwave-menu-focus-source-identity.test.mjs",
+          "scripts/tests/inkwave-public-capture-cache-policy.test.mjs"
         ]
       },
       {

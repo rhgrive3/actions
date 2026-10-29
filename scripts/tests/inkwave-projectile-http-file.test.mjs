@@ -28,10 +28,10 @@ test('local capture HTTP media semantics without browser or gameplay', async t =
       }); req.on('error', reject); req.end();
     });
   }
-  await t.test('ordinary GET retains full bytes and no-store, with correct audio MIME/length', async () => {
+  await t.test('ordinary GET retains full bytes and requires revalidation, with correct audio MIME/length', async () => {
     const r = await request(); assert.equal(r.status, 200); assert.equal(r.body, '0123456789');
     assert.equal(r.headers['content-type'], 'audio/mp3'); assert.equal(r.headers['content-length'], '10');
-    assert.equal(r.headers['accept-ranges'], 'bytes'); assert.equal(r.headers['cache-control'], 'no-store');
+    assert.equal(r.headers['accept-ranges'], 'bytes'); assert.equal(r.headers['cache-control'], 'no-cache, max-age=0, must-revalidate');
     assert.equal(r.headers['transfer-encoding'], undefined);
   });
   for (const [range, body, contentRange] of [
@@ -43,17 +43,20 @@ test('local capture HTTP media semantics without browser or gameplay', async t =
     const r = await request({ range }); assert.equal(r.status, 206); assert.equal(r.body, body);
     assert.equal(r.headers['content-range'], contentRange); assert.equal(Number(r.headers['content-length']), Buffer.byteLength(body));
     assert.equal(r.headers['content-type'], 'audio/mp3');
+    assert.equal(r.headers['cache-control'], 'no-store');
   });
   for (const range of ['bytes=10-', 'bytes=8-3', 'bytes=-0', 'bytes=-', 'bytes=foo-bar', 'bytes=0-1,3-4', 'bytes=9007199254740992-']) {
     await t.test(`reject invalid/unsupported single range ${range}`, async () => {
       const r = await request({ range }); assert.equal(r.status, 416); assert.equal(r.body, '');
       assert.equal(r.headers['content-range'], 'bytes */10'); assert.equal(r.headers['content-length'], '0');
+      assert.equal(r.headers['cache-control'], 'no-store');
     });
   }
   await t.test('HEAD returns full metadata, no body, ignores Range', async () => {
     for (const range of [undefined, 'bytes=2-3']) {
       const r = await request({ method: 'HEAD', range }); assert.equal(r.status, 200); assert.equal(r.body, '');
       assert.equal(r.headers['content-length'], '10'); assert.equal(r.headers['content-range'], undefined);
+      assert.equal(r.headers['cache-control'], 'no-store');
     }
   });
   await t.test('empty asset and range beyond empty representation', async () => {
