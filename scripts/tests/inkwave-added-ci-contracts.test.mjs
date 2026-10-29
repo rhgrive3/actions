@@ -23,8 +23,8 @@ test('A+ replaces obsolete PR checks while retaining every main and manual run',
 test('required checks keep their identities and cancellation cannot skip the required Validate fan-in',()=>{
  assert.match(quality,/^  verify-aplus-suite:\n/m);assert.doesNotMatch(quality,/^    if:.*cancelled\(\)/m);
  const source=read('validate-inkwave-update.yml'),gate=source.slice(source.indexOf('  validate:'),source.indexOf('  browser:'));
- assert.match(gate,/if: \$\{\{ always\(\) && inputs\.diagnostic_only != true \}\}/);
- assert.match(gate,/needs: \[admission_preflight, validate_core, patch_tests, circleci_offload_gate\]/);assert.match(gate,/test "\$PREFLIGHT_RESULT" = success/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
+ assert.match(gate,/if: \$\{\{ always\(\) && inputs\.diagnostic_only != true && \(github\.event_name != 'pull_request' \|\| github\.event\.pull_request\.draft == false\) \}\}/);
+ assert.match(gate,/needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);assert.match(gate,/test "\$PREFLIGHT_RESULT" = success/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
 });
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
@@ -70,7 +70,7 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
  [sparseFixtureFile]:'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
- 'scripts/tests/continuous-browser-video.test.mjs':'1e15c0668d8179753b99e947c35c8bf4c2c91f1c5333c760b4bdbc0165b96f03',
+ 'scripts/tests/continuous-browser-video.test.mjs':'8d3f6b4f9f5ce634efafb8d9dd76e69b04e48d57bababa1014ebb6546a855a2f',
 };
 // Only four literal nodes in this one audited test describe sparse exclusions;
 // none is an input consumed by the build or runtime. The owning constructs
@@ -209,19 +209,25 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  const body=gate.split('        run: |\n')[1];assert(body,'required gate shell');
  const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
  const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,...env},encoding:'utf8'});
+ const admissible=(offload,core,patch,circle)=>({
+  PREFLIGHT_RESULT:'success',BUILD_RESULT:'success',CONTRACTS_ONLY:'false',
+  CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle,
+  BROWSER_RESULT:offload?'skipped':'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',
+  OFFLOAD_ACTIVE:String(offload)
+ });
  for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
-  const env={PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
+  const env=admissible(offload,core,patch,circle);
   const result=run(shell,env);assert.ifError(result.error);
   assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
  }
  // The new gate must reject a failed preflight even when all legacy jobs pass.
- const preflightFailed={PREFLIGHT_RESULT:'failure',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'};
+ const preflightFailed={...admissible(false,'success','success','skipped'),PREFLIGHT_RESULT:'failure'};
  assert.notEqual(run(shell,preflightFailed).status,0);
  assert.equal(run(shell.replace('test "$PREFLIGHT_RESULT" = success','true # missing preflight guard'),preflightFailed).status,0);
  for(const [needle,env]of [
-  ['test "$CORE_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
-  ['test "$PATCH_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
-  ['test "$CIRCLECI_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
+  ['test "$CORE_RESULT" = success',admissible(false,'failure','success','skipped')],
+  ['test "$PATCH_RESULT" = success',admissible(false,'success','failure','skipped')],
+  ['test "$CIRCLECI_RESULT" = success',admissible(true,'success','skipped','failure')],
  ]){
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
