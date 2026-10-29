@@ -36,8 +36,8 @@ export function assertSourceSuiteCoverage(workflow, suite, root = ROOT) {
   const patchSteps = patch?.split(/^      - /m).slice(1) || [];
   const owners = patchSteps.filter(step => step.includes(command));
   if (owners.length !== 1 || /^        (?:if|env|continue-on-error):/m.test(owners[0])
-      || !patch.includes("INKWAVE_TEST_SHARD_COUNT: '8'") || !patch.includes("INKWAVE_TEST_CONCURRENCY: '2'")
-      || !workflow.includes('needs: [build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'))
+      || !patch.includes("INKWAVE_TEST_SHARD_COUNT: '8'") || !patch.includes("INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}")
+      || !workflow.includes('needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'))
     throw Error('Missing mandatory complete CPU source shards');
   const browserRun = '        run: node scripts/ci/run-inkwave-test-suite.mjs source-browser\n';
   const browserOwners = core.split(/^      - /m).filter(step => step.startsWith('name: Verify browser-backed source regressions\n'));

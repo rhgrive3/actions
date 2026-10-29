@@ -70,7 +70,7 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
  [sparseFixtureFile]:'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
- 'scripts/tests/continuous-browser-video.test.mjs':'8d3f6b4f9f5ce634efafb8d9dd76e69b04e48d57bababa1014ebb6546a855a2f',
+ 'scripts/tests/continuous-browser-video.test.mjs':'7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3',
 };
 // Only four literal nodes in this one audited test describe sparse exclusions;
 // none is an input consumed by the build or runtime. The owning constructs
