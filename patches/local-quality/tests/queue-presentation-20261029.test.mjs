@@ -74,16 +74,16 @@ test('muzzle occupancy gate preserves matrices/colors and revives after expiry, 
 });
 // Recreate the actual nested paint owner, including any scratch declaration
 // immediately before it. A detached function alone is not its lexical scope.
-function cataloguePaintClosure(source,G,ellipse){
+function cataloguePaintClosure(source,G,ellipse,three=T){
  const start=source.indexOf('  function paint('),end=source.indexOf('  function floorPaint(',start);
  assert.ok(start>=0&&end>start,'actual catalogue paint/floorPaint boundary');
  assert.equal(source.indexOf('  function paint(',start+1),-1,'unique catalogue paint owner');
  const anchor='  const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();\n';
  const usesScratch=source.slice(start,end).includes('_paintTangent');
- const prelude=usesScratch?anchor:'';
- if(usesScratch)assert.equal(source.slice(start-anchor.length,start),anchor,'actual same-scope scratch declaration');
+ const scratchStart=source.indexOf(anchor),prelude=usesScratch?source.slice(scratchStart,start):'';
+ if(usesScratch){assert.ok(scratchStart>=0&&scratchStart<start,'actual same-scope scratch declaration');assert.match(prelude,/const _paintScratch = \[\{tangent:_paintTangent,cross:_paintCross,centre:_paintCentre\}\];\n  let _paintDepth = 0;\n$/,'bounded lease owner accompanies declaration');}
  else assert.equal(source.includes('_paintTangent'),false,'historical paint owns no scratch');
- return new Function('THREE','G','paintFallbackUp','EPS','SOURCE_SHOT_PAINT_KIND','catalogPaintEllipse',prelude+'return ('+source.slice(start,end)+')')(T,G,new T.Vector3(0,1,0),1e-9,3,ellipse);
+ return new Function('THREE','G','paintFallbackUp','EPS','SOURCE_SHOT_PAINT_KIND','catalogPaintEllipse',prelude+'return ('+source.slice(start,end)+')')(three,G,new T.Vector3(0,1,0),1e-9,3,ellipse);
 }
 test('catalogue inline ellipse retains actual paint packet scalars and vectors for boundary depths and footprints',async()=>{
  const ellipse=(await load('catalog-splash-paint')).catalogPaintEllipse;
@@ -94,6 +94,36 @@ test('catalogue inline ellipse retains actual paint packet scalars and vectors f
  const f=cataloguePaintClosure(s,G,ellipse);
  f(owner,new T.Vector3(2,1,4),.7,depth,new T.Vector3(.4,.2,.9),0,footprint,.37);return {rows,turf};}
  for(const d of [undefined,NaN,Infinity,-Infinity,-1,0,Number.MIN_VALUE,.2,.999999999,1,1.00000001,3])for(const fp of [null,'ink-contact','shot'])for(const n of [new T.Vector3(0,1,0),new T.Vector3(1,0,0)])assert.deepEqual(run(next,d,fp,n),run(old,d,fp,n));
+});
+test('catalogue reentrant paint keeps the outer center and direction live through its consumer callback',async()=>{
+ const ellipse=(await load('catalog-splash-paint')).catalogPaintEllipse;
+ const old=before['main-weapon-catalog'],next=fs.readFileSync(new URL('main-weapon-catalog.mjs',runtime),'utf8');
+ function run(source){let depth=0,paint;const rows=[],G={level:{faces:[{n:new T.Vector3(0,1,0)}]},paint:{splat(center,r,team,opts){
+  const before=[...center.toArray(),...opts.stretch.toArray(),r,team,opts.seed,opts.stretchAmt];
+  if(depth++===0)paint(owner,new T.Vector3(30,3,50),.8,.5,new T.Vector3(-.7,.1,.3),0,'shot',.4);
+  const after=[...center.toArray(),...opts.stretch.toArray(),r,team,opts.seed,opts.stretchAmt];depth--;rows.push({before,after});return 7;
+ }}};const owner={remote:false,team:1,addTurf(){}};paint=cataloguePaintClosure(source,G,ellipse);
+ paint(owner,new T.Vector3(2,1,4),.7,.5,new T.Vector3(.4,.2,.9),0,'shot',.37);return rows;}
+ const baseline=run(old),candidate=run(next);assert.equal(baseline.length,2);assert.deepEqual(baseline[1].before,baseline[1].after,'old outer callback owns its arguments');
+ assert.deepEqual(candidate,baseline,'reentry must not change any live packet values');
+});
+test('catalogue paint scratch leases survive exceptions and retain only eight nested slots',async()=>{
+ const ellipse=(await load('catalog-splash-paint')).catalogPaintEllipse;
+ const source=fs.readFileSync(new URL('main-weapon-catalog.mjs',runtime),'utf8');
+ let allocations=0;class CountVector extends T.Vector3{constructor(...args){super(...args);allocations++;}}
+ const three={...T,Vector3:CountVector},owner={remote:false,team:0,addTurf(){}},G={level:{faces:[{n:new T.Vector3(0,1,0)}]}};
+ let paint,depth=0,limit=0,throwAt=-1,seen=0;G.paint={splat(center,r,team,opts){
+  const before=[...center.toArray(),...opts.stretch.toArray()];seen++;const here=depth++;
+  try{if(here===throwAt)throw Error('injected callback failure');if(depth<limit)paint(owner,new T.Vector3(depth*7,1,depth*9),.7,.5,new T.Vector3(.4,.2,.9),0,'shot',.37);
+   assert.deepEqual([...center.toArray(),...opts.stretch.toArray()],before,'live lease must survive nested calls');return 7;
+  }finally{depth--;}
+ }};
+ paint=cataloguePaintClosure(source,G,ellipse,three);
+ function invoke(n,fail=-1){limit=n;throwAt=fail;seen=0;return paint(owner,new T.Vector3(2,1,4),.7,.5,new T.Vector3(.4,.2,.9),0,'shot',.37);}
+ invoke(8);assert.equal(seen,8);const warm=allocations;invoke(8);assert.equal(allocations,warm,'normal warmed nesting reuses vectors');
+ assert.throws(()=>invoke(8,3),/injected callback failure/);invoke(8);assert.equal(allocations,warm,'throw restores every lease');
+ invoke(12);assert.equal(seen,12,'overflow never drops nested work');const overflow=allocations;assert.equal(overflow-warm,12,'four overflow slots use transient vectors');
+ invoke(12);assert.equal(allocations-overflow,12,'overflow is not retained');
 });
 test('landing sort workspace preserves actual stable paint/telemetry order at30/60/120, nested reentry and thrown paint',async()=>{
  const modules=[await load('blaster-flight-paint',true),await load('blaster-flight-paint')];
