@@ -2,10 +2,25 @@
 // or GPU. Geometry/locomotion is deliberately constrained by source-fixture.
 import {fixture} from '../../../../splatoon3/tests/source-fixture.mjs';
 const STEP=1/60;
-export async function collectCurling({holdFrames=6,initialInk=100,probeAt=null,victimAt=null}={}) {
+const CANONICAL_EXPORT="export {createCanonicalWeaponActions} from './patches/network-replication/canonical-weapon-actions.mjs';";
+function driver(f,a,canonical){
+ if(!canonical)return (tick,input,aim,cancel)=>{
+  for(const key of ['fire','sub','jump','squid','special'])a.intent[key]=input[key];a.intent.move.set(input.move[0],0,input.move[1]);a.aimYaw=aim[0];a.aimPitch=aim[1];
+  if(cancel&&(cancel.fire||cancel.sub))a.weaponRunner.cancelHold(cancel.fire,cancel.sub);
+ };
+ const gate=f.createCanonicalWeaponActions(f.installedRuntime);
+ gate.register(a,{owner:a.owner,life:a.netLife,epoch:'action-trace',firstTick:1});
+ return (tick,input,aim,cancel)=>{
+  const raw={nid:a.nid,owner:a.owner,life:a.netLife,input,aim,...(cancel?{cancel}:{})};
+  const prepared=gate.prepare(raw,{tick,from:a.owner});if(!prepared.ok)throw Error(`prepare ${tick}: ${prepared.reason}`);
+  const applied=gate.apply(prepared.token);if(!applied.ok)throw Error(`apply ${tick}: ${applied.reason}`);
+ };
+}
+const input=(overrides={})=>({fire:false,sub:false,jump:false,squid:false,special:false,move:[0,0],...overrides});
+export async function collectCurling({holdFrames=6,initialInk=100,probeAt=null,victimAt=null,canonical=false,cancelRelease=false}={}) {
  let clock=1000;
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
-   vmPerformance:{now:()=>clock*1000},vmMathRandom:()=>.5});
+   vmPerformance:{now:()=>clock*1000},vmMathRandom:()=>.5,...(canonical?{extraExports:CANONICAL_EXPORT}:{})});
  const {G,THREE}=f;
  G.scene=new THREE.Scene();G.camera={position:new THREE.Vector3(0,12,10)};G.projectiles=new f.Projectiles(G.scene);
  G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
@@ -18,12 +33,12 @@ export async function collectCurling({holdFrames=6,initialInk=100,probeAt=null,v
  const nm=new f.NetMatch(session,{id:'trace',map:'map',difficulty:'normal'});G.netm=nm;nm.byNid.set(a.nid,a);nm._setupActor(a);
  const birthRows=[];const recordBomb=nm.recBomb;nm.recBomb=function(b,...args){birthRows.push({tick,kind:b.kind,sub:b.s3Sub?.id,charge:b.s3Charge,position:b.pos.toArray(),velocity:b.vel.toArray(),fuse:b.fuse,ink:a.ink,recoveryStop:a.s3?.recoverStopRemaining??null});return recordBomb.call(this,b,...args);};
  const events=[];const unsubs=['bomb:throw','bomb:explode','hit'].map(name=>f.on(name,e=>events.push({tick,kind:name,id:e.subId??e.weaponId??null,damage:e.damage??null,position:e.pos?.toArray?.()??null,victim:e.victim?.nid??null})));
- let tick=0;const initial={id:a.weapon.id,sub:a.weapon.sub,ink:a.ink,special:a.special,gear:a.s3.loadout,life:a.netLife,owner:a.owner,nid:a.nid,pos:a.pos.toArray(),velocity:a.vel.toArray(),aim:[a.aimYaw,a.aimPitch],victim:victim?{nid:victim.nid,hp:victim.hp,team:victim.team,pos:victim.pos.toArray()}:null};
- const step=sub=>{tick++;clock=1000+tick*STEP;a.intent.sub=sub;f.tick(a);victim?.update(STEP);G.projectiles.update(STEP);};
+ let tick=0;const drive=driver(f,a,canonical);const initial={id:a.weapon.id,sub:a.weapon.sub,ink:a.ink,special:a.special,gear:a.s3.loadout,life:a.netLife,owner:a.owner,nid:a.nid,pos:a.pos.toArray(),velocity:a.vel.toArray(),aim:[a.aimYaw,a.aimPitch],victim:victim?{nid:victim.nid,hp:victim.hp,team:victim.team,pos:victim.pos.toArray()}:null};
+ const step=sub=>{tick++;clock=1000+tick*STEP;drive(tick,input({sub}),[0,.9],cancelRelease&&tick===61?{fire:false,sub:true}:null);f.tick(a);victim?.update(STEP);G.projectiles.update(STEP);};
  for(let i=0;i<60;i++)step(i>=60-holdFrames);
  nm._sendTick();const beforeRelease=session.packet.a[0];const hold=a.weaponRunner.s3SubHold;
  step(false);step(false);const afterBirth={tick,ink:a.ink,recoveryStop:a.s3?.recoverStopRemaining??null};
- const result={scenario:'curling-hold',initial,commands:[{tick:1,input:{fire:false,sub:holdFrames===60,jump:false,squid:false,special:false,move:[0,0]},aim:[0,.9]},...(holdFrames===60?[]:[{tick:61-holdFrames,input:{fire:false,sub:true,jump:false,squid:false,special:false,move:[0,0]},aim:[0,.9]}]),{tick:61,input:{fire:false,sub:false,jump:false,squid:false,special:false,move:[0,0]},aim:[0,.9]}],beforeRelease,hold,events,birth:birthRows[0]??null,afterBirth,wireBirth:nm.out.find(x=>x[1]==='b')??null};
+ const result={scenario:'curling-hold',initial,commands:[{tick:1,input:{fire:false,sub:holdFrames===60,jump:false,squid:false,special:false,move:[0,0]},aim:[0,.9]},...(holdFrames===60?[]:[{tick:61-holdFrames,input:{fire:false,sub:true,jump:false,squid:false,special:false,move:[0,0]},aim:[0,.9]}]),{tick:61,input:{fire:false,sub:false,jump:false,squid:false,special:false,move:[0,0]},aim:[0,.9],...(cancelRelease?{cancel:{fire:false,sub:true}}:{})}],beforeRelease,hold,events,birth:birthRows[0]??null,afterBirth,wireBirth:nm.out.find(x=>x[1]==='b')??null};
  if(probeAt){
   while(tick<probeAt-1)step(false);
   const before={tick,ink:a.ink,count:G.projectiles.bombs.length};
@@ -57,8 +72,8 @@ export async function collectBlaster({targetX=0,targetZ=8,extraTarget=false}={})
  unsubs.forEach(fn=>fn?.());G.projectiles.clear();return JSON.parse(JSON.stringify(result));
 }
 
-export async function collectWave({targetX=0,targetZ=5,fullSpecial=true}={}) {
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmMathRandom:()=>.5});
+export async function collectWave({targetX=0,targetZ=5,fullSpecial=true,canonical=false}={}) {
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmMathRandom:()=>.5,...(canonical?{extraExports:CANONICAL_EXPORT}:{})});
  const {G,THREE}=f;G.scene=new THREE.Scene();G.camera={position:new THREE.Vector3(0,4,-5)};G.projectiles=new f.Projectiles(G.scene);
  G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
  G.physics=new f.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};G.match={playing:()=>true,canRespawn:()=>false,state:'playing',mode:'turf'};G.time=0;
@@ -66,14 +81,14 @@ export async function collectWave({targetX=0,targetZ=5,fullSpecial=true}={}) {
  Object.assign(v,{nid:2,owner:'p2',team:1,remote:false,isLocal:false,netLife:0,invuln:0});
  a.pos.set(0,0,0);a.aimYaw=a.aimPitch=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,30);a._resolve=()=>{};v.pos.set(targetX,0,targetZ);
  a.s3.loadout=f.emptyLoadout();a.s3RefreshGear();v.s3.loadout=f.emptyLoadout();v.s3RefreshGear();a.special=fullSpecial?a.specialCost():0;
- let tick=0;const events=[],devices=[],seen=new Set();
+ let tick=0;const drive=driver(f,a,canonical),events=[],devices=[],seen=new Set();
  const unsubs=['special:use','all:special','hit','damage'].map(name=>f.on(name,e=>{
   if(name==='damage'&&e.victim!==v)return;
   events.push({tick,kind:name,id:e.id??e.weaponId??e.source??null,action:e.action??null,damage:e.damage??e.amount??null,position:e.pos?.toArray?.()??(Array.isArray(e.pos)?e.pos:null)});
  }));
  const initial={weapon:a.weapon.id,sub:a.weapon.sub,specialId:a.weapon.special,ink:a.ink,special:a.special,specialCost:a.specialCost(),life:a.netLife,owner:a.owner,nid:a.nid,gear:a.s3.loadout,victim:{hp:v.hp,team:v.team,pos:v.pos.toArray()}};
  for(tick=1;tick<=330;tick++){
-  a.intent.special=tick===1;a.intent.sub=fullSpecial&&tick===4;G.time=tick*STEP;a.update(STEP);v.update(STEP);G.projectiles.update(STEP);
+  drive(tick,input({special:tick===1,sub:fullSpecial&&tick===4}),[0,0]);G.time=tick*STEP;a.update(STEP);v.update(STEP);G.projectiles.update(STEP);
   for(const o of G.projectiles._s3AllSpecialObjects||[])if(!seen.has(o)){seen.add(o);devices.push({tick,kind:o.kind,position:o.pos?.toArray?.()??null,hp:o.hp??null,phase:o.phase??null});}
   if(!v.alive)break;
  }

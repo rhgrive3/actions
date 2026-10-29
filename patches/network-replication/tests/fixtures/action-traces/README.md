@@ -33,3 +33,18 @@ VM test is a browser, network replication, controller, or retail comparison.
 `capture.mjs <output>` is an explicit offline recording tool; tests never
 rewrite their expected data. Do not silently regenerate the snapshot when a
 canonicalizer changes: investigate the native behavior and provenance first.
+
+`canonical-sub-special-traces.test.mjs` additionally feeds every native actor
+tick through the independent `createCanonicalWeaponActions` prepare/apply API.
+Its expected data remains the separately captured direct-Actor trace, and no
+recorded outcome or resource value is submitted as a command. It also compares
+a native `cancelHold(false, true)` against deliberate sub release: the same
+button level at tick 61 cancels without spending ink when a cancellation is
+present but otherwise produces a later real bomb. `cancel-recorded.json` is
+the direct-Actor control for that case.
+
+Identical snapshots or birth packets alone do not prove that all event-commit
+server designs are impossible. The two matching-birth cases start with distinct
+trusted ink amounts; a server retaining exact initial resources and complete
+history could distinguish them. The traces establish the inputs and native
+state that a replay or other admission design must account for.

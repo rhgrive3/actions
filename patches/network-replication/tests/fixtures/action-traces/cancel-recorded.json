@@ -1,0 +1,176 @@
+{
+  "base": "035233299348e5c3527f6106b98e721ed2dfd011",
+  "scenario": {
+    "scenario": "curling-hold",
+    "initial": {
+      "id": "dualies-01",
+      "sub": "curling",
+      "ink": 100,
+      "special": 0,
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "life": 0,
+      "owner": "p5",
+      "nid": 37,
+      "pos": [
+        0,
+        12,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "aim": [
+        0,
+        0.9
+      ],
+      "victim": null
+    },
+    "commands": [
+      {
+        "tick": 1,
+        "input": {
+          "fire": false,
+          "sub": false,
+          "jump": false,
+          "squid": false,
+          "special": false,
+          "move": [
+            0,
+            0
+          ]
+        },
+        "aim": [
+          0,
+          0.9
+        ]
+      },
+      {
+        "tick": 31,
+        "input": {
+          "fire": false,
+          "sub": true,
+          "jump": false,
+          "squid": false,
+          "special": false,
+          "move": [
+            0,
+            0
+          ]
+        },
+        "aim": [
+          0,
+          0.9
+        ]
+      },
+      {
+        "tick": 61,
+        "input": {
+          "fire": false,
+          "sub": false,
+          "jump": false,
+          "squid": false,
+          "special": false,
+          "move": [
+            0,
+            0
+          ]
+        },
+        "aim": [
+          0,
+          0.9
+        ],
+        "cancel": {
+          "fire": false,
+          "sub": true
+        }
+      }
+    ],
+    "beforeRelease": [
+      37,
+      0,
+      12,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.9,
+      4196369,
+      100,
+      100,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      [
+        "inkwave-adoption-v1",
+        0,
+        1,
+        60,
+        [
+          "inkwave-protection-v1",
+          60,
+          0,
+          false,
+          null
+        ],
+        null,
+        null,
+        null,
+        0,
+        null
+      ],
+      null,
+      [
+        "inkwave-hit-authority-v1",
+        0,
+        0
+      ]
+    ],
+    "hold": 0.49999999999999994,
+    "events": [],
+    "birth": null,
+    "afterBirth": {
+      "tick": 62,
+      "ink": 100,
+      "recoveryStop": 0
+    },
+    "wireBirth": null,
+    "nextEligibleTick": 62,
+    "nextEligibleInk": 100
+  }
+}
