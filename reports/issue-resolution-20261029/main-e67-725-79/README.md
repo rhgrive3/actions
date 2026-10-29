@@ -31,3 +31,9 @@ cd /workspace/scratch/e67-repro
 node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/gyro-sensitivity-endpoints.test.mjs patches/splatoon3/tests/gyro-sensitivity-cadence-725.test.mjs patches/local-quality/tests/gyro-dropout.test.mjs patches/local-quality/tests/gyro-world-orientation.test.mjs patches/local-quality/tests/gyro-stationary-trust.test.mjs
 node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs
 ```
+
+## Supported Node 22 repeat
+
+The same source suites were repeated with Node **v22.23.4** and `INKWAVE_BUILT_SITE` unset. #725 passed **42/42**, and the strengthened #79 test passed **5/5**, with no failures or skips. The TAP receipts are [gyro](node22-gyro.tap.gz), decompressed SHA-256 `d3f271bcee2e00e0427853214e8d23dc40168d6bbb494f7cb54e3f717c138ff6`, and [#79](node22-issue79.tap.gz), decompressed SHA-256 `7449e4ed99887adedbf541e4a6d3384936f9b5e6d6f7426b976175245d3917f9`.
+
+The original temporary extraction had been removed to recover disk space. A fresh archive from the same `e67` commit and tree IDs was checked: every one of **4,443** extracted tracked blobs matched its Git blob hash, excluding only the intentional #79 test overlay. The overlay and main fixture SHA-256 values matched the hashes recorded above. Run the reproduction commands above with the Node 22 binary and explicitly clear the emitted-site override, for example `env -u INKWAVE_BUILT_SITE /path/to/node22 --experimental-vm-modules --test --test-concurrency=1 ...`. Hosted CI status is unchanged by these local runs.
