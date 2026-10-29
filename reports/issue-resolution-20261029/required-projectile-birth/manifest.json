@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "base": "73481884e",
+  "codeCommit": "02050fc9869a428aa17700092d39da67684191b2",
+  "sourceOnly": true,
+  "node": "22.23.4",
+  "runtimeBefore": "64da9a703cff5e03f48605c8e2f394dc5937e223160557caf0c749e5084ab72a",
+  "runtimeAfter": "0dc379a49d4d43d210e9d94dd0c52c3fa2d97f5f46897f456eedf61509d33f52",
+  "inputs": {
+    "patches/network-replication/combat-provenance.mjs": "0dc379a49d4d43d210e9d94dd0c52c3fa2d97f5f46897f456eedf61509d33f52",
+    "patches/network-replication/tests/added-combat-scans.test.mjs": "953f2d65d7bab6fb7bba3974ebc2fec9d0614e6b6ef0d86fcff3f7f6199f2638",
+    "patches/network-replication/tests/combat-boss-proof-targets.test.mjs": "0da8ea2abd2b7e91b19a96bb11f2972cd9dcc655921c2e908029afaaf37638fb",
+    "patches/network-replication/tests/combat-native-proof-receipt.test.mjs": "23207d3c29ac01405c2e585688b90d12bd81c37d0d0055a4d6e1ad216d62aa23",
+    "patches/network-replication/tests/combat-owner-claim-gap.probe.mjs": "9b641bc6cdefc8d50229e012bf2d829e2cbca2cd2b07cbc55101fce6309afd65",
+    "patches/network-replication/tests/combat-single-round-targets.test.mjs": "7d8f1ff4069c5efe680e047c33bac3c7f3e4fabc8e4c9b5e556a97e163e24cb9",
+    "patches/network-replication/tests/contact-provenance-fixture.mjs": "27df81b125e9bc6b7657c480e92a2746a8d22adce8b8faed36c1ecf64ab88a78",
+    "patches/network-replication/tests/native-main-birth-fixture.mjs": "c3029cb61b5c91afb939da2c4fc09a923adcff8a252361be903bc1e3a284ffbc",
+    "scripts/tests/inkwave-combat-provenance.test.mjs": "567912e94d5d74da22519a4b6ea10d083d64be2786937428ab085f0b02222e62"
+  },
+  "receipts": {
+    "required-birth-migrated-focused.tap": {
+      "sha256": "c631a06e64ad51f2c284c7aa1c7042a6617c656b48137087ae00c605ce9190fd",
+      "bytes": 28865,
+      "archive": "required-birth-migrated-focused.tap.gz",
+      "archiveSha256": "f453fbe47e82bfc5a39f2baaf5447e8ce033eac5459200e538290eb8943183de"
+    },
+    "required-birth-final-targeted.tap": {
+      "sha256": "f1e4f9714cbae3d6672048a200e95ac60dfa56a11835f42abe8517f8fb6ba6ad",
+      "bytes": 14895,
+      "archive": "required-birth-final-targeted.tap.gz",
+      "archiveSha256": "d44dde353d1d8300dd700ee28254d365ee597f99fe2bb1dd4b7336c7c5ebd661"
+    },
+    "required-birth-final-relevant-controls.tap": {
+      "sha256": "ceb4c1066ec79e44035bdf3b55c54dfde8bcb17743504ccf13b49fe80ce59068",
+      "bytes": 23061,
+      "archive": "required-birth-final-relevant-controls.tap.gz",
+      "archiveSha256": "3d240b8c8f62397f26db7c30d2cd1ddad79492933df23589862dc98b99e0d480"
+    },
+    "required-birth-old-native-controls.tap": {
+      "sha256": "548693157440f4af5ef643220f0e6ffed7691157bd40fab79cfa666dde2cf590",
+      "bytes": 3029,
+      "archive": "required-birth-old-native-controls.tap.gz",
+      "archiveSha256": "242965040d42f92363570cc1e3836d9c99e85bbc88c5960f3ed291c780773f05"
+    },
+    "required-birth-old-gap.json": {
+      "sha256": "e87b842e90e6505b13b2ff10e33bad4024fab8db38ab3e004affcfdd48371489",
+      "bytes": 6949,
+      "archive": "required-birth-old-gap.json.gz",
+      "archiveSha256": "5a5a05cfc42d238474f99622aca62ef3854b8534bf5a9caefbe61adf47874b0c"
+    },
+    "required-birth-final-current-gap.json": {
+      "sha256": "06fdfd29e0655a779cc404b27ed0fcb3d34532f43f9d18a45a2e7c5c14278db3",
+      "bytes": 6901,
+      "archive": "required-birth-final-current-gap.json.gz",
+      "archiveSha256": "d944ce2adcd05cc982190779288089b45f53095ecd6c5727d6f7fe44693da6ed"
+    },
+    "required-birth-frozen-producer-audit.json": {
+      "sha256": "6f210f8543143f6eac9a0edd5b12c81fa10df694823d0c371967571da86be6c9",
+      "bytes": 3952,
+      "archive": "required-birth-frozen-producer-audit.json.gz",
+      "archiveSha256": "7b2a154c1c18455faa7860561102c86c85d42f300efd259238939768791a9fe8"
+    },
+    "required-birth-old-runtime.mjs": {
+      "sha256": "64da9a703cff5e03f48605c8e2f394dc5937e223160557caf0c749e5084ab72a",
+      "bytes": 38072,
+      "archive": "required-birth-old-runtime.mjs.gz",
+      "archiveSha256": "cbcc4abd720b8cfff16e4f548a2418e7154302c0c6c56707b03ff0ffdf02b54b"
+    }
+  }
+}
