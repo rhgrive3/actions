@@ -170,20 +170,22 @@ function rollerCapsuleTouchesBlock(start, delta, block, scratch) {
     t = (lo + hi) * 0.5;
   }
   const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;
-  const qx = x < -hx ? -hx : x > hx ? hx : x, qy = y < -hy ? -hy : y > hy ? hy : y, qz = z < -hz ? -hz : z > hz ? hz : z;
-  let nx = x - qx, ny = y - qy, nz = z - qz;
+  let nx = x - Math.max(-hx, Math.min(hx, x));
+  let ny = y - Math.max(-hy, Math.min(hy, y));
+  let nz = z - Math.max(-hz, Math.min(hz, z));
   const d2 = nx * nx + ny * ny + nz * nz;
   if (d2 > ROLLER_BODY_RADIUS * ROLLER_BODY_RADIUS + CONTACT_EPS) return false;
   if (d2 > CONTACT_EPS) {
     const inv = 1 / Math.sqrt(d2); nx *= inv; ny *= inv; nz *= inv;
   } else {
-    const px = hx - (x < 0 ? -x : x), py = hy - (y < 0 ? -y : y), pz = hz - (z < 0 ? -z : z);
+    const px = hx - Math.abs(x), py = hy - Math.abs(y), pz = hz - Math.abs(z);
     if (px <= py && px <= pz) { nx = x < 0 ? -1 : 1; ny = nz = 0; }
     else if (py <= pz) { ny = y < 0 ? -1 : 1; nx = nz = 0; }
     else { nz = z < 0 ? -1 : 1; nx = ny = 0; }
   }
   scratch.normalY = nx * axes[0].y + ny * axes[1].y + nz * axes[2].y;
   // Closest actual contact point on this oriented solid, not the player's feet.
+  const qx = Math.max(-hx, Math.min(hx, x)), qy = Math.max(-hy, Math.min(hy, y)), qz = Math.max(-hz, Math.min(hz, z));
   scratch.contactPoint.x = center.x + qx * axes[0].x + qy * axes[1].x + qz * axes[2].x;
   scratch.contactPoint.y = center.y + qx * axes[0].y + qy * axes[1].y + qz * axes[2].y;
   scratch.contactPoint.z = center.z + qx * axes[0].z + qy * axes[1].z + qz * axes[2].z;
@@ -201,13 +203,12 @@ export function rollerDrumSupport(a, G, scratch) {
   start.x = cx - rx * half; start.y = cy; start.z = cz - rz * half;
   delta.x = rx * half * 2; delta.y = 0; delta.z = rz * half * 2;
   const endX = start.x + delta.x, endZ = start.z + delta.z, radius = ROLLER_BODY_RADIUS;
-  const minX = (start.x < endX ? start.x : endX) - radius, minZ = (start.z < endZ ? start.z : endZ) - radius;
-  const maxX = (start.x > endX ? start.x : endX) + radius, maxZ = (start.z > endZ ? start.z : endZ) + radius;
-  const ids = level.queryBlocks(minX, minZ, maxX, maxZ, scratch.ids);
+  const ids = level.queryBlocks(Math.min(start.x, endX) - radius, Math.min(start.z, endZ) - radius,
+    Math.max(start.x, endX) + radius, Math.max(start.z, endZ) + radius, scratch.ids);
   let floor = false, wall = false;
   for (let i = 0; i < ids.length; i++) {
     const block = level.blocks[ids[i]];
-    if (!block.solid || cy + radius < block.aabbMin.y || cy - radius > block.aabbMax.y || block.aabbMax.x < minX || block.aabbMin.x > maxX || block.aabbMax.z < minZ || block.aabbMin.z > maxZ) continue;
+    if (!block.solid || cy + radius < block.aabbMin.y || cy - radius > block.aabbMax.y) continue;
     if (!rollerCapsuleTouchesBlock(start, delta, block, scratch)) continue;
     const ny = scratch.normalY;
     if (ny >= WALL_BAND) floor = true;
