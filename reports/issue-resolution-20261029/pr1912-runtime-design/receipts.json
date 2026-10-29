@@ -1,0 +1,17 @@
+{
+  "node": "v22.23.4",
+  "receipts": [
+    {
+      "file": "runtime-design-node22.tap.gz",
+      "sha256": "805b077714f2616fb33ad34fc40383c575ab34d7e7c3b0497a403a22331fdb68",
+      "uncompressedSha256": "687fb4461a13e94fcf80af77452a143d111b253af7dac1f3aac29c4116a04ff1",
+      "bytes": 13298
+    },
+    {
+      "file": "runtime-design-source-closure-node22.tap.gz",
+      "sha256": "25acf781503b23c985f0290678ce85bdc3d5ccde9ac1ae48f740ef4a4ac31036",
+      "uncompressedSha256": "56e078f8f4173d5194b1fa01e5032a646c4aa3704ba1203568a388ee27d8c458",
+      "bytes": 1946
+    }
+  ]
+}
