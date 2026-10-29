@@ -1615,7 +1615,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
       if(!geo.boundingBox)geo.computeBoundingBox();
       const bounds=geo.boundingBox;
-      drum.updateWorldMatrix(true,false);
+      // localToWorld below updates the same ancestor path immediately before use.
       // The mesh locates the contact only. PaintParam owns the ink width;
       // changing a display model must never change scored/swimmable turf.
       to.copy(bounds.min).add(bounds.max).multiplyScalar(.5);
