@@ -1,0 +1,18 @@
+(node:365978) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ combat-gpu-cpu-perfect-adapter is registered in BUILD_ONLY_PATCH_MODULES and qualityIdentity (29.059271ms)
+✔ Direct-Source owned modules (nav.js, props-core.js, character-lod.js) remain zero-rewrite and pass auditDirectSource (617.621817ms)
+✔ all 24 target modules compose cleanly through adaptBuildSource and are idempotent on second pass (272.760975ms)
+✔ missing anchors fail closed across target modules (1.525243ms)
+✔ CPU-04 unit and non-unit scale world quaternion in _updateHair is exact against matrixWorld.decompose (1.771274ms)
+✔ GPU-08b SwimWake point pooling preserves exact uniform uploads and uWakeCount across 240 frames (0.545784ms)
+✔ CPU-17b NetMatch._sendTick single-pass packing preserves exact wire payload across 128 states (56.30916ms)
+✔ GPU-22 FX shells upload static aColA and aAxis only on birth, recycle, or swap compaction (1044.636969ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2448.927835

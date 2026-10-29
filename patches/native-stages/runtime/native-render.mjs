@@ -65,12 +65,14 @@ function releaseArray(){this.array=null;}
 
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per
 // source object. Only GPU texture representations have an explicit quality cap.
-function narrowDisplayIndex(indices){
- // WebGL2 reserves 65535 as the Uint16 primitive-restart index. Preserve that
- // legitimate Uint32 vertex ID and all larger IDs, even for malformed metadata.
- for(let i=0;i<indices.length;i++)if(indices[i]>=65535)return indices;
- return Uint16Array.from(indices);
+// WebGL2 reserves the largest index of each type for primitive restart. Match
+// Three's arrayNeedsUint32 boundary, using actual indices rather than metadata
+// vertex counts. Geometry order and every numeric index remain unchanged.
+export function compactNativeIndices(indices){
+ for(let i=indices.length-1;i>=0;i--)if(indices[i]>=65535)return indices;
+ return new Uint16Array(indices);
 }
+
 export function nativeDisplay(data,textures,quality){
  let liveTextures=textures;
  const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cache=new Map();group.name='native-source-display';
@@ -102,7 +104,7 @@ export function nativeDisplay(data,textures,quality){
    mat.name=o.material;cache.set(o.material,{mat,channels,syncChannelProgram});materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(narrowDisplayIndex(ib),1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
+  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(compactNativeIndices(ib),1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
   // Bounds are final above and nothing raycasts the display: once the GPU
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).
   inter.onUpload(releaseArray);g.index.onUpload(releaseArray);

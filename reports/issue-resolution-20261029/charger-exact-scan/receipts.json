@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "base": "2c6aaa2aa012a20b5c6e324df0d4d49cefe95a2d",
+  "codeCommit": "ce3b32927122faf107bca3852221d4acbca78fec",
+  "ownerRuntimeCommit": "2d604cc077a0124ef172b72574da788eb62b5968",
+  "ownerTestCommit": "ec274fbb5eec41b8f7750807659e7b6d643ebb54",
+  "nativeRuntimeSha256": "9361516a56e5b4c89d0ac425f4bf335fdb9ce4b91ede184739029caff380d592",
+  "node": "v24.19.0",
+  "scope": "production-composed native source in Node VM; actual Actor, Projectiles, collision solver, FixedClock and hit HP controls; no emitted or hardware claim",
+  "before": {
+    "command": "node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/charger-exact-scan.test.mjs",
+    "pass": 0,
+    "fail": 4,
+    "skip": 0,
+    "exit": 1,
+    "failure": "eligible candidate solver visits are skipped by the rejected broadphase; grazing damage/miss controls retain their expected native outcomes"
+  },
+  "after": {
+    "command": "node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/charger-exact-scan.test.mjs patches/splatoon3/tests/charger-motion-time-admission.test.mjs patches/splatoon3/tests/charger-friendly-bodyblock.test.mjs patches/splatoon3/tests/charger-field-collision.test.mjs patches/splatoon3/tests/weapons-collision.test.mjs patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "pass": 44,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0
+  },
+  "logs": {
+    "before.tap.gz": {
+      "uncompressedSha256": "8a7966210e9030efe7cfc582e7bc075bf26e69dd384f0016278458cc0de3cd5f",
+      "bytes": 4132
+    },
+    "focused.tap.gz": {
+      "uncompressedSha256": "275f7b5b8fdbc8ff667e60504a1ca87595d9fbceab7e6eddb302989f87d6748a",
+      "bytes": 11007
+    }
+  },
+  "limits": [
+    "No measured missed gameplay hit is claimed.",
+    "No FPS or allocation-speed improvement is claimed.",
+    "Original Splatoon 3 Ver. 11.3.0 profile values are read; no new gameplay constants are introduced.",
+    "MOV-08b and Character release holds remain in place."
+  ]
+}

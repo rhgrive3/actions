@@ -551,6 +551,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const sinYaw=Math.sin(y),cosPitch=Math.cos(p);
     return (out||new THREE.Vector3()).set(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
   }
+  const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();
   function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
@@ -558,7 +559,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||paintFallbackUp;
-      const tangent=direction.clone().addScaledVector(normal,-direction.dot(normal));
+      const tangent=_paintTangent.copy(direction).addScaledVector(normal,-direction.dot(normal));
       // This source depth envelope is interpreted on floor-like contacts only.
       // Wall projection remains unchanged until its separate source law is verified.
       if(Math.abs(normal.y)<.4){options.stretch=direction;options.stretchAmt=Math.max(0,depth-1);}
@@ -573,8 +574,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const ratio=Number.isFinite(depth)&&depth>0?depth:1,rotate=ratio<1;
         paintRadius=rotate?radius*ratio:radius;
         const elongation=rotate?1/ratio:ratio,stretchAmt=1.6*(elongation-1),centreBack=.375*paintRadius*stretchAmt;
-        if(rotate)tangent.crossVectors(normal,tangent.clone()).normalize();
-        centre=at.clone().addScaledVector(tangent,-centreBack);
+        if(rotate)tangent.crossVectors(normal,_paintCross.copy(tangent)).normalize();
+        centre=_paintCentre.copy(at).addScaledVector(tangent,-centreBack);
         options.stretch=tangent;options.stretchAmt=stretchAmt;
       }
     }
@@ -710,7 +711,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,volley:options.volley,
-        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?a.yaw:null}});
+        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?options.sectorYaw:null}});
     if(descriptor.key==='slosh'&&(r.sourceActor==='WeaponSlosherDiffusion'||r.sourceActor==='WeaponSlosherDouble')){
       // Combination.OrderNum selects the emitting glob, not every member of
       // the unit. Reuse the native source resolver and the already drawn seed.
@@ -858,6 +859,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if((key==='slosh'||key==='horizontal'||key==='vertical'||key==='brush')&&
        a.aimDir?.lengthSq()>EPS)
       direction.copy(a.aimDir).normalize();
+    // Damage sectors share the admitted central launch heading. Body facing
+    // follows aim through a spring and can still lag at release; individual
+    // fan pellets must not each redefine the center of the damage sector.
+    const sectorYaw=key==='horizontal'?Math.atan2(direction.x,direction.z):null;
     // Mirrors the mature S3 Slosher cumulative firing-interval sweep:
     // the later Bloblobber bubbles are born 5F apart, but their four yaw
     // headings are resolved at admission from the last windup sample.
@@ -925,7 +930,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           constrainMuzzle(G.physics,base,birth);
         }
         const p=spawn(a,r,d,aim,birth,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
-          index:i,volley,lift:speed*liftRate,depleted});
+          index:i,volley,lift:speed*liftRate,depleted,sectorYaw});
         // Like the existing native Slosher owner, select ground/air speed at
         // each glob's actual birth. Retain the admitted direction, per-index
         // offset and speed draw; landing/falling does not reroll the volley.
@@ -1304,7 +1309,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if(p.ghost)return true;
     const footprint=impactPaint(p);
-    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
+    paint(p.owner,at,footprint.width,footprint.depth,_impactHorizDir.copy(p.vel).setY(0).normalize(),h.face,mainInkFootprint(r));
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
        (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
       G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
@@ -1410,6 +1415,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(pierced)pierced.length=0;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
+      let segBoundsReady=false,segMinX=0,segMaxX=0,segMinZ=0,segMaxZ=0;
       if(unitCanDamage)for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
         q.playerRadius0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale);
@@ -1421,6 +1427,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         const motion=coherentTick?coherentMotionStart(a):null;
+        if(!motion&&shapes.length===1){
+          if(!segBoundsReady){
+            const q0=shapes[0],prMax=Math.max(q0.playerRadius0,q0.playerRadius1);
+            if(Number.isFinite(q0.from.x)&&Number.isFinite(q0.from.z)&&Number.isFinite(q0.to.x)&&Number.isFinite(q0.to.z)&&Number.isFinite(prMax)&&prMax>=0){
+              segMinX=Math.min(q0.from.x,q0.to.x)-prMax;segMaxX=Math.max(q0.from.x,q0.to.x)+prMax;
+              segMinZ=Math.min(q0.from.z,q0.to.z)-prMax;segMaxZ=Math.max(q0.from.z,q0.to.z)+prMax;
+              segBoundsReady=true;
+            }else segBoundsReady=null;
+          }
+          if(segBoundsReady&&Number.isFinite(a.pos?.x)&&Number.isFinite(a.pos?.z)){
+            // Pre-reject only if the shot cannot reach the actual weapon hurtbox.
+            // Terrain radius + 0.25 is too small for the squid bullet radius
+            // (0.675 in the current profile) and can suppress a genuine hit.
+            const reach=hurtboxRadius(a,PLAYER)+1e-4;
+            if(a.pos.x<segMinX-reach||a.pos.x>segMaxX+reach||a.pos.z<segMinZ-reach||a.pos.z>segMaxZ+reach)continue;
+          }
+        }
         const scratch=s.collisionScratch;
         const base=motion?scratch.motionBase.set(motion.x0,motion.y0,motion.z0):a.pos;
         let entry=null;
@@ -1437,6 +1460,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const pr0=q.playerRadius0,radius=q.playerRadius1;
           const end=motion?scratch.motionEnd.set(q.to.x-motionX,
             q.to.y-motionY,q.to.z-motionZ):q.to;
+          const reach=bodyRadius+(pr0>radius?pr0:radius)+1e-4;
+          const qfx=q.from.x,qfz=q.from.z,qtx=end.x,qtz=end.z;
+          const qminX=(qfx<qtx?qfx:qtx)-reach,qmaxX=(qfx>qtx?qfx:qtx)+reach;
+          const qminZ=(qfz<qtz?qfz:qtz)-reach,qmaxZ=(qfz>qtz?qfz:qtz)+reach;
+          const bx=base.x,bz=base.z;
+          if(bx<qminX||bx>qmaxX||bz<qminZ||bz>qmaxZ)continue;
           const contact=capsuleEntry(q.from,end,base,bodyRadius,bodyHeight,pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
@@ -1509,15 +1538,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const from=(s.splashReleasePoint ||= p.prev.clone()).copy(p.prev).lerp(p.pos,clamp((s.nextSplash-splashBefore)/splashLength));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
-            const args={owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-              from,direction,radius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,
-              catchUpSeconds:s.carry,footprint:null};
+            const args=s.splashArgs||={owner:null,team:0,seed:0,salt:0,from:null,direction:null,radius:0,spec:null,depth:true,catchUpSeconds:0,footprint:null};
             const record=s.r;
             if(!footprintReady||record!==footprintRecord){
               footprint=mainInkFootprint(record);footprintRecord=record;
               footprintReady=canShareSourceFootprint(record)&&Object.getOwnPropertyDescriptor(s,'r')?.value===record;
             }
-            args.footprint=footprint;
+            args.owner=p.owner;args.team=p.team;args.seed=p.seed;args.salt=s.dropCount;
+            args.from=from;args.direction=direction;args.radius=radius;args.spec=d.splashDropSpec||d.sloshFall.spec;
+            args.depth=true;args.catchUpSeconds=s.carry;args.footprint=footprint;
             const drop=spawnSplashDrop(G,args);
             if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           }else{
@@ -1632,7 +1661,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const drum=a.character.weapon.drum,geo=a.character.weapon.def.drum;
       if(!geo.boundingBox)geo.computeBoundingBox();
       const bounds=geo.boundingBox;
-      drum.updateWorldMatrix(true,false);
+      // localToWorld below updates the same ancestor path immediately before use.
       // The mesh locates the contact only. PaintParam owns the ink width;
       // changing a display model must never change scored/swimmable turf.
       to.copy(bounds.min).add(bounds.max).multiplyScalar(.5);

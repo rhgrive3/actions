@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {nativeTowerBoarding} from './native-tower-boarding.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
+const _boardDir=new THREE.Vector3(),_boardPoint=new THREE.Vector3(),_boardOrigin=new THREE.Vector3(),_boardDown=new THREE.Vector3(0,-1,0),_boardAim=new THREE.Vector3();
 
 /** Use the source-screened static supports already selected with the vehicle
  * route. A generic radial node is not a proof of a legal human boarding arc. */
@@ -47,10 +48,10 @@ export function updateNativeTowerBoarding(brain,G,engine,dt){
  // launch floor through the installed weapon before requesting the arc.
  if(a.grounded&&a.groundTeam===2){
   state.seconds=0;
-  const direction=start.clone().sub(end).setY(0).normalize(),point=a.pos.clone().addScaledVector(direction,.5),down=new THREE.Vector3(0,-1,0);
-  const hit=G.physics.raycast(point.clone().setY(a.pos.y+.2),down,.5);
+  const direction=_boardDir.copy(start).sub(end).setY(0).normalize(),point=_boardPoint.copy(a.pos).addScaledVector(direction,.5);
+  const hit=G.physics.raycast(_boardOrigin.set(point.x,a.pos.y+.2,point.z),_boardDown,.5);
   if(!hit.hit||hit.face<0){brain._nativeTowerBoarding=null;brain.repath=0;return false;}
-  const aim=hit.point.clone().sub(a.pos).add(new THREE.Vector3(0,-1.05,0));a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z));a.aimPoint.copy(hit.point);
+  const aim=_boardAim.copy(hit.point).sub(a.pos);aim.y-=1.05;a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z));a.aimPoint.copy(hit.point);
   it.fire=a.ink>15&&!a.weaponRunner?.s3ShooterCancelMain;return true;
  }
  it.move.copy(end).sub(a.pos).setY(0);if(it.move.length()<.1)it.move.set(0,0,0);else it.move.normalize();

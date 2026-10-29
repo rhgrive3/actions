@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "executionCodeHead": "5cb10df086b61b9becdb33330e895c5b5e2f41f3",
+  "optimizedAncestor": "58d4d8f2ec1ee3cc337caf426ca197589023c87e",
+  "previousCandidate": "0f8f541f6c9c566672e253cd943df4ad358e59f3",
+  "ownerRemote": {
+    "headRefOid": "8d349280848531828234c2ffc2cbc286869c543b",
+    "updatedAt": "2026-10-29T04:56:04Z"
+  },
+  "checkedUtc": "2026-10-29T05:41:31.539509+00:00",
+  "sourceChecks": {
+    "post-gpu-memory-final.tap": {
+      "tests": 99,
+      "pass": 99,
+      "fail": 0,
+      "skipped": 0
+    },
+    "post-gpu-ci.tap": {
+      "tests": 139,
+      "pass": 139,
+      "fail": 0,
+      "skipped": 0
+    },
+    "post-gpu-registry.tap": {
+      "tests": 7,
+      "pass": 7,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "preservation": {
+    "nativeGeometryModulesByteIdenticalToPreviousCandidate": 49,
+    "gpuOwnerFilesByteIdenticalToOptimized": 4,
+    "testRegistryByteIdenticalToOptimized": true,
+    "changedJavaScriptSyntaxPassed": 11
+  },
+  "initialMemoryFailure": "Sparse checkout omitted unchanged inkwave-public/styles/ui.css. Materialized exact tracked styles and reran the full canonical memory suite; no code/test change.",
+  "unchangedBroadSourceNotRepeated": true,
+  "priorSourceScopeStillAppliesByIdentity": "Native-stage geometry and the other previously verified source owners are unchanged; this supplement validates the four merged GPU owners and registry.",
+  "noGPUorBrowserOrEmittedClaim": true,
+  "holdsRetained": true,
+  "receipts": [
+    {
+      "path": "post-gpu-memory-initial.tap.gz",
+      "sha256": "6b83b0a0294044c82d26492592100ac27842e514bd8d41ed8949b6cb23e925fd",
+      "uncompressedSha256": "ed7c50ce8ebe8d1780305bd2ee7fa93427376b8a1bc967b7fc2370e357a26d17",
+      "bytes": 4372
+    },
+    {
+      "path": "post-gpu-memory-final.tap.gz",
+      "sha256": "03a091e8e294c34892b0de4ecaf914ca71dc7c47f5347b0a31ad58932957029a",
+      "uncompressedSha256": "1a7a44c7c18a672a6d7d8fd6f4c8908617a1a18eb4f369b96ba2e6575c0faad1",
+      "bytes": 4448
+    },
+    {
+      "path": "post-gpu-ci.tap.gz",
+      "sha256": "1bf1340c389cfd63603fb3fdac5d61f8f27489d49ac6daf60bbedaac7974cfe7",
+      "uncompressedSha256": "786252321176eb91e207dc6a24e006f460ef618b0036a1ffb19f50fde7543db7",
+      "bytes": 5830
+    },
+    {
+      "path": "post-gpu-registry.tap.gz",
+      "sha256": "f88f50d117b8bf0ff2c023ccefbe99ae4cc8e0dad0ff0fe65c2401bce5c5ad32",
+      "uncompressedSha256": "2adfddb93a82f8a8cb9be27f16c53ec0f03fbd520f3bf5c83725400e3110a8e9",
+      "bytes": 558
+    },
+    {
+      "path": "post-gpu-ownership.json",
+      "sha256": "a49909df4d88b12b32e1376c18ac883ca42fe994f0a192ad1a14e945756be61c",
+      "bytes": 11096
+    },
+    {
+      "path": "post-gpu-composition.log",
+      "sha256": "5a5f8a84b8c05a6b3813056606142d5b497bc1a6f073e42e0a21d8220ea4a57e",
+      "bytes": 66
+    }
+  ]
+}

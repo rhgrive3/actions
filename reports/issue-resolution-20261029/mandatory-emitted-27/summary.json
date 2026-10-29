@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "scope": "Top-only mandatory emitted CI list and strict contracts; not runtime test acceptance",
+  "baseTopSha": "1ab7a58f85d847ce53bcbcbe1cbdcae75a6f48a6",
+  "testDependencyCommit": "405cd1830dad7a0b35ee18d36ec42ce752a0cc36",
+  "node": "v22.23.4",
+  "canonicalChildPathUsesSameNode": true,
+  "mandatoryFiles": {
+    "original": 23,
+    "added": 4,
+    "total": 27,
+    "originalOrderedPrefixPreserved": true,
+    "conditionalMissingFileSkipAdded": false
+  },
+  "checks": {
+    "focused": {
+      "tests": 28,
+      "pass": 28,
+      "fail": 0,
+      "skipped": 0
+    },
+    "fullCanonicalVerifier": {
+      "tests": 674,
+      "pass": 673,
+      "fail": 0,
+      "skipped": 1,
+      "skip": "Existing emitted optional packs check without INKWAVE_BUILT_SITE in source-only verifier"
+    },
+    "independentPeerSourceCoverage": {
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "initialRejectedRun": {
+    "tests": 674,
+    "pass": 666,
+    "fail": 7,
+    "skipped": 1,
+    "causes": {
+      "immutableSparseFixtureGuards": 4,
+      "isolatedMissingAssetOrCssInputs": 3
+    },
+    "resolution": "Historical fixture restored exactly, no pin changes; missing read inputs hydrated"
+  },
+  "productionCodeChanged": false,
+  "productTestContentsChanged": false,
+  "unchangedContracts": [
+    "exact launch-packet and ghost verification",
+    "10-file guide and phase suite",
+    "global JavaScript hydration",
+    "historical/current sparse fixture pins",
+    "CPU/browser shards",
+    "sandbox runner routing",
+    "full-scope classification"
+  ],
+  "changedFilesSha256": {
+    ".github/workflows/validate-inkwave-update.yml": "f98a8bd3441ca499ea5d91484f6ff145f8dd5201ae158d071445e972f9f5e01f",
+    "scripts/tests/inkwave-source-coverage.test.mjs": "d882cdac4d24bd926afe201a135df32492d46cc2d0c63e4498725c8e4b693585"
+  },
+  "otherGuardGitBlobs": {
+    "scripts/tests/inkwave-ci-sparse-checkout.test.mjs": "6bd3b326cd5e99e4a2a5ea8e223a7b5fcf081bab",
+    "scripts/tests/inkwave-added-ci-contracts.test.mjs": "48f3158b0ec8f353427f7e527530f5ea3743d36c",
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs": "7c5cfaf3331c64b162a85431d2d2732cfe982b72"
+  },
+  "receipts": {
+    "focused-node22.tap.gz": {
+      "sha256": "e9a09b154600c1b3871612b7393dda2955ee4c4c9ddf62ecce7dac8814436f03",
+      "rawSha256": "d90a0050dee63ab791067f8fe92a2530453bea1267ea0f2de63643097de4e3f9"
+    },
+    "verifier-node22-complete.tap.gz": {
+      "sha256": "f04dd09de0b150274d61386877e0e3217cc75d6ad2fa781ec5a24aae008c43ec",
+      "rawSha256": "6d496c060a4469e11434a7fdb6ff0cfc300a8514b785f894efc543b428c6c146"
+    },
+    "initial-verifier-node22-rejected.tap.gz": {
+      "sha256": "1b940481190f088b4d4a3a31d0ac58744f528fe69f93bb450db4dfe94ea1d796",
+      "rawSha256": "bdd914f03eb18c9f988966efdfa6dc0d53a824f9bca50dbf33f8544ddb450c54"
+    },
+    "peer-source-coverage-node22.tap.gz": {
+      "sha256": "a76052f6008d0a48034060b03331c76ac9c990d465601dbc7c175f27fe6b7737",
+      "rawSha256": "f68d9184e3d8e261a56f76dd4ea3edb91709809048922ad184f49bbcf12b8775"
+    }
+  },
+  "documentsSha256": {
+    "mandatory-files.json": "ee3d67b0e0e10db40f3079fe6593d1720447667f446fccf3b1f6b5513b16192a"
+  }
+}

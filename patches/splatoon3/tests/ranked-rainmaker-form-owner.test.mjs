@@ -1,18 +1,18 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {createHash}from'node:crypto';
-import {sourceLoadedActorFixture}from'./source-loaded-actor-fixture.mjs';
+import {sourceLoadedLegacyRainmakerAnchorFixture,LEGACY_RAINMAKER_ANCHOR}from'./rainmaker-legacy-anchor-fixture.mjs';
 const context=vm.createContext({console,crypto,TextEncoder}),module=new vm.SourceTextModule(fs.readFileSync(new URL('../../../tools/rainmaker-form-production-qa/browser.mjs',import.meta.url),'utf8'),{context});
 await module.link(spec=>{assert.equal(spec,'./shared/production-scene.mjs');return new vm.SyntheticModule(['productionScene'],function(){this.setExport('productionScene',()=>{throw Error('CPU test must not create renderer');});},{context});});await module.evaluate();
 const {FORM_CAPTURE_PLAN,runFormScenario,verifyFormScenario}=module.namespace,clean=x=>JSON.parse(JSON.stringify(x)),hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const equalKeys=['frame','returnFrame','weapon','pitch','deliveryAt','source','kidScale','kidVisible','opacity','root','kid','pos','vel','aim','P','springs','canonicalMuzzle','canonicalSecondary','poses','rightSolves','clamArmActive','beforeSourceSha','sourceHistorySha','non12Sha','positionScaleSha','delivered','modelGeometry'];
 let seed=1234,randomValues=[];const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;const x=seed/4294967296;randomValues.push(x);return x;};
-const f=await sourceLoadedActorFixture({random,extraExports:`export {createRankedEffects} from './patches/splatoon3/runtime/ranked/combat.mjs';export {createRainmakerModel,createRainmakerPresentation} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`});
+const f=await sourceLoadedLegacyRainmakerAnchorFixture({random,extraExports:`export {createRankedEffects} from './patches/splatoon3/runtime/ranked/combat.mjs';export {createRainmakerModel,createRainmakerPresentation} from './patches/splatoon3/runtime/ranked/rainmaker-model.mjs';`});
 const control=({ch})=>{ch._captureRainmakerForm=()=>{};};
 test('form native plan keeps20 originals/ten pairs and required aim endpoints',()=>{
  assert.equal(FORM_CAPTURE_PLAN.reduce((n,x)=>n+Object.values(x.frames).reduce((m,v)=>m+v.length,0),0)*2,20);
  assert.deepEqual(clean(FORM_CAPTURE_PLAN.find(p=>p.name==='shooter-lower').frames[3]),['rear','side']);assert.deepEqual(clean(FORM_CAPTURE_PLAN.find(p=>p.name==='dualies-upper').frames[6]),['rear','side']);
  assert.equal(FORM_CAPTURE_PLAN.filter(p=>p.deliveryAt!==null).length,3);
 });
-for(const plan of FORM_CAPTURE_PLAN)test(plan.name+' actual driver preserves canonical source/getters/events and only adds one bounded display solve',async t=>{
+for(const plan of FORM_CAPTURE_PLAN)test('legacy anchor calibration: '+plan.name+' actual driver preserves canonical source/getters/events and only adds one bounded display solve',async t=>{
  const pair=[];
  for(const lane of['warm-control','control','candidate']){
   seed=1234;randomValues=[];const corrected=lane==='candidate';const r=await runFormScenario({api:f,...plan,onSetup:corrected?null:control});assert(verifyFormScenario(r,{corrected}));
@@ -22,10 +22,10 @@ for(const plan of FORM_CAPTURE_PLAN)test(plan.name+' actual driver preserves can
  const [old,now]=pair.map(p=>p.result);for(let i=0;i<10;i++){for(const key of equalKeys)assert.equal(JSON.stringify(old.rows[i][key]),JSON.stringify(now.rows[i][key]),i+'/'+key);if(i===9)assert.equal(old.rows[i].allBoneSha,now.rows[i].allBoneSha);}
  assert.deepEqual(clean(old.births),clean(now.births));assert.deepEqual(clean(old.events),clean(now.events));if(plan.name==='shooter-lower')assert(old.rows.some(r=>r.grip>=.001),'Shooter lower control must reproduce the measured former support gap');
  for(const mutate of[r=>r.rows.pop(),r=>r.rows[0].leftSolves=3,r=>r.rows[0].grip=.01,r=>r.rows[9].pending=true,r=>r.rows[0].source.active=false,r=>r.rows[0].source.active='yes',r=>delete r.rows[0].source.active,r=>r.rows[0].clamArmActive=true,r=>delete r.rows[0].clamArmActive]){const bad=clean(now);mutate(bad);assert.throws(()=>verifyFormScenario(bad),'negative contract rejected');}
- t.diagnostic(JSON.stringify({scenario:plan.name,emitted:!!process.env.INKWAVE_BUILT_SITE,frames:10,extraLeftSolves:9,sourceSha:now.rows[0].source.bankSha256,oldMaxGrip:Math.max(...old.rows.map(r=>r.grip)),newMaxGrip:Math.max(...now.rows.map(r=>r.grip)),globalCalls:pair.map(p=>p.globalCalls),networkOrigin:now.births}));
+ t.diagnostic(JSON.stringify({scenario:plan.name,calibration:LEGACY_RAINMAKER_ANCHOR,emitted:false,frames:10,extraLeftSolves:9,sourceSha:now.rows[0].source.bankSha256,oldMaxGrip:Math.max(...old.rows.map(r=>r.grip)),newMaxGrip:Math.max(...now.rows.map(r=>r.grip)),globalCalls:pair.map(p=>p.globalCalls),networkOrigin:now.births}));
 });
 const trs=b=>[...b.position.toArray(),...b.quaternion.toArray(),...b.scale.toArray()];
-for(const weapon of['shooter','dualies'])test(weapon+' display restoration precedes six lifecycle boundaries and actual ordinary bomb',async t=>{
+for(const weapon of['shooter','dualies'])test('legacy anchor calibration: '+weapon+' display restoration precedes six lifecycle boundaries and actual ordinary bomb',async t=>{
  const cases=[];
  for(const boundary of['quick-return','same-frame-release','hide-show','source-reenable','weapon-cycle','splat-spawn']){
   const lanes=[];
@@ -55,5 +55,5 @@ for(const weapon of['shooter','dualies'])test(weapon+' display restoration prece
   for(const key of['entry','after','bombs','globalCalls','globalValues'])assert.deepEqual(clean(lanes[0][key]),clean(lanes[1][key]),boundary+'/'+key);
   cases.push({boundary,afterFrames:45,bombs:lanes[1].bombs,globalCalls:lanes[1].globalCalls,oldGrip:lanes[0].before.grip,newGrip:lanes[1].before.grip});
  }
- t.diagnostic(JSON.stringify({weapon,emitted:!!process.env.INKWAVE_BUILT_SITE,cases}));
+ t.diagnostic(JSON.stringify({weapon,calibration:LEGACY_RAINMAKER_ANCHOR,emitted:false,cases}));
 });

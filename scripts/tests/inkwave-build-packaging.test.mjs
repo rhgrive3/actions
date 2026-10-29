@@ -191,7 +191,7 @@ test('emitted identity binds every input to one canonical tracked path including
     'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
     'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
     'practice-range': 'patches/practice-range', 'native-stages': 'patches/native-stages', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
-  const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
+  const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
     .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const mapped = [];
   for (const [key, expected] of Object.entries(identity.files)) {

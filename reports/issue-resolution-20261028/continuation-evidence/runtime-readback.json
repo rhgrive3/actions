@@ -1,0 +1,24 @@
+[
+  {
+    "name": "root",
+    "sha": "0faf90be9b38ee5c3c430793a953ea22d4987882",
+    "site": "/workspace/scratch/continuation-root-site",
+    "contentHash": "d731f060585d5a942d07d3675d5f55e32afdafedc04da5f48c0cf936a7a4fa08",
+    "inputHash": "6e370e6ee1c701df3faf306eb31a681510858e41a20847857a6d73364f3f9d2e",
+    "inputs": 1522,
+    "artifacts": 2229,
+    "renderer": "e6372ec27192176c96ed4c5f4c953a1fd60c1f246ecb92b0d9a16cfc095839bc",
+    "input": "8208ac8fe00d2eb80447ae6bf6c5ed6cbd05417f555b2ae0deabf70929daa4af"
+  },
+  {
+    "name": "opt",
+    "sha": "1c53ad235a3441d1786cd2df65332f5a7bd3c149",
+    "site": "/workspace/scratch/continuation-opt-site",
+    "contentHash": "f725263e54d49ce551218235441c008904551271d2621cee3f7c7bf67d5a1ded",
+    "inputHash": "f17cb4425ca49b3963400975f0281adfe5e4b429f9136de5d1aff87493951d91",
+    "inputs": 1523,
+    "artifacts": 2229,
+    "renderer": "e6372ec27192176c96ed4c5f4c953a1fd60c1f246ecb92b0d9a16cfc095839bc",
+    "input": "8208ac8fe00d2eb80447ae6bf6c5ed6cbd05417f555b2ae0deabf70929daa4af"
+  }
+]

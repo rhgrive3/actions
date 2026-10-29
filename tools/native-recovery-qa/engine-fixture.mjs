@@ -58,10 +58,22 @@ export async function createEngineFixture(engine, THREE, options = {}) {
   const context=vm.createContext({console:{warn(...args){warnings.push(args.map(x=>x?.message||String(x)));}},document,window:undefined,location:{reload(){counts.reload++;}},crypto:webcrypto,TextEncoder,TextDecoder,URL,AbortController,DOMException,performance,Worker:PreparedWorker,CustomEvent:class{constructor(type,init){this.type=type;this.detail=init.detail;}},
     addEventListener(k,v){listeners.set(k,v);},removeEventListener(k,v){assert.equal(listeners.get(k),v);listeners.delete(k);},dispatchEvent(e){listeners.get(e.type)?.(e);},requestAnimationFrame:f=>f(),navigator:{deviceMemory:4},
     fetch:async url=>{const prefix='https://prepared.invalid/';assert(String(url).startsWith(prefix),'known prepared asset URL');const b=assets.files.get(String(url).slice(prefix.length));assert(b,'known prepared asset');counts.fetch++;return{ok:true,arrayBuffer:async()=>{const copy=b.slice();if(options.assetMismatch&&String(url).endsWith('manifest.json'))copy[0]^=1;return copy.buffer;}};}});
+  // Read the real exported threshold from the separately verified emitted
+  // physics module. The fixture still owns the other external fault hooks.
+  assert.equal(typeof options.physicsSource,'string','verified emitted physics source required');
+  const physicsModule=new vm.SourceTextModule(options.physicsSource,{context});
+  await physicsModule.link(spec=>{
+    assert.equal(spec,'three','unknown physics external: '+spec);
+    return new vm.SyntheticModule(Object.keys(THREE),function(){for(const[k,v]of Object.entries(THREE))this.setExport(k,v);},{context});
+  });
+  await physicsModule.evaluate();
+  const walkable=physicsModule.namespace.WALKABLE;
+  assert(Number.isFinite(walkable)&&walkable>=0&&walkable<=1,'emitted physics WALKABLE export');
+  externals['../../../src/game/physics.js'].WALKABLE=walkable;
   const module=new vm.SourceTextModule(engine,{context,initializeImportMeta(meta){meta.url='https://emitted.invalid/patches/native-stages/runtime/engine.mjs';}}),linked=[];
   await module.link(spec=>{assert(Object.hasOwn(externals,spec),'unknown bundle external: '+spec);linked.push(spec);const values=externals[spec];return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context});});
   await module.evaluate();assert.equal(typeof module.namespace.buildNativeWorld,'function','public buildNativeWorld export');assert.equal(typeof module.namespace.releaseNativeWorld,'function','public releaseNativeWorld export');
-  return{game,G,counts,document,created,linked,oldLevel,oldPaint,oldWorld,oldMinimap,oldGroup,assets,faults,errors,warnings,resources,listeners,
+  return{game,G,counts,document,created,linked,walkable,oldLevel,oldPaint,oldWorld,oldMinimap,oldGroup,assets,faults,errors,warnings,resources,listeners,
     async run(current=()=>true){let error;try{await module.namespace.buildNativeWorld(game,{id:PREPARED_STAGE_ID,name:'Prepared recovery'},current);}catch(e){error=e;}return error;}};
 }
 export async function loadEmittedEnvironment(source,THREE){

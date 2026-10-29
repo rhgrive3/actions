@@ -296,11 +296,15 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity, startIn
   if (!system?._s3SplashDrops?.length || !Number.isFinite(dt) || dt < 0) return 0;
   let state=landingWorkspaces.get(system);
   if(!state){state={depth:0,slots:[]};landingWorkspaces.set(system,state);}
-  const slot=state.depth++,work=state.slots[slot] ||= {landings:[],free:[]};
+  const slot=state.depth++,work=state.slots[slot] ||= slot === 0
+    ? {landings:system._s3SplashLandingsScratch ||= [],free:system._s3SplashLandingPool ||= [],retired:system._s3SplashRetiredScratch ||= []}
+    : {landings:[],free:[],retired:[]};
+  system._s3SplashAdvanceDepth=slot+1;
+  work.landings.length=0;work.retired.length=0;
   try{return advanceSplashDropsInner(system,dt,game,waterY,startIndex,work);}
   finally{
     for(const record of work.landings){record.drop=null;record.hit=null;record.time=0;if(work.free.length<1024)work.free.push(record);}
-    work.landings.length=0;state.depth--;
+    work.landings.length=0;work.retired.length=0;state.depth--;system._s3SplashAdvanceDepth=slot;
   }
 }
 function advanceSplashDropsInner(system, dt, game, waterY, startIndex, work) {
@@ -311,8 +315,8 @@ function advanceSplashDropsInner(system, dt, game, waterY, startIndex, work) {
   const physics = game?.physics;
   const start = Math.max(0, Math.min(queue.length, Number.isFinite(startIndex) ? Math.trunc(startIndex) : 0));
   let landed = 0, write = start;
-  const landings=work.landings;
-  let retired=null;const epoch=system._s3SplashDropEpoch||0;
+  const landings=work.landings,retired=work.retired;
+  const epoch=system._s3SplashDropEpoch||0;
   for (let i = start; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
@@ -330,11 +334,12 @@ function advanceSplashDropsInner(system, dt, game, waterY, startIndex, work) {
         :physics.segment(d.pos, d.next, record, true);
       d.frames++;
       if (hit?.hit) { const landing=work.free.pop()||{drop:null,hit:null,time:0};landing.drop=d;landing.hit=hit;landing.time=stepTime;landings.push(landing);landed++;done=true;break; }
+
       d.pos.copy(d.next);
       stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
     }
-    if (!done) queue[write++] = d;else (retired ||= []).push(d);
+    if (!done) queue[write++] = d; else retired.push(d);
   }
   // Stable linear compaction: landing a large volley no longer repeatedly
   // shifts all later drops. Survivors retain their deterministic order.
@@ -342,9 +347,15 @@ function advanceSplashDropsInner(system, dt, game, waterY, startIndex, work) {
   // Two opposite-team drops may land on different reference ticks inside one
   // 30Hz update. Apply them by collision time, not by queue iteration order;
   // otherwise the earlier landing can incorrectly overwrite the later one.
-  if(landings?.length>1)landings.sort((a,b)=>a.time-b.time);
-  try{if(landings)for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);}
-  finally{if(retired)for(const drop of retired)recycleSplashDrop(system,drop,epoch);}
+  if (landings.length > 1) landings.sort((a, b) => a.time - b.time);
+  try {
+    for (let i = 0; i < landings.length; i++) {
+      const landing = landings[i];
+      landSplashDrop(game, landing.drop, landing.hit);
+    }
+  } finally {
+    for (let i = 0; i < retired.length; i++) recycleSplashDrop(system, retired[i], epoch);
+  }
   return landed;
 }
 

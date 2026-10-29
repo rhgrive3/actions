@@ -1,0 +1,1 @@
+CI YAML integrity OK: 81 workflow file(s), no duplicate keys

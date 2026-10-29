@@ -1,0 +1,487 @@
+{
+  "schema": 1,
+  "scope": "continuation after user demanded all remaining work",
+  "snapshot_source": "0faf90be9b38ee5c3c430793a953ea22d4987882",
+  "physical_device_validation_required": false,
+  "waiver_quote": "実機検証はいりません",
+  "excluded": [
+    401
+  ],
+  "main_merge_authorized": false,
+  "main_at_resume": "e67c636b81762df56b346a09ef570964d43084df",
+  "published_at_start": {
+    "1908": "60bbe35d4c5176fd86cb1b65f8e66336982ef6ca",
+    "1907": "f151a35994d896b495dd410c4896fb8120e7acb3"
+  },
+  "scope_holds": [
+    "PR1907 MOV-08b whole-PR merge hold",
+    "isolated Character QA owner-note6481309597; no manual rerun"
+  ],
+  "groups": [
+    {
+      "group": "authority",
+      "difficulty_rank": 1,
+      "agent": "remaining_authority",
+      "spawn_model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "issues": [
+        1665,
+        1666
+      ],
+      "applied_commits": [
+        "047918650c5403f2ef3f22c9d061fc9da1d3c474"
+      ],
+      "files": [
+        "patches/network-replication/combat-provenance.mjs",
+        "patches/network-replication/tests/combat-boss-proof-targets.test.mjs",
+        "patches/network-replication/tests/combat-native-proof-receipt.test.mjs",
+        "patches/network-replication/tests/combat-owner-claim-gap.probe.mjs",
+        "reports/issue-resolution-20261028/authority-remaining.md",
+        "reports/issue-resolution-20261028/authority-remaining/baseline-new-cases.log.gz",
+        "reports/issue-resolution-20261028/authority-remaining/emitted-five-files-before-hook-repair.log.gz",
+        "reports/issue-resolution-20261028/authority-remaining/emitted-five-files-final.log.gz",
+        "reports/issue-resolution-20261028/authority-remaining/emitted-repaired-receipts.log.gz",
+        "reports/issue-resolution-20261028/authority-remaining/evidence.json",
+        "reports/issue-resolution-20261028/authority-remaining/owner-claim-gap.json",
+        "reports/issue-resolution-20261028/authority-remaining/source-five-files.log.gz",
+        "reports/issue-resolution-20261028/authority-remaining/source-repaired-receipts.log.gz"
+      ]
+    },
+    {
+      "group": "weapons",
+      "difficulty_rank": 2,
+      "agent": "remaining_weapons",
+      "spawn_model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "issues": [
+        1814,
+        1813,
+        1789,
+        1607,
+        1431,
+        992,
+        956,
+        890,
+        735,
+        532,
+        226,
+        79
+      ],
+      "applied_commits": [
+        "2d78f4a8147dc9260a2f6ad9d634402202832076",
+        "80c92e43820e4f735215a6c5f57fa983c2239037",
+        "e6b523c7be0e22855d49a8544fdbc5547082d670"
+      ],
+      "files": [
+        "patches/splatoon3/runtime/all-specials.mjs",
+        "patches/splatoon3/runtime/catalog-pose-birth.mjs",
+        "patches/splatoon3/tests/issue-1431-hit-pose-birth.test.mjs",
+        "patches/splatoon3/tests/issue-1607-zipcaster-success-minimum.test.mjs",
+        "reports/issue-resolution-20261028/remaining-weapons-1431-hit-pose.json",
+        "reports/issue-resolution-20261028/remaining-weapons-1431.md",
+        "reports/issue-resolution-20261028/remaining-weapons-1607-minimum.json",
+        "reports/issue-resolution-20261028/remaining-weapons-1607.md",
+        "reports/issue-resolution-20261028/remaining-weapons-logs/1431-final-source.tap.gz",
+        "reports/issue-resolution-20261028/remaining-weapons-logs/hit-pose-before.tap.gz",
+        "reports/issue-resolution-20261028/remaining-weapons-logs/zipcaster-final-boundaries-source.tap.gz",
+        "reports/issue-resolution-20261028/remaining-weapons-logs/zipcaster-final-source.tap.gz",
+        "reports/issue-resolution-20261028/remaining-weapons-logs/zipcaster-success-before.json.gz",
+        "reports/issue-resolution-20261028/remaining-weapons-logs/zipcaster-success-old.tap.gz",
+        "reports/issue-resolution-20261028/remaining-weapons-pinned-source-readback.json",
+        "reports/issue-resolution-20261028/remaining-weapons-public-source-search.json",
+        "reports/issue-resolution-20261028/remaining-weapons-reference-fetch.json",
+        "reports/issue-resolution-20261028/remaining-weapons-zipcaster-source-versions.json",
+        "reports/issue-resolution-20261028/remaining-weapons.md"
+      ]
+    },
+    {
+      "group": "performance",
+      "difficulty_rank": 3,
+      "agent": "remaining_performance",
+      "spawn_model": "gpt-6.1-sol",
+      "thinking": "xhigh",
+      "issues": [
+        1757,
+        1671,
+        1565,
+        1434,
+        845,
+        642
+      ],
+      "applied_commits": [
+        "9581522ec2e9e190735b999671c632ce637bdbea",
+        "99dc3d617c9ad99aeabbddb2eae1fd2b618e2177",
+        "63318773bec4186dbf86ac729d365601457da48a",
+        "2ae0a297ec004885d4ff05023ed8dc13383af7d6",
+        "9e76b219e44da00b4d1033aa7ad0dcceb2f42f40",
+        "d2f948381ed2e80da218597f4f64b50af64f87b9",
+        "0faf90be9b38ee5c3c430793a953ea22d4987882"
+      ],
+      "files": [
+        "patches/local-quality/adapter.mjs",
+        "patches/local-quality/composer-format-adapter.mjs",
+        "patches/local-quality/composer-target-adapter.mjs",
+        "patches/local-quality/offline-offscreen-budget.mjs",
+        "patches/local-quality/offscreen-hair-target-adapter.mjs",
+        "patches/local-quality/tests/composer-residual-642.test.mjs",
+        "patches/local-quality/tests/composer-target-adapter.test.mjs",
+        "patches/local-quality/tests/native-offscreen-ground-memo.test.mjs",
+        "patches/local-quality/tests/offscreen-hair-targets.test.mjs",
+        "reports/issue-resolution-20261028/remaining-performance/README.md",
+        "reports/issue-resolution-20261028/remaining-performance/composer-baseline-control.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/composer-final-live.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/composer-old-hdr-edge.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/composer-old-live.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/composer-tests.tap.gz",
+        "reports/issue-resolution-20261028/remaining-performance/context-tests.tap.gz",
+        "reports/issue-resolution-20261028/remaining-performance/emitted-tests.tap.gz",
+        "reports/issue-resolution-20261028/remaining-performance/hair-60-control.png",
+        "reports/issue-resolution-20261028/remaining-performance/hair-60-deferred.png",
+        "reports/issue-resolution-20261028/remaining-performance/hair-reentry.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/lens-baseline-packed-shader.png",
+        "reports/issue-resolution-20261028/remaining-performance/lens-selected-hdr-shader.png",
+        "reports/issue-resolution-20261028/remaining-performance/post-depth-chromium.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/post-depth-executed.mjs.gz",
+        "reports/issue-resolution-20261028/remaining-performance/post-depth-webkit.json.gz",
+        "reports/issue-resolution-20261028/remaining-performance/receipts.json",
+        "reports/issue-resolution-20261028/remaining-performance/source-hair-final.tap.gz",
+        "reports/issue-resolution-20261028/remaining-performance/source-tests.tap.gz",
+        "scripts/check-inkwave-composer-webgl.mjs",
+        "scripts/check-inkwave-offscreen-hair-reentry.mjs",
+        "scripts/check-inkwave-post-depth-browser.mjs",
+        "scripts/lib/inkwave-composer-live-browser.mjs"
+      ]
+    },
+    {
+      "group": "motion",
+      "difficulty_rank": 4,
+      "agent": "remaining_motion",
+      "spawn_model": "gpt-6.1-terra",
+      "thinking": "xhigh",
+      "issues": [
+        1116,
+        1097,
+        997,
+        952
+      ],
+      "applied_commits": [
+        "153c8fbdb8c2226db23c8f2547e80b11f0d2257e",
+        "a7fe9ff05f602a46da8edf1354df118b5dd8205f"
+      ],
+      "files": [
+        "patches/splatoon3/runtime/splatling.mjs",
+        "patches/splatoon3/tests/splatling-charge-reversal.test.mjs"
+      ]
+    },
+    {
+      "group": "audio",
+      "difficulty_rank": 5,
+      "agent": "remaining_audio",
+      "spawn_model": "gpt-6.1-terra",
+      "thinking": "xhigh",
+      "issues": [
+        1823,
+        1708
+      ],
+      "applied_commits": [
+        "02b1cb584cc961bfbbeb9c195e97b860a3d55a90",
+        "50987ae23d7ec9f3a90bcea9c710412834e697be"
+      ],
+      "files": [
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/tests/catalog-charger-remote-audio.test.mjs",
+        "patches/splatoon3/tests/charger-special-audio-cancel.test.mjs",
+        "reports/issue-resolution-20261028/audio-followup.md"
+      ]
+    },
+    {
+      "group": "input",
+      "difficulty_rank": 6,
+      "agent": "remaining_input",
+      "spawn_model": "gpt-6.1-terra",
+      "thinking": "xhigh",
+      "issues": [
+        287,
+        725
+      ],
+      "applied_commits": [
+        "64f996ae8d7910f636c6aee72e94fcb5b29b5022",
+        "c759b49697bd2ba6274b1bff7c6a8f5ba8a19968",
+        "c18e2aa66386e76a375ec9c047562d7c03032eff",
+        "c6d682aa6fc2da1e8e3bd8424b0c4b6affd32cdf",
+        "01ffaedd40d8a1a3217f0ec92986be0034ad0462",
+        "a0146463a16d16eb8e33fa797783fb5bb0c482ba",
+        "391ba31c61611449dd49ec7515ac08df77bf4a5e"
+      ],
+      "files": [
+        "patches/local-quality/aim-profile-adapter.mjs",
+        "patches/local-quality/aim-profile.mjs",
+        "patches/reliability/lock-option-recovery-adapter.mjs",
+        "patches/reliability/tests/touch-pointerlock.test.mjs",
+        "patches/splatoon3/adapter.mjs",
+        "patches/splatoon3/pad-sensitivity-adapter.mjs",
+        "patches/splatoon3/runtime/pad-sensitivity.mjs",
+        "patches/splatoon3/runtime/ui-strings.mjs",
+        "patches/splatoon3/tests/issue-287-settings-reset.test.mjs",
+        "patches/splatoon3/tests/issues-1012-1024-1026-adapter.test.mjs",
+        "patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs",
+        "reports/issue-resolution-20261028/input-followup.md",
+        "reports/issue-resolution-20261028/pointer-fullgame-corrected.json",
+        "reports/issue-resolution-20261028/pointer-fullgame-input.json",
+        "scripts/check-inkwave-pointer-ownership-browser.mjs",
+        "scripts/tests/inkwave-input-constructor-ownership.test.mjs",
+        "scripts/tests/lock-option-recovery.test.mjs"
+      ]
+    },
+    {
+      "group": "integration",
+      "difficulty_rank": null,
+      "agent": "root",
+      "spawn_model": null,
+      "thinking": null,
+      "issues": [],
+      "applied_commits": [
+        "6f8be3d120e28c63766addb90cc8f740dbf1c38a",
+        "474e3e149fc3eb5e2ee3c0a053e0ef054c8706ed",
+        "c003c26bd80d9255c4bfe827f82dff9bc51d1852",
+        "a1a62353c41689c1cff2caef5d347500fb6c3930"
+      ],
+      "files": [
+        ".github/workflows/inkwave-gameplay-resources.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+        "scripts/lib/inkwave-build-only-modules.mjs",
+        "scripts/tests/inkwave-queued-workflow-policy.test.mjs",
+        "scripts/tests/inkwave-source-coverage.test.mjs"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] 本家の持続チャージ上昇音が未実装、HoldNoise誤ループとは別イベント",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "S3持続チャージ音の原音/event graph/parameter曲線が未取得。既存Splatune2 phraseのlifecycleを修正したがS3音源の代用とはしない。"
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "個別source omissionは修正済み。UnitDamageRateの意味、Blob反射、paint selector/default等の未解明なsource algorithmを含む総合課題。"
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "UnitDamageRate=0の選択的既存処理は検証済みだがzero/sentinelのnative意味を示すsource/schemaがない。"
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "坂分類/係数順序、.35の総速度・法線速度制限の意味、大bubbleの疎な.4既定値継承が未decoded。"
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "outputを保つ追加CPU削減は実装。whole-gameの同値校正が拒否されており、通常Turf全体のp50/p95改善は未証明。"
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "2022年以降11武器自身の11.3原音/出典hash/event mapping/公開利用権が不足。借用音をnative確認済みとしない。"
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "CPU/query削減は実装。native8actor全体の校正済みframe-time改善は未完。実機は不要だがcomponent countをwhole-game時間としない。"
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "同一Boss targetの二重証拠、slot上限借用、無敵body証拠消費を修正。現在wireのowner作成fire/hitだけでは真偽を識別できず、mandatory trusted入力/資源/全武器接触simulationがない。"
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "native-admitted順序修正は保持。authenticated ownerが合法風fire+hitを自作でき、既存wireには発射/接触の独立した真実がない。互換性を保つ完全trusted authority契約が未実装。"
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "成功hook20F最短を修正。失敗45Fとsource ShotFailedIntervalFrm20のphase合成の意味は未decodedで、正しい45F観測を20Fへ置換しない。"
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] 軽量Pose Search・歩行品質・インク視認性の性能非劣化実装計画",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "G0/G2の校正済みwhole-game同値・負荷基準が未達。source distance曲線/測定済み品質不足/差引CPU利得なしにG3 PoseSearchを本番有効化できない。"
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "同一現公開f151の4fresh trialsで4番目の1pixel RGBが不一致。全state/workload一致でもstrict zero gateが拒否。旧music-worker条件のcurrent stream owner不適合は別diagnosticで修正調査中。ABBAは未実行。"
+    },
+    {
+      "number": 1431,
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "実表示hit muzzle/全cover segmentを修正、physical/net/paint不変のsourceとemitted回帰を実行。"
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "出荷bankはWiiU由来。S3の武器class別jump selector/実clip trackが未取得で、名前一覧だけからchooserを作らない。"
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "WiiU generic Damageと既存native-upper class layerを区別。S3武器別selector/joint曲線が未取得。"
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "現在のcadence/stride/source bankは実装済み。S3弱入力斜め歩行のsource locomotion/selectorがなく、WiiUの2D合成をS3式と断定しない。"
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "native paint/droplet/CPU turfは検証。7phase permutation、nearest-foot、droplet初期動力/height/default/空間変換のsource algorithmが不足。"
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "256shoe catalogは能力/素材metadataでsole/foot座標を含まない。2足のsource model/sole/reference transformがなく、gear abilityから発射高を捏造しない。"
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "チャージ中逆/直交入力でsolver減速を打ち消す不具合を修正。S3減速式/開始frameはsourceで未確認。"
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "B tapとholdの別trajectory、buffer/coyote等は実装済み。既存5F/.7のexact S3 source calibrationが不足。"
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "既存offscreen budgetに加えhidden idle/special hair target遅延/first-draw同値復元、exact native ground重複除去を実装。"
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "無限下方damageはfinite境界/DPS/owner回帰で解消済み。既存12WU ray/14WU foot境界はinternalで、追加のexact-source cutoff値/座標規約が不足。"
+    },
+    {
+      "number": 725,
+      "title": "[INKWAVE][Aim] DeviceMotion gyro sensitivity spans ~1.30x-3.27x instead of Splatoon 3 measured ~1x-3x range",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "既存gyro endpoint bridgeは暫定で、中間値のsource曲線/version/methodが不明。実機検証は完了条件から除外。"
+    },
+    {
+      "number": 642,
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "composer例外退役とScreenFX active時precision維持、世代毎post/scene役割を修正。software pixels/実GL資源/復帰回帰を実行。"
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "4+1WU/12F等既存挙動は検証済み。S3 easing/glide/dive/defaultと独立空間変換のsourceが不足。"
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "legacy gain移行喪失と上位yaw重複を修正。S3 right-stick transfer curveは公開sourceに未取得、bridgeは明示的な暫定値。"
+    },
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "RainNum72はpaint call数ではない。生成/reuse/lifetime/接地/paint writeのsource lifecycleが未decoded。"
+    },
+    {
+      "number": 79,
+      "title": "[INKWAVE][Shooter] Splattershot impact paint still ignores floor-wall size and impact-angle rules",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "既存live Splattershotのfloor/wall/impact-angle paint/independentdrop/CPU turf実装を再検証。"
+    }
+  ],
+  "prior_verified_closed": [
+    1767
+  ],
+  "new_closures_at_snapshot": [],
+  "closure_candidates_after_required_CI": [
+    79,
+    642,
+    845,
+    1431
+  ],
+  "validation": {
+    "root_build": "normal minified fresh build at391ba31c; later CI/docs-only heads require full Git-input/artifact readback",
+    "root_new_11file_emitted_gate": "62/62 pass, zero skip/fail",
+    "root_packaging": "10/10 pass",
+    "root_startup_budget": "passed; file/dependency budget, not native timing",
+    "CI_contracts": "associated50/40/53 pass groups overlap; YAML81 pass",
+    "native_pointer": "corrected native full Game6cycles/12 DOM+Input owner checks pass; original wrong-canvas and full-charge failures retained",
+    "composer_final": "agent isolated emitted48/48 and existing78 Chromium/WPE pass, exact cases and same-format controls kept",
+    "hosted": "not yet run on continuation heads; prior60/f151 fullCI success is not reused as new acceptance",
+    "both_emitted11": "root62/62 and optimized62/62, zero fail/skip",
+    "both_packaging": "10/10 each, zero skip",
+    "both_budget": "passed; initial JS1902757/1910049 bytes; file budgets, not timing",
+    "root_browser": "fresh combined root48composer/3hair passed,48HDR/idle tests keep original criteria and exact first draw",
+    "optimized_browser": "fresh combined optimized48composer/3hair passed",
+    "normal_raf": "two distinct Turf stages,2total cycles,5s combat each; actual8actors/normalRAF advancing,crab retirement released,errors0; not long-duration leak or performance proof",
+    "runtime_readback": [
+      {
+        "name": "root",
+        "sha": "0faf90be9b38ee5c3c430793a953ea22d4987882",
+        "site": "/workspace/scratch/continuation-root-site",
+        "contentHash": "d731f060585d5a942d07d3675d5f55e32afdafedc04da5f48c0cf936a7a4fa08",
+        "inputHash": "6e370e6ee1c701df3faf306eb31a681510858e41a20847857a6d73364f3f9d2e",
+        "inputs": 1522,
+        "artifacts": 2229,
+        "renderer": "e6372ec27192176c96ed4c5f4c953a1fd60c1f246ecb92b0d9a16cfc095839bc",
+        "input": "8208ac8fe00d2eb80447ae6bf6c5ed6cbd05417f555b2ae0deabf70929daa4af"
+      },
+      {
+        "name": "opt",
+        "sha": "1c53ad235a3441d1786cd2df65332f5a7bd3c149",
+        "site": "/workspace/scratch/continuation-opt-site",
+        "contentHash": "f725263e54d49ce551218235441c008904551271d2621cee3f7c7bf67d5a1ded",
+        "inputHash": "f17cb4425ca49b3963400975f0281adfe5e4b429f9136de5d1aff87493951d91",
+        "inputs": 1523,
+        "artifacts": 2229,
+        "renderer": "e6372ec27192176c96ed4c5f4c953a1fd60c1f246ecb92b0d9a16cfc095839bc",
+        "input": "8208ac8fe00d2eb80447ae6bf6c5ed6cbd05417f555b2ae0deabf70929daa4af"
+      }
+    ],
+    "receipt_index": "continuation-evidence/receipts.json"
+  },
+  "limits": [
+    "Current native prebuilt LFS payloads absent/unverified; browser conversion path is exercised",
+    "Unknown source meanings/models/audio are not solved by waiving physical testing",
+    "Authority residual probe intentionally exits1 with authenticated-owner fabrication still reproducible",
+    "Historical1002 failed jobs are not all individually reproduced/resolved; one historical log unavailable"
+  ]
+}

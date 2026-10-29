@@ -1,0 +1,612 @@
+{
+  "repository": "rhgrive3/actions",
+  "date": "2026-10-28",
+  "excluded_issues": [
+    401
+  ],
+  "main_merge_authorized": false,
+  "test_counts_are_not_additive": true,
+  "fixes": [
+    {
+      "id": "composition-and-gates",
+      "related_issues": [],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "dd64fefbdbcbc21d24b1e2bbf54de4a3b8e9faae",
+          "files": [
+            ".github/workflows/inkwave-ci-repair-focused.yml",
+            ".github/workflows/validate-inkwave-update.yml",
+            "patches/local-quality/queue-remaining-visual-20261027-adapter.mjs",
+            "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+            "patches/local-quality/tests/retarget-queue-compat.test.mjs",
+            "patches/reliability/lock-option-recovery-adapter.mjs",
+            "patches/reliability/queue-network-ui-adapter.mjs",
+            "patches/reliability/tests/touch-pointerlock.test.mjs",
+            "patches/reliability/touch-pointerlock-adapter.mjs",
+            "patches/splatoon3/tests/added-audio-sharing.test.mjs",
+            "scripts/ci/inkwave-source-coverage.mjs",
+            "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+            "scripts/tests/inkwave-ci-recurrence-guards.test.mjs",
+            "scripts/tests/inkwave-idle-resources-gates.test.mjs",
+            "scripts/tests/inkwave-input-constructor-ownership.test.mjs",
+            "scripts/tests/inkwave-integration-workflow.test.mjs",
+            "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs",
+            "scripts/tests/inkwave-responsive-child-pool.test.mjs",
+            "scripts/tests/inkwave-responsive-progress-summary.test.mjs",
+            "scripts/tests/inkwave-responsive-session-retry.test.mjs",
+            "scripts/tests/inkwave-sandbox-runner-route.test.mjs",
+            "scripts/tests/inkwave-source-coverage.test.mjs",
+            "scripts/tests/inkwave-staged-ci-policy.test.mjs",
+            "scripts/tests/inkwave-wiper-capture-isolation.test.mjs",
+            "scripts/tests/run-inkwave-turf-finish-isolated.test.mjs"
+          ]
+        },
+        {
+          "sha": "666ccea7a4b5d4c3bbaaba17b4237428e7fe536e",
+          "files": [
+            "patches/local-quality/queue-remaining-visual-20261027-adapter.mjs",
+            "patches/local-quality/tests/retarget-queue-compat.test.mjs"
+          ]
+        },
+        {
+          "sha": "79e4e71e4b189acf138ecfef8693606c0163cc76",
+          "files": [
+            "patches/local-quality/queue-remaining-visual-20261027-adapter.mjs",
+            "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+            "patches/local-quality/tests/retarget-queue-compat.test.mjs",
+            "patches/native-stages/runtime/prebuilt-load.mjs",
+            "patches/native-stages/tests/prebuilt-stream-lifetime.test.mjs",
+            "patches/splatoon3/adapter.mjs",
+            "patches/splatoon3/tests/explosher-stage-admission.test.mjs",
+            "patches/splatoon3/tests/explosher-stage-fixture.mjs",
+            "patches/splatoon3/tests/gyro-sensitivity-cadence-725.test.mjs",
+            "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs",
+            "scripts/ci/inkwave-responsive-child-pool.mjs",
+            "scripts/tests/inkwave-responsive-child-pool.test.mjs"
+          ]
+        }
+      ],
+      "validation": "CI/gate78、offload/admission60、CI-config24、workflow YAML81本を検証。最終hosted fan-inは別途。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "native-prebuilt-and-census",
+      "related_issues": [
+        642,
+        1434,
+        1757
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "8cd5fe76afb0ac0e35804839299da3dc34f54a30",
+          "files": [
+            "patches/native-stages/runtime/prebuilt-load.mjs",
+            "patches/native-stages/tests/prebuilt-stream-lifetime.test.mjs",
+            "patches/splatoon3/tests/explosher-stage-admission.test.mjs",
+            "patches/splatoon3/tests/explosher-stage-fixture.mjs"
+          ]
+        }
+      ],
+      "validation": "prebuilt31、census/video55、texture取消34成功。実LFS配送・実端末性能を含まない。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "wiper-lazy-mesh-retirement",
+      "related_issues": [
+        1814
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "75e44fdc024052ce67d6ffe74c9cbf16c0e803fa",
+          "files": [
+            "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+            "patches/splatoon3/tests/wiper-wet-wave.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Wiper10、実source scheduler18成功。6action・30/60/120Hz自然終了。実画素受入は別。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "native-claim-policy-order",
+      "related_issues": [
+        1665,
+        1666
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "3345492d7e1e68f80ba58348d617e08baedad0eb",
+          "files": [
+            "patches/network-replication/combat-provenance-adapter.mjs",
+            "patches/network-replication/combat-provenance.mjs",
+            "patches/network-replication/tests/combat-native-receipt-order.test.mjs",
+            "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+            "scripts/tests/inkwave-boss-positive-proof.test.mjs",
+            "scripts/tests/inkwave-combat-provenance.test.mjs"
+          ]
+        },
+        {
+          "sha": "6c4a95f44d68301881d3ddfef1cdc681f879b4a8",
+          "files": [
+            "patches/network-replication/tests/queue-network-receipts-20261027.test.mjs"
+          ]
+        },
+        {
+          "sha": "a3887aeb15a93bc47f3737a9d8c4de8160f1f753",
+          "files": [
+            "patches/network-replication/tests/hit-payload-prequeue.metadata.test.mjs"
+          ]
+        }
+      ],
+      "validation": "native-invalid claimの証拠消費を防ぐ回帰と合法positive成功。fresh owner forgeryは未解決。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "native-admitted-action-receipts",
+      "related_issues": [
+        1665,
+        1666
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "6bb151c86196b83ae459b3a4f593a2d53046e759",
+          "files": [
+            "patches/network-replication/combat-provenance.mjs",
+            "patches/network-replication/owner-tick-receipt.mjs",
+            "patches/network-replication/queue-network-20261027-adapter.mjs",
+            "patches/network-replication/tests/combat-native-proof-receipt.test.mjs",
+            "patches/network-replication/tests/contact-provenance-fixture.mjs",
+            "patches/network-replication/tests/queue-network-receipts-20261027.test.mjs"
+          ]
+        },
+        {
+          "sha": "d20b5544432aea347f4bac1bb3fdb010e7e4779b",
+          "files": [
+            "patches/network-replication/combat-provenance.mjs",
+            "patches/network-replication/owner-tick-receipt.mjs",
+            "patches/network-replication/tests/combat-native-proof-receipt.test.mjs",
+            "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs"
+          ]
+        }
+      ],
+      "validation": "追加17caseと既存event-only/FIFO/metadata計29成功。独立ranked/combat wrapper確認。通信全suite881成功。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "responsive-lane-completion",
+      "related_issues": [],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "f239cf6dc96bff10d734f2695111e7593b07d550",
+          "files": [
+            "scripts/ci/inkwave-responsive-child-pool.mjs",
+            "scripts/tests/inkwave-responsive-child-pool.test.mjs"
+          ]
+        }
+      ],
+      "validation": "responsive35成功。失敗laneでも独立lane終了を待つ。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "gyro-help",
+      "related_issues": [
+        725,
+        287
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "61f8f1c3f3e485bab87cd8e5fcda2dfb070d465b",
+          "files": [
+            "patches/splatoon3/adapter.mjs",
+            "patches/splatoon3/tests/gyro-sensitivity-cadence-725.test.mjs"
+          ]
+        }
+      ],
+      "validation": "input27成功。既存暫定gainの説明修正のみ。実sensor/S3比較は未完了。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "historical-composition-fixtures",
+      "related_issues": [
+        997,
+        1097,
+        1116
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "f09576ea8a3654de0c44e284cbb696233a02096b",
+          "files": [
+            "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+            "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs"
+          ]
+        }
+      ],
+      "validation": "historical/audio/counterfactual36成功、重点motion38成功。retail parityは認定しない。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "final-pointerlock-fixtures",
+      "related_issues": [],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "ca30ae1f5ebcc1d56e6e1c4c636c5a1ef626bec4",
+          "files": [
+            "scripts/tests/inkwave-input-constructor-ownership.test.mjs"
+          ]
+        },
+        {
+          "sha": "88f180973e96455f4bb3ff21c5500bdada43e2ed",
+          "files": [
+            "patches/reliability/tests/touch-pointerlock.test.mjs"
+          ]
+        }
+      ],
+      "validation": "最終composed policy/mutation・paused/menu観測を維持。重点pointerlock34成功。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "native-receipt-input-identity",
+      "related_issues": [
+        1665,
+        1666
+      ],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "0c50841283888be9b412268225d82700d7a022de",
+          "files": [
+            "patches/network-replication/adapter.mjs",
+            "patches/network-replication/tests/source-paint-identity.test.mjs",
+            "scripts/ci/inkwave-test-suites.json",
+            "scripts/tests/inkwave-boss-positive-proof.test.mjs"
+          ]
+        }
+      ],
+      "validation": "source/emitted Boss各13成功、closure7成功、emitted receipt/Boss/Wiper32成功。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "emitted-terminal-recovery-fixture",
+      "related_issues": [],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "6950b7dc654edcd0824b97d110332c611c6335b9",
+          "files": [
+            "tools/native-recovery-qa/bundle-recovery.mjs",
+            "tools/native-recovery-qa/engine-fixture.mjs"
+          ]
+        },
+        {
+          "sha": "baa9e97ca605e360a73f580f65c41f469e0139f2",
+          "files": [
+            "tools/native-recovery-qa/bundle-recovery.mjs",
+            "tools/native-recovery-qa/engine-fixture.mjs"
+          ]
+        }
+      ],
+      "validation": "旧fixture16失敗を再現。両候補emitted各18成功、source295成功、Chromium native回復/context loss各browser成功。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "optimized-injected-helper-exports",
+      "related_issues": [],
+      "issue_disposition": "Open; partial fix or associated verification; no closure claimed",
+      "pull_requests": [
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "ae3fb3058679791ea568fe65ead5c969d119fff1",
+          "files": [
+            "patches/local-quality/render-transfer-optimization-adapter.mjs",
+            "patches/local-quality/tests/render-transfer-optimization.test.mjs"
+          ]
+        }
+      ],
+      "validation": "旧packaging失敗を再現。private API/ring5成功、正常minified production packaging10成功、注入runtime byte同一。",
+      "hosted_exact_head_acceptance": "pending; consult current PR checks, not earlier draft admission"
+    },
+    {
+      "id": "final-1906-history-reconciliation",
+      "related_issues": [],
+      "pull_requests": [
+        1906,
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "a4164ffebb9ab9a8e0f3dcd303ab849d554f0e66",
+          "files": [
+            "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+            "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+            "patches/splatoon3/tests/added-audio-sharing.test.mjs",
+            "patches/splatoon3/tests/explosher-stage-admission.test.mjs",
+            "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs",
+            "patches/splatoon3/tests/wiper-wet-wave.test.mjs",
+            "scripts/ci/package-inkwave-evidence.mjs",
+            "scripts/tests/inkwave-evidence-packaging.test.mjs",
+            "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs"
+          ]
+        }
+      ],
+      "validation": "最終1906 head14beが祖先。13ファイル全比較、runtime配布byte不変。guards7、evidence/Pages32、CI-config36、composition119/74、YAML81成功。",
+      "hosted_exact_head_acceptance": "pending"
+    },
+    {
+      "id": "modeled-native-provenance-fixtures",
+      "related_issues": [
+        1665,
+        1666
+      ],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "ab8863a88ab3b66ff66a0eecffc5f97e57b29e8f",
+          "files": [
+            "scripts/tests/inkwave-boss-positive-proof.test.mjs",
+            "scripts/tests/inkwave-combat-provenance.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Pristine core trio71:46pass25fail. Fixed74/74source and74/74actualemitted-runtime mode, including3new rejection controls; independent Agent3 samecounts no blocking findings. Modeled source-generated native policy, not native HP/browser.",
+      "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
+    },
+    {
+      "id": "early-receipt-admission-guard",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "1d8f90a9d8ab9c97d4355658179a727b840f28a4",
+          "files": [
+            ".github/workflows/validate-inkwave-update.yml",
+            "scripts/tests/inkwave-ci-recurrence-guards.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Pristine source-only preflight57:32pass25fail; fixed60/60 also passes exact sparse payload without vendor/node_modules/history. ExistingDAG/Pages/source31,CIconfig36,YAML81pass. Mandatoryfullcore retained.",
+      "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
+    },
+    {
+      "id": "kraken-committed-life-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "3f855091782d734c48198a171fdc88849213d96f",
+          "files": [
+            "patches/splatoon3/tests/kraken-dash-occlusion.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Pristine failing branch reproduced. Wholefile32/32source+32/32emitted. Positive verifies acceptedlife2activation beforelife3 then same delayedhit1/finalHP=-20 (100 minus120damage); new preadmissionstalelife control0damage/100HP. No runtime changes.",
+      "hosted_exact_head_acceptance": "local fixes prepared after primary hosted failures; next combined source CI pending"
+    },
+    {
+      "id": "pointer-lock-native-event-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "d192a6549ba9d4d664960f008215b2864218b7cd",
+          "files": [
+            "scripts/tests/lock-option-recovery.test.mjs",
+            ".github/workflows/inkwave-ci-repair-focused.yml"
+          ]
+        },
+        {
+          "sha": "07e03c7d27daca0b8a7a731e343b003f11fb24d6",
+          "files": [
+            "scripts/tests/lock-option-recovery.test.mjs",
+            ".github/workflows/inkwave-ci-repair-focused.yml"
+          ]
+        }
+      ],
+      "validation": "Pristine source21/38pass17fail; alloriginal38cases retained; fixed38/38source,rootactualemitted,optactualemitted,rootcompaction,optcompaction. Seven native/error/owner/flow/document/cancel/attract mutants fail. IndependentAgent6 approved; existingnative34,CIcontracts50,YAML81 pass. Sparse probe excludedThree and failed as expected; existingfullcheckoutfocusedlane catches38 early. No runtime change.",
+      "hosted_exact_head_acceptance": "pending next combined published source"
+    },
+    {
+      "id": "gpu22-behavioral-static-upload-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "a460cd46b6ecda32a424dd9f71e0a5f921a34dfd",
+          "files": [
+            "patches/local-quality/tests/queue-root-rendering-20261027.test.mjs"
+          ]
+        },
+        {
+          "sha": "0568bef897648b1a473f245802b04e5c21193439",
+          "files": [
+            "patches/local-quality/tests/queue-root-rendering-20261027.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Root/optimized wholefile10/10; executesactualcomposedringmethods and realTHREE uploadversions/values/quietstate; fourmutationfamilies fail; originalshellassertions retained. Relatedroot18/opt23 andactualemittedshell1eachpass. IndependentAgent2 approvesonecommonfix. No runtime change.",
+      "hosted_exact_head_acceptance": "pending next combined published source"
+    },
+    {
+      "id": "actual-emitted-hurtbox-selector",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "7f7b2851b0beeb542506b7754f6f3f79531990eb",
+          "files": [
+            ".github/workflows/validate-inkwave-update.yml"
+          ]
+        }
+      ],
+      "validation": "player-collision-source-1130 importsweapon-edgecases-fixture, consumingINKWAVE_EDGECASE_SITE. ExistingBUILT_SITE alone selectedsource. Core nowsetsactualEDGECASE_SITE; actualemitted2/2passedwithsameartifact, no count/expectation change. Other10/27fixtureselectors audited; YAML81 andCIcontrols11 pass.",
+      "hosted_exact_head_acceptance": "pending next combined published source; this was a coverage gap, not an observed failed job"
+    },
+    {
+      "id": "optimized-charger-scratch-ownership-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "c8ae9404645c5d706d03114495c52c3c4dead6b7",
+          "files": [
+            "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs"
+          ]
+        },
+        {
+          "sha": "87b289b0fc3c169956d56e780e44eecbc8cf74d1",
+          "files": [
+            "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Baseline whole file 5 pass / 1 fail. Fixed source 16/16 and actual optimized emitted 16/16, zero skips; four ownership/reuse mutations reject. Actual installer/dispatcher with explicit Projectiles API doubles; warm reuse, nested and exceptional calls, per-install isolation, remote/custom output ownership. Original six broadphase/performance checks retained. Agent1 independently reran both modes and approved. No runtime change.",
+      "receipt": "optimized-charger-scratch.json",
+      "hosted_exact_head_acceptance": "Pending the next optimized published head; original failed job remains recorded."
+    },
+    {
+      "id": "optimized-charger-broadphase-endpoint-fixture",
+      "related_issues": [],
+      "pull_requests": [
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "606d6b148e7da3de86e234a8ee913e994e436a53",
+          "files": [
+            "patches/splatoon3/tests/queue-combat-358.test.mjs"
+          ]
+        },
+        {
+          "sha": "73a789978863953c625bf12b9bd6d1b08d1d6b64",
+          "files": [
+            "patches/splatoon3/tests/queue-combat-358.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Baseline whole file 7 pass / 1 fail. Fixed source 10/10 and mixed optimized emitted-suite 10/10, zero skips; the 936-case geometry matrix is source-only. Real capsule, form hurtbox and coherent-motion functions; exact survivor tuples, all omitted native-null, matching full/partial hit order, stopping, seen, impact and lease state. 21,816 full-scan calls versus 17,016 optimized, 4,800 proven misses culled, 3,766 identical reported hits. Five radius/margin/boundary/time/relative-endpoint mutants reject. Original eight cases and Math.min budgets retained, including zero/NaN behavior. Agent4 independently reran source and mixed emitted suite and approved. No runtime change.",
+      "receipt": "optimized-charger-broadphase.json",
+      "hosted_exact_head_acceptance": "Pending the next optimized published head; original failed job remains recorded."
+    },
+    {
+      "id": "emitted-guide-header-companion-contract",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "2edc12f037e0041455b9bd2be7388518536cb3d3",
+          "files": [
+            "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+          ]
+        },
+        {
+          "sha": "2e3c072b10e4f0c6c3b1180a6c283d0186303b0e",
+          "files": [
+            "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Root187corestep7 primary44/46pass2fail; requiredemitted EDGECASEenvwascorrectbutcompanionfixedheaderwasmissed. Exactheaderupdated, omitted/wrongselectornegativecontrols retainedandexpanded. Exact6-file46/46source Node22, independentAgent6 Node22/24; no runtimefailure.",
+      "receipt": "wall-edgecase-contract-repair.json",
+      "hosted_exact_head_acceptance": "pending next combined published head"
+    },
+    {
+      "id": "early-emitted-coverage-admission-contract",
+      "related_issues": [],
+      "pull_requests": [
+        1908,
+        1907
+      ],
+      "commits": [
+        {
+          "sha": "cc17d93dd13cd1f5d553a46f0fd6aee42bb35626",
+          "files": [
+            ".github/workflows/validate-inkwave-update.yml",
+            "scripts/tests/inkwave-ci-recurrence-guards.test.mjs",
+            "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+          ]
+        }
+      ],
+      "validation": "Mandatoryearlycommand is onlywallcoverage6cases (~90ms); all6passonactualsparsepayload+only41467Bcommittedpackage-lockmetadata, no vendor/npm/history. Full6-file46/corecommandretained; othernetworkdiagnosticroutecountsunchanged. Exactmetadata profile rejects missing/wrong/duplicate file; command rejects omission/filter; mutation construction movedoutsideassertThrows so staleanchors failsetup. Combinedaffected106/106, fastother205/205 andquickpass, independentAgent6changed18/18; YAML81.",
+      "receipt": "wall-admission-lock-proof.json",
+      "hosted_exact_head_acceptance": "pending next combined published head"
+    }
+  ]
+}

@@ -120,6 +120,17 @@ export function installWeaponAudioRuntime(api){
     G.audio?.playWeapon?.(id,event,o);
   });
   listen('weapon:canopy',e=>play(e?.actor,e?.event,e?.pos,.72));
+  // Actor.update returns directly on an accepted special and may not tick its
+  // WeaponRunner again until the special ends. Stop the recorded phrase at
+  // the actual activation edge; preserve the charge latch so a surviving hold
+  // does not become a fabricated fresh onset when updates resume.
+  listen('special:use',e=>{
+    const a=e?.actor,s=a?.weaponRunner?._mainAudioState,n=a?.net;
+    if(s?.chargeRise){s.chargeRise.stop?.(.04);s.chargeRise=null;}
+    // Replicas own their phrase in NetMatch, not WeaponRunner. Keep their
+    // edge latch too: an older charging snapshot can outlive this event.
+    if(a?.remote&&n?._chargerRise){n._chargerRise.stop?.(.04);n._chargerRise=null;}
+  });
   listen('splatted',e=>stop(e?.victim?.weaponRunner));
   listen('match:state',e=>{if(e?.state!=='playing'){for(const r of active)stop(r);for(const r of kitOwners)stopKit(r);}});
   listen('actor:removed',e=>{const r=(e?.actor||e)?.weaponRunner;stop(r);stopKit(r);});

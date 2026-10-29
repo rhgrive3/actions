@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {fixture} from './robustness-fixture.mjs';
-async function setup(t,{host='me',peer='peer',roller=true}={}) {
- const f=await fixture({productionComposition:true});
+async function setup(t,{host='me',peer='peer',roller=true,transformSource=null}={}) {
+ const f=await fixture({productionComposition:true,transformSource});
  const s=f.makeSession('me',host,[['me','Me'],[peer,'Peer'],['third','Third']]);
  const nm=f.makeNetMatch(s),local=f.makeActor({nid:7,owner:'me',remote:false,team:0,roller:false}),remote=f.makeActor({nid:17,owner:peer,remote:true,team:1,roller});
  f.bind(nm,[local,remote]);local.netLife=0;remote.weaponRunner.rolling=true;

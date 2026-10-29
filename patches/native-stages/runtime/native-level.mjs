@@ -92,7 +92,18 @@ export class NativeLevel extends Level {
   // Project to the exact source triangle plane, avoiding a rectangular footprint.
   const projected=this._projNative||(this._projNative=new THREE.Vector3());
   projected.copy(p).addScaledVector(face.n,-rel.dot(face.n));
-  for(const id of face.triangles)if(this.triangleWorld.triangle(id).containsPoint(projected))return true;
+  const px=projected.x,py=projected.y,pz=projected.z,verts=this.triangleWorld.triangles,tris=face.triangles;
+  const pxLo=px-1e-6,pxHi=px+1e-6,pzLo=pz-1e-6,pzHi=pz+1e-6,pyLo=py-1e-6,pyHi=py+1e-6;
+  for(let i=0;i<tris.length;i++){
+   const id=tris[i],o=id*9;
+   const x0=verts[o],x1=verts[o+3],x2=verts[o+6];
+   if((x0>pxHi&&x1>pxHi&&x2>pxHi)||(x0<pxLo&&x1<pxLo&&x2<pxLo))continue;
+   const z0=verts[o+2],z1=verts[o+5],z2=verts[o+8];
+   if((z0>pzHi&&z1>pzHi&&z2>pzHi)||(z0<pzLo&&z1<pzLo&&z2<pzLo))continue;
+   const y0=verts[o+1],y1=verts[o+4],y2=verts[o+7];
+   if((y0>pyHi&&y1>pyHi&&y2>pyHi)||(y0<pyLo&&y1<pyLo&&y2<pyLo))continue;
+   if(this.triangleWorld.triangle(id).containsPoint(projected))return true;
+  }
   return false;
  }
  containsFaceUV(face,u,v){

@@ -6,6 +6,7 @@ import {chromium} from 'playwright';
 import {installGameplayObserver} from './lib/inkwave-gameplay-observer.mjs';
 import {gameplayVerdict,validateLifecycleExpectation} from './lib/inkwave-gameplay-verdict.mjs';
 import {sampleChromiumProcessMemory} from './lib/inkwave-chromium-process-memory.mjs';
+import {waitForNativeCombatWindow} from './lib/inkwave-native-combat-window.mjs';
 import {verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,sampleStats,hash} from './lib/inkwave-runtime-evidence.mjs';
 const opt=(k,d)=>{const i=process.argv.indexOf(k);return i<0?d:process.argv[i+1];};
 const root=process.cwd(),site=path.resolve(opt('--site','_site')),out=persistentDirectory(opt('--evidence-dir','.ci-scratch/gameplay/run'));
@@ -14,7 +15,7 @@ const crabLifecycle=process.argv.includes('--crab-lifecycle');
 const expectedLifecycle=validateLifecycleExpectation(opt('--expect-lifecycle','released'),crabLifecycle,process.argv.includes('--expect-lifecycle'));
 const maps=opt('--maps','tidewater,kelpline,halyard').split(',');
 if(!maps.length||maps.some(id=>!id||!/^[-a-z0-9]+$/.test(id)))throw Error('Nonempty comma-separated map IDs required');
-const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
+const harnessFiles=Object.fromEntries(['check-inkwave-gameplay-resources.mjs','lib/inkwave-gameplay-observer.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-gameplay-verdict.mjs','lib/inkwave-chromium-process-memory.mjs','lib/inkwave-native-combat-window.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))]));
 const width=Number(opt('--width','480')),height=Number(opt('--height','300')),dpr=Number(opt('--dpr','1'));
 if(!Number.isFinite(dpr)||dpr<=0||!Number.isInteger(width)||width<=0||!Number.isInteger(height)||height<=0)throw Error('Positive viewport dimensions and device scale required');
 const cycles=Number(opt('--cycles','6')),seconds=Number(opt('--seconds','60')),quality=opt('--quality','high'),mobile=process.argv.includes('--mobile');
@@ -45,9 +46,9 @@ try{
  report.environment=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return{browser:navigator.userAgent,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null,timerQuery:!!gl.getExtension('EXT_disjoint_timer_query_webgl2'),touch:__inkwave.mobile?.touch,quality:__inkwave.settings.quality,ios:!!__inkwave.mobile?.ios,dpr:devicePixelRatio,viewport:[innerWidth,innerHeight]};});
  report.environment.chromiumVersion=await browser.version();
  await page.evaluate(()=>__startGameplayObserver());console.log('ready',JSON.stringify(report.environment));
- const capture=async(label,gc=false)=>{if(gc)await cdp.send('HeapProfiler.collectGarbage');
+ const capture=async(label,gc=false,combatLease=null)=>{if(gc)await cdp.send('HeapProfiler.collectGarbage');
   const metrics=Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(x=>[x.name,x.value]));
-  const state=await page.evaluate(()=>{const G=__G,g=__inkwave,p=__gameplayProbe,gl=G.renderer.getContext();const drops=G.projectiles.inkFlight;const inkFlightPool={pooled:drops.pool.length,owners:drops.pool.filter(p=>p.owner).length,retiredOwners:drops.pool.filter(p=>p.owner&&!G.actors.includes(p.owner)).length,active:drops.drops.length};const r={inkFlightPool,nativeSource:G.level?.native?{prebuilt:!!G.level.data?.sourceMetrics?.prebuilt,cached:!!G.level.data?.sourceMetrics?.cached,sourceMode:G.level.manifest?.sourceMode??null,vertices:G.level.manifest?.geometry?.vertices??null,triangles:G.level.manifest?.geometry?.triangles??null,atlas:g.nativeWorld?.metrics?.atlas??null,textureCount:g.nativeWorld?.metrics?.textureCount??null}:null,native:!!G.level?.native,drawingBuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight],mode:G.mode,state:g.match?.state,map:g.mapDef.id,time:G.time,matchTime:g.match?.time,actors:G.actors.length,coverage:G.paint.coverage(),projectiles:G.projectiles.list.length,bombs:G.projectiles.bombs?.length,clouds:G.projectiles.clouds?.length,resources:structuredClone(p.gpu),memory:{...G.renderer.info.memory},programs:G.renderer.info.programs?.length,frames:p.frames,frameCpu:p.frameCpu,calls:p.calls,triangles:p.triangles,gpuRenderMs:p.gpuRenderMs,gpuTimer:structuredClone(p.gpuTimer),contextLost:p.contextLost,crab:__crabReceipts(),owners:p.owners,totalFrames:p.totalFrames,windowFrames:p.windowFrames,dynamicScale:g.R.dynScale,quality:g.settings.quality,frozen:!!g.frozen,skipRender:!!g._skipRender,glError:gl.getError()};p.frames=[];p.frameCpu=[];p.calls=[];p.triangles=[];p.gpuRenderMs=[];p.owners={};p.windowFrames=0;return r;});
+  const state=await page.evaluate(leaseId=>{const G=__G,g=__inkwave,p=__gameplayProbe;if(leaseId!==null&&(!p.combatWindow?.inspect||!p.combatWindow.inspect(leaseId)))throw Error('Native combat window invalid at capture');const gl=G.renderer.getContext();const drops=G.projectiles.inkFlight;const inkFlightPool={pooled:drops.pool.length,owners:drops.pool.filter(p=>p.owner).length,retiredOwners:drops.pool.filter(p=>p.owner&&!G.actors.includes(p.owner)).length,active:drops.drops.length};const r={inkFlightPool,nativeSource:G.level?.native?{prebuilt:!!G.level.data?.sourceMetrics?.prebuilt,cached:!!G.level.data?.sourceMetrics?.cached,sourceMode:G.level.manifest?.sourceMode??null,vertices:G.level.manifest?.geometry?.vertices??null,triangles:G.level.manifest?.geometry?.triangles??null,atlas:g.nativeWorld?.metrics?.atlas??null,textureCount:g.nativeWorld?.metrics?.textureCount??null}:null,native:!!G.level?.native,drawingBuffer:[gl.drawingBufferWidth,gl.drawingBufferHeight],mode:G.mode,state:g.match?.state,map:g.mapDef.id,time:G.time,matchTime:g.match?.time,actors:G.actors.length,coverage:G.paint.coverage(),projectiles:G.projectiles.list.length,bombs:G.projectiles.bombs?.length,clouds:G.projectiles.clouds?.length,resources:structuredClone(p.gpu),memory:{...G.renderer.info.memory},programs:G.renderer.info.programs?.length,frames:p.frames,frameCpu:p.frameCpu,calls:p.calls,triangles:p.triangles,gpuRenderMs:p.gpuRenderMs,gpuTimer:structuredClone(p.gpuTimer),contextLost:p.contextLost,crab:__crabReceipts(),owners:p.owners,totalFrames:p.totalFrames,windowFrames:p.windowFrames,dynamicScale:g.R.dynScale,quality:g.settings.quality,frozen:!!g.frozen,skipRender:!!g._skipRender,glError:gl.getError()};p.frames=[];p.frameCpu=[];p.calls=[];p.triangles=[];p.gpuRenderMs=[];p.owners={};p.windowFrames=0;return r;},combatLease);
   for(const key of ['frames','frameCpu','calls','triangles','gpuRenderMs'])state[key]=sampleStats(state[key]);report.windows.push({label,gc,elapsedSeconds:(Date.now()-began)/1000,metrics,...state});await sample();console.log(label,JSON.stringify({memory:state.memory,programs:state.programs,resources:state.resources.resources,frames:state.frames,heap:metrics.JSHeapUsedSize}));checkpoint();};
  await capture('boot',true);
  const availableMaps=await page.evaluate(()=>__inkwave.api.maps.map(m=>m.id));
@@ -58,12 +59,25 @@ try{
   // Flow APIs resolve to a Match instance; never serialize its scene/rig graph.
   await page.evaluate(async({mapId})=>{await __inkwave.startMatch({mapId,difficulty:'normal',duration:180});},{mapId});
   await page.waitForFunction(()=>__G.match?.state==='playing',null,{timeout:180000});
-  await page.waitForTimeout(5000);await capture('warm-'+cycle);phase='combat-'+cycle;
+  await page.waitForTimeout(5000);
+  // On software WebGL a newly loaded second map may have simulated under one
+  // match-second after five wall seconds. Do not report "no live paint" before
+  // the unmodified bots actually get their first native paint frame.
+  // This is fail-closed: no scene/RAF/time mutation, exact map and eight actors,
+  // a finite readiness bound, then the original five-second combat lease.
+  await page.waitForFunction(expectedMap=>{
+    const G=globalThis.__G, game=globalThis.__inkwave;
+    return game?.mapDef?.id===expectedMap && G?.mode==='match'
+      && G.match?.state==='playing' && G.actors?.length===8
+      && G.paint?.coverage().some(value=>value>0);
+  },mapId,{polling:1000,timeout:180000});
+  await capture('warm-'+cycle);phase='combat-'+cycle;
   await cdp.send('Profiler.enable');await cdp.send('Profiler.start');
-  await page.waitForTimeout(seconds*1000);
-  const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(out,'combat-'+cycle+'.cpuprofile'),JSON.stringify(profile));
-  await capture('combat-'+cycle);
-  const combat=report.windows.at(-1);if(combat.map!==mapId||combat.actors!==8||!(combat.coverage.some(v=>v>0))||combat.state!=='playing'||combat.mode!=='match'||combat.windowFrames<3||!(combat.calls.max>0)||combat.contextLost||combat.frozen||combat.skipRender||combat.glError!==0)throw Error('Invalid native gameplay combat window '+cycle);
+  const combatWait=await waitForNativeCombatWindow(page,{mapId,minimumMs:seconds*1000},async receipt=>{
+   const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(path.join(out,'combat-'+cycle+'.cpuprofile'),JSON.stringify(profile));
+   await capture('combat-'+cycle,false,receipt.leaseId);
+  });
+  const combat=report.windows.at(-1);combat.wait=combatWait;checkpoint();if(combat.map!==mapId||combat.actors!==8||!(combat.coverage.some(v=>v>0))||combat.state!=='playing'||combat.mode!=='match'||combat.windowFrames<3||!(combat.calls.max>0)||combat.contextLost||combat.frozen||combat.skipRender||combat.glError!==0)throw Error('Invalid native gameplay combat window '+cycle);
   if(!(combat.time>report.windows.find(w=>w.label==='warm-'+cycle).time))throw Error('Gameplay simulation did not advance');
   await page.screenshot({path:path.join(out,'combat-'+cycle+'.png'),timeout:120000});
   if(crabLifecycle){

@@ -1,16 +1,41 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validActorSnapshotRow } from '../../patches/network-replication/snapshot-guard.mjs';
-import { installCombatProvenance,combatAdmission } from '../../patches/network-replication/combat-provenance.mjs';
-
 import fs from 'node:fs';
+import path from 'node:path';
 import vm from 'node:vm';
+import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { adaptBuildSource } from '../inkwave-source-composition.mjs';
-import { stageAcceptedSubBirth, replayWithSubBirthCommit } from '../../patches/network-replication/sub-birth-commit.mjs';
 // Modeled NetMatch below is NOT a native HP, physics, browser or Character test.
 // Its admission predicates are the actual current composed source, not permissive stubs.
 const read = p => fs.readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const sourceRoot=new URL('../../',import.meta.url),built=process.env.INKWAVE_BUILT_SITE;
+const runtimeRoot=built?pathToFileURL(path.resolve(built)+path.sep):sourceRoot;
+const runtimePaths=['patches/network-replication/combat-provenance.mjs',
+  'patches/network-replication/owner-tick-receipt.mjs',
+  'patches/network-replication/snapshot-guard.mjs',
+  'patches/network-replication/sub-birth-commit.mjs'];
+if(built){
+  const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const manifest=JSON.parse(fs.readFileSync(new URL('inkwave-build.json',runtimeRoot),'utf8'));
+  assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
+  for(const rel of runtimePaths){
+    assert.equal(hash(fs.readFileSync(new URL(rel,runtimeRoot))),manifest.artifacts[rel],'actual emitted '+rel);
+    assert.equal(hash(fs.readFileSync(new URL(rel,sourceRoot))),manifest.files[rel.slice('patches/'.length)],'matching runtime source '+rel);
+  }
+  for(const [key,rel] of [['upstream/src/net/netmatch.js','inkwave-public/src/net/netmatch.js'],
+    ['upstream/src/config.js','inkwave-public/src/config.js'],
+    ['patch/runtime/sub-special-fidelity.mjs','patches/splatoon3/runtime/sub-special-fidelity.mjs'],
+    ['patch/runtime/final-damage.mjs','patches/splatoon3/runtime/final-damage.mjs']])
+    assert.equal(hash(fs.readFileSync(new URL(rel,sourceRoot))),manifest.files[key],'matching modeled policy input '+key);
+}
+const {installCombatProvenance,combatAdmission,claimCeiling,sampleLocalHistory,victimVisible}=await import(new URL(runtimePaths[0],runtimeRoot));
+// The actual receipt module must share the runtime's WeakMap in both source and
+// emitted modes. Source-generated predicates below remain a modeled native gate.
+const {commitOwnerTick}=await import(new URL(runtimePaths[1],runtimeRoot));
+const {validActorSnapshotRow}=await import(new URL(runtimePaths[2],runtimeRoot));
+const {stageAcceptedSubBirth,replayWithSubBirthCommit}=await import(new URL(runtimePaths[3],runtimeRoot));
 function declaration(source, name) {
   const nodes=parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.map(n=>n.declaration||n);
   const matches=nodes.filter(n=>n.id?.name===name || n.declarations?.some(d=>d.id.name===name));
@@ -30,11 +55,11 @@ const kinds=Object.fromEntries(weapons.init.properties.map(p=>{
   const k=p.value.properties.find(p=>p.key.name==='kind');
   assert.equal(k.value.type,'Literal');return[p.key.name||p.key.value,{kind:k.value.value}];
 }));
-const names=['unpackActor','readHitAuthorityState','HIT_SEQUENCE_WINDOW','IW_HIT_MAX_DAMAGE','IW_HIT_CAUSES','IW_ANGLE_SHOOTER_HIT_MAX','IW_CATALOGUE_SUB_HIT_MAX','hitSafe','hitAuthorityRow','iwRemoteHitPayloadAllowed','iwRemoteHitReceiptAllowed'];
+const names=['unpackActor','readHitAuthorityState','HIT_SEQUENCE_WINDOW','IW_HIT_MAX_DAMAGE','IW_HIT_CAUSES','IW_ANGLE_SHOOTER_HIT_MAX','IW_CATALOGUE_SUB_HIT_MAX','hitSafe','hitAuthorityRow','iwRemoteHitPayloadAllowed','iwRemoteHitReceiptAllowed','iwRemoteBossHitReceiptAllowed'];
 const policySource=names.map(n=>declaration(native,n)).join('\n')+'\n'+
   ['BLASTER_KNOCKBACK','validBlasterKnockback'].map(n=>declaration(fidelity,n)).join('\n')+'\n'+
   declaration(finalDamage,'validDamageGroup')+'\nconst WEAPONS='+JSON.stringify(kinds)+';\n'+
-  '({unpack:unpackActor,payload:iwRemoteHitPayloadAllowed,receipt:iwRemoteHitReceiptAllowed,caps:IW_CATALOGUE_SUB_HIT_MAX})';
+  'const G={};\n({unpack:unpackActor,payload:iwRemoteHitPayloadAllowed,receipt:iwRemoteHitReceiptAllowed,bossReceipt(d,from){G.netm=this;return iwRemoteBossHitReceiptAllowed.call(this,d,from)},caps:IW_CATALOGUE_SUB_HIT_MAX})';
 const policy=new vm.Script(policySource).runInNewContext(Object.create(null),{timeout:1000,contextCodeGeneration:{strings:false,wasm:false}});
 
 const actor=(kind='shooter',special='storm')=>({
@@ -60,21 +85,24 @@ class Stub {
     if(this.peers.get(from)?.lastTs>=d.ts)return;
     const peer=this.peers.get(from)||{};peer.lastTs=d.ts;this.peers.set(from,peer);
     // Model native acceptance before the provenance wrapper observes the row.
+    const admitted=[];
     for(const row of d.a||[]){
       const a=this.byNid.get(row?.[0]);
       if(!validActorSnapshotRow(row,d.ts)||!a?.remote||a.owner!==from)continue;
-      const snap=policy.unpack(row,d.ts);snap.life=Math.max(a.netLife||0,a.net.lastLife||0);
+      const snap=policy.unpack(row,d.ts);snap.life=d.l?.[a.nid];
+      if(!Number.isSafeInteger(snap.life)||snap.life<0||snap.life<(a.net.lastLife??0))continue;
       a.net.buf=[snap];a.net.lastLife=snap.life;
+      admitted.push({actor:a,nid:a.nid,owner:a.owner,x:snap.x,y:snap.y,z:snap.z});
     }
     for(const e of d.e||[])if(e[1]==='ac'&&e[2]==='sub'){
       const a=this.byNid.get(e[3]);if(!a)continue;
-      a.net.buf=[{t:d.ts,life:e[4],x:0,y:0,z:0}];
       Object.assign(e,{_netPeer:from,_netTick:e[6],_netSeq:e[7]});
       if(stageAcceptedSubBirth(this,from,e,d.ts,e[6]))replayWithSubBirthCommit(this,from,e,report=>{
         if(e[5].phase!=='spawn'||e[4]!==Math.max(a.netLife||0,a.net.lastLife||0)||e[5].subId!==a.weapon.sub)return false;
         report?.('created',{owner:a,seq:e[5].seq,sourceLife:e[4],subId:e[5].subId});return true;
       });
     }
+    commitOwnerTick(this,from,d,d.e||[],admitted);
   }
   _hit(d,from){
     if(!policy.receipt.call(this,d,from))return false;
@@ -91,23 +119,36 @@ class Stub {
   }
   onLeave(){} dispose(){} bind(){}
 }
-installCombatProvenance(Stub,{hitPayloadAllowed:policy.payload,hitReceiptAllowed:policy.receipt});
+installCombatProvenance(Stub,{hitPayloadAllowed:policy.payload,hitReceiptAllowed:policy.receipt,bossReceiptAllowed:policy.bossReceipt});
+function snapshotRow(id=1,x=0,y=0,z=0,flags=1){
+  const row=[id,x,y,z,0,0,0,0,0,0,flags,100,100,0,0,0,0,0,0,1,0];
+  assert.equal(validActorSnapshotRow(row,100),true,'positive fixture is a legal native actor row');
+  return row;
+}
+function ownerTick(nm,from,d){
+  // Positive producer convenience only. Rejected-row/life tests call the
+  // receiver directly or supply the malformed value explicitly.
+  const l=d.l??Object.fromEntries((d.a||[]).map(row=>{
+    const a=nm.byNid.get(row[0]);return[row[0],Math.max(a?.netLife??0,a?.net?.lastLife??0)];
+  }));
+  return nm._tick(from,{...d,l});
+}
 function fire(nm,{id=1,at=100,origin=[0,1,0],dir=[0,0,45],kind='shooter'}={}) {
-  nm._tick('peerA',{k:'t',ts:at+.05,a:[[id,0,0,0]],
+  ownerTick(nm,'peerA',{k:'t',ts:at+.05,a:[snapshotRow(id)],
     e:[[at,'p',id,'shot',kind,...origin,...dir]]});
 }
 function observeRollerContact(nm,{from='peerA',flags=257,life=0,at=100,x=0}={}) {
   const a=nm.byNid.get(1);
   const row=[a.nid,x,0,0,0,0,0,0,0,0,flags,100,100,0,0,0,0,0,0,1,0];
   assert.equal(validActorSnapshotRow(row,at),true);
-  nm._tick(from,{k:'t',ts:at,a:[row],e:[]});
+  ownerTick(nm,from,{k:'t',ts:at,a:[row],l:{[a.nid]:life},e:[]});
   return nm._combatProvenance?.contactSnapshots.get(a)?.at;
 }
 function rollingSnapshot(nm){
   const a=nm.byNid.get(1);
   const row=[a.nid,a.pos.x,a.pos.y,a.pos.z,0,0,0,0,0,0,257,100,100,0,0,0,0,0,0,1,0];
   assert.equal(validActorSnapshotRow(row,100),true);
-  nm._tick('peerA',{k:'t',ts:100,a:[row],e:[]});
+  ownerTick(nm,'peerA',{k:'t',ts:100,a:[row],e:[]});
   return performance.now()/1000;
 }
 function hit(v=2,h=1,w='shooter'){return{k:'hit',m:'test-match',a:1,v,d:Math.min(36,policy.caps[w]??36),w,h,l:0}};
@@ -116,8 +157,25 @@ test('fabricated owner hit without shot cannot change victim health',()=>{
   const nm=new Stub();
   nm.onMessage('peerA',hit());
   assert.equal(nm.hitCalls.length,0);
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[]});
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[]});
   assert.equal(nm.hitCalls.length,0);
+});
+test('short rejected actor row cannot create a modeled native attack receipt',()=>{
+  const nm=new Stub();
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+    e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45]]});
+  assert.equal(nm.byNid.get(1).net.buf,undefined);
+  assert.equal(nm._combatProvenance.proofs.get('peerA')?.length??0,0);
+  nm.onMessage('peerA',hit());assert.equal(nm.hitCalls.length,0);
+});
+test('missing native actor life sidecar cannot create proof; a later legal tick recovers',()=>{
+  const nm=new Stub();
+  nm._tick('peerA',{k:'t',ts:100.05,a:[snapshotRow()],
+    e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45]]});
+  assert.equal(nm.byNid.get(1).net.buf,undefined);
+  assert.equal(nm._combatProvenance.proofs.get('peerA')?.length??0,0);
+  nm.onMessage('peerA',hit());assert.equal(nm.hitCalls.length,0);
+  fire(nm,{at:100.1});assert.equal(nm.hitCalls.length,1);
 });
 test('legitimate hit queued before next 20Hz shot event is applied exactly once',()=>{
   const nm=new Stub();
@@ -130,10 +188,10 @@ test('legitimate hit queued before next 20Hz shot event is applied exactly once'
 test('wrong peer event or off-axis projectile cannot mint plausible shot',()=>{
   const nm=new Stub();
   nm.onMessage('peerA',hit());
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
     e:[[100,'p',1,'shot','shooter',0,1,0,0,0,-45]]});
   assert.equal(nm.hitCalls.length,0);
-  nm._tick('wrongPeer',{k:'t',ts:100.15,a:[[1,0,0,0]],
+  ownerTick(nm,'wrongPeer',{k:'t',ts:100.15,a:[snapshotRow()],
     e:[[100.1,'p',1,'shot','shooter',0,1,0,0,0,45]]});
   assert.equal(nm.hitCalls.length,0);
 });
@@ -143,6 +201,8 @@ test('boss and crablet cannot be damaged without nearby matching owner shot',()=
   nm.onMessage('peerA',boss(2,7));
   assert.equal(nm.bossCalls.length,0);
   fire(nm);
+  assert.equal(nm.bossCalls.length,1,'the first nonpenetrating round cannot reach both objects');
+  fire(nm,{at:100.1});
   assert.equal(nm.bossCalls.length,2);
 });
 test('fake weak point away from projectile trajectory fails, real weak shot passes',()=>{
@@ -152,7 +212,7 @@ test('fake weak point away from projectile trajectory fails, real weak shot pass
   fire(nm);
   assert.equal(nm.bossCalls.length,0);
   nm.match.boss.model.hitShapes[0].pos={x:0,y:1,z:12};
-  nm._tick('peerA',{k:'t',ts:100.15,a:[[1,0,0,0]],
+  ownerTick(nm,'peerA',{k:'t',ts:100.15,a:[snapshotRow()],
     e:[[100.1,'p',1,'shot','shooter',0,1,0,0,0,45]]});
   assert.equal(nm.bossCalls.length,1);
 });
@@ -192,7 +252,7 @@ test('occluded projectile segment is checked with engine Vector3 inputs',()=>{
   assert.equal(calls,1);
   assert.equal(nm.hitCalls.length,0,'blocked shot cannot authorize HP change');
   allow=true;
-  nm._tick('peerA',{k:'t',ts:100.15,a:[[1,0,0,0]],
+  ownerTick(nm,'peerA',{k:'t',ts:100.15,a:[snapshotRow()],
     e:[[100.1,'p',1,'shot','shooter',0,1,0,0,0,45]]});
   assert.equal(nm.hitCalls.length,1);
 });
@@ -207,7 +267,7 @@ test('explosive sub birth with generic bomb visual still admits its real equippe
   const nm=new Stub(),attacker=nm.byNid.get(1);
   attacker.weapon.sub='burst';
   nm.onMessage('peerA',hit(2,1,'burst'));
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
     e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
   assert.equal(nm.hitCalls.length,1);
 });
@@ -251,16 +311,16 @@ test('native all:sub spawn proof admits legitimate Burst with owner life; deploy
   const nm=new Stub(),a=nm.byNid.get(1);a.weapon.sub='burst';a.netLife=0;
   nm.onMessage('peerA',hit(2,1,'burst'));
   const payload={v:1,phase:'spawn',subId:'burst',life:0,sourceLife:0,seq:1,x:0,y:1,z:0,vx:0,vy:0,vz:45};
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ac','sub',1,0,payload,6000,1]]});
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'ac','sub',1,0,payload,6000,1]]});
   assert.equal(nm.hitCalls.length,1);
   const wrong=new Stub();wrong.byNid.get(1).weapon.sub='burst';wrong.byNid.get(1).netLife=0;
   wrong.onMessage('peerA',hit(2,1,'burst'));
-  wrong._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+  ownerTick(wrong,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
     e:[[100,'ac','sub',1,99,payload,6000,1]]});
   assert.equal(wrong.hitCalls.length,0);
   const deployed=new Stub();deployed.byNid.get(1).weapon.sub='burst';deployed.byNid.get(1).netLife=0;
   deployed.onMessage('peerA',hit(2,1,'burst'));
-  deployed._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+  ownerTick(deployed,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
     e:[[100,'ac','sub',1,0,{...payload,phase:'deploy'},6000,1]]});
   assert.equal(deployed.hitCalls.length,0);
 });
@@ -269,7 +329,7 @@ test('native life-bound Kraken Special activation admits contact, not absent att
   nm.byNid.get(2).pos.z=3;
   const h={...hit(2,1,'krakenRoyale'),d:120};
   nm.onMessage('peerA',h);assert.equal(nm.hitCalls.length,0);
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],
     e:[[100,'ev','special:use',{actor:{n:1},id:'krakenRoyale',pos:[0,0,0]}]]});
   assert.equal(nm.hitCalls.length,1);
 });
@@ -327,7 +387,7 @@ test('raw catalogue sub without creation commit cannot mint modeled proof',()=>{
  // coordinates and the currently equipped sub would have satisfied the old fixture.
  const p={v:1,phase:'spawn',subId:'burst',life:0,sourceLife:1,seq:1,x:0,y:1,z:0,vx:0,vy:0,vz:45};
  nm.onMessage('peerA',hit(2,1,'burst'));
- nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ac','sub',1,0,p,6000,1]]});
+ ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'ac','sub',1,0,p,6000,1]]});
  assert.equal(nm.hitCalls.length,0);
  assert.equal(nm._combatProvenance.proofs.get('peerA')?.length||0,0);
 });
@@ -337,7 +397,6 @@ test('raw catalogue sub without creation commit cannot mint modeled proof',()=>{
 // parameter values (Leanny/splat3 data/parameter/1130, source / 10).
 import { COMBAT_HIT_CEILINGS } from '../../patches/network-replication/combat-hit-ceilings-data.mjs';
 import { renderCombatHitCeilings, computeCombatHitCeilings, bossMultipliers } from '../../patches/network-replication/tools/combat-hit-ceilings.mjs';
-import { claimCeiling } from '../../patches/network-replication/combat-provenance.mjs';
 import { MAIN_WEAPON_CATALOG } from '../../patches/splatoon3/runtime/main-weapon-catalog-data.mjs';
 test('shipped hit ceiling table is regenerated from the current production definitions',()=>{
   assert.equal(read('patches/network-replication/combat-hit-ceilings-data.mjs'),renderCombatHitCeilings());
@@ -401,7 +460,7 @@ test('sub ceilings follow the equipped sub, including generic bomb and Torpedo s
   a.weapon.sub='toxicMist';assert.equal(claimCeiling(a,{w:'toxicMist'},'pvp'),0);
   a.weapon.sub='unknownSub';assert.equal(claimCeiling(a,{w:'unknownSub'},'pvp'),-1,'unknown definitions fail closed');
   const nm=new Stub();nm.byNid.get(1).weapon.sub='burst';
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'b',1,'bomb',0,1,0,0,0,45]]});
   nm.onMessage('peerA',{...hit(2,1,'burst'),d:35.5});
   assert.equal(nm.hitCalls.length,0,'Burst Bomb cannot deliver a Splat Bomb sized hit');
 });
@@ -437,7 +496,6 @@ test('crablet marker is bounded by the largest equipped slot',()=>{
 
 // #1665/#1666: trusted receiver geometry. A modeled wall occupies the plane
 // z=3.5 for |x|<10 and y<5; the collision world is the engine LOS interface.
-import { sampleLocalHistory, victimVisible } from '../../patches/network-replication/combat-provenance.mjs';
 class Vec { set(x,y,z){this.x=x;this.y=y;this.z=z;return this;} }
 function walled(nm,{wallZ=3.5,half=10,top=5}={}) {
   let calls=0;
@@ -465,7 +523,7 @@ test('lag compensation admits a victim that was visible inside the 1.2 s window'
     v.pos={x:5,y:0,z:7};                        // stepped out past the pillar
     for(let k=Math.round(.9*hz);k>=Math.round(.5*hz);k--)sampleLocalHistory(nm,t-k/hz);
     v.pos={x:0,y:0,z:7};                        // back behind it on this screen
-    nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
+    ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
     nm.onMessage('peerA',hit());
     assert.equal(nm.hitCalls.length,1,hz+'Hz history sampling');
   }
@@ -474,19 +532,19 @@ test('a pose older than the lag window cannot authorize the hit',()=>{
   const nm=new Stub();walled(nm,{half:2});const v=nm.byNid.get(2),t=nowS();
   v.pos={x:5,y:0,z:7};sampleLocalHistory(nm,t-1.5);
   v.pos={x:0,y:0,z:7};
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'p',1,'shot','shooter',0,1,0,5,0,7]]});
   nm.onMessage('peerA',hit());
   assert.equal(nm.hitCalls.length,0);
 });
 test('a claimed muzzle on the far side of a wall from the attacker body is rejected',()=>{
   const nm=new Stub();walled(nm);
   nm.byNid.get(1).pos={x:0,y:0,z:2.5};nm.byNid.get(2).pos={x:0,y:0,z:9};
-  nm._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,2.5]],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
+  ownerTick(nm,'peerA',{k:'t',ts:100.05,a:[snapshotRow(1,0,0,2.5)],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
   nm.onMessage('peerA',hit());
   assert.equal(nm.hitCalls.length,0);
   const ok=new Stub();walled(ok);
   ok.byNid.get(1).pos={x:0,y:0,z:4};ok.byNid.get(2).pos={x:0,y:0,z:9};
-  ok._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,4]],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
+  ownerTick(ok,'peerA',{k:'t',ts:100.05,a:[snapshotRow(1,0,0,4)],e:[[100,'p',1,'shot','shooter',0,1,5,0,0,45]]});
   ok.onMessage('peerA',hit());
   assert.equal(ok.hitCalls.length,1,'positive control: same muzzle in view of the attacker');
 });
@@ -510,7 +568,7 @@ test('LOS work per claim is bounded and cached per proof',()=>{
   assert.equal(calls(),first,'cached inside 0.1 s');
 });
 test('one shot no longer mints both a projectile and a fire-event proof',()=>{
-  const shot=(nm,at)=>nm._tick('peerA',{k:'t',ts:at+.05,a:[[1,0,0,0]],e:[
+  const shot=(nm,at)=>ownerTick(nm,'peerA',{k:'t',ts:at+.05,a:[snapshotRow()],e:[
     [at,'p',1,'shot','shooter',0,1,0,0,0,45],
     [at+.001,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:[0,1,0],dir:[0,0,1]}]]});
   const nm=new Stub();shot(nm,100);
@@ -518,7 +576,7 @@ test('one shot no longer mints both a projectile and a fire-event proof',()=>{
   for(let h=1;h<=4;h++)nm.onMessage('peerA',hit(2,h));
   assert.equal(nm.hitCalls.length,1,'one round lands once on its victim (previously four claims passed)');
   const charger=new Stub(),c=charger.byNid.get(1);c.weapon={...c.weapon,id:'charger',kind:'charger',damage:160};
-  charger._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'ev','weapon:fire',{actor:{n:1},weapon:'charger',muzzle:[0,1,0],dir:[0,0,1]}]]});
+  ownerTick(charger,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'ev','weapon:fire',{actor:{n:1},weapon:'charger',muzzle:[0,1,0],dir:[0,0,1]}]]});
   charger.onMessage('peerA',{...hit(2,1,'charger'),d:160});
   assert.equal(charger.hitCalls.length,1,'hitscan fire events still prove Charger shots');
 });
@@ -536,14 +594,19 @@ test('Boss body behind cover rejects straight fire; crablets keep the ray gate',
   fire(crab);
   assert.equal(crab.bossCalls.length,1);
 });
-test('a straight-fire proof lands once per victim, still once on each separate local victim',()=>{
+test('nonpenetrating proof lands once; Charger and area retain their separate target capacity',()=>{
   const nm=new Stub();fire(nm);
   nm.onMessage('peerA',hit(2,1));nm.onMessage('peerA',hit(2,2));
   assert.equal(nm.hitCalls.length,1,'second claim from the same round on the same victim is rejected');
   const bots=new Stub();bots.byNid.set(3,{...victim(),nid:3,pos:{x:.5,y:0,z:7}});
   fire(bots);
   bots.onMessage('peerA',hit(2,1));bots.onMessage('peerA',hit(3,2));
-  assert.equal(bots.hitCalls.length,2,'a host owning two victims keeps the existing two uses');
+  assert.equal(bots.hitCalls.length,1,'a nonpenetrating round retires at its first local victim');
+  const charger=new Stub();charger.byNid.get(1).weapon={...charger.byNid.get(1).weapon,id:'charger',kind:'charger',damage:160};
+  charger.byNid.set(3,{...victim(),nid:3,pos:{x:.5,y:0,z:7}});
+  fire(charger,{kind:'charger'});
+  charger.onMessage('peerA',hit(2,1,'charger'));charger.onMessage('peerA',hit(3,2,'charger'));
+  assert.equal(charger.hitCalls.length,2,'a penetrating Charger keeps separate local victims');
   const area=new Stub(),a=area.byNid.get(1);a.weapon={...a.weapon,id:'blaster',kind:'blaster',damage:125};
   fire(area,{kind:'blaster'});
   area.onMessage('peerA',{...hit(2,1,'blaster'),d:30});area.onMessage('peerA',{...hit(2,2,'blaster'),d:30});
@@ -552,15 +615,15 @@ test('a straight-fire proof lands once per victim, still once on each separate l
 test('shot pairing uses the muzzle, not a load-dependent millisecond gap',()=>{
   const ev=(t,m)=>[t,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:m,dir:[0,0,1]}];
   const slow=new Stub();
-  slow._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.005,[0,1,0])]});
+  ownerTick(slow,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.005,[0,1,0])]});
   assert.equal(slow._combatProvenance.proofs.get('peerA').length,1,'5 ms apart on a loaded device is still one shot');
   const burst=new Stub();
-  burst._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[
+  ownerTick(burst,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[
     [100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[0,1,0]),
     [100.002,'p',1,'shot','shooter',.3,1,0,0,0,45],ev(100.003,[.3,1,0])]});
   assert.equal(burst._combatProvenance.proofs.get('peerA').length,2,'two rounds in one frame stay two proofs');
   const other=new Stub();
-  other._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[1.5,1,0])]});
+  ownerTick(other,'peerA',{k:'t',ts:100.05,a:[snapshotRow()],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[1.5,1,0])]});
   assert.equal(other._combatProvenance.proofs.get('peerA').length,2,'a fire event at another muzzle is not that birth');
 });
 

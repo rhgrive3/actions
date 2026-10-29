@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "base": "9ce5e5f1dd4a8e86b8e4461bafab68226b02eed7",
+  "codeCommit": "da8fb04cd99b64921f454bef3c7fed50af0bb657",
+  "node": "v24.19.0",
+  "runtimeInputs": [
+    {
+      "path": "patches/native-stages/runtime/triangle-world.mjs",
+      "beforeSha256": "bb335fcf22a106be84f8810730ea6e7544ab744b3c50b0ca74e53b75d8478902",
+      "afterSha256": "e75dcf8185bc29ac16a050da0ce9dadcb17299bc2461b465e9fa19a0af61a4d5"
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+      "beforeSha256": "db3efec7e81ea8de3691979ca3e9080c6313a9a9ce26bb97f0ffcb36699744f4",
+      "afterSha256": "ef447e98a916b20c5f782f86dfc69133aca471c8491bea4726e69561274e2385"
+    }
+  ],
+  "sourceChecks": [
+    {
+      "name": "before",
+      "tests": 2,
+      "pass": 0,
+      "fail": 2,
+      "skipped": 0,
+      "path": "before.tap.gz",
+      "sha256": "d317d0a91069afa07765a6ef0649695921972ab40807473b9e6b6393f49d4d91",
+      "uncompressedSha256": "3d3ac3bf738910a492074fbdc26e120fa155fe2eda97b110711eec2bd480aec6"
+    },
+    {
+      "name": "after",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "path": "after.tap.gz",
+      "sha256": "0b379e41c18392757369a31d1165f4b4bd3c38e111f577f5b32da48917b6e120",
+      "uncompressedSha256": "f4034c2c1aa63c5f2f72edaf97457cc0df0647c6aad0cdaa08080567bfa10fed"
+    },
+    {
+      "name": "contracts",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0,
+      "path": "contracts.tap.gz",
+      "sha256": "bfddfc53b06adc0b7ec50c5283fc123321a0c6f326a76fcd4f69c905400762ed",
+      "uncompressedSha256": "0ff1fe8056bd7700ddc03e8166bf495bf8102e744e4fac152d320d9b6412f47e"
+    }
+  ],
+  "scope": "Actual native CPU collision method and production-composed ranked blast code; controlled geometry and instrumented victim/display inputs; no browser/emitted/device/full-match claim.",
+  "ownership": "The method has no reusable output argument. Before67af77d7 it allocated a fresh normal for each returned record. No current production call sites to this TriangleWorld method were found, so this restores a public API compatibility contract without claiming a demonstrated live Actor movement failure.",
+  "noWaveTwoMathImported": true,
+  "holdsRetained": true
+}

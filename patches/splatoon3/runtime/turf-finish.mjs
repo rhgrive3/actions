@@ -51,6 +51,9 @@ export function neutralizeTurfInput(match) {
   // a release and throw a bomb in the first finish Actor update.
   for (const state of [actor.intent, actor._prevIntent]) if (state)
     for (const key of ['fire', 'squid', 'sub', 'jump', 'special']) state[key] = false;
+  // A physical jump edge can be queued independently of the held level.
+  // Retire it too; otherwise an expired guest can jump on the next Actor step.
+  if (actor.intent?.jumpPressed !== undefined) actor.intent.jumpPressed = false;
   actor.fireBuffer = 0; actor.jumpBuffer = 0;
 }
 

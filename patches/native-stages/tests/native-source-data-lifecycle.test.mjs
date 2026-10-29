@@ -7,13 +7,13 @@ import vm from 'node:vm';
 
 const file=new URL('../runtime/source-data.mjs',import.meta.url);
 const runtime=fs.readFileSync(file,'utf8');
-async function harness({prebuilt=true,load=async()=>({manifest:{id:'stage'},sourceMetrics:{prebuilt:true}}),reply={result:{manifest:{id:'stage'}}}}={}){
+async function harness({prebuilt=true,load=async()=>({manifest:{id:'stage'},sourceMetrics:{prebuilt:true}}),reply={result:{manifest:{id:'stage'}}},postFailure=null}={}){
  const workers=[],warnings=[],events=[],loads=[];
  const config={runtimeSha256:'runtime-pin',...(prebuilt?{prebuilt:{stages:{stage:{stageSha256:'record-pin',bytes:123}}}}:{})};
  const stages=Array.from({length:26},(_,i)=>({id:i?'stage'+i:'stage',tree:(i+1).toString(16).padStart(40,'0')}));
  class Worker {
   constructor(url,options){this.url=String(url);this.options=options;this.terminated=0;workers.push(this);}
-  postMessage(message){this.message=structuredClone(message);if(reply)queueMicrotask(()=>this.onmessage?.({data:reply}));}
+  postMessage(message){if(postFailure)throw postFailure;this.message=structuredClone(message);if(reply)queueMicrotask(()=>this.onmessage?.({data:reply}));}
   terminate(){this.terminated++;}
  }
  const context=vm.createContext({URL,Worker,DOMException,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},
@@ -75,8 +75,10 @@ test('fallback worker failure terminates once and emits failed, never ready',asy
 
 test('aborting a pending fallback worker terminates it and ignores late result publication',async()=>{
  const controller=new AbortController(),h=await harness({prebuilt:false,reply:null}),pending=h.run('stage',controller.signal);
+ const late=h.workers[0].onmessage;
  controller.abort();await assert.rejects(pending,{name:'AbortError'});const worker=h.workers[0];assert.equal(worker.terminated,1);
- worker.onmessage({data:{result:{manifest:{id:'late'}}}});
+ assert.equal(worker.onmessage,null);assert.equal(worker.onerror,null);assert.equal(worker.onmessageerror,null);
+ late({data:{result:{manifest:{id:'late'}}}});
  assert.equal(worker.terminated,1);assert.deepEqual(h.events.map(e=>e.detail.phase),['failed']);
 });
 
@@ -91,10 +93,32 @@ test('only successful pinned workers publish private metadata; warm messages rec
 test('failed/aborted workers and all late inventory/result events never seed metadata',async()=>{
  for(const abort of [false,true]){
   const h=await harness({prebuilt:false,reply:null}),controller=new AbortController(),p=h.run('stage',controller.signal),first=h.workers.at(-1);emit(first,{sourceInventory:inventory(h)});
+  const late=first.onmessage;
   if(abort)controller.abort();else emit(first,{error:'injected failure'});await assert.rejects(p);
-  emit(first,{sourceInventory:inventory(h)});emit(first,{result:{ok:true}});
+  assert.equal(first.onmessage,null);late({data:{sourceInventory:inventory(h)}});late({data:{result:{ok:true}}});
   const q=h.run('stage'),second=h.workers.at(-1);assert.equal(second.message.verifiedInventory,undefined);emit(second,{result:{ok:true}});await q;
  }
+});
+
+test('an already cancelled source load creates no worker or prebuilt request',async()=>{
+ for(const prebuilt of [false,true]){
+  const h=await harness({prebuilt}),controller=new AbortController();controller.abort();
+  await assert.rejects(h.run('stage',controller.signal),{name:'AbortError'});
+  assert.equal(h.workers.length,0);assert.equal(h.loads.length,0);
+ }
+});
+test('synchronous worker post failure releases handlers, worker and abort listener',async()=>{
+ const error=new DOMException('could not clone','DataCloneError'),controller=new AbortController();
+ const h=await harness({prebuilt:false,postFailure:error});
+ await assert.rejects(h.run('stage',controller.signal),e=>e===error);
+ const w=h.workers[0];assert.equal(w.terminated,1);assert.equal(w.onmessage,null);assert.equal(w.onerror,null);assert.equal(w.onmessageerror,null);
+ controller.abort();assert.equal(w.terminated,1);assert.deepEqual(h.events.map(e=>e.detail.phase),['failed']);
+});
+test('worker deserialization failure rejects once and releases the pending source',async()=>{
+ const h=await harness({prebuilt:false,reply:null}),pending=h.run('stage'),w=h.workers[0],late=w.onmessage;
+ w.onmessageerror({});await assert.rejects(pending,/could not be decoded/);
+ late({data:{result:{untrusted:true}}});assert.equal(w.terminated,1);assert.equal(w.onmessage,null);
+ assert.deepEqual(h.events.map(e=>e.detail.phase),['failed']);
 });
 test('runtime, stage tree and stage identity invalidate inventory reuse; retention is bounded to 24 entries',async()=>{
  const h=await harness({prebuilt:false,reply:null});

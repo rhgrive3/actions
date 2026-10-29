@@ -1,0 +1,634 @@
+{
+  "schema": 1,
+  "createdUtc": "2026-10-29T09:48:06.714166+00:00",
+  "cohortAccounting": "These8 events are a subset of the original85 failed-job records. They are not additions to the separate15 post-atomic logs/14 gate families/6 root causes.",
+  "unknownUnderlyingCauses": 8,
+  "scope": "Read-only original log/API/artifact/source investigation; no browser, dispatch, rerun, cancellation, source edit or push.",
+  "events": [
+    {
+      "pr": 1897,
+      "head": "bf9aa9da354ea7a1d3b5c4478e0f526b6fbe0afb",
+      "run": 40688736829,
+      "job": 122833440425,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-28T12:33:08Z",
+      "runUpdatedAt": "2026-10-28T14:13:28Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-28T13:36:40Z",
+      "jobCompletedAt": "2026-10-28T13:57:59Z",
+      "jobSeconds": 1279.0,
+      "prMergedAt": "2026-10-28T15:41:48Z",
+      "secondsFromJobEndToPrMerge": 6229.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000366692",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "4ccea0595379de002d78e679de94218da2f2c1790bbbe1f49031714973757fd4",
+      "artifact": 12820744901,
+      "case": "webkit-tablet-landscape",
+      "lastCompletedStage": "setup-stage:robo",
+      "pendingOperation": "setup-stage-settle",
+      "criticalEventsMs": [
+        {
+          "ms": 63969,
+          "type": "page-crash",
+          "detail": ""
+        },
+        {
+          "ms": 63970,
+          "type": "first-error",
+          "detail": "page.evaluate: Target page, context or browser has been closed"
+        },
+        {
+          "ms": 63971,
+          "type": "context-close-start",
+          "detail": ""
+        },
+        {
+          "ms": 63974,
+          "type": "page-close",
+          "detail": ""
+        },
+        {
+          "ms": 63993,
+          "type": "context-close",
+          "detail": ""
+        },
+        {
+          "ms": 63993,
+          "type": "browser-disconnected",
+          "detail": ""
+        }
+      ],
+      "childStderrBytes": 0,
+      "pageErrors": [],
+      "observedFailure": "Playwright page-crash event precedes first error and owned-context cleanup. WebKit26.5 had already booted and exercised menus.",
+      "notEstablished": [
+        "WebKit crash code or stack",
+        "kernel OOM/resource evidence",
+        "engine fault vs host resource trigger"
+      ]
+    },
+    {
+      "pr": 1905,
+      "head": "cce7c234629348ae5a1da3f4de26b71a510e02cd",
+      "run": 40688636634,
+      "job": 122829175776,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-28T12:32:26Z",
+      "runUpdatedAt": "2026-10-28T14:11:07Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-28T12:57:51Z",
+      "jobCompletedAt": "2026-10-28T12:58:57Z",
+      "jobSeconds": 66.0,
+      "prMergedAt": "2026-10-28T14:42:31Z",
+      "secondsFromJobEndToPrMerge": 6214.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000366629",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "a3cc27ccd5519e32c957e0f9de0277444f8a694c963d2977dec8a34b825b4fa9",
+      "observedFailure": "Runner shutdown signal and process exit143 after TAP header; no assertion or subtest result emitted.",
+      "configuredJobTimeoutMinutes": 60,
+      "matrixFailFast": false,
+      "latestSiblingCpuCompletion": "2026-10-28T13:49:52Z",
+      "notEstablished": [
+        "GitHub host shutdown initiator",
+        "OOM/resource control",
+        "manually stopped runner service",
+        "test-triggered process signal"
+      ]
+    },
+    {
+      "pr": 1902,
+      "head": "881c5665961973eb4f8e2009b02d9498931db4b1",
+      "run": 40604364455,
+      "job": 122540051814,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-27T23:46:09Z",
+      "runUpdatedAt": "2026-10-28T01:35:21Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-28T00:45:20Z",
+      "jobCompletedAt": "2026-10-28T00:46:16Z",
+      "jobSeconds": 56.0,
+      "prMergedAt": "2026-10-27T23:46:18Z",
+      "secondsFromJobEndToPrMerge": -3598.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000364506",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "612b895ad3b279d0329354a221e6d341cc45d99fc02c2633e837a2a67a16da59",
+      "observedFailure": "Runner shutdown signal and process exit143 after TAP header; no assertion or subtest result emitted.",
+      "configuredJobTimeoutMinutes": 60,
+      "matrixFailFast": false,
+      "latestSiblingCpuCompletion": "2026-10-28T00:59:56Z",
+      "notEstablished": [
+        "GitHub host shutdown initiator",
+        "OOM/resource control",
+        "manually stopped runner service",
+        "test-triggered process signal"
+      ]
+    },
+    {
+      "pr": 1901,
+      "head": "4e0981ede05b8422aada10f638da6f317ba71325",
+      "run": 40601426038,
+      "job": 122530225554,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-27T23:20:14Z",
+      "runUpdatedAt": "2026-10-27T23:56:19Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-27T23:20:18Z",
+      "jobCompletedAt": "2026-10-27T23:24:15Z",
+      "jobSeconds": 237.0,
+      "prMergedAt": "2026-10-27T23:41:13Z",
+      "secondsFromJobEndToPrMerge": 1018.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000364197",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "c9d2ff3ab18c48c787b1bce9273d442ee7aa38b4438b46580001ada68b9f76e8",
+      "observedFailure": "Runner shutdown signal and process exit143 after TAP header; no assertion or subtest result emitted.",
+      "configuredJobTimeoutMinutes": 60,
+      "matrixFailFast": false,
+      "latestSiblingCpuCompletion": "2026-10-27T23:41:21Z",
+      "notEstablished": [
+        "GitHub host shutdown initiator",
+        "OOM/resource control",
+        "manually stopped runner service",
+        "test-triggered process signal"
+      ]
+    },
+    {
+      "pr": 1882,
+      "head": "cb41bee922b020c5b9fbc14f7fe9288cc706b0c3",
+      "run": 40529036880,
+      "job": 122299997364,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-27T15:14:42Z",
+      "runUpdatedAt": "2026-10-27T16:45:37Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-27T16:15:26Z",
+      "jobCompletedAt": "2026-10-27T16:42:15Z",
+      "jobSeconds": 1609.0,
+      "prMergedAt": "2026-10-27T15:18:17Z",
+      "secondsFromJobEndToPrMerge": -5038.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000363936",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "404b8ed0c031a911096c4beec4ab3ead779f11f7fadaa43145e5c600911cd2c2",
+      "observedFailure": "Shared180000ms native menu budget expires while waiting for setup on mobile; final diagnostic reports unpaused visible playing Practice Range,12actors,boot32996ms,no page/boot errors.",
+      "notEstablished": [
+        "Native Menus._focus at old Enter dispatch",
+        "exact input that selected Practice Range",
+        "complete old navigation event provenance"
+      ],
+      "existingRepairComparison": "Current helper verifies real native focus owner before Enter on touch and uses native click on desktop; exact historical input cause remains unproven."
+    },
+    {
+      "pr": 1882,
+      "head": "cb41bee922b020c5b9fbc14f7fe9288cc706b0c3",
+      "run": 40529035746,
+      "job": 122279728189,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-27T15:14:41Z",
+      "runUpdatedAt": "2026-10-27T18:39:06Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-27T17:01:27Z",
+      "jobCompletedAt": "2026-10-27T17:03:08Z",
+      "jobSeconds": 101.0,
+      "prMergedAt": "2026-10-27T15:18:17Z",
+      "secondsFromJobEndToPrMerge": -6291.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000364032",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "0c6daff5a250a9d48651781f24fcc8f25fb6e42dcffa114b7d847740d36f8782",
+      "observedFailure": "Runner shutdown signal and process exit143 after TAP header; no assertion or subtest result emitted.",
+      "configuredJobTimeoutMinutes": 60,
+      "matrixFailFast": false,
+      "latestSiblingCpuCompletion": "2026-10-27T17:49:32Z",
+      "notEstablished": [
+        "GitHub host shutdown initiator",
+        "OOM/resource control",
+        "manually stopped runner service",
+        "test-triggered process signal"
+      ]
+    },
+    {
+      "pr": 1900,
+      "head": "74f38152e27dcdad2658dfb8d412cb0cf4c5ef52",
+      "run": 40510247760,
+      "job": 122291734506,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-27T13:14:06Z",
+      "runUpdatedAt": "2026-10-27T17:38:31Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-27T16:54:00Z",
+      "jobCompletedAt": "2026-10-27T17:16:02Z",
+      "jobSeconds": 1322.0,
+      "prMergedAt": "2026-10-27T15:01:19Z",
+      "secondsFromJobEndToPrMerge": -8083.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000364013",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "ff84277f2d319b0ace37790dbbad5a32266db1d7195c58f08c75f2305d466cd0",
+      "artifact": 12754161774,
+      "case": "webkit-small-phone",
+      "lastCompletedStage": "setup-stage:airport",
+      "pendingOperation": "setup-stage-settle",
+      "criticalEventsMs": [
+        {
+          "ms": 38872,
+          "type": "page-crash",
+          "detail": ""
+        },
+        {
+          "ms": 38873,
+          "type": "first-error",
+          "detail": "page.evaluate: Target page, context or browser has been closed"
+        },
+        {
+          "ms": 38874,
+          "type": "context-close-start",
+          "detail": ""
+        },
+        {
+          "ms": 38877,
+          "type": "page-close",
+          "detail": ""
+        },
+        {
+          "ms": 38896,
+          "type": "context-close",
+          "detail": ""
+        },
+        {
+          "ms": 38896,
+          "type": "browser-disconnected",
+          "detail": ""
+        }
+      ],
+      "childStderrBytes": 0,
+      "pageErrors": [],
+      "observedFailure": "Playwright page-crash event precedes first error and owned-context cleanup. WebKit26.5 had already booted and exercised menus.",
+      "notEstablished": [
+        "WebKit crash code or stack",
+        "kernel OOM/resource evidence",
+        "engine fault vs host resource trigger"
+      ]
+    },
+    {
+      "pr": 1899,
+      "head": "ffb3ca6e824c3688a65bf845db64880f6c53920d",
+      "run": 40507015575,
+      "job": 122232103890,
+      "event": "pull_request",
+      "runConclusion": "failure",
+      "runCreatedAt": "2026-10-27T12:50:54Z",
+      "runUpdatedAt": "2026-10-27T17:15:23Z",
+      "jobConclusion": "failure",
+      "jobStartedAt": "2026-10-27T15:47:31Z",
+      "jobCompletedAt": "2026-10-27T16:13:39Z",
+      "jobSeconds": 1568.0,
+      "prMergedAt": "2026-10-27T12:53:50Z",
+      "secondsFromJobEndToPrMerge": -11989.0,
+      "sameBranchWorkflowRunsCreatedAfterTarget": [],
+      "runAttempt": 1,
+      "runnerName": "GitHub Actions 1000363878",
+      "underlyingCauseEstablished": false,
+      "rawLogSha256": "9c9fc8c2b85bcdf931c4fb0eab67a54ac9f9d890fa5717876aba35d0f67d135a",
+      "artifact": 12750200024,
+      "case": "webkit-phone-landscape",
+      "lastCompletedStage": "setup-stage:tidewater",
+      "pendingOperation": "setup-stage-settle",
+      "criticalEventsMs": [
+        {
+          "ms": 44510,
+          "type": "page-crash",
+          "detail": ""
+        },
+        {
+          "ms": 44511,
+          "type": "first-error",
+          "detail": "page.evaluate: Target page, context or browser has been closed"
+        },
+        {
+          "ms": 44512,
+          "type": "context-close-start",
+          "detail": ""
+        },
+        {
+          "ms": 44515,
+          "type": "page-close",
+          "detail": ""
+        },
+        {
+          "ms": 44538,
+          "type": "context-close",
+          "detail": ""
+        },
+        {
+          "ms": 44538,
+          "type": "browser-disconnected",
+          "detail": ""
+        }
+      ],
+      "childStderrBytes": 0,
+      "pageErrors": [],
+      "observedFailure": "Playwright page-crash event precedes first error and owned-context cleanup. WebKit26.5 had already booted and exercised menus.",
+      "notEstablished": [
+        "WebKit crash code or stack",
+        "kernel OOM/resource evidence",
+        "engine fault vs host resource trigger"
+      ]
+    }
+  ],
+  "existingMenuRepairComparison": {
+    "oldHarnessHead": "cb41bee922b020c5b9fbc14f7fe9288cc706b0c3",
+    "reviewedCandidateAtComparison": "b67e8ee18f19156cb1f0dfab244ee5b67ecab24b",
+    "focusedControlsExecutedFromPublishedCommon": "bb463122f10c069f84fccb61391152ed6c53aa97",
+    "nodeVersion": "22.23.4",
+    "command": "node --experimental-vm-modules --test scripts/tests/inkwave-projectile-menu-start.test.mjs",
+    "tests": 20,
+    "pass": 20,
+    "fail": 0,
+    "skip": 0,
+    "browserRun": false,
+    "sameUrl": "?map=tidewater&difficulty=normal&skipTitle",
+    "sameWorkflowCaptureScript": "scripts/check-inkwave-projectile-visuals.mjs",
+    "sourceIdentities": {
+      "cb41bee922b020c5b9fbc14f7fe9288cc706b0c3": {
+        "scripts/lib/inkwave-projectile-menu-start.mjs": {
+          "blob": "0b91def2d877673d488a454df3aa3bb08f9e14b0",
+          "sha256": "b68e43770a34991eddd48708b5603f7b52837a43f8e031982f2387bebe931cd2"
+        },
+        "scripts/tests/inkwave-projectile-menu-start.test.mjs": {
+          "blob": "cf3c210de0615b07108c9aeb2b264cd85af66b98",
+          "sha256": "6abbc607e7abd8da0900784ec413e34ff71d14b011bff18c953277166c746972"
+        }
+      },
+      "bb463122f10c069f84fccb61391152ed6c53aa97": {
+        "scripts/lib/inkwave-projectile-menu-start.mjs": {
+          "blob": "56fbcbb4b19a7c7bb5b6e51ff27dd0f9c417ab33",
+          "sha256": "a5fcea53dcf51cd1c3ab0b676a74526acc8c59415a92301a692cd2fadd684e78"
+        },
+        "scripts/tests/inkwave-projectile-menu-start.test.mjs": {
+          "blob": "a4baa01c28204976405dcb8ae8fd5b371c5968be",
+          "sha256": "ec9245d201c890ff6d9ffaf47840d849d5e122bd85bb8a5bebd4918db764dea9"
+        }
+      },
+      "2b01cd7efbca260a611165b1e3887ff48062ccd5": {
+        "scripts/lib/inkwave-projectile-menu-start.mjs": {
+          "blob": "56fbcbb4b19a7c7bb5b6e51ff27dd0f9c417ab33",
+          "sha256": "a5fcea53dcf51cd1c3ab0b676a74526acc8c59415a92301a692cd2fadd684e78"
+        },
+        "scripts/tests/inkwave-projectile-menu-start.test.mjs": {
+          "blob": "a4baa01c28204976405dcb8ae8fd5b371c5968be",
+          "sha256": "ec9245d201c890ff6d9ffaf47840d849d5e122bd85bb8a5bebd4918db764dea9"
+        }
+      },
+      "b67e8ee18f19156cb1f0dfab244ee5b67ecab24b": {
+        "scripts/lib/inkwave-projectile-menu-start.mjs": {
+          "blob": "56fbcbb4b19a7c7bb5b6e51ff27dd0f9c417ab33",
+          "sha256": "a5fcea53dcf51cd1c3ab0b676a74526acc8c59415a92301a692cd2fadd684e78"
+        },
+        "scripts/tests/inkwave-projectile-menu-start.test.mjs": {
+          "blob": "a4baa01c28204976405dcb8ae8fd5b371c5968be",
+          "sha256": "ec9245d201c890ff6d9ffaf47840d849d5e122bd85bb8a5bebd4918db764dea9"
+        }
+      }
+    },
+    "existingCompactRouteRefinement": "a8877a08",
+    "causalityLimit": "Old receipt lacks native focus/menu event provenance. Source repair prevents unverified native Enter route class, but does not prove exact historical crash/timeout initiator."
+  },
+  "artifactsNotCopiedInFull": true,
+  "recordAccess": "All8 logs, job annotations and all4 targeted artifact ZIPs remained accessible. GitHub-host OS/kernel/crash dump telemetry is not included in the public APIs or archived evidence.",
+  "files": [
+    {
+      "file": "job-122232103890.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 168930,
+      "uncompressedSha256": "9c9fc8c2b85bcdf931c4fb0eab67a54ac9f9d890fa5717876aba35d0f67d135a",
+      "gzipBytes": 33980,
+      "gzipSha256": "99a085508fda8a14d8e6d9addd2a5590045d392ce1a7f9bbe52cd07f9093be30"
+    },
+    {
+      "file": "job-122279728189.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 25622,
+      "uncompressedSha256": "0c6daff5a250a9d48651781f24fcc8f25fb6e42dcffa114b7d847740d36f8782",
+      "gzipBytes": 6544,
+      "gzipSha256": "2b71a6344156145ff1743ebf328fa6bea46d18e8dd2c9d15019dea6143d1db02"
+    },
+    {
+      "file": "job-122291734506.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 168814,
+      "uncompressedSha256": "ff84277f2d319b0ace37790dbbad5a32266db1d7195c58f08c75f2305d466cd0",
+      "gzipBytes": 33929,
+      "gzipSha256": "fe4dd3f61cdd1be9fd9fd75ee2622289a186c9f1af614d0e8d1d6b4c923945fc"
+    },
+    {
+      "file": "job-122540051814.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 25679,
+      "uncompressedSha256": "612b895ad3b279d0329354a221e6d341cc45d99fc02c2633e837a2a67a16da59",
+      "gzipBytes": 6512,
+      "gzipSha256": "9306187ed00e00d9e56243381addc225006340a53531bb6d10594a5e37d7579f"
+    },
+    {
+      "file": "job-122299997364.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 266290,
+      "uncompressedSha256": "404b8ed0c031a911096c4beec4ab3ead779f11f7fadaa43145e5c600911cd2c2",
+      "gzipBytes": 52512,
+      "gzipSha256": "fa9256832345d9169decbda2a11e4f7c62a8df59ed52211462102856501b0291"
+    },
+    {
+      "file": "job-122833440425.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 165121,
+      "uncompressedSha256": "4ccea0595379de002d78e679de94218da2f2c1790bbbe1f49031714973757fd4",
+      "gzipBytes": 33258,
+      "gzipSha256": "b204283ff84960b5297e3928578dff4546098d7220b0d38fccfcded770fbf931"
+    },
+    {
+      "file": "job-122530225554.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 25699,
+      "uncompressedSha256": "c9d2ff3ab18c48c787b1bce9273d442ee7aa38b4438b46580001ada68b9f76e8",
+      "gzipBytes": 6577,
+      "gzipSha256": "60ce1237de5e09904bb45f05d8eca699e68b2cd8e08985944cde19772efe529a"
+    },
+    {
+      "file": "job-122829175776.log.gz",
+      "description": "Complete original decoded GitHub job log, including original terminal newline/BOM.",
+      "uncompressedBytes": 25707,
+      "uncompressedSha256": "a3cc27ccd5519e32c957e0f9de0277444f8a694c963d2977dec8a34b825b4fa9",
+      "gzipBytes": 6570,
+      "gzipSha256": "a631b27ffe11f8a122a426ffc08c4f22383d1e4b5c1888bdb99431b9f713fe22"
+    },
+    {
+      "file": "github-api-metadata.json.gz",
+      "description": "Structured original run/job/PR/timeline/check-annotation/same-branch run responses; full pages retained.",
+      "uncompressedBytes": 7717593,
+      "uncompressedSha256": "9182d89cdf678620a1a83bda4289a63866bd44748269cfc6f705e51443d78a03",
+      "gzipBytes": 378730,
+      "gzipSha256": "631b7ce77cc7f79153cca398209e3ca9151c4b13cbcf82579dc4449d2df0950c"
+    },
+    {
+      "file": "github-status-incidents.json.gz",
+      "description": "Public GitHub Status last50 incident records, covering the event dates.",
+      "uncompressedBytes": 313174,
+      "uncompressedSha256": "21f2a87b99bcb7c5995a9906bd26449818353322026af2ef5959be843477fcb7",
+      "gzipBytes": 44803,
+      "gzipSha256": "cbe28de67079249a5c70555e54a00dc5647f2073b41d92ef033298d545c34282"
+    },
+    {
+      "file": "current-menu-controls.tap.gz",
+      "description": "Node22 focused existing route-control file:20tests,20pass,0fail,0skip; source-only, no browser.",
+      "uncompressedBytes": 4800,
+      "uncompressedSha256": "7f91aaf9e50b9f8ac369151bff5502dc57acd3dfce8f147f1471904f7226a48c",
+      "gzipBytes": 1220,
+      "gzipSha256": "c2ca3861278483bf1447c77540be21845522a7ac278b3c6ceedc383d651c8d35"
+    },
+    {
+      "file": "projectile-1882-result.json.gz",
+      "description": "Complete failed result JSON parsed from original job stdout; not a rerun.",
+      "uncompressedBytes": 5314,
+      "uncompressedSha256": "aff547ea8e52ef592b9ff157a0270ff4c6c4c65ca80c06f3bdec61a0ecdce2f8",
+      "gzipBytes": 1671,
+      "gzipSha256": "06b6d85cde001b3927fa866994cf48398a50eeea1362e8c120d80f4faea8200a"
+    },
+    {
+      "file": "existing-menu-repair.diff.gz",
+      "description": "Exact old-to-reviewed-current helper diff; no new code repair in this packet.",
+      "uncompressedBytes": 9695,
+      "uncompressedSha256": "a49d3fca2f7f081b0a99c4404f950dfe7334f17355a166af201c4cf1c85cfac4",
+      "gzipBytes": 3373,
+      "gzipSha256": "b01c1135cb8b49fbc5724bbab64bcba3ace6c34c53d663642004af74c17fecc8"
+    },
+    {
+      "file": "pr-1897-webkit-tablet-landscape-diagnostic-progress.json.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 9035,
+      "uncompressedSha256": "5534fa493a3bb1eda75d0b848c06cb29ac080dcc9e75d11c2c7e551499e16e44",
+      "gzipBytes": 1102,
+      "gzipSha256": "570f113f8b7e350dba26fe57b62ff7abb643177df00583308cf47a783366cfc3"
+    },
+    {
+      "file": "pr-1897-responsive-result.json.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 42625,
+      "uncompressedSha256": "d58794249537f8b59360f35f522a623a666f344f15097d6f3352573043731f8b",
+      "gzipBytes": 3689,
+      "gzipSha256": "a5f6a39638bbb0ecfaf87ca9e85c9f850b3b030244263ee79b2b5e2e05f9b03f"
+    },
+    {
+      "file": "pr-1897-child-stderr.txt.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 0,
+      "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipBytes": 20,
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "pr-1900-webkit-small-phone-diagnostic-progress.json.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 9004,
+      "uncompressedSha256": "32602292658dcc7acf2ef708b9713ae0bf9cf33bbcdd3bffb51bdb941f135e58",
+      "gzipBytes": 1092,
+      "gzipSha256": "487693086b6c13db67758397f3892ba5236460de087155bb163d3234ff256748"
+    },
+    {
+      "file": "pr-1900-responsive-result.json.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 41665,
+      "uncompressedSha256": "4f004e53f4eecf525966f487faf9e9ac81a11af2a21643c07cc1102c34dc77f3",
+      "gzipBytes": 3659,
+      "gzipSha256": "ee5ec9768d5cb9cd7c83d33b72bdfd7ca737e91ec1238d7d3356356d46522db3"
+    },
+    {
+      "file": "pr-1900-child-stderr.txt.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 0,
+      "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipBytes": 20,
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "pr-1899-webkit-phone-landscape-diagnostic-progress.json.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 9022,
+      "uncompressedSha256": "7366e756071a1119e9b7bf8f0027c6096c2a6e38ae8c091a7f296a768367f62d",
+      "gzipBytes": 1091,
+      "gzipSha256": "d25cb6fdc3f31bf934b698a8097d7210d17f75f52e486f83ba74e12775a367e6"
+    },
+    {
+      "file": "pr-1899-responsive-result.json.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 49620,
+      "uncompressedSha256": "8cfc72efad6cd7a692de1111db514eaf2620389e21aacaeccc888514a31a3d8f",
+      "gzipBytes": 3943,
+      "gzipSha256": "ae7dd3f78367a016a20f5c0eae3a88dcff158cb901a4040954a2a0fcb622d055"
+    },
+    {
+      "file": "pr-1899-child-stderr.txt.gz",
+      "description": "Original failed-case selected artifact member; HTTP byte ranges and zipfile CRC verified.",
+      "uncompressedBytes": 0,
+      "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipBytes": 20,
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "file": "artifact-12820744901-range-receipt.json.gz",
+      "description": "Complete ZIP member index and selected-member SHA256/CRC receipt; archive was not duplicated in full.",
+      "uncompressedBytes": 45592,
+      "uncompressedSha256": "1570a6c75455cff62cd91bc05d05bb9c38d407e5d6bfb2de84a6d98dc0d129ca",
+      "gzipBytes": 5848,
+      "gzipSha256": "3895460d484090065f80504647cdb6edc542cfdb35a0e0666361d736f950d47c"
+    },
+    {
+      "file": "artifact-12754161774-range-receipt.json.gz",
+      "description": "Complete ZIP member index and selected-member SHA256/CRC receipt; archive was not duplicated in full.",
+      "uncompressedBytes": 43006,
+      "uncompressedSha256": "ae51b67553fdb97f245a2c773cde3cdd304cdf599a4b6432cc8484a7ff326e49",
+      "gzipBytes": 5513,
+      "gzipSha256": "cc524488fe1f81ab091f88f2ef0812ac7f70c48b8c383ce49c527e9e943a776b"
+    },
+    {
+      "file": "artifact-12750200024-range-receipt.json.gz",
+      "description": "Complete ZIP member index and selected-member SHA256/CRC receipt; archive was not duplicated in full.",
+      "uncompressedBytes": 43977,
+      "uncompressedSha256": "f7ca5fbe615aa31a099ef0266e72683189cea0bc023596d94e2590da9ac68b40",
+      "gzipBytes": 5654,
+      "gzipSha256": "9677e67145b6c458898bf919c3b62828c22b22cd89f947c9b9ce73219fd86eae"
+    },
+    {
+      "file": "artifact-12751193990-range-receipt.json.gz",
+      "description": "Complete ZIP member index and selected-member SHA256/CRC receipt; archive was not duplicated in full.",
+      "uncompressedBytes": 14826,
+      "uncompressedSha256": "945443bbc088cece3722c9b2c188271ac2944ec4896733623c2acd4e02d88d50",
+      "gzipBytes": 2186,
+      "gzipSha256": "0f2e29a8a3e0f3466bb83c76148d524a54539e02a1b4d8f48d3f4484c6ca3e12"
+    },
+    {
+      "file": "projectile-1882-browser-stderr.log.gz",
+      "description": "Original artifact says no browser stderr block was reported; not evidence of a captured clean browser process trace.",
+      "uncompressedBytes": 132,
+      "uncompressedSha256": "ccb04b0035acb095da6a7948f59686e4c71f2ed55a2c87133739e7d9bf24353f",
+      "gzipBytes": 121,
+      "gzipSha256": "3c3619390a21449f1274619af4a0af7420b28f27860439a9afd72a8ea5666523"
+    }
+  ]
+}

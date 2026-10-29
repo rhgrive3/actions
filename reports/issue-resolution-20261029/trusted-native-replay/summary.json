@@ -1,0 +1,63 @@
+{
+  "base": "035233299348e5c3527f6106b98e721ed2dfd011",
+  "node": "22.23.4",
+  "mode": "source CPU; production composition; dedicated native VM, no browser/server deployment",
+  "command": "node --experimental-vm-modules --test patches/network-replication/tests/trusted-native-replay.test.mjs patches/network-replication/tests/native-command-wire.test.mjs patches/network-replication/tests/canonical-weapon-actions.test.mjs",
+  "sourceResult": {
+    "tests": 122,
+    "pass": 122,
+    "fail": 0,
+    "skip": 0
+  },
+  "finalModuleHashNote": "source final122 run preceded only strict validation of an explicitly invalid custom command-owner option; the default command path is identical; targeted validation rerun recorded separately",
+  "sourceSHA256": {
+    "patches/network-replication/trusted-native-replay.mjs": "20ae0c65c2f00d1d5c014d0c3a0957433768b5570da8dd293ecc8833aef34985",
+    "patches/network-replication/trusted-native-replay-worker.mjs": "f97b30ceeed8360dacb18ad440509f9e402d165353a84126593014f632495d56",
+    "patches/network-replication/native-command-wire.mjs": "536b4ffc46ce2947ad147c532cf734d4a16e3d2e603342517163380857ba6026",
+    "patches/network-replication/canonical-weapon-actions.mjs": "3594c4a8db71bd3e80280dcfb6faf8c416e4dbfcf6ca4dc615cec53a3e040348",
+    "patches/network-replication/tests/trusted-native-replay.test.mjs": "dbaf4eebcd60a094773bd13ac58b555849343ef956334af9ff21ed57c85edd0d",
+    "patches/network-replication/tests/native-command-wire.test.mjs": "c3c46a9db56023e44b538a806543306da075eb93b688b5930779a20e3bd40693",
+    "patches/network-replication/tests/canonical-weapon-actions.test.mjs": "043efc1a388617f7a0c00a8416b88dccdaec1b190472079ec786391131fb58f0"
+  },
+  "baseline": {
+    "nativeModule": "310eb4b1:patches/network-replication/trusted-native-replay.mjs",
+    "negativeTest": "native cancelHold does not turn focus cancellation into an ordinary release shot",
+    "exitCode": 1,
+    "tests": 1,
+    "fail": 1,
+    "moduleSHA256": "9a02ded24b0b4da833bb51097b97e9546cc20fe9a999eba0b2ca0a938064303f",
+    "harnessSHA256": "e066b60fdab6181bb6ec8617eb5641ec4b6cb2ff96d505dd741d7cbdf3e87170",
+    "scope": "substitute only old replay module in current native fixture; not an old production mandatory-gate claim"
+  },
+  "productionGap": {
+    "exitCode": 1,
+    "securityAcceptancePassed": false,
+    "ownerAuthoredDamage": {
+      "pvp": 36,
+      "boss": 36,
+      "crablet": 36
+    },
+    "absentAndForeignDamage": 0
+  },
+  "newProtocol": {
+    "installed": false,
+    "tupleChanges": false,
+    "version": 2,
+    "optionalSibling": "nc",
+    "heldBits": 7,
+    "cancelBits": 2,
+    "noDowngrade": "trusted immutable room version/build/epoch policy; missing capability/input rejected; no peer reenrollment budget reset"
+  },
+  "emittedResult": "pending root fresh integrated sealed build; wire test explicitly loads built leaf when INKWAVE_BUILT_SITE is supplied",
+  "issueDisposition": {
+    "1665": "open: mandatory trusted authority/world/inputs/effect handoff not installed",
+    "1666": "open: canonical Boss/world/lifecycle/effect handoff not installed"
+  },
+  "gpuOrHardwareRuns": 0,
+  "targetedCommandOwnerValidation": {
+    "tests": 2,
+    "pass": 2,
+    "fail": 0,
+    "skip": 0
+  }
+}

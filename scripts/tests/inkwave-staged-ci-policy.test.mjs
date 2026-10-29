@@ -71,6 +71,7 @@ test('fast preflight binds exact PR head without installing browsers or running 
 test('full gate requires native or offloaded browser evidence and both independent regressions', () => {
   const gate = job(full, 'validate');
   assertValidateWorkflowContract(full);
+  assert.match(gate, /needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
   for (const required of ['CORE_RESULT', 'PATCH_RESULT', 'CIRCLECI_RESULT', 'BROWSER_RESULT', 'SEVEN_RESULT', 'RESOURCE_RESULT'])
     assert.match(gate, new RegExp('test "\\$' + required + '" = (?:success|skipped)'));
   assert.match(gate, /test "\$BROWSER_RESULT" = skipped/);
@@ -222,4 +223,20 @@ test('expensive specialist workflows do not run repeatedly on Draft updates but 
     assert(active(src,name,{event:'workflow_dispatch'}),path+' manual diagnosis remains available when configured');
     if(src.includes('  push:\n'))assert(active(src,name,{event:'push'}),path+' main push remains validated');
   }
+});
+
+
+// Early, tree-only contract: this test also runs in the 8-minute PR preflight.
+// A sparse, blobless checkout is sufficient. Changes to JS file executable
+// bits must not create spurious diffs or weaken pinned source identity tests.
+test('runtime ESM sources remain non-executable in Git HEAD', async () => {
+  const {execFileSync} = await import('node:child_process');
+  const rows = execFileSync('git', [
+    'ls-tree', '-r', 'HEAD', '--',
+    'patches/native-stages/runtime', 'patches/splatoon3/runtime',
+  ], {encoding:'utf8', maxBuffer:8*1024*1024})
+    .split('\n').filter(row => row.endsWith('.mjs'));
+  assert.ok(rows.length > 0, 'runtime source tree must not be missing');
+  const wrong = rows.filter(row => !row.startsWith('100644 blob '));
+  assert.deepEqual(wrong, [], 'runtime .mjs files must retain the regular 100644 Git mode');
 });

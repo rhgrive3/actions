@@ -13,6 +13,7 @@ const auditedImports = [tokenImport,
   "import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';",
   "import { COMBAT_HIT_CEILINGS } from './combat-hit-ceilings-data.mjs';",
   "import { damageLeafMax } from './damage-leaves.mjs';",
+  "import { observeOwnerTick } from './owner-tick-receipt.mjs';",
 ];
 let executable = source;
 for (const dependency of auditedImports) {
@@ -40,10 +41,10 @@ function receiverSprinklerScope(){throw Error('cap-only boundary: receiverSprink
 
 assert.doesNotMatch(executable, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
   'new capabilities require a fresh metadata boundary audit');
-// #1665/#1666 equipped-slot ceilings: two pure sibling modules (a generated
-// frozen data table and an allocation-free leaf walk). Load their actual
-// source into the same realm under the same capability audit; no imports.
-const ceilingSources = ['../combat-hit-ceilings-data.mjs', '../damage-leaves.mjs'].map(file => {
+// Load the equipped-slot ceiling leaves and receiver-local receipt scope into
+// the same realm under the capability audit. The fixture native tick explicitly
+// commits its empty admitted batch; no imported host functions enter the realm.
+const ceilingSources = ['../combat-hit-ceilings-data.mjs', '../damage-leaves.mjs', '../owner-tick-receipt.mjs'].map(file => {
   const text = fs.readFileSync(new URL(file, import.meta.url), 'utf8');
   assert.doesNotMatch(text, /\b(?:import|require|process|fetch|WebSocket|globalThis|eval|Function)\s*(?:[.(]|\{)/,
     'ceiling dependency has no capabilities: ' + file);
@@ -174,13 +175,13 @@ const eq=(a,b,m)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw Error(m+': '+J
 class Stub {
  constructor(){this.myId='local';this.cfg={id:'m'};this.peers=new Map();this.accepted=[];this.calls=0;this.ticks=0;
  this.byNid=new Map([[1,{nid:1,owner:'peer',remote:true,team:0,alive:true,weapon:{id:'shooter',kind:'shooter',special:'storm',sub:'bomb'},pos:{x:0,y:0,z:0},net:{cur:{f:1}}}],[2,{nid:2,owner:'local',remote:false,team:1,alive:true,pos:{x:0,y:0,z:3}}]]);this.match={state:'playing'};}
- _tick(from,d){if((this.peers.get(from)?.lastTs??-Infinity)>=d.ts)return;this.peers.set(from,{lastTs:d.ts});}
+ _tick(from,d){if((this.peers.get(from)?.lastTs??-Infinity)>=d.ts)return;this.peers.set(from,{lastTs:d.ts});commitOwnerTick(this,from,d,d.e,[]);}
  _hit(d,from){this.accepted.push({h:d.h,d:d.d,from});return true;}
  onMessage(from,d){if(d.k==='hit')return this._hit(d,from);}
  onLeave(){} dispose(){} bind(){}
 }
 // Explicit synthetic payload policy for cap-only wrappers, not token/native acceptance.
-installCombatProvenance(Stub,{hitPayloadAllowed:d=>Number.isFinite(d?.d)&&d.d>0&&d.d<=500&&['storm','angleShooter'].includes(d.w)&&(d.w!=='angleShooter'||d.d<=40)});
+installCombatProvenance(Stub,{hitPayloadAllowed:d=>Number.isFinite(d?.d)&&d.d>0&&d.d<=500&&['storm','angleShooter'].includes(d.w)&&(d.w!=='angleShooter'||d.d<=40),hitReceiptAllowed:()=>true});
 function claim(nm,h,damage=161){if(++nm.calls>3)throw Error('event budget');nm.onMessage('peer',{k:'hit',m:'m',a:1,v:2,l:0,h,seq:h,w:'storm',d:damage});}
 function tick(nm,time){if(++nm.ticks>2)throw Error('tick budget');clock=time;nm._tick('peer',{k:'t',ts:time,a:[],e:[]});}
 function proof(nm){state(nm).proofs.set('peer',[{actor:1,kind:'special',cause:'storm',at:clock,origin:[0,0,0],unit:[0,0,1],reach:30,uses:0,maxUses:24,key:'metadata'}]);}

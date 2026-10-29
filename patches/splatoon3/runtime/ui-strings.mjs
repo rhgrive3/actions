@@ -72,6 +72,7 @@ export const UI_JA = Object.freeze({
   'Splatoon 3 stores independent aim settings for TV/Tabletop and Handheld modes. Select which profile is active.':'スプラトゥーン3と同様に、TV・テーブルモードと携帯モードの照準設定を別々に保存します。使用する設定を選んでください。',
   'Motion controls':'ジャイロ操作','Tilt and turn to aim with motion gyro. Stored per profile.':'本体を傾けて照準を動かします。モードごとに保存します。',
   'Motion sensitivity':'ジャイロ感度','Motion-control aiming sensitivity for the selected profile.':'選択中のモードのジャイロ感度です。','Right stick sensitivity':'Rスティック感度',
+  'Stick speed is provisional and stored per profile. Older speeds outside this scale remain until you change the slider.':'スティックの速さは暫定値で、モードごとに保存します。旧設定の範囲外の速さはスライダーを変更するまで維持されます。',
   'Invert right-stick horizontal look':'Rスティック左右リバース','Reverse controller left/right look only. Mouse, touch and gyro are unchanged.':'コントローラーの左右操作を反転します。マウス・タッチ・ジャイロには影響しません。',
   'Right stick up/down':'Rスティック上下','Push stick up to look down. Stored per profile.':'上に倒すと下を向きます。モードごとに保存します。',
   'Right stick left/right':'Rスティック左右','Push stick left to look right. Stored per profile.':'左に倒すと右を向きます。モードごとに保存します。',

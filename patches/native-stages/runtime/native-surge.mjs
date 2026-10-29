@@ -1,3 +1,13 @@
+function findSurgeEdge(list, toId) {
+ if(!list)return null;
+ for(let i=0;i<list.length;i++){const e=list[i];if(e&&e.to===toId&&e.climb?.kind==='surge')return e;}
+ return null;
+}
+function findMissingSurgeSample(samples, paint, team) {
+ if(!samples)return null;
+ for(let i=0;i<samples.length;i++){const s=samples[i];if(s&&paint.sample(s.face,s.u,s.v)!==team+1)return s;}
+ return null;
+}
 import * as THREE from 'three';
 import {PLAYER} from '../../../src/config.js';
 import {Hit,makeContacts} from '../../../src/game/physics.js';
@@ -8,6 +18,7 @@ import {nativeDropClearance} from './native-drop.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
 
 const radius=squid=>(squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw)*PLAYER.s3TerrainDistanceScale;
+const _goal=new THREE.Vector3(),_spine=new THREE.Vector3(),_normal=new THREE.Vector3(),_v0=new THREE.Vector3(),_v1=new THREE.Vector3(),_v2=new THREE.Vector3();
 const ownedCell=(L,h)=>{
  const f=L.faces[h.face];if(!f?.wall||!L.containsOnFace(f,h.point))return false;
  const i=Math.max(0,Math.min(f.nu-1,Math.floor(h.u/f.cu))),j=Math.max(0,Math.min(f.nv-1,Math.floor(h.v/f.cv)));
@@ -101,9 +112,9 @@ export function updateNativeSurge(brain,G,dt){
  const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.wallSurge||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive)return false;
  let index=brain.pi;
  if(index===0&&brain.path.length>1){const n=N.nodes[brain.path[0]];if(Math.hypot(a.pos.x-n.x,a.pos.z-n.z)<.8&&Math.abs(a.pos.y-n.y)<.3)index=1;}
- const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.climb?.kind==='surge');
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=findSurgeEdge(from?.nb,to?.id);
  if(!edge){brain._nativeSurge=null;return false;}
- const c=edge.climb,goal=new THREE.Vector3(...c.upper),spine=new THREE.Vector3(...c.spine),normal=new THREE.Vector3(...c.normal),input=a.intent;
+ const c=edge.climb,goal=_goal.fromArray(c.upper),spine=_spine.fromArray(c.spine),normal=_normal.fromArray(c.normal),input=a.intent;
  const state=brain._nativeSurge?.edge===edge&&brain._nativeSurge.path===brain.path?brain._nativeSurge:(brain._nativeSurge={edge,path:brain.path,phase:'paint',seconds:0});state.seconds+=dt;
  if(state.seconds>35){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeSurge=null;return false;}
  brain.pi=index;brain.noProg=0;input.fire=input.squid=input.jump=input.sub=input.special=false;input.move.set(0,0,0);
@@ -113,10 +124,10 @@ export function updateNativeSurge(brain,G,dt){
  if(state.phase==='human'){
   input.move.copy(normal).negate();return true;
  }
- const missing=c.samples.find(s=>G.paint.sample(s.face,s.u,s.v)!==a.team+1);
+ const missing=findMissingSurgeSample(c.samples,G.paint,a.team);
  if(missing){
-  state.phase='paint';const delta=new THREE.Vector3(...c.paintStance).sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();
-  const aim=new THREE.Vector3(...missing.point).sub(a.pos).add(new THREE.Vector3(0,-1.05,0));a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));a.aimPoint.fromArray(missing.point);
+  state.phase='paint';const delta=_v0.fromArray(c.paintStance).sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();
+  const aim=_v1.fromArray(missing.point).sub(a.pos).add(_v2.set(0,-1.05,0));a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));a.aimPoint.fromArray(missing.point);
   // Travel and earlier walls can consume the initial tank. Finish a normal
   // refill before firing again instead of alternating single shots at 15%.
   if(a.ink<=PLAYER.inkMax*.15)state.refilling=true;
@@ -127,8 +138,8 @@ export function updateNativeSurge(brain,G,dt){
   if(input.fire&&a.weaponRunner?.s3ShooterCancelMain)input.fire=false;
   return true;
  }
- const side=spine.clone().sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));input.squid=true;input.move.copy(normal).negate().addScaledVector(side,3).normalize();if(a.climbing&&state.phase==='swim'&&a.pos.y>=c.holdY-.7)input.move.multiplyScalar(.25);
- if(!a.climbing&&a.pos.y<c.wallTop-1.8){const delta=spine.clone().sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();}
+ const side=_v0.copy(spine).sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));input.squid=true;input.move.copy(normal).negate().addScaledVector(side,3).normalize();if(a.climbing&&state.phase==='swim'&&a.pos.y>=c.holdY-.7)input.move.multiplyScalar(.25);
+ if(!a.climbing&&a.pos.y<c.wallTop-1.8){const delta=_v1.copy(spine).sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();}
  if(state.phase==='paint')state.phase='swim';
  if(state.phase==='swim'&&a.climbing&&a.pos.y>=c.holdY)state.phase='charge';
  if(state.phase==='charge'){

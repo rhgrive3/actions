@@ -44,6 +44,8 @@ test('unrelated capture and required receipts keep their normal failure semantic
  const gate=workflow.slice(workflow.indexOf('  validate:\n'),workflow.indexOf('  browser:\n'));
  const contract=assertValidateWorkflowContract(workflow);
  assert.equal(contract.gate.if,"${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}");
+ assert.ok(gate.includes("if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}"));
+ assert.match(gate,/needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
  assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);
 });
@@ -70,17 +72,41 @@ test('CircleCI accepts only the exact audited Wiper guard and prerequisite owner
  for(const mutant of mutants){assert.notEqual(mutant,workflow);assert.throws(()=>parseBrowserLane(mutant,'catalog'));}
 });
 
-test('isolation regression is mandatory in the default Validate verifier',()=>{
+function assertVerifierWiring(source, registry) {
  const file='scripts/tests/inkwave-wiper-capture-isolation.test.mjs';
- const steps=suiteRegistry.verifier.steps;
+ const steps=registry.verifier.steps;
  assert.equal(steps.flatMap(s=>s.args).filter(s=>s===file).length,1);
  const owner=steps.find(s=>s.args.includes(file));assert.equal(owner.program,'node');assert.ok(owner.args.includes('--test'));
- const core=workflow.slice(workflow.indexOf('  validate_core:\n'),workflow.indexOf('  patch_tests:\n'));
+ const core=source.slice(source.indexOf('  validate_core:\n'),source.indexOf('  patch_tests:\n'));
  assert.match(core,/      - name: Verify motion verifier regressions\n        run: node scripts\/ci\/run-inkwave-test-suite\.mjs verifier\n/);
  const verifierStep=core.split('      - name: Verify motion verifier regressions\n')[1].split('\n      - ')[0];
  assert.doesNotMatch(verifierStep,/continue-on-error:|if:/);
- const {jobs}=assertValidateWorkflowContract(workflow);
+ const {jobs}=assertValidateWorkflowContract(source);
  assert.equal(jobs.validate_core.if,"inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)");
+ assert.match(core,/^    needs: build_site$/m);
+ assert.ok(core.includes("    if: inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)\n"));
+ const build=source.slice(source.indexOf('  build_site:\n'),source.indexOf('  validate_core:\n'));
+ assert.match(build,/^    needs: admission_preflight$/m);
+ const contract=build.split('      - name: CI-only source contract acceptance (no browser or unnecessary rebuild)\n')[1]?.split('\n      - ')[0];
+ assert.ok(contract,'CI-only contract step missing');
+ assert.match(contract,/^        if: steps\.scope\.outputs\.contracts_only == 'true'$/m);
+ assert.match(contract,/^          node scripts\/ci\/run-inkwave-test-suite\.mjs verifier$/m);
+ assert.doesNotMatch(contract,/continue-on-error:/);
+}
+test('isolation regression is mandatory in full and CI-only Validate verifier paths',()=>{
+ assertVerifierWiring(workflow,suiteRegistry);
+});
+test('isolation verifier wiring rejects lost ownership and conditional bypasses',()=>{
+ for(const bad of [
+  workflow.replace('    needs: admission_preflight','    needs: unrelated'),
+  workflow.replace('    needs: build_site','    needs: unrelated'),
+  workflow.replace("needs.build_site.outputs.contracts_only != 'true'", "needs.build_site.outputs.contracts_only == 'true'"),
+  workflow.replace('      - name: Verify motion verifier regressions\n        run:', '      - name: Verify motion verifier regressions\n        if: false\n        run:'),
+  workflow.replace('          node scripts/ci/run-inkwave-test-suite.mjs verifier\n','          echo bypass\n'),
+  workflow.replace("if: steps.scope.outputs.contracts_only == 'true'", "if: false"),
+ ]) {assert.notEqual(bad,workflow);assert.throws(()=>assertVerifierWiring(bad,suiteRegistry));}
+ const changed=structuredClone(suiteRegistry);for(const s of changed.verifier.steps)s.args=s.args.filter(a=>a!=='scripts/tests/inkwave-wiper-capture-isolation.test.mjs');
+ assert.throws(()=>assertVerifierWiring(workflow,changed));
 });
 
 test('a diagnostic Wiper capture cannot turn a failed catalog job green',()=>{

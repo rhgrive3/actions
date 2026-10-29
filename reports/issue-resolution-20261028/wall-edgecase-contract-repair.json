@@ -1,0 +1,79 @@
+{
+  "commit": "2edc12f037e0041455b9bd2be7388518536cb3d3",
+  "baseSha": "187e4dddd46820aa6f5bef7e540fe88393bc02f1",
+  "worktree": "/workspace/wt-agent1-wall-contract",
+  "branch": "fix/inkwave-wall-edgecase-contract-20261028",
+  "files": [
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+  ],
+  "testBlobBefore": "53dee2cf26c1f1a84229a0cf6d5e5257000e3bf9",
+  "testBlobAfter": "35d5d9169e8a366ed17932170cc7211301b5227e",
+  "workflowBlobBefore": "da59858af83b13c8b5e20d5fad5510b1b901194f",
+  "workflowBlobAfter": "da59858af83b13c8b5e20d5fad5510b1b901194f",
+  "runtimeOrWorkflowChanged": false,
+  "command": [
+    "node",
+    "--test",
+    "scripts/tests/inkwave-network-diagnostic-workflow.test.mjs",
+    "scripts/tests/inkwave-opening-peer-diagnostic.test.mjs",
+    "scripts/tests/inkwave-owner-clock-diagnostic.test.mjs",
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+    "scripts/tests/inkwave-projectile-menu-start.test.mjs",
+    "scripts/tests/inkwave-sandbox-runner-route.test.mjs"
+  ],
+  "node": "v22.23.4",
+  "baseline": {
+    "path": "/workspace/scratch/agent1-core187-exact-local-repro.log",
+    "sha256": "b05d662af16b2e98ea32196c20467d1f11ee5fa114396747ec28f388d961b0c9",
+    "stats": {
+      "tests": 46,
+      "pass": 44,
+      "fail": 2,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "durationMs": 3903.988405
+  },
+  "fixed": {
+    "path": "/workspace/scratch/agent1-wall-edgecase-fixed-six.log",
+    "sha256": "b4d812a52b471866fe2ee18bc0e296784f0cf403b88f0964e93dc598a98b7f5e",
+    "stats": {
+      "tests": 46,
+      "pass": 46,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "durationMs": 3644.619502
+  },
+  "addedControls": [
+    "Removing INKWAVE_EDGECASE_SITE from the exact emitted guide/phase step must change workflow and fail full-step equality.",
+    "Pointing only INKWAVE_EDGECASE_SITE to /unverified must change workflow and fail full-step equality."
+  ],
+  "preserved": "All original46 top-level cases, command/source coverage, exact full-step equality, fail-closed checks, and assert.notEqual mutation reachability remain. Correct workflow EDGECASE selector unchanged.",
+  "sparseCurrent": {
+    "layout": "/workspace/scratch/agent1-wall-admission-sparse-layout.json",
+    "log": {
+      "path": "/workspace/scratch/agent1-wall-admission-sparse-six.log",
+      "sha256": "e17327d4e60ef8e56bdf92636b1465ff1ee31510e6bc0deeb76c9f12be77eee9",
+      "stats": {
+        "tests": 41,
+        "pass": 40,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "durationMs": 3798.615952
+    },
+    "observedMissingDependency": "/package-lock.json",
+    "why": "Existing wall contract reads package-lock at top-level to validate esbuild0.28.2/playwright1.62.1; current admission sparse path list omits root files.",
+    "payloadExpanded": false,
+    "vendor": false,
+    "nodeModules": false,
+    "history": false
+  },
+  "review": "Agent6 independently approved exact current diff;46/46 on Node22 andNode24, before commit with no subsequent source changes.",
+  "yamlRerun": "Not repeated; no workflow/YAML content changed by this one-file fixture-only commit.",
+  "remoteMutations": false,
+  "gitStatus": ""
+}

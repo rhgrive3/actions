@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "repository": "rhgrive3/actions",
+  "pr": 1907,
+  "original_commit": "606d6b148e7da3de86e234a8ee913e994e436a53",
+  "integrated_commit": "73a789978863953c625bf12b9bd6d1b08d1d6b64",
+  "base": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+  "common_merge": "187e4dddd46820aa6f5bef7e540fe88393bc02f1",
+  "file": "patches/splatoon3/tests/queue-combat-358.test.mjs",
+  "fixture_sha256": "a06d3ccfb22c85245926bcf54411495fd88cfc94e75c28a30e3d2309bdc3d737",
+  "node": "v22.23.4",
+  "command": "node --experimental-vm-modules --test patches/splatoon3/tests/queue-combat-358.test.mjs",
+  "emitted_environment": {
+    "INKWAVE_BUILT_SITE": "/workspace/scratch/agent2-optimized-site"
+  },
+  "baseline": {
+    "tests": 8,
+    "pass": 7,
+    "fail": 1,
+    "skip": 0
+  },
+  "source": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0,
+    "skip": 0
+  },
+  "mixed_emitted_suite": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0,
+    "skip": 0,
+    "scope": "INKWAVE_BUILT_SITE selects actual emitted modules for the original source-fixture-backed real composed Charger helpers case. The geometry matrix and pure source kernels explicitly read current source; they are not 936 emitted cases."
+  },
+  "root_source_compatibility": {
+    "runtime_source": "54465a5def087608ff4a19b23d57e05a3613033a",
+    "targeted_charger_tests": 3,
+    "pass": 3,
+    "fail": 0,
+    "skip": 0,
+    "applied_to_root_branch": false
+  },
+  "source_geometry_matrix": {
+    "scenarios": 936,
+    "full_scan_capsules": 21816,
+    "optimized_capsules": 17016,
+    "culled_native_null": 4800,
+    "matching_reported_hits": 3766,
+    "independent_reference": "Exact current step with only the unique complete broadphase block removed. Real capsuleEntry, form hurtbox, coherent-motion snapshot/clock and stop-admission functions execute; display, world-query results, hit delivery and paint are explicit component API doubles.",
+    "comparisons": [
+      "Retained target identity/order and exact start, base, relative endpoint, radii and native entry fraction.",
+      "Every omitted complete-scan tuple must return null from the actual capsule solver.",
+      "Native step hit order, seen set, stopping position/travel, impact events, defense callback and candidate-lease cleanup."
+    ],
+    "conditions": [
+      "Humanoid and squid hurtboxes; equal, growing and shrinking projectile radii.",
+      "Positive/negative X/Z segments; exact AABB faces and neighboring epsilon positions; native-contact epsilon.",
+      "Coherent crossing and after-expiry motion; absent/stale/discontinuous motion, ghost and nonfixed intervals.",
+      "Zero and NaN speed, zero/short/range-clipped flight, full and partial hits, world and kit-defense stops."
+    ]
+  },
+  "mutants": [
+    "Wrong clipped duration preserving the Math.min call.",
+    "Using only initial radius instead of maximum growing/shrinking radius.",
+    "Dropping the conservative epsilon margin.",
+    "Culling exact boundary equality.",
+    "Bounding the unadjusted shot endpoint instead of relative motion."
+  ],
+  "review": {
+    "reviewer": "Agent4",
+    "status": "approved",
+    "independent_source": {
+      "pass": 10,
+      "fail": 0,
+      "skip": 0
+    },
+    "independent_mixed_emitted_suite": {
+      "pass": 10,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "build": {
+    "site": "/workspace/scratch/agent2-optimized-site",
+    "inputHash": "930c0227c2d08bd3fcca6e691b117497766972f721dc185316c9f3c18d1c8879",
+    "contentHash": "c14fbb326bdef2888af600b72e982e10e26b8cc380e4c57d510656df84720dde"
+  },
+  "logs": {
+    "baseline": {
+      "path": "/workspace/scratch/agent2-charger-broadphase-before.log",
+      "sha256": "f3315896752ad031ad87dd6236a93e854a8a47b06d25a184f84a0eb74a59ca79"
+    },
+    "source": {
+      "path": "/workspace/scratch/agent2-charger-broadphase-fixed.log",
+      "sha256": "ba0dec76b9d77ddf5a1c6d75a486f3e462026383a2d7a97a74a1792f9844bc14"
+    },
+    "mixed_emitted_suite": {
+      "path": "/workspace/scratch/agent2-charger-broadphase-emitted.log",
+      "sha256": "3fb148ec37447ca2fed7e28e24e7aaa2a25705ce66e64fe163d6dd625220a64a"
+    },
+    "root_source_compatibility": {
+      "path": "/workspace/scratch/agent2-charger-broadphase-root-compat.log",
+      "sha256": "f658fdf247fb5f64402a3c7e619edf99219c75e5635f466e9b2e187dd54b74c5"
+    }
+  },
+  "limits": [
+    "Test-only optimized PR repair; production runtime, game build inputs and current root branch are unchanged.",
+    "Component geometry/hit-selection evidence is not native full-match, browser/GPU or Nintendo retail parity.",
+    "Hosted acceptance of the next published optimized head remains pending."
+  ]
+}

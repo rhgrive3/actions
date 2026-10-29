@@ -1,0 +1,193 @@
+{
+  "schema": 1,
+  "sourceBase": "987e2e570e5361da258df13f86bd37a2b089af23",
+  "fixCommits": [
+    "4d3149f9",
+    "6525a510"
+  ],
+  "historicalArtifact": {
+    "run": 40820129308,
+    "job": 123270400752,
+    "candidateHead": "2663b8f7c2be1d6ed073428dd1be9aac789377f5",
+    "artifactId": 12875013608,
+    "artifactSha256": "089d747412413f04efe5928c3424526784df1479ff49934b957f25061d07c084",
+    "actualGeometryCounts": [
+      281,
+      295
+    ],
+    "remainsRejected": true
+  },
+  "sourceMaterialization": {
+    "sourceSha": "364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c",
+    "sourceCount": 5639,
+    "hashVerifiedHardlinkedFiles": 4934,
+    "hardlinkedLogicalBytes": 343929981,
+    "newSourceFilesFromGit": 705,
+    "newSourceBytesFromGit": 13639172,
+    "sharedFilesWrittenOrChmodded": false
+  },
+  "unmodifiedGuards": {
+    "scripts/check-inkwave-explosher-absolute-geometries.mjs": "4714ce0036a8b9d17bd2814a49be50e595323bd8f715d755b4ebc28f710180ed",
+    "scripts/lib/inkwave-explosher-stage-admission.mjs": "e91434453259c84f5b9fe1b03b61a0251edddf6b966f9d448462c4b4891080fa",
+    "scripts/lib/inkwave-explosher-scene-census.mjs": "5ab357fbed62ab5586f76ee976c15a7024db6a0afd916fe2c830bb649d74b8e6",
+    "scripts/lib/inkwave-explosher-inverse-contract.mjs": "583c1434673dad4826de833d1bd68d6ed6b1edfb798cb4a3419f5a3298b35b75"
+  },
+  "frozenVerification": {
+    "sourceFreezeVerified": 38,
+    "archiveMembersVerified": 104,
+    "archiveSha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d",
+    "tarSha256": "02d6e0cf9dbc5e7e3f325c9ee1248c6b924bc3ec3e9dc817030ccb6125aab7e5",
+    "changed": false
+  },
+  "evidence": {
+    "summary.json.gz": {
+      "rawBytes": 4371,
+      "rawSha256": "f628885557f3e3b5fa422f8d2561d6d15965adafd559bc031820657598e9f7bf",
+      "gzipBytes": 1682,
+      "gzipSha256": "083c09b6a6e46cdb335c1d08828bdfa127dd84e02b45dbfca0d3446632604d2d"
+    },
+    "hosted-before-manifest.json.gz": {
+      "rawBytes": 58487,
+      "rawSha256": "edf65352b917ec18060200f3bfacbcc85bd35293d95cafa70fc0f5590980aada",
+      "gzipBytes": 6942,
+      "gzipSha256": "6b42624adf4450475d2245693ef43a70dde055ddf6a3dc15eb3b98c03878635a"
+    },
+    "hosted-after-manifest.json.gz": {
+      "rawBytes": 58474,
+      "rawSha256": "8b5e1f007c4ae4081b591d5e68400b7c6b85597be7e78912a589a88626d5b96e",
+      "gzipBytes": 6935,
+      "gzipSha256": "72686b74881fdac7c30a9cac2c9f5d3e47b6d203ecfc6180d9361d87887752fd"
+    },
+    "hosted-before-lifetime.json.gz": {
+      "rawBytes": 626669,
+      "rawSha256": "a42ef4b54cda68bcde80e4a6ecc6089e4e059a0d50e15a69399179c207523d2b",
+      "gzipBytes": 20431,
+      "gzipSha256": "4de997cfaf80c5008f77f8105c5d36c9d028e53ddfdbe1071acfc65760c22e7e"
+    },
+    "hosted-after-lifetime.json.gz": {
+      "rawBytes": 686464,
+      "rawSha256": "d858978ca40c636787a676989fd43357a5bb106bf848e76111a0d3d927308b6e",
+      "gzipBytes": 22237,
+      "gzipSha256": "527c561f2109c1442e21526b2351d6dcea98f6c88ec9c9cd7b10fee40a7d64ea"
+    },
+    "actual-owner-match.json.gz": {
+      "rawBytes": 49564,
+      "rawSha256": "394b63898743c19c3ce4b2ccc3c67e74fb642a1576f7c71ca0ed91713c1aedf6",
+      "gzipBytes": 3493,
+      "gzipSha256": "15e08823710cc4f4fb03757a403f4014980639b03b3370c3bcbf18ae40460011"
+    },
+    "expanded-owner-lifetime.json.gz": {
+      "rawBytes": 1454094,
+      "rawSha256": "0dc320d295f02e684ef3890797f2f364cf277a8d35e6a7410746b5e661b14025",
+      "gzipBytes": 57249,
+      "gzipSha256": "5e99b5056a8f04fe06dc362eff753d5ccf0023709027d4b89328b9683ec935ff"
+    },
+    "expanded-owner-manifest.json.gz": {
+      "rawBytes": 58488,
+      "rawSha256": "1a12641054efcb8f9fc01c95b1a755fdb7d983b66e54b1d3f009575285be1d01",
+      "gzipBytes": 6944,
+      "gzipSha256": "a2ad74d1b29c2fa158aee5cf8be7873f4c87693c971f70181eee2b08f0ad1e15"
+    },
+    "expanded-owner-processes.json.gz": {
+      "rawBytes": 1857,
+      "rawSha256": "00d2b6f428c24a97dafba59da3cd023ef66c2b64547d5442d2de50235c8bd823",
+      "gzipBytes": 405,
+      "gzipSha256": "338609b1c7135eb537bd1a3bace0fd26cedb30bd93c4313b86bfd8043174c6ff"
+    },
+    "unfenced-local-before-manifest.json.gz": {
+      "rawBytes": 58487,
+      "rawSha256": "15f19663c1244bccf902cbd76e8fc08f3718de929b6ec13a01da1314ae89a886",
+      "gzipBytes": 6942,
+      "gzipSha256": "f6fa04ee4d38d6d7e8b904ee83fc055cb8bb41651dcce60dd78b2cab9f5d8cc3"
+    },
+    "unfenced-local-after-manifest.json.gz": {
+      "rawBytes": 58472,
+      "rawSha256": "f55dd2d27f3986b2aea19add76acdb9a960defe58b109305d6145573b861fa16",
+      "gzipBytes": 6934,
+      "gzipSha256": "666237ec5e34ef69bbd29307afe94f5a076a0d45dfe733a12ba53128569c3f11"
+    },
+    "unfenced-local-before-metadata-timeout.json.gz": {
+      "rawBytes": 87,
+      "rawSha256": "5795ca3f42a7bdff88f87f43dbb22ed1c747bc9fff3231790eb4975a393acd2d",
+      "gzipBytes": 94,
+      "gzipSha256": "af34f907156b163d07e35cba1e8e63a79ca1042850af636283b902addc59af1c"
+    },
+    "unfenced-local-after-metadata-timeout.json.gz": {
+      "rawBytes": 87,
+      "rawSha256": "5795ca3f42a7bdff88f87f43dbb22ed1c747bc9fff3231790eb4975a393acd2d",
+      "gzipBytes": 94,
+      "gzipSha256": "af34f907156b163d07e35cba1e8e63a79ca1042850af636283b902addc59af1c"
+    },
+    "fenced-before-manifest.json.gz": {
+      "rawBytes": 59035,
+      "rawSha256": "13445a293d76169676f47b48a1b2828901132200e8c82b04b89ebe87feb5f99d",
+      "gzipBytes": 6987,
+      "gzipSha256": "883c8452fa1a1f6a365ff939342eb3de44b08c5790a286b56208aee0e8c2f97a"
+    },
+    "fenced-after-manifest.json.gz": {
+      "rawBytes": 59018,
+      "rawSha256": "0066cc1cc801dc3755fa7ce995f3911b67f92139818af0dc9fa15d3d40c87a49",
+      "gzipBytes": 6978,
+      "gzipSha256": "41f2c18d1b85708d4c69676b7bebeaf9f17bce031d9642d453a0eb2c2fced020"
+    },
+    "fenced-stage-admission.json.gz": {
+      "rawBytes": 6355,
+      "rawSha256": "71eb76ea7b3317d76108baf115cf0266830dec6dc085a230f8b11b85cecc656d",
+      "gzipBytes": 1619,
+      "gzipSha256": "9cf2e3f09f63a9d9a02d129713208b52dc3fb2116dc28e06d26c44c4ba6cd7ba"
+    },
+    "fenced-absolute-admission.json.gz": {
+      "rawBytes": 7145,
+      "rawSha256": "1c01e99e16e952291fed4b36bd6df0ecc4059511767b03c7ce933d22535d288f",
+      "gzipBytes": 1896,
+      "gzipSha256": "25530b6705a4b640234cc908e2fdd462579bc5949eb4436dfe2d3cb1abd2b23f"
+    },
+    "fenced-controlled-main-receipt.json.gz": {
+      "rawBytes": 1343,
+      "rawSha256": "4ee336536bf07296fd53bc7280b0392d2cdb362eb12dad8af4a0191936b0cd8c",
+      "gzipBytes": 787,
+      "gzipSha256": "8ebab2423c9b273594a76df4fbd3f7d2b27170c99da126cad93b0ebb4f16280a"
+    },
+    "fenced-processes.json.gz": {
+      "rawBytes": 3916,
+      "rawSha256": "d4ae0801bbac7e77751a3a4ae5ed939823a90500184e05032e31e3adee44f9c6",
+      "gzipBytes": 486,
+      "gzipSha256": "b28af38b13a9ef1b98cfc6cbc1a8f40e9ce925df7e0e1b7b9d193d7a86911b80"
+    },
+    "source-build-admission-before.json.gz": {
+      "rawBytes": 658,
+      "rawSha256": "feb36e4cf3b2b97b4aa5ee24adfd3667d6cd57ac061a5468a8247c5a585e5105",
+      "gzipBytes": 419,
+      "gzipSha256": "ff24700b4c0e6b9d3b2a5c630b4879e3cbcb3e8af3cf8b3484e80cb634aad6fc"
+    },
+    "source-build-admission-after.json.gz": {
+      "rawBytes": 658,
+      "rawSha256": "feb36e4cf3b2b97b4aa5ee24adfd3667d6cd57ac061a5468a8247c5a585e5105",
+      "gzipBytes": 419,
+      "gzipSha256": "ff24700b4c0e6b9d3b2a5c630b4879e3cbcb3e8af3cf8b3484e80cb634aad6fc"
+    },
+    "frozen-after.json.gz": {
+      "rawBytes": 256,
+      "rawSha256": "ce5a334f0a29d914281ce14092a17bac12b32703dd4ce8dc2fde4868eae04210",
+      "gzipBytes": 198,
+      "gzipSha256": "6458604fc52d44c02b7443dbd9c23fc7fc1b918efa8d36c567051d619e1aab68"
+    },
+    "tests-98.tap.gz": {
+      "rawBytes": 8941,
+      "rawSha256": "9d8c4fa7b7a8782ac57c88e8e1683902cbf8b012e5f40654284f0fffe5341859",
+      "gzipBytes": 3549,
+      "gzipSha256": "35e0e1d2cca32f44ade8eb653ca573f04aa9dbb9f33984c9808e4d449c5460a1"
+    },
+    "original-observer-tests-15.tap.gz": {
+      "rawBytes": 2008,
+      "rawSha256": "745ed067937b3abc7e13f736b5acba1e9d6279ebd0053b1e3d82485554560391",
+      "gzipBytes": 1066,
+      "gzipSha256": "f89480c48d0a9a1e07559129312cb25f1f9ea24a7a28df5d2e5a0fe5d81e214d"
+    }
+  },
+  "diagnosticSourceHashes": {
+    "scripts/diagnostics/inkwave-explosher-geometry-owners.mjs": "46990acd6057286b17bae283a783b631567b243f0ee1544d463d2e6214e536d3",
+    "scripts/.explosher-geometry-owner-capture.mjs": "fc6cd5abada607a847f068813d9fe12076686af0e9986fbc8b4e6bc1295032ae"
+  },
+  "publicationPolicy": "JSON/log receipts only; no private assets, Drive URLs, PNG/RGBA payloads or diagnostic execution code. All native counts are unadjusted."
+}

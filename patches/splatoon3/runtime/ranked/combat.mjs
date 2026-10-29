@@ -4,6 +4,7 @@ import { toxicMistScale } from '../toxic-mist.mjs';
 import { rainmakerWallBlast, rainmakerWallsBlockBlast, rainmakerDomeBlast } from './rainmaker-defense.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
 import { BIG_BUBBLER_RAW } from '../kit-big-bubbler.mjs';
+import { createRainmakerAttackVisuals } from './rainmaker-visuals.mjs';
 
 export function sphereEntry(start, end, center, radius) {
   const d = end.map((v, i) => v - start[i]), o = start.map((v, i) => v - center[i]);
@@ -137,8 +138,11 @@ function barrierDamage(m, actor, amount, kind, pos, api) {
 
 export function createRankedEffects(api, match) {
   const { THREE, G, Hit } = api;
-  const shots = [], shotMaterials = new Map();
-  let shotGeometry = null;
+  const shots = [];
+  let visuals = null;
+  // Headless rule/timeout consumers can run before a scene is installed.
+  // Bind on the first rendered event, rather than capturing a null boot scene.
+  const attackVisuals = () => visuals || (G.scene?.add ? (visuals = createRainmakerAttackVisuals(THREE, G.scene)) : null);
   const hit = new Hit();
   function damage(victim, attacker, amount, cause = 'Gachihoko_Bullet') {
     if (!victim.alive || victim.team === attacker?.team) return;
@@ -151,15 +155,23 @@ export function createRankedEffects(api, match) {
       api.emit('hit', { attacker, victim, damage: amount, killed, weaponId: 'rainmaker' });
     }
   }
+  const _blastUp = new THREE.Vector3(0, 1, 0), _blastLift = new THREE.Vector3(0, .05, 0), _blastFrames = [];
+  let _blastDepth = 0;
   function explode(pos, team, radius, amount, attacker, visualOnly = false, paintRadius = radius, outerDamage = amount, nearRadius = radius * .45, noSpecial = false, shot = null) {
-    const p = new THREE.Vector3(...pos);
-    G.fx?.ring?.(p, new THREE.Vector3(0, 1, 0), G.teamColors[team], { radius, life: .6 });
+    // Hit listeners may synchronously emit another blast. Lease one scratch
+    // frame per active call so an inner event cannot move the outer LOS origin.
+    const depth = _blastDepth++;
+    try {
+    const scratch = _blastFrames[depth] || (_blastFrames[depth] = { body: new THREE.Vector3(), from: null });
+    const p = new THREE.Vector3(...pos); // Owned by this event; FX/audio may retain it.
+    G.fx?.ring?.(p, _blastUp, G.teamColors[team], { radius, life: .6 });
+    attackVisuals()?.splash(p, G.teamColors[team], radius);
     G.audio?.play?.('bomb_explode', { pos: p, volume: .7 });
-    const blastFrom = shot?.from || p.clone().add(new THREE.Vector3(0, .05, 0));
+    const blastFrom = shot?.from || (scratch.from || (scratch.from = new THREE.Vector3())).copy(p).add(_blastLift);
     const domeSheltered = shot && !visualOnly ? new Set() : null;
     if (shot && !visualOnly) for (const a of match.actors) if (a.alive && a.team !== team) {
-      const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
-      if (body.distanceTo(p) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
+      const body = scratch.body.set(a.pos.x, a.pos.y + 0.7, a.pos.z);
+      if (Math.sqrt(body.distanceToSquared(p)) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
     }
     const walls = shot ? rainmakerWallBlast(api, p, attacker, team, radius, nearRadius, amount, outerDamage, shot.impactWall) : [];
@@ -167,28 +179,26 @@ export function createRankedEffects(api, match) {
     if (visualOnly) return;
     G.paint?.splat?.(p, paintRadius, team, { seed: match.ranked.revision % 65536, claimOwner: attacker, ...(noSpecial ? { claimMode: 'no-special' } : {}) });
     for (const a of match.actors) if (amount > 0 && a.alive && a.team !== team) {
-      const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
-      const distance = body.distanceTo(p);
-      if (distance <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a))
+      const body = scratch.body.set(a.pos.x, a.pos.y + 0.7, a.pos.z);
+      const d2 = body.distanceToSquared(p);
+      if (Math.sqrt(d2) <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a)) {
+        const distance = Math.sqrt(d2);
         damage(a, attacker, distance <= nearRadius ? amount : outerDamage, shot ? 'Gachihoko_BombCore' : 'GachihokoTimeUpBurst');
+      }
     }
+    } finally { _blastDepth = depth; }
   }
   function event(e, visualOnly = false) {
     if (e.kind === 'rainmaker-charged') G.audio?.play?.('charger_full', { pos: new THREE.Vector3(...e.pos), volume: .7 });
     else if (e.kind === 'rainmaker-shot' && Array.isArray(e.pos) && Array.isArray(e.aim)) {
       const a = match.actors.find(a => actorId(a) === String(e.actorId ?? e.carrier ?? e.id));
       if (!a || !a.alive || !validRainmakerShotOrigin(e.shotOrigin, e) || !rainmakerShotOwnerMatches(e.shotOrigin, a)) return;
-      const geometry = shotGeometry || (shotGeometry = new THREE.SphereGeometry(.32, 10, 8));
-      const color = G.teamColors[e.team], materialKey = color?.isColor ? `${color.r}:${color.g}:${color.b}` : color;
-      let resource = shotMaterials.get(materialKey);
-      if (!resource) { resource = { material: new THREE.MeshBasicMaterial({ color }), count: 0, key: materialKey }; shotMaterials.set(materialKey, resource); }
-      resource.count++;
-      const material = resource.material;
-      const mesh = new THREE.Mesh(geometry, material); mesh.position.fromArray(e.shotOrigin.muzzle);
-      G.scene.add(mesh);
+      if (!attackVisuals()) return;
+      const mesh = visuals.shot(G.teamColors[e.team], e.charge, e.shotOrigin.muzzle);
       shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 22), age: 0, team: e.team,
-        actor: a, mesh, geometry, material, resource, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
+        actor: a, mesh, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
       shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 3.36 : 1.68);
+      visuals.updateShot(mesh, shots.at(-1).vel, 0);
       if (!a.remote && a.vel) {
         const recoil = e.recoil ?? (e.charge >= 1 ? 1.44 : .72);
         a.vel.x -= e.aim[0] * recoil; a.vel.z -= e.aim[2] * recoil;
@@ -212,7 +222,7 @@ export function createRankedEffects(api, match) {
   const ownsDefense = s => s.actor?.remote !== true;
   function retire(s) {
     G.scene.remove(s.mesh);
-    if (--s.resource.count === 0) { s.resource.material.dispose(); shotMaterials.delete(s.resource.key); }
+    s.mesh.getObjectByName('rainmaker-shot-droplets')?.dispose();
   }
   function advanceShot(s, dt, release = false) {
     if (!release) s.previous.copy(s.pos);
@@ -244,7 +254,7 @@ export function createRankedEffects(api, match) {
     let terminal = !!worldPoint || !!blocked || !!target;
     if (target || blocked) s.pos.copy(s.previous.clone().lerp(s.pos, nearest));
     else if (worldPoint) s.pos.copy(worldPoint);
-    const floor = match.rankedWorld?.floorAt?.(s.pos.x, s.pos.z);
+    const floor = match.rankedWorld?.floorAt?.(s.pos.x, s.pos.z, s.pos.y);
     const water = floor === null && s.pos.y <= (api.PLAYER?.waterY ?? -1);
     if (water || s.age > 3 || blocked?.kind === 'ultra-stamp-guard' || blocked?.kind === 'ink-vac') {
       if (blocked && ownsDefense(s)) blocked.onHit(probe);
@@ -275,6 +285,7 @@ export function createRankedEffects(api, match) {
       } finally { s.trailRayDepth = depth; }
     }
     if (!terminal) return false;
+    visuals.splash(s.pos, G.teamColors[s.team], Math.max(.5, s.trailRadius * 2), 'impact');
     if (!(s.damage > 0)) {
       if (!s.visualOnly) G.paint?.splat?.(s.pos.clone(), s.paintRadius, s.team, { claimOwner: s.actor, claimMode: 'no-special' });
       retire(s); return true;
@@ -283,13 +294,14 @@ export function createRankedEffects(api, match) {
     if (blocked || target?.specialActive?.id === 'crabTank') {
       explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall, dome: s.impactDome });
       retire(s); return true;
-    } else { s.landed = true; s.wait = .2; s.mesh.visible = false; }
+    } else { s.landed = true; s.wait = .2; }
     return false;
   }
   return {
     event,
     update(dt) {
       if (match.state !== 'playing') return;
+      visuals?.update(dt);
       for (let i = shots.length - 1; i >= 0; i--) {
         const s = shots[i];
         if (s.landed) {
@@ -302,19 +314,20 @@ export function createRankedEffects(api, match) {
             retire(s); shots.splice(i, 1); continue;
           }
           s.wait -= dt;
-          if (s.wait > 1e-9) continue;
+          if (s.wait > 1e-9) { visuals.updateShot(s.mesh, s.vel, s.age, true, s.wait); continue; }
           explode(s.pos.toArray(), s.team, s.radius, s.damage, s.actor, s.visualOnly, s.paintRadius, s.outerDamage, s.nearRadius, true, { from: s.blastStart, impactWall: s.impactWall });
           retire(s); shots.splice(i, 1); continue;
         }
         if (s.releaseStart) {
           s.previous.copy(s.releaseStart); s.releaseStart = null;
           if (advanceShot(s, 0, true)) { shots.splice(i, 1); continue; }
-          if (s.landed) continue;
+          if (s.landed) { visuals.updateShot(s.mesh, s.vel, s.age, true, s.wait); continue; }
         }
         if (advanceShot(s, dt)) shots.splice(i, 1);
+        else visuals.updateShot(s.mesh, s.vel, s.age, s.landed, s.wait);
 
       }
     },
-    dispose() { for (const s of shots) retire(s); shots.length = 0; shotGeometry?.dispose(); shotGeometry = null; shotMaterials.clear(); },
+    dispose() { for (const s of shots) retire(s); shots.length = 0; visuals?.dispose(); },
   };
 }

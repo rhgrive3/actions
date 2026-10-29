@@ -75,6 +75,19 @@ test('Rainmaker timeout uses the real Actor.splat path for a local carrier', asy
   effects.dispose();
 });
 
+test('headless Rainmaker timeout preserves gameplay and later binds the current render scene', async () => {
+  const h = await makeHarness(), shooter = h.actor('late-scene', 0, [0, 0, 0]);
+  const scene = h.G.scene; h.G.scene = null; h.match.actors = [shooter];
+  let splats = 0; shooter.splat = () => { splats++; };
+  assert.doesNotThrow(() => h.effects.event({ kind: 'rainmaker-timeout', id: shooter.nid, pos: [0, 0, 0], team: 0 }));
+  assert.equal(splats, 1);
+  assert.equal(h.calls.sceneAdds.length, 0);
+  h.G.scene = scene;
+  h.effects.event(fullShot(shooter.nid));
+  assert.equal(h.calls.sceneAdds.length, 1, 'the first rendered shot binds the scene installed after construction');
+  h.effects.dispose();
+});
+
 test('swept Rainmaker shot resolves its actorId rather than the projectile sequence id', async () => {
   const h = await makeHarness();
   const shooter = h.actor('host-actor-17', 0, [0, 0, 0]);
@@ -206,6 +219,21 @@ test('water removes a charged projectile without explosion, paint, or damage', a
   h.match.rankedWorld = { floorAt: () => null };
   h.effects.event({ ...fullShot(shooter.nid), aim: [0, -1, 0] }); h.effects.update(.2); h.effects.update(.3);
   assert.equal(h.calls.sceneRemoves.length, 1); assert.deepEqual(h.calls.rings, []); assert.deepEqual(h.calls.paints, []); assert.deepEqual(h.calls.damage, []);
+  h.effects.dispose();
+});
+
+for (const hz of [30, 60, 120]) test(`an overhead floor cannot turn a Rainmaker water entry into a blast at ${hz}Hz`, async () => {
+  const h = await makeHarness(), shooter = h.actor('under-bridge', 0, [0, 0, 0]); h.match.actors = [shooter];
+  const heights = [];
+  h.match.rankedWorld = { floorAt: (_x, _z, yMax) => {
+    heights.push(yMax);
+    return yMax === undefined || yMax >= 5 ? 5 : null;
+  } };
+  h.effects.event({ ...fullShot(shooter.nid), aim: [0, -1, 0] });
+  for (let i = 0; i < hz / 2; i++) h.effects.update(1 / hz);
+  assert.equal(h.calls.sceneRemoves.length, 1);
+  assert.ok(heights.length > 0 && heights.every(Number.isFinite));
+  assert.deepEqual(h.calls.rings, []); assert.deepEqual(h.calls.paints, []); assert.deepEqual(h.calls.damage, []);
   h.effects.dispose();
 });
 

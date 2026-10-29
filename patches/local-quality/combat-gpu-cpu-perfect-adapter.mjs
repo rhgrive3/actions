@@ -22,11 +22,13 @@ export const adaptCombatGpuCpuPerfectTargets = Object.freeze([
   'src/game/character-weapons.js',
   'src/world/paint.js',
   'src/game/actor.js',
+  'src/game/inkFlightRuntime.js',
   'src/game/weapons.js',
   'src/game/bots.js',
   'src/boss/boss.js',
   'src/game/match.js',
   'src/game/player.js',
+  'src/game/cameraRig.js',
   'src/ui/hud.js',
   'src/net/netmatch.js',
   'src/main.js',
@@ -589,24 +591,46 @@ export class SwimWake {`,
   }
 
   if (rel === 'src/world/paint.js') {
-    // CPU-01: Early bounds rejection and r2 hoist in PaintSystem.regionStats.
+    // CPU-01 / CMB-11: Early bounds rejection, row-hoisted dv2 check, and array reference hoist in PaintSystem.regionStats.
     code = applyIdempotent(
       code,
       `        const i0 = Math.max(0, Math.floor((lu - radius) / f.cu)), i1 = Math.min(f.nu - 1, Math.floor((lu + radius) / f.cu));
         const j0 = Math.max(0, Math.floor((lv - radius) / f.cv)), j1 = Math.min(f.nv - 1, Math.floor((lv + radius) / f.cv));
         for (let j = j0; j <= j1; j += 2) for (let i = i0; i <= i1; i += 2) {
           const du = (i + 0.5) * f.cu - lu, dv = (j + 0.5) * f.cv - lv;
-          if (du * du + dv * dv > radius * radius) continue;`,
+          if (du * du + dv * dv > radius * radius) continue;
+          const k = f.grid + j * f.nu + i;
+          if (this.dead[k]) continue;
+          const g = this.grid[k];`,
       `        const i0 = Math.max(0, Math.floor((lu - radius) / f.cu)), i1 = Math.min(f.nu - 1, Math.floor((lu + radius) / f.cu));
         if (i0 > i1) continue;
         const j0 = Math.max(0, Math.floor((lv - radius) / f.cv)), j1 = Math.min(f.nv - 1, Math.floor((lv + radius) / f.cv));
         if (j0 > j1) continue;
-        const r2 = radius * radius;
-        for (let j = j0; j <= j1; j += 2) for (let i = i0; i <= i1; i += 2) {
-          const du = (i + 0.5) * f.cu - lu, dv = (j + 0.5) * f.cv - lv;
-          if (du * du + dv * dv > r2) continue;`,
+        const r2 = radius * radius, cu = f.cu, cv = f.cv, nu = f.nu, fGrid = f.grid, dead = this.dead, grid = this.grid;
+        for (let j = j0; j <= j1; j += 2) {
+          const dv = (j + 0.5) * cv - lv, dv2 = dv * dv;
+          if (dv2 > r2) continue;
+          const row = fGrid + j * nu;
+          for (let i = i0; i <= i1; i += 2) {
+            const du = (i + 0.5) * cu - lu;
+            if (du * du + dv2 > r2) continue;
+            const k = row + i;
+            if (dead[k]) continue;
+            const g = grid[k];`,
       replaceOnce,
       'CPU-01 early bounds rejection and r2 hoist in PaintSystem.regionStats'
+    );
+    code = applyIdempotent(
+      code,
+      `          if (g === own) out.own++; else if (g) out.enemy++; else out.empty++;
+        }
+      }`,
+      `          if (g === own) out.own++; else if (g) out.enemy++; else out.empty++;
+          }
+        }
+      }`,
+      replaceOnce,
+      'CPU-01 close outer j loop in PaintSystem.regionStats'
     );
   }
 
@@ -650,6 +674,7 @@ export class SwimWake {`,
       replaceOnce,
       'CPU-07a fast-path empty clouds and reuse _rainHits Map in _updateClouds'
     );
+
   }
 
   if (rel === 'src/game/bots.js') {
@@ -698,6 +723,22 @@ export class SwimWake {`,
       if (!onOwnInk && remaining < 1.5 && (inkFrac > 0.03 || (_wk1 === 'charger' || _wk1 === 'splatling' || _wk1 === 'stringer' || _wk1 === 'splatana') && (a.weaponRunner.charging || a.weaponRunner.s3ReleaseHold))) { it.squid = false; it.fire = this._puddleFire(dt); wantPitch = -1.0; }`,
       replaceOnce,
       'CPU-10 replace boss refill array literal in bots.js'
+    );
+    // MOV-09: Precompute fixed trigonometric table for [0.8, -0.8, 1.45, -1.45] in _edgeGuardUncached.
+    code = applyIdempotent(
+      code,
+      `    for (const ang of [0.8, -0.8, 1.45, -1.45]) {
+      const c = Math.cos(ang), s = Math.sin(ang), nx = dx * c + dz * s, nz = -dx * s + dz * c;
+      if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
+    }`,
+      `    const _egCos0 = Math.cos(0.8), _egSin0 = Math.sin(0.8), _egCos1 = Math.cos(1.45), _egSin1 = Math.sin(1.45);
+    for (let _egi = 0; _egi < 4; _egi++) {
+      const c = _egi < 2 ? _egCos0 : _egCos1, s = _egi === 0 ? _egSin0 : _egi === 1 ? -_egSin0 : _egi === 2 ? _egSin1 : -_egSin1;
+      const nx = dx * c + dz * s, nz = -dx * s + dz * c;
+      if (!bad(nx, nz)) { mv.set(nx * m, 0, nz * m); return; }
+    }`,
+      replaceOnce,
+      'MOV-09 precompute trigonometric values in _edgeGuardUncached'
     );
   }
 
@@ -872,6 +913,239 @@ export class SwimWake {`,
     }]));`;
         code = applyIdempotent(code, beforeBlockD8, exactAfterDD, replaceOnce, 'CPU-17b single-pass sc, l, and rl packing in NetMatch._sendTick (d88aa683)');
       }
+    }
+    if (rel === 'src/game/cameraRig.js') {
+      // MOV-03: Remove redundant unconditional gc.updateProjectionMatrix() after projectionDirty guard.
+      code = applyIdempotent(
+        code,
+        `    if (projectionDirty) gc.updateProjectionMatrix();
+    gc.updateProjectionMatrix();
+    gc.updateMatrixWorld();`,
+        `    if (projectionDirty) gc.updateProjectionMatrix();
+    gc.updateMatrixWorld();`,
+        replaceOnce,
+        'MOV-03 remove duplicate unconditional gameCam.updateProjectionMatrix in CameraRig.update'
+      );
+    }
+
+    if (rel === 'src/game/player.js') {
+      // MOV-04a: Reuse cached effective weapon descriptor in _assistTarget and computeAim instead of per-frame object spread.
+      code = applyIdempotent(
+        code,
+        `    const fwd = cam.getWorldDirection(_fwd);
+    const w = (a.weapon?.behaviorKind || a.weapon?.kind === 'catalog') ? {
+      ...a.weapon,
+      kind: ({
+        stringer: 'charger',
+        splatana: 'charger',
+        brush: 'roller',
+        brella: 'shooter',
+      }[a.weapon.behaviorKind || a.weapon.modelKind] || a.weapon.behaviorKind || a.weapon.modelKind),
+    } : a.weapon;`,
+        `    const fwd = cam.getWorldDirection(_fwd);
+    let w = a.weapon;
+    if (w?.behaviorKind || w?.kind === 'catalog') {
+      const bk = w.behaviorKind || w.modelKind;
+      const rk = bk === 'stringer' || bk === 'splatana' ? 'charger' : bk === 'brush' ? 'roller' : bk === 'brella' ? 'shooter' : bk;
+      const ew = this._effWeapon || (this._effWeapon = {});
+      if (this._effWeaponSrc !== w) { this._effWeaponSrc = w; Object.assign(ew, w); }
+      else { ew.range = w.range; ew.rangeMin = w.rangeMin; ew.rangeMax = w.rangeMax; ew.reticleRange = w.reticleRange; ew.combatRange = w.combatRange; }
+      ew.kind = rk;
+      w = ew;
+    }`,
+        replaceOnce,
+        'MOV-04a reuse _effWeapon in PlayerController._assistTarget'
+      );
+      code = applyIdempotent(
+        code,
+        `    // is the crosshair point inside the weapon's effective range? (HUD reticle state)
+    const w = (a.weapon?.behaviorKind || a.weapon?.kind === 'catalog') ? {
+      ...a.weapon,
+      kind: ({
+        stringer: 'charger',
+        splatana: 'charger',
+        brush: 'roller',
+        brella: 'shooter',
+      }[a.weapon.behaviorKind || a.weapon.modelKind] || a.weapon.behaviorKind || a.weapon.modelKind),
+    } : a.weapon;`,
+        `    // is the crosshair point inside the weapon's effective range? (HUD reticle state)
+    let w = a.weapon;
+    if (w?.behaviorKind || w?.kind === 'catalog') {
+      const bk = w.behaviorKind || w.modelKind;
+      const rk = bk === 'stringer' || bk === 'splatana' ? 'charger' : bk === 'brush' ? 'roller' : bk === 'brella' ? 'shooter' : bk;
+      const ew = this._effWeapon || (this._effWeapon = {});
+      if (this._effWeaponSrc !== w) { this._effWeaponSrc = w; Object.assign(ew, w); }
+      else { ew.range = w.range; ew.rangeMin = w.rangeMin; ew.rangeMax = w.rangeMax; ew.reticleRange = w.reticleRange; ew.combatRange = w.combatRange; }
+      ew.kind = rk;
+      w = ew;
+    }`,
+        replaceOnce,
+        'MOV-04a reuse _effWeapon in PlayerController.computeAim'
+      );
+      // MOV-04b: Reuse _padMapAllies and eliminate per-tick direction/shoulder array allocations in respawn & pad map navigation.
+      code = applyIdempotent(
+        code,
+        `    this.updatePadMapSelection(standard);
+    const allies = G.actors.filter(o => o.team === a.team && o !== a);
+    // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.
+    const touchIndex = touch?.jumpTarget ?? -1; if (touch) touch.jumpTarget = -1;
+    for (let i = 0; i < 4; i++) {
+      const key = 'Digit' + (i + 1), direction = [14,12,15,13][i];`,
+        `    this.updatePadMapSelection(standard);
+    const allies = this._padMapAllies || (this._padMapAllies = []); allies.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o.team === a.team && o !== a) allies.push(o); }
+    // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.
+    const touchIndex = touch?.jumpTarget ?? -1; if (touch) touch.jumpTarget = -1;
+    for (let i = 0; i < 4; i++) {
+      const key = 'Digit' + (i + 1), direction = i === 0 ? 14 : i === 1 ? 12 : i === 2 ? 15 : 13;`,
+        replaceOnce,
+        'MOV-04b reuse _padMapAllies and branch direction lookup in updateRespawnNavigation'
+      );
+      code = applyIdempotent(
+        code,
+        `    if (!this.mapHeld || !standardPad) { this.padJumpTarget = null; this.padJumpIndex = -1; return; }
+    const allies = G.actors.filter(o => o.team === a.team && o !== a);
+    let selected = false;
+    // W3C standard positions: D-pad left/up/right/down, LB/RB cycle Bubblers, right face = Nintendo A.
+    const directions = [14, 12, 15, 13], confirm = 1;
+    const bubblers = G.bigBubblerJumpTargets?.(a.team) || [];
+    for (let i = 0; i < directions.length; i++) if (inp.padPressed.has(directions[i])) {
+      this.padJumpTarget = i === 3 ? { spawn: true } : { actor: allies[i] || null };
+      this._mapGyroYaw = this._mapGyroPitch = 0;
+      this._mapGyroCursor = false; this.mapGyroTarget = null;
+      selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(directions[i]);
+    }
+    for (const [button, delta] of [[4, -1], [5, 1]]) if (inp.padPressed.has(button)) {
+      const current = this.padJumpTarget?.bubblerIndex ?? (delta > 0 ? -1 : bubblers.length);
+      const index = (current + delta + bubblers.length) % bubblers.length;
+      this.padJumpTarget = bubblers.length ? { bubbler: bubblers[index], bubblerIndex: index } : null;
+      this._mapGyroYaw = this._mapGyroPitch = 0;
+      this._mapGyroCursor = false; this.mapGyroTarget = null;
+      selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(button);
+    }`,
+        `    if (!this.mapHeld || !standardPad) { this.padJumpTarget = null; this.padJumpIndex = -1; return; }
+    const allies = this._padMapAllies || (this._padMapAllies = []); allies.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o.team === a.team && o !== a) allies.push(o); }
+    let selected = false;
+    // W3C standard positions: D-pad left/up/right/down, LB/RB cycle Bubblers, right face = Nintendo A.
+    const confirm = 1;
+    const bubblers = G.bigBubblerJumpTargets?.(a.team) || [];
+    for (let i = 0; i < 4; i++) {
+      const dirBtn = i === 0 ? 14 : i === 1 ? 12 : i === 2 ? 15 : 13;
+      if (inp.padPressed.has(dirBtn)) {
+        this.padJumpTarget = i === 3 ? { spawn: true } : { actor: allies[i] || null };
+        this._mapGyroYaw = this._mapGyroPitch = 0;
+        this._mapGyroCursor = false; this.mapGyroTarget = null;
+        selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(dirBtn);
+      }
+    }
+    for (let s = 0; s < 2; s++) {
+      const button = s === 0 ? 4 : 5, delta = s === 0 ? -1 : 1;
+      if (inp.padPressed.has(button)) {
+        const current = this.padJumpTarget?.bubblerIndex ?? (delta > 0 ? -1 : bubblers.length);
+        const index = (current + delta + bubblers.length) % bubblers.length;
+        this.padJumpTarget = bubblers.length ? { bubbler: bubblers[index], bubblerIndex: index } : null;
+        this._mapGyroYaw = this._mapGyroPitch = 0;
+        this._mapGyroCursor = false; this.mapGyroTarget = null;
+        selected = true; this.pendingRespawnJump = null; inp.padPressed.delete(button);
+      }
+    }`,
+        replaceOnce,
+        'MOV-04b reuse _padMapAllies and unroll direction/shoulder loops in updatePadMapSelection'
+      );
+    }
+
+    if (rel === 'src/game/actor.js') {
+      // MOV-05: Reuse _stormIntent and preserve jumpPressed consumption on this.intent during Ink Storm hold.
+      code = applyIdempotent(
+        code,
+        `    const stormHolding = isStormHolding(this);
+    const intent = stormHolding ? { ...this.intent, fire: false, sub: false, special: false } : this.intent;`,
+        `    const stormHolding = isStormHolding(this);
+    let intent = this.intent;
+    if (stormHolding) {
+      const si = this._stormIntent || (this._stormIntent = { move: intent.move, squid: false, jump: false, jumpPressed: undefined, fire: false, sub: false, special: false });
+      si.move = intent.move; si.squid = intent.squid; si.jump = intent.jump; si.jumpPressed = intent.jumpPressed;
+      si.fire = false; si.sub = false; si.special = false;
+      if (intent.jumpPressed !== undefined) intent.jumpPressed = false;
+      intent = si;
+    }`,
+        replaceOnce,
+        'MOV-05 reuse _stormIntent and clear this.intent.jumpPressed during Ink Storm hold'
+      );
+    }
+
+    if (rel === 'src/game/bots.js') {
+      // MOV-08a: Reuse _paintChoices, _paintChoicePool, _mates, and _triedGoals in BotMind._pickPaintGoal.
+      code = applyIdempotent(
+        code,
+        `    const choices = [];
+    const enemyPad = G.level.spawnPads[1 - a.team];
+    const ownPad = G.level.spawnPads[a.team];
+    const total = ownPad.distanceTo(enemyPad);
+    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);`,
+        `    const choices = this._paintChoices || (this._paintChoices = []); choices.length = 0;
+    const choicePool = this._paintChoicePool || (this._paintChoicePool = []);
+    const enemyPad = G.level.spawnPads[1 - a.team];
+    const ownPad = G.level.spawnPads[a.team];
+    const total = ownPad.distanceTo(enemyPad);
+    const mates = this._mates || (this._mates = []); mates.length = 0;
+    for (let i = 0; i < G.actors.length; i++) { const o = G.actors[i]; if (o !== a && o.team === a.team && o.bot) mates.push(o); }`,
+        replaceOnce,
+        'MOV-08a reuse _paintChoices, _paintChoicePool, and _mates in BotMind._pickPaintGoal'
+      );
+      code = applyIdempotent(
+        code,
+        `      choices.push({ id, score });
+    }
+    this.goalTimer = 4 + Math.random() * 3;
+    choices.sort((a, b) => b.score - a.score);
+    // Try at most three distinct goals. A one-way drop or isolated height must
+    // not trigger sixteen new paint scans on every simulation tick.
+    const tried = new Set();`,
+        `      let entry = choicePool[choices.length];
+      if (!entry) entry = choicePool[choices.length] = { id: 0, score: 0 };
+      entry.id = id; entry.score = score;
+      choices.push(entry);
+    }
+    this.goalTimer = 4 + Math.random() * 3;
+    choices.sort((a, b) => b.score - a.score);
+    // Try at most three distinct goals. A one-way drop or isolated height must
+    // not trigger sixteen new paint scans on every simulation tick.
+    const tried = this._triedGoals || (this._triedGoals = new Set()); tried.clear();`,
+        replaceOnce,
+        'MOV-08a pool choice entries and reuse _triedGoals Set in BotMind._pickPaintGoal'
+      );
+    }
+
+    // MOV-08b Character._updateSquid optimization remains excluded:
+    // character-model work is paused pending explicit scope review.
+
+    if (rel === 'src/game/inkFlightRuntime.js') {
+      // CMB-04: capsuleEntry already bounds the segment with the actual hurtbox
+      // and projectile radii. A terrain-radius + .25 prefilter rejects the
+      // installed .675 squid hurtbox and caller-supplied larger hurtboxes.
+      // Keep the native actor scan and its exact unique source guard.
+      const nativeActorScan = `      for (const actor of G.actors) {
+        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head
+        const friendly = actor.team === p.team;
+        if (!actor.alive || actor === p.owner || (friendly && (actor.submerged || !Number.isFinite(p.fidelityFriendThrough)))) continue;
+        this.base.set(actor.pos.x, actor.pos.y, actor.pos.z);
+        const motion = coherentMotionStart(actor);`;
+      code = replaceOnce(code, nativeActorScan, nativeActorScan,
+        'CMB-04 preserve native shape-aware capsule scan');
+    }
+
+    if (rel === 'src/game/bots.js') {
+      // CMB-06: dSq > awareness*awareness is not equivalent to native
+      // distanceTo > awareness at IEEE-754 rounding boundaries. It also skips
+      // custom distanceTo behavior. Keep the native distance and scan policy.
+      const nativePerceptionScan = `    for (const e of G.actors) {
+      if (e.team === a.team || !e.alive) continue;
+      const d = e.pos.distanceTo(a.pos);
+      if (d > aw) continue;`;
+      code = replaceOnce(code, nativePerceptionScan, nativePerceptionScan,
+        'CMB-06 preserve native perception distance semantics');
     }
     return code;
 }

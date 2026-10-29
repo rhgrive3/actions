@@ -1,0 +1,322 @@
+{
+  "reviewed_jobs": 35,
+  "categorized": 34,
+  "unknown": 1,
+  "rows": [
+    {
+      "run_id": 40258992018,
+      "head_sha": "86b07eed13e4c5d8c3ff9ca189cfa050b778ae84",
+      "job_id": 121367095711,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40258992018/job/121367095711",
+      "category": "world-source-anchor",
+      "reason": "Composed src/world/render-bounds.js failed the remaining-world-queue anchor for union of transformed local boxes.",
+      "current_verification_or_blocker": "Production composition preflight passed on d20b5544432aea347f4bac1bb3fdb010e7e4779b: 119 sources, 74 adapted; does not establish hosted browser behavior."
+    },
+    {
+      "run_id": 40273924406,
+      "head_sha": "03d75852b6db74a02d9c60bd04c4a27c91f79c58",
+      "job_id": 121413288520,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40273924406/job/121413288520",
+      "category": "world-source-anchor",
+      "reason": "Composed src/world/render-bounds.js failed the remaining-world-queue anchor for union of transformed local boxes.",
+      "current_verification_or_blocker": "Production composition preflight passed on d20b5544432aea347f4bac1bb3fdb010e7e4779b: 119 sources, 74 adapted; does not establish hosted browser behavior."
+    },
+    {
+      "run_id": 40285735967,
+      "head_sha": "65fa7f183d2d163af798972c2ff0ced46a92868f",
+      "job_id": 121450235870,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40285735967/job/121450235870",
+      "category": "unknown-log-unavailable",
+      "reason": "GitHub job-log artifact returns BlobNotFound; API job has no steps.",
+      "current_verification_or_blocker": "No reliable cause can be recovered from available job evidence; historical log is unavailable."
+    },
+    {
+      "run_id": 40297744398,
+      "head_sha": "0ca10779e551d1acb8595f0bb06193194c6d368b",
+      "job_id": 121487838507,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40297744398/job/121487838507",
+      "category": "missing-npm-script",
+      "reason": "npm reported Missing script: test:ci-config in the Verify shared test suite runner step.",
+      "current_verification_or_blocker": "d20b package.json defines test:ci-config; /workspace/scratch/root-focused-contracts.log reports 305 runner-contract cases passed. Hosted integrated-head run remains unverified."
+    },
+    {
+      "run_id": 40318853985,
+      "head_sha": "67c0623088218a50d6733b1ea304ce5fcaf0d1ad",
+      "job_id": 121558279084,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40318853985/job/121558279084",
+      "category": "charger-remote-voice-assertion",
+      "reason": "Audio test expected all remote Chargers to share the Splat rising phrase and failed that assertion.",
+      "current_verification_or_blocker": "/workspace/scratch/root-focused-audio.log case 19 passes on the current focused source lane; source test does not establish retail audio parity."
+    },
+    {
+      "run_id": 40319027131,
+      "head_sha": "b418ab10e37dcfe58f660b60ee8962dd769c94af",
+      "job_id": 121558896144,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40319027131/job/121558896144",
+      "category": "charger-remote-voice-assertion",
+      "reason": "Audio test expected all remote Chargers to share the Splat rising phrase and failed that assertion.",
+      "current_verification_or_blocker": "/workspace/scratch/root-focused-audio.log case 19 passes on the current focused source lane; source test does not establish retail audio parity."
+    },
+    {
+      "run_id": 40345635119,
+      "head_sha": "70eebd77efbef48b13b9253acb0210a01aeb8ffc",
+      "job_id": 121651875645,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40345635119/job/121651875645",
+      "category": "profiler-test-syntax",
+      "reason": "range-hitch-tracer.test.mjs failed to parse: invalid regular expression flags.",
+      "current_verification_or_blocker": "Node 22 focused profiler test at d20b passed as part of 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40357487471,
+      "head_sha": "a700c4e09e1c04f2f415c01bf2bd8b65a9d39231",
+      "job_id": 121693727715,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40357487471/job/121693727715",
+      "category": "profiler-event-fixture",
+      "reason": "The opt-in profiler test threw TypeError reading stopPropagation from an undefined event in debug-ab-runtime.mjs.",
+      "current_verification_or_blocker": "Node 22 focused profiler test at d20b passed as part of 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40436273632,
+      "head_sha": "4ce9768e6177b19f11f17e28f086a4da36f35fcd",
+      "job_id": 121972914419,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40436273632/job/121972914419",
+      "category": "projectile-paired-physical-mismatch",
+      "reason": "Paired capture comparator found floor-washtub paint coverage 0.01575872740846623 vs 0.016374826771933054 and other physical-state differences. Synthetic comparator controls passed; comparator failed.",
+      "current_verification_or_blocker": "Requires fresh paired native browser capture against the current source and matching baseline; no current paired run was performed, so current parity is unknown."
+    },
+    {
+      "run_id": 40448198806,
+      "head_sha": "3932bf2945d9f172f1e3cb8968b498b8ff5cab95",
+      "job_id": 122012109908,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40448198806/job/122012109908",
+      "category": "projectile-paired-physical-mismatch",
+      "reason": "Paired capture comparator found floor-washtub paint coverage 0.01575872740846623 vs 0.016374826771933054 and other physical-state differences. Synthetic comparator controls passed; comparator failed.",
+      "current_verification_or_blocker": "Requires fresh paired native browser capture against the current source and matching baseline; no current paired run was performed, so current parity is unknown."
+    },
+    {
+      "run_id": 40451016222,
+      "head_sha": "90706e3778586fa6c9d09a64ac354e547086e1c0",
+      "job_id": 122021483606,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40451016222/job/122021483606",
+      "category": "projectile-paired-physical-mismatch",
+      "reason": "Paired capture comparator found floor-washtub paint coverage 0.01575872740846623 vs 0.016374826771933054 and other physical-state differences. Synthetic comparator controls passed; comparator failed.",
+      "current_verification_or_blocker": "Requires fresh paired native browser capture against the current source and matching baseline; no current paired run was performed, so current parity is unknown."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205680,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205680",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205832,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205832",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205900,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205900",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205903,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205903",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205917,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205917",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205921,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205921",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205938,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205938",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205962,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205962",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40452072245,
+      "head_sha": "ddf6abbb5dcabd0b969c8dbf571e9822d3fb6016",
+      "job_id": 122017205999,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40452072245/job/122017205999",
+      "category": "npm-ci-lock-missing",
+      "reason": "Each primary failed step used npm ci and reported EUSAGE because package-lock.json or npm-shrinkwrap.json was absent.",
+      "current_verification_or_blocker": "At d20b root package-lock.json exists and main build and patch dependency steps use npm install; scoped wall diagnostic still uses npm ci. Current hosted dependency installation has not been run."
+    },
+    {
+      "run_id": 40457223592,
+      "head_sha": "8849b2282b95ffd3df19cb27b8f3e07e31a9db12",
+      "job_id": 122033250933,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40457223592/job/122033250933",
+      "category": "charger-preload-assertion",
+      "reason": "Selected Charger preload test failed its requirement to load the base hold before the batch for a collaboration weapon.",
+      "current_verification_or_blocker": "/workspace/scratch/root-focused-audio.log case 17 passes in the current focused source lane; not a retail audio comparison."
+    },
+    {
+      "run_id": 40457406747,
+      "head_sha": "b9fc72357050e8c75b665caa1d1d27b33675ed08",
+      "job_id": 122033842041,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40457406747/job/122033842041",
+      "category": "charger-preload-assertion",
+      "reason": "Selected Charger preload test failed its requirement to load the base hold before the batch for a collaboration weapon.",
+      "current_verification_or_blocker": "/workspace/scratch/root-focused-audio.log case 17 passes in the current focused source lane; not a retail audio comparison."
+    },
+    {
+      "run_id": 40458309661,
+      "head_sha": "3fa08dbad5fbc0ea6f95fe47b8c1727daf561e83",
+      "job_id": 122036714248,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40458309661/job/122036714248",
+      "category": "special-fixture-import",
+      "reason": "VM fixture rejected a new special-vfx-kit import with unexpected import / unexpected kit import.",
+      "current_verification_or_blocker": "Node 22 Kraken and Super Chump focused tests at d20b passed within 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40458915212,
+      "head_sha": "1ab0f4d3f952e80b23df862820549e68dba9e8c2",
+      "job_id": 122069134247,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40458915212/job/122069134247",
+      "category": "projectile-paired-physical-mismatch",
+      "reason": "Paired capture comparator found floor-washtub paint coverage 0.01575872740846623 vs 0.016374826771933054 and other physical-state differences. Synthetic comparator controls passed; comparator failed.",
+      "current_verification_or_blocker": "Requires fresh paired native browser capture against the current source and matching baseline; no current paired run was performed, so current parity is unknown."
+    },
+    {
+      "run_id": 40476238144,
+      "head_sha": "797bd03f46750258fa64eb2e6f88b8041a0535cf",
+      "job_id": 122095053882,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40476238144/job/122095053882",
+      "category": "special-fixture-import",
+      "reason": "VM fixture rejected a new special-vfx-kit import with unexpected import / unexpected kit import.",
+      "current_verification_or_blocker": "Node 22 Kraken and Super Chump focused tests at d20b passed within 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40488787825,
+      "head_sha": "c150a22fb1b86765d126810d26907595f604835a",
+      "job_id": 122166907241,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40488787825/job/122166907241",
+      "category": "active-browser-page-crash",
+      "reason": "After native boot and 567 verified responses, page.evaluate reported Target crashed; no page errors recorded.",
+      "current_verification_or_blocker": "Cause is not established; current active browser run and captured diagnostics are required. Assigned to browser/GPU owner."
+    },
+    {
+      "run_id": 40488788270,
+      "head_sha": "c150a22fb1b86765d126810d26907595f604835a",
+      "job_id": 122137197425,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40488788270/job/122137197425",
+      "category": "trizooka-vfx-helper",
+      "reason": "Trizooka sprite-pool test failed with ReferenceError: markAttributeRange is not defined.",
+      "current_verification_or_blocker": "Node 22 Trizooka focused tests at d20b passed within 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40545650507,
+      "head_sha": "d8d2534c5c351295a80e1ce64891dbf3ffd94b75",
+      "job_id": 122335428651,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40545650507/job/122335428651",
+      "category": "charger-preload-helper",
+      "reason": "Selected Charger preload test raised ReferenceError: usesSplatChargerRise is not defined.",
+      "current_verification_or_blocker": "/workspace/scratch/root-focused-audio.log case 17 passes in the current focused source lane; not a retail audio comparison."
+    },
+    {
+      "run_id": 40625245357,
+      "head_sha": "897bbaa4550aae24c1d710216127ff5e52a64ad6",
+      "job_id": 122618937091,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40625245357/job/122618937091",
+      "category": "combat-browser-aborted-audio",
+      "reason": "Recovered artifact 12790584312: at accept-same-id-36 the browser error assertion saw Sp_UltraShot_Explosion_00.mp3 net::ERR_ABORTED; 1 error instead of 0.",
+      "current_verification_or_blocker": "The abort cause is unknown; the primary assertion is browser resource error, not a documented hit-ceiling assertion. Current browser rerun and diagnostics are required. Extracted /workspace/scratch/agent6-combat-ceiling.json."
+    },
+    {
+      "run_id": 40640877819,
+      "head_sha": "9a1013782a263e47c9eb92706da7b9ea9447ac29",
+      "job_id": 122658463538,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40640877819/job/122658463538",
+      "category": "authoring-sparse-contract",
+      "reason": "Guard rejected an excluded authoring dependency in scripts/tests/continuous-browser-video.test.mjs.",
+      "current_verification_or_blocker": "Node 22 scripts/tests/inkwave-added-ci-contracts.test.mjs at d20b passed within 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40676526240,
+      "head_sha": "b897220a95c1cbcf942bddb89f51c93bcb932765",
+      "job_id": 122776254017,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40676526240/job/122776254017",
+      "category": "authoring-sparse-contract",
+      "reason": "Guard rejected an excluded authoring dependency in scripts/tests/continuous-browser-video.test.mjs.",
+      "current_verification_or_blocker": "Node 22 scripts/tests/inkwave-added-ci-contracts.test.mjs at d20b passed within 64/64; /workspace/scratch/agent6-unclassified-current-tests-node22.tap."
+    },
+    {
+      "run_id": 40714030475,
+      "head_sha": "23e1ae6b3cc0cec02882c4053e852cb69d3029d8",
+      "job_id": 122907614853,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40714030475/job/122907614853",
+      "category": "checkout-http408",
+      "reason": "Git checkout failed fetching a promisor object with HTTP 408, incomplete packfile and exit 128; subsequent missing evidence-packager module followed failed checkout.",
+      "current_verification_or_blocker": "A successful GitHub-hosted checkout of the current head is required; this historical transport error alone does not establish a source defect."
+    },
+    {
+      "run_id": 40723514818,
+      "head_sha": "ae9ecdf9e70b22b0b1fceca9feda2766c5b1f00c",
+      "job_id": 122940510746,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40723514818/job/122940510746",
+      "category": "pointerlock-resume-regression",
+      "reason": "Rejected resume test expected two pointer-lock calls in playing state but observed one.",
+      "current_verification_or_blocker": "/workspace/scratch/root-focused-pointerlock.log reports this case and all 34 lane tests passed; current hosted browser/CI validation remains required."
+    },
+    {
+      "run_id": 40725931420,
+      "head_sha": "3aef3e896b643cb540761d9238ce9f6f2246916d",
+      "job_id": 122949941262,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40725931420/job/122949941262",
+      "category": "checkout-http2",
+      "reason": "Git checkout failed fetching a promisor object with HTTP/2 CANCEL, unexpected EOF or bad pack header and exit 128; browser job evidence packaging then lacked its module because checkout failed.",
+      "current_verification_or_blocker": "A successful GitHub-hosted checkout of the current head is required; historical transport errors do not establish a source defect."
+    },
+    {
+      "run_id": 40725931420,
+      "head_sha": "3aef3e896b643cb540761d9238ce9f6f2246916d",
+      "job_id": 122949941499,
+      "job_url": "https://github.com/rhgrive3/actions/actions/runs/40725931420/job/122949941499",
+      "category": "checkout-http2",
+      "reason": "Git checkout failed fetching a promisor object with HTTP/2 CANCEL, unexpected EOF or bad pack header and exit 128; browser job evidence packaging then lacked its module because checkout failed.",
+      "current_verification_or_blocker": "A successful GitHub-hosted checkout of the current head is required; historical transport errors do not establish a source defect."
+    }
+  ]
+}

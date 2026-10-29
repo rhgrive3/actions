@@ -213,6 +213,7 @@ function validRuleState(mode, r) {
     && r.barrier && typeof r.barrier.active === 'boolean' && number(r.barrier.max) && number(r.barrier.balance)
     && r.charge && number(r.charge.value) && r.charge.value >= 0 && r.charge.value <= 1
     && number(r.charge.seconds) && r.charge.seconds >= 0 && r.charge.seconds <= 1 && typeof r.charge.firing === 'boolean'
+    && (r.charge.released === undefined || typeof r.charge.released === 'boolean')
     && number(r.charge.delay) && r.charge.delay >= 0 && r.charge.delay <= .1
     && number(r.charge.recovery) && r.charge.recovery >= 0 && r.charge.recovery <= 20 / 60
     && typeof r.charge.wasSwimming === 'boolean'

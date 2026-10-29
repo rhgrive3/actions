@@ -13,10 +13,10 @@ async function scene() {
   const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
     vmPerformance: { now: () => milliseconds },
     extraExports: "export {installWeaponAudioRuntime} from './patches/splatoon3/runtime/audio/runtime.mjs';" });
-  const calls = [], rises = [], loops = [];
+  const calls = [], rises = [], loops = [], prewarms = [];
   f.G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
   f.G.audio = {
-    ctx: {}, prepareWeapon() {}, prewarmChargerChargeRise() {}, duck() {}, play() {},
+    ctx: {}, prepareWeapon() {}, prewarmChargerChargeRise(id, chargeTime) { prewarms.push({id, chargeTime}); }, duck() {}, play() {},
     playWeapon(id, event, options) { calls.push({ id, event, options }); },
     playChargerChargeRise(options) {
       const handle = { options, playing: true, stops: 0, stop() { this.playing = false; this.stops++; } };
@@ -30,7 +30,7 @@ async function scene() {
   f.installWeaponAudioRuntime(f.installedRuntime);
   let serial = 0;
   function pair(id) {
-    calls.length = rises.length = loops.length = 0;
+    calls.length = rises.length = loops.length = prewarms.length = 0;
     const owner = f.make(id), remote = f.make(id), nid = ++serial;
     owner.owner = remote.owner = 'sender';
     owner.nid = remote.nid = nid;
@@ -68,7 +68,7 @@ async function scene() {
     return { owner, remote, tx, rx, publish, voices, onsets, clear,
       setNear(value) { near = value; }, removed: () => removed };
   }
-  return { ...f, pair, calls, rises, loops };
+  return { ...f, pair, calls, rises, loops, prewarms };
 }
 
 test('all native and catalogue Charger kits emit one remote onset per decoded charge edge at 30/60/120Hz', async () => {
@@ -169,3 +169,36 @@ test('remote non-Chargers never enter the Charger onset path and native continuo
   }
 });
 
+
+
+test('remote roster warms Charger audio before its first observed charge edge', async () => {
+  const f = await scene();
+  for (const id of ['charger','s3-charger-long','s3-charger-pencil']) {
+    const p=f.pair(id);
+    assert.deepEqual(f.prewarms.map(x=>x.id), [id], id + ' remote setup starts loading');
+    assert.equal(f.prewarms[0].chargeTime,p.remote.weapon.chargeTime);
+    assert.equal(f.rises.length,0,'setup is silent');
+    p.publish(true,.1);p.voices(60,2);
+    assert.equal(f.rises.length,1,'first charge edge plays');
+    p.clear();
+  }
+  const p=f.pair('shooter');
+  assert.equal(f.prewarms.length,0,'non-Charger roster does not load the phrase');
+  p.clear();
+});
+
+test('replicated special event stops the remote phrase without replaying a stale charge edge', async () => {
+  const f=await scene();
+  for(const id of ['charger','s3-charger-long']) for(const hz of [30,60,120]) {
+    const p=f.pair(id);p.publish(true,.3);p.voices(hz,1);
+    const rise=f.rises.at(-1);assert.ok(rise?.playing);
+    p.rx._playEvent('special:use',{actor:{n:p.remote.nid},id:p.remote.weapon.special});
+    assert.equal(rise.playing,false,id+' replicated activation stops phrase');
+    assert.equal(rise.stops,1);
+    p.voices(hz,3);
+    assert.equal(f.rises.length,1,id+' old charging snapshot cannot replay phrase');
+    p.publish(false);p.voices(hz,1);p.publish(true,.2);p.voices(hz,1);
+    assert.equal(f.rises.length,2,id+' later real charge edge re-arms');
+    p.clear();
+  }
+});

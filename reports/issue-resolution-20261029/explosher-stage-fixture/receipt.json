@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "createdUtc": "2026-10-29T10:04:02.523179+00:00",
+  "codeCommit": "8b5602d90cc62e21d0d83a07ff59f24f803a718b",
+  "baseCommon": "bb463122f10c069f84fccb61391152ed6c53aa97",
+  "sharedSourceBeforeRepair": {
+    "1908": {
+      "head": "bb463122f10c069f84fccb61391152ed6c53aa97",
+      "fixtureBlob": "4410fdf32755a5d256d5e16d11b3633fc36ce397",
+      "wrapperBlob": "a283be851111f7ebfed23752b4f2f84f2253a0fd"
+    },
+    "1910": {
+      "head": "c33ea8eed2eafbb33cc3bb146df3e94d7c52bcd1",
+      "fixtureBlob": "4410fdf32755a5d256d5e16d11b3633fc36ce397",
+      "wrapperBlob": "a283be851111f7ebfed23752b4f2f84f2253a0fd"
+    },
+    "1909": {
+      "head": "ab0d403f7f82a47ab13663fd1332002fcc611f35",
+      "fixtureBlob": "4410fdf32755a5d256d5e16d11b3633fc36ce397",
+      "wrapperBlob": "a283be851111f7ebfed23752b4f2f84f2253a0fd"
+    },
+    "1907": {
+      "head": "d4400f3e797d91111256a1842e0e5116a2eb7ee2",
+      "fixtureBlob": "4410fdf32755a5d256d5e16d11b3633fc36ce397",
+      "wrapperBlob": "a283be851111f7ebfed23752b4f2f84f2253a0fd"
+    },
+    "1911": {
+      "head": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+      "fixtureBlob": "4410fdf32755a5d256d5e16d11b3633fc36ce397",
+      "wrapperBlob": "a283be851111f7ebfed23752b4f2f84f2253a0fd"
+    }
+  },
+  "actualHostedFailure": {
+    "pr": 1907,
+    "head": "d4400f3e797d91111256a1842e0e5116a2eb7ee2",
+    "run": 40844077878,
+    "job": 123360212263,
+    "artifact": 12887518747,
+    "artifactZipSha256": "f64e4acaf2f35dbe21ac861dd760dd1c10524b98eb0ee6ec7d581c1cc2cf4edd",
+    "startedAt": "2026-10-29T09:34:24Z",
+    "completedAt": "2026-10-29T09:53:54Z",
+    "tests": 1558,
+    "pass": 1549,
+    "fail": 5,
+    "skip": 4,
+    "file": "patches/splatoon3/tests/explosher-stage-composition.test.mjs",
+    "error": "Controlled main lacks initial attract readiness"
+  },
+  "cause": "Synthetic control receipt omitted compiler initialAttractWarmup metadata; actual strict wrapper guard stopped five old cases before intended later capture/geometry/rig checks.",
+  "repair": "Supply all4 current compiler metadata fields in valid unit fixture; reuse same actual-wrapper invocation for five malformed-metadata controls across all3 modes; no native/wrapper/production edit.",
+  "preservedAssertions": [
+    "Wrong native capture count",
+    "exactly one actual geometry observer installation",
+    "geometry cleanup artifact and observer.restore()",
+    "all preflight/stills/video capture ticks and views",
+    "controlled retained-boundary and effective-rig drift refusal",
+    "missing/no-op/wrong-restoration geometry collaborator refusal"
+  ],
+  "newNegativeCases": [
+    "missing readiness object",
+    "alreadyStartedOnly false",
+    "ownerCount7",
+    "ownerCount9",
+    "ownerCount string8"
+  ],
+  "earlyRefusal": "Every malformed case in preflight/stills/video must fail actual readiness guard before evidence writes or native spawn.",
+  "validation": {
+    "node": "22.23.4",
+    "independentBaseline": {
+      "tests": 5,
+      "pass": 0,
+      "fail": 5
+    },
+    "independentAfter": {
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skip": 0
+    },
+    "focusedComplete": {
+      "tests": 154,
+      "pass": 154,
+      "fail": 0,
+      "skip": 0
+    },
+    "peer": "Sol3 read-only review APPROVED; exact baseline and corrected file rerun; source guard and original late-stage assertions unchanged.",
+    "overlap": "10 changed-file cases are included in154focused; counts are not summed.",
+    "sourceOnly": true,
+    "browserRun": false,
+    "initialIncompleteSparseSetup": "Six missing closure files/modules caused148/154 before full JS/MJS/CJS, source locks/vendor/esbuild were materialized; separate TAP retained."
+  },
+  "cohortAccounting": "Original85-log and subsequent15-log/six-cause cohorts remain unchanged. This newly observed current d440 job is a separate post-repair failure; other inherited heads share source but are not claimed to have failed without their own logs.",
+  "publication": "Prepared for parent single atomic normal propagation common1908\u21921910\u21921909\u21921907\u21921911. No agent push/rerun/dispatch/cancel. Corrected-head hosted acceptance pending.",
+  "files": [
+    {
+      "file": "hosted-shard1-job-123360212263.log.gz",
+      "scope": "Complete original current-head GitHub decoded failure log;1558tests/1549pass/5fail/4skip, original failure preserved.",
+      "uncompressedBytes": 982580,
+      "uncompressedSha256": "14936c833f757f69267ff2e90d65a54e3a6eb0396eeab507bda548cd616406fc",
+      "gzipBytes": 156665,
+      "gzipSha256": "98711d294d27d3eb576db2ebdac11928f1d69702df2deb9f72fa61e4a32db6f8"
+    },
+    {
+      "file": "independent-before-node22.tap.gz",
+      "scope": "Sol3 independent untouched bb Node22 baseline:0/5pass,5fail at readiness guard.",
+      "uncompressedBytes": 10634,
+      "uncompressedSha256": "93118df7d39f4bcea7799404c2e851a648c705333b992f7e3e7a23d8ed47b282",
+      "gzipBytes": 1063,
+      "gzipSha256": "5e163690d95695beb8844447960e114fa081db5b65181b6926a9317a3e7f556a"
+    },
+    {
+      "file": "independent-after-node22.tap.gz",
+      "scope": "Sol3 independent corrected whole composition file:10/10pass,0skip.",
+      "uncompressedBytes": 2238,
+      "uncompressedSha256": "ff0cbdb9a9cd592022748b61083b94b0d7e75d26115e208c4f6b3bba085008d8",
+      "gzipBytes": 517,
+      "gzipSha256": "125bfa22684e4635a8239db57b11f1a493a0bdf4aca2e2c7308c60194666f001"
+    },
+    {
+      "file": "focused-complete-node22.tap.gz",
+      "scope": "Complete154/154focused composition/wrapper/volume/geometry/admission contracts,0skip; overlaps10-file cases, do not sum.",
+      "uncompressedBytes": 30095,
+      "uncompressedSha256": "24505c7e02ce0d9178ab0c52ffbabced4c425d2c7be4253e42f3de5eb7e374ce",
+      "gzipBytes": 6130,
+      "gzipSha256": "cbc188d4f57deee9a9057e27b8740a76f123d5af4d71c89a158450e521dc3c37"
+    },
+    {
+      "file": "initial-incomplete-sparse-setup.tap.gz",
+      "scope": "Earlier local wider attempt148/154: six ENOENT/missing-import failures from incomplete isolated sparse setup, not six product failures; retained separately.",
+      "uncompressedBytes": 35147,
+      "uncompressedSha256": "d3da0e7f752f03f17687237ffa4071164fdf19f870b46ca863d1de5e7ee130ff",
+      "gzipBytes": 6837,
+      "gzipSha256": "85b499f8a6869faf164ac7f8e028d00a0246c8197b4d5dda174989054bdfce39"
+    }
+  ]
+}

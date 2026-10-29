@@ -10,7 +10,21 @@ const fused=`    if(!candidate)continue;
       if(proof.actor===candidate.actor && t-proof.at<1)recent++;
     }
     if(duplicate)continue;`;
-const oldRecord=_source=>frozenCombat.replace(fused,'    if(!candidate || store.some(p=>p.key===candidate.key))continue;')
+const frozenMainCapacity = [
+  "const family=source.weapon?.kind;\n      maxUses=['blaster','slosher','stringer','roller','brush'].includes(family)?6:2;",
+  "maxUses=['blaster','slosher','stringer','roller','brush'].includes(source.weapon?.kind)?6:2;",
+];
+function reviewedSingleRoundPolicy(source) {
+  // Keep the frozen scan independent, but compare both scans under the later
+  // reviewed single-round admission policy. Do not alter the historical file.
+  const capacity = "maxUses=!source.weapon?0:['shooter','dualies','splatling'].includes(source.weapon.catalogRecord?.family||source.weapon.behaviorKind||source.weapon.kind)?1:['blaster','slosher','stringer','roller','brush'].includes(source.weapon.kind)?6:2;";
+  for(const anchor of frozenMainCapacity) {
+    assert.equal(source.split(anchor).length,2,'one frozen main-capacity anchor');
+    source=source.replace(anchor,capacity);
+  }
+  return source;
+}
+const oldRecord=_source=>reviewedSingleRoundPolicy(frozenCombat).replace(fused,'    if(!candidate || store.some(p=>p.key===candidate.key))continue;')
  .replace('    if(recent>=rate)continue;',`    let recent=0;
     for(const shot of store)if(shot.actor===candidate.actor && t-shot.at<1)recent++;
     if(recent>=rate)continue;`);
@@ -27,6 +41,67 @@ const packet=(events,ts=100)=>({ts,a:[[1,0,0,0]],e:events});
 const shot=(n,at=100)=>[at,'p',1,'shot','shooter',0,1,n*.01,0,0,45];
 const fire=(n,at=100)=>[at,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzzle:[0,1,n*.01],dir:[0,0,45]}];
 function snapshot(m){const s=m._combatProvenance;return s?{proofs:[...s.proofs],pending:[...s.pending],contacts:[...s.contacts]}:null;}
+
+test('reference policy retains single-round, penetrating and area capacities on both main event routes',async()=>{
+ const before=await load(oldRecord),after=await load();
+ const cases=[
+  ...['shooter','dualies','splatling'].flatMap(family=>[
+   [{kind:family},1],
+   [{kind:'blaster',catalogRecord:{id:'catalog-'+family,family}},1],
+   [{kind:'shooter',behaviorKind:family},1],
+  ]),
+  [{kind:'charger'},2],...['blaster','slosher','stringer','roller','brush'].map(kind=>[{kind},6]),
+  [{kind:'splatana'},2],[{kind:'brella'},2],
+ ];
+ for(const [definition,capacity]of cases)for(const route of ['birth','fire']){
+  const a=net(),b=net();
+  for(const nm of [a,b])Object.assign(nm.byNid.get(1).weapon,definition);
+  const id=definition.catalogRecord?.id||'shooter',event=route==='birth'?shot(0):fire(0);
+  if(route==='birth')event[4]=id;else event[3].weapon=id;
+  before.api.record(a,'peer',packet([event]),100);after.api.record(b,'peer',packet([event]),100);
+  assert.deepEqual(json(snapshot(b)),json(snapshot(a)),JSON.stringify([definition,route]));
+  assert.equal(b._combatProvenance.proofs.get('peer')[0].maxUses,capacity);
+ }
+ // Sub explosions and special births keep their separate multi-contact budget.
+ for(const cause of ['bomb','storm']){
+  const a=net(),b=net();for(const nm of [a,b])Object.assign(nm.byNid.get(1).weapon,{sub:'bomb',special:'storm'});
+  const event=shot(0);event[4]=cause;
+  before.api.record(a,'peer',packet([event]),100);after.api.record(b,'peer',packet([event]),100);
+  assert.deepEqual(json(snapshot(b)),json(snapshot(a)));assert.equal(b._combatProvenance.proofs.get('peer')[0].maxUses,8);
+ }
+ const a=net(),b=net(),event=shot(0);event[4]=0;
+ for(const nm of [a,b])nm.byNid.get(1).weapon=null;
+ before.api.record(a,'peer',packet([event]),100);after.api.record(b,'peer',packet([event]),100);
+ assert.deepEqual(json(snapshot(b)),json(snapshot(a)));assert.equal(b._combatProvenance.proofs.get('peer')[0].maxUses,0);
+});
+
+test('frozen pre-security capacity is a negative control, and its policy bridge rejects missing or duplicate anchors',async()=>{
+ const stale=await load(()=>frozenCombat),reference=await load(oldRecord),current=await load();
+ const states=[];
+ for(const module of [stale,reference,current]){
+  const nm=net();module.api.record(nm,'peer',packet([shot(0),fire(0,100.005)]),100.005);
+  states.push(json(snapshot(nm)));
+ }
+ assert.notDeepEqual(states[0],states[2],'the historical two-use Shooter policy must not be the current oracle');
+ assert.deepEqual(states[1],states[2],'the independent old scan retains all paired proof fields under the current policy');
+ assert.equal(states[0].proofs[0][1][0].maxUses,2);assert.equal(states[2].proofs[0][1][0].maxUses,1);
+ assert.equal(states[2].proofs[0][1].length,1);assert.equal(states[2].proofs[0][1][0].pairedFire,true);
+ for(const anchor of frozenMainCapacity){
+  assert.throws(()=>reviewedSingleRoundPolicy(frozenCombat.replace(anchor,'')),/one frozen main-capacity anchor/);
+  assert.throws(()=>reviewedSingleRoundPolicy(frozenCombat+anchor),/one frozen main-capacity anchor/);
+ }
+});
+
+test('the aligned reference and actual admission reject a second body claim from one Shooter proof',async()=>{
+ const stale=await load(()=>frozenCombat),reference=await load(oldRecord),current=await load(),outcomes=[];
+ for(const module of [stale,reference,current]){
+  const nm=net();nm.byNid.set(3,{nid:3,owner:'local',remote:false,alive:true,team:1,pos:{x:0,y:0,z:7}});
+  module.api.record(nm,'peer',packet([shot(0)]),100);
+  const claim=(v,h)=>module.api.combatAdmission(nm,'peer',{m:'m',a:1,v,h,l:0,d:36,w:'shooter'},'pvp',100);
+  outcomes.push([claim(2,1),claim(3,2),nm._combatProvenance.proofs.get('peer')[0].uses]);
+ }
+ assert.deepEqual(outcomes,[[true,true,2],[true,false,1],[true,false,1]]);
+});
 
 test('actual record fused scan preserves duplicate/pairing/rate/order and cap outcomes over deterministic streams',async()=>{
  const before=await load(oldRecord),after=await load();assert(frozenCombat.includes(fused));

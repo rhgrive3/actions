@@ -13,6 +13,25 @@ const TriangleWorld = new Function('THREE', 'sphereTriangleEntry',
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const flat = hit => ({ ...hit, point: hit.point.toArray(), normal: hit.normal.toArray() });
 
+test('public capsule results retain independent normals after later resolutions and caller edits', () => {
+  const world = new TriangleWorld({
+    triangles: new Float32Array([-5, 0, -5, 5, 0, -5, 0, 0, 5]),
+    normals: new Float32Array([0, 1, 0]),
+    nodes: new Float32Array([-5, -.1, -5, 5, .1, 5, -1, 1]),
+    order: new Uint32Array([0]), flags: new Uint32Array([2]), objectIds: new Uint32Array([0]),
+  });
+  const feet = V(0, -.05, 0), first = world.resolveCapsule(feet), saved = first.normal.toArray();
+  assert.equal(first.ground, true); assert.ok(feet.y >= 0); assert.deepEqual(saved, [0, 1, 0]);
+  const second = world.resolveCapsule(V(.2, -.03, .2));
+  assert.notEqual(second.normal, first.normal, 'this API has no caller-supplied reusable result');
+  second.normal.set(1, 0, 0);
+  assert.deepEqual(first.normal.toArray(), saved, 'another result belongs to its caller');
+  const miss = world.resolveCapsule(V(0, 3, 0));
+  assert.equal(miss.ground, false); assert.deepEqual(miss.normal.toArray(), [0, 0, 0]);
+  assert.deepEqual(first.normal.toArray(), saved, 'a later miss cannot clear a retained contact normal');
+  assert.deepEqual(second.normal.toArray(), [1, 0, 0], 'later queries cannot alter caller edits');
+});
+
 function level() {
   return { staticBlockCount: 1, blocks: [{}], data: { triangleFace: new Int32Array([0]) },
     faces: [{ origin: V(), u: V(0, 1, 0), v: V(0, 0, 1) }], blockForTriangle: () => 0,
@@ -26,10 +45,10 @@ function level() {
 
 for (const kind of ['level', 'catalogue']) test(kind + ' sweeps reuse distinct source/moving outputs and preserve nearest ties, UVs and misses', () => {
   const stage = level(), from = V(-2, .5, .5), to = V(2, .5, .5);
-  const out = { point: V(), normal: V() }, sourceOuts = [], movingOuts = [];
+  const out = { point: V(), normal: V() }, sourceOuts = [], sourceOptions = [], movingOuts = [];
   const original = stage.triangleWorld.sweepSphere;
   stage.triangleWorld.sweepSphere = function (...args) {
-    sourceOuts.push(args[4]);
+    sourceOuts.push(args[4]);sourceOptions.push(args[3]);
     assert(args[4], 'native wrapper supplies an output');
     return original.apply(this, args);
   };
@@ -70,6 +89,7 @@ for (const kind of ['level', 'catalogue']) test(kind + ' sweeps reuse distinct s
     const growing = sweep(from, to, .1, .8, false);
     assert.equal(growing.hit, true); assert(Math.abs(growing.dist - 4 * 1.9 / 4.7) < 1e-10);
   }
+  assert(sourceOptions.every(value => value === sourceOptions[0]), 'one options object is retained per wrapper and level');
   assert(sourceOuts.every(value => value === sourceOuts[0]), 'one source result is retained by this level');
   assert(movingOuts.every(value => value === movingOuts[0]), 'moving result identity stays stable');
   assert.deepEqual(flat(owned), savedOwned, 'public owned hit survives wrapper reuse');

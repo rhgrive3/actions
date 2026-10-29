@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {assertNetworkArtifactSourceBinding} from './inkwave-network-source-coverage.mjs';
 export const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export const physicalLocation=name=>fs.existsSync(name)?fs.realpathSync(name):path.join(physicalLocation(path.dirname(name)),path.basename(name));
 export function persistentDirectory(name){
@@ -21,6 +22,7 @@ export function persistentBrowserTemp(target){
 export function verifyRuntimeBuild(site,root,sha){
  if(!/^[a-f0-9]{40}$/.test(sha))throw Error('Full source SHA required');
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+ assertNetworkArtifactSourceBinding(manifest);
  if(hash(JSON.stringify(manifest.artifacts))!==manifest.contentHash)throw Error('Manifest mismatch');
  for(const [file,expected]of Object.entries(manifest.artifacts)){
   const resolved=fs.realpathSync(path.join(site,file));
@@ -34,7 +36,18 @@ export function verifyRuntimeBuild(site,root,sha){
   return [namespaces[prefix]+name.slice(prefix.length),expected];
  });
  inputs.push(['scripts/build-inkwave.mjs',manifest.build.script]);
- const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sha],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean).map(row=>{const [meta,file]=row.split('\t');return [file,meta.split(' ')[2]];}));
+ // The repository tree can exceed Node's default 1 MiB capture even when
+ // these build inputs are small. Query only their literal paths in bounded
+ // batches, keeping unrelated repository growth and argv size out of this
+ // check. The explicit metadata cap still fails closed on oversized output.
+ const paths=[...new Set(inputs.map(([file])=>file))],tree=new Map();
+ for(let start=0;start<paths.length;start+=256){
+  const rows=execFileSync('git',['--literal-pathspecs','ls-tree','-r','-z',sha,'--',...paths.slice(start,start+256)],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024});
+  for(const row of rows.split('\0').filter(Boolean)){
+   const tab=row.indexOf('\t'),meta=row.slice(0,tab),file=row.slice(tab+1);
+   tree.set(file,meta.split(' ')[2]);
+  }
+ }
  const blobs=inputs.map(([file])=>{const blob=tree.get(file);if(!blob)throw Error('Missing source input: '+file);return blob;});
  // Bound aggregate capture independently of the number of committed inputs.
  // Metadata is checked first; each body batch is at most 8 MiB unless one
@@ -70,6 +83,43 @@ export function sampleStats(values){
  if(!a.length)return {n:0};
  const middle=Math.floor(a.length/2);
  return{n:a.length,mean:a.reduce((sum,value)=>sum+value,0)/a.length,median:a.length%2?a[middle]:(a[middle-1]+a[middle])/2,p95:a[Math.min(a.length-1,Math.floor(a.length*.95))],max:a.at(-1)};
+}
+
+// Native prebuilt payloads intentionally sit outside the revision manifest.
+// Admit their exact paths through the stage record sealed by that manifest;
+// the local server still checks each requested body's hash before serving it.
+export function indexPrebuiltRuntimeAssets(site, manifest) {
+ const artifacts = {};
+ const safe = value => typeof value === 'string' && value.length > 0 &&
+  !path.isAbsolute(value) && !value.includes('\\') && !value.includes('\0') &&
+  value.split('/').every(part => part && part !== '.' && part !== '..');
+ const add = (name, receipt) => {
+  if (!safe(name) || !/^[a-f0-9]{64}$/.test(receipt?.sha256) ||
+      !Number.isSafeInteger(receipt.bytes) || receipt.bytes < 0)
+   throw Error('Invalid prebuilt runtime receipt: ' + name);
+  if (artifacts[name] && artifacts[name] !== receipt.sha256)
+   throw Error('Conflicting prebuilt runtime receipt: ' + name);
+  artifacts[name] = receipt.sha256;
+ };
+ for (const [id, sealed] of Object.entries(manifest.build?.nativeStages?.prebuilt?.stages || {})) {
+  if (!/^[-a-z0-9]+$/.test(id)) throw Error('Invalid prebuilt stage id');
+  const prefix = 'native-prebuilt/' + id + '/', name = prefix + 'stage.json';
+  const bytes = fs.readFileSync(path.join(site, name));
+  if (bytes.length !== sealed.bytes || hash(bytes) !== sealed.stageSha256)
+   throw Error('Prebuilt stage record changed: ' + id);
+  add(name, {bytes: sealed.bytes, sha256: sealed.stageSha256});
+  const record = JSON.parse(bytes);
+  if (record.id !== id) throw Error('Prebuilt stage identity mismatch: ' + id);
+  for (const array of Object.values(record.arrays || {})) for (const chunk of array.chunks || []) {
+   if (!safe(chunk.file)) throw Error('Invalid prebuilt chunk path');
+   add(prefix + chunk.file, chunk);
+  }
+  for (const pack of record.manifest?.prebuiltTexturePacks || []) {
+   if (!safe(pack.file) || !pack.file.startsWith('packs/')) throw Error('Invalid prebuilt pack path');
+   add('native-prebuilt/' + pack.file, pack);
+  }
+ }
+ return artifacts;
 }
 
 export function invalidWindows(scenarios,fixed){

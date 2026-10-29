@@ -41,8 +41,8 @@ export function adaptStormEffects(rel, code) {
             _v2.set(object.pos.x, c.group.position.y - 0.6, object.pos.z);
             return G.physics.los(_v, _v2) ? sp.dps * dt : 0;
           };
-          this.s3DamageSubObjects?.(c.owner, c.group.position, objectRadius, damageStormObject, 'InkStorm');
-          this.s3DamageSpecialObjects?.(c.owner, c.group.position, objectRadius, damageStormObject, 'InkStorm');
+          this.s3DamageSubObjects?.(c.owner, c.group.position, objectRadius, damageStormObject, 'InkStorm', { pierceLOS: true });
+          this.s3DamageSpecialObjects?.(c.owner, c.group.position, objectRadius, damageStormObject, 'InkStorm', { pierceLOS: true });
         }
       }
       if (c.t >= c.dur)`, 'continuous Storm object contact');

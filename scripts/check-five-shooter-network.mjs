@@ -26,7 +26,7 @@ for(const [f,h]of Object.entries(build.artifacts))assert.equal(hash(fs.readFileS
 let sourceSha=null;
 if(process.argv.includes('--exact-source')){
  sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
- const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8'}).split('\0').filter(Boolean).map(r=>{const [m,f]=r.split('\t');return[f,m.split(' ')[2]];}));
+ const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sourceSha],{cwd:ROOT,encoding:'utf8',maxBuffer:8*1024*1024}).split('\0').filter(Boolean).map(r=>{const [m,f]=r.split('\t');return[f,m.split(' ')[2]];}));
  const roots={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','build-script/':'scripts/','native-stages/':'patches/native-stages/'};
  const files=Object.entries(build.files).map(([k,h])=>{const prefix=Object.keys(roots).find(p=>k.startsWith(p));assert(prefix,k);const f=roots[prefix]+k.slice(prefix.length);assert.equal(hash(fs.readFileSync(path.join(ROOT,f))),h,f);return f;});
  assert.equal(hash(fs.readFileSync(path.join(ROOT,'scripts/build-inkwave.mjs'))),build.build.script);files.push('scripts/build-inkwave.mjs','scripts/check-five-shooter-network.mjs','scripts/fixtures/five-shooter-network.mjs','server/src/index.js');

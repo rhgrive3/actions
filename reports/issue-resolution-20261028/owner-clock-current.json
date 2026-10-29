@@ -1,0 +1,219 @@
+{
+  "issue": 1767,
+  "status": "passed",
+  "sourceSha": "8c7f27a23513b1fc650a5465a3eef8a2b1645823",
+  "checkedInputs": 1522,
+  "inputHash": "bdb851a80a79a984f15dc002c4fb0b997a8931c4d7b51caefc24f64cbd34210e",
+  "contentHash": "fcec6e8db8e58c0ff5bd0c27da583e6a105b2949c27c1a8d0970152904c2429c",
+  "relaySha256": "7e2c49c9c93489b643ea5437379219045fefbad68be72535562b6dc63b4c90be",
+  "harnessSha256": {
+    "scripts/check-inkwave-native-online.mjs": "46882cda2600f91030e997e791c33b097fa69aeca127da1f75b83d98aca2126f",
+    "scripts/lib/inkwave-owner-clock-browser.mjs": "869902f0e046b792b28180c925173b914ab762ed79e949c8f00bd236b8789913",
+    "scripts/lib/inkwave-local-relay-fixture.mjs": "213a44494ae7a9ecfdf81f766a1b3a064708eafadf839d26654570fe0a3e83cd"
+  },
+  "command": "OWNER_CLOCK_SOURCE_SHA=8c7f27a23513b1fc650a5465a3eef8a2b1645823 timeout --kill-after=10s 900s /home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node --max-old-space-size=1024 --import /workspace/scratch/agent1-owner-clock-sandbox.mjs scripts/check-inkwave-native-online.mjs _site /workspace/scratch/agent1-owner-clock-8c7 --owner-clock",
+  "cwd": "/workspace/wt-integration",
+  "nodeVersion": "22.23.4",
+  "launch": {
+    "scope": "launcher options only; game clocks, runtime and acceptance harness unchanged",
+    "executablePath": "/home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+    "headless": true,
+    "chromiumSandbox": true,
+    "args": [
+      "--disable-dev-shm-usage",
+      "--disable-features=LocalNetworkAccessChecks",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader"
+    ],
+    "loaderSha256": "eb2851494bf3be66fd5c9ae6ce3fedffb93326c2af380bb64132e290ec3fa45c",
+    "browserVersion": "151.0.7922.34"
+  },
+  "browserContexts": 2,
+  "requestCount": 8,
+  "replyCount": 6,
+  "pageConsoleErrors": [],
+  "cases": [
+    {
+      "phase": "cold-start",
+      "pairs": [
+        {
+          "receiver": 0,
+          "firstSenderTimestamp": 42.265,
+          "firstLocalReceiveTime": 85.04059999999963,
+          "catchUpSenderTimestamp": 49.287,
+          "catchUpLocalReceiveTime": 85.08979999999981,
+          "senderProgress": 7.0219999999999985,
+          "receiverElapsed": 0.04920000000018376,
+          "oldGuardAccepted": false,
+          "fixedOriginUnchanged": true,
+          "nativePerformanceClock": true,
+          "nativeMatchState": "playing",
+          "remoteActorBufferSizes": [
+            7
+          ],
+          "subsequentSenderTimestamp": 50.731,
+          "normalProgressAfterCatchUp": 1.4440000000000026,
+          "normalSnapshotsContinue": true
+        },
+        {
+          "receiver": 1,
+          "firstSenderTimestamp": 78.019,
+          "firstLocalReceiveTime": 49.28270000000018,
+          "catchUpSenderTimestamp": 85.045,
+          "catchUpLocalReceiveTime": 49.33179999999982,
+          "senderProgress": 7.025999999999996,
+          "receiverElapsed": 0.049099999999633326,
+          "oldGuardAccepted": false,
+          "fixedOriginUnchanged": true,
+          "nativePerformanceClock": true,
+          "nativeMatchState": "playing",
+          "remoteActorBufferSizes": [
+            7
+          ],
+          "subsequentSenderTimestamp": 86.489,
+          "normalProgressAfterCatchUp": 1.4440000000000026,
+          "normalSnapshotsContinue": true
+        }
+      ]
+    },
+    {
+      "phase": "same-room-rematch",
+      "pairs": [
+        {
+          "receiver": 0,
+          "firstSenderTimestamp": 61.699,
+          "firstLocalReceiveTime": 104.49789999999945,
+          "catchUpSenderTimestamp": 68.714,
+          "catchUpLocalReceiveTime": 104.53720000000018,
+          "senderProgress": 7.015000000000001,
+          "receiverElapsed": 0.03930000000073619,
+          "oldGuardAccepted": false,
+          "fixedOriginUnchanged": true,
+          "nativePerformanceClock": true,
+          "nativeMatchState": "playing",
+          "remoteActorBufferSizes": [
+            9
+          ],
+          "subsequentSenderTimestamp": 71.734,
+          "normalProgressAfterCatchUp": 3.019999999999996,
+          "normalSnapshotsContinue": true
+        },
+        {
+          "receiver": 1,
+          "firstSenderTimestamp": 97.475,
+          "firstLocalReceiveTime": 68.74,
+          "catchUpSenderTimestamp": 104.473,
+          "catchUpLocalReceiveTime": 68.77929999999981,
+          "senderProgress": 6.998000000000005,
+          "receiverElapsed": 0.039299999999812485,
+          "oldGuardAccepted": false,
+          "fixedOriginUnchanged": true,
+          "nativePerformanceClock": true,
+          "nativeMatchState": "playing",
+          "remoteActorBufferSizes": [
+            10
+          ],
+          "subsequentSenderTimestamp": 107.49,
+          "normalProgressAfterCatchUp": 3.016999999999996,
+          "normalSnapshotsContinue": true
+        }
+      ]
+    },
+    {
+      "phase": "socket-reconnect",
+      "pairs": [
+        {
+          "receiver": 0,
+          "firstSenderTimestamp": 73.615,
+          "firstLocalReceiveTime": 116.4095,
+          "catchUpSenderTimestamp": 80.674,
+          "catchUpLocalReceiveTime": 116.50070000000018,
+          "senderProgress": 7.059000000000012,
+          "receiverElapsed": 0.09120000000018536,
+          "oldGuardAccepted": false,
+          "fixedOriginUnchanged": true,
+          "nativePerformanceClock": true,
+          "nativeMatchState": "playing",
+          "remoteActorBufferSizes": [
+            6
+          ],
+          "subsequentSenderTimestamp": 85.61,
+          "normalProgressAfterCatchUp": 4.935999999999993,
+          "normalSnapshotsContinue": true
+        },
+        {
+          "receiver": 1,
+          "firstSenderTimestamp": 109.386,
+          "firstLocalReceiveTime": 80.66440000000037,
+          "catchUpSenderTimestamp": 116.431,
+          "catchUpLocalReceiveTime": 80.7415,
+          "senderProgress": 7.045000000000002,
+          "receiverElapsed": 0.07709999999963202,
+          "oldGuardAccepted": false,
+          "fixedOriginUnchanged": true,
+          "nativePerformanceClock": true,
+          "nativeMatchState": "playing",
+          "remoteActorBufferSizes": [
+            7
+          ],
+          "subsequentSenderTimestamp": 121.368,
+          "normalProgressAfterCatchUp": 4.936999999999998,
+          "normalSnapshotsContinue": true
+        }
+      ]
+    }
+  ],
+  "render": [
+    {
+      "drawCalls": 69,
+      "triangles": 337640,
+      "contextLost": false
+    },
+    {
+      "drawCalls": 71,
+      "triangles": 340682,
+      "contextLost": false
+    }
+  ],
+  "exitCode": 0,
+  "ownedProcessesPresentAfterCleanup": [],
+  "files": {
+    "/workspace/scratch/agent1-owner-clock-8c7/clock-reconnect-peer-0.png": {
+      "bytes": 501496,
+      "sha256": "85e3078085cebc639965517e3e58082dbe1005daed9234ffa919dc2ff75fd616"
+    },
+    "/workspace/scratch/agent1-owner-clock-8c7/online.json": {
+      "bytes": 347491,
+      "sha256": "2de16c03f469b72415d24a5d6d1effd89b75365f4a115a09a95711c32f03deeb"
+    },
+    "/workspace/scratch/agent1-owner-clock-8c7/owner-clock-browser.json": {
+      "bytes": 305953,
+      "sha256": "51d23310f195fe7fa8f247c62d870974adecc844ac59c3bab79c168aa00afb87"
+    },
+    "/workspace/scratch/agent1-owner-clock-8c7/clock-reconnect-peer-1.png": {
+      "bytes": 506972,
+      "sha256": "ecbb4b313ffd7d1cd7632a20aeea4ed1596f1fda2e876f9c0eb84282d1dbfbe3"
+    },
+    "/workspace/scratch/agent1-owner-clock-8c7.log": {
+      "bytes": 650,
+      "sha256": "4d29828494a9a5a843fd618a4f8085b1153fc99b3fd86e73f786f6a8ffca9095"
+    },
+    "/workspace/scratch/agent1-owner-clock-8c7-launch.json": {
+      "bytes": 520,
+      "sha256": "36625e8a75705bc4edc8dc050046e4d120839e02cea3f1cbd8b68ce86d3b2728"
+    },
+    "/workspace/scratch/agent1-owner-clock-sandbox.mjs": {
+      "bytes": 1607,
+      "sha256": "eb2851494bf3be66fd5c9ae6ce3fedffb93326c2af380bb64132e290ec3fa45c"
+    }
+  },
+  "constraints": [
+    "No repository game, guard, clock, peer-state, or harness source edits; scratch preload changes only launcher options to bundled Chromium 151 with strict sandbox.",
+    "Real production Game/Match/Tidewater/Actor/Character; two contexts share a Chromium process; low-quality SwiftShader and manual native-frame stepping.",
+    "Real browser WebSocket and production Worker/RoomDurableObject via existing local Cloudflare upgrade shim; no remote deployment or action.",
+    "Relay holds first/latest ticks for at least 7 real seconds and explicitly drops superseded intermediates without rewriting packets.",
+    "Screenshots retain native click-to-launch spawn prompt; no completed human spawn, human combat, device-performance or Switch parity claim.",
+    "Historical helper scope string references the old independent foundation; this receipt is explicitly the full current 8c7 artifact, not a claim that later weapon changes were excluded.",
+    "Required exact-head CI must still pass before issue closure; no extra deployment requirement is imposed."
+  ]
+}

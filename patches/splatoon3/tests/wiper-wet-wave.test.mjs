@@ -95,20 +95,43 @@ test('charged shader removes dense stripes and emissive blade rim only on select
   assert.doesNotMatch(drill.fragmentShader,/wetBody|vS3A/,'no launch-only varying may leak into drill shader');
 });
 
-for(const hz of [30,60,120])test(`wet draw/repeat/clear at ${hz} Hz consumes no RNG and cannot alter gameplay`,async()=>{
+for(const hz of [30,60,120])test(`wet draw/repeat and sheet retirement are RNG-pure at ${hz} Hz without changing gameplay`,async()=>{
   const f=await setup(),{s,a}=fire(f,'s3-saber-lite');let calls=0;f.setRandom(()=>{calls++;return .37;});
-  const calls0=calls;
   for(let i=0;i<Math.ceil(hz/12);i++) {
-    s.update(1/hz);f.G.time+=1/hz;const before=physical(s,a);s._draw();s._draw();
+    // Simulation may use game RNG for a legitimate projectile event.
+    // Snapshot after the native tick, then prove both presentation draws are pure.
+    s.update(1/hz);f.G.time+=1/hz;const before=physical(s,a),drawRng=calls;
+    s._draw();s._draw();
+    assert.equal(calls,drawRng,'both repeated presentation draws consume zero gameplay RNG');
     assert.equal(physical(s,a),before,'repeat draw cannot move/paint/damage/retime a projectile');
   }
-  assert.equal(calls,calls0,'presentation consumes zero gameplay random calls');
+  // The native Projectiles.clear() is a gameplay lifecycle operation, not
+  // just a presentation teardown. Instrument the sheet renderer's own clear
+  // independently, then keep validating the native clear's visual reset.
+  const beforeSheetClearRng=calls;
+  s._s3Shapes.sheets.clear();
+  assert.equal(calls,beforeSheetClearRng,'presentation-only sheet retirement consumes no gameplay RNG');
   s.clear();assert.equal(s._s3Shapes.slashV.count,0);assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.sheets.mesh.count,0);
   assert.equal(s._s3Shapes.wetSlashV.visible,false,'clearing the final wet wave hides its pooled mesh');
   const wetMesh=s._s3Shapes.wetSlashV;
   s._draw();s._draw();assert.equal(wetMesh.count,0);assert.equal(wetMesh.visible,false);
   fire(f,'s3-saber-lite');s._draw();assert.equal(s._s3Shapes.wetSlashV,wetMesh);assert.equal(wetMesh.count,2);assert.equal(wetMesh.visible,true);
   fire(f,'s3-saber-heavy');s._draw();assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.slashV.count,2);
+});
+
+test('natural wet projectile and sheet retirement clears the lazy mesh without disposing it',async()=>{
+  const f=await setup(),{s}=fire(f,'s3-saber-normal');s._draw();
+  const wet=s._s3Shapes.wetSlashV;assert.equal(wet.count,2);assert.equal(wet.visible,true);
+  // Run the real simulation and presentation through its normal expiry path,
+  // rather than manufacturing an empty list or relying only on clear().
+  for(let i=0;i<240&&(s.list.length||s._s3Shapes.sheets.bursts.length||s._s3Shapes.sheets.drills.length);i++){
+    s.update(1/60);f.G.time+=1/60;s._draw();
+  }
+  assert.equal(s.list.length,0);assert.equal(s._s3Shapes.sheets.bursts.length,0);assert.equal(s._s3Shapes.sheets.drills.length,0);
+  s._draw();s._draw();assert.equal(wet.count,0);assert.equal(wet.visible,false);
+  assert.equal(s._s3Shapes.wetSlashV,wet,'lazy resource remains reusable after retirement');
+  fire(f,'s3-saber-heavy');s._draw();assert.equal(wet.count,0);assert.equal(wet.visible,false);assert.equal(s._s3Shapes.slashV.count,2);
+  fire(f,'s3-saber-normal');s._draw();assert.equal(s._s3Shapes.wetSlashV,wet);assert.equal(wet.count,2);assert.equal(wet.visible,true);
 });
 
 
@@ -172,4 +195,39 @@ test('actual wet Wiper material hook avoids GLSL ES reserved patch identifier wi
   assert.match(shader.fragmentShader,/0\.45 \* sin\(vS3Local\.x \* 7\.3 - vS3Local\.z \* 5\.2 \+ 1\.1\)/);
   assert.match(shader.fragmentShader,/diffuseColor\.rgb \*= 0\.94 \+ 0\.09 \* smoothstep\(-0\.3, 1\.0, iwWetPatch\)/);
   assert.doesNotMatch(shader.fragmentShader,/\bfloat\s+patch\b/,'GLSL ES 3 reserves patch');
+});
+
+test('all six native Wiper actions naturally retire identically at 30/60/120 Hz with a 21-tick quiet tail',async()=>{
+  let reference;
+  for(const hz of [30,60,120]){
+  const f=await setup(),rows=[];
+  // Legacy Heavy and tap controls precede the two lazy wet-mesh owners.
+  for(const [id,charged] of [['s3-saber-heavy',false],['s3-saber-heavy',true],
+    ['s3-saber-normal',false],['s3-saber-lite',false],['s3-saber-normal',true],['s3-saber-lite',true]]){
+    const {s,a,p}=fire(f,id,charged);s._draw();
+    const R=s._s3Shapes,wet=R.wetSlashV,mesh=charged?(id==='s3-saber-heavy'?R.slashV:wet):R.slashH;
+    assert.equal(mesh.count,2,'observe the actual active native shot before its natural expiry');
+    let accumulator=0,tick=0,tail=0;
+    while(tick<240&&tail<21){
+      accumulator+=1/hz;
+      while(accumulator+1e-10>=1/60&&tick<240&&tail<21){
+        accumulator-=1/60;f.tick(a);s.update(1/60);tick++;
+        const retired=!s.list.length&&!R.sheets.bursts.length&&
+          ![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh,R.sheets.drillMesh].some(m=>m?.count>0);
+        tail=retired?tail+1:0;
+      }
+      s._draw();
+    }
+    assert.equal(s.list.length,0,'native projectile expires without clear, retagging or lifetime changes');
+    assert.equal(R.sheets.bursts.length,0,'native launch sheets expire on the advancing game clock');
+    assert.equal(tail,21,`${hz} Hz ${id} ${charged?'charged':'tap'} retained a mesh after natural projectile/sheet expiry`);
+    assert.equal(R.wetSlashV,wet,'retirement preserves lazy reusable geometry');
+    assert.equal(mesh.count,0);assert.equal(mesh.visible,false);
+    assert.equal(s.s3ShapeCounts.slashV,0);
+    rows.push({id,charged,life:p.life,quietTailTicks:tail,finalTick:tick});
+  }
+  assert.equal(rows.length,6);
+  if(reference)assert.deepEqual(rows,reference,'fixed-step retirement tick and quiet tail agree across render schedules');
+  else reference=rows;
+  }
 });

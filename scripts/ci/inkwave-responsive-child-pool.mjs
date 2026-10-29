@@ -29,12 +29,15 @@ export async function mapResponsiveByEngine(cases,workers,runCase) {
   const webkit=cases.filter(x=>x?.engine==='webkit');
   if (!chromium.length || !webkit.length || chromium.length+webkit.length!==cases.length)
     throw TypeError('Both browser engines must own every responsive case');
-  // Promise.all waits for both complete 7-case lanes. No case disappears if
-  // another lane fails; the full 14-case acceptance receipt still fails closed.
-  const [a,b]=await Promise.all([
+  // Wait for both complete lanes even when one rejects first. This prevents
+  // an early failure from ending the runner while the other engine is active.
+  const results=await Promise.allSettled([
     mapResponsiveCases(chromium,1,runCase),
     mapResponsiveCases(webkit,1,runCase),
   ]);
+  const failure=results.find(result=>result.status==='rejected');
+  if (failure) throw failure.reason;
+  const [a,b]=results.map(result=>result.value);
   return cases.map(item=>item.engine==='chromium'?a[chromium.indexOf(item)]:b[webkit.indexOf(item)]);
 }
 

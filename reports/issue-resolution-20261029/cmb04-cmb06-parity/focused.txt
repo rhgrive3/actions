@@ -1,0 +1,65 @@
+(node:366490) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ after a visible nearer candidate, a worse enemy does not consume a LOS ray (0.940079ms)
+✔ occluded nearer enemy cannot suppress a later visible target (0.157658ms)
+✔ retained target keeps the original score -4 hysteresis before pruning (0.223397ms)
+✔ equal-score rivals retain first-visible tie break without a second raycast (0.168394ms)
+✔ awareness, teammate, death and swimming filters remain before any raycast (0.25206ms)
+✔ CMB04 negative control: old prefilter loses an installed squid edge hit with a standard shooter head (21.011221ms)
+✔ CMB04 actual composed flight retains the native squid edge hit (2.14618ms)
+✔ CMB04 actor contact is preserved at 30, 60 and 120 Hz update intervals (6.65692ms)
+✔ CMB04 exact native capsule boundaries, custom shapes, and invalid inputs retain outcomes (8.449566ms)
+✔ CMB04 coherent moving targets and discontinuity fallback use actual motion records (3.361024ms)
+✔ CMB04 live actor order, friendly/dead/owner/ghost filters, and world tie remain native (7.37905ms)
+✔ CMB04 actor eligibility callbacks retain the native live-roster iterator (2.183246ms)
+✔ CMB06 negative control: old squared rejection loses the native rounded awareness-boundary candidate (20.128678ms)
+✔ CMB06 actual composed perception retains the rounded awareness-boundary candidate (8.821187ms)
+✔ CMB06 awareness, nonfinite and custom vector distance semantics remain native (44.142453ms)
+✔ CMB06 native candidate order, retained target, equal scores, swim, dead and team filters remain intact (19.152666ms)
+✔ CMB06 LOS callbacks retain native live-roster scanning and perception reentry behavior (6.927789ms)
+(node:366497) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches full Triangle.containsPoint across 2000 random points (18.696236ms)
+✔ NAT-02 TriangleWorld.resolveCapsule returns independently owned contact normals (1.560896ms)
+✔ NAT-03 through NAT-06 native runtime modules use preallocated scratch vectors and closure-free edge helpers (0.257459ms)
+✔ CMB-01 through CMB-06 firefight paint, splash drop, graze, and native scans preserve exact combat behavior (26.620179ms)
+✔ NAT-07 through NAT-10 native runtime modules hoist sort closure, scratch vectors, and closure-free climb/surge/jump helpers (0.422698ms)
+✔ CMB-08 through CMB-10 ranked combat, catalog spiral cover, and charger flight broadphase and scratch allocations (0.825486ms)
+✔ CMB-10 native local Charger warming reuses reset scratch while flight/event geometry stays independent (564.964183ms)
+✔ CMB-10 nested native muzzle/aim callbacks keep distinct reusable depth leases (327.885615ms)
+✔ CMB-10 a throwing native callback restores the scratch depth before the next shot (300.915598ms)
+✔ CMB-10 independent Charger installations own their scratch and duplicate install is inert (315.649387ms)
+✔ CMB-10 remote and each custom callback retain independent outputs and returned-vector ownership (290.826677ms)
+▶ CMB-10 ownership and warming oracles reject controlled subject regressions
+  ✔ always-new output vectors (299.401232ms)
+  ✔ one slot for all nested depths (301.693282ms)
+  ✔ one module-global pool for independent installs (315.080583ms)
+  ✔ unconditional reuse for remote/custom callbacks (302.973085ms)
+✔ CMB-10 ownership and warming oracles reject controlled subject regressions (1220.03363ms)
+(node:366511) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1040 static target in the band still takes exactly one hit (coherent record present) (3.092619ms)
+✔ #1040 CE-1: target entering the path only after the round passed takes no damage (2.025157ms)
+✔ #1040 CE-2: target occupying the path at the pass time takes exactly one hit (1.838105ms)
+✔ #1040 nearest victim wins; the later one on the line stays untouched (1.944416ms)
+✔ #1040 terrain between round and victim wins the ordering (no victim hit) (3.20561ms)
+✔ #1040 remote victim driven by the real sample pipeline is time-coherent (6.46488ms)
+✔ #1040 teleport, spawn and owner change reset the record (no sweep across discontinuities) (5.885095ms)
+✔ #1040 motion record is one preallocated object per actor, stable across ticks (1.274214ms)
+✔ #1040 24/30/60/120 Hz render cadence produces identical fixed-tick outcomes (52.417476ms)
+✔ #1040 remote sample hit stays once-only at 24/30/60/120 Hz and across a render hitch (23.163841ms)
+✔ #1040 installed Actor updates preserve real Dualies dodge and Splatling motion; all four shot families are admitted (139.039045ms)
+(node:366518) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #430 independent profile dimensions preserve the supplied capsule aspect, not terrain radius (335.951713ms)
+✔ #430 actual continuous main projectile sweep matches side/head/foot boundaries independently of bullet radius (376.88717ms)
+✔ #430 swim shape and visual smoothing remain independent (353.980877ms)
+✔ #430 installed finite Charger flight consumes the same independent human shape (657.769017ms)
+ℹ tests 48
+ℹ suites 0
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3629.382156

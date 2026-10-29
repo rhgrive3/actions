@@ -1,0 +1,62 @@
+{
+  "scope": "Selected related inputs only; not whole-build identity",
+  "checkout": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "contentHash": "6a4dba60665bb02b5b8589fe23af48113ff8bc84761fb4a0d1a19acf1de25fd6",
+  "inputs": [
+    {
+      "manifestKey": "upstream/src/core/gyro.js",
+      "checkoutPath": "inkwave-public/src/core/gyro.js",
+      "sha256": "2dcdc2591c157c0dd63fcbef7847a09c5bca524750d6337d674ff80467e4ea9e"
+    },
+    {
+      "manifestKey": "upstream/src/core/device.js",
+      "checkoutPath": "inkwave-public/src/core/device.js",
+      "sha256": "b04747e1f331dd5222d54c3f65d708c3bd70fdb81fbe5573041079396ad11464"
+    },
+    {
+      "manifestKey": "patch/adapter.mjs",
+      "checkoutPath": "patches/splatoon3/adapter.mjs",
+      "sha256": "26f421ecf1bd0bd5e18d57057d0fa7f9277a980e9ac413d2c3482fe5ac9c3866"
+    },
+    {
+      "manifestKey": "local-quality/adapter.mjs",
+      "checkoutPath": "patches/local-quality/adapter.mjs",
+      "sha256": "85c0a8b63b23c2daf7416677878e8327647e8cb2f6a01a69ea488a290251bae2"
+    },
+    {
+      "manifestKey": "local-quality/gyro.mjs",
+      "checkoutPath": "patches/local-quality/gyro.mjs",
+      "sha256": "f45db8dbd6a99ece6714208f06b7879b313116465a44f723ee6768236ae1522d"
+    },
+    {
+      "manifestKey": "local-quality/platform-lifecycle.mjs",
+      "checkoutPath": "patches/local-quality/platform-lifecycle.mjs",
+      "sha256": "9f1b3013648b910fafede7b60cbfe1abccbf46880fac4cb15b8c0e32bdf04c6e"
+    },
+    {
+      "manifestKey": "local-quality/gyro-permission.mjs",
+      "checkoutPath": "patches/local-quality/gyro-permission.mjs",
+      "sha256": "b6485cfa60bfc736480c2ea8037a5fa6fc7a2a5af7c6d75d2b30475b2b0a2054"
+    },
+    {
+      "manifestKey": "local-quality/screen-angle.mjs",
+      "checkoutPath": "patches/local-quality/screen-angle.mjs",
+      "sha256": "0f5bd9a98c475bfaa03cb05bb13d3027a97a0062aacd6fabd54957d9ed91399f"
+    },
+    {
+      "manifestKey": "build-script/inkwave-source-composition.mjs",
+      "checkoutPath": "scripts/inkwave-source-composition.mjs",
+      "sha256": "3f981abf01ed35465075ef2d87e496a1797175f160ce52f353089aa792943078"
+    },
+    {
+      "manifestKey": "reliability/gyro-adapter.mjs",
+      "checkoutPath": "patches/reliability/gyro-adapter.mjs",
+      "sha256": "cb55d63f2a216cd530df955f65af2291674ddca24035b98f0697d2b6ff9c33c0"
+    },
+    {
+      "manifestKey": "reliability/gyro-invert-adapter.mjs",
+      "checkoutPath": "patches/reliability/gyro-invert-adapter.mjs",
+      "sha256": "d710d4b3aed1caf4ee7f9ffbba18cbef4fa3b1617dfb751010c4a96df89c2afa"
+    }
+  ]
+}
