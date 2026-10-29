@@ -1,0 +1,240 @@
+{
+  "schema": 1,
+  "base": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "codeCommit": "f9585b37e3bd90442a3dda210e042f358a539fb3",
+  "productionSourceSha256": {
+    "patches/network-replication/adapter.mjs": "7c39f41bf8cc537c05a9877b6eeff06cfab23421f858a479073ae5a8573c9c54",
+    "patches/network-replication/snapshot-guard.mjs": "04df4dea0f997e01a1d3cb7102d9fa1e6a3c6274f5e1fab6b680cd177d136d6b"
+  },
+  "before": {
+    "node": "22.23.4",
+    "subject": "original2b native adapter with final new regression file; new unused snapshot-guard export remains present but original adapter never imports it",
+    "pass": 0,
+    "fail": 31,
+    "skip": 0,
+    "exit": 1
+  },
+  "finalSource": {
+    "node": "22.23.4",
+    "files": [
+      "patches/network-replication/tests/combat-native-birth-timing.test.mjs",
+      "patches/network-replication/tests/combat-single-round-targets.test.mjs",
+      "patches/network-replication/tests/combat-native-proof-receipt.test.mjs",
+      "patches/network-replication/tests/combat-native-receipt-order.test.mjs",
+      "patches/network-replication/tests/combat-boss-proof-targets.test.mjs",
+      "patches/network-replication/tests/contact-provenance-receipts-1.test.mjs",
+      "patches/network-replication/tests/contact-provenance-receipts-2.test.mjs",
+      "patches/network-replication/tests/contact-provenance-receipts-3.test.mjs",
+      "patches/network-replication/tests/contact-provenance-receipts-4.test.mjs",
+      "patches/network-replication/tests/contact-provenance-receipts-5.test.mjs",
+      "patches/network-replication/tests/contact-provenance-deferred-1.test.mjs",
+      "patches/network-replication/tests/contact-provenance-deferred-2.test.mjs",
+      "patches/network-replication/tests/contact-provenance-deferred-3.test.mjs",
+      "patches/network-replication/tests/contact-provenance-boss-positive.test.mjs",
+      "patches/network-replication/tests/contracts.test.mjs",
+      "patches/network-replication/tests/robustness-timing.test.mjs",
+      "patches/network-replication/tests/robustness-ownership.test.mjs",
+      "patches/network-replication/tests/robustness-packets.test.mjs",
+      "patches/network-replication/tests/special-provenance-projectile.test.mjs",
+      "patches/network-replication/tests/issue-1033-handoff-hit.test.mjs",
+      "patches/network-replication/tests/issue-93-squidspawn-handoff.test.mjs",
+      "patches/network-replication/tests/queue-network-receipts-20261027.test.mjs",
+      "scripts/tests/inkwave-combat-provenance.test.mjs",
+      "scripts/tests/inkwave-boss-positive-proof.test.mjs"
+    ],
+    "tests": 302,
+    "pass": 302,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "durationMs": 151511.974748,
+    "command": "PATH=/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin:$PATH node --experimental-vm-modules --test --test-concurrency=2 --test-reporter=tap patches/network-replication/tests/combat-native-birth-timing.test.mjs patches/network-replication/tests/combat-single-round-targets.test.mjs patches/network-replication/tests/combat-native-proof-receipt.test.mjs patches/network-replication/tests/combat-native-receipt-order.test.mjs patches/network-replication/tests/combat-boss-proof-targets.test.mjs patches/network-replication/tests/contact-provenance-receipts-1.test.mjs patches/network-replication/tests/contact-provenance-receipts-2.test.mjs patches/network-replication/tests/contact-provenance-receipts-3.test.mjs patches/network-replication/tests/contact-provenance-receipts-4.test.mjs patches/network-replication/tests/contact-provenance-receipts-5.test.mjs patches/network-replication/tests/contact-provenance-deferred-1.test.mjs patches/network-replication/tests/contact-provenance-deferred-2.test.mjs patches/network-replication/tests/contact-provenance-deferred-3.test.mjs patches/network-replication/tests/contact-provenance-boss-positive.test.mjs patches/network-replication/tests/contracts.test.mjs patches/network-replication/tests/robustness-timing.test.mjs patches/network-replication/tests/robustness-ownership.test.mjs patches/network-replication/tests/robustness-packets.test.mjs patches/network-replication/tests/special-provenance-projectile.test.mjs patches/network-replication/tests/issue-1033-handoff-hit.test.mjs patches/network-replication/tests/issue-93-squidspawn-handoff.test.mjs patches/network-replication/tests/queue-network-receipts-20261027.test.mjs scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs"
+  },
+  "earlierTimingOnly": {
+    "pass": 281,
+    "fail": 0,
+    "skip": 0,
+    "scope": "before finite/layout expansion; retained as earlier result, not final validation"
+  },
+  "actualHpFaultProbe": {
+    "rows": 18,
+    "oldFifoOnly": {
+      "rows": 9,
+      "damageEach": 36,
+      "nativeReceiverProjectilesEach": 0
+    },
+    "currentGate": {
+      "rows": 9,
+      "damageEach": 0,
+      "proofsEach": 0,
+      "fifoEach": 0,
+      "nativeReceiverProjectilesEach": 0
+    },
+    "source": "AST-extracted unchanged actual regression setup, actual producer templates, single invalid field; only admission gate is controlled in old subject",
+    "command": "node --experimental-vm-modules /workspace/scratch/authority-static-native-birth-hp-probe.mjs /workspace/wt-optimized-bounded"
+  },
+  "independentReview": {
+    "agent": "agent6",
+    "historicalOrdinaryProducerRows": 847,
+    "weaponsWithP": 64,
+    "totalMainTraces": 65,
+    "historicalSource": "035233299348e5c3527f6106b98e721ed2dfd011",
+    "bad": 0,
+    "checks": [
+      "shared native birth validator",
+      "pure fidelity packet parser"
+    ],
+    "limits": "historical ordinary-fire compatibility, not current all-class/special or deployed-session proof"
+  },
+  "combinedEmitted": {
+    "sourceSha": "829c93fc99bb4dfe3c23f0804792d1f24ed56270",
+    "nativeDiffAgainstAgentCode": "none across all five changed paths",
+    "node": "22.23.4",
+    "tests": 303,
+    "pass": 303,
+    "fail": 0,
+    "skip": 0,
+    "files": [
+      "patches/network-replication/tests/combat-boss-proof-targets.test.mjs",
+      "patches/network-replication/tests/combat-native-proof-receipt.test.mjs",
+      "patches/splatoon3/tests/issue-1431-hit-pose-birth.test.mjs",
+      "patches/splatoon3/tests/issue-1607-zipcaster-success-minimum.test.mjs",
+      "patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs",
+      "patches/splatoon3/tests/charger-special-audio-cancel.test.mjs",
+      "patches/splatoon3/tests/catalog-charger-remote-audio.test.mjs",
+      "patches/splatoon3/tests/splatling-charge-reversal.test.mjs",
+      "patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs",
+      "patches/local-quality/tests/offscreen-hair-targets.test.mjs",
+      "patches/local-quality/tests/native-offscreen-ground-memo.test.mjs",
+      "patches/network-replication/tests/canonical-weapon-actions.test.mjs",
+      "patches/network-replication/tests/canonical-weapon-modes.test.mjs",
+      "patches/network-replication/tests/canonical-sub-special-traces.test.mjs",
+      "patches/network-replication/tests/native-action-traces.test.mjs",
+      "patches/network-replication/tests/trusted-native-replay.test.mjs",
+      "patches/network-replication/tests/native-command-wire.test.mjs",
+      "patches/network-replication/tests/native-turf-start-replay.test.mjs",
+      "patches/network-replication/tests/native-turf-session-reconnect.test.mjs",
+      "patches/splatoon3/tests/native-action-trace.test.mjs",
+      "patches/splatoon3/tests/native-action-representatives.test.mjs",
+      "patches/splatoon3/tests/native-action-trace-binding.test.mjs",
+      "patches/splatoon3/tests/roller-paint-world-update.test.mjs",
+      "patches/network-replication/tests/combat-native-birth-timing.test.mjs",
+      "patches/network-replication/tests/combat-single-round-targets.test.mjs",
+      "patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs"
+    ],
+    "inputs": 1530,
+    "artifacts": 2241,
+    "contentHash": "cdd688713f9ebc3e78b3e9b6195e9cb0f5133d2e949dcb7a1f916108dd6ba595",
+    "inputHash": "b3f9a8907e224ae3d64673f61e191df891020bcc3018dbe78640b239f53cc149",
+    "executionOwner": "root; fresh combined Node22 build and manifest checks before/after",
+    "overlap": "includes the new31 and changed55 tests; source302 and emitted303 are separate overlapping scopes, not summed"
+  },
+  "supportedEmittedTests": [
+    "patches/network-replication/tests/combat-native-birth-timing.test.mjs",
+    "patches/network-replication/tests/combat-single-round-targets.test.mjs"
+  ],
+  "sourceOnlyControls": [
+    "old adapter before31",
+    "controlled old FIFO actual HP probe18",
+    "manual remaining valid-fire forge diagnostic"
+  ],
+  "remainingForgedValidFire": {
+    "securityAcceptancePassed": false,
+    "pvpDamage": 36,
+    "bossDamage": 36,
+    "crabletDamage": 36,
+    "actualSenderWeaponInvocations": 0,
+    "actualReceiverProjectileContacts": 0,
+    "scope": "actual composed receiver/native HP component diagnostic, no socket/browser"
+  },
+  "logs": {
+    "before31.tap.gz": {
+      "sha256": "5270353c6ab51c0f559de84c26f8401f3fdb536f5821f7c105377d58e5a5b279",
+      "uncompressedSha256": "0d2cb9d879f6bfe1ae22e30a8635f84efb7cede5301bd20891c4828c71c5ed7c",
+      "uncompressedBytes": 28149
+    },
+    "source302.tap.gz": {
+      "sha256": "7e6f048a6f258454ca7dbc4c576ef12d54ef8c0a32ac1abc10ffd58d04dd3fa3",
+      "uncompressedSha256": "275c1c58b916f00ae4906d7211fe821bed7e12d3127a79964fec022c7de191bb",
+      "uncompressedBytes": 72225
+    },
+    "initial-timing281.tap.gz": {
+      "sha256": "06b5117b7be9d26a52e2ea0a0ffe1a6b1b9b09a89468043aa071e18212565963",
+      "uncompressedSha256": "08b5ff7f6b7f83a3e1522742a4b40e9c5e248e71b3cd21ff411aa785a281e684",
+      "uncompressedBytes": 66571
+    },
+    "missing-weapon-nonvacuous.tap.gz": {
+      "sha256": "9f890b36e8245445c2e0803737efaa013bb7fe1ed24b0ce8054e6a987d0c6fdf",
+      "uncompressedSha256": "9274a287ea36b0760be841d6f23a666ffc06de2607919c47db857f61a5ccca50",
+      "uncompressedBytes": 520,
+      "scope": "earlier timing-only predicate; final legacy27/parser path is covered in source302 and combined emitted303"
+    },
+    "original-zero-life-hp.json.gz": {
+      "sha256": "9f1e6ef492ce4003a0b2f53bc3d800d28c33f97013688241ed208270a11d8e96",
+      "uncompressedSha256": "ac2e51d1c05a8fd12cfd261050a937a96553727fa5e85e2bd4cde67d52bd08a4",
+      "uncompressedBytes": 793
+    },
+    "native-hp-faults18.json.gz": {
+      "sha256": "fd5bff7e5b54f1d1a85c8537deab7781ddc7cffd9a075635625c28a4bbcc2494",
+      "uncompressedSha256": "8ef770dc1211eaeb147c88fa60c389185375225b543676102ffd5f75e43e0e6f",
+      "uncompressedBytes": 4555
+    },
+    "native-hp-faults18.log.gz": {
+      "sha256": "622380acf66c42d736cbfd361a0580a0026e39e1db74d725ffe7e7951d091112",
+      "uncompressedSha256": "087fddefc47eddf06dded448f3906f8971a05c4c59a51700aaa8e264e29bc4ab",
+      "uncompressedBytes": 174
+    },
+    "native-hp-probe-source.txt.gz": {
+      "sha256": "36a3217bcc15adcb778731bd683bfe691c68be4a82056f0f83f30296dfaa067e",
+      "uncompressedSha256": "afcc85bba6fa2a42eb9db166239e468d57ac2da37c17bd1a20980be8c5f3e832",
+      "uncompressedBytes": 2632
+    },
+    "remaining-valid-fire-gap.json.gz": {
+      "sha256": "f4611c9dbc5cfa5c6982c0a2a406b691c42cdbb2534eae096a0d1eacb9e1b692",
+      "uncompressedSha256": "89b0ed6036ac03888dd265a364b3df15559fcc05a8419f7a7982b8b8c9345e4f",
+      "uncompressedBytes": 5146
+    },
+    "remaining-valid-fire-gap.log.gz": {
+      "sha256": "24ef2fc954d105bb5d3db0fb877ae594d9ae93829a7667bd9c36b8ba42cc1622",
+      "uncompressedSha256": "8419e394d9158438fa1747be3281a819c9ff9be5e857916dc957787a481f0612",
+      "uncompressedBytes": 174
+    },
+    "native-short-row-audit.json.gz": {
+      "sha256": "e92d5ffb693a4b544ca31283c9ba377e769ef02611c781b1be07bb67fe3079f6",
+      "uncompressedSha256": "74e98a3aa9606d447f90b190a0a89f35ca3a0fc7718dd9ea692c83e5aa300dae",
+      "uncompressedBytes": 2212
+    },
+    "historical847-producer-review.log.gz": {
+      "sha256": "7acdbe7afc84ad8560a038dcabd25201bd015b7de4fa9b623e266c9056aba91d",
+      "uncompressedSha256": "22e7ec277c344cacd4e4511230af547f2cdca19b712d64d9c52d928631c10875",
+      "uncompressedBytes": 271
+    },
+    "combined-emitted303.tap.gz": {
+      "sha256": "a51f3c69d17893890ae8ba288acce674ad4a0c4721b6c588fce0de6596e922e7",
+      "uncompressedSha256": "e1424d4f6ee446c730757b198b960aaed1203db705896b33455a40f3cea17e60",
+      "uncompressedBytes": 111990
+    },
+    "combined-emitted-selection.json.gz": {
+      "sha256": "ebba94cd7af67515c7b053d0f5f2af01a0980c808837240ddc885aa17a5e089c",
+      "uncompressedSha256": "56ee767d4089e5b38546460ff20ccc58f616631a8e0991c8b8c8dad7196fc5d5",
+      "uncompressedBytes": 6469
+    },
+    "combined-emitted-summary.json.gz": {
+      "sha256": "5cc8e4bd0de47bf5f228c40842d6a3e303beaf985e66b5100e0eaf4fc37b4c44",
+      "uncompressedSha256": "d38be02abb5f2ea681d3191b2e2310c8e5c19f24ced406d0b3860ec68e12d47c",
+      "uncompressedBytes": 9851
+    },
+    "combined-emitted-after-manifest.json.gz": {
+      "sha256": "0f31c21534e48f7857f7e82746ea8181911a13832fc28bbe25d12e8014ef19b2",
+      "uncompressedSha256": "168b7739757d1a7f212f46bb16dfd4dac9e51f522542a79aaddce08bad6fa7e1",
+      "uncompressedBytes": 581713
+    }
+  },
+  "limits": [
+    "This closes malformed/unexecutable p-row proof admission only; valid forged action/contact authority #1665/#1666 remains unresolved.",
+    "No cosmetic allocation capacity/quota drop is reclassified as no action.",
+    "No weapon/timing/damage/RNG/physics/movement or wire scalar is changed; all checks were already present on native playback.",
+    "The producer helper temporarily resets an explicit sender component actor/world to obtain genuine serialized rows; it is not an independent multi-client proof.",
+    "No main merge, push, issue closure, held Character QA retry or MOV08b release by this workstream."
+  ]
+}
