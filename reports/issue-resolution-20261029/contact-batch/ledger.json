@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "scope": "Software contact-batch evidence for exact tested source/build snapshots; no subsequent commit is implied.",
+  "builds": {
+    "common": {
+      "sha": "53d886000e991e7a21e233d55f15d5caa3258619",
+      "contentHash": "236528e1e15d593fb5b3d5586f84ecd930083e8bdbb54a003d1a64f5cf7ed1c3",
+      "inputHash": "9d260d68e281a44ce44d7f2ebc54b8b9636ac8bdb5929a136edbfc8ec39ce9c5",
+      "artifacts": 2237,
+      "inputs": 1527
+    },
+    "opt": {
+      "sha": "e4ffc3b93047ac38d3f53ad6ac24e3cddbe79bd4",
+      "contentHash": "33a559f5ab49c9ff39dab0aedcb3015731f924eff1de5b4bcf55f40629505bba",
+      "inputHash": "dc0110ee11a0890b376cb9b8db0c808ebe5737a57d6ea9e6c43b7d4276ce741c",
+      "artifacts": 2241,
+      "inputs": 1530
+    },
+    "pr1909": {
+      "sha": "be48c6be0d9a7b21f8ae2f0060a4da7c9f7d822b",
+      "contentHash": "67e78b1a51080907c534e2df392b640b6124a6a494c1069705064453279bea1b",
+      "inputHash": "12550154a027cf79878eeaa8bcfe29e560fdd4a497bf38768cc8914c8d2d482f",
+      "artifacts": 2241,
+      "inputs": 1529
+    },
+    "pr1910": {
+      "sha": "79fb0047a15ca4a36f1999964b73f0ae95d9b7cd",
+      "contentHash": "0c3788aae8fd362953bbb959c6038eb9cbf452b618638144c84e50ddb1cbe03d",
+      "inputHash": "70f311926677e6607bcf08245e6da8650da2c64b8030cc966ff104b6820c0b68",
+      "artifacts": 2237,
+      "inputs": 1527
+    },
+    "optRing": {
+      "sha": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+      "contentHash": "27d49de07e8864caac45045f840a65055e4976d8b930ca8bb93366698f7a64fb",
+      "inputHash": "ced465820a4a710dc654c47d7e77ec750e7bd6040809f53048f7540068857e5a",
+      "artifacts": 2241,
+      "inputs": 1530
+    }
+  },
+  "runtimeBlobIds": {
+    "all-specials.mjs": "19d83df586dbc8f534b5bea71a7a9eaa4a7455a9",
+    "storm-effects-adapter.mjs": "ce0fec753291e02ec176dbe123f50181afbf3fb8",
+    "combat-provenance.mjs": "509ab355100419275d7c9fd7c9066bef76d35a1c",
+    "combat-single-round-targets.test.mjs": "238f7f94190096d069d83c3b6de57f73efec6913"
+  },
+  "sourceTests": {
+    "stormContactAccounting": {
+      "pass": 6,
+      "fail": 0,
+      "path": "evidence/final-storm-root-vm.tap.gz"
+    },
+    "stormCutoff": {
+      "pass": 3,
+      "fail": 0,
+      "path": "evidence/final-storm-root-cutoff.tap.gz"
+    },
+    "singleRoundEarlierFocused": {
+      "pass": 100,
+      "fail": 0,
+      "overlap": "subset of final guard source suite",
+      "path": "evidence/final-single-round-root.tap.gz"
+    },
+    "singleRoundGuardFinal": {
+      "pass": 154,
+      "fail": 0,
+      "path": "../single-round-proof-admission/guard-source-final.tap.gz",
+      "sha256": "5a3be709e40e59c0eda107a9dce4b374d0558bd2af13d36547174faa18e89885"
+    }
+  },
+  "initialEmittedTests": {
+    "common": {
+      "exitCode": 1,
+      "tests": 61,
+      "pass": 60,
+      "fail": 1,
+      "path": "evidence/contact-batch-common-emitted-initial.tap.gz"
+    },
+    "opt": {
+      "exitCode": 1,
+      "tests": 61,
+      "pass": 60,
+      "fail": 1,
+      "path": "evidence/contact-batch-opt-emitted-initial.tap.gz"
+    },
+    "cause": "Original-source #226 call count assertion was run on emitted adapted runtime; observed 178/178/178 versus expected 172/172/171."
+  },
+  "openBoundaries": [
+    "#1665 and #1666: retained production gap permits 36 HP damage with no real sender launch or receiver contact.",
+    "#735: native vertical cutoff remains unverified.",
+    "Hosted CI for these local commits has not been established.",
+    "#401 is out of scope; main merge and existing holds are outside this batch."
+  ],
+  "evidence": [
+    {
+      "path": "evidence/contact-batch-common-budget.log.gz",
+      "sha256": "ef8b07307fdc18ae0767d92f11fa48e9823b3bfd913a5166b924952fe3789e5f",
+      "uncompressedSha256": "f410d5c9a9d4f8c8d78d96e047c41e775c4306f87560fe0be32119aaa4273dda",
+      "uncompressedBytes": 520
+    },
+    {
+      "path": "evidence/contact-batch-common-build-final.log.gz",
+      "sha256": "a7a2427d6046c25e596e254dd893212a0e0416ad1d9c72c663cf33b75d26f511",
+      "uncompressedSha256": "ac25b2927f260677abc5d823001dbb462e3a0a87a7ceb2f1b72500b38a440cf8",
+      "uncompressedBytes": 1210
+    },
+    {
+      "path": "evidence/contact-batch-common-emitted-final.tap.gz",
+      "sha256": "05eea197205b045d9abf1993864b30470694134de7897cb91b122aabd0ed2337",
+      "uncompressedSha256": "6cc11c7cdeded86248a0caebef5ba77643f991a1d0e6dbd095e55d92bd651f96",
+      "uncompressedBytes": 22269
+    },
+    {
+      "path": "evidence/contact-batch-common-emitted-initial.tap.gz",
+      "sha256": "e19a31005816943b6bea39982f1fbe08226af99b4e2104ac263bb576c0fa1873",
+      "uncompressedSha256": "35107591afc6b34648f3bf7ea662ccd9271762bd9029ce932ac5b1c9a084ff5c",
+      "uncompressedBytes": 23913
+    },
+    {
+      "path": "evidence/contact-batch-common-identity.json.gz",
+      "sha256": "850046a169a05d8a05fa76b91398fcd7566a1ab9faadc0fe5eb5659095266d8e",
+      "uncompressedSha256": "fd39e54da9a0451319b7706bc26a3ad0dd87ab57b393d9cde379c5c4d5a381f8",
+      "uncompressedBytes": 242
+    },
+    {
+      "path": "evidence/contact-batch-opt-budget.log.gz",
+      "sha256": "2eb50f88b6a6e5abbc2876acc60b6045e75462927f806d3768be8e8201fb0295",
+      "uncompressedSha256": "424955e10f856a802d742dae57433c599a0b013b4266f3248057fc85afd31fac",
+      "uncompressedBytes": 520
+    },
+    {
+      "path": "evidence/contact-batch-opt-build.log.gz",
+      "sha256": "cabc1812009da625a5f387e076dcd744e3929fd64bce3e18448014bf856de402",
+      "uncompressedSha256": "d8e2159d4ff6d774651ce1668f80d99e34649d4584245b4a79afae32965e133b",
+      "uncompressedBytes": 1210
+    },
+    {
+      "path": "evidence/contact-batch-opt-emitted-final.tap.gz",
+      "sha256": "0f1df233178447bd214800882c59d84ccfc39f46a9bb189d4dc249fcbca46b2f",
+      "uncompressedSha256": "926f1dc22456b20bd2d307e06c3d13a2a54be8dcbe72a7add2e26f4b615e8d6c",
+      "uncompressedBytes": 22143
+    },
+    {
+      "path": "evidence/contact-batch-opt-emitted-initial.tap.gz",
+      "sha256": "5b9b0d11ec7f9c0c66ad6154c3e1538657eb856042af7828e24ea3ac39f6b4bd",
+      "uncompressedSha256": "8b1e72f37695a1a58848d3428b1eae7a1760f541123f73b7f828b97649556236",
+      "uncompressedBytes": 23777
+    },
+    {
+      "path": "evidence/contact-batch-opt-identity.json.gz",
+      "sha256": "c960383ed2548ca35e3814a99705fb6c3ca7adbd912d5eb7aed0a471370efdfa",
+      "uncompressedSha256": "ca8848566422271c68e1d7c6359203d73fab397e47732619e96910ac498c580b",
+      "uncompressedBytes": 242
+    },
+    {
+      "path": "evidence/contact-batch-opt-ring-budget.log.gz",
+      "sha256": "90e03065ad847befba1ef0b559c37950a12af6ed5fa21c60c8d4a37687f59136",
+      "uncompressedSha256": "7996dc93e04b212e6d24032f275615d7e0685b3410f78c9a4ace377c5df67f7c",
+      "uncompressedBytes": 520
+    },
+    {
+      "path": "evidence/contact-batch-opt-ring-build.log.gz",
+      "sha256": "d4b5a699f735ace79a9a96b02a37c222c438b7c78cb350099646de265f364a5a",
+      "uncompressedSha256": "bc3f6df0b330094ad19392c2f17a3beca530563be29dd1b6665204a2453bd70d",
+      "uncompressedBytes": 1210
+    },
+    {
+      "path": "evidence/contact-batch-opt-ring-identity.json.gz",
+      "sha256": "febf50502c6b0ba4d6efe8708ed6659b5c756d6114fe7feb43f3eec997be6254",
+      "uncompressedSha256": "a73176bbc1cc4dcb64d875e613aa3a7a755e87231173347f21d22bdce4a85d6f",
+      "uncompressedBytes": 242
+    },
+    {
+      "path": "evidence/contact-batch-pr1909-budget.log.gz",
+      "sha256": "d9f80bb9cc91fde87485fd56e673fa2078cbd8dff45563370e593585571a1f4a",
+      "uncompressedSha256": "7a9874a24cd7c9366663566620bf4fa9f615be0a7d878ecd18cff3a1e2c9a0ac",
+      "uncompressedBytes": 520
+    },
+    {
+      "path": "evidence/contact-batch-pr1909-build.log.gz",
+      "sha256": "bd7f5a934ed09f88242e8a704afdf58a70a221ce1b30c0b68ccd352138668386",
+      "uncompressedSha256": "ead53d2cc13cd1e7b150d154b53cf171a0e819ada6a4304bcd0d56fe2bc776ce",
+      "uncompressedBytes": 904
+    },
+    {
+      "path": "evidence/contact-batch-pr1909-identity.json.gz",
+      "sha256": "529119f5f3b973b35bb8c1bcbd5084b7685b8d2a3db61767eece7f1196f25496",
+      "uncompressedSha256": "aa98de5719e3386358f545aaef36e85147a91932a66d4d5cc6f88d288d17fd24",
+      "uncompressedBytes": 242
+    },
+    {
+      "path": "evidence/contact-batch-pr1910-budget.log.gz",
+      "sha256": "360c954c6cf5174c2edce697ebd00fdb8155b3de87e0ed0e07b3ed961f2e41fc",
+      "uncompressedSha256": "cfe57b03f841844878c8adde36efde61261ef0080668167c284a2a64c3d0a79d",
+      "uncompressedBytes": 520
+    },
+    {
+      "path": "evidence/contact-batch-pr1910-build.log.gz",
+      "sha256": "8c9d086094c9f5e66b47348f3a625e13573546af53192014b595a41897922ba2",
+      "uncompressedSha256": "6e884cfbb616be2abdd5d6ab0625b6d0e509ecdb0b1a2fd80d48212c06b2b143",
+      "uncompressedBytes": 904
+    },
+    {
+      "path": "evidence/contact-batch-pr1910-identity.json.gz",
+      "sha256": "8807b7e9f755371cf96a0be7b2e880bbae524967200f70729f5736aa9726df34",
+      "uncompressedSha256": "09eb1fbeff1606e68aa16453ef1cad169862e5170115295528827faab264c54c",
+      "uncompressedBytes": 242
+    },
+    {
+      "path": "evidence/final-single-round-root.tap.gz",
+      "sha256": "0bba964cb7c319a5e8704489f588454799a8dc1cbe8e6971b2dce4be0353ad7c",
+      "uncompressedSha256": "1502f33fb122aac0dc9af6335349dd7d51ec484d3c871afbe1b768260ad3b672",
+      "uncompressedBytes": 21427
+    },
+    {
+      "path": "evidence/final-storm-root-cutoff.tap.gz",
+      "sha256": "4512390bd460968adbc0d0da41ba44d86d889977dcec69201b30bafeb20c7ace",
+      "uncompressedSha256": "6e99307a29e0635a1ba435687241db464a44fc6f617ffeb1d7953ef77f2b1548",
+      "uncompressedBytes": 1063
+    },
+    {
+      "path": "evidence/final-storm-root-vm.tap.gz",
+      "sha256": "3643a4f20f52a518001e75f6406eb864d9bb673c183a9900f86901b975c4efa5",
+      "uncompressedSha256": "bf06a08c731d4a856ddce8aa30bc8dcd811a43130713fe4f8acae19d2db7aa15",
+      "uncompressedBytes": 1998
+    }
+  ],
+  "finalEmittedTests": {
+    "common": {
+      "testSource": "b18d91f336e635e6da4b7f08fa1010e79fd11044",
+      "buildSource": "53d886000e991e7a21e233d55f15d5caa3258619",
+      "contentHash": "236528e1e15d593fb5b3d5586f84ecd930083e8bdbb54a003d1a64f5cf7ed1c3",
+      "exitCode": 0,
+      "tests": 61,
+      "pass": 61,
+      "fail": 0,
+      "skipped": 0,
+      "path": "evidence/contact-batch-common-emitted-final.tap.gz"
+    },
+    "optRing": {
+      "testAndBuildSource": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+      "contentHash": "27d49de07e8864caac45045f840a65055e4976d8b930ca8bb93366698f7a64fb",
+      "exitCode": 0,
+      "tests": 61,
+      "pass": 61,
+      "fail": 0,
+      "skipped": 0,
+      "path": "evidence/contact-batch-opt-emitted-final.tap.gz"
+    },
+    "selector": "Source-only #226 counterfactual moved intact to mandatory source test; emitted selector adds a fail-closed scope guard."
+  }
+}
