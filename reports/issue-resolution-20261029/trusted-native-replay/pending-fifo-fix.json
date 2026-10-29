@@ -1,0 +1,23 @@
+{
+  "scope": "Source VM extraction dependency repair; production helper already declared at module top level and runtime unchanged",
+  "oldControl": {
+    "commit": "d81aeaf3",
+    "exitCode": 1,
+    "tests": 1,
+    "fail": 1,
+    "error": "bossBodyBlocked is not defined"
+  },
+  "fixed": {
+    "files": [
+      "queue-network-receipts-20261027.test.mjs",
+      "combat-boss-proof-targets.test.mjs",
+      "combat-native-proof-receipt.test.mjs"
+    ],
+    "tests": 35,
+    "pass": 35,
+    "fail": 0,
+    "skip": 0
+  },
+  "assertions": "All original FIFO/prune/live-prefix/callback-enqueue expectations retained across PvP/Boss and all3 expired positions; added actual nested same-peer flush and real hidden/invuln body versus crablet predicates",
+  "testSHA256": "5adb59e6acd31ed0c999442cdf0e79b069b555a0689b45b7ed89c736d16f0c59"
+}

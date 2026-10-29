@@ -1,0 +1,191 @@
+{
+  "recordedAt": "2026-10-28T20:19:39.972527+00:00",
+  "sourceCheckoutAtLaunch": "54465a5def087608ff4a19b23d57e05a3613033a",
+  "nodeVersion": "22.23.4",
+  "build": {
+    "site": "/workspace/wt-integration/_site",
+    "manifestSha256": "87aa57e47068b8b2af4f0247015b72f454fb5e683e00d72b87c2b5631e963121",
+    "inputHash": "bdb851a80a79a984f15dc002c4fb0b997a8931c4d7b51caefc24f64cbd34210e",
+    "contentHash": "fcec6e8db8e58c0ff5bd0c27da583e6a105b2949c27c1a8d0970152904c2429c"
+  },
+  "runs": [
+    {
+      "name": "charger",
+      "cwd": "/workspace/wt-integration",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site"
+      },
+      "argv": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/splatoon3/tests/charger-native-grip-reach.test.mjs",
+        "patches/splatoon3/tests/charger-protected-trajectory.test.mjs"
+      ],
+      "fileCount": 2,
+      "log": "/workspace/scratch/agent3-core-charger-emitted-once.log",
+      "logSha256": "bc25e208116d718d82afe46bd26f1630ba086693ff72b42296072921f49dff04",
+      "exitCode": 0,
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 58113.563297,
+      "skipLines": []
+    },
+    {
+      "name": "spawn",
+      "cwd": "/workspace/wt-integration",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site",
+        "INKWAVE_CONTROLS_SITE": "/workspace/wt-integration/_site"
+      },
+      "argv": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/splatoon3/tests/spawn-exclusion.test.mjs",
+        "patches/splatoon3/tests/spawn-exclusion-fallback.test.mjs",
+        "patches/reliability/tests/special-spawn-barrier.test.mjs",
+        "patches/splatoon3/tests/respawn-lifecycle.test.mjs"
+      ],
+      "fileCount": 4,
+      "log": "/workspace/scratch/agent3-core-spawn-emitted-once.log",
+      "logSha256": "82e685fcea8f658bc482c2d07dafff0870ab5d732dd9ff5c64fa2315cc88d301",
+      "exitCode": 0,
+      "tests": 94,
+      "pass": 94,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 70322.238518,
+      "skipLines": []
+    },
+    {
+      "name": "source-backed-10",
+      "cwd": "/workspace/wt-integration",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site"
+      },
+      "argv": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/splatoon3/tests/catalog-player-inertia-native.test.mjs",
+        "patches/splatoon3/tests/catalog-slosher-birth-speed.test.mjs",
+        "patches/splatoon3/tests/projectile-pool-slosher-index.test.mjs",
+        "patches/splatoon3/tests/spinner-kinematics-source.test.mjs",
+        "patches/splatoon3/tests/spinner-charge-family.test.mjs",
+        "patches/splatoon3/tests/jump-recovery-airborne-native.test.mjs",
+        "patches/splatoon3/tests/player-collision-source-1130.test.mjs",
+        "patches/native-stages/tests/collision-revision-producers.test.mjs",
+        "patches/splatoon3/tests/shooter-shot-guide-cache.test.mjs",
+        "patches/splatoon3/tests/catalog-slosher-initial-splash.test.mjs"
+      ],
+      "fileCount": 10,
+      "log": "/workspace/scratch/agent3-core-source-backed-10-emitted-once.log",
+      "logSha256": "2a2cf093dae6772ee4e93e1a4bc5c23320fcb6441b8eec96ca72912b767f86fd",
+      "exitCode": 0,
+      "tests": 56,
+      "pass": 55,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 1,
+      "durationMs": 108129.505341,
+      "skipLines": [
+        "ok 40 - removing only the Slosher-index reset fails the same native reuse oracle # SKIP the one-expression counterfactual edits raw source; built positive regressions remain active"
+      ]
+    },
+    {
+      "name": "hurtbox-actual",
+      "cwd": "/workspace/wt-integration",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site",
+        "INKWAVE_EDGECASE_SITE": "/workspace/wt-integration/_site"
+      },
+      "argv": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--experimental-vm-modules",
+        "--test",
+        "patches/splatoon3/tests/player-collision-source-1130.test.mjs"
+      ],
+      "fileCount": 1,
+      "log": "/workspace/scratch/agent3-core-hurtbox-actual-emitted-once.log",
+      "logSha256": "a45f26e2361ce096888412410e16b14b716a9b64dc346be5e3e8367f4c23650c",
+      "exitCode": 0,
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 3036.539542,
+      "skipLines": []
+    },
+    {
+      "name": "subspecial-27",
+      "cwd": "/workspace/wt-integration",
+      "env": {
+        "INKWAVE_BUILT_SITE": "/workspace/wt-integration/_site"
+      },
+      "argv": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "--max-old-space-size=2048",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-concurrency=1",
+        "patches/splatoon3/tests/active-special-gauge.test.mjs",
+        "patches/splatoon3/tests/preoperation-special-gauge.test.mjs",
+        "patches/splatoon3/tests/deployed-special-gauge-display.test.mjs",
+        "patches/splatoon3/tests/retained-special-deep-fidelity.test.mjs",
+        "patches/splatoon3/tests/special-device-flight.test.mjs",
+        "patches/splatoon3/tests/special-device-sparse-replay.test.mjs",
+        "patches/splatoon3/tests/combat-special-terrain.test.mjs",
+        "patches/splatoon3/tests/combat-special-native-bands.test.mjs",
+        "patches/splatoon3/tests/killer-wail-trace-lifecycle.test.mjs",
+        "patches/splatoon3/tests/triple-splashdown-network.test.mjs",
+        "patches/splatoon3/tests/special-health-recovery.test.mjs",
+        "patches/splatoon3/tests/special-presentation-native-controls.test.mjs",
+        "patches/splatoon3/tests/retained-autobomb-fidelity.test.mjs",
+        "patches/splatoon3/tests/retained-suction-attachment.test.mjs",
+        "patches/splatoon3/tests/beakon-concurrent-jumps.test.mjs",
+        "patches/splatoon3/tests/beakon-ground-admission.test.mjs",
+        "patches/splatoon3/tests/fizzy-ghost-hops.test.mjs",
+        "patches/splatoon3/tests/fizzy-detached-splashes.test.mjs",
+        "patches/splatoon3/tests/fizzy-input-queue.test.mjs",
+        "patches/splatoon3/tests/ink-mine-source-offsets.test.mjs",
+        "patches/splatoon3/tests/splash-wall-deployment.test.mjs",
+        "patches/splatoon3/tests/sprinkler-stage-duration.test.mjs",
+        "patches/splatoon3/tests/sub-ground-reflection.test.mjs",
+        "patches/splatoon3/tests/sub-moving-surface.test.mjs",
+        "patches/splatoon3/tests/torpedo-detached-splashes.test.mjs",
+        "patches/splatoon3/tests/torpedo-flight-stages.test.mjs",
+        "patches/network-replication/tests/tower-mine-paint-admission.test.mjs"
+      ],
+      "fileCount": 27,
+      "log": "/workspace/scratch/agent3-core-subspecial-27-emitted-once.log",
+      "logSha256": "2187db08e20431ccb36bc662c24c8bdbb4f75da35c1c59430dd5ed7a96f7fb56",
+      "exitCode": 0,
+      "tests": 203,
+      "pass": 203,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 210168.873467,
+      "skipLines": []
+    }
+  ],
+  "selectorFinding": {
+    "test": "patches/splatoon3/tests/player-collision-source-1130.test.mjs:5",
+    "consumer": "patches/splatoon3/tests/weapon-edgecases-fixture.mjs:14",
+    "requiredSelector": "INKWAVE_EDGECASE_SITE",
+    "originalTenFileWorkflowSelector": "INKWAVE_BUILT_SITE",
+    "resolution": "Actual-emitted hurtbox file run once separately with EDGECASE_SITE. Root owns workflow env correction.",
+    "otherTenAndTwentySevenSelectorMismatches": []
+  },
+  "constraints": [
+    "Each command executed once; no full match simulation, browser recapture, CI retry, test or production change.",
+    "Original ten-file command hurtbox fixture used source because its different selector was unset; the separate actual-emitted file corrects this evidence gap.",
+    "Receipt/oracle assertions and modeled helpers retain their documented scope; passing cases do not certify Nintendo retail or GPU/browser behavior."
+  ]
+}

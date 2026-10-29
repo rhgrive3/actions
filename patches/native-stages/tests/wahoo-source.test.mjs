@@ -25,7 +25,7 @@ test('Wahoo pins the Carousel03 export while retaining unverified moving-object 
 
 test('Wahoo original MTL and every PNG match pinned Git blob hashes and sizes',{skip:!SOURCE||!ASSETS||!REPOSITORY},()=>{
  const revision='0611f51b35c9736ee986fb2218461e2585b7875e',prefix='stages/'+stage.internal+'/',d=readStage(ASSETS,'wahoo');
- const rows=execFileSync('git',['-C',REPOSITORY,'ls-tree','-lr','-z',revision,prefix]).toString().split('\0');let png=0,mtl=0;
+ const rows=execFileSync('git',['-C',REPOSITORY,'ls-tree','-lr','-z',revision,prefix],{maxBuffer:8*1024*1024}).toString().split('\0');let png=0,mtl=0;
  for(const row of rows){if(!row)continue;const [meta,file]=row.split('\t'),relative=file.slice(prefix.length);
   if(relative!==stage.internal+'.mtl'&&!relative.startsWith('textures/'))continue;
   const [,type,oid,size]=meta.trim().split(/\s+/),raw=fs.readFileSync(path.join(SOURCE,stage.internal,relative));

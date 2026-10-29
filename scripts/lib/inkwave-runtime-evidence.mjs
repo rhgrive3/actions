@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {assertNetworkArtifactSourceBinding} from './inkwave-network-source-coverage.mjs';
 export const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export const physicalLocation=name=>fs.existsSync(name)?fs.realpathSync(name):path.join(physicalLocation(path.dirname(name)),path.basename(name));
 export function persistentDirectory(name){
@@ -21,6 +22,7 @@ export function persistentBrowserTemp(target){
 export function verifyRuntimeBuild(site,root,sha){
  if(!/^[a-f0-9]{40}$/.test(sha))throw Error('Full source SHA required');
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+ assertNetworkArtifactSourceBinding(manifest);
  if(hash(JSON.stringify(manifest.artifacts))!==manifest.contentHash)throw Error('Manifest mismatch');
  for(const [file,expected]of Object.entries(manifest.artifacts)){
   const resolved=fs.realpathSync(path.join(site,file));
@@ -34,7 +36,18 @@ export function verifyRuntimeBuild(site,root,sha){
   return [namespaces[prefix]+name.slice(prefix.length),expected];
  });
  inputs.push(['scripts/build-inkwave.mjs',manifest.build.script]);
- const tree=new Map(execFileSync('git',['ls-tree','-r','-z',sha],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean).map(row=>{const [meta,file]=row.split('\t');return [file,meta.split(' ')[2]];}));
+ // The repository tree can exceed Node's default 1 MiB capture even when
+ // these build inputs are small. Query only their literal paths in bounded
+ // batches, keeping unrelated repository growth and argv size out of this
+ // check. The explicit metadata cap still fails closed on oversized output.
+ const paths=[...new Set(inputs.map(([file])=>file))],tree=new Map();
+ for(let start=0;start<paths.length;start+=256){
+  const rows=execFileSync('git',['--literal-pathspecs','ls-tree','-r','-z',sha,'--',...paths.slice(start,start+256)],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024});
+  for(const row of rows.split('\0').filter(Boolean)){
+   const tab=row.indexOf('\t'),meta=row.slice(0,tab),file=row.slice(tab+1);
+   tree.set(file,meta.split(' ')[2]);
+  }
+ }
  const blobs=inputs.map(([file])=>{const blob=tree.get(file);if(!blob)throw Error('Missing source input: '+file);return blob;});
  // Bound aggregate capture independently of the number of committed inputs.
  // Metadata is checked first; each body batch is at most 8 MiB unless one

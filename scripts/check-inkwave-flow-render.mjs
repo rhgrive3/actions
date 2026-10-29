@@ -126,7 +126,7 @@ export function verifyFlowBuild(site, exactSource = false) {
   let sourceSha = null;
   if (exactSource) {
     sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
-    const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: ROOT, encoding: 'utf8' })
+    const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: ROOT, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
       .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
     const blobs = execFileSync('git', ['hash-object', '--', ...files], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n');
     files.forEach((file, i) => { if (blobs[i] !== tree.get(file)) throw Error('Flow source differs from commit: ' + file); });

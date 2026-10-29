@@ -11,6 +11,7 @@ import {verifyRuntimeBuild, hash, persistentDirectory, persistentBrowserTemp} fr
 import {summarizeGcTrace} from './lib/inkwave-cpu-trace.mjs';
 import {installCpuGameplayDigest} from './lib/inkwave-cpu-gameplay-digest.mjs';
 import {installCpuCounters} from './lib/inkwave-cpu-counters.mjs';
+import {launchSandboxBrowser} from './lib/inkwave-sandbox-browser.mjs';
 
 const get=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const site=fs.realpathSync(get('--site','_site'));
@@ -22,6 +23,7 @@ if(!Number.isInteger(frames)||frames<30||frames>18000||![30,60,120].includes(hz)
 const stages=get('--stages','range,tidewater,kelpline').split(',');
 const render=process.argv.includes('--render'),wrappers=!process.argv.includes('--no-wrappers');
 const quality=get('--quality','high');
+const weapon=get('--weapon',null);
 const temp=persistentBrowserTemp(path.join(evidence,'tmp'));
 for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=temp;
 const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'};
@@ -50,15 +52,15 @@ const server=http.createServer((req,res)=>{try{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
 const report={schema:2,sourceSha,contentHash:manifest.contentHash,revision:manifest.build.revision,
- harness:Object.fromEntries(['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))])),
- environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,viewport:[960,640],render,wrappers},
+ harness:Object.fromEntries(['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-sandbox-browser.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))])),
+ environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,weapon,viewport:[960,640],render,wrappers},
  limits:['Linux Chromium/SwiftShader; no physical iPad or FPS evidence.',
  'Fixed-step CPU transaction; loading, async cold startup and presentation pacing are excluded.',
  'Inclusive scopes overlap. Wrappers and GC tracing perturb timings; use --no-wrappers as a control.',
  'GC pause intervals are observed V8 trace events on the measured renderer thread, not inferred from heap drops.',
  'Draw frames and GPU allocations are measured-window deltas; raw startup/process totals and active-scene workload are retained separately.'],scenarios:[]};
 try{
- browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ browser=await launchSandboxBrowser(chromium,{CHROMIUM_EXECUTABLE_PATH:process.env.CHROMIUM_PATH});
  report.environment.browser=browser.version();
  for(const stage of stages){
   const context=await browser.newContext({viewport:{width:960,height:640}}),page=await context.newPage(),errors=[];
@@ -74,15 +76,17 @@ try{
   // the workload and can monopolize a software GPU before we can freeze it.
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.__G?.mode==='menu',null,{timeout:300000});
-  const initial=await page.evaluate(async({stage,render})=>{
+  const initial=await page.evaluate(async({stage,render,weapon})=>{
    const g=window.__inkwave,G=window.__G;
    g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();G.time=0;g.s3Clock.reset();
    let seed=11223;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
    Math.random=random;
+   if(weapon){if(!g.api.weapons[weapon])throw Error('Unknown fixture weapon: '+weapon);g.profile.weapon=weapon;}
    const proto=Object.getPrototypeOf(G.match),setup=proto.setup;
    proto.setup=function(...args){seed=11223;return setup.apply(this,args);};
    try{await g.startMatch({mapId:stage,mode:'turf',duration:180,difficulty:'normal'});}finally{proto.setup=setup;}
    if(G.level.layout.id!==stage)throw Error('Requested stage did not load: '+stage);
+   if(weapon&&G.local?.weapon?.id!==weapon)throw Error('Requested local weapon did not load');
    // Wait for actual source clips; never silently benchmark the fallback pose.
    const characters=G.actors.map(a=>a.character).filter(c=>Array.isArray(c.boneList));
    await Promise.all(characters.map(c=>c._sourceMotionLoader));
@@ -109,7 +113,7 @@ try{
    window.cpuBenchResetStep=i=>{seed=(24680+Math.imul(i,2654435761))>>>0;};
    return {actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,roster:G.actors.map(a=>a.weapon.id),native:!!G.level.native,
     sourceCharacters:characters.length,triangles:G.level.triangleWorld?.triangleCount??0,paintFaces:G.paint.paintFaces?.length,atlas:G.paint.size,ppm:G.paint.ppm,settings:g.settings,scene:globalThis.__iwReadCpuCounters(G.renderer,G.scene).scene};
-  },{stage,render});
+  },{stage,render,weapon});
   const cdp=await context.newCDPSession(page);
   await cdp.send('Performance.enable',{timeDomain:'threadTicks'});
   const before=await cdp.send('Performance.getMetrics');
@@ -134,17 +138,25 @@ try{
     for(const key of ['advanceSimulation','splat','regionStats','_advanceSplatOwnership','_emitGrowth','flush','_drawQuads'])wrap(G.paint,key,'paint.'+key);
     wrap(G.projectiles,'update','projectiles.update');wrap(G.fx,'update','fx.update');wrap(G.env,'update','environment.update');wrap(g.R,'render','render.submit');wrap(G.renderer.shadowMap,'render','render.shadow');wrap(G.scene,'updateMatrixWorld','render.sceneMatrices');wrap(g,'_updateHud','hud.update');
    }
+   const drum=G.local?.character?.weapon?.drum,drumWork={updates:0,localToWorld:0};
+   if(wrappers&&drum)for(const key of ['updateWorldMatrix','localToWorld']){
+    const fn=drum[key],own=Object.getOwnPropertyDescriptor(drum,key);
+    drum[key]=function(...args){drumWork[key==='localToWorld'?'localToWorld':'updates']++;return fn.apply(this,args);};
+    restore.push(()=>{if(own)Object.defineProperty(drum,key,own);else delete drum[key];});
+   }
    const w=G.level.triangleWorld,q0=w?.queryCount??0,t0=w?.triangleTests??0,ticks0=g.s3Clock.ticks,times=[],gameplay=globalThis.__iwCreateCpuGameplayDigest(),counterBefore=globalThis.__iwReadCpuCounters(G.renderer,G.scene);
+   let minActors=G.actors.length,minLiving=G.actors.length;
    g.debug.key('KeyW',true);g.debug.fire(true);
    performance.mark('inkwave-cpu-start');
    try{for(let i=0;i<frames;i++){
     window.cpuBenchResetStep(i);g.rig.yaw+=.6/hz;g.debug.key('Space',i%Math.round(hz*2)===0);
     const t=performance.now();g._frame(1/hz);times.push(performance.now()-t);
+    let living=0;for(const a of G.actors)if(a.alive)living++;minLiving=Math.min(minLiving,living);minActors=Math.min(minActors,G.actors.length);
     gameplay.step(G.actors,G.paint);
    }}finally{performance.mark('inkwave-cpu-end');for(const undo of restore.reverse())undo();g.debug.key('KeyW',false);g.debug.fire(false);}
    const ticks=g.s3Clock.ticks-ticks0;
    const counters=globalThis.__iwCpuCounterWindow(counterBefore,globalThis.__iwReadCpuCounters(G.renderer,G.scene));
-   return {frames,hz,ticks,times,digests:gameplay.digests,digest:gameplay.finish(G.paint),counts:[...G.paint.counts],state:G.match.state,
+   return {frames,hz,ticks,times,minActors,minLiving,drumWork,digests:gameplay.digests,digest:gameplay.finish(G.paint),counts:[...G.paint.counts],state:G.match.state,
     bvh:{queries:(w?.queryCount??0)-q0,triangleTests:(w?.triangleTests??0)-t0},
     categories:Object.fromEntries(Object.entries(acc).sort((a,b)=>b[1].ms-a[1].ms).map(([k,v])=>[k,{msPerTick:v.ms/ticks,callsPerTick:v.calls/ticks}])),
     draw:counters.draw,resources:counters.resources,scene:counters.scene,rawCounters:counters.raw,contextLost:G.renderer.getContext().isContextLost()};

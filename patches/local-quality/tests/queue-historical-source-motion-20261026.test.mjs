@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {adaptHistoricalSourceMotion20261026,restoreHistoricalSourceMotion20261026} from '../queue-historical-source-motion-20261026-adapter.mjs';
 import {adaptWalkPresentation} from '../walk-presentation-adapter.mjs';
+import {adaptRemainingVisualQueue20261027} from '../queue-remaining-visual-20261027-adapter.mjs';
+import {adaptOffscreenHairTargets} from '../offscreen-hair-target-adapter.mjs';
 import {replaceOnce} from '../adapter.mjs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
 const REL='src/game/motion/source-controller.js';
@@ -18,6 +20,72 @@ const helper=after.slice(after.indexOf('// Historical queue: one exact dt slot')
 const names=['iwMotionResponse24Exp','iwMotionResponse12Exp','iwMotionResponse10Expm1','iwMotionResponse12Expm1','iwMotionResponse7Exp','iwMotionResponse8Expm1'];
 const rates=[24,12,10,12,7,8],modes=['exp','exp','expm1','expm1','exp','expm1'];
 const kernels=math=>new Function('Math',helper+'\nreturn ['+names.join(',')+'];')(math);
+// Independently pinned exact source-controller anchors owned by the later 2026-10-27
+// visual queue. Reverse in strict reverse order; this is text-only compatibility,
+// not a performance or visual acceptance. Zero or multiple matches fail closed.
+const laterOwnerPairs=[["const lm=s.localMove||{};this.treadmill=!c.inWorld&&dist<1e-10&&Number(s.speed)>0&&Math.hypot(lm.x||0,lm.z||0)>0;","const lm=s.localMove||{};let treadmillLength;this.treadmill=!c.inWorld&&dist<1e-10&&Number(s.speed)>0&&(treadmillLength=Math.hypot(lm.x||0,lm.z||0))>0;"],["const n=this.treadmill?Math.hypot(lm.x||0,lm.z||0):dist;","const n=this.treadmill?treadmillLength:dist;"],["  this.gaitSpeed=this.pivoting?Math.max(this.speed,Math.abs(this.turnRate)*Math.hypot(c.rest.footL.x,c.rest.footL.z+0.11)):this.speed;","  if(this.pivoting&&(!Object.is(this._pivotRestX,c.rest.footL.x)||!Object.is(this._pivotRestZ,c.rest.footL.z))){this._pivotRestX=c.rest.footL.x;this._pivotRestZ=c.rest.footL.z;this._pivotRadius=Math.hypot(c.rest.footL.x,c.rest.footL.z+0.11);}\n  this.gaitSpeed=this.pivoting?Math.max(this.speed,Math.abs(this.turnRate)*this._pivotRadius):this.speed;"],["locomotionProfile,sampleContact,feasibleContact,smooth5","locomotionProfile,sampleContact,sampleContactPair,feasibleContact,smooth5"],["    for(let i=0;i<2;i++){\n     this.contact[i]+=sampleContact(p,i,normalizedFrame)","    const contactSamples=sampleContactPair(p,normalizedFrame,this._contactSamples||(this._contactSamples=new Float64Array(2)));\n    for(let i=0;i<2;i++){\n     this.contact[i]+=contactSamples[i]"],["sampleContactPair,feasibleContact,smooth5","sampleContactPair,feasibleContact,feasibleContactPrepared,smooth5"],["   contactArg.speed=this.speed;contactArg.cadenceHz=cadenceHz;contactArg.legReach=this.character.limbs.legL.a+this.character.limbs.legL.b;","   contactArg.speed=this.speed;contactArg.cadenceHz=cadenceHz;contactArg.legReach=this.character.limbs.legL.a+this.character.limbs.legL.b;\n   const worldCycle=Math.max(0,contactArg.speed)/Math.max(1e-6,contactArg.cadenceHz),reachDuty=contactArg.legReach*0.62/Math.max(1e-6,worldCycle);"],["feasibleContact(p,i,normalizedFrame,contactArg)","feasibleContactPrepared(p,i,normalizedFrame,reachDuty)"]];
+function reverseLaterOwner(source, mutate=(s)=>s){
+ let value=source;for(let i=laterOwnerPairs.length-1;i>=0;i--){
+  const [original,later]=laterOwnerPairs[i];value=mutate(value,later,i);
+  value=replaceOnce(value,later,original,'pinned later owner '+i);
+ }return value;
+}
+// The hair adapter runs before the motion FK owner. The pinned historical
+// fixture already contains that owner's idle-balance rewrite, so translate
+// exactly that one reviewed anchor into the fixture's composition boundary.
+function composeHairOwner(source,pairs=[]){
+ return adaptOffscreenHairTargets(REL,source,(text,original,later,label)=>{
+  if(label==='#845 suppress hidden idle hair inputs'){
+   assert.equal(original,'this.bodyBalance.add(idleProfile,1);this.hairTargets.add(this.pose,idleProfile,1);');
+   assert.equal(later,'this.bodyBalance.add(idleProfile,1);if(!c._oobBudget)this.hairTargets.add(this.pose,idleProfile,1);');
+   const from='this.bodyBalance.add(idleProfile,1);',to='this.bodyBalance.add(idleProfile,1,this.bodyBalance._centerFk);';
+   original=original.replace(from,to);later=later.replace(from,to);
+  }
+  pairs.push([original,later,label]);return replaceOnce(text,original,later,label);
+ });
+}
+// The separately reviewed be1c4b71 hair-input pool changed exactly four
+// replacement outputs. Retain the original7d2f7f0e receipt and the new receipt;
+// every source anchor and complete current composition still fails closed.
+const hairInputRowChanges=[
+ [
+  "#845 retain only clips that contribute hair, before action overlays",
+  "  this._iwHairClipCount=this.currentClips.length;this._iwHairLoop=!special;\n  // Pivoting changes the feet, not the gaze/weapon pose into a full lateral",
+  "  if(this._iwHairDeferred){\n   // Optimized diagnostics own pooled inputs. Read them without materializing\n   // public clip descriptors, then retain our own scalar rows across updates.\n   const frame=this._iwMotionClipFrame?.();\n   const clips=frame?(frame.ready?frame.cached:frame.rows):this.currentClips;\n   const count=frame&&!frame.ready?frame.count:clips.length;\n   const rows=this._iwHairClips||(this._iwHairClips=[]);\n   for(let i=0;i<count;i++){\n    const item=clips[i],row=rows[i]||(rows[i]={name:null,frame:0,weight:0});\n    row.name=item.name;row.frame=item.frame;row.weight=item.weight;\n   }\n   this._iwHairClipCount=count;this._iwHairLoop=!special;\n  }\n  // Pivoting changes the feet, not the gaze/weapon pose into a full lateral"
+ ],
+ [
+  "#845 rebuild deferred hair before the first visible accessory solve",
+  " _ensureHairTargets(){\n  if(!this._iwHairDeferred)return;\n  this.hairTargets.clear();\n  for(let i=0;i<this._iwHairClipCount;i++){\n   const item=this.currentClips[i];\n   this.bank.sample(item.name,item.frame,this.tmp,this._iwHairLoop);\n   this.hairTargets.add(this.tmp,locomotionProfile(this.bank,item.name),item.weight);\n  }\n  if(this._iwHairTransition<1)this.hairTargets.mix(this.previousHairTargets,1-this._iwHairTransition);\n  this._iwHairDeferred=false;\n }\n applyAccessories(dt){if(this.active&&this.pose){if(!this.manual)this._ensureHairTargets();",
+  " _ensureHairTargets(){\n  if(!this._iwHairDeferred)return;\n  this.hairTargets.clear();\n  for(let i=0;i<this._iwHairClipCount;i++){\n   const item=this._iwHairClips[i];\n   this.bank.sample(item.name,item.frame,this.tmp,this._iwHairLoop);\n   this.hairTargets.add(this.tmp,locomotionProfile(this.bank,item.name),item.weight);\n   item.name=null;\n  }\n  if(this._iwHairTransition<1)this.hairTargets.mix(this.previousHairTargets,1-this._iwHairTransition);\n  this._iwHairDeferred=false;\n }\n applyAccessories(dt){if(this.active&&this.pose){if(!this.manual)this._ensureHairTargets();"
+ ],
+ [
+  "#845 manual poses discard automatic pending hair inputs",
+  " sampleManual(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;",
+  " sampleManual(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;if(this._iwHairClips)this._iwHairClips.length=0;"
+ ],
+ [
+  "#845 drop deferred bank inputs on bank changes and disposal",
+  " clearBankCaches(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;",
+  " clearBankCaches(){\n  this._iwHairDeferred=false;this._iwHairClipCount=0;if(this._iwHairClips)this._iwHairClips.length=0;"
+ ]
+];
+function legacyHairOwnerPairs(pairs){
+ let changed=0;
+ const prior=pairs.map(([original,later,label])=>{
+  const update=hairInputRowChanges.find(row=>row[0]===label);
+  if(!update)return [original,later,label];
+  assert.equal(later,update[2],'exact reviewed hair-input row replacement');changed++;
+  return [original,update[1],label];
+ });
+ assert.equal(changed,4,'all four reviewed hair-input row changes are present');
+ return prior;
+}
+function reverseHairOwner(source,pairs,mutate=(s)=>s){
+ let value=source;for(let i=pairs.length-1;i>=0;i--){
+  const [original,later,label]=pairs[i];value=mutate(value,later,i);
+  value=replaceOnce(value,later,original,label);
+ }return value;
+}
 const original=(math,index,dt)=>modes[index]==='exp'?1-math.exp(-rates[index]*dt):-math.expm1(-rates[index]*dt);
 
 test('pinned source-controller reconstructs the walk owner and historical queue (text only)',()=>{
@@ -28,6 +96,12 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,after),/composition conflict/);
  assert.throws(()=>adaptHistoricalSourceMotion20261026(REL,''),/composition conflict/);
  const current=adaptBuildSource(REL,fs.readFileSync(new URL('../../../inkwave-public/'+REL,import.meta.url),'utf8'));
+ const afterHistoricalRestore=restoreHistoricalSourceMotion20261026(REL,current);
+ assert.equal(sha(JSON.stringify(laterOwnerPairs)),'26654dc4115ea24a28d7fad6c73eacafcd41298c7c4a34f183fbe790de638976','pinned later owner anchor pairs');
+ const currentBeforeLaterOwner=reverseLaterOwner(afterHistoricalRestore);
+ for(let target=0;target<laterOwnerPairs.length;target++){
+  for(const mode of ['missing','duplicate'])assert.throws(()=>reverseLaterOwner(afterHistoricalRestore,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
+ }
  // Independently pinned pre-owner bytes plus the precise later walk owner
  // anchors; this checks source composition only, not Character behavior.
  const unique=(s,from,to)=>{const i=s.indexOf(from);assert.ok(i>=0&&s.indexOf(from,i+from.length)<0,'unique walk owner anchor');return s.slice(0,i)+to+s.slice(i+from.length);};
@@ -36,13 +110,23 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
  composed=unique(composed,'  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;',`  const rawTravelSpeed=dt>0?dist/dt:0;
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
- assert.equal(restoreHistoricalSourceMotion20261026(REL,current),composed,'pinned historical source plus exact walk owner anchors');
+ const hairPairs=[],withHair=composeHairOwner(composed,hairPairs);
+ assert.equal(hairPairs.length,9,'all reviewed hair owner anchors are represented');
+ assert.equal(sha(JSON.stringify(legacyHairOwnerPairs(hairPairs))),'9b6dc62be57eb1240fff1a4816ac2f15775348089c4ed32a2b92df77a6aa5aad','original frozen hair owner anchor pairs');
+ assert.equal(sha(JSON.stringify(hairPairs)),'8e79598ba85b25232222c948cb254eededae9958c9d6f922f7b70a3b3e43bf75','reviewed pooled hair owner anchor pairs');
+ assert.equal(reverseHairOwner(withHair,hairPairs),composed,'hair owner reverses on independently pinned walk composition');
+ for(let target=0;target<hairPairs.length;target++)for(const mode of ['missing','duplicate'])
+  assert.throws(()=>reverseHairOwner(currentBeforeLaterOwner,hairPairs,(text,anchor,i)=>i!==target?text:mode==='missing'?text.replace(anchor,''):text.replace(anchor,anchor+anchor)),/expected exactly one/);
+ const restoredCurrent=reverseHairOwner(currentBeforeLaterOwner,hairPairs);
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,withHair)),'pinned walk, reviewed hair owner, historical owner and subsequent visual queue compose exactly');
+ assert.equal(restoredCurrent,composed,'pinned historical source plus exact walk owner anchors');
  const walkImport="import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n";
  const ownerImport="import { nativeWeaponPoseRequired, sourceActionUpperOnly }";
  let expected=adaptWalkPresentation(REL,before,replaceOnce);
  assert.ok(expected.startsWith(walkImport)); expected=expected.slice(walkImport.length);
  expected=replaceOnce(expected,ownerImport,walkImport+ownerImport,'walking import order');
- assert.equal(restoreHistoricalSourceMotion20261026(REL,current),expected,'prior composition plus the reviewed walking presentation is retained');
+ assert.equal(current,adaptRemainingVisualQueue20261027(REL,adaptHistoricalSourceMotion20261026(REL,composeHairOwner(expected))),'walk adapter and later owners retain the pinned source composition');
+ assert.equal(restoredCurrent,expected,'prior composition plus the reviewed walking presentation is retained');
  // Both independently reconstructed ownership paths must agree byte-for-byte.
  assert.equal(expected,composed,'walk adapter and pinned owner anchors agree');
  const speedAnchor='  this.speed=dt>0?dist/dt:0;this.velocityY=dt>0?dy/dt:0;this.distance+=dist;';

@@ -1,0 +1,282 @@
+{
+  "hitPoseBirth": [
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": -45,
+      "hz": 30,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.02916002681778803
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": -45,
+      "hz": 60,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.02916002681778803
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": -45,
+      "hz": 120,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.02916002681778803
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": 0,
+      "hz": 30,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.025706483228671684
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": 0,
+      "hz": 60,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.025706483228671684
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": 0,
+      "hz": 120,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.025706483228671684
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": 40,
+      "hz": 30,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.021327461611738843
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": 40,
+      "hz": 60,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.021327461611738843
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 0,
+      "pitch": 40,
+      "hz": 120,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.021327461611738843
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": -45,
+      "hz": 30,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.031839343621512875
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": -45,
+      "hz": 60,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.031839343621512875
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": -45,
+      "hz": 120,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.031839343621512875
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": 0,
+      "hz": 30,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.031246341660733676
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": 0,
+      "hz": 60,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.031246341660733676
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": 0,
+      "hz": 120,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.031246341660733676
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": 40,
+      "hz": 30,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.028980205788916295
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": 40,
+      "hz": 60,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.028980205788916295
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "hand": 1,
+      "pitch": 40,
+      "hz": 120,
+      "births": 14,
+      "connected": 14,
+      "split": 14,
+      "maxFormerGap": 0.028980205788916295
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": -45,
+      "hz": 30,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.28488718610920655
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": -45,
+      "hz": 60,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.28488718610920655
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": -45,
+      "hz": 120,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.28488718610920655
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": 0,
+      "hz": 30,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.17592186303682747
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": 0,
+      "hz": 60,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.17592186303682747
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": 0,
+      "hz": 120,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.17592186303682747
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": 40,
+      "hz": 30,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.07926167832378274
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": 40,
+      "hz": 60,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.07926167832378274
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "hand": 0,
+      "pitch": 40,
+      "hz": 120,
+      "births": 2,
+      "connected": 2,
+      "split": 2,
+      "maxFormerGap": 0.07926167832378274
+    }
+  ],
+  "tests": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "baseline": "60bbe35d4c5176fd86cb1b65f8e66336982ef6ca",
+  "scope": "Node22 production-adapted native Character matrix/FX, actual Actor/Runner/Physics/serializer; no WebGL image or hardware parity"
+}

@@ -40,7 +40,7 @@ test('Manta independently compares every OBJ position, normal, UV and face index
   }
  }
  assert.equal(position,595742);assert.equal(normal,position);assert.equal(object,163);assert.equal(index,data.indices.length);assert.equal(index/3,317651);
- const repository=process.env.INKWAVE_NATIVE_STAGE_PINNED_REPO||path.dirname(SOURCE),rows=execFileSync('git',['-C',repository,'ls-tree','-rz',REV+':stages/Vss_Pillar03']);
+ const repository=process.env.INKWAVE_NATIVE_STAGE_PINNED_REPO||path.dirname(SOURCE),rows=execFileSync('git',['-C',repository,'ls-tree','-rz',REV+':stages/Vss_Pillar03'],{maxBuffer:8*1024*1024});
  const pinned=new Map(rows.toString().split('\0').filter(Boolean).map(r=>{const [meta,name]=r.split('\t');return[name,meta.split(' ')[2]];}));
  let png=0,mtl=0,bytes=0;
  for(const [name,oid] of pinned){

@@ -139,6 +139,7 @@ jobs:
             /inkwave-public/index.html
             /inkwave-public/sw.js
             /.github/workflows/
+            /package-lock.json
       - name: Verify immutable source checkout before other jobs
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
@@ -150,6 +151,10 @@ jobs:
         run: ruby scripts/ci/check-workflow-yaml.rb .github/workflows
       - name: Reject production composition anchor drift before heavy lanes
         run: node scripts/ci/check-composition-preflight.mjs
+      - name: Verify source combat receipt and Boss admission fixtures
+        run: node --test scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs
+      - name: Verify emitted coverage contracts before heavy lanes
+        run: node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
 
   build_site:
     needs: admission_preflight
@@ -430,6 +435,37 @@ jobs:
         run: INKWAVE_BUILT_SITE=_site INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/spawn-exclusion.test.mjs patches/splatoon3/tests/spawn-exclusion-fallback.test.mjs patches/reliability/tests/special-spawn-barrier.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs
       - name: Verify emitted Boss positive-proof admission and PvP zero knockback
         run: INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-boss-positive-proof.test.mjs
+      - name: Verify remaining emitted combat, weapon and visual regressions
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+          INKWAVE_CANONICAL_TRACE_MODULE: ${{ github.workspace }}/_site/patches/network-replication/canonical-weapon-actions.mjs
+          INKWAVE_NATIVE_TRACE_COMPARE: ${{ github.workspace }}/patches/splatoon3/tests/fixtures/native-action-trace-035.json.gz
+        run: |
+          node --input-type=module -e "import {verifyRuntimeBuild} from './scripts/lib/inkwave-runtime-evidence.mjs'; verifyRuntimeBuild(process.env.INKWAVE_BUILT_SITE, process.cwd(), process.env.SOURCE_SHA);"
+          node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/network-replication/tests/combat-boss-proof-targets.test.mjs \
+            patches/network-replication/tests/combat-native-proof-receipt.test.mjs \
+            patches/splatoon3/tests/issue-1431-hit-pose-birth.test.mjs \
+            patches/splatoon3/tests/issue-1607-zipcaster-success-minimum.test.mjs \
+            patches/splatoon3/tests/issue-79-shooter-live-impact-paint.test.mjs \
+            patches/splatoon3/tests/charger-special-audio-cancel.test.mjs \
+            patches/splatoon3/tests/catalog-charger-remote-audio.test.mjs \
+            patches/splatoon3/tests/splatling-charge-reversal.test.mjs \
+            patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs \
+            patches/local-quality/tests/offscreen-hair-targets.test.mjs \
+            patches/local-quality/tests/native-offscreen-ground-memo.test.mjs \
+            patches/network-replication/tests/canonical-weapon-actions.test.mjs \
+            patches/network-replication/tests/canonical-weapon-modes.test.mjs \
+            patches/network-replication/tests/canonical-sub-special-traces.test.mjs \
+            patches/network-replication/tests/native-action-traces.test.mjs \
+            patches/network-replication/tests/trusted-native-replay.test.mjs \
+            patches/network-replication/tests/native-command-wire.test.mjs \
+            patches/network-replication/tests/native-turf-start-replay.test.mjs \
+            patches/network-replication/tests/native-turf-session-reconnect.test.mjs \
+            patches/splatoon3/tests/native-action-trace.test.mjs \
+            patches/splatoon3/tests/native-action-representatives.test.mjs \
+            patches/splatoon3/tests/native-action-trace-binding.test.mjs \
+            patches/splatoon3/tests/roller-paint-world-update.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
@@ -529,6 +565,7 @@ jobs:
       - name: Verify emitted source-backed inertia, launch, charge and hurtbox behavior
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+          INKWAVE_EDGECASE_SITE: ${{ github.workspace }}/_site
         run: >-
           node --experimental-vm-modules --test
           patches/splatoon3/tests/catalog-player-inertia-native.test.mjs
@@ -591,7 +628,7 @@ jobs:
     # Default GitHub full-suite behavior unless explicitly offloaded.
     needs: build_site
     if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -603,7 +640,7 @@ jobs:
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
       # Full-Character VM/geometry tests can retain large heaps. Keep the
       # complete eight-way partition, with at most two test processes per VM.
-      INKWAVE_TEST_CONCURRENCY: '2'
+      INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -879,6 +916,12 @@ jobs:
         run: |
           node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out "$CI_STORAGE/evidence/post-depth-chromium.json"
           node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser webkit --out "$CI_STORAGE/evidence/post-depth-webkit.json"
+      - name: Verify active mobile HDR precision and retained post passes
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-offscreen-hair-reentry.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --composer-lifecycle --out "$CI_STORAGE/evidence/composer-precision"
+      - name: Verify exact first-draw hair recovery and gameplay muzzle
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-offscreen-hair-reentry.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --out "$CI_STORAGE/evidence/offscreen-hair"
       - name: Verify grate orientation and painted level normals in Chromium and WebKit
         if: matrix.suite == 'active'
         run: |
@@ -1321,7 +1364,7 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs
       - name: Install pinned build and browser dependencies
         run: |
-          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npm ci --no-audit --no-fund
           sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium
       - name: Build the exact source without production overrides

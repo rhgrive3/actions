@@ -24,7 +24,7 @@ export function captureSourceIdentity(root,head,expect) {
   assert.match(head,/^[0-9a-f]{40}$/);assert(['baseline','candidate'].includes(expect));
   root=fs.realpathSync(root);assert.equal(git(root,'rev-parse','HEAD'),head,'exact source checkout');
   const tree=git(root,'rev-parse','HEAD^{tree}'),files={};
-  const entries=execFileSync('git',['ls-tree','-rz','--full-tree','HEAD'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
+  const entries=execFileSync('git',['ls-tree','-rz','--full-tree','HEAD'],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}).split('\0').filter(Boolean);
   for(const entry of entries){
     const match=/^(100644|100755) blob ([0-9a-f]{40})\t(.+)$/.exec(entry);assert(match,'only tracked regular source files are supported');
     const [,mode,expectedGitBlob,rel]=match;assert(!path.isAbsolute(rel)&&!rel.split('/').includes('..'),'tracked path containment');

@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "sourceSha": "d192a6549ba9d4d664960f008215b2864218b7cd",
+  "baseSha": "54465a5def087608ff4a19b23d57e05a3613033a",
+  "node": "v22.23.4",
+  "files": [
+    "scripts/tests/lock-option-recovery.test.mjs",
+    ".github/workflows/inkwave-ci-repair-focused.yml"
+  ],
+  "primary": {
+    "run": 40756964070,
+    "job": 123065842669,
+    "step": "Verify pointer-lock successful-pair source regressions",
+    "cases": 38,
+    "baselinePass": 21,
+    "baselineFail": 17
+  },
+  "sourceCommand": "env -u TEST_FROM -u TEST_TO -u TEST_EMITTED -u INKWAVE_TEST_ROOT -u INKWAVE_TEST_ADAPTER -u INKWAVE_UPSTREAM_SOURCE -u INKWAVE_BUILT_SITE -u INKWAVE_POINTER_LOCK_SITE -u INKWAVE_ESBUILD_MODULE node scripts/tests/lock-option-recovery.test.mjs",
+  "emittedCommand": "env -u TEST_FROM -u TEST_TO -u TEST_EMITTED -u INKWAVE_TEST_ROOT -u INKWAVE_TEST_ADAPTER -u INKWAVE_UPSTREAM_SOURCE -u INKWAVE_BUILT_SITE -u INKWAVE_POINTER_LOCK_SITE -u INKWAVE_ESBUILD_MODULE INKWAVE_POINTER_LOCK_SITE=<absolute sealed site> node scripts/tests/lock-option-recovery.test.mjs",
+  "modes": [
+    {
+      "name": "source-fixed",
+      "log": "/workspace/scratch/agent2-lock-option-source-fixed.log",
+      "sourceRoot": "/workspace/wt-lock-option-fixture",
+      "site": null,
+      "compacted": false,
+      "candidateOverride": false,
+      "cases": 38,
+      "passed": 38,
+      "failed": 0
+    },
+    {
+      "name": "emitted-root",
+      "log": "/workspace/scratch/agent2-lock-option-emitted-root.log",
+      "sourceRoot": "/workspace/wt-lock-option-fixture",
+      "site": "/workspace/wt-integration/_site",
+      "compacted": false,
+      "candidateOverride": false,
+      "cases": 38,
+      "passed": 38,
+      "failed": 0
+    },
+    {
+      "name": "emitted-opt",
+      "log": "/workspace/scratch/agent2-lock-option-emitted-opt.log",
+      "sourceRoot": "/workspace/wt-lock-option-fixture",
+      "site": "/workspace/scratch/agent2-optimized-site",
+      "compacted": false,
+      "candidateOverride": false,
+      "cases": 38,
+      "passed": 38,
+      "failed": 0
+    },
+    {
+      "name": "compacted-root",
+      "log": "/workspace/scratch/agent2-lock-option-compacted-root.log",
+      "sourceRoot": "/workspace/wt-lock-option-fixture",
+      "site": null,
+      "compacted": true,
+      "candidateOverride": false,
+      "cases": 38,
+      "passed": 38,
+      "failed": 0
+    },
+    {
+      "name": "compacted-opt",
+      "log": "/workspace/scratch/agent2-lock-option-compacted-opt.log",
+      "sourceRoot": "/workspace/wt-optimized",
+      "site": null,
+      "compacted": true,
+      "candidateOverride": false,
+      "cases": 38,
+      "passed": 38,
+      "failed": 0
+    }
+  ],
+  "mutants": [
+    {
+      "name": "observed",
+      "log": "/workspace/scratch/agent2-lock-mutant-observed.log",
+      "rejectedBy": [
+        {
+          "ordinal": 1,
+          "name": "eligible raw unsupported does exactly one automatic plain fallback",
+          "error": "AssertionError [ERR_ASSERTION]: absent\n\n2 !== 1\n"
+        }
+      ]
+    },
+    {
+      "name": "error-name",
+      "log": "/workspace/scratch/agent2-lock-mutant-error-name.log",
+      "rejectedBy": [
+        {
+          "ordinal": 2,
+          "name": "NotAllowedError never auto-fallback or records unsupported",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        },
+        {
+          "ordinal": 3,
+          "name": "SecurityError never auto-fallback or records unsupported",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        },
+        {
+          "ordinal": 4,
+          "name": "UnknownError never auto-fallback or records unsupported",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        }
+      ]
+    },
+    {
+      "name": "owner-game",
+      "log": "/workspace/scratch/agent2-lock-mutant-owner-game.log",
+      "rejectedBy": [
+        {
+          "ordinal": 14,
+          "name": "playing ticket cannot fallback after G.game replacement",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        }
+      ]
+    },
+    {
+      "name": "owner-flow",
+      "log": "/workspace/scratch/agent2-lock-mutant-owner-flow.log",
+      "rejectedBy": [
+        {
+          "ordinal": 17,
+          "name": "playing ticket cannot fallback or cache after flow replacement with same game and match",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        },
+        {
+          "ordinal": 18,
+          "name": "playing no-flow ticket cannot fallback or cache after a flow appears",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        }
+      ]
+    },
+    {
+      "name": "owner-document",
+      "log": "/workspace/scratch/agent2-lock-mutant-owner-document.log",
+      "rejectedBy": [
+        {
+          "ordinal": 16,
+          "name": "moved canvas cannot record or fallback from wrong document",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        },
+        {
+          "ordinal": 19,
+          "name": "pending ticket cannot fallback after canvas changes document",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        }
+      ]
+    },
+    {
+      "name": "cancelled",
+      "log": "/workspace/scratch/agent2-lock-mutant-cancelled.log",
+      "rejectedBy": [
+        {
+          "ordinal": 5,
+          "name": "cancelled stale unsupported is not cached",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        }
+      ]
+    },
+    {
+      "name": "attract",
+      "log": "/workspace/scratch/agent2-lock-mutant-attract.log",
+      "rejectedBy": [
+        {
+          "ordinal": 37,
+          "name": "attract-started ticket never falls back after attract is retired",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n"
+        }
+      ]
+    }
+  ],
+  "related": {
+    "focusedNative": {
+      "pass": 34,
+      "fail": 0,
+      "skip": 0
+    },
+    "ciContracts": {
+      "pass": 50,
+      "fail": 0,
+      "skip": 0
+    },
+    "workflowYaml": {
+      "pass": 81
+    }
+  },
+  "sparseAdmission": {
+    "changed": false,
+    "reason": "Actual configured sparse payload lacks native fixture dependency inkwave-public/vendor/three/build/three.module.js; verified bounded probe. Existing full-checkout focused pointerlock lane now runs exact source command after native34."
+  },
+  "scope": "Fixture and early focused CI only; production runtime and mandatory core/source/emitted checks unchanged.",
+  "sites": [
+    {
+      "kind": "root",
+      "site": "/workspace/wt-integration/_site",
+      "sourceSha": "54465a5def087608ff4a19b23d57e05a3613033a",
+      "inputHash": "bdb851a80a79a984f15dc002c4fb0b997a8931c4d7b51caefc24f64cbd34210e",
+      "contentHash": "fcec6e8db8e58c0ff5bd0c27da583e6a105b2949c27c1a8d0970152904c2429c",
+      "manifestInputs": 1521,
+      "manifestArtifacts": 2229,
+      "exactInputAndArtifactReadback": "passed"
+    },
+    {
+      "kind": "optimized",
+      "site": "/workspace/scratch/agent2-optimized-site",
+      "sourceSha": "0706b35a25e32ed9c0e48f677220558bdea4b6f5",
+      "inputHash": "930c0227c2d08bd3fcca6e691b117497766972f721dc185316c9f3c18d1c8879",
+      "contentHash": "c14fbb326bdef2888af600b72e982e10e26b8cc380e4c57d510656df84720dde",
+      "manifestInputs": 1522,
+      "manifestArtifacts": 2229,
+      "exactInputAndArtifactReadback": "passed"
+    }
+  ]
+}

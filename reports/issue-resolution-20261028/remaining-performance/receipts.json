@@ -1,0 +1,130 @@
+[
+  {
+    "name": "source-tests.tap.gz",
+    "rawSha256": "52aff86250ccc081537fe8f833f6069e379d0b8e651325c11b95764df2fc874b",
+    "gzipSha256": "dda859c931da518987560a52c1e896b4f8686b9f2947be29d48e82e6dc9192dd",
+    "rawBytes": 2058,
+    "gzipBytes": 762,
+    "executionPath": "/workspace/scratch/remaining-performance-source.tap"
+  },
+  {
+    "name": "source-hair-final.tap.gz",
+    "rawSha256": "a1a4aa8149acaa46678318d660f80f2ceb94c5de23ba6d0d2f5b72f92de9b8dd",
+    "gzipSha256": "80f9757bbac3b27630e3e6e7c114757727152d41d45d4256c6c6eced6c8f191e",
+    "rawBytes": 1047,
+    "gzipBytes": 519,
+    "executionPath": "/workspace/scratch/remaining-performance-final-source-hair.tap"
+  },
+  {
+    "name": "emitted-tests.tap.gz",
+    "rawSha256": "42791f8634c5c22e1a0f385db69ff9d24fb3d9f7a35de64be079aa7ef5a017a1",
+    "gzipSha256": "c56056265840892e9014241b088ce36e7e94bb754db40e750320430fecdece2e",
+    "rawBytes": 2057,
+    "gzipBytes": 763,
+    "executionPath": "/workspace/scratch/remaining-performance-emitted.tap"
+  },
+  {
+    "name": "context-tests.tap.gz",
+    "rawSha256": "cb86355bb895f32a6aabb4783af0ad0401e5c195086e517f1d6b04bb3e9c840e",
+    "gzipSha256": "19f101f5e82dbb7791e3b613d3ca9e60b706e077d83f60c65ab4b5fb31376ed3",
+    "rawBytes": 10717,
+    "gzipBytes": 1606,
+    "executionPath": "/workspace/scratch/remaining-performance-context.tap"
+  },
+  {
+    "name": "hair-reentry.json.gz",
+    "rawSha256": "bc532e1e4b7df759e6cb85fd024d1490841ca1b5698cf77f554669ad25057743",
+    "gzipSha256": "522703972303ce6367d1aef2358773106b72970a946eb1971302f5f700b3463e",
+    "rawBytes": 137420,
+    "gzipBytes": 12921,
+    "executionPath": "/workspace/wt-remaining-performance/.hair-evidence/result.json"
+  },
+  {
+    "name": "composer-baseline-control.json.gz",
+    "rawSha256": "f53187db27d531a9801a51324b2959f5172c71fc61bcd5bffcc96b6e931331c9",
+    "gzipSha256": "b92e7084f1f4fe4d86de7b48fc4fa4441fcc84b41172c5d33fc224d348aa585e",
+    "rawBytes": 50616,
+    "gzipBytes": 3926,
+    "executionPath": "/workspace/wt-remaining-performance/.composer-baseline-evidence/webgl-comparison.json"
+  },
+  {
+    "name": "composer-old-hdr-edge.json.gz",
+    "rawSha256": "d64efc8e448b9884e9a578e28016c13dcf4fad1d0cbb8624cc8108a96c40671f",
+    "gzipSha256": "a2f8433e43e0441fae145f13a4a13dd9786c0ef28bd84e6c15732f66f8f62d0c",
+    "rawBytes": 48923,
+    "gzipBytes": 3172,
+    "executionPath": "/workspace/wt-remaining-performance/.composer-fixed-evidence/webgl-comparison.json"
+  },
+  {
+    "name": "composer-old-live.json.gz",
+    "rawSha256": "55c2249b3d1d6cdf8b1e5c021ec494c32e58cb017ee09e6d460e95a567be386e",
+    "gzipSha256": "dd6ff04d806a04fae87ab60465de035201a6355a40c26ae5d6d377df5b061776",
+    "rawBytes": 32819,
+    "gzipBytes": 1171,
+    "executionPath": "/workspace/wt-remaining-performance/.composer-live-bounded-evidence/result.json"
+  },
+  {
+    "name": "composer-tests.tap.gz",
+    "rawSha256": "05427a397777ce2c254a80b27eb5c5554b107ac589888608d5a89f02ab56648f",
+    "gzipSha256": "fa3203e5ebed56929f4c3078555e3ee83110056b65dc05bb91709a7a260e9343",
+    "rawBytes": 4701,
+    "gzipBytes": 1333,
+    "executionPath": "/workspace/scratch/remaining-performance-composer-native-roles.tap"
+  },
+  {
+    "name": "composer-final-live.json.gz",
+    "rawSha256": "8a20007677e5cba25eb4ee489e153015201d2fdd285e2a328638f8b304e5819c",
+    "gzipSha256": "c6a4bd54fa3719c99a26acf865aa36e9f1342c891560e3f1ea11206d252f97be",
+    "rawBytes": 46173,
+    "gzipBytes": 1878,
+    "executionPath": "/workspace/wt-remaining-performance/.composer-final-evidence/result.json"
+  },
+  {
+    "name": "post-depth-chromium.json.gz",
+    "rawSha256": "0441cea32c9af8c10c3d124aae38d00383387dfc06dc7fb2539f60b0ffc9beed",
+    "gzipSha256": "9d2199b9ea866c3ec6d29275e6f371cb1edb8e61c947ad02c9290b8e9bc1b35e",
+    "rawBytes": 108252,
+    "gzipBytes": 6562,
+    "executionPath": "/workspace/scratch/remaining-performance-post-depth-chromium.json"
+  },
+  {
+    "name": "post-depth-webkit.json.gz",
+    "rawSha256": "043d0b5c2e7caab282046900f20f70c341e7e17dc9e7a16307c36c372625390b",
+    "gzipSha256": "1f47dd84a1b7c962ed0d18d3ccb0aa0061505b3f74710c106e268ea50a7ef06b",
+    "rawBytes": 108241,
+    "gzipBytes": 6570,
+    "executionPath": "/workspace/scratch/remaining-performance-post-depth-webkit.json"
+  },
+  {
+    "name": "post-depth-executed.mjs.gz",
+    "rawSha256": "e07a5ec7ef72a37c38fe7d24448ae9234dee441df245c7dc4cbcdb36c64c5334",
+    "gzipSha256": "79d1d44311a4f33fc18f80807796531b1690c0c0c360134d8d6c6a7fb1e307b3",
+    "rawBytes": 17337,
+    "gzipBytes": 6285,
+    "note": "Exact executed post-depth harness; subsequent edit adds only its own hash to future reports."
+  },
+  {
+    "name": "hair-60-deferred.png",
+    "sha256": "33ad48527d613c00310b80dfd14e640a58b1ee01aa32afe9763185b2e6f5a4dc",
+    "bytes": 95874,
+    "executionPath": "/workspace/wt-remaining-performance/.hair-evidence/60-0.png"
+  },
+  {
+    "name": "hair-60-control.png",
+    "sha256": "33ad48527d613c00310b80dfd14e640a58b1ee01aa32afe9763185b2e6f5a4dc",
+    "bytes": 95874,
+    "executionPath": "/workspace/wt-remaining-performance/.hair-evidence/60-1.png"
+  },
+  {
+    "name": "lens-baseline-packed-shader.png",
+    "sha256": "82a5580e12d1b30b3422d29c7150003bc1d987ac461746f4ef5fb2e2b99900b3",
+    "bytes": 126329,
+    "executionPath": "/workspace/wt-remaining-performance/.composer-baseline-evidence/03-lens-splat-screenfx-fxaa-r11f-g11f-b10f.png"
+  },
+  {
+    "name": "lens-selected-hdr-shader.png",
+    "sha256": "176fa61b26654c6044e8daa478776323296898391ecb802df9baea5726f24727",
+    "bytes": 133722,
+    "executionPath": "/workspace/wt-remaining-performance/.composer-fixed-evidence/03-lens-splat-screenfx-fxaa-r11f-g11f-b10f.png"
+  }
+]
