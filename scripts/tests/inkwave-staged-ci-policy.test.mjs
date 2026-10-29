@@ -232,7 +232,7 @@ test('runtime ESM sources remain non-executable in Git HEAD', async () => {
   const rows = execFileSync('git', [
     'ls-tree', '-r', 'HEAD', '--',
     'patches/native-stages/runtime', 'patches/splatoon3/runtime',
-  ], {encoding:'utf8', maxBuffer:2*1024*1024})
+  ], {encoding:'utf8', maxBuffer:8*1024*1024})
     .split('\n').filter(row => row.endsWith('.mjs'));
   assert.ok(rows.length > 0, 'runtime source tree must not be missing');
   const wrong = rows.filter(row => !row.startsWith('100644 blob '));
