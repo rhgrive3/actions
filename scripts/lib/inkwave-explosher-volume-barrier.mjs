@@ -1,5 +1,6 @@
 // LOCAL QA-only controlled-initial-condition candidate. No production file is edited.
 // This moves readiness earlier than natural boot; it is not natural-boot acceptance.
+import {awaitExistingExplosherAttractWarmup} from './inkwave-explosher-attract-warmup.mjs';
 export async function awaitExistingExplosherVolumes(G, game, timeoutMs=20000, readRng=globalThis.readExplosherRandom) {
   if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>20000)throw Error('Invalid readiness timeout');
   const fx=G.fx,scene=G.scene,root=fx?.root,ready=fx?.inkVolumeReady,existingEngine=fx?.inkVolumes,hooks=game.fxHooks;
@@ -31,7 +32,7 @@ export function adaptExplosherControlledBoot(source) {
   if(source.split(begin).length!==2||present.length!==1||source.split(present[0]).length!==2)throw Error('Native boot boundaries missing');
   const end=present[0];
   const at=source.indexOf(anchor);if(at<source.indexOf(begin)||at>source.indexOf(end))throw Error('Anchor is outside initial async boot');
-  const replacement='    this._bindEvents();\n    globalThis.__inkwaveExplosherControlledStartup = await ('+awaitExistingExplosherVolumes.toString()+')(G, this);\n    this._startAttract();';
+  const replacement='    this._bindEvents();\n    globalThis.__inkwaveExplosherControlledStartup = await ('+awaitExistingExplosherVolumes.toString()+')(G, this);\n    this._startAttract();\n    globalThis.__inkwaveExplosherInitialAttractWarmup = await ('+awaitExistingExplosherAttractWarmup.toString()+')(G, this);';
   return source.replace(anchor,replacement);
 }
 
@@ -65,6 +66,6 @@ export function adaptExplosherControlledCompiledBoot(source,parse){
   const starts=calls.filter(n=>n.callee.property.name==='_startAttract'),binds=calls.filter(n=>n.callee.property.name==='_bindEvents');
   if(starts.length!==1||binds.length!==1||binds[0].end>starts[0].start||starts[0].arguments.length||binds[0].arguments.length)throw Error('Initial attract/bind topology changed');
   const call=starts[0],original=source.slice(call.start,call.end);
-  const replacement='(globalThis.__inkwaveExplosherControlledStartup = await ('+awaitExistingExplosherVolumes.toString()+')('+imports[0].local.name+', this), '+original+')';
+  const replacement='(globalThis.__inkwaveExplosherControlledStartup = await ('+awaitExistingExplosherVolumes.toString()+')('+imports[0].local.name+', this), '+original+', globalThis.__inkwaveExplosherInitialAttractWarmup = await ('+awaitExistingExplosherAttractWarmup.toString()+')('+imports[0].local.name+', this))';
   const output=source.slice(0,call.start)+replacement+source.slice(call.end);parse(output,{ecmaVersion:'latest',sourceType:'module'});return output;
 }

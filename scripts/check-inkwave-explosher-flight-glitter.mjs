@@ -44,6 +44,7 @@ const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('capture anchor mismatch: '+a);return s.replace(a,b);};
 const controlledPath=process.env.EXPLOSHER_CONTROLLED_MAIN;
 const controlled=controlledPath?JSON.parse(fs.readFileSync(controlledPath,'utf8')):null;
+if(controlled&&(!controlled.initialAttractWarmup?.alreadyStartedOnly||controlled.initialAttractWarmup.ownerCount!==8))throw Error('Controlled main lacks initial attract readiness');
 if(controlled&&(controlled.controlledInitialCondition!==true||controlled.naturalBootAccepted!==false||controlled.site!==site||controlled.sourceRoot!==sourceRoot||hash(fs.readFileSync(controlled.file))!==controlled.transformedEmittedSha256))throw Error('Invalid controlled main provenance');
 const shapeOverlayPath=process.env.EXPLOSHER_SHAPE_OVERLAY;
 const shapeOverlay=shapeOverlayPath?JSON.parse(fs.readFileSync(shapeOverlayPath,'utf8')):null;
@@ -158,6 +159,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const G=window.__G,g=window.__inkwave,r=g.R.renderer;
           const physical=()=>JSON.stringify(G.projectiles.list.map(p=>({wid:p.wid,age:p.age,delay:p.delay,seed:p.seed,pos:p.pos.toArray(),vel:p.vel.toArray(),damage:p.damage,life:p.life,travel:p.catalog?.travel})));
           window.markExplosherRandomBoundary('before-draw-probe');
+          if(${Boolean(controlled)}&&(!window.__inkwaveExplosherInitialAttractWarmup?.settled||window.__inkwaveExplosherInitialAttractWarmup.ownerCount!==8))throw Error('Missing settled initial attract warmup');
           const initial=physical(),buffers=G.projectiles._s3Shapes;
           const pos=buffers?.sparkPos.array,size=buffers?.sparkSize.array;
           for(let j=0;j<30;j++)G.projectiles._draw();
@@ -170,7 +172,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
           const paletteReceipt={...palette,local:palette.local(G.local)};
           if(paletteReceipt.colorblind!==true||paletteReceipt.local!==0xffd21a)throw Error('Native fixed palette was not applied');
           window.markExplosherRandomBoundary('after-draw-probe');
-          return {rngDiagnostic:window.readExplosherRandomDiagnostic(),rng:window.readExplosherRandom(),effects:await window.readExplosherEffects(),style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
+          return {initialAttractWarmup:window.__inkwaveExplosherInitialAttractWarmup||null,rngDiagnostic:window.readExplosherRandomDiagnostic(),rng:window.readExplosherRandom(),effects:await window.readExplosherEffects(),style:window.requireExplosherStyle(G.local.character.style),sceneClocks:window.readExplosherSceneClocks(),startup:window.explosherEntry,sceneCensus:window.explosherSceneCensus(G,g.R.scene,window.explosherTargetDummyClass),sceneSources:window.explosherSceneSources,palette:paletteReceipt,preShot:window.explosherPreShot,aimTrace:window.explosherAimTrace,nativeReset:window.explosherResetReceipt,lighting,viewport:{width:r.domElement.width,height:r.domElement.height,pixelRatio:r.getPixelRatio()},physical:JSON.parse(initial),camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov},
             time:G.time,inkHex:G.local.color.getHex(),render:{...r.info.render},memory:{...r.info.memory},
             sparkles:G.projectiles.s3ShapeCounts?.sparkles??0,drawCpuMs:drawMs,renderSubmitMs:submitMs,
             gpuTimerMs:null,gpuTimerStatus:'not measured; submit CPU time is not GPU time',
@@ -288,7 +290,7 @@ if(controlled){
 // not repaired, and the original native memory/resource assertion is unchanged.
 if(!runtimeUIRoute)driver=instrumentExplosherGeometryDriver(driver);
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const captureProtocolSha256=hash(JSON.stringify([fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),...['inkwave-explosher-startup.mjs','inkwave-explosher-scene-census.mjs','inkwave-explosher-capture-surface.mjs','inkwave-explosher-volume-barrier.mjs','inkwave-explosher-stage-admission.mjs','inkwave-explosher-video-gate.mjs','inkwave-projectile-capture-ui.mjs','inkwave-range-menu-entry.mjs','inkwave-explosher-geometry-lifetime.mjs'].map(p=>fs.readFileSync(path.join(root,'scripts/lib',p),'utf8'))]));
+const captureProtocolSha256=hash(JSON.stringify([fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),...['inkwave-explosher-startup.mjs','inkwave-explosher-scene-census.mjs','inkwave-explosher-capture-surface.mjs','inkwave-explosher-volume-barrier.mjs','inkwave-explosher-attract-warmup.mjs','inkwave-explosher-stage-admission.mjs','inkwave-explosher-video-gate.mjs','inkwave-projectile-capture-ui.mjs','inkwave-range-menu-entry.mjs','inkwave-explosher-geometry-lifetime.mjs'].map(p=>fs.readFileSync(path.join(root,'scripts/lib',p),'utf8'))]));
 const receipt={commonBuildAdmission,captureProtocolSha256,stageAdmission,captureMode:preflight?'preflight':video?'continuous-native-60Hz':'multi-view-stills',captureTicks,captureViews,simulationHz:60,captureUiGateSha256:hash(installProjectileCaptureUiGate.toString()),shapeOverlay,controlledMain:controlled,sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   geometryLifetime:{controlledInstrumentedQA:!runtimeUIRoute,artifact:runtimeUIRoute?null:'geometry-lifetime.json',nativeResourceGateUnchanged:true,ordinaryInputAcceptance:false,gpuAllocationOwnershipProven:false},
   nativeResetHelperSha256:hash(nativeReset),
