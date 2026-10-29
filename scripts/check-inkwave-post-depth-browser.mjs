@@ -7,10 +7,14 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {chromium,webkit} from 'playwright';
 import {launchSandboxBrowser} from './lib/inkwave-sandbox-browser.mjs';
+import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
 const arg=(key,fallback)=>{const i=process.argv.indexOf(key);return i<0?fallback:process.argv[i+1];};
 const site=path.resolve(arg('--site','_site')),out=path.resolve(arg('--out','post-depth.json')),engine=arg('--browser','chromium');
+const sourceSha=arg('--source-sha',null),root=fileURLToPath(new URL('../',import.meta.url));
+if(sourceSha)verifyRuntimeBuild(site,root,sourceSha);
 assert.ok(['chromium','webkit'].includes(engine));
 const hash=b=>createHash('sha256').update(b).digest('hex'),manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))),base='/_versions/'+manifest.build.revision+'/',receipts=new Set();
 assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
@@ -24,7 +28,7 @@ const server=http.createServer((req,res)=>{try{
  }catch(e){res.writeHead(404);res.end(String(e));}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
- browser=engine==='chromium'?await launchSandboxBrowser(chromium):await webkit.launch({headless:true});
+ browser=engine==='chromium'?await launchSandboxBrowser(chromium):await webkit.launch({headless:true,...(process.env.INKWAVE_WEBKIT?{executablePath:process.env.INKWAVE_WEBKIT}:{})});
  const page=await browser.newPage({viewport:{width:320,height:180},deviceScaleFactor:2}),errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto('http://127.0.0.1:'+server.address().port+'/');
  const result=await page.evaluate(async base=>{
   const THREE=await import('three'),{Renderer}=await import(base+'src/core/renderer.js'),{ScreenFX}=await import(base+'src/fx/screenfx.js'),{G}=await import(base+'src/core/ctx.js');
@@ -144,6 +148,7 @@ try{
   return {rows,lifecycle,contextRecovery,negativeControl,frameCount,disposedLiveRenderbuffers:0};
  },base);
  assert.deepEqual(errors,[]);assert.equal(result.rows.length,78);assert.equal(result.negativeControl,true);assert.equal(result.contextRecovery.length,6);
- const report={status:'passed',engine,browser:browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,scope:'Actual emitted Renderer and ScreenFX; baseline restores only the old post-depth flag before first WebGL binding. Exact completed RGBA pixel comparison and live renderbuffer/attachment counts. No physical-iPad GPU memory, RSS or FPS claim.',...result,artifacts:[...receipts].sort()};
+ if(sourceSha)verifyRuntimeBuild(site,root,sourceSha);
+ const report={status:'passed',engine,browser:browser.version(),sourceSha,harnessSha256:hash(fs.readFileSync(new URL(import.meta.url))),contentHash:manifest.contentHash,revision:manifest.build.revision,scope:'Actual emitted Renderer and ScreenFX; baseline restores only the old post-depth flag before first WebGL binding. Exact completed RGBA pixel comparison and live renderbuffer/attachment counts. No physical-iPad GPU memory, RSS or FPS claim.',...result,artifacts:[...receipts].sort()};
  fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,browser:report.browser,cases:report.rows.length,negativeControl:report.negativeControl,contentHash:report.contentHash}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

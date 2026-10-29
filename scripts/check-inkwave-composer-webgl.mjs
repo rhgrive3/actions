@@ -533,8 +533,9 @@ const comparisons = report.comparisons.map(({ referencePngBase64, packedPngBase6
 const imagePaths = [];
 for (let index = 0; index < report.comparisons.length; index++) {
   const comparison = report.comparisons[index];
-  const selectedTargetSuffix = report.actualFormatProbe.type === 35899 ? 'r11f-g11f-b10f'
-    : report.actualFormatProbe.packed ? `format-${report.actualFormatProbe.format}-type-${report.actualFormatProbe.type}` : 'rgba16f-selected';
+  const selectedType = comparison.packedTargets.target1.type;
+  const selectedTargetSuffix = selectedType === 35899 ? 'r11f-g11f-b10f'
+    : selectedType === 1016 ? 'rgba16f-selected' : `format-${comparison.packedTargets.target1.format}-type-${selectedType}`;
   for (const [suffix, payload] of [['rgba16f-reference', comparison.referencePngBase64], [selectedTargetSuffix, comparison.packedPngBase64]]) {
     const file = `${String(index + 1).padStart(2, '0')}-${comparison.name}-${suffix}.png`;
     await fs.writeFile(path.join(resolvedEvidence, file), Buffer.from(payload, 'base64'));

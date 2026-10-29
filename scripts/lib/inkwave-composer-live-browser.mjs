@@ -54,11 +54,13 @@ export async function runComposerLive(prefix) {
         const preservedSceneTarget=sceneTargetBefore===null||sceneTargetBefore===post.composer.renderTarget2;
         const sameStateReuse=lastHdr===expectedHdr&&lastTarget===targetBefore&&targetBefore!==null?lastTarget===target:true;
         const pair=[post.composer.renderTarget1,post.composer.renderTarget2];
-        const framebuffers=pair.map(t=>{renderer.setRenderTarget(t);return gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;});renderer.setRenderTarget(null);
-        const passed=correctType&&stableTarget&&sameStateReuse&&preservedPasses&&preservedSceneTarget&&framebuffers.every(Boolean)&&!repeatDiff.changedChannels&&!referenceDiff.changedChannels&&
+        const depthAttachments=[];
+        const framebuffers=pair.map(t=>{renderer.setRenderTarget(t);depthAttachments.push(gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE));return gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;});renderer.setRenderTarget(null);
+        const correctDepthRoles=depthAttachments[0]===gl.NONE&&depthAttachments[1]===gl.RENDERBUFFER;
+        const passed=correctType&&correctDepthRoles&&stableTarget&&sameStateReuse&&preservedPasses&&preservedSceneTarget&&framebuffers.every(Boolean)&&!repeatDiff.changedChannels&&!referenceDiff.changedChannels&&
           (expectedHdr?!diff.changedChannels:diff.mean<=1.25&&diff.p99<=3&&!diff.alpha);
         rows.push({name:quality+'-'+name,quality,active,expectedHdr,type,correctType,stableTarget,sameStateReuse,preservedPasses,preservedSceneTarget,liveTextures:liveTextures.size,
-          framebufferComplete:framebuffers,diff,repeatDiff,referenceDiff,glError:gl.getError(),passed,bytes:[]});
+          framebufferComplete:framebuffers,depthAttachments,correctDepthRoles,diff,repeatDiff,referenceDiff,glError:gl.getError(),passed,bytes:[]});
         if(!passed)rows.at(-1).bytes=[renderer.domElement.toDataURL('image/png').split(',')[1]];
         lastTarget=target;lastHdr=expectedHdr;
       };
@@ -101,7 +103,7 @@ export async function runComposerLive(prefix) {
       const event=type=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error(type+' timeout')),5000);
         recoveryPost.renderer.domElement.addEventListener(type,()=>{clearTimeout(timer);resolve();},{once:true});});
       const lost=event('webglcontextlost');extension.loseContext();await lost;
-      const restored=event('webglcontextrestored');extension.restoreContext();await restored;
+      const restored=event('webglcontextrestored');await new Promise(resolve=>setTimeout(resolve,0));extension.restoreContext();await restored;
       const frame=recoveryPost.renderer.info.render.frame,target=recoveryPost.composer.renderTarget1;
       recoveryPost.render();
       contextRecovery={available:true,restored:!recoveryGl.isContextLost(),requiresReload:recoveryPost._contextLost,

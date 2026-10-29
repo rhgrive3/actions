@@ -86,10 +86,12 @@ try{
         post.render();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);
         gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
         const c=actors[side].character;
+        const colors=new Set();for(let i=0;i<pixels.length&&colors.size<64;i+=4)colors.add(pixels[i]+256*pixels[i+1]+65536*pixels[i+2]);
         captures.push({pixels,png:renderer.domElement.toDataURL('image/png').split(',')[1],
           bones:c.boneList.map(b=>[...b.position.toArray(),...b.quaternion.toArray()]),
           targets:c.sourceMotion.hairTargets.indices.map(i=>c.sourceMotion.hairTargets.q[i].toArray()),
-          muzzle:c.getMuzzle(new THREE.Vector3()).toArray(),catchups:c._oobCatchUps,
+          muzzle:c.getMuzzle(new THREE.Vector3()).toArray(),catchups:c._oobCatchUps,renderedFrame:c._camFrame,
+          outputSize:[gl.drawingBufferWidth,gl.drawingBufferHeight],distinctColors:colors.size,
           clock:c.sourceMotion.time,phase:c.sourceMotion.phase});
       }
       let changed=0;for(let i=0;i<captures[0].pixels.length;i++)if(captures[0].pixels[i]!==captures[1].pixels[i])changed++;
@@ -104,7 +106,7 @@ try{
     post._disposeComposer(null);renderer.dispose();return {rows,contextLost:gl.isContextLost()};
   },prefix);
   for(const row of result.rows){row.bytes.forEach((png,i)=>fs.writeFileSync(path.join(out,`${row.hz??row.name}-${i}.png`),Buffer.from(png,'base64')));delete row.bytes;}
-  const failures=composerMode?result.rows.filter(r=>!r.passed||r.glError||!result.resources.passed||!result.contextRecovery.passed):result.rows.filter(r=>r.changedChannels||!r.bodyEqual||!r.targetsEqual||!r.muzzleEqual||r.glError||r.hiddenTicks.some(n=>n<1)||r.initialFrames.some((n,i)=>n!==r.hiddenFrames[i]));
+  const failures=composerMode?result.rows.filter(r=>!r.passed||r.glError||!result.resources.passed||!result.contextRecovery.passed):result.rows.filter(r=>r.changedChannels||!r.bodyEqual||!r.targetsEqual||!r.muzzleEqual||r.glError||r.hiddenTicks.some(n=>n<1)||r.initialFrames.some((n,i)=>n<0||n!==r.hiddenFrames[i])||r.captures.some((c,i)=>c.catchups<1||c.renderedFrame<=r.hiddenFrames[i]||c.distinctColors<32));
   verifyRuntimeBuild(site,root,sha);
   const report={sourceSha:sha,contentHash:manifest.contentHash,browser:browser.version(),node:process.version,
     harness:{runner:hash(fs.readFileSync(new URL(import.meta.url))),composerProbe:hash(Buffer.from(runComposerLive.toString()))},servedArtifacts:[...served].sort(),
