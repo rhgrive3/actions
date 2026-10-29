@@ -92,20 +92,29 @@ export class InkVolumes {
             g.setAttribute('position', new THREE.BufferAttribute(data.positions.slice(), 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(drawIndices, 1)); g.setAttribute('normal', new THREE.BufferAttribute(data.normals.slice(), 3, data.normals instanceof Int16Array)); g.setDrawRange(0,opaque.length);g.computeBoundingSphere();
             pattern.radius = Math.max(pattern.radius, g.boundingSphere.radius + g.boundingSphere.center.length());
             const mesh = new THREE.InstancedMesh(g, material, this.capacity);
-            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); mesh.setColorAt(0, new THREE.Color()); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); mesh.setColorAt(0, new THREE.Color()); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage); mesh.instanceColor.onUpload(clearVolumeUploadRanges);
             // Opaque ink writes depth; source-alpha fringe blends against that
             // depth without hiding the solid surface behind it. Both passes
             // share all geometry and instance buffers, never duplicate sprites.
             const fg=new THREE.BufferGeometry();asset.resources.push(fg);for(const [key,a] of Object.entries(g.attributes))fg.setAttribute(key,a);fg.setIndex(g.index);fg.setDrawRange(opaque.length,partial.length);
             const fringe = new THREE.InstancedMesh(fg,fringeMaterial,1); fringe.instanceMatrix=mesh.instanceMatrix; fringe.instanceColor=mesh.instanceColor;
-            const bounds=[(f%cols+.5/p.width)/cols,(Math.floor(f/cols)+.5/p.height)/rows,(f%cols+1-.5/p.width)/cols,(Math.floor(f/cols)+1-.5/p.height)/rows];
-            const before=(_renderer,_scene,_camera,_geometry,mat)=>{uniforms.uFrameBounds.value.set(...bounds);mat.uniformsNeedUpdate=true;};mesh.onBeforeRender=fringe.onBeforeRender=before;
+            const b0=(f%cols+.5/p.width)/cols, b1=(Math.floor(f/cols)+.5/p.height)/rows;
+            const b2=(f%cols+1-.5/p.width)/cols, b3=(Math.floor(f/cols)+1-.5/p.height)/rows;
+            // The opaque/fringe materials share uniforms across frames. Cache the
+            // last frame bounds separately on each material, not on the Vector4.
+            const before=(_renderer,_scene,_camera,_geometry,mat)=>{
+              const fb=uniforms.uFrameBounds.value;
+              if(fb.x!==b0||fb.y!==b1||fb.z!==b2||fb.w!==b3)fb.set(b0,b1,b2,b3);
+              if(mat._iwB0!==b0||mat._iwB1!==b1||mat._iwB2!==b2||mat._iwB3!==b3){
+                mat._iwB0=b0;mat._iwB1=b1;mat._iwB2=b2;mat._iwB3=b3;mat.uniformsNeedUpdate=true;
+              }
+            };mesh.onBeforeRender=fringe.onBeforeRender=before;
             mesh.count = 0; mesh.frustumCulled = false; mesh.castShadow = false; mesh.name = 'InkVolume:' + name + ':' + f + ':' + levels.length;
             fringe.count=0;fringe.frustumCulled=false;fringe.castShadow=false;fringe.name=mesh.name+':fringe';
             // Empty batches stay out of the render list (see WARM_FRAMES): an instanced mesh with count 0 draws nothing,
             // but a visible one still costs three.js its program/state/VAO setup and this onBeforeRender's full uniform
             // upload every frame.
-            const batch = { asset, pattern, mesh, fringe, triangles:drawIndices.length/3, n: 0, matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } }; levels.push(batch);asset.batches.push(batch);
+            const batch = { asset, pattern, mesh, fringe, triangles:drawIndices.length/3, n: 0, colorStart: this.capacity, colorEnd: 0, matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } }; levels.push(batch);asset.batches.push(batch);
             asset.bytes += data.positions.byteLength + data.normals.byteLength + uv.byteLength + drawIndices.byteLength + this.capacity * 19 * 4;
           }
           pattern.frames.push(levels);
@@ -178,8 +187,14 @@ export class InkVolumes {
     if(this.metrics.active+active>this.capacity||this.metrics.triangles+triangles>this.triangleBudget){this.metrics.overflow++;return false;}
     for(let i=0;i<parts.length;i++) {
       const plan=this.plans[i];if(plan.culled)continue;const b=plan.batch;
-      if(b.n===0){this.activeBatches.push(b);this._lighting(b.pattern);}
-      b.mesh.setMatrixAt(b.n,plan.matrix);b.mesh.setColorAt(b.n,source.owner.color);b.n++;
+      if(b.n===0){this.activeBatches.push(b);this._lighting(b.pattern);b.colorStart=this.capacity;b.colorEnd=0;}
+      const ca=b.mesh.instanceColor.array,ci=b.n*3,c0=ca[ci],c1=ca[ci+1],c2=ca[ci+2];
+      b.mesh.setMatrixAt(b.n,plan.matrix);b.mesh.setColorAt(b.n,source.owner.color);
+      if(!Object.is(ca[ci],c0)||!Object.is(ca[ci+1],c1)||!Object.is(ca[ci+2],c2)){
+        if(b.n<b.colorStart)b.colorStart=b.n;
+        if(b.n+1>b.colorEnd)b.colorEnd=b.n+1;
+      }
+      b.n++;
     }
     this.metrics.active+=active;this.metrics.triangles+=triangles;this.metrics.culled+=culled;return true;
   }
@@ -189,7 +204,7 @@ export class InkVolumes {
       b.mesh.count = b.mesh.geometry.drawRange.count ? b.n : 0; b.fringe.count = b.fringe.geometry.drawRange.count ? b.n : 0;
       b.mesh.visible = a.showAll || b.mesh.count > 0; b.fringe.visible = a.showAll || b.fringe.count > 0; if (!b.n) continue; this.metrics.batches+=Number(b.mesh.count>0)+Number(b.fringe.count>0);
       upload(b.mesh.instanceMatrix, b.matrixRange, b.n);
-      upload(b.mesh.instanceColor, b.colorRange, b.n);
+      uploadColor(b);
     }
   }
   clear() { this.bindings = new WeakMap(); this.begin(); }
@@ -215,5 +230,28 @@ function validateMesh(d) {
 
 function upload(attribute, range, count) {
   range.count = count * attribute.itemSize; attribute.updateRanges.length = 0; attribute.updateRanges.push(range); attribute.needsUpdate = true;
+}
+// The renderer clears ranges after bufferSubData; an initial bufferData needs
+// explicit clearing so an obsolete range cannot leak into a later update.
+function clearVolumeUploadRanges() { this.clearUpdateRanges(); }
+function uploadColor(batch) {
+  const attribute=batch.mesh.instanceColor, range=batch.colorRange, size=attribute.itemSize;
+  const dirty=batch.colorStart<batch.colorEnd;
+  let first=dirty?batch.colorStart*size:attribute.array.length, last=dirty?batch.colorEnd*size:0;
+  // Keep unconsumed dirty data if rendering was skipped. Do not clip to the
+  // current instance count: a previously populated tail may become visible
+  // again without changing its CPU-side Float32Array values.
+  for(const pending of attribute.updateRanges){
+    first=Math.min(first,pending.start);
+    last=Math.max(last,pending.start+pending.count);
+  }
+  if(first>=last)return;
+  // Even a full-range update must remain queued until the renderer consumes
+  // it. An empty updateRanges array denotes a full upload but cannot preserve
+  // that intent across skipped render frames.
+  range.start=first;range.count=last-first;
+  attribute.updateRanges.length=0;attribute.updateRanges.push(range);
+  // An earlier unconsumed upload already incremented attribute.version.
+  if(dirty)attribute.needsUpdate=true;
 }
 function finiteVector(v) { return Number.isFinite(v.x)&&Number.isFinite(v.y)&&Number.isFinite(v.z); }
