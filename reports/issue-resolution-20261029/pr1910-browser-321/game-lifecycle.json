@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "contentHash": "0c3788aae8fd362953bbb959c6038eb9cbf452b618638144c84e50ddb1cbe03d",
+  "inputHash": "70f311926677e6607bcf08245e6da8650da2c64b8030cc966ff104b6820c0b68",
+  "revision": "58aba27343b3bb506f204e4637a8e3b168c2d352c6764c431786ed4d761900bb",
+  "physicalDeviceVerified": false,
+  "scope": "Chromium software WebGL; actual practice-range Game",
+  "cycles": [
+    {
+      "cycle": 0,
+      "snapshot": true,
+      "quality": "high",
+      "liveTextures": 30
+    },
+    {
+      "cycle": 1,
+      "snapshot": true,
+      "quality": "low",
+      "liveTextures": 29
+    },
+    {
+      "cycle": 2,
+      "snapshot": true,
+      "quality": "high",
+      "liveTextures": 29
+    },
+    {
+      "cycle": 3,
+      "snapshot": true,
+      "quality": "low",
+      "liveTextures": 29
+    },
+    {
+      "cycle": 4,
+      "snapshot": true,
+      "quality": "high",
+      "liveTextures": 29
+    },
+    {
+      "cycle": 5,
+      "snapshot": true,
+      "quality": "low",
+      "liveTextures": 29
+    }
+  ],
+  "quit": true,
+  "errors": []
+}

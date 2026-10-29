@@ -43,6 +43,10 @@ export function installPausedFrameRetention(Renderer) {
     // Never accidentally cache an HDR intermediate composer target.
     if (r.getRenderTarget?.() !== null) { this.releasePausedFrame(); return false; }
     try {
+      // The final default framebuffer already owns the finished pixels. Retire
+      // HDR/MSAA attachments BEFORE allocating the full-size snapshot, rather
+      // than briefly owning both on memory-constrained iPad GPUs.
+      if (this.composer?.renderToScreen !== false) this.composer?.releaseInactiveTargets?.();
       let snapshot = this._pauseSnapshot;
       if (!snapshot || snapshot.image.width !== width || snapshot.image.height !== height) {
         this.releasePausedFrame();
@@ -54,10 +58,6 @@ export function installPausedFrameRetention(Renderer) {
       }
       // GPU->GPU framebuffer copy, performed before the browser composites/clears it.
       r.copyFramebufferToTexture(snapshot);
-      // The finished frame is now independent of the composer's HDR/MSAA pair.
-      // Reuse its existing lazy-target lifecycle; keep pass objects/shaders and
-      // all gameplay resources so the next real render restores the same stack.
-      if (this.composer?.renderToScreen !== false) this.composer?.releaseInactiveTargets?.();
       return true;
     } catch {
       this.releasePausedFrame();

@@ -129,6 +129,8 @@ test('NAT-02 TriangleWorld.resolveCapsule returns a stable independently owned n
   const r2 = tw.resolveCapsule(feet2, 1.45, 0.38, false);
   assert.notEqual(r2.normal, nRef, 'distinct capsule resolutions must return independently owned normals');
   assert.deepEqual(nRef.toArray(), originalNormal, 'later capsule resolutions must not mutate previous results');
+  tw.resolveCapsule(new THREE.Vector3(0, 3, 0), 1.45, 0.38, false);
+  assert.deepEqual(nRef.toArray(), originalNormal, 'a later miss cannot clear a retained result');
 });
 
 test('NAT-03 through NAT-06 native runtime modules use preallocated scratch vectors and closure-free edge helpers', () => {
@@ -239,6 +241,7 @@ test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and charger fli
   const rankedCombat = readRepo('patches/splatoon3/runtime/ranked/combat.mjs');
   assert.match(rankedCombat, /const scratch = _blastFrames\[depth\]/);
   assert.match(rankedCombat, /Math\.sqrt\(d2\) <= radius/);
+  assert.match(rankedCombat, /Math\.sqrt\(body\.distanceToSquared\(p\)\) <= radius/);
 
   const catalog = readRepo('patches/splatoon3/runtime/main-weapon-catalog.mjs');
   assert.match(catalog, /const reach=bodyRadius\+\(pr0>radius\?pr0:radius\)\+1e-4;/);

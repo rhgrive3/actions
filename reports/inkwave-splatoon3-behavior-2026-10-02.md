@@ -6676,6 +6676,19 @@ rollerの二重world-matrix更新と、同期hitイベントの入れ子blastで
 
 Git treeの出力上限、prebuilt digest試験の無期限待機、報告書の件数・出典を修正した。新headのhosted CIは別途確認し、旧赤履歴を削除しない。全Issue判定・変更commit/file・raw hashは[追加統合ledger](issue-resolution-20261029/final-batch/ledger.json)と[検証記録](issue-resolution-20261029/final-batch/README.md)。#401、main未マージ、MOV-08bとisolated Character QAのscope保留を維持する。
 
+## 2026-10-29: iPad の一時停止終了時にもメニューの GPU 負荷保護を維持
+
+- 対象: INKWAVE 公開版の iOS/iPadOS Safari 向け一時停止メニュー。関連する本家の参照条件は既存記録のスプラトゥーン3 Ver.11.3.0。今回の変更はブラウザの画面合成資源の寿命に限り、本家のブキ・ギア・移動・射撃・対戦ルールの数値は変更しない。本家実機との終了操作比較および iPad 実機の GPU 計測は未確認。
+- 実装箇所: `patches/local-quality/ios-paused-menu-gpu-guard.mjs`。`Menus.show()` が画面履歴を入れ替える前に、一時停止からの遷移であることを保存する。iOS では終了・再開時にも全画面 Canvas2D のワイプを抑止し、退出する DOM を同期的に取り除く。
+- 修正前の再現操作: 一時停止 → 終了（または一時停止内の設定 → メイン／タイトル／画面なしへの遷移）。画面履歴が先に空または新画面に変わり、既存の iOS 保護判定が false になる。そのため終了ワイプと旧画面の 340 ms の重複が許可されていた。これはコード上で確認した負荷増加要因であり、報告された実機クラッシュの原因を断定するものではない。
+- プレイへの影響: 一時停止画面を開閉する際に余分な全画面合成を避ける。終了後の通常メニュー遷移と他プラットフォームの既存演出は維持する。
+- ロジック検証: iOS 保護、GPU 一時停止フレーム保持、停止中のシミュレーション抑止、ステージ画像メモリの関連テスト計36件合格（`node --experimental-vm-modules --test`）。quick パッチ互換性、本番最適化ビルド、起動予算検査も合格。実機の GPU メモリ不足・Safari 終了が解消したとの判定は行っていない。
+- ブラウザ検証: 最適化済み配信物の実 `Menus` / CSS を Chromium の iPad エミュレーションで読み込み、一時停止／その中の設定からメイン・タイトル・画面なしへの6遷移と、実際の終了確認ボタン操作を確認。全7条件でワイプ0回、旧画面の即時切断、ページ例外0件。API はオフライン fixture、iOS クラスを明示した検証であり、WebKit や実 iPad の確認には読み替えない。作業用の結果は `work/ipad-pause-browser-result.json`。
+
+### 2026-10-29 追補: 同種の GPU 保持・重複経路を追加監査
+
+停止中の画面更新で旧画像と compositor を重複確保する順序、ページ非表示中の停止画像保持、演出終了後も全画面 Canvas が残る点、既存演出の onMid が遅れて走る経路を修正。ブキ・ギア・操作・判定の値は変更しない。Chromium / Linux WebKit 各72遷移と12回の全画素比較・GL 資源寿命検証、memory 98テスト、quality と runner 契約を通過。実機 iPad のクラッシュ解消や本家実機との終了操作の一致は未確認のまま。[監査・再現・検証記録](ipad-gpu-lifecycle-20261029/README.md) を参照。
+
 ### 2026-10-29: Ink Storm object cover consistency (#735)
 
 The composed runtime previously performed a cloud-center-to-device visibility test before the vertical rain test. A side barrier blocking only the diagonal could incorrectly shield a Splash Wall or Wave Breaker even with unobstructed rain above it. Storm object damage now uses its existing vertical contact ray; the shared radial damage path retains its normal visibility check by default. A production-composed source fixture reproduces the diagonal-only obstruction, verifies both device classes take damage, verifies a blocked vertical ray stops damage, and preserves the default radial LOS. The negative control without the change fails on the exposed wall. Existing 30/60/120 Hz damage and finite-reach controls pass. This establishes internal consistency, not the 11.3.0 vertical cutoff or cover formula; #735 remains open.
