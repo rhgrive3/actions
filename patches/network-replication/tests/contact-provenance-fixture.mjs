@@ -1,17 +1,20 @@
 import assert from 'node:assert/strict';
 import {fixture} from './robustness-fixture.mjs';
+import {nativeMainBirth} from './native-main-birth-fixture.mjs';
 async function setup(t,{host='me',peer='peer',roller=true,transformSource=null}={}) {
  const f=await fixture({productionComposition:true,transformSource});
  const s=f.makeSession('me',host,[['me','Me'],[peer,'Peer'],['third','Third']]);
  const nm=f.makeNetMatch(s),local=f.makeActor({nid:7,owner:'me',remote:false,team:0,roller:false}),remote=f.makeActor({nid:17,owner:peer,remote:true,team:1,roller});
  f.bind(nm,[local,remote]);local.netLife=0;remote.weaponRunner.rolling=true;
+ remote.character.getMuzzle=out=>out.copy(remote.pos);
  const calls=[];f.projectiles.applyHit=(...a)=>{calls.push(a);return'accepted'};
  t.after(()=>nm.dispose());
  return {f,s,nm,local,remote,calls,peer,
   tick(ts=1000,at=100,extra={}) { f.clock.set(at); nm.onMessage(peer,{k:'t',ts,u:100,a:[f.packActor(remote,{f:257})],l:{17:0},...extra}); },
   hit(extra={},from=peer) {nm.onMessage(from,{k:'hit',m:nm.cfg.id,v:7,a:17,d:10,w:'roller',l:0,h:1,seq:1,...extra});},
   state(){return nm._combatProvenance;},
-  proof(ts=1000,extra={}){return [ts,'ev','weapon:fire',{actor:{n:17},weapon:remote.weapon.id,muzzle:[0,2,0],dir:[0,0,1],...extra}];}
+  proof(ts=1000,extra={}){return [ts,'ev','weapon:fire',{actor:{n:17},weapon:remote.weapon.id,muzzle:[0,2,0],dir:[0,0,1],...extra}];},
+  birth(ts=1000,extra={}){const event=nativeMainBirth(f,nm,remote,remote.weapon,ts);if(extra.muzzle)event.splice(5,3,...extra.muzzle);return event;}
  };
 }
 function untouched(x,{pending=false}={}) {assert.equal(x.calls.length,0,'native applyHit called');assert.equal(x.nm.peers.get(x.peer)?.lastHit,undefined,'hit replay consumed');assert.equal(x.state()?.contacts.size??0,0,'contact proof consumed');if(!pending)assert.ok((x.state()?.pending.get(x.peer)||[]).every(i=>i.proofOnly===true),'deferred claims must not inherit pose fallback');}

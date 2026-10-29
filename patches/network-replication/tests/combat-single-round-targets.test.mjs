@@ -34,7 +34,7 @@ async function setup(t,{family='shooter',catalog=false}={}) {
     Object.assign(a,{nid,owner:'me',netLife:0,remote:false});a.pos.set(0,0,3+index*2);
     return a;
   });
-  f.bind(nm,[...victims,attacker]);nm.bind(nm.match);
+  const match=f.bind(nm,[...victims,attacker]);nm.match=null;nm.bind(match);
   Object.assign(f.G,{match:nm.match,actors:[...victims,attacker]});
   const boss=Object.assign(Object.create(f.Boss.prototype),{
     sim:true,dead:false,visible:true,invuln:false,pos:new f.THREE.Vector3(0,0,3),
@@ -45,15 +45,21 @@ async function setup(t,{family='shooter',catalog=false}={}) {
   nm.match.boss=boss;f.clock.set(100);t.after(()=>nm.dispose());
   const hit=(v=7,h=1)=>nm.onMessage('peer',{k:'hit',m:nm.cfg.id,v,a:17,l:0,h,seq:h,d:10,w:weapon.id});
   const bossHit=(c=-1,q=1)=>nm.onMessage('peer',{k:'bhit',m:nm.cfg.id,a:17,l:0,q,d:10,w:c<0?weapon.id:'crab',c,weak:0});
-  function fire(source='event',ts=1000) {
-    const event=source==='event'?[ts,'ev','weapon:fire',{
-      actor:{n:17},weapon:weapon.id,muzzle:[0,1.05,.3],dir:[0,0,1],
-    }]:nativeMainBirth(f,nm,attacker,weapon,ts);
+  let captured=[];
+  function deliver(events,ts=1000){
     f.clock.set(100+ts-1000);
-    nm.onMessage('peer',{k:'t',ts,u:60000+Math.round((ts-1000)*60),a:[f.packActor(attacker,{f:1})],l:{17:0},e:[event]});
-    return nm._combatProvenance.proofs.get('peer').at(-1);
+    nm.onMessage('peer',{k:'t',r:2,ts,u:60000+Math.round((ts-1000)*60),a:[f.packActor(attacker,{f:1})],l:{17:0},e:JSON.parse(JSON.stringify(events))});
+    return (nm._combatProvenance.proofs.get('peer')||[]).at(-1);
   }
-  return {f,nm,attacker,victims,boss,weapon,fire,hit,bossHit};
+  function fire(source='paired',ts=1000) {
+    const rows=nativeMainBirth(f,nm,attacker,weapon,ts,{events:true});
+    assert.ok(rows.some(e=>e[1]==='ev'),'actual producer must record its fire presentation');
+    captured=rows;
+    const events=source==='presentation'?rows.filter(e=>e[1]==='ev')
+      :source==='birth'?rows.filter(e=>e[1]==='p'):rows;
+    return deliver(events,ts);
+  }
+  return {f,nm,attacker,victims,boss,weapon,fire,hit,bossHit,deliver,captured:()=>captured};
 }
 
 test('missing local weapon definition cannot throw or grant a usable birth proof',async t=>{
@@ -90,7 +96,7 @@ for(const family of ['shooter','dualies','splatling'])for(const catalog of [fals
     assert.equal(x.victims[1].hp,100,'the rear body never receives this round');
   });
 
-  for(const source of ['event','birth'])for(const queued of [false,true]) {
+  for(const source of ['paired','birth'])for(const queued of [false,true]) {
     test(`${label} ${source} ${queued?'queued':'direct'} proof cannot damage two local victims`,async t=>{
       const x=await setup(t,{family,catalog});
       let p;if(!queued)p=x.fire(source);
@@ -114,4 +120,29 @@ for(const family of ['shooter','dualies','splatling'])for(const catalog of [fals
       assert.equal(x.nm.peers.get('peer').lastBossHit,2);
     });
   }
+  for(const target of ['pvp','boss','crablet'])test(`${label} lost birth cannot borrow its actual fire presentation for ${target} damage`,async t=>{
+    const x=await setup(t,{family,catalog});assert.equal(x.fire('presentation'),undefined);
+    if(target==='pvp')x.hit();else x.bossHit(target==='boss'?-1:3);
+    assert.deepEqual(x.victims.map(v=>v.hp),[100,100]);assert.equal(x.boss.hp,1000);assert.equal(x.boss.crabs.get(3).hp,1000);
+    assert.equal(x.nm.peers.get('peer').lastHit,undefined);assert.equal(x.nm.peers.get('peer').lastBossHit,undefined);
+    assert.equal(x.nm._combatProvenance.pending.get('peer').length,1,'claim waits for an actual accepted birth');
+    x.deliver(x.captured().filter(e=>e[1]==='p'),1000.1);
+    assert.equal(target==='pvp'?x.victims[0].hp:target==='boss'?x.boss.hp:x.boss.crabs.get(3).hp,target==='pvp'?90:990,
+      'the original genuine late birth can flush the still-valid claim before playback advances past its sequence');
+  });
+  test(`${label} playback watermark rejects an older late birth without spending the pending claim`,async t=>{
+    const x=await setup(t,{family,catalog});x.fire('presentation');x.hit();
+    const peer=x.nm.peers.get('peer'),event=peer.events.shift();assert.equal(event[1],'ev');x.nm._play('peer',event);
+    assert.equal(peer._lastEventSeq,event._netSeq);
+    x.deliver(x.captured().filter(e=>e[1]==='p'),1000.1);
+    assert.equal(x.victims[0].hp,100);assert.equal(peer.lastHit,undefined);assert.equal(x.nm._combatProvenance.proofs.get('peer')?.length||0,0);
+    x.fire('paired',1000.2);assert.equal(x.victims[0].hp,90,'a distinct newer native birth still releases the valid pending claim');
+  });
+  test(`${label} reordered R2 array retains one genuine birth proof without presentation fallback`,async t=>{
+    const x=await setup(t,{family,catalog});
+    const rows=nativeMainBirth(x.f,x.nm,x.attacker,x.weapon,1000,{events:true});
+    assert.equal(rows[0][1],'p');assert.equal(rows.at(-1)[1],'ev');x.deliver(rows.reverse());
+    assert.equal(x.nm._combatProvenance.proofs.get('peer').length,1);x.hit();assert.equal(x.victims[0].hp,90);
+    x.hit(8,2);assert.equal(x.victims[1].hp,100,'the reordered presentation grants no second shot');
+  });
 }

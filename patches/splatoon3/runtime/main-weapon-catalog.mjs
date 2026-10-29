@@ -570,6 +570,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Preserve the drum heading and the transverse radius on both sides.
         if(footprint==='ink-contact'&&depth<1){
           options.stretch=tangent;options.stretchAmt=depth-1;
+          if(centre===at)centre=_paintCentre.copy(at);
           owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));return;
         }
         const shape=catalogPaintEllipse(radius,depth);
@@ -578,6 +579,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         options.stretch=tangent;options.stretchAmt=shape.stretchAmt;
       }
     }
+    // Non-ellipse callers can pass the shared floor-hit point. The native
+    // consumer may synchronously reenter another ground query before reading it.
+    if(centre===at)centre=_paintCentre.copy(at);
     owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));
     } finally { _paintDepth--; }
   }
