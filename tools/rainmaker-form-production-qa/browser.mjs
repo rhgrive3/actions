@@ -52,6 +52,7 @@ export async function runFormScenario({api,weapon,pitch,deliveryAt=null,priorFul
    if(returnFrame===deliveryAt){
     const nm={_disposed:false,match:m,_rankedAPI:api,cfg:{id:'rainmaker-form'},s:{hostId:'host'},isHost:false,rankedEventSeq:0},packet={k:'rkevent',match:nm.cfg.id,seq:1,events:[queued]};G.netm=nm;defer=false;delivering=true;
     api.NetMatch.prototype.onMessage.call(nm,'wrong-host',packet);check(births.length===0,'wrong host negative');api.NetMatch.prototype.onMessage.call(nm,'host',packet);check(births.length===1&&nm.rankedEventSeq===1,'real delayed shot admitted');api.NetMatch.prototype.onMessage.call(nm,'host',packet);check(births.length===1,'duplicate negative');
+    check(JSON.stringify(births[0].origin)===JSON.stringify(queued.shotOrigin.muzzle),'shot born at captured host muzzle');
     delivered={event:queued,origin:births[0].origin,delaySeconds:G.time-queued.at,wrongHostRejected:true,duplicateRejected:true};G.netm=null;
    }
    phase='measurement';

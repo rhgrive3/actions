@@ -6,6 +6,7 @@ const f = await fixture({
   fullRuntime: true,
   extraExports: `
     export { MAP_LAYOUTS } from './inkwave-public/src/world/maps.js';
+    export { LAYOUT as BLOCKOUT_SCORCH } from './patches/splatoon3/stage/scorch-layout.mjs';
     export { createRankedStage, RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';
   `,
 });
@@ -14,7 +15,11 @@ const MAP_IDS = ['tidewater', 'kelpline', 'halyard', 'cargo', 'scorch'];
 const closeTo = (a, b, epsilon = 1e-5) => Math.abs(a - b) <= epsilon;
 
 function makeMap(id) {
-  const level = new f.Level(f.MAP_LAYOUTS[id]);
+  // A production build replaces the scorch layout with an empty native-stage
+  // loading descriptor. This suite exercises the five blockout geometries;
+  // the native descriptor requires its separate asynchronous world loader.
+  const layout = id === 'scorch' && f.MAP_LAYOUTS[id].nativeSource ? f.BLOCKOUT_SCORCH : f.MAP_LAYOUTS[id];
+  const level = new f.Level(layout);
   const physics = new f.Physics(level);
   Object.assign(f.G, { level, physics, scene: new f.THREE.Scene(), time: 0 });
   return { level, physics, stage: f.createRankedStage(f.G) };
@@ -78,11 +83,10 @@ function assertTowerSweepClear(level, stage) {
 
 test('ranked stage coordinates use reachable live floors, symmetric routes, and clear swept tower volumes', () => {
   assert.ok(f.MAP_LAYOUTS.range, 'practice range remains registered outside battle stage selection');
-  assert.deepEqual(
-    Object.keys(f.MAP_LAYOUTS).filter(id => id !== 'range').sort(),
-    MAP_IDS.slice().sort(),
-    'only battle stages are required to provide ranked objectives',
-  );
+  for (const id of MAP_IDS) assert.ok(f.MAP_LAYOUTS[id], `${id} remains registered`);
+  for (const [id, layout] of Object.entries(f.MAP_LAYOUTS)) {
+    if (id !== 'range' && !MAP_IDS.includes(id)) assert.equal(layout.nativeSource, true, `${id} is a native loading descriptor`);
+  }
   for (const id of MAP_IDS) {
     const { level, physics, stage } = makeMap(id);
     assert.equal(stage.id, id);
@@ -122,6 +126,7 @@ function paintRenderer(THREE) {
     getClearAlpha: () => 1,
     setClearColor() {},
     clear() { if (state.scissorTest) this.scissorClears.push(state.scissor.slice()); },
+    render() {}, // CPU fixture: GPU draw calls do not alter the live paint grid.
     THREE,
   };
 }
@@ -326,7 +331,7 @@ test('objective visuals stay mode-specific and Rainmaker markers reflect rule st
 
 test('non-Tower teardown retains live spatial query order across five stages and wrap', () => {
   for (const id of MAP_IDS) for (const mode of ['zones', 'rainmaker', 'clams']) {
-    const level = new f.Level(f.MAP_LAYOUTS[id]);
+    const { level } = makeMap(id);
     Object.assign(f.G, { level, physics: new f.Physics(level), paint: null, scene: new f.THREE.Scene() });
     const stage = f.createRankedStage(f.G, mode);
     const world = new f.RankedWorld({ G: f.G, THREE: f.THREE, Hit: f.Hit }, { mode, actors: [] }, stage);
