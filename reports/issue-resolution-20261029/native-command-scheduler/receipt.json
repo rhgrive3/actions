@@ -1,0 +1,210 @@
+{
+  "schema": 1,
+  "base": "72c799fee36173e1255e023bad7c9a19605ad2b1",
+  "worktree": "/workspace/wt-agent3-authority-final",
+  "node": "22.23.4",
+  "command": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node --experimental-vm-modules --test patches/network-replication/tests/native-command-scheduler.test.mjs patches/network-replication/tests/trusted-native-replay.test.mjs patches/network-replication/tests/native-command-wire.test.mjs patches/network-replication/tests/canonical-weapon-actions.test.mjs",
+  "final": {
+    "tests": 156,
+    "pass": 156,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "sourceOnly": true,
+    "elapsedMilliseconds": 18131.225497
+  },
+  "changedFiles": [
+    {
+      "path": "patches/network-replication/native-command-scheduler.mjs",
+      "bytes": 7117,
+      "sha256": "a4addeeae0fdf0ca6041d86200dc5a968621002dc24b5b33dd3ccbb61cbd967b"
+    },
+    {
+      "path": "patches/network-replication/trusted-native-replay-worker.mjs",
+      "bytes": 5164,
+      "sha256": "ba87337c21f2df8c02b4f94718bf3b71e17812cfe959e1e51189108567e84671"
+    },
+    {
+      "path": "patches/network-replication/tests/native-command-scheduler.test.mjs",
+      "bytes": 19984,
+      "sha256": "7c43827795732e4dfc2debff72bf2c357b5e9beee214c1a784551fc456c064df"
+    },
+    {
+      "path": "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+      "bytes": 1593164,
+      "sha256": "89c4063bae2a46df31625e52e02c9c0af8cf3a6921348a032aaae5f7ca53c715"
+    },
+    {
+      "path": "reports/issue-resolution-20261029/native-command-scheduler/README.md",
+      "bytes": 6579,
+      "sha256": "4ed546673296362c29815b9d48a97ffb77f8ac676c39d48ec8cd826e166fbffa"
+    }
+  ],
+  "unchangedInputs": [
+    {
+      "path": "patches/network-replication/trusted-native-replay.mjs",
+      "bytes": 17176,
+      "sha256": "37139f088600712c533212d17cf03be9abd48be633f52f936c939ec37f491902"
+    },
+    {
+      "path": "patches/network-replication/native-command-wire.mjs",
+      "bytes": 8482,
+      "sha256": "536b4ffc46ce2947ad147c532cf734d4a16e3d2e603342517163380857ba6026"
+    },
+    {
+      "path": "patches/network-replication/canonical-weapon-actions.mjs",
+      "bytes": 15213,
+      "sha256": "3594c4a8db71bd3e80280dcfb6faf8c416e4dbfcf6ca4dc615cec53a3e040348"
+    },
+    {
+      "path": "patches/network-replication/tests/trusted-native-replay.test.mjs",
+      "bytes": 28270,
+      "sha256": "2abc3c63c28fddb7a346326ff20a276734d3b3c3b27d83a416223be8454bf6c2"
+    },
+    {
+      "path": "patches/network-replication/tests/native-command-wire.test.mjs",
+      "bytes": 8678,
+      "sha256": "c3c46a9db56023e44b538a806543306da075eb93b688b5930779a20e3bd40693"
+    },
+    {
+      "path": "patches/network-replication/tests/canonical-weapon-actions.test.mjs",
+      "bytes": 13078,
+      "sha256": "043efc1a388617f7a0c00a8416b88dccdaec1b190472079ec786391131fb58f0"
+    },
+    {
+      "path": "patches/network-replication/combat-provenance.mjs",
+      "bytes": 38509,
+      "sha256": "0dc379a49d4d43d210e9d94dd0c52c3fa2d97f5f46897f456eedf61509d33f52"
+    },
+    {
+      "path": "patches/splatoon3/tests/source-fixture.mjs",
+      "bytes": 11379,
+      "sha256": "a1955f6288dabac02c180ec623efeaebc3e2ad389e6acef54bf13c1a6970bd0e"
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "bytes": 12240,
+      "sha256": "17cae099d697e9767be5fe07fb3807c8325d9e989e82b9577d725f65720b6725"
+    }
+  ],
+  "attempts": [
+    {
+      "path": "initial20.tap.gz",
+      "sha256": "d954c9154326b4696a3f5fd51e083d3eeb4988e121bf2348255614c7859ba747",
+      "rawSha256": "05e3f1daf49e8275a93be87c81d4408b0f7310daef1f41aeae210613359a7742",
+      "counts": {
+        "tests": 20,
+        "pass": 20,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exit": 0,
+      "scope": "new scheduler source file at initial implementation"
+    },
+    {
+      "path": "intermediate151.tap.gz",
+      "sha256": "22dfb6e98b7d3d8fbe337899a842cf8115cee7699357f79fb05fdaa11486b956",
+      "rawSha256": "1aa5f04bdcc28b8e8245178a13caab1a9cb2afddf8f8936334f3f4c07a8f7b9b",
+      "counts": {
+        "tests": 151,
+        "pass": 151,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exit": 0,
+      "scope": "four focused source files"
+    },
+    {
+      "path": "intermediate154.tap.gz",
+      "sha256": "016b9c75006929fb8b5b14d5bc7c290b6259f6f02d219c19786f86bf1520e9bd",
+      "rawSha256": "0185d43f7068caa67e6d6dd4931bf097cd6dc7e50a4ae779e02bc7b4024c34be",
+      "counts": {
+        "tests": 154,
+        "pass": 154,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exit": 0,
+      "scope": "four focused source files"
+    },
+    {
+      "path": "intermediate155.tap.gz",
+      "sha256": "26b26979681bcac25c1cde051ccb2fb6843a2ec3581bf2fa6be55e936d00676c",
+      "rawSha256": "4ea3f4419dd04cb60343edbfe7626c937b29fc8e56885c9da75ac89e0be6c523",
+      "counts": {
+        "tests": 155,
+        "pass": 155,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exit": 0,
+      "scope": "four focused source files"
+    },
+    {
+      "path": "final156.tap.gz",
+      "sha256": "22944e7511116fe75070921168defcf89a541103e8244b2a0efbf5f199ca6286",
+      "rawSha256": "20593ee337dafed97a6f5a1ec9198b59b852867e684635f7804a042b9b6ab700",
+      "counts": {
+        "tests": 156,
+        "pass": 156,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exit": 0,
+      "scope": "four focused source files"
+    }
+  ],
+  "consumer": "attachTrustedNativeReplayWorker trusted host-only explicit commandRoom mode: enroll + commands -> bounded all-owner fixed-tick scheduler -> real native replay -> existing one-use native claim; default mode preserves prior API",
+  "runtimeBounds": {
+    "actors": 32,
+    "pendingFramesPerOwnerMax": 256,
+    "packetBytes": 24576,
+    "fixedDtMax": 0.1,
+    "sourceTimeOrigin": "fresh native replay time; first and subsequent frames checked against tick*room dt",
+    "commonElapsedOrigin": "trusted host at; enrollment cannot reset it"
+  },
+  "failureSemantics": {
+    "malformedPacket": "all packet rows checked before any prefix commit or queue insertion",
+    "acceptedPacket": "whole peer prefix committed into bounded in-memory queue before native execution",
+    "partialNativeFault": "earlier ticks and failing tick may have mutated; entire room retires, queued suffix cleared, all outstanding contacts revoked; no rollback or retry",
+    "membership": "host-only endpoint.revokeOwner synchronously retires fixed-roster room; no owner-asserted drop",
+    "reentrantClose": "returns false without teardown; host must retry/fail closed; internal fatal transport/worker fault closure deferred until outer scope exits before successful response",
+    "rpcIds": "scheduled mode uses positive safe IDs only for host-managed correlation; native envelope sequences and one-use contacts own replay; default mode retains ordered IDs"
+  },
+  "coverage": [
+    "30/60/120Hz native paid Shooter flight/PvP contact via real MessageChannel from independent A/B principals",
+    "delayed opposite-owner order exact state/effect equality",
+    "actual Boss/crablet native collision and committed native effects",
+    "idle/wall negatives and no fabricated effect from legacy result events",
+    "raw advance bypass rejected in scheduled mode; old complete-frame default worker preserved",
+    "malformed batch last row, dt/origin/elapsed/owner/epoch rejection without legitimate-prefix poisoning",
+    "bounded absent-owner backlog, exact retry dedup, changed retry and sequence gap rejection",
+    "host owner revocation clears queued commands and prior effects before other-owner barrier completion",
+    "second native tick fault in multi-frame packet truthfully records partial native progress and revokes contacts",
+    "actual native spawnAt next life barrier; final native callback caught disposal; out-of-band replay advance before claim",
+    "trusted authorize exception; scheduler and custom-port worker reentry; nested transport throw suppresses outer success"
+  ],
+  "limitations": [
+    "No production NetMatch/NetSession/RoomDurableObject wiring, deployed server, required client protocol or full security fix. #1665/#1666 remain open.",
+    "No reconnect/late-join/respawn/ownership migration checkpoint, historical world replay or WAN lag compensation. Missing owners wait; trusted removal retires whole room.",
+    "Native CPU fixtures use fixed display/muzzle, flat dry paint/zero credit and fixed Boss combat state. No new browser/GPU/build/emitted validation.",
+    "Private command mode is opt-in and host-trusted. A client-owned worker does not supply authority.",
+    "Queued inputs and native effects are in-memory only; no persistence or rollback claim.",
+    "Splatoon3 Ver.11.3.0 is comparison target; no private Nintendo networking or new gameplay parameter inferred. Physical-device verification waived by parent."
+  ],
+  "productionGap": {
+    "rerunByThisSlice": false,
+    "historicalReceipt": "reports/issue-resolution-20261029/native-replay-synchronous-phases/receipt.json",
+    "source": "39c2060fe5d27ea1d8182861a07e79da99e8915e",
+    "emittedContent": "f27791906bcf7a0a1c7e6c6520dbfc513157b6ca1c98b89f5de3029915375308",
+    "forgedValidBirthDamage": {
+      "pvp": 36,
+      "boss": 36,
+      "crablet": 36
+    },
+    "actualSenderInvocations": 0,
+    "actualReceiverContacts": 0,
+    "note": "Historical exact-build labels retained, not relabeled as this new source; production admission is unchanged by this private worker slice."
+  },
+  "publication": "No commit, push, PR, comment, merge, close, build or deployment performed by this task. Root owns integration/publication."
+}
