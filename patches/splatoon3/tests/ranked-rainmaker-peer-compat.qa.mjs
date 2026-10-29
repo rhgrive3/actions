@@ -53,7 +53,7 @@ async function pair(r,options=[{},{}]){const a=await peer(r,options[0]),b=await 
 async function bindWorld(p,hostId,owners){const {f,session}=p;const actors=[];for(let i=0;i<2;i++){const a=await f.make(i);Object.assign(a,{nid:i,owner:owners[i],slot:0,team:i,netLife:7,invuln:0,isLocal:owners[i]===session.myId});a.pos.set(i?15:0,0,0);a.damage=function(amount){p.damage.push({nid:this.nid,amount,remote:this.remote});return false;};actors.push(a);}
  const m=Object.assign(Object.create(f.Match.prototype),{mode:'rainmaker',state:'playing',time:300,actors,local:actors.find(a=>a.owner===session.myId),follower:session.myId!==hostId,ranked:new f.RankedEngine('rainmaker',stage),rankedBarrierHits:[],rankedGains:[0,0],rankedWorld:{zoneCoverage:()=>[],floorAt:()=>0,blocked:()=>false,update(){}}});
  f.G.match=m;f.G.actors=actors;f.G.paint={sample:()=>1,splat:(pos,...args)=>{p.paint.push({pos:pos.toArray(),args});return 0;}};f.G.audio={play(){},stop(){}};f.G.fx={ring(){}};
- const add=f.G.scene.add.bind(f.G.scene);f.G.scene.add=o=>{if(o.geometry?.type==='SphereGeometry')p.births.push({position:o.position.toArray(),mesh:o});return add(o);};
+ const add=f.G.scene.add.bind(f.G.scene);f.G.scene.add=o=>{if(o.name==='rainmaker-shot'||o.geometry?.type==='SphereGeometry')p.births.push({position:o.position.toArray(),mesh:o});return add(o);};
  const nm=new f.NetMatch(session,{id:'native-origin-match',mode:'rainmaker',map:'tidewater'});session.match=nm;session.state='match';nm.bind(m);m.rankedEffects=f.createRankedEffects(f,m);
  const play=m.playRankedEvents.bind(m);m.playRankedEvents=(events,visual)=>{p.events.push(...plain(events));return play(events,visual);};p.match=m;p.net=nm;return p;
 }

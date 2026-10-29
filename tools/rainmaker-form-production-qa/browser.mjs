@@ -23,7 +23,7 @@ export async function runFormScenario({api,weapon,pitch,deliveryAt=null,priorFul
  m.playRankedEvents=function(batch,...args){const pass=[];for(const e of batch){events.push({...e});if(e.kind==='rainmaker-shot'&&defer){check(!queued,'one delayed legitimate event');queued=JSON.parse(JSON.stringify(e));}else pass.push(e);}return Match.prototype.playRankedEvents.call(this,pass,...args);};m.rankedEffects=createRankedEffects(api,m);
  const mesh=createRainmakerModel(THREE),display=createRainmakerPresentation(THREE,mesh);G.scene.add(mesh);
  const modelGeometry={triangles:mesh.geometry.index.count/3,vertices:mesh.geometry.attributes.position.count,sha256:await digest([Array.from(mesh.geometry.attributes.position.array),Array.from(mesh.geometry.index.array)])};
- const add=G.scene.add;G.scene.add=function(...objects){for(const o of objects)if(o.geometry?.parameters?.radius===.32)births.push({delivering,origin:o.position.toArray(),mesh:o});return add.apply(this,objects);};
+ const add=G.scene.add;G.scene.add=function(...objects){for(const o of objects)if(o.name==='rainmaker-shot'||o.geometry?.parameters?.radius===.32)births.push({delivering,origin:o.position.toArray(),mesh:o});return add.apply(this,objects);};
  let frame=0,recording=false,poses=0,leftSolves=0,rightSolves=0,entry=null,captureCalls=0;const rows=[],apply=ch._applyPose,solve=ch._solveLimb;
  ch._applyPose=function(...args){poses++;return apply.apply(this,args);};ch._solveLimb=function(limb,...args){if(limb===this.limbs.armL)leftSolves++;if(limb===this.limbs.armR)rightSolves++;return solve.call(this,limb,...args);};
  // QA-only counters separate actual consumer work from receipt getters/rendering.

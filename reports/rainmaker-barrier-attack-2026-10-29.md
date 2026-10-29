@@ -2,6 +2,20 @@
 
 比較元は `main` の `e67c636b81762df56b346a09ef570964d43084df`。対象は公開版の `patches/splatoon3/runtime/ranked/`。原作画像は実際に表示して確認し、ゲーム本体や配信物へ転載していない。
 
+## バリア表面の再調整
+
+初回候補の大きな淡色斑模様が不快に見えるとの指摘を受け、バリアにはショット用の模様shaderを使わず、滑らかな単色の膜、縁の反射光、小さい鏡面ハイライトへ変更した。灰色・クリーム色の塊を描かず、中立時の透け感と圧力に応じた濃さで見せる。先のバリア画像 `after-barrier.png` は初回候補の記録として残し、下の比較表は追補版へ差し替えた。
+
+同じ原作画像を再確認した上での表面の近似で、膜の屈折率・厚さなどを抽出した実測ではない。球の位置・衝突半径・HP・色の反転条件は変えていない。低画質・bloom無効の実ゲームで、中立・650/1000・950/1000・相手色へ反転の4状態を描画し、全shaderのGPUリンクと画素への寄与を確認した。`rainmaker-visuals.test.mjs` 3件、quick checks、ビルド、起動予算も成功。結果は[smooth-barrier-result.json](rainmaker-barrier-attack-2026-10-29/smooth-barrier-result.json)、再実行は `node scripts/check-inkwave-rainmaker-visuals.mjs --site .built-site/rainmaker-smooth-final --barrier-only --evidence-dir .browser-evidence/rainmaker/smooth-final --profile-dir .browser-evidence/rainmaker/profile-smooth-final`。
+
+## 初回PRのCIで検出した攻撃・観測の追補
+
+回復時間を使い切ったtickで次のチャージを開始すると、回復中だけ押した入力から意図しない最小弾が生じ、静止標的・Splash Wallの厳密なダメージ検査が失敗した。残り時間がないtickでは次のチャージを始めないように修正し、30/60/120Hzで余分な弾が出ず、その後の本当の短押しは発射できることを確認した。また、Sceneの生成前に作るCPU用のeffectsがnullのSceneを捕まえていたため、描画資源を最初の描画イベントで生成するようにした。headlessでの時間切れのダメージ処理は継続する。
+
+複合弾の位置はSceneへ追加する前に設定する。観測用ヘルパーには新しい弾の名前を認識させ、追加時点の不変な銃口原点・wrong-host・重複イベントの拒否を保った。旧単一球を前提にした資源テストは、弾頭・尾・滴の共有geometry、色の精度、インスタンスの解放を検査する形へ更新した。旧ルールとの完全snapshot比較は非射撃の所有・得点・時計・復元と、通常フルチャージの可変dt射撃で残し、意図的に変更した短押しは専用回帰で確認する。
+
+この追補の限定検証は74件成功。コマンドと件数は[ci-followup.json](rainmaker-barrier-attack-2026-10-29/ci-followup.json)。前回のCIに残る4件の静的CIポリシー不一致は、クリーンな基準SHAの別worktreeでも再現した。workflow自体やその必須条件はこの変更で修正しておらず、PR全体のCI成功とは扱わない。
+
 ## 参照と確認条件
 
 - [任天堂・ガチキング決定戦](https://www.nintendo.com/jp/bankara-king/index.html)の[通常ホコショット図](https://www.nintendo.com/jp/bankara-king/assets_final/img/rule_step02_img_hoko.png)：艶のある大きな球状インク、銃口へ伸びる穴の開いた液状の尾、周囲の細長い飛沫と粒を確認した。説明用の合成画像であり、投影寸法・時間の計測値としては扱わない。
@@ -31,15 +45,15 @@
 - `check-inkwave-patches.mjs --quick`、`inkwave-source-migration-audit.mjs`、通常ビルドと起動予算チェックは成功。
 - 最適化生成物を指定した銃口・短押しテストは14件成功、同じ生成物の `ranked-world.test.mjs` は表示1件成功・6件失敗。後者の6件はクリーンな基準SHAから別worktreeでビルドしても同じように失敗した。内訳はネイティブマップを含む一覧と5マップ前提の不一致、GPU paint用mock rendererの不足4件、scorchの旧床fixture1件。この既存のfixture非互換を修正していない。source版の同ファイル7件は通過している。
 
-ブラウザ最終実行は成功。画像・生成物のハッシュは[verification.json](rainmaker-barrier-attack-2026-10-29/verification.json)、実行結果は[browser-result.json](rainmaker-barrier-attack-2026-10-29/browser-result.json)を参照。通常のオフライン tidewater を起動し、最初の配置とバリアへの被弾入力を設定した後、実Actor/Matchの固定60Hz処理で取得・チャージ・発射・着弾・消去を進めた。取得後45tickでバリア破裂の飛沫を落ち着かせてから所持中の光を比較した。`?shadercheck=1` によるGPUプログラムのリンク検査に加え、同じ停止画面で対象効果だけを隠したframebufferとの差を測り、実際の画素への寄与を確認した。低画質・bloom無効のChromium 151.0.7922.34 / SwiftShader、1280×800。pressure49,566・idle24,440・half34,452・full39,401・flight8,145・impact2,999・blast10,560画素が変化し、飛沫消去後の差は0。これらは可視性の検証であり、本家との一致率やGPU時間ではない。
+初回版の全演出ブラウザ実行は成功。画像・生成物のハッシュは[verification.json](rainmaker-barrier-attack-2026-10-29/verification.json)、実行結果は[browser-result.json](rainmaker-barrier-attack-2026-10-29/browser-result.json)を参照。通常のオフライン tidewater を起動し、最初の配置とバリアへの被弾入力を設定した後、実Actor/Matchの固定60Hz処理で取得・チャージ・発射・着弾・消去を進めた。取得後45tickでバリア破裂の飛沫を落ち着かせてから所持中の光を比較した。`?shadercheck=1` によるGPUプログラムのリンク検査に加え、同じ停止画面で対象効果だけを隠したframebufferとの差を測り、実際の画素への寄与を確認した。低画質・bloom無効のChromium 151.0.7922.34 / SwiftShader、1280×800。pressure49,566・idle24,440・half34,452・full39,401・flight8,145・impact2,999・blast10,560画素が変化し、飛沫消去後の差は0。これらは可視性の検証であり、本家との一致率やGPU時間ではない。
 
-最終配信物のcontentHashは `b3a3c652b54b6cdd1d4821505026045fc21ccadcc1ba8c0653c45d49a8c9a5bf`、inputHashは `9211d96ae99c3cef480781302b1aa2acf5f85aaf72989bafd40a45e8cd78dfdd`。再実行コマンドは `node scripts/check-inkwave-rainmaker-visuals.mjs --site .built-site/rainmaker-final --phase candidate --evidence-dir .browser-evidence/rainmaker/final --profile-dir .browser-evidence/rainmaker/profile-final-settled`。
+初回版の配信物のcontentHashは `b3a3c652b54b6cdd1d4821505026045fc21ccadcc1ba8c0653c45d49a8c9a5bf`、inputHashは `9211d96ae99c3cef480781302b1aa2acf5f85aaf72989bafd40a45e8cd78dfdd`。再実行コマンドは `node scripts/check-inkwave-rainmaker-visuals.mjs --site .built-site/rainmaker-final --phase candidate --evidence-dir .browser-evidence/rainmaker/final --profile-dir .browser-evidence/rainmaker/profile-final-settled`。
 
 ## 実ゲームの比較画像
 
-| 表示 | 変更前 | 最終候補 |
+| 表示 | 変更前 | 最新表示（バリアのみ追補版） |
 | --- | --- | --- |
-| 膨張したバリア | ![変更前のワイヤーバリア](rainmaker-barrier-attack-2026-10-29/before-barrier.png) | ![濡れた膜のバリア](rainmaker-barrier-attack-2026-10-29/after-barrier.png) |
+| 膨張したバリア | ![変更前のワイヤーバリア](rainmaker-barrier-attack-2026-10-29/before-barrier.png) | ![斑模様を除いた滑らかなバリア](rainmaker-barrier-attack-2026-10-29/smooth-barrier.png) |
 | フルチャージ | ![変更前のチャージ](rainmaker-barrier-attack-2026-10-29/before-charge.png) | ![体と銃口の発光](rainmaker-barrier-attack-2026-10-29/after-charge.png) |
 | 発射中 | ![変更前の単色球](rainmaker-barrier-attack-2026-10-29/before-shot.png) | ![弾頭と液状の尾・飛沫](rainmaker-barrier-attack-2026-10-29/after-shot.png) |
 

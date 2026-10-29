@@ -528,6 +528,10 @@ export class RainmakerRule {
       const used = Math.min(remaining, c.recovery); c.recovery -= used; remaining -= used;
       if (c.recovery > 1e-9) return;
       c.recovery = 0;
+      // A hold spent entirely in recovery is not another charge attempt.
+      // Starting its windup with no elapsed time would manufacture a tap if
+      // the player releases before the next eligible charging tick.
+      if (remaining <= 1e-9) return;
     }
     const firing = input?.fire === true && !c.released && !(actor.swimming && c.firing);
     if (firing) {

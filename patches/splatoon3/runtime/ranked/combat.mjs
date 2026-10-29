@@ -138,7 +138,11 @@ function barrierDamage(m, actor, amount, kind, pos, api) {
 
 export function createRankedEffects(api, match) {
   const { THREE, G, Hit } = api;
-  const shots = [], visuals = createRainmakerAttackVisuals(THREE, G.scene);
+  const shots = [];
+  let visuals = null;
+  // Headless rule/timeout consumers can run before a scene is installed.
+  // Bind on the first rendered event, rather than capturing a null boot scene.
+  const attackVisuals = () => visuals || (G.scene?.add ? (visuals = createRainmakerAttackVisuals(THREE, G.scene)) : null);
   const hit = new Hit();
   function damage(victim, attacker, amount, cause = 'Gachihoko_Bullet') {
     if (!victim.alive || victim.team === attacker?.team) return;
@@ -154,7 +158,7 @@ export function createRankedEffects(api, match) {
   function explode(pos, team, radius, amount, attacker, visualOnly = false, paintRadius = radius, outerDamage = amount, nearRadius = radius * .45, noSpecial = false, shot = null) {
     const p = new THREE.Vector3(...pos);
     G.fx?.ring?.(p, new THREE.Vector3(0, 1, 0), G.teamColors[team], { radius, life: .6 });
-    visuals.splash(p, G.teamColors[team], radius);
+    attackVisuals()?.splash(p, G.teamColors[team], radius);
     G.audio?.play?.('bomb_explode', { pos: p, volume: .7 });
     const blastFrom = shot?.from || p.clone().add(new THREE.Vector3(0, .05, 0));
     const domeSheltered = shot && !visualOnly ? new Set() : null;
@@ -179,8 +183,8 @@ export function createRankedEffects(api, match) {
     else if (e.kind === 'rainmaker-shot' && Array.isArray(e.pos) && Array.isArray(e.aim)) {
       const a = match.actors.find(a => actorId(a) === String(e.actorId ?? e.carrier ?? e.id));
       if (!a || !a.alive || !validRainmakerShotOrigin(e.shotOrigin, e) || !rainmakerShotOwnerMatches(e.shotOrigin, a)) return;
-      const mesh = visuals.shot(G.teamColors[e.team], e.charge);
-      mesh.position.fromArray(e.shotOrigin.muzzle);
+      if (!attackVisuals()) return;
+      const mesh = visuals.shot(G.teamColors[e.team], e.charge, e.shotOrigin.muzzle);
       shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 22), age: 0, team: e.team,
         actor: a, mesh, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
       shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 3.36 : 1.68);
@@ -287,7 +291,7 @@ export function createRankedEffects(api, match) {
     event,
     update(dt) {
       if (match.state !== 'playing') return;
-      visuals.update(dt);
+      visuals?.update(dt);
       for (let i = shots.length - 1; i >= 0; i--) {
         const s = shots[i];
         if (s.landed) {
@@ -314,6 +318,6 @@ export function createRankedEffects(api, match) {
 
       }
     },
-    dispose() { for (const s of shots) retire(s); shots.length = 0; visuals.dispose(); },
+    dispose() { for (const s of shots) retire(s); shots.length = 0; visuals?.dispose(); },
   };
 }

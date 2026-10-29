@@ -75,6 +75,19 @@ test('Rainmaker timeout uses the real Actor.splat path for a local carrier', asy
   effects.dispose();
 });
 
+test('headless Rainmaker timeout preserves gameplay and later binds the current render scene', async () => {
+  const h = await makeHarness(), shooter = h.actor('late-scene', 0, [0, 0, 0]);
+  const scene = h.G.scene; h.G.scene = null; h.match.actors = [shooter];
+  let splats = 0; shooter.splat = () => { splats++; };
+  assert.doesNotThrow(() => h.effects.event({ kind: 'rainmaker-timeout', id: shooter.nid, pos: [0, 0, 0], team: 0 }));
+  assert.equal(splats, 1);
+  assert.equal(h.calls.sceneAdds.length, 0);
+  h.G.scene = scene;
+  h.effects.event(fullShot(shooter.nid));
+  assert.equal(h.calls.sceneAdds.length, 1, 'the first rendered shot binds the scene installed after construction');
+  h.effects.dispose();
+});
+
 test('swept Rainmaker shot resolves its actorId rather than the projectile sequence id', async () => {
   const h = await makeHarness();
   const shooter = h.actor('host-actor-17', 0, [0, 0, 0]);

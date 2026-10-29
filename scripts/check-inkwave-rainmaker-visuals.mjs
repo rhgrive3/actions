@@ -10,6 +10,7 @@ import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
 
 const arg=name=>{const i=process.argv.indexOf(name);return i<0?null:process.argv[i+1];};
 const phase=arg('--phase')||'candidate';
+const barrierOnly=process.argv.includes('--barrier-only');
 assert(['baseline','candidate'].includes(phase),'--phase baseline|candidate');
 const site=path.resolve(arg('--site')||'_site');
 const out=path.resolve(arg('--evidence-dir')||`.browser-evidence/rainmaker/${phase}`);
@@ -91,6 +92,22 @@ try{
  await page.evaluate(()=>{const m=RG.match,a=m.local;m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:650,kind:'main'});m.advanceRanked(1/60);});
  const pressured=await capture('02-barrier-pressured');
  assert(pressured.barrier.active&&pressured.barrier.health<neutral.barrier.health,'Native shield input must grow the pressured barrier');
+ if(barrierOnly){
+  await page.evaluate(()=>{const m=RG.match,a=m.local;m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:300,kind:'main'});m.advanceRanked(1/60);});
+  const nearBurst=await capture('03-barrier-near-burst');
+  assert(nearBurst.barrier.active&&nearBurst.barrier.health===50,'Near-pop shield must remain active');
+  await page.evaluate(()=>{const m=RG.match,a=m.actors.find(a=>a.alive&&a.team!==m.local.team);if(!a)throw Error('No opponent for shield counter-pressure');m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:1250,kind:'main'});m.advanceRanked(1/60);});
+  const counter=await capture('04-barrier-counter-color');
+  assert(counter.barrier.active&&counter.barrier.team!==pressured.barrier.team,'Counter-pressure must reverse the shield color');
+  for(const frame of captures){
+   assert(frame.nodes.some(n=>n.visible&&n.name==='rainmaker-barrier'&&n.wireframe===false),'Shield must have a visible filled surface');
+   assert(frame.programs.every(p=>p.linked&&p.runnable!==false),'Every drawn GPU program must link and run');
+   assert(frame.effectPixels.changedPixels>50,'Shield must contribute actual visible pixels');
+  }
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',phase,scope:'Four native shield states: neutral, pressure, near pop, reversed team. Chromium SwiftShader, low quality, bloom disabled. GPU links and framebuffer coverage; not retail equivalence.',build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},renderSettings:captures[0].renderSettings,captures:captures.map(c=>({name:c.name,barrier:c.barrier,effectPixels:c.effectPixels,gpuPrograms:c.programs.length})),errors},null,2));
+  console.log(`Rainmaker barrier: passed; ${out}`);
+ }else{
  await page.evaluate(async()=>{
   const {PLAYER}=await import(new URL('src/config.js',document.baseURI));const m=RG.match,a=m.local,w=m.rankedWorld,s=m.ranked.rule.state;
   a.pos.fromArray(s.pos);a.vel.set(0,0,0);a.grounded=true;
@@ -146,6 +163,7 @@ try{
  assert.equal(errors.length,0,JSON.stringify(errors));
  const receipt={status:'passed',phase,scope:'Chromium SwiftShader; real offline tidewater native game. Debug freeze and fixed 60 Hz Actor/Match/FX ticks; seeded shield-hit input and initial carrier position. Effect framebuffer hidden/visible comparison and GPU program link checks. No Switch real-device equivalence claim.',build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},browser:context.browser()?.version(),renderSettings:captures[0]?.renderSettings??null,boot,events,captures:captures.map(c=>({name:c.name,nativeTime:c.nativeTime,barrier:c.barrier,carrier:c.carrier,charge:c.charge.value,visibleRainmakerNodes:c.nodes.filter(n=>n.visible).map(n=>n.name),effectPixels:c.effectPixels,draw:c.draw})),errors};
  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2));console.log(`Rainmaker ${phase}: passed; ${out}`);
+ }
 }catch(error){
  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',phase,error:error.stack,build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},boot,captures,errors},null,2));
  if(page)await page.screenshot({path:path.join(out,'failure.png'),timeout:5000}).catch(()=>{});throw error;

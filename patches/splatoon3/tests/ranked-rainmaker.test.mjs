@@ -162,6 +162,21 @@ for (const hz of [30, 60, 120]) test(`one-tick Rainmaker tap fires once after mi
   assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 1);
 });
 
+for (const hz of [30, 60, 120]) test(`a hold confined to Rainmaker recovery cannot create a phantom tap at ${hz}Hz`, () => {
+  const { engine, rule, carrier } = popAndPickup(0), dt = 1 / hz;
+  const tick = fire => rule.update(dt, { actors: [carrier], inputs: { [carrier.id]: { fire } } });
+  rule.update(61 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
+  for (let i = 0; i < hz / 3; i++) tick(true);
+  assert.equal(rule.state.charge.firing, false, 'an exhausted recovery tick has no time to begin a charge');
+  for (let i = 0; i < hz / 2; i++) tick(false);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 1);
+  tick(true); tick(false);
+  for (let i = 0; i < hz / 2; i++) tick(false);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 2, 'a subsequent genuine short tap still fires');
+  assert.equal(event(engine, 'rainmaker-shot').damage, 30);
+});
+
 for (const interruption of ['swim', 'death', 'drop']) test(`a minimum-charge Rainmaker tap cancels on ${interruption}`, () => {
   const { engine, rule, carrier } = popAndPickup(0);
   const frame = { actors: [carrier], inputs: { [carrier.id]: { fire: true } } };

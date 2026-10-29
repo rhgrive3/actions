@@ -35,12 +35,27 @@ function wetInkMaterial(THREE, color, membrane = false) {
 
 export function createRainmakerBarrier(THREE) {
   const geometry = new THREE.SphereGeometry(1.45, 40, 24);
-  const material = wetInkMaterial(THREE, 0xffe585, true);
+  // A smooth liquid shell. The shot's torn/patchy ink shader made the large
+  // shield look mottled and muddy; its surface now uses lighting and a thin
+  // view-dependent rim, rather than painted-on pale regions.
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xffe585, emissive: 0xffe585, emissiveIntensity: .12,
+    roughness: .12, metalness: 0, transparent: true, opacity: .24, depthWrite: false,
+  });
+  material.onBeforeCompile = shader => {
+    shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `
+      #include <normal_fragment_maps>
+      float hokoRim = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.5);
+      diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb, vec3(1.0), .35), hokoRim*.35);
+      diffuseColor.a = mix(diffuseColor.a, min(1.0, diffuseColor.a+.50), hokoRim);
+      totalEmissiveRadiance += diffuseColor.rgb * hokoRim * .28;
+    `);
+  };
+  material.customProgramCacheKey = () => 'rainmaker-smooth-barrier-v2';
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'rainmaker-barrier'; mesh.position.y = 1;
-  let age = 0, lastColor;
-  function update(barrier = {}, color = 0xffe585, dt = 0) {
-    age += step(dt);
+  let lastColor;
+  function update(barrier = {}, color = 0xffe585) {
     const max = Math.max(1, Number.isFinite(barrier.max) ? barrier.max : 1000);
     const pressure = Number.isFinite(barrier.balance) ? unit(Math.abs(barrier.balance) / max)
       : 1 - unit((Number.isFinite(barrier.health) ? barrier.health : max) / max);
@@ -49,10 +64,9 @@ export function createRainmakerBarrier(THREE) {
     if (mesh.scale.x !== scale || mesh.scale.y !== scale || mesh.scale.z !== scale) mesh.scale.setScalar(scale);
     const visible = barrier.active !== false;
     if (mesh.visible !== visible) mesh.visible = visible;
-    if (lastColor !== color) { material.color.setHex(color); lastColor = color; }
-    const opacity = .45 + .40 * pressure;
+    if (lastColor !== color) { material.color.setHex(color); material.emissive.setHex(color); lastColor = color; }
+    const opacity = .24 + .66 * pressure;
     if (material.opacity !== opacity) material.opacity = opacity;
-    material.userData.rainmakerClock.value = age;
     mesh.userData.pressure = pressure;
   }
   update();
@@ -152,7 +166,7 @@ export function createRainmakerAttackVisuals(THREE, scene) {
     dropletGeometry ||= new THREE.SphereGeometry(1, 7, 5);
     return material;
   }
-  function shot(color, charge) {
+  function shot(color, charge, position = null) {
     const material = resources(color), group = new THREE.Group(), q = unit(charge);
     group.name = 'rainmaker-shot';
     const head = new THREE.Mesh(headGeometry, material); head.name = 'rainmaker-shot-head';
@@ -161,6 +175,7 @@ export function createRainmakerAttackVisuals(THREE, scene) {
     drops.name = 'rainmaker-shot-droplets'; drops.frustumCulled = false;
     group.add(head, tail, drops);
     group.userData.rainmakerShot = { head, tail, drops, q };
+    if (position) group.position.fromArray(position);
     scene.add(group); return group;
   }
   function updateShot(group, velocity, age, landed = false, wait = 0) {
