@@ -1033,6 +1033,21 @@
       "review": "All11 original inline threads resolved after verifying public39c code; no new findings at18:28:32.",
       "CI": "At18:29:19,39c had36 workflows:27success,5active,3queued,1skip,0fail; this is progress, not final acceptance. Final next head needs its own CI.",
       "issueClosure": "No additional issue closed by this addendum; original26 excluding401 retained. Device testing waived; main merge not performed by root."
+    },
+    {
+      "sourceEpoch": "73bfea73c7250519023fdf8f8b499d93757a01f6",
+      "buildContentHash": "5d8b116b9dbb804c21aaa0f92fadd5e9298f1f7a7ecd0a81c3fcc42541524a5a",
+      "buildInputHash": "6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9",
+      "sourceInputs": 1550,
+      "artifacts": 2267,
+      "emittedNative": "131/131 pass, no skips",
+      "emittedExactHUD": "2/2 pass, no skips",
+      "focusedBrowser": "PASS all UI and7 Minimap/710 frames, strict errors empty, fullAcceptance false; prior full-active remains NONPASS",
+      "reticleSource": "32/32 pass",
+      "runnerContracts": "118/118 pass",
+      "evidence": "../final73-scoped-validation/README.md",
+      "nextHeadCI": "pending; no successful acceptance inferred",
+      "issueClosures": "none added"
     }
   ]
 }
