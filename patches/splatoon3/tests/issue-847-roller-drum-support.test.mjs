@@ -64,6 +64,11 @@ const ROLLER_PERFORMANCE_REVERSE_EDITS = Object.freeze([
   ["        delta.set(shaftCy,0,-shaftSy);", "        delta.set(Math.cos(ROLL_ROTATION[1]),0,-Math.sin(ROLL_ROTATION[1]));", "performance-owner-6"],
   ["      if (penetration > .00001 && Number.isFinite(scale.x) && Math.abs(scale.x) > 1e-4 && Number.isFinite(scale.y) && Math.abs(scale.y) > 1e-4 && Number.isFinite(scale.z) && Math.abs(scale.z) > 1e-4) {", "      if (penetration > .00001 && [scale.x, scale.y, scale.z].every(v => Number.isFinite(v) && Math.abs(v) > 1e-4)) {", "performance-owner-7"],
 ]);
+function withoutReviewedDownhillSupport(source) {
+  return exactFault(exactFault(source,
+        "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
+        "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
+}
 function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8')) {
   // Fail before creating/linking any VM modules: an unreviewed input must not
   // strand dependent link promises and reject again after the test has ended.
@@ -80,12 +85,13 @@ function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel
       for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) reviewed=exactFault(reviewed,before,after,name);
       assert.equal(createHash('sha256').update(reviewed).digest('hex'),
         'f80e6a5f736ef6411dadcf2c0929fd902cd4ee090ee493613940622e4281fb39', 'previous #847 performance-owner input');
-      // The downhill fix adds only a shared collision-floor import and this
-      // admission fallback. Undo those exact reviewed edits and prove the
-      // entire previous pinned source is byte-identical; no pin is relaxed.
-      const previous=exactFault(exactFault(reviewed,
-        "import { traceRollingFloor } from './rolling-floor.mjs';\n",'', 'downhill-import'),
-        "  // The lowered drum follows continuous floor, including a descending ramp.\n  // A fixed world-height tolerance mistakes the ramp's forward drop for a\n  // ledge. Reuse the paint path's collision intervals: missing floor or an\n  // actual height discontinuity still rejects support.\n  if (!floor && a.grounded && a.ground?.hit) {\n    const contact=scratch.floorContact||=( {point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone()} );\n    const at=contact.target||=(a.pos.clone());at.set(cx,a.pos.y,cz);\n    if(traceRollingFloor(a,at,level,G.physics,contact,false))floor=true;\n  }\n",'', 'downhill-continuous-support');
+      // The owner reviewed the current performance epoch without the downhill
+      // import/fallback. Preserve that independent source identity as well.
+      assert.equal(createHash('sha256').update(withoutReviewedDownhillSupport(raw)).digest('hex'),
+        'dc67c95c5e99e398f994fa5c621c56739ee0b73b7686ba1b3395f31bffba0f96', 'reviewed #847 performance epoch without downhill support');
+      // The older epoch first reverses all seven exact performance edits.
+      // Removing the same downhill edits must reproduce its original pin.
+      const previous=withoutReviewedDownhillSupport(reviewed);
       assert.equal(createHash('sha256').update(previous).digest('hex'),
         '121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3', 'previous reviewed #847 roller input');
     } else {
@@ -331,6 +337,13 @@ test('847 rejects missing or modified fault inputs before VM linking and keeps e
   for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) {
     assert.throws(() => exactFault(roller.replace(before,''), before, after, name), /counterfactual anchor/);
     assert.throws(() => exactFault(roller+before, before, after, name), /counterfactual anchor/);
+  }
+  let reviewed = roller;
+  for (const [before, after, name] of ROLLER_PERFORMANCE_REVERSE_EDITS) reviewed=exactFault(reviewed,before,after,name);
+  const downhillImport = "import { traceRollingFloor } from './rolling-floor.mjs';\n";
+  for (const epoch of [roller, reviewed]) {
+    assert.throws(() => withoutReviewedDownhillSupport(epoch.replace(downhillImport,'')), /counterfactual anchor downhill-import/);
+    assert.throws(() => withoutReviewedDownhillSupport(epoch+downhillImport), /counterfactual anchor downhill-import/);
   }
   const faults = counterfactualSources(p => inputs.get(p));
   assert.equal(faults.size, 2);
