@@ -1,3 +1,13 @@
+function findJumpAttachEdge(list, toId){
+ if(!list)return null;
+ for(let i=0;i<list.length;i++){const e=list[i];if(e&&e.to===toId&&e.climb?.kind==='jump-attach')return e;}
+ return null;
+}
+function findUnpaintedSample(samples,paint,team){
+ if(!samples)return null;
+ for(let i=0;i<samples.length;i++){const s=samples[i];if(s&&paint.sample(s.face,s.u,s.v)!==team+1)return s;}
+ return null;
+}
 import * as THREE from 'three';
 import {PLAYER} from '../../../src/config.js';
 import {STEP} from '../../splatoon3/runtime/clock.mjs';
@@ -7,6 +17,8 @@ import {weightSpeedCurve} from '../../splatoon3/runtime/weapon-weight.mjs';
 import {nativeDropClearance} from './native-drop.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
 const radius=squid=>{const raw=squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw;return Number.isFinite(raw)&&Number.isFinite(PLAYER.s3TerrainDistanceScale)?raw*PLAYER.s3TerrainDistanceScale:PLAYER.radius;};
+const _normal=new THREE.Vector3(),_goal=new THREE.Vector3(),_start=new THREE.Vector3(),_v0=new THREE.Vector3(),_v1=new THREE.Vector3(),_v2=new THREE.Vector3();
+const _down=new THREE.Vector3(0,-1,0),_probe=new THREE.Vector3();
 function paintableWall(L,h,normal){
  if(!h.hit||h.triangle<0||h.face<0||Math.abs(h.normal.y)>.15||h.normal.dot(normal)<.97)return false;
  const f=L.faces[h.face];if(!f?.wall||!L.containsOnFace(f,h.point))return false;
@@ -14,7 +26,7 @@ function paintableWall(L,h,normal){
  return !!L.mask[f.grid+j*f.nu+i];
 }
 function supported(P,L,p){
- const h=P.raycast(p.clone().setY(p.y+.1),new THREE.Vector3(0,-1,0),.3);
+ const h=P.raycast(_probe.copy(p).setY(p.y+.1),_down,.3);
  return h.hit&&h.triangle>=0&&h.normal.y>.68&&Math.abs(h.point.y-p.y)<.15&&h.face>=0&&L.faces[h.face].turf&&L.containsOnFace(L.faces[h.face],h.point);
 }
 // Sample positive-height source intervals, including every original wall
@@ -111,18 +123,18 @@ export function nativeJumpAttachTransition(graph,lower,upper){
 export function updateNativeJumpAttach(brain,G,dt){
  const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.wallJumpAttach||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive)return false;
  let index=brain.pi;if(index===0&&brain.path.length>1){const n=N.nodes[brain.path[0]];if(Math.hypot(a.pos.x-n.x,a.pos.z-n.z)<.8&&Math.abs(a.pos.y-n.y)<.3)index=1;}
- const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.climb?.kind==='jump-attach');if(!edge){brain._nativeJumpAttach=null;return false;}
- const c=edge.climb,normal=new THREE.Vector3(...c.normal),goal=new THREE.Vector3(...c.upper),start=new THREE.Vector3(...c.jumpFrom),input=a.intent,state=brain._nativeJumpAttach?.edge===edge&&brain._nativeJumpAttach.path===brain.path?brain._nativeJumpAttach:(brain._nativeJumpAttach={edge,path:brain.path,phase:'paint',seconds:0});state.seconds+=dt;brain.pi=index;brain.noProg=0;input.fire=input.squid=input.jump=input.sub=input.special=false;input.move.set(0,0,0);
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=findJumpAttachEdge(from?.nb,to?.id);if(!edge){brain._nativeJumpAttach=null;return false;}
+ const c=edge.climb,normal=_normal.fromArray(c.normal),goal=_goal.fromArray(c.upper),start=_start.fromArray(c.jumpFrom),input=a.intent,state=brain._nativeJumpAttach?.edge===edge&&brain._nativeJumpAttach.path===brain.path?brain._nativeJumpAttach:(brain._nativeJumpAttach={edge,path:brain.path,phase:'paint',seconds:0});state.seconds+=dt;brain.pi=index;brain.noProg=0;input.fire=input.squid=input.jump=input.sub=input.special=false;input.move.set(0,0,0);
  if(state.seconds>30){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeJumpAttach=null;return false;}
  if(a.grounded&&nativeSourceFootSupported(G,a,to)){const delta=goal.sub(a.pos).setY(0);if(delta.length()<.35){brain.pi=index+1;brain._nativeJumpAttach=null;return false;}input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;}
- const missing=c.samples.find(s=>G.paint.sample(s.face,s.u,s.v)!==a.team+1);
- if(missing&&a.grounded&&Math.abs(a.pos.y-c.lower[1])<.2){state.phase='paint';const delta=new THREE.Vector3(...c.paintStance).sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();const aim=new THREE.Vector3(...(missing.paintPoint||missing.point)).sub(a.pos).add(new THREE.Vector3(0,-1.05,0));a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));a.aimPoint.fromArray(missing.paintPoint||missing.point);if(a.ink<=PLAYER.inkMax*.15)state.refilling=true;if(state.refilling&&a.ink>=PLAYER.inkMax*.9)state.refilling=false;input.squid=!!state.refilling;input.fire=!input.squid&&!a.weaponRunner?.s3ShooterCancelMain;return true;}
- const side=start.clone().sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));input.move.copy(normal).negate().addScaledVector(side,3).normalize();input.squid=true;
+ const missing=findUnpaintedSample(c.samples,G.paint,a.team);
+ if(missing&&a.grounded&&Math.abs(a.pos.y-c.lower[1])<.2){state.phase='paint';const delta=_v0.fromArray(c.paintStance).sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();const aim=_v1.fromArray(missing.paintPoint||missing.point).sub(a.pos).add(_v2.set(0,-1.05,0));a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));a.aimPoint.fromArray(missing.paintPoint||missing.point);if(a.ink<=PLAYER.inkMax*.15)state.refilling=true;if(state.refilling&&a.ink>=PLAYER.inkMax*.9)state.refilling=false;input.squid=!!state.refilling;input.fire=!input.squid&&!a.weaponRunner?.s3ShooterCancelMain;return true;}
+ const side=_v0.copy(start).sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));input.move.copy(normal).negate().addScaledVector(side,3).normalize();input.squid=true;
  if(state.phase==='paint')state.phase='approach';
  if(state.phase==='approach'){
-  input.squid=false;const delta=start.clone().sub(a.pos).setY(0),distance=delta.length();input.move.set(0,0,0);
+  input.squid=false;const delta=_v1.copy(start).sub(a.pos).setY(0),distance=delta.length();input.move.set(0,0,0);
   if(distance>.045)input.move.copy(delta).multiplyScalar(Math.min(.35,Math.max(.03,(distance-.02)*.65))/distance);
-  if(a.grounded&&Math.abs(a.pos.y-start.y)<.16&&distance<.07&&Math.hypot(a.vel.x,a.vel.z)<.1&&nativeSourceFootSupported(G,a,{x:start.x,y:start.y,z:start.z})){input.jump=true;state.phase='flight';state.jumpSerial=a.s3JumpSerial||0;}
+  if(a.grounded&&Math.abs(a.pos.y-start.y)<.16&&distance<.07&&Math.hypot(a.vel.x,a.vel.z)<.1&&nativeSourceFootSupported(G,a,start)){input.jump=true;state.phase='flight';state.jumpSerial=a.s3JumpSerial||0;}
  }
  if(state.phase==='flight'&&a.grounded&&Math.abs(a.pos.y-c.lower[1])<.2&&(a.s3JumpSerial||0)>state.jumpSerial){state.phase='approach';}
  return true;
