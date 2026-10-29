@@ -4,6 +4,7 @@ import { createPowerClamResources } from './power-clam-model.mjs';
 import { createClamBarrier } from './clam-presentation.mjs';
 import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
 import { createRainmakerBarrier, createRainmakerChargeAura } from './rainmaker-visuals.mjs';
+import { createRainmakerCarrierMarker } from './rainmaker-carrier-marker.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
 const NEUTRAL = 0x9ceff2;
@@ -238,10 +239,8 @@ export class RankedWorld {
       this.rainmakerGroup.add(this.rainmaker);
       this.rainmakerAura = createRainmakerChargeAura(THREE);
       this.rainmakerGroup.add(this.rainmakerAura.group);
-      this.rainmakerCarrier = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.07, 8, 20),
-        new THREE.MeshStandardMaterial({ color: 0xffe77a, transparent: true, opacity: 0.9 }));
-      this.rainmakerCarrier.rotation.x = Math.PI / 2;
-      this.rainmakerCarrier.name = 'rainmaker-carrier-marker';
+      this.rainmakerCarrierIndicator = createRainmakerCarrierMarker(THREE);
+      this.rainmakerCarrier = this.rainmakerCarrierIndicator.mesh;
       this.rainmakerGroup.add(this.rainmakerCarrier);
       this.rainmakerMarkers = { checkpoints: [], goals: [] };
       const makeObjectiveMarker = ({ pos, team, kind, index = 0, radius }) => {
@@ -717,8 +716,8 @@ export class RankedWorld {
     const barrier = rainmaker?.barrier || {};
     const shieldColor = validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c;
     this.rainmakerBarrier.update(barrier, shieldColor, dt);
-    this.rainmakerCarrier.visible = !!carrier;
-    if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
+    this.rainmakerCarrierIndicator.update(carrier, rainmaker?.holderRemaining);
+    if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 1.6, carrier.pos.z);
     else { this.rainmakerCarrier.position.copy(this.rainmaker.position); this.rainmakerCarrier.position.y += 2.2; }
     const charge = rainmaker?.charge?.pending?.charge ?? rainmaker?.charge?.value ?? 0;
     this.rainmakerPresentation.update(carrier, charge);
