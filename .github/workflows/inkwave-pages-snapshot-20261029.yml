@@ -1,0 +1,54 @@
+name: INKWAVE Pages snapshot publish
+on:
+  push:
+    branches: [deploy/inkwave-pages-main-fecc40a9-20261029]
+    paths: ['.github/workflows/inkwave-pages-snapshot-20261029.yml']
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages-inkwave-snapshot-20261029
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.repository == 'rhgrive3/actions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify main snapshot and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha=fecc40a9de1652a1f6e27ae6840439ff989e8fdc
+          test "$(git rev-parse HEAD^)" = "$source_sha"
+          test "$(git ls-remote https://github.com/rhgrive3/actions.git refs/heads/main | cut -f1)" = "$source_sha"
+          npm ci --no-audit --no-fund
+          node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
+          node scripts/check-inkwave-patches.mjs --quick
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+          printf '%s\n' "$source_sha" > _site/inkwave-deployed-sha.txt
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify public version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(curl -fsSL --retry 5 --retry-delay 2 "https://rhgrive3.github.io/actions/inkwave-deployed-sha.txt?nocache=$GITHUB_RUN_ID")" = "fecc40a9de1652a1f6e27ae6840439ff989e8fdc"
