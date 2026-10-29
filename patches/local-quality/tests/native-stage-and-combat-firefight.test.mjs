@@ -116,7 +116,7 @@ test('NAT-01 NativeLevel.containsOnFace scalar triangle AABB precheck matches fu
   assert.ok(triCallsOpt < triCallsRef * 0.1, `expected >90% reduction in triangle containsPoint calls, got ${triCallsOpt} vs ${triCallsRef}`);
 });
 
-test('NAT-02 TriangleWorld.resolveCapsule reuses _capsuleNormal without allocating per call', () => {
+test('NAT-02 TriangleWorld.resolveCapsule returns independently owned contact normals', () => {
   const vertices = new Float32Array([
     -5, 0, -5, 0, 1, 0, 0, 0,
      5, 0, -5, 0, 1, 0, 0, 0,
@@ -134,13 +134,15 @@ test('NAT-02 TriangleWorld.resolveCapsule reuses _capsuleNormal without allocati
 
   const feet1 = new THREE.Vector3(0, -0.05, 0);
   const r1 = tw.resolveCapsule(feet1, 1.45, 0.38, false);
-  const nRef = r1.normal;
+  const nRef = r1.normal, savedNormal = nRef.toArray();
   assert.equal(r1.ground, true);
   assert.ok(feet1.y >= 0);
 
   const feet2 = new THREE.Vector3(0.2, -0.03, 0.2);
   const r2 = tw.resolveCapsule(feet2, 1.45, 0.38, false);
-  assert.equal(r2.normal, nRef, 'resolveCapsule should reuse _capsuleNormal instance');
+  assert.notEqual(r2.normal, nRef, 'returned capsule results own their normal');
+  tw.resolveCapsule(new THREE.Vector3(0, 3, 0), 1.45, 0.38, false);
+  assert.deepEqual(nRef.toArray(), savedNormal, 'later resolutions cannot clear a retained result');
 });
 
 test('NAT-03 through NAT-06 native runtime modules use preallocated scratch vectors and closure-free edge helpers', () => {
@@ -249,8 +251,8 @@ test('NAT-07 through NAT-10 native runtime modules hoist sort closure, scratch v
 
 test('CMB-08 through CMB-10 ranked combat, catalog spiral cover, and charger flight broadphase and scratch allocations', () => {
   const rankedCombat = readRepo('patches/splatoon3/runtime/ranked/combat.mjs');
-  assert.match(rankedCombat, /const _blastBody = new THREE\.Vector3\(\)/);
-  assert.match(rankedCombat, /body\.distanceToSquared\(p\) <= r2/);
+  assert.match(rankedCombat, /const scratch = _blastFrames\[depth\]/);
+  assert.match(rankedCombat, /Math\.sqrt\(body\.distanceToSquared\(p\)\) <= radius/);
 
   const catalog = readRepo('patches/splatoon3/runtime/main-weapon-catalog.mjs');
   assert.match(catalog, /const reach=bodyRadius\+\(pr0>radius\?pr0:radius\)\+1e-4;/);

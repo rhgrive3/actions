@@ -68,6 +68,27 @@ test('nested hit events and exceptions cannot replace another active Rainmaker b
   }finally{pair.forEach(h=>h.effects.dispose());}
 });
 
+test('Rainmaker blast retains the original square-root radius boundary and occlusion',async()=>{
+  const pair=await Promise.all([harness(true),harness()]);
+  try{
+    for(const h of pair){
+      const actor=h.actors[0];for(const other of h.actors.slice(1))other.alive=false;
+      // The next representable coordinate above 3 makes d2 exceed 25 while
+      // its square root still rounds to the native five-unit blast radius.
+      actor.pos.set(4,-.7,3.0000000000000004);
+      const d2=actor.pos.x*actor.pos.x+actor.pos.z*actor.pos.z;
+      assert.ok(d2>25);assert.equal(Math.sqrt(d2),5);
+      h.pop();assert.deepEqual(h.records.damage,[[actor.nid,180]]);
+      h.records.damage.length=0;
+      actor.pos.z=3.000000000000001;
+      assert.ok(Math.sqrt(actor.pos.x*actor.pos.x+actor.pos.z*actor.pos.z)>5);
+      h.pop();assert.equal(h.records.damage.length,0,'the next outside body stays outside');
+      actor.pos.set(0,-.7,0);h.G.physics.los=()=>false;
+      h.pop();assert.equal(h.records.damage.length,0,'a body inside the radius still needs clear LOS');
+    }
+  }finally{pair.forEach(h=>h.effects.dispose());}
+});
+
 test('Rainmaker visuals copy source muzzle arrays, borrowed impact positions and mutable color values',()=>{
   const scene=new THREE.Scene(),visuals=createRainmakerAttackVisuals(THREE,scene);
   try{

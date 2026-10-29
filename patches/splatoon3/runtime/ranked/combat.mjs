@@ -169,10 +169,9 @@ export function createRankedEffects(api, match) {
     G.audio?.play?.('bomb_explode', { pos: p, volume: .7 });
     const blastFrom = shot?.from || (scratch.from || (scratch.from = new THREE.Vector3())).copy(p).add(_blastLift);
     const domeSheltered = shot && !visualOnly ? new Set() : null;
-    const r2 = radius * radius;
     if (shot && !visualOnly) for (const a of match.actors) if (a.alive && a.team !== team) {
       const body = scratch.body.set(a.pos.x, a.pos.y + 0.7, a.pos.z);
-      if (body.distanceToSquared(p) <= r2 && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
+      if (Math.sqrt(body.distanceToSquared(p)) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
     }
     const walls = shot ? rainmakerWallBlast(api, p, attacker, team, radius, nearRadius, amount, outerDamage, shot.impactWall) : [];
@@ -182,7 +181,7 @@ export function createRankedEffects(api, match) {
     for (const a of match.actors) if (amount > 0 && a.alive && a.team !== team) {
       const body = scratch.body.set(a.pos.x, a.pos.y + 0.7, a.pos.z);
       const d2 = body.distanceToSquared(p);
-      if (d2 <= r2 && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a)) {
+      if (Math.sqrt(d2) <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a)) {
         const distance = Math.sqrt(d2);
         damage(a, attacker, distance <= nearRadius ? amount : outerDamage, shot ? 'Gachihoko_BombCore' : 'GachihokoTimeUpBurst');
       }

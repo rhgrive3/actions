@@ -255,7 +255,7 @@ export class TriangleWorld {
   return Math.sqrt(best);
  }
  resolveCapsule(feet,height=1.45,radius=.38,ignoreGrates=false){
-  let ground=false,wall=false,maxPush=0;const velocityNormal=(this._capsuleNormal||(this._capsuleNormal=V())).set(0,0,0);
+  let ground=false,wall=false,maxPush=0;const velocityNormal=new THREE.Vector3();
   const s0=this._s0,s1=this._s1,box=this._box,tri=this._triangle;
   for(let pass=0;pass<4;pass++){
    s0.set(feet.x,feet.y+radius,feet.z);s1.set(feet.x,feet.y+Math.max(radius,height-radius),feet.z);
