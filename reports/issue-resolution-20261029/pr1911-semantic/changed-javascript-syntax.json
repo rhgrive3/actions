@@ -1,0 +1,151 @@
+{
+  "node": "v24.19.0",
+  "checked": 29,
+  "rows": [
+    {
+      "file": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+      "sha256": "046e467ec9e10a665654a6b93336085d292eb7f81a41df199956544fcc5c8338",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+      "sha256": "7c6d63b2222d47edacfe8fa0a1359e87f269e35b366f2f782010643d47f8d8d2",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/local-quality/tests/queue-historical-character-20261026.test.mjs",
+      "sha256": "0482c06412a633f4493897e4349ab3e644ee8f705d9f70cece76074df38a1e46",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+      "sha256": "5a918f7cdb07f8526b8b5bba9d49aeb0f53e6147709339fbcf029297eff4c1b5",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/local-quality/tests/rainmaker-merge-composition.test.mjs",
+      "sha256": "42f980aee5fa539b668c846126efa46d71bc90980818c8c6da34d8798fe2dbf8",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-approach.mjs",
+      "sha256": "df6325c6e01f752ba3e6025b073f09ceb079dd1e457d01e512acc9d35e7476da",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bot-form.mjs",
+      "sha256": "38e6e650c794cc3e9a7a04ff83ce216a4b093a9a1ae9d5a1e24391c33468a7ff",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bots.mjs",
+      "sha256": "dd6c3ce9b7c616b2e4f509a7669161dc4400a193c1dd2905994e41de4771be86",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-drop.mjs",
+      "sha256": "4c6740e8c720d814acf71a4344a5f85d3d298236677cb87a6d297e6b6451719b",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-level.mjs",
+      "sha256": "9e1e6b728962318aa8a5d1ee32fe144f03ec000328e2c195af462a798c3a5e13",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/native-physics.mjs",
+      "sha256": "14760eeac476cb9b3c4dad095bfe5bfcbe8617b92fc22a6c01a23e79b1a36c0a",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/sphere-triangle-entry.mjs",
+      "sha256": "0de40cfd7b790a849606cca97931732f7559b256976defb53723e5650af3aab6",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/native-stages/runtime/triangle-world.mjs",
+      "sha256": "03f7de4043c4f08d54eb573da590d10506e987a085030de2f71d6f6e6bf84804",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/kit-subs.mjs",
+      "sha256": "f29db9b427322345c1e66ac923c29c6492745f0f471b20aafb50a0c0b97f93ac",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/main-ink-footprints.mjs",
+      "sha256": "d6a08e1552f4d428aba6017e1ed4882a2692b87395d4f4e4ba2006396c132a94",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/paint-ownership.mjs",
+      "sha256": "16c7cf72a8f060a69c00399512526eba1a0e19968b3ce8b306797a7f4925385e",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/ranked/combat.mjs",
+      "sha256": "ef447e98a916b20c5f782f86dfc69133aca471c8491bea4726e69561274e2385",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+      "sha256": "299baaffed2253d57b71a8b92ebad4f8ae41aea9cc711323a833c2d154f7688d",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+      "sha256": "ddaa29053f35f5ef3480134089479afd858cb6685d3454dd3dfcc9c0e581d983",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/tests/added-audio-sharing.test.mjs",
+      "sha256": "711aaa2f1de2b7aaff64d96633c1f17fdc9dc9fef2face5669fc1598fffc58c3",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/tests/explosher-stage-admission.test.mjs",
+      "sha256": "67bbe2065d382494e98ad51f9cabbc9e4b84640ebea5d7ab126cbbc9e8c87ca5",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs",
+      "sha256": "adc89b628e6e9489e3308b23a1235c78bd1f11dc609fd92f59eb53826fd02a51",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/tests/paint-ancillary-template.test.mjs",
+      "sha256": "0dbf5c71335d292ef39f04f2dc117e6aa95f275bf814dd7a55d299020e3a1c08",
+      "syntax": "passed"
+    },
+    {
+      "file": "patches/splatoon3/tests/wiper-wet-wave.test.mjs",
+      "sha256": "3ff04f34721c4bb5609e672c25cb2ecfe7a751f361822ed94958845e799dccf9",
+      "syntax": "passed"
+    },
+    {
+      "file": "scripts/check-inkwave-wiper-native-acceptance.mjs",
+      "sha256": "7af11c0069ff33552fbc3ef801a1f4a4019db67e0a2d6e386b092575d3bb072f",
+      "syntax": "passed"
+    },
+    {
+      "file": "scripts/tests/continuous-browser-video.test.mjs",
+      "sha256": "7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3",
+      "syntax": "passed"
+    },
+    {
+      "file": "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+      "sha256": "c47feaff469bf311c9a1db8052985766bf19085b38d5d2151ebdf3de4e88a074",
+      "syntax": "passed"
+    },
+    {
+      "file": "scripts/tests/inkwave-source-coverage.test.mjs",
+      "sha256": "d5197fd3684b770c1e70c26edf678168b61773385a8c924b5ee8baa66920cb2e",
+      "syntax": "passed"
+    },
+    {
+      "file": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+      "sha256": "94d0a0deca9cbe82efd7aed3e421d954faafb2b0882cb24d5bc65391ddaf93bc",
+      "syntax": "passed"
+    }
+  ]
+}
