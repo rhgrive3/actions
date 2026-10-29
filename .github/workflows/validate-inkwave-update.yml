@@ -591,7 +591,7 @@ jobs:
     # Default GitHub full-suite behavior unless explicitly offloaded.
     needs: build_site
     if: ${{ inputs.diagnostic_only != true && needs.build_site.outputs.contracts_only != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -602,8 +602,9 @@ jobs:
       INKWAVE_TEST_SHARD_COUNT: '8'
       INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}
       # Full-Character VM/geometry tests can retain large heaps. Keep the
-      # complete eight-way partition, with at most two test processes per VM.
-      INKWAVE_TEST_CONCURRENCY: '2'
+      # complete eight-way partition: shard 2 runs serially on Ubuntu 22.04;
+      # other shards permit up to two test processes per VM.
+      INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}
     steps:
       - uses: actions/checkout@v4
         with:
