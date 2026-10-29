@@ -3,7 +3,7 @@
   "finding": "The clock-specific implementation and catalogue native-admission companion already exist on latest main and equal the tested source. Main integration condition is met; full required CI remains pending.",
   "mainSha": "e67c636b81762df56b346a09ef570964d43084df",
   "testedSha": "472c85fa85e91f6e8b316f7d466c2c51209e3759",
-  "nativeSixPhaseEvidenceSource": "8c7f27a23513b1fc650a5465a3eef8a2b1645823 (runtime/build inputs verified identical to472 by the committed native receipt)",
+  "nativeSixPhaseEvidenceSource": "8c7f27a23513b1fc650a5465a3eef8a2b1645823 (three phases with two receivers each, six receiver observations; runtime/build inputs verified identical to 472 by the committed native receipt)",
   "fileBlobs": [
     {
       "path": "patches/network-replication/owner-clock.mjs",

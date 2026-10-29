@@ -50,7 +50,7 @@ test('Shipshape every pinned MTL and PNG matches Git blob SHA1 and byte count',{
  const before=execFileSync('git',['-C',repository,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
  const indexPath=path.resolve(repository,execFileSync('git',['-C',repository,'rev-parse','--git-path','index'],{encoding:'utf8'}).trim()),indexBefore=sha(fs.readFileSync(indexPath));
  assert.equal(before,SOURCE_COMMIT);
- const rows=execFileSync('git',['-C',repository,'ls-tree','-rz',SOURCE_COMMIT,'stages/'+spec.internal]).toString().split('\0').filter(Boolean);
+ const rows=execFileSync('git',['-C',repository,'ls-tree','-rz',SOURCE_COMMIT,'stages/'+spec.internal],{maxBuffer:8*1024*1024}).toString().split('\0').filter(Boolean);
  let verified=0,bytes=0;
  for(const row of rows){const [meta,name]=row.split('\t');if(!/\.(mtl|png)$/.test(name))continue;
   const data=fs.readFileSync(path.join(source,path.relative('stages',name))),blob=crypto.createHash('sha1').update('blob '+data.length+'\0').update(data).digest('hex');

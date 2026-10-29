@@ -43,7 +43,7 @@ if(currentCharger){
 let sourceSha = null;
 if (process.argv.includes('--exact-source')) {
   sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
-  const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: ROOT, encoding: 'utf8' })
+  const tree = new Map(execFileSync('git', ['ls-tree', '-r', '-z', sourceSha], { cwd: ROOT, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
     .split('\0').filter(Boolean).map(row => { const [metadata, file] = row.split('\t'); return [file, metadata.split(' ')[2]]; }));
   const roots = { 'upstream/': 'inkwave-public/', 'patch/': 'patches/splatoon3/', 'touch-layout/': 'patches/touch-layout/',
     'reliability/': 'patches/reliability/', 'local-quality/': 'patches/local-quality/', 'network-replication/': 'patches/network-replication/',
