@@ -33,9 +33,10 @@ for(const sub of ['toxicMist','splashWall','beakon'])test(`${sub}: accepted depl
 });
 for(const sub of ['inkMine','angleShooter'])test(`${sub}: fresh-envelope repeats cannot extend one target life; first forged target remains explicitly unresolved`,async t=>{
  for(const before of [true,false]){const w=await setup(before);try{
-  const {p,o}=w.birth(sub);const mark={...p,phase:'mark',frames:300,targetId:2,targetLife:0,markAgeFrames:0};
+  const {p,o}=w.birth(sub);const mark={...p,phase:'mark',frames:300,targetId:2,targetLife:0,markAgeFrames:0,sourceTeam:0};
   w.play({...mark,frames:299});assert.equal(w.target.s3.revealedUntil,undefined);
   w.play(mark,'foreign');assert.equal(w.target.s3.revealedUntil,undefined);
+  if(!before){const missing={...mark};delete missing.sourceTeam;w.play(missing);assert.equal(w.target.s3.revealedUntil,undefined,'missing source team rejected');w.play({...mark,sourceTeam:1});assert.equal(w.target.s3.revealedUntil,undefined,'wrong source team rejected');}
   w.play(mark);const first=w.target.s3.revealedUntil[0];assert.ok(first>w.f.G.time,'diagnostic: first far-target claim remains accepted without contact proof');
   w.f.G.time=14;for(let i=0;i<10;i++)w.play(mark);
   assert.equal(w.target.s3.revealedUntil[0],before?first+4:first);
