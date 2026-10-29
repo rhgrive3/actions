@@ -81,6 +81,8 @@ function assertAdmissionDag(yaml) {
   }
   const admission = jobBlock(yaml, 'admission_preflight');
   assert.doesNotMatch(admission, /^\s*(?:-\s*)?continue-on-error:/m, 'preflight cannot mask failure');
+  assert.doesNotMatch(admission, /^    defaults:/m, 'preflight job cannot override shell or directory defaults');
+  assert.doesNotMatch(admission, /^[ \t]*(?:-[ \t]*)?(?:shell|working-directory):/m, 'preflight steps cannot override shell or directory');
   assert.doesNotMatch(admission, /^        if:/m, 'preflight steps cannot be conditional');
   assert.doesNotMatch(admission.match(/^    if: (.+)$/m)?.[1] ?? '', /\b(?:always|failure|cancelled|success)\s*\(/i);
   assert.match(admission, /^      - name: Reject invalid or duplicated YAML workflow definitions\n        run: ruby scripts\/ci\/check-workflow-yaml\.rb \.github\/workflows$/m);
@@ -91,7 +93,7 @@ function assertAdmissionDag(yaml) {
   assert.ok(admission.includes('      - name: Verify emitted coverage contracts before heavy lanes\n        run: ' + EMITTED_COVERAGE_CONTRACT + '\n'), 'emitted coverage contracts must run before heavy lanes');
   const gate = jobBlock(yaml, 'validate');
   assert.ok(gate.includes("    if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}\n"), 'validate must run for failed prerequisites in admitted full CI');
-  assert.doesNotMatch(gate, /^    defaults:|^        shell:/m, 'validate uses GitHub default fail-fast shell');
+  assert.doesNotMatch(gate, /^    defaults:|^[ \t]*(?:-[ \t]*)?(?:shell|working-directory):/m, 'validate uses GitHub default fail-fast shell and directory');
   const needs = gate.match(/^    needs: \[([^\]]+)\]\s*$/m)?.[1].split(',').map(s => s.trim());
   assert.ok(needs, 'validate needs list');
   for (const name of ['admission_preflight', 'build_site', 'validate_core', 'patch_tests', 'circleci_offload_gate', 'browser', 'seven_claims', 'resource_paint_continuation']) assert.ok(needs.includes(name), 'validate missing ' + name);
@@ -148,6 +150,12 @@ test('admission DAG and final shell gate reject dependency and status bypass mut
     ['admission_preflight', s => s.replace('run: ' + EMITTED_COVERAGE_CONTRACT, 'run: node --test --test-name-pattern=guide scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs')],
     ['admission_preflight', s => s.replace('            /package-lock.json\n', '')],
     ['admission_preflight', s => s.replace('      - name: Reject production composition', '      - continue-on-error: true\n        name: Reject production composition')],
+    ...['admission_preflight', 'validate'].flatMap(name => [
+      [name, s => s.replace('    steps:\n', '    defaults:\n      run:\n        shell: echo {0}\n    steps:\n')],
+      [name, s => s.replace('      - name:', '      - shell: echo {0}\n        name:')],
+      [name, s => s.replace('      - name:', '      - working-directory: /tmp\n        name:')],
+      [name, s => s.replace('      - name:', '      - name: original\n        working-directory: /tmp\n      - name:')],
+    ]),
     ['build_site', s => s.replace('    needs: admission_preflight', '    needs: admission_preflight\n    continue-on-error: true')],
     ['validate', s => s.replace('always() && ', '')],
     ['validate', s => s.replace('always() && ', 'always() && false && ')],
