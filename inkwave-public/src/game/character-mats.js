@@ -1655,7 +1655,7 @@ const _inkCache = new Map();
 export function getInkMaterial(color) {
   const hex = color.getHexString();
   if (!_inkCache.has(hex)) {
-    const m = new THREE.MeshPhysicalMaterial({ color: color.clone(), roughness: 0.16, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, sheen: 0.4, sheenRoughness: 0.3, sheenColor: color.clone().lerp(new THREE.Color(1, 1, 1), 0.5), name: 'iw-ink-' + hex });
+    const m = new THREE.MeshPhysicalMaterial({ color: color.clone(), roughness: 0.16, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, sheen: 0.4, sheenRoughness: 0.3, sheenColor: color.clone().lerp(new THREE.Color(1, 1, 1), 0.5), name: 'iw-ink-physical' });
     _inkCache.set(hex, m);
   }
   return _inkCache.get(hex);
