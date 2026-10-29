@@ -1,0 +1,51 @@
+# INKWAVE exact-head CI and remaining issue disposition
+
+The published repair target is [PR #1914](https://github.com/rhgrive3/actions/pull/1914), source **`1cba8c73e79565757f051bb106c6076440ca97d9`**. The required [CI run 40957522742](https://github.com/rhgrive3/actions/actions/runs/40957522742) succeeded. Core 1/1, CPU shards 8/8, browser suites 7/7 and strict final `validate` passed. The complete 22:16:38 UTC snapshot contains 36 terminal workflows (35 success, one unchanged permitted skip) and 77 checks (70 success, seven unchanged skips), with no missing workflow/check family, failures or cancellations. No skip was introduced to obtain this result.
+
+This report is on a **diagnostic branch**, descending from `7a6b6501692ce79d2875ef1734f277bf505f5db4`. Its publication commit is not the tested application identity. Publishing this evidence does not change the PR head. The PR remains unmerged under the existing main-merge policy; main was observed at `91c1aa89061ddeec0685a7b32899b3b711995c60`.
+
+## Repairs and validation
+
+- `1cba8c73` corrects a second Hissen shared-envelope test that still expected the old display scale. The existing owner permits 1.5 only for Diffusion; Dread/native Bucket retain 1.0. All raw source radius, physics, paint, cache, asset and state assertions remain. The six-file local source selection passed 49/49; actual runtime counterfactuals forcing Hissen 1.0 or Dread 1.5 each failed as expected. The final comment-only wording edit and its separate source hashes are preserved in the [public fixture report](https://github.com/rhgrive3/actions/blob/1cba8c73e79565757f051bb106c6076440ca97d9/reports/issue-resolution-20261029/slosher-envelope-fixture-followup/README.md).
+- The former failing CPU2 case now explicitly passes in its complete successful hosted log. That shard reports 2,073 total, 2,068 pass, zero fail and five existing conditional skips. Its complete decoded raw log and SHA receipt are in the [CI packet](ci-packet/README.md). Earlier failed heads and logs remain failures in the historical ledger.
+- Earlier production repairs and their separate tests remain in PR #1914: native simulation ordering, mutable posture/cache ownership, paint/contact-FK equivalence, ScreenFX cache initialization and synchronous replay phase guards. Historical emitted and browser results retain their actual source/build identities; they are not relabeled as new `1cba` runs.
+- All 1,550 application inputs and 2,267 artifacts match the retained build: content `5d8b116b9dbb804c21aaa0f92fadd5e9298f1f7a7ecd0a81c3fcc42541524a5a`, input `6c8108b2fb71150e7f0bdf7d7e365b27d0a594cc7b52d3cfb6c1da91301c0fd9`. The exact-HEAD build receipt is included; this was identity verification without rebuilding or claiming a new browser capture.
+
+## Counts and limits
+
+Eight PR histories received root-published repair heads: #1907, #1908, #1909, #1910, #1911, #1912, #1914 and #1915. Seven are historical; #1914 is the current open CI target. All 26 retained open/recent PRs were audited, but that is not 26 repaired PRs. External #1916 owner work is preserved and excluded from root repair credit. All eleven review threads are resolved; the current PR is mergeable.
+
+Within the 148 retained historical PR failed-job records, **108 distinct known-primary failed jobs across 50 diagnosed causes** have current fully passed equivalent gates and root-session repair evidence. Another six jobs/one cause belong to the preserved #1916 owner repair, giving 114 jobs/51 causes of total known-primary current coverage. The original 111 and prior expanded 146 cohorts are subsets and must not be added. Twelve main-context records and six operational secondary fan-ins are separate. Secondary failures, cancelled/skipped jobs and unknown causes do not count as repaired primary failures. Full definitions, workflow/case equivalence and per-job attribution are in the packet.
+
+**Fifteen historical primary failure events across six classes remain causally unresolved**, despite current CI passing: WebKit crashes, runner exit 143, menu timeout, audio `ERR_ABORTED`, Promise collection/browser disconnect and silent setup. Their complete retained decoded logs and selected recovered artifact members are included; not all 160 historical raw job logs are included. Success now does not prove their historical trigger. The packet inventory explicitly distinguishes available local raw logs from bytes actually published.
+
+The later [final readback](final-delivery-readback.json) records actual Issue comments, closures and the refreshed complete census. The CI packet intentionally preserves its earlier 26-open-issue snapshot. Only #642 and #1431 qualify for new closure in this final delivery. #79 and #725 closed earlier after the initial 06:20 UTC audit; #1767 was already closed before that audit. These are **four closures since the 28-open-issue audit**, with **24 issues remaining**, excluding #401. The prior #1767 makes five confirmed closed issues across the broader retained history, not five new closures in this audit.
+
+[#642's native WebGL resource capture](https://github.com/rhgrive3/actions/blob/1cba8c73e79565757f051bb106c6076440ca97d9/reports/issue-resolution-20261029/642-native-webgl-resource-capture-98/README.md) supports lazy menu release and 25% lower estimated color storage in eligible normal-battle conditions. Active effects retain HDR. The original and observer runs each passed 48 controlled cases; 64 native texture IDs were linked to allocation, attachment and subsequent deletion. The short battle samples do not establish a whole-match average, physical VRAM or FPS; those are not claimed. The engineering image budget is not attributed to personal approval by the issue owner. [#1431's acceptance mapping](https://github.com/rhgrive3/actions/blob/1cba8c73e79565757f051bb106c6076440ca97d9/reports/issue-resolution-20261029/issue1431-current2b/README.md) covers the requested actual Actor first/steady births, rates, aim/cover and damage/network controls, with separate historical browser epochs preserved.
+
+**#1813 and #1814 remain open.** The 11.2 paint-only description and identical pinned 11.2/11.3 Dynamo parameters strengthen the current zero-authority policy, but do not establish the original target-specific S3 comparison. The source authority/crossfire tests pass within their stated scope. This missing evidence also leaves the #1813 tracker row open; no new 65-weapon retail certification or exact internal-engine decoding requirement is imposed.
+
+## Remaining work and diagnostic implementations
+
+The [24-issue disposition table](dispositions/current-remaining-issue-dispositions.md) records the concrete missing criterion, implementation/evidence and next change for every remaining issue. The full [eight-issue original-criteria audit](dispositions/audit.md) corrects the former #997 internal-selector over-gate and identifies the real production bank ownership gaps in #1097/#1116. The [#956 footwear audit](dispositions/findings.md) records the absent source-item/transform evidence and ordinary/keep-charge origin boundaries. These are evidence and implementation gaps, not demands for new physical-device testing.
+
+- **#1665/#1666:** the separate [private native command scheduler implementation](https://github.com/rhgrive3/actions/blob/7a6b6501692ce79d2875ef1734f277bf505f5db4/reports/issue-resolution-20261029/native-command-scheduler/README.md) passed source 156/156. It is a bounded authenticated-owner fixed-tick barrier with one-use native contacts and fault retirement, not a deployed mandatory production authority bridge. Production valid-shaped forged births still demonstrate the documented 36 HP issue. Both issues remain open; the diagnostic branch is DO_NOT_MERGE.
+- **#1434 and the other performance issues:** the [matched CPU packet](https://github.com/rhgrive3/actions/blob/be0001ac163380f46263839d3a6dc7dee620527b/reports/issue-resolution-20261029/matched-cpu-3c85/README.md) preserves 451 original paths and all 16 raw binary16 snapshots. Its strict identity/repeatability gate failed. No calibration/timing series or FPS improvement is claimed. The diagnostic source is DO_NOT_MERGE.
+- Remaining source/behavior/audio issues retain their explicit missing reference or implementation criteria. Coefficients, clips, sounds and source semantics were not invented to reduce issue counts.
+
+Physical-device verification was expressly waived. #401 remains excluded. No main merge, force push, auto-merge, test deletion, CI disablement or newly unconditional skip was used in this delivery.
+
+## Actual agent configuration
+
+The requested six agents were explicitly started with the available model overrides and `xhigh`, rather than inferred from a default. Completed agents received additional independent work where useful; the final CI and acceptance continuations used the same requested model families.
+
+| Ranked work group | Actual model / effort | Agent and work |
+| --- | --- | --- |
+| Complex trusted action/contact design | GPT-6.1 Sol / xhigh | Agent 3 authority: private scheduler, worker integration, native contact and fault controls |
+| Strict performance equivalence and GPU/source diagnostics | GPT-6.1 Sol / xhigh | Agent 1 benchmark: matched builds, endpoint/native proof, lossless publication |
+| Cross-PR CI causes, dependency integration and accounting | GPT-6.1 Sol / xhigh | Agent 2 CI: full pagination, failed-case equivalence, scope/reviews and final sealed packet; final delivery continuation |
+| Original-criteria acceptance and repair peer review | GPT-6.1 Terra / xhigh | Agent 4 acceptance: #642/#1431, fixture/private worker peer review and final 24-issue disposition |
+| Independent weapon/source investigation | GPT-6.1 Terra / xhigh | Agent 5 source: #1813/#1814 matrix/crossfire and #956/eight-issue original criteria |
+| Independent observer and evidence integrity | GPT-6.1 Terra / xhigh | Agent 6 GPU peer: frozen helpers/native identity, packet verification and lossless disk deduplication |
+
+Root integrated and published shared changes, verified receipts independently and managed the final Issue updates. The six agents' historical completion does not imply that every remaining Issue was fixed.

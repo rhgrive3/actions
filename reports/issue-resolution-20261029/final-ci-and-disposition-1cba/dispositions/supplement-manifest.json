@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-29T22:20:49.286263+00:00",
+  "testedPublicSourceHead": "1cba8c73e79565757f051bb106c6076440ca97d9",
+  "finalReadbackSHA256": "df3d03179b92beccfc3a5a3c45a1d201734038d9218f63fe76f7cad1470102f2",
+  "files": [
+    {
+      "file": "1431-closure-response.json",
+      "bytes": 3058,
+      "sha256": "bb9ed123b69c71647bafdf6f8e184bbd8972b5f9cfdccd7afb939cbe5ac7e5de"
+    },
+    {
+      "file": "1431-comment-response.json",
+      "bytes": 162,
+      "sha256": "4087db7bb597df17e7e3c69bc049bb2456472c2ed986d2c147676f24fc717e42"
+    },
+    {
+      "file": "642-closure-response.json",
+      "bytes": 7917,
+      "sha256": "71e307a4cdfc601d8f2e8052f27e9eae5dc6d685ff12a988562ee051e76660a0"
+    },
+    {
+      "file": "642-comment-response.json",
+      "bytes": 162,
+      "sha256": "bab6b98ca643a623c95041db8d6f8348c91fd2748f8666594b8afe716bed2c82"
+    },
+    {
+      "file": "audit.md",
+      "bytes": 12104,
+      "sha256": "14f16a69dca8620e4fe599f958012f17153dbf4c6812f3c0dde5967dc6c86bf3"
+    },
+    {
+      "file": "current-remaining-issue-dispositions.md",
+      "bytes": 18173,
+      "sha256": "f0d4f634cc55017b40dbaf5ec247e182cb64448e61e46a8f3645562cb6840711"
+    },
+    {
+      "file": "final-scope-census.json",
+      "bytes": 9403,
+      "sha256": "951be263f4847118f25fc9a3a52eb651aa2cc26409077861dfa7d73e035d2a14"
+    },
+    {
+      "file": "findings.md",
+      "bytes": 6021,
+      "sha256": "2e96bae9b6ec910943eceb91fc577742b37872fbb9f6308bc12a18a2f0c379ad"
+    },
+    {
+      "file": "posted-two-closure-comments.json",
+      "bytes": 6887,
+      "sha256": "08837a11dd3a2ec55a39bec5f3c94b2f799088b314e24c4fd8c71d78d911383a"
+    }
+  ]
+}

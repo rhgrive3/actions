@@ -1,0 +1,10 @@
+{
+  "testedPublicSourceHead": "1cba8c73e79565757f051bb106c6076440ca97d9",
+  "snapshotAt": "2026-10-29T22:16:38.679Z",
+  "manifestSha256": "804a23d93276d932dce40789036fd68454e04087345eb3a674c4b3abcda9da9b",
+  "sha256sumsSha256": "1121fa492cd36d5c01860242672d40c19aa20068d3d0a49ddbca377aa39f43d9",
+  "filePayloads": 102,
+  "totalGzipBytes": 2159686,
+  "publicationPerformed": false,
+  "immutableAfterRootReview": true
+}

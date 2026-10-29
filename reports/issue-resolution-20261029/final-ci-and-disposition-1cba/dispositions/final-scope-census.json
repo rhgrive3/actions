@@ -1,0 +1,312 @@
+{
+  "at": "2026-10-29T22:20:05.151Z",
+  "openPRSnapshotAt": "2026-10-29T22:19:59.923Z",
+  "main": "91c1aa89061ddeec0685a7b32899b3b711995c60",
+  "excludedIssue": 401,
+  "openIssues": [
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] 本家の持続チャージ上昇音が未実装、HoldNoise誤ループとは別イベント",
+      "updated_at": "2026-10-22T12:47:45Z"
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "updated_at": "2026-10-22T16:56:08Z"
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "updated_at": "2026-10-22T08:44:43Z"
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "updated_at": "2026-10-22T05:52:49Z"
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "updated_at": "2026-10-22T01:01:45Z"
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "updated_at": "2026-10-20T00:19:54Z"
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "updated_at": "2026-10-22T01:01:40Z"
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "updated_at": "2026-10-29T20:56:45Z"
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "updated_at": "2026-10-29T20:56:44Z"
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "updated_at": "2026-10-21T01:57:04Z"
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] 軽量Pose Search・歩行品質・インク視認性の性能非劣化実装計画",
+      "updated_at": "2026-10-17T16:19:05Z"
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "updated_at": "2026-10-29T21:50:51Z"
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "updated_at": "2026-10-10T07:46:03Z"
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "updated_at": "2026-10-10T07:05:56Z"
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "updated_at": "2026-10-10T08:08:07Z"
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "updated_at": "2026-10-18T11:52:17Z"
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "updated_at": "2026-10-10T20:17:39Z"
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "updated_at": "2026-10-10T16:50:15Z"
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "updated_at": "2026-10-25T00:44:41Z"
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "updated_at": "2026-10-29T09:22:57Z"
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "updated_at": "2026-10-29T05:15:38Z"
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "updated_at": "2026-10-18T11:52:19Z"
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "updated_at": "2026-10-21T04:18:47Z"
+    },
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "updated_at": "2026-10-10T07:12:04Z"
+    }
+  ],
+  "openPRs": [
+    {
+      "number": 1914,
+      "head": "1cba8c73e79565757f051bb106c6076440ca97d9",
+      "base": "main"
+    }
+  ],
+  "last48HoursPRs": [
+    {
+      "number": 1914,
+      "head": "1cba8c73e79565757f051bb106c6076440ca97d9",
+      "state": "open",
+      "merged_at": null,
+      "updated_at": "2026-10-29T21:51:14Z"
+    },
+    {
+      "number": 1916,
+      "head": "dafba0a2bf9ca18d41ffe4ce2209a8cf3338a359",
+      "state": "closed",
+      "merged_at": "2026-10-29T18:15:47Z",
+      "updated_at": "2026-10-29T18:15:47Z"
+    },
+    {
+      "number": 1915,
+      "head": "6690e8017252396b327ae6088d3746765ad5835d",
+      "state": "closed",
+      "merged_at": "2026-10-29T15:43:20Z",
+      "updated_at": "2026-10-29T15:46:25Z"
+    },
+    {
+      "number": 1910,
+      "head": "a22700d04744d7540d6069b9e09b3109c4fb1906",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:41:42Z",
+      "updated_at": "2026-10-29T13:41:43Z"
+    },
+    {
+      "number": 1909,
+      "head": "e9dcd6f5584d3e7c5f2a346d9fa8b2cda2390d95",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:41:32Z",
+      "updated_at": "2026-10-29T13:41:32Z"
+    },
+    {
+      "number": 1907,
+      "head": "d0b09b23ec299a958b63ec961b6eab98285b14a2",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:41:12Z",
+      "updated_at": "2026-10-29T13:41:12Z"
+    },
+    {
+      "number": 1911,
+      "head": "1826844805af5a458be9d2fd5636c505b4a73afb",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:40:57Z",
+      "updated_at": "2026-10-29T13:40:57Z"
+    },
+    {
+      "number": 1912,
+      "head": "7e8601d233e2a56ee175f0c459ed304621e870b5",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:40:42Z",
+      "updated_at": "2026-10-29T13:40:43Z"
+    },
+    {
+      "number": 1913,
+      "head": "972e26cdc117f7fec6a3636d2fd1545481a5eaba",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:40:26Z",
+      "updated_at": "2026-10-29T13:40:27Z"
+    },
+    {
+      "number": 1908,
+      "head": "88f8d25d13a309ee47c59831116b1742740df517",
+      "state": "closed",
+      "merged_at": "2026-10-29T13:38:35Z",
+      "updated_at": "2026-10-29T13:38:35Z"
+    },
+    {
+      "number": 1906,
+      "head": "14be56452b2ee56c366d4ab03c90767c358ed761",
+      "state": "closed",
+      "merged_at": null,
+      "updated_at": "2026-10-28T18:45:09Z"
+    },
+    {
+      "number": 1897,
+      "head": "bf9aa9da354ea7a1d3b5c4478e0f526b6fbe0afb",
+      "state": "closed",
+      "merged_at": "2026-10-28T15:41:48Z",
+      "updated_at": "2026-10-28T15:41:48Z"
+    },
+    {
+      "number": 1904,
+      "head": "8ad68aef87ba726864bc99f745dd77f529c59622",
+      "state": "closed",
+      "merged_at": "2026-10-28T14:54:30Z",
+      "updated_at": "2026-10-28T14:54:30Z"
+    },
+    {
+      "number": 1903,
+      "head": "554c16a278058a0217d4e9366b536ee4d3895cfa",
+      "state": "closed",
+      "merged_at": "2026-10-28T14:47:16Z",
+      "updated_at": "2026-10-28T14:47:17Z"
+    },
+    {
+      "number": 1905,
+      "head": "cce7c234629348ae5a1da3f4de26b71a510e02cd",
+      "state": "closed",
+      "merged_at": "2026-10-28T14:42:31Z",
+      "updated_at": "2026-10-28T14:42:31Z"
+    },
+    {
+      "number": 1895,
+      "head": "701d32250b6c590f3a25a23ffa9246de9d050643",
+      "state": "closed",
+      "merged_at": "2026-10-28T14:41:27Z",
+      "updated_at": "2026-10-28T14:41:28Z"
+    },
+    {
+      "number": 1902,
+      "head": "881c5665961973eb4f8e2009b02d9498931db4b1",
+      "state": "closed",
+      "merged_at": "2026-10-27T23:46:18Z",
+      "updated_at": "2026-10-27T23:46:18Z"
+    },
+    {
+      "number": 1901,
+      "head": "4e0981ede05b8422aada10f638da6f317ba71325",
+      "state": "closed",
+      "merged_at": "2026-10-27T23:41:13Z",
+      "updated_at": "2026-10-27T23:41:13Z"
+    }
+  ],
+  "retainedAuditedPRs": [
+    1882,
+    1889,
+    1890,
+    1894,
+    1895,
+    1896,
+    1897,
+    1898,
+    1899,
+    1900,
+    1901,
+    1902,
+    1903,
+    1904,
+    1905,
+    1906,
+    1907,
+    1908,
+    1909,
+    1910,
+    1911,
+    1912,
+    1913,
+    1914,
+    1915,
+    1916
+  ],
+  "pages": {
+    "issues": 1,
+    "recentPRs": 1,
+    "openPRs": 1
+  },
+  "recentCutoff": "2026-10-27T22:20:04.060Z",
+  "reviewThreads": {
+    "total": 11,
+    "resolved": 11,
+    "unresolved": []
+  },
+  "changesSincePriorCensus": {
+    "priorAt": "2026-10-29T22:16:44.362Z",
+    "newOpenIssues": [],
+    "closedOrAbsentIssues": [
+      1431,
+      642
+    ],
+    "updatedOpenIssues": [],
+    "newAuditedPRs": []
+  }
+}

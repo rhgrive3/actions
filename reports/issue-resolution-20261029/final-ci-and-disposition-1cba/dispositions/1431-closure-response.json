@@ -1,0 +1,39 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "url": "https://github.com/rhgrive3/actions/issues/1431",
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "issue_number": 1431,
+      "body": "## 残課題\nクアッドホッパーとエクスプロッシャーの弾の出生位置・照準収束・muzzle/FX座標を、実際の Actor/Runner/Projectiles に対して検証・修正する。#1277 は武器の外形復元であり、この原点修正を承認していない。\n\n## 再現・証拠\n- 読み取り専用診断 PR #1300 は main にマージしない。\n- 固定HEAD CI [run 38258592398](https://github.com/rhgrive3/actions/actions/runs/38258592398) の3計測ジョブは成功。成功とは射出位置の不具合が解消した意味ではない。\n- 第一出生フレームの表示/出生ギャップ：約 **455 mm**（Quad native socket）、約 **568 mm**（Explosher native socket）、約 **529 mm**（仮置き authored mouth）。外形/socketずれ約 **121 mm** とは別の `aimReady`/full-aim予測差があり、単純なソケット移動だけでは解消しない。\n- Socket単独差分では、制御した同一条件の射速長も open最大0.039m/s・壁fallback最大0.350m/s変わるため、「位置だけの変更」ではない。\n\n## 受入条件\n1. 実 Actor 発射の first/steady両相、30/60/120 Hz、上下照準と壁前 OBB を比較し、world muzzle/velocity/FX/render born を記録。\n2. native aimReady/full-aim/LOS fallback に対する影響を検証し、照準収束・壁際の命中判定を回帰させない。\n3. ダメージ、弾速、インク、射撃間隔、ネットワーク所有権/再現を崩さない。\n4. 現行mainと #1277 の完成した外形変更の両方で評価する。\n\nPR #1300 の固定HEAD検証は履歴として保持。このIssueが未完の実装/物理確認の追跡先。",
+      "state": "closed",
+      "user": {
+        "login": "rhgrive3",
+        "name": "rhgrive3",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/212239128?v=4",
+        "id": 212239128
+      },
+      "assignees": null,
+      "labels": null,
+      "milestone": null,
+      "state_reason": "completed",
+      "comments": 4,
+      "created_at": "2026-10-14T12:34:14Z",
+      "updated_at": "2026-10-29T22:19:30Z",
+      "closed_at": "2026-10-29T22:19:30Z",
+      "display_url": "https://github.com/rhgrive3/actions/issues/1431",
+      "display_title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap"
+    },
+    "url": "https://github.com/rhgrive3/actions/issues/1431",
+    "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+    "display_url": "https://github.com/rhgrive3/actions/issues/1431",
+    "display_title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap"
+  },
+  "isError": false
+}

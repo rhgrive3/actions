@@ -1,0 +1,39 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "url": "https://github.com/rhgrive3/actions/issues/642",
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "issue_number": 642,
+      "body": "## Main SHA\n\n`fc057af9baac421ec707504f4637e2ed8824a444`\n\nCurrent `main` was re-fetched immediately before investigation.\n\n## Target device / state\n\n- iPhone/iPad/Android WebGL builds, especially the default HIGH setting after mobile effective-quality caps.\n- Also affects desktop HIGH/ULTRA at higher device pixel ratios.\n- Present in menus/attract, live battle, pause/results, and any other state where the main composer remains allocated.\n- This is persistent GPU memory, independent of the separate paint/shadow/mural/PropKit/texlib render-target findings.\n\n## Root cause\n\n`inkwave-public/src/core/renderer.js` always constructs the main post stack around a full-resolution half-float render target:\n\n```js\nconst pr = Math.min(window.devicePixelRatio || 1, q.pixelRatio, mobileCap) * this.dynScale;\n...\nconst samples = this.mobile.touch ? 0 : (q.msaa || 0);\nconst rt = new THREE.WebGLRenderTarget(w * pr, h * pr, {\n  type: THREE.HalfFloatType,\n  samples\n});\nconst comp = (this.composer = new EffectComposer(r, rt));\ncomp.setPixelRatio(pr);\ncomp.setSize(w, h);\n```\n\nThe vendored Three.js `EffectComposer` immediately clones the supplied target:\n\n```js\nthis.renderTarget1 = renderTarget;\nthis.renderTarget2 = renderTarget.clone();\nthis.writeBuffer = this.renderTarget1;\nthis.readBuffer = this.renderTarget2;\n```\n\nso the base composer permanently owns **two** full-resolution `HalfFloatType` ping-pong targets.\n\nMobile effective quality disables MSAA, GTAO and bloom:\n\n```js\nq = Object.freeze({\n  ...base,\n  ...\n  msaa: 0,\n  ao: false,\n  bloom: false,\n  pixelRatio: Math.min(base.pixelRatio, mobile.ios ? 1.2 : 1.35),\n});\n```\n\nbut it does not change the composer target type or eliminate one of the two RGBA16F buffers. The buffers therefore remain allocated even when the expensive HDR-oriented optional passes are absent and ScreenFX is idle/disabled.\n\n## Code-derived memory lower bound\n\nA four-channel half-float color buffer is 8 bytes/pixel (4 × 16-bit). Two composer color targets therefore cost a guaranteed color-only lower bound of:\n\n`drawingWidth × drawingHeight × 16 bytes`\n\nwhere `drawingWidth = CSS width × effective pixel ratio` and likewise for height.\n\nExamples from the code's own pixel-ratio rules, before counting depth attachments, driver padding, other post-pass targets, shadows, paint, FX, mural, PropKit, etc.:\n\n- 744×1133 CSS px at iOS default HIGH cap 1.2: about **18.5 MiB** color-only.\n- 800×1280 CSS px at non-iOS touch HIGH cap 1.35: about **28.5 MiB** color-only.\n- 1920×1080 desktop HIGH at PR 1.5: about **71.2 MiB** color-only.\n- 1920×1080 desktop ULTRA at PR 2.0: about **126.6 MiB** color-only.\n\nLOW reduces the pixel ratio, but it still keeps the same two half-float targets.\n\n## Reproduction / measurement\n\nAfter boot on current main:\n\n```js\nconst c = __inkwave.R.composer;\nconst a = c.renderTarget1, b = c.renderTarget2;\n({\n  a: [a.width, a.height, a.texture.type],\n  b: [b.width, b.height, b.texture.type],\n  colorMiBLowerBound: (a.width * a.height + b.width * b.height) * 8 / 1048576,\n  quality: __inkwave.settings.quality,\n  mobile: __inkwave.mobile,\n});\n```\n\nThen compare HIGH/MEDIUM/LOW on a touch device. Even when `__inkwave.R.gtao === null`, `__inkwave.R.bloom === null`, and `__inkwave.screenfx.pass.enabled === false`, both full-resolution half-float targets remain.\n\nFor GPU confirmation, capture a WebGL/Metal/GPU memory trace or browser GPU resource capture before and after replacing the mobile composer target with a lower-precision/direct path.\n\n## Expected\n\nMobile quality presets that disable MSAA/GTAO/bloom should have a post stack whose persistent memory footprint is proportional to the passes actually needed, and should not reserve high-precision ping-pong storage unless the active grade/ScreenFX path demonstrably requires it.\n\n## Actual\n\nTwo full-resolution RGBA16F-equivalent color targets remain resident for the base composer on every quality/device path. On tablet-sized touch viewports the color-only lower bound is already tens of MiB at the default HIGH mobile cap.\n\n## Performance / resource impact\n\n- Adds persistent GPU memory pressure on iOS/Android on top of paint, shadows, mural, PropKit, texlib and FX allocations.\n- Higher GPU memory pressure increases the risk of browser/WebGL context loss and memory eviction on constrained devices.\n- Full-resolution half-float ping-pong also doubles color-buffer bandwidth for every composer pass that swaps buffers.\n- The cost persists in non-battle/menu states because the composer is a page-lifetime renderer resource.\n- Desktop HIGH/ULTRA can reserve substantially larger buffers at 1.5–2.0 render density.\n\n## Fix direction\n\nProfile visual requirements first, then choose the cheapest valid path per effective quality:\n\n- For touch/mobile presets where GTAO/bloom are disabled, test an `UnsignedByteType` composer target if Grade/ScreenFX output remains visually equivalent.\n- If ScreenFX is idle and the remaining chain can be fused, consider a single post target/direct render path rather than unconditional ping-pong.\n- If HDR is truly required for active ScreenFX, allocate/switch to the higher-precision path only while needed, or use a lower-resolution screen-FX intermediate.\n- Keep current HalfFloat ping-pong on desktop/high-quality paths only where measured visual benefit justifies the memory/bandwidth.\n\nDo not change gameplay simulation or render resolution as part of this fix.\n\n## Regression / acceptance criteria\n\n- Record `renderTarget1/2` dimensions/type and a GPU memory capture on LOW/MEDIUM/HIGH touch profiles before/after.\n- Mobile idle/menu and normal battle post-stack persistent color memory is materially lower than the current two-RGBA16F baseline.\n- Grade/tone mapping, FXAA, damage/lens ink, swim/special/flood ScreenFX and color output remain visually equivalent within agreed image-diff tolerance.\n- Dynamic resolution changes and orientation/resize do not leak old targets.\n- Desktop HIGH/ULTRA retain HDR precision where required.\n- No regression in WebGL context stability or post-processing output.\n\n## Duplicate check\n\nChecked open/closed GitHub issues and ChatGPT Library `/INKWAVE Issue Queue` against current main using `EffectComposer`, `HalfFloatType`, `RGBA16F`, post-processing ping-pong and mobile GPU-memory queries. No existing item covers this composer-buffer allocation.",
+      "state": "closed",
+      "user": {
+        "login": "rhgrive3",
+        "name": "rhgrive3",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/212239128?v=4",
+        "id": 212239128
+      },
+      "assignees": null,
+      "labels": null,
+      "milestone": null,
+      "state_reason": "completed",
+      "comments": 11,
+      "created_at": "2026-10-05T13:29:07Z",
+      "updated_at": "2026-10-29T22:19:21Z",
+      "closed_at": "2026-10-29T22:19:21Z",
+      "display_url": "https://github.com/rhgrive3/actions/issues/642",
+      "display_title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers"
+    },
+    "url": "https://github.com/rhgrive3/actions/issues/642",
+    "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+    "display_url": "https://github.com/rhgrive3/actions/issues/642",
+    "display_title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers"
+  },
+  "isError": false
+}

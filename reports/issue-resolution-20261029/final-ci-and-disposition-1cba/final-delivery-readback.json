@@ -1,0 +1,148 @@
+{
+  "at": "2026-10-29T22:20:49.286263+00:00",
+  "complete": true,
+  "scopeCensusAt": "2026-10-29T22:20:05.151Z",
+  "CICompleteSnapshotAt": "2026-10-29T22:19:59.923Z",
+  "head": "1cba8c73e79565757f051bb106c6076440ca97d9",
+  "main": "91c1aa89061ddeec0685a7b32899b3b711995c60",
+  "requiredCISuccess": true,
+  "requiredCIRun": "https://github.com/rhgrive3/actions/actions/runs/40957522742",
+  "workflowCounts": {
+    "success": 35,
+    "unchangedPermittedSkip": 1
+  },
+  "checkCounts": {
+    "success": 70,
+    "unchangedSkip": 7
+  },
+  "corePassed": 1,
+  "CPUShardsPassed": 8,
+  "browserSuitesPassed": 7,
+  "strictFinalPassed": true,
+  "mergeable": true,
+  "merged": false,
+  "confirmedNewClosures": [
+    642,
+    1431
+  ],
+  "closureResponses": [
+    {
+      "issue": 642,
+      "state": "closed",
+      "stateReason": "completed",
+      "closedAt": "2026-10-29T22:19:21Z",
+      "commentId": 6509635954,
+      "commentURL": "https://github.com/rhgrive3/actions/issues/642#issuecomment-6509635954"
+    },
+    {
+      "issue": 1431,
+      "state": "closed",
+      "stateReason": "completed",
+      "closedAt": "2026-10-29T22:19:30Z",
+      "commentId": 6509638875,
+      "commentURL": "https://github.com/rhgrive3/actions/issues/1431#issuecomment-6509638875"
+    }
+  ],
+  "newClosuresSince0620Audit": [
+    79,
+    642,
+    725,
+    1431
+  ],
+  "priorClosed1767": "2026-10-28T22:05:22Z",
+  "confirmedClosedAcrossRetainedHistory": 5,
+  "openIssuesExcluding401Count": 24,
+  "openIssuesExcluding401": [
+    226,
+    287,
+    532,
+    735,
+    845,
+    890,
+    952,
+    956,
+    992,
+    997,
+    1097,
+    1116,
+    1434,
+    1565,
+    1607,
+    1665,
+    1666,
+    1671,
+    1708,
+    1757,
+    1789,
+    1813,
+    1814,
+    1823
+  ],
+  "openPRs": [
+    {
+      "number": 1914,
+      "head": "1cba8c73e79565757f051bb106c6076440ca97d9",
+      "base": "main"
+    }
+  ],
+  "retainedAuditedPRs": [
+    1882,
+    1889,
+    1890,
+    1894,
+    1895,
+    1896,
+    1897,
+    1898,
+    1899,
+    1900,
+    1901,
+    1902,
+    1903,
+    1904,
+    1905,
+    1906,
+    1907,
+    1908,
+    1909,
+    1910,
+    1911,
+    1912,
+    1913,
+    1914,
+    1915,
+    1916
+  ],
+  "reviewThreads": {
+    "total": 11,
+    "resolved": 11,
+    "unresolved": []
+  },
+  "rootPublishedRepairPRHistories": [
+    1907,
+    1908,
+    1909,
+    1910,
+    1911,
+    1912,
+    1914,
+    1915
+  ],
+  "CIRepairMetric": {
+    "scope": "current-expanded148 historical PRfailedjob records; exactcurrentequivalentgateproof; excludes explicitowner1916",
+    "knownPrimaryJobs": 108,
+    "distinctDiagnosedCauses": 50,
+    "owner1916ExcludedJobs": 6,
+    "owner1916ExcludedCauses": 1,
+    "unresolvedHistoricalPrimaryEvents": 15,
+    "unresolvedCauseClasses": 6
+  },
+  "deviceVerification": "waived explicitly by user",
+  "excludedIssue": 401,
+  "mainMergePolicy": "No root main merge authorized or performed; PR remains unmerged",
+  "diagnosticNotTestedIdentity": {
+    "privateWorkerSource": "7a6b6501692ce79d2875ef1734f277bf505f5db4",
+    "rejectedPerformancePacket": "be0001ac163380f46263839d3a6dc7dee620527b"
+  },
+  "remainingReason": "Original reference/semantics and production authority/performance implementation or evidence gaps; exact reasons in disposition table. Hardware tests are not blocking gates."
+}
