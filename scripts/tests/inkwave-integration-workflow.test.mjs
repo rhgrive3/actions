@@ -293,10 +293,10 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7]'));
   assert.ok(shards.includes('max-parallel: 8'));
   const {jobs}=assertValidateWorkflowContract(workflow);
-  assert.equal(jobs.patch_tests['runs-on'],'ubuntu-latest');
+  assert.equal(jobs.patch_tests['runs-on'],"${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}");
   assert.equal((shards.match(/shard: \[0, 1, 2, 3, 4, 5, 6, 7\]/g)||[]).length,1);
   assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
-  assert.equal(jobs.patch_tests.env.INKWAVE_TEST_CONCURRENCY,'2','Every isolated shard bounds its source-test processes to two');
+  assert.equal(jobs.patch_tests.env.INKWAVE_TEST_CONCURRENCY,"${{ matrix.shard == 2 && '1' || '2' }}",'Sandboxed Chromium shard has one process; the other seven retain two');
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assertShardEvidencePolicy(workflow);

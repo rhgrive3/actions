@@ -316,17 +316,17 @@ test('actual Validate shell requires precisely the native or offloaded complete 
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
  }
  const heavy=['CORE_RESULT','PATCH_RESULT','CIRCLECI_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'];
- const contracts={...complete,CONTRACTS_ONLY:'true',...Object.fromEntries(heavy.map(name=>[name,'skipped']))};
- for(const good of [complete,{...complete,OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:'skipped'},contracts]){
+ const contracts={...baseline,CONTRACTS_ONLY:'true',...Object.fromEntries(heavy.map(name=>[name,'skipped']))};
+ for(const good of [baseline,{...baseline,OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:'skipped'},contracts]){
   assert.equal(run(shell,good).status,0,'complete current gate');
-  for(const name of Object.keys(complete).filter(name=>name.endsWith('_RESULT'))){
+  for(const name of Object.keys(baseline).filter(name=>name.endsWith('_RESULT'))){
    for(const value of ['success','failure','cancelled','skipped']){
     if(value===good[name])continue;
     assert.notEqual(run(shell,{...good,[name]:value}).status,0,'gate rejects '+name+'='+value);
    }
   }
  }
- for(const scope of ['', 'unknown'])assert.notEqual(run(shell,{...complete,CONTRACTS_ONLY:scope}).status,0);
+ for(const scope of ['', 'unknown'])assert.notEqual(run(shell,{...baseline,CONTRACTS_ONLY:scope}).status,0);
 });
 
 
