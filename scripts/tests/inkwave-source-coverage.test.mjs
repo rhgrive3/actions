@@ -19,6 +19,7 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs',
   'patches/local-quality/tests/offscreen-hair-targets.test.mjs',
   'patches/local-quality/tests/native-offscreen-ground-memo.test.mjs',
+  'patches/local-quality/tests/issue-845-ground-certificate.test.mjs',
   'patches/network-replication/tests/canonical-weapon-actions.test.mjs',
   'patches/network-replication/tests/canonical-weapon-modes.test.mjs',
   'patches/network-replication/tests/canonical-sub-special-traces.test.mjs',
@@ -50,7 +51,7 @@ function assertRemainingEmittedCoverage(source) {
 }
 
 test('new remaining regressions execute once against the immutable emitted site in mandatory core', () => {
-  assert.equal(remainingEmittedFiles.length,24,'23 existing emitted regressions plus native paint reentry');
+  assert.equal(remainingEmittedFiles.length,25,'23 original emitted regressions plus ground support and native paint reentry');
   assert.ok(fs.statSync(new URL('../../patches/splatoon3/tests/catalog-paint-reentry.test.mjs',import.meta.url)).isFile(),'mandatory paint test exists');
   assertRemainingEmittedCoverage(workflow);
 });

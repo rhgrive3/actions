@@ -1,0 +1,57 @@
+{
+  "sourceCommit": "edac3d2778f7793e8e5587bbe46abaee3586cfe6",
+  "parent": "73481884e2519534a17be68d79691c94dc18f0dd",
+  "nodeVersion": "22.23.4",
+  "builtSiteUnset": true,
+  "candidateFileCount": 7,
+  "candidateFilesVerifiedAgainstCommit": [
+    {
+      "path": ".github/workflows/validate-inkwave-update.yml",
+      "gitBlob": "bd66c463daf0a62ef7bdbf67556c883ab4f66085",
+      "sha256": "3cb6281ca376e37cb3aca4b631e97eb26bdc39f29feae5c2450448c15603bd22"
+    },
+    {
+      "path": "patches/local-quality/firefight-tier-budget.mjs",
+      "gitBlob": "46d500a31d0fec9e18fcc98e6a4ac40f3ef9ec3f",
+      "sha256": "4f1d8a13de04c6205915adc8120bbc479c446a230f05057b9a9e8643bb01d5fe"
+    },
+    {
+      "path": "patches/local-quality/tests/issue-845-ground-certificate-fixture.mjs",
+      "gitBlob": "eee18a97c0058ba854999de5c807e9d4ca246645",
+      "sha256": "5315d13823b9e96267c71ae8bb103b2346120478726b33af0d9a6d0ee281880b"
+    },
+    {
+      "path": "patches/local-quality/tests/issue-845-ground-certificate-source.test.mjs",
+      "gitBlob": "3c8d2354afb1543c169191b2ebcef3348f1d5d16",
+      "sha256": "7931e17391dd46439034a3366ea43c0ed6a9837efbdc5f0161d2d5e9ec96ead8"
+    },
+    {
+      "path": "patches/local-quality/tests/issue-845-ground-certificate.test.mjs",
+      "gitBlob": "78fb4d074bebb3e8d397a38094a215eada26c719",
+      "sha256": "4f347f65066b3e4d691b77b91ab9c5dda634e80bdb370012501539185ed7b717"
+    },
+    {
+      "path": "patches/splatoon3/tests/firefight-tier-budget.test.mjs",
+      "gitBlob": "f6363d5185a3eae4859287c2b90fe8bb903bc8ed",
+      "sha256": "251fb843578b8fd38c163f4e49f28ffa8fbaa6985b7dd4a3c45d919c8d6b8743"
+    },
+    {
+      "path": "scripts/tests/inkwave-source-coverage.test.mjs",
+      "gitBlob": "82adb21bf597829df2c1e834708968b13729ddf5",
+      "sha256": "65a0e790526f543a793346f107dc1bc5df9e82038229b6d3e5eb5cb4870045f0"
+    }
+  ],
+  "receipts": [
+    {
+      "path": "source-node22.tap.gz",
+      "rawSha256": "097cdb9d2a03269a40e1b7009d358beff1ec919ca17ad47fb96d0bf8d8e60b5d",
+      "gzipSha256": "a34bb2150e9eb846d3aee744c4a197a39388dec05fc6bd5b0fa5a85a98614b69"
+    },
+    {
+      "path": "selector-node22.tap.gz",
+      "rawSha256": "ecfa53d03848c4608de198536e3b8a0073e80a121d6ad7a720fc6b2ac51d8260",
+      "gzipSha256": "f812ba9854853fc324dc5ce20f7b67195ca387cf2940bc6067f796c02ea94f80"
+    }
+  ],
+  "scope": "source only; no emitted build or physical-device test"
+}
