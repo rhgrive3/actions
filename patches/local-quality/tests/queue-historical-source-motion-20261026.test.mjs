@@ -40,7 +40,7 @@ test('pinned source-controller reconstructs the walk owner and historical queue 
   const ordinaryWalk=(s.form||'kid')==='kid'&&(s.grounded??true)&&!this.manual;
   this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk);this.velocityY=dt>0?dy/dt:0;this.distance+=dist;`);
  const restored=restoreHistoricalSourceMotion20261026(REL,current);
- assert.ok(restored.startsWith("import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n"),'walk owner import survives historical inversion');
+ assert.equal(restored.split("import { walkPresentationSpeed } from '../../../patches/local-quality/walk-presentation.mjs';\n").length-1,1,'exactly one walk owner import survives historical inversion');
  assert.ok(restored.includes('this.speed=walkPresentationSpeed(this,rawTravelSpeed,dt,teleport||!ordinaryWalk)'), 'walk speed owner preserved');
  assert.ok(restored.includes('sampleContactPair,feasibleContact,feasibleContactPrepared'), 'newer contact-pair and prepared contact source owners retained');
  assert.ok(restored.includes("import { nativeWeaponPoseRequired, sourceActionUpperOnly }"),'source weapon owner import is retained');
