@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "productSourceCommit": "a09bcd7e2617366fb77a9b1577a9ac0218b1ae08",
+  "oldSource": "a6ea3874663c3969e802ccabd93ed9b2dd0d39c4",
+  "oldContent": "f3c32046eef2b5aa592c3566e2db780ce6009de9f2d2dde76b316a1ef5b2b668",
+  "newContent": "fc0d620acf5b5f62fed7f4ee1bdfbf93db795508ec20876ddcd835ece64c6af3",
+  "evidence": {
+    "source.tap.gz": {
+      "rawBytes": 856,
+      "rawSha256": "604e4abd5f8008281b510ce52c020370c842c497b9a4525065df25ec0636079f",
+      "gzipSha256": "de6bbe26ed4272d8ec7077a18038d38e164c492bb55821b0d5744259f0eaa66b",
+      "gzipBytes": 349
+    },
+    "build.log.gz": {
+      "rawBytes": 904,
+      "rawSha256": "9195dd2086433213ba8fc848074d56522c42d156c2782bb2de77a93f17a3493d",
+      "gzipSha256": "142cd4ebb50e30853382a6a631442e8e06bdb5db1eb95fdb6aeaec9c994ba660",
+      "gzipBytes": 546
+    },
+    "source-pair.json.gz": {
+      "rawBytes": 398,
+      "rawSha256": "dd39337ad0b2bd5ea664c6e291dd9452056639d76b384f544a96ed30dfc98a38",
+      "gzipSha256": "1ae35eb6b6fded626c7915673da836c0aee1ab76b2cffb2faa332b68a5bff4d3",
+      "gzipBytes": 284
+    },
+    "render.json.gz": {
+      "rawBytes": 982360,
+      "rawSha256": "1b3dc33adf648008b2efae96338b81234d2e3a46df2aebf43e091823e02a0841",
+      "gzipSha256": "9d8d012a3078e61e983e685a720240639ef4d2561630701614d0c8c99a5b9bb5",
+      "gzipBytes": 73406
+    },
+    "render.log.gz": {
+      "rawBytes": 540,
+      "rawSha256": "f8e943f82f700330a6692240e63fce538ace5eb09986716531eb9445049d3d54",
+      "gzipSha256": "0befc9ae8059f11eb0506d86f07445d84da963d6cca3a71a9515dc5a076c1704",
+      "gzipBytes": 315
+    },
+    "old.png": {
+      "bytes": 36364,
+      "sha256": "6e247bed2fae8bed7cd632af5aacf71d3b2f72f041cd00ce51c37e51d4ad576f",
+      "localPath": "/workspace/scratch/performance1434-mesa-probe/ink-name-render/old.png"
+    },
+    "new.png": {
+      "bytes": 36364,
+      "sha256": "6e247bed2fae8bed7cd632af5aacf71d3b2f72f041cd00ce51c37e51d4ad576f",
+      "localPath": "/workspace/scratch/performance1434-mesa-probe/ink-name-render/new.png"
+    },
+    "rendererRunner": {
+      "sha256": "1faf83336dfeab08c10a0ef57db978933e40716a06cb4448c8a26f6eeec8c004",
+      "scope": "DO_NOT_MERGE isolated old/new regression; actual script bytes unchanged since before run; hash captured after completion"
+    }
+  }
+}

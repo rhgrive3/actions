@@ -74,3 +74,10 @@
 ## 確認の限界
 
 原作の通常ショットの明瞭な着弾フレームを今回取得できておらず、爆発の立体形状・粒数・寿命は原作測定値ではない。膜の模様、発光の大きさ・時刻、弾の表示寸法も手続き的な近似であり、完全一致を主張しない。Switch実機、実iPad、実オンライン通信、多数同時爆発時のGPU時間、広域CI全体はこの限定検証の対象外。基準画像と候補のチームパレット・味方装備はランダムで、画像の単純な差分値を改善量とは扱わない。
+
+
+## 追加統合・CI依存修復（2026-10-29）
+
+作者の53149347/c2b69a77のバリア・所持マーク・recovery中phantom tap修正を保持し、#1908の共通runtime/CI修復を通常mergeした。旧f8adは一括適用せず、ranked-worldのgenerated fixtureと実出生がhost記録muzzleに一致するassertionだけ追加。source49/49、queue/visual26/26、delayed-origin3/3、emitted ranked-world7/7が成功。旧1/7・6failureは履歴として保持する。
+
+新metadata verifierで既存buildを現在mergeheadへ無変更照合し、2241artifacts/1529inputsが成功した。これはCPU/生成物の検証で、以前の画像の再撮影やSwitch実機一致の主張ではない。新headのhostedCIはpush後の最新runを参照。[共通検証ledger](issue-resolution-20261029/final-batch/ledger.json)。mainはマージしない。
