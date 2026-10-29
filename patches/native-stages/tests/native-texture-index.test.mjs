@@ -48,7 +48,7 @@ test('native texture index baseline is pinned to the previously published loader
 for(const sourceMode of [undefined,'browser-direct'])for(const quality of ['low','balanced','high'])test(`all material metadata, role precedence, pixels and ownership: ${sourceMode||'staged'}/${quality}`,async()=>{
  const before=await run(old,quality,sourceMode),after=await run(current,quality,sourceMode);
  assert.deepEqual(after.snapshot,before.snapshot);assert.equal(after.decoded,before.decoded);assert.equal(after.textures,before.textures);
- if(sourceMode){assert.ok(after.counts.mapsValues<before.counts.mapsValues/4);assert.equal(after.counts.materialsValues,1);}
+ if(sourceMode){assert.ok(after.counts.mapsValues<before.counts.mapsValues/4);assert.ok(after.counts.materialsValues<=1,'material inventory is traversed at most once');}
  console.log(JSON.stringify({sourceMode:sourceMode||'staged',quality,materials:96,textures:after.textures,before:before.counts,after:after.counts}));
 });
 

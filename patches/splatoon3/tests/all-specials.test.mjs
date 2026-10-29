@@ -565,13 +565,14 @@ test('Booyah cheer accepts distinct calls up to the source cap and rejects dupli
 });
 
 test('remote destructible hit proposal validates the owner life using the network last-life fallback',async()=>{
- const f=await setup(),owner=f.make(),shooter=f.make();equip(owner,'waveBreaker');owner.nid=11;owner.netLife=0;owner.net={lastLife:4};shooter.nid=22;shooter.remote=true;shooter.team=1;f.G.actors=[owner,shooter];
+ const f=await setup(),owner=f.make(),shooter=f.make();equip(owner,'waveBreaker');owner.nid=11;owner.netLife=0;owner.net={lastLife:4};shooter.nid=22;shooter.remote=true;shooter.team=1;shooter.netLife=2;f.G.actors=[owner,shooter];
  ready(owner);deployInput(owner,f);
  const device=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='wave');assert.ok(device);const hp=device.hp;
- const event={actor:shooter,id:'waveBreaker',activation:device.activation,action:'objectHit',pos:[0,0,0],target:[0,0,0],seed:91,object:device.serial,index:0,ownerNid:11,ownerLife:4,damage:25,tick:1};
+ const event={actor:shooter,id:'waveBreaker',activation:device.activation,action:'objectHit',pos:[0,0,0],target:[0,0,0],seed:device.seed>>>0,object:device.serial,index:device.index||0,ownerNid:11,ownerLife:4,attackerLife:2,damage:25,tick:1};
  assert.equal(f.replayAllSpecials(f,event),true);assert.equal(device.hp,hp-25);
  owner.net.lastLife=5;
- const after=device.hp;assert.equal(f.replayAllSpecials(f,{...event,seed:92,tick:2}),false);
+ const after=device.hp;assert.equal(f.replayAllSpecials(f,{...event,attackerLife:undefined,tick:2}),false,'missing attacker life is rejected');
+ assert.equal(f.replayAllSpecials(f,{...event,tick:2}),false,'stale device owner life is rejected');
  assert.equal(device.hp,after,'stale device owner life cannot alter peer-owned device health');
 });
 

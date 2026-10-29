@@ -16,7 +16,7 @@ for(const [file,name]of [['../../../src/world/paint.js','PaintSystem'],['../../.
 const render=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-render.mjs',import.meta.url),'utf8'),{context});await render.link(s=>dependencies[s]);await render.evaluate();dependencies['./native-render.mjs']=render;
 let thrown;const actualDisplay=render.namespace.nativeDisplay;dependencies['./native-render.mjs']=module({...Object.fromEntries(Object.keys(render.namespace).map(k=>[k,render.namespace[k]])),nativeDisplay(...args){try{return actualDisplay(...args);}catch(e){thrown=e;throw e;}}});
 const world=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-world.mjs',import.meta.url),'utf8'),{context});await world.link(s=>dependencies[s]);await world.evaluate();
-let currentCalls=0;let error;try{await world.namespace.buildNativeWorld({settings:{quality:'medium'}},{id:'synthetic',name:'Synthetic'},()=>!stale||++currentCalls===1);}catch(e){error=e;}
+// Keep the first two authority checks true; invalidate only after display owns its textures.\nlet currentCalls=0;let error;try{await world.namespace.buildNativeWorld({settings:{quality:'medium'}},{id:'synthetic',name:'Synthetic'},()=>!stale||++currentCalls<=2);}catch(e){error=e;}
 if(stale)assert.equal(error,undefined);else {assert.equal(error?.name,'RangeError');assert.match(error.message,/typed array length/);}assert.equal(closes,1);assert.equal(disposes,1);assert.equal(textures.size,0);
 if(!stale)assert.equal(error,thrown,'original exception identity');
 const failed={name:error?.name,message:error?.message,closes,disposes,retainedTextures:textures.size};
