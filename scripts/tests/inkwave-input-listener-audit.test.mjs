@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {auditInputListeners} from '../lib/inkwave-input-listener-audit.mjs';
 
 function setup(fault='') {
- const windowTarget=new EventTarget(),documentTarget=new EventTarget(),canvas=new EventTarget(),orientationTarget=new EventTarget(),root=new EventTarget(),child=new EventTarget();root.contains=t=>t===child;
+ const windowTarget=new EventTarget(),documentTarget=new EventTarget(),canvas=new EventTarget(),orientationTarget=new EventTarget(),root=new EventTarget(),child=new EventTarget();root.nodeType=1;child.nodeType=1;root.contains=t=>{if(!t.nodeType)throw Error('not a Node');return t===child;};
  let sentinels,canvasCalls=0;
  class Input {
   constructor() {

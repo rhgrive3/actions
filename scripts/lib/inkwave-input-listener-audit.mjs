@@ -29,7 +29,7 @@ export function auditInputListeners({Input,windowTarget,documentTarget,canvas,or
   for(let n=0;n<cycles;n++){
    const begin=records.length,input=new Input(canvas),allCreated=records.slice(begin),owners=input._platformInputListeners,mobile=input.mobile,root=mobile?.root;
    check(Array.isArray(owners),'Input does not expose its platform listener owners');
-   const kind=target=>target===windowTarget?'window':target===documentTarget?'document':target===canvas?'canvas':target===orientationTarget?'orientation':target===viewportTarget?'visualViewport':target===fontsTarget?'fonts':target===root?'mobile-root':root?.contains?.(target)?'mobile-descendant':null;
+   const kind=target=>target===windowTarget?'window':target===documentTarget?'document':target===canvas?'canvas':target===orientationTarget?'orientation':target===viewportTarget?'visualViewport':target===fontsTarget?'fonts':target===root?'mobile-root':target?.nodeType&&root?.contains?.(target)?'mobile-descendant':null;
    const created=allCreated.filter(r=>kind(r.target));
    for(const o of owners)check(created.some(r=>r.target===o.target&&r.type===o.type&&r.callback===o.callback&&r.capture===!!o.capture&&active(r)),'missing platform listener '+o.type);
    // LayoutSample registers this exact set using explicit unsubscriptions.
