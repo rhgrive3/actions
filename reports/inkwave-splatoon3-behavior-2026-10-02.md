@@ -6654,3 +6654,14 @@ touch gyroは既存の暫定public-bridge gainにadapter合成済みだったが
 #1666では同一straight-fire証拠の同一Boss targetへの二重使用、main証拠がbomb/Specialのdamage上限を借用するcrablet claim、無敵/非表示Boss bodyが証拠とnonceを先に消費する経路を修正した。ownerが自作したfresh fireとhitの対は依然として作れる。relayは入力・weapon resource・接触のtrusted simulationを実行しておらず、これは実機検証の除外で解消する問題ではない。現状と残るauthority契約を `reports/issue-resolution-20261028/authority-remaining.md` に記録する。
 
 CIは追加11fileの回帰をimmutable emitted siteに接続し、既存source inventory・8shard・7browser family・fan-inを維持する。通常RAFの短い2stage lifecycle検証を追加する。個別テスト・旧head・既存の成功結果を、最終統合headのCI成功へ読み替えない。Character単独QAのscope保留とMOV-08bのマージ保留は維持し、実機検証の除外をその解除とみなさない。
+
+
+## 2026-10-29 追加統合・ローカル最終確認
+
+実機検証を除外した条件で、共通・最適化の通常minified生成物は必須23fileを各212/212（147 top-level＋65 nested）成功、fail/skip0。全65武器の凍結入力・発射・資源・receiver-admitted snapshotも一致した。最終hair first-drawは両版各3/3、通常RAFの新しい同一Match/Level leaseはKelpline/8actor/Crab退役releasedで成功。各suiteの件数は重複があり合算しない。
+
+rollerの二重world-matrix更新と、同期hitイベントの入れ子blastでLOS起点が上書きされる不具合を修正。hidden hairは独立した再利用rowで入力を保存し、最適化版の公開diagnostic descriptorを生成しない。元のzero-allocation/全state/first-drawの条件を維持し、全体CPU/FPSの向上は未立証。旧historical9/9は旧adapterのみの結果であり、新bridgeを実統合adb01331で9/9再検証した。
+
+新native replay/canonical/v2 codec/workerは生成物で検証したが、本番の必須admissionには未接続。production probeでは発射・接触0でPvP/Boss/crab各36HP減少が残り、#1665/#1666は未解決。398tickの骨と銃口一致はcamera:null/模擬relayのCPU条件に限定する。未知の原典値・音源・モデルを代替で確定しない。
+
+Git treeの出力上限、prebuilt digest試験の無期限待機、報告書の件数・出典を修正した。新headのhosted CIは別途確認し、旧赤履歴を削除しない。全Issue判定・変更commit/file・raw hashは[追加統合ledger](issue-resolution-20261029/final-batch/ledger.json)と[検証記録](issue-resolution-20261029/final-batch/README.md)。#401、main未マージ、MOV-08bとisolated Character QAのscope保留を維持する。

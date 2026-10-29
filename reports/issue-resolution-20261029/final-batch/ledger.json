@@ -1,0 +1,968 @@
+{
+  "schema": 1,
+  "snapshotUtc": "2026-10-29T02:40:34.368414+00:00",
+  "sourceSnapshotHeads": {
+    "1908": "5197d408f8a7ee109ca74cda7b42fd514b57b539",
+    "1909": "7d7e16b29b10836c0c0971cf7a16601bdfa1046c",
+    "1907": "cc85457f6adb3b7aa526d685e4805bb658540d00"
+  },
+  "physicalValidationRequired": false,
+  "waiver": "実機検証はいりません",
+  "excludedIssues": [
+    401
+  ],
+  "mainMergeAuthorized": false,
+  "holds": [
+    "PR1907 whole-PR MOV-08b",
+    "owner6481309597 isolated Character QA scope; no manual retry"
+  ],
+  "hostedCI": "pending new publication; old failures retained",
+  "agents": [
+    {
+      "rank": 1,
+      "agent": "remaining_authority",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh"
+    },
+    {
+      "rank": 2,
+      "agent": "remaining_weapons",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh"
+    },
+    {
+      "rank": 3,
+      "agent": "remaining_performance",
+      "model": "gpt-6.1-sol",
+      "thinking": "xhigh"
+    },
+    {
+      "rank": 4,
+      "agent": "remaining_motion",
+      "model": "gpt-6.1-terra",
+      "thinking": "xhigh"
+    },
+    {
+      "rank": 5,
+      "agent": "remaining_audio",
+      "model": "gpt-6.1-terra",
+      "thinking": "xhigh"
+    },
+    {
+      "rank": 6,
+      "agent": "remaining_input",
+      "model": "gpt-6.1-terra",
+      "thinking": "xhigh"
+    }
+  ],
+  "builds": {
+    "1908": {
+      "contentHash": "f3c32046eef2b5aa592c3566e2db780ce6009de9f2d2dde76b316a1ef5b2b668",
+      "inputHash": "e4e98232344ab0d9d7ac476bc48671ea63a0074cadc80228e838865e7248f426",
+      "artifacts": 2237,
+      "inputs": 1527
+    },
+    "1907": {
+      "contentHash": "4414de1ae5293f9c19ab406a53d954877c535ce925822da3c43ba56b06fa905f",
+      "inputHash": "76717ad006c2d2e6b1398bd1e4148ac6ca68fd5f88a877d95683b89fac1c7d9b",
+      "artifacts": 2241,
+      "inputs": 1530
+    },
+    "1909": {
+      "contentHash": "995f1ab779af566cbd8b12fd91d71c572e866f500a19c142c1d7bacc2ab7576a",
+      "inputHash": "7ba5729cc15e9a46307931f6bfd8c45cba073dde14326ad9663f2223745bf4de",
+      "artifacts": 2241,
+      "inputs": 1529
+    }
+  },
+  "issues": [
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] 本家の持続チャージ上昇音が未実装、HoldNoise誤ループとは別イベント",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "S3持続チャージ音の原音/event graph/parameter曲線が未取得。既存Splatune2 phraseのlifecycleを修正したがS3音源の代用とはしない。"
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "個別source omissionは修正済み。UnitDamageRateの意味、Blob反射、paint selector/default等の未解明なsource algorithmを含む総合課題。"
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "UnitDamageRate=0の選択的既存処理は検証済みだがzero/sentinelのnative意味を示すsource/schemaがない。"
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "坂分類/係数順序、.35の総速度・法線速度制限の意味、大bubbleの疎な.4既定値継承が未decoded。"
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "8actor/7bot/300tickの全状態一致とroller更新380→190を確認。全体時間は変動/悪化値もあり全体CPU/定常FPS改善は未立証。実機検証自体は要求しない。"
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "2022年以降11武器自身の11.3原音/出典hash/event mapping/公開利用権が不足。借用音をnative確認済みとしない。 接続済資料の候補7WAV/2MP3は版/原典が未確認。別v11資料は2022抽出で11.3.0ではないと明記。未検証音源は採用/公開しない。"
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "8actor/7bot/300tickの全状態一致とroller更新380→190を確認。全体時間は変動/悪化値もあり全体CPU/定常FPS改善は未立証。実機検証自体は要求しない。"
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "native replay/one-use effect/codec/workerは実装・生成物検証済みだがproduction必須経路は未接続。発射・接触0でPvP/Boss/crab各36 HP減少を再現。trusted world/RNG/clock/latejoin/handoffと両側接続は未実装、未解決。"
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "native replay/one-use effect/codec/workerは実装・生成物検証済みだがproduction必須経路は未接続。発射・接触0でPvP/Boss/crab各36 HP減少を再現。trusted world/RNG/clock/latejoin/handoffと両側接続は未実装、未解決。"
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "成功hook20F最短を修正。失敗45Fとsource ShotFailedIntervalFrm20のphase合成の意味は未decodedで、正しい45F観測を20Fへ置換しない。"
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] 軽量Pose Search・歩行品質・インク視認性の性能非劣化実装計画",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "G0/G2の校正済みwhole-game同値・負荷基準が未達。source distance曲線/測定済み品質不足/差引CPU利得なしにG3 PoseSearchを本番有効化できない。"
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "従来software backendのstrict native/native校正は不合格。別backendの限定診断を継続中。成功していない現行pair/ABBA/BAABを完了とはしない。"
+    },
+    {
+      "number": 1431,
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "実表示hit muzzle/全cover segmentを修正、physical/net/paint不変のsourceとemitted回帰を実行。"
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "出荷bankはWiiU由来。S3の武器class別jump selector/実clip trackが未取得で、名前一覧だけからchooserを作らない。"
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "WiiU generic Damageと既存native-upper class layerを区別。S3武器別selector/joint曲線が未取得。"
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "現在のcadence/stride/source bankは実装済み。S3弱入力斜め歩行のsource locomotion/selectorがなく、WiiUの2D合成をS3式と断定しない。"
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "native paint/droplet/CPU turfは検証。7phase permutation、nearest-foot、droplet初期動力/height/default/空間変換のsource algorithmが不足。"
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "256shoe catalogは能力/素材metadataでsole/foot座標を含まない。2足のsource model/sole/reference transformがなく、gear abilityから発射高を捏造しない。"
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "チャージ中逆/直交入力でsolver減速を打ち消す不具合を修正。S3減速式/開始frameはsourceで未確認。"
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "B tapとholdの別trajectory、buffer/coyote等は実装済み。既存5F/.7のexact S3 source calibrationが不足。"
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "既存offscreen budgetに加えhidden idle/special hair target遅延/first-draw同値復元、exact native ground重複除去を実装。"
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "無限下方damageはfinite境界/DPS/owner回帰で解消済み。既存12WU ray/14WU foot境界はinternalで、追加のexact-source cutoff値/座標規約が不足。"
+    },
+    {
+      "number": 725,
+      "title": "[INKWAVE][Aim] DeviceMotion gyro sensitivity spans ~1.30x-3.27x instead of Splatoon 3 measured ~1x-3x range",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "既存gyro endpoint bridgeは暫定で、中間値のsource曲線/version/methodが不明。実機検証は完了条件から除外。"
+    },
+    {
+      "number": 642,
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "composer例外退役とScreenFX active時precision維持、世代毎post/scene役割を修正。software pixels/実GL資源/復帰回帰を実行。"
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "4+1WU/12F等既存挙動は検証済み。S3 easing/glide/dive/defaultと独立空間変換のsourceが不足。"
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "legacy gain移行喪失と上位yaw重複を修正。S3 right-stick transfer curveは公開sourceに未取得、bridgeは明示的な暫定値。"
+    },
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "status": "unresolved_specific_source_or_implementation_condition",
+      "reason": "RainNum72はpaint call数ではない。生成/reuse/lifetime/接地/paint writeのsource lifecycleが未decoded。"
+    },
+    {
+      "number": 79,
+      "title": "[INKWAVE][Shooter] Splattershot impact paint still ignores floor-wall size and impact-angle rules",
+      "status": "implementation_validated_pending_final_hosted_CI",
+      "reason": "既存live Splattershotのfloor/wall/impact-angle paint/independentdrop/CPU turf実装を再検証。"
+    }
+  ],
+  "closureCandidatesAfterRequiredCI": [
+    1431,
+    79,
+    845,
+    642
+  ],
+  "newClosuresAtSnapshot": 0,
+  "commits": [
+    {
+      "sha": "5197d408f8a7ee109ca74cda7b42fd514b57b539",
+      "subject": "ci: require wide Git metadata and exact source verifier regressions",
+      "files": [
+        "scripts/ci/inkwave-test-suites.json"
+      ]
+    },
+    {
+      "sha": "31c50e8b2a1486a15b9a1e8c0f965b7b2702e6f4",
+      "subject": "fix: bound every literal Git tree metadata capture",
+      "files": [
+        "patches/native-stages/tests/manta-source.test.mjs",
+        "patches/native-stages/tests/shipshape-source.test.mjs",
+        "patches/native-stages/tests/wahoo-source.test.mjs",
+        "reports/brush-downhill-contact-20261027/audit-build.mjs",
+        "reports/locomotion-surface-20261026/audit-build-identity.mjs",
+        "scripts/check-five-shooter-network.mjs",
+        "scripts/check-inkwave-browser.mjs",
+        "scripts/check-inkwave-context-recovery-browser.mjs",
+        "scripts/check-inkwave-flow-render.mjs",
+        "scripts/check-inkwave-network-browser.mjs",
+        "scripts/check-inkwave-paint-mask.mjs",
+        "scripts/check-inkwave-wall-render.mjs",
+        "scripts/lib/inkwave-public-boot-evidence.mjs",
+        "scripts/tests/inkwave-build-packaging.test.mjs",
+        "scripts/tests/inkwave-runtime-evidence.test.mjs",
+        "tools/squid-heading-qa/reference.mjs",
+        "tools/swim-entry-qa/reference.mjs"
+      ]
+    },
+    {
+      "sha": "b03fce6448e893e1af673c63335608397760c6e0",
+      "subject": "Correct review counts and owner clock evidence references",
+      "files": [
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+        "reports/issue-resolution-20261028/ci-history.md",
+        "reports/issue-resolution-20261028/owner-clock-main-inclusion.json",
+        "reports/issue-resolution-20261028/owner-clock-main-inclusion.md"
+      ]
+    },
+    {
+      "sha": "21178d30ff6df353ec3d83a699e37c2561ff1269",
+      "subject": "Bound prebuilt digest-entry test waits",
+      "files": [
+        "patches/native-stages/tests/prebuilt-stream-lifetime.test.mjs"
+      ]
+    },
+    {
+      "sha": "67c9d444be93d57b039eba69b9874ed0d83e4581",
+      "subject": "style: normalize native historical fixture ending",
+      "files": [
+        "patches/network-replication/tests/native-turf-historical-source.test.mjs"
+      ]
+    },
+    {
+      "sha": "adb0133158e5db3d01ec8253b53fada09772faa6",
+      "subject": "test: retain both reviewed hair composition receipts",
+      "files": [
+        "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs"
+      ]
+    },
+    {
+      "sha": "7c3a3ebbd08de847a16f6a2b803e594c8286a933",
+      "subject": "fix: verify runtime sources in bounded literal Git path batches",
+      "files": [
+        "scripts/lib/inkwave-runtime-evidence.mjs",
+        "scripts/tests/inkwave-runtime-evidence.test.mjs"
+      ]
+    },
+    {
+      "sha": "bfb393823e604b3f8838341157ef2d5bb9111d9f",
+      "subject": "ci: require native replay and complete emitted weapon traces",
+      "files": [
+        ".github/workflows/validate-inkwave-update.yml",
+        "scripts/tests/inkwave-source-coverage.test.mjs"
+      ]
+    },
+    {
+      "sha": "b508070586edf1e6c10be4bb2241f08eb7968308",
+      "subject": "build: require emitted network modules to identify exact sources",
+      "files": [
+        "patches/network-replication/adapter.mjs",
+        "scripts/build-inkwave.mjs",
+        "scripts/ci/inkwave-test-suites.json",
+        "scripts/lib/inkwave-runtime-evidence.mjs"
+      ]
+    },
+    {
+      "sha": "0f6069479c45add0267db133af8e325d44f1cb04",
+      "subject": "Reject reentrant native frames before clocks and effects can change",
+      "files": [
+        "patches/network-replication/tests/trusted-native-replay.test.mjs",
+        "patches/network-replication/trusted-native-replay-contract.md",
+        "patches/network-replication/trusted-native-replay.mjs",
+        "reports/issue-resolution-20261029/trusted-native-replay/native-reentry-guard.json",
+        "reports/issue-resolution-20261029/trusted-native-replay/native-reentry-old-control.log.gz",
+        "reports/issue-resolution-20261029/trusted-native-replay/source-final-123.log.gz"
+      ]
+    },
+    {
+      "sha": "e59952b6765f9e25c45a2ec2c5183092df8967e1",
+      "subject": "docs: bind native turf replay comparison evidence",
+      "files": [
+        "reports/issue-resolution-20261028/native-turf-replay/README.md",
+        "reports/issue-resolution-20261028/native-turf-replay/comparison.json",
+        "reports/issue-resolution-20261028/native-turf-replay/d81-build-manifest.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/d81-emitted-test.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/d81-emitted-trace.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/d81-source-test.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/d81-source-trace.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/emitted-test.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/emitted-trace.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/muzzle-emitted-matched.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/muzzle-emitted-matched.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/muzzle-negative.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/muzzle-negative.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/muzzle-source-matched.json.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/muzzle-source-matched.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/source-test.log.gz",
+        "reports/issue-resolution-20261028/native-turf-replay/source-trace.json.gz"
+      ]
+    },
+    {
+      "sha": "98bc3b48f9de21e09314bf1843bf74884bb53fec",
+      "subject": "test: require source and emitted native opening coverage",
+      "files": [
+        "patches/network-replication/tests/native-turf-historical-source.test.mjs",
+        "patches/network-replication/tests/native-turf-start-replay.test.mjs"
+      ]
+    },
+    {
+      "sha": "e42bff0737885fd9cf54380fd2a5b5778455ebe8",
+      "subject": "test: trace native muzzle initialization ownership",
+      "files": [
+        "patches/network-replication/tests/native-turf-muzzle-probe.mjs"
+      ]
+    },
+    {
+      "sha": "e77917a9eed5cd7540c6b9b9b61062af85e9ac4d",
+      "subject": "test: advance native projectiles after turf match step",
+      "files": [
+        "patches/network-replication/tests/native-turf-replay-fixture.mjs"
+      ]
+    },
+    {
+      "sha": "d85c4db63911a735f6af57c90dd6f7c807207c0e",
+      "subject": "test: trace native spawn through negotiated command codec",
+      "files": [
+        "patches/network-replication/tests/native-turf-replay-fixture.mjs",
+        "patches/network-replication/tests/native-turf-start-replay.test.mjs"
+      ]
+    },
+    {
+      "sha": "b2b875834cb34447f3de1eb1661ce651d2ceba3c",
+      "subject": "test: bind native replay requests to trusted match epoch",
+      "files": [
+        "patches/network-replication/tests/native-turf-start-replay.test.mjs"
+      ]
+    },
+    {
+      "sha": "c45766518ae8284e294620bc261a040cdc62e37b",
+      "subject": "Exercise real Turf opening and first native replay action",
+      "files": [
+        "patches/network-replication/tests/fixtures/native-charger-9d8efc/README.md",
+        "patches/network-replication/tests/fixtures/native-charger-9d8efc/native-charger-input.mjs",
+        "patches/network-replication/tests/fixtures/native-charger-9d8efc/native-charger-replay.mjs",
+        "patches/network-replication/tests/native-turf-replay-fixture.mjs",
+        "patches/network-replication/tests/native-turf-session-reconnect.test.mjs",
+        "patches/network-replication/tests/native-turf-start-replay.test.mjs"
+      ]
+    },
+    {
+      "sha": "738eb79c371c4c98ce2b7d5ac318b7f9c5457971",
+      "subject": "Bind network source in runtime evidence fixtures",
+      "files": [
+        "scripts/tests/inkwave-runtime-evidence.test.mjs"
+      ]
+    },
+    {
+      "sha": "75cd567cf74cc938d3af985a2cb78be442d002c8",
+      "subject": "Preserve historical motion fixture across hair owner",
+      "files": [
+        "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs"
+      ]
+    },
+    {
+      "sha": "fa0c0bb95f25e02c1b55692a7d928aef41be8b69",
+      "subject": "Restore actual Boss predicate in pending FIFO source fixture",
+      "files": [
+        "patches/network-replication/tests/queue-network-receipts-20261027.test.mjs",
+        "reports/issue-resolution-20261029/trusted-native-replay/pending-fifo-fix.json",
+        "reports/issue-resolution-20261029/trusted-native-replay/pending-fifo-fixed.log.gz",
+        "reports/issue-resolution-20261029/trusted-native-replay/pending-fifo-old-control.log.gz"
+      ]
+    },
+    {
+      "sha": "ef9305fca0346ec608323055bf451951d6e5a986",
+      "subject": "Guard emitted network modules against missing source identity",
+      "files": [
+        "scripts/lib/inkwave-network-source-coverage.mjs",
+        "scripts/tests/inkwave-network-source-coverage.test.mjs"
+      ]
+    },
+    {
+      "sha": "79f56ccceacb6e4df18aa4d9b6f40c33b4788027",
+      "subject": "Preserve native cancellation, armor effects and trusted initialization context",
+      "files": [
+        "patches/network-replication/native-command-wire.mjs",
+        "patches/network-replication/tests/native-command-wire.test.mjs",
+        "patches/network-replication/tests/trusted-native-replay.test.mjs",
+        "patches/network-replication/trusted-native-replay-contract.md",
+        "patches/network-replication/trusted-native-replay.mjs",
+        "reports/issue-resolution-20261029/trusted-native-replay.md",
+        "reports/issue-resolution-20261029/trusted-native-replay/old-cancel-negative.log.gz",
+        "reports/issue-resolution-20261029/trusted-native-replay/production-gap.json",
+        "reports/issue-resolution-20261029/trusted-native-replay/production-gap.log.gz",
+        "reports/issue-resolution-20261029/trusted-native-replay/source-command-owner-validation.log.gz",
+        "reports/issue-resolution-20261029/trusted-native-replay/source-final.log.gz",
+        "reports/issue-resolution-20261029/trusted-native-replay/summary.json"
+      ]
+    },
+    {
+      "sha": "96138d06350cb7d2b420f5d835d6c662585a5c6a",
+      "subject": "Connect canonical native input, epoch scopes and worker effect transport",
+      "files": [
+        "patches/network-replication/native-command-wire.mjs",
+        "patches/network-replication/tests/native-command-wire.test.mjs",
+        "patches/network-replication/tests/trusted-native-replay.test.mjs",
+        "patches/network-replication/trusted-native-replay-contract.md",
+        "patches/network-replication/trusted-native-replay-worker.mjs",
+        "patches/network-replication/trusted-native-replay.mjs"
+      ]
+    },
+    {
+      "sha": "f0829c3e933d5cd8312eb74e5e4476ab966b8d0a",
+      "subject": "Add versioned native input codec and fixed v2 room admission policy",
+      "files": [
+        "patches/network-replication/native-command-wire.mjs",
+        "patches/network-replication/tests/native-command-wire.test.mjs",
+        "patches/network-replication/trusted-native-replay.mjs"
+      ]
+    },
+    {
+      "sha": "305550706e6079f181ebcaee052fc2f241d5b9ec",
+      "subject": "Add isolated native replay and contact capabilities without production admission",
+      "files": [
+        "patches/network-replication/tests/trusted-native-replay.test.mjs",
+        "patches/network-replication/trusted-native-replay-contract.md",
+        "patches/network-replication/trusted-native-replay.mjs"
+      ]
+    },
+    {
+      "sha": "ba781d79274d78885ce724ebb5f3081c7243b0c1",
+      "subject": "ci: require native sampling and listener observer contracts",
+      "files": [
+        "scripts/ci/inkwave-test-suites.json"
+      ]
+    },
+    {
+      "sha": "a299f2920bed4f2fbff87d8736df9e850a670d85",
+      "subject": "docs: state exact representative weapon coverage",
+      "files": [
+        "reports/issue-resolution-20261029/canonical-weapon-actions.md"
+      ]
+    },
+    {
+      "sha": "1113eda3d153f3e4bb4853e14fd8f109d143e263",
+      "subject": "Record passing desktop and touch component audit",
+      "files": [
+        "reports/issue-resolution-20261028/input-listener-audit-followup.md"
+      ]
+    },
+    {
+      "sha": "73727b5b972b5ccace942ef6952eb23bd5a8c944",
+      "subject": "Guard non-DOM listener targets in touch audit",
+      "files": [
+        "scripts/lib/inkwave-input-listener-audit.mjs",
+        "scripts/tests/inkwave-input-listener-audit.test.mjs"
+      ]
+    },
+    {
+      "sha": "0ecb7e407edcdbb360d6c523fceb3488549836b4",
+      "subject": "Bind browser audit and cover touch listener owners",
+      "files": [
+        "scripts/check-inkwave-issue-batch-browser.mjs",
+        "scripts/lib/inkwave-input-listener-audit.mjs",
+        "scripts/tests/inkwave-input-listener-audit.test.mjs"
+      ]
+    },
+    {
+      "sha": "2284c80dd7d30f35ed29136c895890c3e4db5cd1",
+      "subject": "Record input listener audit evidence and limits",
+      "files": [
+        "reports/issue-resolution-20261028/input-listener-audit-followup.md"
+      ]
+    },
+    {
+      "sha": "bc9592f16ff3bf94f9e8ae7ede2fa14e7da4e1bc",
+      "subject": "Fail closed on emitted trace selection and frozen corpus",
+      "files": [
+        "patches/splatoon3/tests/native-action-trace-binding.mjs",
+        "patches/splatoon3/tests/native-action-trace-binding.test.mjs",
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs",
+        "patches/splatoon3/tests/native-action-trace.test.mjs",
+        "reports/issue-resolution-20261028/native-action-traces-followup.md"
+      ]
+    },
+    {
+      "sha": "6b8ea9cda6d4b2a15a55732c2ca571b03ed8e4bd",
+      "subject": "Record native action trace evidence and scope",
+      "files": [
+        "reports/issue-resolution-20261028/native-action-traces-followup.md"
+      ]
+    },
+    {
+      "sha": "a14895cffaeae1668fe87306562ee294bf68e980",
+      "subject": "Trace native cancellation and actor life identity",
+      "files": [
+        "patches/splatoon3/tests/native-action-representatives.test.mjs",
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs"
+      ]
+    },
+    {
+      "sha": "94b800746104c071d9cb66e866c249442530c2f3",
+      "subject": "Record matched native action traces for 65 mains",
+      "files": [
+        "patches/splatoon3/tests/fixtures/native-action-trace-035.json.gz",
+        "patches/splatoon3/tests/fixtures/native-action-trace-035.meta.json",
+        "patches/splatoon3/tests/native-action-trace.test.mjs"
+      ]
+    },
+    {
+      "sha": "94d70565f3a8a43e69503371c76ec33e3085e84c",
+      "subject": "Trace native ink recovery stop clocks",
+      "files": [
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs",
+        "patches/splatoon3/tests/native-action-trace.test.mjs"
+      ]
+    },
+    {
+      "sha": "c2f556eca37ebef263083c2906ce5812a23acdc8",
+      "subject": "Bind emitted canonical traces to the selected build",
+      "files": [
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs"
+      ]
+    },
+    {
+      "sha": "e7cd871d9db90909c29f313ba3ba945bd4a62245",
+      "subject": "Allow native traces to use sealed canonical module",
+      "files": [
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs"
+      ]
+    },
+    {
+      "sha": "c6b648f2faad8c0e329faf622b873f83e2242894",
+      "subject": "Drive native traces through canonical input and clock admission",
+      "files": [
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs",
+        "patches/splatoon3/tests/native-action-trace.test.mjs"
+      ]
+    },
+    {
+      "sha": "4efd9677d4d1afbbbfa7b37c8527338a15eaacd2",
+      "subject": "Record native charger flights and projectile identities",
+      "files": [
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs",
+        "patches/splatoon3/tests/native-action-trace.test.mjs"
+      ]
+    },
+    {
+      "sha": "cc859699143b3fcc4e40dafc6b0ab4da4e68adbe",
+      "subject": "Trace native action streams across 65 mains",
+      "files": [
+        "patches/splatoon3/tests/native-action-representatives.test.mjs",
+        "patches/splatoon3/tests/native-action-trace-fixture.mjs",
+        "patches/splatoon3/tests/native-action-trace.test.mjs"
+      ]
+    },
+    {
+      "sha": "72b9b9b82b1c89545cd8e1855d8a8197db88c4c9",
+      "subject": "test: verify canonical native weapon modes and emitted identity",
+      "files": [
+        "patches/network-replication/tests/canonical-weapon-modes.test.mjs",
+        "reports/issue-resolution-20261029/canonical-weapon-actions.md",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/before-cancel-emitted.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/before-life-emitted.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/behavior-report-append.md",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/build.json",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/build.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/core-emitted.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/core-source.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/inventory-emitted.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/inventory-source.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/inventory.json.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/modes-emitted.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/modes-source.log.gz",
+        "reports/issue-resolution-20261029/canonical-weapon-actions/verification.json"
+      ]
+    },
+    {
+      "sha": "87438f0b568a6c290e8a8008a7a6082a4d1ded28",
+      "subject": "test: reject deferred hair aliases to recycled clip rows",
+      "files": [
+        "patches/local-quality/tests/offscreen-hair-targets.test.mjs",
+        "reports/issue-resolution-20261028/cpu-continuation/README.md",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/hair-private-pool-negative.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/hair-private-pool-opt.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/receipts.json"
+      ]
+    },
+    {
+      "sha": "57c0714f0c08752e4a16a3e6e7aa135ed9bdd0a1",
+      "subject": "test: retain eight-actor CPU controls and profile findings",
+      "files": [
+        "reports/issue-resolution-20261028/cpu-continuation/README.md",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/a1-result.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/a1-tidewater-trace.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/a2-result.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/a2-tidewater-trace.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/b1-result.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/b1-tidewater-trace.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/comparison.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/comparison.log.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/diagnostics.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/hair-allocation-opt.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/hair-allocation-root.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/normal-raf-analysis.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/normal-raf-analysis.log.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/normal-raf-combat-0.cpuprofile.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/normal-raf-combat-1.cpuprofile.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/normal-raf-result.json.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/roller-world-emitted.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/roller-world-integration.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/evidence/roller-world-source-final.tap.gz",
+        "reports/issue-resolution-20261028/cpu-continuation/receipts.json",
+        "scripts/benchmark-inkwave-composed-cpu.mjs",
+        "scripts/compare-inkwave-composed-cpu.mjs",
+        "scripts/tests/inkwave-composed-cpu-comparison.test.mjs"
+      ]
+    },
+    {
+      "sha": "1292fd4b6c69253473d5ebcc364a5ef86b6dfe4a",
+      "subject": "Clean up lease after lost begin response",
+      "files": [
+        "scripts/lib/inkwave-native-combat-window.mjs",
+        "scripts/tests/inkwave-native-combat-window.test.mjs"
+      ]
+    },
+    {
+      "sha": "783f2d96141ea78419a4efb3ffc6ca9a4e1ce893",
+      "subject": "Keep native combat observation valid through capture",
+      "files": [
+        "scripts/check-inkwave-gameplay-resources.mjs",
+        "scripts/lib/inkwave-native-combat-window.mjs",
+        "scripts/tests/inkwave-native-combat-window.test.mjs"
+      ]
+    },
+    {
+      "sha": "0bbd8054c28e9a1fb0fe74e6f438ea3f95638df7",
+      "subject": "Audit mobile layout observer disposal",
+      "files": [
+        "scripts/lib/inkwave-input-listener-audit.mjs",
+        "scripts/tests/inkwave-input-listener-audit.test.mjs"
+      ]
+    },
+    {
+      "sha": "a2adb0ffda28e1aa144783ce796c38616a43b802",
+      "subject": "Count sentinel only at its dispatch target",
+      "files": [
+        "scripts/lib/inkwave-input-listener-audit.mjs",
+        "scripts/tests/inkwave-input-listener-audit.test.mjs"
+      ]
+    },
+    {
+      "sha": "4c08bd682c6b8c90b35947b95d1ba42adc4aaf52",
+      "subject": "Audit input listener ownership instead of fixed counts",
+      "files": [
+        "patches/local-quality/tests/input-owned-listeners.test.mjs",
+        "scripts/check-inkwave-issue-batch-browser.mjs",
+        "scripts/lib/inkwave-input-listener-audit.mjs",
+        "scripts/tests/inkwave-input-listener-audit.test.mjs"
+      ]
+    },
+    {
+      "sha": "58b08d7dd8e07919d5e8432454bca209dfceed45",
+      "subject": "perf: preserve unread motion clips during deferred hair evaluation",
+      "files": [
+        "patches/local-quality/offscreen-hair-target-adapter.mjs",
+        "patches/local-quality/tests/offscreen-hair-targets.test.mjs"
+      ]
+    },
+    {
+      "sha": "cf6962461ca11bbfabe927c6ea00415a727e011e",
+      "subject": "test: replay sub and special traces through canonical input",
+      "files": [
+        "patches/network-replication/tests/canonical-sub-special-traces.test.mjs",
+        "patches/network-replication/tests/fixtures/action-traces/README.md",
+        "patches/network-replication/tests/fixtures/action-traces/cancel-recorded.json",
+        "patches/network-replication/tests/fixtures/action-traces/collect.mjs"
+      ]
+    },
+    {
+      "sha": "efa43af9aeb36be722050d898ac2465375c441e8",
+      "subject": "test: record native action and resource authority traces",
+      "files": [
+        "patches/network-replication/tests/fixtures/action-traces/README.md",
+        "patches/network-replication/tests/fixtures/action-traces/capture.mjs",
+        "patches/network-replication/tests/fixtures/action-traces/collect.mjs",
+        "patches/network-replication/tests/fixtures/action-traces/source-recorded.json",
+        "patches/network-replication/tests/native-action-traces.test.mjs"
+      ]
+    },
+    {
+      "sha": "1f567b96520ea4442c29ff5a64ca1190fc0dea7a",
+      "subject": "fix: bind canonical commands to current native identity and life",
+      "files": [
+        "patches/network-replication/canonical-weapon-actions.mjs",
+        "patches/network-replication/tests/canonical-weapon-actions.test.mjs"
+      ]
+    },
+    {
+      "sha": "14e694ca0130bdb16fce96282bd9e46bdca78652",
+      "subject": "fix: preserve native hold cancellation in canonical commands",
+      "files": [
+        "patches/network-replication/canonical-weapon-actions.mjs",
+        "patches/network-replication/tests/canonical-weapon-actions.test.mjs"
+      ]
+    },
+    {
+      "sha": "a56426c3bf9f5c7633747f2f0eb9a75a853fba9c",
+      "subject": "ci: run native RAF gate when its sampling contract changes",
+      "files": [
+        ".github/workflows/inkwave-gameplay-resources.yml"
+      ]
+    },
+    {
+      "sha": "e404a0b1aa3d3c4fec0d744b5c78d222811ef315",
+      "subject": "build: bind canonical native action source to runtime identity",
+      "files": [
+        "patches/network-replication/adapter.mjs"
+      ]
+    },
+    {
+      "sha": "91378adf97486050f08d8aea776e5dc5af149a0a",
+      "subject": "feat: gate native weapon requests with canonical input and resource ownership",
+      "files": [
+        "patches/network-replication/canonical-weapon-actions.mjs",
+        "patches/network-replication/tests/canonical-weapon-actions.test.mjs"
+      ]
+    },
+    {
+      "sha": "008e1883acb4e8d0e99d78119cc0b91f3b299aba",
+      "subject": "perf: remove duplicate roller paint world updates",
+      "files": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "patches/splatoon3/tests/fixtures/roller-paint-world-before-03523329.mjs.txt",
+        "patches/splatoon3/tests/roller-paint-world-update.test.mjs",
+        "scripts/analyze-inkwave-cpu-profile.mjs",
+        "scripts/tests/inkwave-cpu-profile.test.mjs"
+      ]
+    },
+    {
+      "sha": "bf12bd30173729f90b373f6bc3b6867ba9389971",
+      "subject": "Provide offscreen adapter to performance test contexts",
+      "files": [
+        "patches/local-quality/tests/performance-v2-ao.test.mjs",
+        "patches/local-quality/tests/performance-v2-geometry.test.mjs"
+      ]
+    },
+    {
+      "sha": "62ea00729c49b159acf898c90224faefbf80b81c",
+      "subject": "ci: wait for real gameplay frames in slow native RAF windows",
+      "files": [
+        ".github/workflows/inkwave-gameplay-resources.yml",
+        "scripts/check-inkwave-gameplay-resources.mjs",
+        "scripts/lib/inkwave-native-combat-window.mjs",
+        "scripts/tests/inkwave-native-combat-window.test.mjs"
+      ]
+    }
+  ],
+  "receipts": [
+    {
+      "file": "evidence/common-emitted-summary.json.gz",
+      "sha256": "3359c0c9af3f66add6c83bb6b38129385bb2ab02ebdeff95c1cf2ca9747cf346",
+      "uncompressedSha256": "d589212b6d28cdb118127f0a0d06367ef71b7bab6213bdd584f24f7b3942b84d",
+      "bytes": 2239
+    },
+    {
+      "file": "evidence/common-emitted.tap.gz",
+      "sha256": "ffefbd487ffeca0e87519a5fe9d00064a7ccde422b91e6f4331906238aa13f1c",
+      "uncompressedSha256": "2bb4433251eb19207039b2afa8b0aea62a9703c3668161cc03ceb05143006614",
+      "bytes": 85849
+    },
+    {
+      "file": "evidence/opt-emitted-summary.json.gz",
+      "sha256": "9001e444e462692e8f47f5e960cda0b91fbf2bf4d95ede82578c8e7a127eb1b3",
+      "uncompressedSha256": "c2361ebc818ea6b18c8d45a65f29deca74dd27455abb2772a78bd6925407da14",
+      "bytes": 2021
+    },
+    {
+      "file": "evidence/opt-emitted.tap.gz",
+      "sha256": "30136a4b8b4834466577b7cf480b2c7e2ea5915a87cfac0c2f073a0a68bb32eb",
+      "uncompressedSha256": "fc2a0660cc5198c3ff15dd71edd28d7c7459aa420c46b52905d9798121f323ee",
+      "bytes": 85780
+    },
+    {
+      "file": "evidence/native-lease.json.gz",
+      "sha256": "b177dddde8acb1f3a81824ede70bd9a4174a8be5e812c8663159c18b4c9484fa",
+      "uncompressedSha256": "c3547d516a8af1f77043099705934803f0265dd2d32f2bb2c7dab392b9b32ab9",
+      "bytes": 156332
+    },
+    {
+      "file": "evidence/common-hair.json.gz",
+      "sha256": "04314d6ab100a4749df2fbd1648d6c8e72f1514a3769161c0561ab66206b3ee1",
+      "uncompressedSha256": "f4a24db149ddf6f7058adfb988f01d1096fdd6cc4ddf78d063cef51cc2455294",
+      "bytes": 196206
+    },
+    {
+      "file": "evidence/opt-hair.json.gz",
+      "sha256": "ecb8c8c9c4777ec182b5cf8e8c59aafe6c66a50ac0ffd17c710bffb3d808999c",
+      "uncompressedSha256": "9138152c47cbeb5e1f74ad024db21ac0641f5f39fc205d18b31bf5c26fd84d06",
+      "bytes": 196206
+    },
+    {
+      "file": "evidence/source-native-summary.json.gz",
+      "sha256": "84d6464f0f044d12d346306b431adef79f82ca09a02ab784d8a339cf3b900707",
+      "uncompressedSha256": "6c5eefd4307c28f3e62e4f609e9f325036409543e03599516c03ab20b975843b",
+      "bytes": 8004
+    },
+    {
+      "file": "evidence/source-native.tap.gz",
+      "sha256": "e50b98915e8584b219c476443932a88c3d40a2034d79b9f6593fa4d35e089c06",
+      "uncompressedSha256": "3e6c0c99ba2ad294e8159973146b50a209bbc9e40331abd6dc5a9ae070731310",
+      "bytes": 24877
+    },
+    {
+      "file": "evidence/production-gap.json.gz",
+      "sha256": "a9b994c55b5e3308f6062ec95e632aede6fc07107ca70a5c0a97afbd4392d569",
+      "uncompressedSha256": "d248a3724edfdd70af2e1afebfc7a41e86e25acc3c82228235c3e9f1d50d8421",
+      "bytes": 4125
+    },
+    {
+      "file": "evidence/historical-current-root.tap.gz",
+      "sha256": "4e9f740387872ee778a8658c2ef42acbf14cb6a8fb118eec087eb998a067fc5f",
+      "uncompressedSha256": "5ba7c752355e88175b71330852e7d3facf60202b30059aebbd50b4dd8173bea7",
+      "bytes": 3255
+    },
+    {
+      "file": "evidence/review-prebuilt.tap.gz",
+      "sha256": "25884ddafd8a9fe9a6f8eb5dd2c1cf9d6b2128d58821015ef512940b9237f4ce",
+      "uncompressedSha256": "90fce08a0f4a3e9273da176f4cf05fb3cf08954e7c8ab33634af0a0b71c54d28",
+      "bytes": 6598
+    },
+    {
+      "file": "evidence/runner-complete.tap.gz",
+      "sha256": "44e34c5bf590a6b3e6557f314a6b9c11942047cd0dd43c254113653ff3cdb45a",
+      "uncompressedSha256": "da22303ed92eb2f085755a37aee8baa40d2a718d13b3e68e06e4fe08ab6d3438",
+      "bytes": 20334
+    },
+    {
+      "file": "evidence/historical-CI-audit.json.gz",
+      "sha256": "9dfa7ca89c43e07925b47fe84f4ebd5050358307f75dcecdf139ffdf08e8a673",
+      "uncompressedSha256": "eb4cf865e5b4be163b465f3539b35bc02bd666b601ab452bc2253f5b1c73b227",
+      "bytes": 15645
+    },
+    {
+      "file": "evidence/historical-CI-audit.md.gz",
+      "sha256": "82560264d99bb33a9442900e2a06a5a74b93f138417836f03c40ee81d72e4e06",
+      "uncompressedSha256": "1337c8be0040f162ccde97b9f13e85952babc78b80b6cec91dbef03e4b521011",
+      "bytes": 7824
+    },
+    {
+      "file": "evidence/common-packaging.tap.gz",
+      "sha256": "f9c8449983142a2f3edbe96b194eb85853c3dc757afb8648cd5a1e8ec66e1eb6",
+      "uncompressedSha256": "cfdb1b4291df8ea23c2d194f1e468e97d3bbd66f058be7738a586850ad5a1204",
+      "bytes": 3316
+    },
+    {
+      "file": "evidence/opt-packaging.tap.gz",
+      "sha256": "0cb35dac6383784aaf703d407d4c5a3e5c13d80e90435b5f33fd3e425ccb9113",
+      "uncompressedSha256": "b7c25df32646e6735678cbcddea98a593c67018fcbc93900f132ac154d03383d",
+      "bytes": 3314
+    },
+    {
+      "file": "evidence/pr1909-world.tap.gz",
+      "sha256": "a02da815299bd5475a44dffde68442e9339a8491220f085833fd5f11a08752c0",
+      "uncompressedSha256": "b6ed3a7939b4f8bafbc02a57eb7e48e10f2a4398884d9e1acc0bc7443378925a",
+      "bytes": 2129
+    },
+    {
+      "file": "evidence/pr1909-source.tap.gz",
+      "sha256": "ca78ddeffbbc1dc580f6d396ad93426770e479dd5a533be9e95804615d0f2a6d",
+      "uncompressedSha256": "93f5e7b5e0fd0240f3200fe15a9b0084cd74bc20f73a5eff08131fdfa0240270",
+      "bytes": 12149
+    },
+    {
+      "file": "evidence/pr1909-origin.tap.gz",
+      "sha256": "17dcb177187c5bd965999d7e6456f72cc8fdb59635f84dceb8102f35b4f70c94",
+      "uncompressedSha256": "7c441f63352ada0d8aec8b6df63b304d8b9c4f9aa402dd155ee8ebd84b0c533c",
+      "bytes": 2323
+    }
+  ],
+  "reviewFixes": {
+    "digestWait": "21178d30",
+    "countsPathsPhases": "b03fce64"
+  },
+  "limits": [
+    "212 includes65 nested cases; overlapping suite counts are not added.",
+    "Unconnected native authority is not fixed production security.",
+    "No total CPU/FPS/device gain claim.",
+    "Private Drive IDs/URLs/raw assets are not published."
+  ]
+}
