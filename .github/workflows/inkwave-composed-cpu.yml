@@ -1,6 +1,7 @@
 name: INKWAVE composed CPU regression
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
     paths:
       - 'scripts/inkwave-source-composition.mjs'
       - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
@@ -43,6 +44,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /*

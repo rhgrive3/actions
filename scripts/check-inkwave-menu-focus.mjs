@@ -112,7 +112,7 @@ try {
   });
   await page.goto(`http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`);
   await page.waitForFunction(() => window.menuReady);
-  result.checks = await page.evaluate(() => {
+  result.checks = await page.evaluate(menuEpoch => {
     const check = (ok, label) => { if (!ok) throw Error(label); checks.push(label); };
     const checks = [], menus = window.menus, audit = window.focusAudit;
     const show = (name, back = false) => {
@@ -167,16 +167,32 @@ try {
     check(mode.onNav('down')===true&&menus._focus===modeCards[2],'cached mode nodes still read responsive column changes');
     menus._setFocus(modeCards[1],{snap:true});mode.onNav('right');
     check(menus._focus===modeCards[1],'horizontal mode navigation retains row boundaries');
-    const parent=modeRow.parentNode,next=modeRow.nextSibling;
-    menus._setFocus(modeCards[0],{snap:true});
-    let graphCount=audit.graphNavigation.length;
-    modeRow.remove();mode.onNav('right');
-    check(audit.graphNavigation.length===graphCount+1&&menus._focus===modeCards[0],'disconnected cached row delegates native graph without disconnected focus');
-    parent.insertBefore(modeRow,next);
-    const moved=modeCards.at(-1);mode.el.appendChild(moved);
-    graphCount=audit.graphNavigation.length;mode.onNav('down');
-    check(audit.graphNavigation.length===graphCount+1,'reparented cached card delegates the native graph');
-    modeRow.appendChild(moved);modeRow.style.gridTemplateColumns=columns;
+    const auditModeOwnership = () => {
+      const parent=modeRow.parentNode,next=modeRow.nextSibling;
+      menus._setFocus(modeCards[0],{snap:true});
+      let graphCount=audit.graphNavigation.length;
+      modeRow.remove();
+      if(menuEpoch==='a1381283-screen-owned-caches'){
+        mode.onNav('right');
+        check(audit.graphNavigation.length===graphCount+1&&menus._focus===modeCards[0],'disconnected cached row delegates native graph without disconnected focus');
+        parent.insertBefore(modeRow,next);
+        const moved=modeCards.at(-1);mode.el.appendChild(moved);
+        graphCount=audit.graphNavigation.length;mode.onNav('down');
+        check(audit.graphNavigation.length===graphCount+1,'reparented cached card delegates the native graph');
+        modeRow.appendChild(moved);
+      }else if(menuEpoch==='historical-stage-picker'){
+        let missingRowError;
+        try{mode.onNav('right');}catch(error){missingRowError=error;}
+        check(missingRowError instanceof TypeError&&audit.graphNavigation.length===graphCount&&menus._focus===modeCards[0],'historical detached row preserves prior TypeError');
+        parent.insertBefore(modeRow,next);
+        const moved=modeCards.at(-1);mode.el.appendChild(moved);
+        graphCount=audit.graphNavigation.length;
+        check(mode.onNav('down')===true&&menus._focus===modeCards[2]&&audit.graphNavigation.length===graphCount,'historical reparented card uses the live grid');
+        modeRow.appendChild(moved);
+      }else throw Error('Unknown menu-layout source epoch: '+menuEpoch);
+    }; // End epoch-specific mode ownership audit
+    auditModeOwnership();modeRow.style.gridTemplateColumns=columns;
+    let graphCount;
     menus._setFocus(null);graphCount=audit.graphNavigation.length;mode.onNav('left');
     check(audit.graphNavigation.length===graphCount+1&&menus._focus===null,'absent mode focus delegates native graph');
     show('loadout');show('mode');
@@ -184,7 +200,7 @@ try {
     check(audit.destroyedCallbacks.length === 0 && audit.screens.filter(x => x !== audit.screens.at(-1)).every(x => x.destroyed), 'all outgoing screens destroyed without late focus callbacks');
     check(audit.screens.every(row => row.owned && row.mounted), 'every observed focus callback belongs to its mounted screen');
     return checks;
-  });
+  },menuLayoutEpoch.epoch);
   result.consumed = [...new Set(await Promise.all(responses))].sort();
   assert.deepEqual(result.consumed, [...files].sort(), 'All pinned runtime inputs actually consumed');
   assert.deepEqual(result.errors, []);

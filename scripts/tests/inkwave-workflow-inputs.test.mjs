@@ -109,3 +109,57 @@ test('audio source audit has focused relevant triggers and an immutable manual e
  covered('inkwave-audio-source-audit.yml',['patches/splatoon3/runtime/audio/s3-real/manifest.json','patches/splatoon3/audio-adapter.mjs','inkwave-public/src/audio/audio.js','tools/audio/collect-public-reference-recordings.py']);
  const source=read('.github/workflows/inkwave-audio-source-audit.yml');assert.match(source,/  workflow_dispatch:/);assert.match(source,/ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/);assert.match(source,/retention-days: 5/);
 });
+
+function reviewJob(workflow,name){
+ const start=workflow.indexOf('  '+name+':\n');assert(start>=0,'job exists: '+name);
+ const rest=workflow.slice(start+1),next=rest.search(/\n  [a-zA-Z][a-zA-Z0-9_-]*:\n/);
+ return next<0?workflow.slice(start):workflow.slice(start,start+1+next);
+}
+function reviewCheckouts(job){
+ return job.split(/(?=^      - )/m).filter(step=>/\buses: actions\/checkout@v4\b/.test(step));
+}
+function reviewCiContracts({composed,swim,draft,validate}){
+ for(const [name,text] of [['composed CPU',composed],['swim QA',swim]]){
+  const trigger=text.match(/^  pull_request:\n    types: \[([^\]]+)\]\n    paths:/m);
+  assert(trigger,'explicit original PR types plus ready_for_review: '+name);
+  assert.deepEqual(trigger[1].split(',').map(x=>x.trim()),['opened','reopened','synchronize','ready_for_review']);
+ }
+ const cpu=reviewJob(composed,'source-and-emitted'),swimJob=reviewJob(swim,'compare-swim-entry');
+ assert.match(cpu,/^    if: github\.event\.pull_request\.draft == false$/m);
+ assert.match(swimJob,/^    if: github\.event_name != 'pull_request' \|\| github\.event\.pull_request\.draft == false$/m);
+ const checks=[
+  [reviewCheckouts(cpu),['${{ github.event.pull_request.head.sha }}'],'composed CPU'],
+  [reviewCheckouts(swimJob),['${{ github.event.pull_request.head.sha || github.sha }}','${{ env.SOURCE_SHA }}'],'swim QA'],
+  [reviewCheckouts(reviewJob(draft,'focused-regressions')),['${{ github.sha }}'],'draft repro'],
+  [reviewCheckouts(reviewJob(validate,'patch_tests')),['${{ env.SOURCE_SHA }}'],'patch shards'],
+  [reviewCheckouts(reviewJob(validate,'browser')),['${{ env.SOURCE_SHA }}'],'browser shards'],
+ ];
+ for(const [blocks,refs,label] of checks){
+  assert.equal(blocks.length,refs.length,label+' checkout count');
+  for(let i=0;i<refs.length;i++){
+   assert.equal((blocks[i].match(/^          persist-credentials: false$/gm)||[]).length,1,label+' does not retain checkout credentials');
+   assert.equal((blocks[i].match(/^          ref: (.+)$/gm)||[]).length,1,label+' exact one ref');
+   assert.ok(blocks[i].includes('          ref: '+refs[i]+'\n'),label+' immutable source ref');
+  }
+ }
+ assert.ok(swimJob.includes('          fetch-depth: 1\n          path: _swim_entry_reference\n'),'same-head shallow reference retained');
+ const browser=reviewJob(validate,'browser');
+ assert.ok(browser.includes('baseline_sha=5e28dbd16f7829aebd88052ff5f7fdf71f39fdad\n'),'pinned runtime baseline retained');
+ assert.ok(browser.includes('git fetch origin "$baseline_sha"\n'),'public origin baseline fetch retained');
+}
+test('review-triggered native jobs and read-only checkouts retain exact source and existing admission',()=>{
+ const files={composed:'.github/workflows/inkwave-composed-cpu.yml',swim:'.github/workflows/inkwave-swim-entry-qa.yml',draft:'.github/workflows/inkwave-draft-ci-failure-repro.yml',validate:'.github/workflows/validate-inkwave-update.yml'};
+ const input=Object.fromEntries(Object.entries(files).map(([key,file])=>[key,read(file)]));reviewCiContracts(input);
+ for(const key of ['composed','swim']){
+  const changed={...input,[key]:input[key].replace(', ready_for_review','')};
+  assert.throws(()=>reviewCiContracts(changed),key+' draft-to-ready event cannot be lost');
+ }
+ for(const [key,job] of [['composed','source-and-emitted'],['swim','compare-swim-entry'],['draft','focused-regressions'],['validate','patch_tests'],['validate','browser']]){
+  const section=reviewJob(input[key],job),blocks=reviewCheckouts(section);
+  for(const block of blocks){
+   const changed=block.replace('          persist-credentials: false\n','');assert.notEqual(changed,block);
+   assert.throws(()=>reviewCiContracts({...input,[key]:input[key].replace(block,changed)}),key+'/'+job+' checkout credential guard');
+  }
+ }
+ assert.throws(()=>reviewCiContracts({...input,validate:input.validate.replace('git fetch origin "$baseline_sha"','true')}),'baseline read fetch cannot be removed');
+});

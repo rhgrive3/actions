@@ -61,5 +61,5 @@
     ".github/workflows/validate-inkwave-update.yml": "54cf19bc325dce2a86a7fc7871f9c77ef07030ff65ed5c939545be8ed4859113",
     ".circleci/config.yml": "e0ef7cf14fc7cba1d95ae15828956706adae468bfe91ce1b50111c8275f47fab"
   },
-  "limits": "Exact local fix-forward candidate proof. Root independently owns source14files130/130 and mandatoryemitted34files369/369, immutablebuild6013/artifacts. These source/CI/historical runs overlap earlier proofs and are not added together; they do not establish hosted CI, hardware, currentmainfecc acceptance, or old45family resolution. All old7PRs alreadymerged externally; no closedPR retry/cancellation/mainwrite performed in this phase."
+  "limits": "Exact local fix-forward candidate proof. Root independently owns source 14 files, 130/130, and mandatory emitted 34 files, 369/369, with immutable build 6013/artifacts. These source/CI/historical runs overlap earlier proofs and are not added together; they do not establish hosted CI, hardware, current main fecc acceptance, or resolution of the old 45 families. All old 7 PRs were already merged externally; no closed-PR retry, cancellation, or main write was performed in this phase."
 }
