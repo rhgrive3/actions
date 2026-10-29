@@ -84,8 +84,8 @@ test('missing, duplicate, filtered, raw-source and optional remaining coverage i
       'patches/splatoon3/tests/catalog-horizontal-sector-aim.test.mjs'),
     source => source.replace('          node --experimental-vm-modules --test --test-concurrency=2 \\\n',
       '          if test -d _site; then\n          node --experimental-vm-modules --test --test-concurrency=2 \\\n')
-      .replace('            patches/splatoon3/tests/special-legacy-native-receiver.test.mjs\n',
-        '            patches/splatoon3/tests/special-legacy-native-receiver.test.mjs\n          fi\n'),
+      .replace('            ' + remainingEmittedFiles.at(-1) + '\n',
+        '            ' + remainingEmittedFiles.at(-1) + '\n          fi\n'),
   ]) {
     const mutant = change(workflow);
     assert.notEqual(mutant, workflow, 'negative control changes the actual workflow');

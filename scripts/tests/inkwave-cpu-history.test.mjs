@@ -85,3 +85,9 @@ test('the reviewed Lod owner descriptor seal rejects a modified bridge independe
  const gate=lodGate(s=>s.replace(from,to));
  assert.throws(()=>gate.restore(gate.closure),/exact reviewed Lod memo owner descriptors/);
 });
+
+// Retain the upstream owner's three independent fast-path mutation witnesses.
+test('current LOD fast-path mutation cannot bypass immutable reviewed oracle',()=>{
+ for(const mutate of [s=>s+'\n',s=>s.replace('if (!SI && !SW && !EX && !CL && !TI)','if (!SI && !SW && !EX && !CL)'),s=>s.replace('cornerMemo[original] = index + 1','cornerMemo[original] = index')])
+  assert.throws(()=>run(x=>x,x=>x,x=>x,mutate),/queue Lod memo owner|exact reviewed predecessor or current Lod raw source/);
+});

@@ -13,12 +13,12 @@ export function adaptQueueAudio20261029(rel,code){
       "if (inst === 'guitar') guitar(v, T, e.hz || e.ms.map(mtof), gate, vel, { mute: e.mute });",'reuse compiled frequencies while retaining custom event fallback');
   }
   if(rel!=='src/main.js')return code;
-  const cancel='    clearTimeout(this._resultsMusicTimer); this._resultsMusicTimer = null;\n'
+  const cancel='    if (this._resultsMusicTimer != null) clearTimeout(this._resultsMusicTimer); this._resultsMusicTimer = null;\n'
     + "    if (this.hud?._judgeOwner?.kind === 'ranked') this.hud._judgeOwner.cancel();\n";
   for(const header of ['  async startMatch(o = {}, flow = null) {\n','  async startNetMatch(cfg, nm) {\n','  async netMatchEnd() {\n','  async quitToMenu() {\n','  async _judge() {\n'])
     code=once(code,header,header+cancel,'retire results timer at '+header.trim());
   code=once(code,'  _playMusic(t, fade = 1.2) { this._musicTrack = t;',
-    '  _playMusic(t, fade = 1.2) { clearTimeout(this._resultsMusicTimer); this._resultsMusicTimer = null; this._musicTrack = t;','music transition owns results timer');
+    '  _playMusic(t, fade = 1.2) { if (this._resultsMusicTimer != null) clearTimeout(this._resultsMusicTimer); this._resultsMusicTimer = null; this._musicTrack = t;','music transition owns results timer');
   return once(code,`    setTimeout(() => {
       if (resultsCurrent() && m.state === 'results' && this.menus?.current === 'results') this._playMusic(won ? 'results_win' : 'results_lose');
     }, 2600);`,`    const resultsTimer = this._resultsMusicTimer = setTimeout(() => {
