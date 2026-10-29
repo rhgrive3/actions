@@ -72,7 +72,7 @@ export async function nativeTurfProbe(weapon='charger', {historic=false,generic=
 // owns only its state clock; the replay owner creates all private actors.
 // Native Match.update advances intro/playing without authoring actor state.
 export async function privateNativeRealm() {
- const genericExports="export {createTrustedNativeReplay,advanceTrustedNativeReplay,inspectTrustedNativeReplay,disposeTrustedNativeReplay} from './patches/network-replication/trusted-native-replay.mjs';";
+ const genericExports="export {createTrustedNativeReplay,advanceTrustedNativeReplay,inspectTrustedNativeReplay,disposeTrustedNativeReplay} from './patches/network-replication/trusted-native-replay.mjs'; export {createNativeCommandRoomPolicy,nativeCommandCapability,admitNativeCommandPeer,attachNativeCommandEnvelope,prepareNativeCommandEnvelope,commitNativeCommandEnvelope,retireNativeCommandPeer} from './patches/network-replication/native-command-wire.mjs';";
  const f=await sourceLoadedActorFixture({extraExports:extraExports+genericExports,moduleTransform:observeResources});
  await f.make();f.reset();
  const {G}=f;G.mode='match';G.game={settings:{},menus:{current:null}};

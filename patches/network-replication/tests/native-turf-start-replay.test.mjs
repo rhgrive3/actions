@@ -33,17 +33,23 @@ if(!process.env.INKWAVE_BUILT_SITE) test('historical actual replay rejects the f
 
 test('native initial spawn and first Charger launch are replayed from uninterrupted requests',async()=>{
  const p=await nativeTurfProbe('charger'),q=await privateNativeRealm();
- const {f}=q,orig=p.actor, actor=orig, owners=new Map([[orig.nid,orig.owner]]), authorization={epoch:p.net.cfg.id,owners};let initialized=0, token;
+ const {f}=q,orig=p.actor, actor=orig, owners=new Map([[orig.nid,orig.owner]]), authorization={epoch:p.net.cfg.id,owners};let initialized=0, token,peer;
  try{
   token=f.createTrustedNativeReplay(f,{isolatedRealm:true,epoch:p.net.cfg.id,seed:1,time:f.G.time,
    world:{level:f.G.level,physics:f.G.physics,paint:f.G.paint,match:q.match,initializeActor(a){initialized++;assert.equal(f.beginInitialSquidSpawn(a),true);}},
    roster:[{nid:actor.nid,owner:actor.owner,life:actor.netLife,team:actor.team,slot:actor.slot,weapon:actor.weapon.id,position:actor.pos.toArray(),yaw:actor.yaw,style:{hair:0,skin:2,outfit:0,eyes:0}}],CharacterClass:f.Character});
   assert.equal(initialized,1);let replay=f.inspectTrustedNativeReplay(token);assert.equal(replay.actors[0].life,orig.netLife);assert.deepEqual(plain(replay.actors[0].position),plain(orig.pos.toArray()));
+  // This is a negotiated experimental sibling constructed by the fixture;
+  // production NetMatch does not currently send it. The room and receiver
+  // clock below are trusted test scheduler inputs, not owner packet fields.
+  const policy=f.createNativeCommandRoomPolicy({epoch:p.net.cfg.id,build:'native-vm-fixture',seed:1,roster:[{nid:orig.nid,owner:orig.owner,life:orig.netLife}]});
+  const admitted=f.admitNativeCommandPeer(policy,{from:orig.owner,capability:f.nativeCommandCapability(policy),at:performance.now()/1000});
+  assert.equal(admitted.ok,true);peer=admitted.peer;
   // Validation must not advance the trusted frame or alter the native actor.
   // Pace fixed simulation against the unmodified monotonic clock. A burst of
   // hundreds of synthetic frames would make owner ticks advance faster than
   // the transport clock and would not be a legal live packet trace.
-  let nextTick=performance.now();
+  let nextTick=performance.now()+1000/60;
   const pace=async()=>{const delay=nextTick-performance.now();if(delay>0)await new Promise(r=>setTimeout(r,Math.ceil(delay)));nextTick=performance.now()+1000/60;};
   await pace();p.step();q.step();let row=p.rows[0],valid=command(orig,row);
   for(const bad of [{...valid,owner:'other'},{...valid,life:row.life+1},{...valid,ink:100},{...valid,position:row.position},{...valid,input:{...valid.input,move:[2,0]}}]){
@@ -51,14 +57,30 @@ test('native initial spawn and first Charger launch are replayed from uninterrup
    assert.equal(f.inspectTrustedNativeReplay(token).tick,0);
   }
   assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},{epoch:p.net.cfg.id,owners:new Map([[actor.nid,'other']])}).ok,false,'wire owner cannot substitute authenticated principal');
+  assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},{epoch:p.net.cfg.id+'-old',owners}).ok,false,'stale match epoch cannot authorize an otherwise valid command');
   for(const frame of [{tick:0,dt:row.dt,commands:[valid]},{tick:2,dt:row.dt,commands:[valid]},{tick:1,dt:0,commands:[valid]},{tick:1,dt:row.dt,commands:[valid,valid]}])
    assert.equal(f.advanceTrustedNativeReplay(token,frame,authorization).ok,false,'malformed frame does not advance');
   assert.equal(f.inspectTrustedNativeReplay(token).tick,0);
-  const snapshots=[];
+  const snapshots=[],wireRows=[];
   const packetAt=label=>{assert.equal(p.net._sendTick(),true);const packet=p.wire.findLast(x=>x.k==='t');assert.ok(packet);snapshots.push({label,packet:plain(packet)});return packet;};
   packetAt('initial-aim');nextTick=performance.now()+1000/60;
   function consume(r){
-   const result=f.advanceTrustedNativeReplay(token,{tick:r.tick,dt:r.dt,commands:[command(orig,r)]},authorization);assert.equal(result.ok,true,JSON.stringify(result));
+   assert.equal(p.net._sendTick(),true);
+   const publicPacket=p.wire.findLast(x=>x.k==='t');
+   const envelope=f.attachNativeCommandEnvelope(publicPacket,policy,{from:orig.owner,sequence:r.tick,frames:[{tick:r.tick,dt:r.dt,sourceTime:r.time,commands:[command(orig,r)]}]});
+   assert.equal(f.prepareNativeCommandEnvelope(peer,envelope,{from:'other',at:performance.now()/1000}).ok,false,'foreign authenticated sender rejected');
+   if(r.tick===1){
+    assert.equal(f.prepareNativeCommandEnvelope(peer,publicPacket,{from:orig.owner,at:performance.now()/1000}).ok,false,'missing sibling cannot downgrade a negotiated peer');
+    const stale=plain(envelope);stale.nc.epoch+='-old';
+    assert.equal(f.prepareNativeCommandEnvelope(peer,stale,{from:orig.owner,at:performance.now()/1000}).ok,false,'stale envelope epoch rejected');
+   }
+   const prepared=f.prepareNativeCommandEnvelope(peer,envelope,{from:orig.owner,at:performance.now()/1000});assert.equal(prepared.ok,true,JSON.stringify(prepared));
+   const decoded=prepared.frames[0];
+   const result=f.advanceTrustedNativeReplay(token,{tick:decoded.tick,dt:decoded.dt,commands:decoded.commands},authorization);assert.equal(result.ok,true,JSON.stringify(result));
+   assert.equal(f.commitNativeCommandEnvelope(peer,prepared.token),true);
+   assert.equal(f.commitNativeCommandEnvelope(peer,prepared.token),false,'prepared command commits only once');
+   if(r.tick===1){const repeat=f.prepareNativeCommandEnvelope(peer,envelope,{from:orig.owner,at:performance.now()/1000});assert.equal(repeat.duplicate,true);assert.equal(repeat.frames.length,0);}
+   wireRows.push({packet:plain(publicPacket),nc:plain(envelope.nc)});
    const a=f.inspectTrustedNativeReplay(token).actors[0];assert.equal(a.life,r.life);assert.equal(a.form,r.form);
    for(let i=0;i<3;i++)close(a.position[i],r.position[i],`tick ${r.tick} position ${i}`);
    for(let i=0;i<3;i++)close(a.velocity[i],r.velocity[i],`tick ${r.tick} velocity ${i}`);
@@ -85,7 +107,8 @@ test('native initial spawn and first Charger launch are replayed from uninterrup
   const spawnRow=s=>s.packet.a[0][23]?.[10];
   assert.equal(spawnRow(snapshots[0])?.[0],'inkwave-squidspawn-v1');assert.equal(spawnRow(snapshots[0])?.[1],0);
   assert.equal(spawnRow(snapshots[1])?.[1],1);assert.equal(spawnRow(snapshots[2]),undefined);
-  const fireEvent=packet.e.find(e=>e[1]==='ev'&&e[2]==='weapon:fire');assert.ok(fireEvent,'wire contains actual first launch event');
+  const firePacket=p.wire.findLast(x=>x.k==='t'&&x.e?.some(e=>e[1]==='ev'&&e[2]==='weapon:fire'));
+  const fireEvent=firePacket?.e.find(e=>e[1]==='ev'&&e[2]==='weapon:fire');assert.ok(fireEvent,'wire contains actual first launch event');
   const realMuzzle=fireEvent[3].muzzle,privateMuzzle=replay.launches[0].muzzle;
   assert.ok(realMuzzle?.length===3&&privateMuzzle?.length===3);
   const muzzleGap=Math.hypot(...realMuzzle.map((x,i)=>x-privateMuzzle[i]));
@@ -94,8 +117,8 @@ test('native initial spawn and first Charger launch are replayed from uninterrup
    const a=snapshots[i-1].packet,b=snapshots[i].packet;
    assert.ok(b.ts>a.ts && (b.u-a.u)/60 <= b.ts-a.ts+.025,`source tick Δ${b.u-a.u} exceeds real clock Δ${b.ts-a.ts}`);
   }
-  const receipt={scope:'two independent native VM realms, flat Physics, simulated relay socket and no renderer; request stream is captured locally, not obtained from public packet',rows:p.rows.length,first:p.rows[0],lastSpawn:p.rows.find(r=>r.phaseBefore==='flight'&&r.phaseAfter==='landed'),birth:p.births[0],muzzle:{source:realMuzzle,private:privateMuzzle,gap:muzzleGap},snapshots};
-  if(process.env.INKWAVE_TURF_TRACE)fs.writeFileSync(process.env.INKWAVE_TURF_TRACE,JSON.stringify({...receipt,frames:p.rows},null,2)+'\n');
+  const receipt={scope:'two independent native VM realms, flat Physics, simulated relay socket and no renderer; locally captured requests are encoded in a fixture-created experimental sibling, not supplied by public NetMatch',rows:p.rows.length,first:p.rows[0],lastSpawn:p.rows.find(r=>r.phaseBefore==='flight'&&r.phaseAfter==='landed'),birth:p.births[0],muzzle:{source:realMuzzle,private:privateMuzzle,gap:muzzleGap},snapshots};
+  if(process.env.INKWAVE_TURF_TRACE)fs.writeFileSync(process.env.INKWAVE_TURF_TRACE,JSON.stringify({...receipt,frames:p.rows,wireRows},null,2)+'\n');
   console.log(JSON.stringify(receipt));
- }finally{if(token)f.disposeTrustedNativeReplay(token);p.dispose();q.dispose();}
+ }finally{if(peer)f.retireNativeCommandPeer(peer);if(token)f.disposeTrustedNativeReplay(token);p.dispose();q.dispose();}
 });
