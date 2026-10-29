@@ -256,3 +256,15 @@ test('trusted roster name/controller and native camera context are preserved wit
  const w=setup({warmup:0,roster:[{...spawn(1,0,0),name:'Canonical Owner',isLocal:true,isBot:false}],worldCamera:null,afterActors(actors,_dt,api){assert.equal(api.G.camera,null);assert.equal(api.G.local,actors[0]);observed=true;}});
  try{assert.equal(w.step().ok,true);const a=w.state().actors[0];assert.equal(a.name,'Canonical Owner');assert.equal(a.isLocal,true);assert.equal(a.isBot,false);assert.equal(observed,true);}finally{w.close();}
 });
+test('same-session callback reentry cannot advance ticks, poison the outer frame or spend effects mid-frame',()=>{
+ let w,probe=false,receipt,selected;
+ w=setup({afterActors(actors,_dt){if(!probe)return;const before=w.state();
+  const commands=actors.map(a=>({nid:a.nid,owner:a.owner,life:a.netLife,input:{fire:false,squid:false,sub:false,jump:false,special:false,move:[0,0]},aim:[a.aimYaw,a.aimPitch]}));
+  const nested=f.advanceTrustedNativeReplay(w.token,{tick:before.tick+1,dt:1/60,commands},w.authorization);assert.deepEqual(w.state(),before);assert.equal(nested.reason,'reentrant-native-frame');
+  assert.equal(f.peekTrustedNativeContact(w.token,selected),null);assert.equal(f.commitTrustedNativeContact(w.token,receipt),null);
+ }});
+ try{
+  shoot(w);const e=w.state().effects[0];selected=claim(e);receipt=f.peekTrustedNativeContact(w.token,selected);assert.ok(receipt);const tick=w.state().tick;probe=true;
+  assert.equal(w.step().ok,true);assert.equal(w.state().tick,tick+1);assert.equal(w.state().error,null);assert.ok(f.commitTrustedNativeContact(w.token,receipt));
+ }finally{w.close();}
+});

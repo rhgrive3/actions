@@ -102,6 +102,12 @@ condition or socket equivalence for all65 native owners. The API preserves
 trusted name/isLocal/isBot and explicitly supplied world.camera (including null);
 camera values are not accepted from a hit claim.
 
+Same-session frame reentry is rejected before tick/time or input admission can
+change. A trusted native phase callback cannot select or commit effects while
+the frame is executing; they remain available after it finishes. An old d81
+module control fails the same actual native callback regression by poisoning
+the outer update, whereas the guarded module preserves its tick and receipt.
+
 Optional `command.cancel:{fire,sub}` preserves native cancelHold behavior before
 Actor.update; it is not an ordinary button release. Both flags must be boolean
 and a cancelled button must be false in that frame. The draft v2 sidecar keeps

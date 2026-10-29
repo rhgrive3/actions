@@ -162,6 +162,7 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
 export function advanceTrustedNativeReplay(token,frame,authorization) {
   const s=sessions.get(token);
   if(!live(s))return {ok:false,reason:'retired-native-replay'};
+  if(s.executing)return {ok:false,reason:'reentrant-native-frame'};
   if(!frame||frame.tick!==s.tick+1||!finite(frame.dt)||frame.dt<=0||frame.dt>limits.dt||!Array.isArray(frame.commands)||frame.commands.length!==s.actors.size||Object.keys(frame).some(k=>!['tick','dt','commands'].includes(k)))return {ok:false,reason:'invalid-native-frame'};
   if(authorization?.epoch!==s.epoch)return {ok:false,reason:'authenticated-command-epoch-required'};
   if(!authorization?.owners||typeof authorization.owners.get!=='function')return {ok:false,reason:'authenticated-command-owners-required'};
@@ -197,7 +198,7 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
 // effect from fire metadata, proximity, reported resources or a damage ceiling.
 export function peekTrustedNativeContact(token,claim) {
   const s=sessions.get(token);
-  if(!live(s)||!claim||Object.keys(claim).some(k=>!['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].includes(k)))return null;
+  if(!live(s)||s.executing||!claim||Object.keys(claim).some(k=>!['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].includes(k)))return null;
   for(const t of s.pending){const c=contacts.get(t),r=c.record;
     if(!c.used&&liveContact(s,r)&&['epoch','tick','serial','kind','attacker','attackerLife','victim','victimLife','source','damage'].every(k=>Object.is(claim[k],r[k])))return t;
   }
@@ -205,7 +206,7 @@ export function peekTrustedNativeContact(token,claim) {
 }
 export function commitTrustedNativeContact(token,receipt) {
   const s=sessions.get(token),c=contacts.get(receipt);
-  if(!live(s)||!c||c.session!==s||c.used||!s.pending.has(receipt)||!liveContact(s,c.record))return null;
+  if(!live(s)||s.executing||!c||c.session!==s||c.used||!s.pending.has(receipt)||!liveContact(s,c.record))return null;
   c.used=true;s.pending.delete(receipt);return clone(c.record);
 }
 export function inspectTrustedNativeReplay(token) {
