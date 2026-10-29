@@ -1,0 +1,9 @@
+# Final runtime integration and exact-source verification
+
+Runtime head f91135cb combines the complete common, GPU-lifecycle, Rainmaker, optimized and current owner a73784e8 histories. It restores exact Charger actor scans, owned public capsule normals, native Rainmaker radius rounding and native CMB04/CMB06 contact/perception scans; it also retires stale guest deadline jump edges. The separate controlled Explosher warmup fix keeps all resource assertions and production boot unchanged.
+
+The required23-file emitted gate passed212/212,0fail/skip. Additional emitted contact/Storm/deadline/Charger tests passed66/66; build/volume packaging and emitted optional props passed18/18. These suites overlap and are not summed. The final canonical verifier initially found one new-owner Git metadata caller at2MiB; d9530a5d brings that caller to the already-enforced8MiB cap without relaxing the guard. Verifier then passed660/661,0fail, with one existing emitted-only conditional skip. That case passed in the separate18-case emitted run. No test skip was added.
+
+The five manifests/artifact sets were verified against their named source commits and deterministic startup budgets passed. Data records the runtime execution head separately from later test-only/receipt changes. The212-case run checks its frozen corpus and test sources before/after; neither changed. Old failures and exact raw receipts remain in [summary.json](summary.json).
+
+The final dependency order is1908→1910→1909→1907→1911. Hosted acceptance on the forthcoming publication is pending. Source633/128 unavailable original-asset cases, memory99, other source suites and earlier browser results retain the exact scopes in adjacent reports. Open source-calibration and production-authority limitations are not resolved by these tests. No main merge or hold release;401 excluded; physical-device testing waived.
