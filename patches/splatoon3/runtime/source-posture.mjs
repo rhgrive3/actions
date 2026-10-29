@@ -70,11 +70,16 @@ export const SOURCE_POSTURE = Object.freeze({
   // in metres / degrees / seconds, not extracted joint values.
   idle: Object.freeze({ front: 'L', frontKneeDeg: 24, rearKneeDeg: 30, rearHeel: 0.06, bob: 0.045, period: 0.5 }),
 });
-const CORRECTED_STATES = new Set(['idle', 'move']);
+const isCorrectedState = (s) => s === 'idle' || s === 'move';
 let enabled = true;
 /** Counterfactual switch for regression tests (production keeps the default). */
 export function setSourcePostureEnabled(value) { enabled = !!value; }
-const TORSO = new Set(['spine', 'chest']);
+const isTorsoBone = (t) => t === 'spine' || t === 'chest';
+const FRONT_KNEE_RAD = SOURCE_POSTURE.idle.frontKneeDeg * Math.PI / 180;
+const FRONT_KNEE_COS = Math.cos(FRONT_KNEE_RAD);
+const FRONT_KNEE_SIN = Math.sin(FRONT_KNEE_RAD);
+const REAR_KNEE_RAD = SOURCE_POSTURE.idle.rearKneeDeg * Math.PI / 180;
+const REAR_KNEE_COS = Math.cos(REAR_KNEE_RAD);
 const XAX = new THREE.Vector3(1, 0, 0);
 const _d = new THREE.Vector3(), _t = new THREE.Vector3(), _q = new THREE.Quaternion(), _id = new THREE.Quaternion();
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -86,7 +91,7 @@ function moveFactor(c) {
   return m * m * (3 - 2 * m);
 }
 function postureState(retarget) {
-  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false, carryMix: 0, carryReentryAge: 0 });
+  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false, carryMix: 0, carryReentryAge: 0, emerging: 0, lateralK: -1 });
 }
 /** Smoothed 0 standing … 1 moving, so a stop or start never snaps the carry or the support hand. */
 function smoothMove(retarget) { return postureState(retarget).move; }
@@ -120,7 +125,8 @@ function formClipOwnsCarry(c) {
 function advanceWeight(retarget) {
   const st = postureState(retarget), c = controllerOf(retarget);
   const emerging = enabled ? sourceEmergePostureWeight(c) : 0;
-  const wanted = enabled && c && !c.manual && c.formKid !== false && CORRECTED_STATES.has(c.state) ? 1 : emerging;
+  const correctedState = c !== null && isCorrectedState(c.state);
+  const wanted = enabled && c && !c.manual && c.formKid !== false && correctedState ? 1 : emerging;
   const now = c ? c.time : null;
   // The first frame (or a controller clock that went backwards) snaps to the wanted state; a
   // paused (dt = 0) frame holds the weight; otherwise blend at a frame-rate independent rate.
@@ -134,7 +140,7 @@ function advanceWeight(retarget) {
     st.carryReentryAge = 0;
   }
   if (enabled && c && !c.manual && c.formKid !== false) {
-    if (CORRECTED_STATES.has(c.state)) {
+    if (correctedState) {
       if (!st.carryEligible) {
         st.carryEligible = true;
         // A brand-new retarget controller starts in its ordinary authored
@@ -165,7 +171,7 @@ function advanceWeight(retarget) {
     // Do not snap the weapon from ToHuman's authored hold to a fully yaw-
     // corrected shooter on the first new grounded frame. Ordinary air/land
     // preserves the previous mix and uses the existing posture fade.
-    if (st.carryEligible && CORRECTED_STATES.has(c?.state)) {
+    if (st.carryEligible && correctedState) {
       if (Number.isFinite(st.carryReentryAge)) st.carryReentryAge += dt;
       st.carryMix += (1 - st.carryMix) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
     }
@@ -176,6 +182,8 @@ function advanceWeight(retarget) {
   if (emerging > st.weight) st.weight = emerging;
   st.time = now;
   st.neck = 0;
+  st.emerging = emerging;
+  st.lateralK = !enabled || !c || c.manual ? 0 : st.weight * clamp(c.strafeBalance || 0, 0, 1) * (1 - SOURCE_POSTURE.lateralKeep);
   return st.weight;
 }
 
@@ -188,8 +196,8 @@ export function sourceLateralCorrection(retarget) {
   return postureState(retarget).weight * clamp(c.strafeBalance || 0, 0, 1) * (1 - SOURCE_POSTURE.lateralKeep);
 }
 /** Roll `q` about the kid Z axis so the bone's axis loses that share of its side lean. */
-function correctLateral(retarget, q, axis) {
-  const k = sourceLateralCorrection(retarget);
+function correctLateral(retarget, q, axis, precomputedK) {
+  const k = precomputedK >= 0 ? precomputedK : sourceLateralCorrection(retarget);
   if (k <= 1e-4) return 0;
   _d.copy(axis).applyQuaternion(q);
   const angle = Math.atan2(_d.x, _d.y) * k;
@@ -202,7 +210,12 @@ function correctLateral(retarget, q, axis) {
  *  entry (hips) advances the blend weight once per frame. Rotates spine/chest/neck/head about the
  *  kid X axis so the clip's forward lean is reduced; arms keep their solved world orientation. */
 export function sourcePostureBone(retarget, target, q, dir, upper = true) {
-  if (target === 'hips') { advanceWeight(retarget); correctLateral(retarget, q, YAX); return; }
+  if (target === 'hips') {
+    advanceWeight(retarget);
+    const st = retarget.s3Posture;
+    correctLateral(retarget, q, YAX, st.lateralK);
+    return;
+  }
   if (!upper) return;
   if (target !== 'spine' && target !== 'chest' && target !== 'neck' && target !== 'head') return;
   const st = postureState(retarget), w = st.weight;
@@ -216,16 +229,16 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
     const P = SOURCE_POSTURE;
     // ToHuman's forward tilt comes directly from the sampled source bone q.
     // Cancel that actual lean, not a video-estimated angle or frame fraction.
-    const emergence = sourceEmergePostureWeight(controllerOf(retarget));
-    const keep = emergence ? 0 : TORSO.has(target)
-      ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * smoothMove(retarget)
+    const emergence = st.time !== null ? st.emerging : sourceEmergePostureWeight(controllerOf(retarget));
+    const keep = emergence ? 0 : isTorsoBone(target)
+      ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * st.move
       : P.neckKeep;
     angle = -lean * (1 - keep) * w;
     if (target === 'neck') st.neck = angle;
   }
   if (Math.abs(angle) > 1e-7) q.premultiply(_q.setFromAxisAngle(XAX, angle));
   // Side lean after the sagittal correction, measured on each bone's own up axis (the displayed lean).
-  correctLateral(retarget, q, YAX);
+  correctLateral(retarget, q, YAX, st.time !== null ? st.lateralK : -1);
 }
 
 /** Called by SourceMotionController.alignWeapon with the weapon orientation (kid space, before aim pitch).
@@ -235,12 +248,14 @@ export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
   if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
       formClipOwnsCarry(controller) || !sourceCarryWeight(controller.retarget)) return;
-  let w = sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
+  const st = postureState(controller.retarget);
+  let w = (st.carryEligible ? st.carryMix : 0) * st.weight *
     clamp(1 - (controller.shootBlend || 0), 0, 1);
   if (w <= 1e-4) return;
-  const m = smoothMove(controller.retarget), a = SOURCE_POSTURE.standCarry, b = SOURCE_POSTURE.carry;
+  const m = st.move, a = SOURCE_POSTURE.standCarry, b = SOURCE_POSTURE.carry;
   const pitch = a.pitch + (b.pitch - a.pitch) * m, yaw = a.yaw + (b.yaw - a.yaw) * m, follow = a.follow + (b.follow - a.follow) * m;
-  _t.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+  const cp = Math.cos(pitch);
+  _t.set(Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp);
   _d.set(0, 0, 1).applyQuaternion(weaponQ);
   _t.lerp(_d, 1 - follow).normalize();
   // Source clips can point the barrel far across the body at the instant
@@ -249,7 +264,7 @@ export function sourceCarryWeapon(controller, weaponQ) {
   // At 60 Hz the first post-form correction is at most 0.03 rad; accumulate
   // the same angular budget by elapsed source time at other frame rates.
   // A fresh idle/move start and an ordinary move→air→land carry are unchanged.
-  const reentryAge = postureState(controller.retarget).carryReentryAge;
+  const reentryAge = st.carryReentryAge;
   if (Number.isFinite(reentryAge)) {
     const sourceTurn = _d.angleTo(_t);
     if (sourceTurn > 1e-9) w = Math.min(w, Math.max(0, reentryAge) * (0.03 * 60) / sourceTurn);
@@ -261,8 +276,9 @@ export function sourceCarryWeapon(controller, weaponQ) {
 function standGripWeight(controller) {
   const c = controller.character;
   if (!c || c.weaponKind !== 'shooter' || !controller.retarget || formClipOwnsCarry(controller)) return 0;
-  return sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
-    clamp(1 - (controller.shootBlend || 0), 0, 1) * (1 - smoothMove(controller.retarget));
+  const st = postureState(controller.retarget);
+  return (st.carryEligible ? st.carryMix : 0) * st.weight *
+    clamp(1 - (controller.shootBlend || 0), 0, 1) * (1 - st.move);
 }
 /** Called by SourceMotionController.alignWeapon with the kid-space right wrist target before the
  *  two-hand fit: a standing, non-firing shooter brings the grip in front of the lower right chest. */
@@ -307,7 +323,10 @@ function idleWeight(retarget) {
   return st.weight * clamp(1 - st.move, 0, 1) * clamp(1 - (c.shootBlend || 0), 0, 1);
 }
 const _j = new THREE.Vector3(), _jq = new THREE.Quaternion();
-const legReach = (leg, deg) => { const k = deg * Math.PI / 180; return Math.sqrt(leg.a * leg.a + leg.b * leg.b + 2 * leg.a * leg.b * Math.cos(k)); };
+const legReach = (leg, deg) => {
+  const cosK = deg === SOURCE_POSTURE.idle.rearKneeDeg ? REAR_KNEE_COS : Math.cos(deg * Math.PI / 180);
+  return Math.sqrt(leg.a * leg.a + leg.b * leg.b + 2 * leg.a * leg.b * cosK);
+};
 /** Called by HumanRetarget.adaptLegFootpaths with a leg's kid-space ankle target before leg IK.
  *  Front ankle: under its knee, the shin perpendicular to the ground. Rear ankle: heel raised,
  *  a nearly straight leg reaching diagonally back. Both are solved once per frame from the
@@ -349,15 +368,15 @@ export function sourceIdleBob(retarget, hips) {
   if (!c || w <= 1e-4) { st.idleFeet = null; return; }
   const ch = retarget.character, I = SOURCE_POSTURE.idle, rearSide = I.front === 'L' ? 'R' : 'L';
   const front = ch.limbs['leg' + I.front], rear = ch.limbs['leg' + rearSide];
-  const k = I.frontKneeDeg * Math.PI / 180, ankleY = ch.rest['foot' + I.front].y;
+  const ankleY = ch.rest['foot' + I.front].y;
   // Hip joint height for a vertical shin under a thigh bent by the knee angle.
   ch._kidXform(front.up, _j, _jq);
-  hips.y += (ankleY + front.b + front.a * Math.cos(k) - _j.y) * w;
+  hips.y += (ankleY + front.b + front.a * FRONT_KNEE_COS - _j.y) * w;
   // The soles are latched in kid space when the stance is entered: the sourced
   // pelvis sway and the bob move the body over still feet.
   if (!st.idleFeet) {
     ch._kidXform(front.up, _j, _jq);
-    const feet = st.idleFeet = { front: { y: ankleY, z: _j.z + front.a * Math.sin(k) }, rear: { y: 0, z: 0 } };
+    const feet = st.idleFeet = { front: { y: ankleY, z: _j.z + front.a * FRONT_KNEE_SIN }, rear: { y: 0, z: 0 } };
     ch._kidXform(rear.up, _j, _jq);
     // Per-family stance (registry IDLE_STANCE): the brush sets the rear foot out to the side.
     const fam = ch.weaponIdleStance, out = (fam?.rearOutDeg || 0) * Math.PI / 180;
