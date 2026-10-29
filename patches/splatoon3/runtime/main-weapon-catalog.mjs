@@ -1424,6 +1424,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const pr0=q.playerRadius0,radius=q.playerRadius1;
           const end=motion?scratch.motionEnd.set(q.to.x-motionX,
             q.to.y-motionY,q.to.z-motionZ):q.to;
+          const reach=bodyRadius+(pr0>radius?pr0:radius)+1e-4;
+          const qfx=q.from.x,qfz=q.from.z,qtx=end.x,qtz=end.z;
+          const qminX=(qfx<qtx?qfx:qtx)-reach,qmaxX=(qfx>qtx?qfx:qtx)+reach;
+          const qminZ=(qfz<qtz?qfz:qtz)-reach,qmaxZ=(qfz>qtz?qfz:qtz)+reach;
+          const bx=base.x,bz=base.z;
+          if(bx<qminX||bx>qmaxX||bz<qminZ||bz>qmaxZ)continue;
           const contact=capsuleEntry(q.from,end,base,bodyRadius,bodyHeight,pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
@@ -1492,15 +1498,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const from=(s.splashReleasePoint ||= p.prev.clone()).copy(p.prev).lerp(p.pos,clamp((s.nextSplash-splashBefore)/splashLength));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
-            const args={owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-              from,direction,radius,spec:d.splashDropSpec||d.sloshFall.spec,depth:true,
-              catchUpSeconds:s.carry,footprint:null};
+            const args=s.splashArgs||={owner:null,team:0,seed:0,salt:0,from:null,direction:null,radius:0,spec:null,depth:true,catchUpSeconds:0,footprint:null};
             const record=s.r;
             if(!footprintReady||record!==footprintRecord){
               footprint=mainInkFootprint(record);footprintRecord=record;
               footprintReady=canShareSourceFootprint(record)&&Object.getOwnPropertyDescriptor(s,'r')?.value===record;
             }
-            args.footprint=footprint;
+            args.owner=p.owner;args.team=p.team;args.seed=p.seed;args.salt=s.dropCount;
+            args.from=from;args.direction=direction;args.radius=radius;args.spec=d.splashDropSpec||d.sloshFall.spec;
+            args.depth=true;args.catchUpSeconds=s.carry;args.footprint=footprint;
             const drop=spawnSplashDrop(G,args);
             if(drop&&d.sloshFall){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
           }else{
