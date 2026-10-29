@@ -6625,3 +6625,16 @@ The production build contains 2,223 declared artifacts. Their independently rech
 Revalidated focused evidence includes source wet lifecycle 8/8, emitted Charger/wet 10/10, CPU-13 source mutation tests 4/4, source wall tests 4/4, emitted collision/wall tests 4/4, capture helper tests 38/38, and deterministic startup budget gates. Broader reconstructed test and verifier results are recorded separately at the frozen candidate. Test-only fixtures were restored by their public Git blob identities rather than weakening checks to ignore missing data.
 
 Still unverified: live final-head mandatory CI, actual Hissen/Wiper screenshots, full mobile three-lane acceptance, original-game comparison and hardware performance. The native Explosher absolute geometry increase 281→295 remains a failed gate, not waived or offset. Native prebuilt stage payloads are not hydrated; runtime fallback may fetch external stage data, and offline stage availability is not guaranteed. No character or hair model was edited. Character provenance acceptance is source-text-only, not character visual verification.
+
+## 2026-10-29: iPad の一時停止終了時にもメニューの GPU 負荷保護を維持
+
+- 対象: INKWAVE 公開版の iOS/iPadOS Safari 向け一時停止メニュー。関連する本家の参照条件は既存記録のスプラトゥーン3 Ver.11.3.0。今回の変更はブラウザの画面合成資源の寿命に限り、本家のブキ・ギア・移動・射撃・対戦ルールの数値は変更しない。本家実機との終了操作比較および iPad 実機の GPU 計測は未確認。
+- 実装箇所: `patches/local-quality/ios-paused-menu-gpu-guard.mjs`。`Menus.show()` が画面履歴を入れ替える前に、一時停止からの遷移であることを保存する。iOS では終了・再開時にも全画面 Canvas2D のワイプを抑止し、退出する DOM を同期的に取り除く。
+- 修正前の再現操作: 一時停止 → 終了（または一時停止内の設定 → メイン／タイトル／画面なしへの遷移）。画面履歴が先に空または新画面に変わり、既存の iOS 保護判定が false になる。そのため終了ワイプと旧画面の 340 ms の重複が許可されていた。これはコード上で確認した負荷増加要因であり、報告された実機クラッシュの原因を断定するものではない。
+- プレイへの影響: 一時停止画面を開閉する際に余分な全画面合成を避ける。終了後の通常メニュー遷移と他プラットフォームの既存演出は維持する。
+- ロジック検証: iOS 保護、GPU 一時停止フレーム保持、停止中のシミュレーション抑止、ステージ画像メモリの関連テスト計36件合格（`node --experimental-vm-modules --test`）。quick パッチ互換性、本番最適化ビルド、起動予算検査も合格。実機の GPU メモリ不足・Safari 終了が解消したとの判定は行っていない。
+- ブラウザ検証: 最適化済み配信物の実 `Menus` / CSS を Chromium の iPad エミュレーションで読み込み、一時停止／その中の設定からメイン・タイトル・画面なしへの6遷移と、実際の終了確認ボタン操作を確認。全7条件でワイプ0回、旧画面の即時切断、ページ例外0件。API はオフライン fixture、iOS クラスを明示した検証であり、WebKit や実 iPad の確認には読み替えない。作業用の結果は `work/ipad-pause-browser-result.json`。
+
+### 2026-10-29 追補: 同種の GPU 保持・重複経路を追加監査
+
+停止中の画面更新で旧画像と compositor を重複確保する順序、ページ非表示中の停止画像保持、演出終了後も全画面 Canvas が残る点、既存演出の onMid が遅れて走る経路を修正。ブキ・ギア・操作・判定の値は変更しない。Chromium / Linux WebKit 各72遷移と12回の全画素比較・GL 資源寿命検証、memory 98テスト、quality と runner 契約を通過。実機 iPad のクラッシュ解消や本家実機との終了操作の一致は未確認のまま。[監査・再現・検証記録](ipad-gpu-lifecycle-20261029/README.md) を参照。

@@ -1,0 +1,303 @@
+{
+  "status": "passed",
+  "engine": "chromium",
+  "version": "154.0.8037.57",
+  "contentHash": "d76a3411d9de4820d87dce5ef1efa88c5147b66c764a584c1aa3a603830f962f",
+  "inputHash": "7cd597a358883149f870d9514e1ad578723fbfbaa20796ca69b93370b307183b",
+  "revision": "b6dc2d3611871c526826d7f95188bc5abed3d49cdcb9ed2e9ff07cfde63c8357",
+  "physicalDeviceVerified": false,
+  "scope": "production modules; offline menu API; small software-GL scene, no hardware memory measurement",
+  "menus": [
+    {
+      "action": "cancel running wipe",
+      "screen": "pause",
+      "canvas": [
+        1,
+        1
+      ]
+    },
+    {
+      "action": "pause/nested settings exits",
+      "cycles": 12,
+      "transitions": 72,
+      "passed": true
+    },
+    {
+      "action": "real quit confirmation",
+      "passed": true
+    },
+    {
+      "action": "natural full completion",
+      "allocated": [
+        1791,
+        1251
+      ],
+      "released": [
+        1,
+        1
+      ]
+    },
+    {
+      "action": "natural light completion",
+      "allocated": [
+        1791,
+        1251
+      ],
+      "released": [
+        1,
+        1
+      ]
+    },
+    {
+      "action": "natural fade completion",
+      "allocated": [
+        1791,
+        1251
+      ],
+      "released": [
+        1,
+        1
+      ]
+    }
+  ],
+  "gpu": {
+    "cycles": [
+      {
+        "cycle": 0,
+        "size": [
+          480,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 691200
+      },
+      {
+        "cycle": 1,
+        "size": [
+          270,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 388800
+      },
+      {
+        "cycle": 2,
+        "size": [
+          480,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 691200
+      },
+      {
+        "cycle": 3,
+        "size": [
+          270,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 388800
+      },
+      {
+        "cycle": 4,
+        "size": [
+          480,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 691200
+      },
+      {
+        "cycle": 5,
+        "size": [
+          270,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 388800
+      },
+      {
+        "cycle": 6,
+        "size": [
+          480,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 691200
+      },
+      {
+        "cycle": 7,
+        "size": [
+          270,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 388800
+      },
+      {
+        "cycle": 8,
+        "size": [
+          480,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 691200
+      },
+      {
+        "cycle": 9,
+        "size": [
+          270,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 388800
+      },
+      {
+        "cycle": 10,
+        "size": [
+          480,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 691200
+      },
+      {
+        "cycle": 11,
+        "size": [
+          270,
+          360
+        ],
+        "rendered": {
+          "textures": 2,
+          "renderbuffers": 1,
+          "framebuffers": 2
+        },
+        "captured": {
+          "textures": 1,
+          "renderbuffers": 0,
+          "framebuffers": 0
+        },
+        "unchangedPixels": true,
+        "checkedChannels": 388800
+      }
+    ],
+    "visibilityReleased": true,
+    "finalLive": {
+      "textures": 0,
+      "renderbuffers": 0,
+      "framebuffers": 0
+    },
+    "recoveryShown": true
+  },
+  "errors": []
+}
