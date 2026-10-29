@@ -55,3 +55,12 @@ test('compiled control waits immediately after only the initial async boot attra
  const guard=fs.readFileSync(new URL('../check-inkwave-explosher-absolute-geometries.mjs',import.meta.url),'utf8');
  assert.ok(guard.includes("assert(b<=a,'Absolute geometry regression"));assert.ok(!guard.includes('281'),'281 is an observed hosted baseline, never a fixed limit');
 });
+
+test('controlled capture retains its real post-generation receipt insertion anchor',()=>{
+ const wrapper=fs.readFileSync(new URL('../check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');
+ const generatedLine=wrapper.split('\n').find(line=>line.startsWith('          return {rngDiagnostic:'));
+ assert.ok(generatedLine,'actual measurement template retains the controlled-branch anchor');
+ assert.equal(generatedLine.split('return {rngDiagnostic:').length,2);
+ assert.ok(generatedLine.includes('initialAttractWarmup:window.__inkwaveExplosherInitialAttractWarmup'));
+ assert.ok(wrapper.includes("driver=once(driver,'return {rngDiagnostic:', 'return {controlledStartup:"));
+});
