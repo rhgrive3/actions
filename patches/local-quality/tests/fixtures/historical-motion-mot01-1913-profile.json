@@ -1,0 +1,5 @@
+{
+  "before": "   const item=(j?runClips:walkClips)[mode][i],p=locomotionProfile(this.bank,item.name);",
+  "after": "   const item=(j?runClips:walkClips)[mode][i],bank=this.bank,name=item.name;\n   const p=item._profBank===bank&&item._profName===name?item._prof:\n    (item._prof=locomotionProfile(bank,name),item._profName=name,item._profBank=bank,item._prof);",
+  "label": "MOT-01a cache locomotionProfile by direction item, bank and name"
+}

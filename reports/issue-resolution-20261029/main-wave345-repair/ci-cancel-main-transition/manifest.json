@@ -1,0 +1,101 @@
+{
+  "utc": "2026-10-29T13:51:48.856762+00:00",
+  "files": [
+    {
+      "name": "agent2-current-validate-cancellation-investigation.json",
+      "bytes": 45402,
+      "sha256": "e0656d595306da3b246382954b472bcef87292c3b4b4814209199e8dbb5439e1",
+      "gzipSha256": "708c3ca0bd9f78391d42ec997b366cef73ae87d1415eb63b018ade2b984c8202"
+    },
+    {
+      "name": "agent2-current-cancel-check-annotations.json",
+      "bytes": 4113,
+      "sha256": "5d240c39e8ac334207c03d4ee3c89946b3495091f0ce99ae2aa9aedcf618e9d5",
+      "gzipSha256": "f47545d02d3529e645ca5efede35c54e93a9e6b5c699b48ca15d1599a893486c"
+    },
+    {
+      "name": "agent2-queue-relief-workflow-run-history.json",
+      "bytes": 309,
+      "sha256": "b529db7a380d61f287f64ac761c7d9816e1ffe93654c97d7d40be7183e344eed",
+      "gzipSha256": "2b7a4be7e003c6dac9767cc07f191956be0bf76968b6e29b6ad897e108435272"
+    },
+    {
+      "name": "agent2-final-six-old-cancel-actions.json",
+      "bytes": 11699,
+      "sha256": "bd37075b015f22739d3ec382e1a5d73d43e504b36c3b56f3dd0c868fb818a131",
+      "gzipSha256": "17927a439a28a52a4a26906957b43bd077eb58ef1597bafec0cedbf3456fd3de"
+    },
+    {
+      "name": "agent2-final-six-old-force-actions.json",
+      "bytes": 4537,
+      "sha256": "f795cb1a840158c2f1e53f0bbcb286e1b45203b42edeb2ce4f1fd5bb7cfd007a",
+      "gzipSha256": "54a430e52b10b4dac888ed6912ccee8a9a38e1675bcebc0edd4cbc290fdcbafe"
+    },
+    {
+      "name": "agent2-final-six-old-cancel-final-readback.json",
+      "bytes": 1570,
+      "sha256": "42b8fba9d109093df64e0e44dd4c8e4e1d60dda428cac29350db4cd450224e03",
+      "gzipSha256": "794d7790b506cd6d1d54810b1a24f45ae3a1c078190bdbb7fba348766989f9b2"
+    },
+    {
+      "name": "agent2-controlled-1908-validate-recovery.json",
+      "bytes": 1268,
+      "sha256": "a97388d4e72d74c79bb6a188cc7387dea676d899e53cd90a5a51922ad553a0b0",
+      "gzipSha256": "4c2c0faef93657b87b083c21d7ee59729f4abac1bbef56d367098138e42fe88b"
+    },
+    {
+      "name": "agent2-controlled-1908-attempt2-latest.json",
+      "bytes": 1432,
+      "sha256": "1d6c9d341af9451f4d7619bbfb2160b0808940dba4b871d961c8ea1d2c6a9510",
+      "gzipSha256": "d68b96751b9e79915b6832ed9884f9e6cf5b01960c84782bf28078de8e9c9dd7"
+    },
+    {
+      "name": "agent2-post-external-main-write-scope.json",
+      "bytes": 5018,
+      "sha256": "6fb5d07aa4ef5aa5fa488f0b014085e32f38def384df8fb8a1b17a29c7e5443d",
+      "gzipSha256": "49828ea89b05bf84d73b614050ad11d5165799f52dc379ad465b0a5cf6f8734e"
+    },
+    {
+      "name": "agent2-external-main-ci-snapshot.json",
+      "bytes": 190,
+      "sha256": "bbdca3101aeae6d619eb275371b4d910f03ec4fef5784be552ef2a17e5e09bae",
+      "gzipSha256": "6f2e3fe2dc973156218a1a9f499a9d74b3aaf2e74fe5e03ed9b23c9f870b8855"
+    },
+    {
+      "name": "agent2-unified-family-last-pre-external-merge.json",
+      "bytes": 42259,
+      "sha256": "912e9cd1e9bff033d85d752adaef6bf0872042a96c09d909b35fc617933bfc59",
+      "gzipSha256": "a7d5431780c6908ce495a6a9972c5772f714774b62d0689e18b4bac0cd3ca1c7"
+    },
+    {
+      "name": "agent2-current-failure-job-123475446233.log",
+      "bytes": 5695,
+      "sha256": "1d217cac1578a15645a7b7706ea754368060f428123fd199f386852d13914f47",
+      "gzipSha256": "2f2da58dbb0cd242f9a04a45a614fee6c32780c171f08fcc4b7490d3767f7dd1"
+    },
+    {
+      "name": "agent2-current-failure-job-123475438077.log",
+      "bytes": 5701,
+      "sha256": "1626fcc0fcaacf4dde53a6073dbdb0279e75fe88dc91ce3c10c579da1f77ce5e",
+      "gzipSha256": "a6fa230951804fbd69c581467fdce97938e4fa2711c2ce9b4b1a19be4ac70554"
+    },
+    {
+      "name": "agent2-current-failure-job-123475483969.log",
+      "bytes": 5694,
+      "sha256": "c41cb722be179cd10b1f7577bf1050d84d307e339da298d73a087e0c9dddc366",
+      "gzipSha256": "8cb9abe925568bff5c674e20a0998e4aa2cab9af21bb0ae44f2250e86df69c36"
+    },
+    {
+      "name": "agent2-current-failure-job-123475491078.log",
+      "bytes": 5697,
+      "sha256": "7e3cb4773a450a93d1c5e0a4307e78c9396aa3795f2056f4647d5e67d1133bc4",
+      "gzipSha256": "284ceb86c303941fe1d28d0293501a82b0e3c14f56ae85dfa78f0f79c929e35f"
+    },
+    {
+      "name": "agent2-current-failure-job-123475532286.log",
+      "bytes": 5699,
+      "sha256": "dc8eda0867dd36f1467c72c58587bef0f3e3c430e5556d57cff0aed75523b336",
+      "gzipSha256": "dcc5248c1cea222af3df182f4e9be84f3193d351d25c18f5a210882300e836f4"
+    }
+  ]
+}

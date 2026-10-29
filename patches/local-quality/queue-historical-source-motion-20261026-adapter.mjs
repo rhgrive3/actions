@@ -63,6 +63,14 @@ const MOT01_PATCHES=[
   ]
 ];
 
+// Separate current epoch: profile reuse is keyed by item, bank and name.
+// Incoming clip-reference caches above remain historical data, never relabelled.
+const MOT01_PROFILE_PATCH=[
+  "   const item=(j?runClips:walkClips)[mode][i],p=locomotionProfile(this.bank,item.name);",
+  "   const item=(j?runClips:walkClips)[mode][i],bank=this.bank,name=item.name;\n   const p=item._profBank===bank&&item._profName===name?item._prof:\n    (item._prof=locomotionProfile(bank,name),item._profName=name,item._profBank=bank,item._prof);",
+  "MOT-01a cache locomotionProfile by direction item, bank and name"
+];
+
 export function adaptHistoricalSourceMotion20261026(rel,code){
  if(rel!==REL)return code;
  for(const [before,after,label] of PATCHES)code=once(code,before,after,label);
@@ -72,7 +80,18 @@ export function adaptHistoricalSourceMotion20261026(rel,code){
 export function restoreHistoricalSourceMotion20261026(rel,code){
  if(rel!==REL||!code.endsWith(HELPERS))return code;
  code=code.slice(0,-HELPERS.length);
- if(code.includes(MOT01_PATCHES[0][1])){
+ const mot01Sites=MOT01_PATCHES.map(([,after])=>code.includes(after));
+ const profileEpoch=code.includes(MOT01_PROFILE_PATCH[1].split('\n')[0])||
+  code.includes('item._profBank')||code.includes('item._profName')||code.includes('item._prof=locomotionProfile(bank,name)');
+ if(profileEpoch){
+  if(mot01Sites.some(Boolean))throw Error('Historical source motion: mixed MOT01 epochs cannot be restored');
+  const [before,after,label]=MOT01_PROFILE_PATCH;
+  if(!code.includes(after))throw Error('Historical source motion: partial MOT01 profile owner cannot be restored');
+  for(const [nativeSite] of MOT01_PATCHES.slice(1))
+   if(code.split(nativeSite).length!==2)throw Error('Historical source motion: mixed MOT01 clip-reference owner cannot be restored');
+  code=once(code,after,before,'reverse '+label);
+ }else if(mot01Sites.some(Boolean)){
+  if(!mot01Sites.every(Boolean))throw Error('Historical source motion: partial MOT01 owner cannot be restored');
   for(const [before,after,label] of [...MOT01_PATCHES].reverse())code=once(code,after,before,'reverse '+label);
  }
  for(const [before,after,label] of [...PATCHES].reverse())code=once(code,after,before,'reverse '+label);
