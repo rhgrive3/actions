@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { validateIdleResult } from '../check-inkwave-idle-resources.mjs';
+import { assertValidateWorkflowContract } from '../ci/inkwave-validate-contract.mjs';
 import './inkwave-idle-evaluate-deadline.test.mjs';
 import './inkwave-cloud-theme-deadlines.test.mjs';
 import './inkwave-results-work-progress.test.mjs';
@@ -39,7 +40,26 @@ test('idle GPU and WebAudio retain exact-source mandatory evidence in parallel r
  assert.match(resource,/assert\.equal\(report\.contentHash,build\.contentHash\)/);
  assert.match(resource,/name: inkwave-idle-resource-\$\{\{ env\.SOURCE_SHA \}\}/);
  assert.doesNotMatch(active,/idle-resources\/idle-resources-result.json/);
- assert.match(w,/needs: \[build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
+ // The final gate now includes admission_preflight; validate its exact YAML
+ // dependency/result contract instead of the obsolete seven-job text list.
+ assertValidateWorkflowContract(w);
  assert.match(w,/test "\$RESOURCE_RESULT" = success/);
  for(const name of ['motion-detail','wall','flow','responsive','identity-touch'])assert.ok(w.includes(name));
+});
+
+test('idle resource lane cannot lose its admitted final-gate dependency or exact result binding',()=>{
+ const w=fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url),'utf8');
+ const {finalNeeds}=assertValidateWorkflowContract(w);
+ const needLine='    needs: ['+finalNeeds.join(', ')+']';
+ assert.equal(w.split(needLine).length,2,'one exact final gate dependency owner');
+ for(const missing of ['admission_preflight','resource_paint_continuation']) {
+  const changed=w.replace(needLine,'    needs: ['+finalNeeds.filter(name=>name!==missing).join(', ')+']');
+  assert.throws(()=>assertValidateWorkflowContract(changed),/final gate must collect every required job/);
+ }
+ const binding='RESOURCE_RESULT: ${{ needs.resource_paint_continuation.result }}';
+ assert.equal(w.split(binding).length,2);
+ assert.throws(()=>assertValidateWorkflowContract(w.replace(binding,'RESOURCE_RESULT: ${{ needs.browser.result }}')),/unbound result for resource_paint_continuation/);
+ const success='test "$RESOURCE_RESULT" = success';
+ assert.equal(w.split(success).length,2);
+ assert.throws(()=>assertValidateWorkflowContract(w.replace(success,'true # removed required resource check')),/missing success check for resource_paint_continuation/);
 });

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
+import {assertValidateWorkflowContract} from '../ci/inkwave-validate-contract.mjs';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const pages=read('.github/workflows/pages-inkwave.yml'),ranked=read('.github/workflows/validate-inkwave-ranked.yml'),runner=read('scripts/check-inkwave-ranked-browser.mjs');
 const block=pages.slice(pages.indexOf('      - name: Verify deployed ranked modes'));
@@ -32,7 +33,7 @@ test('push and PR local ranked coverage, strict gate and existing permissions re
  assert.match(ranked,/RANKED_RELAY_DELAY_MS: 200/);
  assert.doesNotMatch(ranked,/RANKED_PUBLIC_URL/);
  assert.match(ranked,/permissions:\n  contents: read\njobs:/);
- assert.match(pages,/permissions:\n  contents: read\n  pages: write\n  id-token: write\n/);
+ assert.match(pages,/permissions:\n  contents: read\n  actions: read\n  pages: write\n  id-token: write\n/);
  assert.doesNotMatch(pages,/actions: write|contents: write|workflow_run:/);
  assert.match(runner,/attempt<30/);assert.match(runner,/AbortSignal.timeout\(15000\)/);assert.match(runner,/setTimeout\(r,10000\)/);
 });
@@ -50,7 +51,7 @@ test('actual public identity gate accepts exact artifact and rejects stale or ch
 const updateWorkflow=read('.github/workflows/validate-inkwave-update.yml');
 const settingsHudTest=read('patches/local-quality/tests/settings-hud-queue.test.mjs');
 const pagesBrowserSetup='          npm ci --no-audit --no-fund\n          npx --no-install playwright install --with-deps --no-shell chromium\n';
-const coreBrowserSetup="      - name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).\n          # Rewrite only the stalled mirror before Playwright's unchanged dependency installation.\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx --no-install playwright install --with-deps chromium\n";
+const coreBrowserSetup='      - name: Install pinned source regression and build tool\n        run: |\n          npm ci --no-audit --no-fund\n          # Hosted Azure apt mirror fetched fonts at 45 kB/s (7m43s, run 40487962033).\n          # Rewrite only the stalled mirror before Playwright\'s unchanged dependency installation.\n          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx --no-install playwright install --with-deps chromium\n';
 function verifySettingsBrowserConsumers(p,u,s){
  const build=p.slice(p.indexOf('      - name: Build optimized site'),p.indexOf('      - name: Upload INKWAVE site'));
  const core=u.slice(u.indexOf('  validate_core:'),u.indexOf('  patch_tests:'));
@@ -62,10 +63,7 @@ function verifySettingsBrowserConsumers(p,u,s){
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('node scripts/ci/run-inkwave-test-suite.mjs source-browser'));
  // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
  assert.doesNotMatch(shards.replace(/^          key: .*\n/gm,''),/playwright|chromium/);
- const acceptance=u.slice(u.indexOf('  validate:\n'),u.indexOf('  browser:\n'));
- assert.ok(acceptance.includes('    needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'));
- for(const gate of ['PREFLIGHT_RESULT','BUILD_RESULT','CORE_RESULT','PATCH_RESULT','SEVEN_RESULT','RESOURCE_RESULT','BROWSER_RESULT'])
-   assert.ok(acceptance.includes('test "$'+gate+'" = success'),gate+' cannot be omitted from full acceptance');
+ assertValidateWorkflowContract(u);
  assert.doesNotMatch(p.slice(p.indexOf('      - name: Verify deployed ranked modes')),/npm install|npx .*playwright install/);
  assert.ok(p.includes('node scripts/check-inkwave-ranked-browser.mjs _site reports/ranked-public-browser'));
  assert.ok(s.includes("const executablePath=process.env.CI?chromium.executablePath():"));

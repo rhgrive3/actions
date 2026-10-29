@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {assertValidateWorkflowContract} from '../ci/inkwave-validate-contract.mjs';
 
 const read = name => fs.readFileSync(new URL('../../.github/workflows/' + name, import.meta.url), 'utf8');
 const full = read('validate-inkwave-update.yml');
@@ -69,7 +70,7 @@ test('fast preflight binds exact PR head without installing browsers or running 
 
 test('full gate requires native or offloaded browser evidence and both independent regressions', () => {
   const gate = job(full, 'validate');
-  assert.match(gate, /needs: \[build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);
+  assertValidateWorkflowContract(full);
   for (const required of ['CORE_RESULT', 'PATCH_RESULT', 'CIRCLECI_RESULT', 'BROWSER_RESULT', 'SEVEN_RESULT', 'RESOURCE_RESULT'])
     assert.match(gate, new RegExp('test "\\$' + required + '" = (?:success|skipped)'));
   assert.match(gate, /test "\$BROWSER_RESULT" = skipped/);
