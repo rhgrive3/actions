@@ -33,7 +33,7 @@ if(!process.env.INKWAVE_BUILT_SITE) test('historical actual replay rejects the f
 
 test('native initial spawn and first Charger launch are replayed from uninterrupted requests',async()=>{
  const p=await nativeTurfProbe('charger'),q=await privateNativeRealm();
- const {f}=q,orig=p.actor, actor=orig, owners=new Map([[orig.nid,orig.owner]]);let initialized=0, token;
+ const {f}=q,orig=p.actor, actor=orig, owners=new Map([[orig.nid,orig.owner]]), authorization={epoch:p.net.cfg.id,owners};let initialized=0, token;
  try{
   token=f.createTrustedNativeReplay(f,{isolatedRealm:true,epoch:p.net.cfg.id,seed:1,time:f.G.time,
    world:{level:f.G.level,physics:f.G.physics,paint:f.G.paint,match:q.match,initializeActor(a){initialized++;assert.equal(f.beginInitialSquidSpawn(a),true);}},
@@ -47,25 +47,25 @@ test('native initial spawn and first Charger launch are replayed from uninterrup
   const pace=async()=>{const delay=nextTick-performance.now();if(delay>0)await new Promise(r=>setTimeout(r,Math.ceil(delay)));nextTick=performance.now()+1000/60;};
   await pace();p.step();q.step();let row=p.rows[0],valid=command(orig,row);
   for(const bad of [{...valid,owner:'other'},{...valid,life:row.life+1},{...valid,ink:100},{...valid,position:row.position},{...valid,input:{...valid.input,move:[2,0]}}]){
-   assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[bad]},{owners}).ok,false);
+   assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[bad]},authorization).ok,false);
    assert.equal(f.inspectTrustedNativeReplay(token).tick,0);
   }
-  assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},{owners:new Map([[actor.nid,'other']])}).ok,false,'wire owner cannot substitute authenticated principal');
+  assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},{epoch:p.net.cfg.id,owners:new Map([[actor.nid,'other']])}).ok,false,'wire owner cannot substitute authenticated principal');
   for(const frame of [{tick:0,dt:row.dt,commands:[valid]},{tick:2,dt:row.dt,commands:[valid]},{tick:1,dt:0,commands:[valid]},{tick:1,dt:row.dt,commands:[valid,valid]}])
-   assert.equal(f.advanceTrustedNativeReplay(token,frame,{owners}).ok,false,'malformed frame does not advance');
+   assert.equal(f.advanceTrustedNativeReplay(token,frame,authorization).ok,false,'malformed frame does not advance');
   assert.equal(f.inspectTrustedNativeReplay(token).tick,0);
   const snapshots=[];
   const packetAt=label=>{assert.equal(p.net._sendTick(),true);const packet=p.wire.findLast(x=>x.k==='t');assert.ok(packet);snapshots.push({label,packet:plain(packet)});return packet;};
   packetAt('initial-aim');nextTick=performance.now()+1000/60;
   function consume(r){
-   const result=f.advanceTrustedNativeReplay(token,{tick:r.tick,dt:r.dt,commands:[command(orig,r)]},{owners});assert.equal(result.ok,true,JSON.stringify(result));
+   const result=f.advanceTrustedNativeReplay(token,{tick:r.tick,dt:r.dt,commands:[command(orig,r)]},authorization);assert.equal(result.ok,true,JSON.stringify(result));
    const a=f.inspectTrustedNativeReplay(token).actors[0];assert.equal(a.life,r.life);assert.equal(a.form,r.form);
    for(let i=0;i<3;i++)close(a.position[i],r.position[i],`tick ${r.tick} position ${i}`);
    for(let i=0;i<3;i++)close(a.velocity[i],r.velocity[i],`tick ${r.tick} velocity ${i}`);
    close(a.ink,r.ink,`tick ${r.tick} ink`);close(a.charge,r.charge,`tick ${r.tick} charge`);
   }
   consume(row);
-  assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},{owners}).ok,false,'duplicate tick rejected');
+  assert.equal(f.advanceTrustedNativeReplay(token,{tick:1,dt:row.dt,commands:[valid]},authorization).ok,false,'duplicate tick rejected');
   const advance=async()=>{await pace();p.step();q.step();consume(p.rows.at(-1));};
   for(let i=1;i<260;i++)await advance();assert.equal(p.match.state,'playing');assert.equal(p.actor.s3.squidSpawn.phase,'aim');
   p.actor.intent.fire=true;await advance();p.actor.intent.fire=false;
