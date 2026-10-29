@@ -25,3 +25,11 @@ for(const scenario of ['carry-jump','charge-jump'])test('legacy anchor calibrati
  if(scenario==='carry-jump')assert.ok(r.maxTranslation>0,'carry input must reach capped-rotation/position branch');
  t.diagnostic(JSON.stringify({calibration:LEGACY_RAINMAKER_ANCHOR,emitted:false,...r,traces:undefined,firstBad:undefined,worst:{frame:r.worst.frame,grip:r.worst.grip},worstLanding:{frame:r.worstLanding.frame,grip:r.worstLanding.grip}}));
 });
+
+test('current shoulder carry: injected landing hand offset is measured and rejected by the unchanged grip verifier',async t=>{
+ const r=await runAirScenario({api:f,scenario:'carry-jump',injectLandingFault:true});
+ assert.equal(r.airFrames,84);assert.equal(r.badFrames,0);
+ assert.equal(r.landingFrames,48);assert.ok(r.landingBadFrames>0,'real landing samples must expose the injected hand displacement');
+ assert.throws(()=>verifyAirScenario(r),/all48 actual landing frames keep world grip < \.001/);
+ t.diagnostic(JSON.stringify({pose:'current',negative:'QA-only +0.05 local handL x after landing solve',airBadFrames:r.badFrames,landingBadFrames:r.landingBadFrames,worstLandingGrip:r.worstLanding.grip,emitted:!!process.env.INKWAVE_BUILT_SITE}));
+});
