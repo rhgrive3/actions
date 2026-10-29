@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {assertNetworkArtifactSourceBinding} from './inkwave-network-source-coverage.mjs';
 export const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export const physicalLocation=name=>fs.existsSync(name)?fs.realpathSync(name):path.join(physicalLocation(path.dirname(name)),path.basename(name));
 export function persistentDirectory(name){
@@ -21,6 +22,7 @@ export function persistentBrowserTemp(target){
 export function verifyRuntimeBuild(site,root,sha){
  if(!/^[a-f0-9]{40}$/.test(sha))throw Error('Full source SHA required');
  const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+ assertNetworkArtifactSourceBinding(manifest);
  if(hash(JSON.stringify(manifest.artifacts))!==manifest.contentHash)throw Error('Manifest mismatch');
  for(const [file,expected]of Object.entries(manifest.artifacts)){
   const resolved=fs.realpathSync(path.join(site,file));

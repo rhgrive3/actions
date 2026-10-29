@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 export function compareComposedCpu(before,repeat,after,{allowBvhWorkReduction=false}={}){
- const harnessFiles=['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'];
+ const harnessFiles=['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs','lib/inkwave-sandbox-browser.mjs'];
  for(const report of [before,repeat,after]){
   assert.equal(report.schema,2,'measured-window counter schema');assert.equal(report.status,'passed');assert.match(report.sourceSha,/^[a-f0-9]{40}$/);
   assert.deepEqual(Object.keys(report.harness||{}).sort(),[...harnessFiles].sort(),'complete benchmark implementation receipt');
@@ -24,7 +24,7 @@ export function compareComposedCpu(before,repeat,after,{allowBvhWorkReduction=fa
  return before.scenarios.map((base,i)=>{
   for(const row of [repeat.scenarios[i],after.scenarios[i]]){
    assert.deepEqual(row.initial,base.initial,'same loaded geometry, roster, source readiness and settings');
-   for(const key of ['frames','hz','ticks','digest','digests','counts','state','draw','resources','scene'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
+   for(const key of ['frames','hz','ticks','minActors','minLiving','digest','digests','counts','state','draw','resources','scene'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
    // Exact Boolean early exits may reduce BVH work while preserving every
    // recorded gameplay result. This explicit mode never relaxes A/A, state,
    // rendering, resource, environment or harness identity checks.

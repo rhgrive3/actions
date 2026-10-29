@@ -9,6 +9,7 @@ import {replaceOnce,qualityIdentity} from '../adapter.mjs';
 test('#845 deferred hair has exact full-rate inputs before state transitions and first visible accessories', async () => {
   const f=await sourceLoadedActorFixture({random:()=>.4});
   const counts=[];
+  let unreadHiddenFrames=0,unreadVisibleFrames=0,detachedInputChecks=0,privateRowReuseChecks=0;
   for(const hz of [30,60,120]){
     const actors=[await f.make(),await f.make()],motion=actors.map(a=>a.character.sourceMotion);
     const adds=[0,0];
@@ -30,15 +31,35 @@ test('#845 deferred hair has exact full-rate inputs before state transitions and
         if(phase===4)c.root.position.y=(frame-hz)*.01;else c.root.position.y=0;
         motion[side].advance(1/hz,state);
       }
+      for(let side=0;side<2;side++){
+        const frame=motion[side]._iwMotionClipFrame?.();
+        if(frame){
+          assert.equal(frame.ready,false,'hair tracking does not materialize unread public motion descriptors');
+          if(side===0)unreadHiddenFrames++;else unreadVisibleFrames++;
+        }
+      }
       states.add(motion[0].state);
       assert.equal(body(motion[0]),body(motion[1]),`${hz}Hz frame ${frame}: body and clocks`);
       assert.equal(hair(motion[0].previousHairTargets),hair(motion[1].previousHairTargets),`${hz}Hz frame ${frame}: previous state`);
       // Recover before rendering midway through every phase, then defer again.
       if(frame%Math.max(1,Math.floor(hz/4))===Math.floor(hz/8)){
         const before=body(motion[0]);
+        // Deferred inputs must survive reuse or mutation of diagnostic rows.
+        // The full-rate hair path already consumed these semantic scalars.
+        const current=motion[0].currentClips[0],savedFrame=current.frame;
+        assert.notEqual(motion[0]._iwHairClips[0],current,'hair owns its saved scalar row');
+        const privateRow=motion[0]._iwMotionClipFrame?.().rows?.[0],privateFrame=privateRow?.frame;
+        if(privateRow){
+          assert.notEqual(motion[0]._iwHairClips[0],privateRow,'hair never retains a reusable diagnostic row');
+          privateRow.frame+=17;privateRowReuseChecks++;
+        }
+        current.frame+=13;
         motion[0]._ensureHairTargets();
+        if(privateRow)privateRow.frame=privateFrame;
+        current.frame=savedFrame;detachedInputChecks++;
         assert.equal(hair(motion[0].hairTargets),hair(motion[1].hairTargets),`${hz}Hz frame ${frame}: first-draw targets`);
         assert.equal(body(motion[0]),before,'recovery never advances body, clip phase or clocks');
+        assert.ok(motion[0]._iwHairClips.slice(0,motion[0]._iwHairClipCount).every(row=>row.name===null),'completed reconstruction releases clip names');
         const n=adds[0];motion[0]._ensureHairTargets();assert.equal(adds[0],n,'recovery is idempotent');
       }
     }
@@ -48,12 +69,14 @@ test('#845 deferred hair has exact full-rate inputs before state transitions and
     motion[0].manual={name:motion[0].currentClips[0].name,frame:0,loop:true};
     motion[0].sampleManual();motion[0]._ensureHairTargets();
     assert.equal(adds[0],n,'manual presentation drops deferred automatic clips');
+    assert.equal(motion[0]._iwHairClips.length,0,'manual presentation releases saved rows');
     motion[0].manual=null;motion[0].clearBankCaches();motion[0]._ensureHairTargets();
     assert.equal(adds[0],n,'bank cleanup drops pending references');
+    assert.equal(motion[0]._iwHairClips.length,0,'bank cleanup releases saved rows');
     counts.push({hz,deferredAdds:adds[0],fullRateAdds:adds[1]});
     f.reset();
   }
-  console.log(JSON.stringify({scope:'exact source hair inputs/body clocks; no device FPS claim',counts}));
+  console.log(JSON.stringify({scope:'exact source hair inputs/body clocks; no device FPS claim',counts,unreadHiddenFrames,unreadVisibleFrames,detachedInputChecks,privateRowReuseChecks}));
 });
 
 test('#845 adapter is identity-sealed, strict and remains after prior source-motion adapters',()=>{

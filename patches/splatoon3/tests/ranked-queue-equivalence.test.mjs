@@ -50,6 +50,11 @@ const urls = {};
 for (const name of ['clams', 'tower', 'zones', 'rainmaker', 'engine']) {
  let source = old(`patches/splatoon3/runtime/ranked/${name}.mjs`);
  if (name === 'clams') source = supportCorrectedReference(source);
+ // The short-tap fix adds an idle release latch. This queue trace exercises
+ // held/full-charge releases; give the frozen state the same additive default.
+ if (name === 'rainmaker') source = replaceReference(source,
+  'firing: false, delay: 0, recovery: 0, pending: null, wasSwimming: false',
+  'firing: false, released: false, delay: 0, recovery: 0, pending: null, wasSwimming: false');
  source = source.replace(/from '\.\/(\w+)\.mjs'/g, (_all, dependency) => `from '${urls[dependency]}'`);
  urls[name] = dataUrl(source);
 }
@@ -81,11 +86,14 @@ const stage = { id: 'queue-equivalence', zones: [{ center: [0,0,0], size: [6,6] 
  tower: { path: [[0,0,-10],[0,0,0],[0,0,10]], centerIndex: 1, checkpoints: [[{ progress: .5, count: 1.3 }],[{ progress: .5, count: 1.3 }]], speed: 1.2, halfSize: 1.4 },
  rainmaker: { center: [0,0,0], goals: [[0,0,10],[0,0,-10]], checkpoints: [[[0,0,5],[1,0,5]],[[0,0,-5],[-1,0,-5]]], retreatZ: [-8,8] },
  clams: { spawns: [[0,0,0],[1,0,0],[-1,0,0]], goals: [[0,0,10],[0,0,-10]] } };
-for (const mode of ['zones','tower','rainmaker','clams']) test(`${mode === 'clams' ? 'support-corrected baseline' : 'baseline'} complete ${mode} rules preserve each catch-up step, events and detached restore`, () => {
+for (const mode of ['zones','tower','rainmaker','clams']) test(`${mode === 'clams' ? 'support-corrected baseline' : 'baseline'} complete ${mode}${mode === 'rainmaker' ? ' non-firing' : ''} rules preserve each catch-up step, events and detached restore`, () => {
  const pair = [new BaselineEngine(mode, stage), new RankedEngine(mode, stage)], r = random(771);
  for (let tick = 0; tick < 600; tick++) {
   const actors = Array.from({ length: 8 }, (_, i) => ({ id: String(i), team: i % 2, slot: i, pos: [Math.sin(tick / 31 + i) * 1.3, 0, Math.sin(tick / 71 + i) * 6], alive: tick % 113 !== i, grounded: tick % 5 !== 0, weight: 'middle', swimming: tick % 11 === 0, onTower: mode === 'tower' && i === Math.floor(tick / 120) % 2 }));
-  const inputs = Object.fromEntries(actors.map(a => [a.id, { fire: tick % 150 < 80, throw: tick % 37 === 0, aim: [0, .1, a.team ? -1 : 1] }]));
+  // Short releases intentionally differ from the frozen rule now. Preserve
+  // this trace's exact ownership/checkpoint/swim/death/clock comparisons with
+  // fire idle; full-shot equivalence and the new tap behavior have separate tests.
+  const inputs = Object.fromEntries(actors.map(a => [a.id, { fire: mode !== 'rainmaker' && tick % 150 < 80, throw: tick % 37 === 0, aim: [0, .1, a.team ? -1 : 1] }]));
   const frame = { actors, inputs, zoneCoverage: [[tick % 181 < 90 ? .8 : .1, tick % 181 < 90 ? .1 : .8]], barrierHits: tick % 73 === 0 ? [{ id: '0', team: 0, damage: 1200, kind: 'shooter' }] : [], floorAt: () => 0, blocked: () => false };
   const dt = [1/120,1/60,1/30,.08,.25][Math.floor(r()*5)];
   for (const engine of pair) engine.update(dt, frame);
@@ -100,6 +108,26 @@ for (const mode of ['zones','tower','rainmaker','clams']) test(`${mode === 'clam
    assert.notEqual(pair[1].counts[0],0,'restore did not borrow incoming arrays');
   }
  }
+});
+test('baseline Rainmaker full-charge releases preserve catch-up snapshots and ordered shot events', () => {
+ const pair = [new BaselineEngine('rainmaker', stage), new RankedEngine('rainmaker', stage)], shots = [];
+ for (const engine of pair) engine.rule.state.barrier.active = false;
+ const frame = { actors: [{id:'0',team:0,pos:[0,0,0],alive:true,grounded:true,swimming:false}],
+  inputs: {'0':{fire:false,aim:[0,0,1]}}, floorAt:()=>0, blocked:()=>false };
+ const step = (dt,fire) => {
+  frame.inputs['0'].fire=fire;
+  for (const engine of pair) engine.update(dt,frame);
+  assert.deepEqual(pair[1].snapshot(),pair[0].snapshot());
+  assert.deepEqual(pair[1].events,pair[0].events);
+  shots.push(...pair[1].events.filter(e=>e.kind==='rainmaker-shot'));
+  for (const engine of pair) engine.events.length=0;
+ };
+ step(1/60,false);
+ for(let cycle=0;cycle<2;cycle++) {
+  for(const dt of [1/120,1/60,1/30,.08,.25,.4,.5])step(dt,true);
+  for(const dt of [1/120,1/60,1/30,.08,.25,.4])step(dt,false);
+ }
+ assert.equal(shots.length,2);assert.ok(shots.every(e=>e.charge===1&&e.damage===60&&e.blastDamage===180));
 });
 test('Rainmaker swept-sphere arithmetic preserves exact baseline numbers without per-target arrays', () => {
  const r=random(417);
@@ -231,17 +259,24 @@ test('Rainmaker shot geometry sharing preserves exact palette colors and dispose
  const { createRankedEffects } = await import('../runtime/ranked/combat.mjs');
  const geometries=[],materials=[];
  class Geometry extends THREE.SphereGeometry { constructor(...args){super(...args);this.disposals=0;geometries.push(this);}dispose(){this.disposals++;super.dispose();} }
- class Material extends THREE.MeshBasicMaterial { constructor(...args){super(...args);this.disposals=0;materials.push(this);}dispose(){this.disposals++;super.dispose();} }
- const namespace={...THREE,SphereGeometry:Geometry,MeshBasicMaterial:Material},scene=new THREE.Scene();
+ class TailGeometry extends THREE.BufferGeometry { constructor(...args){super(...args);this.disposals=0;geometries.push(this);}dispose(){this.disposals++;super.dispose();} }
+ class Material extends THREE.MeshStandardMaterial { constructor(...args){super(...args);this.disposals=0;materials.push(this);}dispose(){this.disposals++;super.dispose();} }
+ const namespace={...THREE,SphereGeometry:Geometry,BufferGeometry:TailGeometry,MeshStandardMaterial:Material},scene=new THREE.Scene();
  const actor={nid:1,team:0,alive:true,remote:false,pos:new THREE.Vector3(),vel:new THREE.Vector3()};
  const G={scene,teamColors:[new THREE.Color(.3,.4,.5),new THREE.Color(.8,.2,.1)],audio:{play(){}},physics:{segment:()=>({hit:false})},projectiles:{kitDefenseCandidate:()=>null}};
  const match={state:'playing',actors:[actor],ranked:{revision:0},rankedWorld:{floorAt:()=>0}};
  const effects=createRankedEffects({G,THREE:namespace,Hit:class {},PLAYER:{waterY:-1}},match);
  const event={kind:'rainmaker-shot',actorId:'1',team:0,pos:[0,0,0],aim:[0,0,1],charge:1,shotOrigin:{actorId:'1',owner:null,life:0,team:0,body:[0,.7,0],muzzle:[0,1,0]}};
- effects.event(event);effects.event(event);assert.equal(geometries.length,1);assert.equal(materials.length,1);assert.equal(scene.children[0].geometry,scene.children[1].geometry);
- const previous=scene.children[0].material.color.clone();G.teamColors[0].r+=1e-8;effects.event(event);
+ effects.event(event);effects.event(event);assert.equal(geometries.length,3);assert.equal(materials.length,1);
+ const head=root=>root.getObjectByName('rainmaker-shot-head'),tail=root=>root.getObjectByName('rainmaker-shot-ink-sheet'),drops=root=>root.getObjectByName('rainmaker-shot-droplets');
+ for(const part of [head,tail,drops])assert.equal(part(scene.children[0]).geometry,part(scene.children[1]).geometry);
+ const instanced=[];let retired=0;
+ const observe=root=>{const mesh=drops(root);instanced.push(mesh);mesh.addEventListener('dispose',()=>retired++);};
+ observe(scene.children[0]);observe(scene.children[1]);
+ const previous=head(scene.children[0]).material.color.clone();G.teamColors[0].r+=1e-8;effects.event(event);observe(scene.children[2]);
  assert.equal(materials.length,2,'do not quantize distinct palette values to a common hex key');
- assert.equal(scene.children[0].material.color.r,previous.r);assert.equal(scene.children[2].material.color.r,G.teamColors[0].r);
- effects.update(4);assert.equal(scene.children.length,0);assert.equal(geometries[0].disposals,0,'shared geometry belongs to the effects lifetime');
- effects.event(event);effects.dispose();effects.dispose();assert.equal(geometries[0].disposals,1);assert.ok(materials.every(m=>m.disposals===1));assert.equal(scene.children.length,0);
+ assert.equal(head(scene.children[0]).material.color.r,previous.r);assert.equal(head(scene.children[2]).material.color.r,G.teamColors[0].r);
+ effects.update(4);assert.equal(scene.children.length,0);assert.equal(retired,3);assert.ok(geometries.every(g=>g.disposals===0),'shared geometry belongs to the effects lifetime');
+ effects.event(event);observe(scene.children[0]);effects.dispose();effects.dispose();
+ assert.equal(retired,instanced.length);assert.ok(geometries.every(g=>g.disposals===1));assert.ok(materials.every(m=>m.disposals===1));assert.equal(scene.children.length,0);
 });

@@ -30,7 +30,7 @@ export async function run({prefix,baselinePrefix}){
    const match=G.match={mode:'rainmaker',state:'playing',actors:[a],ranked:engine,rankedBarrierHits:[],playing:()=>true,canRespawn:()=>false,rankedWorld:{zoneCoverage:()=>[],floorAt:()=>0,blocked:()=>false}};
    rule.state.barrier.active=false;rule.state.carrier='carrier';rule.state.carrierTeam=0;
    const core=createRainmakerModel(THREE),group=new THREE.Group();group.add(core);scene.add(group);const display=createRainmakerPresentation(THREE,core),fx=createRankedEffects(api,match),births=[];
-   const add=scene.add;scene.add=function(o,...rest){if(o.geometry?.type==='SphereGeometry')births.push(o);return add.call(this,o,...rest);};
+   const add=scene.add;scene.add=function(o,...rest){if(o.name==='rainmaker-shot'||o.geometry?.type==='SphereGeometry')births.push(o);return add.call(this,o,...rest);};
    try{
     await ch._sourceMotionLoader;await ch.sourceMotion?.ready;check(ch.sourceMotion?.status==='ready','same-build Player00 ready');
     a.aimPitch=pitch;a.aimYaw=a.yaw=0;a.aimDir.set(0,Math.sin(pitch),Math.cos(pitch));a.intent.fire=false;a._rankedInput={fire:false,throw:false,aim:a.aimDir.toArray(),at:G.time};

@@ -229,7 +229,11 @@
           "scripts/tests/inkwave-evidence-packaging.test.mjs",
           "scripts/tests/ranked-roller-audio.test.mjs",
           "scripts/tests/inkwave-quality-account-scope.test.mjs",
-          "scripts/tests/cxx-openttd-projection.test.mjs"
+          "scripts/tests/cxx-openttd-projection.test.mjs",
+          "scripts/tests/inkwave-native-combat-window.test.mjs",
+          "scripts/tests/inkwave-input-listener-audit.test.mjs",
+          "scripts/tests/inkwave-cpu-profile.test.mjs",
+          "scripts/tests/inkwave-network-source-coverage.test.mjs"
         ]
       }
     ]

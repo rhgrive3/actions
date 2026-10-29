@@ -1,0 +1,25 @@
+{
+  "scope": "Isolated native API reentry/effect-commit ordering; no production admission installation",
+  "oldControl": {
+    "commit": "d81aeaf3",
+    "tests": 1,
+    "fail": 1,
+    "exitCode": 1,
+    "nativeModuleSHA256": "20ae0c65c2f00d1d5c014d0c3a0957433768b5570da8dd293ecc8833aef34985"
+  },
+  "fixed": {
+    "tests": 123,
+    "pass": 123,
+    "fail": 0,
+    "skip": 0,
+    "files": [
+      "trusted-native-replay.test.mjs",
+      "native-command-wire.test.mjs",
+      "canonical-weapon-actions.test.mjs"
+    ]
+  },
+  "nativeModuleSHA256": "95f11ea022a0ee7d2e87361d7a6208a9b77117e3fcf121ce451895e1f192b7cc",
+  "testSHA256": "6e886a628de3b2c6c0ac65bc1c841a95f7a6f353784aba48c4eacb8ccf59d798",
+  "semantics": "Reject same-session native callback reentry before tick/time/input mutation; deny effect peek/commit while native frame executes; preserve outer update and pending capability for end-of-frame commit",
+  "countNote": "123 is the final full source run including the prior122, not additional independent123 cases"
+}

@@ -65,7 +65,8 @@ test('Rainmaker origin admission, immutable release, and body-to-muzzle obstruct
     h.G.physics.los=()=>false;
     h.effects.event(shot());h.effects.update(1/60);
     near(segments[0][0],[0,.7,0]);near(segments[0][1],[0,1,1.2]);
-    assert.equal(h.calls.added[0].position.z,.5);assert.equal(h.calls.added[0].visible,false);
+    assert.equal(h.calls.added[0].position.z,.5);assert.equal(h.calls.added[0].visible,true);
+    assert.equal(h.calls.added[0].userData.phase,'armed');
     assert.deepEqual(h.calls.damage,[]);assert.ok(h.calls.paints.every(p=>p[0].z<=.5));
     h.effects.update(.2);assert.equal(h.calls.rings.length,1);assert.deepEqual(h.calls.damage,[]);h.effects.dispose();
   });
@@ -177,4 +178,44 @@ test('production Actor final release pose agrees with the adopted displayed muzz
     if(process.env.INKWAVE_RAINMAKER_ORIGIN_TRACE)fs.writeFileSync(process.env.INKWAVE_RAINMAKER_ORIGIN_TRACE,JSON.stringify({trace,digest},null,2)+'\n');
     t.diagnostic(JSON.stringify({samples,interruptedSamples,maxError,maxOldActorOriginGap:maxOldGap,sourceBank:a.character.sourceMotion.status,traceSha256:digest}));
   }finally{presentation.release();core.geometry.dispose();core.material.dispose();f.reset();}
+});
+
+test('a moving production carrier emits a short tap from the live muzzle after the minimum charge', async () => {
+  const f = await sourceLoadedActorFixture({ extraExports, random: () => .5 }), { G } = f;
+  try {
+    for (const hz of [30, 60, 120]) {
+      const a = await f.make(), engine = new f.OriginRankedEngine('rainmaker', stage), rule = engine.rule, dt = 1 / hz;
+      rule.state.carrier = String(a.nid); rule.state.carrierTeam = a.team; rule.state.barrier.active = false;
+      const match = G.match = { mode: 'rainmaker', state: 'playing', actors: [a], ranked: engine,
+        rankedBarrierHits: [], playing: () => true, canRespawn: () => false,
+        rankedWorld: { zoneCoverage: () => [], floorAt: () => 0, blocked: () => false } };
+      // Legacy snapshots retain an idle default for the additive latch.
+      const legacy = rule.snapshot(); delete legacy.charge.released;
+      rule.restore(legacy); assert.equal(rule.state.charge.released, false);
+      for (let i = 0; i < 12; i++) f.tick(a, dt);
+      a.intent.move.set(1, 0, 0);
+      const tick = fire => {
+        a.intent.fire = fire; f.tick(a, dt);
+        const frame = f.buildFrame(match, f), origin = plain(frame.actors[0].rainmakerShotOrigin);
+        rule.update(dt, frame);
+        return origin;
+      };
+      tick(true); const earlyMuzzle = tick(false);
+      assert.equal(rule.state.charge.released, true);
+      const snapshot = engine.snapshot();
+      assert.equal(f.validRankedSnapshot(snapshot, 'rainmaker', stage.id), true);
+      const malformed = plain(snapshot); malformed.rule.charge.released = 'yes';
+      assert.equal(f.validRankedSnapshot(malformed, 'rainmaker', stage.id), false);
+      rule.restore(plain(snapshot).rule);
+      let liveOrigin = null, count = 0;
+      while (!engine.events.some(e => e.kind === 'rainmaker-shot') && count++ < hz) {
+        const sampled = tick(true); if (sampled) liveOrigin = sampled;
+      }
+      const shot = engine.events.find(e => e.kind === 'rainmaker-shot');
+      assert.ok(shot); assert.equal(shot.damage, 30);
+      assert.deepEqual(plain(shot.shotOrigin), liveOrigin, 're-press captures the live pose at the pre-shot transition');
+      assert.ok(Math.abs(shot.shotOrigin.muzzle[0] - earlyMuzzle.muzzle[0]) > .05,
+        'a tap must not freeze the projectile at the carrier position from a third-second earlier');
+    }
+  } finally { f.reset(); }
 });

@@ -19,6 +19,18 @@ const remainingEmittedFiles = [
   'patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs',
   'patches/local-quality/tests/offscreen-hair-targets.test.mjs',
   'patches/local-quality/tests/native-offscreen-ground-memo.test.mjs',
+  'patches/network-replication/tests/canonical-weapon-actions.test.mjs',
+  'patches/network-replication/tests/canonical-weapon-modes.test.mjs',
+  'patches/network-replication/tests/canonical-sub-special-traces.test.mjs',
+  'patches/network-replication/tests/native-action-traces.test.mjs',
+  'patches/network-replication/tests/trusted-native-replay.test.mjs',
+  'patches/network-replication/tests/native-command-wire.test.mjs',
+  'patches/network-replication/tests/native-turf-start-replay.test.mjs',
+  'patches/network-replication/tests/native-turf-session-reconnect.test.mjs',
+  'patches/splatoon3/tests/native-action-trace.test.mjs',
+  'patches/splatoon3/tests/native-action-representatives.test.mjs',
+  'patches/splatoon3/tests/native-action-trace-binding.test.mjs',
+  'patches/splatoon3/tests/roller-paint-world-update.test.mjs',
 ];
 function assertRemainingEmittedCoverage(source) {
   const core = source.match(/^  validate_core:\n([\s\S]*?)(?=^  [\w-]+:|$(?![\s\S]))/m)?.[1];
@@ -28,6 +40,9 @@ function assertRemainingEmittedCoverage(source) {
   const step = steps[0];
   assert.ok(step.includes('        env:\n          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n'));
   assert.ok(step.includes('          node --experimental-vm-modules --test --test-concurrency=2 \\\n'));
+  assert.ok(step.includes('          INKWAVE_CANONICAL_TRACE_MODULE: ${{ github.workspace }}/_site/patches/network-replication/canonical-weapon-actions.mjs\n'));
+  assert.ok(step.includes('          INKWAVE_NATIVE_TRACE_COMPARE: ${{ github.workspace }}/patches/splatoon3/tests/fixtures/native-action-trace-035.json.gz\n'));
+  assert.ok(step.includes('verifyRuntimeBuild(process.env.INKWAVE_BUILT_SITE, process.cwd(), process.env.SOURCE_SHA)'));
   assert.doesNotMatch(step, /^        (?:if|continue-on-error):|--test-name-pattern|--test-skip-pattern|\|\|\s*(?:true|echo)/m);
   for (const file of remainingEmittedFiles) assert.equal(step.split(file).length - 1, 1, file);
   assert.equal((step.match(/\.test\.mjs/g) || []).length, remainingEmittedFiles.length);
@@ -41,11 +56,14 @@ test('missing, duplicate, filtered, raw-source and optional remaining coverage i
   const name = 'name: Verify remaining emitted combat, weapon and visual regressions\n';
   for (const change of [
     ...remainingEmittedFiles.map(file => source => source.replace(file, 'missing.test.mjs')),
+    source => source.replace('          INKWAVE_CANONICAL_TRACE_MODULE:', '          OMITTED_CANONICAL_TRACE_MODULE:'),
+    source => source.replace('          INKWAVE_NATIVE_TRACE_COMPARE:', '          OMITTED_NATIVE_TRACE_COMPARE:'),
+    source => source.replace('verifyRuntimeBuild(process.env.INKWAVE_BUILT_SITE, process.cwd(), process.env.SOURCE_SHA)', 'void 0'),
     source => source.replace(name, name + '        if: false\n'),
     source => source.replace(name, name + '        continue-on-error: true\n'),
     source => source.replace(name, 'name: omitted remaining regressions\n'),
-    source => source.replace('          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n        run: |\n          node --experimental-vm-modules --test --test-concurrency=2',
-      '          INKWAVE_BUILT_SITE: ${{ github.workspace }}/inkwave-public\n        run: |\n          node --experimental-vm-modules --test --test-concurrency=2'),
+    source => source.replace('          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site\n',
+      '          INKWAVE_BUILT_SITE: ${{ github.workspace }}/inkwave-public\n'),
     source => source.replace('node --experimental-vm-modules --test --test-concurrency=2 \\\n', 'node --experimental-vm-modules --test --test-name-pattern=only --test-concurrency=2 \\\n'),
     source => source.replace(remainingEmittedFiles[0], remainingEmittedFiles[0] + ' ' + remainingEmittedFiles[0]),
   ]) {

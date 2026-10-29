@@ -22,9 +22,11 @@ on:
       - 'patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs'
       - 'scripts/check-inkwave-gameplay-resources.mjs'
       - 'scripts/lib/inkwave-gameplay-*.mjs'
+      - 'scripts/lib/inkwave-native-combat-window.mjs'
       - 'scripts/lib/inkwave-chromium-process-memory.mjs'
       - 'scripts/lib/inkwave-runtime-evidence.mjs'
       - 'scripts/tests/inkwave-gameplay-*.test.mjs'
+      - 'scripts/tests/inkwave-native-combat-window.test.mjs'
       - 'scripts/tests/inkwave-chromium-process-memory.test.mjs'
       - 'scripts/prepare-inkwave-ci-apt.py'
       - '.github/workflows/inkwave-gameplay-resources.yml'
@@ -50,9 +52,11 @@ on:
       - 'patches/splatoon3/tests/torpedo-splash-upload-browser.test.mjs'
       - 'scripts/check-inkwave-gameplay-resources.mjs'
       - 'scripts/lib/inkwave-gameplay-*.mjs'
+      - 'scripts/lib/inkwave-native-combat-window.mjs'
       - 'scripts/lib/inkwave-chromium-process-memory.mjs'
       - 'scripts/lib/inkwave-runtime-evidence.mjs'
       - 'scripts/tests/inkwave-gameplay-*.test.mjs'
+      - 'scripts/tests/inkwave-native-combat-window.test.mjs'
       - 'scripts/tests/inkwave-chromium-process-memory.test.mjs'
       - 'scripts/prepare-inkwave-ci-apt.py'
       - '.github/workflows/inkwave-gameplay-resources.yml'
@@ -102,7 +106,7 @@ jobs:
           node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/crab-ball-lifecycle.test.mjs patches/splatoon3/tests/crab-tank-splash-visual.test.mjs patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/queue-extra-weapons-fx.test.mjs patches/splatoon3/tests/ink-flight-pool-lifecycle.test.mjs patches/local-quality/tests/screenfx-local-lifecycle.test.mjs patches/native-stages/tests/native-context-retirement.test.mjs patches/native-stages/tests/native-compressed-mip-legality.test.mjs
       - name: Verify gameplay profiler measurement contracts
         run: |
-          node --test scripts/tests/inkwave-gameplay-observer.test.mjs scripts/tests/inkwave-gameplay-flow-transport.test.mjs scripts/tests/inkwave-gameplay-verdict.test.mjs scripts/tests/inkwave-chromium-process-memory.test.mjs
+          node --test scripts/tests/inkwave-gameplay-observer.test.mjs scripts/tests/inkwave-gameplay-flow-transport.test.mjs scripts/tests/inkwave-gameplay-verdict.test.mjs scripts/tests/inkwave-chromium-process-memory.test.mjs scripts/tests/inkwave-native-combat-window.test.mjs
       - name: Build production site and verify startup budget
         run: |
           node scripts/build-inkwave.mjs inkwave-public .built-site/_site
