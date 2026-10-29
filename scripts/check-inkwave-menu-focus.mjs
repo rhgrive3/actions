@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
+import { verifyMenuLayoutSourceIdentity } from './lib/inkwave-menu-focus-source-identity.mjs';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
 const source = path.resolve(arg('--source') || path.join(repo, '.built-site/_site'));
@@ -18,7 +19,8 @@ const manifestBytes = fs.readFileSync(manifestPath), manifest = JSON.parse(manif
 assert.equal(manifest.build.optimization, 'esbuild-minify', 'Requires production emission');
 assert.equal(hash(JSON.stringify(manifest.files)), manifest.inputHash, 'Manifest input hash');
 assert.equal(hash(JSON.stringify(manifest.artifacts)), manifest.contentHash, 'Manifest artifact hash');
-for (const [key, digest] of Object.entries(pins.inputs)) assert.equal(manifest.files[key], digest, `Pinned composed UI input: ${key}`);
+const menuLayoutEpoch=verifyMenuLayoutSourceIdentity(fs.readFileSync(path.join(repo,'patches/splatoon3/runtime/menu-layout.mjs'),'utf8'),manifest.files['patch/runtime/menu-layout.mjs'],pins.inputs['patch/runtime/menu-layout.mjs']);
+for (const [key, digest] of Object.entries(pins.inputs)) assert.equal(manifest.files[key],key==='patch/runtime/menu-layout.mjs'?menuLayoutEpoch.sourceSha256:digest, `Pinned composed UI input: ${key}`);
 const files = ['src/ui/menus.js', 'patches/splatoon3/runtime/menu-layout.mjs', 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/profile.json'];
 const emitted = Object.fromEntries(files.map(file => {
   const digest = hash(fs.readFileSync(path.join(source, file)));
@@ -28,8 +30,14 @@ const emitted = Object.fromEntries(files.map(file => {
 // Observe factories and callbacks, preserving receiver, arguments, return and errors.
 // Installation precedes observation; no native constructor or screen is substituted.
 function observe(Menus) {
-  const audit = window.focusAudit = { screens: [], construction: [], destroyedCallbacks: [] };
-  for (const name of ['setup', 'loadout']) {
+  const audit = window.focusAudit = { screens: [], construction: [], destroyedCallbacks: [], graphNavigation: [] };
+  const graphNav=Menus.prototype._graphNav;
+  Menus.prototype._graphNav=function(...args){
+    const result=Reflect.apply(graphNav,this,args);
+    audit.graphNavigation.push({dir:args[1],result});
+    return result;
+  };
+  for (const name of ['setup', 'loadout', 'mode']) {
     const key = '_scr_' + name, factory = Menus.prototype[key];
     Menus.prototype[key] = function (...args) {
       const before = this._focus, scr = Reflect.apply(factory, this, args);
@@ -82,7 +90,7 @@ window.G=G;window.menuState=()=>({settings,profile,loadout});window.menus=new Me
 window.addEventListener('keydown',e=>{if(menus.handleKey(e)&&document.activeElement?.tagName!=='INPUT')e.preventDefault()});
 window.menuReady=true;
 </script></html>`;
-const result = { status: 'pending', baseCommit: pins.baseCommit, sourceSha: process.env.SOURCE_SHA || null, contentHash: manifest.contentHash, source, manifestSha256: hash(manifestBytes), inputHash: manifest.inputHash, revision: manifest.build.revision, emitted, errors: [], checks: [] };
+const result = { status: 'pending', baseCommit: pins.baseCommit, sourceSha: process.env.SOURCE_SHA || null, contentHash: manifest.contentHash, source, manifestSha256: hash(manifestBytes), inputHash: manifest.inputHash, revision: manifest.build.revision, menuLayoutEpoch, emitted, errors: [], checks: [] };
 fs.mkdirSync(evidence, { recursive: true });
 const server = createResponsiveAssetServer({ source, html });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -145,6 +153,34 @@ try {
       show('setup'); show('loadout', true);
       check(menus._focus.dataset.id === remembered && visible(), `return ${cycle}: remembered visible focus`);
     }
+    show('mode');
+    const mode=menus._scr,modeRow=mode.el.querySelector('.iw-modesel__row');
+    const modeCards=[...modeRow.querySelectorAll('.iw-mode')];
+    check(modeCards.length>=6,'production mode catalogue supplies the real six-rule grid');
+    menus._input='touch';
+    const columns=modeRow.style.gridTemplateColumns;
+    modeRow.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
+    menus._setFocus(modeCards[0],{snap:true});
+    check(mode.onNav('down')===true&&menus._focus===modeCards[3],'mode navigation uses the mounted three-column grid');
+    modeRow.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';
+    menus._setFocus(modeCards[0],{snap:true});
+    check(mode.onNav('down')===true&&menus._focus===modeCards[2],'cached mode nodes still read responsive column changes');
+    menus._setFocus(modeCards[1],{snap:true});mode.onNav('right');
+    check(menus._focus===modeCards[1],'horizontal mode navigation retains row boundaries');
+    const parent=modeRow.parentNode,next=modeRow.nextSibling;
+    menus._setFocus(modeCards[0],{snap:true});
+    let graphCount=audit.graphNavigation.length;
+    modeRow.remove();mode.onNav('right');
+    check(audit.graphNavigation.length===graphCount+1&&menus._focus===modeCards[0],'disconnected cached row delegates native graph without disconnected focus');
+    parent.insertBefore(modeRow,next);
+    const moved=modeCards.at(-1);mode.el.appendChild(moved);
+    graphCount=audit.graphNavigation.length;mode.onNav('down');
+    check(audit.graphNavigation.length===graphCount+1,'reparented cached card delegates the native graph');
+    modeRow.appendChild(moved);modeRow.style.gridTemplateColumns=columns;
+    menus._setFocus(null);graphCount=audit.graphNavigation.length;mode.onNav('left');
+    check(audit.graphNavigation.length===graphCount+1&&menus._focus===null,'absent mode focus delegates native graph');
+    show('loadout');show('mode');
+    check(menus._scr!==mode&&menus._scr.el.contains(menus._focus),'replacement mode screen owns its initial focus and cache');
     check(audit.destroyedCallbacks.length === 0 && audit.screens.filter(x => x !== audit.screens.at(-1)).every(x => x.destroyed), 'all outgoing screens destroyed without late focus callbacks');
     check(audit.screens.every(row => row.owned && row.mounted), 'every observed focus callback belongs to its mounted screen');
     return checks;

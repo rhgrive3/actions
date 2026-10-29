@@ -242,7 +242,17 @@
           "scripts/tests/inkwave-input-listener-audit.test.mjs",
           "scripts/tests/inkwave-cpu-profile.test.mjs",
           "scripts/tests/inkwave-network-source-coverage.test.mjs",
-          "scripts/tests/inkwave-runtime-evidence.test.mjs"
+          "scripts/tests/inkwave-runtime-evidence.test.mjs",
+          "scripts/tests/inkwave-validate-install-evidence-20261029.test.mjs",
+          "scripts/tests/inkwave-menu-focus-source-identity.test.mjs"
+        ]
+      },
+      {
+        "program": "node",
+        "args": [
+          "--experimental-vm-modules",
+          "--test",
+          "patches/splatoon3/tests/menu-layout-cache-1915.test.mjs"
         ]
       }
     ]

@@ -65,7 +65,7 @@ jobs:
         if: always()
         id: repair
         run: >-
-          node --test
+          node --experimental-vm-modules --test
           scripts/tests/inkwave-workflow-inputs.test.mjs
           tools/swim-entry-qa/workflow.test.mjs
           scripts/tests/inkwave-context-recovery-browser.test.mjs

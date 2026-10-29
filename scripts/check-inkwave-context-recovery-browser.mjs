@@ -7,6 +7,58 @@ import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
+// Diagnostic-only; suitable for page.addInitScript serialization. No promise
+// reactions are added: native fetch/read promises retain rejection observability.
+export function installAudioRequestTrace(){
+  const env=globalThis;if(env.__audioRequestTrace)return;
+  const trace=env.__audioRequestTrace=[],signals=new WeakMap(),responses=new WeakMap(),streams=new WeakMap(),readers=new WeakMap(),byURL=new Map();
+  const identities=new WeakMap();let nextIdentity=0;
+  const identity=value=>value && (typeof value==='object'||typeof value==='function') ? (identities.get(value) || (identities.set(value,++nextIdentity),nextIdentity)) : null;
+  env.__contextAudioOwnerSnapshot=()=>{
+    const audio=env.RG?.audio,bank=audio?._weaponBank,pack=bank?.authorized,loader=audio?._realS3Loader,context=audio?.ctx;
+    const cues=['shooter','combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat'];
+    const loaded=pack?.loaded instanceof Map?[...pack.loaded.values()]:[];
+    return {at:Date.now(),mono:env.performance?.now?.()??null,engine:identity(audio),context:identity(context),contextState:context?.state??null,
+      bank:identity(bank),bankContext:identity(bank?.ctx),bankDisposed:bank?.disposed??null,loader:identity(loader),loaderBank:identity(loader?.bank),
+      pack:identity(pack),generation:pack?.generation??null,pending:pack?.pending??null,loaderStatus:loader?.status??null,
+      queuedKeys:loader?.inFlight instanceof Map?[...loader.inFlight.keys()].slice(0,128):[],loaderErrors:Array.isArray(loader?.errors)?loader.errors.slice(-16):[],
+      packErrors:Array.isArray(pack?.errors)?pack.errors.slice(-16):[],
+      cues:cues.map(id=>({id,declared:loader?.declares?.(id,'fire')??null,variants:loaded.filter(row=>row.id===id&&row.event==='fire').map(row=>({variant:row.variant,file:row.file,sha256:row.sha256??null}))}))};
+  };
+  const now=()=>({wall:Date.now(),mono:env.performance?.now?.()??null});
+  const note=(event,row,extra={})=>{try{if(trace.length<512)trace.push({...now(),event,url:row?.url??null,id:row?.id??null,...extra});}catch{}};
+  const errorInfo=e=>{try{return {name:String(e?.name??''),message:String(e?.message??e??'').slice(0,250)};}catch{return {name:'',message:'unavailable'};}};
+  let serial=0;const nativeFetch=env.fetch;
+  if(typeof nativeFetch==='function')env.fetch=function(input,options){
+    const url=typeof input==='string'?input:(typeof env.URL==='function' && input instanceof env.URL ? input.href : ''),observe=/\/runtime\/audio\/s3-real\/[^/?#]+\.mp3(?:[?#]|$)/i.test(url);
+    if(!observe||trace.length>=512)return Reflect.apply(nativeFetch,this,arguments);
+    const row={url,id:++serial};let signal=null;
+    try { const descriptor=options && Object.getOwnPropertyDescriptor(options,'signal'); if(descriptor && Object.hasOwn(descriptor,'value'))signal=descriptor.value; } catch {}
+    note('fetch-start',row,{signal:!!signal});
+    try { let candidates=byURL.get(url);if(!candidates)byURL.set(url,candidates=[]);candidates.push(row);
+      if(signal){let set=signals.get(signal);if(!set){set=[];signals.set(signal,set);signal.addEventListener('abort',()=>{for(const item of set)note('signal-abort',item,{reason:errorInfo(signal.reason)});},{once:true});}set.push(row);}
+    } catch { /* Observation must not alter fetch. */ }
+    try{return Reflect.apply(nativeFetch,this,arguments);}catch(e){note('fetch-throw',row,{error:errorInfo(e)});throw e;}
+  };
+  // Match a browser Response to its URL without observing or replacing the
+  // fetch promise. Concurrent identical URLs remain explicitly ambiguous.
+  const responseProto=env.Response?.prototype,bodyDescriptor=responseProto&&Object.getOwnPropertyDescriptor(responseProto,'body');
+  if(bodyDescriptor?.configurable&&typeof bodyDescriptor.get==='function')Object.defineProperty(responseProto,'body',{...bodyDescriptor,get(){
+    const body=Reflect.apply(bodyDescriptor.get,this,[]);
+    try{let row=responses.get(this);if(!row){const url=this.url,candidates=byURL.get(url);if(candidates?.length){row=candidates.length===1?candidates[0]:{url,id:null};if(candidates.length===1)byURL.delete(url);responses.set(this,row);note('body',row,{ambiguous:row.id===null});}}if(row&&body)streams.set(body,row);}catch{}
+    return body;
+  }});
+  const ac=env.AbortController?.prototype,nativeAbort=ac?.abort;
+  if(nativeAbort)ac.abort=function(...args){for(const row of signals.get(this.signal)||[])note('controller-abort',row,{stack:String(new Error().stack)});return Reflect.apply(nativeAbort,this,args);};
+  const sp=env.ReadableStream?.prototype,nativeGetReader=sp?.getReader,nativeStreamCancel=sp?.cancel;
+  if(nativeGetReader)sp.getReader=function(...args){const reader=Reflect.apply(nativeGetReader,this,args),row=streams.get(this);if(row){readers.set(reader,row);note('get-reader',row);}return reader;};
+  if(nativeStreamCancel)sp.cancel=function(...args){const row=streams.get(this);if(row){row.cancelled=true;note('stream-cancel',row,{reason:errorInfo(args[0]),stack:String(new Error().stack)});}return Reflect.apply(nativeStreamCancel,this,args);};
+  const rp=env.ReadableStreamDefaultReader?.prototype,nativeRead=rp?.read,nativeCancel=rp?.cancel,nativeRelease=rp?.releaseLock;
+  if(nativeRead)rp.read=function(...args){const row=readers.get(this);if(row){row.readCalls=(row.readCalls||0)+1;note('read-call',row);}try{return Reflect.apply(nativeRead,this,args);}catch(e){if(row)note('read-throw',row,{error:errorInfo(e)});throw e;}};
+  if(nativeCancel)rp.cancel=function(...args){const row=readers.get(this);if(row){row.cancelled=true;note('reader-cancel',row,{reason:errorInfo(args[0]),stack:String(new Error().stack)});}return Reflect.apply(nativeCancel,this,args);};
+  if(nativeRelease)rp.releaseLock=function(...args){const row=readers.get(this),stack=row?String(new Error().stack):'';const result=Reflect.apply(nativeRelease,this,args);if(row)note('reader-release',row,{stack,encodedBodyCompleted:stack.includes('encoded-response.mjs')&&!!row.readCalls&&!row.cancelled});return result;};
+}
+
 // Every phase emitted by the shared menu helper has an explicit native control
 // admission. Unknown phases fail closed rather than skipping the input guard.
 export function contextMenuControlForPhase(label) {
@@ -245,7 +297,8 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
   const required = ['src/main.js', 'src/core/renderer.js', 'patches/splatoon3/runtime/clock.mjs', 'patches/splatoon3/runtime/recovery-gate.mjs'];
   for (const file of ['inkwave-public/src/main.js', 'inkwave-public/src/core/renderer.js', 'patches/splatoon3/runtime/clock.mjs', 'patches/splatoon3/runtime/recovery-gate.mjs']) assert(sourceInputs.includes(file), 'Required source input omitted from identity: ' + file);
   const moduleHashes = Object.fromEntries(required.map(file => { const digest = build.artifacts[file]; assert(digest, 'Missing required emitted module: ' + file); return [file, digest]; }));
-  const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set();
+  const errors = [], consoleMessages = [], requests = [], httpFailures = [], events = [], served = new Set(), audioNetwork = [];
+  let preLossAudio = null;
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg' };
   const server = http.createServer((req, res) => {
     try {
@@ -266,7 +319,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     const pendingAudio = new Set();
     const audioRequest = r => /\.(?:mp3|ogg|wav)(?:[?#]|$)/i.test(r.url());
     page.on('request', r => { if (audioRequest(r)) pendingAudio.add(r); });
+    page.on('request', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'start',url:r.url(),at:Date.now()}); });
     page.on('requestfinished', r => pendingAudio.delete(r));
+    page.on('requestfinished', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'finished',url:r.url(),at:Date.now(),timing:r.timing()}); });
     await page.exposeFunction('__awaitContextRecoveryAudioIdle', async () => {
       // Wait only for a stable quiet period, never suppress a failed request.
       const deadline = Date.now() + 30000;
@@ -280,13 +335,32 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
         assert(now < deadline, 'Native startup audio fetch did not settle');
         await new Promise(resolve => setTimeout(resolve, 100));
       }
+      try { preLossAudio = await page.evaluate(() => globalThis.__contextAudioOwnerSnapshot?.() ?? null); }
+      catch (error) { preLossAudio = { diagnosticError:String(error?.message || error) }; }
       assert.deepEqual(requests, [], 'Audio startup produced failed network requests');
       assert.deepEqual(httpFailures, [], 'Audio startup returned HTTP errors');
     });
     page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => events.push('crash')); page.on('close', () => events.push('close'));
     page.on('response', r => { if (r.status() >= 400 && httpFailures.length < 32) httpFailures.push({ url: r.url(), status: r.status() }); });
+    page.on('response', r => { if (audioRequest(r.request()) && audioNetwork.length < 512) audioNetwork.push({event:'headers',url:r.url(),at:Date.now(),status:r.status()}); });
     page.on('requestfailed', r => { pendingAudio.delete(r); if (requests.length < 32) requests.push({ url: r.url(), error: r.failure()?.errorText }); });
+    page.on('requestfailed', r => { if (audioRequest(r) && audioNetwork.length < 512) audioNetwork.push({event:'failed',url:r.url(),error:r.failure()?.errorText,at:Date.now(),timing:r.timing()}); });
     page.on('console', m => { if (consoleMessages.length < 32) consoleMessages.push({ type: m.type(), text: m.text().slice(0, 1500) }); });
+    // Diagnostic only. Observe the actual owner that calls AbortController,
+    // without delaying, replacing or suppressing any native audio/network call.
+    await page.addInitScript(() => {
+      const original = AbortController.prototype.abort;
+      globalThis.__inkwaveAudioAbortTrace = [];
+      AbortController.prototype.abort = function(...args) {
+        const stack = new Error('AbortController source').stack || '';
+        if (stack.includes('load-deadline.mjs') || stack.includes('authorized-samples.mjs')) {
+          const trace = globalThis.__inkwaveAudioAbortTrace;
+          if (trace.length < 80) trace.push({ at: performance.now(), reason: String(args[0]?.message || args[0] || ''), stack: stack.slice(0, 2400) });
+        }
+        return Reflect.apply(original, this, args);
+      };
+    });
+    await page.addInitScript(installAudioRequestTrace);
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true })));
     await page.goto('http://127.0.0.1:' + server.address().port + '/?skipTitle', { waitUntil: 'domcontentloaded', timeout: 30000 }); lastStage = 'navigated';
     await page.evaluate(async () => {
@@ -323,7 +397,8 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     startup.gestures = await page.evaluate(() => __contextStartupGestures);
     startup.admission = await page.evaluate(() => ({ mode: RG.mode, state: RG.match.state, attract: !!RG.match.attract,
       local: !!RG.match.local?.isLocal, sameMatch: RG.game.match === RG.match, audioState: RG.audio?.ctx?.state,
-      recordedShooterFire: RG.audio?._weaponBank?.authorized?.byEvent?.has('shooter:fire') === true }));
+      recordedShooterFire: RG.audio?._weaponBank?.authorized?.byEvent?.has('shooter:fire') === true,
+      audioOwner:(()=>{try{return globalThis.__contextAudioOwnerSnapshot?.() ?? null;}catch(error){return {diagnosticError:String(error?.message || error)};}})() }));
     validateContextStartupReceipt(startup); lastStage = 'playing';
     const proof = await page.evaluate(nativeContextRecoveryProof); validateContextRecoveryReceipt(proof);
     assert.equal(await page.locator('.iw-webgl-recovery').isVisible(), true);
@@ -335,8 +410,20 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     let partial = null, diagnosticError = null;
     if (page && !page.isClosed() && !events.includes('crash')) try { partial = await page.evaluate(() => ({ proof: globalThis.__contextRecoveryReceipt || null, startupGestures: globalThis.__contextStartupGestures || [] })); } catch (e) { diagnosticError = e.message; }
     result = { ok: false, error: error.stack || String(error), partial, diagnosticError };
+    if (page && !page.isClosed() && !events.includes('crash')) try {
+      result.audioCancellation = await page.evaluate(() => ({
+        aborts: (globalThis.__inkwaveAudioAbortTrace || []).slice(-80),
+        authorized: globalThis.RG?.audio?._weaponBank?.authorized?.stats?.() ?? null,
+        realS3: globalThis.RG?.audio?._realS3Loader?.stats?.() ?? null,
+      }));
+      console.error('Context recovery audio cancellation provenance:', JSON.stringify(result.audioCancellation));
+    } catch (diagnosticFailure) {
+      result.audioCancellationError = String(diagnosticFailure?.message || diagnosticFailure);
+    }
   } finally {
-    result = { ...result, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
+    let audioTrace = null, audioOwnerFinal = null;
+    if (page && !page.isClosed() && !events.includes('crash')) try { ({audioTrace,audioOwnerFinal} = await page.evaluate(() => ({audioTrace:globalThis.__audioRequestTrace ?? null,audioOwnerFinal:globalThis.__contextAudioOwnerSnapshot?.() ?? null}))); } catch {}
+    result = { ...result, audioNetwork, audioTrace, audioOwnerFinal, preLossAudio, startup, lastStage, harnessBlobs: Object.fromEntries(sourceInputs.slice(-3).map(file => [file, tree.get(file)])), build: { sourceSha, verifiedSourceInputs: sourceInputs.length, revision: build.build.revision, inputHash: build.inputHash, contentHash: build.contentHash }, moduleHashes, errors, requests, httpFailures, consoleMessages, events: [...events], served: [...served].sort() };
     fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2));
     if (context) try { await context.tracing.stop({ path: path.join(out, 'trace.zip') }); } catch (error) { if (!primary) primary = error; }
     if (browser) try { await browser.close(); } catch (error) { if (!primary) primary = error; }

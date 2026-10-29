@@ -7,6 +7,16 @@ import {parse} from '../../loading-cache/vendor/acorn.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/residual-ui-before.json',import.meta.url)));
 function source(file,name){const s=fs.readFileSync(new URL('../../../'+file,import.meta.url),'utf8'),ast=parse(s,{sourceType:'module',ecmaVersion:'latest'}),n=ast.body.map(x=>x.declaration||x).find(x=>x.type==='FunctionDeclaration'&&x.id.name===name);assert(n,name);return s.slice(n.start,n.end);}
 const currentMove=source('patches/splatoon3/runtime/all-specials.mjs','moveActor'),currentDamp=source('patches/splatoon3/runtime/all-specials.mjs','dampForSpecial'),currentHit=source('patches/splatoon3/runtime/all-subs.mjs','applyRemoteObjectHit');
+// Preserve the frozen Vector3 implementation while applying the separately
+// reviewed anti-poison reservation policy before comparing the scalar path.
+function currentReservationPolicy(body) {
+  const early='  const key=objectHitKey(event);if(objectHitSeen.has(key))return false;objectHitSeen.add(key);\n  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);';
+  const late='  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear';
+  const replaceOnce=(text,from,to)=>{assert.equal(text.split(from).length,2,'unique replay policy anchor');return text.replace(from,to);};
+  body=replaceOnce(body,early,'  const key=objectHitKey(event);if(objectHitSeen.has(key))return false;');
+  return replaceOnce(body,late,'  objectHitSeen.add(key);\n  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);\n'+late);
+}
+const policyBridgedHit=currentReservationPolicy(before.applyRemoteObjectHit);
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const equal=(a,b)=>assert.deepEqual(structuredClone(a),structuredClone(b));
 
@@ -42,7 +52,7 @@ test('actual special damp preserves invalid dt, signed zero, gravity and resolve
   }
 });
 
-function hitFixture(body,{subId='beakon',position=[0,0,0],ghost=false,damage=20,coordinates=[0,0,0],getterSecondUndefined=false}={}) {
+function hitFixture(body,{subId='beakon',position=[0,0,0],ghost=false,damage=20,coordinates=[0,0,0],getterSecondUndefined=false,onGear=()=>{}}={}) {
   const log=[],seen=new Set();let constructed=0;
   const owner={nid:1,remote:false,team:0,netLife:7},shooter={nid:2,remote:true,team:1,netLife:8};
   const pos=new THREE.Vector3(...position),target={owner,seq:10,sourceLife:7,subId,phase:'deployed',ghost,hp:100,pos};
@@ -50,7 +60,7 @@ function hitFixture(body,{subId='beakon',position=[0,0,0],ghost=false,damage=20,
   const api={THREE:{Vector3:vector},G:{netm:{byNid:new Map([[1,owner],[2,shooter]])},projectiles:[target]}};
   const event={actor:shooter,targetOwnerId:1,targetSeq:10,targetLife:7,targetSubId:subId,life:8,eventSeq:1,damage,x:coordinates[0],y:coordinates[1],z:coordinates[2]};
   if(getterSecondUndefined)for(const axis of ['x','y','z']){let n=0;Object.defineProperty(event,axis,{get(){log.push(axis);return ++n===1?1:undefined;}});}
-  const hit=vm.runInNewContext(`(${body}\n)`,{ownerLife:a=>a.netLife,finite3:p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z),objectHitKey:e=>String(e.eventSeq),objectHitSeen:seen,MAX_REPLAY_EVENTS:4,entityList:x=>x,targetableTorpedo:o=>o.subId==='torpedo',ALL_SUB_SPECS:{splashWall:{wallWidth:5.3}},clamp,withObjectHitGear:(s,g,fn)=>{log.push('gear');return fn();},objectDamageScale:()=>1,removeObject:(a,p,t)=>{log.push('remove');t.dead=true;}});
+  const hit=vm.runInNewContext(`(${body}\n)`,{ownerLife:a=>a.netLife,finite3:p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z),objectHitKey:e=>String(e.eventSeq),objectHitSeen:seen,MAX_REPLAY_EVENTS:4,entityList:x=>x,targetableTorpedo:o=>o.subId==='torpedo',ALL_SUB_SPECS:{splashWall:{wallWidth:5.3}},clamp,withObjectHitGear:(s,g,fn)=>{log.push('gear');onGear();return fn();},objectDamageScale:()=>1,removeObject:(a,p,t)=>{log.push('remove');t.dead=true;}});
   return {run:()=>hit(api,event),event,target,log,seen,count:()=>constructed};
 }
 
@@ -58,15 +68,40 @@ test('actual remote object-hit admission preserves exact Vector3 distance bounda
   for(const subId of ['splashWall','torpedo','beakon']) {
     const reach=subId==='splashWall'?3.65:subId==='torpedo'?1:1.5;
     for(const x of [0,-0,1e-300,reach-1e-12,reach,reach+1e-12,1e150,NaN,Infinity,-Infinity])for(const y of [0,.5,NaN])for(const ghost of [false,true])for(const damage of [-1,0,1,50,101,2200,2201,NaN]){
-      const options={subId,position:[0,0,0],coordinates:[x,y,0],ghost,damage},a=hitFixture(before.applyRemoteObjectHit,options),b=hitFixture(currentHit,options);
-      assert.equal(b.run(),a.run());assert.equal(b.target.hp,a.target.hp);assert.equal(b.target.dead,a.target.dead);equal(b.log,a.log);equal([...b.seen],[...a.seen]);assert.equal(b.run(),a.run());assert.equal(b.target.hp,a.target.hp);
-      assert.equal(b.count(),0);assert(a.count()<=1);
+      const options={subId,position:[0,0,0],coordinates:[x,y,0],ghost,damage},a=hitFixture(policyBridgedHit,options),b=hitFixture(currentHit,options);
+      assert.equal(b.run(),a.run());assert.equal(b.target.hp,a.target.hp);assert.equal(b.target.dead,a.target.dead);equal(b.log,a.log);equal([...b.seen],[...a.seen]);
+      const firstAllocations=a.count();assert(firstAllocations<=1);assert.equal(b.count(),0);
+      assert.equal(b.run(),a.run());assert.equal(b.target.hp,a.target.hp);equal(b.log,a.log);equal([...b.seen],[...a.seen]);
+      assert(a.count()-firstAllocations<=1,'each retry makes at most one Vector3');assert.equal(b.count(),0);
     }
   }
 });
 
+test('rejected object hits cannot poison a corrected retry; accepted hits reserve before callbacks',()=>{
+  for(const scenario of ['miss','ghost','absent']){
+    for(const body of [policyBridgedHit,currentHit]){
+      const f=hitFixture(body,{coordinates:scenario==='miss'?[9,0,0]:[0,0,0],ghost:scenario==='ghost'});
+      if(scenario==='absent')f.target.phase='pending';
+      assert.equal(f.run(),false,scenario);assert.equal(f.target.hp,100);assert.equal(f.seen.size,0,scenario);
+      f.event.x=0;f.target.ghost=false;f.target.phase='deployed';
+      assert.equal(f.run(),true,scenario+' corrected');assert.equal(f.target.hp,80);equal([...f.seen],['1']);
+      assert.equal(f.run(),false,scenario+' replay');assert.equal(f.target.hp,80);
+    }
+    const old=hitFixture(before.applyRemoteObjectHit,{coordinates:scenario==='miss'?[9,0,0]:[0,0,0],ghost:scenario==='ghost'});
+    if(scenario==='absent')old.target.phase='pending';
+    assert.equal(old.run(),false);equal([...old.seen],['1']);
+    old.event.x=0;old.target.ghost=false;old.target.phase='deployed';
+    assert.equal(old.run(),false,'frozen policy demonstrates poisoned retry');assert.equal(old.target.hp,100);
+  }
+  for(const body of [policyBridgedHit,currentHit]){
+    let nested;let f;f=hitFixture(body,{onGear:()=>{nested=f.run();}});
+    assert.equal(f.run(),true);assert.equal(nested,false,'reservation precedes synchronous gear callback');
+    assert.equal(f.target.hp,80);equal([...f.seen],['1']);
+  }
+});
+
 test('remote object-hit scalar path retains event coordinate read order and undefined constructor defaults',()=>{
-  const a=hitFixture(before.applyRemoteObjectHit,{getterSecondUndefined:true}),b=hitFixture(currentHit,{getterSecondUndefined:true});
+  const a=hitFixture(policyBridgedHit,{getterSecondUndefined:true}),b=hitFixture(currentHit,{getterSecondUndefined:true});
   assert.equal(b.run(),a.run());assert.equal(b.target.hp,a.target.hp);equal(b.log,a.log);assert.equal(a.count(),1);assert.equal(b.count(),0);
 });
 
