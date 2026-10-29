@@ -201,3 +201,28 @@ test('GPU-15b accepts exact downstream guarded full-upload form and rejects corr
     assert.throws(()=>adaptCombatGpuCpuPerfect(rel,built.replace(guard,guard.replace('!==','===')),replaceOnce),/expected exactly one connection/);
   }
 });
+
+test('Wave 3-5 composed source compatibility and second-pass idempotence', () => {
+  // Test the actual build adapter order: motion/paint/FX sources are modified
+  // by prior owners before the final wave can apply its exact-match fast paths.
+  // An unmatched upstream anchor must retain the prior implementation, never
+  // write through Direct-Source ownership or partially rewrite a function.
+  for (const rel of [
+    'src/world/level.js',
+    'src/game/physics.js',
+    'src/game/motion/source-controller.js',
+    'src/game/motion/squid-rig.js',
+    'src/game/motion/retarget.js',
+    'src/game/motion/root-hair.js',
+    'src/game/character.js',
+    'src/world/paint.js',
+    'src/fx/fx.js',
+    'src/game/minimap.js',
+  ]) {
+    const raw = read(rel);
+    const composed = adaptBuildSource(rel, raw);
+    const again = adaptCombatGpuCpuPerfect(rel, composed, replaceOnce);
+    assert.equal(again, composed, rel + ': wave 3-5 transformer must be idempotent');
+    assert.ok(composed.length > 100, rel + ': expected real source, not an empty adapter result');
+  }
+});

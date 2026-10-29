@@ -31,41 +31,49 @@ export class PaintDryRegions {
     if (removed) this.dirty = true;
   }
   markPositions(positions, quads, nextCredit) {
-    const n=this.axis, N=this.size, tile=this.tile, expiry=nextCredit+256;
+    const n=this.axis, nMax=n-1, N=this.size, tile=this.tile, expiry=nextCredit+256, exp=this.expiry;
     for(let i=0;i<quads;i++) {
       const at=i*8;
       const ax=positions[at], bx=positions[at+2], ay=positions[at+1], by=positions[at+5];
       if (!Number.isFinite(ax)||!Number.isFinite(bx)||!Number.isFinite(ay)||!Number.isFinite(by)) {
-        this.expiry.fill(expiry);this.live=n*n;this.dirty=true;return;
+        exp.fill(expiry);this.live=n*n;this.dirty=true;return;
       }
       // A two-texel guard covers clipping/raster subpixel precision. We use
       // submitted Float32 clip coordinates, not rounded gameplay extents.
-      const x0=Math.max(0,Math.min(n-1,Math.floor(((Math.min(ax,bx)+1)*.5*N-2)/tile)));
-      const x1=Math.max(0,Math.min(n-1,Math.floor(((Math.max(ax,bx)+1)*.5*N+2)/tile)));
-      const y0=Math.max(0,Math.min(n-1,Math.floor(((Math.min(ay,by)+1)*.5*N-2)/tile)));
-      const y1=Math.max(0,Math.min(n-1,Math.floor(((Math.max(ay,by)+1)*.5*N+2)/tile)));
-      for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) {
-        const k=y*n+x;
-        if(!this.expiry[k]){this.live++;this.dirty=true;}
-        this.expiry[k]=expiry;
+      const minX=ax<=bx?ax:bx, maxX=ax>=bx?ax:bx;
+      const minY=ay<=by?ay:by, maxY=ay>=by?ay:by;
+      let x0=Math.floor(((minX+1)*.5*N-2)/tile); if(x0<0)x0=0; else if(x0>nMax)x0=nMax;
+      let x1=Math.floor(((maxX+1)*.5*N+2)/tile); if(x1<0)x1=0; else if(x1>nMax)x1=nMax;
+      let y0=Math.floor(((minY+1)*.5*N-2)/tile); if(y0<0)y0=0; else if(y0>nMax)y0=nMax;
+      let y1=Math.floor(((maxY+1)*.5*N+2)/tile); if(y1<0)y1=0; else if(y1>nMax)y1=nMax;
+      for(let y=y0;y<=y1;y++) {
+        const row=y*n;
+        for(let x=x0;x<=x1;x++) {
+          const k=row+x;
+          if(!exp[k]){this.live++;this.dirty=true;}
+          exp[k]=expiry;
+        }
       }
     }
   }
   // Rectangles come from the canonical profile shader support bounds. They
   // already include antialias and raster guards; retain another two texels.
   markPixelRects(rectangles, count, nextCredit) {
-    const n=this.axis,tile=this.tile,expiry=nextCredit+256;
+    const n=this.axis, nMax=n-1, tile=this.tile, expiry=nextCredit+256, exp=this.expiry;
     for(let i=0;i<count;i++) {
       const k=i*4,x=rectangles[k],y=rectangles[k+1],w=rectangles[k+2],h=rectangles[k+3];
       if(w<=0||h<=0)continue;
-      const x0=Math.max(0,Math.min(n-1,Math.floor((x-2)/tile)));
-      const x1=Math.max(0,Math.min(n-1,Math.floor((x+w+2)/tile)));
-      const y0=Math.max(0,Math.min(n-1,Math.floor((y-2)/tile)));
-      const y1=Math.max(0,Math.min(n-1,Math.floor((y+h+2)/tile)));
-      for(let row=y0;row<=y1;row++)for(let col=x0;col<=x1;col++) {
-        const at=row*n+col;
-        if(!this.expiry[at]){this.live++;this.dirty=true;}
-        this.expiry[at]=expiry;
+      let x0=Math.floor((x-2)/tile); if(x0<0)x0=0; else if(x0>nMax)x0=nMax;
+      let x1=Math.floor((x+w+2)/tile); if(x1<0)x1=0; else if(x1>nMax)x1=nMax;
+      let y0=Math.floor((y-2)/tile); if(y0<0)y0=0; else if(y0>nMax)y0=nMax;
+      let y1=Math.floor((y+h+2)/tile); if(y1<0)y1=0; else if(y1>nMax)y1=nMax;
+      for(let row=y0;row<=y1;row++){
+        const r=row*n;
+        for(let col=x0;col<=x1;col++) {
+          const at=r+col;
+          if(!exp[at]){this.live++;this.dirty=true;}
+          exp[at]=expiry;
+        }
       }
     }
   }

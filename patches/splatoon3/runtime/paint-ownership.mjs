@@ -343,6 +343,7 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
     }
   }
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
+  if (piece.type === 3 && (x + dx < piece.minX || x - dx > piece.maxX || y + dy < piece.minY || y - dy > piece.maxY)) return false;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites
   // without treating a hand-mirrored antialias width as gameplay truth.
@@ -559,8 +560,10 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
       const cells = cache && sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) ? cache.cells : null;
       if (cells) {
         for (let k = 0; k < cells.length; k++) {
-          const i = cells[k] % nu, j = (cells[k] - i) / nu;
-          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,fGrid+cells[k],(i+.5)*cu-lu,(j+.5)*cv-lv,piece);
+          const cell = cells[k], idx = fGrid + cell;
+          if (visit[idx] === stamp) continue;
+          const i = cell % nu, j = (cell - i) / nu;
+          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,idx,(i+.5)*cu-lu,(j+.5)*cv-lv,piece);
           if(status&2)changed=true;if(status&4)claimed+=cellArea;
         }
         continue;
@@ -573,7 +576,9 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
         for (let i = bi0; i <= bi1; i++) {
           const x = (i + 0.5) * cu - lu;
           if (x + hcu < -ext || x - hcu > ext) continue;
-          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,row+i,x,y,piece);
+          const idx = row + i;
+          if (visit[idx] === stamp) { if (record) record.push(rowLocal + i); continue; }
+          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,idx,x,y,piece);
           if(status&2)changed=true;if(status&4)claimed+=cellArea;
           if(status&&record)record.push(rowLocal+i);
         }
