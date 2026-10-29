@@ -6665,3 +6665,7 @@ rollerの二重world-matrix更新と、同期hitイベントの入れ子blastで
 新native replay/canonical/v2 codec/workerは生成物で検証したが、本番の必須admissionには未接続。production probeでは発射・接触0でPvP/Boss/crab各36HP減少が残り、#1665/#1666は未解決。398tickの骨と銃口一致はcamera:null/模擬relayのCPU条件に限定する。未知の原典値・音源・モデルを代替で確定しない。
 
 Git treeの出力上限、prebuilt digest試験の無期限待機、報告書の件数・出典を修正した。新headのhosted CIは別途確認し、旧赤履歴を削除しない。全Issue判定・変更commit/file・raw hashは[追加統合ledger](issue-resolution-20261029/final-batch/ledger.json)と[検証記録](issue-resolution-20261029/final-batch/README.md)。#401、main未マージ、MOV-08bとisolated Character QAのscope保留を維持する。
+
+### 2026-10-29: Ink Storm object cover consistency (#735)
+
+The composed runtime previously performed a cloud-center-to-device visibility test before the vertical rain test. A side barrier blocking only the diagonal could incorrectly shield a Splash Wall or Wave Breaker even with unobstructed rain above it. Storm object damage now uses its existing vertical contact ray; the shared radial damage path retains its normal visibility check by default. A production-composed source fixture reproduces the diagonal-only obstruction, verifies both device classes take damage, verifies a blocked vertical ray stops damage, and preserves the default radial LOS. The negative control without the change fails on the exposed wall. Existing 30/60/120 Hz damage and finite-reach controls pass. This establishes internal consistency, not the 11.3.0 vertical cutoff or cover formula; #735 remains open.

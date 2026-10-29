@@ -543,7 +543,7 @@ function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,include
     const reusable=!options.shapeContact&&point.distanceTo===distanceMethod;
     let px,py,pz,cx,cy,cz;
     if(reusable){px=point.x;py=point.y;pz=point.z;cx=center.x;cy=center.y;cz=center.z;}
-    if(rt.api.G.physics?.los&&!rt.api.G.physics.los(center,point))continue;
+    if(!options.pierceLOS&&rt.api.G.physics?.los&&!rt.api.G.physics.los(center,point))continue;
     const same=reusable&&point.distanceTo===distanceMethod&&Object.is(px,point.x)&&Object.is(py,point.y)&&Object.is(pz,point.z)&&
       Object.is(cx,center.x)&&Object.is(cy,center.y)&&Object.is(cz,center.z);
     const amount=damageAt(same?distance:point.distanceTo(center),object,point);if(amount>0)specialObjectDamage(rt,attack,object,amount,cause,options.shapeContact?point:center);
