@@ -1,0 +1,136 @@
+// Frozen Drive-base selection; only the index publication optimization is reversed.
+function writeIdentityRange(target, out, start, end) {
+ for(let i=start;i<end;i++)target[out++]=i;
+ return out;
+}
+return function(camera) {
+    // No chart has reached the atlas yet (or paint was cleared). There are
+    // no ink vertices to select, regardless of the camera or stage transform.
+    // Keep the view invalid so the first paint always evaluates its current
+    // camera, including after an AO override or a camera move while empty.
+    if (this._painted !== null && this._paintedCount === 0) {
+      this.geometry.setDrawRange(0, 0);
+      this._lastVisibleCount = 0;
+      this._fullDraw = false;
+      this._lastViewValid = false;
+      return 0;
+    }
+    // World transform and renderer depth convention are part of the
+    // frustum contract, including transformed stage objects and reverse Z.
+    this._view.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+      .multiply(this.matrixWorld);
+    const elements = this._view.elements, previous = this._lastView;
+    let same = this._lastViewValid &&
+      this._lastCoordinateSystem === camera.coordinateSystem &&
+      this._lastReversedDepth === camera.reversedDepth;
+    if (same) {
+      for (let i = 0; i < 16; i++) {
+        if (!Object.is(elements[i], previous[i])) { same = false; break; }
+      }
+    }
+    if (same && !this._faceDirty) return this._lastVisibleCount;
+    for (let i = 0; i < 16; i++) previous[i] = elements[i];
+    this._lastViewValid = true;
+    this._lastCoordinateSystem = camera.coordinateSystem;
+    this._lastReversedDepth = camera.reversedDepth;
+    this._frustum.setFromProjectionMatrix(
+      this._view, camera.coordinateSystem, camera.reversedDepth
+    );
+
+    let changed = false, visibleCount = 0;
+    for (let tile = 0; tile < this.chunks.length; tile++) {
+      const visible = (this._painted === null || this._painted[tile]) &&
+        this._frustum.intersectsSphere(this.chunks[tile].boundingSphere) ? 1 : 0;
+      if (visible !== this._visible[tile]) changed = true;
+      this._visible[tile] = visible;
+      visibleCount += visible;
+    }
+    this._lastVisibleCount = visibleCount;
+    const faces = this._faceCulling ? this._facePainted : null;
+    if (this._faceDirty) changed = true;
+    this._faceDirty = false;
+    // Moving a camera without changing the visible set never re-uploads
+    // indices. Zero visible indices require only a drawRange update.
+    if (!changed) return visibleCount;
+    if (visibleCount === 0) {
+      this.geometry.setDrawRange(0, 0);
+      this._fullDraw = false;
+      return 0;
+    }
+    const index = this._drawIndex.array;
+    if (faces) {
+      // Painted charts in visible tiles, still in source triangle order.
+      const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible;
+      let count = 0;
+      for(let wordIndex=0;wordIndex<this._paintedFaceWords.length;wordIndex++){
+        let word=this._paintedFaceWords[wordIndex];
+        while(word){
+        const bit=31-Math.clz32(word&-word),face=wordIndex*32+bit;word=(word&(word-1))>>>0;
+        if(face>=faces.length)continue;
+        for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
+          if (!visible[tileOf[tri]]) continue;
+          const i = tri * 3;
+          index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+        }
+        }
+      }
+      this.geometry.setDrawRange(0, count);
+      if (count) {
+        this._drawIndex.clearUpdateRanges();
+        this._drawIndex.addUpdateRange(0, count);
+        this._drawIndex.needsUpdate = true;
+      }
+      this._fullDraw = false;
+      return visibleCount;
+    }
+    if (visibleCount === this.chunks.length) {
+      if (!this._fullDraw) {
+        writeIdentityRange(index,0,0,index.length);
+        this._drawIndex.clearUpdateRanges();
+        this._drawIndex.addUpdateRange(0, index.length);
+        this._drawIndex.needsUpdate = true;
+      }
+      this.geometry.setDrawRange(0, index.length);
+      this._fullDraw = true;
+      return visibleCount;
+    }
+
+    // Coalesce adjacent *visible source-order runs*, even if their tiles
+    // differ. This can reduce thousands of scalar writes to a few
+    // TypedArray.set operations without changing triangle order.
+    let count = 0;
+    if (this._fragmentedRuns) {
+      // Scalar fallback preserves original performance when source triangles
+      // alternate tiles too frequently for contiguous bulk writes.
+      for (let tri = 0; tri < this._triangleTile.length; tri++) {
+        if (!this._visible[this._triangleTile[tri]]) continue;
+        const i = tri * 3;
+        index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+      }
+    } else {
+      let first = -1, last = 0;
+      const tiles = this._runTiles, starts = this._runStarts, ends = this._runEnds;
+      for (let k = 0; k < tiles.length; k++) {
+        if (this._visible[tiles[k]]) {
+          if (first === -1) { first = starts[k]; last = ends[k]; }
+          else if (starts[k] === last) last = ends[k];
+          else {
+            count=writeIdentityRange(index,count,first,last);
+            first = starts[k]; last = ends[k];
+          }
+        } else if (first !== -1) {
+          count=writeIdentityRange(index,count,first,last);
+          first = -1;
+        }
+      }
+      if (first !== -1) {
+        count=writeIdentityRange(index,count,first,last);
+      }
+    }
+    this.geometry.setDrawRange(0, count);
+    this._drawIndex.clearUpdateRanges();
+    this._drawIndex.addUpdateRange(0, count);
+    this._drawIndex.needsUpdate = true;
+    this._fullDraw = false;
+    return visibleCount;
+  };

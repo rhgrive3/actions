@@ -1,3 +1,4 @@
+import { installShapePoolBounds, updateShapePoolBounds } from './shape-pool-bounds.mjs';
 import { markAttributeRange } from './instance-color-upload.mjs';
 // GPU effect pools for the Splatoon 3 special presentation (special-vfx.mjs).
 //
@@ -487,9 +488,11 @@ class RibbonPool {
       }
       v = slot;
     }
+    // Keep retirement/sampling above active even when all trails have fewer than two points.
+    if(!slot && this._emptyUploaded) return;
     // keep one degenerate segment drawn (warm program); zero alpha
     if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
-    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;this._drawCount=slot;
+    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=slot===0;this._drawCount=slot;
     const sphere=this.mesh.geometry.boundingSphere;
     let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
     for(let i=0,end=slot*this.M*2*3;i<end;i+=3){
@@ -500,7 +503,12 @@ class RibbonPool {
     this.mesh.frustumCulled=!!this._warmed&&slot>0&&Number.isFinite(radius);
     if(this.mesh.frustumCulled){sphere.center.set((minX+maxX)*.5,(minY+maxY)*.5,(minZ+maxZ)*.5);sphere.radius=radius+1e-6*(1+radius);}
     markAttributeRange(this.rib, ribStart, ribEnd);
-    for (const a of [this.pos, this.col, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
+    // Capture the same attribute identities before any upload callback runs.
+    const posAttribute=this.pos,colAttribute=this.col,sideAttribute=this.side,faceAttribute=this.face;
+    posAttribute.clearUpdateRanges(); posAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*posAttribute.itemSize); posAttribute.needsUpdate=true;
+    colAttribute.clearUpdateRanges(); colAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*colAttribute.itemSize); colAttribute.needsUpdate=true;
+    sideAttribute.clearUpdateRanges(); sideAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*sideAttribute.itemSize); sideAttribute.needsUpdate=true;
+    faceAttribute.clearUpdateRanges(); faceAttribute.addUpdateRange(0,Math.max(1,slot)*this.M*2*faceAttribute.itemSize); faceAttribute.needsUpdate=true;
   }
   clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; r.samples.length=0; r.count=0; } this.list.length = 0; this._emptyUploaded = false; }
 }
@@ -612,6 +620,7 @@ void main(){
     float hole = n * 0.9 + (1.0 - vL.y) * 0.25 - (t * 1.15 - 0.02) - (1.0 - vCol.a) * 0.9;   // fading tears holes, it never turns see-through
     float fw = max(fwidth(hole), 1e-3);
     a = smoothstep(-fw, fw, hole);
+    if (a < 0.004) discard;
     float e = 0.06;
     float nx = sxFbm(vec2(sph.x * 10.0 + seed * 7.0 + e, sph.y * 4.0 - t * 2.0)) - n;
     float ny = sxFbm(vec2(sph.x * 10.0 + seed * 7.0, sph.y * 4.0 - t * 2.0 + e)) - n;
@@ -619,7 +628,6 @@ void main(){
     vec3 T = normalize(cross(vec3(0.0, 1.0, 0.0), N) + vec3(1e-4)), Bt = cross(N, T);
     N = normalize(N - (T * nx + Bt * ny) * 5.0);
     col = sxInk(col, N, vV, 1.0);
-    if (a < 0.004) discard;
     gl_FragColor = vec4(col, a);
     ${OUT}
     return;
@@ -819,6 +827,7 @@ class ShapePool {
       transparent: true, depthWrite: false, side: extra.side ?? THREE.DoubleSide, blending: additive ? THREE.CustomBlending : THREE.NormalBlending });
     if (additive) { m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor; m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor; }
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = extra.order ?? (additive ? 8 : 5); this.mesh.name = 'special-vfx:' + name;
+    installShapePoolBounds(THREE,this,attrs);
     geometry.dispose?.();
   }
   _retire(record) {
@@ -875,8 +884,9 @@ class ShapePool {
     // degenerate warm instance: alpha 0
     const col = this.buf[2].array; col[3] = 0;
     this.mesh.geometry.instanceCount = n + 1;this._emptyUploaded=n===0;this._drawCount=n;
+    updateShapePoolBounds(this);
   }
-  clear() { for (const r of this.recs) this._retire(r); this.recs.length = 0; this._emptyUploaded = false; }
+  clear() { for (const r of this.recs) this._retire(r); this.recs.length = 0; this._emptyUploaded = false; this._shapeBoundsValid=false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------

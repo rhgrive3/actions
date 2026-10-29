@@ -3,6 +3,12 @@ name: INKWAVE gameplay resource regressions
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'patches/local-quality/adapter.mjs'
+      - 'inkwave-public/src/fx/fx.js'
+      - 'scripts/tests/inkwave-queue-ci-20261029.test.mjs'
       - 'patches/native-stages/runtime/native-world.mjs'
       - 'patches/native-stages/runtime/native-load.mjs'
       - 'patches/native-stages/tests/native-context-retirement.test.mjs'
@@ -33,6 +39,12 @@ on:
   push:
     branches: [main]
     paths:
+      - 'patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'patches/local-quality/adapter.mjs'
+      - 'inkwave-public/src/fx/fx.js'
+      - 'scripts/tests/inkwave-queue-ci-20261029.test.mjs'
       - 'patches/native-stages/runtime/native-world.mjs'
       - 'patches/native-stages/runtime/native-load.mjs'
       - 'patches/native-stages/tests/native-context-retirement.test.mjs'

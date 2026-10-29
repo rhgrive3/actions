@@ -218,7 +218,18 @@ export async function installWiperProbe(testCase) {
     },
     finish(){
       g.debug.fire(false);let tail=0;
-      while(scheduler.tick<240){scheduler.advance();const R=P._s3Shapes;if(!owned().length&&![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh].some(m=>m?.count>0)){tail++;if(tail>=21)break;}else tail=0;}
+      while(scheduler.tick<240){
+        scheduler.advance();
+        // The controlled step runs with _skipRender=true. InstancedMesh counts
+        // otherwise retain the last captured frame even after projectiles die.
+        // Rebuild the real native presentation batch from the new simulation
+        // state before checking the required 21 consecutive quiet ticks.
+        P._draw();
+        const R=P._s3Shapes;
+        if(!owned().length&&![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh].some(m=>m?.count>0)){
+          tail++;if(tail>=21)break;
+        }else tail=0;
+      }
       const R=P._s3Shapes,retired=!owned().length&&![R.slashH,R.slashV,R.wetSlashV,R.sheets.mesh].some(m=>m?.count>0);
       if(!retired||tail<21)throw Error('Native slash/sheet tail did not retire within 240 ticks');
       const wet=R.wetSlashV,events={geometry:0,material:0};

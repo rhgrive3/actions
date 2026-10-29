@@ -1,6 +1,7 @@
 import vm from 'node:vm';
 import {expandTestSuiteSteps} from '../ci/run-inkwave-test-suite.mjs';
 import {assertSourceSuiteCoverage} from '../ci/inkwave-source-coverage.mjs';
+import {assertValidateWorkflowContract} from '../ci/inkwave-validate-contract.mjs';
 import './inkwave-live-test-log.test.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -121,7 +122,10 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.ok(workflow.includes('patches/loading-cache/tests/worker.test.mjs'));
   assert.ok(workflow.includes("REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}"));
   assert.ok(workflow.includes('--cycles "$REMATCH_CYCLES"'));
-  assert.ok(workflow.includes("'responsive':['responsive/responsive-result.json']"));
+  for (const receipt of ['responsive/responsive-result.json', 'mobile-menus/chromium/result.json',
+    'mobile-menus/webkit/result.json', 'mobile-menus/webkit-resize/result.json']) {
+    assert.ok(workflow.includes("'" + receipt + "'"), receipt);
+  }
 });
 
 test('all nested final integration source families trigger validation on PR and pushed main', () => {
@@ -246,7 +250,8 @@ test('worker source regressions have their pinned dependency and writable persis
   const focus=validate.indexOf('name: Run requested focused source regressions');
   const canonical=validate.indexOf('name: Verify loading/cache regressions');
   assert(install>=0 && install<focus && prepare>=0 && prepare<focus && prepare<canonical);
-  assert.equal((validate.match(/npm install --no-save --no-package-lock --silent esbuild@0\.28\.2/g)||[]).length,1);
+  assert.equal((validate.match(/npm ci --no-audit --no-fund/g)||[]).length,1);
+  assertPinnedBuildDependencies();
   const storage=validate.slice(prepare,validate.indexOf('name: Prepare persistent focused test evidence'));
   assert(!storage.includes('if:'), 'storage is required even when focused_tests is empty');
   assert(storage.indexOf('realpath -m')<storage.indexOf('sudo mkdir'));
@@ -287,13 +292,15 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(core.includes('scripts/check-inkwave-patches.mjs --quick'));
   assert.ok(shards.includes('shard: [0, 1, 2, 3, 4, 5, 6, 7]'));
   assert.ok(shards.includes('max-parallel: 8'));
-  assert.equal(shards.split("    runs-on: ${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}").length-1,1);
+  const {jobs}=assertValidateWorkflowContract(workflow);
+  assert.equal(jobs.patch_tests['runs-on'],"${{ matrix.shard == 2 && 'ubuntu-22.04' || 'ubuntu-latest' }}");
   assert.equal((shards.match(/shard: \[0, 1, 2, 3, 4, 5, 6, 7\]/g)||[]).length,1);
   assert.ok(shards.includes("INKWAVE_TEST_SHARD_COUNT: '8'"));
-  assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: ${{ matrix.shard == 2 && '1' || '2' }}"),'All shards retained; shard 2 runs serially after repeated host shutdowns');
+  assert.equal(jobs.patch_tests.env.INKWAVE_TEST_CONCURRENCY,"${{ matrix.shard == 2 && '1' || '2' }}",'Sandboxed Chromium shard has one process; the other seven retain two');
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
   assertShardEvidencePolicy(workflow);
+  assertValidateWorkflowContract(workflow);
   assert.ok(gate.includes('needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]'));
   assert.ok(gate.includes('always()'));
   assert.ok(gate.includes('test "$CORE_RESULT" = success'));
@@ -448,15 +455,26 @@ test('workflow policy negatives reject cancellation loss and failure-only or unb
 
 // Validate concrete provisioning and evidence requirements. Unrelated jobs can
 // evolve without reconstructing obsolete workflow bodies to satisfy old hashes.
+function assertPinnedBuildDependencies() {
+  const packageJSON = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+  const lock = JSON.parse(fs.readFileSync(new URL('../../package-lock.json', import.meta.url), 'utf8'));
+  for (const [name, version] of Object.entries({esbuild:'0.28.2', playwright:'1.62.1'})) {
+    assert.equal(packageJSON.devDependencies[name], version);
+    assert.equal(lock.packages[''].devDependencies[name], version);
+    assert.equal(lock.packages['node_modules/' + name].version, version);
+    assert.match(lock.packages['node_modules/' + name].integrity, /^sha512-/);
+  }
+}
 function assertCoreEvidenceAndProvisioning(text) {
   const core = text.slice(text.indexOf('  validate_core:'), text.indexOf('  patch_tests:'));
   const steps = core.split(/^      - /m);
   const provision = steps.find(step => step.startsWith('name: Install pinned source regression and build tool\n'));
   assert.ok(provision);
   assert.doesNotMatch(provision, /^        (?:if|continue-on-error):|\|\|/m);
-  const install = provision.indexOf('npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1');
+  const install = provision.indexOf('npm ci --no-audit --no-fund');
   const chromium = provision.indexOf('npx --no-install playwright install --with-deps chromium');
   assert.ok(install >= 0 && chromium > install);
+  assertPinnedBuildDependencies();
   assert.ok(core.indexOf(provision) < core.indexOf('name: Run requested focused source regressions'));
   const uploads = steps.filter(step => step.startsWith('name: Retain exact emitted launch packet evidence\n'));
   assert.equal(uploads.length, 1);
@@ -474,6 +492,7 @@ function assertCoreEvidenceAndProvisioning(text) {
 test('core retains browser provisioning and source-bound launch packet evidence', () => assertCoreEvidenceAndProvisioning(workflow));
 test('provisioning and evidence guards reject disabled, reordered, missing and unbound requirements', () => {
   for (const [before, after] of [
+    ['npm ci --no-audit --no-fund', 'npm install --no-save esbuild@latest playwright@latest'],
     ['npx --no-install playwright install --with-deps chromium', 'true # browser omitted'],
     ['name: Install pinned source regression and build tool\n', 'name: Install pinned source regression and build tool\n        if: false\n'],
     ['name: Retain exact emitted launch packet evidence\n        if: always()', 'name: Retain exact emitted launch packet evidence\n        if: success()'],

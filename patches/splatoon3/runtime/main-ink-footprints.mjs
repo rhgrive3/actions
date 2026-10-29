@@ -240,13 +240,12 @@ for (let row = 0; row < INK_PROFILE_SECTIONS.length; row++) {
 }
 
 export function inkFootprintContains(along, across, kind, word) {
-  if (along <= -1 || along >= 1) return false;
+  if (along <= -1 || along >= 1 || across <= -1 || across >= 1) return false;
   if (word % 2) across = -across;
-  const x = (along + 1) * .5 * (INK_PROFILE_SIZE - 1), i = Math.floor(x), t = x - i;
-  const offset = ((kind - 10) * INK_PROFILE_SIZE + i) * 4;
-  const channel = across < 0 ? 0 : 1;
-  const width = (INK_PROFILE_BYTES[offset + channel] * (1 - t) + INK_PROFILE_BYTES[offset + 2 + channel] * t) / 255;
-  return Math.abs(across) < width;
+  const x = (along + 1) * .5 * (INK_PROFILE_SIZE - 1), i = x | 0, t = x - i;
+  const offset = ((kind - 10) * INK_PROFILE_SIZE + i) * 4 + (across < 0 ? 0 : 1);
+  const width = (INK_PROFILE_BYTES[offset] * (1 - t) + INK_PROFILE_BYTES[offset + 2] * t) / 255;
+  return (across < 0 ? -across : across) < width;
 }
 
 export function createInkProfileTexture(THREE) {

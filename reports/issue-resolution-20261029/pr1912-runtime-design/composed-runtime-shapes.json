@@ -1,0 +1,60 @@
+{
+  "source": "11ea9f273bc315257699e4436d08c273145bee05",
+  "node": "v22.23.4",
+  "results": [
+    {
+      "rel": "src/game/inkFlightRuntime.js",
+      "bytes": 17801,
+      "sha256": "bcb4316200d4bb940fab571a6f4439aa663581d63cbf00f236f04e5e1cafa7fa",
+      "nativeCapsuleScan": true,
+      "unsafeTerrainRadiusFilter": false,
+      "unsafeBotSquaredAwareness": false
+    },
+    {
+      "rel": "src/game/bots.js",
+      "bytes": 54393,
+      "sha256": "9a6ff29083c9610df61e9d46e53afe7709aff6b70246d9198d3ca89bf9a06547",
+      "unsafeTerrainRadiusFilter": false,
+      "nativeBotPerception": true,
+      "unsafeBotSquaredAwareness": false
+    },
+    {
+      "rel": "src/game/match.js",
+      "bytes": 14343,
+      "sha256": "c61c40f36e1b5017a5aa321428b6aabe661113804abe18ad448707e322aff03d",
+      "unsafeTerrainRadiusFilter": false,
+      "unsafeBotSquaredAwareness": false
+    },
+    {
+      "rel": "src/game/motion/source-controller.js",
+      "bytes": 51632,
+      "sha256": "1e9771eb7b68b08a97514c8e7a0516c5f1bd4e483261db83cbde673898bc4a35",
+      "unsafeTerrainRadiusFilter": false,
+      "unsafeBotSquaredAwareness": false,
+      "deferredHairReentry": false
+    },
+    {
+      "rel": "src/game/motion/retarget.js",
+      "bytes": 37073,
+      "sha256": "80c25d7ec38ccb9c4725963553bf116130480a7effa53fb3c6017f53c7a72f7d",
+      "unsafeTerrainRadiusFilter": false,
+      "unsafeBotSquaredAwareness": false
+    },
+    {
+      "rel": "src/fx/fx.js",
+      "bytes": 134460,
+      "sha256": "ccb15c4cc7fa610c7e0e18cfdaed53416eb574a0a8d3769840627f8dbe89294f",
+      "unsafeTerrainRadiusFilter": false,
+      "unsafeBotSquaredAwareness": false,
+      "ringTransferOwner": false
+    },
+    {
+      "rel": "src/main.js",
+      "bytes": 115070,
+      "sha256": "50b04f1f2be8c389947685b2061bbcd81388d71bd3cfd135f5797c03202b3c52",
+      "unsafeTerrainRadiusFilter": false,
+      "unsafeBotSquaredAwareness": false,
+      "refreshTrial": true
+    }
+  ]
+}

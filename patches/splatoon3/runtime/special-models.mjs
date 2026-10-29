@@ -549,9 +549,9 @@ const domeAt = (az, el) => {
   return [p, n];
 };
 // Point at arclength fraction u round a closed [x, z] polygon.
-function crabLoop(pts, u) {
-  const L = pts.map((p, i) => Math.hypot(pts[(i + 1) % pts.length][0] - p[0], pts[(i + 1) % pts.length][1] - p[1]));
-  let s = (((u % 1) + 1) % 1) * L.reduce((a, b) => a + b, 0);
+function crabLoop(pts, u, lengths = null, perimeter = null) {
+  const L = lengths || pts.map((p, i) => Math.hypot(pts[(i + 1) % pts.length][0] - p[0], pts[(i + 1) % pts.length][1] - p[1]));
+  let s = (((u % 1) + 1) % 1) * (perimeter ?? L.reduce((a, b) => a + b, 0));
   for (let i = 0; i < pts.length; i++) {
     if (s <= L[i] || i === pts.length - 1) { const a = pts[i], b = pts[(i + 1) % pts.length], t = Math.min(1, s / L[i]); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
     s -= L[i];
@@ -645,7 +645,9 @@ function crabTank(THREE) {
     const prism = (k, y0, y1) => new THREE.ExtrudeGeometry(new THREE.Shape(scaled(k).map(([x, z]) => new THREE.Vector2(x, z))), { depth: y1 - y0, bevelEnabled: false })
       .rotateX(Math.PI / 2).translate(cx, y1, cz);
     K.add('clawR', 'crabTan', prism(1.15, 0.13, 0.26));
-    const band = (u, v) => { const k = 0.92 + 0.22 * v, [x, z] = crabLoop(plan, u); return [cx + x * k, 0.02 + 0.11 * v, cz + z * k]; };
+    const planLengths=plan.map((p,i)=>Math.hypot(plan[(i+1)%plan.length][0]-p[0],plan[(i+1)%plan.length][1]-p[1]));
+    const planPerimeter=planLengths.reduce((a,b)=>a+b,0);
+    const band = (u, v) => { const k = 0.92 + 0.22 * v, [x, z] = crabLoop(plan, u, planLengths, planPerimeter); return [cx + x * k, 0.02 + 0.11 * v, cz + z * k]; };
     const [st, sw] = crabStripes(THREE, band, 26, 0.9, (m) => [m[0] - cx, -0.5, m[2] - cz], null, 2, 3);
     K.add('clawR', 'crabTan', st); K.add('clawR', 'hazard', sw);
     K.add('clawR', 'darkMetal', prism(0.92, 0.015, 0.03), box(THREE, 0.14, 0.16, 0.24, -0.2, 0.6, 0.2));

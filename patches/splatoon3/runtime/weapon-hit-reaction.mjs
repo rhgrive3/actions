@@ -98,8 +98,14 @@ function applyPresentation(ch,T,C,s) {
   // not drag a held anchor back either, or the hand IK loses its target.
   const holdL=heldGrip(ch,C,true),holdR=heldGrip(ch,C,false);
   const ancMoves=!(ch.dual?holdR:holdL||holdR), ancLMoves=!holdL;
-  if(s.pre&&w>.001) for(const base of [ANCR,ANLR,C.POLER,C.POLEL,...(ancMoves?[ANC]:[]),...(ancLMoves?[ANL]:[])])
-    for(let i=base;i<base+3;i++){const before=s.pre[i];P[i]=before+(P[i]-before)*(1-w);}
+  if(s.pre&&w>.001) {
+    // Preserve the original array expression's channel reads before any pose write.
+    const poleR=C.POLER,poleL=C.POLEL,count=4+(ancMoves?1:0)+(ancLMoves?1:0);
+    for(let anchor=0;anchor<count;anchor++) {
+      const base=anchor===0?ANCR:anchor===1?ANLR:anchor===2?poleR:anchor===3?poleL:anchor===4&&ancMoves?ANC:ANL;
+      for(let i=base;i<base+3;i++){const before=s.pre[i];P[i]=before+(P[i]-before)*(1-w);}
+    }
+  }
   P[SPINE]+=d[j]*front;P[SPINE+1]+=y;P[SPINE+2]+=r;
   P[CHEST]+=d[j+1]*front;P[CHEST+1]+=.6*y;P[CHEST+2]+=.6*r;
   P[NECK]+=d[j+3]*front;P[HEAD]+=d[j+2]*front;P[HEAD+1]+=.8*y;

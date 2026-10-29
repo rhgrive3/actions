@@ -31,14 +31,23 @@ async function setup(id,ap=57){
  const select=nm=>{f.G.netm=nm;f.G.match=nm.match;};
  const receive=p=>{select(receiver);receiver.onMessage('A',p);const peer=receiver.peers.get('A');if(peer){peer.tr=p.ts;receiver._playEvents();}};
  select(sender);sender._sendTick();receive(sent.at(-1));clock+=.1;f.G.time=.1;
- const deploy=()=>{select(sender);owner.special=100;owner._startSpecial();assert.ok(owner.specialActive,'real special input must activate');owner.intent.sub=true;owner._updateSpecial(1/60);
+ let nativeUse;
+ const deploy=()=>{select(sender);owner.special=100;owner._startSpecial();assert.ok(owner.specialActive,'real special input must activate');
+  nativeUse=json(sender.out.findLast(e=>e[1]==='ev'&&e[2]==='special:use'));
+  assert.equal(nativeUse[3].id,id,'the real Actor activation records its native use');
+  owner.intent.sub=true;owner._updateSpecial(1/60);
   owner.intent.sub=false;owner._updateSpecial(1/60);for(let i=0;i<16&&owner.specialActive;i++)owner._updateSpecial(1/60);
   const rows=json(sender.out.filter(e=>e[1]==='ac'&&['deploy','device','screen'].includes(e[5].action)));
   assert.equal(rows.length,2,'one canonical and one companion birth');return rows;};
  const rows=deploy(),objects=()=>f.G.projectiles._s3AllSpecialObjects||[],ghost=()=>objects().find(o=>o.owner===proxy);
  const play=(row,from='A')=>{select(receiver);receiver._play(from,json(row));};
+ // Direct _play probes must supply the same accepted use and wire sidecars
+ // that the real tick receiver supplies before catalogue replay admission.
+ const acceptUse=(row=nativeUse)=>{select(receiver);const event=json(row);event._netTick=event.at(-2);event._netSeq=event.at(-1);
+  receiver._peer('A');receiver._play('A',event);assert.equal(receiver._peer('A')._lastEventSeq,event._netSeq);return event;};
+ const renewUse=()=>{select(sender);sender._rec(['ev','special:use',{actor:{n:owner.nid},id}]);return acceptUse(sender.out.at(-1));};
  const tick=(frames,hz=60)=>{select(sender);for(let i=0;i<frames;i++){clock+=1/hz;f.G.time+=1/hz;f.G.projectiles.update(1/hz);}};
- return{f,id,owner,proxy,sender,receiver,rows,objects,ghost,play,tick,deploy,receive,sent,select,
+ return{f,id,owner,proxy,sender,receiver,rows,objects,ghost,play,tick,deploy,receive,sent,select,acceptUse,renewUse,
   close(){receiver.dispose();sender.dispose();f.G.projectiles.clear();}};
 }
 
@@ -46,6 +55,7 @@ for(const id of IDS)for(const ap of [0,57])test(`${id} AP${ap}: both birth envel
  let canonical;
  for(const route of ['normal','reverse','companion-only']){
   const w=await setup(id,ap);try{
+   w.acceptUse();
    const [birth,companion]=w.rows.map(e=>e[5]);
    for(const key of ['kind','hp','radius','duration','specialPowerAP','width','height','waveFrame','phase','age','landedAt','vx','vy','vz','gravity','airResist'])
     assert.equal(companion[key],birth[key],`${id} ${key}: companion must be self-contained`);
@@ -90,13 +100,14 @@ for(const id of IDS)test(`${id}: real tick receiver orders rows and survives a d
 
 for(const id of IDS)test(`${id}: owner/life rejection, activation isolation, and explicit world cleanup remain intact`,async()=>{
  const w=await setup(id);try{
+  w.acceptUse();
   const old=json(w.rows);w.play(old[1],'foreign');assert.equal(w.ghost(),undefined);
   const wrongLife=json(old[1]);wrongLife[4]--;w.play(wrongLife);assert.equal(w.ghost(),undefined);
   w.play(old[1]);const first=w.ghost();assert.ok(first);w.play(old[0]);
   w.tick(720);assert.equal(first.dead,true);assert.equal(w.ghost(),undefined);
   const retired=w.sender.out.filter(e=>e[1]==='ac'&&['expire','destroy'].includes(e[5].action));assert.ok(retired.length);
   for(const row of retired)w.play(row);for(const row of old)w.play(row);assert.equal(w.ghost(),undefined);
-  w.sender.out.length=0;w.owner.netLife=4;w.proxy.netLife=4;const newer=w.deploy();assert.notEqual(newer[0][5].activation,old[0][5].activation);
+  w.sender.out.length=0;w.owner.netLife=4;w.proxy.netLife=4;const newer=w.deploy();w.acceptUse();assert.notEqual(newer[0][5].activation,old[0][5].activation);
   w.play(newer[1]);w.play(newer[0]);const next=w.ghost();assert.ok(next);for(const row of retired)w.play(row);assert.equal(w.ghost(),next);
   w.f.G.projectiles.clear();assert.equal(next.dead,true);assert.equal(next.mesh?.parent||null,null);assert.equal(w.objects().length,0);
   for(const row of newer)w.play(row);assert.equal(w.ghost(),undefined,'seen birth pair stays retired after clear');
@@ -115,6 +126,7 @@ for(const id of IDS)test(`${id}: delayed sibling cannot rewind phase and legacy 
   }finally{w.close();}
  }
  const w=await setup(id);try{
+  w.acceptUse();
   const sparse=json(w.rows[1]),full=sparse[5];sparse[5]={id:full.id,activation:full.activation,action:full.action,pos:full.pos,seed:full.seed,object:full.object};
   if(full.target)sparse[5].target=full.target;
   w.play(sparse);assert.equal(w.ghost(),undefined,'old sparse companion waits without an invalid ghost');
@@ -127,6 +139,7 @@ for(const id of IDS)test(`${id}: delayed sibling cannot rewind phase and legacy 
 for(const id of IDS)test(`${id}: unseen late birth is retired by expiry, clear or terminal row; new life and land updates still work`,async()=>{
  for(const retire of ['expiry','clear','terminal-before-birth']){
   const w=await setup(id);try{
+   w.acceptUse();
    if(retire!=='terminal-before-birth')w.play(w.rows[1]);
    if(retire==='clear')w.f.G.projectiles.clear();else w.tick(720);
    const terminal=w.sender.out.find(e=>e[1]==='ac'&&e[5].object===w.rows[0][5].object&&e[5].action==='expire');
@@ -135,11 +148,18 @@ for(const id of IDS)test(`${id}: unseen late birth is retired by expiry, clear o
    // Same action/object/activation/seed with a new accepted actor life is not
    // the old device. The envelope's life guard remains the authority boundary.
    w.proxy.netLife=4;const renewed=json(w.rows[1]);renewed[4]=4;renewed[7]+=100;
+   w.play(renewed);assert.equal(w.ghost(),undefined,'a new life cannot inherit the prior native-use admission');
+   const use=w.renewUse();renewed[0]=use[0];renewed[6]=use._netTick;renewed[7]=use._netSeq+1;
    w.play(renewed);const o=w.ghost();assert.ok(o,'new life may create its own device');assert.equal(o.replayLife,4);
    const badLife=json(renewed);badLife[4]=3;badLife[7]++;w.play(badLife);assert.equal(w.ghost(),o);
    const land=json(renewed);land[7]+=1;Object.assign(land[5],{action:'land',tick:10,age:2,landedAt:2,phase:'active',pos:[3,.08,4]});
    w.play(land);assert.equal(o.phase,'active');assert.equal(o.age,2);assert.equal(o.landedAt,2);assert.equal(o.vel,null);assert.deepEqual(Array.from(o.pos.toArray()),[3,.08,4]);
-   const active=json(land);active[7]++;Object.assign(active[5],{action:'active',tick:11,age:2.25});w.play(active);assert.equal(o.age,2.25);
+   // These devices enter their active phase through land; only markers/decoys
+   // emit an active action. Keep that invalid action fail-closed, then verify
+   // a newer valid owner attachment update advances authoritative device age.
+   const active=json(land);active[7]++;Object.assign(active[5],{action:'active',tick:11,age:2.25});
+   const beforeInvalid=snapshot(o);w.play(active);assert.deepEqual(snapshot(o),beforeInvalid,'foreign device action cannot update this device');
+   const attachment=json(land);attachment[7]+=2;Object.assign(attachment[5],{tick:12,age:2.25});w.play(attachment);assert.equal(o.age,2.25);
    const state=snapshot(o);w.play(land);assert.deepEqual(snapshot(o),state,'duplicate land cannot rewind authoritative active state');
   }finally{w.close();}
  }

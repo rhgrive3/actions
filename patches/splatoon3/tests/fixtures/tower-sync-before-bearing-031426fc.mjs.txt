@@ -1,0 +1,63 @@
+  _syncTower(engine, carry = true) {
+    if (this.mode !== 'tower' || !this.towerBlock) return;
+    // Public offset snapshots stay fresh. Only this synchronous consumer
+    // borrows depth-isolated rows, and releases actor references on errors.
+    const depth=this._riderLeaseDepth||0;
+    const owned=carry&&this._collectRiderOffsets===RankedWorld.prototype._collectRiderOffsets;
+    const lease=owned?((this._riderLeases||=([]))[depth]||=( {offsets:[],records:[]} )):null;
+    if(lease){this._riderLeaseDepth=depth+1;lease.offsets.length=0;}
+    try {
+    // Capture the pre-move rider latches and offsets in one actor traversal.
+    const riders = carry ? this._collectRiderOffsets(true,lease) : (this._refreshRideLatches(), []);
+    const target = this._towerPosition(engine);
+    setVec(this._position, target);
+    const progress = engine?.rule?.state?.progress ?? this._towerProgress;
+    let at = this._towerPathTotal * Math.max(0, Math.min(1, finite(progress) ? progress : 0.5)), bearing = INVALID_BEARING;
+    for (let i = 0; i < this._towerBearings.length; i++) {
+      const length = this._towerSegmentLengths[i];
+      if (at <= length || i === this._towerBearings.length - 1) { bearing = this._towerBearings[i]; break; }
+      at -= length;
+    }
+    const [dx, dz] = bearing;
+    this._forward.set(dx, 0, dz).normalize();
+    this._side.set(this._forward.z, 0, -this._forward.x).normalize();
+    const yaw = Math.atan2(dx, dz);
+    const cosYaw = Math.cos(yaw), sinYaw = Math.sin(yaw);
+    const transformChanged = !this._towerTransformReady || !this._position.equals(this._lastPosition) || yaw !== this._towerYaw;
+    this.towerBlock.center.set(this._position.x, this._position.y - 0.12, this._position.z);
+    this.towerBlock.axes[0].set(cosYaw, 0, -sinYaw);
+    this.towerBlock.axes[1].set(0, 1, 0);
+    this.towerBlock.axes[2].set(sinYaw, 0, cosYaw);
+    if (transformChanged) updateBlockBounds(this.towerBlock);
+    if (this.towerPoleBlock) {
+      this.towerPoleBlock.center.set(this._position.x, this._position.y + 0.945, this._position.z);
+      this.towerPoleBlock.axes[0].copy(this.towerBlock.axes[0]);
+      this.towerPoleBlock.axes[1].copy(this.towerBlock.axes[1]);
+      this.towerPoleBlock.axes[2].copy(this.towerBlock.axes[2]);
+      if (transformChanged) updateBlockBounds(this.towerPoleBlock);
+    }
+    this._towerDeckTop = this._position.y;
+    if (transformChanged) {
+      this.tower.position.copy(this._position);
+      this.tower.rotation.y = yaw;
+      this.tower.updateMatrixWorld(true);
+      this._updateTowerPaintGeometry();
+      this._towerTransformReady = true; this._towerYaw = yaw;
+      this.level?.markCollisionChanged?.();
+    }
+    for (const rider of riders) {
+      const { actor, x, y, z } = rider;
+      actor.pos.copy(this.towerBlock.center)
+        .addScaledVector(this.towerBlock.axes[0], x)
+        .addScaledVector(this.towerBlock.axes[1], y)
+        .addScaledVector(this.towerBlock.axes[2], z);
+      const root = actor.character?.root?.position;
+      if (root) root.copy(actor.pos).setY(actor.pos.y + (actor.smoothY || 0));
+    }
+    this._refreshRideLatches();
+    this._towerProgress = finite(engine?.rule?.state?.progress) ? engine.rule.state.progress : this._towerProgress;
+    this._lastPosition.copy(this._position);
+    } finally {
+      if(lease){for(const row of lease.records)row.actor=null;lease.offsets.length=0;this._riderLeaseDepth=depth;}
+    }
+  }

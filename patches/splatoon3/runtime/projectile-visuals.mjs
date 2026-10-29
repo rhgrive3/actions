@@ -507,9 +507,13 @@ export class ProjectileVisualRuntime {
       const inverseSide=1/sideLength;rx*=inverseSide;rz*=inverseSide;
       const f0=rx,f2=rz,f3=dy*rz,f4=dz*rx-dx*rz,f5=-dy*rx,f6=dx,f7=dy,f8=dz;
       const cx=c[o],cy=c[o+1],cz=c[o+2],width=w[ring],thickness=t[ring];
-      const inverseLength=1/max(EPS,length),dWidth=(w[after]-w[before])*inverseLength,dThin=(t[after]-t[before])*inverseLength;
-      const circular=w[ring]===t[ring]&&dWidth===dThin,circularNormalScale=1/sqrt(1+dWidth*dWidth);
       const endpoint=ring===0||ring===RINGS-1,capSign=ring===0?-1:1;
+      let dWidth=0,dThin=0,circular=false,circularNormalScale=0;
+      if(!endpoint){
+        const inverseLength=1/max(EPS,length);dWidth=(w[after]-w[before])*inverseLength;dThin=(t[after]-t[before])*inverseLength;
+        circular=w[ring]===t[ring]&&dWidth===dThin;
+        if(circular)circularNormalScale=1/sqrt(1+dWidth*dWidth);
+      }
       const ph1=lobeMode===1?seed*7+ring*.6:lobeMode===4?ring*.75+seed*6:lobeMode===5?ring*1.2+seed*8:0;
       const cPh=lobeMode===1||lobeMode===4||lobeMode===5?cos(ph1):0;
       const sPh=lobeMode===1||lobeMode===4||lobeMode===5?sin(ph1):0;
@@ -701,9 +705,14 @@ export class ProjectileVisualRuntime {
     if(this.disposed)return;
     alpha=clamp(finite(alpha,1));this.lastAlpha=alpha;this.bodies=0;this.renderRecordCount=0;this.stats.linkedRollerPairs=0;this.stats.historicalRollerPairs=0;
     this.colorDirtyStart=this.capacity*BODY_VERTICES*3;this.colorDirtyEnd=0;
+    if(!this.system.list.length&&!this.trails.length){
+      if(!this._emptyDraw){this.groupOccupied.fill(0);this.geometry.setDrawRange(0,0);this.mesh.visible=false;}
+      this.stats.vertexCount=this.stats.triangles=this.stats.drawCalls=0;this._emptyDraw=true;return;
+    }
+    this._emptyDraw=false;
     this.groupOccupied.fill(0);
     for(const p of this.system.list){this.ensureBirth(p);if(this.handles(p))this._drawRound(p,alpha);}
-    this._rollerLinks(alpha);
+    if(this.renderRecordCount>=2)this._rollerLinks(alpha);
     const now=finite(this.system.inkFlight?.time);
     for(let i=this.trails.length-1;i>=0;i--) {
       const t=this.trails[i],elapsed=Math.max(0,now-t.birth-DT*(1-alpha)),start=t.endAge+elapsed-t.frames*DT;

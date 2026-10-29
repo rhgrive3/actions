@@ -5,7 +5,29 @@ import {captureFinishMapSnapshot} from '../runtime/turf-finish.mjs';
 const frozen=JSON.parse(fs.readFileSync(new URL('./fixtures/ranked-added-before-8de71b09.json',import.meta.url)));
 const url=new URL('../runtime/ranked/ui.mjs',import.meta.url);
 const oldSource=frozen.files['patches/splatoon3/runtime/ranked/ui.mjs'].replace(/from (['"])(\.[^'"]+)\1/g,(_,q,p)=>`from ${q}${new URL(p,url).href}${q}`);
-const {installRankedUi:oldInstall}=await import('data:text/javascript;base64,'+Buffer.from(oldSource).toString('base64'));
+// Keep the sealed Drive fixture intact. Normalize only its known incorrect
+// checkpoint formula; all route cache, cadence and Canvas commands stay old.
+function referenceCheckpoint(stage,team,progress) {
+ if((team!==0&&team!==1)||!Number.isFinite(progress))return null;
+ let points=(Array.isArray(stage?.tower?.path)?stage.tower.path:[]).filter(p=>Array.isArray(p)&&p.length>=3&&p.slice(0,3).every(Number.isFinite));
+ if(points.length<2)points=[[-1,0,0],[0,0,0],[1,0,0]];
+ const distances=[0];for(let i=1;i<points.length;i++)distances.push(distances[i-1]+Math.hypot(...[0,1,2].map(a=>points[i][a]-points[i-1][a])));
+ const total=distances.at(-1)||1, index=Number.isFinite(stage?.tower?.centerIndex)?Math.trunc(stage.tower.centerIndex):Math.floor(points.length/2);
+ const center=distances[Math.max(0,Math.min(points.length-1,index))],p=Math.max(0,Math.min(1,progress));
+ const target=team===0?center+p*(total-center):center-p*center;
+ for(let i=1;i<points.length;i++)if(target<=distances[i]+1e-9){const span=distances[i]-distances[i-1],t=span>1e-9?Math.max(0,Math.min(1,(target-distances[i-1])/span)):0;return [0,1,2].map(a=>points[i-1][a]+(points[i][a]-points[i-1][a])*t);}
+ return points.at(-1).slice(0,3);
+}
+const oldCheckpoint='const p = path[Math.round(clamp01(cp.progress) * Math.max(0, path.length - 1))];';
+assert.equal(oldSource.split(oldCheckpoint).length,2,'normalize exactly one old checkpoint expression');
+const normalizedSource=referenceCheckpoint.toString()+'\n'+oldSource.replace(oldCheckpoint,'const p = referenceCheckpoint(stage,t,cp?.progress);');
+const {installRankedUi:oldInstall}=await import('data:text/javascript;base64,'+Buffer.from(normalizedSource).toString('base64'));
+const {installRankedUi:unfixedInstall}=await import('data:text/javascript;base64,'+Buffer.from(oldSource).toString('base64'));
+test('negative control: sealed old vertex-index checkpoint projection differs from corrected physical route',()=>{
+ const a=minimapHarness(unfixedInstall),b=minimapHarness(oldInstall);
+ for(const h of [a,b]){h.G.match.ranked=engine('tower');h.m.update(0,true);}
+ assert.notDeepEqual(a.snapshot().output,b.snapshot().output);
+});
 const stage=()=>({zones:[{center:[1,0,1],size:[2,3]}],tower:{path:[[0,0,0],[1,0,1],[2,0,2]],centerIndex:1,checkpoints:[[{progress:.5}],[{progress:.75}]]},rainmaker:{center:[1,0,1],checkpoints:[[[0,0,1],[1,0,0]],[[3,0,3]]],goals:[[1,0,3],[3,0,1]]},clams:{goals:[[1,0,3],[3,0,1]]}});
 const engine=mode=>({mode,stage:stage(),rule:{state:{zones:[{team:-1}],position:[1,0,1],controllingTeam:-1,pos:[1,0,1],carrier:null,checkpoint:{passed:[false,false],choice:[null,null],goalOpen:[false,false]},clams:[{kind:'small',pos:[1,0,1]}],inventories:{'a':{power:true}}}}});
 const mutations={zones:[e=>e.rule.state.zones[0].team=0,e=>e.stage.zones[0].center[0]++,e=>e.stage.zones[0].size[0]++],tower:[e=>e.rule.state.position[0]++,e=>e.rule.state.controllingTeam=1,e=>e.stage.tower.path[1][2]++,e=>e.stage.tower.checkpoints[0][0].progress=.9],rainmaker:[e=>e.rule.state.pos[0]++,e=>{e.rule.state.carrier='a';e.rule.state.carrierTeam=1;},e=>{e.rule.state.checkpoint.passed[0]=true;e.rule.state.checkpoint.choice[0]=1;e.rule.state.checkpoint.goalOpen[0]=true;}],clams:[e=>e.rule.state.clams[0].pos[0]++,e=>e.rule.state.clams[0].kind='power',e=>e.rule.state.clams.pop(),e=>e.rule.state.inventories.a.power=false]};
@@ -61,8 +83,9 @@ for(const mode of ['zones','tower','clams'])test(`composed ${mode} sparse object
   a=>{a.length=1;},
  ];
  for(const change of steps){const before=pair[1].counts();for(const h of pair){change(objectiveCollection(h.G.match.ranked,mode));h.m.update(1/30,h===pair[0]);}assert.deepEqual(pair[1].snapshot().output,pair[0].snapshot().output);assert.equal(pair[1].counts().rasters,before.rasters,'objective-only mutation does not rasterize ink');}
- // Explicit values are present entries: the old renderer throws, rather than skipping them.
- for(const value of [null,undefined])for(const install of [oldInstall,installRankedUi]){const h=minimapHarness(install);h.G.match.ranked=engine(mode);objectiveCollection(h.G.match.ranked,mode)[0]=value;assert.throws(()=>h.m.update(0,true),error=>error.name==='TypeError');}
+ // Explicit malformed values retain the production snapshot TypeError contract.
+ // The normalized old renderer has no snapshot cache; its checkpoint formula skips invalid progress.
+ for(const value of [null,undefined])for(const install of [oldInstall,installRankedUi]){const h=minimapHarness(install);h.G.match.ranked=engine(mode);objectiveCollection(h.G.match.ranked,mode)[0]=value;if(mode==='tower'&&install===oldInstall)assert.doesNotThrow(()=>h.m.update(0,true));else assert.throws(()=>h.m.update(0,true),error=>error.name==='TypeError');}
 });
 test('composed Tower sparse checkpoint teams retain team-index colours and inherited teams',()=>{
  const pair=[minimapHarness(oldInstall),minimapHarness(installRankedUi)];

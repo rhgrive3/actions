@@ -11,7 +11,26 @@ const definition=JSON.parse(fs.readFileSync(new URL('../definitions/lemuria.json
 const code=rel=>adaptBuildSource(rel,fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8'));
 const section=(source,start,end)=>{const at=source.indexOf(start),until=source.indexOf(end,at);assert.ok(at>=0&&until>at,start);return source.slice(at,until);};
 const main=code('src/main.js'),session=code('src/net/session.js'),menus=code('src/ui/menus.js');
-const context=()=>vm.createContext({nativeStageEnabled:true,nativeStageRuleStatus,UNAVAILABLE_NATIVE_STAGES:[definition],isRankedMode});
+const context=()=>{
+ const timers={nextId:1,pending:new Map(),cancelled:[],flush(){for(const [id,task]of [...this.pending])if(this.pending.delete(id))task.callback(...task.args);}};
+ return vm.createContext({nativeStageEnabled:true,nativeStageRuleStatus,UNAVAILABLE_NATIVE_STAGES:[definition],isRankedMode,
+  setTimeout(callback,delay,...args){const id=timers.nextId++;timers.pending.set(id,{callback,delay,args});return id;},
+  clearTimeout(id){timers.cancelled.push(id);timers.pending.delete(id);},timers});
+};
+function observeResultsTimer(sandbox,game){
+ const fired=[];
+ const retired=game._resultsMusicTimer=sandbox.setTimeout(()=>fired.push('retired results music'),2600);
+ const survivor=sandbox.setTimeout(()=>fired.push('unrelated timer'),2600);
+ assert.notEqual(retired,survivor);
+ return()=>{
+  assert.equal(game._resultsMusicTimer,null,'actual startup clears its timer owner');
+  assert.ok(sandbox.timers.cancelled.includes(retired),'actual startup invokes cancellation for its exact timer ID');
+  assert.equal(sandbox.timers.pending.has(retired),false,'retired callback is removed from the queue');
+  assert.equal(sandbox.timers.pending.has(survivor),true,'unrelated pending timer is retained');
+  sandbox.timers.flush();assert.deepEqual(fired,['unrelated timer'],'cancelled results callback never fires');
+ };
+}
+
 
 test('Lemuria is roster-confirmed but has no invented geometry, placement or playable build entry',()=>{
  const build=prepareNativeStageBuild(null).config;
@@ -25,10 +44,11 @@ test('Lemuria is roster-confirmed but has no invented geometry, placement or pla
 
 for(const rule of ['turf','zones','tower','rainmaker','clams'])test('Lemuria '+rule+' request stops before match flow, world disposal or fallback',async()=>{
  const methods=section(main,'  _beginMatchFlow() {','\n  // ---- online (src/net/session.js');
- const Game=vm.runInContext(`class Game {${methods}};Game`,context());
- const calls=[],game=new Game(),world={id:'existing-world'};
+ const sandbox=context(),Game=vm.runInContext(`class Game {${methods}};Game`,sandbox);
+ const calls=[],game=new Game(),world={id:'existing-world'},assertTimerRetired=observeResultsTimer(sandbox,game);
  Object.assign(game,{mapDef:{id:'tidewater'},world,match:{dispose(){throw Error('Unavailable stage disposed the existing match');}},menus:{toast:message=>calls.push(message)}});
  assert.equal(await game.startMatch({mapId:'lemuria',rule,mode:rule}),false);
+ assertTimerRetired();
  assert.equal(game._matchFlow,undefined);
  assert.equal(game.world,world);
  assert.equal(await game._startMenuMatch({mapId:'lemuria',rule,mode:rule}),false);
@@ -39,9 +59,10 @@ for(const rule of ['turf','zones','tower','rainmaker','clams'])test('Lemuria '+r
 
 test('Direct online world startup rejects Lemuria before network flow or world disposal',async()=>{
  const method=section(main,'  async startNetMatch(cfg, nm) {','\n  // Compile every shader variant');
- const Game=vm.runInContext(`class Game {${method}};Game`,context());
- const game=new Game();
+ const sandbox=context(),Game=vm.runInContext(`class Game {${method}};Game`,sandbox);
+ const game=new Game(),assertTimerRetired=observeResultsTimer(sandbox,game);
  await assert.rejects(game.startNetMatch({map:'lemuria'},{}),error=>error.name==='RangeError'&&error.message.includes(definition.name));
+ assertTimerRetired();
  assert.equal(game._matchFlow,undefined);
 });
 

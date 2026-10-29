@@ -13,7 +13,10 @@ const root=fileURLToPath(new URL('../../../',import.meta.url));
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const hash=s=>createHash('sha256').update(s).digest('hex');
 const entry='scripts/inkwave-source-composition.mjs';
-const specs=['patches/local-quality/drive-core-queue-adapter.mjs','patches/splatoon3/weapon-queue-20261024-adapter.mjs','patches/local-quality/drive-visual-audio-adapter.mjs','patches/local-quality/queue-world-20261024-adapter.mjs'];
+const specs=['patches/local-quality/drive-core-queue-adapter.mjs','patches/splatoon3/weapon-queue-20261024-adapter.mjs','patches/local-quality/drive-visual-audio-adapter.mjs','patches/local-quality/queue-world-20261024-adapter.mjs',
+ 'patches/local-quality/queue-ui-continuation-20261029-adapter.mjs','patches/local-quality/queue-visual-continuation-20261029-adapter.mjs',
+ 'patches/local-quality/queue-ui-input-20261029-adapter.mjs','patches/local-quality/queue-world-native-20261029-adapter.mjs',
+ 'patches/local-quality/queue-combat-network-20261029-adapter.mjs','patches/local-quality/queue-audio-20261029-adapter.mjs'];
 function closure(reader=read){const visited=new Map();function visit(p){assert(!p.startsWith('../'));if(visited.has(p))return;const s=reader(p);visited.set(p,s);for(const n of parse(s,{ecmaVersion:'latest',sourceType:'module'}).body){const spec=n.source?.value;if(spec?.startsWith('.'))visit(path.posix.normalize(path.posix.join(path.posix.dirname(p),spec)));}}visit(entry);return visited;}
 function registered(){const ids=new Map();for(const [prefix,f]of[['patches/local-quality/',qualityIdentity],['patches/reliability/',reliabilityIdentity]])for(const [p,h]of Object.entries(f()))ids.set(prefix+p,h);return ids;}
 function verify(ids,reader=read){const c=closure(reader);for(const [p,s]of c)if(p.startsWith('patches/local-quality/')||p.startsWith('patches/reliability/')){assert(ids.has(p),'untracked '+p);assert.equal(ids.get(p),hash(s),'stale '+p);}return c;}

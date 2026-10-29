@@ -19,6 +19,8 @@ on:
       - "patches/network-replication/**"
       - "patches/movement-physics/**"
       - "scripts/lib/**"
+      - "scripts/ci/inkwave-pages-validation.mjs"
+      - "scripts/tests/inkwave-pages-validation.test.mjs"
       - "scripts/check-inkwave-startup-budget.mjs"
       - "scripts/check-inkwave-ranked-browser.mjs"
       - "scripts/run-logged-test-process.mjs"
@@ -30,6 +32,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -44,6 +47,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -85,10 +89,20 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
 
+      - name: Require successful Validate for current main before upload
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/inkwave-pages-validation.mjs --wait
+
       - name: Upload INKWAVE site
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+
+      - name: Recheck Validate and current main before publication
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/inkwave-pages-validation.mjs --once
 
       - name: Deploy to GitHub Pages
         id: deployment

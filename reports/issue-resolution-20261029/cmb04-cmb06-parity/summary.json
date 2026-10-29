@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "baseSource": "e3f19ab9913824b15dfc56330ec731408890d6a3",
+  "referenceMain": "e67c636b81762df56b346a09ef570964d43084df",
+  "sourcePath": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+  "originalAdapterSha256": "ed1b9a8f27212bf1e4350e7c086de4b4e42c8b309348c99ef841aad043b5ac79",
+  "unsafeFixturePath": "patches/local-quality/tests/fixtures/cmb04-cmb06-unsafe-prefixes.json",
+  "unsafeFixtureSha256": "1c912d51bcf74a9be3e465517a672f7b42d097409001efdb061efc9a88b75949",
+  "controls": {
+    "CMB04": {
+      "terrainRadius": 0.38,
+      "oldMargin": 0.25,
+      "installedSquidHurtRadius": 0.675,
+      "standardShooterPlayerRadius": 0.285,
+      "targetLateralOffset": 0.94,
+      "projectileY": 0.675,
+      "projectileSegmentZ": [
+        -1,
+        1
+      ],
+      "nativeHits": 1,
+      "unsafeHits": 0,
+      "fixedHits": 1,
+      "damage": 36
+    },
+    "CMB06": {
+      "difficulty": "normal",
+      "awareness": 21,
+      "enemyPosition": [
+        21,
+        2.384185791015625e-07,
+        0
+      ],
+      "nativeDistanceSquared": 441.00000000000006,
+      "nativeDistance": 21,
+      "nativeTarget": "enemy",
+      "unsafeTarget": null,
+      "fixedTarget": "enemy",
+      "nativeLosCalls": 1,
+      "unsafeLosCalls": 0,
+      "fixedLosCalls": 1,
+      "nativeRngDraws": 4,
+      "unsafeRngDraws": 0,
+      "fixedRngDraws": 4
+    }
+  },
+  "checks": {
+    "focused": {
+      "pass": 48,
+      "fail": 0,
+      "skip": 0
+    },
+    "adapter": {
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    "quick": "pass"
+  },
+  "rawSha256": {
+    "focused.txt": "fcfd166916977a327a4517057be5ae2edf50bef8f04872b5a61442e64b175d09",
+    "quick.txt": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+    "adapter.txt": "32cfca3a261fa74e9f8d8dd96b72cfedc0e410be98809432ec8082dd44965a50"
+  },
+  "scope": {
+    "cpuComposedSourceOnly": true,
+    "browserOrGpuUsed": false,
+    "retailParityVerified": false,
+    "performanceClaim": false,
+    "mov08bHoldChanged": false
+  }
+}

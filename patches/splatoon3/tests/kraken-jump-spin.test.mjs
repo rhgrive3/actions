@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {markAttributeRange} from '../runtime/instance-color-upload.mjs';
+import {installShapePoolBounds,updateShapePoolBounds} from '../runtime/shape-pool-bounds.mjs';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const {transform}=require(process.env.ESBUILD_MODULE || 'esbuild');
@@ -22,8 +23,10 @@ async function load(file, emitted){
  await module.evaluate();return module.namespace;
 }
 const kit= new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/special-vfx-kit.mjs',import.meta.url),'utf8')+'\nexport {RibbonPool};');await kit.link(spec=>{
-  assert.equal(spec,'./instance-color-upload.mjs','the RibbonPool test uses only the real upload helper');
-  return new vm.SyntheticModule(['markAttributeRange'],function(){this.setExport('markAttributeRange',markAttributeRange);});
+  const helpers={'./instance-color-upload.mjs':{markAttributeRange},'./shape-pool-bounds.mjs':{installShapePoolBounds,updateShapePoolBounds}};
+  assert.ok(Object.hasOwn(helpers,spec),`explicit real pool dependency ${spec}`);
+  const exports=helpers[spec];
+  return new vm.SyntheticModule(Object.keys(exports),function(){for(const [name,value] of Object.entries(exports))this.setExport(name,value);});
 });await kit.evaluate();
 const Pool=kit.namespace.RibbonPool;
 const results=[];

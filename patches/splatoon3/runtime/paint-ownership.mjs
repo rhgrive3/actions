@@ -27,7 +27,7 @@ export function paintClockComesAfter(a, b) {
   return typeof a === 'number' && typeof b === 'number' ? a > b : BigInt(a) > BigInt(b);
 }
 
-const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+const clamp = (x, lo, hi) => x <= lo ? +lo : x >= hi ? +hi : x;
 const fract = x => x - Math.floor(x);
 const f32 = Math.fround;
 const smoothstep = (lo, hi, x) => {
@@ -64,7 +64,8 @@ const wobble = (a, s) => 1 + 0.12 * Math.sin(3 * a + s * 6.2831) + 0.08 * Math.s
 
 function sdRay(px, py, ax, ay, bx, by, ra, rb) {
   const pax = px - ax, pay = py - ay, bax = bx - ax, bay = by - ay;
-  const h = clamp((pax * bax + pay * bay) / Math.max(bax * bax + bay * bay, 1e-8), 0, 1);
+  const b2 = bax * bax + bay * bay;
+  const h = clamp((pax * bax + pay * bay) / (b2 > 1e-8 ? b2 : 1e-8), 0, 1);
   return Math.hypot(px - ax - bax * h, py - ay - bay * h) - (ra * (1 - h) + rb * h);
 }
 
@@ -79,7 +80,7 @@ function allocPiece(idx) {
     p = { type: 0, ax: 0, ay: 0, bx: 0, by: 0, ra: 0, rb: 0, x: 0, y: 0, radius: 0, ux: 0, uy: 0, el: 0, x0: 0, yTop: 0, len: 0, w: 0, h2: 0, k: 0, r: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
     _ancillaryPiecePool[idx] = p;
   }
-  _ancillaryPieces.push(p);
+  _ancillaryPieces[idx] = p;
   return p;
 }
 
@@ -129,7 +130,6 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const r = Math.sqrt(r2), fall = clamp(r / Math.max(R, 1e-3), 0, 1);
   const kind = g.kind, [rayCount, satelliteCount, spatterCount, dripCount] = counts(kind, contract.shapes);
   if (rayCount + satelliteCount + spatterCount + dripCount === 0) return null;
-  _ancillaryPieces.length = 0;
   let pIdx = 0;
   const seed = f32(g.seed), word = paintShapeSeed(seed), pixel = 1 / Math.max(face.atlas?.ppm || 1, 1);
   const dirAng = sa > 0 ? Math.atan2(sdv, sdu) : 0;
@@ -150,8 +150,8 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     const tipY = uy * (edge + len) + ux * len * 0.18 * (h1 - 0.5);
     const p0 = allocPiece(pIdx++);
     p0.type = 0; p0.ax = ax; p0.ay = ay; p0.bx = tipX; p0.by = tipY; p0.ra = wB; p0.rb = tipR;
-    p0.minX = Math.min(ax, tipX) - wB; p0.maxX = Math.max(ax, tipX) + wB;
-    p0.minY = Math.min(ay, tipY) - wB; p0.maxY = Math.max(ay, tipY) + wB;
+    p0.minX = (ax < tipX ? ax : tipX) - wB; p0.maxX = (ax > tipX ? ax : tipX) + wB;
+    p0.minY = (ay < tipY ? ay : tipY) - wB; p0.maxY = (ay > tipY ? ay : tipY) + wB;
     const headR = tipR * (1.6 + 1.4 * h2);
     const p1 = allocPiece(pIdx++);
     p1.type = 1; p1.x = tipX; p1.y = tipY; p1.radius = headR;
@@ -198,7 +198,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
       p3.minX = x0 - w * 2; p3.maxX = x0 + w * 2; p3.minY = yTop - len - w * 2; p3.maxY = yTop + w * 2;
     }
   }
-  if (!_ancillaryPieces.length) return null;
+  // Retain V8 elements capacity while exposing only the current live prefix.
+  _ancillaryPieces.length = pIdx;
+  if (!pIdx) return null;
   _ancillaryMask.sa = sa; _ancillaryMask.sdu = sdu; _ancillaryMask.sdv = sdv;
   _ancillaryMask.margin = pixel * 1.5; _ancillaryMask.seed = seed; _ancillaryMask.dT = dT;
   return _ancillaryMask;
@@ -217,15 +219,19 @@ function pointInsideAncillary(mask, x, y, seed, p) {
   if (p.type === 0 && sdRay(sx, sy, p.ax, p.ay, p.bx, p.by, p.ra, p.rb) < -mask.margin) return true;
   // Keep the signed-distance comparison. Squaring radius - margin changes
   // floating-point rounding at the boundary, including inside/outside decisions.
-  if (p.type === 1 && Math.hypot(sx - p.x, sy - p.y) - p.radius < -mask.margin) return true;
+  if (p.type === 1) {
+    const dx = sx - p.x, dy = sy - p.y, rHi = p.radius * (1 + 1e-5) + 1e-8;
+    if (!(dx * dx + dy * dy > rHi * rHi) && Math.hypot(dx, dy) - p.radius < -mask.margin) return true;
+  }
   if (p.type === 2) {
     let qx = sx - p.x, qy = sy - p.y, along = qx * p.ux + qy * p.uy;
     qx -= p.ux * along * (1 - 1 / p.el); qy -= p.uy * along * (1 - 1 / p.el);
-    if (Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
+    const rHi = p.radius * (1 + 1e-5) + 1e-8;
+    if (!(qx * qx + qy * qy > rHi * rHi) && Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
   }
   if (p.type === 3) {
     let qx = sx - p.x0, qy = sy - p.yTop;
-    const ty = clamp(-qy / Math.max(p.len, 1e-4), 0, 1);
+    const ty = clamp(-qy / (p.len > 1e-4 ? p.len : 1e-4), 0, 1);
     qx += Math.sin(qy / p.r * 9 + seed * 20 + p.k * 2.3) * p.w * 0.35 * ty;
     const wt = p.w * (1 + (0.6 - 1) * smoothstep(0.05, 0.85, ty));
     const stream = Math.max(Math.abs(qx) - wt, Math.max(qy, -p.len - qy));
@@ -243,7 +249,7 @@ function pointInsideAncillary(mask, x, y, seed, p) {
 const dotWitness = new Float64Array(2);
 export function paintDotCellWitness(mask, face, x, y, piece) {
   if (piece.type !== 1 && piece.type !== 2) return null;
-  const radius = piece.radius - Math.min(mask.margin, piece.radius * 0.5);
+  const radius = piece.radius - (mask.margin < piece.radius * 0.5 ? mask.margin : piece.radius * 0.5);
   if (!(radius > 0)) return null;
   const x0 = x - face.cu * 0.5, x1 = x + face.cu * 0.5;
   const y0 = y - face.cv * 0.5, y1 = y + face.cv * 0.5;
@@ -254,6 +260,7 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
   if (cx >= x0 && cx < x1 && cy >= y0 && cy < y1) {
     dotWitness[0] = cx; dotWitness[1] = cy; return dotWitness;
   }
+  const radHi = radius * (1 + 1e-5) + 1e-8, radHiSq = radHi * radHi;
   for (let side = 0; side < 4; side++) {
     const ax = side === 0 || side === 3 ? x0 : x1, ay = side < 2 ? y0 : y1;
     const bx = side < 2 ? x1 : x0, by = side === 0 || side === 3 ? y0 : y1;
@@ -279,8 +286,10 @@ export function paintDotCellWitness(mask, face, x, y, piece) {
         qx += piece.ux * a; qy += piece.uy * a;
         vx += piece.ux * b; vy += piece.uy * b;
       }
-      const t = clamp(-(qx * vx + qy * vy) / Math.max(vx * vx + vy * vy, 1e-30), 0, 1);
-      if (Math.hypot(qx + t * vx, qy + t * vy) >= radius) continue;
+      const v2 = vx * vx + vy * vy;
+      const t = clamp(-(qx * vx + qy * vy) / (v2 > 1e-30 ? v2 : 1e-30), 0, 1);
+      const rx = qx + t * vx, ry = qy + t * vy;
+      if (rx * rx + ry * ry > radHiSq || Math.hypot(rx, ry) >= radius) continue;
       const at = lo + t * (hi - lo);
       dotWitness[0] = ax + (bx - ax) * at; dotWitness[1] = ay + (by - ay) * at;
       return dotWitness;
@@ -296,9 +305,11 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
   // absolute slack far above the rounding of the exact path) stays clear of
   // the closed cell rectangle, no sample is inside and no witness exists.
   // NaN or infinite inputs never reject and keep the exact path.
-  if ((piece.type === 1 || piece.type === 2) && !(mask.sa > 0)) {
+  if ((piece.type === 1 || piece.type === 2) && !(mask.sa > 0) &&
+      face.cu > 0 && face.cv > 0 && Number.isFinite(x + y + face.cu + face.cv + piece.x + piece.y)) {
     const hx = face.cu * 0.5, hy = face.cv * 0.5;
-    const ex = Math.max(x - hx - piece.x, piece.x - (x + hx), 0), ey = Math.max(y - hy - piece.y, piece.y - (y + hy), 0);
+    const ex0 = x - hx - piece.x, ex1 = piece.x - (x + hx), ex = ex0 > 0 ? ex0 : ex1 > 0 ? ex1 : 0;
+    const ey0 = y - hy - piece.y, ey1 = piece.y - (y + hy), ey = ey0 > 0 ? ey0 : ey1 > 0 ? ey1 : 0;
     const reach = (piece.type === 2 ? piece.radius * Math.max(1, piece.el) : piece.radius) * (1 + 1e-6) + 1e-9;
     const d2 = ex * ex + ey * ey;
     if (d2 > reach * reach && d2 < Infinity) return false;
@@ -320,13 +331,13 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
     const radius = piece.radius * (piece.type === 2 ? Math.max(1, piece.el) : 1);
     const hx = face.cu * 0.5, hy = face.cv * 0.5;
     const frontX = piece.x + u * along * mask.sa, frontY = piece.y + v * along * mask.sa;
-    const ex = Math.max(x - hx - frontX, frontX - (x + hx), 0);
-    const ey = Math.max(y - hy - frontY, frontY - (y + hy), 0);
+    const ex0 = x - hx - frontX, ex1 = frontX - (x + hx), ex = ex0 > 0 ? ex0 : ex1 > 0 ? ex1 : 0;
+    const ey0 = y - hy - frontY, ey1 = frontY - (y + hy), ey = ey0 > 0 ? ey0 : ey1 > 0 ? ey1 : 0;
     const frontReach = radius * (1 + mask.sa) * (1 + 1e-5) + 1e-8;
     if (ex * ex + ey * ey > frontReach * frontReach) {
       const backX = piece.x + u * along * mask.sa * 0.25, backY = piece.y + v * along * mask.sa * 0.25;
-      const bx = Math.max(x - hx - backX, backX - (x + hx), 0);
-      const by = Math.max(y - hy - backY, backY - (y + hy), 0);
+      const bx0 = x - hx - backX, bx1 = backX - (x + hx), bx = bx0 > 0 ? bx0 : bx1 > 0 ? bx1 : 0;
+      const by0 = y - hy - backY, by1 = backY - (y + hy), by = by0 > 0 ? by0 : by1 > 0 ? by1 : 0;
       const backReach = radius * (1 + mask.sa * 0.25) * (1 + 1e-5) + 1e-8;
       if (bx * bx + by * by > backReach * backReach) return false;
     }
@@ -402,6 +413,7 @@ function paintOrderComesAfter(paint, nextId, previousId) {
 }
 
 function claimPaintCell(paint, index, value, orderId, orderState = null) {
+  if (paint.level?.native && paint.dead[index]) return false;
   const current = orderId || paint._paintCurrentOrder || 0;
   const previous = paint._paintOwnershipOrder[index] || 0;
   if (current && previous === current) return false;
@@ -456,9 +468,9 @@ function cellCacheSlot(paint, g, n, n2, tn, face, piece) {
   // Only native source stages (many small wall charts) and only once growth
   // can no longer change ray/bead/satellite shapes; drip ticks re-use them.
   if (!paint.level?.native || tn < 1.45 || !face.wall || !g.dripDur || piece.type === 3) return null;
+  const entryStride = g.entryStride === 8 ? 8 : 7, slot = n / entryStride;
   const byEntry = g._s3AncillaryCells || (g._s3AncillaryCells = []);
-  const entry = n / (g.entryStride === 8 ? 8 : 7);
-  const pieces = byEntry[entry] || (byEntry[entry] = []);
+  const pieces = byEntry[slot] || (byEntry[slot] = []);
   return pieces[n2] || (pieces[n2] = { key: null, cells: null });
 }
 function cellCacheKey(key, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
@@ -482,7 +494,7 @@ function sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1
   return true;
 }
 function storeCellCache(cache, cells, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) {
-  cache.key = cellCacheKey([], face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
+  cache.key = cellCacheKey(cache.key || new Array(35), face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
   cache.cells = cells;
 }
 
@@ -524,7 +536,7 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const ext = r * (reach + 1.4 * sa);
     const down = face.wall && g.dripDur ? r * contract.dripReach : 0;
     const i0 = Math.max(0, Math.floor((lu - ext) / face.cu)), i1 = Math.min(face.nu - 1, Math.floor((lu + ext) / face.cu));
-    const j0 = Math.max(0, Math.floor((lv - Math.max(ext, down)) / face.cv)), j1 = Math.min(face.nv - 1, Math.floor((lv + ext) / face.cv));
+    const j0 = Math.max(0, Math.floor((lv - (ext > down ? ext : down)) / face.cv)), j1 = Math.min(face.nv - 1, Math.floor((lv + ext) / face.cv));
     if (i1 < i0 || j1 < j0) continue;
     const cellArea = face.cu * face.cv;
     const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
@@ -533,36 +545,37 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     // cell area between fixed samples, so include the complete half-cell extent.
     const stamp = nextVisitStamp(paint);
     const visit = paint._paintVisitStamp;
-    const pad = Math.max(face.cu, face.cv) * 0.5 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
-    const yLo = -Math.max(ext, down);
+    const cu = face.cu, cv = face.cv, nu = face.nu, fGrid = face.grid, hcu = cu * 0.5, hcv = cv * 0.5;
+    const pad = (cu > cv ? cu : cv) * 0.5 + mask.margin * (1 + (sa > 0 ? sa : 0)) + 1e-9;
+    const yLo = -(ext > down ? ext : down);
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
       const piece = mask.pieces[n2];
       const box = pieceCellBox(mask, piece, pad);
-      const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / face.cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / face.cu - 0.5));
-      const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / face.cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / face.cv - 0.5));
+      const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / cu - 0.5));
+      const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / cv - 0.5));
       // An empty box visits no cell; skip the cache bookkeeping too.
       if (bi1 < bi0 || bj1 < bj0) continue;
       const cache = cellCacheSlot(paint, g, n, n2, tn, face, piece);
       const cells = cache && sameCellCacheKey(cache, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece) ? cache.cells : null;
       if (cells) {
         for (let k = 0; k < cells.length; k++) {
-          const i = cells[k] % face.nu, j = (cells[k] - i) / face.nu;
-          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,face.grid+cells[k],(i+.5)*face.cu-lu,(j+.5)*face.cv-lv,piece);
+          const i = cells[k] % nu, j = (cells[k] - i) / nu;
+          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,fGrid+cells[k],(i+.5)*cu-lu,(j+.5)*cv-lv,piece);
           if(status&2)changed=true;if(status&4)claimed+=cellArea;
         }
         continue;
       }
       const record = cache ? [] : null;
       for (let j = bj0; j <= bj1; j++) {
-        const y = (j + 0.5) * face.cv - lv;
-        if (y + face.cv * 0.5 < yLo || y - face.cv * 0.5 > ext) continue;
+        const y = (j + 0.5) * cv - lv;
+        if (y + hcv < yLo || y - hcv > ext) continue;
+        const row = fGrid + j * nu, rowLocal = j * nu;
         for (let i = bi0; i <= bi1; i++) {
-          const x = (i + 0.5) * face.cu - lu;
-          const index = face.grid + j * face.nu + i;
-          if (x + face.cu * 0.5 < -ext || x - face.cu * 0.5 > ext) continue;
-          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,index,x,y,piece);
+          const x = (i + 0.5) * cu - lu;
+          if (x + hcu < -ext || x - hcu > ext) continue;
+          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,row+i,x,y,piece);
           if(status&2)changed=true;if(status&4)claimed+=cellArea;
-          if(status&&record)record.push(j*face.nu+i);
+          if(status&&record)record.push(rowLocal+i);
         }
       }
       if (record) storeCellCache(cache, record, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
@@ -701,10 +714,14 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     if (callOpts !== opts) { delete callOpts.claimOwner; delete callOpts.claimMode; }
     const order = paintOrderId(this, opts.__netOrder,true);
     const previousOrder = this._paintCurrentOrder, previousContext = this._paintOwnerContext;
+    const ctxDepth = this._paintOwnerDepth || 0, ctxPool = this._paintOwnerPool || (this._paintOwnerPool = []);
+    const ctx = ctxPool[ctxDepth] || (ctxPool[ctxDepth] = { owner: null, mode: 0, order: 0, accepted: false });
+    ctx.owner = owner; ctx.mode = mode; ctx.order = order; ctx.accepted = false;
+    this._paintOwnerDepth = ctxDepth + 1;
     this._paintCurrentOrder = order;
-    this._paintOwnerContext = { owner, mode, order, accepted: false };
+    this._paintOwnerContext = ctx;
     try { return nativeSplat.call(this, center, radius, team, callOpts); }
-    finally { this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext; }
+    finally { ctx.owner = null; this._paintOwnerDepth = ctxDepth; this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext; }
   };
 
   proto._advanceSplatOwnership = function issue264AdvanceOwnership(g, phase, dripPhase) {
@@ -727,6 +744,7 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     this._hiddenPaintGrowth = null;
     this._hiddenPaintInsertions = 0;
     this._paintOwnerContext = null;
+    this._paintOwnerDepth = 0;
     this._paintCurrentOrder = 0;
   };
   proto.useFixedPaintClock = function issue264UseFixedPaintClock() {

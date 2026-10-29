@@ -346,3 +346,27 @@ test('non-Tower teardown retains live spatial query order across five stages and
     assert.deepEqual(queries.map(q => Array.from(level.queryBlocks(...q, []))), before, 'safe native stamp wrap');
   }
 });
+
+test('Rainmaker snapshot refresh does not advance spin and keeps immediate presentation', () => {
+  const {stage}=makeMap('tidewater');
+  for(const hz of [30,60,120]){
+    const actor={nid:7,team:0,pos:new f.THREE.Vector3(3,4,5)};
+    const world=new f.RankedWorld({G:f.G,THREE:f.THREE},{mode:'rainmaker',actors:[actor]},stage);
+    const state={pos:[1,2,3],carrier:null,barrier:{active:true,health:1000,max:1000,team:1},checkpoint:{passed:[false,false],choice:[null,null],goalOpen:[false,false]}};
+    const engine={rule:{state}},before=JSON.stringify(engine);
+    for(let frame=0;frame<hz;frame++){world.update(engine,1/hz);if(frame%6===0)world.update(engine,0);}
+    assert.ok(Math.abs(world.rainmaker.rotation.y-1.08)<1e-12);
+    assert.equal(JSON.stringify(engine),before,'presentation never mutates rule state');
+    const rotation=world.rainmaker.rotation.y;
+    for(const dt of [0,-1,NaN,Infinity])world.update(engine,dt);
+    assert.equal(world.rainmaker.rotation.y,rotation);
+    state.pos=[9,8,7];state.barrier.health=0;world.update(engine,0);
+    assert.deepEqual([...world.rainmaker.position.toArray()],[9,8,7]);
+    assert.ok(world.rainmakerShield.scale.x>1);
+    assert.equal(world.rainmaker.rotation.y,rotation);
+    state.carrier=7;world.update(engine,0);
+    assert.equal(world.rainmaker.rotation.y,0);
+    assert.deepEqual([...world.rainmaker.position.toArray()],[3,4,5]);
+    world.dispose();
+  }
+});

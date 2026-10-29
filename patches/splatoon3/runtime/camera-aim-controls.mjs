@@ -211,6 +211,7 @@ export function syncScopeOverlay(strength) {
     Object.assign(element.style, { position: 'fixed', pointerEvents: 'none', zIndex: '1', opacity: '0', left: '0', top: '0', width: '0', height: '0' });
     doc.body.appendChild(element);
   }
+  if (s === 0 && shown === 0) return;
   const f = scopeFrame(globalThis.innerWidth, globalThis.innerHeight);
   const key = Math.round(f.x) + ',' + Math.round(f.y) + ',' + Math.round(f.width) + ',' + Math.round(f.height);
   if (key !== frameKey) {

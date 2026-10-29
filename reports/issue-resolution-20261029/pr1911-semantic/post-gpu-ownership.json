@@ -1,0 +1,290 @@
+{
+  "gpuOwner": "58d4d8f2ec1ee3cc337caf426ca197589023c87e",
+  "gpu": [
+    {
+      "file": "patches/local-quality/idle-adapter.mjs",
+      "sha256": "903eeb7223a17b875a6f84a8e5f97e88eba6c6d89483dd46b07e71f2020a9afd",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/local-quality/idle-resources.mjs",
+      "sha256": "7f52870fe40e67a98471ddd886c56e4dd0c5bdd2eba11e269f033bf59408db78",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/local-quality/ios-paused-menu-gpu-guard.mjs",
+      "sha256": "bcc6fbc0c74fec7bcc726f0a13c7d02687e97c0c16d9f9f9973be3a8556cbd5c",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/local-quality/pause-frame-retention.mjs",
+      "sha256": "3650290b151eb29521da1bb281e63598171fed9ca0ed8a6d311b3eb49e7c3f6d",
+      "byteIdentical": true
+    }
+  ],
+  "registry": {
+    "file": "scripts/ci/inkwave-test-suites.json",
+    "byteIdentical": true
+  },
+  "geometryBase": "0f8f541f6c9c566672e253cd943df4ad358e59f3",
+  "geometry": [
+    {
+      "file": "patches/native-stages/runtime/build-config.mjs",
+      "sha256": "6cc51ad76feea14824e1eb318e34f91a00d5835aaa2c985e020be345c03988e8",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/engine.mjs",
+      "sha256": "7bf0190e65a7d84167ebf71c863071142033653c48f402e6b18715505798db26",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-approach.mjs",
+      "sha256": "df6325c6e01f752ba3e6025b073f09ceb079dd1e457d01e512acc9d35e7476da",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bot-form.mjs",
+      "sha256": "38e6e650c794cc3e9a7a04ff83ce216a4b093a9a1ae9d5a1e24391c33468a7ff",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bot-support.mjs",
+      "sha256": "a67ff36962e5ddea77bf5d02811feba7a344d1b434226ecb738d8885292b3668",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-bots.mjs",
+      "sha256": "dd6c3ce9b7c616b2e4f509a7669161dc4400a193c1dd2905994e41de4771be86",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-climb.mjs",
+      "sha256": "f561d4575fd37daa1303c3a87b418afef1d5f345de1697c9f28cdd2c2c8cef8b",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-combat-support.mjs",
+      "sha256": "b11bd810f4b7c2beb70fe4f647cd56dedc4798eba0eb362a8cf5eed809a21825",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-drop.mjs",
+      "sha256": "4c6740e8c720d814acf71a4344a5f85d3d298236677cb87a6d297e6b6451719b",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-gpu-budget.mjs",
+      "sha256": "c8639385b286647d959f5505560b603cb5f68e8660a96d5d56c38b4453d3ad34",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ink-chunks.mjs",
+      "sha256": "9b8f89079b13343210a4a33a2b895818fa98e7bdb35641141d56e53b8cba3e31",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-jump-attach.mjs",
+      "sha256": "40e45dfeb919f9731cf13931f4261780a21e1585b0fe62f5163e6803cd737cc6",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-jump-input.mjs",
+      "sha256": "5e30667e48b27d75464a247088a9014d4616a5d00f239f494d6c7a400d0aeeef",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-level.mjs",
+      "sha256": "9e1e6b728962318aa8a5d1ee32fe144f03ec000328e2c195af462a798c3a5e13",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-load.mjs",
+      "sha256": "8526e2edc3337cef7cfc8012e3e0a333981073abd93c29c3be8005cd8225614f",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-minimap.mjs",
+      "sha256": "f2012fac76b5ea631b6ba45e4cd6f75d3d27ffe6d76f8fdcb0d491d3666d70d5",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-nav.mjs",
+      "sha256": "f8f2b543660b26560781688abd422615f180ddea4cb656249165d4935dfd8e03",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-paint.mjs",
+      "sha256": "b24483f30f9b55d27d881d9b627750a294f88e0b1fe390146db59bc9d999c3ca",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-physics.mjs",
+      "sha256": "14760eeac476cb9b3c4dad095bfe5bfcbe8617b92fc22a6c01a23e79b1a36c0a",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-projectile-sweep.mjs",
+      "sha256": "8fe5ce7f3421fa06f422027fa109c930fb7fcae07133fa48ff4725158b28c6f7",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-quality.mjs",
+      "sha256": "519947ca7981d89b9d7ba8daed985784cffb39b330ab43c3b5265ea23de93f80",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ranked-boarding.mjs",
+      "sha256": "fc54e07b993bbd1c9970aeab890f169da387397c2b6ef3686c70fe981494384e",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ranked-goals.mjs",
+      "sha256": "b81819563e19b06379d5d786bb685ca74ebce701e9fefc244d0a815b6dbb49ad",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-ranked.mjs",
+      "sha256": "be1a7a4e6dd949002cdcd40f94bc40c55ac6603c7d4bd73260a59f10ab15b9d9",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-render.mjs",
+      "sha256": "a6f11ff5f7c3b86a009ab29f25261d50a1b240e5ff76c7e0b039a098122e463a",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-spawn.mjs",
+      "sha256": "17804b0e5b0a287b5baa607f8d370ca5894422dd76cba6d67245fcdbd9b09cd9",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-surge.mjs",
+      "sha256": "34c7fb6bc69d4b522bc0408f1c2c3dc1269cf46fb0e1c348ecf7bdab84764f3c",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-texture-budget.mjs",
+      "sha256": "7244a4ddbe0f9652097f855db1a670ee9db86f58e54263d4edb0bc63d7526af7",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-tower-boarding.mjs",
+      "sha256": "13a97f055d1f0af6309b974c6c70bd4152aab084e5c8d739767eec93a1e1d1ae",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-tower-calibration.mjs",
+      "sha256": "0080669e79789ef0ca35a58aaa643c8ce34914252a7d4dc7f1599e1171dcbfb7",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-tower-clearance.mjs",
+      "sha256": "4c8bdb558acd3bc366bfbe3b0a3753a06df8b8359c661e99738d6bf11947f9ee",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-world.mjs",
+      "sha256": "9f2ec967d96f6e0bdcec0d015348974009a5c761e878a52bbc66c8e068b101cc",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/native-zone.mjs",
+      "sha256": "c9bcf9420abce875cfa7094ef3bcd94dd8902ebf8520eaea79b1f89bddde8cc7",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/prebuilt-format.mjs",
+      "sha256": "4833343a756db1b95b4c643587817bf276eaa83d43629f4dd84aa2be35b79f94",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/prebuilt-load.mjs",
+      "sha256": "0fcc7aa0828964f413be947fa9460002a21b91ce1bdc7a9959c7e1a0f3d1a99e",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/registry.mjs",
+      "sha256": "5eaa9132beca15ac3e5ba9ea9769258bce73bc295ee5331e757465836e1495f1",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/rule-availability.mjs",
+      "sha256": "f43844b71837193f95ecf8f5b1a9eb753f0175e5ecd58258e92523134e6c07cd",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-cache.mjs",
+      "sha256": "1d4e40866868378272dc319eee76a951796daa593ece758d0cb2de6f13f641fc",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-catalog.mjs",
+      "sha256": "958f3290a8d6dc4afccd0bb3b2401863149c1b08164249acb52630c0d4d5ace4",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-convert.mjs",
+      "sha256": "a4b2bc36c7e4b2f9ba4d4ff91b5a86194ed4b61ba0184b6ba0fc3c526116072c",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-data.mjs",
+      "sha256": "83711840352bfd063fce3f373a587f60f983b65017b30c9f2b34759d7d73b753",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-inventory.mjs",
+      "sha256": "3394885dd5684b563a9275f4186fec7888f45c811134668a5686baeb48e79c83",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-menu.mjs",
+      "sha256": "a3e3e9747222db055b92ca02deb680c8c6207812cda9a87bfe705e812abdb88e",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-placement.mjs",
+      "sha256": "09817787950a47c74f451b58d14cae96161dac40ea213d6975b5313274bb7613",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-retention.mjs",
+      "sha256": "86e7022861c1e1fcb798fc983e0d98a7343be5fbbce433f2a74fbde1ba3a5d0a",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-terrain-contract.mjs",
+      "sha256": "6a6a933c53b579b510b4d5adf5d33e671ec30383b5fdad26a93ffbe830f7add7",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/source-worker.mjs",
+      "sha256": "38ebe9bdd3967d86acfd62fb06b74e824a7d3af974bb7a52efa9446f828737cb",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/sphere-triangle-entry.mjs",
+      "sha256": "0de40cfd7b790a849606cca97931732f7559b256976defb53723e5650af3aab6",
+      "byteIdentical": true
+    },
+    {
+      "file": "patches/native-stages/runtime/triangle-world.mjs",
+      "sha256": "03f7de4043c4f08d54eb573da590d10506e987a085030de2f71d6f6e6bf84804",
+      "byteIdentical": true
+    }
+  ],
+  "changedJavaScriptSyntax": [
+    "patches/local-quality/idle-adapter.mjs",
+    "patches/local-quality/idle-resources.mjs",
+    "patches/local-quality/ios-paused-menu-gpu-guard.mjs",
+    "patches/local-quality/pause-frame-retention.mjs",
+    "patches/local-quality/tests/gpu-transition-lifecycle.test.mjs",
+    "patches/local-quality/tests/ios-paused-menu-gpu-guard.test.mjs",
+    "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "patches/local-quality/tests/pause-gpu.test.mjs",
+    "patches/native-stages/tests/native-sweep-output.test.mjs",
+    "scripts/check-inkwave-ipad-game-lifecycle.mjs",
+    "scripts/check-inkwave-ipad-gpu-lifecycle.mjs"
+  ]
+}

@@ -36,7 +36,22 @@ function world(id, adopt) {
       ...({waveBreaker:{duration:6,radius:20,hp:480},splattercolorScreen:{duration:10,radius:15,hp:0},
         superChump:{duration:5,radius:7,hp:60},tripleInkstrike:{duration:2,radius:7,hp:0}}[id]),
       specialPowerAP: 0, waveFrame: 160 / 60 };
-    n._play('A', [1, 'ac', 'special', 7, 0, p]);
+    // Admission depends on the accepted native use as well as the equipped
+    // kit. Build the wire envelope with the production recorder; _tick normally
+    // attaches these sequence/tick sidecars before _play.
+    const sender = new f.NetMatch({ myId: 'A', hostId: 'B', isHost: false }, {});
+    sender._rec(['ev', 'special:use', { actor: { n: 7 }, id }]);
+    sender._rec(['ac', 'special', 7, 0, p]);
+    const [use, deploy] = JSON.parse(JSON.stringify(sender.out));
+    sender.dispose();
+    for (const event of [use, deploy]) {
+      event._netSeq = event.at(-1); event._netTick = event.at(-2);
+    }
+    n._peer('A');
+    n._play('A', deploy);
+    assert.equal(G.projectiles._s3AllSpecialObjects.some(o => o.owner === owner), false,
+      'control: a catalogue action alone cannot create the special replica');
+    n._play('A', use);
     ghost = G.projectiles._s3AllSpecialObjects.find(o => o.owner === owner);
     assert.ok(ghost?.remote, 'control: native catalogue replay created the special replica');
   }

@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "sourceBefore": "2c662fab5e64c98424dd9be6406382c467263084",
+  "productionChange": "Signal needsUpdate only for new dirty ring source slots; retain and coalesce an existing unconsumed range without resignal.",
+  "productionFileCount": 1,
+  "forcedVersionAssignment": false,
+  "benchmarkGateChanged": false,
+  "oldNegativeTests": {
+    "tests": 3,
+    "failures": 3,
+    "exitCode": 1
+  },
+  "fixedTests": {
+    "tests": 8,
+    "passes": 8,
+    "exitCode": 0
+  },
+  "assetCopies": 0,
+  "temporaryAssetIdentityLinksRemoved": true,
+  "fullGameRenderPerformed": false,
+  "currentPairCalibrationAccepted": false,
+  "hardwareClaim": false,
+  "files": {
+    "patches/local-quality/render-transfer-optimization-adapter.mjs": {
+      "bytes": 6648,
+      "sha256": "77542972da20bca66c910a7b367e57c9a9f00f620391b03243a7c899d857db7d"
+    },
+    "patches/local-quality/tests/render-transfer-pending.test.mjs": {
+      "bytes": 4349,
+      "sha256": "534c7c8ac41e67d9c97ea479c40ff60126db66f4b5bdac29a3801adb3951e4d3"
+    }
+  },
+  "evidence": {
+    "old-three-negative.tap.gz": {
+      "rawBytes": 3161,
+      "rawSha256": "69b3b0b397e40f0d0bdd34ba53acb299af86671e8c2617c85b3c79e8c70ab3db",
+      "gzipBytes": 803,
+      "gzipSha256": "5a88ad6c1f4db731aa48fde7b3d0237b54d9d2e93c17b83860443c708588f353"
+    },
+    "fixed-eight-tests.tap.gz": {
+      "rawBytes": 948,
+      "rawSha256": "bf12edd753760d91260e31152a9a818d06c94687b6883d66c4d1f421037eae11",
+      "gzipBytes": 538,
+      "gzipSha256": "1680ea4612f32b663a2356fcb400559807c3366135d92c32a7ac6db9bd147097"
+    }
+  }
+}

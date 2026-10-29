@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "stages": [
+    "tidewater"
+  ],
+  "records": [
+    {
+      "render": false,
+      "frames": 300,
+      "hz": 60,
+      "ticks": 300
+    },
+    {
+      "render": false,
+      "frames": 300,
+      "hz": 60,
+      "ticks": 300
+    },
+    {
+      "render": false,
+      "frames": 300,
+      "hz": 60,
+      "ticks": 300
+    }
+  ]
+}

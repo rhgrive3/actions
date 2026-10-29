@@ -155,16 +155,23 @@ export function createRankedEffects(api, match) {
       api.emit('hit', { attacker, victim, damage: amount, killed, weaponId: 'rainmaker' });
     }
   }
+  const _blastUp = new THREE.Vector3(0, 1, 0), _blastLift = new THREE.Vector3(0, .05, 0), _blastFrames = [];
+  let _blastDepth = 0;
   function explode(pos, team, radius, amount, attacker, visualOnly = false, paintRadius = radius, outerDamage = amount, nearRadius = radius * .45, noSpecial = false, shot = null) {
-    const p = new THREE.Vector3(...pos);
-    G.fx?.ring?.(p, new THREE.Vector3(0, 1, 0), G.teamColors[team], { radius, life: .6 });
+    // Hit listeners may synchronously emit another blast. Lease one scratch
+    // frame per active call so an inner event cannot move the outer LOS origin.
+    const depth = _blastDepth++;
+    try {
+    const scratch = _blastFrames[depth] || (_blastFrames[depth] = { body: new THREE.Vector3(), from: null });
+    const p = new THREE.Vector3(...pos); // Owned by this event; FX/audio may retain it.
+    G.fx?.ring?.(p, _blastUp, G.teamColors[team], { radius, life: .6 });
     attackVisuals()?.splash(p, G.teamColors[team], radius);
     G.audio?.play?.('bomb_explode', { pos: p, volume: .7 });
-    const blastFrom = shot?.from || p.clone().add(new THREE.Vector3(0, .05, 0));
+    const blastFrom = shot?.from || (scratch.from || (scratch.from = new THREE.Vector3())).copy(p).add(_blastLift);
     const domeSheltered = shot && !visualOnly ? new Set() : null;
     if (shot && !visualOnly) for (const a of match.actors) if (a.alive && a.team !== team) {
-      const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
-      if (body.distanceTo(p) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
+      const body = scratch.body.set(a.pos.x, a.pos.y + 0.7, a.pos.z);
+      if (Math.sqrt(body.distanceToSquared(p)) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
     }
     const walls = shot ? rainmakerWallBlast(api, p, attacker, team, radius, nearRadius, amount, outerDamage, shot.impactWall) : [];
@@ -172,11 +179,14 @@ export function createRankedEffects(api, match) {
     if (visualOnly) return;
     G.paint?.splat?.(p, paintRadius, team, { seed: match.ranked.revision % 65536, claimOwner: attacker, ...(noSpecial ? { claimMode: 'no-special' } : {}) });
     for (const a of match.actors) if (amount > 0 && a.alive && a.team !== team) {
-      const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
-      const distance = body.distanceTo(p);
-      if (distance <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a))
+      const body = scratch.body.set(a.pos.x, a.pos.y + 0.7, a.pos.z);
+      const d2 = body.distanceToSquared(p);
+      if (Math.sqrt(d2) <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a)) {
+        const distance = Math.sqrt(d2);
         damage(a, attacker, distance <= nearRadius ? amount : outerDamage, shot ? 'Gachihoko_BombCore' : 'GachihokoTimeUpBurst');
+      }
     }
+    } finally { _blastDepth = depth; }
   }
   function event(e, visualOnly = false) {
     if (e.kind === 'rainmaker-charged') G.audio?.play?.('charger_full', { pos: new THREE.Vector3(...e.pos), volume: .7 });

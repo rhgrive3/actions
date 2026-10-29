@@ -1,10 +1,15 @@
 import {PLAYER} from '../../../src/config.js';
 import {GroundHit,Hit} from '../../../src/game/physics.js';
 
+function hasJumpEdgeTo(node,toId){
+ const nb=node?.nb;if(!nb)return false;
+ for(let i=0;i<nb.length;i++){const e=nb[i];if(e.to===toId)return e.type==='jump';}
+ return false;
+}
 function cautiousSourceTurn(brain,G){
  const N=G.nav,from=N?.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N?.nodes[brain.path?.[brain.pi]],next=N?.nodes[brain.path?.[brain.pi+1]];
  if(!from||!to)return false;
- if(from.nb.find(e=>e.to===to.id)?.type==='jump'||next&&to.nb.find(e=>e.to===next.id)?.type==='jump')return true;
+ if(hasJumpEdgeTo(from,to.id)||next&&hasJumpEdgeTo(to,next.id))return true;
  if(!next)return true;
  const ax=to.x-from.x,az=to.z-from.z,bx=next.x-to.x,bz=next.z-to.z;
  return ax*bx+az*bz<.85*Math.hypot(ax,az)*Math.hypot(bx,bz);

@@ -467,17 +467,20 @@ NetMatch.prototype.dispose = function(...args) {
             payload = end + 1;
           }
           let obj; try { obj = JSON.parse(s.slice(payload)); } catch { return; }
-          const from = s.slice(2, k), previous = relayReceipts.get(this);
-          relayReceipts.set(this, { from, at });
+          const from = s.slice(2, k);
+          let receipt = relayReceipts.get(this);
+          if (!receipt) { receipt = { active: false, from: null, at: null }; relayReceipts.set(this, receipt); }
+          const activeBefore = receipt.active, fromBefore = receipt.from, atBefore = receipt.at;
+          receipt.active = true; receipt.from = from; receipt.at = at;
           try { this.onMessage?.(from, obj); }
-          finally { if (previous) relayReceipts.set(this, previous); else relayReceipts.delete(this); }`, rel);
+          finally { receipt.active = activeBefore; receipt.from = fromBefore; receipt.at = atBefore; }`, rel);
     code = replaceOnce(code, `          this.id = o.id; this._startPing(); done(resolve, o);`,
       `          this._relayClock = o.relayClock === 1;
           this.id = o.id; this._startPing(); done(resolve, o);`, rel);
     code = replaceOnce(code, `  close() {
     const disconnect = this._disconnect;`, `  relayReceipt(from) {
     const receipt = relayReceipts.get(this);
-    return receipt?.from === from ? receipt.at : null;
+    return receipt?.active && receipt.from === from ? receipt.at : null;
   }
   close() {
     this._relayClock = false; relayReceipts.delete(this);

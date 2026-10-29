@@ -1,4 +1,5 @@
 import { createRankedStage } from './stages.mjs';
+import { createZoneCoveragePair } from './zone-coverage-samples.mjs';
 import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
 import { createPowerClamResources } from './power-clam-model.mjs';
 import { createClamBarrier } from './clam-presentation.mjs';
@@ -10,6 +11,7 @@ const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
 const NEUTRAL = 0x9ceff2;
 const EPSILON = 1e-6;
 const INVALID_BEARING = [0, 0, 1];
+const TOWER_NATIVE_TRIG = [Math.atan2, Math.cos, Math.sin];
 
 const finite = Number.isFinite;
 const validTeam = team => team === 0 || team === 1;
@@ -628,8 +630,14 @@ export class RankedWorld {
     const [dx, dz] = bearing;
     this._forward.set(dx, 0, dz).normalize();
     this._side.set(this._forward.z, 0, -this._forward.x).normalize();
-    const yaw = Math.atan2(dx, dz);
-    const cosYaw = Math.cos(yaw), sinYaw = Math.sin(yaw);
+    const nativeTrig = Math.atan2 === TOWER_NATIVE_TRIG[0] && Math.cos === TOWER_NATIVE_TRIG[1] && Math.sin === TOWER_NATIVE_TRIG[2];
+    let angles = this._towerBearingAngles;
+    if (!nativeTrig || !angles || !Object.is(angles.dx, dx) || !Object.is(angles.dz, dz)) {
+      const yaw = Math.atan2(dx, dz), cosYaw = Math.cos(yaw), sinYaw = Math.sin(yaw);
+      angles = {dx, dz, yaw, cosYaw, sinYaw};
+      if (nativeTrig) this._towerBearingAngles = angles;
+    }
+    const {yaw, cosYaw, sinYaw} = angles;
     const transformChanged = !this._towerTransformReady || !this._position.equals(this._lastPosition) || yaw !== this._towerYaw;
     this.towerBlock.center.set(this._position.x, this._position.y - 0.12, this._position.z);
     this.towerBlock.axes[0].set(cosYaw, 0, -sinYaw);
@@ -712,7 +720,7 @@ export class RankedWorld {
     if (carrier?.pos && validTeam(carrier.team)) this.rainmaker.position.copy(carrier.pos);
     else this.rainmaker.position.set(position[0], position[1], position[2]);
     if (carrier) this.rainmaker.rotation.y = 0;
-    else this.rainmaker.rotation.y += 0.018;
+    else if (Number.isFinite(dt) && dt > 0) this.rainmaker.rotation.y += dt === 1 / 60 ? 0.018 : 0.018 * dt * 60;
     const barrier = rainmaker?.barrier || {};
     const shieldColor = validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c;
     this.rainmakerBarrier.update(barrier, shieldColor, dt);
@@ -920,15 +928,16 @@ export class RankedWorld {
       && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
     const value = zones.map((_, index) => {
       const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
-      const area = [total === undefined ? 0 : total, 0, 0];
+      let totalArea=total === undefined ? 0 : total, teamOneArea=0, teamTwoArea=0;
       for (const entry of cells || []) {
-        if (total === undefined) area[0] += entry.area;
+        if (total === undefined) totalArea += entry.area;
         const team = this.paint.grid[entry.cell];
-        if (team === 1) area[1] += entry.area;
-        else if (team === 2) area[2] += entry.area;
+        if (team === 1) teamOneArea += entry.area;
+        else if (team === 2) teamTwoArea += entry.area;
       }
-      if (area[0] <= 0) return [0, 0];
-      return [area[1] / area[0], area[2] / area[0]];
+      const a = totalArea <= 0 ? 0 : teamOneArea / totalArea;
+      const b = totalArea <= 0 ? 0 : teamTwoArea / totalArea;
+      return grid && finite(version) ? createZoneCoveragePair(a, b) : [a, b];
     });
     if (grid && finite(version)) {
       // Production clear, stamped paint and owner replay all advance version.

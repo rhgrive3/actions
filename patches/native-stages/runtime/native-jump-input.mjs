@@ -2,17 +2,24 @@ import {nativeSourceFootSupported} from './native-bot-support.mjs';
 import {nativeTowerRider} from './native-ranked-boarding.mjs';
 import {PLAYER} from '../../../src/config.js';
 const pending=new WeakMap();
+let _jumpGoal=null,_jumpOrigin=null,_jumpDown=null;
+const _jumpProbe={pos:null,grounded:true,form:'kid'},_jumpDest={goal:null,block:-1,triangle:-1};
 
 function staticDestination(G,node){
  const P=G.physics,L=G.level;if(!node||!P?.raycast||!P.groundProbe||!P.bodyFits||P.level!==L)return null;
- const goal=L.spawnPads[0].clone().set(node.x,node.y,node.z),probe={pos:goal,grounded:true,form:'kid'};
- if(!nativeSourceFootSupported(G,probe,node))return null;
- const support=probe._nativeWaypointGround;
- const hit=P.raycast(goal.clone().setY(node.y+.1),goal.clone().set(0,-1,0),.3);
+ const goal=(_jumpGoal||(_jumpGoal=L.spawnPads[0].clone())).set(node.x,node.y,node.z);
+ _jumpProbe.pos=goal;_jumpProbe.grounded=true;_jumpProbe.form='kid';
+ if(!nativeSourceFootSupported(G,_jumpProbe,node))return null;
+ const support=_jumpProbe._nativeWaypointGround;
+ const origin=(_jumpOrigin||(_jumpOrigin=goal.clone())).set(node.x,node.y+.1,node.z);
+ const down=_jumpDown||(_jumpDown=goal.clone().set(0,-1,0));
+ const hit=P.raycast(origin,down,.3);
  if(!hit.hit||hit.triangle<0||hit.block<0||hit.block>=L.staticBlockCount)return null;
  goal.y=support.y;
  const radius=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale;
- return P.bodyFits(goal,radius,PLAYER.stepUp,PLAYER.height,false,.01)?{goal,block:support.block,triangle:hit.triangle}:null;
+ if(!P.bodyFits(goal,radius,PLAYER.stepUp,PLAYER.height,false,.01))return null;
+ _jumpDest.goal=goal;_jumpDest.block=support.block;_jumpDest.triangle=hit.triangle;
+ return _jumpDest;
 }
 
 function combatContext(brain,G,state){
@@ -33,7 +40,9 @@ export function nativeOrdinaryJumpCommitted(brain,G){
 function combatSourceReady(brain,G){
  const a=brain.a,N=G.nav,L=G.level,P=G.physics;
  if(!N?.nodes||!P?.raycast||!P.groundProbe||!P.bodyFits||N.level!==L||N.physics!==P||P.level!==L||a.s3?.squidSpawn)return false;
- const from=N.nodes[brain.path[brain.pi-1]],to=N.nodes[brain.path[brain.pi]],edge=from?.nb.find(e=>e.to===to?.id);
+ const from=N.nodes[brain.path[brain.pi-1]],to=N.nodes[brain.path[brain.pi]],nb=from?.nb;
+ let edge=undefined;
+ if(nb&&to){for(let i=0;i<nb.length;i++)if(nb[i].to===to.id){edge=nb[i];break;}}
  if(brain.mode!=='fight'||!brain.target?.alive||brain.target.team===a.team||!N.valid?.[from?.id]||!N.valid?.[to?.id]||to.zone===1-a.team||edge?.type!=='jump'||edge.climb||edge.drop||!Number.isFinite(G.time))return false;
  const destination=staticDestination(G,to);if(!destination)return false;
  const r=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale,rise=destination.goal.y-a.pos.y,peak=PLAYER.jumpVel**2/(2*PLAYER.gravity)+Math.min(PLAYER.ledgeAssist,.22);

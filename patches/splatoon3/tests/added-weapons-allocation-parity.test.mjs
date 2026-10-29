@@ -127,7 +127,7 @@ test('Torpedo/Fizzy share exact geometry while individual birth colors, cap evic
 test('Point Sensor per-record sweep scratch resets partial capsule outputs and preserves nearest body vs terrain contact',()=>{
  const globals={aliveInMatch:()=>false,vec3:p=>p?.isVector3,POINT_SENSOR:{maxFlightSeconds:3,areaSeconds:2.5},poseSensorVisual(){},retireDrink(){}};
  const old=compile(oracle.kernels.sensor,['stepSupport'],globals).stepSupport;
- const now=compile(cut(runtime('kit-support.mjs'),'function stepSupport','export function installSupportGameplay'),['stepSupport'],globals).stepSupport;
+ const now=compile(cut(runtime('kit-support.mjs'),'const SUPPORT_EMPTY_ROSTER','export function installSupportGameplay'),['stepSupport'],globals).stepSupport;
  for(let i=0;i<90;i++){
   const traces=[];
   for(const step of [old,now]){

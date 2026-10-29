@@ -14,7 +14,7 @@ test('combat-gpu-cpu-perfect-adapter is registered in BUILD_ONLY_PATCH_MODULES a
   assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs'));
   const qId = qualityIdentity();
   assert.ok(Object.hasOwn(qId, 'combat-gpu-cpu-perfect-adapter.mjs'));
-  assert.equal(adaptCombatGpuCpuPerfectTargets.length, 22);
+  assert.equal(adaptCombatGpuCpuPerfectTargets.length, 24);
 });
 
 test('Direct-Source owned modules (nav.js, props-core.js, character-lod.js) remain zero-rewrite and pass auditDirectSource', () => {
@@ -29,7 +29,7 @@ test('Direct-Source owned modules (nav.js, props-core.js, character-lod.js) rema
   assert.equal(adaptQualitySource('src/game/character-lod.js', rawLod), rawLod, 'src/game/character-lod.js must not be rewritten by adaptQualitySource');
 });
 
-test('all 22 target modules compose cleanly through adaptBuildSource and are idempotent on second pass', () => {
+test('all 24 target modules compose cleanly through adaptBuildSource and are idempotent on second pass', () => {
   for (const rel of adaptCombatGpuCpuPerfectTargets) {
     const raw = read(rel);
     const built = adaptBuildSource(rel, raw);
@@ -190,4 +190,14 @@ test('GPU-22 FX shells upload static aColA and aAxis only on birth, recycle, or 
   fx._updateShells(1 / 60);
   assert.equal(consume(), 0);
   fx.dispose();
+});
+
+test('GPU-15b accepts exact downstream guarded full-upload form and rejects corrupted guards', () => {
+  const rel='src/world/environment.js', built=adaptBuildSource(rel,read(rel));
+  assert.equal(adaptCombatGpuCpuPerfect(rel,built,replaceOnce),built);
+  for(const [inst,items] of [['sailInst','sailboats'],['buoyInst','buoys'],['gullInst','gulls']]) {
+    const guard=`if(this.${inst}.instanceMatrix.array.length!==this.${items}.length*16)`;
+    assert.ok(built.includes(guard));
+    assert.throws(()=>adaptCombatGpuCpuPerfect(rel,built.replace(guard,guard.replace('!==','===')),replaceOnce),/expected exactly one connection/);
+  }
 });

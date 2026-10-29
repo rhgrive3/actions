@@ -1,0 +1,77 @@
+{
+  "sourceSha": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "gitBlobIds": {
+    "nativePhysics": "f09150b08d8dad688b3abc1bbbdb0bb4e742267f",
+    "paintOwnership": "e8158a28a56d7430677d9f475772e4604723ccaa",
+    "frozenPaintOracle": "b5a4dd6cb2fbc45b708054c34ee8882923632742"
+  },
+  "scope": "Rejected CPU-only source-composed component experiments, not changes to runtime, FPS or complete issue acceptance",
+  "receipts": [
+    {
+      "path": "paint-cache-first.tap.gz",
+      "sha256": "1d6f9eb603271ec9184292e9ea21da8e7e09bd5ae7cbc3e2ea9eda08f1400258",
+      "rawSha256": "a9651e8a4f81b8571dd26b20866e49290220742d2a913187610f3c8cf709006d",
+      "rawBytes": 764
+    },
+    {
+      "path": "paint-cache-focused.tap.gz",
+      "sha256": "7c1580d564eebdc7dc8fcbcd07381624b319aeea1ebedb3b1cab2c270e1e6de4",
+      "rawSha256": "71bd036352ae5ed039d916b5287cfa09d009619598fa35afd6574e8fa82fab1d",
+      "rawBytes": 327
+    },
+    {
+      "path": "paint-cache-workload.tap.gz",
+      "sha256": "df4cb9454c74bf31eaa6f040517794f05f4817b399c76a8d8220dcbfef859653",
+      "rawSha256": "25e70f870dca53ca03407afb665c77973ea076027b30c3fe61334517ce76e753",
+      "rawBytes": 318
+    },
+    {
+      "path": "native-foot-lazy-scope.tap.gz",
+      "sha256": "6de2740c2919f1a371bc7e1e140631d86501fbe10e40e62b83e6ae863d254ab4",
+      "rawSha256": "5fdd4d3ca65945f8b04f5def3946c74b82d40c0805eb8bc4cd21441a05a901e4",
+      "rawBytes": 954
+    },
+    {
+      "path": "native-foot-lazy-negative.tap.gz",
+      "sha256": "1c875ba060fcc3d71c731d1ab76343997a70911620b252e8629484d799618204",
+      "rawSha256": "84194388a069a187d6fa421c5e4d3b9c1815c8c7327d8423b735eba2050c8758",
+      "rawBytes": 780
+    },
+    {
+      "path": "native-foot-uv-timing.json.gz",
+      "sha256": "29310dbb9e4bd699ef15dd9e08aa02a231aded964c37b1d098df22ac7a2c4a6f",
+      "rawSha256": "68ff8f2805349ce172cdd597e5affcba876f883a2d6de42203f8568dd3199fe9",
+      "rawBytes": 6117
+    },
+    {
+      "path": "native-foot-uv-timing.stderr.gz",
+      "sha256": "9064f52396c2b80ec906e39d2396722465d90a2384fdc4969a183ad021d5178d",
+      "rawSha256": "64efae568e68b509b92cab0ce61c119a4dc07a7a9396abbe47819d5d1a7cca7b",
+      "rawBytes": 174
+    },
+    {
+      "path": "native-foot-uv-candidate.diff.gz",
+      "sha256": "feba7fd0ab6facb8cfcdaee22b327361981eb9442fdbad0a647c00d0f4cee325",
+      "rawSha256": "6dfea4019953b73d4d64823afb0a7ca9761900a6c4e4594d0c74495cdaf9903b",
+      "rawBytes": 8207
+    },
+    {
+      "path": "native-ground-selected-uv-source.test.mjs.gz",
+      "sha256": "a9bdb3eac54d7a690bbce21fabcb6a262b6eeac3038b067551ad80a61123ba10",
+      "rawSha256": "b862ffcf356f6a7715e2d6ea2f1c8ae620b31522de42a211c48622e1589e91b6",
+      "rawBytes": 5666
+    },
+    {
+      "path": "native-physics-before-uv.mjs.gz",
+      "sha256": "39e72dcca54d05dee6f92d258dea66ad60acba63c4553bb5801093d3dbafee61",
+      "rawSha256": "14760eeac476cb9b3c4dad095bfe5bfcbe8617b92fc22a6c01a23e79b1a36c0a",
+      "rawBytes": 12321
+    },
+    {
+      "path": "compare.mjs.gz",
+      "sha256": "b7391bf954b9c92e603c1db36220517757e8a3a1e2d46f541c8107037703efa4",
+      "rawSha256": "35eec1208b150beb3ff057255bcdedd94a00fd6b2d97221ffb418c92588c0483",
+      "rawBytes": 2978
+    }
+  ]
+}

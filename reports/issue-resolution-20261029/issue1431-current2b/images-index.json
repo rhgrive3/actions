@@ -1,0 +1,377 @@
+[
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-120-0-open-first.png",
+    "sha256": "18496ef45c3402bfb20124caf10b3fc49d1364375ebb874f91267215e18d7787",
+    "bytes": 47962
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-120-0-open-prediction.png",
+    "sha256": "01c323f97d342818b24c581f7468cacf9325eb33b8764b22430f67a0391737e4",
+    "bytes": 51019
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-120-0-open-steady.png",
+    "sha256": "d50180b16abfc86c0980f1e4e8b4e24f6355dab3aec0919f85f6472b8441ab39",
+    "bytes": 52272
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-120-0-wall-first.png",
+    "sha256": "031ae6943aa64a96da6d7ada2f0e7137d63375142b10ac6291e8760e492e34fc",
+    "bytes": 44325
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-120-0-wall-steady.png",
+    "sha256": "7c36f711ae403a3b24aa235081f5cc2fca46fef0d2240b25fc222e4620b089d9",
+    "bytes": 46193
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-30-0-open-first.png",
+    "sha256": "16bfaf69ade3af311022fdbdd4b44cffb86b28942bd4f3956923388e5c92f23e",
+    "bytes": 54536
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-30-0-open-prediction.png",
+    "sha256": "474acd89119024f8acf8965e6c6fdc1b7355d1f0a1517f7be2d81c98d62a046e",
+    "bytes": 50930
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-30-0-open-steady.png",
+    "sha256": "52da6b0be03ac92316c9531aee52e82f9212163407ca7f48bc595a1cb21caaa4",
+    "bytes": 57549
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-30-0-wall-first.png",
+    "sha256": "f3ae544b7d6ef8a686e005eb5e9d60aa6c17c7e1ddd02a2c69f2181a90781945",
+    "bytes": 44931
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-30-0-wall-steady.png",
+    "sha256": "79592b095d3075a1f2d9fef7d000b04237cfa601936cfe5c58baf07ba40caf52",
+    "bytes": 46534
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-60-0-open-first.png",
+    "sha256": "9c3babd4cbc9a09d459d83bc5e1d9496c5e605d85ce9c60f2cccaf10eac03e2c",
+    "bytes": 47883
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-60-0-open-prediction.png",
+    "sha256": "6c664cc7c715ff02f222f3ec3c831c75905000b7e509a7a1058a23798362f392",
+    "bytes": 51423
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-60-0-open-steady.png",
+    "sha256": "c058dd73858788c0a199b1d6176423a877e4222849fb484c8f425b16134e6db1",
+    "bytes": 52932
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-60-0-wall-first.png",
+    "sha256": "0cfb084a065972d4998ec8d0765b6dcc22f7e5b750392a8f2b065390f0adae74",
+    "bytes": 44421
+  },
+  {
+    "path": "horizontal/s3-maneuver-stepper-horizontal-60-0-wall-steady.png",
+    "sha256": "9f3c1ea07add3e93cdd98b1eb147b3dac6806965866f45fcbde84a10316525fc",
+    "bytes": 46202
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-120-0-open-first.png",
+    "sha256": "5ff909f8c8f36e5b2fd810405d1c3451c8f706fc82335150890cfb822cf19c89",
+    "bytes": 51296
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-120-0-open-steady.png",
+    "sha256": "37a8123db3328de10020d26ebcc7a29ff6edbf5d2fce5b30648103c47b1c4890",
+    "bytes": 51269
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-120-0-wall-first.png",
+    "sha256": "dd74c72d9559fcbf3f158f8bf6d4d54423d319dbcf16187ee4ab00cecaa8c181",
+    "bytes": 68668
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-120-0-wall-steady.png",
+    "sha256": "2745e1e4b8fe5a90ea9b5cbffe0af08a29c2faaddda7b4f218e0976d702974ef",
+    "bytes": 61028
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-30-0-open-first.png",
+    "sha256": "bf5cdc1157fb1d91b4534e4b595246aa2ec6b913d17c11024d913b521ff14e04",
+    "bytes": 53559
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-30-0-open-steady.png",
+    "sha256": "8ef33ba257144c5d500391522587a95f3c1586bdd3b4e315053f0518250d9d38",
+    "bytes": 51059
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-30-0-wall-first.png",
+    "sha256": "109a922e894b41c40fa2efd04d3c821decd97fb0f4abfa65dbade9f61a948882",
+    "bytes": 88265
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-30-0-wall-steady.png",
+    "sha256": "441a43dcb2e15b0e2f301a034660151f870945734c9bbc76376313e6deefb622",
+    "bytes": 64738
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-60-0-open-first.png",
+    "sha256": "b32dc203eaa6512fcae4727bcdfc80567fc8ae9e2b5437a2a07d07cfcbf960e6",
+    "bytes": 50939
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-60-0-open-steady.png",
+    "sha256": "1f36b4cc357ce46ee26c8cb26bb6a9882f833bf7d1c2a5f7bbf1670c2c7da091",
+    "bytes": 50950
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-60-0-wall-first.png",
+    "sha256": "c7a97804fc77f8c054bb5084ef08b166bef60a8f312a194ca7001803b22fa0b8",
+    "bytes": 65311
+  },
+  {
+    "path": "horizontal/s3-slosher-washtub-horizontal-60-0-wall-steady.png",
+    "sha256": "e8c87e70e842d9a5fa737faf8dc913e79137602f8649c1e01799900051980433",
+    "bytes": 65193
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120--45-open-first.png",
+    "sha256": "52352b8b10c9629d918fd6c1299bc1c8951b2034269571f085f67b30488c958f",
+    "bytes": 44124
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120--45-open-steady.png",
+    "sha256": "4a8f12a3ab254a3439824e88ec04b2ec14fddd2c68d0d1e59bc1155d72e65544",
+    "bytes": 46211
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120--45-wall-first.png",
+    "sha256": "45fb68305fe35bd4390207f969ab3b2a2d8a00a38cc75159380c6ab479ba0053",
+    "bytes": 43656
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120--45-wall-steady.png",
+    "sha256": "608fe7f031cd1f03f0bce9d0863d8035efa61518d83f3578b7bf8d356ea7e65c",
+    "bytes": 45789
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120-40-open-first.png",
+    "sha256": "4619befba94d1078b1cd3668b79ec056e37602bba2fbc333c1ea1bd6c6c4285c",
+    "bytes": 48984
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120-40-open-steady.png",
+    "sha256": "10c45bb78ccfda4f8d512e500ad7744a767e9bb64e57515864679b0ddf298be5",
+    "bytes": 55572
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120-40-wall-first.png",
+    "sha256": "993561aa0d8cdd5b7e90c7c9606af4baddd1c97e60d2f6b4bfb87fa86a4daf22",
+    "bytes": 44391
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-120-40-wall-steady.png",
+    "sha256": "b62d92b9ce9b4523735aa6c98739a52292b665fd3642fc887f9d12cd59f15507",
+    "bytes": 48875
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30--45-open-first.png",
+    "sha256": "d9c38c3c6615a778ce09eb26ead36c265f69bdb1e80d36ebe25dce97b6e5d4a3",
+    "bytes": 44502
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30--45-open-steady.png",
+    "sha256": "31ff1f0aac2b710df3922864355674fa3d5bd6d90bf3bb2ce43ca1bf99dab3e4",
+    "bytes": 46488
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30--45-wall-first.png",
+    "sha256": "9557de3dcf4c754a51f09bf03034ad40c0a27810dfe68f399258e201f7447e7b",
+    "bytes": 44399
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30--45-wall-steady.png",
+    "sha256": "133b91d4863d7743cc59441865f1fa386135c1d9fae3e216e3ea1c44ea2e450d",
+    "bytes": 46430
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30-40-open-first.png",
+    "sha256": "041ecec1409530e408939ed3893db9227627b179672ba3795ada5836989db4eb",
+    "bytes": 56609
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30-40-open-steady.png",
+    "sha256": "a7fc0c12f6bdcd471b25d0bec606231ccd4889f427c98f73c7f166894e080268",
+    "bytes": 60942
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30-40-wall-first.png",
+    "sha256": "80e7a48538e2360c6e7e4946416c03735a2e62241db3631f60b99ba8b728d23e",
+    "bytes": 45457
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-30-40-wall-steady.png",
+    "sha256": "ab5844baf22c4911775943fd002bf56e270607fc414dfa077b6da6236ed01b90",
+    "bytes": 49405
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60--45-open-first.png",
+    "sha256": "f74587d20a4fe45da415e8fbeb30adec81b0f5c6d1059cd4c3f79989dcd45f6a",
+    "bytes": 43860
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60--45-open-steady.png",
+    "sha256": "2ed1621ada6582468d5e3d3a71eb90f4131f9abea3db0d29d43ce97ab576ae32",
+    "bytes": 46095
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60--45-wall-first.png",
+    "sha256": "a33a860b0fbeb24d5b0e1f00914dced38271bdaa8a203fab2375f326df07851b",
+    "bytes": 43621
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60--45-wall-steady.png",
+    "sha256": "4c0f08141ad8d38ab71befdba2ed737d924fc8ba4e5042519d170e7282b4d421",
+    "bytes": 45776
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60-40-open-first.png",
+    "sha256": "6063631863842a208bab3ffc6935e72f5fb57afde1ec9fc8cb24fc1f2244af9b",
+    "bytes": 48793
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60-40-open-steady.png",
+    "sha256": "e5bbfe19becd9bfa376156c6a3c14e7fa6df78272af4224c9804ebb55df01037",
+    "bytes": 55242
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60-40-wall-first.png",
+    "sha256": "d49ac91640730efa35f95838c6b95b14e7fd630826eb75c67d63be2ff513e92f",
+    "bytes": 44476
+  },
+  {
+    "path": "angles/s3-maneuver-stepper-horizontal-60-40-wall-steady.png",
+    "sha256": "bf92a8ae2c7bd7a47b48889cbf1a862027aa10dd5556c565e33cbe0373c6e2cf",
+    "bytes": 48883
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120--45-open-first.png",
+    "sha256": "af21597f0c921eb0c311f49a688fc7df48e95aa4b8198685fdff9c2b11200549",
+    "bytes": 69566
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120--45-open-steady.png",
+    "sha256": "74ae98ade4059986ff0e55c613c89ffe77cfa9ae40b92eb9d961cbae73d3d402",
+    "bytes": 81062
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120--45-wall-first.png",
+    "sha256": "5d1f6a2dc19d7120bf36a2c521910835eee5a13761810acf40f69021b5edb6c7",
+    "bytes": 69694
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120--45-wall-steady.png",
+    "sha256": "c1eba0c1f6cc9895045638c6e08df8976905ebc48d2e6fbabaeb58924f64faab",
+    "bytes": 65618
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120-40-open-first.png",
+    "sha256": "9824b26cdb2ed714e89cdd146ce762d8c4c85e8d1d590459f7b8ed36ec22de1b",
+    "bytes": 52218
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120-40-open-steady.png",
+    "sha256": "c942fd456d6b6b8bf9cc6068295c5cb036bdac5a685928103d6e9f9ce493d4d5",
+    "bytes": 51837
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120-40-wall-first.png",
+    "sha256": "5ff594f6dd91482c36f0455916b2e6f056d26f2c6942aa84e9fe3448cdd68120",
+    "bytes": 72607
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-120-40-wall-steady.png",
+    "sha256": "faca850bdb7355e032151a32a91729842eca9499443552c6f8fa6c82f6625266",
+    "bytes": 75457
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30--45-open-first.png",
+    "sha256": "7dfc559241b2bfe5f83d1cdb04f1cd6283bd77d0faf3b214f58986276e7aa42a",
+    "bytes": 98281
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30--45-open-steady.png",
+    "sha256": "c6fc0ed4f2cde9b12780f01cb52343ac52469fda969d0e43f89dc2722f2b1e01",
+    "bytes": 79447
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30--45-wall-first.png",
+    "sha256": "cdada5234ebda939b08054645c6112dd6b554e6cbc5a005cbede0e70f32d6c67",
+    "bytes": 74175
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30--45-wall-steady.png",
+    "sha256": "c807f1e829214c9a01314b1f21a31e7324b026ed87daec0cc624775637e438ba",
+    "bytes": 73200
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30-40-open-first.png",
+    "sha256": "1cf3bc7b51ea792c87bcd48463ddad3108f60f3809230ea53503b8f35a74b129",
+    "bytes": 55271
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30-40-open-steady.png",
+    "sha256": "c213b929189eda890b9930f0e99c996ebade14dc0a532aa249349e158b281f5b",
+    "bytes": 51732
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30-40-wall-first.png",
+    "sha256": "a7a28e92ba672ce94b678914d0b4bf6698fcfb17ba1ef688e3e5cbf12a466415",
+    "bytes": 97157
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-30-40-wall-steady.png",
+    "sha256": "ff22090a16f3403eeef37d937a1226090fe93405ca11e51612850791c566b447",
+    "bytes": 85702
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60--45-open-first.png",
+    "sha256": "961e5827c07e2b95d3d2304c62f2d7f3eec3216460a775d2b8647569fb19186f",
+    "bytes": 80292
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60--45-open-steady.png",
+    "sha256": "13830521702b9b8312f7ed04599e827f98bf9f1171b4b747d876978314fcf8ff",
+    "bytes": 74244
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60--45-wall-first.png",
+    "sha256": "fffbc5698304f8b11b098dcd87f4cdea50323bfd7ee1882667084f4321c355b0",
+    "bytes": 67884
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60--45-wall-steady.png",
+    "sha256": "a666b7218e416e855ef30c22b7d4f5735cea9cf23872616d6059c61508907976",
+    "bytes": 65829
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60-40-open-first.png",
+    "sha256": "998cbe9fc337e5e33bb391cf2e5ef5015b9150adcb1346e17c2229c879ed4955",
+    "bytes": 52002
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60-40-open-steady.png",
+    "sha256": "c35cacc094be351a231607c9586626d7052bdcf37d2f044997d10f0a9b009ffb",
+    "bytes": 52333
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60-40-wall-first.png",
+    "sha256": "e405fad2ebc5e77cd388439ef970d6185e2b5e25c984d2ee4a37a02f2d7d9c28",
+    "bytes": 77245
+  },
+  {
+    "path": "angles/s3-slosher-washtub-horizontal-60-40-wall-steady.png",
+    "sha256": "a8baf0fe44b913fe95105017ec2f932caf58dabe3fa50f56555d8113a4adb84c",
+    "bytes": 77529
+  }
+]

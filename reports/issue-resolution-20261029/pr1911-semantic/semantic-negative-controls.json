@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "owner": "8d349280848531828234c2ffc2cbc286869c543b",
+  "paint": {
+    "sourceBefore": "ac5b178005b6dc646270676f699e8f6fbfd0e0bc3d1daf803280c9979cb489a3",
+    "sourceAfter": "16c7cf72a8f060a69c00399512526eba1a0e19968b3ce8b306797a7f4925385e",
+    "checked": 60,
+    "beforeMismatches": 16,
+    "afterMismatches": 0,
+    "differences": [
+      {
+        "type": 1,
+        "key": "x",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "y",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "cu",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "cu",
+        "value": "Infinity",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "cv",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "cv",
+        "value": "Infinity",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "pieceX",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 1,
+        "key": "pieceY",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "x",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "y",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "cu",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "cu",
+        "value": "Infinity",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "cv",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "cv",
+        "value": "Infinity",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "pieceX",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      },
+      {
+        "type": 2,
+        "key": "pieceY",
+        "value": "NaN",
+        "expected": true,
+        "before": false,
+        "after": true
+      }
+    ]
+  },
+  "sub": {
+    "sourceBefore": "7b81eab7a3b51f7ede1e8c571e30f551407a5a41b17904ee3ab239c91ef92b78",
+    "sourceAfter": "f29db9b427322345c1e66ac923c29c6492745f0f471b20aafb50a0c0b97f93ac",
+    "beforeError": {
+      "name": "ReferenceError",
+      "message": "bombCost is not defined"
+    },
+    "expectedFallback": 70,
+    "actualFallback": 70
+  },
+  "scope": "actual native CPU mask/witness and sub release helpers; synthetic inputs; no socket, browser, original stage asset or Nintendo retail claim"
+}

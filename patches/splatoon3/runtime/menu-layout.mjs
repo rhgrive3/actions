@@ -213,13 +213,15 @@ function decorateMode(menus, scr) {
     }
   }
   const onNav = scr.onNav;
+  const modeRow = scr.el.querySelector('.iw-modesel__row');
+  const modeCards = modeRow ? [...modeRow.querySelectorAll('.iw-mode')] : [];
   scr.onNav = dir => {
     // Read the real grid on each move: the six-rule catalogue, portrait rows
     // and a rotation can all have different column counts from the native graph.
-    if ((touchMenu() || menus._input === 'touch') && ['up', 'down', 'left', 'right'].includes(dir)) {
-      const row = scr.el.querySelector('.iw-modesel__row');
-      const cards = [...row.querySelectorAll('.iw-mode')];
+    if ((touchMenu() || menus._input === 'touch') && (dir === 'up' || dir === 'down' || dir === 'left' || dir === 'right')) {
+      const row = modeRow, cards = modeCards;
       const i = cards.indexOf(menus._focus);
+      if (i < 0 || row?.isConnected === false || cards.some(card => card.parentNode !== row)) return onNav?.(dir);
       const cols = Math.max(1, globalThis.getComputedStyle(row).gridTemplateColumns.trim().split(/\s+/).length);
       if (i >= 0) {
         const step = dir === 'up' ? -cols : dir === 'down' ? cols : dir === 'left' ? -1 : 1;
@@ -336,7 +338,7 @@ function decorateLoadout(menus, scr, api) {
     if (!order.some(([k]) => k === key)) key = 'all';
     cur = key;
     for (const t of tabs) { const on = t.dataset.cat === key; t.classList.toggle('is-sel', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); }
-    for (const c of cards) c.hidden = key !== 'all' && c.dataset.cat !== key;
+    for (const c of cards) { const hidden = key !== 'all' && c.dataset.cat !== key; if (c.hidden !== hidden) c.hidden = hidden; }
     grid.scrollTop = 0;
     if (sound) menus._sfx?.('ui_toggle');
     const f = menus._focus;

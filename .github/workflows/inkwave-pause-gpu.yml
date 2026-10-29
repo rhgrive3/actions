@@ -2,6 +2,13 @@ name: INKWAVE pause GPU work
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/pause-frame-retention.mjs'
+      - 'patches/local-quality/composer-target-adapter.mjs'
+      - 'patches/local-quality/adapter.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'patches/local-quality/queue-ui-input-20261029-adapter.mjs'
+      - 'scripts/tests/inkwave-queue-ci-20261029.test.mjs'
       - 'patches/local-quality/idle-resources.mjs'
       - 'patches/local-quality/tests/idle-resources.test.mjs'
       - 'patches/local-quality/tests/idle-attract-budget.test.mjs'

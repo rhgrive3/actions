@@ -2,29 +2,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRibbonPool, ribbonBaselineSource, ribbonCandidateSource, ribbonAttributes, ribbonBytes, observeRibbonWrites } from './ribbon-tail-fixture.mjs';
 
+// Check uploads against bytes changed by EACH real update, not the old
+// implementation's redundant version increments on already-empty draws.
+function candidatePool(...args) {
+  const pool = makeRibbonPool(ribbonCandidateSource, ...args), update = pool.update;
+  pool.update = function (...args) {
+    const before = Object.fromEntries(ribbonAttributes.map(key => [key, { bytes: Buffer.from(ribbonBytes(this, key)), version: this[key].version }]));
+    const value = update.apply(this, args);
+    for (const key of ribbonAttributes) {
+      const attr = this[key], bytes = ribbonBytes(this, key), previous = before[key];
+      for (let offset = 0; offset < bytes.length; offset += 4) if (bytes.readUInt32LE(offset) !== previous.bytes.readUInt32LE(offset)) {
+        const index = offset / 4;
+        assert.ok(attr.version > previous.version, key + ' changed Float32 bytes require upload');
+        assert.ok(attr.updateRanges.some(r => r.count < 0 || (r.start <= index && index < r.start + r.count)), key + ' missing changed-byte upload at ' + index);
+      }
+    }
+    return value;
+  };
+  return pool;
+}
 function compare(a, b, label) {
   for (const key of ribbonAttributes) {
     assert.deepEqual(ribbonBytes(b, key), ribbonBytes(a, key), label + ' complete ' + key + ' bytes');
-    if (key !== 'rib') {
-      assert.deepEqual(b[key].updateRanges, a[key].updateRanges, label + ' upload range ' + key);
-      assert.equal(b[key].version, a[key].version, label + ' upload version ' + key);
-    } else {
-      // The later dirty-range optimization uploads only changed rib values.
-      // Check every changed element against the still-pending ranges, including
-      // ranges left unconsumed across several updates.
-      const prev = b._testRib, attr = b.rib;
-      let changed = false;
-      for (let i = 0; i < attr.array.length; i++) if (!Object.is(prev.values[i], attr.array[i])) {
-        changed = true;
-        assert.ok(attr.updateRanges.some(r => r.count < 0 || (r.start <= i && i < r.start + r.count)), label + ' missing rib upload at ' + i);
-      }
-      if (changed) assert.ok(attr.version > prev.version, label + ' changed rib needs upload');
-      prev.values = Float32Array.from({length: attr.array.length}, (_, i) => attr.array[i]); prev.version = attr.version;
-    }
+    // Active full-buffer uploads retain the original range. Rib remains dirty
+    // ranged; every changed byte was checked at the update boundary above.
+    if (key !== 'rib' && b._drawCount > 0)
+      assert.deepEqual(b[key].updateRanges, a[key].updateRanges, label + ' active upload range ' + key);
   }
   assert.deepEqual(b.mesh.geometry.drawRange, a.mesh.geometry.drawRange, label + ' draw range');
   assert.deepEqual(b.mesh.geometry.index.array, a.mesh.geometry.index.array, label + ' indices');
-  assert.equal(b._drawCount, a._drawCount); assert.equal(b._emptyUploaded, a._emptyUploaded);
+  assert.equal(b._drawCount, a._drawCount);
   assert.deepEqual(b.list.map(r => ({ head: r.head, count: r.count, ended: r.ended, pts: r.pts, samples: r.samples, o: r.o })),
     a.list.map(r => ({ head: r.head, count: r.count, ended: r.ended, pts: r.pts, samples: r.samples, o: r.o })), label + ' public records');
   assert.equal(b.rngCalls(), a.rngCalls(), label + ' RNG count');
@@ -33,7 +40,7 @@ const camera = { x: 4, y: 8, z: 12 };
 
 test('every possible partial tail preserves all five complete Float32 buffers, indices and upload ranges', () => {
   for (const points of [2, 3, 8, 40, 48]) for (const additive of [false, true]) for (let n = 0; n <= points; n++) {
-    const a = makeRibbonPool(ribbonBaselineSource, 2, points, additive), b = makeRibbonPool(ribbonCandidateSource, 2, points, additive);
+    const a = makeRibbonPool(ribbonBaselineSource, 2, points, additive), b = candidatePool(2, points, additive);
     for (const p of [a, b]) {
       const r = p.start({ life: 10, spacing: .01, flat: n % 2 === 0, alpha: .9, style: n % 3, color: [-0, .7, 2] });
       for (let i = 0; i < n; i++) p.push(r, i / 3, 1 + Math.sin(i), -i / 2, .1);
@@ -45,7 +52,7 @@ test('every possible partial tail preserves all five complete Float32 buffers, i
 
 test('30/60/120Hz moving-camera lifecycles match through coalescing, overflow, expiry, live option edits and clear', () => {
   for (const hz of [30, 60, 120]) {
-    const a = makeRibbonPool(ribbonBaselineSource, 3), b = makeRibbonPool(ribbonCandidateSource, 3);
+    const a = makeRibbonPool(ribbonBaselineSource, 3), b = candidatePool(3);
     const handles = [[], []], refs = [];
     for (const p of [a, b]) refs.push(ribbonAttributes.map(key => p[key]));
     for (let frame = 0; frame < hz * 4; frame++) {
@@ -72,7 +79,7 @@ test('30/60/120Hz moving-camera lifecycles match through coalescing, overflow, e
 
 test('zero/NaN/infinite lifetimes and non-finite coordinates retain the original stored float bytes', () => {
   for (const life of [0, NaN, Infinity]) {
-    const a = makeRibbonPool(ribbonBaselineSource), b = makeRibbonPool(ribbonCandidateSource);
+    const a = makeRibbonPool(ribbonBaselineSource), b = candidatePool();
     for (const p of [a, b]) {
       const r = p.start({ life, spacing: 0, color: [NaN, -0, Infinity] });
       p.push(r, -0, 0, 0, 0); p.push(r, NaN, Infinity, -Infinity, 0); p.update(0, camera);
@@ -82,7 +89,7 @@ test('zero/NaN/infinite lifetimes and non-finite coordinates retain the original
 });
 
 test('partial tails use logarithmic native copies while preserving complete output', () => {
-  const a = makeRibbonPool(ribbonBaselineSource, 1), b = makeRibbonPool(ribbonCandidateSource, 1);
+  const a = makeRibbonPool(ribbonBaselineSource, 1), b = candidatePool(1);
   const counts = [observeRibbonWrites(a), observeRibbonWrites(b)];
   for (const p of [a, b]) {
     const r = p.start({ life: 10, spacing: 0 });
@@ -93,4 +100,26 @@ test('partial tails use logarithmic native copies while preserving complete outp
   assert.ok(counts[1].scalarWrites < counts[0].scalarWrites / 2, 'tail still reduces scalar writes');
   assert.ok(counts[1].blockCopies > 0 && counts[1].blockCopies <= 35, 'remaining attributes use bounded block copies');
   assert.ok(counts[1].copiedFloats > 0, 'block copies carry padded vertices');
+});
+
+
+test('zero-segment trails skip unchanged uploads but still expire, revive and clear correctly', () => {
+  const a = makeRibbonPool(ribbonBaselineSource, 2, 8), b = candidatePool(2, 8);
+  const handles = [a, b].map(p => p.start({life: .5, spacing: 0}));
+  for (const p of [a, b]) p.update(0, camera);
+  compare(a, b, 'initial warm empty');
+  const versions = () => ribbonAttributes.map(key => b[key].version);
+  let prior = versions();
+  for (const [index, p] of [a, b].entries()) {p.push(handles[index], 1, 2, 3, .1);p.update(.2, camera);}
+  compare(a, b, 'one point cannot draw'); assert.deepEqual(versions(), prior, 'one-point frame does not upload unchanged warm geometry');
+  for (const p of [a, b]) p.update(.8, camera);
+  compare(a, b, 'one point expired');assert.equal(handles[1].count, 0);assert.deepEqual(versions(), prior, 'expiry still runs without an upload');
+  for (const [index, p] of [a, b].entries()) {p.push(handles[index], 1, 2, 3, 1);p.push(handles[index], 2, 3, 4, 1);p.update(1, camera);}
+  compare(a, b, 'revived two-point trail');assert.ok(b.pos.version > prior[0]);
+  for (const p of [a, b]) p.update(2, camera);
+  compare(a, b, 'retired drawn geometry');prior = versions();
+  for (const p of [a, b]) p.update(2.1, camera);
+  compare(a, b, 'stable empty after retirement');assert.deepEqual(versions(), prior);
+  for (const p of [a, b]) {p.clear();p.update(2.2, camera);}
+  compare(a, b, 'clear reinitializes warm geometry');assert.ok(b.pos.version > prior[0]);
 });

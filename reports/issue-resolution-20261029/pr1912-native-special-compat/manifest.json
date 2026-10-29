@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "base": "11ea9f273bc315257699e4436d08c273145bee05",
+  "productionCommit": "d250a9e7bd7336078b85f739657d8cfd3dc2f086",
+  "policyTestsCommit": "756aa4f781b65af52c606ff7d1e67a60af5a4fcb",
+  "node": "22.23.4",
+  "sourceOnly": true,
+  "hardwareUsed": false,
+  "inputs": {
+    "patches/splatoon3/runtime/catalogue.mjs": "54c553143a3ae75f88ecb6d73ab6e3e66a33744899143ea429509d2e9a3713fd",
+    "patches/splatoon3/runtime/special-replay-admission.mjs": "2413498062936a63c3da5e14fa66b91ae32331b604f52175f38eb7f2974c275f",
+    "patches/splatoon3/tests/special-legacy-native-receiver.test.mjs": "8a7b4ccdc038139b08745a41baf6db76c7115043bb254a66a4b3e8c62dbf58cc",
+    "patches/splatoon3/tests/object-gear-accepted-snapshot.test.mjs": "713fc314e33e019f93d0bfd4b643720c73733b1acd4d31055bf11e14a3d43941",
+    "patches/splatoon3/tests/object-shredder-1130.test.mjs": "5fab76a76bf44094d8e687f672cee25b2251cd81eee62c21d14faf9a0341087f"
+  },
+  "receipts": {
+    "pr1912-network-readonly-focused-vm.tap": {
+      "sha256": "587fe7cf407c2e7833ab0a49a81dcd76ca71dfa3c40b36b5225088b1f1e5fbdc",
+      "bytes": 39356,
+      "archive": "pr1912-network-readonly-focused-vm.tap.gz",
+      "archiveSha256": "405419d6d837c2b0112fca67b3d4c17063133c7322c4145db2d8a3fe004ad1a9"
+    },
+    "pr1912-special-wire-readonly-probe.mjs": {
+      "sha256": "ce7ac6490e1e48b85ae8b4b8d39ec6ad23f89c2875811f85c264990c30858349",
+      "bytes": 2649,
+      "archive": "pr1912-special-wire-readonly-probe.mjs.gz",
+      "archiveSha256": "ff14ad5379b2c89390e33a2eddf0af5702bfbd5eaf71d2ff11aa1441d920ddef"
+    },
+    "pr1912-special-wire-readonly-probe.json": {
+      "sha256": "76a15f450b837ebda3a14eeaed265ddcf9ee92ec431cf567df6ec1b1da738653",
+      "bytes": 2577,
+      "archive": "pr1912-special-wire-readonly-probe.json.gz",
+      "archiveSha256": "ae16ff007a940b35cf72d5bbe9c6c98cba47795c3a8cf822919225988aaba225"
+    },
+    "pr1912-special-legacy-before.tap": {
+      "sha256": "ffa61eea3d4cdbe4aae22687cd9ed2fba3df4de48b7b260e56ef87af9e470aa4",
+      "bytes": 4268,
+      "archive": "pr1912-special-legacy-before.tap.gz",
+      "archiveSha256": "9f417dc12f8f09910854ce135198a4a1af2dc2782acc3d83694420e76ee79436"
+    },
+    "pr1912-network-repair-relevant.tap": {
+      "sha256": "bff7acb35cf58111ae480719413fc94889aa36a19bf7975c9c709156681cb822",
+      "bytes": 36046,
+      "archive": "pr1912-network-repair-relevant.tap.gz",
+      "archiveSha256": "82fd6a1d92ae9bab2ac6b4ed97456834917f848ea6b9105ca7d824f6f8d07e24"
+    },
+    "pr1912-legacy-final-focused.tap": {
+      "sha256": "1118102d90549322da5f021c6f56054a5a39691f0dce41fd3aac7aecf9e9a9a4",
+      "bytes": 7673,
+      "archive": "pr1912-legacy-final-focused.tap.gz",
+      "archiveSha256": "98d07cfb80f16362dcf6c86da58b0cdeb566a748f74a9db0efd5e1f0845e4b94"
+    }
+  }
+}

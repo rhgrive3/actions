@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { markAttributeRange } from '../../splatoon3/runtime/instance-color-upload.mjs';
+import { installShapePoolBounds, updateShapePoolBounds } from '../../splatoon3/runtime/shape-pool-bounds.mjs';
 
 const source = readFileSync(new URL('../../splatoon3/runtime/special-vfx-kit.mjs', import.meta.url), 'utf8');
 const start = source.indexOf('class RibbonPool {');
@@ -114,7 +115,7 @@ test('idle ShapePool preserves warmed instancing without 4 redundant uploads per
   class InstancedBufferGeometry extends BufferGeometry {}
   class InstancedBufferAttribute extends BufferAttribute {}
   const STHREE = { ...THREE, InstancedBufferGeometry, InstancedBufferAttribute };
-  const ShapePool = new Function('THREE', 'markAttributeRange', source.slice(begin, finish) + '\nreturn ShapePool;')(STHREE, markAttributeRange);
+  const ShapePool = new Function('THREE', 'markAttributeRange', 'installShapePoolBounds', 'updateShapePoolBounds', source.slice(begin, finish) + '\nreturn ShapePool;')(STHREE, markAttributeRange, installShapePoolBounds, updateShapePoolBounds);
   const geo = new BufferGeometry();
   geo.setAttribute('position', new BufferAttribute(new Float32Array(12), 3));
   geo.dispose = () => {};

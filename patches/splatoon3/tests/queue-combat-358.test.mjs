@@ -4,6 +4,10 @@ import {catalogFlickSourceDamage} from '../runtime/catalog-flick-damage.mjs';
 import {catalogBubbleLimitGroundNormalSpeed} from '../runtime/projectile-presentation.mjs';
 import {fixture} from './source-fixture.mjs';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
+import {capsuleEntry as nativeCapsuleEntry} from '../runtime/weapons-collision.mjs';
+import {chargerActorBeforeStop as nativeChargerActorBeforeStop} from '../runtime/weapons-charger-flight.mjs';
+import {hurtboxRadius as nativeHurtboxRadius,hurtboxHeight as nativeHurtboxHeight} from '../runtime/player-hurtbox.mjs';
+import {beginActorMotionTick,advanceActorMotionTick,markActorMotionDiscontinuity,coherentMotionStart} from '../runtime/actor-motion.mjs';
 const before=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-combat-358-before.json',import.meta.url)));
 const read=name=>fs.readFileSync(new URL('../runtime/'+name,import.meta.url),'utf8');
 const pure=(code,name,globals={})=>vm.runInNewContext(code.replace(/export /g,'')+';'+name,{Math,...globals});
@@ -66,7 +70,8 @@ test('real composed Charger helpers return their outputs and births retain indep
  let retained;system._muzzle=(_a,out)=>{retained=out;return out.set(1,2,3);};system._aimFrom=(_a,_from,out)=>{retained.set(99,99,99);return out.set(0,0,1);};system.fireCharger(a,a.weapon,.5);assert.deepEqual(Array.from(system._fidelityChargerFlights.at(-1).origin.toArray()),[1,2,3],'custom callbacks may retain supplied outputs; keep their prior copy boundary');
 });
 
-test('actual Charger scan reuses range-clipped duration and preserves each moving target endpoint',()=>{
+const chargerPlayer={radius:.38,height:1.45,s3HumanoidHurtRadius:.35,s3HumanoidHurtHeight:1.65,s3SwimHurtRadius:.675,s3SwimHurtSegmentHeight:0};
+function chargerStepSource(){
  const source=read('weapons-charger-flight.mjs'),steps=[];
  const visit=node=>{
   if(!node||typeof node!=='object')return;
@@ -75,10 +80,117 @@ test('actual Charger scan reuses range-clipped duration and preserves each movin
  };
  visit(parse(source,{ecmaVersion:'latest',sourceType:'module'}));assert.equal(steps.length,1,'one complete Charger step declaration');
  // Keep the real lease try/finally intact; an interior statement is not a function boundary.
- const after=source.slice(steps[0].start,steps[0].end);
- const run=(code,ghost,speed)=>{const ends=[],G={actors:Array.from({length:8},(_,i)=>({alive:true,team:1,pos:new THREE.Vector3(i,.2,i*.1)})),physics:{}},job={speed,range:.5,travel:0,pos:new THREE.Vector3(),prev:new THREE.Vector3(),dir:new THREE.Vector3(0,0,1),owner:{team:0,addTurf(){}},team:0,seen:new Set(),base:new THREE.Vector3(),moved:new THREE.Vector3(),ghost,paint:{width:1,terminalRate:1}};let mins=0;const math=Object.create(Math);math.min=(...a)=>{mins++;return Math.min(...a);};
-  const fn=pure(code,'step',{Math:math,G,EPS:1e-9,SIM_DT:1/60,PLAYER:{},collision:{InitRadiusForField:.1,EndRadiusForField:.1,InitRadiusForPlayer:.1,EndRadiusForPlayer:.1},sweptWorldHit:()=>({hit:false}),coherentMotionStart:()=>({x0:0,y0:0,z0:0}),hurtboxRadius:()=>.3,hurtboxHeight:()=>1.7,capsuleEntry(_a,end){ends.push(end.toArray());return null;},chargerActorBeforeStop:()=>false,paintTravel(){},splatTravelPoint:()=>0,chargerPaintWorldRadius:width=>width,emit(){}});fn({},job,1/60);return{ends,mins};};
- for(const ghost of [false,true])for(const speed of [0,60,120]){const a=run(before.chargerScan+'return actors;}',ghost,speed),b=run(after,ghost,speed);assert.deepEqual(b.ends,a.ends);assert.equal(b.mins,ghost?1:2);assert.equal(a.mins,ghost?1:9);}
+ return source.slice(steps[0].start,steps[0].end);
+}
+function runChargerStep(code,{actors,ghost=false,speed=60,range=.5,dt=1/60,from=[0,.8,0],dir=[0,0,1],full=false,radii=[.1,.1],motion='coherent',stop=null,nativeHits=false,player=chargerPlayer}){
+ const rows=actors.map((a,i)=>({...a,nid:a.nid??i,alive:a.alive??true,team:a.team??1,form:a.form??'kid',pos:new THREE.Vector3(...(a.start||a.end))}));
+ if(motion!=='missing')beginActorMotionTick(rows);
+ rows.forEach((a,i)=>a.pos.fromArray(actors[i].end));
+ if(motion==='stale')advanceActorMotionTick();
+ if(motion==='discontinuous')rows.forEach(markActorMotionDiscontinuity);
+ const trace=[],hits=[],events=[],defenses=[],G={actors:rows,physics:{}},owner={team:0,addTurf(){}},job={speed,range,travel:0,pos:new THREE.Vector3(...from),prev:new THREE.Vector3(),dir:new THREE.Vector3(...dir),owner,team:0,seen:new Set(),base:new THREE.Vector3(),moved:new THREE.Vector3(),ghost,full,damage:40,charge:1,weapon:{id:'charger'},paint:{width:1,terminalRate:1}};
+ let mins=0,current;const math=Object.create(Math);math.min=(...a)=>{mins++;return Math.min(...a);};
+ const fn=pure(code,'step',{Math:math,G,EPS:1e-10,SIM_DT:1/60,PLAYER:player,completion:{weapons:{charger:{}}},api:{},
+  collision:{InitRadiusForField:radii[0],EndRadiusForField:radii[1],InitRadiusForPlayer:radii[0],EndRadiusForPlayer:radii[1]},
+  sweptWorldHit:()=>stop?.kind==='world'?{hit:true,dist:stop.distance,normal:new THREE.Vector3(0,0,-1),point:new THREE.Vector3(0,.8,stop.distance)}:{hit:false},
+  coherentMotionStart,hurtboxRadius(actor){current=actor;return nativeHurtboxRadius(actor,player);},hurtboxHeight:actor=>nativeHurtboxHeight(actor,player),
+  capsuleEntry(start,end,base,body,height,r0,r1){const t=nativeCapsuleEntry(start,end,base,body,height,r0,r1);trace.push({nid:current.nid,from:start.toArray(),end:end.toArray(),base:base.toArray(),body,height,r0,r1,t});return nativeHits?t:null;},
+  chargerActorBeforeStop:nativeHits?nativeChargerActorBeforeStop:()=>false,
+  paintTravel(){},splatTravelPoint:()=>0,chargerPaintWorldRadius:width=>width,beginChargerWallDrop:()=>true,
+  emit(kind,data){events.push({kind,pos:data.pos.toArray(),victim:data.victim?.nid??null});}});
+ const system={applyHit(_owner,actor,amount,id){hits.push({nid:actor.nid,amount,id});}};
+ if(stop?.kind==='defense')system.kitDefenseCandidate=()=>({distance:stop.distance,onHit(){defenses.push(stop.distance);}});
+ const ended=fn(system,job,dt);
+ return{trace,mins,hits,events,defenses,seen:[...job.seen].map(a=>a.nid),ended,pos:job.pos.toArray(),travel:job.travel,depth:job.hitCandidateDepth,leases:job.hitCandidateLeases?Array.from(job.hitCandidateLeases,l=>({actors:l.actors.length,retained:l.rows.some(r=>r.actor!==null)})):undefined};
+}
+function assertChargerTraces(full,optimized){
+ let previous=-1;
+ for(const row of optimized.trace){const index=full.trace.findIndex(a=>a.nid===row.nid);assert(index>previous,'surviving candidates retain full-scan order');assert.deepEqual(row,full.trace[index],'surviving target keeps exact relative start/base/end and entry');previous=index;}
+ const retained=new Set(optimized.trace.map(a=>a.nid));
+ for(const row of full.trace)if(!retained.has(row.nid))assert.equal(row.t,null,'culled target '+row.nid+' must miss the actual capsule solver');
+ return full.trace.length-optimized.trace.length;
+}
+
+test('actual Charger scan reuses range-clipped duration and preserves each moving target endpoint',()=>{
+ const after=chargerStepSource(),actors=Array.from({length:8},(_,i)=>({nid:i,start:[0,0,0],end:[i,.2,i*.1]}));
+ let culled=0;
+ for(const ghost of [false,true])for(const speed of [0,60,120,NaN]){
+  const options={actors,ghost,speed,from:[0,0,0],player:{radius:.3,height:1.7}},a=runChargerStep(before.chargerScan+'return actors;}',options),b=runChargerStep(after,options);
+  culled+=assertChargerTraces(a,b);assert.equal(b.mins,ghost?1:2);assert.equal(a.mins,ghost?1:9);
+ }
+ if(after.includes('const reach=bodyRadius+'))assert(culled>0,'the optimized fixture must exercise rejected candidates');
+});
+
+// Remove only the exact conservative guard. All relative-motion, real capsule,
+// admission, hit ordering, stop distance and lease cleanup remain production code.
+const chargerBroadphase=`      const reach=bodyRadius+(collision.InitRadiusForPlayer>collision.EndRadiusForPlayer?collision.InitRadiusForPlayer:collision.EndRadiusForPlayer)+1e-4;
+      const px0=job.prev.x,pz0=job.prev.z,px1=end.x,pz1=end.z;
+      const segMinX=(px0<px1?px0:px1)-reach,segMaxX=(px0>px1?px0:px1)+reach;
+      const segMinZ=(pz0<pz1?pz0:pz1)-reach,segMaxZ=(pz0>pz1?pz0:pz1)+reach;
+      const bx=job.base.x,bz=job.base.z;
+      if(bx<segMinX||bx>segMaxX||bz<segMinZ||bz>segMaxZ)continue;
+`;
+function chargerFullScan(code){
+ if(!code.includes('const reach=bodyRadius+')){assert.doesNotMatch(code,/segMinX|segMaxZ/);return code;}
+ assert.equal(code.split(chargerBroadphase).length,2,'exactly one complete Charger broadphase guard');return code.replace(chargerBroadphase,'');
+}
+function chargerGeometryCases(){
+ const cases=[];
+ for(const form of ['kid','squid'])for(const radii of [[.1,.1],[.02,.22],[.22,.02]])for(const dir of [[0,0,1],[0,0,-1],[1,0,0],[-1,0,0]]){
+  const body=nativeHurtboxRadius({form},chargerPlayer),height=nativeHurtboxHeight({form},chargerPlayer),reach=body+Math.max(...radii)+1e-4,end=dir.map(n=>n*.5),actors=[];
+  const add=(nid,position,start=position)=>actors.push({nid,form,start,end:position});
+  for(const axis of [0,2])for(const side of [-1,1])for(const delta of [-1e-7,0,1e-7]){
+   const p=[end[0]/2,0,end[2]/2];p[axis]=(side<0?Math.min(0,end[axis])-reach:Math.max(0,end[axis])+reach)+delta;add('face-'+axis+'-'+side+'-'+delta,p);
+  }
+  const cross=dir[2]!==0?0:2;
+  for(const side of [-1,1])for(const delta of [-1e-11,0,1e-11]){const p=[0,0,0];p[cross]=side*(body+radii[0]+delta);add('native-graze-'+side+'-'+delta,p);}
+  const p=[end[0]*.98,0,end[2]*.98];p[cross]=body+Math.max(...radii)-.01;add('growing-edge',p);
+  add('near',[dir[0]*.6,0,dir[2]*.6]);add('far',[dir[0]*.85,0,dir[2]*.85]);add('outside',[8,0,8]);add('above',[0,8,0]);
+  const movingStart=[dir[0]*.25,0,dir[2]*.25],movingEnd=[...movingStart];movingStart[cross]+=.7;movingEnd[cross]-=.7;add('crossing',movingEnd,movingStart);
+  const lateStart=[dir[0]*.25,0,dir[2]*.25],lateEnd=[...lateStart];lateStart[cross]+=1;lateEnd[cross]+=.3;add('after-expiry',lateEnd,lateStart);
+  for(const mode of ['coherent','missing','stale','discontinuous','ghost','nonfixed']){
+   const options={actors,dir,radii,from:[0,height/2,0],motion:['ghost','nonfixed'].includes(mode)?'coherent':mode,ghost:mode==='ghost',dt:mode==='nonfixed'?1/30:1/60};
+   for(const full of [false,true])for(const stop of [null,{kind:'world',distance:.3},{kind:'defense',distance:.2}])cases.push({...options,full,stop});
+  }
+ }
+ // Isolate nonzero hit distances and obstruction ordering from the grazing
+ // contacts above; include finite zero/short shots and the retained NaN path.
+ for(const range of [0,.01,.5,1.5])for(const speed of [0,60,NaN])for(const full of [false,true])for(const stop of [null,{kind:'world',distance:.3},{kind:'defense',distance:.2}]){
+  const actors=[{nid:'near',end:[0,0,.6]},{nid:'far',end:[0,0,.85]},{nid:'miss',end:[4,0,4]}];
+  cases.push({actors,range,speed,full,stop,from:[0,.825,0]});
+ }
+ return cases;
+}
+function assertChargerGeometry(code,cases=chargerGeometryCases()){
+ const reference=chargerFullScan(chargerStepSource());let culled=0,hits=0,fullScanCapsules=0,optimizedCapsules=0;
+ for(const options of cases){
+  const a=runChargerStep(reference,{...options,nativeHits:true}),b=runChargerStep(code,{...options,nativeHits:true});
+  culled+=assertChargerTraces(a,b);hits+=a.hits.length;fullScanCapsules+=a.trace.length;optimizedCapsules+=b.trace.length;
+  const state=({trace,mins,...rest})=>rest;assert.deepEqual(state(b),state(a),'native hit order, seen, stop, events and lease ownership match the complete scan');
+  const retained=new Set(b.trace.map(row=>row.nid));for(const actor of options.actors)if(actor.nid.startsWith('face-')&&actor.nid.endsWith('-0'))assert(retained.has(actor.nid),'exact AABB face equality remains a candidate');
+ }
+ assert(hits>0,'native narrowphase must admit genuine hits');
+ return{cases:cases.length,culled,hits,fullScanCapsules,optimizedCapsules};
+}
+test('actual Charger broadphase preserves native capsule hits at faces and clipped moving-target intervals',t=>{
+ const code=chargerStepSource(),cases=chargerGeometryCases();assert.equal(cases.length,936,'complete audited geometry matrix');
+ const coverage=assertChargerGeometry(code,cases);t.diagnostic(JSON.stringify(coverage));
+ if(code.includes('const reach=bodyRadius+'))assert(coverage.culled>0,'native geometry cases must actually cull misses');
+});
+test('Charger geometry guard rejects wrong radius, relative endpoint and clipped duration',()=>{
+ const code=chargerStepSource();
+ const time='Math.min(1,length/(job.speed*dt))';assert.equal(code.split(time).length,2);
+ assert.throws(()=>assertChargerGeometry(code.replace(time,'Math.min(1,1)')),/surviving target|culled target|native hit order/);
+ if(code.includes('const reach=bodyRadius+')){
+  const radius='const reach=bodyRadius+(collision.InitRadiusForPlayer>collision.EndRadiusForPlayer?collision.InitRadiusForPlayer:collision.EndRadiusForPlayer)+1e-4;';assert.equal(code.split(radius).length,2);
+  const nativeCases=chargerGeometryCases().map(c=>({...c,actors:c.actors.filter(a=>!a.nid.startsWith('face-'))}));
+  assert.throws(()=>assertChargerGeometry(code.replace(radius,'const reach=bodyRadius+collision.InitRadiusForPlayer+1e-4;'),nativeCases),/culled target|native hit order/);
+  assert.throws(()=>assertChargerGeometry(code.replace(radius,radius.replace('+1e-4','')),nativeCases),/culled target|native hit order/);
+  const boundary='if(bx<segMinX||bx>segMaxX||bz<segMinZ||bz>segMaxZ)continue;';assert.equal(code.split(boundary).length,2);
+  assert.throws(()=>assertChargerGeometry(code.replace(boundary,'if(bx<=segMinX||bx>=segMaxX||bz<=segMinZ||bz>=segMaxZ)continue;')),/exact AABB face equality/);
+  const relative='px1=end.x,pz1=end.z';assert.equal(code.split(relative).length,2);
+  assert.throws(()=>assertChargerGeometry(code.replace(relative,'px1=job.pos.x,pz1=job.pos.z')),/culled target|native hit order/);
+ }
 });
 
 import {ClamsRule} from '../runtime/ranked/clams.mjs';

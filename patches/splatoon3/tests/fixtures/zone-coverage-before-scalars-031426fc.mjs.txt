@@ -1,0 +1,27 @@
+  zoneCoverage() {
+    const zones = this.stage?.zones || [], paint = this.paint, grid = paint?.grid;
+    const turfVersion = paint?._s3ObservedPaintVersion === paint?.version && finite(paint?._s3TurfVersion);
+    const version = turfVersion ? paint._s3TurfVersion : paint?.version;
+    const cached = this._zoneCoverageCache;
+    if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version && cached.turfVersion === turfVersion
+      && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
+    const value = zones.map((_, index) => {
+      const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
+      const area = [total === undefined ? 0 : total, 0, 0];
+      for (const entry of cells || []) {
+        if (total === undefined) area[0] += entry.area;
+        const team = this.paint.grid[entry.cell];
+        if (team === 1) area[1] += entry.area;
+        else if (team === 2) area[2] += entry.area;
+      }
+      if (area[0] <= 0) return [0, 0];
+      return [area[1] / area[0], area[2] / area[0]];
+    });
+    if (grid && finite(version)) {
+      // Production clear, stamped paint and owner replay all advance version.
+      // A replaced grid/index invalidates even if its numeric version repeats.
+      for (const pair of value) Object.freeze(pair); Object.freeze(value);
+      this._zoneCoverageCache = { paint, grid, version, turfVersion, cells: this._zoneCells, zones, value };
+    }
+    return value;
+  }

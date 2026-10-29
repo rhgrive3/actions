@@ -1,0 +1,52 @@
+{
+  "summary.json": {
+    "sha256": "d38be02abb5f2ea681d3191b2e2310c8e5c19f24ced406d0b3860ec68e12d47c",
+    "rawSha256": "d38be02abb5f2ea681d3191b2e2310c8e5c19f24ced406d0b3860ec68e12d47c",
+    "bytes": 9851
+  },
+  "source-new-guards.tap.gz": {
+    "sha256": "9783cc446afb6668c731e4d09e5e7901ef6be4a0db0ea8026fcf1a9c47920910",
+    "rawSha256": "72bde732557eb209ad26f84ccd6c7ac3b225511817069c9945b58980890674c4",
+    "bytes": 1309
+  },
+  "emitted26.tap.gz": {
+    "sha256": "a51f3c69d17893890ae8ba288acce674ad4a0c4721b6c588fce0de6596e922e7",
+    "rawSha256": "e1424d4f6ee446c730757b198b960aaed1203db705896b33455a40f3cea17e60",
+    "bytes": 15442
+  },
+  "canonical-verifier.tap.gz": {
+    "sha256": "07325a242c8486569963e0d54c21e14b4ab498122c97a5ba403a287ba615a3a1",
+    "rawSha256": "411d141c34618ff1a9818ff8883e5832a63b699bcef0756e4a7e3502f8a7d5f9",
+    "bytes": 25591
+  },
+  "build.log.gz": {
+    "sha256": "57ece85a7a088ed6c1a0537fb58e19721e48c3cdd3f7c2abf8ed0ba2b5afc54c",
+    "rawSha256": "6f828e63750feb0d4f67f50a8189f405cf5d02f913d1ad75b034980cd7193249",
+    "bytes": 739
+  },
+  "build-manifest.json.gz": {
+    "sha256": "0f31c21534e48f7857f7e82746ea8181911a13832fc28bbe25d12e8014ef19b2",
+    "rawSha256": "168b7739757d1a7f212f46bb16dfd4dac9e51f522542a79aaddce08bad6fa7e1",
+    "bytes": 208631
+  },
+  "validation-runner.py.gz": {
+    "sha256": "fbd609ca5c6e03aac01a5773699e7446743738d3b675e293540ea789ca829c98",
+    "rawSha256": "e35793b1d1ac564c83b30419330761006eb1154b1f3fb9e79a30367912d720c8",
+    "bytes": 1794
+  },
+  "explosher-current-node22.tap.gz": {
+    "sha256": "fc563717fa6eb723e9cc3e7c02dada77578fee83e438dbd6a18ffb74b3bf887c",
+    "rawSha256": "b902c40a187877b2f0a74e3f9cf71d969e5e57af38fec657734462f6d9171895",
+    "bytes": 521
+  },
+  "merge-build-binding.json": {
+    "sha256": "b178a4a0044fea2f40c09d5a1e70db42eff7f9441457977d25cacc7274ba7f59",
+    "rawSha256": "b178a4a0044fea2f40c09d5a1e70db42eff7f9441457977d25cacc7274ba7f59",
+    "bytes": 248
+  },
+  "base-build-bindings.json": {
+    "sha256": "b086a3635482b0724500f74f3951f865f452db58604a6164e50010c12d50c835",
+    "rawSha256": "b086a3635482b0724500f74f3951f865f452db58604a6164e50010c12d50c835",
+    "bytes": 1203
+  }
+}
