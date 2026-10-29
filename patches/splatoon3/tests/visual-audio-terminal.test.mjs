@@ -5,26 +5,32 @@ import vm from 'node:vm';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import baseline from './fixtures/visual-audio-baseline.mjs';
+import { createPresentationClock } from '../../local-quality/presentation-clock.mjs';
 import { nonWailVfxTicks } from '../runtime/nonwail-vfx-clock.mjs';
 const root=new URL('../../../',import.meta.url);
 const source=rel=>adaptBuildSource(rel,fs.readFileSync(new URL('inkwave-public/'+rel,root),'utf8'));
 function methods(code,names){let found=[];function walk(n){if(!n||typeof n!=='object')return;if(n.type==='MethodDefinition'&&names.includes(n.key.name))found.push(code.slice(n.start,n.end));for(const [k,v]of Object.entries(n))if(k!=='start'&&k!=='end')if(Array.isArray(v))v.forEach(walk);else if(v&&typeof v==='object')walk(v);}walk(parse(code,{ecmaVersion:'latest',sourceType:'module'}));return found.join('\n');}
-function hud(){let id=0;const pending=new Map();const env={performance:{now:()=>1000},requestAnimationFrame:fn=>{pending.set(++id,fn);return id;},cancelAnimationFrame:i=>pending.delete(i),console};let h=vm.runInNewContext('new(class {'+methods(source('src/ui/hud.js'),['paused','_addFx','_fxLoop','setWorldPaused'])+'})',env);Object.assign(h,{timeScale:1,_fxTime:0,_fxMap:new Map(),el:{classList:{toggle(){}}},overLayer:{classList:{toggle(){}}}});h._fxLoop=h._fxLoop.bind(h);return {h,pending,run(){const [i,fn]=pending.entries().next().value;pending.delete(i);fn(1016);}};}
-test('HUD scheduling retains historical canonical methods except exact reviewed pause ownership corrections',()=>{
+function hud(){let id=0;const pending=new Map();const env={performance:{now:()=>1000},requestAnimationFrame:fn=>{pending.set(++id,fn);return id;},cancelAnimationFrame:i=>pending.delete(i),console};env.createPresentationClock=()=>createPresentationClock({performance:env.performance});let h=vm.runInNewContext('new(class {'+methods(source('src/ui/hud.js'),['paused','_addFx','_fxLoop','setWorldPaused'])+'})',env);Object.assign(h,{timeScale:1,_fxTime:0,_fxMap:new Map(),el:{classList:{toggle(){}}},overLayer:{classList:{toggle(){}}}});h._fxLoop=h._fxLoop.bind(h);return {h,pending,run(){const [i,fn]=pending.entries().next().value;pending.delete(i);fn(1016);}};}
+test('HUD scheduling retains historical methods except exact reviewed pause and presentation-clock corrections',()=>{
  let actual=methods(source('src/ui/hud.js'),['paused','_addFx','_fxLoop','setWorldPaused']);
- // The queue's five exact pause/RAF ownership edits are independently
+ // Exact reviewed pause ownership and presentation-clock edits are independently
  // verified below. Revert only these text fragments, then retain the full
  // byte-for-byte historical method comparison (including every other token).
  const changes=[
+  ['    this._fxClock ||= createPresentationClock();\n',''],
+  ['this._lastFx = performance.now(); this._fxClock?.rebase(this._lastFx);','this._lastFx = performance.now();',2],
+  ['    const elapsed = this._fxClock ? this._fxClock.elapsed(t) : Math.max(0, (t - this._lastFx) / 1000);\n    const raw = Math.min(0.25, elapsed);','    const raw = Math.min(0.25, Math.max(0, (t - this._lastFx) / 1000));'],
+  ['    this._fxTime += elapsed * this.timeScale;','    this._fxTime += dt;'],
+  ['    if (!this._fxMap.size) { this._fxClock?.dispose(); this._fxClock = null; }\n',''],
   ['      if (!this.paused && this._fxMap?.size && !this._rafId) {','      if (this._fxMap?.size && !this._rafId) {'],
   ['    if (!this._rafId && !this._worldPaused && !this.paused) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }','    if (!this._rafId && !this._worldPaused) { this._lastFx = performance.now(); this._rafId = requestAnimationFrame(this._fxLoop); }'],
   ['_fxLoop(t) {\n    this._rafId = 0;','_fxLoop(t) {'],
   ['    if (this.paused) { this._rafId = 0; return; }','    if (this.paused) { this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0; return; }'],
   ['    if (this._fxMap.size && !this.paused && !this._worldPaused) { if (!this._rafId) this._rafId = requestAnimationFrame(this._fxLoop); }\n    else { cancelAnimationFrame(this._rafId); this._rafId = 0; }','    this._rafId = this._fxMap.size ? requestAnimationFrame(this._fxLoop) : 0;'],
  ];
- for(const [changed,original] of changes){
-   assert.equal(actual.split(changed).length,2,'one exact reviewed HUD queue correction');
-   actual=actual.replace(changed,original);
+ for(const [changed,original,count=1] of changes){
+   assert.equal(actual.split(changed).length,count+1,'exact reviewed HUD queue correction count: '+changed);
+   actual=actual.split(changed).join(original);
  }
  assert.equal(actual,baseline['hud.js'].methods,'unrelated HUD method edits remain rejected');
 });

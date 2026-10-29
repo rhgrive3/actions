@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {proveMainAudioFailureRecovery} from './lib/ranked-main-audio-failure-probe.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -6,7 +7,8 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
-import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
+import {observeRankedBoot,recoverableRankedEdge503} from './lib/ranked-boot-diagnostics.mjs';
+import {rankedTraceOptions,captureRankedBootPhase} from './lib/ranked-trace-policy.mjs';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installRankedLiveAudioReader} from './lib/ranked-live-audio.mjs';
 import {releaseFullRankedRainmaker} from './lib/ranked-rainmaker-charge.mjs';
@@ -38,7 +40,44 @@ const connectRelay=createLocalRelay({rooms});
 relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(text,deliver)=>{if(delay&&text.startsWith('m|'))setTimeout(()=>deliver(text),delay);else deliver(text);}}));
 const url=`${publicUrl||'http://127.0.0.1:'+server.address().port+'/'}?relay=${encodeURIComponent('ws://127.0.0.1:'+relay.address().port)}`;
 const errors=[],results=[],contexts=[],pages=[],bootAttempts=[];let browser,browserInfo=null;
-async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start({screenshots:true,snapshots:true,sources:false});const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));const receipt={context:contexts.length-1,inputHash:build.inputHash,revision:build.build.revision,runAttempt:process.env.GITHUB_RUN_ATTEMPT||null,contentHash:build.contentHash};bootAttempts.push(receipt);await observeRankedBoot(p,url,receipt,async()=>{await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});},{artifacts:build.artifacts});return p;}
+async function boot(){const c=await browser.newContext({viewport:{width:1280,height:800}});contexts.push(c);await c.tracing.start(rankedTraceOptions(process.env));const p=await c.newPage();pages.push(p);p.on('crash',()=>console.error('ranked browser page crashed'));p.on('pageerror',e=>{errors.push(e.message);console.error(e.message);});await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true})));const receipt={context:contexts.length-1,inputHash:build.inputHash,revision:build.build.revision,runAttempt:process.env.GITHUB_RUN_ATTEMPT||null,contentHash:build.contentHash,traceScreenshots:rankedTraceOptions(process.env).screenshots};bootAttempts.push(receipt);await observeRankedBoot(p,url,receipt,async()=>{await p.goto(url,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.RG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});},{artifacts:build.artifacts,observePhase:phase=>captureRankedBootPhase(p,out,receipt,phase)});await captureRankedBootPhase(p,out,receipt,'ready');return p;}
+// One fresh browser context may recover a proven transient CDN edge error.
+// A successful retry still has to pass the same complete Ranked gameplay gate
+// AND byte-verify the exact immutable JS that originally returned HTTP 503.
+// Any 404, JS error, persistent 503 or build identity drift remains fatal.
+async function bootWithEdge503Retry(){
+  let transient=null;
+  for(let attempt=0;attempt<2;attempt++){
+    try {
+      const p=await boot();
+      if(transient){
+        const file=transient.expectedArtifact.file;
+        const current=await p.context().request.get(transient.url,{timeout:15000,headers:{'cache-control':'no-cache'}});
+        assert.equal(current.status(),200,'Recovered public script must independently return 200');
+        const digest=hash(await current.body());
+        assert.equal(digest,build.artifacts[file],'Recovered public script does not match this deployment');
+        bootAttempts.at(-1).recoveredAsset={file,sha256:digest,independentHttpStatus:200};
+      }
+      return p;
+    }catch(error){
+      const receipt=bootAttempts.at(-1);
+      if(attempt!==0||!publicUrl||!recoverableRankedEdge503(receipt,publishedIdentity,build.artifacts))throw error;
+      transient=receipt.failures[0];
+      // The exact public identity is checked again before retry. Re-deploying
+      // a different SHA between attempts is never treated as a recovery.
+      const response=await fetch(new URL('inkwave-build.json?rankedEdgeRetry='+Date.now(),publicUrl),
+        {signal:AbortSignal.timeout(15000),cache:'no-store'});
+      assert.equal(response.status,200,'Public manifest unavailable during edge recovery');
+      const remote=await response.json();
+      assert.equal(remote.inputHash,build.inputHash);
+      assert.equal(remote.contentHash,build.contentHash);
+      assert.equal(remote.build.revision,build.build.revision);
+      receipt.retryAuthorized=true;
+      await new Promise(resolve=>setTimeout(resolve,1000));
+    }
+  }
+  throw new Error('Ranked public boot failed after bounded edge recovery');
+}
 async function advance(p,n){
  return p.evaluate(async n=>{
   const g=RG.game,previous=g._skipRender;
@@ -313,7 +352,7 @@ try{
  else launchOptions.channel='chromium'; // Use Playwright's full Chromium headless mode; CI's default headless shell hangs on offline WebGL screenshots.
  browser=await chromium.launch(launchOptions);
  browserInfo={version:browser.version(),channel:launchOptions.channel||'custom-executable'};console.log(`Chromium ${browserInfo.version} (${browserInfo.channel})`);
- const p=await boot();await p.evaluate(()=>{RG.game.debug.freeze();RG.game._skipRender=true;});
+ const p=await bootWithEdge503Retry();await p.evaluate(()=>{RG.game.debug.freeze();RG.game._skipRender=true;});
  for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : rankedModes){
   console.log('offline',mode);
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
@@ -324,6 +363,7 @@ try{
   await p.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
   await advance(p,120);
   const initial=await p.evaluate(()=>({mode:RG.match.mode,state:RG.match.state,time:RG.match.time,actors:RG.match.actors.length,ranked:!!RG.match.ranked,hud:document.querySelector('.iw-ranked-hud')?.textContent}));assert(initial.ranked&&initial.actors===8&&initial.time<=300&&initial.time>290);assert(initial.hud?.length>5);
+  if(process.env.RANKED_MAIN_AUDIO_FAILURE_PROBE==='1' && mode==='tower') { const audioFailureRecovery=await proveMainAudioFailureRecovery(p); fs.writeFileSync(path.join(out,'main-audio-failure-recovery.json'),JSON.stringify(audioFailureRecovery,null,2)); }
   await capture(p,{path:path.join(out,mode+'-offline.jpg'),type:'jpeg',quality:60});
   const proof=await p.evaluate(async mode=>{
    const m=RG.match,e=m.ranked,w=m.rankedWorld,a=m.local;RG.game.debug.freezeBots();
@@ -448,7 +488,7 @@ try{
   });
   results.push({mode,offline:initial,proof:{...proof,...deadline},...(clamVoidDrop?{clamVoidDrop}:{})});
  }
- const guest=process.env.RANKED_OFFLINE_ONLY?null:await boot();
+ const guest=process.env.RANKED_OFFLINE_ONLY?null:await bootWithEdge503Retry();
  // Real native session and production relay across isolated browser contexts.
  for(const mode of process.env.RANKED_OFFLINE_ONLY?[]:rankedModes){
   console.log('online',mode);

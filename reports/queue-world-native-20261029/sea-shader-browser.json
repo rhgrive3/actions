@@ -1,0 +1,265 @@
+{
+  "scope": "actual bundled Three.js full sea shader variants; Chromium SwiftShader WebGL2; actual deterministic wave texture and synthetic foam atlas; no physical-device or GPU-performance claim",
+  "cases": [
+    {
+      "marina": false,
+      "dist": 5.99,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 5.99,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 6,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 6,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 6.01,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 6.01,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 39.99,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 39.99,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 40,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 40,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 40.01,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 40.01,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 100,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 100,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 1000,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": false,
+      "dist": 1000,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 5.99,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 5.99,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 6,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 6,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 6.01,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 6.01,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 39.99,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 39.99,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 40,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 40,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 40.01,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 40.01,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 100,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 100,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 1000,
+      "time": 0,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    },
+    {
+      "marina": true,
+      "dist": 1000,
+      "time": 5.5,
+      "changedChannels": 0,
+      "maxChannelDifference": 0,
+      "meanChannelDifference": 0
+    }
+  ],
+  "nonzero": 5603328,
+  "glError": 0,
+  "renderer": "WebKit WebGL",
+  "errors": []
+}

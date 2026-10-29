@@ -104,6 +104,10 @@ for(const hz of [30,60,120])test(`wet draw/repeat/clear at ${hz} Hz consumes no 
   }
   assert.equal(calls,calls0,'presentation consumes zero gameplay random calls');
   s.clear();assert.equal(s._s3Shapes.slashV.count,0);assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.sheets.mesh.count,0);
+  assert.equal(s._s3Shapes.wetSlashV.visible,false,'clearing the final wet wave hides its pooled mesh');
+  const wetMesh=s._s3Shapes.wetSlashV;
+  s._draw();s._draw();assert.equal(wetMesh.count,0);assert.equal(wetMesh.visible,false);
+  fire(f,'s3-saber-lite');s._draw();assert.equal(s._s3Shapes.wetSlashV,wetMesh);assert.equal(wetMesh.count,2);assert.equal(wetMesh.visible,true);
   fire(f,'s3-saber-heavy');s._draw();assert.equal(s._s3Shapes.wetSlashV.count,0);assert.equal(s._s3Shapes.slashV.count,2);
 });
 
@@ -111,6 +115,7 @@ for(const hz of [30,60,120])test(`wet draw/repeat/clear at ${hz} Hz consumes no 
 test('wet mesh is lazy, reused, capacity-bounded, and disposed once with its renderer',async()=>{
   const f=await setup();let x=fire(f,'s3-saber-heavy');x.s._draw();const R=x.s._s3Shapes;
   assert.equal(R.wetSlashV,null,'non-target never allocates wet geometry/material');
+  x.s.clear();x.s._draw();assert.equal(R.wetSlashV,null,'empty draw does not allocate a wet mesh');
   x=fire(f,'s3-saber-lite');x.s._draw();const mesh=R.wetSlashV;
   x=fire(f,'s3-saber-normal');x.s._draw();assert.equal(R.wetSlashV,mesh,'shared by the two selected source actors');
   assert.equal(mesh.instanceMatrix.count,16);assert.equal(mesh.count,2);
