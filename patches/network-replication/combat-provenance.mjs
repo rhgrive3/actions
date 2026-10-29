@@ -51,6 +51,16 @@ function ownerActor(nm,from,id) {
 function nearActor(origin,pose) {
   return v3(origin) && v3(pose) && dist(origin,pose)<=7.5;
 }
+function mainProofUses(actor) {
+  const w=actor.weapon;
+  if(!w)return 0;
+  const family=w.catalogRecord?.family||w.behaviorKind||w.kind;
+  // Both native InkFlightRuntime and catalogue collision retire these rounds
+  // at their first body contact. A second victim/object is not penetration.
+  // Charger and area/multi-unit owners retain their separate native policies.
+  if(family==='shooter'||family==='dualies'||family==='splatling')return 1;
+  return ['blaster','slosher','stringer','roller','brush'].includes(w.kind)?6:2;
+}
 function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false) {
   if(!Array.isArray(e) || !finite(e[0]) || e[0]>ts+.075 || ts-e[0]>1.4)return null;
   let id,source,origin,direction,cause,kind,maxUses;
@@ -60,8 +70,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
     const wire=e[4],main=weaponId(source);
     if(!wire || wire===main || wire===source.weapon?.id) {
       cause=main;kind='main';
-      const family=source.weapon?.kind;
-      maxUses=['blaster','slosher','stringer','roller','brush'].includes(family)?6:2;
+      maxUses=mainProofUses(source);
     } else if(wire===source.weapon?.sub) {
       cause=wire;kind='sub';maxUses=8;
     } else if(wire===source.weapon?.special) {
@@ -73,7 +82,7 @@ function proofFromEvent(nm,from,e,poses,ts,t,acceptedSub=null,requirePose=false)
     source=ownerActor(nm,from,id);
     if(!source || ev.weapon!==weaponId(source) && ev.weapon!==source.weapon?.id)return null;
     origin=ev.muzzle;direction=ev.dir;cause=weaponId(source);kind='main';
-    maxUses=['blaster','slosher','stringer','roller','brush'].includes(source.weapon?.kind)?6:2;
+    maxUses=mainProofUses(source);
   } else if(e[1]==='ac' && e[2]==='sub') {
     // Raw packets never mint catalogue-sub proof. This receipt is supplied
     // only after receiver FIFO admission and successful native object creation.
