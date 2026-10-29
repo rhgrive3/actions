@@ -175,6 +175,38 @@ test('all committed inputs remain verified above the old 64 MiB aggregate captur
  }
 });
 
+test('source verification ignores a repository tree above 1 MiB while checking every literal input batch',()=>{
+ const repo=path.join(root,'wide-tree-repo'),site=path.join(root,'wide-tree-site');
+ fs.mkdirSync(repo,{recursive:true});fs.mkdirSync(site,{recursive:true});
+ const git=(args,opts={})=>execFileSync('git',args,{cwd:repo,encoding:'utf8',...opts}).trim();
+ git(['init','--quiet']);
+ const bytes=Buffer.from('// committed input\n'),blob=git(['hash-object','-w','--stdin'],{input:bytes});
+ const networkDigest=stageNetwork(repo,site),networkBlob=git(['hash-object','-w','--stdin'],{input:networkSource});
+ const files={};let index='';
+ // Real Git metadata, without creating thousands of unrelated working files.
+ for(let i=0;i<10000;i++)index+='100644 '+blob+'\tunrelated/'+String(i).padStart(5,'0')+'-'+('x'.repeat(70))+'.js\n';
+ for(let i=0;i<300;i++){
+  const name=String(i).padStart(3,'0')+'.js';files['upstream/'+name]=hash(bytes);
+  index+='100644 '+blob+'\tinkwave-public/'+name+'\n';
+ }
+ const literal='[literal]*?.js';files['upstream/'+literal]=hash(bytes);
+ index+='100644 '+blob+'\tinkwave-public/'+literal+'\n';
+ index+='100644 '+networkBlob+'\tpatches/network-replication/'+networkName+'\n';
+ index+='100644 '+blob+'\tscripts/build-inkwave.mjs\n';
+ git(['update-index','--index-info'],{input:index});
+ const tree=git(['write-tree']),sha=git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit-tree',tree,'-m','wide fixture']);
+ const fullTree=execFileSync('git',['ls-tree','-r','-z',sha],{cwd:repo,maxBuffer:8*1024*1024});
+ assert.ok(fullTree.length>1024*1024,'the real repository tree exceeds the former default capture cap');
+ const manifest={artifacts:{},contentHash:hash('{}'),files,build:{script:hash(bytes)}};bindNetwork(manifest,networkDigest);
+ const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));save();
+ assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,manifest.contentHash,'all inputs, including literal metacharacters and later batches, are checked');
+ manifest.files['upstream/299.js']=hash('tampered late source');save();
+ assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: inkwave-public\/299\.js/);
+ manifest.files['upstream/299.js']=hash(bytes);delete manifest.files['upstream/'+literal];
+ manifest.files['upstream/missing-final.js']=hash(bytes);save();
+ assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Missing source input: inkwave-public\/missing-final\.js/);
+});
+
 const adapter=new URL('../../patches/reliability/lock-option-recovery-adapter.mjs',import.meta.url);
 const key='lock-option-recovery-adapter.mjs';
 test('lock option build-only transformer is a declared source identity input',()=>{
