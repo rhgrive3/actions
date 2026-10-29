@@ -85,7 +85,7 @@ test('MOV-02 rollerContactClear reuses scratch vectors and hit instance across c
   assert.equal(seenHits.size, 1, 'hit scratch object should be reused across calls');
 });
 
-test('MOV-03..05 and MOV-08a..b compose cleanly in cameraRig.js, player.js, actor.js, bots.js, and character.js', () => {
+test('MOV-03..05 and MOV-08a compose while paused MOV-08b leaves _updateSquid unchanged', () => {
   const builtCam = adaptBuildSource('src/game/cameraRig.js', read('src/game/cameraRig.js'));
   assert.match(builtCam, /if \(projectionDirty\) gc\.updateProjectionMatrix\(\);\s*gc\.updateMatrixWorld\(\);/);
 
@@ -102,8 +102,8 @@ test('MOV-03..05 and MOV-08a..b compose cleanly in cameraRig.js, player.js, acto
   assert.match(builtBots, /const tried = this\._triedGoals \|\| \(this\._triedGoals = new Set\(\)\); tried\.clear\(\);/);
 
   const builtChar = adaptBuildSource('src/game/character.js', read('src/game/character.js'));
-  assert.match(builtChar, /_q3\.setFromRotationMatrix\(this\.model\.matrixWorld\);/);
-  assert.match(builtChar, /this\.root\.getWorldPosition\(_v5\)\.addScaledVector\(UP, 0\.26/);
+  assert.match(builtChar, /this\.model\.matrixWorld\.decompose\(_v3, _q3, _v4\);\s*q\.copy\(_q3\)\.invert\(\)\.multiply\(_q2\);\s*_v5\.copy\(this\.root\.getWorldPosition\(_v5\)\)/, 'stopped _updateSquid climb path remains native');
+  assert.doesNotMatch(builtChar, /const _cms = this\.model\.scale, _crs = this\.root\?\.scale/, 'MOV-08b must not be reintroduced');
 });
 
 test('MOV-06a..c and MOV-07a..b native movement and triangle-world modules reuse module-scoped scratch structures', () => {
