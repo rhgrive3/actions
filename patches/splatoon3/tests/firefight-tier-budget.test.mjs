@@ -60,9 +60,9 @@ test('deferred cosmetic ray always sampled at least once every three 60Hz frames
   }
 });
 
-test('flat height only reused within observed 5mm expanded footprint',()=>{
+test('three flat samples never replace an unverified interior ground query',()=>{
   const f={_iwFlatY:3,_iwFlatMinX:-.10,_iwFlatMaxX:.11,_iwFlatMinZ:-.08,_iwFlatMaxZ:.12};
-  assert.equal(flatFootHeightAt(f,0,0),3);
+  assert.equal(flatFootHeightAt(f,0,0),null);
   assert.equal(flatFootHeightAt(f,.2,0),null);
   assert.equal(flatFootHeightAt(f,0,-.2),null);
   f._iwFlatY=null;assert.equal(flatFootHeightAt(f,0,0),null);
