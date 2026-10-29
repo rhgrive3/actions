@@ -1,4 +1,5 @@
 import {observeNativeSpecialUse,admitCatalogueSpecial,flushCatalogueSpecials,captureLegacySpecialFrames,withNativeSpecialPlayback,noteNativeSpecialPlayback} from './special-replay-admission.mjs';
+import { syncCatalogueKitIcons, bindCatalogueKitIconFocus } from './ui-kit-icons.mjs';
 import { hasPendingSubBirthCommit, replayWithSubBirthCommit } from '../../network-replication/sub-birth-commit.mjs';
 import { cataloguePayload } from './catalogue-payload.mjs';
 export { cataloguePayload } from './catalogue-payload.mjs';
@@ -91,6 +92,7 @@ export function installCatalogueLoadout(api) {
       const chips=body.querySelector('.iw-wd.is-compare')?[]:body.querySelectorAll('.iw-kit');
       if(chips[0]?.querySelector('b'))chips[0].querySelector('b').textContent=sub?.name||'';
       if(chips[1]?.querySelector('b'))chips[1].querySelector('b').textContent=sp?.name||'';
+      syncCatalogueKitIcons(chips, selectors.sub.value, selectors.special.value, api);
       note.textContent=(choice?'カスタムセット':'本家標準セット（Ver.11.3.0）')+' / 必要スペシャルポイント: '+base.specialCost+'p。技の挙動には未検証部分があります。';
       help.textContent=(sub?.blurb||'サブボタンを押して構え、離すと使用。')+' '+(CATALOGUE_HELP[selectors.special.value]||sp?.blurb||'ゲージが満タンでスペシャルボタン。');
     }
@@ -100,6 +102,7 @@ export function installCatalogueLoadout(api) {
       const actor=G.match?.local||G.local;if(actor?.isLocal&&(!G.match||G.match.attract)){actor.s3CatalogueChoice=null;actor.setWeapon(actor.weaponId);}
       sync();
     }
+    bindCatalogueKitIconFocus(screen, sync);
     // Screen listeners are removed together with their screen DOM.
     body.addEventListener('click',()=>queueMicrotask(sync));
     sync();
