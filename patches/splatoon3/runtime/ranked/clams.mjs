@@ -356,21 +356,24 @@ export class ClamsRule {
   }
 
   _distanceSq(a, b) {
-    return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+    const dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+    return dx * dx + dy * dy + dz * dz;
   }
 
   _pickupDistanceSq(position, target, rejectOutsidePickup = false) {
     // Scalar distance only for ordinary dense finite coordinates. Keep the
     // original vec fallback for short, sparse and otherwise invalid inputs.
-    const p = Array.isArray(position) && position.length >= 3 &&
-      0 in position && 1 in position && 2 in position &&
-      Number.isFinite(position[0]) && Number.isFinite(position[1]) && Number.isFinite(position[2])
+    const p0 = Array.isArray(position) && position.length >= 3 ? position[0] : NaN;
+    const p1 = Number.isFinite(p0) ? position[1] : NaN;
+    const p2 = Number.isFinite(p1) ? position[2] : NaN;
+    const p = Number.isFinite(p2) && 0 in position && 1 in position && 2 in position
       ? position : vec(position);
     // Only reject a pair strictly beyond the existing radius. Keep the exact
     // squared sum near its floating-point boundary and for unusual values.
     const dx = p[0] - target[0], dy = p[1] - target[1], dz = p[2] - target[2];
-    if (rejectOutsidePickup && Number.isFinite(dx) && Number.isFinite(dy) && Number.isFinite(dz) &&
-        (Math.abs(dx) > .820001 || Math.abs(dy) > .820001 || Math.abs(dz) > .820001)) return Infinity;
+    if (rejectOutsidePickup &&
+        (dx > .820001 || dx < -.820001 || dy > .820001 || dy < -.820001 || dz > .820001 || dz < -.820001) &&
+        Number.isFinite(dx) && Number.isFinite(dy) && Number.isFinite(dz)) return Infinity;
     return this._distanceSq(p, target);
   }
 

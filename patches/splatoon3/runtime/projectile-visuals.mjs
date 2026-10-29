@@ -135,16 +135,21 @@ export class ProjectileHistory {
   }
   get oldestAge() { return this.count ? this.data[((this.next-this.count+HISTORY_CAPACITY)%HISTORY_CAPACITY)*7] : 0; }
   sample(age, out, offset=0) {
-    if (!this.count) { for(let j=0;j<6;j++)out[offset+j]=0; return false; }
-    const a=this.data, first=(this.next-this.count+HISTORY_CAPACITY)%HISTORY_CAPACITY;
-    if(age<=a[first*7] || age>=this.latestAge || this.count===1) {
-      const o=age<=a[first*7]?first*7:((this.next+HISTORY_CAPACITY-1)%HISTORY_CAPACITY)*7;
-      for(let j=0;j<6;j++)out[offset+j]=a[o+j+1]; return true;
+    if (!this.count) {
+      out[offset]=0; out[offset+1]=0; out[offset+2]=0; out[offset+3]=0; out[offset+4]=0; out[offset+5]=0;
+      return false;
+    }
+    const a=this.data, first=(this.next-this.count+HISTORY_CAPACITY)%HISTORY_CAPACITY, first7=first*7;
+    if(age<=a[first7] || age>=this.latestAge || this.count===1) {
+      const o=age<=a[first7]?first7:((this.next+HISTORY_CAPACITY-1)%HISTORY_CAPACITY)*7;
+      out[offset]=a[o+1]; out[offset+1]=a[o+2]; out[offset+2]=a[o+3];
+      out[offset+3]=a[o+4]; out[offset+4]=a[o+5]; out[offset+5]=a[o+6];
+      return true;
     }
     // Actual histories are sampled on a60Hz grid: direct addressing is O(1).
     // Adjust locally for fractional births/final samples; arbitrary public
     // record() times remain valid without assuming every gap is exactly1/60.
-    let j=clamp(((age-a[first*7])*HISTORY_HZ)|0,0,this.count-2);
+    let j=clamp(((age-a[first7])*HISTORY_HZ)|0,0,this.count-2);
     let lo=((first+j)%HISTORY_CAPACITY)*7,hi=((first+j+1)%HISTORY_CAPACITY)*7;
     // Preserve the previous scan's incoming-segment tangent at exact grid
     // knots, including its EPS boundary, while avoiding a scan from oldest.
@@ -152,8 +157,9 @@ export class ProjectileHistory {
     while(j<this.count-2&&a[hi]<age-EPS){j++;lo=hi;hi=((first+j+1)%HISTORY_CAPACITY)*7;}
     const span=a[hi]-a[lo], inverseSpan=1/max(EPS,span),u=clamp((age-a[lo])*inverseSpan), u2=u*u, u3=u2*u;
     const h00=2*u3-3*u2+1, h10=u3-2*u2+u, h01=-2*u3+3*u2, h11=u3-u2;
+    const c00=6*u2-6*u, c10=3*u2-4*u+1, c01=-6*u2+6*u, c11=3*u2-2*u;
     for(let j=0;j<3;j++) {
-      const delta=a[hi+1+j]-a[lo+1+j];
+      const p0=a[lo+1+j],p1=a[hi+1+j],delta=p1-p0;
       let m0=span*a[lo+4+j],m1=span*a[hi+4+j];
       // Bounded Hermite tangents prevent a collision-truncated segment from
       // overshooting beyond its final contact sample. This slope limiter is an
@@ -164,9 +170,8 @@ export class ProjectileHistory {
         const d0=m0/delta,d1=m1/delta,q2=d0*d0+d1*d1;
         if(q2>9){const scale=3/sqrt(q2);m0*=scale;m1*=scale;}
       }
-      out[offset+j]=h00*a[lo+1+j]+h10*m0+h01*a[hi+1+j]+h11*m1;
-      out[offset+3+j]=((6*u2-6*u)*a[lo+1+j]+(3*u2-4*u+1)*m0+
-        (-6*u2+6*u)*a[hi+1+j]+(3*u2-2*u)*m1)*inverseSpan;
+      out[offset+j]=h00*p0+h10*m0+h01*p1+h11*m1;
+      out[offset+3+j]=(c00*p0+c10*m0+c01*p1+c11*m1)*inverseSpan;
     }
     return true;
   }
@@ -468,7 +473,10 @@ export class ProjectileVisualRuntime {
     if(profile.sphere)h.sample(end,this.sample);
     for(let ring=0;ring<RINGS;ring++) {
       const o=ring*6;
-      if(profile.sphere){for(let j=0;j<6;j++)c[o+j]=this.sample[j];}
+      if(profile.sphere){
+        c[o]=this.sample[0];c[o+1]=this.sample[1];c[o+2]=this.sample[2];
+        c[o+3]=this.sample[3];c[o+4]=this.sample[4];c[o+5]=this.sample[5];
+      }
       else h.sample(start+(end-start)*HISTORY_FRACTION[ring],c,o);
       const axial=radius*profile.axial[ring];
       if(axial!==0) {
@@ -513,7 +521,8 @@ export class ProjectileVisualRuntime {
       const ph1=lobeMode===1?seed*7+ring*.6:lobeMode===4?ring*.75+seed*6:lobeMode===5?ring*1.2+seed*8:0;
       const cPh=lobeMode===1||lobeMode===4||lobeMode===5?cos(ph1):0;
       const sPh=lobeMode===1||lobeMode===4||lobeMode===5?sin(ph1):0;
-      for(let side=0;side<SIDES;side++) {
+      let vertex=(base+ring*SIDES)*3;
+      for(let side=0;side<SIDES;side++,vertex+=3) {
         const cs=SECTION_COS[side],sn=SECTION_SIN[side];
         let lobe=1;
         if(lobeMode===1){
@@ -523,7 +532,7 @@ export class ProjectileVisualRuntime {
         else if(lobeMode===2)lobe=(petalCenter+petalRate*SECTION_COS4[side])*invPetal;
         else if(lobeMode===4)lobe=.86+.14*(SECTION_COS3[side]*cPh-SECTION_SIN3[side]*sPh);
         else if(lobeMode===5)lobe=.92+.08*(SECTION_SIN5[side]*cPh+SECTION_COS5[side]*sPh);
-        const x=cs*width*lobe,y=sn*thickness*lobe,vertex=(base+ring*SIDES+side)*3;
+        const x=cs*width*lobe,y=sn*thickness*lobe;
         pa[vertex]=cx+f0*x+f3*y;pa[vertex+1]=cy+f4*y;pa[vertex+2]=cz+f2*x+f5*y;
         let nx,ny,nz;
         if(endpoint){nx=f6*capSign;ny=f7*capSign;nz=f8*capSign;}
@@ -643,8 +652,9 @@ export class ProjectileVisualRuntime {
     for(let ring=0;ring<RINGS;ring++) {
       const before=ring>0?ring-1:0,after=ring<RINGS-1?ring+1:RINGS-1,o=ring*6,j=ring*9,prev=before*6,next=after*6,pj=before*9,nj=after*9;
       const rx=f[j],ry=f[j+1],rz=f[j+2],nx=f[j+3],ny=f[j+4],nz=f[j+5],width=w[ring],thin=t[ring];
-      for(let side=0;side<SIDES;side++) {
-        const cs=SECTION_COS[side],sn=SECTION_SIN[side],v=(base+ring*SIDES+side)*3;
+      let v=(base+ring*SIDES)*3;
+      for(let side=0;side<SIDES;side++,v+=3) {
+        const cs=SECTION_COS[side],sn=SECTION_SIN[side];
         pa[v]=c[o]+rx*width*cs+nx*thin*sn;pa[v+1]=c[o+1]+ry*width*cs+ny*thin*sn;pa[v+2]=c[o+2]+rz*width*cs+nz*thin*sn;
         // Differentiate the stored swept surface, including rotating frames,
         // so beauty, shadow and override-normal passes see the same geometry.
