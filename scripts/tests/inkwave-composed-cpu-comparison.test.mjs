@@ -24,3 +24,16 @@ test('explicit BVH reduction mode keeps exact A/A and gameplay/render gates',()=
  const changedRepeat=structuredClone(b);changedRepeat.scenarios[0].bvh.triangleTests--;
  assert.throws(()=>compareComposedCpu(a,changedRepeat,c,options));
 });
+
+for(const [label,mutate] of [
+ ['lost context',r=>r.scenarios[0].contextLost=true],
+ ['page error',r=>r.scenarios[0].errors.push('baseline page failed')],
+])test(`comparison rejects baseline ${label}`,()=>{
+ const a=report(),b=report(),c=report();mutate(a);
+ assert.throws(()=>compareComposedCpu(a,b,c),'invalid baseline must not support parity');
+});
+test('comparison rejects an empty workload',()=>{
+ const a=report(),b=report(),c=report();
+ for(const r of [a,b,c])r.scenarios=[];
+ assert.throws(()=>compareComposedCpu(a,b,c),'empty comparison is not measured work');
+});

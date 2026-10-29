@@ -7,7 +7,10 @@ export function compareComposedCpu(before,repeat,after,{allowBvhWorkReduction=fa
   assert.equal(report.schema,2,'measured-window counter schema');assert.equal(report.status,'passed');assert.match(report.sourceSha,/^[a-f0-9]{40}$/);
   assert.deepEqual(Object.keys(report.harness||{}).sort(),[...harnessFiles].sort(),'complete benchmark implementation receipt');
   for(const file of harnessFiles)assert.match(report.harness[file],/^[a-f0-9]{64}$/);
+  assert.ok(Array.isArray(report.scenarios)&&report.scenarios.length>0,'at least one measured scenario');
   for(const row of report.scenarios){
+   assert.equal(row.contextLost,false,'each measured scenario retains its GL context');
+   assert.deepEqual(row.errors,[],'each measured scenario has no page errors');
    const {before:start,after:end}=row.rawCounters;
    assert.deepEqual(row.draw,{...end.draw,frame:end.draw.frame-start.draw.frame},'draw counter window agrees with raw observations');
    assert.deepEqual(row.resources,Object.fromEntries(Object.keys(end.resources).map(k=>[k,end.resources[k]-start.resources[k]])),'allocation window agrees with raw observations');
@@ -36,7 +39,6 @@ export function compareComposedCpu(before,repeat,after,{allowBvhWorkReduction=fa
      assert.ok(Number.isSafeInteger(row.bvh[key])&&row.bvh[key]>=0&&row.bvh[key]<=base.bvh[key],base.stage+' non-increasing BVH '+key);
     }
    }else assert.deepEqual(row.bvh,base.bvh,base.stage+' bvh parity');
-   assert.equal(row.contextLost,false);assert.deepEqual(row.errors,[]);
   }
   return {stage:base.stage,status:'exact-recorded-state-parity',beforeMs:base.cpuFrameMs,repeatMs:repeat.scenarios[i].cpuFrameMs,afterMs:after.scenarios[i].cpuFrameMs,
    bvh:{policy:allowBvhWorkReduction?'explicit-non-increasing-candidate-work':'exact',before:base.bvh,repeat:repeat.scenarios[i].bvh,after:after.scenarios[i].bvh},

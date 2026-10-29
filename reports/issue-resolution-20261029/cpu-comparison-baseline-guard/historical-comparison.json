@@ -1,0 +1,69 @@
+[
+  {
+    "stage": "tidewater",
+    "status": "exact-recorded-state-parity",
+    "beforeMs": {
+      "mean": 11.080666666589677,
+      "p50": 9.599999997764826,
+      "p95": 25.599999997764826,
+      "p99": 31.899999998509884,
+      "max": 39.900000002235174
+    },
+    "repeatMs": {
+      "mean": 17.73533333328863,
+      "p50": 12.700000002980232,
+      "p95": 44.599999997764826,
+      "p99": 61.19999999925494,
+      "max": 65.80000000074506
+    },
+    "afterMs": {
+      "mean": 20.356666666616995,
+      "p50": 16.599999997764826,
+      "p95": 45.80000000074506,
+      "p99": 55.79999999701977,
+      "max": 72.69999999925494
+    },
+    "bvh": {
+      "policy": "exact",
+      "before": {
+        "queries": 0,
+        "triangleTests": 0
+      },
+      "repeat": {
+        "queries": 0,
+        "triangleTests": 0
+      },
+      "after": {
+        "queries": 0,
+        "triangleTests": 0
+      }
+    },
+    "gc": [
+      {
+        "status": "observed",
+        "events": 10,
+        "pauses": 5,
+        "pauseMs": 13.113999999999999,
+        "maxPauseMs": 5.983,
+        "windowMs": 3332.879
+      },
+      {
+        "status": "observed",
+        "events": 10,
+        "pauses": 5,
+        "pauseMs": 13.719,
+        "maxPauseMs": 6.729,
+        "windowMs": 5333.243
+      },
+      {
+        "status": "observed",
+        "events": 10,
+        "pauses": 5,
+        "pauseMs": 13.843,
+        "maxPauseMs": 4.799,
+        "windowMs": 6137.94
+      }
+    ],
+    "limits": "Host CPU workload only; measured draw/allocation and live-scene counters are compared. No physical-device, presented FPS, whole-image or absolute resource-budget acceptance; A/A noise must accompany A/B timings."
+  }
+]
