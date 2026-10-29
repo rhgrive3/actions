@@ -9,6 +9,9 @@ export function compareComposedCpu(before,repeat,after,{allowBvhWorkReduction=fa
   for(const file of harnessFiles)assert.match(report.harness[file],/^[a-f0-9]{64}$/);
   assert.ok(Array.isArray(report.scenarios)&&report.scenarios.length>0,'at least one measured scenario');
   for(const row of report.scenarios){
+   assert.ok(Number.isInteger(row.frames)&&row.frames>=30&&row.frames<=18000,'measured frame count matches capture bounds');
+   assert.ok([30,60,120].includes(row.hz),'measured cadence matches capture options');
+   assert.equal(row.ticks,Math.round(row.frames*60/row.hz),'measured fixed ticks match capture contract');
    assert.equal(row.contextLost,false,'each measured scenario retains its GL context');
    assert.deepEqual(row.errors,[],'each measured scenario has no page errors');
    const {before:start,after:end}=row.rawCounters;
