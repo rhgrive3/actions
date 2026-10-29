@@ -23,6 +23,8 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+          fetch-depth: 6
+          filter: blob:none
       - uses: actions/configure-pages@v5
       - uses: actions/setup-node@v4
         with:
@@ -33,7 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           source_sha=fecc40a9de1652a1f6e27ae6840439ff989e8fdc
-          test "$(git rev-parse HEAD^)" = "$source_sha"
+          git merge-base --is-ancestor "$source_sha" HEAD
+          test "$(git diff --name-only "$source_sha" HEAD)" = ".github/workflows/inkwave-pages-snapshot-20261029.yml"
           test "$(git ls-remote https://github.com/rhgrive3/actions.git refs/heads/main | cut -f1)" = "$source_sha"
           npm ci --no-audit --no-fund
           node --test scripts/tests/inkwave-pages-source-identity.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs
@@ -51,4 +54,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(curl -fsSL --retry 5 --retry-delay 2 "https://rhgrive3.github.io/actions/inkwave-deployed-sha.txt?nocache=$GITHUB_RUN_ID")" = "fecc40a9de1652a1f6e27ae6840439ff989e8fdc"
+          for attempt in $(seq 1 20); do
+            published="$(curl -fsSL --max-time 8 "https://rhgrive3.github.io/actions/inkwave-deployed-sha.txt?nocache=$GITHUB_RUN_ID-$attempt" || true)"
+            if [ "$published" = "fecc40a9de1652a1f6e27ae6840439ff989e8fdc" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Pages marker did not match published source" >&2
+          exit 1
