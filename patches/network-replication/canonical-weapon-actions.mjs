@@ -9,7 +9,7 @@ export const CANONICAL_WEAPON_STEP = 1 / 60;
 const MAX_TICK = 1e9, MAX_COORD = 2000;
 const BUTTONS = Object.freeze(['fire','sub','jump','squid','special']);
 const OPTIONAL_BUTTONS = Object.freeze(['booyah','throw']);
-const COMMAND_KEYS = new Set(['nid','owner','life','input','aim','aimPoint']);
+const COMMAND_KEYS = new Set(['nid','owner','life','input','aim','aimPoint','cancel']);
 const INPUT_KEYS = new Set([...BUTTONS,...OPTIONAL_BUTTONS,'move']);
 const RESULT_KEYS = new Set(['ink','specialGauge','charge','chargeF','cooldown','damage',
   'births','pellets','projectiles','velocity','vel','position','pos','weapon','weaponId',
@@ -31,7 +31,7 @@ export const CANONICAL_WEAPON_ACTION_SCHEMA = freeze({
   requiredInput:BUTTONS,
   optionalInput:OPTIONAL_BUTTONS,
   requiredCommand:freeze(['nid','owner','life','input','aim']),
-  optionalCommand:freeze(['aimPoint']),
+  optionalCommand:freeze(['aimPoint','cancel']),
   outcomeOwner:'native Actor.update -> WeaponRunner -> Projectiles',
   resourceOwner:'trusted initial spawn/gear + native resource clocks',
   legacyWire:'birth/fire/snapshot rows are observations, not complete input history',
@@ -173,12 +173,21 @@ export function createCanonicalWeaponActions(nativeApi) {
     if(!vector(input.move,2,1)||Math.hypot(...input.move)>1+1e-9)return rejected('invalid-move');
     if(!vector(raw.aim,2,MAX_TICK))return rejected('invalid-aim');
     if(own(raw,'aimPoint')&&!vector(raw.aimPoint,3,MAX_COORD))return rejected('invalid-aim-point');
+    if(own(raw,'cancel')){
+      const c=raw.cancel;
+      if(!record(c)||Object.keys(c).some(k=>k!=='fire'&&k!=='sub')||
+        !own(c,'fire')||!own(c,'sub')||typeof c.fire!=='boolean'||typeof c.sub!=='boolean')
+        return rejected('invalid-cancel');
+      if(c.fire&&input.fire||c.sub&&input.sub)return rejected('cancelled-held-input');
+      if((c.fire||c.sub)&&typeof entry.actor.weaponRunner?.cancelHold!=='function')return rejected('unsupported-native-cancel');
+    }
     const normalized={};
     for(const key of BUTTONS)normalized[key]=input[key];
     for(const key of OPTIONAL_BUTTONS)normalized[key]=input[key]??false;
     normalized.move=freeze(input.move.slice());
     const request=freeze({nid:raw.nid,owner:from,life:raw.life,input:freeze(normalized),
-      aim:freeze(raw.aim.slice()),...(own(raw,'aimPoint')?{aimPoint:freeze(raw.aimPoint.slice())}:{})});
+      aim:freeze(raw.aim.slice()),...(own(raw,'aimPoint')?{aimPoint:freeze(raw.aimPoint.slice())}:{}),
+      ...(own(raw,'cancel')?{cancel:freeze({fire:raw.cancel.fire,sub:raw.cancel.sub})}:{})});
     const token=freeze({});tickets.set(token,{entry,tick,request,used:false});
     return freeze({ok:true,token,request});
   }
@@ -198,6 +207,11 @@ export function createCanonicalWeaponActions(nativeApi) {
     actor.intent.move.set(request.input.move[0],0,request.input.move[1]);
     actor.aimYaw=request.aim[0];actor.aimPitch=request.aim[1];
     if(request.aimPoint)actor.aimPoint.set(...request.aimPoint);
+    // A platform-cancelled hold is a distinct native input operation, not a
+    // deliberate release. Use the very hook PlayerController._cancelHolds
+    // invokes before Actor.update; never reimplement its state/resource edits.
+    if(request.cancel&&(request.cancel.fire||request.cancel.sub))
+      actor.weaponRunner.cancelHold(request.cancel.fire,request.cancel.sub);
     return freeze({ok:true,nid:entry.nid,owner:entry.owner,life:entry.life,epoch:entry.epoch,tick,
       weaponId:actor.weaponId,outcome:'input-applied; native action not yet evaluated'});
   }

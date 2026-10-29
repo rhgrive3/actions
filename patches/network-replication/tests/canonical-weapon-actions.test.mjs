@@ -96,24 +96,28 @@ test('commands require complete holds and finite native input vectors, while abs
   assert.deepEqual(plain(actor.aimPoint.toArray()),[2,3,4]);
 });
 
-function nativeRun(f,id,{canonical=true,ink=100,ticks=240}={}){
+function nativeRun(f,id,{canonical=true,ink=100,ticks=240,cancelAt=null}={}){
   const {actor,actions}=setup(f,id);actor.ink=ink;
   const ps=f.G.projectiles,births=[],events=[],push=ps._push,chargerJobs=new Set();
   const off=f.on('weapon:fire',e=>{if(e.actor===actor)events.push({tick,weapon:e.weapon,charge:e.charge,hand:e.hand});});
-  ps._push=function(p){if(p.owner===actor)births.push({tick,wid:p.wid??null,type:p.type,ink:actor.ink,
+  // _push is an allocation/queue observation, not proof of wire publication.
+  // Native Slosher owners finalize some pending flags only after this call.
+  ps._push=function(p){if(p.owner===actor)births.push({tick,stage:'native-allocation',wid:p.wid??null,type:p.type,ink:actor.ink,
     pos:p.pos.toArray(),vel:p.vel.toArray(),delay:p.delay,life:p.life,damage:p.damage,inkMeta:plain(p.inkMeta??null)});return push.call(this,p);};
   let tick=0;
   try{
     for(;tick<ticks;tick++){
-      const hold=tick<160,raw=command({input:{...command().input,fire:hold}});
+      const hold=tick<160,raw=command({input:{...command().input,fire:hold},
+        ...(tick===cancelAt?{cancel:{fire:true,sub:false}}:{})});
       if(canonical){const p=actions.prepare(raw,{tick,from:'A'});assert.equal(p.ok,true,id+' at'+tick);assert.equal(actions.apply(p.token).ok,true);}
-      else{Object.assign(actor.intent,raw.input);actor.intent.move=new f.THREE.Vector3(0,0,0);actor.aimYaw=0;actor.aimPitch=0;actor.aimPoint.set(...raw.aimPoint);}
+      else{Object.assign(actor.intent,raw.input);actor.intent.move=new f.THREE.Vector3(0,0,0);actor.aimYaw=0;actor.aimPitch=0;actor.aimPoint.set(...raw.aimPoint);
+        if(raw.cancel)actor.weaponRunner.cancelHold(raw.cancel.fire,raw.cancel.sub);}
       f.G.time+=1/60;actor.update(1/60);
       // Legacy Charger owns a separate finite-flight queue, not _push/list.
       // Its authoritative jobs are native emissions too, without inventing
       // an owner-authored projectile record for them.
       for(const job of ps._fidelityChargerFlights||[])if(job.owner===actor&&!chargerJobs.has(job)){
-        chargerJobs.add(job);births.push({tick,wid:job.weapon.id,type:'native-charger-flight',ink:actor.ink,
+        chargerJobs.add(job);births.push({tick,stage:'native-flight-start',wid:job.weapon.id,type:'native-charger-flight',ink:actor.ink,
           pos:job.origin.toArray(),vel:job.dir.clone().multiplyScalar(job.speed).toArray(),delay:0,
           life:job.range/job.speed,damage:job.damage,charge:job.charge,chargeT:job.chargeT,inkMeta:null});
       }
@@ -136,6 +140,22 @@ test('native cadence/resources and multi-pellet/charge/burst/roller owners retai
   assert.equal(empty.births.length,0,'valid empty-ink fire requests cannot invent a native birth');
   assert.equal(empty.state.runner.charge,0);
   console.log(JSON.stringify({canonicalNativeActions:proof}));
+});
+
+test('native cancel requests preserve deliberate-release versus cancelled-hold Charger and Splatling behavior',async()=>{
+  const f=await world();
+  for(const id of ['charger','splatling']){
+    const release=nativeRun(f,id),cancelled=nativeRun(f,id,{cancelAt:160});
+    const reference=nativeRun(f,id,{canonical:false,cancelAt:160});
+    assert.ok(release.events.length>0,id+' deliberate release owns an actual shot');
+    assert.equal(cancelled.events.length,0,id+' native cancellation never becomes a shot release');
+    assert.equal(cancelled.births.length,0);
+    assert.deepEqual(cancelled,reference,id+' command calls the existing native cancellation owner');
+  }
+  const {actions}=setup(f);
+  assert.equal(actions.prepare(command({cancel:{fire:1,sub:false}}),{tick:0,from:'A'}).reason,'invalid-cancel');
+  assert.equal(actions.prepare(command({cancel:{fire:true,sub:false},input:{...command().input,fire:true}}),
+    {tick:0,from:'A'}).reason,'cancelled-held-input');
 });
 
 test('legacy birth/fire/snapshot observations cannot mint complete canonical command history',async()=>{
