@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {execFileSync} from 'node:child_process';
 const read=file=>fs.readFileSync(new URL('../../'+file,import.meta.url),'utf8');
 const command=(cwd,args,options={})=>execFileSync('git',args,{cwd,stdio:['pipe','pipe','pipe'],...options});
@@ -15,12 +16,20 @@ for(const workflow of ['validate-inkwave-ranked.yml','inkwave-runtime-frame-pari
   assert.deepEqual(materialized,workflow==='inkwave-audio-reference-fetch.yml'?examples.filter(file=>file==='tools/audio/collect-public-reference-recordings.py'||file==='.github/workflows/inkwave-audio-reference-fetch.yml'):examples.filter(file=>!excludedAuthoringFixturePaths.includes(file)||(['inkwave-paint-hotpath.yml','inkwave-touch-frame-pacing.yml','inkwave-composed-cpu.yml','inkwave-small-tank.yml'].includes(workflow)&&file.endsWith('/src/editor.js'))));
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
-test('test jobs keep original entries and only the pinned build dependency where required',()=>{
+test('test-only jobs keep original entries without installing unused packages',()=>{
  for(const [workflow,tests]of [['inkwave-touch-frame-pacing.yml',['range-frame-pacing.test.mjs','range-hitch-tracer.test.mjs','quality.test.mjs','cargo-offline-precache.test.mjs']],['inkwave-roller-support-source-pin.yml',['issue-847-roller-drum-support.test.mjs']]]){
-  const source=read('.github/workflows/'+workflow);if(workflow==='inkwave-touch-frame-pacing.yml'){assert.equal((source.match(/npm install/g)||[]).length,1);assert.match(source,/npm install --no-save --no-package-lock --silent esbuild@0\.28\.2/);assert.doesNotMatch(source,/playwright|npx /);}else assert.doesNotMatch(source,/npm install|npx /);assert.match(source,/node-version: 22/);assert.match(source,/node --experimental-vm-modules --test /);for(const entry of tests)assert(source.includes(entry));
+  const source=read('.github/workflows/'+workflow);assert.doesNotMatch(source,/npm install|npm ci|playwright|npx /);assert.match(source,/node-version: 22/);assert.match(source,/node --experimental-vm-modules --test /);for(const entry of tests)assert(source.includes(entry));
  }
 });
 test('the sparse audio collector parses and imports only Python standard-library modules',()=>{
  const script=new URL('../../tools/audio/collect-public-reference-recordings.py',import.meta.url).pathname;
  execFileSync('python3',['-c',"import ast,pathlib,sys; tree=ast.parse(pathlib.Path(sys.argv[1]).read_text()); names={a.name.split('.')[0] for n in ast.walk(tree) if isinstance(n,ast.Import) for a in n.names}|{n.module.split('.')[0] for n in ast.walk(tree) if isinstance(n,ast.ImportFrom)}; assert names <= sys.stdlib_module_names, names-sys.stdlib_module_names",script]);
+});
+
+test('touch test-only dependency removal restores the exact reviewed prior workflow',()=>{
+ const source=read('.github/workflows/inkwave-touch-frame-pacing.yml');
+ const boundary="      - name: Verify touch cadence, profiler and final composed main loop\n";
+ assert.equal(source.split(boundary).length,2);
+ const restored=source.replace(boundary,"      - name: Install pinned build dependency\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\n"+boundary);
+ assert.equal(createHash('sha256').update(restored).digest('hex'),"3894070c7ca5bdd936c5eecec84f5ffe5b9c6a20e6d347941e0651a672cf9371");
 });

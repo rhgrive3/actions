@@ -31,6 +31,7 @@ const runtimeHelpers = [
 // Never infer this from '*-adapter' names: the emitted graph audit below must
 // still reject every static/dynamic runtime reference to an excluded module.
 const auditedBuildExports = new Map([
+  ['patches/local-quality/queue-visual-continuation-20261029-adapter.mjs', ['visualContinuationTargets']],
   ['patches/local-quality/queue-remaining-world-20261026-adapter.mjs', ['WORLD_DIRECT_PATHS', 'WORLD_REMAINING_PATHS']],
   ['patches/local-quality/queue-historical-source-motion-20261026-adapter.mjs', ['restoreHistoricalSourceMotion20261026']],
   ['patches/local-quality/static-menu-adapter.mjs', ['deferPrimaryWeaponIcon']],
@@ -62,6 +63,21 @@ const auditedBuildExports = new Map([
   ['patches/splatoon3/issue-483-adapter.mjs', ['replaceOnce483', 'ISSUE_483_REL', 'ISSUE_483_HEADER', 'ISSUE_483_RIG_ANCHOR', 'ISSUE_483_RIG_TAIL_ANCHOR', 'ISSUE_483_TIER_ANCHOR', 'ISSUE_483_QUALITY_ANCHOR', 'ISSUE_483_DISPOSE_ANCHOR', 'ISSUE_483_GEO_REL', 'ISSUE_483_GEO_ANCHOR', 'ISSUE_483_GEO_APPEND']],
   ['patches/splatoon3/issue-484-adapter.mjs', ['replaceOnce']],
 ]);
+
+test('every terminal quality composer dependency is bound to the build input identity', () => {
+  const text = fs.readFileSync(new URL('scripts/inkwave-source-composition.mjs', root), 'utf8');
+  const ast = parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
+  const dependencies = ast.body.filter(n => n.type === 'ImportDeclaration')
+    .map(n => n.source.value).filter(spec => spec.startsWith('../patches/local-quality/'))
+    .map(spec => spec.slice('../patches/local-quality/'.length));
+  assert(dependencies.length > 0);
+  const identity = qualityIdentity();
+  for (const file of dependencies) {
+    const bytes = fs.readFileSync(new URL('patches/local-quality/' + file, root));
+    assert.equal(identity[file], crypto.createHash('sha256').update(bytes).digest('hex'),
+      'Terminal composition must invalidate the build when this dependency changes: ' + file);
+  }
+});
 
 test('excluded modules have audited build-only exports; mixed runtime adapters remain shipped', () => {
   assert(BUILD_ONLY_PATCH_MODULES.size > 0);

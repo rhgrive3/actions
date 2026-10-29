@@ -159,6 +159,9 @@
           "scripts/tests/inkwave-queued-workflow-policy.test.mjs",
           "scripts/tests/inkwave-ci-queue-relief.test.mjs",
           "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+          "scripts/tests/inkwave-queue-ci-20261029.test.mjs",
+          "scripts/tests/inkwave-pages-validation.test.mjs",
+          "scripts/tests/inkwave-headgear-shared-build.test.mjs",
           "scripts/tests/inkwave-wiper-capture-isolation.test.mjs",
           "scripts/tests/inkwave-ci-source-admission.test.mjs",
           "scripts/tests/inkwave-main9fe-paint-admission.test.mjs",
@@ -227,6 +230,7 @@
           "scripts/tests/inkwave-test-suites.test.mjs",
           "scripts/tests/inkwave-evidence-packaging.test.mjs",
           "scripts/tests/ranked-roller-audio.test.mjs",
+          "scripts/tests/ranked-trace-policy.test.mjs",
           "scripts/tests/inkwave-quality-account-scope.test.mjs",
           "scripts/tests/cxx-openttd-projection.test.mjs"
         ]

@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
+import {assertValidateWorkflowContract} from '../ci/inkwave-validate-contract.mjs';
 const root=new URL('../../',import.meta.url);
 const read=name=>fs.readFileSync(new URL('.github/workflows/'+name,root),'utf8');
 const expression="${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}";
@@ -23,20 +24,24 @@ test('A+ replaces obsolete PR checks while retaining every main and manual run',
 test('required checks keep their identities and cancellation cannot skip the required Validate fan-in',()=>{
  assert.match(quality,/^  verify-aplus-suite:\n/m);assert.doesNotMatch(quality,/^    if:.*cancelled\(\)/m);
  const source=read('validate-inkwave-update.yml'),gate=source.slice(source.indexOf('  validate:'),source.indexOf('  browser:'));
- assert.match(gate,/if: \$\{\{ always\(\) && inputs\.diagnostic_only != true \}\}/);
- assert.match(gate,/needs: \[admission_preflight, validate_core, patch_tests, circleci_offload_gate\]/);assert.match(gate,/test "\$PREFLIGHT_RESULT" = success/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
+ assertValidateWorkflowContract(source);
+ assert.match(gate,/always\(\) && inputs\.diagnostic_only != true/);
+ assert.match(gate,/github\.event_name != 'pull_request' \|\| github\.event\.pull_request\.draft == false/);
+ assert.match(gate,/test "\$PREFLIGHT_RESULT" = success/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
 });
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
 // Only Validate core executes the CircleCI parity gate that reads this config.
 const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+// The build job consumes only the checked-in ink-volume source under reports.
+const buildProfile=profile.flatMap(p=>p==='/reports/'?[p,'!/reports/*','/reports/ink-volume/','!/reports/ink-volume/*','/reports/ink-volume/source/']:[p]);
 // Exact immutable checkout input closure for the mandatory low-cost preflight.
 const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/'];
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
 function assertCurrentCheckouts(name,source,count){
  const blocks=checkouts(source);assert.equal(blocks.length,count);
  if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
- for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:name==='validate-inkwave-update.yml'&&job==='build_site'?buildProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
 }
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
  for(const[name,count]of[['validate-inkwave-update.yml',11],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
@@ -69,9 +74,55 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // prevents an added prototype mutation or dynamic side effect from intercepting
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
- [sparseFixtureFile]:'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
- 'scripts/tests/continuous-browser-video.test.mjs':'1e15c0668d8179753b99e947c35c8bf4c2c91f1c5333c760b4bdbc0165b96f03',
+ [sparseFixtureFile]:'d1c3a8e8702f0033e2df9c7a0b9ce1244c02e3f8cd0d030f3870087f2053c2fb',
+ 'scripts/tests/continuous-browser-video.test.mjs':'7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3',
 };
+// Re-reviewed touch CI delta: crypto import, test title/unused-install expectation,
+// and one workflow-restoration negative control only. Reverse the exact reviewed
+// text to the original whole-file seal; synthetic fixture/consumer AST pins below
+// remain unchanged. An unrelated edit fails both current and historical seals.
+const reviewedSparseSourceDelta = [
+  {
+    "before": "",
+    "after": "import {createHash} from 'node:crypto';\n"
+  },
+  {
+    "before": "test('test jobs keep original entries and only the pinned build dependency where required',()=>{\n",
+    "after": "test('test-only jobs keep original entries without installing unused packages',()=>{\n"
+  },
+  {
+    "before": "  const source=read('.github/workflows/'+workflow);if(workflow==='inkwave-touch-frame-pacing.yml'){assert.equal((source.match(/npm install/g)||[]).length,1);assert.match(source,/npm install --no-save --no-package-lock --silent esbuild@0\\.28\\.2/);assert.doesNotMatch(source,/playwright|npx /);}else assert.doesNotMatch(source,/npm install|npx /);assert.match(source,/node-version: 22/);assert.match(source,/node --experimental-vm-modules --test /);for(const entry of tests)assert(source.includes(entry));\n",
+    "after": "  const source=read('.github/workflows/'+workflow);assert.doesNotMatch(source,/npm install|npm ci|playwright|npx /);assert.match(source,/node-version: 22/);assert.match(source,/node --experimental-vm-modules --test /);for(const entry of tests)assert(source.includes(entry));\n"
+  },
+  {
+    "before": "",
+    "after": "\ntest('touch test-only dependency removal restores the exact reviewed prior workflow',()=>{\n const source=read('.github/workflows/inkwave-touch-frame-pacing.yml');\n const boundary=\"      - name: Verify touch cadence, profiler and final composed main loop\\n\";\n assert.equal(source.split(boundary).length,2);\n const restored=source.replace(boundary,\"      - name: Install pinned build dependency\\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\\n\"+boundary);\n assert.equal(createHash('sha256').update(restored).digest('hex'),\"3894070c7ca5bdd936c5eecec84f5ffe5b9c6a20e6d347941e0651a672cf9371\");\n});\n"
+  }
+];
+function restoreReviewedSparseSource(source) {
+ let restored=source;
+ for(const {before,after} of reviewedSparseSourceDelta) {
+  assert.equal(restored.split(after).length,2,'exactly one reviewed sparse fixture delta');
+  restored=restored.replace(after,before);
+ }
+ assert.equal(createHash('sha256').update(restored).digest('hex'),
+  'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
+  'reversed sparse fixture must retain the exact original audited source');
+ return restored;
+}
+test('reviewed touch CI fixture delta reverses to its immutable original source seal',()=>{
+ const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
+ assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[sparseFixtureFile]);
+ restoreReviewedSparseSource(source);
+ for(const {after} of reviewedSparseSourceDelta) {
+  assert.throws(()=>restoreReviewedSparseSource(source.replace(after,'')));
+  assert.throws(()=>restoreReviewedSparseSource(source+after));
+ }
+ assert.throws(()=>restoreReviewedSparseSource(source+'\n// unrelated fixture mutation\n'));
+});
+// Re-reviewed 2026-10-29: removed only the byte-identical second sparse-negative
+// loop. All three immutable consumer hashes and all original workflow blob
+// seals below are unchanged; each negative control still runs exactly once.
 // Only four literal nodes in this one audited test describe sparse exclusions;
 // none is an input consumed by the build or runtime. The owning constructs
 // are pinned as a whole: permitting an otherwise legitimate identifier as an
@@ -125,6 +176,7 @@ function assertNoAuthoringDependency(file,source){
   assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[file],'audited fixture changed; re-review before updating its narrow literal exemption');
  let checked=file===volumeFixtureFile?maskReviewedVolumeFixture(source):source;
  if(file===sparseFixtureFile){
+  restoreReviewedSparseSource(source);
   // Only the reviewed literal data in this temporary-repository fixture is
   // exempt. Imports, filesystem references and the rest of its code are scanned.
   const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
@@ -209,23 +261,36 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  const body=gate.split('        run: |\n')[1];assert(body,'required gate shell');
  const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
  const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,...env},encoding:'utf8'});
+ const complete={PREFLIGHT_RESULT:'success',BUILD_RESULT:'success',CONTRACTS_ONLY:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',BROWSER_RESULT:'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',OFFLOAD_ACTIVE:'false'};
  for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
-  const env={PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle};
+  const env={...complete,OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle,BROWSER_RESULT:offload?'skipped':'success'};
   const result=run(shell,env);assert.ifError(result.error);
   assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
  }
  // The new gate must reject a failed preflight even when all legacy jobs pass.
- const preflightFailed={PREFLIGHT_RESULT:'failure',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'};
+ const preflightFailed={...complete,PREFLIGHT_RESULT:'failure'};
  assert.notEqual(run(shell,preflightFailed).status,0);
  assert.equal(run(shell.replace('test "$PREFLIGHT_RESULT" = success','true # missing preflight guard'),preflightFailed).status,0);
  for(const [needle,env]of [
-  ['test "$CORE_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
-  ['test "$PATCH_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
-  ['test "$CIRCLECI_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
+  ['test "$CORE_RESULT" = success',{...complete,CORE_RESULT:'failure'}],
+  ['test "$PATCH_RESULT" = success',{...complete,PATCH_RESULT:'failure'}],
+  ['test "$CIRCLECI_RESULT" = success',{...complete,OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',BROWSER_RESULT:'skipped',CIRCLECI_RESULT:'failure'}],
  ]){
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
  }
+ const heavy=['CORE_RESULT','PATCH_RESULT','CIRCLECI_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'];
+ const contracts={...complete,CONTRACTS_ONLY:'true',...Object.fromEntries(heavy.map(name=>[name,'skipped']))};
+ for(const good of [complete,{...complete,OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:'skipped'},contracts]){
+  assert.equal(run(shell,good).status,0,'complete current gate');
+  for(const name of Object.keys(complete).filter(name=>name.endsWith('_RESULT'))){
+   for(const value of ['success','failure','cancelled','skipped']){
+    if(value===good[name])continue;
+    assert.notEqual(run(shell,{...good,[name]:value}).status,0,'gate rejects '+name+'='+value);
+   }
+  }
+ }
+ for(const scope of ['', 'unknown'])assert.notEqual(run(shell,{...complete,CONTRACTS_ONLY:scope}).status,0);
 });
 
 
