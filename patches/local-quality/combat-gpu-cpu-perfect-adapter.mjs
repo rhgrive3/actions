@@ -1164,6 +1164,10 @@ export class SwimWake {`,
 // Final Wave 3–5 pass runs after strict world/audio/UI queue adapters.
 // Conditional misses retain those owners; they are not counted as applied.
 export function adaptCombatWave345(rel, code, replaceOnce) {
+    // DO NOT MERGE: matched diagnostic baseline from current 98ccd1c6.
+    // Disable only the six applied CPU ancestor/quaternion transformations.
+    // RootHair MOT-04 is already unmatched here; all other Wave owners stay on.
+    if (rel === 'src/game/character.js' || rel === 'src/game/motion/retarget.js') return code;
     if (rel === 'src/world/level.js') {
       // LVL-01: Ternary hash clamping, scalar OBB test and scalar ground plane.
       code = applyWave345Compatible(
