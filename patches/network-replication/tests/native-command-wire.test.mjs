@@ -80,3 +80,8 @@ test('only trusted next-life enrollment can accept a respawn; old prepared plans
  assert.equal(prepareNativeCommandEnvelope(peer,first,{from:'A',at:101}).ok,false);
  const next=prepareNativeCommandEnvelope(peer,future,{from:'A',at:101});assert.equal(next.ok,true);assert.equal(commitNativeCommandEnvelope(peer,next.token),true);assert.equal(p.version,2);
 });
+test('rejoining cannot mint another elapsed budget or reset native input chronology',()=>{
+ const {p,peer}=setup(),request={from:'A',capability:nativeCommandCapability(p),at:100};
+ assert.equal(admitNativeCommandPeer(p,request).reason,'native-command-owner-already-enrolled');
+ retireNativeCommandPeer(peer);assert.equal(admitNativeCommandPeer(p,{...request,at:200}).reason,'native-command-owner-already-enrolled');
+});

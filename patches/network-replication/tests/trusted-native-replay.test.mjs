@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {MessageChannel} from 'node:worker_threads';
 import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 
 // Actual production-adapted Actor/Physics/WeaponRunner/Projectiles. The only
@@ -8,7 +9,9 @@ import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 // rollback is made. Native actor integration and final damage stay installed.
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:`
  export * from './patches/network-replication/trusted-native-replay.mjs';
+ export * from './patches/network-replication/trusted-native-replay-worker.mjs';
  export {Boss} from './inkwave-public/src/boss/boss.js';
+ export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';
 `});
 const host=x=>JSON.parse(JSON.stringify(x));
 const V=(x=0,y=0,z=0)=>new f.THREE.Vector3(x,y,z);
@@ -19,13 +22,13 @@ class Display {
   getMuzzle(out){return out.copy(this.root.position).add(V(0,1.05,.3));}
 }
 const spawn=(nid,team,z,weapon='shooter',x=0)=>({nid,owner:team?'B':'A',life:1,team,slot:0,weapon,position:[x,0,z],yaw:team?Math.PI:0});
-function setup({wall=false,roster=[spawn(1,0,0),spawn(2,1,7)],boss=null,afterActors=null}={}){
+function setup({wall=false,roster=[spawn(1,0,0),spawn(2,1,7)],boss=null,afterActors=null,initializeActor=null}={}){
   const raw={bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]};
   if(wall)raw.single.push({kind:'box',min:[-4,0,3],max:[4,6,4]});
   const level=new f.Level(raw),physics=new f.Physics(level),paint={sample:()=>0,splat:()=>0};
-  const world={level,physics,paint,match:{playing:()=>true,canRespawn:()=>false},afterActors,createBoss:boss};
+  const world={level,physics,paint,match:{playing:()=>true,canRespawn:()=>false},afterActors,createBoss:boss,initializeActor};
   const token=f.createTrustedNativeReplay(f,{isolatedRealm:true,epoch:'match',seed:83921,time:0,world,roster,CharacterClass:Display});
-  const authorization={owners:new Map(roster.map(r=>[r.nid,r.owner]))};
+  const authorization={epoch:'match',owners:new Map(roster.map(r=>[r.nid,r.owner]))};
   const state=()=>host(f.inspectTrustedNativeReplay(token));
   const step=(inputs={},dt=1/60)=>host(f.advanceTrustedNativeReplay(token,{tick:state().tick+1,dt,commands:roster.map(r=>({nid:r.nid,owner:r.owner,life:r.life,input:{fire:false,squid:false,sub:false,jump:false,special:false,move:[0,0],...inputs[r.nid]},aim:[r.yaw,0],aimPoint:[r.position[0],1,40]}))},authorization));
   // Expire native spawn invulnerability through real updates, not assignments.
@@ -123,8 +126,42 @@ test('owner body/RNG metadata cannot be used to fund or reseed a trusted spawn',
 test('raw owner assertion without independently supplied authenticated principal rejects',()=>{
   const w=setup();try{
     const commands=[1,2].map(nid=>({nid,owner:nid===1?'A':'B',life:1,input:{fire:false,squid:false,sub:false,jump:false,special:false,move:[0,0]},aim:[0,0]})),frame={tick:181,dt:1/60,commands};
-    assert.equal(f.advanceTrustedNativeReplay(w.token,frame).reason,'authenticated-command-owners-required');
-    assert.equal(f.advanceTrustedNativeReplay(w.token,frame,{owners:new Map([[1,'A'],[2,'A']])}).ok,false);
+    assert.equal(f.advanceTrustedNativeReplay(w.token,frame,{epoch:'match'}).reason,'authenticated-command-owners-required');
+    assert.equal(f.advanceTrustedNativeReplay(w.token,frame,{epoch:'old-match',owners:w.authorization.owners}).reason,'authenticated-command-epoch-required');
+    assert.equal(f.advanceTrustedNativeReplay(w.token,frame,{epoch:'match',owners:new Map([[1,'A'],[2,'A']])}).ok,false);
     assert.equal(w.state().tick,180);
   }finally{w.close();}
+});
+test('native empty-ink fire request is legal input but cannot mint owner-reported HP damage',()=>{
+  const w=setup({initializeActor(a,r){a.spawnAt(V(...r.position),r.yaw);a.ink=0;}});
+  try{
+    // Native waiting recovers ink; deplete it with native paid fire until the
+    // actual runner cannot fund the requested cadence. Never copy wire ink.
+    for(let i=0;i<900;i++)assert.equal(w.step({1:{fire:true}}).ok,true,w.state().error);
+    const state=w.state();assert.ok(state.actors[0].ink<2);assert.ok(state.launches.length<150);
+    assert.equal(f.peekTrustedNativeContact(w.token,{epoch:'match',tick:state.tick,kind:'pvp',attacker:1,attackerLife:1,victim:2,victimLife:1,source:'shooter',damage:999}),null);
+  }finally{w.close();}
+});
+test('all 65 catalog/native mains retain native hold/release emission under canonical requests',async t=>{
+  assert.equal(f.MAIN_WEAPON_CATALOG.records.length,65);
+  for(const record of f.MAIN_WEAPON_CATALOG.records)await t.test(record.id,()=>{
+    const w=setup({roster:[spawn(1,0,0,record.id)]});
+    try{for(let i=0;i<210;i++)assert.equal(w.step({1:{fire:i<130}}).ok,true,w.state().error);assert.ok(w.state().launches.length>0,'native emission event required; no p/list/birth-count assumption');}
+    finally{w.close();}
+  });
+});
+test('worker port returns committed native effects and refuses forged/cross-owner/cross-epoch/repeated claims',async()=>{
+ const w=setup(),{port1,port2}=new MessageChannel();let principal='A',epoch='match',serial=0;
+ const endpoint=f.attachTrustedNativeReplayWorker(port1,w.token,{authorize:()=>({epoch,from:principal,owners:w.authorization.owners})});
+ const call=payload=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('worker receipt timeout')),2000);port2.once('message',r=>{clearTimeout(timer);resolve(r);});port2.postMessage({id:++serial,...payload});});
+ try{
+  const forged={epoch:'match',tick:181,kind:'pvp',attacker:1,attackerLife:1,victim:2,victimLife:1,source:'shooter',damage:36};
+  assert.equal((await call({operation:'claim',claim:forged})).reason,'no-native-contact');
+  const frame={tick:181,dt:1/60,commands:w.state().actors.map(a=>({nid:a.nid,owner:a.owner,life:a.life,input:{fire:a.nid===1,squid:false,sub:false,jump:false,special:false,move:[0,0]},aim:[a.nid===1?0:Math.PI,0]}))};
+  assert.equal((await call({operation:'advance',frame})).ok,true);
+  shoot(w);const effect=w.state().effects[0],c=claim(effect);principal='B';assert.equal((await call({operation:'claim',claim:c})).reason,'worker-claim-owner');
+  principal='A';epoch='old-match';assert.equal((await call({operation:'claim',claim:c})).reason,'worker-epoch-mismatch');
+  epoch='match';assert.deepEqual((await call({operation:'claim',claim:c})).effect,effect);assert.equal((await call({operation:'claim',claim:c})).reason,'no-native-contact');
+  assert.equal((await call({operation:'inspect'})).ok,false);assert.equal((await call({operation:'init',frame:{ink:1000}})).ok,false);
+ }finally{endpoint.close();port1.close();port2.close();w.close();}
 });

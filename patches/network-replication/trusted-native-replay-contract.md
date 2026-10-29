@@ -14,7 +14,7 @@ once; a trusted `world.initializeActor` can instead run initial Squid Spawn.
 Its actual resulting native life must equal the roster life. Later-life state
 cannot be bootstrapped by assigning the life counter or accepting a snapshot.
 
-`advanceTrustedNativeReplay(handle, {tick, dt, commands}, {owners})` takes a
+`advanceTrustedNativeReplay(handle, {tick, dt, commands}, {epoch, owners})` takes a
 complete frame request and an independent trusted Map of authenticated owner
 identities. It validates every command before applying any, writes only raw
 intent/move/aim/optional aimPoint, and executes Actor.update for the roster,
@@ -57,3 +57,29 @@ results/owner/life/tick, copied receipts and exception/disposal cleanup. The
 Character/muzzle is an explicit display seam; paint is dry/zero-credit and the
 Boss has fixed combat state rather than a running AI/hazard lifecycle. These
 tests are not rendered, browser, hardware, WAN or production-server acceptance.
+
+The next stage connects `canonical-weapon-actions.mjs` as the default input
+owner. A source run now has 110 passing cases across the replay, canonical and
+wire files, including all 65 native main owners' ordinary hold/release emission.
+Those 65 use the same explicit display seam, not 65 source-banked Characters.
+The worker adapter exercises a real MessageChannel with copied data; it keeps
+capabilities in the native realm and returns only a committed native effect.
+That is a worker RPC test, not an actual deployed server worker or network room.
+
+`native-command-wire.mjs` adds a proposed `nc` sibling envelope without changing
+an existing actor/event tuple. A trusted policy fixes version2/build/epoch/seed.
+Missing/legacy capability or input does not negotiate down. A separate `from`
+argument owns authentication. Exact input serials/source dt/time and receiver
+elapsed budget reject gaps and speedup without inventing held input. Preparation
+is pure and prefix commit is one-use; exact retry deduplicates. An owner cannot
+enroll twice to reset time or resources. Life enrollment advances only through
+a trusted native lifecycle hook; late join/migration needs retained checkpoints
+or original input history, not a new first-life budget. This policy is not yet
+installed in RoomDurableObject or NetMatch, and cannot be called production
+backward compatibility merely because its unchanged tuples round-trip.
+
+Independent first-spawn work confirms 398 source/native replay frames and the
+first full-charge event with equal body/life/resources. It also records a
+0.0006324268558987452-world-unit source/private Character muzzle difference.
+The cause has not been established. Neither full socket equivalence nor a
+1e-7 muzzle match is established by the fixed display tests or 65 emissions.

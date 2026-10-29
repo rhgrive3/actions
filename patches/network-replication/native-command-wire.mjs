@@ -19,15 +19,16 @@ export function createNativeCommandRoomPolicy({epoch,build,seed,roster}={}){
   const actors=new Map();
   for(const r of roster){if(!keys(r,['nid','owner','life'])||!safe(r.nid)||actors.has(r.nid)||typeof r.owner!=='string'||!r.owner||!safe(r.life))throw Error('Invalid command roster');actors.set(r.nid,Object.freeze({...r}));}
   const token=Object.freeze({version:2,schema:NATIVE_COMMAND_SCHEMA,epoch,build,seed});
-  policies.set(token,{actors,peers:new Set()});return token;
+  policies.set(token,{actors,peers:new Set(),enrolledOwners:new Set()});return token;
 }
 export function nativeCommandCapability(p){policy(p);return {version:2,schema:NATIVE_COMMAND_SCHEMA,build:p.build};}
 export function admitNativeCommandPeer(p,{from,capability,at}={}){
   const s=policy(p);
   if(typeof from!=='string'||![...s.actors.values()].some(a=>a.owner===from)||!finite(at))return fail('authenticated-room-member-required');
   if(!keys(capability,['version','schema','build'])||capability.version!==2||capability.schema!==NATIVE_COMMAND_SCHEMA||capability.build!==p.build)return fail('required-native-command-capability');
+  if(s.enrolledOwners.has(from))return fail('native-command-owner-already-enrolled');
   const token=Object.freeze({}),state={policy:p,from,at,sequence:0,tick:0,time:null,elapsed:0,lastPayload:null,revision:0,closed:false};
-  peers.set(token,state);s.peers.add(state);return {ok:true,peer:token};
+  peers.set(token,state);s.peers.add(state);s.enrolledOwners.add(from);return {ok:true,peer:token};
 }
 // Called by trusted native lifecycle ownership after executing spawn/respawn,
 // not by a received snapshot. Only the next native life may replace enrollment.

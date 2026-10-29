@@ -2,6 +2,7 @@
 // Run in a dedicated native realm/worker: the native event bus and module-local
 // gameplay owners must belong to that realm. Commands are requests, never
 // witnesses that can assign HP, ink, charge, grounded state or projectile data.
+import {createCanonicalWeaponActions} from './canonical-weapon-actions.mjs';
 const sessions = new WeakMap(), contacts = new WeakMap(), realms = new WeakMap();
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 const integer = n => Number.isSafeInteger(n) && n >= 0;
@@ -102,6 +103,7 @@ export function createTrustedNativeReplay(api,{isolatedRealm=false,epoch,seed,ti
     if(Object.keys(r).some(k=>!['nid','owner','life','team','slot','weapon','position','yaw','loadout','style'].includes(k)))throw Error('Owner result state cannot initialize native replay');
     ids.add(r.nid);
   }
+  commands??=createCanonicalWeaponActions(api);
   const token=Object.freeze({}),scene=new api.THREE.Scene(),camera=new api.THREE.PerspectiveCamera();
   camera.position.set(0,10000,0);
   const s={api,epoch,random:random(seed),tick:0,serial:0,actors:new Map(),actorSet:new Set(),pending:new Set(),launches:[],closed:false,error:null,executing:false,commands,offs:[],context:{
@@ -143,6 +145,7 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
   const s=sessions.get(token);
   if(!live(s))return {ok:false,reason:'retired-native-replay'};
   if(!frame||frame.tick!==s.tick+1||!finite(frame.dt)||frame.dt<=0||frame.dt>limits.dt||!Array.isArray(frame.commands)||frame.commands.length!==s.actors.size||Object.keys(frame).some(k=>!['tick','dt','commands'].includes(k)))return {ok:false,reason:'invalid-native-frame'};
+  if(authorization?.epoch!==s.epoch)return {ok:false,reason:'authenticated-command-epoch-required'};
   if(!authorization?.owners||typeof authorization.owners.get!=='function')return {ok:false,reason:'authenticated-command-owners-required'};
   const seen=new Set(),prepared=[];
   // Validate the entire request before applying even the first actor's input.
@@ -155,13 +158,18 @@ export function advanceTrustedNativeReplay(token,frame,authorization) {
   s.tick=frame.tick;s.context.time+=frame.dt;
   try {
     scope(s,()=>{
-      if(s.commands){for(const t of prepared)if(!s.commands.apply(t))throw Error('Canonical command commit rejected');}
+      if(s.commands){for(const t of prepared)if(!s.commands.apply(t)?.ok)throw Error('Canonical command commit rejected');}
       else for(const c of frame.commands)applyCommand(c,s.actors.get(c.nid));
       s.world.beforeActors?.(s.context.actors,frame.dt,s.api);
       for(const a of s.context.actors)a.update(frame.dt);
       s.world.afterActors?.(s.context.actors,frame.dt,s.api);
       s.context.projectiles.update(frame.dt);
       s.world.afterProjectiles?.(s.context.actors,frame.dt,s.api);
+      // Reenrollment follows actual native respawn, never an owner row. The
+      // current input was applied to the old life before native spawn reset it.
+      for(const a of s.context.actors){const c=frame.commands.find(c=>c.nid===a.nid);if(c.life!==a.netLife){
+        s.commands?.forget(a);s.commands?.register(a,{owner:a.owner,life:a.netLife,epoch:s.epoch,firstTick:s.tick+1});
+      }}
     });
   }catch(error){s.error=String(error?.message||error);s.pending.clear();return {ok:false,reason:s.error};}
   return {ok:true,tick:s.tick,contacts:s.pending.size};
@@ -188,7 +196,7 @@ export function inspectTrustedNativeReplay(token) {
     boss:s.context.boss?{hp:s.context.boss.hp,dead:s.context.boss.dead,crablets:[...s.context.boss.crabs.values()].map(c=>({id:c.id,hp:c.hp,dead:c.dead}))}:null,
     actors:[...s.actors.values()].map(a=>{const spawn=a.s3?.squidSpawn;return {nid:a.nid,owner:a.owner,life:a.netLife,weapon:a.weapon.id,ink:a.ink,hp:a.hp,alive:a.alive,form:a.form,position:a.pos.toArray(),velocity:a.vel.toArray(),yaw:a.yaw,grounded:a.grounded,aimPoint:a.aimPoint.toArray(),charge:a.weaponRunner.charge,chargeT:a.weaponRunner.chargeT,cooldown:a.weaponRunner.cooldown,lastFire:a.lastFire,special:a.special,
       squidSpawn:spawn?{phase:spawn.phase,wait:spawn.wait??0,t:spawn.t??0,playWait:spawn.playWait??0,target:spawn.target,from:spawn.from,to:spawn.to}:null,
-      pose:Object.fromEntries(['hips','spine','chest','head','footL','footR'].flatMap(k=>{const b=a.character.bones?.[k];return b?[[k,{position:b.position.toArray(),quaternion:b.quaternion.toArray(),scale:b.scale.toArray()}]]:[])),
+      pose:Object.fromEntries(['hips','spine','chest','head','footL','footR'].flatMap(k=>{const b=a.character.bones?.[k];return b?[[k,{position:b.position.toArray(),quaternion:b.quaternion.toArray(),scale:b.scale.toArray()}]]:[];})),
     };})});
 }
 export function disposeTrustedNativeReplay(token) {
