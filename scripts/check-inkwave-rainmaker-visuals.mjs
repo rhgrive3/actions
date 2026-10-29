@@ -11,6 +11,7 @@ import {observeRankedBoot} from './lib/ranked-boot-diagnostics.mjs';
 const arg=name=>{const i=process.argv.indexOf(name);return i<0?null:process.argv[i+1];};
 const phase=arg('--phase')||'candidate';
 const barrierOnly=process.argv.includes('--barrier-only');
+const carrierOnly=process.argv.includes('--carrier-only');
 assert(['baseline','candidate'].includes(phase),'--phase baseline|candidate');
 const site=path.resolve(arg('--site')||'_site');
 const out=path.resolve(arg('--evidence-dir')||`.browser-evidence/rainmaker/${phase}`);
@@ -24,7 +25,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const url=`http://127.0.0.1:${server.address().port}/?shadercheck=1`,errors=[],captures=[],boot={};
 let context,page;
 async function capture(name,view='barrier'){
- const state=await page.evaluate(view=>{
+ const state=await page.evaluate(({view,carrierOnly})=>{
   const G=RG,m=G.match,w=m.rankedWorld,a=m.local,s=m.ranked.rule.state;
   const at=view==='barrier'?w.rainmaker.position:a.pos;
   G.camera.fov=48;G.camera.updateProjectionMatrix();
@@ -40,7 +41,7 @@ async function capture(name,view='barrier'){
   const gl=G.renderer.getContext(),canvas=G.renderer.domElement;
   const pixels=new Uint8Array(canvas.width*canvas.height*4),hiddenPixels=new Uint8Array(pixels.length);
   gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
-  const effectNames=view==='barrier'?['rainmaker-barrier']:view==='carrier'?['rainmaker-carrier-aura']:['rainmaker-shot','rainmaker-ink-splashes'];
+  const effectNames=view==='barrier'?['rainmaker-barrier']:view==='carrier'?[carrierOnly?'rainmaker-carrier-marker':'rainmaker-carrier-aura']:['rainmaker-shot','rainmaker-ink-splashes'];
   const effects=[];G.scene.traverse(o=>{if(effectNames.includes(o.name))effects.push([o,o.visible]);});
   for(const [o]of effects)o.visible=false;
   G.renderer.render(G.scene,G.camera);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,hiddenPixels);
@@ -48,9 +49,9 @@ async function capture(name,view='barrier'){
   G.renderer.render(G.scene,G.camera);gl.finish();
   let changedPixels=0,maxDelta=0;for(let i=0;i<pixels.length;i+=4){const delta=Math.abs(pixels[i]-hiddenPixels[i])+Math.abs(pixels[i+1]-hiddenPixels[i+1])+Math.abs(pixels[i+2]-hiddenPixels[i+2]);if(delta>20)changedPixels++;maxDelta=Math.max(maxDelta,delta);}
   const programs=G.renderer.info.programs.map(p=>({name:p.name,runnable:p.diagnostics?.runnable??null,linked:!!gl.getProgramParameter(p.program,gl.LINK_STATUS)}));
-  const nodes=[];G.scene.traverse(o=>{if(/rainmaker/i.test(o.name)){let visible=o.visible;for(let p=o.parent;p;p=p.parent)visible&&=p.visible;const userData={};for(const key of ['phase','charge','pressure','carrier'])if(o.userData[key]!==undefined)userData[key]=o.userData[key];nodes.push({name:o.name,type:o.type,visible,position:o.getWorldPosition(a.pos.clone()).toArray(),scale:o.scale.toArray(),opacity:o.material?.opacity??null,wireframe:o.material?.wireframe??null,userData});}});
-  return {nativeTime:G.time,matchTime:m.time,barrier:{...s.barrier},carrier:s.carrier,charge:structuredClone(s.charge),actor:{pos:a.pos.toArray(),form:a.form,alive:a.alive},renderSettings:{quality:G.game.settings.quality,bloom:G.game.settings.bloom,shadows:G.game.settings.shadows,teamInk:G.teamColors.map(c=>c.getHexString())},nodes,effectPixels:{changedPixels,maxDelta},programs,draw:{...G.renderer.info.render},contextLost:G.renderer.getContext().isContextLost()};
- },view);
+  const nodes=[];G.scene.traverse(o=>{if(/rainmaker/i.test(o.name)){let visible=o.visible;for(let p=o.parent;p;p=p.parent)visible&&=p.visible;const userData={};for(const key of ['phase','charge','pressure','carrier','symbol','seconds'])if(o.userData[key]!==undefined)userData[key]=o.userData[key];nodes.push({name:o.name,type:o.type,visible,position:o.getWorldPosition(a.pos.clone()).toArray(),scale:o.scale.toArray(),opacity:o.material?.opacity??null,wireframe:o.material?.wireframe??null,userData});}});
+  return {nativeTime:G.time,matchTime:m.time,barrier:{...s.barrier},carrier:s.carrier,holderRemaining:s.holderRemaining,charge:structuredClone(s.charge),actor:{pos:a.pos.toArray(),form:a.form,alive:a.alive},renderSettings:{quality:G.game.settings.quality,bloom:G.game.settings.bloom,shadows:G.game.settings.shadows,teamInk:G.teamColors.map(c=>c.getHexString())},nodes,effectPixels:{changedPixels,maxDelta},programs,draw:{...G.renderer.info.render},contextLost:G.renderer.getContext().isContextLost()};
+ },{view,carrierOnly});
  assert(!state.contextLost,`${name}: WebGL context lost`);assert(state.draw.triangles>100,`${name}: no meaningful scene rendered`);
  const cdp=await context.newCDPSession(page);
  try{const {data}=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:false});const bytes=Buffer.from(data,'base64');assert(bytes.length>12000,`${name}: empty screenshot`);fs.writeFileSync(path.join(out,`${name}.png`),bytes);}finally{await cdp.detach();}
@@ -127,6 +128,27 @@ try{
  // presentation retire before inspecting the carrier's own idle/charge aura.
  await step(45,false);
  const idle=await capture('03-carrier-idle','carrier');
+ if(carrierOnly){
+  const marker=frame=>frame.nodes.find(n=>n.name==='rainmaker-carrier-marker');
+  assert(!marker(neutral).visible&&!marker(pressured).visible,'Unclaimed objective must have no carrier marker');
+  assert.equal(marker(idle).userData.symbol,'anchor-shield');
+  await step(120,false);const later=await capture('04-carrier-countdown','carrier');
+  for(const frame of [idle,later]){
+   assert(frame.programs.every(p=>p.linked&&p.runnable!==false),'Carrier shader must link and run');
+   assert(marker(frame).visible&&frame.effectPixels.changedPixels>50,'Carrier marker must contribute real pixels');
+   assert.equal(marker(frame).userData.seconds,Math.ceil(frame.holderRemaining),'Countdown must read the real rule state');
+  }
+  assert(marker(later).userData.seconds<marker(idle).userData.seconds,'Native carry time must count down');
+  await step(61,true);const chargedMarker=await capture('05-carrier-charged','carrier');
+  assert.equal(chargedMarker.charge.value,1,'Native full charge must be reached');
+  assert(chargedMarker.effectPixels.changedPixels>50&&marker(chargedMarker).visible,'Full-charge glow must not hide the carrier marker');
+  await page.evaluate(()=>{const m=RG.match,a=m.local;m.ranked.rule.removeActor(String(a.nid??`${a.team}:${a.slot}`));m.advanceRanked(1/60);});
+  const dropped=await capture('06-carrier-dropped','carrier');
+  assert(!marker(dropped).visible&&dropped.effectPixels.changedPixels===0,'Drop must remove the carrier marker');
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:'Native Rainmaker pickup, countdown and drop; camera-facing anchor-shield marker, GPU links and actual marker pixels. Chromium SwiftShader, low quality, bloom disabled.',build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},renderSettings:idle.renderSettings,captures:captures.map(c=>({name:c.name,carrier:c.carrier,holderRemaining:c.holderRemaining,effectPixels:c.effectPixels,marker:marker(c)})),errors},null,2));
+  console.log(`Rainmaker carrier marker: passed; ${out}`);
+ }else{
  const half=await step(30,true);assert(half.charge>.3&&half.charge<.8,'Native held input must reach a partial charge');
  const partial=await capture('04-carrier-half-charge','carrier');
  const full=await step(33,true);assert.equal(full.charge,1,'Native held input must reach full charge');
@@ -163,6 +185,7 @@ try{
  assert.equal(errors.length,0,JSON.stringify(errors));
  const receipt={status:'passed',phase,scope:'Chromium SwiftShader; real offline tidewater native game. Debug freeze and fixed 60 Hz Actor/Match/FX ticks; seeded shield-hit input and initial carrier position. Effect framebuffer hidden/visible comparison and GPU program link checks. No Switch real-device equivalence claim.',build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},browser:context.browser()?.version(),renderSettings:captures[0]?.renderSettings??null,boot,events,captures:captures.map(c=>({name:c.name,nativeTime:c.nativeTime,barrier:c.barrier,carrier:c.carrier,charge:c.charge.value,visibleRainmakerNodes:c.nodes.filter(n=>n.visible).map(n=>n.name),effectPixels:c.effectPixels,draw:c.draw})),errors};
  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2));console.log(`Rainmaker ${phase}: passed; ${out}`);
+ }
  }
 }catch(error){
  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'failed',phase,error:error.stack,build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},boot,captures,errors},null,2));

@@ -297,6 +297,20 @@ test('objective visuals stay mode-specific and Rainmaker markers reflect rule st
   assert.equal(rainmaker.rainmakerShield.material.color.getHex(), rainmaker.teamInk[1]);
   assert.equal(rainmaker.rainmakerMarkers.checkpoints[0].group.userData.passed, true);
   assert.equal(rainmaker.rainmakerMarkers.goals[1].group.userData.open, true);
+  assert.equal(rainmaker.rainmakerCarrier.visible, false);
+  const holder = { nid: 'marker-holder', alive: true, team: 0, pos: new f.THREE.Vector3(2, 0, 3) };
+  rainmaker.match.actors.push(holder);
+  const held = { pos: [2, 0, 3], carrier: holder.nid, holderRemaining: 58.2, barrier: { active: false } };
+  rainmaker.update({ rule: { state: held } }, 1 / 60);
+  assert.equal(rainmaker.rainmakerCarrier.visible, true);
+  assert.equal(rainmaker.rainmakerCarrier.userData.symbol, 'anchor-shield');
+  assert.equal(rainmaker.rainmakerCarrier.material.uniforms.uSeconds.value, 59);
+  held.holderRemaining = 12; holder.pos.x = 4;
+  rainmaker.update({ rule: { state: held } }, 1 / 120);
+  assert.equal(rainmaker.rainmakerCarrier.material.uniforms.uSeconds.value, 12);
+  assert.equal(rainmaker.rainmakerCarrier.position.x, 4);
+  held.carrier = null; rainmaker.update({ rule: { state: held } }, 1 / 30);
+  assert.equal(rainmaker.rainmakerCarrier.visible, false);
   rainmaker.dispose();
 
   const clams = new f.RankedWorld({ G: f.G, THREE: f.THREE }, { mode: 'clams', actors: [] }, stage);

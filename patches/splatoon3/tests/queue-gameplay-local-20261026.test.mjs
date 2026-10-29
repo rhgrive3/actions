@@ -42,6 +42,7 @@ test('Rainmaker checkpoint rings read passed[team] and choice[team], including r
     rainmakerShield: { scale: new THREE.Vector3(), material: { color: new THREE.Color() } },
     rainmakerCore: { material: { color: new THREE.Color() } }, rainmakerPresentation: { update() {} },
     rainmakerBarrier: { update() {} }, rainmakerAura: { update() {} },
+    rainmakerCarrierIndicator: { update() {} },
     rainmakerMarkers: { checkpoints: [], goals: [] } });
   for (let team = 0; team < 2; team++) {
     for (let index = 0; index < 2; index++) world.rainmakerMarkers.checkpoints.push({ team, index, group: { userData: {} }, ring: { material: {} } });

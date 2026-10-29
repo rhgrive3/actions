@@ -2,6 +2,14 @@
 
 比較元は `main` の `e67c636b81762df56b346a09ef570964d43084df`。対象は公開版の `patches/splatoon3/runtime/ranked/`。原作画像は実際に表示して確認し、ゲーム本体や配信物へ転載していない。
 
+## 頭上の所持マークの再調整
+
+従来の水平な金色のTorusを削除した。[任天堂掲載の実機画像](https://assets.nintendo.eu/video/private/f_auto%2Cq_auto/uvumuwlrx4ohvy2bftbv.jpg)と[ファミ通の画像](https://www.famitsu.com/images/000/277/040/y_632f91767b594.jpg)を拡大して実見し、白いイカリの入った金色の盾形バッジと、その上の所持残り秒数へ置き換えた。常にカメラへ正面を向け、頭のすぐ上に表示する。原作画像をテクスチャとして配信せず、形と数字は手続き的な近似で描く。寸法・フォント・精密な表示位置は実機からの抽出値ではない。
+
+残り秒数は既存の `holderRemaining` を切り上げて読み、独自の時計を追加しない。未取得・死亡・所持解除では消える。sourceのworld/queue 14件と追補した所持・秒数・追従・解除の限定2件が成功。通常ビルド・quick checks・起動予算も成功。Chromiumの実ゲームで取得→60/58/57表示→フルチャージ→解除を進め、GPUリンク、マーク単独の画素寄与、解除後の画素寄与0を確認した。結果とハッシュは[carrier-marker-result.json](rainmaker-barrier-attack-2026-10-29/carrier-marker-result.json)。コマンドは `node scripts/check-inkwave-rainmaker-visuals.mjs --site .built-site/rainmaker-carrier-final --carrier-only --evidence-dir .browser-evidence/rainmaker/carrier-final --profile-dir .browser-evidence/rainmaker/profile-carrier-final`。
+
+![白いイカリの盾形マークと所持残り秒数](rainmaker-barrier-attack-2026-10-29/carrier-marker.png)
+
 ## バリア表面の再調整
 
 初回候補の大きな淡色斑模様が不快に見えるとの指摘を受け、バリアにはショット用の模様shaderを使わず、滑らかな単色の膜、縁の反射光、小さい鏡面ハイライトへ変更した。灰色・クリーム色の塊を描かず、中立時の透け感と圧力に応じた濃さで見せる。先のバリア画像 `after-barrier.png` は初回候補の記録として残し、下の比較表は追補版へ差し替えた。
@@ -51,10 +59,10 @@
 
 ## 実ゲームの比較画像
 
-| 表示 | 変更前 | 最新表示（バリアのみ追補版） |
+| 表示 | 変更前 | 最新表示（発射行のみ初回版） |
 | --- | --- | --- |
 | 膨張したバリア | ![変更前のワイヤーバリア](rainmaker-barrier-attack-2026-10-29/before-barrier.png) | ![斑模様を除いた滑らかなバリア](rainmaker-barrier-attack-2026-10-29/smooth-barrier.png) |
-| フルチャージ | ![変更前のチャージ](rainmaker-barrier-attack-2026-10-29/before-charge.png) | ![体と銃口の発光](rainmaker-barrier-attack-2026-10-29/after-charge.png) |
+| フルチャージ | ![変更前のチャージ](rainmaker-barrier-attack-2026-10-29/before-charge.png) | ![体と銃口の発光・盾形の所持マーク](rainmaker-barrier-attack-2026-10-29/carrier-marker.png) |
 | 発射中 | ![変更前の単色球](rainmaker-barrier-attack-2026-10-29/before-shot.png) | ![弾頭と液状の尾・飛沫](rainmaker-barrier-attack-2026-10-29/after-shot.png) |
 
 着弾後の遅延爆発：
