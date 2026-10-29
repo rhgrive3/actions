@@ -152,6 +152,7 @@
 .iw-ret.is-killflash { animation: iw-ret-kill .45s var(--spring); }
 @keyframes iw-ret-kill { 0% { color: var(--self-light); scale: 1.45; rotate: 45deg; } }
 .iw-ret__dot { position: absolute; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: currentColor; }
+.iw-ret--charger .iw-ret__dot, .iw-ret--splatling .iw-ret__dot { width: 3.5px; height: 3.5px; margin: -1.75px 0 0 -1.75px; }
 .iw-ret__svg { position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; }
 .iw-ret__svg.wide { left: -80px; width: 160px; }
 .iw-ret__svg circle, .iw-ret__svg path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -159,16 +160,16 @@
 .iw-ret__tick { position: absolute; left: -1.5px; top: -5.5px; width: 3px; height: 11px; border-radius: 2px; background: currentColor; transform: rotate(var(--a)) translateY(calc(-17px - var(--sp, 0) * 1px)); transition: transform .06s linear; }
 .iw-ret--blaster .iw-ret__svg { transform: scale(calc(1 + var(--sp, 0) * .012)); transition: transform .1s linear; }
 .iw-ret--charger .iw-ret__svg { transform: rotate(-90deg); }
-.iw-ret--charger .iw-ret__track { stroke-width: 2; opacity: .45; }
-.iw-ret--charger .iw-ret__charge { stroke: var(--self-light); stroke-width: 4.5; transition: stroke-dashoffset .05s linear; }
-.iw-ret__notch path { stroke-width: 2.2; opacity: .55; }
+.iw-ret--charger .iw-ret__track { stroke-width: 1.4; opacity: .45; }
+.iw-ret--charger .iw-ret__charge { stroke: var(--self-light); stroke-width: 2.9; transition: stroke-dashoffset .05s linear; }
+.iw-ret__notch path { stroke-width: 1.5; opacity: .55; }
 .iw-ret--charger.is-full .iw-ret__notch path { opacity: 1; stroke: #fff; }
-.iw-ret__line { position: absolute; height: 2.5px; top: -1.25px; width: 16px; background: currentColor; border-radius: 2px; }
-.iw-ret__line.l { left: -52px; }
-.iw-ret__line.r { left: 36px; }
-.iw-ret__line.d { left: -1.25px; top: 34px; width: 2.5px; height: 12px; }
-.iw-ret--charger.is-charging .iw-ret__line.l { translate: calc(var(--ch, 0) * 10px) 0; }
-.iw-ret--charger.is-charging .iw-ret__line.r { translate: calc(var(--ch, 0) * -10px) 0; }
+.iw-ret__line { position: absolute; height: 1.75px; top: -0.875px; width: 10px; background: currentColor; border-radius: 2px; }
+.iw-ret__line.l { left: -31px; }
+.iw-ret__line.r { left: 21px; }
+.iw-ret__line.d { left: -0.875px; top: 20px; width: 1.75px; height: 7px; }
+.iw-ret--charger.is-charging .iw-ret__line.l { translate: calc(var(--ch, 0) * 6px) 0; }
+.iw-ret--charger.is-charging .iw-ret__line.r { translate: calc(var(--ch, 0) * -6px) 0; }
 .iw-ret--charger.is-full .iw-ret__charge { stroke: #fff; }
 .iw-ret--charger.is-full { color: var(--self-light); }
 .iw-ret.is-flash { animation: iw-charge-flash .35s var(--spring); }
@@ -189,16 +190,16 @@
 /* splatling: 8-segment spin-up meter — fills while charging (white), full = your ink + flash, drains while streaming */
 .iw-ret--splatling .iw-ret__svg { transform: rotate(-90deg); }
 /* Four outward-facing spread brackets, separate from the eight charge segments. */
-.iw-ret--splatling .iw-ret__tick { left: -4px; top: -4px; width: 8px; height: 8px; background: none; border-top: 2px solid currentColor; border-left: 2px solid currentColor; border-radius: 0; }
-.iw-ret--splatling .iw-ret__track { stroke-width: 4.5; opacity: .28; }
-.iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 4.5; stroke-linecap: butt; transition: stroke-dashoffset .05s linear; }
+.iw-ret--splatling .iw-ret__tick { left: -3px; top: -3px; width: 6px; height: 6px; background: none; border-top: 1.6px solid currentColor; border-left: 1.6px solid currentColor; border-radius: 0; transform: rotate(var(--a)) translateY(calc(-16.5px - var(--sp, 0) * 1px)); }
+.iw-ret--splatling .iw-ret__track { stroke-width: 2.9; opacity: .28; }
+.iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 2.9; stroke-linecap: butt; transition: stroke-dashoffset .05s linear; }
 .iw-ret--splatling .iw-ret__segs path { stroke: rgba(0, 0, 0, .55); stroke-width: 1.6; }
 .iw-ret--splatling.is-full .iw-ret__charge, .iw-ret--splatling.is-streaming .iw-ret__charge { stroke: var(--self-light); }
 .iw-ret--splatling.is-streaming { color: var(--self-light); }
 .iw-ret--splatling.is-first-complete:not(.is-streaming) .iw-ret__charge:not(.iw-ret__charge-second) { stroke: var(--self-light); }
 .iw-ret--splatling .iw-ret__charge-second { opacity: .92; }
 .iw-ret--splatling.is-first-flash .iw-ret__charge:not(.iw-ret__charge-second) { animation: iw-splat-first .24s ease-out; }
-@keyframes iw-splat-first { from { stroke-width: 8; filter: drop-shadow(0 0 5px white); } to { stroke-width: 4.5; filter: none; } }
+@keyframes iw-splat-first { from { stroke-width: 5; filter: drop-shadow(0 0 5px white); } to { stroke-width: 2.9; filter: none; } }
 .iw-hit, .iw-kill { position: absolute; left: 0; top: 0; }
 .iw-hit { scale: var(--hs, 1); }
 .iw-hit i, .iw-kill i { position: absolute; left: -1.75px; top: -6px; width: 3.5px; height: 12px; border-radius: 2px; background: #fff; opacity: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }
