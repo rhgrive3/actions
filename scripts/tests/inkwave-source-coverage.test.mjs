@@ -29,7 +29,7 @@ test('disabled, filtered, duplicated and non-source invocations cannot certify s
     workflow.replace(marker, marker + '\n        if: false'),
     workflow.replace(marker, marker + '\n        continue-on-error: true'),
     workflow.replace("INKWAVE_TEST_SHARD_COUNT: '8'", "INKWAVE_TEST_SHARD_COUNT: '1'"),
-    workflow.replace('needs: [build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]', 'needs: [validate_core, patch_tests, circleci_offload_gate]'),
+    workflow.replace('needs: [admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation]', 'needs: [validate_core, patch_tests, circleci_offload_gate]'),
     workflow.replace("INKWAVE_REQUIRE_BROWSER_TESTS: '1'", "INKWAVE_REQUIRE_BROWSER_TESTS: '0'"),
     workflow.replace('      - name: Verify remote combat provenance', '      - name: redundant source file\n        run: node --experimental-vm-modules --test patches/network-replication/tests/comparison.test.mjs\n      - name: Verify remote combat provenance'),
   ]) { assert.notEqual(changed, workflow); assert.throws(() => assertSourceSuiteCoverage(changed, 'network')); }
