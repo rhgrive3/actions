@@ -30,13 +30,18 @@ test('required checks keep their identities and cancellation cannot skip the req
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
 // Only Validate core executes the CircleCI parity gate that reads this config.
 const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+// Keep the original profiles exact for the other jobs. These two reviewed
+// expansions materialize the complete JavaScript metadata audit inventory.
+const auditJavaScriptProfile=['*.js','*.mjs','*.cjs'];
+const buildAuditProfile=[...profile,'# The global metadata AST guard reads every tracked JavaScript file.',...auditJavaScriptProfile];
+const coreAuditProfile=[...coreProfile,'# Include audit code while keeping excluded authoring binaries absent.',...auditJavaScriptProfile];
 // Exact immutable checkout input closure for the mandatory low-cost preflight.
 const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/','/package-lock.json'];
 function checkouts(source){return [...source.matchAll(/      - uses: actions\/checkout@v4\n([\s\S]*?)(?=      - |$)/g)].map(m=>({job:[...source.slice(0,m.index).matchAll(/^  ([\w-]+):$/gm)].at(-1)?.[1],block:m[1]}));}
 function assertCurrentCheckouts(name,source,count){
  const blocks=checkouts(source);assert.equal(blocks.length,count);
  if(name==='validate-inkwave-update.yml')assert.equal(blocks.filter(({job})=>job==='validate_core').length,1,'one native core checkout');
- for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
+ for(const {job,block}of blocks){if(block.includes('ref: 83f27e5d59db944458a85122a95d1154e3543393')){assert.doesNotMatch(block,/filter:|sparse-checkout/);continue;}assert.match(block,/filter: blob:none/);assert.match(block,/sparse-checkout-cone-mode: false/);const actual=/sparse-checkout: \|\n((?:            .*\n)*)/.exec(block)?.[1].trim().split('\n').map(x=>x.trim());assert.deepEqual(actual,name==='validate-inkwave-update.yml'&&job==='admission_preflight'?admissionProfile:name==='validate-inkwave-update.yml'&&job==='build_site'?buildAuditProfile:name==='validate-inkwave-update.yml'&&job==='validate_core'?coreAuditProfile:profile,name+' '+job);assert.match(block,/ref: \$\{\{|ref: 83f27e5d59db944458a85122a95d1154e3543393/);}
 }
 test('current sparse checkouts retain the complete input closure and historical baseline stays full',()=>{
  for(const[name,count]of[['validate-inkwave-update.yml',11],['inkwave-main-weapons.yml',4]])assertCurrentCheckouts(name,read(name),count);
@@ -58,6 +63,13 @@ test('exact job-bound sparse profiles reject missing, unexpected and misplaced C
  ]){assert.notEqual(altered,source);assert.throws(()=>assertCurrentCheckouts(name,altered,11));}
  const weapon=read('inkwave-main-weapons.yml');
  assert.throws(()=>assertCurrentCheckouts('inkwave-main-weapons.yml',weapon.replace('            /.github/\n','            /.github/\n'+circle),4));
+ for(const audit of [buildAuditProfile,coreAuditProfile]){
+  const tail=audit.slice(-4).map(line=>'            '+line+'\n').join('');
+  for(const pattern of auditJavaScriptProfile)for(const change of ['',pattern+'\n            '+pattern,'*.py']){
+   const altered=source.replace(tail,tail.replace('            '+pattern+'\n',change?'            '+change+'\n':''));
+   assert.notEqual(altered,source);assert.throws(()=>assertCurrentCheckouts(name,altered,11));
+  }
+ }
 });
 function matches(pattern,file){let out='^';for(let i=0;i<pattern.length;i++){const c=pattern[i];if(c==='*'){if(pattern[i+1]==='*'){out+='.*';i++;}else out+='[^/]*';}else if(c==='?')out+='[^/]';else out+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}return new RegExp(out+'$').test(file);}
 function paths(source,event){const section=event==='push'?source.slice(source.indexOf('  push:'),source.indexOf('  pull_request:')):source.slice(source.indexOf('  pull_request:'),source.indexOf('  workflow_dispatch:'));return [...section.matchAll(/^      - '([^']+)'$/gm)].map(m=>m[1]);}
@@ -67,12 +79,13 @@ test('both main-weapon event filters cover every executed test entrypoint, inclu
  for(const event of['push','pull_request']){const patterns=paths(source,event);assert(covered(patterns));for(const missing of['issue-771-roller-speed-swerve','reverse-shot-release','source-posture','roller-flick-movement','roller','bomb-kit-fidelity','air-attack-acceleration','dynamo-handle-center','brella-physics','stringer-source-1130','stringer-tilt-motion']){const exact='patches/splatoon3/tests/'+missing+'.test.mjs';assert.equal(covered(patterns.filter(p=>p!==exact)),false,'missing route '+exact);}}
 });
 const sparseFixtureFile='scripts/tests/inkwave-ci-sparse-checkout.test.mjs';
+const historicalSparseFixtureSha256='b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452';
 const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/docs/reference.png','tools/inkwave-modeler/src/editor.js'];
 // The exception is limited to the two audited fixture snapshots. This also
 // prevents an added prototype mutation or dynamic side effect from intercepting
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
- [sparseFixtureFile]:'b8c11c5cfeb0a5ed219323973d9a3154e51faa22a1461f58c545e34c72425452',
+ [sparseFixtureFile]:'788a50eee7f93cd50c301fe45c96f62942295f2c75948c89b1bf247190bef272',
  'scripts/tests/continuous-browser-video.test.mjs':'8d3f6b4f9f5ce634efafb8d9dd76e69b04e48d57bababa1014ebb6546a855a2f',
 };
 // Only four literal nodes in this one audited test describe sparse exclusions;
@@ -164,6 +177,12 @@ function assertNoAuthoringDependency(file,source){
  }
  assert.doesNotMatch(checked,/tools\/inkwave-modeler\//,'excluded authoring dependency in '+file);
 }
+test('expanded sparse audit retains the complete historical fixture bytes',()=>{
+ const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
+ const boundary=source.indexOf('\n// The metadata guard deliberately audits every tracked JavaScript module, not');
+ assert.ok(boundary>0,'one explicit boundary for the later global metadata tests');
+ assert.equal(createHash('sha256').update(source.slice(0,boundary)).digest('hex'),historicalSparseFixtureSha256);
+});
 test('the excluded authoring workbench is not referenced by runtime/test/build input code',()=>{
  const files=execFileSync('git',['ls-files','-z','inkwave-public','patches','scripts','server','tests'],{cwd:root,encoding:'utf8'}).split('\0').filter(f=>/\.(?:mjs|js|py)$/.test(f)&&f!=='scripts/tests/inkwave-added-ci-contracts.test.mjs');
  for(const file of files)assertNoAuthoringDependency(file,fs.readFileSync(new URL(file,root),'utf8'));
