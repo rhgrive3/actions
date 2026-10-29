@@ -160,6 +160,7 @@ test('#79 elevated live wall impact paints wall cells without awarding floor tur
 
 test('#79 live long-fall impact reaches the far width anchor and credits actual floor area', async () => {
   const s = await liveWorld();
+  s.initialSpecial = s.actor.special = s.actor.specialCost() - 1;
   // A naturally fired horizontal round from an elevated position reaches the
   // 20-unit distance anchor without changing projectile speed or lifetime.
   fire(s, { angle: 0, height: 10 }); advance(s);
@@ -172,6 +173,7 @@ test('#79 live long-fall impact reaches the far width anchor and credits actual 
   const floorFace = s.f.G.level.faces[0];
   near(s.turf(), s.f.G.paint.counts[s.actor.team] * floorFace.cu * floorFace.cv, 'far impact and drops credit owned floor cells');
   checkCredit(s);
+  assert.equal(s.actor.special, s.actor.specialCost(), 'far paint reaches but never exceeds the native special cap');
 });
 
 test('#79 live floor paint and turf agree across 30/60/120 render schedules', async () => {

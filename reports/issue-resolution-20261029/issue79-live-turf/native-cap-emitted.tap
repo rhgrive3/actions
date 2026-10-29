@@ -1,0 +1,29 @@
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+INKWAVE built fixture /workspace/wt-agent6/_site contentHash=381c3c5777dbe72752b778aa2df9a211f59b22021e81d4f0e5910ed16185314f
+(node:507021) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #79 live floor impacts: near/far width and shallow/mid/steep straight-phase depth reach CPU paint (3547.565537ms)
+✔ #79 live wall contact paints the sourced 1.56 shock radius once, deterministically (1709.193137ms)
+✔ #79 elevated live wall impact paints wall cells without awarding floor turf (477.82299ms)
+✔ #79 live long-fall impact reaches the far width anchor and credits actual floor area (677.739613ms)
+✔ #79 live floor paint and turf agree across 30/60/120 render schedules (1625.025129ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8563.700492
