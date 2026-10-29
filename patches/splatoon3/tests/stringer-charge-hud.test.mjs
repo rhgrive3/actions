@@ -49,6 +49,9 @@ test('compact Charger/Stringer and two-stage Spinner rings keep their HUD geomet
   const composed=adaptBuildSource('src/ui/hud.js',raw);
   assert.ok(composed.includes('<circle r="16" class="iw-ret__track"'),'Spinner second circle is 16px in production');
   assert.ok(composed.includes('<circle r="16" class="iw-ret__charge iw-ret__charge-second"'),'Spinner second charge path stays attached');
+  const builtStyles=adaptBuildSource('styles/hud.css',styles);
+  assert.ok(builtStyles.includes('--iw-x: calc(33px + var(--sp, 0) * 0.7071px); --iw-y: calc(23px + var(--sp, 0) * 0.7071px);'),'Splatling production corner coordinates are compact');
+  assert.ok(builtStyles.includes('left: -6px; top: -6px; width: 12px; height: 12px;'),'Splatling production corner arms are compact');
   assert.ok(styles.includes('.iw-ret--charger .iw-ret__charge { stroke: var(--self-light); stroke-width: 2.9;'),'Charger stroke width is compact');
   assert.ok(styles.includes('.iw-ret--splatling .iw-ret__charge { stroke: #fff; stroke-width: 2.9;'),'Spinner stroke width is compact');
 });
