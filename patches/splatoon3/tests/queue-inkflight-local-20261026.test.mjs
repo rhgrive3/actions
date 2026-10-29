@@ -74,7 +74,7 @@ test('actual Three.js drop orientation reuse preserves 30/60/120 Hz matrices, li
 function hitRecord(v){return{hit:false,dist:0,point:v.clone(),normal:v.clone(),block:-1,face:-1,u:0,v:0};}
 test('inline splash birth matches baseline random order, scalar fields and reused record resets',()=>{
   const env={EPS:1e-9,STEP_FRAMES_PER_SECOND:60,seededSplashUnit,hitRecord,dropQueue:g=>g.projectiles?g.projectiles._s3SplashDrops||=([]):null};
-  const old=evalFn(before.spawnSplashDrop,env),current=evalFn(functionSource(splashSource,'spawnSplashDrop'),env),random=rng(32);
+  const old=evalFn(before.spawnSplashDrop,env),current=spawnSplashDrop,random=rng(32);
   const games=[{projectiles:{}},{projectiles:{}}];
   for(let i=0;i<500;i++){
     const args={owner:{remote:false},team:i%2,seed:random(),salt:i,from:new THREE.Vector3(random(),random()*7,random()),direction:new THREE.Vector3(random()-.5,0,random()-.5),radius:.4,spec:{randomVelocity:i%3?{x:2,y:3,zMin:.2,zMax:.5}:null},catchUpSeconds:i%7/60,footprint:i%2?'ink-shot':null};

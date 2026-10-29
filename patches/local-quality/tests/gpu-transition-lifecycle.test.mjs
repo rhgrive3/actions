@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {pausedWorldFrame} from '../idle-resources.mjs';
+import {createPresentationClock} from '../presentation-clock.mjs';
 
 const source = rel => adaptBuildSource(rel, fs.readFileSync(new URL('../../../inkwave-public/'+rel, import.meta.url),'utf8'));
 function wipeFixture() {
@@ -15,6 +16,7 @@ function wipeFixture() {
     cancelAnimationFrame:id=>rafs.delete(id),clearTimeout:id=>timers.delete(id),safeCall:fn=>fn?.(),
     requestAnimationFrame:()=>{rafs.add(++next);return next;},setTimeout:()=>{timers.add(++next);return next;},
     rng:()=>()=>.5,shade:()=>'',TAU:Math.PI*2,WIPE:{mid:380,total:1000}});
+  context.createPresentationClock=()=>createPresentationClock(context);
   const Wipe=vm.runInContext('('+code.slice(declaration.start,declaration.end)+')',context);
   const owner=Object.assign(Object.create(Wipe.prototype),{
     r:null,cv:{width:1,height:1},ctx:{setTransform(){},clearRect(...args){clears.push(args);}},
@@ -67,9 +69,15 @@ test('backgrounding a paused page releases its snapshot without RAF and recaptur
 });
 
 test('paused invalidation frees the superseded snapshot before allocating real frame targets',()=>{
-  const code=source('src/main.js'),start=code.indexOf('    if (!this._skipRender && !document.hidden) {'),end=code.indexOf('    const tC =',start);
-  assert(start>0&&end>start);
-  const render=new Function('setUp','menuAttractBudget','pausedFrame','sm','document',code.slice(start,end));
+  const code=source('src/main.js'), matches=[];
+  const visit=node=>{
+    if(!node||typeof node!=='object')return;
+    if(node.type==='IfStatement'&&code.slice(node.test.start,node.test.end)==='!this._skipRender && !document.hidden')matches.push(node);
+    for(const value of Object.values(node))if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object')visit(value);
+  };
+  visit(parse(code,{ecmaVersion:'latest',sourceType:'module'}));
+  assert.equal(matches.length,1,'one complete native render guard');
+  const render=new Function('setUp','menuAttractBudget','pausedFrame','sm','document',code.slice(matches[0].start,matches[0].end));
   const events=[],game={R:{releasePausedFrame(){events.push('release');},render(){events.push('render');},capturePausedFrame(){events.push('capture');return true;}},showcase:{render(){}}};
   render.call(game,false,false,{paused:true,draw:true,commit(){events.push('commit');}},{},{hidden:false});
   assert.deepEqual(events,['release','render','capture','commit']);
