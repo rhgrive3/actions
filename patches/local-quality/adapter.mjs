@@ -878,6 +878,9 @@ function adaptQualityLayer(rel, code) {
   }
 
   if (rel === 'src/game/actor.js') {
+    code = replaceOnce(code, "    this.character.onEvent = (name, data) => emit('actor:' + name, { actor: this, surface: this.groundTeam, ...(data || {}) });",
+      "    const characterEventOwner = this.character;\n    this.character.onEvent = (name, data) => {\n      const groundMemoLease = characterEventOwner._oobPauseGroundMemo?.();\n      try { return emit('actor:' + name, { actor: this, surface: this.groundTeam, ...(data || {}) }); }\n      finally { characterEventOwner._oobResumeGroundMemo?.(groundMemoLease); }\n    };",
+      'invalidate native ground memo across synchronous Character event listeners');
     code = replaceOnce(code, '    ch.update(dt, a);',
       '    a.remote = this.remote === true;\n    ch.update(dt, a);',
       'carry actor authority into Character presentation budget');

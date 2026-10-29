@@ -181,6 +181,11 @@ function record(nm,from,packet,t,acceptedSub=null,acceptedPoses=null) {
     // still proves hitscan shots (Charger), which have no projectile birth.
     if(candidate.src==='ev'&&candidate.kind==='main'&&sameShotBirth(store,packetStart,candidate))continue;
     const actor=ownerActor(nm,from,candidate.actor);
+    // These native families always publish recProj before weapon:fire. The
+    // latter is presentation, so an omitted/rejected birth cannot be replaced
+    // by a second self-authored row. Charger hitscan keeps its no-birth path.
+    if(candidate.src==='ev'&&candidate.kind==='main'&&
+       ['shooter','dualies','splatling'].includes(actor?.weapon?.catalogRecord?.family||actor?.weapon?.behaviorKind||actor?.weapon?.kind))continue;
     const interval=actor?.weapon?.fireInterval;
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
     if(recent>=rate)continue;

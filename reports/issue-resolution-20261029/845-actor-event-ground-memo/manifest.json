@@ -1,0 +1,33 @@
+{
+  "repairCommit": "5bc9d1fc4b227d6c31b955956ca6af81e617ca97",
+  "repairParent": "edac3d2778f7793e8e5587bbe46abaee3586cfe6",
+  "commonBase": "73481884e2519534a17be68d79691c94dc18f0dd",
+  "earlierNativeBusProofSource": "395b685df8c63da3de3e04c1f9ae1700d7dd1aa0",
+  "node": "v22.23.4",
+  "receipts": [
+    {
+      "file": "845-actor-bus-memo.json.gz",
+      "sha256": "d8461efa8b432a3254d26d266f56f4cde11f87d41f22084d4e838a0dd56905bc",
+      "uncompressedBytes": 833856,
+      "uncompressedSha256": "df3ce8be19dab708aa06fdd09ba0f65d1917b053359f4cf6f7ab7527e7050035"
+    },
+    {
+      "file": "845-ground-event-memo-node22.tap.gz",
+      "sha256": "4a7fa0f393b6c66b8afa81c65d571278045a8e73697c0bccd0562627b62f1a72",
+      "uncompressedBytes": 4577,
+      "uncompressedSha256": "68630de1038bec3882143d2b9ed57f306086fc9f9368215f3b83e91d34d4e251"
+    },
+    {
+      "file": "845-actor-source-closure.json.gz",
+      "sha256": "b486ebf4b4a24dc416994ec99774a398f7be503deb009d375d3145a6b154aa2f",
+      "uncompressedBytes": 3658,
+      "uncompressedSha256": "6a13cc3a590145a9461222bed6e5f1aa500f5dd5ec81765c0185ffd0c4ae660c"
+    },
+    {
+      "file": "845-fixed-source-closure.json.gz",
+      "sha256": "62174b552221b92b4083e408c5d5c7593e6333bbb5dda8bd625276fb55dcf4d3",
+      "uncompressedBytes": 3602,
+      "uncompressedSha256": "62d62fff1bbff5e0f677692643b4dd60fe889f8db34113138f704e04065c66e3"
+    }
+  ]
+}
