@@ -66,3 +66,29 @@ test('the continuous Storm cloud tick damages devices with InkStorm source rates
   close(expected[0][0], expected[1][0]); close(expected[1][0], expected[2][0]);
   close(expected[0][1], expected[1][1]); close(expected[1][1], expected[2][1]);
 });
+
+test('storm object contact tests vertical rain visibility, not the diagonal to the cloud center', async () => {
+  const { f, p, owner, wall, wave } = await setup();
+  const rays = [];
+  // A wall between the cloud center and the device blocks diagonal rays. The
+  // unobstructed vertical rain ray at each device is unaffected.
+  f.G.physics.los = (from, to) => {
+    rays.push([from.x, from.y, from.z, to.x, to.y, to.z]);
+    return Math.abs(from.z - to.z) < 1e-9 && Math.abs(from.x - to.x) < 1e-9;
+  };
+  p._updateClouds(1 / 60);
+  assert.ok(wall.hp < 10000, 'exposed Splash Wall receives rain');
+  assert.ok(wave.hp < 10000, 'exposed Wave Breaker receives rain');
+  assert.ok(rays.length >= 2 && rays.every(([x,,z,tx,,tz]) => x === tx && z === tz), 'only vertical rain LOS is used');
+
+  // Other radial damage still respects the normal center-to-object visibility.
+  const before = wave.hp;
+  p.s3DamageSpecialObjects(owner, new f.THREE.Vector3(0, 5, 0), 10, () => 1, 'InkStorm');
+  assert.equal(wave.hp, before, 'default radial LOS remains blocking');
+
+  f.G.physics.los = () => false;
+  const blocked = [wall.hp, wave.hp];
+  p._updateClouds(1 / 60);
+  assert.deepEqual([wall.hp, wave.hp], blocked, 'a roof over the device blocks the rain ray');
+  p.clear();
+});

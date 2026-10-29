@@ -6678,3 +6678,7 @@ Git treeの出力上限、prebuilt digest試験の無期限待機、報告書の
 ### 2026-10-29 追補: 同種の GPU 保持・重複経路を追加監査
 
 停止中の画面更新で旧画像と compositor を重複確保する順序、ページ非表示中の停止画像保持、演出終了後も全画面 Canvas が残る点、既存演出の onMid が遅れて走る経路を修正。ブキ・ギア・操作・判定の値は変更しない。Chromium / Linux WebKit 各72遷移と12回の全画素比較・GL 資源寿命検証、memory 98テスト、quality と runner 契約を通過。実機 iPad のクラッシュ解消や本家実機との終了操作の一致は未確認のまま。[監査・再現・検証記録](ipad-gpu-lifecycle-20261029/README.md) を参照。
+
+### 2026-10-29: Ink Storm object cover consistency (#735)
+
+The composed runtime previously performed a cloud-center-to-device visibility test before the vertical rain test. A side barrier blocking only the diagonal could incorrectly shield a Splash Wall or Wave Breaker even with unobstructed rain above it. Storm object damage now uses its existing vertical contact ray; the shared radial damage path retains its normal visibility check by default. A production-composed source fixture reproduces the diagonal-only obstruction, verifies both device classes take damage, verifies a blocked vertical ray stops damage, and preserves the default radial LOS. The negative control without the change fails on the exposed wall. Existing 30/60/120 Hz damage and finite-reach controls pass. This establishes internal consistency, not the 11.3.0 vertical cutoff or cover formula; #735 remains open.
