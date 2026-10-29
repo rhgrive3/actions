@@ -308,7 +308,7 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
     const hx = face.cu * 0.5, hy = face.cv * 0.5;
     const ex0 = x - hx - piece.x, ex1 = piece.x - (x + hx), ex = ex0 > 0 ? ex0 : ex1 > 0 ? ex1 : 0;
     const ey0 = y - hy - piece.y, ey1 = piece.y - (y + hy), ey = ey0 > 0 ? ey0 : ey1 > 0 ? ey1 : 0;
-    const reach = (piece.type === 2 ? piece.radius * (piece.el > 1 ? piece.el : 1) : piece.radius) * (1 + 1e-6) + 1e-9;
+    const reach = (piece.type === 2 ? piece.radius * Math.max(1, piece.el) : piece.radius) * (1 + 1e-6) + 1e-9;
     const d2 = ex * ex + ey * ey;
     if (d2 > reach * reach && d2 < Infinity) return false;
   }
@@ -326,7 +326,7 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
       (piece.type !== 2 || (piece.el > 0 && Number.isFinite(piece.el) &&
         Math.abs(piece.ux * piece.ux + piece.uy * piece.uy - 1) < 1e-12))) {
     const u = mask.sdu, v = mask.sdv, along = piece.x * u + piece.y * v;
-    const radius = piece.radius * (piece.type === 2 ? (piece.el > 1 ? piece.el : 1) : 1);
+    const radius = piece.radius * (piece.type === 2 ? Math.max(1, piece.el) : 1);
     const hx = face.cu * 0.5, hy = face.cv * 0.5;
     const frontX = piece.x + u * along * mask.sa, frontY = piece.y + v * along * mask.sa;
     const ex0 = x - hx - frontX, ex1 = frontX - (x + hx), ex = ex0 > 0 ? ex0 : ex1 > 0 ? ex1 : 0;
