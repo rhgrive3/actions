@@ -898,5 +898,108 @@
     ],
     "fixes": "Local fixes are under validation and are not yet published at this snapshot",
     "ciNote": "The merge message contains [skip ci]. A cancelled account annotation is not a successful test. Earlier #1908 recovery attempt remains historical and does not prove current main."
-  }
+  },
+  "currentEvidenceAddenda": [
+    {
+      "asOf": "2026-10-29T16:17:34Z",
+      "historicalSnapshotPreserved": true,
+      "openIssueNumbers": [
+        226,
+        287,
+        532,
+        642,
+        735,
+        845,
+        890,
+        952,
+        956,
+        992,
+        997,
+        1097,
+        1116,
+        1431,
+        1434,
+        1565,
+        1607,
+        1665,
+        1666,
+        1671,
+        1708,
+        1757,
+        1789,
+        1813,
+        1814,
+        1823
+      ],
+      "excludedIssue": 401,
+      "physicalDeviceValidation": "waived",
+      "closuresAlreadyVerified": [
+        79,
+        725,
+        1767
+      ],
+      "publicPR": {
+        "number": 1914,
+        "state": "open",
+        "draft": false,
+        "head": "331fdaadb061d192e83e0f82d37fbb5c3291da0a",
+        "base": "085dc852fbed282204b84b63a47ee56a7d95a7f1"
+      },
+      "localUnpublishedCommit": "7290b01f329f7de3b7ccf830b50604c9585061ef",
+      "commonEvidence": {
+        "source": "550b5a3f49f40cf8ab913ea1687b7074af11e3e9",
+        "contentHash": "6013fcd90a3ed04ac0d3f5cec30a7088168c4ee9e9506d1e1b4be1c3cfdbea79",
+        "inputHash": "4a3ec6606981d5a6afdf82d7ec57901d424191a65eab1458980fa7203b5cfbc5",
+        "publishedReport": "https://github.com/rhgrive3/actions/blob/331fdaadb061d192e83e0f82d37fbb5c3291da0a/reports/issue-resolution-20261029/pr1914-ci-reconciliation/README.md"
+      },
+      "issues": {
+        "1431": {
+          "browserConditions": 36,
+          "births": 288,
+          "images": 75,
+          "actualDraws": 147,
+          "browserScope": "controlled actual native actors/physics and SwiftShader; not full match or retail",
+          "previous2bEvidenceRemainsSeparate": true,
+          "requiredExactHeadHostedCI": "pending"
+        },
+        "642": {
+          "profiles": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "scope": "actual local Turf touch-emulation snapshots; not time-weighted or physical VRAM",
+          "eligiblePackedColorSavingsPercent": 25,
+          "activeScreenFxColorSavingsPercent": 0,
+          "sampledMenuTargets": "null target accessors only",
+          "highAudioRequestFailures": "two ERR_ABORTED retained",
+          "requiredExactHeadHostedCI": "pending"
+        },
+        "1814": {
+          "sourceTestCommit": "a1805ae79f0d02de387d50ab86adcb142ddd7476",
+          "localSourceTest": "patches/splatoon3/tests/issue-1814-native-weapon-matrix-20261029.test.mjs",
+          "testCount": 8,
+          "passed": 8,
+          "skipped": 0,
+          "scope": "controlled Actor/Runner/projectile and deployed-object fixture; Character pose and movement integration stubbed",
+          "remaining": "#1813 retail zero-rate semantics and tracker completion remain unresolved"
+        },
+        "1434": {
+          "priorPairKind": "distinct common C versus optimized B, not a same-build native/native self-control",
+          "commonSource": "4f5f7acc15e43016985d8b782bf3ba83551a9443",
+          "optimizedSource": "7525bd5cc275c46f308fda2ee06912478d48b5d5",
+          "priorVersions": [
+            135,
+            134
+          ],
+          "priorStrictResult": "rejected and retained",
+          "controlAttributionLocalPath": "/workspace/scratch/agent3-ring-gpu-reentry-20261029-v3/whole-game-control-mode-proof.json",
+          "controlAttributionSha256": "99b271d7263eaea0b4f1df32667fd4289a26d9316ef2782034e5e914d2e42168",
+          "isolatedRingDiagnostic": "99 observations / 33 groups; RGBA and live VBO/source exact, strict state remains unequal; no whole-game causality claim",
+          "currentCurrentSelfControl": "source/build preflight only; browser calibration pending"
+        }
+      },
+      "otherStatus": "Native Chromium audio request failures and required current-hosted CI unresolved; minimap clock and sub-mark investigations not adjudicated. MOV-08b and isolated Character QA holds retained."
+    }
+  ]
 }

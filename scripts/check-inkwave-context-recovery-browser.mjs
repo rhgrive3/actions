@@ -304,7 +304,9 @@ export async function main(siteArg = '_site', outArg = 'reports/context-recovery
     try {
       const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname), file = path.resolve(site, '.' + (pathname === '/' ? '/index.html' : pathname));
       if (!file.startsWith(site + path.sep) || !fs.statSync(file).isFile()) throw Error('Missing file');
-      served.add(path.relative(site, file)); res.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
+      // Chromium can report a streamed no-store response aborted after EOF: https://github.com/microsoft/playwright/issues/42742
+      const cacheControl = path.extname(file) === '.html' ? 'no-store' : 'no-cache, max-age=0, must-revalidate';
+      served.add(path.relative(site, file)); res.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream', 'cache-control': cacheControl });
       fs.createReadStream(file).on('error', error => { errors.push('HTTP stream: ' + error.message); res.destroy(error); }).pipe(res);
     } catch { res.writeHead(404); res.end('Not found'); }
   });

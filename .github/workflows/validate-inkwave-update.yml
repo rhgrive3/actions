@@ -927,6 +927,9 @@ jobs:
       - name: Verify minimap observation symmetry and strict failure controls
         if: matrix.suite == 'active'
         run: node --test scripts/lib/minimap-canvas-observation.test.mjs scripts/lib/inkwave-canonical-kit-input.test.mjs
+      - name: Verify native minimap storage and Canvas parity
+        if: matrix.suite == 'active'
+        run: node --experimental-vm-modules --test scripts/tests/inkwave-minimap-world-canvas.test.mjs
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
