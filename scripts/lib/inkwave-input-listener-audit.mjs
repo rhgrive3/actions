@@ -7,7 +7,7 @@ export function auditInputListeners({Input,windowTarget,documentTarget,canvas,ev
  const originals=targets.map(t=>({add:t.addEventListener,remove:t.removeEventListener,
   addOwn:Object.getOwnPropertyDescriptor(t,'addEventListener'),removeOwn:Object.getOwnPropertyDescriptor(t,'removeEventListener')}));
  const sentinelCalls=[0,0,0],sentinels=targets.map((target,i)=>{
-  const callback=()=>sentinelCalls[i]++;originals[i].add.call(target,'iw-audit-sentinel',callback,{capture:true});return {target,callback};
+  const callback=e=>{if(e.target===target)sentinelCalls[i]++;};originals[i].add.call(target,'iw-audit-sentinel',callback,{capture:true});return {target,callback};
  });
  onSentinels?.(sentinels);
  const records=[],retired=[],summaries=[];let addCalls=0,removeCalls=0;

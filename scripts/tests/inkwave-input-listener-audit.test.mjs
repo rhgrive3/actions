@@ -42,6 +42,11 @@ test('exact listener identities, abort ownership, sentinels and repeated disposa
  assert.equal(result.cycles,3);assert.equal(result.active,0);assert.deepEqual(result.sentinelCalls,[3,3,3]);
  f.canvas.dispatchEvent(new Event('pointerdown'));assert.equal(f.getCanvasCalls(),0);
 });
+test('capture propagation from canvas does not count as a window or document sentinel dispatch',()=>{
+ const f=setup(),previous=f.args.onSentinels;
+ f.args.onSentinels=sentinels=>{previous(sentinels);sentinels[0].callback({target:f.canvas});sentinels[1].callback({target:f.canvas});};
+ assert.deepEqual(auditInputListeners(f.args).sentinelCalls,[3,3,3]);
+});
 for(const [fault,pattern] of [
  ['leak-target',/instance listener remains active/],['wrong-capture',/instance listener remains active/],
  ['forget-abort',/instance listener remains active/],['leak-key',/instance listener remains active/],
