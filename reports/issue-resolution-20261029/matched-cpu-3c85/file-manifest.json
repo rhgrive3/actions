@@ -1,0 +1,4075 @@
+{
+  "schema": 1,
+  "kind": "DO_NOT_MERGE-lossless-content-addressed-evidence",
+  "files": [
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu-publication-generated/README.md",
+      "sha256": "cee1cb29252a4cc9fe571efd5b87db3257f051f2cd9a6cc04894e5c193f19c3e",
+      "bytes": 11057,
+      "mode": 384,
+      "roles": [
+        "publication-readme-original-issue-source-diff-tools"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu-publication-generated/issue-1434-original.json",
+      "sha256": "0ae47deb348a1a753622bf65ed1604c5431497a8a02fb5dc235ece32ab268c72",
+      "bytes": 3821,
+      "mode": 384,
+      "roles": [
+        "publication-readme-original-issue-source-diff-tools"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu-publication-generated/restore_packet.py",
+      "sha256": "f7b6fc7c9f7ae6484b95692cb029672bbd821e708f600a976df5326c5339ff4a",
+      "bytes": 1744,
+      "mode": 384,
+      "roles": [
+        "publication-readme-original-issue-source-diff-tools"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu-publication-generated/source-current3c-C85-diagnostic.patch",
+      "sha256": "6adb0ca3bee380a017752bf1fd635e7e1c4bf85ac71e18912e6e5b4b70db35f8",
+      "bytes": 13625,
+      "mode": 384,
+      "roles": [
+        "publication-readme-original-issue-source-diff-tools"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu-publication-generated/verify_packet.py",
+      "sha256": "74369a61c324b41817c4a0499ee364370012ca98aa2a16bfa370f95160dd29d6",
+      "bytes": 2385,
+      "mode": 384,
+      "roles": [
+        "publication-readme-original-issue-source-diff-tools"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu-publication-plan.py",
+      "sha256": "cc14942a9b15da434c15830779339fd1dd69a84d595dd5fd5c41a1df799a5d83",
+      "bytes": 7796,
+      "mode": 384,
+      "roles": [
+        "packet-generation-streaming-no-raw-copies"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/B3c-sparse-inputs.txt",
+      "sha256": "1d5c0c113b8f0f9e23fbac4020ecbe0f14fde95a59386e6d49c0b1e4fc64e44f",
+      "bytes": 85964,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/README.md",
+      "sha256": "b449a8488a54e3188173c67b288cb8dd8cb8831fc82d608b6eaa2a9d5a16c40e",
+      "bytes": 4736,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/actual-draw-receipts-owned.mjs",
+      "sha256": "42b4d3c63850e21d7cb15cd42c8e859a077569516406a87147c7eda81dd3a2c4",
+      "bytes": 8517,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/actual-owner-contract.test.mjs",
+      "sha256": "6228339a4225737d092ef73fc4ebf662bd26bbe22b3def8be78044a18b759f26",
+      "bytes": 4873,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/actual-owner-derivation.json",
+      "sha256": "3730123688d12e1192f9f9ad6ae496db29e3ce5371175c9a99009977e1a42f90",
+      "bytes": 2313,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/adapter.diff",
+      "sha256": "3978dd9c2b38d19324b0aa3724998328b081ef76ab558342b5a8df40f622ce3b",
+      "bytes": 1040,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/agent1-driver-peer-historical.json",
+      "sha256": "ebaa71db8c673b0a1fcadadc8101d7fc555f91f21378bc7c7cea0747c953dbfb",
+      "bytes": 687,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/agent1-driver-peer.json",
+      "sha256": "4a41c492db968c2c43122733a9caa10304754d42de4667a80a102f2a2f3f88e5",
+      "bytes": 3223,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/applied-map.json",
+      "sha256": "a909f883a84a360c1bd7549b1f899dcabd7e118a96f4798d27f06deb15c3fe56",
+      "bytes": 4584,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/applied-map.log",
+      "sha256": "bf652a4aa3b8ff9357e8bf4dcca2773fb46296b1d496e787ba1305c2ad3c7af2",
+      "bytes": 4314,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/applied-map.mjs",
+      "sha256": "f31cb824a26c968e8a51647fa264b7c3fd0ce439441a1cce27a4b000aa7d317b",
+      "bytes": 3798,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/audit-built-delta.mjs",
+      "sha256": "c1c4c6dfc3de8edf5d811092ad342704c43126c01b2a05a9447b68d2d56895ac",
+      "bytes": 6561,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-3c85-initial-budget-check.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-3c85-initial-budget-check.log",
+      "sha256": "c568d8099c1bbe18d04ec841baea606637349a1f50128a1d267ea701a32987d5",
+      "bytes": 527,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-3c85.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-3c85.json",
+      "sha256": "1001621255d6557c2aac280c1c48eea277ad5ce3ac68e17e6d29870abb186193",
+      "bytes": 604731,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-3c85.log",
+      "sha256": "9614ad919d3bae79a92efcc3429695c324e1689d94b5bb057c9d5efe6450c296",
+      "bytes": 2199,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-pinnedB.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-closure-pinnedB.log",
+      "sha256": "9614ad919d3bae79a92efcc3429695c324e1689d94b5bb057c9d5efe6450c296",
+      "bytes": 2199,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-delta-3c85.json",
+      "sha256": "275afbfadf31eb8e9936c3c22f503bd5bc28011fddeec22c0b967716f3e5c9e0",
+      "bytes": 601242,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/build-epoch-3c.md",
+      "sha256": "3bbb4fe9ab47f0b701445195755ef0e12ee44b8f671435dbdc33c131ef2ba0ac",
+      "bytes": 950,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/component-limits.md",
+      "sha256": "ea3af3a9dfca1b07bc8c63693bf5f39088a8098f1fac036052c46021d3095ce8",
+      "bytes": 672,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/derive-actual-owners.py",
+      "sha256": "673179d1d989286d671183e1890fa6466c292e507f4dbb12f22fcde99105b662",
+      "bytes": 2858,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/derive-matched-driver.py",
+      "sha256": "e96146c84d172d4054deb2b244687a98d56e789179deb527c408da63f1224d31",
+      "bytes": 29760,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/derive-native-tail.py",
+      "sha256": "3c2fc755e89a6a8cf9657bda5de338724b766687a042e5349e060048b84c4c0e",
+      "bytes": 5608,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/derive-strict-gpu-helper.py",
+      "sha256": "664b3fa1c1929bd81bbb631d20bc524ecf05302e3c1b537ff2d0c3cb2a6f2461",
+      "bytes": 17758,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/driver-derivation.json",
+      "sha256": "81cdf720b018aa715ab78903f82b9e5048158651911680ea0009666767862375",
+      "bytes": 33090,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/driver-peer-initial-inverse-error.log",
+      "sha256": "e557be35d2c9fdb3be12bf1e31df03b7473d515d651c5b4d0b3d6617ad40bd10",
+      "bytes": 319,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/durability-contract.test.mjs",
+      "sha256": "3199a5d661f7c449ee4310c3cae14e0412e6ccf3bdf76ef8cf76392f71235ff5",
+      "bytes": 5976,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/durability-review.diff",
+      "sha256": "50cbf9cf8526b96a6d13a65053f4baa33ea172be8ae20932e375550b74072aeb",
+      "bytes": 30942,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/endpoint2-wrapper.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-helper-derivation.json",
+      "sha256": "29682621d13673ea886e3e86aac9d089e34b784e00244d06c9d06036d63d927c",
+      "bytes": 23708,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-preflight-corrected.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-preflight-corrected.log",
+      "sha256": "3358be585442785d0f12470113d1576698e427274f53f25c64400668f1d1fbf4",
+      "bytes": 673,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-preflight-first-frozen.mjs",
+      "sha256": "8e83bf7705e4f6e50df4cec954df2489cba232a78de38e3bcfee7169c04e582d",
+      "bytes": 18874,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-preflight-first.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-preflight-first.log",
+      "sha256": "ebb38c135b9160972d2fe64cbb5daa90c706176033ec3fc6a8650dc1e4aa8cc0",
+      "bytes": 832,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-preflight.mjs",
+      "sha256": "8d3aa3ec0960369f9c11b5a0f64d2c2f1ad55821edc590df5b897147becff2ff",
+      "bytes": 20680,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-tail-preflight.mjs",
+      "sha256": "f3969bd9045dc6b9952b5ea96ddc7c0290f74386f4498175402f33f1df9e66d7",
+      "bytes": 16092,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-tail.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/gpu-native-tail.log",
+      "sha256": "0b99f9c5f148396b8ea6933866ed62de5d2fe4c3177c528f9b1a948891409093",
+      "bytes": 250,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/inkwave-gpu-frame-inputs-strict.mjs",
+      "sha256": "eea3219ce626ffea83d5ada2a304741cc51db8b1b079f847ca03367228dd6242",
+      "bytes": 33168,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/matched-cpu98-contract.mjs",
+      "sha256": "af72587814299576135a8d948ec15dad011126e1bd7dcb45e9bdf7dc10576eda",
+      "bytes": 22389,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/measure-matched-cpu3c.mjs",
+      "sha256": "823381c9a22352e0592326b76156a6e805a1c62322fbeca61100348fe4aa003f",
+      "bytes": 48816,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/native-control-composite.json",
+      "sha256": "3fdbb3e59352b649e16e552001a2342a63c89f44611a64f11b17e131edfdb6ed",
+      "bytes": 9795,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/native-preflight-index-class-fix.diff",
+      "sha256": "48bee9f76005f1a985f9b477d492ada1dc4b60fc7bcf78e53f92f6801955e769",
+      "bytes": 10644,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/native-tail-derivation.json",
+      "sha256": "cb7fde22c8d2dbe9333c6dd9bff1a0f897e10fbe7381b2231495c7b9dc851911",
+      "bytes": 784,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/observed2-diagnosis.json",
+      "sha256": "f0ee0e1aab41df34f72fbdf24cfc6af2ea7312c552077d5be1946a2a7be45c5d",
+      "bytes": 2123,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/owner-durability-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/owner-durability-final.tap",
+      "sha256": "b6ad4d1d803b3d7c40fdd559d5bf902a633ef6f813bb5da3328953f0c3a6412d",
+      "bytes": 3195,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-contract-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-contract-final.log",
+      "sha256": "c03e7acad8935d27af0ec68e89919cdd0b0b20e915bf53082951e1d6b6a38f1e",
+      "bytes": 349,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-contract-v2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-contract-v2.log",
+      "sha256": "1469a048dcc8fb98464229787525caf13f1f0dcae20ae88a02346a7a654473fa",
+      "bytes": 365,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-contract.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-contract.log",
+      "sha256": "98a112b9162b111677b60016ab8702e8bbcbec97aeb90094caa8b0ed689aba56",
+      "bytes": 343,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-matched-contract-initial.mjs",
+      "sha256": "8b978bf81e5260cece5b6f716c74c9ef801a706c12c3a4febff4fa9d8fbb60fe",
+      "bytes": 3387,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/prepare-matched-contract.mjs",
+      "sha256": "c65f06e663c92c5d59db9c333b5b9805fc10ff7977c7f1438c289b0f019dd461",
+      "bytes": 3398,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/preserved-parent-freeze.json",
+      "sha256": "58fbb9714b2b0645cf949f092589dc56a020d1f46f093093a7d91ee0de26d673",
+      "bytes": 8961,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/publication-manifest-plan.json",
+      "sha256": "f58b0977b8e141715f36ce82949ab48ef121ec81a5b80c2a4570860b0f2c90ff",
+      "bytes": 1520,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/run-matched-cpu3c.mjs",
+      "sha256": "2a69fe2b46d1de8550bcfb63b5ce200e1b1f6188b270f1c3777fd404966747ac",
+      "bytes": 9605,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/seal-native-controls.mjs",
+      "sha256": "88a005569fdad0c176ee5a9a58bfa2cd339b4080189ab01853a3903400e9b69c",
+      "bytes": 5277,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/sealed-contract-3c85-durable-v2.json",
+      "sha256": "26932244775b50a04c2b7d975304050d3e4013e9a18e6b90c8dccfd63a2da482",
+      "bytes": 610970,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/sealed-contract-3c85-final.json",
+      "sha256": "3f912056abe9b7ba90136ebe3c92746ef1d5238c30f04e430283d2d604ceadd9",
+      "bytes": 609866,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/sealed-contract-3c85.json",
+      "sha256": "93dcb5265b51aefa0c3e0200c87c487342b7c6c4f2d94384c1104e09dc97fb19",
+      "bytes": 609866,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/signal-rejection.mjs",
+      "sha256": "76968d171d3ffcd2db01a0a030570c8c79699af9c1643f0202c3d7943b24777e",
+      "bytes": 1047,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/source-freeze.json",
+      "sha256": "e332b88c10df2ae3152f21339ed87cfef875be80623303228b16c94f92adf275",
+      "bytes": 2380,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/source-parity-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/source-parity-final.tap",
+      "sha256": "7b7173af7f8e9de596ab330978c1b63f116259c85474815c7cb3f6602df9108b",
+      "bytes": 2650,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/source-parity.tap",
+      "sha256": "d4c9aff9585a3b18a2c2beda592c2580d5a3639983f289d46d4f45e229119c90",
+      "bytes": 2650,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/source98-to-build3c-input-equivalence.json",
+      "sha256": "f6e4b0603c47cfb5d3e46b58b5a8659003e8789508085c610039851d1a2ea564",
+      "bytes": 360,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_fx_fx.js.B.txt",
+      "sha256": "a567f840cdc0adde3278cd45657801e930ed98a29a6fc1e3a44cc89f23f1c519",
+      "bytes": 137245,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_fx_fx.js.C.txt",
+      "sha256": "a567f840cdc0adde3278cd45657801e930ed98a29a6fc1e3a44cc89f23f1c519",
+      "bytes": 137245,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_fx_screenfx.js.B.txt",
+      "sha256": "0307b8e2478a1d0389a7834b68084caa1c422851d485e86c0e8cc6689c691ed8",
+      "bytes": 60011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_fx_screenfx.js.C.txt",
+      "sha256": "0307b8e2478a1d0389a7834b68084caa1c422851d485e86c0e8cc6689c691ed8",
+      "bytes": 60011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_character.js.B.txt",
+      "sha256": "c5dcec526ff02b2215fbdd5bc58f0c8b7aa5a16aa32550e669d2aac6e68351a7",
+      "bytes": 249997,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_character.js.C.txt",
+      "sha256": "ed3fcefe88689573998dda29f683bf1ea5e4b22dd1f08be837b83d6023e594f6",
+      "bytes": 249250,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_retarget.js.B.txt",
+      "sha256": "3fd9ea38eb0a5dc9a141375049d0e29f44487b4f8b371cc2bae21464700df650",
+      "bytes": 37202,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_retarget.js.C.txt",
+      "sha256": "5772de758ab796692a690782d963cbfaeef48fe3f5055fb5825a45ea0cad6652",
+      "bytes": 36914,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_root-hair.js.B.txt",
+      "sha256": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "bytes": 3558,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_root-hair.js.C.txt",
+      "sha256": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "bytes": 3558,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_source-controller.js.B.txt",
+      "sha256": "792a86779ef81d560da7a2b39b7e73dd8563a67354b1ead2bb90e99cf9fe03e5",
+      "bytes": 53289,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_source-controller.js.C.txt",
+      "sha256": "792a86779ef81d560da7a2b39b7e73dd8563a67354b1ead2bb90e99cf9fe03e5",
+      "bytes": 53289,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_squid-rig.js.B.txt",
+      "sha256": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "bytes": 16417,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_motion_squid-rig.js.C.txt",
+      "sha256": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "bytes": 16417,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_physics.js.B.txt",
+      "sha256": "604c36549b132e68bf0f6f35081cd8eea87f69596bfcc20b7235cb42303f80f4",
+      "bytes": 20913,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_game_physics.js.C.txt",
+      "sha256": "604c36549b132e68bf0f6f35081cd8eea87f69596bfcc20b7235cb42303f80f4",
+      "bytes": 20913,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_world_level.js.B.txt",
+      "sha256": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "bytes": 30523,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_world_level.js.C.txt",
+      "sha256": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "bytes": 30523,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_world_paint.js.B.txt",
+      "sha256": "b71fec082b247e4bac6b48659da3e3c80999e72c2bb45bf88620b15b2afd3ec4",
+      "bytes": 57159,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/src_world_paint.js.C.txt",
+      "sha256": "b71fec082b247e4bac6b48659da3e3c80999e72c2bb45bf88620b15b2afd3ec4",
+      "bytes": 57159,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract-final.tap",
+      "sha256": "11fe18ca3c1345f74ffa7fbc46452a2af7fd2243af26a2b6fce40165ad8757cf",
+      "bytes": 2708,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract-v2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract-v2.tap",
+      "sha256": "96904769c822851ff72be5747f2f930e55665a45005cea3fc1e0ea2cb6825bb2",
+      "bytes": 2182,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract-v3.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract-v3.tap",
+      "sha256": "db0cf0667afffa95a547cf46fa452d0b1ae7850ee64b85bc513dc3145a576e63",
+      "bytes": 3019,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract.tap",
+      "sha256": "7a2f2033080ca051be203b29084ac115a47ae633862033a79a4520875fcd5f91",
+      "bytes": 2184,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/strict-gpu-buffer-contract.test.mjs",
+      "sha256": "af1d442f592cf314604c69cb30fde9467bcf95047883e1351435365d51b21f43",
+      "bytes": 11139,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-durable-v2/sw-build-delta.json",
+      "sha256": "d7a18387c1766bd5269b5e78e01201fa6ba489e5b415f7b773b4de0babce1185",
+      "bytes": 1200,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/B3c-sparse-inputs.txt",
+      "sha256": "1d5c0c113b8f0f9e23fbac4020ecbe0f14fde95a59386e6d49c0b1e4fc64e44f",
+      "bytes": 85964,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/README.md",
+      "sha256": "b449a8488a54e3188173c67b288cb8dd8cb8831fc82d608b6eaa2a9d5a16c40e",
+      "bytes": 4736,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/actual-draw-receipts-owned.mjs",
+      "sha256": "2614e490897abe4f771cc05d3e00d5cc16be2723785b4ed26778b322f36a0145",
+      "bytes": 12011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/actual-owner-contract.test.mjs",
+      "sha256": "6228339a4225737d092ef73fc4ebf662bd26bbe22b3def8be78044a18b759f26",
+      "bytes": 4873,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/actual-owner-derivation.json",
+      "sha256": "f92d95b02b83aa783f98494b1d6539802af844fdf2599e95cb3b2925db799b92",
+      "bytes": 7718,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/adapter.diff",
+      "sha256": "3978dd9c2b38d19324b0aa3724998328b081ef76ab558342b5a8df40f622ce3b",
+      "bytes": 1040,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/agent1-driver-peer-historical.json",
+      "sha256": "ebaa71db8c673b0a1fcadadc8101d7fc555f91f21378bc7c7cea0747c953dbfb",
+      "bytes": 687,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/agent1-driver-peer-v2-historical.json",
+      "sha256": "4a41c492db968c2c43122733a9caa10304754d42de4667a80a102f2a2f3f88e5",
+      "bytes": 3223,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/agent1-driver-peer.json",
+      "sha256": "bed250ecdfa47a510471fa62c861047ead76ec8aaa6c4171003b7315d8ffa951",
+      "bytes": 3576,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/applied-map.json",
+      "sha256": "a909f883a84a360c1bd7549b1f899dcabd7e118a96f4798d27f06deb15c3fe56",
+      "bytes": 4584,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/applied-map.log",
+      "sha256": "bf652a4aa3b8ff9357e8bf4dcca2773fb46296b1d496e787ba1305c2ad3c7af2",
+      "bytes": 4314,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/applied-map.mjs",
+      "sha256": "f31cb824a26c968e8a51647fa264b7c3fd0ce439441a1cce27a4b000aa7d317b",
+      "bytes": 3798,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/audit-built-delta.mjs",
+      "sha256": "c1c4c6dfc3de8edf5d811092ad342704c43126c01b2a05a9447b68d2d56895ac",
+      "bytes": 6561,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-3c85-initial-budget-check.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-3c85-initial-budget-check.log",
+      "sha256": "c568d8099c1bbe18d04ec841baea606637349a1f50128a1d267ea701a32987d5",
+      "bytes": 527,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-3c85.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-3c85.json",
+      "sha256": "1001621255d6557c2aac280c1c48eea277ad5ce3ac68e17e6d29870abb186193",
+      "bytes": 604731,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-3c85.log",
+      "sha256": "9614ad919d3bae79a92efcc3429695c324e1689d94b5bb057c9d5efe6450c296",
+      "bytes": 2199,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-pinnedB.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-closure-pinnedB.log",
+      "sha256": "9614ad919d3bae79a92efcc3429695c324e1689d94b5bb057c9d5efe6450c296",
+      "bytes": 2199,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-delta-3c85.json",
+      "sha256": "275afbfadf31eb8e9936c3c22f503bd5bc28011fddeec22c0b967716f3e5c9e0",
+      "bytes": 601242,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/build-epoch-3c.md",
+      "sha256": "3bbb4fe9ab47f0b701445195755ef0e12ee44b8f671435dbdc33c131ef2ba0ac",
+      "bytes": 950,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/component-limits.md",
+      "sha256": "ea3af3a9dfca1b07bc8c63693bf5f39088a8098f1fac036052c46021d3095ce8",
+      "bytes": 672,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/derive-actual-owners.py",
+      "sha256": "4c4367b16f7f00b863dee20928d7b70bfd811ae99899bb31badceec9dd8cc2aa",
+      "bytes": 8103,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/derive-matched-driver.py",
+      "sha256": "d5a7811e0c4b6caeab9342d5252214da3904f1d590faba91b36f44cc13773ace",
+      "bytes": 31651,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/derive-native-tail.py",
+      "sha256": "3c2fc755e89a6a8cf9657bda5de338724b766687a042e5349e060048b84c4c0e",
+      "bytes": 5608,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/derive-strict-gpu-helper.py",
+      "sha256": "e3efb809849f54f296d76e4f0b4bca17bb0a36053394adbe3d960dd8ef942616",
+      "bytes": 22392,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/driver-derivation.json",
+      "sha256": "b7610cbfd908f0028ba3ce1031f3cc7aa98f9aa2009a1a5b0395e816866d8278",
+      "bytes": 35287,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/driver-peer-initial-inverse-error.log",
+      "sha256": "e557be35d2c9fdb3be12bf1e31df03b7473d515d651c5b4d0b3d6617ad40bd10",
+      "bytes": 319,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/durability-contract.test.mjs",
+      "sha256": "3199a5d661f7c449ee4310c3cae14e0412e6ccf3bdf76ef8cf76392f71235ff5",
+      "bytes": 5976,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/durability-review.diff",
+      "sha256": "50cbf9cf8526b96a6d13a65053f4baa33ea172be8ae20932e375550b74072aeb",
+      "bytes": 30942,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/endpoint2-wrapper.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-helper-derivation.json",
+      "sha256": "0bd87b728f66109965e7905fe0ffd50d4084c54bc600fc32c51e50b97d638bf2",
+      "bytes": 28582,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-preflight-corrected.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-preflight-corrected.log",
+      "sha256": "3358be585442785d0f12470113d1576698e427274f53f25c64400668f1d1fbf4",
+      "bytes": 673,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-preflight-first-frozen.mjs",
+      "sha256": "8e83bf7705e4f6e50df4cec954df2489cba232a78de38e3bcfee7169c04e582d",
+      "bytes": 18874,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-preflight-first.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-preflight-first.log",
+      "sha256": "ebb38c135b9160972d2fe64cbb5daa90c706176033ec3fc6a8650dc1e4aa8cc0",
+      "bytes": 832,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-preflight.mjs",
+      "sha256": "8d3aa3ec0960369f9c11b5a0f64d2c2f1ad55821edc590df5b897147becff2ff",
+      "bytes": 20680,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-tail-preflight.mjs",
+      "sha256": "f3969bd9045dc6b9952b5ea96ddc7c0290f74386f4498175402f33f1df9e66d7",
+      "bytes": 16092,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-tail.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/gpu-native-tail.log",
+      "sha256": "0b99f9c5f148396b8ea6933866ed62de5d2fe4c3177c528f9b1a948891409093",
+      "bytes": 250,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/inkwave-gpu-frame-inputs-strict.mjs",
+      "sha256": "51e330f92c202ab66badb16f419932c0d921d64323ab6730dbc936aa4ff1120d",
+      "bytes": 34442,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/matched-cpu98-contract.mjs",
+      "sha256": "04ddbda312b6171b3fdfe1e5463048579cd3e3623e5b43aad6fb9dca78eb1770",
+      "bytes": 23081,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/measure-matched-cpu3c.mjs",
+      "sha256": "2d1bf39dda3b8aeaad30903960b28d078a926e38d0329854d87da8a113fab008",
+      "bytes": 49322,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/native-control-composite.json",
+      "sha256": "3fdbb3e59352b649e16e552001a2342a63c89f44611a64f11b17e131edfdb6ed",
+      "bytes": 9795,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/native-fallback-contract.test.mjs",
+      "sha256": "2e632fdbb11e5571c75599b62b1872693f835a347c2992e5360aeaff2c525e4c",
+      "bytes": 10616,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/native-preflight-index-class-fix.diff",
+      "sha256": "48bee9f76005f1a985f9b477d492ada1dc4b60fc7bcf78e53f92f6801955e769",
+      "bytes": 10644,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/native-tail-derivation.json",
+      "sha256": "cb7fde22c8d2dbe9333c6dd9bff1a0f897e10fbe7381b2231495c7b9dc851911",
+      "bytes": 784,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/observed-evidence-v3.mjs",
+      "sha256": "a073dc2dad5ca6705f7fda3f9ed8c63e5d801320907e8fe61e6f1183d9f1b60a",
+      "bytes": 6627,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/observed-evidence-v3.test.mjs",
+      "sha256": "3b6174cfe59bcbbaf14ef9750f9a486cda9ef10d996b1626a31e2aa2900ea103",
+      "bytes": 6867,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/observed2-diagnosis.json",
+      "sha256": "f0ee0e1aab41df34f72fbdf24cfc6af2ea7312c552077d5be1946a2a7be45c5d",
+      "bytes": 2123,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/owner-durability-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/owner-durability-final.tap",
+      "sha256": "b6ad4d1d803b3d7c40fdd559d5bf902a633ef6f813bb5da3328953f0c3a6412d",
+      "bytes": 3195,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract-final.log",
+      "sha256": "c03e7acad8935d27af0ec68e89919cdd0b0b20e915bf53082951e1d6b6a38f1e",
+      "bytes": 349,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract-v2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract-v2.log",
+      "sha256": "1469a048dcc8fb98464229787525caf13f1f0dcae20ae88a02346a7a654473fa",
+      "bytes": 365,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract-v3.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract-v3.log",
+      "sha256": "db0a67d5b2286309e60511d9bda566c905b894424b78dd717faba2170a57fb10",
+      "bytes": 367,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-contract.log",
+      "sha256": "98a112b9162b111677b60016ab8702e8bbcbec97aeb90094caa8b0ed689aba56",
+      "bytes": 343,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-matched-contract-initial.mjs",
+      "sha256": "8b978bf81e5260cece5b6f716c74c9ef801a706c12c3a4febff4fa9d8fbb60fe",
+      "bytes": 3387,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/prepare-matched-contract.mjs",
+      "sha256": "90962cb80b081fe39d0eb75c9e26df842f04616cd528df26c071df6154d0500e",
+      "bytes": 3399,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/preserved-parent-freeze.json",
+      "sha256": "58fbb9714b2b0645cf949f092589dc56a020d1f46f093093a7d91ee0de26d673",
+      "bytes": 8961,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/preserved-v2-freeze.json",
+      "sha256": "708bf1ec41446cfef88392ed52a5377a928a3f8fe18fafad59a7e73e8ccbcf27",
+      "bytes": 10572,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/publication-manifest-plan.json",
+      "sha256": "f58b0977b8e141715f36ce82949ab48ef121ec81a5b80c2a4570860b0f2c90ff",
+      "bytes": 1520,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/raw-retention-derivation.json",
+      "sha256": "d26929fe28846a420daece95dfb1651c2f52fcef01258710dc977f7a8a43ef50",
+      "bytes": 5382,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/raw-retention-review.diff",
+      "sha256": "50fd0510ca534f0991f3c63f04879ee1861a3484d88eb50c21c330d6a2cbaf76",
+      "bytes": 6657,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/run-matched-cpu3c.mjs",
+      "sha256": "a97b7325b8780bc5a2e4be2ba515953d86c9b0d9831e039a8a464ab8ba361668",
+      "bytes": 9636,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/seal-native-controls.mjs",
+      "sha256": "88a005569fdad0c176ee5a9a58bfa2cd339b4080189ab01853a3903400e9b69c",
+      "bytes": 5277,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/sealed-contract-3c85-durable-v2.json",
+      "sha256": "26932244775b50a04c2b7d975304050d3e4013e9a18e6b90c8dccfd63a2da482",
+      "bytes": 610970,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/sealed-contract-3c85-final.json",
+      "sha256": "3f912056abe9b7ba90136ebe3c92746ef1d5238c30f04e430283d2d604ceadd9",
+      "bytes": 609866,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/sealed-contract-3c85-observed-v3.json",
+      "sha256": "82ff11ee94605950198b70aca57a1b10ed750a49ceb3295ef1c187cae11baa29",
+      "bytes": 611846,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/sealed-contract-3c85.json",
+      "sha256": "93dcb5265b51aefa0c3e0200c87c487342b7c6c4f2d94384c1104e09dc97fb19",
+      "bytes": 609866,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/signal-rejection.mjs",
+      "sha256": "76968d171d3ffcd2db01a0a030570c8c79699af9c1643f0202c3d7943b24777e",
+      "bytes": 1047,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/source-freeze.json",
+      "sha256": "e332b88c10df2ae3152f21339ed87cfef875be80623303228b16c94f92adf275",
+      "bytes": 2380,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/source-parity-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/source-parity-final.tap",
+      "sha256": "7b7173af7f8e9de596ab330978c1b63f116259c85474815c7cb3f6602df9108b",
+      "bytes": 2650,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/source-parity.tap",
+      "sha256": "d4c9aff9585a3b18a2c2beda592c2580d5a3639983f289d46d4f45e229119c90",
+      "bytes": 2650,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/source98-to-build3c-input-equivalence.json",
+      "sha256": "f6e4b0603c47cfb5d3e46b58b5a8659003e8789508085c610039851d1a2ea564",
+      "bytes": 360,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_fx_fx.js.B.txt",
+      "sha256": "a567f840cdc0adde3278cd45657801e930ed98a29a6fc1e3a44cc89f23f1c519",
+      "bytes": 137245,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_fx_fx.js.C.txt",
+      "sha256": "a567f840cdc0adde3278cd45657801e930ed98a29a6fc1e3a44cc89f23f1c519",
+      "bytes": 137245,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_fx_screenfx.js.B.txt",
+      "sha256": "0307b8e2478a1d0389a7834b68084caa1c422851d485e86c0e8cc6689c691ed8",
+      "bytes": 60011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_fx_screenfx.js.C.txt",
+      "sha256": "0307b8e2478a1d0389a7834b68084caa1c422851d485e86c0e8cc6689c691ed8",
+      "bytes": 60011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_character.js.B.txt",
+      "sha256": "c5dcec526ff02b2215fbdd5bc58f0c8b7aa5a16aa32550e669d2aac6e68351a7",
+      "bytes": 249997,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_character.js.C.txt",
+      "sha256": "ed3fcefe88689573998dda29f683bf1ea5e4b22dd1f08be837b83d6023e594f6",
+      "bytes": 249250,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_retarget.js.B.txt",
+      "sha256": "3fd9ea38eb0a5dc9a141375049d0e29f44487b4f8b371cc2bae21464700df650",
+      "bytes": 37202,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_retarget.js.C.txt",
+      "sha256": "5772de758ab796692a690782d963cbfaeef48fe3f5055fb5825a45ea0cad6652",
+      "bytes": 36914,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_root-hair.js.B.txt",
+      "sha256": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "bytes": 3558,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_root-hair.js.C.txt",
+      "sha256": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "bytes": 3558,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_source-controller.js.B.txt",
+      "sha256": "792a86779ef81d560da7a2b39b7e73dd8563a67354b1ead2bb90e99cf9fe03e5",
+      "bytes": 53289,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_source-controller.js.C.txt",
+      "sha256": "792a86779ef81d560da7a2b39b7e73dd8563a67354b1ead2bb90e99cf9fe03e5",
+      "bytes": 53289,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_squid-rig.js.B.txt",
+      "sha256": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "bytes": 16417,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_motion_squid-rig.js.C.txt",
+      "sha256": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "bytes": 16417,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_physics.js.B.txt",
+      "sha256": "604c36549b132e68bf0f6f35081cd8eea87f69596bfcc20b7235cb42303f80f4",
+      "bytes": 20913,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_game_physics.js.C.txt",
+      "sha256": "604c36549b132e68bf0f6f35081cd8eea87f69596bfcc20b7235cb42303f80f4",
+      "bytes": 20913,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_world_level.js.B.txt",
+      "sha256": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "bytes": 30523,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_world_level.js.C.txt",
+      "sha256": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "bytes": 30523,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_world_paint.js.B.txt",
+      "sha256": "b71fec082b247e4bac6b48659da3e3c80999e72c2bb45bf88620b15b2afd3ec4",
+      "bytes": 57159,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/src_world_paint.js.C.txt",
+      "sha256": "b71fec082b247e4bac6b48659da3e3c80999e72c2bb45bf88620b15b2afd3ec4",
+      "bytes": 57159,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract-final.tap",
+      "sha256": "11fe18ca3c1345f74ffa7fbc46452a2af7fd2243af26a2b6fce40165ad8757cf",
+      "bytes": 2708,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract-v2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract-v2.tap",
+      "sha256": "96904769c822851ff72be5747f2f930e55665a45005cea3fc1e0ea2cb6825bb2",
+      "bytes": 2182,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract-v3.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract-v3.tap",
+      "sha256": "db0cf0667afffa95a547cf46fa452d0b1ae7850ee64b85bc513dc3145a576e63",
+      "bytes": 3019,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract.tap",
+      "sha256": "7a2f2033080ca051be203b29084ac115a47ae633862033a79a4520875fcd5f91",
+      "bytes": 2184,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/strict-gpu-buffer-contract.test.mjs",
+      "sha256": "af1d442f592cf314604c69cb30fde9467bcf95047883e1351435365d51b21f43",
+      "bytes": 11139,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/sw-build-delta.json",
+      "sha256": "d7a18387c1766bd5269b5e78e01201fa6ba489e5b415f7b773b4de0babce1185",
+      "bytes": 1200,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/v3-observation-policy.json",
+      "sha256": "0b3beada4b819f79c6898873590cffdafd7a0d0d44a51390fde025e96ec549db",
+      "bytes": 1481,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/v3-static-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/v3-static-final.tap",
+      "sha256": "26aa46f494c3fb46fc44288264c6e7952b4a9a2f35941162087076f564232d65",
+      "bytes": 12210,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/v3-static-first.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/v3-static-first.tap",
+      "sha256": "e60e8a7431459c11851b09f5e601ebac5aa3c38eda7f2f3b181149f37a74a4e0",
+      "bytes": 11283,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu3c-v3-reproducibility.json",
+      "sha256": "6b5a63c02e802094f691b01f93f20675e872815e241ed0506fe5c85208bdde24",
+      "bytes": 69586,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/B3c-sparse-inputs.txt",
+      "sha256": "1d5c0c113b8f0f9e23fbac4020ecbe0f14fde95a59386e6d49c0b1e4fc64e44f",
+      "bytes": 85964,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/README.md",
+      "sha256": "b449a8488a54e3188173c67b288cb8dd8cb8831fc82d608b6eaa2a9d5a16c40e",
+      "bytes": 4736,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/adapter.diff",
+      "sha256": "3978dd9c2b38d19324b0aa3724998328b081ef76ab558342b5a8df40f622ce3b",
+      "bytes": 1040,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/agent1-driver-peer.json",
+      "sha256": "ebaa71db8c673b0a1fcadadc8101d7fc555f91f21378bc7c7cea0747c953dbfb",
+      "bytes": 687,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/applied-map.json",
+      "sha256": "a909f883a84a360c1bd7549b1f899dcabd7e118a96f4798d27f06deb15c3fe56",
+      "bytes": 4584,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/applied-map.log",
+      "sha256": "bf652a4aa3b8ff9357e8bf4dcca2773fb46296b1d496e787ba1305c2ad3c7af2",
+      "bytes": 4314,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/applied-map.mjs",
+      "sha256": "f31cb824a26c968e8a51647fa264b7c3fd0ce439441a1cce27a4b000aa7d317b",
+      "bytes": 3798,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/audit-built-delta.mjs",
+      "sha256": "c1c4c6dfc3de8edf5d811092ad342704c43126c01b2a05a9447b68d2d56895ac",
+      "bytes": 6561,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-3c85-initial-budget-check.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-3c85-initial-budget-check.log",
+      "sha256": "c568d8099c1bbe18d04ec841baea606637349a1f50128a1d267ea701a32987d5",
+      "bytes": 527,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-3c85.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-3c85.json",
+      "sha256": "1001621255d6557c2aac280c1c48eea277ad5ce3ac68e17e6d29870abb186193",
+      "bytes": 604731,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-3c85.log",
+      "sha256": "9614ad919d3bae79a92efcc3429695c324e1689d94b5bb057c9d5efe6450c296",
+      "bytes": 2199,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-pinnedB.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-closure-pinnedB.log",
+      "sha256": "9614ad919d3bae79a92efcc3429695c324e1689d94b5bb057c9d5efe6450c296",
+      "bytes": 2199,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-delta-3c85.json",
+      "sha256": "275afbfadf31eb8e9936c3c22f503bd5bc28011fddeec22c0b967716f3e5c9e0",
+      "bytes": 601242,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/build-epoch-3c.md",
+      "sha256": "3bbb4fe9ab47f0b701445195755ef0e12ee44b8f671435dbdc33c131ef2ba0ac",
+      "bytes": 950,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/component-limits.md",
+      "sha256": "ea3af3a9dfca1b07bc8c63693bf5f39088a8098f1fac036052c46021d3095ce8",
+      "bytes": 672,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/derive-matched-driver.py",
+      "sha256": "d43a9398d98a1f47ee6e0d33da1e77de4b48c2e498e58d322a849babb6c7a16f",
+      "bytes": 25950,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/derive-native-tail.py",
+      "sha256": "3c2fc755e89a6a8cf9657bda5de338724b766687a042e5349e060048b84c4c0e",
+      "bytes": 5608,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/derive-strict-gpu-helper.py",
+      "sha256": "664b3fa1c1929bd81bbb631d20bc524ecf05302e3c1b537ff2d0c3cb2a6f2461",
+      "bytes": 17758,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/driver-derivation.json",
+      "sha256": "c1e7c3ad371e004186cd09559035236ec22edad9116044606c94496c16ea09c6",
+      "bytes": 28694,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/driver-peer-initial-inverse-error.log",
+      "sha256": "e557be35d2c9fdb3be12bf1e31df03b7473d515d651c5b4d0b3d6617ad40bd10",
+      "bytes": 319,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/endpoint2-wrapper.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-helper-derivation.json",
+      "sha256": "29682621d13673ea886e3e86aac9d089e34b784e00244d06c9d06036d63d927c",
+      "bytes": 23708,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-preflight-corrected.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-preflight-corrected.log",
+      "sha256": "3358be585442785d0f12470113d1576698e427274f53f25c64400668f1d1fbf4",
+      "bytes": 673,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-preflight-first-frozen.mjs",
+      "sha256": "8e83bf7705e4f6e50df4cec954df2489cba232a78de38e3bcfee7169c04e582d",
+      "bytes": 18874,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-preflight-first.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-preflight-first.log",
+      "sha256": "ebb38c135b9160972d2fe64cbb5daa90c706176033ec3fc6a8650dc1e4aa8cc0",
+      "bytes": 832,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-preflight.mjs",
+      "sha256": "8d3aa3ec0960369f9c11b5a0f64d2c2f1ad55821edc590df5b897147becff2ff",
+      "bytes": 20680,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-tail-preflight.mjs",
+      "sha256": "f3969bd9045dc6b9952b5ea96ddc7c0290f74386f4498175402f33f1df9e66d7",
+      "bytes": 16092,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-tail.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/gpu-native-tail.log",
+      "sha256": "0b99f9c5f148396b8ea6933866ed62de5d2fe4c3177c528f9b1a948891409093",
+      "bytes": 250,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/inkwave-gpu-frame-inputs-strict.mjs",
+      "sha256": "eea3219ce626ffea83d5ada2a304741cc51db8b1b079f847ca03367228dd6242",
+      "bytes": 33168,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/matched-cpu98-contract.mjs",
+      "sha256": "31c46ce4d9baa3aa26f995f723c5f812fbc975c0a12745edd38fa57ffef6716a",
+      "bytes": 22095,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/measure-matched-cpu3c.mjs",
+      "sha256": "43e63481779fe8efc4f8498c0aac40e7dca09992b19becabe997300af5e94152",
+      "bytes": 47884,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/native-control-composite.json",
+      "sha256": "3fdbb3e59352b649e16e552001a2342a63c89f44611a64f11b17e131edfdb6ed",
+      "bytes": 9795,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/native-preflight-index-class-fix.diff",
+      "sha256": "48bee9f76005f1a985f9b477d492ada1dc4b60fc7bcf78e53f92f6801955e769",
+      "bytes": 10644,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/native-tail-derivation.json",
+      "sha256": "cb7fde22c8d2dbe9333c6dd9bff1a0f897e10fbe7381b2231495c7b9dc851911",
+      "bytes": 784,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/prepare-contract-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/prepare-contract-final.log",
+      "sha256": "c03e7acad8935d27af0ec68e89919cdd0b0b20e915bf53082951e1d6b6a38f1e",
+      "bytes": 349,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/prepare-contract.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/prepare-contract.log",
+      "sha256": "98a112b9162b111677b60016ab8702e8bbcbec97aeb90094caa8b0ed689aba56",
+      "bytes": 343,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/prepare-matched-contract-initial.mjs",
+      "sha256": "8b978bf81e5260cece5b6f716c74c9ef801a706c12c3a4febff4fa9d8fbb60fe",
+      "bytes": 3387,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/prepare-matched-contract.mjs",
+      "sha256": "5e09603ea8543705593281b44a39f87d0527e760fda5d9a74c092c78ef51d01d",
+      "bytes": 3393,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/run-matched-cpu3c.mjs",
+      "sha256": "b8aa86235278456429ae63a2b4a12a37b6ca21b69ab5cb3ffb97e7f1d9915bd2",
+      "bytes": 8792,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/seal-native-controls.mjs",
+      "sha256": "88a005569fdad0c176ee5a9a58bfa2cd339b4080189ab01853a3903400e9b69c",
+      "bytes": 5277,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/sealed-contract-3c85-final.json",
+      "sha256": "3f912056abe9b7ba90136ebe3c92746ef1d5238c30f04e430283d2d604ceadd9",
+      "bytes": 609866,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/sealed-contract-3c85.json",
+      "sha256": "93dcb5265b51aefa0c3e0200c87c487342b7c6c4f2d94384c1104e09dc97fb19",
+      "bytes": 609866,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/source-freeze.json",
+      "sha256": "e332b88c10df2ae3152f21339ed87cfef875be80623303228b16c94f92adf275",
+      "bytes": 2380,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/source-parity-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/source-parity-final.tap",
+      "sha256": "7b7173af7f8e9de596ab330978c1b63f116259c85474815c7cb3f6602df9108b",
+      "bytes": 2650,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/source-parity.tap",
+      "sha256": "d4c9aff9585a3b18a2c2beda592c2580d5a3639983f289d46d4f45e229119c90",
+      "bytes": 2650,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/source98-to-build3c-input-equivalence.json",
+      "sha256": "f6e4b0603c47cfb5d3e46b58b5a8659003e8789508085c610039851d1a2ea564",
+      "bytes": 360,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_fx_fx.js.B.txt",
+      "sha256": "a567f840cdc0adde3278cd45657801e930ed98a29a6fc1e3a44cc89f23f1c519",
+      "bytes": 137245,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_fx_fx.js.C.txt",
+      "sha256": "a567f840cdc0adde3278cd45657801e930ed98a29a6fc1e3a44cc89f23f1c519",
+      "bytes": 137245,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_fx_screenfx.js.B.txt",
+      "sha256": "0307b8e2478a1d0389a7834b68084caa1c422851d485e86c0e8cc6689c691ed8",
+      "bytes": 60011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_fx_screenfx.js.C.txt",
+      "sha256": "0307b8e2478a1d0389a7834b68084caa1c422851d485e86c0e8cc6689c691ed8",
+      "bytes": 60011,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_character.js.B.txt",
+      "sha256": "c5dcec526ff02b2215fbdd5bc58f0c8b7aa5a16aa32550e669d2aac6e68351a7",
+      "bytes": 249997,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_character.js.C.txt",
+      "sha256": "ed3fcefe88689573998dda29f683bf1ea5e4b22dd1f08be837b83d6023e594f6",
+      "bytes": 249250,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_retarget.js.B.txt",
+      "sha256": "3fd9ea38eb0a5dc9a141375049d0e29f44487b4f8b371cc2bae21464700df650",
+      "bytes": 37202,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_retarget.js.C.txt",
+      "sha256": "5772de758ab796692a690782d963cbfaeef48fe3f5055fb5825a45ea0cad6652",
+      "bytes": 36914,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_root-hair.js.B.txt",
+      "sha256": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "bytes": 3558,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_root-hair.js.C.txt",
+      "sha256": "0e78655f38ebd94fff05c5795ae408f4940bd16c08b90922400acd5eacadbf2a",
+      "bytes": 3558,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_source-controller.js.B.txt",
+      "sha256": "792a86779ef81d560da7a2b39b7e73dd8563a67354b1ead2bb90e99cf9fe03e5",
+      "bytes": 53289,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_source-controller.js.C.txt",
+      "sha256": "792a86779ef81d560da7a2b39b7e73dd8563a67354b1ead2bb90e99cf9fe03e5",
+      "bytes": 53289,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_squid-rig.js.B.txt",
+      "sha256": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "bytes": 16417,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_motion_squid-rig.js.C.txt",
+      "sha256": "3cfc1d40af87d124d16c9a5e152c3e8b40d7375bfbfc7b8f7845c4f6fff8d110",
+      "bytes": 16417,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_physics.js.B.txt",
+      "sha256": "604c36549b132e68bf0f6f35081cd8eea87f69596bfcc20b7235cb42303f80f4",
+      "bytes": 20913,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_game_physics.js.C.txt",
+      "sha256": "604c36549b132e68bf0f6f35081cd8eea87f69596bfcc20b7235cb42303f80f4",
+      "bytes": 20913,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_world_level.js.B.txt",
+      "sha256": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "bytes": 30523,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_world_level.js.C.txt",
+      "sha256": "bdf1421ed8b6ec531c77e764d0c37ed2f48f0d2ff81509635c38e29b4622ca17",
+      "bytes": 30523,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_world_paint.js.B.txt",
+      "sha256": "b71fec082b247e4bac6b48659da3e3c80999e72c2bb45bf88620b15b2afd3ec4",
+      "bytes": 57159,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/src_world_paint.js.C.txt",
+      "sha256": "b71fec082b247e4bac6b48659da3e3c80999e72c2bb45bf88620b15b2afd3ec4",
+      "bytes": 57159,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract-final.tap",
+      "sha256": "11fe18ca3c1345f74ffa7fbc46452a2af7fd2243af26a2b6fce40165ad8757cf",
+      "bytes": 2708,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract-v2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract-v2.tap",
+      "sha256": "96904769c822851ff72be5747f2f930e55665a45005cea3fc1e0ea2cb6825bb2",
+      "bytes": 2182,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract-v3.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract-v3.tap",
+      "sha256": "db0cf0667afffa95a547cf46fa452d0b1ae7850ee64b85bc513dc3145a576e63",
+      "bytes": 3019,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract.tap",
+      "sha256": "7a2f2033080ca051be203b29084ac115a47ae633862033a79a4520875fcd5f91",
+      "bytes": 2184,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/strict-gpu-buffer-contract.test.mjs",
+      "sha256": "af1d442f592cf314604c69cb30fde9467bcf95047883e1351435365d51b21f43",
+      "bytes": 11139,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-cpu98/sw-build-delta.json",
+      "sha256": "d7a18387c1766bd5269b5e78e01201fa6ba489e5b415f7b773b4de0babce1185",
+      "bytes": 1200,
+      "mode": 384,
+      "roles": [
+        "frozen-helper-contract-source-static-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-gpu-native-preflight-3c85-corrected/result.json",
+      "sha256": "b00f8c0749adfff04f67121f245df2599b1cf9c8776a5a7fb3f6a7e99179adc5",
+      "bytes": 10144,
+      "mode": 384,
+      "roles": [
+        "native-NONPASS-plus-separate-12-and-2-provenance"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-gpu-native-preflight-3c85/result.json",
+      "sha256": "0cee9f7ac5df182e5a4c285715bfd91b90116333840f33437060184fd8a1d58f",
+      "bytes": 3782,
+      "mode": 384,
+      "roles": [
+        "native-NONPASS-plus-separate-12-and-2-provenance"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-matched-gpu-native-tail-3c85/result.json",
+      "sha256": "14f633ec6401eb5f642c399a5b2395311b2a5989b701607d65393aa0f34832e1",
+      "bytes": 5751,
+      "mode": 384,
+      "roles": [
+        "native-NONPASS-plus-separate-12-and-2-provenance"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/actual-draw-receipts-fallback.mjs",
+      "sha256": "2614e490897abe4f771cc05d3e00d5cc16be2723785b4ed26778b322f36a0145",
+      "bytes": 12011,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/native-fallback-contract.test.mjs",
+      "sha256": "81bc376fd37dcaf4aa7662ce7e0bf23ca1c6cf006305228086614faa121acd2b",
+      "bytes": 10619,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/native-fallback-derivation.json",
+      "sha256": "926d0c8ffae9d1215712d534805151f42dc786742f0f82e965d64a0ac8d99229",
+      "bytes": 5789,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/native-fallback-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/native-fallback-final.tap",
+      "sha256": "7ee17e134a39cc44c5514539e124b03dd8211cd84ae487ed4dafdf796909ada0",
+      "bytes": 3244,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/native-fallback-review.diff",
+      "sha256": "450fdfeb896b57f934e70dccd57d2fcea5ae0518f24ad3a5a493733b4c84ba43",
+      "bytes": 5470,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent1-native-fallback-proof/parent-identity.json",
+      "sha256": "e3212b27e1683a051354861b0e04597c1e75618f595ba81f4c0beef003ae2a04",
+      "bytes": 380,
+      "mode": 384,
+      "roles": [
+        "native-fallback-static-source-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/analysis.json",
+      "sha256": "bcd625c15584a6b509cbd2380183d36a6f1bbe39bb28f9eba133d5b4f0f86624",
+      "bytes": 15316,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/analysis.md",
+      "sha256": "89c3815c7a2387a0ba426822d24b53714f977b3999d38e7b117e2fccf2dd5757",
+      "bytes": 6459,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/analyze.py",
+      "sha256": "ac933f0839b4f59eb1fbc38f3303044c5195292ba9bc264706cbd3de04691bbc",
+      "bytes": 4862,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/v3/README.md",
+      "sha256": "296e44217b9b98bf8300df890a8d2bae1c4fa863ddf54843690f8fefa6ee2cf5",
+      "bytes": 4130,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/v3/analyze_raw.py",
+      "sha256": "bc6c396fd6ed053948116f5adbd72b2f536a1f56e38c6164a9056c3232e3b9ba",
+      "bytes": 9936,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/v3/raw-statistics.json",
+      "sha256": "aea5051a5450060fd5a37107dff4c6561f0a08444e0a9303dfb1c99296c895b5",
+      "bytes": 154933,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-matched-cpu-input-diff/v3/summary.json",
+      "sha256": "3c980de2b7f8bd4da52ce2729d04e45c3d2c31dfd7c64e3c59bea5cce6412283",
+      "bytes": 5923,
+      "mode": 384,
+      "roles": [
+        "independent-raw-and-structural-analysis"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-peer-matched-cpu98-final.json",
+      "sha256": "a431fd125835e47e9590cda3bd65011f739255dd33310eba3b539f4e98215b80",
+      "bytes": 1886,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-peer-matched-cpu98-reverse.json",
+      "sha256": "ca1c0336dfb6ab92802d37a5ef4b4756efa956c06d617becb8b9afa4452d0968",
+      "bytes": 1279,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent3-peer-matched-cpu98.mjs",
+      "sha256": "43e01f868bf57e823f69f35ddc78a98204fae4bdc67c445ab429c9b18c6a6c9f",
+      "bytes": 3848,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent6-matched-cpu3c-durable-v2-peer.json",
+      "sha256": "4a41c492db968c2c43122733a9caa10304754d42de4667a80a102f2a2f3f88e5",
+      "bytes": 3223,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent6-matched-cpu3c-observed-v3-freeze-witness.json",
+      "sha256": "3c5fdcec6593be764844b6d0b4bdf227d87904e784ead41d48750ae00351a9f0",
+      "bytes": 1525,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/agent6-matched-cpu3c-observed-v3-peer.json",
+      "sha256": "bed250ecdfa47a510471fa62c861047ead76ec8aaa6c4171003b7315d8ffa951",
+      "bytes": 3576,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/main91-phase-integrated-site/inkwave-build.json",
+      "sha256": "380891fc733b8c69f78d5fe114f9aea3b7882be06e257915cb9a6cdac51b2a9f",
+      "bytes": 626710,
+      "mode": 384,
+      "roles": [
+        "complete-original-build-identity-manifest-only"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu-B3c-source-verified.json",
+      "sha256": "9ba233e40fbd7c0e06c1bd877abe6f85efc7c1bc98268c2ec8d90e4270855910",
+      "bytes": 284,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-baseline-build.log",
+      "sha256": "5bbdab0c7d03d7525e29421fe42fd8e9864eee57d09c21075b27d89fa27d4b91",
+      "bytes": 1210,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-baseline-site/inkwave-build.json",
+      "sha256": "a957ec7e6418900f9b2fdfa4514d9bac1033db97d7ccb5f75fe5455d22822c6b",
+      "bytes": 626710,
+      "mode": 384,
+      "roles": [
+        "complete-original-build-identity-manifest-only"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-baseline-verified.json",
+      "sha256": "f917f52d3a22f43cce7f68d75cd355d368e80423e38973fd9bd5518dc2d139ea",
+      "bytes": 589066,
+      "mode": 384,
+      "roles": [
+        "independent-source-build-static-run-proof"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2-exit.json",
+      "sha256": "6dc7a5d0da3293b19bac99701f58c74b64088e77e11870c8f347886bc70f6d3b",
+      "bytes": 92,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2-launch.json",
+      "sha256": "1f930c9a28f27a8a686ad2feecbca5c445c82898f2fb1b4e0b583df7b2bf2e1e",
+      "bytes": 866,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2-pid.json",
+      "sha256": "5fd6b7f7e48fae95e59ad22ba37ea092fe1f2c02bb9c2b92333413b5455d821d",
+      "bytes": 484,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2-supervisor.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2-supervisor.py",
+      "sha256": "eb004e548e52cd346d71831959b0855d912ebd8ce862057bf76759e7823ccefe",
+      "bytes": 846,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2-wrapper.log",
+      "sha256": "13fbb9bf73b92829c05763e753292fb9f92435f1d427ebe0eca26c70c829edb0",
+      "bytes": 522,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-0-C-actual-draws.json",
+      "sha256": "d7bc8bc837919db0239991e5922abd9de6670ab7afb92e6ed5081763ff11eca9",
+      "bytes": 10356524,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-0-C-gpu-frame-inputs.json",
+      "sha256": "db4f9ad6d9ffd6fc88784277269acdc33d249a1383eb099feaeaaf020e57e681",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-0-C.png",
+      "sha256": "985f393eb670a4a16638ee4fc16952b521476009a809040df967975ed58017db",
+      "bytes": 299345,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-0-C.rgba",
+      "sha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-1-B-actual-draws.json",
+      "sha256": "d7bc8bc837919db0239991e5922abd9de6670ab7afb92e6ed5081763ff11eca9",
+      "bytes": 10356524,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-1-B-gpu-frame-inputs.json",
+      "sha256": "fab8b51a11465eb5aa6b536d5430b7f6c1c038262c5f1e992871e9c8a79cc373",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-1-B.png",
+      "sha256": "985f393eb670a4a16638ee4fc16952b521476009a809040df967975ed58017db",
+      "bytes": 299345,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/trial-1-B.rgba",
+      "sha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/driver/whole-game-gpu-endpoint.json",
+      "sha256": "742064a8e15600cc283079f1065a692811d4d7ed1ac22e687c75bcf4169ede1b",
+      "bytes": 13371022,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/launch-receipt.json",
+      "sha256": "755522dfe5e12f2341ebf6f8916b01f035adf1711506a1a03d9e90e3185d3a4c",
+      "bytes": 10684,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-durable-v2/run.log",
+      "sha256": "11a652b9a6cf4ff4031ea9dabbd73c873f2f942340e57dfba42f42010fe54fb3",
+      "bytes": 2764,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a-exit.json",
+      "sha256": "93ce3426f6c382fa63728eedcd66b8dd6eb9f0443e956db65dda5cdd708ba0cb",
+      "bytes": 92,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a-launch.json",
+      "sha256": "7ea662986d055eeac45de305e03fa20af7ccd34ce95e07a088d5e68798bb0fe6",
+      "bytes": 1327,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a-pid.json",
+      "sha256": "78d877dca133270f13a724c77ec8a5d7347909b248276f9605390b3d55dbe410",
+      "bytes": 491,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a-supervisor.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a-supervisor.py",
+      "sha256": "eb004e548e52cd346d71831959b0855d912ebd8ce862057bf76759e7823ccefe",
+      "bytes": 846,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a-wrapper.log",
+      "sha256": "e330d9cd9c137c5ac4ca8e09445e33b93b0113f248b065b86b58b5b1189dc856",
+      "bytes": 528,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-actual-draws.json",
+      "sha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "bytes": 10356692,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-gpu-color-0.rgba16f.bin",
+      "sha256": "df0ca5ef2eededb853f0c5bfa775d60478ab5f5334993d23c9a81e6d389500c4",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-gpu-color-1.rgba16f.bin",
+      "sha256": "df0ca5ef2eededb853f0c5bfa775d60478ab5f5334993d23c9a81e6d389500c4",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-gpu-color-2.rgba16f.bin",
+      "sha256": "e1769f32e3112ad4b40b5611195109f493fb5374a802bc347e0095b634b69a74",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-gpu-color-3.rgba16f.bin",
+      "sha256": "9f04209abb31444bf47f9f43464d1804797a925695760e933b476660a31593e2",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-gpu-frame-inputs.json",
+      "sha256": "c697d7c7e37c02b4857e03333cae3beb17563f25ac779b26142cc9a703c8c10a",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C-gpu-raw-color-manifest.json",
+      "sha256": "bbff0c05e596047f2ca57fb321cc94bd42e4ffc2b49fc418b8d084a77ec46124",
+      "bytes": 2678,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C.png",
+      "sha256": "985f393eb670a4a16638ee4fc16952b521476009a809040df967975ed58017db",
+      "bytes": 299345,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-0-C.rgba",
+      "sha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-actual-draws.json",
+      "sha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "bytes": 10356692,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-gpu-color-0.rgba16f.bin",
+      "sha256": "b55da4769730579058333f6c41b3515e319c4a30b620dfc201b6d7404b36bd4b",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-gpu-color-1.rgba16f.bin",
+      "sha256": "b55da4769730579058333f6c41b3515e319c4a30b620dfc201b6d7404b36bd4b",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-gpu-color-2.rgba16f.bin",
+      "sha256": "dce2c204edd20bdaa157d65c150e02499e9198bb0511b858e6cc430fce8eaf22",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-gpu-color-3.rgba16f.bin",
+      "sha256": "dbaa1c9a8775b1260dac3de5ae62627d9f4d9fb72231ff02a318cc95235097c2",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-gpu-frame-inputs.json",
+      "sha256": "8e40041ddf28b3a496d449cd666e95a3052dea4b1b45f6158c8375fc4da28453",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B-gpu-raw-color-manifest.json",
+      "sha256": "0676a6721ffeaf1fe66334bcd1dff62c7be47cddfcd085c7207713a9c64c628a",
+      "bytes": 2678,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B.png",
+      "sha256": "985f393eb670a4a16638ee4fc16952b521476009a809040df967975ed58017db",
+      "bytes": 299345,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/trial-1-B.rgba",
+      "sha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/whole-game-gpu-endpoint.json",
+      "sha256": "ecdeb0a5844087f393cb319f460026a9d9bf9657850caf34e9255d6ed5fce176",
+      "bytes": 13375861,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/launch-receipt.json",
+      "sha256": "d24ac9ef590d65481cd9713ae6c6fba4d60c0d8eadc40c5ff5ecec8d468d716b",
+      "bytes": 11624,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/run.log",
+      "sha256": "314100342cbee64509b3ab6b2886e79f034096eb6db68a60756dfeb731c2cd8e",
+      "bytes": 2560,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b-exit.json",
+      "sha256": "2327ad5f366e665b72bf08089a50b9499f627365ad21aa74e28935d335d57b91",
+      "bytes": 92,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b-launch.json",
+      "sha256": "3626a1a0cf1bd27b829d3d1c5b365cf047f09b980a1597c45ff8c449bbe33e33",
+      "bytes": 1226,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b-pid.json",
+      "sha256": "61ceb7202ae4ee4d5f249f4a07e3e6c0db52514e7aeadb20436027c2735036de",
+      "bytes": 491,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b-supervisor.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b-supervisor.py",
+      "sha256": "eb004e548e52cd346d71831959b0855d912ebd8ce862057bf76759e7823ccefe",
+      "bytes": 846,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b-wrapper.log",
+      "sha256": "d32d889226772bd44ae55f2d11fc51722ba385a778b5b63319a9b627a7ae85b9",
+      "bytes": 528,
+      "mode": 384,
+      "roles": [
+        "exact-launch-supervision-exit-logs"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-actual-draws.json",
+      "sha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "bytes": 10356692,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-gpu-color-0.rgba16f.bin",
+      "sha256": "b369d647ff75174ecaa8d01a81c76cf9a60419bcf3c9629805b7ea028a0ddaae",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-gpu-color-1.rgba16f.bin",
+      "sha256": "b369d647ff75174ecaa8d01a81c76cf9a60419bcf3c9629805b7ea028a0ddaae",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-gpu-color-2.rgba16f.bin",
+      "sha256": "2015601d20527130e7b75af02f9951f6529cef39f00b7a588316f96325be55da",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-gpu-color-3.rgba16f.bin",
+      "sha256": "325bae9bcbbac6feabe20f9eae4ef96f8802d86579da01de2fa6f47ff2d137c8",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-gpu-frame-inputs.json",
+      "sha256": "771cf976462084cc7b671b772941ce07e3cdcff9d9e5b7e8c3316d6c66b9066b",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C-gpu-raw-color-manifest.json",
+      "sha256": "2e612f1e8410336b440f9f5ebfcebe9b516f25c47399fabed16ba41164f796f0",
+      "bytes": 2678,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C.png",
+      "sha256": "985f393eb670a4a16638ee4fc16952b521476009a809040df967975ed58017db",
+      "bytes": 299345,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-0-C.rgba",
+      "sha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-actual-draws.json",
+      "sha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "bytes": 10356692,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-gpu-color-0.rgba16f.bin",
+      "sha256": "4b26ba98bb2dc51f429fda3d4d50483fea45eca89346ca543e0aaad5e6adf964",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-gpu-color-1.rgba16f.bin",
+      "sha256": "4b26ba98bb2dc51f429fda3d4d50483fea45eca89346ca543e0aaad5e6adf964",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-gpu-color-2.rgba16f.bin",
+      "sha256": "4b0ae053a7f4c131e6d545a81209e875690d2d0ca3978b2efef6ad0e5cfcec7c",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-gpu-color-3.rgba16f.bin",
+      "sha256": "5bdb061c599b710ef660ddb9b0a616a21e9ca9fefea1028c02ebf76d5664987c",
+      "bytes": 1152000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-gpu-frame-inputs.json",
+      "sha256": "1b3a30ebd1b3f0f2fed44433ee4a1034ea38f490a5aa39d73bee4dfa8f0ea14c",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B-gpu-raw-color-manifest.json",
+      "sha256": "0cb3a4bad663bc1c1e17cf5fb102644608667cb4fae1e143fcaffe1021caf801",
+      "bytes": 2678,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B.png",
+      "sha256": "985f393eb670a4a16638ee4fc16952b521476009a809040df967975ed58017db",
+      "bytes": 299345,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/trial-1-B.rgba",
+      "sha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/whole-game-gpu-endpoint.json",
+      "sha256": "82f1f17dddccf23d21364a51b0c90d335219be1ea2b735409d1392e66110617d",
+      "bytes": 13375853,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/launch-receipt.json",
+      "sha256": "644650ce18d6bac807aeb80c88a1e3119e67f4269934f5d537bd68c3b2a8205b",
+      "bytes": 11624,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/run.log",
+      "sha256": "314100342cbee64509b3ab6b2886e79f034096eb6db68a60756dfeb731c2cd8e",
+      "bytes": 2560,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/driver/trial-0-C-actual-draws.json",
+      "sha256": "8b5bffff6c5c3a51b071f2e673b7f758773240286666eafb94bd1881c08e5899",
+      "bytes": 4656442,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/driver/trial-0-C-gpu-frame-inputs.json",
+      "sha256": "ac49b288fdb5999672cb22b0fff60901ddde24f66c76c7aa356b216ba81fe71c",
+      "bytes": 864572,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/driver/trial-0-C.png",
+      "sha256": "798c38340be14149fb22599fe9cef32a3ce69d23dec25da098f64a1c3dc1a138",
+      "bytes": 299347,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/driver/trial-0-C.rgba",
+      "sha256": "f904af0a234d1c39bbb37fc0b3b2119cc2e6704d8695019a76b9817ef0581fec",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/driver/whole-game-gpu-endpoint.json",
+      "sha256": "9cb289211580f4f63c9d72da44567d32c854601990e9d90138d77813cd61a63f",
+      "bytes": 6609972,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/launch-receipt.json",
+      "sha256": "6c57836fe68ef8c4d1ef0ecddb98868b6f0fb7bbf7734bf2c78574678a2eb68f",
+      "bytes": 7251,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/matched-cpu3c-endpoint-observed2/run.log",
+      "sha256": "b06dbdb4218979cb9805126120059c98e9482b5860bd9c392f96dac22f52032f",
+      "bytes": 499,
+      "mode": 384,
+      "roles": [
+        "raw-NONPASS-observed-endpoint"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/bounded-clean.log",
+      "sha256": "0167d12b7e645e0ca690475a000328fc81da3236c352f3d9b0a5719fb71955c4",
+      "bytes": 3886,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/bounded-clean/trial-0-C.png",
+      "sha256": "6c7a332acd64d828165146f7407558b8574884e618c89528cb11a4d60dc8d57a",
+      "bytes": 52064,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/bounded-clean/trial-0-C.rgba",
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/bounded-clean/trial-1-B.png",
+      "sha256": "6c7a332acd64d828165146f7407558b8574884e618c89528cb11a4d60dc8d57a",
+      "bytes": 52064,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/bounded-clean/trial-1-B.rgba",
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/bounded-clean/whole-game-calibrate.json",
+      "sha256": "10d750831e380b23bfdeb024b921d99b1422db920d1d827004130307645b1b92",
+      "bytes": 13354597,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/contract-source-negative-controls.json",
+      "sha256": "c187267d0c3dafdf51d293ad161c502abb16a025615e1b47e81686861fc0388c",
+      "bytes": 999,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/diagnostic-tests.tap",
+      "sha256": "809a17c8d8945ebd534901971e4a20b7c7ee7b5cf9d0ac11dc7e49f7aacd0c5e",
+      "bytes": 3332,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/endpoint-differences.json",
+      "sha256": "e76811f9f545ab2dbeb52c653275601ef7cbefc4d2884cf709920ac25e088a3a",
+      "bytes": 311,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/frozen-after.json",
+      "sha256": "ce5a334f0a29d914281ce14092a17bac12b32703dd4ce8dc2fde4868eae04210",
+      "bytes": 256,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/frozen-before.json",
+      "sha256": "ce5a334f0a29d914281ce14092a17bac12b32703dd4ce8dc2fde4868eae04210",
+      "bytes": 256,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/overlapped-preflight-interruption.json",
+      "sha256": "b4c230e08e3d0994e01b64994054bbf25044444702a96ac1a3f40177e4e98313",
+      "bytes": 1348,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/owned-processes-final.json",
+      "sha256": "49dd45bbb7cb63bf2cb6f0682093642248413670ed40d4324e141449f847586a",
+      "bytes": 210,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/pair-contract.json",
+      "sha256": "15d8ccc142c9e2e91dac361a3ed8265e7c13fa6a7deb4a4cfee63f82f00df7ec",
+      "bytes": 610049,
+      "mode": 256,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/renderer-binary-receipts.json",
+      "sha256": "0ed8accaf1b65557a76232a14bbc1dfa21bae60fc1513ef66aef0b399b8ae1e8",
+      "bytes": 1546,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/ring-pending-fixed-complete.tap",
+      "sha256": "87de3ea0f19c7a9b42876edef1831f513134dcb0d2d7fd16c9ddc997f233ca53",
+      "bytes": 829,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/ring-pending-fixed-final.tap",
+      "sha256": "bf12edd753760d91260e31152a9a818d06c94687b6883d66c4d1f421037eae11",
+      "bytes": 948,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/ring-pending-fixed-real-three.tap",
+      "sha256": "c117ccb940692ae03200d237e074837033ccbc41dd59141b25c50e1604d3c3fa",
+      "bytes": 432,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/ring-pending-fixed.tap",
+      "sha256": "2d2ddeb12c5e68037ef974e9eb0da479bd67dd73d38c758739896c8cbdae4869",
+      "bytes": 2050,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/ring-pending-old-complete.tap",
+      "sha256": "69b3b0b397e40f0d0bdd34ba53acb299af86671e8c2617c85b3c79e8c70ab3db",
+      "bytes": 3161,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/ring-pending-old.tap",
+      "sha256": "f6c63342b7870cb2a629dea6ba3ad3583b19411ac4ad1b86fdafc828ee31a6ef",
+      "bytes": 2080,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/summary.json",
+      "sha256": "7924d51c2acc41a36a52b2ce9eb38021da26e35297a254366487031ccbcef084",
+      "bytes": 3757,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/two-trial.log",
+      "sha256": "45e4cdbbfdda10844e15cb874a70a3f624f0fb376ff18b65b49c4ca8aa460968",
+      "bytes": 8996,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/two-trial/trial-0-C.png",
+      "sha256": "6c7a332acd64d828165146f7407558b8574884e618c89528cb11a4d60dc8d57a",
+      "bytes": 52064,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/two-trial/trial-0-C.rgba",
+      "sha256": "afbdaab9994b028e3b3f20a986544ccd4a94407d7cf7597a88dd5ef08a24df72",
+      "bytes": 576000,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/two-trial/whole-game-calibrate.json",
+      "sha256": "672d38705992fbaa1516d2d234605e8fa412b11a1941a2cc10c4007472db4acf",
+      "bytes": 6763841,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/scratch/performance1434-current-pair/verify-frozen.py",
+      "sha256": "48fb8bc6b74c261454268845d3390bb7598c0599b068d54a4e4e61ac6554e6ff",
+      "bytes": 1268,
+      "mode": 384,
+      "roles": [
+        "earlier-current-pair-NONPASS-history"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/current-pair-contract.mjs",
+      "sha256": "0661c3bb572d30755d6cc40468d3390392aab885dba76812df810020fbfa45fb",
+      "bytes": 6443,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/measure-current-pair.mjs",
+      "sha256": "3ff7c196369b177df3fda0420efa7705483eefe36fab4a388679a6ed2e3ed718",
+      "bytes": 38929,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/mesa-native-condition.mjs",
+      "sha256": "5ca1e817cecc3e4ee0a646aa4dbe88cb4c238c29aca2516f1920d27bcc948e8d",
+      "bytes": 1746,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/music-owner-receipts.mjs",
+      "sha256": "f59785c11f1212e85fdb5fd350afd27c3bf3b6f51b1b711e87c047217c0fa4b4",
+      "bytes": 5828,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/diagnostics/inkwave-performance/render-target-neighborhood.mjs",
+      "sha256": "19afa1ccbecbbf33358d330e1024df7d807da3338f5656a9f4fa47b048e798fe",
+      "bytes": 3907,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/lib/inkwave-actual-draw-receipts.mjs",
+      "sha256": "d4d0fc36fd2c97408c67d5d09a623abf93823deefcfb1535de74830c3b65461e",
+      "bytes": 8044,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/lib/inkwave-gpu-frame-inputs.mjs",
+      "sha256": "30eb15833dfb793815a3e1887c321142aeb96da61f9c2e1d643b12027cd3ac2f",
+      "bytes": 26839,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/lib/inkwave-mesa-runtime-evidence.mjs",
+      "sha256": "6232a60aa0569af413d3f40e58a27abdc2ed3fbe5a4576e4b7633e2064ceb77c",
+      "bytes": 6355,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    },
+    {
+      "originalPath": "/workspace/wt-authority-gpu-diagnostic/scripts/lib/inkwave-render-input-receipts.mjs",
+      "sha256": "feaf3a450fd059c86cdb3eaa341a50a360db8504e21d312c60d35895ddf4b950",
+      "bytes": 11736,
+      "mode": 384,
+      "roles": [
+        "direct-frozen-historical-import"
+      ]
+    }
+  ],
+  "sourceBytes": 183942331,
+  "uniqueBytes": 123122511,
+  "uniqueObjects": 225,
+  "excluded": [
+    "full-built-site-assets",
+    "node_modules",
+    "browser-profiles",
+    "credentials"
+  ],
+  "currentContractSha256": "82ff11ee94605950198b70aca57a1b10ed750a49ceb3295ef1c187cae11baa29"
+}

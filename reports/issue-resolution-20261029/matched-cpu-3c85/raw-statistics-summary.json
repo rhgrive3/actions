@@ -1,0 +1,338 @@
+[
+  {
+    "pair": "C1/B1",
+    "pointer": "/textures/28/levels/0",
+    "components": 5,
+    "pixels": 4,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/B1",
+    "pointer": "/textures/41/levels/0",
+    "components": 5,
+    "pixels": 4,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/B1",
+    "pointer": "/textures/42/levels/0",
+    "components": 5,
+    "pixels": 4,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/B1",
+    "pointer": "/textures/44/levels/0",
+    "components": 5,
+    "pixels": 4,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C2/B2",
+    "pointer": "/textures/28/levels/0",
+    "components": 3,
+    "pixels": 2,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 269,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C2/B2",
+    "pointer": "/textures/41/levels/0",
+    "components": 3,
+    "pixels": 2,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 269,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C2/B2",
+    "pointer": "/textures/42/levels/0",
+    "components": 3,
+    "pixels": 2,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 269,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C2/B2",
+    "pointer": "/textures/44/levels/0",
+    "components": 3,
+    "pixels": 2,
+    "channels": {
+      "R": 1,
+      "G": 2,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 269,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/C2",
+    "pointer": "/textures/28/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 3,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/C2",
+    "pointer": "/textures/41/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 3,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/C2",
+    "pointer": "/textures/42/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 3,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "C1/C2",
+    "pointer": "/textures/44/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 3,
+      "B": 0,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 4,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 209,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "B1/B2",
+    "pointer": "/textures/28/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 1,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 211,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "B1/B2",
+    "pointer": "/textures/41/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 1,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 211,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "B1/B2",
+    "pointer": "/textures/42/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 1,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 211,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  },
+  {
+    "pair": "B1/B2",
+    "pointer": "/textures/44/levels/0",
+    "components": 4,
+    "pixels": 3,
+    "channels": {
+      "R": 1,
+      "G": 1,
+      "B": 2,
+      "A": 0
+    },
+    "maxAbs": 0.00048828125,
+    "maxULP": 1,
+    "nonfiniteChanged": 0,
+    "bounds": {
+      "minX": 211,
+      "maxX": 270,
+      "minBottomY": 128,
+      "maxBottomY": 133
+    }
+  }
+]

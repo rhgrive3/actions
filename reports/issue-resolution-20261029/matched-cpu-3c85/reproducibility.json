@@ -1,0 +1,2289 @@
+{
+  "schema": 1,
+  "kind": "DO_NOT_MERGE-same51helper-matched-source-reproducibility-control",
+  "status": "NONPASS-strict-intermediate-color-repeatability",
+  "contract": {
+    "path": "/workspace/scratch/agent1-matched-cpu3c-observed-v3/sealed-contract-3c85-observed-v3.json",
+    "sha256": "82ff11ee94605950198b70aca57a1b10ed750a49ceb3295ef1c187cae11baa29",
+    "helperCount": 51,
+    "currentHelpersExact": true
+  },
+  "runs": [
+    {
+      "root": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a",
+      "result": {
+        "path": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/driver/whole-game-gpu-endpoint.json",
+        "sha256": "ecdeb0a5844087f393cb319f460026a9d9bf9657850caf34e9255d6ed5fce176"
+      },
+      "launcher": {
+        "path": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-a/launch-receipt.json",
+        "sha256": "d24ac9ef590d65481cd9713ae6c6fba4d60c0d8eadc40c5ff5ecec8d468d716b"
+      },
+      "status": "rejected-matched-cpu3c-gpu-endpoint",
+      "exitCode": 2,
+      "executableWitnesses": 2,
+      "integrityUnchanged": true,
+      "cleanupAccepted": true,
+      "serverClosed": true,
+      "originalStrictProblems": [
+        "all observed VAO/VBO/IBO/texture/framebuffer/event fields and actual byte hashes must match"
+      ]
+    },
+    {
+      "root": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b",
+      "result": {
+        "path": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/driver/whole-game-gpu-endpoint.json",
+        "sha256": "82f1f17dddccf23d21364a51b0c90d335219be1ea2b735409d1392e66110617d"
+      },
+      "launcher": {
+        "path": "/workspace/scratch/matched-cpu3c-endpoint-observed-v3-b/launch-receipt.json",
+        "sha256": "644650ce18d6bac807aeb80c88a1e3119e67f4269934f5d537bd68c3b2a8205b"
+      },
+      "status": "rejected-matched-cpu3c-gpu-endpoint",
+      "exitCode": 2,
+      "executableWitnesses": 2,
+      "integrityUnchanged": true,
+      "cleanupAccepted": true,
+      "serverClosed": true,
+      "originalStrictProblems": [
+        "all observed VAO/VBO/IBO/texture/framebuffer/event fields and actual byte hashes must match"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "id": "C1",
+      "run": "a",
+      "variant": "C",
+      "ordinal": 0,
+      "actualDrawSha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "gpuFrameSha256": "c697d7c7e37c02b4857e03333cae3beb17563f25ac779b26142cc9a703c8c10a",
+      "pixelSha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "nativeFallback": {
+        "accepted": true,
+        "problems": [],
+        "witnesses": 1,
+        "references": 1
+      },
+      "rawColor": {
+        "accepted": true,
+        "problems": []
+      },
+      "rawManifest": {
+        "path": "trial-0-C-gpu-raw-color-manifest.json",
+        "sha256": "bbff0c05e596047f2ca57fb321cc94bd42e4ffc2b49fc418b8d084a77ec46124",
+        "bytes": 2678,
+        "count": 4
+      }
+    },
+    {
+      "id": "B1",
+      "run": "a",
+      "variant": "B",
+      "ordinal": 1,
+      "actualDrawSha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "gpuFrameSha256": "8e40041ddf28b3a496d449cd666e95a3052dea4b1b45f6158c8375fc4da28453",
+      "pixelSha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "nativeFallback": {
+        "accepted": true,
+        "problems": [],
+        "witnesses": 1,
+        "references": 1
+      },
+      "rawColor": {
+        "accepted": true,
+        "problems": []
+      },
+      "rawManifest": {
+        "path": "trial-1-B-gpu-raw-color-manifest.json",
+        "sha256": "0676a6721ffeaf1fe66334bcd1dff62c7be47cddfcd085c7207713a9c64c628a",
+        "bytes": 2678,
+        "count": 4
+      }
+    },
+    {
+      "id": "C2",
+      "run": "b",
+      "variant": "C",
+      "ordinal": 0,
+      "actualDrawSha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "gpuFrameSha256": "771cf976462084cc7b671b772941ce07e3cdcff9d9e5b7e8c3316d6c66b9066b",
+      "pixelSha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "nativeFallback": {
+        "accepted": true,
+        "problems": [],
+        "witnesses": 1,
+        "references": 1
+      },
+      "rawColor": {
+        "accepted": true,
+        "problems": []
+      },
+      "rawManifest": {
+        "path": "trial-0-C-gpu-raw-color-manifest.json",
+        "sha256": "2e612f1e8410336b440f9f5ebfcebe9b516f25c47399fabed16ba41164f796f0",
+        "bytes": 2678,
+        "count": 4
+      }
+    },
+    {
+      "id": "B2",
+      "run": "b",
+      "variant": "B",
+      "ordinal": 1,
+      "actualDrawSha256": "cdb202a18c9203feff7f4c9621ca23d6ab4152b22adb3df1846ccc4a2df26888",
+      "gpuFrameSha256": "1b3a30ebd1b3f0f2fed44433ee4a1034ea38f490a5aa39d73bee4dfa8f0ea14c",
+      "pixelSha256": "07d56b5c381aa65c2cbf5f89c1c74ad45fd5a88cf4e18d42dc069d684b90213e",
+      "nativeFallback": {
+        "accepted": true,
+        "problems": [],
+        "witnesses": 1,
+        "references": 1
+      },
+      "rawColor": {
+        "accepted": true,
+        "problems": []
+      },
+      "rawManifest": {
+        "path": "trial-1-B-gpu-raw-color-manifest.json",
+        "sha256": "0cb3a4bad663bc1c1e17cf5fb102644608667cb4fae1e143fcaffe1021caf801",
+        "bytes": 2678,
+        "count": 4
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "left": "C1",
+      "right": "B1",
+      "sameContractAndFullScope": true,
+      "startStateExact": true,
+      "endStateExact": true,
+      "allFrameWorkAndRngExact": true,
+      "actualDrawProgramUniformSamplerStateReceiptExact": true,
+      "nativeBufferSnapshotMetadataAndBytesHashExact": true,
+      "nativeDrawEventsExact": true,
+      "finalRgbaByteExact": true,
+      "strictGpuFrameReceiptExact": false,
+      "strictGpuDifferences": [
+        {
+          "path": "/textures/28/levels/0/sha256",
+          "a": "df0ca5ef2eededb853f0c5bfa775d60478ab5f5334993d23c9a81e6d389500c4",
+          "b": "b55da4769730579058333f6c41b3515e319c4a30b620dfc201b6d7404b36bd4b"
+        },
+        {
+          "path": "/textures/41/levels/0/sha256",
+          "a": "df0ca5ef2eededb853f0c5bfa775d60478ab5f5334993d23c9a81e6d389500c4",
+          "b": "b55da4769730579058333f6c41b3515e319c4a30b620dfc201b6d7404b36bd4b"
+        },
+        {
+          "path": "/textures/42/levels/0/sha256",
+          "a": "e1769f32e3112ad4b40b5611195109f493fb5374a802bc347e0095b634b69a74",
+          "b": "dce2c204edd20bdaa157d65c150e02499e9198bb0511b858e6cc430fce8eaf22"
+        },
+        {
+          "path": "/textures/44/levels/0/sha256",
+          "a": "9f04209abb31444bf47f9f43464d1804797a925695760e933b476660a31593e2",
+          "b": "dbaa1c9a8775b1260dac3de5ae62627d9f4d9fb72231ff02a318cc95235097c2"
+        }
+      ],
+      "onlyFourRgba16fHashesDiffer": true,
+      "completeSourceStateGpuColorInputReceiptExact": false,
+      "sourceInputDifferences": [
+        {
+          "path": "/gpuColorTargets/2/faces/0/sha256",
+          "a": "e1769f32e3112ad4b40b5611195109f493fb5374a802bc347e0095b634b69a74",
+          "b": "dce2c204edd20bdaa157d65c150e02499e9198bb0511b858e6cc430fce8eaf22"
+        },
+        {
+          "path": "/gpuColorTargets/3/faces/0/sha256",
+          "a": "9f04209abb31444bf47f9f43464d1804797a925695760e933b476660a31593e2",
+          "b": "dbaa1c9a8775b1260dac3de5ae62627d9f4d9fb72231ff02a318cc95235097c2"
+        },
+        {
+          "path": "/materialStates/48/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/48/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/48/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/48/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/48/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/48/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/49/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/49/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/49/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/49/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/49/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/49/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/50/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/50/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/50/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/50/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/50/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/50/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/51/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/51/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/51/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/51/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/51/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/51/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/meshStates/164/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/164/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/164/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/164/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/164/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/164/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/164/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/164/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/164/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/164/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/164/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/164/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/165/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/165/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/165/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/165/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/165/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/165/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/165/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/165/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/165/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/165/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/165/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/165/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/166/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/166/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/166/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/166/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/166/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/166/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/166/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/166/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/166/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/166/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/166/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/166/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/167/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/167/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/167/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/167/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/167/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/167/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/167/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/167/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/167/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/167/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/167/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/167/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/168/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/168/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/168/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/168/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/168/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/168/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/168/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/168/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/168/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/168/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/168/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/168/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/169/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/169/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/169/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/169/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/169/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/169/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/169/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/169/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/169/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/169/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/169/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/169/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/170/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/170/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/170/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/170/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/170/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/170/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/170/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/170/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/170/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/170/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/170/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/170/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/171/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/171/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/171/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/171/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/171/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/171/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/171/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/171/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/171/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/171/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/171/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/171/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        }
+      ],
+      "strictPairAccepted": false
+    },
+    {
+      "left": "C2",
+      "right": "B2",
+      "sameContractAndFullScope": true,
+      "startStateExact": true,
+      "endStateExact": true,
+      "allFrameWorkAndRngExact": true,
+      "actualDrawProgramUniformSamplerStateReceiptExact": true,
+      "nativeBufferSnapshotMetadataAndBytesHashExact": true,
+      "nativeDrawEventsExact": true,
+      "finalRgbaByteExact": true,
+      "strictGpuFrameReceiptExact": false,
+      "strictGpuDifferences": [
+        {
+          "path": "/textures/28/levels/0/sha256",
+          "a": "b369d647ff75174ecaa8d01a81c76cf9a60419bcf3c9629805b7ea028a0ddaae",
+          "b": "4b26ba98bb2dc51f429fda3d4d50483fea45eca89346ca543e0aaad5e6adf964"
+        },
+        {
+          "path": "/textures/41/levels/0/sha256",
+          "a": "b369d647ff75174ecaa8d01a81c76cf9a60419bcf3c9629805b7ea028a0ddaae",
+          "b": "4b26ba98bb2dc51f429fda3d4d50483fea45eca89346ca543e0aaad5e6adf964"
+        },
+        {
+          "path": "/textures/42/levels/0/sha256",
+          "a": "2015601d20527130e7b75af02f9951f6529cef39f00b7a588316f96325be55da",
+          "b": "4b0ae053a7f4c131e6d545a81209e875690d2d0ca3978b2efef6ad0e5cfcec7c"
+        },
+        {
+          "path": "/textures/44/levels/0/sha256",
+          "a": "325bae9bcbbac6feabe20f9eae4ef96f8802d86579da01de2fa6f47ff2d137c8",
+          "b": "5bdb061c599b710ef660ddb9b0a616a21e9ca9fefea1028c02ebf76d5664987c"
+        }
+      ],
+      "onlyFourRgba16fHashesDiffer": true,
+      "completeSourceStateGpuColorInputReceiptExact": false,
+      "sourceInputDifferences": [
+        {
+          "path": "/gpuColorTargets/2/faces/0/sha256",
+          "a": "2015601d20527130e7b75af02f9951f6529cef39f00b7a588316f96325be55da",
+          "b": "4b0ae053a7f4c131e6d545a81209e875690d2d0ca3978b2efef6ad0e5cfcec7c"
+        },
+        {
+          "path": "/gpuColorTargets/3/faces/0/sha256",
+          "a": "325bae9bcbbac6feabe20f9eae4ef96f8802d86579da01de2fa6f47ff2d137c8",
+          "b": "5bdb061c599b710ef660ddb9b0a616a21e9ca9fefea1028c02ebf76d5664987c"
+        },
+        {
+          "path": "/materialStates/48/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/48/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/48/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/48/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/48/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/48/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/49/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/49/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/49/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/49/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/49/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/49/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/50/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/50/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/50/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/50/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/50/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/50/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/51/uniforms/uSunDirV/0",
+          "a": 0.5867992744620664,
+          "b": -0.5775319998974024
+        },
+        {
+          "path": "/materialStates/51/uniforms/uSunDirV/1",
+          "a": 0.24233069286412667,
+          "b": 0.6293203910498374
+        },
+        {
+          "path": "/materialStates/51/uniforms/uSunDirV/2",
+          "a": 0.7726205063203959,
+          "b": -0.5200121484190409
+        },
+        {
+          "path": "/materialStates/51/uniforms/uUpV/0",
+          "a": -3.469446951953612e-18,
+          "b": 0
+        },
+        {
+          "path": "/materialStates/51/uniforms/uUpV/1",
+          "a": 0.8330120884206493,
+          "b": 1
+        },
+        {
+          "path": "/materialStates/51/uniforms/uUpV/2",
+          "a": 0.5532547880905038,
+          "b": 0
+        },
+        {
+          "path": "/meshStates/164/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/164/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/164/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/164/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/164/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/164/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/164/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/164/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/164/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/164/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/164/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/164/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/164/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/165/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/165/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/165/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/165/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/165/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/165/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/165/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/165/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/165/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/165/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/165/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/165/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/165/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/166/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/166/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/166/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/166/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/166/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/166/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/166/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/166/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/166/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/166/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/166/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/166/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/166/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/167/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/167/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/167/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/167/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/167/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/167/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/167/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/167/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/167/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/167/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/167/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/167/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/167/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/168/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/168/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/168/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/168/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/168/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/168/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/168/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/168/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/168/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/168/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/168/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/168/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/168/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/169/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/169/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/169/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/169/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/169/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/169/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/169/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/169/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/169/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/169/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/169/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/169/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/169/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/170/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/170/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/170/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/170/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/170/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/170/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/170/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/170/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/170/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/170/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/170/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/170/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/170/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        },
+        {
+          "path": "/meshStates/171/modelView/0",
+          "a": -0.9993201184262019,
+          "b": -0.9998379648434925
+        },
+        {
+          "path": "/meshStates/171/modelView/1",
+          "a": -0.02070587698632532,
+          "b": -0.00995926324846045
+        },
+        {
+          "path": "/meshStates/171/modelView/2",
+          "a": 0.030505205570000332,
+          "b": 0.014995237016139352
+        },
+        {
+          "path": "/meshStates/171/modelView/4",
+          "a": -3.469446951953611e-18,
+          "b": -3.469446951953612e-18
+        },
+        {
+          "path": "/meshStates/171/modelView/5",
+          "a": 0.8274012113389495,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/171/modelView/6",
+          "a": 0.5616112850315945,
+          "b": 0.5532547880905038
+        },
+        {
+          "path": "/meshStates/171/modelView/8",
+          "a": -0.03686869822275823,
+          "b": -0.018001223781241398
+        },
+        {
+          "path": "/meshStates/171/modelView/9",
+          "a": 0.5612294558672648,
+          "b": 0.5531651413643272
+        },
+        {
+          "path": "/meshStates/171/modelView/10",
+          "a": -0.8268386765012219,
+          "b": -0.8328771111765295
+        },
+        {
+          "path": "/meshStates/171/modelView/12",
+          "a": 6.522560269672789e-16,
+          "b": 2.2551405187698477e-16
+        },
+        {
+          "path": "/meshStates/171/modelView/13",
+          "a": -0.8274012113389662,
+          "b": -0.8330120884206592
+        },
+        {
+          "path": "/meshStates/171/modelView/14",
+          "a": -67.4787256517078,
+          "b": -69.74170154476703
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/0",
+          "a": -0.999320118426203,
+          "b": -0.9998379648434932
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/1",
+          "a": -0.020705876986325342,
+          "b": -0.009959263248460457
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/2",
+          "a": 0.030505205570000363,
+          "b": 0.014995237016139364
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/3",
+          "a": 6.938893903907236e-18,
+          "b": -1.7347234759768082e-18
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/4",
+          "a": 0.8274012113389496,
+          "b": 0.8330120884206493
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/5",
+          "a": 0.561611285031595,
+          "b": 0.5532547880905039
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/6",
+          "a": -0.03686869822275827,
+          "b": -0.018001223781241405
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/7",
+          "a": 0.5612294558672651,
+          "b": 0.5531651413643274
+        },
+        {
+          "path": "/meshStates/171/normalMatrix/8",
+          "a": -0.8268386765012229,
+          "b": -0.8328771111765301
+        }
+      ],
+      "strictPairAccepted": false
+    },
+    {
+      "left": "C1",
+      "right": "C2",
+      "sameContractAndFullScope": true,
+      "startStateExact": true,
+      "endStateExact": true,
+      "allFrameWorkAndRngExact": true,
+      "actualDrawProgramUniformSamplerStateReceiptExact": true,
+      "nativeBufferSnapshotMetadataAndBytesHashExact": true,
+      "nativeDrawEventsExact": true,
+      "finalRgbaByteExact": true,
+      "strictGpuFrameReceiptExact": false,
+      "strictGpuDifferences": [
+        {
+          "path": "/textures/28/levels/0/sha256",
+          "a": "df0ca5ef2eededb853f0c5bfa775d60478ab5f5334993d23c9a81e6d389500c4",
+          "b": "b369d647ff75174ecaa8d01a81c76cf9a60419bcf3c9629805b7ea028a0ddaae"
+        },
+        {
+          "path": "/textures/41/levels/0/sha256",
+          "a": "df0ca5ef2eededb853f0c5bfa775d60478ab5f5334993d23c9a81e6d389500c4",
+          "b": "b369d647ff75174ecaa8d01a81c76cf9a60419bcf3c9629805b7ea028a0ddaae"
+        },
+        {
+          "path": "/textures/42/levels/0/sha256",
+          "a": "e1769f32e3112ad4b40b5611195109f493fb5374a802bc347e0095b634b69a74",
+          "b": "2015601d20527130e7b75af02f9951f6529cef39f00b7a588316f96325be55da"
+        },
+        {
+          "path": "/textures/44/levels/0/sha256",
+          "a": "9f04209abb31444bf47f9f43464d1804797a925695760e933b476660a31593e2",
+          "b": "325bae9bcbbac6feabe20f9eae4ef96f8802d86579da01de2fa6f47ff2d137c8"
+        }
+      ],
+      "onlyFourRgba16fHashesDiffer": true,
+      "completeSourceStateGpuColorInputReceiptExact": false,
+      "sourceInputDifferences": [
+        {
+          "path": "/gpuColorTargets/2/faces/0/sha256",
+          "a": "e1769f32e3112ad4b40b5611195109f493fb5374a802bc347e0095b634b69a74",
+          "b": "2015601d20527130e7b75af02f9951f6529cef39f00b7a588316f96325be55da"
+        },
+        {
+          "path": "/gpuColorTargets/3/faces/0/sha256",
+          "a": "9f04209abb31444bf47f9f43464d1804797a925695760e933b476660a31593e2",
+          "b": "325bae9bcbbac6feabe20f9eae4ef96f8802d86579da01de2fa6f47ff2d137c8"
+        }
+      ],
+      "strictPairAccepted": false
+    },
+    {
+      "left": "B1",
+      "right": "B2",
+      "sameContractAndFullScope": true,
+      "startStateExact": true,
+      "endStateExact": true,
+      "allFrameWorkAndRngExact": true,
+      "actualDrawProgramUniformSamplerStateReceiptExact": true,
+      "nativeBufferSnapshotMetadataAndBytesHashExact": true,
+      "nativeDrawEventsExact": true,
+      "finalRgbaByteExact": true,
+      "strictGpuFrameReceiptExact": false,
+      "strictGpuDifferences": [
+        {
+          "path": "/textures/28/levels/0/sha256",
+          "a": "b55da4769730579058333f6c41b3515e319c4a30b620dfc201b6d7404b36bd4b",
+          "b": "4b26ba98bb2dc51f429fda3d4d50483fea45eca89346ca543e0aaad5e6adf964"
+        },
+        {
+          "path": "/textures/41/levels/0/sha256",
+          "a": "b55da4769730579058333f6c41b3515e319c4a30b620dfc201b6d7404b36bd4b",
+          "b": "4b26ba98bb2dc51f429fda3d4d50483fea45eca89346ca543e0aaad5e6adf964"
+        },
+        {
+          "path": "/textures/42/levels/0/sha256",
+          "a": "dce2c204edd20bdaa157d65c150e02499e9198bb0511b858e6cc430fce8eaf22",
+          "b": "4b0ae053a7f4c131e6d545a81209e875690d2d0ca3978b2efef6ad0e5cfcec7c"
+        },
+        {
+          "path": "/textures/44/levels/0/sha256",
+          "a": "dbaa1c9a8775b1260dac3de5ae62627d9f4d9fb72231ff02a318cc95235097c2",
+          "b": "5bdb061c599b710ef660ddb9b0a616a21e9ca9fefea1028c02ebf76d5664987c"
+        }
+      ],
+      "onlyFourRgba16fHashesDiffer": true,
+      "completeSourceStateGpuColorInputReceiptExact": false,
+      "sourceInputDifferences": [
+        {
+          "path": "/gpuColorTargets/2/faces/0/sha256",
+          "a": "dce2c204edd20bdaa157d65c150e02499e9198bb0511b858e6cc430fce8eaf22",
+          "b": "4b0ae053a7f4c131e6d545a81209e875690d2d0ca3978b2efef6ad0e5cfcec7c"
+        },
+        {
+          "path": "/gpuColorTargets/3/faces/0/sha256",
+          "a": "dbaa1c9a8775b1260dac3de5ae62627d9f4d9fb72231ff02a318cc95235097c2",
+          "b": "5bdb061c599b710ef660ddb9b0a616a21e9ca9fefea1028c02ebf76d5664987c"
+        }
+      ],
+      "strictPairAccepted": false
+    }
+  ],
+  "firstObservedDivergence": "Resolved composer/renderTarget2 RGBA16F sampled by draw187; the preceding native multisample renderbuffer source is not directly observed.",
+  "conclusion": "Each unchanged build repeats exact captured state/work/draw/program/uniform/sampler/buffer/event/final-RGBA receipts but does not repeat four sampled intermediate RGBA16F hashes. The strict pair remains rejected.",
+  "universalGpuInputEqualityProven": false,
+  "rootCauseEstablished": false,
+  "limits": [
+    "Native multisample/depth/stencil storage and unsampled renderbuffer/resolve-source contents remain unobserved.",
+    "This does not establish that six CPU hunks cause the color difference, nor isolate a driver/compiler/observer cause.",
+    "No field or pixel tolerance was changed; all original failed receipts remain NONPASS.",
+    "Observed endpoints retain no timing scalars; no four-trial calibration or eight-trial timing was executed."
+  ],
+  "performanceClaimAllowed": false,
+  "issue1434Closed": false
+}
