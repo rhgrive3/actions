@@ -12,6 +12,7 @@ const arg=name=>{const i=process.argv.indexOf(name);return i<0?null:process.argv
 const phase=arg('--phase')||'candidate';
 const barrierOnly=process.argv.includes('--barrier-only');
 const carrierOnly=process.argv.includes('--carrier-only');
+const holdOnly=process.argv.includes('--hold-only');
 assert(['baseline','candidate'].includes(phase),'--phase baseline|candidate');
 const site=path.resolve(arg('--site')||'_site');
 const out=path.resolve(arg('--evidence-dir')||`.browser-evidence/rainmaker/${phase}`);
@@ -33,6 +34,13 @@ async function capture(name,view='barrier'){
   else if(view==='shot')G.camera.position.set(at.x+7.2,at.y+4.7,at.z+4.3);
   else G.camera.position.set(at.x+3.4,at.y+2.1,at.z+4.1);
   G.camera.lookAt(at.x,at.y+(view==='barrier'?1:1.1),at.z+(view==='shot'?1.7:0));
+  if(view.startsWith('carrier-')){
+   // Keep the camera in the known clear firing lane while the body turns.
+   const forward=a.pos.clone().set(Math.sin(a.aimYaw),0,Math.cos(a.aimYaw)),right=a.pos.clone().set(forward.z,0,-forward.x);
+   const side=view==='carrier-side',back=view==='carrier-back';
+   G.camera.position.copy(at).addScaledVector(right,side?3.5:.7).addScaledVector(forward,side?.45:back?-4.2:4.2);G.camera.position.y=at.y+1.65;
+   G.camera.lookAt(at.clone().addScaledVector(forward,.3).add({x:0,y:1.05,z:0}));
+  }
   G.camera.updateMatrixWorld(true);G.game._updateHud(0);
   G.scene.updateMatrixWorld(true);G.paint.flush(1/60);G.renderer.render(G.scene,G.camera);G.renderer.getContext().finish();
   // A .visible flag cannot prove a material linked or put any ink on screen.
@@ -41,7 +49,7 @@ async function capture(name,view='barrier'){
   const gl=G.renderer.getContext(),canvas=G.renderer.domElement;
   const pixels=new Uint8Array(canvas.width*canvas.height*4),hiddenPixels=new Uint8Array(pixels.length);
   gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
-  const effectNames=view==='barrier'?['rainmaker-barrier']:view==='carrier'?[carrierOnly?'rainmaker-carrier-marker':'rainmaker-carrier-aura']:['rainmaker-shot','rainmaker-ink-splashes'];
+  const effectNames=view==='barrier'?['rainmaker-barrier']:view.startsWith('carrier')?[carrierOnly?'rainmaker-carrier-marker':'rainmaker-carrier-aura']:['rainmaker-shot','rainmaker-ink-splashes'];
   const effects=[];G.scene.traverse(o=>{if(effectNames.includes(o.name))effects.push([o,o.visible]);});
   for(const [o]of effects)o.visible=false;
   G.renderer.render(G.scene,G.camera);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,hiddenPixels);
@@ -50,23 +58,30 @@ async function capture(name,view='barrier'){
   let changedPixels=0,maxDelta=0;for(let i=0;i<pixels.length;i+=4){const delta=Math.abs(pixels[i]-hiddenPixels[i])+Math.abs(pixels[i+1]-hiddenPixels[i+1])+Math.abs(pixels[i+2]-hiddenPixels[i+2]);if(delta>20)changedPixels++;maxDelta=Math.max(maxDelta,delta);}
   const programs=G.renderer.info.programs.map(p=>({name:p.name,runnable:p.diagnostics?.runnable??null,linked:!!gl.getProgramParameter(p.program,gl.LINK_STATUS)}));
   const nodes=[];G.scene.traverse(o=>{if(/rainmaker/i.test(o.name)){let visible=o.visible;for(let p=o.parent;p;p=p.parent)visible&&=p.visible;const userData={};for(const key of ['phase','charge','pressure','carrier','symbol','seconds'])if(o.userData[key]!==undefined)userData[key]=o.userData[key];nodes.push({name:o.name,type:o.type,visible,position:o.getWorldPosition(a.pos.clone()).toArray(),scale:o.scale.toArray(),opacity:o.material?.opacity??null,wireframe:o.material?.wireframe??null,userData});}});
-  return {nativeTime:G.time,matchTime:m.time,barrier:{...s.barrier},carrier:s.carrier,holderRemaining:s.holderRemaining,charge:structuredClone(s.charge),actor:{pos:a.pos.toArray(),form:a.form,alive:a.alive},renderSettings:{quality:G.game.settings.quality,bloom:G.game.settings.bloom,shadows:G.game.settings.shadows,teamInk:G.teamColors.map(c=>c.getHexString())},nodes,effectPixels:{changedPixels,maxDelta},programs,draw:{...G.renderer.info.render},contextLost:G.renderer.getContext().isContextLost()};
+  let hold=null;const ch=a.character,core=w.rainmakerCore;
+  if(ch?._rainmakerPose){
+   const point=a.pos.clone(),grip=ch.weapon.pivot.getWorldPosition(point.clone()),muzzle=core.localToWorld(point.fromArray(core.userData.rainmakerModel.muzzle)).clone();
+   const support=ch.weapon.pivot.position.clone();support.x=-support.x;ch.bones.handL.localToWorld(support);
+   const target=core.localToWorld(point.set(0,0,.07));
+   hold={grip:grip.toArray(),gripInKid:ch.kid.worldToLocal(grip.clone()).toArray(),muzzle:muzzle.toArray(),head:ch.bones.head.getWorldPosition(point.clone()).toArray(),shoulder:ch.bones.uArmR.getWorldPosition(point.clone()).toArray(),leftGripError:support.distanceTo(target),rightGripError:grip.distanceTo(core.getWorldPosition(point.clone())),pitch:ch._rainmakerPitch,ready:ch._rainmakerReady};
+  }
+  return {nativeTime:G.time,matchTime:m.time,barrier:{...s.barrier},carrier:s.carrier,holderRemaining:s.holderRemaining,charge:structuredClone(s.charge),actor:{pos:a.pos.toArray(),form:a.form,alive:a.alive,yaw:a.yaw,aimYaw:a.aimYaw,aim:a.aimDir.toArray()},hold,renderSettings:{quality:G.game.settings.quality,bloom:G.game.settings.bloom,shadows:G.game.settings.shadows,teamInk:G.teamColors.map(c=>c.getHexString())},nodes,effectPixels:{changedPixels,maxDelta},programs,draw:{...G.renderer.info.render},contextLost:G.renderer.getContext().isContextLost()};
  },{view,carrierOnly});
  assert(!state.contextLost,`${name}: WebGL context lost`);assert(state.draw.triangles>100,`${name}: no meaningful scene rendered`);
  const cdp=await context.newCDPSession(page);
  try{const {data}=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:false});const bytes=Buffer.from(data,'base64');assert(bytes.length>12000,`${name}: empty screenshot`);fs.writeFileSync(path.join(out,`${name}.png`),bytes);}finally{await cdp.detach();}
  fs.writeFileSync(path.join(out,`${name}.json`),JSON.stringify(state,null,2));captures.push({name,...state});console.log(`Captured ${name}`);
- return state;
+ return {name,...state};
 }
-async function step(n,fire=false){return page.evaluate(({n,fire})=>{
+async function step(n,fire=false,move=null){return page.evaluate(({n,fire,move})=>{
  const G=RG,m=G.match,a=m.local,dt=1/60;
  for(let i=0;i<n;i++){
-  G.time+=dt;a.intent.move.set(0,0,0);a.intent.fire=fire;a.intent.sub=a.intent.squid=a.intent.jump=a.intent.special=false;
+  G.time+=dt;if(move)a.intent.move.fromArray(move);else a.intent.move.set(0,0,0);a.intent.fire=fire;a.intent.sub=a.intent.squid=a.intent.jump=a.intent.special=false;
   a.update(dt);m.advanceRanked(dt);G.fx.update(dt,G.camera);G.paint.flush(dt);
  }
  const root=__rainmakerEvidence.shotRoots.at(-1);
  return {shots:__rainmakerEvidence.events.filter(e=>e.kind==='rainmaker-shot').length,charge:m.ranked.rule.state.charge.value,shot:root?{attached:!!root.parent,visible:root.visible,phase:root.userData.phase??null}:null};
-},{n,fire});}
+},{n,fire,move});}
 try{
  const launch={headless:true,viewport:{width:1280,height:800},args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']};
  if(process.env.CHROMIUM_PATH)launch.executablePath=process.env.CHROMIUM_PATH;else launch.channel='chromium';
@@ -128,7 +143,27 @@ try{
  // presentation retire before inspecting the carrier's own idle/charge aura.
  await step(45,false);
  const idle=await capture('03-carrier-idle','carrier');
- if(carrierOnly){
+ if(holdOnly){
+  const frames=[];
+  for(const view of ['carrier-side','carrier-front','carrier-back'])frames.push(await capture(`hold-idle-${view.slice(8)}`,view));
+  await step(63,true);
+  for(const view of ['carrier-side','carrier-front','carrier-back'])frames.push(await capture(`hold-charge-${view.slice(8)}`,view));
+  await step(2,false);frames.push(await capture('hold-release-side','carrier-side'));
+  await step(30,false);frames.push(await capture('hold-recovered-side','carrier-side'));
+  const move=await page.evaluate(()=>[__rainmakerEvidence.lane[0],0,__rainmakerEvidence.lane[1]]);
+  await step(30,false,move);frames.push(await capture('hold-moving-side','carrier-side'));
+  await step(30,false,[-move[2],0,move[0]]);const turning=await capture('hold-turning-side','carrier-side');frames.push(turning);
+  assert(Math.abs(Math.sin(turning.actor.yaw-turning.actor.aimYaw))>.2,'Native walking must exercise different body and aim headings');
+  for(const frame of frames){
+   assert(frame.hold&&frame.hold.leftGripError<.001&&frame.hold.rightGripError<1e-6,'Both hands must retain the live objective grip');
+   assert(frame.programs.every(p=>p.linked&&p.runnable!==false),'Hold shaders must link and run');
+  }
+  const shots=await page.evaluate(()=>__rainmakerEvidence.events.filter(e=>e.kind==='rainmaker-shot'));
+  assert.equal(shots.length,1,'Native release must emit one shot');assert.equal(shots[0].charge,1);
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({status:'passed',scope:'Native pickup, carry, full charge, release, recovery, walking and a turn with separate body/aim headings; three camera views with both live grips. Chromium SwiftShader, not retail measurement.',build:{revision:build.build.revision,inputHash:build.inputHash,contentHash:build.contentHash},renderSettings:idle.renderSettings,captures:frames.map(c=>({name:c.name,actor:c.actor,charge:c.charge,hold:c.hold,effectPixels:c.effectPixels})),shots,errors},null,2));
+  console.log(`Rainmaker carry position: passed; ${out}`);
+ }else if(carrierOnly){
   const marker=frame=>frame.nodes.find(n=>n.name==='rainmaker-carrier-marker');
   assert(!marker(neutral).visible&&!marker(pressured).visible,'Unclaimed objective must have no carrier marker');
   assert.equal(marker(idle).userData.symbol,'anchor-shield');
