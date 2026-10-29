@@ -1,0 +1,163 @@
+{
+  "baseCommit": "e67c636b81762df56b346a09ef570964d43084df",
+  "candidateBuild": {
+    "revision": "9ac9b2fd85f045c96bf45784f91b946b88c4ad072e05a63fb88e6318158e4d6c",
+    "inputHash": "9211d96ae99c3cef480781302b1aa2acf5f85aaf72989bafd40a45e8cd78dfdd",
+    "contentHash": "b3a3c652b54b6cdd1d4821505026045fc21ccadcc1ba8c0653c45d49a8c9a5bf"
+  },
+  "sourceTests": {
+    "focusedAttackEngineMotion": {
+      "passed": 107,
+      "failed": 0
+    },
+    "combatWorldModel": {
+      "passed": 29,
+      "failed": 0
+    },
+    "queueModelActorVisuals": {
+      "passed": 13,
+      "failed": 0
+    },
+    "note": "Counts overlap between runs; not a unique-test total."
+  },
+  "emittedTests": {
+    "origin": {
+      "passed": 14,
+      "failed": 0
+    },
+    "world": {
+      "passed": 1,
+      "failed": 6
+    },
+    "cleanBaselineWorld": {
+      "passed": 1,
+      "failed": 6
+    },
+    "limitation": "Same six baseline fixture failures, separately reproduced. Full suite not declared passed."
+  },
+  "browser": {
+    "status": "passed",
+    "scope": "Chromium SwiftShader; real offline tidewater native game. Debug freeze and fixed 60 Hz Actor/Match/FX ticks; seeded shield-hit input and initial carrier position. Effect framebuffer hidden/visible comparison and GPU program link checks. No Switch real-device equivalence claim.",
+    "captures": [
+      {
+        "name": "01-barrier-neutral",
+        "effectPixels": {
+          "changedPixels": 21843,
+          "maxDelta": 216
+        },
+        "nativeTime": 7.616666666666645
+      },
+      {
+        "name": "02-barrier-pressured",
+        "effectPixels": {
+          "changedPixels": 49566,
+          "maxDelta": 363
+        },
+        "nativeTime": 7.616666666666645
+      },
+      {
+        "name": "03-carrier-idle",
+        "effectPixels": {
+          "changedPixels": 24440,
+          "maxDelta": 631
+        },
+        "nativeTime": 8.366666666666662
+      },
+      {
+        "name": "04-carrier-half-charge",
+        "effectPixels": {
+          "changedPixels": 34452,
+          "maxDelta": 604
+        },
+        "nativeTime": 8.866666666666687
+      },
+      {
+        "name": "05-carrier-full-charge",
+        "effectPixels": {
+          "changedPixels": 39401,
+          "maxDelta": 667
+        },
+        "nativeTime": 9.416666666666714
+      },
+      {
+        "name": "06-shot-flight",
+        "effectPixels": {
+          "changedPixels": 8145,
+          "maxDelta": 471
+        },
+        "nativeTime": 9.500000000000052
+      },
+      {
+        "name": "07-shot-impact",
+        "effectPixels": {
+          "changedPixels": 2999,
+          "maxDelta": 325
+        },
+        "nativeTime": 9.700000000000061
+      },
+      {
+        "name": "08-shot-detonation",
+        "effectPixels": {
+          "changedPixels": 10560,
+          "maxDelta": 344
+        },
+        "nativeTime": 9.916666666666739
+      },
+      {
+        "name": "09-effects-cleaned",
+        "effectPixels": {
+          "changedPixels": 0,
+          "maxDelta": 0
+        },
+        "nativeTime": 11.916666666666838
+      }
+    ],
+    "renderSettings": {
+      "quality": "low",
+      "bloom": false,
+      "shadows": false,
+      "teamInk": [
+        "ff3f9e",
+        "18d48c"
+      ]
+    }
+  },
+  "artifacts": {
+    "after-barrier.png": {
+      "sha256": "6e0a7996dbce70af00ef3b7710cd96fa2868143011cc5fd89238c4c6250ae3fc",
+      "bytes": 917754
+    },
+    "after-blast.png": {
+      "sha256": "c74820cc75a2459ed6561660ba9dfc3c035b8650fdddaf7c4b8072336d0293a5",
+      "bytes": 612627
+    },
+    "after-charge.png": {
+      "sha256": "802485a28ec7accaf1001ddbbb6dd97021d62efef951dd8825ae17642df551f9",
+      "bytes": 629072
+    },
+    "after-shot.png": {
+      "sha256": "6fafe7fca3cba02f02cebfc853ea9edee3790c89d5e6763925911a2a7a3b32d0",
+      "bytes": 617432
+    },
+    "baseline-emitted-world.log": {
+      "sha256": "35b16e6f6278cfb224aff47629ef18f16088eb8f81bb13145a6fb5943edbc03b",
+      "bytes": 2513
+    },
+    "before-barrier.png": {
+      "sha256": "400cc3f42c269858da345c9efa9ec6fb558f40d04cd5030af3f9098a3857cd89",
+      "bytes": 968255
+    },
+    "before-charge.png": {
+      "sha256": "eff0e55fc1bd3906175bd4d6d07259e13a201ecc7fa2bc8d480b4ae440604927",
+      "bytes": 582507
+    },
+    "before-shot.png": {
+      "sha256": "8306694065b5fcb957114117e37fc6f1ad2ce3f746afe8354ca6a13125225e38",
+      "bytes": 581264
+    },
+    "browser-result.json": {
+      "sha256": "38bf7ad8f965c97baf5610dc9b2841e9aec904696103aa40ec893b093dade03d",
+      "bytes": 13703
+    }
+  }
+}

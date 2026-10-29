@@ -1,0 +1,543 @@
+{
+  "status": "passed",
+  "phase": "candidate",
+  "scope": "Chromium SwiftShader; real offline tidewater native game. Debug freeze and fixed 60 Hz Actor/Match/FX ticks; seeded shield-hit input and initial carrier position. Effect framebuffer hidden/visible comparison and GPU program link checks. No Switch real-device equivalence claim.",
+  "build": {
+    "revision": "9ac9b2fd85f045c96bf45784f91b946b88c4ad072e05a63fb88e6318158e4d6c",
+    "inputHash": "9211d96ae99c3cef480781302b1aa2acf5f85aaf72989bafd40a45e8cd78dfdd",
+    "contentHash": "b3a3c652b54b6cdd1d4821505026045fc21ccadcc1ba8c0653c45d49a8c9a5bf"
+  },
+  "browser": "151.0.7922.34",
+  "boot": {
+    "url": "http://127.0.0.1:33365/?shadercheck=1",
+    "startedAt": "2026-10-29T00:46:39.543Z",
+    "status": "ready",
+    "failures": [],
+    "finishedAt": "2026-10-29T00:47:13.642Z"
+  },
+  "events": [
+    {
+      "kind": "rainmaker-pop",
+      "pos": [
+        6.5,
+        0,
+        0
+      ],
+      "team": 0,
+      "radius": 7,
+      "damage": 900,
+      "id": "0:0",
+      "at": 3.3333333333333264
+    },
+    {
+      "kind": "rainmaker-pickup",
+      "id": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        0,
+        0
+      ],
+      "at": 3.3333333333333264
+    },
+    {
+      "kind": "rainmaker-charged",
+      "id": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        5.551115123125783e-17,
+        0
+      ],
+      "at": 5.116666666666654
+    },
+    {
+      "kind": "rainmaker-shot",
+      "id": 0,
+      "actorId": "0:0",
+      "team": 0,
+      "pos": [
+        6.5,
+        5.551115123125783e-17,
+        0
+      ],
+      "aim": [
+        0,
+        0.09983341664682813,
+        0.9950041652780256
+      ],
+      "charge": 1,
+      "shotOrigin": {
+        "actorId": "0:0",
+        "owner": null,
+        "life": 1,
+        "team": 0,
+        "body": [
+          6.5,
+          0.7,
+          0
+        ],
+        "muzzle": [
+          6.413998245855657,
+          0.823377003018951,
+          1.1373138045614062
+        ]
+      },
+      "damage": 60,
+      "blastDamage": 180,
+      "outerDamage": 40,
+      "radius": 1.4,
+      "nearRadius": 0.92,
+      "directRange": 4.4,
+      "nearRange": 5.3,
+      "effectiveRange": 5.8,
+      "paintRadius": 1,
+      "speed": 18,
+      "launchY": 3.3600000000000008,
+      "recoil": 1.44,
+      "trailRadius": 0.48,
+      "at": 5.166666666666654
+    }
+  ],
+  "captures": [
+    {
+      "name": "01-barrier-neutral",
+      "nativeTime": 7.616666666666645,
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 1000,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": null,
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-barrier",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1"
+      ],
+      "effectPixels": {
+        "changedPixels": 21843,
+        "maxDelta": 216
+      },
+      "draw": {
+        "frame": 283,
+        "calls": 285,
+        "triangles": 1168856,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 171,
+        "linked": 171,
+        "failed": []
+      },
+      "rawStateSha256": "2dce755d1b6d99bfbaffd5dcec8d0d7d6659a0df7fd54975fa496cc08eff0133"
+    },
+    {
+      "name": "02-barrier-pressured",
+      "nativeTime": 7.616666666666645,
+      "barrier": {
+        "active": true,
+        "max": 1000,
+        "health": 350,
+        "balance": 650,
+        "team": 0
+      },
+      "carrier": null,
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-barrier",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1"
+      ],
+      "effectPixels": {
+        "changedPixels": 49566,
+        "maxDelta": 363
+      },
+      "draw": {
+        "frame": 286,
+        "calls": 545,
+        "triangles": 2337664,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 171,
+        "linked": 171,
+        "failed": []
+      },
+      "rawStateSha256": "1cc58277c5cc9bbafe7a1c87d49ebbf37b66778a0865e2e3355066c8a23fd1ef"
+    },
+    {
+      "name": "03-carrier-idle",
+      "nativeTime": 8.366666666666662,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 24440,
+        "maxDelta": 631
+      },
+      "draw": {
+        "frame": 290,
+        "calls": 795,
+        "triangles": 3447627,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 173,
+        "linked": 173,
+        "failed": []
+      },
+      "rawStateSha256": "f84c72f2aa501bee8513a4143744d1ac79330a7e8caddec553719875b77e597d"
+    },
+    {
+      "name": "04-carrier-half-charge",
+      "nativeTime": 8.866666666666687,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0.4833333333333333,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 34452,
+        "maxDelta": 604
+      },
+      "draw": {
+        "frame": 293,
+        "calls": 1047,
+        "triangles": 4597304,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 173,
+        "linked": 173,
+        "failed": []
+      },
+      "rawStateSha256": "480a7e03addb84633d5bf571196bafe46492ae55c6c3c30161c7220157a8ffe5"
+    },
+    {
+      "name": "05-carrier-full-charge",
+      "nativeTime": 9.416666666666714,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 1,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 39401,
+        "maxDelta": 667
+      },
+      "draw": {
+        "frame": 296,
+        "calls": 1293,
+        "triangles": 5746951,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 173,
+        "linked": 173,
+        "failed": []
+      },
+      "rawStateSha256": "9e15d2a85c23b2e8dde33fb78074c0df2c9bc94b03461d5b696cf396cefbedc2"
+    },
+    {
+      "name": "06-shot-flight",
+      "nativeTime": 9.500000000000052,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes",
+        "rainmaker-shot",
+        "rainmaker-shot-head",
+        "rainmaker-shot-ink-sheet",
+        "rainmaker-shot-droplets"
+      ],
+      "effectPixels": {
+        "changedPixels": 8145,
+        "maxDelta": 471
+      },
+      "draw": {
+        "frame": 304,
+        "calls": 1466,
+        "triangles": 6790479,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 175,
+        "linked": 175,
+        "failed": []
+      },
+      "rawStateSha256": "ef6b31f7ef94f22b9839df728d491bffb871d7e1999b4d2e3e4fc72b645c6713"
+    },
+    {
+      "name": "07-shot-impact",
+      "nativeTime": 9.700000000000061,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes",
+        "rainmaker-impact-splash",
+        "rainmaker-shot",
+        "rainmaker-shot-head"
+      ],
+      "effectPixels": {
+        "changedPixels": 2999,
+        "maxDelta": 325
+      },
+      "draw": {
+        "frame": 319,
+        "calls": 1653,
+        "triangles": 7863827,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 179,
+        "linked": 179,
+        "failed": []
+      },
+      "rawStateSha256": "c9994e4ee927eb9db9e42a4e1a22e72dcd90078e9cb82a6c3a9bf7e335c85330"
+    },
+    {
+      "name": "08-shot-detonation",
+      "nativeTime": 9.916666666666739,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes",
+        "rainmaker-impact-splash",
+        "rainmaker-impact-splash"
+      ],
+      "effectPixels": {
+        "changedPixels": 10560,
+        "maxDelta": 344
+      },
+      "draw": {
+        "frame": 323,
+        "calls": 1820,
+        "triangles": 8872027,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 179,
+        "linked": 179,
+        "failed": []
+      },
+      "rawStateSha256": "cbe298a92cb6bbfba1fa92244bd638eb28de8f18b877018792c2f0fa0bc302c2"
+    },
+    {
+      "name": "09-effects-cleaned",
+      "nativeTime": 11.916666666666838,
+      "barrier": {
+        "active": false,
+        "max": 1000,
+        "health": 0,
+        "balance": 0,
+        "team": null
+      },
+      "carrier": "0:0",
+      "charge": 0,
+      "visibleRainmakerNodes": [
+        "ranked-rainmaker-visuals",
+        "ranked-rainmaker",
+        "rainmaker-core",
+        "rainmaker-carrier-aura",
+        "rainmaker-body-glow",
+        "rainmaker-muzzle-glow",
+        "rainmaker-charge-motes",
+        "rainmaker-carrier-marker",
+        "rainmaker-checkpoint-0-0",
+        "rainmaker-checkpoint-0-1",
+        "rainmaker-goal-0",
+        "rainmaker-checkpoint-1-0",
+        "rainmaker-checkpoint-1-1",
+        "rainmaker-goal-1",
+        "rainmaker-ink-splashes"
+      ],
+      "effectPixels": {
+        "changedPixels": 0,
+        "maxDelta": 0
+      },
+      "draw": {
+        "frame": 326,
+        "calls": 1979,
+        "triangles": 9873049,
+        "points": 0,
+        "lines": 0
+      },
+      "gpuPrograms": {
+        "total": 179,
+        "linked": 179,
+        "failed": []
+      },
+      "rawStateSha256": "9df579a2d0dd2dfc30ca51aed37e01a5c1bd257dde12dc1896b03916117f9cd7"
+    }
+  ],
+  "errors": [],
+  "renderSettings": {
+    "quality": "low",
+    "bloom": false,
+    "shadows": false,
+    "teamInk": [
+      "ff3f9e",
+      "18d48c"
+    ]
+  },
+  "storedReceipt": {
+    "kind": "bounded summary",
+    "rawReceiptSha256": "bb2c00039a88e55f612f8c57628516ed379d0e531032235ba08006ab0f1abb95",
+    "omittedEvents": {
+      "special-gain": 260
+    }
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "status": "passed",
+  "scope": "Native Rainmaker pickup, countdown and drop; camera-facing anchor-shield marker, GPU links and actual marker pixels. Chromium SwiftShader, low quality, bloom disabled.",
+  "build": {
+    "revision": "96f37395a5129a65a715439e894ffec33e95654acff44c4b8832a103c653d098",
+    "inputHash": "e92f35304df7f0794f1c4247dab5c3121f84c0cf6c4cdc08df988ebc165a143d",
+    "contentHash": "a48f1085c3b08b401737f28747729ed2fbd841ebe4aa17e3f59111d43318fedb"
+  },
+  "renderSettings": {
+    "quality": "low",
+    "bloom": false,
+    "shadows": false,
+    "teamInk": [
+      "10d2e6",
+      "ff4150"
+    ]
+  },
+  "captures": [
+    {
+      "name": "01-barrier-neutral",
+      "carrier": null,
+      "holderRemaining": 60,
+      "effectPixels": {
+        "changedPixels": 22085,
+        "maxDelta": 264
+      },
+      "marker": {
+        "name": "rainmaker-carrier-marker",
+        "type": "Mesh",
+        "visible": false,
+        "position": [
+          6.5,
+          2.2,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "opacity": 1,
+        "wireframe": false,
+        "userData": {
+          "symbol": "anchor-shield",
+          "seconds": 60
+        }
+      }
+    },
+    {
+      "name": "02-barrier-pressured",
+      "carrier": null,
+      "holderRemaining": 60,
+      "effectPixels": {
+        "changedPixels": 49847,
+        "maxDelta": 400
+      },
+      "marker": {
+        "name": "rainmaker-carrier-marker",
+        "type": "Mesh",
+        "visible": false,
+        "position": [
+          6.5,
+          2.2,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "opacity": 1,
+        "wireframe": false,
+        "userData": {
+          "symbol": "anchor-shield",
+          "seconds": 60
+        }
+      }
+    },
+    {
+      "name": "03-carrier-idle",
+      "carrier": "0:0",
+      "holderRemaining": 59.21666666666667,
+      "effectPixels": {
+        "changedPixels": 2740,
+        "maxDelta": 419
+      },
+      "marker": {
+        "name": "rainmaker-carrier-marker",
+        "type": "Mesh",
+        "visible": true,
+        "position": [
+          6.5,
+          1.6,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "opacity": 1,
+        "wireframe": false,
+        "userData": {
+          "symbol": "anchor-shield",
+          "seconds": 60
+        }
+      }
+    },
+    {
+      "name": "04-carrier-countdown",
+      "carrier": "0:0",
+      "holderRemaining": 57.21666666666667,
+      "effectPixels": {
+        "changedPixels": 2772,
+        "maxDelta": 419
+      },
+      "marker": {
+        "name": "rainmaker-carrier-marker",
+        "type": "Mesh",
+        "visible": true,
+        "position": [
+          6.5,
+          1.6,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "opacity": 1,
+        "wireframe": false,
+        "userData": {
+          "symbol": "anchor-shield",
+          "seconds": 58
+        }
+      }
+    },
+    {
+      "name": "05-carrier-charged",
+      "carrier": "0:0",
+      "holderRemaining": 56.20000000000001,
+      "effectPixels": {
+        "changedPixels": 2648,
+        "maxDelta": 366
+      },
+      "marker": {
+        "name": "rainmaker-carrier-marker",
+        "type": "Mesh",
+        "visible": true,
+        "position": [
+          6.5,
+          1.6,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "opacity": 1,
+        "wireframe": false,
+        "userData": {
+          "symbol": "anchor-shield",
+          "seconds": 57
+        }
+      }
+    },
+    {
+      "name": "06-carrier-dropped",
+      "carrier": null,
+      "holderRemaining": 60,
+      "effectPixels": {
+        "changedPixels": 0,
+        "maxDelta": 0
+      },
+      "marker": {
+        "name": "rainmaker-carrier-marker",
+        "type": "Mesh",
+        "visible": false,
+        "position": [
+          6.5,
+          2.2,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "opacity": 1,
+        "wireframe": false,
+        "userData": {
+          "symbol": "anchor-shield",
+          "seconds": 60
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "screenshotSha256": "2f4e03bc1743388910fc2e5b856afe7bcb62a20535b2844e3e5aaf64663a1d51"
+}

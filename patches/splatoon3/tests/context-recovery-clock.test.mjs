@@ -172,9 +172,12 @@ for (const cause of ['context', 'native-world']) test(`final installed PlatformF
       assert.equal(game.platform.owner.active, true, 'restored platform owner is active, terminal flag still fences its frame');
     } else game._nativeWorldRecoveryFatal = { error: new Error('rollback failed') };
     game.frozen = false;
-    for (let i = 0; i < 10; i++) step();
+    // Offline reload-only native failures now retire the driver itself. The
+    // context-loss case keeps its existing chain behind the terminal gate.
+    for (let i = 0; i < 10 && pending.size; i++) step();
     assert.deepEqual({ frames, rendering, time: G.time, remaining: match.time }, before);
-    assert.equal(pending.size, 1, 'only the existing platform RAF chain remains');
+    assert.equal(pending.size, cause === 'native-world' ? 0 : 1,
+      'native terminal owns no RAF; context recovery retains its gated owner');
   } finally { const owner = game.platform.owner; game.disposePlatform(); owner.dispose(); }
   assert.equal(pending.size, 0);
 });

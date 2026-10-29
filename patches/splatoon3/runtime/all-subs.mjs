@@ -47,6 +47,7 @@ export function beakonActorKey(actor){
 // A rendered ghost may retire before its owner's delayed marking event.
 // Retain only bounded, accepted birth facts, independently of visual lifetime.
 const markBirths = new WeakMap();
+const acceptedSubDeploys = new WeakSet();
 const markBirthKey = o => JSON.stringify([o.sourceLife,o.seq,o.subId]);
 function markBirthState(api,projectiles,owner,create=false) {
   let state=markBirths.get(projectiles);
@@ -468,7 +469,14 @@ function createObject(api, projectiles, owner, id, record = {}) {
     const births=markBirthState(api,projectiles,owner,true);
     if(object.sourceLife>births.life||object.sourceLife===births.life&&seq>births.seq){
       births.life=object.sourceLife;births.seq=seq;
-      births.entries.set(markBirthKey(object),Object.freeze({frames:Math.round(markSeconds(spec,owner,ap)*60)}));
+      births.entries.set(markBirthKey(object),Object.freeze({
+        frames:Math.round(markSeconds(spec,owner,ap)*60),
+        // The receiver's accepted birth is the earliest local reference for
+        // an Angle Shooter's release-time mark clock. Delayed mark packets
+        // must not restart the full duration from their receipt time.
+        receivedAt:Number.isFinite(api.G.time)?api.G.time:0,
+        targets:new WeakMap(),
+      }));
       // The source itself can retain at most MAX_OBJECTS live catalogue objects.
       // A later same-owner ordered birth beyond this bound proves the oldest
       // can no longer emit a new mark. Other owners cannot evict this history.
@@ -680,6 +688,8 @@ function appendAngleLine(api,projectiles,object,start,end){
       color:object.owner?.color||api.G.teamColors?.[object.team]||0xffcc33,transparent:true,opacity:.85}));
     object.lineMesh.geometry.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(object.spec.flightFrames*6),3));
     object.lineMesh.frustumCulled=false;
+    object._lineVisualBounds = new THREE.Box3();
+    object.lineMesh.geometry.boundingSphere = new THREE.Sphere();
     scene.add(object.lineMesh);
   }
   const positions=object.lineMesh.geometry.getAttribute('position'),i=(object.lineSegments.length-1)*2;
@@ -687,6 +697,23 @@ function appendAngleLine(api,projectiles,object,start,end){
   // Several fixed ticks may precede one draw; retain every unconsumed range.
   positions.addUpdateRange(i*3,6);positions.needsUpdate=true;
   object.lineMesh.geometry.setDrawRange(0,object.lineSegments.length*2);
+  // Bounds follow the stored Float32 endpoints, not the unused capacity/origin.
+  // Invalid coordinates keep drawing; this never gates marking or lifetime.
+  const bounds = object._lineVisualBounds, mesh = object.lineMesh;
+  if (!object._lineVisualInvalid) {
+    for (let j = i; j <= i + 1; j++) {
+      const x=positions.getX(j), y=positions.getY(j), z=positions.getZ(j);
+      if (!Number.isFinite(x+y+z)) { object._lineVisualInvalid=true; break; }
+      bounds.min.x=Math.min(bounds.min.x,x);bounds.max.x=Math.max(bounds.max.x,x);
+      bounds.min.y=Math.min(bounds.min.y,y);bounds.max.y=Math.max(bounds.max.y,y);
+      bounds.min.z=Math.min(bounds.min.z,z);bounds.max.z=Math.max(bounds.max.z,z);
+    }
+  }
+  mesh.frustumCulled=!object._lineVisualInvalid;
+  if (mesh.frustumCulled) {
+    bounds.getBoundingSphere(mesh.geometry.boundingSphere);
+    mesh.geometry.boundingSphere.radius += 1e-6*(1+mesh.geometry.boundingSphere.radius+mesh.geometry.boundingSphere.center.length());
+  }
 }
 function finishAngleFlight(api,object){
   object.phase='line';object.vel.set(0,0,0);
@@ -1213,7 +1240,7 @@ function applyBeaconProposal(api,event) {
 }
 function replayBeaconUses(api,event,owner) {
   if(!owner?.remote||replayOwnerLife(owner)!==event.life||!Number.isInteger(event.usesLeft)||event.usesLeft<0||event.usesLeft>2)return false;
-  const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&o.subId==='beakon');
+  const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&o.subId==='beakon');
   if(!object||!object.ghost)return false;
   object.usesLeft=event.usesLeft;
   if(event.removed===true||object.usesLeft===0)removeObject(api,api.G.projectiles,object,true);
@@ -1272,8 +1299,7 @@ function applyRemoteObjectHit(api,event) {
   if(!shooter?.remote||!owner||owner.remote||owner.nid!==event.targetOwnerId||
      ownerLife(shooter)!==event.life||shooter.team===owner.team||!finite3({x:event.x,y:event.y,z:event.z})||
      !Number.isFinite(event.damage)||event.damage<=0||event.damage>2200||!Number.isSafeInteger(event.targetSeq)||!Number.isSafeInteger(event.targetLife))return false;
-  const key=objectHitKey(event);if(objectHitSeen.has(key))return false;objectHitSeen.add(key);
-  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);
+  const key=objectHitKey(event);if(objectHitSeen.has(key))return false;
   const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&o.subId===event.targetSubId&&o.phase==='deployed');
   const target=object||entityList(api.G.projectiles).find(o=>!o.dead&&o.owner===owner&&o.seq===event.targetSeq&&o.sourceLife===event.targetLife&&targetableTorpedo(o));
   if(!target||target.ghost)return false;
@@ -1282,6 +1308,11 @@ function applyRemoteObjectHit(api,event) {
   // Match Vector3 constructor defaults, subtraction order and distanceTo square root.
   const dx=hitPos.x-(hitX===undefined?0:hitX), dy=hitPos.y-(hitY===undefined?0:hitY), dz=hitPos.z-(hitZ===undefined?0:hitZ);
   if(Math.sqrt(dx*dx+dy*dy+dz*dz)>reach)return false;
+  // An invalid target, a premature birth or a geometric miss must not poison
+  // this attacker's replay window. Reserve only accepted hits, immediately
+  // before HP callbacks so synchronous replay cannot apply them twice.
+  objectHitSeen.add(key);
+  while(objectHitSeen.size>MAX_REPLAY_EVENTS)objectHitSeen.delete(objectHitSeen.values().next().value);
   target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectDamageScale(shooter,target.subId,event.cause||'Default'));
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return true;
@@ -1709,7 +1740,7 @@ function replaySpawn(api,event,owner,report){
   if(!owner?.remote||!api.G.projectiles||event.life!==replayOwnerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
   const list=entityList(api.G.projectiles);
   const old=list.find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife);
-  if(old){report?.('reused',old);return true;}
+  if(old){if(old.dead||!old.ghost||old.subId!==event.subId)return false;report?.('reused',old);return true;}
   if(![event.x,event.y,event.z,event.vx,event.vy,event.vz,event.charge].every(Number.isFinite)||
      !Number.isSafeInteger(event.seed)||!Number.isSafeInteger(event.seq)||event.seq<=0)return false;
   const created=createObject(api,api.G.projectiles,owner,event.subId,{...event,ghost:true});
@@ -1717,8 +1748,11 @@ function replaySpawn(api,event,owner,report){
   return !!created;
 }
 function replayDeploy(api,event,owner){
-  const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
-  if(!object||!finite3({x:event.x,y:event.y,z:event.z}))return false;
+  const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+  if(!object||object.burstReplayed||acceptedSubDeploys.has(object)||!finite3({x:event.x,y:event.y,z:event.z}))return false;
+  // The first owner correction remains valid after a locally predicted landing.
+  // Later envelopes for this same birth cannot renew clocks, uses or visuals.
+  acceptedSubDeploys.add(object);
   deploy(api,api.G.projectiles,object,new api.THREE.Vector3(event.x,event.y,event.z),null,null,'defer');
   if(Number.isFinite(event.yaw))object.yaw=event.yaw;
   if(['splashWall','inkMine','beakon'].includes(object.subId))object.s3SurfaceAttachment=replayTowerAttachment(api.G,object,event);
@@ -1728,25 +1762,39 @@ function replayDeploy(api,event,owner){
     if(object.phase==='wallPending')object.wallReadyAge=object.age+delay;
   }
   if(Number.isFinite(event.lifeSeconds))object.expireAt=(api.G.time||0)+clamp(event.lifeSeconds,0,60);
-  if(object.subId==='beakon'&&Number.isInteger(event.usesLeft))object.usesLeft=clamp(event.usesLeft,0,2);
+  if(object.subId==='beakon'&&Number.isInteger(event.usesLeft))object.usesLeft=Math.min(object.usesLeft,clamp(event.usesLeft,0,2));
   replaceVisual(api,object);return true;
 }
 function replayMark(api,event,owner){
   const target=api.G.netm?.byNid?.get(event.targetId);
   const birth=owner&&api.G.projectiles&&markBirthState(api,api.G.projectiles,owner)?.entries.get(markBirthKey(event));
-  if(!owner?.remote||!target||target.team===owner.team||ownerLife(target)!==event.targetLife||
+  // A remote event cannot choose a second team for a real accepted birth.
+  // This is an identity check, not a substitute for local contact proof.
+  if(!owner?.remote||!target||target.team===owner.team||event.sourceTeam!==owner.team||ownerLife(target)!==event.targetLife||
     !['inkMine','angleShooter'].includes(event.subId)||!birth||
     !Number.isSafeInteger(event.frames)||event.frames!==birth.frames)return false;
   const elapsed=event.markAgeFrames??0;
   if(!Number.isSafeInteger(elapsed)||elapsed<0||
     event.subId!=='angleShooter'&&elapsed!==0||
     event.subId==='angleShooter'&&elapsed>ALL_SUB_SPECS.angleShooter.flightFrames+ALL_SUB_SPECS.angleShooter.tailFrames)return false;
-  return applyMark(api,target,owner.team,Math.max(0,event.frames-elapsed)/60,event.subId);
+  // The owner starts Angle Shooter marking at release. Transit latency must
+  // not create extra marking time: the accepted receiver birth provides a
+  // conservative lower bound on the elapsed fixed-frame clock. A mine is
+  // different: it marks at detonation and may remain planted indefinitely.
+  const birthAge=event.subId==='angleShooter'&&Number.isFinite(birth.receivedAt)
+    ?Math.max(0,Math.floor(((api.G.time||0)-birth.receivedAt)*60+1e-8)):0;
+  const remaining=Math.max(0,event.frames-Math.max(elapsed,birthAge))/60;
+  // Birth evidence does not prove contact with this target. Preserve that
+  // unresolved boundary while preventing one accepted claim from renewing.
+  if(birth.targets.get(target)===event.targetLife)return false;
+  const applied=applyMark(api,target,owner.team,remaining,event.subId);
+  if(applied)birth.targets.set(target,event.targetLife);
+  return applied;
 }
 function replayExpire(api,event,owner){
   // Owner retirement is ordered after its marks. Local visual retirement is not.
   markBirthState(api,api.G.projectiles,owner)?.entries.delete(markBirthKey(event));
-  const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+  const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object)return false;removeObject(api,api.G.projectiles,object,true);return true;
 }
 
@@ -1766,7 +1814,7 @@ export function replaySub(api,event,report){
   if(!owner?.remote||!Number.isSafeInteger(event.seq)||event.seq<=0||!Number.isSafeInteger(event.life)||replayOwnerLife(owner)!==event.life)return false;
   if(event.phase==='spawn')return replaySpawn(api,event,owner,report);
   // Observation-driven ghosts follow only the existing native integrator.
-  if(entityList(api.G.projectiles).some(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&hasReceiverTorpedoObservation(o)))return false;
+  if(entityList(api.G.projectiles).some(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&hasReceiverTorpedoObservation(o)))return false;
   if(event.phase==='deploy')return replayDeploy(api,event,owner);
   if(event.phase==='mark')return replayMark(api,event,owner);
   // Only ordered native paint rows may change ownership. A stale legacy drop
@@ -1785,7 +1833,7 @@ export function replaySub(api,event,report){
   }
   if(event.phase==='torpedoLock'||event.phase==='torpedoLaunch'){
     const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.owner===owner&&o.subId==='torpedo'&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
-    if(!object||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
+    if(!object||object.burstReplayed||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
     if(event.phase==='torpedoLock'){
       if(object.chasedTarget)return false;
       object.pos.set(event.x,event.y,event.z);object.prev.copy(object.pos);object.vel.set(0,0,0);
@@ -1799,8 +1847,9 @@ export function replaySub(api,event,report){
     return true;
   }
   if(event.phase==='burst'){
-    const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
-    if(!object)return false;
+    const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+    if(!object||object.burstReplayed||![event.x,event.y,event.z].every(Number.isFinite))return false;
+    if(object.subId!=='fizzy'&&event.burstIndex!==0)return false;
     if(object.subId==='fizzy'){
       const index=object.fizzyBurstReplayed||0;
       if(!Number.isSafeInteger(event.burstIndex)||event.burstIndex!==index||index>=object.popLimit)return false;
@@ -1813,7 +1862,10 @@ export function replaySub(api,event,report){
         ![event.x,event.y,event.z].every(Number.isFinite))return false;
       object.torpedoBurstReplayed=true;
     }
-    if([event.x,event.y,event.z].every(Number.isFinite))object.pos.set(event.x,event.y,event.z);
+    // Replica collision may enter ghostWait before the owner's first burst.
+    // Retire the admitted transition before callbacks so replay cannot reenter it.
+    if(object.subId!=='fizzy')object.burstReplayed=true;
+    object.pos.set(event.x,event.y,event.z);
     const spec=object.subId==='fizzy'?object.spec.bursts[Math.min(2,event.burstIndex||0)]:object.spec;
     if(object.subId==='torpedo'&&object.chasedTarget)spawnTorpedoSplashes(api,api.G.projectiles,object,object.pos);
     if(object.subId==='fizzy')spawnFizzySplashes(api,api.G.projectiles,object,object.pos,event.burstIndex);
@@ -1822,8 +1874,8 @@ export function replaySub(api,event,report){
     return true;
   }
   if(event.phase==='fizzyHop'||event.phase==='bounce'){
-    const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
-    if(!object||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
+    const object=entityList(api.G.projectiles).find(o=>!o.dead&&o.ghost&&o.subId===event.subId&&o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
+    if(!object||object.burstReplayed||![event.x,event.y,event.z,event.vx,event.vy,event.vz].every(Number.isFinite))return false;
     object.pos.set(event.x,event.y,event.z);object.vel.set(event.vx,event.vy,event.vz);
     if(event.phase==='fizzyHop')object.age=0;
     object.phase='flight';

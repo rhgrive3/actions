@@ -6,6 +6,8 @@ import { PLAYER } from '../../../src/config.js';
 import { SUPERJUMP_MAIN_PROGRESS } from './weapon-gates.mjs';
 import { hasCommittedSuperJumpDestination } from './superjump-destination.mjs';
 
+const _wallOrigin = new THREE.Vector3(), _wallDir = new THREE.Vector3();
+
 // Preserve the public game's existing human-form boundary, NOT a measured S3
 // frame value. Nintendo confirms pre-landing attacks but not their exact gate.
 export { SUPERJUMP_MAIN_PROGRESS };
@@ -88,8 +90,8 @@ export function prepareSuperJump(a, dt) {
   // A wall is support only while the same nearby face is still inked. Do not
   // trust a captured climbing flag after the wall is repainted or disappears.
   if (s.wallSupport) {
-    const origin = a.pos.clone().add(new THREE.Vector3(0, .3, 0));
-    const direction = s.wallSupport.clone().negate();
+    const origin = _wallOrigin.set(a.pos.x + 0, a.pos.y + .3, a.pos.z + 0);
+    const direction = _wallDir.copy(s.wallSupport).negate();
     const h = G.physics.raycast(origin, direction, PLAYER.radius + .35, a.wallHit);
     if (h.hit && Math.abs(h.normal.y) < .5 && h.face >= 0 && G.paint.sample(h.face, h.u, h.v) - 1 === a.team) {
       a.vel.set(0, 0, 0); a.grounded = false; return true;

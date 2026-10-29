@@ -25,6 +25,13 @@ function common(c){
  return c[8]==='inkwave-paint-order-v1'&&typeof c[9]==='string'&&(c[10]===0||c[10]===1);
 }
 function paint(row){return Array.isArray(row)&&row.length===17&&row[1]==='s'&&Array.isArray(row[14])&&(row[14].length===4||row[14].length===5)&&row[14][0]==='inkwave-paint-order-v1'&&typeof row[14][1]==='string';}
+// Paint produced in one firing burst usually repeats the same dictionary
+// fields. Reuse only the immediately preceding exact tuple; the original Map
+// still assigns IDs for every other tuple, preserving dictionary/wire order.
+function sameCommon(row,c){
+ return c&&row[5]===c[0]&&row[6]===c[1]&&row[8]===c[2]&&row[9]===c[3]&&row[10]===c[4]&&row[11]===c[5]&&row[12]===c[6]&&row[13]===c[7]
+  &&row[14][0]===c[8]&&row[14][1]===c[9]&&row[14][3]===c[10]&&row[14].length===c.length-7&&(c.length===11||row[14][4]===c[11]);
+}
 /** Returns null when the unchanged legacy encoding is preferable or required. */
 function encodePaintPayload(rows){
  if(!Array.isArray(rows)||rows.length>512)return null;
@@ -32,14 +39,25 @@ function encodePaintPayload(rows){
  // Strip only array properties; the indexed wire values remain exact.
  rows=rows.map(r=>Array.isArray(r)?r.slice():r);
  if(!bounded(rows))return null;
- const dict=[],index=new Map(),out=[];
+ const dict=[],index=new Map(),radiusIndex=rows.length>64?new Map():null,out=[];let previous=null,previousId;
  for(const row of rows){
   if(!paint(row)){out.push([0,row]);continue;}
-  const c=[row[5],row[6],row[8],row[9],row[10],row[11],row[12],row[13],row[14][0],row[14][1],row[14][3]];
-  if(row[14].length===5)c[11]=row[14][4];
-  const key=JSON.stringify(c);
-  if(!common(c))return null;
-  let id=index.get(key);if(id===undefined){if(dict.length>=64)return null;id=dict.length;index.set(key,id);dict.push(c);}
+  let id=previousId;
+  if(!sameCommon(row,previous)){
+   // Interleaved weapons can revisit a tuple after many rows. A bounded
+   // packet-local radius lookup avoids serializing their unchanged fields;
+   // every field still has to match before an existing ID can be reused.
+   const cached=radiusIndex?.get(row[5]);
+   if(cached!==undefined&&sameCommon(row,dict[cached])){id=cached;previous=dict[id];previousId=id;}
+   else{
+   const c=[row[5],row[6],row[8],row[9],row[10],row[11],row[12],row[13],row[14][0],row[14][1],row[14][3]];
+   if(row[14].length===5)c[11]=row[14][4];
+   const key=JSON.stringify(c);
+   if(!common(c))return null;
+   id=index.get(key);if(id===undefined){if(dict.length>=64)return null;id=dict.length;index.set(key,id);dict.push(c);}
+   previous=c;previousId=id;radiusIndex?.set(row[5],id);
+   }
+  }
   // No delta arithmetic or quantization. Each original value is preserved.
   out.push([1,id,row[0],row[2],row[3],row[4],row[7],row[14][2],row[15],row[16]]);
  }
@@ -64,7 +82,7 @@ export function decodePaintEvents(payload){
  for(const r of rows){if(!Array.isArray(r))return null;if(r[0]===0){if(r.length!==2||!Array.isArray(r[1]))return null;}
   else if(r[0]!==1||r.length!==10||!Number.isInteger(r[1])||r[1]<0||r[1]>=dict.length)return null;
  }
- return rows.map(r=>{if(r[0]===0)return r[1];const c=dict[r[1]];return[r[2],'s',r[3],r[4],r[5],c[0],c[1],r[6],c[2],c[3],c[4],c[5],c[6],c[7],[c[8],c[9],r[7],c[10],...(c.length===12?[c[11]]:[])],r[8],r[9]];});
+ return rows.map(r=>{if(r[0]===0)return r[1];const c=dict[r[1]],order=[c[8],c[9],r[7],c[10]];if(c.length===12)order.push(c[11]);return[r[2],'s',r[3],r[4],r[5],c[0],c[1],r[6],c[2],c[3],c[4],c[5],c[6],c[7],order,r[8],r[9]];});
 }
 
 // Membership comes from the relay. The relay silently drops failed sends, so

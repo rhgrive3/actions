@@ -1,0 +1,39 @@
+{
+  "testedRuntimeSha": "48eaacef33ac0b7fa3feb9214e70380c60f52579",
+  "checkedLaterHead": "59b84a24568d9a4eb5db22f66df768b2ed347489",
+  "before": {
+    "sourceSha": "48eaacef33ac0b7fa3feb9214e70380c60f52579",
+    "contentHash": "90a745c4cff306240c2222bdc9790d37613d95efdbf2fd27e9857efb304b47c4",
+    "inputHash": "cc4685163c18d25a68e8d7f5dfb663f858ed7929c690923c2a13fa7abeac03a7",
+    "inputs": 1530,
+    "artifacts": 2241
+  },
+  "after": {
+    "sourceSha": "59b84a24568d9a4eb5db22f66df768b2ed347489",
+    "contentHash": "90a745c4cff306240c2222bdc9790d37613d95efdbf2fd27e9857efb304b47c4",
+    "inputHash": "cc4685163c18d25a68e8d7f5dfb663f858ed7929c690923c2a13fa7abeac03a7",
+    "inputs": 1530,
+    "artifacts": 2241
+  },
+  "node": "22.23.4",
+  "emittedFiles": [
+    "patches/splatoon3/tests/ranked-rainmaker-shot-origin.test.mjs",
+    "patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs",
+    "patches/splatoon3/tests/rainmaker-model-actor.test.mjs",
+    "patches/splatoon3/tests/ranked-rainmaker-current-lifecycle.test.mjs"
+  ],
+  "receipts": {
+    "emitted-current.tap.gz": {
+      "sha256": "97221dc4a932aeed4edbc013d61c5f661daea009bd2fca33c2acb83da72dbe6c",
+      "rawSha256": "a346d0670d369c9f097bab1ce7e045c78acfda3ad15b096462fe8a8d9075150a"
+    },
+    "source-current-lifecycle.tap.gz": {
+      "sha256": "18fb13b1feb5111bb17fe588f16f0e603965f59006fee05e2a6f84a98dc7eff5",
+      "rawSha256": "3c87c09a79de01089f27ebe1adaac0e562c8bbdcf72e2bdeb30930f61f91fcd0"
+    },
+    "build.log.gz": {
+      "sha256": "edd642ca2f76dc52686936fdb56a8894e0b2de8f16ff3dc65d437e426f51c29e",
+      "rawSha256": "aa04df2b1c73104aaf70517a4e02c17d742014c9d467f31f408d04ab1d9fcb24"
+    }
+  }
+}

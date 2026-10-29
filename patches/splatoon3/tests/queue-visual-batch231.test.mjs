@@ -1,3 +1,4 @@
+import { towerCheckpointPosition } from '../runtime/ranked/tower.mjs';
 import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
@@ -44,8 +45,9 @@ test('scalar Kraken guards preserve planar, 3D and invalid contact results',()=>
 test('TRY IT cancels only the detached news animation and retains remove-before-Boss ordering',()=>{
  const source=adaptBuildSource('src/ui/news.js',read('../../../inkwave-public/src/ui/news.js')),calls=[];
  const close=method(source,'WhatsNew','close',{clearTimeout(){},cancelAnimationFrame:id=>calls.push(['cancel',id])});
- const el={classList:{add(){}},remove(){calls.push(['remove']);}},news={M:{_modal:el},el,card:{classList:{add(){}}},_t:0,_raf:12,_tweens:[()=>{}],_tryBoss(){calls.push(['boss']);}};
- close.call(news,'try');assert.equal(news._raf,0);assert.equal(news._tweens.length,0);assert.deepEqual(calls,[['cancel',12],['remove'],['boss']]);
+ const releaseClock=method(source,'WhatsNew','_releaseTweenClock');
+ const el={classList:{add(){}},remove(){calls.push(['remove']);}},news={M:{_modal:el},el,card:{classList:{add(){}}},_t:0,_raf:12,_tweens:[()=>{}],_releaseTweenClock:releaseClock,_newsClockOff(){calls.push(['unsubscribe']);},_tryBoss(){calls.push(['boss']);}};
+ close.call(news,'try');assert.equal(news._raf,0);assert.equal(news._tweens.length,0);assert.deepEqual(calls,[['unsubscribe'],['cancel',12],['remove'],['boss']]);assert.equal(news._newsClockOff,null);releaseClock.call(news);assert.equal(calls.filter(c=>c[0]==='unsubscribe').length,1);
 });
 test('inventory indexing preserves first duplicate actor, string IDs, disappearance and marker positions',()=>{
  const source=read('../runtime/ranked/world.mjs'),before=read('./fixtures/clam-inventory-before-oct23.txt');
@@ -69,17 +71,23 @@ test('unsupported special kinds allocate no Group or team color work',()=>{
 });
 test('idle local movement audio skips only absent handles and still fades existing loops after death',()=>{
  const raw=read('../../../inkwave-public/src/main.js'),source=adaptBuildSource('src/main.js',raw),calls=[];
- const update=method(source,'Game','_updateLocalLoops',{G:{audio:{loop:()=>{throw Error('must stay dormant');}}},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)});
- const want=method(source,'Game','_wantLocalLoop',{G:{audio:{loop:()=>{throw Error('must stay dormant');}}},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)});
- const dormant={match:null,_wantLocalLoop:want};for(let i=0;i<100;i++)update.call(dormant,1/60);assert.equal(dormant._loops,undefined);
- const active={match:null,_wantLocalLoop:want,_loops:{swim:{_v:.5,set(p){calls.push(['set',p.volume]);},stop(){calls.push(['stop']);}}}};
- for(let i=0;i<100;i++)update.call(active,1/60);assert.ok(calls.some(c=>c[0]==='set'));assert.equal(calls.filter(c=>c[0]==='stop').length,1);assert.equal(active._loops.swim,null);
+ let attemptedLoops=0;const audio={ctx:{state:'running'},loop(){attemptedLoops++;return null;}};
+ const bindings={G:{audio},damp:(v,to,hz,dt)=>to+(v-to)*Math.exp(-hz*dt)};
+ const update=method(source,'Game','_updateLocalLoops',bindings),want=method(source,'Game','_wantLocalLoop',bindings),recover=method(source,'Game','_recoverMainLoop',bindings);
+ let recoveries=0;const recoverTracked=function(...args){recoveries++;return recover.apply(this,args);};
+ const dormant={match:null,_wantLocalLoop:want,_recoverMainLoop:recoverTracked};for(let i=0;i<100;i++)update.call(dormant,1/60);assert.equal(dormant._loops,undefined);assert.equal(recoveries,0,'idle frames do not visit recovery');
+ const active={match:null,_wantLocalLoop:want,_recoverMainLoop:recoverTracked,_loops:{swim:{playing:true,_v:.5,set(p){calls.push(['set',p.volume]);},stop(){this.playing=false;calls.push(['stop']);}}}};
+ for(let i=0;i<100;i++)update.call(active,1/60);assert.ok(calls.some(c=>c[0]==='set'));assert.equal(calls.filter(c=>c[0]==='stop').length,1);assert.equal(active._loops.swim,null);assert.ok(recoveries>0,'existing loop visits the real recovery owner');assert.equal(active._mainLoopRecovery.swim.context,audio.ctx);assert.equal(attemptedLoops,0,'fading cannot start an unwanted loop');
 });
 test('ranked objective projection scratch retains every Canvas command for all four ranked rules',()=>{
  const source=read('../runtime/ranked/ui.mjs'),ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
  const selected=ast.body.filter(n=>n.type==='FunctionDeclaration'&&['projectObjective','marker','drawObjectives'].includes(n.id.name)||n.type==='VariableDeclaration'&&n.declarations[0].id.name==='objectiveScratch');
- const compile=code=>new Function('strokeTowerRoute','finite','clamp01',code+'\nreturn drawObjectives;')(()=>false,(n,f=0)=>Number.isFinite(n)?n:f,n=>Math.max(0,Math.min(1,Number.isFinite(n)?n:0)));
- const old=compile(read('./fixtures/ranked-objective-projection-before-oct23.txt')),next=compile(selected.map(n=>source.slice(n.start,n.end)).join('\n'));
+ const compile=code=>new Function('towerCheckpointPosition','strokeTowerRoute','finite','clamp01',code+'\nreturn drawObjectives;')(towerCheckpointPosition,()=>false,(n,f=0)=>Number.isFinite(n)?n:f,n=>Math.max(0,Math.min(1,Number.isFinite(n)?n:0)));
+ // This fixture compares projection scratch and Canvas commands. The later
+ // checkpoint route law is owned and tested by tower.mjs; use it on both sides
+ // while keeping the frozen fresh-projection implementation independent.
+ const baseline=read('./fixtures/ranked-objective-projection-before-oct23.txt').replace('path[Math.round(clamp01(cp.progress) * Math.max(0, path.length - 1))]','towerCheckpointPosition(stage,t,cp?.progress,engine.rule?.metrics)');
+ const old=compile(baseline),next=compile(selected.map(n=>source.slice(n.start,n.end)).join('\n'));
  const stage={zones:[{center:[1,0,2],size:[3,4]},{center:{x:3,y:0,z:4},size:[2,5]}],tower:{path:[[0,0,0],[1,0,3],[2,0,5]],checkpoints:[[{progress:.5}],[{progress:1}]]},rainmaker:{center:[2,0,3],checkpoints:[[[1,0,2]],[[3,0,4]]],goals:[[0,0,8],[0,0,-8]]},clams:{goals:[[0,0,8],[0,0,-8]]}};
  const state={zones:[{team:0},{team:-1}],position:[2,0,3],controllingTeam:1,pos:[2,0,3],checkpoint:{passed:[true,false],choice:[0,0],goalOpen:[true,false]},clams:[{pos:[1,0,2],kind:'power'},{pos:[3,0,4],kind:'small'}],inventories:{'7':{power:true}}};
  for(const mode of ['zones','tower','rainmaker','clams']){

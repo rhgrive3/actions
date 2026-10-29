@@ -10,15 +10,20 @@ export const CRAB_TANK_RIG = Object.freeze({
 
 // Aim is authoritative even while body yaw catches up. A caller can explicitly
 // request crosshair convergence by supplying its muzzle; never aim from feet.
+function finiteVector(value) {
+  // Preserve the array literal's eager x/y/z read order, including accessors.
+  const x = value.x, y = value.y, z = value.z;
+  return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z);
+}
 export function crabTankAimDirection(actor, out, muzzle = null) {
   const aim = actor?.aimDir;
-  if (aim && [aim.x, aim.y, aim.z].every(Number.isFinite) && aim.lengthSq() > 1e-12) out.copy(aim).normalize();
+  if (aim && finiteVector(aim) && aim.lengthSq() > 1e-12) out.copy(aim).normalize();
   else {
     const yaw = actor?.aimYaw ?? actor?.yaw ?? 0, pitch = actor?.aimPitch ?? 0, cp = Math.cos(pitch);
     out.set(Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp);
   }
   const target = actor?.aimPoint;
-  if (muzzle && target && [target.x, target.y, target.z].every(Number.isFinite)) {
+  if (muzzle && target && finiteVector(target)) {
     const x = target.x - muzzle.x, y = target.y - muzzle.y, z = target.z - muzzle.z;
     const fromFeet = (target.x - actor.pos.x) ** 2 + (target.y - actor.pos.y) ** 2 + (target.z - actor.pos.z) ** 2;
     if (fromFeet > 1e-12 && x * out.x + y * out.y + z * out.z > 0 && x * x + y * y + z * z > 1e-12) out.set(x, y, z).normalize();
@@ -52,7 +57,7 @@ export function crabTankShotGeometry(actor, mode, origin, direction) {
   // the same sentinel guard as crabTankAimDirection(..., muzzle); the feet
   // must never become an accidental close-range crosshair target.
   const fromFeet = target && (target.x - actor.pos.x) ** 2 + (target.y - actor.pos.y) ** 2 + (target.z - actor.pos.z) ** 2;
-  if (target && [target.x, target.y, target.z].every(Number.isFinite) && fromFeet > 1e-12) {
+  if (target && finiteVector(target) && fromFeet > 1e-12) {
     // Damping avoids the old near-target two-cycle. Retain the original
     // direction precision after damping rather than stopping at 1e-6 rad.
     for (let i = 0; i < 48; i++) {

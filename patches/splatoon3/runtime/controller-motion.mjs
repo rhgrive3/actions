@@ -335,12 +335,11 @@ export function decodeSwitchMotionReport(data, options = {}) {
 
   const gyroCalibration = calibrationIsUsable(options.gyroCalibration) ? options.gyroCalibration : null;
   const nominalScale = Number.isFinite(options.scale) ? options.scale : DEFAULT_GYRO_SCALE;
-  const nominalBias = [options.biasX, options.biasY, options.biasZ].map(value => Number.isFinite(value) ? value : 0);
-  const rawGyro = [rawG1, rawG2, rawG3];
-  const rate = rawGyro.map((raw, axis) => gyroCalibration
-    ? (raw - gyroCalibration.gyroOffsets[axis]) * gyroCalibration.gyroDpsPerCount[axis] * DEG_TO_RAD
-    : (raw - nominalBias[axis]) * nominalScale);
-  const [rateX, rateY, rateZ] = rate;
+  const bx = options.biasX, by = options.biasY, bz = options.biasZ;
+  const biasX = Number.isFinite(bx) ? bx : 0, biasY = Number.isFinite(by) ? by : 0, biasZ = Number.isFinite(bz) ? bz : 0;
+  const rateX = gyroCalibration ? (rawG1 - gyroCalibration.gyroOffsets[0]) * gyroCalibration.gyroDpsPerCount[0] * DEG_TO_RAD : (rawG1 - biasX) * nominalScale;
+  const rateY = gyroCalibration ? (rawG2 - gyroCalibration.gyroOffsets[1]) * gyroCalibration.gyroDpsPerCount[1] * DEG_TO_RAD : (rawG2 - biasY) * nominalScale;
+  const rateZ = gyroCalibration ? (rawG3 - gyroCalibration.gyroOffsets[2]) * gyroCalibration.gyroDpsPerCount[2] * DEG_TO_RAD : (rawG3 - biasZ) * nominalScale;
 
   // Provisional bridge convention: Gyro 1 maps to pitch and inverted Gyro 3 to yaw.
   // Controller mounting orientation/signs and Splatoon 3's mapping are unverified.
@@ -386,9 +385,12 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
   let suspended = integrated && options.initiallySuspended === true;
   let yawDelta = 0, pitchDelta = 0, sampleSeconds = 0, firstArrival = 0;
   const clear = () => { latestSample = null; yawDelta = pitchDelta = sampleSeconds = firstArrival = 0; };
+  // Only the built-in connection owns immutable options; custom readers retain live options.
+  const fixedOptions = options.fixedDecodeOptions === true ? new Map([0x30, 0x31, 0x32, 0x33].map(reportId => [reportId, { ...options, productId, averageFrames: integrated || options.averageFrames, reportId }])) : null;
   function accept(data, reportId) {
-    const opt = { ...options, productId, averageFrames: integrated || options.averageFrames };
-    if (reportId !== undefined && reportId !== null) opt.reportId = reportId;
+    let opt = fixedOptions?.get(reportId);
+    if (!opt) { opt = { ...options, productId, averageFrames: integrated || options.averageFrames };
+      if (reportId !== undefined && reportId !== null) opt.reportId = reportId; }
     const sample = decodeSwitchMotionReport(data, opt);
     if (!sample.available || suspended) { clear(); return sample; }
     if (integrated) {
@@ -410,7 +412,7 @@ export function createSwitchHIDReader(deviceOrOptions = {}) {
   }
 
   function handleInputReport(event) {
-    if (!event?.data) { clear(); return; }
+    if (suspended || !event?.data) { clear(); return; }
     accept(event.data, event.reportId);
   }
 
@@ -544,7 +546,7 @@ export function attachWebHIDControllerMotion(input, options = {}) {
       }
 
       const reader = createSwitchHIDReader({ device, productId: device.productId, ...options,
-        integrateReports: true, initiallySuspended: true, gyroCalibration: initResult.calibration });
+        integrateReports: true, initiallySuspended: true, fixedDecodeOptions: true, gyroCalibration: initResult.calibration });
       reader.initResult = initResult;
       session.reader = reader;
       input.s3ControllerMotionInitError = null;

@@ -2,9 +2,8 @@ import { catalogChargeStage } from '../catalog-charge-stages.mjs';
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { mainAudioSourceId } from './bank.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
-import { KIT_AUDIO } from './kit-recipes.mjs';
+import {refreshRecordedKitPrefetch,cancelRecordedKitPrefetch} from './kit-prefetch.mjs';
 import { withBlasterSplashHit } from './blaster-hit.mjs';
-import { sourceEventRoute, EXTRA_SPECIAL_ACTION_SOURCE } from './extra-source-routes.mjs';
 import { usesChargerRise } from './charger-charge-rise.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
@@ -33,8 +32,9 @@ export function installWeaponAudioRuntime(api){
     if(p?.type!=='blast'||p.ghost)return oldBurst.call(this,p,...args);
     return withBlasterSplashHit(p.owner,()=>oldBurst.call(this,p,...args));
   };
-  const unsubs=[],active=new Set(),obstruction=new WeakMap();
+  const unsubs=[],active=new Set(),kitOwners=new Set(),obstruction=new WeakMap();
   const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},loopUpdates:{},wasReady:false,wasCharge:false,keepEmergePlayed:false,canopy:null,sBlastMode:null} );
+  const stopKit=r=>{if(r?._mainAudioState)cancelRecordedKitPrefetch(r._mainAudioState);kitOwners.delete(r);};
   // One-shot spatial work runs only when the engine resolves a playable source.
   // Loop options stay eager: their pending handles may start after decoding.
   const deferredOcclusion=Symbol.for('inkwave.weapon-audio.resolve-occlusion'),deferredPosition=Symbol.for('inkwave.weapon-audio.occlusion-position');
@@ -132,9 +132,9 @@ export function installWeaponAudioRuntime(api){
     if(a?.remote&&n?._chargerRise){n._chargerRise.stop?.(.04);n._chargerRise=null;}
   });
   listen('splatted',e=>stop(e?.victim?.weaponRunner));
-  listen('match:state',e=>{if(e?.state!=='playing')for(const r of active)stop(r);});
-  listen('actor:removed',e=>stop((e?.actor||e)?.weaponRunner));
-  const oldReset=R.reset;R.reset=function(...args){stop(this);this._mainAudioState=null;return oldReset.apply(this,args);};
+  listen('match:state',e=>{if(e?.state!=='playing'){for(const r of active)stop(r);for(const r of kitOwners)stopKit(r);}});
+  listen('actor:removed',e=>{const r=(e?.actor||e)?.weaponRunner;stop(r);stopKit(r);});
+  const oldReset=R.reset;R.reset=function(...args){stop(this);stopKit(this);this._mainAudioState=null;return oldReset.apply(this,args);};
   const oldUpdate=R.update;
   R.update=function(dt,input,...rest){
     const a=this.a,s=stateFor(this),id=mainAudioSourceId(a?.weapon?.id);
@@ -144,19 +144,8 @@ export function installWeaponAudioRuntime(api){
     // rather than decoding all 381 samples or warming every remote actor.
     const loader=G.audio?._realS3Loader,sub=a?.weapon?.sub,special=a?.weapon?.special;
     if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'){
-    const kitKey=String(sub||'')+'|'+String(special||'');
-    if(s.preloadedKit!==kitKey){
-      s.preloadedKit=kitKey;
-      for(const [kit,events] of [['sub:'+sub,KIT_AUDIO['sub:'+sub]?.events||[]],['special:'+special,KIT_AUDIO['special:'+special]?.events||[]]])
-        for(const event of events){
-          loader.ensure(kit,event).catch(()=>{});
-          const extra=sourceEventRoute(kit,event);
-          if(extra)loader.ensure(extra,'fire').catch(()=>{});
-        }
-      for(const [action,cue] of Object.entries(EXTRA_SPECIAL_ACTION_SOURCE))
-        if(action.startsWith(special+':'))loader.ensure(cue,'fire').catch(()=>{});
-    }
-    }
+      refreshRecordedKitPrefetch(s,loader,G.audio?.ctx,sub,special);kitOwners.add(this);
+    }else stopKit(this);
     s.firedThisUpdate=false;
     const priorCatalog=this.catalogState,keptFrames=priorCatalog?.stored?.frames;
     const result=oldUpdate.call(this,dt,input,...rest);
@@ -234,6 +223,6 @@ export function installWeaponAudioRuntime(api){
   const oldSet=Actor.prototype.setWeapon;
   Actor.prototype.setWeapon=function(id,...args){const r=oldSet.call(this,id,...args);G.audio?.prepareWeapon?.(this.weapon?.id,{urgent:!!this.isLocal});if(this.isLocal&&usesChargerRise(this.weapon?.id))G.audio?.prewarmChargerChargeRise?.(this.weapon?.id,this.weapon?.chargeTime);return r;};
   const kit=installKitAudio(api,{listen,options});
-  const installed={version:1,weapons:Object.keys(WEAPON_AUDIO).length,dispose(){for(const u of unsubs)u();for(const r of active)stop(r);kit?.dispose();}};
+  const installed={version:1,weapons:Object.keys(WEAPON_AUDIO).length,dispose(){for(const u of unsubs)u();for(const r of active)stop(r);for(const r of kitOwners)stopKit(r);kit?.dispose();}};
   Object.defineProperty(R,INSTALL,{value:installed});return installed;
 }

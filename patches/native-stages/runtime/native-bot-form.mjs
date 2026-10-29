@@ -18,7 +18,8 @@ export function nativeSourceGroundedForm(brain,G){
  const L=G.level,a=brain.a,it=a?.intent,N=G.nav;
  if(!L?.native||!a?.alive||!a.grounded||a.climbing||a.specialActive||a.superJumpState||a.s3?.squidSpawn||brain.target||!it?.squid||it.jump||it.sub||it.special||it.throw||!it.move?.lengthSq()||nativeTowerRider(G,a)||brain._nativeTowerBoarding)return false;
  if(!a.ground?.hit||a.ground.block<0||a.ground.block>=L.staticBlockCount||a.ground.normal.y<=.68)return false;
- const from=N?.nodes[brain.path?.[Math.max(0,brain.pi-1)]],node=N?.nodes[brain.path?.[brain.pi]],edge=from?.nb.find(e=>e.to===node?.id);
+ const from=N?.nodes[brain.path?.[Math.max(0,brain.pi-1)]],node=N?.nodes[brain.path?.[brain.pi]],nb=from?.nb;
+ let edge;if(nb&&node)for(let i=0;i<nb.length;i++)if(nb[i].to===node.id){edge=nb[i];break;}
  if(!node||edge?.type!=='walk'||edge.climb||edge.drop||Math.abs(node.y-a.pos.y)>.5||Math.hypot(node.x-a.pos.x,node.z-a.pos.z)>Math.max(.25,N.step??1)*2.01)return false;
  let screen=screens.get(L);
  if(!screen){screen={clearance:nativeDropClearance(L),origin:new THREE.Vector3(),down:new THREE.Vector3(0,-1,0),hit:new Hit(),ground:new GroundHit(),previous:new THREE.Vector3(),point:new THREE.Vector3(),goal:new THREE.Vector3()};screens.set(L,screen);}

@@ -51,6 +51,7 @@ function disposeOldWorld(game,snap){
  old(()=>snap.stageLightmap?.dispose?.(),'lightmap');
  old(()=>snap.props?.dispose?.(),'props');
  old(()=>snap.paint?.dispose?.(),'paint');
+ old(()=>snap.minimap?.dispose?.(),'minimap');
 }
 
 function yieldNativeWorld(signal){
@@ -69,7 +70,7 @@ function yieldNativeWorld(signal){
 /** Prepare detached, publish atomically through the existing worldCurrent guard. */
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
- let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures,pendingNavigation;
+ let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures,pendingNavigation,minimap;
  let snapshot=null,published=false,committed=false;
  const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
@@ -84,7 +85,9 @@ export async function buildNativeWorld(game,map,current){
   // Constrained stages must not clone large derived arrays through IndexedDB during activation.
   const data=await loadNativeData(map.id,signal,{constrained:!!game.mobile?.touch});if(!current())return;
   status.update('textures');
-  const level=new NativeLevel(data),physics=new NativePhysics(level);
+  const level=NativeLevel.create?await NativeLevel.create(data,{signal,current}):new NativeLevel(data);
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
+  const physics=new NativePhysics(level);
   // A previous context loss on a native stage lowers this load's budget.
   // Touch devices start one texture step lower unless the stage ships KTX2
   // and this GPU receives it compressed (about a quarter of the memory).
@@ -144,7 +147,7 @@ export async function buildNativeWorld(game,map,current){
   level.nativeNav=nav;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   // The minimap's global CURRENT is not touched until final commit.
-  const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
+  minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
   if(G.settings?.minimap!==false)await minimap.prepareNative?.({signal,current});
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const wake=new SwimWake();
@@ -210,6 +213,7 @@ export async function buildNativeWorld(game,map,current){
     safely(()=>display?.dispose(),'display');safely(()=>paint?.dispose(),'paint');
     safely(()=>{if(inkMesh)inkMesh.dispose();else inkGeometry?.dispose();},'ink');
     safely(()=>inkMat?.dispose(),'material');
+    safely(()=>minimap?.dispose?.(),'minimap');
    }
   }
   if(recoveryErrors.length){

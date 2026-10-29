@@ -26,7 +26,9 @@ const HEALTH_OBSERVER = Symbol.for('inkwave.s3.health-hit-observer.v1');
 function recordHealthLoss(actor, before, now) {
   if (!actor?.alive || !Number.isFinite(now) || !Number.isFinite(before) ||
       !(actor.hp > 0 && actor.hp < before - 1e-6)) return;
-  hpObserved.set(actor, { hp: actor.hp, life: actor.netLife ?? 0, at: now });
+  let seen = hpObserved.get(actor);
+  if (!seen) { seen = {}; hpObserved.set(actor, seen); }
+  seen.hp = actor.hp; seen.life = actor.netLife ?? 0; seen.at = now;
 }
 // Observe completed authoritative operations, not HUD-frame net HP deltas.
 // Healing followed by a smaller hit between renders must still refresh the bar.
@@ -92,23 +94,30 @@ export function healthActorVisible(actor, viewer, { hpMax = 100, now = 0, visibl
 }
 export function buildHealthMarkers(game, G, PLAYER, THREE) {
   const out = game._hudHealth || (game._hudHealth = []), viewer = game.match.local;
+  // Keep scalar marker rows separate from the visible list: clipping or the
+  // damage window may empty that list without discarding its reusable rows.
+  const pool = game._hudHealthPool || (game._hudHealthPool = []);
   const head = game._healthHead || (game._healthHead = new THREE.Vector3());
   const body = game._healthBody || (game._healthBody = new THREE.Vector3());
   let n = 0;
   for (const actor of game.match.actors) {
     let visible = healthActorDecision(actor, viewer, PLAYER.hp, G.time, null);
     if (visible === false) continue;
-    if (visible === null) {
-      body.copy(actor.pos); body.y += actor.form === 'squid' ? .3 : .9;
-      visible = healthActorDecision(actor, viewer, PLAYER.hp, G.time, !!G.physics?.los?.(G.camera.position, body));
-    }
-    if (!visible) continue;
     if (actor.character.getHeadPosition && actor.form !== 'squid') { actor.character.getHeadPosition(head); head.y += .25; }
     else { if (actor.visualPos) actor.visualPos(head); else head.copy(actor.pos); head.y += actor.form === 'squid' ? .8 : 1.7; }
     head.project(G.camera);
     if (!Number.isFinite(head.x) || !Number.isFinite(head.y) || !Number.isFinite(head.z) ||
         head.z < -1 || head.z > 1 || Math.abs(head.x) >= 1 || Math.abs(head.y) >= 1) continue;
-    const row = out[n] || (out[n] = {});
+    // An offscreen bar cannot contribute pixels. Observe damage above for
+    // every actor, but only perform world occlusion for an on-screen candidate.
+    // Reveals and allies keep their existing occlusion-independent behavior.
+    if (visible === null) {
+      body.copy(actor.pos); body.y += actor.form === 'squid' ? .3 : .9;
+      visible = healthActorDecision(actor, viewer, PLAYER.hp, G.time, !!G.physics?.los?.(G.camera.position, body));
+    }
+    if (!visible) continue;
+    const row = pool[n] || (pool[n] = {});
+    out[n] = row;
     row.x = (head.x * .5 + .5) * innerWidth; row.y = (-head.y * .5 + .5) * innerHeight;
     row.hp = Math.max(0, Math.min(1, actor.hp / PLAYER.hp)); row.color = G.teamHex[actor.team]; n++;
   }

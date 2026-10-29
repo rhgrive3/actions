@@ -96,3 +96,16 @@ test('single whole-packet profitability matches the original two-stage decision 
 test('standalone encoding uses normalized wire rows rather than array metadata',()=>{
  const r=rows(),expected=encode(r);r.toJSON=()=>[];r[0]._netTick=42;assert.deepEqual(encode(r),expected);
 });
+test('online codec rejects 257..512 rows before nested decode while generic decoder retains its 512-row contract',()=>{
+ const p=pair();p.start();
+ for(const count of [0,1,255,256,257,512]){
+  const original=Array.from({length:count},(_,i)=>row(i)),payload=encode(original);
+  if(!payload)continue;
+  assert.deepEqual(decode(payload),original);
+  const packet={k:'t',pe:payload,pn:p.nodes.a.nonce};
+  const out=p.nodes.b.acceptTick('a',packet);
+  if(count<=256)assert.deepEqual(out.e,original);else assert.equal(out,null);
+ }
+ const excessive=new Array(257);Object.defineProperty(excessive,0,{get(){throw Error('expanded oversized packet');}});
+ assert.equal(p.nodes.b.acceptTick('a',{k:'t',pe:['inkwave-paint-dictionary-v3',[],excessive],pn:p.nodes.a.nonce}),null);
+});

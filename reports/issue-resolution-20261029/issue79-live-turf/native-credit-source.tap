@@ -1,0 +1,15 @@
+(node:506226) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #79 live floor impacts: near/far width and shallow/mid/steep straight-phase depth reach CPU paint (6081.828238ms)
+✔ #79 live wall contact paints the sourced 1.56 shock radius once, deterministically (2819.139639ms)
+✔ #79 elevated live wall impact paints wall cells without awarding floor turf (900.459924ms)
+✔ #79 live long-fall impact reaches the far width anchor and credits actual floor area (884.79385ms)
+✔ #79 live floor paint and turf agree across 30/60/120 render schedules (2643.116575ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13746.327526

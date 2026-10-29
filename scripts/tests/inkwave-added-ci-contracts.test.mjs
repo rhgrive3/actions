@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
+import {assertValidateWorkflowContract} from '../ci/inkwave-validate-contract.mjs';
 const root=new URL('../../',import.meta.url);
 const read=name=>fs.readFileSync(new URL('.github/workflows/'+name,root),'utf8');
 const expression="${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}";
@@ -23,6 +24,7 @@ test('A+ replaces obsolete PR checks while retaining every main and manual run',
 test('required checks keep their identities and cancellation cannot skip the required Validate fan-in',()=>{
  assert.match(quality,/^  verify-aplus-suite:\n/m);assert.doesNotMatch(quality,/^    if:.*cancelled\(\)/m);
  const source=read('validate-inkwave-update.yml'),gate=source.slice(source.indexOf('  validate:'),source.indexOf('  browser:'));
+ assertValidateWorkflowContract(source);
  assert.ok(gate.includes("if: ${{ always() && inputs.diagnostic_only != true && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}"));
  assert.match(gate,/needs: \[admission_preflight, build_site, validate_core, patch_tests, circleci_offload_gate, browser, seven_claims, resource_paint_continuation\]/);assert.match(gate,/test "\$PREFLIGHT_RESULT" = success/);assert.match(gate,/test "\$CORE_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = success/);assert.match(gate,/test "\$PATCH_RESULT" = skipped/);assert.match(gate,/test "\$CIRCLECI_RESULT" = success/);assert.match(gate,/test "\$CIRCLECI_RESULT" = skipped/);assert.match(source,/INKWAVE_CIRCLECI_OFFLOAD/);
  assert.doesNotMatch(gate,/!cancelled\(\)|continue-on-error/);
@@ -30,10 +32,12 @@ test('required checks keep their identities and cancellation cannot skip the req
 const profile=['/*','!/*/','/.github/','/inkwave-public/','/patches/','/scripts/','/server/','/tests/','/tools/','!/tools/inkwave-modeler/','/reports/','/docs/'];
 // Only Validate core executes the CircleCI parity gate that reads this config.
 const coreProfile=[...profile.slice(0,3),'/.circleci/config.yml',...profile.slice(3)];
+// The build job consumes only the checked-in ink-volume source under reports.
+const buildProfile=profile.flatMap(p=>p==='/reports/'?[p,'!/reports/*','/reports/ink-volume/','!/reports/ink-volume/*','/reports/ink-volume/source/']:[p]);
 // Keep the original profiles exact for the other jobs. These two reviewed
 // expansions materialize the complete JavaScript metadata audit inventory.
 const auditJavaScriptProfile=['*.js','*.mjs','*.cjs'];
-const buildAuditProfile=[...profile,'# The global metadata AST guard reads every tracked JavaScript file.',...auditJavaScriptProfile];
+const buildAuditProfile=[...buildProfile,'# The global metadata AST guard reads every tracked JavaScript file.',...auditJavaScriptProfile];
 const coreAuditProfile=[...coreProfile,'# Include audit code while keeping excluded authoring binaries absent.',...auditJavaScriptProfile];
 // Exact immutable checkout input closure for the mandatory low-cost preflight.
 const admissionProfile=['/scripts/','/patches/','/inkwave-public/src/','/inkwave-public/index.html','/inkwave-public/sw.js','/.github/workflows/','/package-lock.json'];
@@ -85,10 +89,61 @@ const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/i
 // prevents an added prototype mutation or dynamic side effect from intercepting
 // approved text operations. Future fixture edits require an explicit re-review.
 const fixtureSourcePins={
- [sparseFixtureFile]:'788a50eee7f93cd50c301fe45c96f62942295f2c75948c89b1bf247190bef272',
- 'scripts/tests/continuous-browser-video.test.mjs':'8d3f6b4f9f5ce634efafb8d9dd76e69b04e48d57bababa1014ebb6546a855a2f',
+ [sparseFixtureFile]:'05303588abb91c74e0925b410702f72ca7e0e91e1e0f361134f8e226af30a0fb',
+ 'scripts/tests/continuous-browser-video.test.mjs':'7436ae93586542669dcab5b9756dfbb279fb0292e02b3792a9e693273b16d6f3',
 };
-// Only four literal nodes in this one audited test describe sparse exclusions;
+// Re-reviewed touch CI delta: crypto import, test title/unused-install expectation,
+// and one workflow-restoration negative control only. Reverse the exact reviewed
+// text to the original whole-file seal; synthetic fixture/consumer AST pins below
+// remain unchanged. An unrelated edit fails both current and historical seals.
+const reviewedSparseSourceDelta = [
+  {
+    "before": "",
+    "after": "import {createHash} from 'node:crypto';\n"
+  },
+  {
+    "before": "test('test jobs keep original entries and only the pinned build dependency where required',()=>{\n",
+    "after": "test('test-only jobs keep original entries without installing unused packages',()=>{\n"
+  },
+  {
+    "before": "  const source=read('.github/workflows/'+workflow);if(workflow==='inkwave-touch-frame-pacing.yml'){assert.equal((source.match(/npm install/g)||[]).length,1);assert.match(source,/npm install --no-save --no-package-lock --silent esbuild@0\\.28\\.2/);assert.doesNotMatch(source,/playwright|npx /);}else assert.doesNotMatch(source,/npm install|npx /);assert.match(source,/node-version: 22/);assert.match(source,/node --experimental-vm-modules --test /);for(const entry of tests)assert(source.includes(entry));\n",
+    "after": "  const source=read('.github/workflows/'+workflow);assert.doesNotMatch(source,/npm install|npm ci|playwright|npx /);assert.match(source,/node-version: 22/);assert.match(source,/node --experimental-vm-modules --test /);for(const entry of tests)assert(source.includes(entry));\n"
+  },
+  {
+    "before": "",
+    "after": "\ntest('touch test-only dependency removal restores the exact reviewed prior workflow',()=>{\n const source=read('.github/workflows/inkwave-touch-frame-pacing.yml');\n const boundary=\"      - name: Verify touch cadence, profiler and final composed main loop\\n\";\n assert.equal(source.split(boundary).length,2);\n const restored=source.replace(boundary,\"      - name: Install pinned build dependency\\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\\n\"+boundary);\n assert.equal(createHash('sha256').update(restored).digest('hex'),\"3894070c7ca5bdd936c5eecec84f5ffe5b9c6a20e6d347941e0651a672cf9371\");\n});\n"
+  }
+];
+function restoreReviewedSparseSource(source) {
+ let restored=source;
+ for(const {before,after} of reviewedSparseSourceDelta) {
+  assert.equal(restored.split(after).length,2,'exactly one reviewed sparse fixture delta');
+  restored=restored.replace(after,before);
+ }
+ assert.equal(createHash('sha256').update(restored).digest('hex'),
+  '788a50eee7f93cd50c301fe45c96f62942295f2c75948c89b1bf247190bef272',
+  'reversed sparse fixture must retain the exact original audited source');
+ return restored;
+}
+test('reviewed touch CI fixture delta reverses to its immutable original source seal',()=>{
+ const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
+ assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[sparseFixtureFile]);
+ restoreReviewedSparseSource(source);
+ const boundary='\n// The metadata guard deliberately audits every tracked JavaScript module, not';
+ assert.equal(source.split(boundary).length,2);
+ assert.equal(createHash('sha256').update(source.split(boundary)[0]).digest('hex'),
+  'd1c3a8e8702f0033e2df9c7a0b9ce1244c02e3f8cd0d030f3870087f2053c2fb',
+  'global-audit suffix removal retains the exact author-reviewed touch epoch');
+ for(const {after} of reviewedSparseSourceDelta) {
+  assert.throws(()=>restoreReviewedSparseSource(source.replace(after,'')));
+  assert.throws(()=>restoreReviewedSparseSource(source+after));
+ }
+ assert.throws(()=>restoreReviewedSparseSource(source+'\n// unrelated fixture mutation\n'));
+});
+// Re-reviewed 2026-10-29: removed only the byte-identical second sparse-negative
+// loop. All three immutable consumer hashes and all original workflow blob
+// seals below are unchanged; each negative control still runs exactly once.
+// Only three literal nodes in this one audited test describe sparse exclusions;
 // none is an input consumed by the build or runtime. The owning constructs
 // are pinned as a whole: permitting an otherwise legitimate identifier as an
 // arbitrary subexpression would allow an alias, import, or filesystem read.
@@ -108,7 +163,7 @@ function maskReviewedVolumeFixture(source){
  assert.equal(declaration.init.value,volumeSparseLiteral);
  const functions=ast.body.filter(n=>n.type==='FunctionDeclaration'&&n.id?.name==='assertUnchangedDefaultVolumeJob');
  const negatives=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing sparse fetch',"));
- assert.equal(functions.length,1);assert.equal(negatives.length,2,'exactly two identical reviewed sparse negative loops');
+ assert.equal(functions.length,1);assert.equal(negatives.length,1,'exactly one reviewed sparse negative loop');
  const workflowNegatives=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing build trigger',"));
  assert.equal(workflowNegatives.length,1);
  const allowed=[functions[0],...negatives],workflowNegative=workflowNegatives[0];
@@ -131,8 +186,8 @@ function maskReviewedVolumeFixture(source){
   }
   for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,[...ancestors,node]);}else if(value&&typeof value==='object')visit(value,[...ancestors,node]);
  };
- visit(ast);assert.equal(identifiers,11);
- assert.deepEqual(literals.map(n=>n.value).sort(),['!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].sort());
+ visit(ast);assert.equal(identifiers,6);
+ assert.deepEqual(literals.map(n=>n.value).sort(),['!/tools/inkwave-modeler/blender/','!/tools/inkwave-modeler/docs/','/tools/inkwave-modeler/docs/'].sort());
  let checked=source;for(const node of [declaration.init,...literals].sort((a,b)=>b.start-a.start))checked=checked.slice(0,node.start)+"''"+checked.slice(node.end);
  return checked;
 }
@@ -141,6 +196,7 @@ function assertNoAuthoringDependency(file,source){
   assert.equal(createHash('sha256').update(source).digest('hex'),fixtureSourcePins[file],'audited fixture changed; re-review before updating its narrow literal exemption');
  let checked=file===volumeFixtureFile?maskReviewedVolumeFixture(source):source;
  if(file===sparseFixtureFile){
+  restoreReviewedSparseSource(source);
   // Only the reviewed literal data in this temporary-repository fixture is
   // exempt. Imports, filesystem references and the rest of its code are scanned.
   const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
@@ -179,9 +235,10 @@ function assertNoAuthoringDependency(file,source){
 }
 test('expanded sparse audit retains the complete historical fixture bytes',()=>{
  const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
- const boundary=source.indexOf('\n// The metadata guard deliberately audits every tracked JavaScript module, not');
+ const restored=restoreReviewedSparseSource(source);
+ const boundary=restored.indexOf('\n// The metadata guard deliberately audits every tracked JavaScript module, not');
  assert.ok(boundary>0,'one explicit boundary for the later global metadata tests');
- assert.equal(createHash('sha256').update(source.slice(0,boundary)).digest('hex'),historicalSparseFixtureSha256);
+ assert.equal(createHash('sha256').update(restored.slice(0,boundary)).digest('hex'),historicalSparseFixtureSha256);
 });
 test('the excluded authoring workbench is not referenced by runtime/test/build input code',()=>{
  const files=execFileSync('git',['ls-files','-z','inkwave-public','patches','scripts','server','tests'],{cwd:root,encoding:'utf8'}).split('\0').filter(f=>/\.(?:mjs|js|py)$/.test(f)&&f!=='scripts/tests/inkwave-added-ci-contracts.test.mjs');
@@ -230,10 +287,16 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  const gate=workflow.slice(workflow.indexOf('  validate:'),workflow.indexOf('  browser:'));
  const body=gate.split('        run: |\n')[1];assert(body,'required gate shell');
  const shell=body.split('\n').map(line=>line.replace(/^          /,'')).join('\n');
- const baseline={PREFLIGHT_RESULT:'success',BUILD_RESULT:'success',CONTRACTS_ONLY:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped',BROWSER_RESULT:'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',OFFLOAD_ACTIVE:'false'};
+ const admissible=(offload,core,patch,circle)=>({
+  PREFLIGHT_RESULT:'success',BUILD_RESULT:'success',CONTRACTS_ONLY:'false',
+  CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle,
+  BROWSER_RESULT:offload?'skipped':'success',SEVEN_RESULT:'success',RESOURCE_RESULT:'success',
+  OFFLOAD_ACTIVE:String(offload)
+ });
+ const baseline=admissible(false,'success','success','skipped');
  const run=(command,env)=>spawnSync('bash',['--noprofile','--norc','-e','-o','pipefail','-c',command],{env:{...process.env,...baseline,...env},encoding:'utf8'});
  for(const offload of [false,true])for(const core of ['success','failure','cancelled','skipped'])for(const patch of ['success','failure','cancelled','skipped'])for(const circle of ['success','failure','cancelled','skipped']){
-  const env={OFFLOAD_ACTIVE:String(offload),CORE_RESULT:core,PATCH_RESULT:patch,CIRCLECI_RESULT:circle,BROWSER_RESULT:offload?'skipped':'success'};
+  const env=admissible(offload,core,patch,circle);
   const result=run(shell,env);assert.ifError(result.error);
   assert.equal(result.status===0,core==='success'&&(offload?patch==='skipped'&&circle==='success':patch==='success'&&circle==='skipped'),JSON.stringify(env));
  }
@@ -241,17 +304,29 @@ test('actual Validate shell requires precisely the native or offloaded complete 
  for(const name of ['PREFLIGHT_RESULT','BUILD_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'])for(const state of ['failure','cancelled','skipped'])assert.notEqual(run(shell,{[name]:state}).status,0,name+'='+state);
  for(const state of ['failure','cancelled','success'])assert.notEqual(run(shell,{OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:state}).status,0,'offloaded browser '+state);
  // The new gate must reject a failed preflight even when all legacy jobs pass.
- const preflightFailed={PREFLIGHT_RESULT:'failure',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'};
+ const preflightFailed={...admissible(false,'success','success','skipped'),PREFLIGHT_RESULT:'failure'};
  assert.notEqual(run(shell,preflightFailed).status,0);
  assert.equal(run(shell.replace('test "$PREFLIGHT_RESULT" = success','true # missing preflight guard'),preflightFailed).status,0);
  for(const [needle,env]of [
-  ['test "$CORE_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'failure',PATCH_RESULT:'success',CIRCLECI_RESULT:'skipped'}],
-  ['test "$PATCH_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'false',CORE_RESULT:'success',PATCH_RESULT:'failure',CIRCLECI_RESULT:'skipped'}],
-  ['test "$CIRCLECI_RESULT" = success',{PREFLIGHT_RESULT:'success',OFFLOAD_ACTIVE:'true',CORE_RESULT:'success',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'failure',BROWSER_RESULT:'skipped'}],
+  ['test "$CORE_RESULT" = success',admissible(false,'failure','success','skipped')],
+  ['test "$PATCH_RESULT" = success',admissible(false,'success','failure','skipped')],
+  ['test "$CIRCLECI_RESULT" = success',admissible(true,'success','skipped','failure')],
  ]){
   const altered=shell.replace(needle,'true # removed required receipt');assert.notEqual(altered,shell);
   assert.notEqual(run(shell,env).status,0);assert.equal(run(altered,env).status,0,'negative control exposes omitted '+needle);
  }
+ const heavy=['CORE_RESULT','PATCH_RESULT','CIRCLECI_RESULT','BROWSER_RESULT','SEVEN_RESULT','RESOURCE_RESULT'];
+ const contracts={...baseline,CONTRACTS_ONLY:'true',...Object.fromEntries(heavy.map(name=>[name,'skipped']))};
+ for(const good of [baseline,{...baseline,OFFLOAD_ACTIVE:'true',PATCH_RESULT:'skipped',CIRCLECI_RESULT:'success',BROWSER_RESULT:'skipped'},contracts]){
+  assert.equal(run(shell,good).status,0,'complete current gate');
+  for(const name of Object.keys(baseline).filter(name=>name.endsWith('_RESULT'))){
+   for(const value of ['success','failure','cancelled','skipped']){
+    if(value===good[name])continue;
+    assert.notEqual(run(shell,{...good,[name]:value}).status,0,'gate rejects '+name+'='+value);
+   }
+  }
+ }
+ for(const scope of ['', 'unknown'])assert.notEqual(run(shell,{...baseline,CONTRACTS_ONLY:scope}).status,0);
 });
 
 
@@ -260,11 +335,11 @@ test('volume exclusions are limited to audited literal data, never executable co
  assertNoAuthoringDependency(volumeFixtureFile,source);
  // Exercise the AST restriction independently of the whole-source pin as well.
  maskReviewedVolumeFixture(source);
- // Each duplicate loop is separately pinned: removing, adding or modifying either
+ // The single reviewed loop is pinned: removing, duplicating or modifying it
  // must fail even when bypassing the outer whole-file digest check.
  const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
  const loops=ast.body.filter(n=>n.type==='ForOfStatement'&&source.slice(n.start,n.end).includes("['missing sparse fetch',"));
- assert.equal(loops.length,2);
+ assert.equal(loops.length,1);
  for(const loop of loops){
   assert.throws(()=>maskReviewedVolumeFixture(source.slice(0,loop.start)+source.slice(loop.end)));
   const body=source.slice(loop.start,loop.end),bad=body.replace("s.replace(reviewedSparseCheckout,'')","fs.readFileSync(reviewedSparseCheckout)");

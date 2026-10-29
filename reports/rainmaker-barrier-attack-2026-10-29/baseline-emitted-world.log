@@ -1,0 +1,36 @@
+{
+  "baseline": "e67c636b81762df56b346a09ef570964d43084df",
+  "cwd": "/workspace/actions-rainmaker-baseline",
+  "site": "/workspace/actions-rainmaker-baseline/.built-site/baseline",
+  "contentHash": "6e633396004b30383fcadba05bdc9ea83e3b84ff823110ecad90ba7da6455c34",
+  "inputHash": "f0a8e4371c43bf72000bcb18252856e8c7ec41d9d1a301f7e65b668ccaf92340",
+  "command": "INKWAVE_BUILT_SITE=/workspace/actions-rainmaker-baseline/.built-site/baseline node --experimental-vm-modules --test patches/splatoon3/tests/ranked-world.test.mjs",
+  "exitCode": 1,
+  "buildRevision": "70d1c83be6a2baf8d4a606bc9e12bd4091b425d39e45e0d30828cee94581d26a",
+  "rawLog": "/workspace/actions-current/.browser-evidence/rainmaker/baseline-emitted-world.raw.log"
+}
+
+✖ ranked stage coordinates use reachable live floors, symmetric routes, and clear swept tower volumes (2.677405ms)
+✖ zone capture uses the live paint grid and reaches full exposed turf coverage (308.559879ms)
+✖ a calibrated floor band excludes box tops and other storeys from zone scoring and capture paint (357.482339ms)
+✖ moving tower paint face fits every map atlas and follows a Physics support face (781.994753ms)
+✖ tower world installs a live moving collider and carries only riders inside its deck volume (667.156716ms)
+✔ objective visuals stay mode-specific and Rainmaker markers reflect rule state (267.41769ms)
+✖ non-Tower teardown retains live spatial query order across five stages and wrap (348.902943ms)
+ℹ tests 7
+ℹ pass 1
+ℹ fail 6
+ℹ duration_ms 3722.066621
+✖ failing tests:
+✖ ranked stage coordinates use reachable live floors, symmetric routes, and clear swept tower volumes (2.677405ms)
+  AssertionError [ERR_ASSERTION]: only battle stages are required to provide ranked objectives
+✖ zone capture uses the live paint grid and reaches full exposed turf coverage (308.559879ms)
+  TypeError: t.render is not a function
+✖ a calibrated floor band excludes box tops and other storeys from zone scoring and capture paint (357.482339ms)
+  TypeError: t.render is not a function
+✖ moving tower paint face fits every map atlas and follows a Physics support face (781.994753ms)
+  TypeError: t.render is not a function
+✖ tower world installs a live moving collider and carries only riders inside its deck volume (667.156716ms)
+  TypeError: t.render is not a function
+✖ non-Tower teardown retains live spatial query order across five stages and wrap (348.902943ms)
+  Error: Ranked scorch zone 0 center is not over live floor (-8.00, 0.00)

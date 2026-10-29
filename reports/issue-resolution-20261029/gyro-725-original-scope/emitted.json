@@ -1,0 +1,68 @@
+{
+  "contentHash": "6a4dba60665bb02b5b8589fe23af48113ff8bc84761fb4a0d1a19acf1de25fd6",
+  "inputHash": "02fe24046f82c2580776b261b42877bc82a37fd447916cef6722bf6fe6c230c6",
+  "checkedArtifacts": [
+    "patches/local-quality/gyro-permission.mjs",
+    "patches/local-quality/gyro.mjs",
+    "patches/local-quality/platform-lifecycle.mjs",
+    "patches/local-quality/screen-angle.mjs",
+    "src/core/device.js",
+    "src/core/gyro.js"
+  ],
+  "results": [
+    {
+      "sens": -5,
+      "hz": 30,
+      "gain": 0.9999999999999993,
+      "deviceDegreesPer360": 360
+    },
+    {
+      "sens": -5,
+      "hz": 60,
+      "gain": 1.0000000000000013,
+      "deviceDegreesPer360": 360
+    },
+    {
+      "sens": -5,
+      "hz": 120,
+      "gain": 1.0000000000000033,
+      "deviceDegreesPer360": 360
+    },
+    {
+      "sens": 0,
+      "hz": 30,
+      "gain": 1.8000000000000012,
+      "deviceDegreesPer360": 200
+    },
+    {
+      "sens": 0,
+      "hz": 60,
+      "gain": 1.799999999999999,
+      "deviceDegreesPer360": 200
+    },
+    {
+      "sens": 0,
+      "hz": 120,
+      "gain": 1.8000000000000043,
+      "deviceDegreesPer360": 200
+    },
+    {
+      "sens": 5,
+      "hz": 30,
+      "gain": 3.000000000000002,
+      "deviceDegreesPer360": 120
+    },
+    {
+      "sens": 5,
+      "hz": 60,
+      "gain": 3.0000000000000098,
+      "deviceDegreesPer360": 120
+    },
+    {
+      "sens": 5,
+      "hz": 120,
+      "gain": 3.000000000000013,
+      "deviceDegreesPer360": 120
+    }
+  ]
+}

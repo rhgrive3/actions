@@ -1,0 +1,317 @@
+[
+  {
+    "path": ".github/workflows/validate-inkwave-update.yml",
+    "line": 642,
+    "decision": "head",
+    "headLines": 2,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+    "line": 911,
+    "decision": "opt",
+    "headLines": 0,
+    "optimizedLines": 53
+  },
+  {
+    "path": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+    "line": 1040,
+    "decision": "opt",
+    "headLines": 0,
+    "optimizedLines": 20
+  },
+  {
+    "path": "patches/local-quality/combat-gpu-cpu-perfect-adapter.mjs",
+    "line": 1106,
+    "decision": "opt",
+    "headLines": 0,
+    "optimizedLines": 75
+  },
+  {
+    "path": "patches/local-quality/tests/character-movement-hotpaths.test.mjs",
+    "line": 88,
+    "decision": "opt",
+    "headLines": 10,
+    "optimizedLines": 19
+  },
+  {
+    "path": "patches/local-quality/tests/combat-gpu-cpu-perfect.test.mjs",
+    "line": 17,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/local-quality/tests/combat-gpu-cpu-perfect.test.mjs",
+    "line": 36,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 4,
+    "decision": "opt",
+    "headLines": 2,
+    "optimizedLines": 4
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 17,
+    "decision": "opt",
+    "headLines": 0,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 38,
+    "decision": "head",
+    "headLines": 6,
+    "optimizedLines": 6
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 63,
+    "decision": "head",
+    "headLines": 12,
+    "optimizedLines": 22
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 151,
+    "decision": "head",
+    "headLines": 16,
+    "optimizedLines": 19
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 194,
+    "decision": "head",
+    "headLines": 2,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 209,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 278,
+    "decision": "opt",
+    "headLines": 0,
+    "optimizedLines": 6
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 300,
+    "decision": "head",
+    "headLines": 2,
+    "optimizedLines": 2
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 320,
+    "decision": "ranked-owner",
+    "headLines": 2,
+    "optimizedLines": 2
+  },
+  {
+    "path": "patches/local-quality/tests/native-stage-and-combat-firefight.test.mjs",
+    "line": 332,
+    "decision": "native-union",
+    "headLines": 34,
+    "optimizedLines": 218
+  },
+  {
+    "path": "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+    "line": 110,
+    "decision": "motion-prefix",
+    "headLines": 4,
+    "optimizedLines": 7
+  },
+  {
+    "path": "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+    "line": 132,
+    "decision": "both",
+    "headLines": 5,
+    "optimizedLines": 10
+  },
+  {
+    "path": "patches/local-quality/tests/queue-historical-source-motion-20261026.test.mjs",
+    "line": 155,
+    "decision": "both",
+    "headLines": 1,
+    "optimizedLines": 2
+  },
+  {
+    "path": "patches/native-stages/runtime/native-drop.mjs",
+    "line": 10,
+    "decision": "head",
+    "headLines": 1,
+    "optimizedLines": 0
+  },
+  {
+    "path": "patches/native-stages/runtime/native-drop.mjs",
+    "line": 156,
+    "decision": "head",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/native-stages/runtime/native-level.mjs",
+    "line": 79,
+    "decision": "head",
+    "headLines": 9,
+    "optimizedLines": 8
+  },
+  {
+    "path": "patches/native-stages/runtime/native-physics.mjs",
+    "line": 6,
+    "decision": "foot-constants",
+    "headLines": 0,
+    "optimizedLines": 3
+  },
+  {
+    "path": "patches/native-stages/runtime/native-physics.mjs",
+    "line": 105,
+    "decision": "head",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/native-stages/runtime/triangle-world.mjs",
+    "line": 238,
+    "decision": "head",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/native-stages/runtime/triangle-world.mjs",
+    "line": 299,
+    "decision": "head",
+    "headLines": 2,
+    "optimizedLines": 2
+  },
+  {
+    "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+    "line": 158,
+    "decision": "opt",
+    "headLines": 6,
+    "optimizedLines": 13
+  },
+  {
+    "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+    "line": 183,
+    "decision": "ranked-distance",
+    "headLines": 2,
+    "optimizedLines": 2
+  },
+  {
+    "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+    "line": 197,
+    "decision": "ranked-distance",
+    "headLines": 3,
+    "optimizedLines": 3
+  },
+  {
+    "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+    "line": 539,
+    "decision": "both",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "patches/splatoon3/tests/added-audio-sharing.test.mjs",
+    "line": 60,
+    "decision": "audio-union",
+    "headLines": 2,
+    "optimizedLines": 2
+  },
+  {
+    "path": "patches/splatoon3/tests/explosher-stage-admission.test.mjs",
+    "line": 8,
+    "decision": "head",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "scripts/ci/inkwave-source-coverage.mjs",
+    "line": 39,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 6
+  },
+  {
+    "path": "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+    "line": 26,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+    "line": 80,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 1
+  },
+  {
+    "path": "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+    "line": 222,
+    "decision": "head",
+    "headLines": 9,
+    "optimizedLines": 4
+  },
+  {
+    "path": "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+    "line": 249,
+    "decision": "head",
+    "headLines": 3,
+    "optimizedLines": 3
+  },
+  {
+    "path": "scripts/tests/inkwave-ci-recurrence-guards.test.mjs",
+    "line": 132,
+    "decision": "opt",
+    "headLines": 7,
+    "optimizedLines": 36
+  },
+  {
+    "path": "scripts/tests/inkwave-responsive-child-pool.test.mjs",
+    "line": 81,
+    "decision": "opt",
+    "headLines": 6,
+    "optimizedLines": 17
+  },
+  {
+    "path": "scripts/tests/inkwave-responsive-session-retry.test.mjs",
+    "line": 57,
+    "decision": "opt",
+    "headLines": 2,
+    "optimizedLines": 2
+  },
+  {
+    "path": "scripts/tests/inkwave-source-coverage.test.mjs",
+    "line": 98,
+    "decision": "both",
+    "headLines": 1,
+    "optimizedLines": 8
+  },
+  {
+    "path": "scripts/tests/inkwave-wiper-capture-isolation.test.mjs",
+    "line": 44,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 2
+  },
+  {
+    "path": "scripts/tests/inkwave-wiper-capture-isolation.test.mjs",
+    "line": 85,
+    "decision": "opt",
+    "headLines": 1,
+    "optimizedLines": 24
+  }
+]

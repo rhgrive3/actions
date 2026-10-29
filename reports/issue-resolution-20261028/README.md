@@ -155,6 +155,14 @@ CIのhurtbox stepは、fixtureが読む`INKWAVE_EDGECASE_SITE`を設定せずsou
 
 次のpush前に、[後続coreの関連する一度だけのローカル検証](emitted-core-sweep.md)、[通信のselector/command/hash](emitted-network-sweep.json)、[武器/物理のcommand/hash/skip境界](emitted-weapon-sweep.json)を確認した。新規失敗job・元source・対応commitは[`new-ci-failures.json`](new-ci-failures.json)に追記し、正式な次head CIとは区別する。最適化側のscratch名・broadphase後のcall-listについても隔離worktreeで修正・独立レビュー中。Issueは形式的にCloseせず、#1767も必要な全体CIまでOpenを維持する。
 
+## #1907のCharger fixture後続修正
+
+最適化側の後続2件はテストだけを修正した。`c8ae9404`（統合`87b289b0`）は古いmodule-global名のassertionを、実installerのwarm再利用・depth別/installation別所有権・nested/exception・remote/custom callbackの検証に置き換える。元の6個のbroadphase/performance条件を維持し、source16/16・実最適化emitted16/16、4種類のmutationが意図したassertionで拒否される。Agent1が独立に再実行・承認した。[scratchの条件・hash・確認範囲](optimized-charger-scratch.json)。
+
+`606d6b14`（統合`73a78997`）は全8候補へのnarrowphase呼出を必須にしていたfixtureを修正する。残る候補のidentity/順序・relative endpoint・entryを元の完全scanと厳密比較し、省略された全候補が実capsule solverでnullになることを確認する。source936条件では21,816回から17,016回へ減った4,800回すべてがmissで、報告hit3,766件・stop/seen/event/lease状態が一致した。初期/終端半径、境界epsilon/equality、coherent/不連続/古いmotion、ghost、zero/NaN/short/range-clipped shot、full/partialとworld/defense stopを含み、5種類の不正cull/time対照を拒否する。
+
+全fileはsource10/10・最適化emitted選択suite10/10で成功し、Agent4が独立再実行・承認した。936条件のgeometry matrixは明示的にsourceを読む。emitted選択は元からあるreal-composed Charger helper caseに適用されるため、936件の実emitted検証とは扱わない。[比較方法・command・対象hash・限界](optimized-charger-broadphase.json)。両修正は#1907だけへ適用し、通常版のroot branchや製品runtimeを変更しない。新headの必須hosted CI成功は引き続き別途確認する。
+
 ## 最適化固有の残りfixtureと契約の再発防止（20:53 UTC）
 
 最適化`0706b35a`の全8source shardが完走し、0/3/4/5/7は成功、1/2/6の失敗はそれぞれ古いbroadphase call-list、scratch名、GPU22文字列形に特定された。scratchの`c8ae9404`は実installer/dispatcherによる再利用・depth・例外unwind・installation別所有権と4mutationを確認し、source/actual emitted各16/16、Agent1が独立承認。[範囲とreceipt](optimized-charger-scratch.json)。broadphaseの`606d6b14`は、元の8caseとclip/Math.min条件を維持し、936のsource-kernel条件で全除外候補が実capsule solverでnull、命中順序等が同じことを検証。sourceとmixed emitted suite各10/10、Agent4が独立承認。[936caseがemitted全件ではないという境界を含むreceipt](optimized-charger-broadphase.json)。両方とも#1907固有のtest変更でruntimeを変更しない。

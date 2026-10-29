@@ -529,7 +529,7 @@ export function installWeapons(context, profile) {
     if (kind === 'charger' && (this.s3ChargerCancelSwimRemaining > 1e-10 || this.s3ChargerPostShot > 1e-10)) return true;
     if (kind === 'dualies' && this.s3DualiesPostShot > 1e-10) return true;
     if (kind === 'slosher' && this.s3SloshPostShot > 1e-10) return true;
-    if (['charger','splatling'].includes(kind) && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
+    if ((kind === 'charger' || kind === 'splatling') && this.a.intent.squid && this.a._squidPressT > this.a._firePressT) return false;
     return this.s3BlasterWindup > 0 || busy.call(this);
   };
   const blasterParam = profile.weaponsFidelityCompletion?.weapons?.blaster?.WeaponParam;

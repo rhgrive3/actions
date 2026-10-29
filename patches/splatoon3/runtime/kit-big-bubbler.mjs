@@ -746,7 +746,9 @@ export function kitBarrierCandidate(p, start, end, excludedDomeIds = null) {
   // visually; it must never be able to spend a dome budget.
   const hostile = Number.isInteger(p.team);
   let found = false;
-  for (const pool of [domes, remoteDomes]) {
+  const localPool = domes, remotePool = remoteDomes;
+  for (let lane = 0; lane < 2; lane++) {
+    const pool = lane === 0 ? localPool : remotePool;
     for (const dome of pool) {
       if (dome.dead) continue;
       if (excludedDomeIds?.has?.(dome.id) || excludedDomeIds?.has?.(`${dome.id}\u0000${dome.serial}`)) continue;
@@ -1318,7 +1320,11 @@ function replayExpire(owner, payload) {
     return no('bad-event-id');
   }
   if (serial !== undefined && (!Number.isSafeInteger(serial) || serial < 0)) return no('bad-serial');
-  // The tombstone is written FIRST and unconditionally: an expire that arrives
+  // Reject mismatched live activations before touching any replay bookkeeping.
+  // Otherwise a refused expire would poison the live dome's tombstone/cursor.
+  const dome = remoteDomes.find(d => d.id === domeId);
+  if (dome && serial !== undefined && serial !== dome.serial) return no('stale-activation');
+  // An accepted tombstone is written even when an expire arrives
   // before its deploy (reordered frames) has still ended that activation, and
   // must not be forgotten just because there was nothing on screen to remove.
   tombstone(domeId);
@@ -1328,9 +1334,7 @@ function replayExpire(owner, payload) {
   hitCursor.delete(domeId);
   const key = eventId === undefined ? `expire|${domeId}` : `expire|${domeId}|${eventId}`;
   if (!remember(key)) return ok('duplicate', { domeId });
-  const dome = remoteDomes.find(d => d.id === domeId);
   if (!dome) return ok('already-absent', { domeId });
-  if (serial !== undefined && serial !== dome.serial) return no('stale-activation');
   removeDome(dome, 'replay-expire');
   return ok('expired', { domeId });
 }

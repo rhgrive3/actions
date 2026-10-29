@@ -9,34 +9,38 @@ export function nativeStageTextureLimit(manifest, quality, {
   mobile = false, deviceMemoryGB = null, maxTextureSize = 4096
 } = {}) {
   const mats = Object.values(manifest?.materials || {});
-  const unique = new Set();
-  for (const m of mats) {
-    if (m.albedo) unique.add(m.albedo);
-    if (m.maps?.opacity) unique.add(m.maps.opacity);
-    if (quality === 'high') {
-      for (const key of ['normal', 'roughness', 'emissive'])
-        if (m.maps?.[key]) unique.add(m.maps[key]);
-    }
-  }
   const vertices = Number((manifest?.sourceGeometry||manifest?.geometry)?.vertices) || 0;
   const heavy = mats.length >= 30 || vertices >= 150000;
   const memory = Number.isFinite(Number(deviceMemoryGB)) && Number(deviceMemoryGB) > 0
     ? Number(deviceMemoryGB) : null;
   let limit = quality === 'low' ? 512 : quality === 'high' ? 4096 : 1024;
+  // Map count only affects constrained High profiles. Other profiles still
+  // retain their exact heavy-stage and hardware bounds without this scan.
+  let uniqueCount = 0;
+  if (heavy && quality === 'high' && memory !== null && memory <= (mobile ? 2 : 8)) {
+    const unique = new Set();
+    for (const m of mats) {
+      if (m.albedo) unique.add(m.albedo);
+      if (m.maps?.opacity) unique.add(m.maps.opacity);
+      for (const key of ['normal', 'roughness', 'emissive'])
+        if (m.maps?.[key]) unique.add(m.maps[key]);
+    }
+    uniqueCount = unique.size;
+  }
 
   if (mobile) {
     // Mobile high was already capped at 1024 before this optimization.
     limit = Math.min(limit, 1024);
     // Only very constrained devices with unusually many maps step down.
-    if (heavy && quality === 'high' && memory !== null && memory <= 2 && unique.size >= 80)
+    if (heavy && quality === 'high' && memory !== null && memory <= 2 && uniqueCount >= 80)
       limit = 512;
   } else if (heavy && quality === 'high') {
     // Avoid a blanket 1024px High-mode cap: 2K better retains close-up
     // albedo, stencil silhouettes and normal detail on ordinary desktops.
     // Extremely dense scenes on weak machines need the smaller budget.
     limit = 2048;
-    if ((memory !== null && memory <= 4 && unique.size >= 64) ||
-        (memory !== null && memory <= 8 && unique.size >= 160))
+    if ((memory !== null && memory <= 4 && uniqueCount >= 64) ||
+        (memory !== null && memory <= 8 && uniqueCount >= 160))
       limit = 1024;
   }
 

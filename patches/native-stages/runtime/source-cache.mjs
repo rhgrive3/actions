@@ -136,7 +136,16 @@ function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.
 const arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 async function seal(data){
  const keys=data.faceTriangles?[...arrays,'faceTriangles']:arrays;
- const hashes=await Promise.all(keys.map(k=>crypto.subtle.digest('SHA-256',data[k])));
+ const hashes=[];
+ // WebCrypto snapshots each BufferSource when digest is called. Avoid
+ // retaining a second entire stage in outstanding native hash jobs. Small
+ // columns still overlap in pairs; a large column is authenticated alone.
+ for(let at=0;at<keys.length;){
+  const first=data[keys[at++]],wave=[crypto.subtle.digest('SHA-256',first)];
+  if(at<keys.length&&first.byteLength+data[keys[at]].byteLength<=8*1024*1024)
+   wave.push(crypto.subtle.digest('SHA-256',data[keys[at++]]));
+  hashes.push(...await Promise.all(wave));
+ }
  // Packed IDs are already hashed as bytes. Serialize each shared view's exact
  // range instead of expanding hundreds of thousands of numeric object keys.
  const manifest=JSON.stringify(data.manifest,(_key,value)=>data.faceTriangles&&value instanceof Uint32Array&&value.buffer===data.faceTriangles.buffer

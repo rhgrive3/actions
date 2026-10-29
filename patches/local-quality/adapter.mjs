@@ -84,6 +84,7 @@ import { adaptMinimapResources } from './minimap-resource-adapter.mjs';
 import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
+import { adaptRefreshAwareDynRes } from './refresh-aware-dynres-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
 import { adaptDistanceHotpath } from './distance-hotpath-adapter.mjs';
 import { adaptPerfReadout } from './perf-readout-adapter.mjs';
@@ -111,6 +112,7 @@ const IDENTITY_FILES = [
   'lobby-slot-transform-adapter.mjs',
   'visual-audio-queue-adapter.mjs',
   'combat-gpu-cpu-perfect-adapter.mjs',
+  'render-transfer-optimization-adapter.mjs',
   'input-lens-queue-adapter.mjs',
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
@@ -154,11 +156,11 @@ const IDENTITY_FILES = [
   'tenacity-adapter.mjs', 'tenacity.mjs',
   'idle-adapter.mjs', 'idle-resources.mjs', 'pause-frame-retention.mjs', 'music-idle.mjs',
   'lobby-resource-adapter.mjs', 'minimap-resource-adapter.mjs', 'refl-skip-adapter.mjs', 'finish-tape-adapter.mjs',
-  'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs',
+  'adapter.mjs', 'gyro.mjs', 'install.mjs', 'menu-preview.mjs', 'menu.mjs', 'preview-retirement.mjs',
   'offline-offscreen-budget.mjs',
   'roller-motion.mjs', 'roller-visual.mjs', 'surface.mjs', 'landing-rigidity-adapter.mjs', 'match-retainer-adapter.mjs', 'first-touch-adapter.mjs', 'touch-relayout.mjs',
   'offscreen-visual-budget.mjs',
-  'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs',
+  'platform-adapter.mjs', 'platform-lifecycle.mjs', 'platform-game.mjs', 'presentation-clock.mjs',
   'platform-input.mjs', 'platform-audio.mjs', 'platform-transport.mjs',
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
@@ -169,7 +171,7 @@ const IDENTITY_FILES = [
   'collision-hotpath-adapter.mjs', 'shooter-hud-hotpath-adapter.mjs',
   'paint-render-regions-adapter.mjs', 'paint-profile-batch.mjs', 'paint-profile-bounds.mjs', 'paint-profile-shader.mjs', 'paint-profile-compatibility.mjs', 'paint-dry-regions.mjs', 'paint-dry-region-grid.mjs', 'paint-regional-mips.mjs', 'paint-native-mip-guard.mjs',
   'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
-  'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'debug-ab-runtime.mjs', 'range-frame-pacing-adapter.mjs',
+  'range-frame-pacing.mjs', 'refresh-aware-dynres-adapter.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'debug-ab-runtime.mjs', 'range-frame-pacing-adapter.mjs',
   // Terminal composition dependencies are build inputs even when this layer's
   // adaptQualitySource does not directly invoke them. Preserve existing order.
   // Full terminal composer owns these additional build-only queue transformers.
@@ -179,6 +181,9 @@ const IDENTITY_FILES = [
   'queue-historical-source-motion-20261026-adapter.mjs',
   'queue-remaining-visual-20261027-adapter.mjs', 'queue-audio-build-20261027-adapter.mjs',
   'queue-combat-world-20261027-adapter.mjs',
+  'queue-ui-input-20261029-adapter.mjs', 'queue-ui-continuation-20261029-adapter.mjs', 'queue-visual-continuation-20261029-adapter.mjs', 'queue-world-native-20261029-adapter.mjs',
+  'queue-combat-network-20261029-adapter.mjs', 'queue-audio-20261029-adapter.mjs',
+  'queue-late-root-20261029-adapter.mjs',
   'added-ui-motion-adapter.mjs', 'drive-core-queue-adapter.mjs',
   'drive-visual-audio-adapter.mjs', 'fx-empty-pools-adapter.mjs',
   'ink-ripple-presentation-adapter.mjs', 'perf-readout-adapter.mjs',
@@ -205,7 +210,7 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue405(rel, code);
   code = adaptIssue484(rel, code);
   const framed = adaptFrameOrder(rel, adaptFirefightTierBudget(rel, adaptQualityLayer(rel, code), replaceOnce));
-  const paced = adaptRangeFramePacing(rel, framed);
+  const paced = adaptRefreshAwareDynRes(rel, adaptRangeFramePacing(rel, framed), replaceOnce);
   let broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
   if (rel === 'src/game/physics.js') {
     broadphased = replaceOnce(broadphased, '        if (tmin > tmax) { miss = true; break; }', '        if (tmin > tmax || tmin > best) { miss = true; break; }', 'reject OBB slabs beyond the current nearest hit');

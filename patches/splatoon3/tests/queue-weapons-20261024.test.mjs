@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { markAttributeRange } from '../runtime/instance-color-upload.mjs';
+import { installShapePoolBounds, updateShapePoolBounds } from '../runtime/shape-pool-bounds.mjs';
 import * as T from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {SnapshotPool} from '../runtime/snapshot-pool.mjs';
@@ -83,7 +84,7 @@ test('Booyah layout reuses immutable output only after a fresh plane query and i
 test('Stringer volley scratch matches original Three.js arrow births, clipping and recursively published volleys',()=>{
  const next=declarations(read('../runtime/main-weapon-catalog.mjs'),['emitArrow']).emitArrow;
  function run(code,count,tilt,reenter){const out=[],muzzle=new T.Vector3(1,2,3),dir=new T.Vector3(.2,.3,.9).normalize(),s={bowTilt:tilt,arrowShotOrdinal:0},runner={a:{}},record={family:'stringer',parameters:{spl__WeaponStringerParam:{ShotParam:{ArrowNum:count,ArrowMargin:.4}}}};let nested=false;
-  const bindings={THREE:T,RAD:Math.PI/180,EPS:1e-9,finite:(x,d)=>Number.isFinite(x)?x:d,chargeFrames:()=>60,stageValue:()=>7,mode:()=>({b:{}}),state:()=>s,addedFamilySplash:()=>null,origin:()=>{},muzzle,dir,G:{physics:{}},constrainMuzzle:(_p,a,b)=>{if(b.x>a.x+.2)b.x=a.x+.2;},notify:(_a,_r,p,d,c)=>out.push(['notify',...p.toArray(),...d.toArray(),c]),spawn:(_a,_r,_d,aim,birth,options)=>{out.push([options.index,...aim.toArray(),...birth.toArray(),options.bowTilt]);if(reenter&&!nested){nested=true;f(runner,record,.4);}}};
+  const bindings={THREE:T,RAD:Math.PI/180,EPS:1e-9,finite:(x,d)=>Number.isFinite(x)?x:d,chargeFrames:()=>60,stageValue:()=>7,stringerArrowDegrees:()=>7,mode:()=>({b:{}}),state:()=>s,addedFamilySplash:()=>null,origin:()=>{},muzzle,dir,G:{physics:{}},constrainMuzzle:(_p,a,b)=>{if(b.x>a.x+.2)b.x=a.x+.2;},notify:(_a,_r,p,d,c)=>out.push(['notify',...p.toArray(),...d.toArray(),c]),spawn:(_a,_r,_d,aim,birth,options)=>{out.push([options.index,...aim.toArray(),...birth.toArray(),options.bowTilt]);if(reenter&&!nested){nested=true;f(runner,record,.4);}}};
   const f=compile(code,'emitArrow',bindings);f(runner,record,.7);return{out,ordinal:s.arrowShotOrdinal};}
  for(const count of [0,1,2,3,5,9])for(const tilt of [-90,-21,0,30,90])for(const nested of [false,true])assert.deepEqual(run(next,count,tilt,nested),run(before.emitArrow,count,tilt,nested));
 });
@@ -92,7 +93,7 @@ const newShape=declarations(read('../runtime/special-vfx-kit.mjs'),['ShapePool']
 function shape(Class){const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(new Float32Array(9),3));return new Class(T,'parity',g,16,['a','b','c','d'],'','',false,{value:0});}
 const shapeState=p=>({recs:p.recs.map(r=>({id:r.id,t:r.t,life:r.life,dead:r.dead,retired:r.retired,v:Array.from(r.v)})),buf:p.buf.map(b=>Array.from(b.array)),draw:p.mesh.geometry.instanceCount});
 test('ShapePool compaction retains order, callbacks, reentrant births and every uploaded Float32 value',()=>{
- const Old=compile(before.ShapePool,'ShapePool'),Next=compile(newShape,'ShapePool',{markAttributeRange});
+ const Old=compile(before.ShapePool,'ShapePool'),Next=compile(newShape,'ShapePool',{markAttributeRange,installShapePoolBounds,updateShapePoolBounds});
  for(const mode of ['plain','follow','onEnd','reenter']){
   const a=shape(Old),b=shape(Next),logs=[[],[]];
   for(const [which,p]of [a,b].entries())for(let i=0;i<13;i++){
@@ -106,7 +107,7 @@ test('ShapePool compaction retains order, callbacks, reentrant births and every 
  }
 });
 test('ShapePool unchanged buffers keep their pending upload range/version and write changed values once',()=>{
- const p=shape(compile(newShape,'ShapePool',{markAttributeRange})),r=p.addRaw(0,...new Array(16).fill(.2));p.update(0);
+ const p=shape(compile(newShape,'ShapePool',{markAttributeRange,installShapePoolBounds,updateShapePoolBounds})),r=p.addRaw(0,...new Array(16).fill(.2));p.update(0);
  const versions=p.buf.map(x=>x.version),ranges=p.buf.map(x=>x.updateRanges[0]);p.update(.01);
  assert.deepEqual(p.buf.map(x=>x.version),versions);assert.deepEqual(p.buf.map(x=>x.updateRanges[0]),ranges);
  r.v[5]=.7;p.update(.01);assert.deepEqual(p.buf.map(x=>x.version),versions.map((v,i)=>v+(i===1?1:0)));

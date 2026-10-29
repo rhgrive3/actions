@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "baseSourceSha": "2b01cd7efbca260a611165b1e3887ff48062ccd5",
+  "candidate": "same base plus the committed horizontal-sector patch",
+  "referenceVersion": "11.3.0",
+  "parameterCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "scope": "CPU production-composed source; no browser, emitted build, GPU or device measurement",
+  "productionFilesChanged": [
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+  ],
+  "counterexample": {
+    "weapon": "Dynamo Roller",
+    "mode": "horizontal",
+    "unit": 0,
+    "targetDistanceFromBirth": 4,
+    "acceptedCameraYaw": 1.5707963267948966,
+    "bodyYawAtCapture": 0.10555555555555556,
+    "oldSectorYaw": 0,
+    "fixedSectorYaw": 1.5707963267948966,
+    "alignedDamage": 180,
+    "oldTurnedDamage": 102.58956702780895,
+    "fixedTurnedDamage": 180,
+    "wireUnchanged": true
+  },
+  "checks": {
+    "baseCurrentTests": {
+      "pass": 33,
+      "fail": 0,
+      "skip": 0
+    },
+    "candidateTests": {
+      "files": 9,
+      "pass": 51,
+      "fail": 0,
+      "skip": 0,
+      "includesNewSectorGroups": 5,
+      "testFiles": [
+        "catalog-horizontal-sector-aim.test.mjs",
+        "catalog-source-launch-1130.test.mjs",
+        "catalog-depletion-1130.test.mjs",
+        "catalog-flick-damage-source.test.mjs",
+        "issue-1813-dynamo-unit-authority-live.test.mjs",
+        "catalog-slosher-flight-contact.test.mjs",
+        "catalog-explosher-aim-pitch.test.mjs",
+        "catalog-dread-wringer-origin.test.mjs",
+        "catalog-20261025-paint-regressions.test.mjs"
+      ]
+    },
+    "splitSourceTests": {
+      "pass": 8,
+      "fail": 0,
+      "skip": 0,
+      "scope": "5 source-counterfactual groups plus3 unchanged production-positive groups, executed on source only"
+    },
+    "quickCompatibility": "pass"
+  },
+  "disposition": {
+    "1804-1811": "previous source closures reused; new1810 camera/body gap corrected by this patch",
+    "1812": "original diagnostic acceptance completed; historical rendered receipts remain historical",
+    "1813": "open; zero multiplier vs sentinel not decoded; existing policy untouched",
+    "1814": "open; no full eleven-weapon Cartesian or retail parity claim",
+    "1789": "related only",
+    "1431": "related only",
+    "992": "not a prerequisite"
+  },
+  "ownership": {
+    "product": "catalog central heading metadata only",
+    "tests": "new actual Actor/WeaponRunner/projectile/facing/collision source controls",
+    "excluded": [
+      "Character/offscreen budget/adapters",
+      "MOV08b",
+      "network admission",
+      "source numerical records",
+      "UnitDamageRate policy"
+    ]
+  },
+  "filesSha256": {
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "b8179f32feea10e2cf249a0fb139632f926bb2ab7c4336ac806fbdca0b6d3a07",
+    "patches/splatoon3/runtime/catalog-flick-damage.mjs": "75573a61e7e4cc1fc9adf420a968da41cd2c179e7af4f53f9dac955e57cd84f4",
+    "patches/splatoon3/runtime/catalog-depletion.mjs": "520f5a215dcf8c0b82aaacc71e03909aa966229684d0eb5f3b81b5a4e4cb769d",
+    "patches/splatoon3/runtime/catalog-source-launch.mjs": "911744dffb24ad3b8d45744c2b0467df8fa5e99e542782d9b20c4b2a015d95d3",
+    "patches/splatoon3/runtime/main-weapon-catalog-data.mjs": "d2f6274e1a65b666ee7172773a3c447900dc6c90917c2228964f9e27237d766c",
+    "patches/splatoon3/tests/catalog-horizontal-sector-aim.test.mjs": "db227196419eedbc00d79a45ceb40e47cc2d32f8856aef293979fbcaf921941a",
+    "patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs": "8e96d90688131fc6b04f14affe2cc4015aea13b79da485480d1401da1080f3e3",
+    "patches/splatoon3/tests/catalog-horizontal-sector-fixture.mjs": "35444912a752c3da863444caafa431b2deb76cf8f516e348d311b973f05ed2a2"
+  },
+  "receiptSha256": {
+    "split-source-tests.txt": "5866922c2f2481e3bf3c01a92dab36dadde2c0ca1fc61be809a475ea2e3eb120",
+    "candidate-tests.txt": "b1cb2b8563e91ca5c983dae90f266a31a70cdb30f59bba1dc55efbde42620711",
+    "README.md": "18021baedb6eb23fa6a2b1c2833c996cc910b4fb2d3ff136ec66a2fbcc56fa3a",
+    "unit-rate-inventory.json": "f162875e1ab8bcaa80339969d9659f8e0ed7fe6e98e4fc522bb77df8553f03f4",
+    "quick.txt": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+    "original-issues.json": "e79edf872541f2831098241bad70b2609a56f194b18f78c2d6464c4e370cab69",
+    "base-2b-tests.txt": "97e1b6eca224202ede29373ea87fbf0fca4718d4073ae48a6109476c00e8211e"
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "emittedPositiveEntryPoint": "patches/splatoon3/tests/catalog-horizontal-sector-emitted.test.mjs",
+  "emittedExecution": "pending separate root-owned combined minified build; not claimed by these receipts"
+}

@@ -974,20 +974,22 @@ export function fidelityWorldCollisionRadius(p) { return p.inkProfile?.collision
 // separates floor-like contacts (paint under the glob centre) from walls,
 // edges and ceilings (paint at the touched point).
 export const GLOB_GRAZE = Object.freeze({ normalY: 0.3, minPaintFraction: 0.25 });
+let _grazeCenter = null;
 export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   const owner = p?.owner;
   if (!game?.paint?.splat || !owner || p.ghost || owner.remote || !(radius > 0) || !point || !normal) return 0;
   const h = (p.pos.x - point.x) * normal.x + (p.pos.y - point.y) * normal.y + (p.pos.z - point.z) * normal.z;
   const cut = Math.sqrt(Math.max(0, radius * radius - Math.max(0, h) * h));
   const paintRadius = Math.max(radius * GLOB_GRAZE.minPaintFraction, cut);
-  const center = normal.y > GLOB_GRAZE.normalY
-    ? p.pos.clone().addScaledVector(normal, -Math.max(0, h)).addScaledVector(normal, 0.05)
-    : point.clone().addScaledVector(normal, 0.05);
+  const center = _grazeCenter || (_grazeCenter = p.pos.clone());
+  if (normal.y > GLOB_GRAZE.normalY) center.copy(p.pos).addScaledVector(normal, -Math.max(0, h)).addScaledVector(normal, 0.05);
+  else center.copy(point).addScaledVector(normal, 0.05);
   const last = p.s3GrazePaint;
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
-  p.s3GrazePaint = { at: center, face };
+  if (last && last.at?.copy) { last.at.copy(center); last.face = face; }
+  else p.s3GrazePaint = { at: center.clone(), face };
   const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
-  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: owner });
+  const area = game.paint.splat(p.s3GrazePaint.at, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: owner });
   if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
   return area;
 }

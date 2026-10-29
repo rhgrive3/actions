@@ -44,12 +44,17 @@ function stampSlidePoint(runtime,point){
     (state.lastStamp||=point.clone()).copy(point);
   }
 
+function finiteActorPosition(actor) {
+  const x = actor.pos.x, y = actor.pos.y, z = actor.pos.z;
+  return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z);
+}
+
 export function paintDualiesSlide(game, runner, weapon, ending = false) {
   const actor = runner?.a, dodge = runner?.dodge;
   const half = weapon?.rollPaintWidthHalf;
   if (!actor || !dodge || dodge.startup > EPS || weapon.kind !== 'dualies' || actor.remote || actor.alive === false ||
       !(Number.isFinite(half) && half > 0) || !game?.paint || !game?.physics ||
-      ![actor.pos.x, actor.pos.y, actor.pos.z].every(Number.isFinite)) return 0;
+      !finiteActorPosition(actor)) return 0;
   let state = runner.s3SlidePaint;
   if (!state || state.dodge !== dodge) {
     state = runner.s3SlidePaint = { dodge, token: (runner.s3SlidePaintSequence = (runner.s3SlidePaintSequence || 0) + 1), last: actor.pos.clone(),

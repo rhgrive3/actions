@@ -147,11 +147,13 @@ test('production runtime prefetches routed kit sounds and retains original audio
   if(!built){
   const engine=fs.readFileSync(new URL('../runtime/audio/engine.mjs',import.meta.url),'utf8');
   const runtime=fs.readFileSync(new URL('../runtime/audio/runtime.mjs',import.meta.url),'utf8');
+  const prefetch=fs.readFileSync(new URL('../runtime/audio/kit-prefetch.mjs',import.meta.url),'utf8');
   assert.match(engine,/sourceEventRoute\(id,event\)/);
   assert.match(engine,/loader\?\.declares\(id,event\)===false/);
-  assert.match(runtime,/loader\.ensure\(extra,'fire'\)/);
-  assert.match(runtime,/sourceEventRoute\(kit,event\)/);
-  assert.match(runtime,/EXTRA_SPECIAL_ACTION_SOURCE/);
+  assert.match(runtime,/refreshRecordedKitPrefetch\(s,loader,G\.audio\?\.ctx,sub,special\)/);
+  assert.match(prefetch,/sourceEventRoute\(id,event\)/);
+  assert.match(prefetch,/EXTRA_SPECIAL_ACTION_SOURCE/);
+  assert.match(prefetch,/loader\.ensure\(id,event,\{owner:row\.owner\}\)/);
   const kitRuntime=fs.readFileSync(new URL('../runtime/audio/kit-runtime.mjs',import.meta.url),'utf8');
   assert.match(kitRuntime,/this.specialActive\?\.phase==='ready'/,'Booyah full-hold loop cannot start at activation');
   }
@@ -159,8 +161,12 @@ test('production runtime prefetches routed kit sounds and retains original audio
   class WeaponRunner {constructor(a){this.a=a;} reset(){} update(){return 'native-update';}}
   class Projectiles {throwBomb(){} _push(){} _blastBurst(){}}
   const ensured=[],loops=[],listeners=new Map();
+  // The production manifest declares every routed source clip. A false result
+  // means known-absent, so a fixture must not mark shipped cues as absent while
+  // expecting the prefetch owner to request them.
+  const declaredEvents=new Set(runtimeInstalled.clips.map(({id,event})=>id+':'+event));
   const G={time:0,audio:{ctx:{state:'running'},play(){},prepareWeapon(){},
-    _realS3Loader:{declares(id,event){return id==='special:booyahBomb'&&event==='spin';},ensure(id,event){ensured.push([id,event]);return Promise.resolve();}},
+    _realS3Loader:{declares(id,event){return declaredEvents.has(id+':'+event);},ensure(id,event,options){assert.equal(typeof options?.owner,'object','speculative requests retain their kit owner');ensured.push([id,event]);return Promise.resolve();}},
     loopWeapon(id,event){const h={id,event,playing:true,stops:0,set(){},stop(){this.playing=false;this.stops++;}};loops.push(h);return h;}}};
   const on=(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);return ()=>listeners.get(name).delete(fn);};
   const runtime=installWeaponAudioRuntime({G,Actor,WeaponRunner,Projectiles,on});

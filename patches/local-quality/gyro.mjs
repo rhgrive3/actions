@@ -30,11 +30,6 @@ function fallback(g, reason) {
 // A committed sample owns a timestamped attitude, independent of which sensor
 // supplied it. Raw intervals advance that attitude with their existing body-rate
 // model; fallback consumes absolute attitude observations after that boundary.
-function multiplyQuat(a, b) {
-  const [x,y,z,w]=a,[X,Y,Z,W]=b;
-  const q=[w*X+x*W+y*Z-z*Y,w*Y-x*Z+y*W+z*X,w*Z+x*Y-y*X+z*W,w*W-x*X-y*Y-z*Z];
-  const n=Math.hypot(...q);return q.map(v=>v/n);
-}
 function commitRaw(s, x, y, z, dt, time) {
   const speed=Math.hypot(x,y,z),half=speed*dt/2,k=speed>0?Math.sin(half)/speed:0;
   const [qx,qy,qz,qw]=s.boundary.q,X=x*k,Y=y*k,Z=z*k,W=Math.cos(half);
@@ -49,13 +44,16 @@ function commitRaw(s, x, y, z, dt, time) {
 function consumeAttitude(g, s, point, sample) {
   if (!s.boundary) { s.boundary={time:point.time,q:point.q.slice()};return; }
   if (!(point.time>s.boundary.time)) return;
-  const p=s.boundary.q,q=point.q,delta=multiplyQuat([-p[0],-p[1],-p[2],p[3]],q);
-  let [x,y,z,w]=delta;if(w<0){x=-x;y=-y;z=-z;w=-w;}
+  const p=s.boundary.q,q=point.q,px=-p[0],py=-p[1],pz=-p[2],pw=p[3];
+  const [X,Y,Z,W]=q;
+  let x=pw*X+px*W+py*Z-pz*Y,y=pw*Y-px*Z+py*W+pz*X,z=pw*Z+px*Y-py*X+pz*W,w=pw*W-px*X-py*Y-pz*Z;
+  const length=Math.hypot(x,y,z,w);x/=length;y/=length;z/=length;w/=length;
+  if(w<0){x=-x;y=-y;z=-z;w=-w;}
   const dt=(point.time-s.boundary.time)/1000,n=Math.hypot(x,y,z),k=n>1e-9?2*Math.atan2(n,w)/n/dt:0;
-  const down=g._down.slice(),[qx,qy,qz,qw]=q;
+  const down=g._down,d0=down[0],d1=down[1],d2=down[2],[qx,qy,qz,qw]=q;
   g._down[0]=-2*(qx*qz-qw*qy);g._down[1]=-2*(qy*qz+qw*qx);g._down[2]=-(1-2*(qx*qx+qy*qy));
   try { sample.call(g,x*k,y*k,z*k,dt); }
-  finally { for(let i=0;i<3;i++)g._down[i]=down[i]; }
+  finally { g._down[0]=d0;g._down[1]=d1;g._down[2]=d2; }
   s.boundary={time:point.time,q:q.slice()};
 }
 function consumeThrough(g,s,time,sample) {
