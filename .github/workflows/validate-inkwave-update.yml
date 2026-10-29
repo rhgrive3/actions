@@ -438,7 +438,10 @@ jobs:
       - name: Verify remaining emitted combat, weapon and visual regressions
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+          INKWAVE_CANONICAL_TRACE_MODULE: ${{ github.workspace }}/_site/patches/network-replication/canonical-weapon-actions.mjs
+          INKWAVE_NATIVE_TRACE_COMPARE: ${{ github.workspace }}/patches/splatoon3/tests/fixtures/native-action-trace-035.json.gz
         run: |
+          node --input-type=module -e "import {verifyRuntimeBuild} from './scripts/lib/inkwave-runtime-evidence.mjs'; verifyRuntimeBuild(process.env.INKWAVE_BUILT_SITE, process.cwd(), process.env.SOURCE_SHA);"
           node --experimental-vm-modules --test --test-concurrency=2 \
             patches/network-replication/tests/combat-boss-proof-targets.test.mjs \
             patches/network-replication/tests/combat-native-proof-receipt.test.mjs \
@@ -450,7 +453,19 @@ jobs:
             patches/splatoon3/tests/splatling-charge-reversal.test.mjs \
             patches/splatoon3/tests/pad-sensitivity-rate-287.test.mjs \
             patches/local-quality/tests/offscreen-hair-targets.test.mjs \
-            patches/local-quality/tests/native-offscreen-ground-memo.test.mjs
+            patches/local-quality/tests/native-offscreen-ground-memo.test.mjs \
+            patches/network-replication/tests/canonical-weapon-actions.test.mjs \
+            patches/network-replication/tests/canonical-weapon-modes.test.mjs \
+            patches/network-replication/tests/canonical-sub-special-traces.test.mjs \
+            patches/network-replication/tests/native-action-traces.test.mjs \
+            patches/network-replication/tests/trusted-native-replay.test.mjs \
+            patches/network-replication/tests/native-command-wire.test.mjs \
+            patches/network-replication/tests/native-turf-start-replay.test.mjs \
+            patches/network-replication/tests/native-turf-session-reconnect.test.mjs \
+            patches/splatoon3/tests/native-action-trace.test.mjs \
+            patches/splatoon3/tests/native-action-representatives.test.mjs \
+            patches/splatoon3/tests/native-action-trace-binding.test.mjs \
+            patches/splatoon3/tests/roller-paint-world-update.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)
