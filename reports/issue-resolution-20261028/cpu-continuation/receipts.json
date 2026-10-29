@@ -698,6 +698,18 @@
       "rawBytes": 186454,
       "gzipSha256": "e4c3de3d66a5f6dde89cd0da42898d832b442ae805f09f23478dbcef77f26f35",
       "gzipBytes": 18730
+    },
+    "hair-private-pool-opt.tap.gz": {
+      "rawSha256": "bdeae9c1e652b5c67e1232e4894215553e1e53abc2754fa0e96da02456ab6a05",
+      "rawBytes": 1150,
+      "gzipSha256": "0f803b2ff0e1e5ab149cbe2ee2ff7589f225f59bc7cdca8e43f81eeb780bf19a",
+      "gzipBytes": 573
+    },
+    "hair-private-pool-negative.tap.gz": {
+      "rawSha256": "bf46d695f8caa78674861ebd46a9f1d3a7d2cd2745b3613afe619272736b215b",
+      "rawBytes": 1346,
+      "gzipSha256": "9d19c03b01d5cc3bc1c44c88ec5eb8b6908d8a12899c862084fd7c74511cfef1",
+      "gzipBytes": 674
     }
   }
 }

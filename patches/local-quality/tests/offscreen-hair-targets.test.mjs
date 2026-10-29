@@ -9,7 +9,7 @@ import {replaceOnce,qualityIdentity} from '../adapter.mjs';
 test('#845 deferred hair has exact full-rate inputs before state transitions and first visible accessories', async () => {
   const f=await sourceLoadedActorFixture({random:()=>.4});
   const counts=[];
-  let unreadHiddenFrames=0,unreadVisibleFrames=0,detachedInputChecks=0;
+  let unreadHiddenFrames=0,unreadVisibleFrames=0,detachedInputChecks=0,privateRowReuseChecks=0;
   for(const hz of [30,60,120]){
     const actors=[await f.make(),await f.make()],motion=actors.map(a=>a.character.sourceMotion);
     const adds=[0,0];
@@ -48,8 +48,14 @@ test('#845 deferred hair has exact full-rate inputs before state transitions and
         // The full-rate hair path already consumed these semantic scalars.
         const current=motion[0].currentClips[0],savedFrame=current.frame;
         assert.notEqual(motion[0]._iwHairClips[0],current,'hair owns its saved scalar row');
+        const privateRow=motion[0]._iwMotionClipFrame?.().rows?.[0],privateFrame=privateRow?.frame;
+        if(privateRow){
+          assert.notEqual(motion[0]._iwHairClips[0],privateRow,'hair never retains a reusable diagnostic row');
+          privateRow.frame+=17;privateRowReuseChecks++;
+        }
         current.frame+=13;
         motion[0]._ensureHairTargets();
+        if(privateRow)privateRow.frame=privateFrame;
         current.frame=savedFrame;detachedInputChecks++;
         assert.equal(hair(motion[0].hairTargets),hair(motion[1].hairTargets),`${hz}Hz frame ${frame}: first-draw targets`);
         assert.equal(body(motion[0]),before,'recovery never advances body, clip phase or clocks');
@@ -70,7 +76,7 @@ test('#845 deferred hair has exact full-rate inputs before state transitions and
     counts.push({hz,deferredAdds:adds[0],fullRateAdds:adds[1]});
     f.reset();
   }
-  console.log(JSON.stringify({scope:'exact source hair inputs/body clocks; no device FPS claim',counts,unreadHiddenFrames,unreadVisibleFrames,detachedInputChecks}));
+  console.log(JSON.stringify({scope:'exact source hair inputs/body clocks; no device FPS claim',counts,unreadHiddenFrames,unreadVisibleFrames,detachedInputChecks,privateRowReuseChecks}));
 });
 
 test('#845 adapter is identity-sealed, strict and remains after prior source-motion adapters',()=>{
