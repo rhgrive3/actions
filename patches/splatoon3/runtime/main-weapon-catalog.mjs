@@ -541,8 +541,20 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return (out||new THREE.Vector3()).set(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
   }
   const _paintTangent = new THREE.Vector3(), _paintCross = new THREE.Vector3(), _paintCentre = new THREE.Vector3(), _impactHorizDir = new THREE.Vector3();
+  // Splat consumers can synchronously reenter this producer. Keep each live
+  // callback's vectors leased until it returns; cap retained nesting storage.
+  const _paintScratch = [{tangent:_paintTangent,cross:_paintCross,centre:_paintCentre}];
+  let _paintDepth = 0;
   function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
+    const depthSlot=_paintDepth++;
+    try {
+    let scratch=_paintScratch[depthSlot];
+    if(!scratch){
+      scratch={tangent:new THREE.Vector3(),cross:new THREE.Vector3(),centre:new THREE.Vector3()};
+      if(depthSlot<8)_paintScratch[depthSlot]=scratch;
+    }
+    const _paintTangent=scratch.tangent,_paintCross=scratch.cross,_paintCentre=scratch.centre;
     // The recorded paint packet carries this seed; receivers never reroll it.
     const options = {seed:seed??Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
     let centre=at,paintRadius=radius;
@@ -567,6 +579,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     }
     owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));
+    } finally { _paintDepth--; }
   }
   function floorPaint(owner, at, radius, depth=1, direction=null, footprint=null) {
     base.copy(at); base.y += .15;
