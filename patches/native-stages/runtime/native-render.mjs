@@ -25,14 +25,14 @@ export function nativeInkGeometry(level,paint){
   for(const f of paint.paintFaces)if(f.atlas&&f.triangles)count+=f.triangles.length*3;
   const arrays=Object.fromEntries(specs.map(([name,size])=>[name,name==='nativeWall'?new Uint8Array(count*size):new Float32Array(count*size)]));
   const {position,normal,paintUv,faceUv,nativeFaceSize,nativeWall,faceTan}=arrays;
-  const p=new THREE.Vector3(),rel=new THREE.Vector3();
+  const triangles=level.data.triangles;
   let vertex=0;
   for(const f of paint.paintFaces){
     const a=f.atlas;if(!a||!f.triangles)continue;
     for(const id of f.triangles)for(let k=0;k<3;k++){
-      p.fromArray(level.data.triangles,id*9+k*3);rel.copy(p).sub(f.origin);
-      const u=rel.dot(f.u),v=rel.dot(f.v),i2=vertex*2,i3=vertex*3;
-      position[i3]=p.x;position[i3+1]=p.y;position[i3+2]=p.z;
+      const at=id*9+k*3,x=triangles[at],y=triangles[at+1],z=triangles[at+2],rx=x-f.origin.x,ry=y-f.origin.y,rz=z-f.origin.z;
+      const u=rx*f.u.x+ry*f.u.y+rz*f.u.z,v=rx*f.v.x+ry*f.v.y+rz*f.v.z,i2=vertex*2,i3=vertex*3;
+      position[i3]=x;position[i3+1]=y;position[i3+2]=z;
       normal[i3]=f.n.x;normal[i3+1]=f.n.y;normal[i3+2]=f.n.z;
       paintUv[i2]=(a.x+a.pad+u*a.ppm)/paint.size;
       paintUv[i2+1]=(a.y+a.pad+v*a.ppm)/paint.size;
@@ -65,6 +65,12 @@ function releaseArray(){this.array=null;}
 
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per
 // source object. Only GPU texture representations have an explicit quality cap.
+function narrowDisplayIndex(indices){
+ // WebGL2 reserves 65535 as the Uint16 primitive-restart index. Preserve that
+ // legitimate Uint32 vertex ID and all larger IDs, even for malformed metadata.
+ for(let i=0;i<indices.length;i++)if(indices[i]>=65535)return indices;
+ return Uint16Array.from(indices);
+}
 export function nativeDisplay(data,textures,quality){
  let liveTextures=textures;
  const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cache=new Map();group.name='native-source-display';
@@ -96,7 +102,7 @@ export function nativeDisplay(data,textures,quality){
    mat.name=o.material;cache.set(o.material,{mat,channels,syncChannelProgram});materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
+  g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(narrowDisplayIndex(ib),1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null,m.sourceMode==='browser-direct'?o.boundingSphere:null);
   // Bounds are final above and nothing raycasts the display: once the GPU
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).
   inter.onUpload(releaseArray);g.index.onUpload(releaseArray);

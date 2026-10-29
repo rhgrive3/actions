@@ -64,7 +64,7 @@ export class RangePads {
     this._icons = {};
     for (const d of defs) if (d.kind === 'weapon') this._icons[d.weapon] = svgImage(weaponIcon(WEAPONS[d.weapon].kind || d.weapon), '#f6f2e8');
     this._draw();
-    for (const img of Object.values(this._icons)) img.onload = () => { if (!this.disposed) this._draw(); };
+    for (const img of Object.values(this._icons)) img.onload = () => { if (!this.disposed) this._atlasDirty = true; };
     const pos = [], uv = [], nor = [];
     const H = this.canvas.height, Wc = this.canvas.width, s = PAD_R * 0.78;
     defs.forEach((d, i) => {
@@ -115,6 +115,7 @@ export class RangePads {
 
   // on = the pad the player stands on (or null), k = dwell progress 0…1, weapon = the equipped weapon id
   update(dt, on, k, weapon) {
+    if (this._atlasDirty && !this.disposed) { this._atlasDirty = false; this._draw(); }
     this.t += dt;
     const glow = 0.35 + 0.15 * Math.sin(this.t * 3);
     if (on !== this._lastOn || weapon !== this._lastWeapon) {
@@ -157,7 +158,8 @@ export class RangePads {
   }
 
   dispose() {
-    this.disposed = true;
+    this.disposed = true; this._atlasDirty = false;
+    for (const img of Object.values(this._icons)) img.onload = null;
     this.group.removeFromParent();
     this.base.geometry.dispose(); this.rim.geometry.dispose(); this.labels.geometry.dispose(); this.ring.geometry.dispose();
     this.baseMat.dispose(); this.rimMat.dispose(); this.labelMat.dispose(); this.ringMat.dispose(); this.tex.dispose();

@@ -21,8 +21,8 @@ export function catalogSplashNearestSlot(spawn, sequence) {
   const split = spawn?.SplitNum;
   if (!Number.isInteger(split) || split < 1) return false;
   const slot = sequence % split + 1;
-  const force = Array.isArray(spawn.ForceSpawnNearestAddNumArray) ? spawn.ForceSpawnNearestAddNumArray : [];
-  return slot === split || force.includes(slot);
+  const force = Array.isArray(spawn.ForceSpawnNearestAddNumArray) ? spawn.ForceSpawnNearestAddNumArray : null;
+  return slot === split || (force !== null && force.includes(slot));
 }
 
 export function catalogSplashRadius(descriptor, index) {

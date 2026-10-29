@@ -98,3 +98,14 @@ test('retention reuse changes real admission under a synchronous geometry reentr
  assert.equal(run(original),false,'retained outer traversal cannot see proof appended to the replacement');
  assert.equal(run(reuse),true,'candidate exposes the appended proof to an already active admission traversal');
 });
+test('caching main cause across proof candidates changes admission when an earlier LOS callback changes the live weapon',async()=>{
+ const clause="[weaponId(actor),actor.weapon.id,actor.weapon.kind,'shot','slosh','blast','drop','roller','crab'].includes(d.w)";
+ const original=await load(),cached=await load(s=>s.replace('  for(const p of shots) {','  let mainCause;\n  for(const p of shots) {').replace(clause,'(mainCause ??= '+clause+')'));
+ const run=module=>{
+  const nm=net();module.api.record(nm,'peer',packet([shot(0),shot(10)]),100);
+  class V{set(x,y,z){this.x=x;this.y=y;this.z=z;return this;}}
+  nm._combatProvenanceTHREE={Vector3:V};nm._combatProvenancePhysics={los(from){nm.byNid.get(1).weapon={id:'charger',kind:'charger',range:35,fireInterval:.12,damage:36};return from.z===.1;}};
+  return module.api.combatAdmission(nm,'peer',{m:'m',a:1,v:2,h:1,l:0,d:36,w:'shooter'},'pvp',100);
+ };
+ assert.equal(run(original),false);assert.equal(run(cached),true);
+});
